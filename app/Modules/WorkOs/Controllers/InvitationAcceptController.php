@@ -3,7 +3,7 @@
 namespace App\Modules\WorkOs\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\AuthInvitation;
+use App\Models\Auth\AuthInvitation;
 use Inertia\Inertia;
 
 class InvitationAcceptController extends Controller

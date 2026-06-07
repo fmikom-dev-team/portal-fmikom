@@ -77,8 +77,8 @@ class FortifyServiceProvider extends ServiceProvider
             'canRegister' => Features::enabled(Features::registration()),
             'status' => $request->session()->get('status'),
             'error' => $request->session()->get('error'),
-            'oauthProviders' => \App\Models\AuthOAuthProvider::where('is_enabled', true)->get(['name', 'slug']),
-            'passkeysEnabled' => (bool) \App\Models\AuthSetting::get('passkeys.enabled', true),
+            'oauthProviders' => \App\Models\Auth\AuthOAuthProvider::where('is_enabled', true)->get(['name', 'slug']),
+            'passkeysEnabled' => (bool) \App\Models\Auth\AuthSetting::get('passkeys.enabled', true),
         ]));
 
         Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/ResetPassword', [

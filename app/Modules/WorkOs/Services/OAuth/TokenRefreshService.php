@@ -2,8 +2,8 @@
 
 namespace App\Modules\WorkOs\Services\OAuth;
 
-use App\Models\AuthOAuthCredential;
-use App\Models\AuthOAuthProvider;
+use App\Models\Auth\AuthOAuthCredential;
+use App\Models\Auth\AuthOAuthProvider;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;

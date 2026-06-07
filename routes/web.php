@@ -32,7 +32,7 @@ Route::get('/', function () {
     }
 
     $settings = \Illuminate\Support\Facades\Cache::rememberForever('portal_settings', function () {
-        return \App\Models\PortalSetting::pluck('value', 'key')->toArray();
+        return \App\Models\Portal\PortalSetting::pluck('value', 'key')->toArray();
     });
 
     $settings['hero_gallery'] = isset($settings['hero_gallery'])
@@ -41,9 +41,9 @@ Route::get('/', function () {
         ? json_decode($settings['partners'], true) : [];
 
     $latest_posts = \Illuminate\Support\Facades\Cache::remember('portal_latest_posts', 3600, function () {
-        return \App\Models\PortalPost::with('user:id,name')
+        return \App\Models\Portal\PortalPost::with('user:id,name')
             ->select(['id', 'title', 'slug', 'meta_description', 'thumbnail', 'published_at', 'created_at', 'user_id', 'status'])
-            ->where('status', \App\Models\PortalPost::STATUS_PUBLISHED)
+            ->where('status', \App\Models\Portal\PortalPost::STATUS_PUBLISHED)
             ->latest()
             ->take(5)
             ->get();

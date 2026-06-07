@@ -24,7 +24,7 @@ class SecurityController extends Controller
     public function userMfaStatus(Request $request)
     {
         $user = Auth::user() ?? \App\Models\User::first();
-        $mfa = \App\Models\AuthMfa::where('user_id', $user->id)->where('is_active', true)->first();
+        $mfa = \App\Models\Auth\AuthMfa::where('user_id', $user->id)->where('is_active', true)->first();
         
         return response()->json([
             'is_active' => $mfa !== null,

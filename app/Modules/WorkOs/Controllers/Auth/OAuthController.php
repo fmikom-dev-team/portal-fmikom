@@ -165,7 +165,7 @@ class OAuthController extends Controller
 
             // Link OAuth Credential safely
             try {
-                \App\Models\AuthOAuthCredential::updateOrCreate(
+                \App\Models\Auth\AuthOAuthCredential::updateOrCreate(
                     [
                         'provider_id' => $oauthData['provider_id'],
                         'external_id' => $oauthData['external_id'],
@@ -179,7 +179,7 @@ class OAuthController extends Controller
                     ]
                 );
             } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
-                $credential = \App\Models\AuthOAuthCredential::where('provider_id', $oauthData['provider_id'])
+                $credential = \App\Models\Auth\AuthOAuthCredential::where('provider_id', $oauthData['provider_id'])
                     ->where('external_id', $oauthData['external_id'])
                     ->first();
                 if ($credential) {
@@ -252,7 +252,7 @@ class OAuthController extends Controller
 
         // Link OAuth Credential safely
         try {
-            \App\Models\AuthOAuthCredential::updateOrCreate(
+            \App\Models\Auth\AuthOAuthCredential::updateOrCreate(
                 [
                     'provider_id' => $oauthData['provider_id'],
                     'external_id' => $oauthData['external_id'],
@@ -266,7 +266,7 @@ class OAuthController extends Controller
                 ]
             );
         } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
-            $credential = \App\Models\AuthOAuthCredential::where('provider_id', $oauthData['provider_id'])
+            $credential = \App\Models\Auth\AuthOAuthCredential::where('provider_id', $oauthData['provider_id'])
                 ->where('external_id', $oauthData['external_id'])
                 ->first();
             if ($credential) {

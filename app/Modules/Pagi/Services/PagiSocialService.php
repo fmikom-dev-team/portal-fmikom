@@ -3,7 +3,7 @@
 namespace App\Modules\Pagi\Services;
 
 use App\Models\User;
-use App\Models\PagiWork;
+use App\Models\Pagi\PagiWork;
 use App\Models\UserModuleRole;
 use Illuminate\Http\Request;
 

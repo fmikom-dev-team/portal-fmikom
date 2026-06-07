@@ -3,9 +3,9 @@
 namespace App\Modules\Portal\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\PortalPage;
-use App\Models\PortalAcademicCalendar;
-use App\Models\PortalEvent;
+use App\Models\Portal\PortalPage;
+use App\Models\Portal\PortalAcademicCalendar;
+use App\Models\Portal\PortalEvent;
 
 class PublicPageController extends Controller
 {

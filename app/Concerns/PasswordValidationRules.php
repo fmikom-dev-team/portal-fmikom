@@ -16,12 +16,12 @@ trait PasswordValidationRules
     {
         $rules = ['required', 'string', Password::default(), 'confirmed'];
 
-        $complexity = (int) \App\Models\AuthSetting::get('email_password.complexity', 3);
+        $complexity = (int) \App\Models\Auth\AuthSetting::get('email_password.complexity', 3);
         if ($complexity > 1) {
             $rules[] = new \App\Rules\PasswordComplexityRule($complexity);
         }
 
-        $historyCount = (int) \App\Models\AuthSetting::get('password.history_count', 5);
+        $historyCount = (int) \App\Models\Auth\AuthSetting::get('password.history_count', 5);
         if ($historyCount > 0) {
             $rules[] = new \App\Rules\NotUsedPassword();
         }

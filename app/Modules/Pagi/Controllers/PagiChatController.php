@@ -9,7 +9,7 @@ use App\Events\PagiMessagesRead;
 use App\Events\PagiMessageDeleted;
 use App\Events\PagiMessageEdited;
 use App\Events\PagiMessageReacted;
-use App\Models\PagiMessage;
+use App\Models\Pagi\PagiMessage;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

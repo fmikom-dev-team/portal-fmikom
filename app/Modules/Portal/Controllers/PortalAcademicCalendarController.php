@@ -3,7 +3,7 @@
 namespace App\Modules\Portal\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\PortalAcademicCalendar;
+use App\Models\Portal\PortalAcademicCalendar;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 

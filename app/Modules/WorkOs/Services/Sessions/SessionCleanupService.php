@@ -2,7 +2,7 @@
 
 namespace App\Modules\WorkOs\Services\Sessions;
 
-use App\Models\AuthSession;
+use App\Models\Auth\AuthSession;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 

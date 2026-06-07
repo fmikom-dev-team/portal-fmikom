@@ -5,7 +5,7 @@ namespace App\Modules\WorkOs\Controllers;
 use App\Http\Controllers\Controller;
 
 use Inertia\Inertia;
-use App\Models\AuditLog;
+use App\Models\Audit\AuditLog;
 use Illuminate\Http\Request;
 
 class AuditLogsController extends Controller
@@ -19,7 +19,7 @@ class AuditLogsController extends Controller
             'stats' => [
                 'total_events' => AuditLog::count(),
                 'active_users' => AuditLog::whereNotNull('actor_id')->distinct('actor_id')->count(),
-                'security_incidents' => \App\Models\AuditSecurityIncident::count(),
+                'security_incidents' => \App\Models\Audit\AuditSecurityIncident::count(),
             ],
             'recent_events' => AuditLog::with('actor:id,name,email')
                                         ->orderBy('created_at', 'desc')
@@ -71,7 +71,7 @@ class AuditLogsController extends Controller
      */
     public function securityLogs(Request $request)
     {
-        $query = \App\Models\AuditSecurityIncident::with(['user:id,name,email', 'auditLog']);
+        $query = \App\Models\Audit\AuditSecurityIncident::with(['user:id,name,email', 'auditLog']);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -96,9 +96,9 @@ class AuditLogsController extends Controller
      */
     public function clear(Request $request)
     {
-        \App\Models\AuditSecurityIncident::query()->delete();
-        \App\Models\AuditLog::query()->delete();
-        \App\Models\AuditApiRequest::query()->delete();
+        \App\Models\Audit\AuditSecurityIncident::query()->delete();
+        \App\Models\Audit\AuditLog::query()->delete();
+        \App\Models\Audit\AuditApiRequest::query()->delete();
 
         return back()->with('success', 'Audit logs cleared successfully.');
     }

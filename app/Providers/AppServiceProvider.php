@@ -42,6 +42,14 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('pagi-chat-send', function ($request) {
             return Limit::perMinute(30)->by($request->user()->id);
         });
+
+        // Load migrations from subdirectories
+        $mainPath = database_path('migrations');
+        if (is_dir($mainPath)) {
+            $directories = glob($mainPath . '/*', GLOB_ONLYDIR);
+            $paths = array_merge([$mainPath], $directories);
+            $this->loadMigrationsFrom($paths);
+        }
     }
 
     /**
@@ -56,13 +64,13 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Password::defaults(function () {
-            $min = (int) \App\Models\AuthSetting::get('email_password.min_length', 10);
+            $min = (int) \App\Models\Auth\AuthSetting::get('email_password.min_length', 10);
             $rule = Password::min($min);
 
-            $requireUppercase = (bool) \App\Models\AuthSetting::get('email_password.require_uppercase', false);
-            $requireLowercase = (bool) \App\Models\AuthSetting::get('email_password.require_lowercase', false);
-            $requireNumber    = (bool) \App\Models\AuthSetting::get('email_password.require_number', false);
-            $requireSpecial   = (bool) \App\Models\AuthSetting::get('email_password.require_special', false);
+            $requireUppercase = (bool) \App\Models\Auth\AuthSetting::get('email_password.require_uppercase', false);
+            $requireLowercase = (bool) \App\Models\Auth\AuthSetting::get('email_password.require_lowercase', false);
+            $requireNumber    = (bool) \App\Models\Auth\AuthSetting::get('email_password.require_number', false);
+            $requireSpecial   = (bool) \App\Models\Auth\AuthSetting::get('email_password.require_special', false);
 
             if ($requireUppercase && $requireLowercase) {
                 $rule->mixedCase();
@@ -78,7 +86,7 @@ class AppServiceProvider extends ServiceProvider
                 $rule->symbols();
             }
 
-            if ((bool) \App\Models\AuthSetting::get('password.reject_breached', true)) {
+            if ((bool) \App\Models\Auth\AuthSetting::get('password.reject_breached', true)) {
                 $rule->uncompromised();
             }
 

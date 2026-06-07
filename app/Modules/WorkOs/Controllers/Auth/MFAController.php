@@ -15,7 +15,7 @@ class MFAController extends Controller
 
     public function status(Request $request)
     {
-        $mfa = \App\Models\AuthMfa::where('user_id', $request->user()->id)->first();
+        $mfa = \App\Models\Auth\AuthMfa::where('user_id', $request->user()->id)->first();
         return response()->json([
             'enabled' => $mfa?->is_active ?? false,
             'type' => $mfa?->type ?? null,

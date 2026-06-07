@@ -3,8 +3,8 @@
 namespace App\Modules\WorkOs\Services\AuthPlatform;
 
 use App\Models\User;
-use App\Models\AuthMfa;
-use App\Models\AuthBackupCode;
+use App\Models\Auth\AuthMfa;
+use App\Models\Auth\AuthBackupCode;
 use PragmaRX\Google2FA\Google2FA;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;

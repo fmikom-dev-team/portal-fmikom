@@ -3,7 +3,7 @@
 namespace App\Modules\WorkOs\Services\SSO;
 
 use App\Models\User;
-use App\Models\AuthSsoConnection;
+use App\Models\Auth\AuthSsoConnection;
 use App\Modules\WorkOs\Services\Auth\LoginService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;

@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\PagiMessage;
+use App\Models\Pagi\PagiMessage;
 use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {

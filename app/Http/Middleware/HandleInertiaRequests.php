@@ -46,7 +46,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user ? (new \App\Http\Resources\UserResource($user))->resolve() : null,
                 'session_lifetime' => (int) config('session.lifetime') * 60 * 1000,
             ],
-            'unread_messages_count' => $user ? \App\Models\PagiMessage::where('receiver_id', $user->id)->whereNull('read_at')->count() : 0,
+            'unread_messages_count' => $user ? \App\Models\Pagi\PagiMessage::where('receiver_id', $user->id)->whereNull('read_at')->count() : 0,
             'unread_notifications_count' => $user ? $user->unreadNotifications()->count() : 0,
             'recent_notifications' => $user ? fn() => $user->notifications()->latest()->limit(30)->get()->map(fn($n) => [
                 'id'      => $n->id,
@@ -69,16 +69,16 @@ class HandleInertiaRequests extends Middleware
                 'active_role'   => session('active_role'),
             ] : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'pending_comments_count' => fn() => ($user && ($user->isAdmin() || $user->isSuperAdmin())) ? \App\Models\PortalComment::where('status', 'pending')->count() : 0,
+            'pending_comments_count' => fn() => ($user && ($user->isAdmin() || $user->isSuperAdmin())) ? \App\Models\Portal\PortalComment::where('status', 'pending')->count() : 0,
             'portal_menus' => \Inertia\Inertia::defer(fn() => \Illuminate\Support\Facades\Cache::rememberForever('portal_menus', function () {
-                return \App\Models\PortalMenu::with(['children.page', 'page'])
+                return \App\Models\Portal\PortalMenu::with(['children.page', 'page'])
                     ->whereNull('parent_id')
                     ->orderBy('order')
                     ->get();
             }))->once(),
             // 3 artikel terbaru untuk preview di mega menu "Berita & Media"
             'featured_posts' => \Inertia\Inertia::defer(fn() => \Illuminate\Support\Facades\Cache::remember('portal_featured_posts', 3600, function () {
-                return \App\Models\PortalPost::where('is_published', true)
+                return \App\Models\Portal\PortalPost::where('is_published', true)
                     ->select('id', 'title', 'slug', 'excerpt', 'thumbnail', 'published_at', 'created_at')
                     ->latest('published_at')
                     ->limit(1)

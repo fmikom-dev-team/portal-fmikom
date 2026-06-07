@@ -5,7 +5,7 @@ namespace App\Modules\WorkOs\Controllers\Auth;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
-use App\Models\AuthSession;
+use App\Models\Auth\AuthSession;
 use App\Modules\WorkOs\Services\AuthPlatform\SessionEngine;
 use Illuminate\Support\Facades\Auth;
 

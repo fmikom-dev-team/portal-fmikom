@@ -3,7 +3,7 @@
 namespace App\Modules\WorkOs\Services\AuthPlatform;
 
 use App\Models\User;
-use App\Models\AuthPasskey;
+use App\Models\Auth\AuthPasskey;
 use Illuminate\Support\Facades\Crypt;
 use Carbon\Carbon;
 use App\Exceptions\PasskeyException;

@@ -3,8 +3,8 @@
 namespace App\Modules\Portal\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\PortalMenu;
-use App\Models\PortalPage;
+use App\Models\Portal\PortalMenu;
+use App\Models\Portal\PortalPage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 

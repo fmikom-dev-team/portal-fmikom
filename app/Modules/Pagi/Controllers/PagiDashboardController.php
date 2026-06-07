@@ -63,7 +63,7 @@ class PagiDashboardController extends Controller
             ? $this->socialService->getPeopleYouMayKnow($module->id, auth()->id())
             : collect();
 
-        $feedProjects = \App\Models\PagiWork::with(['user', 'tags'])
+        $feedProjects = \App\Models\Pagi\PagiWork::with(['user', 'tags'])
             ->where('is_published', true)
             ->where(function($q) {
                 $q->whereNull('visibility')
@@ -93,7 +93,7 @@ class PagiDashboardController extends Controller
                     'created_at' => $portfolio->created_at->toISOString(),
                     'resolved_collaborators' => $this->profileService->resolveCollaborators($portfolio),
                     'reported_by_me' => auth()->check() 
-                        ? \App\Models\PagiReport::where('work_id', $portfolio->id)
+                        ? \App\Models\Pagi\PagiReport::where('work_id', $portfolio->id)
                             ->where('reporter_id', auth()->id())
                             ->where('status', 'pending')
                             ->exists()
@@ -279,7 +279,7 @@ class PagiDashboardController extends Controller
     public function userWorks(Request $request, \App\Models\User $user)
     {
         $isOwner = auth()->check() && auth()->id() === $user->id;
-        $query = \App\Models\PagiWork::with(['tags', 'user'])
+        $query = \App\Models\Pagi\PagiWork::with(['tags', 'user'])
             ->where('user_id', $user->id);
 
         if (!$isOwner) {
@@ -527,7 +527,7 @@ class PagiDashboardController extends Controller
 
     public function viewPreview(Request $request, int $previewId)
     {
-        $portfolio = \App\Models\PagiWork::findOrFail($previewId);
+        $portfolio = \App\Models\Pagi\PagiWork::findOrFail($previewId);
         $portfolio->increment('views_count');
 
         return response()->json(['views' => $portfolio->views_count]);
@@ -649,7 +649,7 @@ class PagiDashboardController extends Controller
         $metaType = 'profile';
 
         if ($projectId) {
-            $sharedProject = \App\Models\PagiWork::find($projectId);
+            $sharedProject = \App\Models\Pagi\PagiWork::find($projectId);
             if ($sharedProject) {
                 $metaTitle = $sharedProject->title . ' by ' . $user->name . ' — PAGI Work';
                 $metaType = 'article';

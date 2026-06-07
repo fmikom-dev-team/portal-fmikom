@@ -623,16 +623,16 @@ class DashboardController extends Controller // NOSONAR
     private function getAuditStats(): array
     {
         return [
-            'total_events' => \App\Models\AuditLog::count(),
-            'active_users' => \App\Models\AuditLog::whereNotNull('actor_id')->distinct('actor_id')->count(),
-            'security_incidents' => \App\Models\AuditSecurityIncident::count(),
-            'failed_actions' => \App\Models\AuditApiRequest::where('status_code', '>=', 400)->count(),
+            'total_events' => \App\Models\Audit\AuditLog::count(),
+            'active_users' => \App\Models\Audit\AuditLog::whereNotNull('actor_id')->distinct('actor_id')->count(),
+            'security_incidents' => \App\Models\Audit\AuditSecurityIncident::count(),
+            'failed_actions' => \App\Models\Audit\AuditApiRequest::where('status_code', '>=', 400)->count(),
         ];
     }
 
     private function getAuditRecentEvents(): array
     {
-        return \App\Models\AuditLog::with('actor:id,name,email')
+        return \App\Models\Audit\AuditLog::with('actor:id,name,email')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()

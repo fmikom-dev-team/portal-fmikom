@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use App\Modules\WorkOs\Services\AuthPlatform\PasskeyEngine;
-use App\Models\AuthPasskey;
+use App\Models\Auth\AuthPasskey;
 use Illuminate\Support\Facades\Auth;
 
 class PasskeyController extends Controller

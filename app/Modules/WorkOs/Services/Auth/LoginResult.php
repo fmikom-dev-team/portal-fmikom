@@ -3,7 +3,7 @@
 namespace App\Modules\WorkOs\Services\Auth;
 
 use App\Models\User;
-use App\Models\AuthSession;
+use App\Models\Auth\AuthSession;
 
 /**
  * LoginResult — Value Object / DTO

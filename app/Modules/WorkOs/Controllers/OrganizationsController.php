@@ -5,7 +5,7 @@ namespace App\Modules\WorkOs\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Module;
-use App\Models\AuthInvitation;
+use App\Models\Auth\AuthInvitation;
 use App\Mail\OrganizationInvitationMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;

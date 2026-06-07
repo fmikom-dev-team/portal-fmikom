@@ -3,8 +3,8 @@
 namespace App\Modules\WorkOs\Services\AuthPlatform;
 
 use App\Models\User;
-use App\Models\AuthSession;
-use App\Models\AuthDevice;
+use App\Models\Auth\AuthSession;
+use App\Models\Auth\AuthDevice;
 use Jenssegers\Agent\Agent;
 use Illuminate\Support\Str;
 use Carbon\Carbon;

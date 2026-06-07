@@ -3,8 +3,8 @@
 namespace App\Modules\WorkOs\Services\AuthPlatform;
 
 use App\Models\User;
-use App\Models\AuthDevice;
-use App\Models\AuthLoginAttempt;
+use App\Models\Auth\AuthDevice;
+use App\Models\Auth\AuthLoginAttempt;
 use Carbon\Carbon;
 
 class RiskEngine

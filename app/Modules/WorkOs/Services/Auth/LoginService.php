@@ -3,7 +3,7 @@
 namespace App\Modules\WorkOs\Services\Auth;
 
 use App\Models\User;
-use App\Models\AuthLoginAttempt;
+use App\Models\Auth\AuthLoginAttempt;
 use App\Modules\WorkOs\Services\AuthPlatform\SessionEngine;
 use App\Modules\WorkOs\Services\AuthPlatform\MFAEngine;
 use Illuminate\Http\Request;
@@ -141,7 +141,7 @@ class LoginService
      */
     protected function requiresMfa(User $user): bool
     {
-        return \App\Models\AuthMfa::where('user_id', $user->id)
+        return \App\Models\Auth\AuthMfa::where('user_id', $user->id)
             ->where('is_active', true)
             ->exists();
     }

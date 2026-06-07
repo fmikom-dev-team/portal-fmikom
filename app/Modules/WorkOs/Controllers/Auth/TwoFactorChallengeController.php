@@ -58,7 +58,7 @@ class TwoFactorChallengeController extends Controller
                 Auth::login($user, $request->session()->get('login.remember', false));
 
                 // Log the success audit event
-                \App\Models\AuthAuditLog::log('auth.login.success', $user->id, ['mfa_used' => true]);
+                \App\Models\Auth\AuthAuditLog::log('auth.login.success', $user->id, ['mfa_used' => true]);
 
                 $request->session()->regenerate();
 

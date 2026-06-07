@@ -3,7 +3,7 @@
 namespace App\Modules\Portal\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\PortalPost;
+use App\Models\Portal\PortalPost;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 

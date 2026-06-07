@@ -360,7 +360,7 @@ class UsersController extends Controller
         return app(\App\Modules\WorkOs\Controllers\DashboardController::class)->removeModuleRole($moduleRole);
     }
 
-    public function disconnectOAuth(User $user, \App\Models\AuthOAuthCredential $credential)
+    public function disconnectOAuth(User $user, \App\Models\Auth\AuthOAuthCredential $credential)
     {
         if ($credential->user_id !== $user->id) {
             abort(403, 'Unauthorized action.');
@@ -385,7 +385,7 @@ class UsersController extends Controller
             $lastActivityAt = \Carbon\Carbon::createFromTimestamp($ls->last_activity);
             $expiresAt = \Carbon\Carbon::createFromTimestamp($ls->last_activity + config('session.lifetime') * 60);
 
-            \App\Models\AuthSession::updateOrCreate(
+            \App\Models\Auth\AuthSession::updateOrCreate(
                 [
                     'user_id' => $user->id,
                     'session_token' => $ls->id,
@@ -401,13 +401,13 @@ class UsersController extends Controller
         }
 
         // Mark sessions no longer in the Laravel sessions table as revoked
-        \App\Models\AuthSession::where('user_id', $user->id)
+        \App\Models\Auth\AuthSession::where('user_id', $user->id)
             ->whereNotIn('session_token', $activeSessionTokens)
             ->where('is_revoked', false)
             ->update(['is_revoked' => true]);
 
         // Retrieve and return all synced sessions
-        $sessions = \App\Models\AuthSession::where('user_id', $user->id)
+        $sessions = \App\Models\Auth\AuthSession::where('user_id', $user->id)
             ->latest('last_activity_at')
             ->get();
 
@@ -418,7 +418,7 @@ class UsersController extends Controller
 
     public function revokeSession(User $user, $sessionId)
     {
-        $session = \App\Models\AuthSession::where('user_id', $user->id)
+        $session = \App\Models\Auth\AuthSession::where('user_id', $user->id)
             ->where('id', $sessionId)
             ->firstOrFail();
 
@@ -440,7 +440,7 @@ class UsersController extends Controller
     public function revokeAllSessions(User $user)
     {
         // Fetch active auth_sessions
-        $activeSessions = \App\Models\AuthSession::where('user_id', $user->id)
+        $activeSessions = \App\Models\Auth\AuthSession::where('user_id', $user->id)
             ->where('is_revoked', false)
             ->get();
 
@@ -452,7 +452,7 @@ class UsersController extends Controller
             }
         }
 
-        \App\Models\AuthSession::where('user_id', $user->id)
+        \App\Models\Auth\AuthSession::where('user_id', $user->id)
             ->where('is_revoked', false)
             ->update(['is_revoked' => true]);
 
@@ -464,7 +464,7 @@ class UsersController extends Controller
 
     public function clearInactiveSessions(User $user)
     {
-        \App\Models\AuthSession::where('user_id', $user->id)
+        \App\Models\Auth\AuthSession::where('user_id', $user->id)
             ->where(function ($query) {
                 $query->where('is_revoked', true)
                     ->orWhere('expires_at', '<', now());
@@ -480,7 +480,7 @@ class UsersController extends Controller
     public function emails(User $user)
     {
         // Seed some realistic email history if none exists for this user yet
-        $logsCount = \App\Models\AuthEmailLog::where('user_id', $user->id)->count();
+        $logsCount = \App\Models\Auth\AuthEmailLog::where('user_id', $user->id)->count();
         if ($logsCount === 0) {
             $emailsToSeed = [
                 [
@@ -514,11 +514,11 @@ class UsersController extends Controller
             ];
 
             foreach ($emailsToSeed as $seed) {
-                \App\Models\AuthEmailLog::create(array_merge($seed, ['user_id' => $user->id]));
+                \App\Models\Auth\AuthEmailLog::create(array_merge($seed, ['user_id' => $user->id]));
             }
         }
 
-        $logs = \App\Models\AuthEmailLog::where('user_id', $user->id)
+        $logs = \App\Models\Auth\AuthEmailLog::where('user_id', $user->id)
             ->latest('created_at')
             ->get();
 
@@ -529,7 +529,7 @@ class UsersController extends Controller
 
     public function clearEmailHistory(User $user)
     {
-        \App\Models\AuthEmailLog::where('user_id', $user->id)->delete();
+        \App\Models\Auth\AuthEmailLog::where('user_id', $user->id)->delete();
 
         return response()->json([
             'success' => true,

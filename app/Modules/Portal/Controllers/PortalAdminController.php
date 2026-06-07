@@ -5,12 +5,12 @@ namespace App\Modules\Portal\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-use App\Models\PortalPost;
-use App\Models\PortalCategory;
-use App\Models\PortalMedia;
-use App\Models\PortalPage;
-use App\Models\PortalComment;
-use App\Models\PortalSetting;
+use App\Models\Portal\PortalPost;
+use App\Models\Portal\PortalCategory;
+use App\Models\Portal\PortalMedia;
+use App\Models\Portal\PortalPage;
+use App\Models\Portal\PortalComment;
+use App\Models\Portal\PortalSetting;
 use Inertia\Inertia;
 
 class PortalAdminController extends Controller

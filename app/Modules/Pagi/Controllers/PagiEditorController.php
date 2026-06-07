@@ -7,7 +7,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 use Inertia\Inertia;
-use App\Models\PagiWork;
+use App\Models\Pagi\PagiWork;
 
 class PagiEditorController extends Controller
 {
@@ -281,7 +281,7 @@ class PagiEditorController extends Controller
                 if (empty($name)) continue;
                 
                 $slug = \Illuminate\Support\Str::slug($name);
-                $tag = \App\Models\PagiTag::firstOrCreate(
+                $tag = \App\Models\Pagi\PagiTag::firstOrCreate(
                     ['slug' => $slug],
                     ['name' => $name, 'color' => '#6366f1']
                 );
@@ -844,7 +844,7 @@ class PagiEditorController extends Controller
                 if (empty($name)) continue;
                 
                 $slug = \Illuminate\Support\Str::slug($name);
-                $tag = \App\Models\PagiTag::firstOrCreate(
+                $tag = \App\Models\Pagi\PagiTag::firstOrCreate(
                     ['slug' => $slug],
                     ['name' => $name, 'color' => '#6366f1']
                 );

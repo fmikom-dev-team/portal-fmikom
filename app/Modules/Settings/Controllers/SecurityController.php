@@ -15,8 +15,8 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Fortify\Features;
-use App\Models\AuthSetting;
-use App\Models\AuthPasskey;
+use App\Models\Auth\AuthSetting;
+use App\Models\Auth\AuthPasskey;
 
 class SecurityController extends Controller implements HasMiddleware
 {

@@ -3,7 +3,7 @@
 namespace App\Modules\Pagi\Services;
 
 use App\Models\User;
-use App\Models\PagiWork;
+use App\Models\Pagi\PagiWork;
 use App\Concerns\HandlesImageCompression;
 use Illuminate\Http\Request;
 use Carbon\Carbon;

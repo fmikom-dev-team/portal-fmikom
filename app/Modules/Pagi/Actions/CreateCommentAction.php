@@ -3,7 +3,7 @@
 namespace App\Modules\Pagi\Actions;
 
 use App\Models\User;
-use App\Models\PagiWork;
+use App\Models\Pagi\PagiWork;
 use App\Notifications\PagiNotification;
 use Illuminate\Support\Str;
 

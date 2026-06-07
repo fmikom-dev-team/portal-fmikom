@@ -4,8 +4,8 @@ namespace App\Modules\WorkOs\Services\AuthPlatform;
 
 use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
-use App\Models\AuthOAuthCredential;
-use App\Models\AuthOAuthProvider;
+use App\Models\Auth\AuthOAuthCredential;
+use App\Models\Auth\AuthOAuthProvider;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;

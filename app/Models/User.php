@@ -1,6 +1,16 @@
 <?php
 
 namespace App\Models;
+use App\Models\Surat\Surat;
+use App\Models\Surat\SuratApprovalFlow;
+use App\Models\Alumni\ProfilAlumni;
+use App\Models\Kuesioner\Kuesioner;
+use App\Models\Magang\LowonganInfo;
+use App\Models\Magang\PembimbingLapangan;
+use App\Models\Magang\PendaftaranMagang;
+use App\Models\Magang\PenilaianMagang;
+use App\Models\Auth\AuthOAuthCredential;
+use App\Models\Pagi\PagiWork;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;

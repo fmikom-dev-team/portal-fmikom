@@ -5,7 +5,7 @@ namespace App\Modules\WorkOs\Controllers\Auth;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
-use App\Models\AuthLoginAttempt;
+use App\Models\Auth\AuthLoginAttempt;
 
 class AuditController extends Controller
 {
@@ -28,7 +28,7 @@ class AuditController extends Controller
     public function security(Request $request)
     {
         return response()->json([
-            'high_risk_sessions' => \App\Models\AuthSession::where('risk_score', '>', 60)
+            'high_risk_sessions' => \App\Models\Auth\AuthSession::where('risk_score', '>', 60)
                 ->with(['user', 'device'])
                 ->latest()
                 ->paginate(50)

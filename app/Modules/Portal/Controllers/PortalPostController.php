@@ -5,8 +5,8 @@ namespace App\Modules\Portal\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-use App\Models\PortalPost;
-use App\Models\PortalCategory;
+use App\Models\Portal\PortalPost;
+use App\Models\Portal\PortalCategory;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Mews\Purifier\Facades\Purifier;
