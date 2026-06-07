@@ -14,7 +14,19 @@ trait PasswordValidationRules
      */
     protected function passwordRules(): array
     {
-        return ['required', 'string', Password::default(), 'confirmed'];
+        $rules = ['required', 'string', Password::default(), 'confirmed'];
+
+        $complexity = (int) \App\Models\AuthSetting::get('email_password.complexity', 3);
+        if ($complexity > 1) {
+            $rules[] = new \App\Rules\PasswordComplexityRule($complexity);
+        }
+
+        $historyCount = (int) \App\Models\AuthSetting::get('password.history_count', 5);
+        if ($historyCount > 0) {
+            $rules[] = new \App\Rules\NotUsedPassword();
+        }
+
+        return $rules;
     }
 
     /**

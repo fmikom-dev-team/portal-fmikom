@@ -304,6 +304,61 @@ class PagiSocialService
         ];
     }
 
+    /**
+     * Get people you may know in a module.
+     */
+    public function getPeopleYouMayKnow(int $moduleId, int $currentUserId): \Illuminate\Support\Collection
+    {
+        return UserModuleRole::with(['user.programStudi', 'role'])
+            ->where('module_id', $moduleId)
+            ->where('user_id', '!=', $currentUserId)
+            ->where('is_active', true)
+            ->inRandomOrder()
+            ->limit(5)
+            ->get()
+            ->map(fn($umr) => $umr->user ? [
+                'id' => $umr->user->id,
+                'name' => $umr->user->name,
+                'email' => $umr->user->email,
+                'pagi_username' => $umr->user->pagi_username,
+                'role' => optional($umr->role)->nama ?? 'User',
+                'foto_path' => $umr->user->foto_path
+                    ? (str_starts_with($umr->user->foto_path, 'http') ? $umr->user->foto_path : asset('storage/' . $umr->user->foto_path))
+                    : null,
+                'prodi' => optional($umr->user->programStudi)->nama ?? null,
+            ] : null)
+            ->filter()
+            ->values();
+    }
+
+    /**
+     * Get followers and following list for a user.
+     */
+    public function getFollowRelations(User $user): array
+    {
+        $followersIds = $user->metadata['followers'] ?? [];
+        $followingIds = $user->metadata['following'] ?? [];
+
+        $mapUsers = function ($ids) {
+            return User::whereIn('id', $ids)
+                ->get()
+                ->map(fn($u) => [
+                    'id' => $u->id,
+                    'name' => $u->name,
+                    'pagi_username' => $u->pagi_username,
+                    'foto_path' => $u->foto_path ? (str_starts_with($u->foto_path, 'http') ? $u->foto_path : asset('storage/' . $u->foto_path)) : null,
+                    'role_title' => $u->role_title ?? $u->user_type ?? 'Member',
+                ])
+                ->values()
+                ->toArray();
+        };
+
+        return [
+            'followers' => $mapUsers($followersIds),
+            'following' => $mapUsers($followingIds),
+        ];
+    }
+
     // --- Private Helper Formatting Methods ---
 
     private function isVideoUrlLocal($url)

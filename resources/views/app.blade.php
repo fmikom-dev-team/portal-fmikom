@@ -3,9 +3,9 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
-        <script>
+        <script nonce="{{ $csp_nonce ?? '' }}">
             (function() {
                 const appearance = '{{ $appearance ?? "system" }}';
 
@@ -20,7 +20,7 @@
         </script>
 
         {{-- Inline style to set the HTML background color based on our theme in app.css --}}
-        <style>
+        <style nonce="{{ $csp_nonce ?? '' }}">
             html {
                 background-color: oklch(1 0 0);
             }
@@ -30,16 +30,33 @@
             }
         </style>
 
-        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        <title inertia>{{ $metaTitle ?? config('app.name', 'Laravel') }}</title>
 
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
+        <!-- SEO Meta Tags -->
+        <meta name="description" content="{{ $metaDescription ?? 'FMIKOM Portal - Academic & Creative Network Fakultas Ilmu Komputer. Tempat berbagi karya, portofolio, dan kolaborasi mahasiswa dan creator.' }}">
+        
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="{{ $metaType ?? 'profile' }}">
+        <meta property="og:title" content="{{ $metaTitle ?? 'FMIKOM Portal — Academic & Creative Network' }}">
+        <meta property="og:description" content="{{ $metaDescription ?? 'Tempat berbagi karya, portofolio, dan kolaborasi mahasiswa dan creator Fakultas Ilmu Komputer.' }}">
+        <meta property="og:image" content="{{ $metaImage ?? asset('og-image.png') }}">
 
-        @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
+        <!-- Twitter -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="{{ $metaTitle ?? 'FMIKOM Portal — Academic & Creative Network' }}">
+        <meta name="twitter:description" content="{{ $metaDescription ?? 'Tempat berbagi karya, portofolio, dan kolaborasi mahasiswa dan creator Fakultas Ilmu Komputer.' }}">
+        <meta name="twitter:image" content="{{ $metaImage ?? asset('og-image.png') }}">
+
+        <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
+        <link rel="dns-prefetch" href="https://fonts.bunny.net">
+        <link rel="preload" as="style" href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600|inter:300,400,500,600,700,800&display=swap">
+        <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600|inter:300,400,500,600,700,800&display=swap" rel="stylesheet" />
+
+        @vite(['resources/js/app.ts'])
         @inertiaHead
     </head>
     <body class="font-sans antialiased">

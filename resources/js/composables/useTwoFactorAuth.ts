@@ -1,32 +1,32 @@
-import type { ComputedRef, Ref } from 'vue';
-import { computed, ref } from 'vue';
-import { qrCode, recoveryCodes, secretKey } from '@/routes/two-factor';
+import { type ComputedRef, computed, type Ref, ref } from "vue";
+import { recoveryCodes } from "@/routes/two-factor/index";
+
 
 export type UseTwoFactorAuthReturn = {
-    qrCodeSvg: Ref<string | null>;
-    manualSetupKey: Ref<string | null>;
-    recoveryCodesList: Ref<string[]>;
-    errors: Ref<string[]>;
-    hasSetupData: ComputedRef<boolean>;
-    clearSetupData: () => void;
-    clearErrors: () => void;
-    clearTwoFactorAuthData: () => void;
-    fetchQrCode: () => Promise<void>;
-    fetchSetupKey: () => Promise<void>;
-    fetchSetupData: () => Promise<void>;
-    fetchRecoveryCodes: () => Promise<void>;
+	qrCodeSvg: Ref<string | null>;
+	manualSetupKey: Ref<string | null>;
+	recoveryCodesList: Ref<string[]>;
+	errors: Ref<string[]>;
+	hasSetupData: ComputedRef<boolean>;
+	clearSetupData: () => void;
+	clearErrors: () => void;
+	clearTwoFactorAuthData: () => void;
+	fetchQrCode: () => Promise<void>;
+	fetchSetupKey: () => Promise<void>;
+	fetchSetupData: () => Promise<void>;
+	fetchRecoveryCodes: () => Promise<void>;
 };
 
 const fetchJson = async <T>(url: string): Promise<T> => {
-    const response = await fetch(url, {
-        headers: { Accept: 'application/json' },
-    });
+	const response = await fetch(url, {
+		headers: { Accept: "application/json" },
+	});
 
-    if (!response.ok) {
-        throw new Error(`Failed to fetch: ${response.status}`);
-    }
+	if (!response.ok) {
+		throw new Error(`Failed to fetch: ${response.status}`);
+	}
 
-    return response.json();
+	return response.json();
 };
 
 const errors = ref<string[]>([]);
@@ -35,86 +35,85 @@ const qrCodeSvg = ref<string | null>(null);
 const recoveryCodesList = ref<string[]>([]);
 
 const hasSetupData = computed<boolean>(
-    () => qrCodeSvg.value !== null && manualSetupKey.value !== null,
+	() => qrCodeSvg.value !== null && manualSetupKey.value !== null,
 );
 
 export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
-    const fetchQrCode = async (): Promise<void> => {
-        try {
-            const { svg } = await fetchJson<{ svg: string; url: string }>(
-                qrCode.url(),
-            );
+	const fetchQrCode = async (): Promise<void> => {
+		// We no longer fetch them separately, setupData fetches both
+	};
 
-            qrCodeSvg.value = svg;
-        } catch {
-            errors.value.push('Failed to fetch QR code');
-            qrCodeSvg.value = null;
-        }
-    };
+	const fetchSetupKey = async (): Promise<void> => {
+		// Handled by setupData
+	};
 
-    const fetchSetupKey = async (): Promise<void> => {
-        try {
-            const { secretKey: key } = await fetchJson<{ secretKey: string }>(
-                secretKey.url(),
-            );
+	const clearSetupData = (): void => {
+		manualSetupKey.value = null;
+		qrCodeSvg.value = null;
+		clearErrors();
+	};
 
-            manualSetupKey.value = key;
-        } catch {
-            errors.value.push('Failed to fetch a setup key');
-            manualSetupKey.value = null;
-        }
-    };
+	const clearErrors = (): void => {
+		errors.value = [];
+	};
 
-    const clearSetupData = (): void => {
-        manualSetupKey.value = null;
-        qrCodeSvg.value = null;
-        clearErrors();
-    };
+	const clearTwoFactorAuthData = (): void => {
+		clearSetupData();
+		clearErrors();
+		recoveryCodesList.value = [];
+	};
 
-    const clearErrors = (): void => {
-        errors.value = [];
-    };
+	const fetchRecoveryCodes = async (): Promise<void> => {
+		try {
+			clearErrors();
+			recoveryCodesList.value = await fetchJson<string[]>(recoveryCodes.url());
+		} catch {
+			errors.value.push("Failed to fetch recovery codes");
+			recoveryCodesList.value = [];
+		}
+	};
 
-    const clearTwoFactorAuthData = (): void => {
-        clearSetupData();
-        clearErrors();
-        recoveryCodesList.value = [];
-    };
+	const fetchSetupData = async (): Promise<void> => {
+		try {
+			clearErrors();
+			const response = await fetch("/auth/mfa/setup", {
+				method: "POST",
+				headers: {
+					Accept: "application/json",
+					"X-CSRF-TOKEN":
+						document.head
+							.querySelector('meta[name="csrf-token"]')
+							?.getAttribute("content") || "",
+				},
+			});
 
-    const fetchRecoveryCodes = async (): Promise<void> => {
-        try {
-            clearErrors();
-            recoveryCodesList.value = await fetchJson<string[]>(
-                recoveryCodes.url(),
-            );
-        } catch {
-            errors.value.push('Failed to fetch recovery codes');
-            recoveryCodesList.value = [];
-        }
-    };
+			if (!response.ok) throw new Error("Setup failed");
+			const data = await response.json();
 
-    const fetchSetupData = async (): Promise<void> => {
-        try {
-            clearErrors();
-            await Promise.all([fetchQrCode(), fetchSetupKey()]);
-        } catch {
-            qrCodeSvg.value = null;
-            manualSetupKey.value = null;
-        }
-    };
+			// Backend returns base64 svg, need to format it for display
+			qrCodeSvg.value = data.qr_code_svg.startsWith("<svg")
+				? data.qr_code_svg
+				: `<img src="data:image/svg+xml;base64,${data.qr_code_svg}" class="w-full h-full" />`;
+			manualSetupKey.value = data.secret;
+		} catch {
+			errors.value.push("Failed to fetch setup data from Enterprise MFA");
+			qrCodeSvg.value = null;
+			manualSetupKey.value = null;
+		}
+	};
 
-    return {
-        qrCodeSvg,
-        manualSetupKey,
-        recoveryCodesList,
-        errors,
-        hasSetupData,
-        clearSetupData,
-        clearErrors,
-        clearTwoFactorAuthData,
-        fetchQrCode,
-        fetchSetupKey,
-        fetchSetupData,
-        fetchRecoveryCodes,
-    };
+	return {
+		qrCodeSvg,
+		manualSetupKey,
+		recoveryCodesList,
+		errors,
+		hasSetupData,
+		clearSetupData,
+		clearErrors,
+		clearTwoFactorAuthData,
+		fetchQrCode,
+		fetchSetupKey,
+		fetchSetupData,
+		fetchRecoveryCodes,
+	};
 };

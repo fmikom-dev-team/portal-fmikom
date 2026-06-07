@@ -2,52 +2,180 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Fortify\TwoFactorAuthenticatable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Module;
+use App\Models\UserModuleRole;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, Notifiable, \App\Concerns\UserHelpers;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
+        'name', 'email', 'password', 'program_studi_id',
+        'no_telepon', 'foto_path', 'banner_path', 'is_active',
+        'nomor_induk', 'status_approval', 'user_type',
+        'tahun_lulus', 'otp_code', 'otp_expires_at', 'password_changed_at',
+        'role_title', 'bio', 'location', 'website', 'twitter', 'linkedin', 'github', 'instagram',
+        'metadata', 'tanggal_lahir', 'last_seen_at', 'pagi_username',
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
+     * ⚠️ KEAMANAN — Semua field sensitif WAJIB tersembunyi dari serialisasi JSON/array.
+     * Ini adalah lapis kedua keamanan selain filter di HandleInertiaRequests.php
      */
     protected $hidden = [
         'password',
+        'remember_token',
         'two_factor_secret',
         'two_factor_recovery_codes',
-        'remember_token',
+        'two_factor_confirmed_at',
+        'otp_code',
+        'otp_expires_at',
+        'password_changed_at',
+        'nomor_induk',
+        'clearHistory',
+        'encryptHistory',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'two_factor_confirmed_at' => 'datetime',
+            'otp_expires_at'    => 'datetime',
+            'password'          => 'hashed',
+            'is_active'         => 'boolean',
+            'tahun_lulus'       => 'integer',
+            // user_type = identity layer (mahasiswa, alumni, mitra, dosen, staff)
+            // digunakan sebagai fallback role di module jika tidak ada assignment
+            'user_type'         => 'string',
+            'metadata'          => 'array',
+            'tanggal_lahir'     => 'date:Y-m-d',
+            'last_seen_at'      => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function ($user) {
+            if ($user->wasChanged('password') || ($user->wasRecentlyCreated && $user->password)) {
+                \Illuminate\Support\Facades\DB::table('auth_password_histories')->insert([
+                    'user_id'       => $user->id,
+                    'password_hash' => $user->password,
+                    'created_at'    => now(),
+                    'updated_at'    => now(),
+                ]);
+            }
+        });
+
+        static::deleting(function ($user) {
+            if ($user->user_type === 'super_admin') {
+                throw new \Exception('Akun dengan tipe Super Admin dilindungi oleh sistem dan tidak dapat dihapus.');
+            }
+        });
+    }
+
+    /**
+     * Relasi ke SSO global role (super-admin, admin, dll).
+     * Digunakan hanya untuk CheckRole middleware (portal-level).
+     * Untuk otorisasi modul, gunakan UserModuleRole + active_role session.
+     *
+     * @deprecated Gunakan user_type untuk identity, UserModuleRole untuk otorisasi modul.
+     */
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    /**
+     * Relasi ke pivot table custom untuk Multi-Module SSO
+     */
+    public function moduleRoles(): HasMany
+    {
+        return $this->hasMany(UserModuleRole::class);
+    }
+
+    /**
+     * Relasi ke akun OAuth yang terhubung.
+     */
+    public function oauthCredentials(): HasMany
+    {
+        return $this->hasMany(AuthOAuthCredential::class);
+    }
+
+    /**
+     * Mengambil daftar modul unik yang bisa diakses user ini
+     */
+    public function accessibleModules()
+    {
+        return Module::whereHas('userRoles', function($query) {
+            $query->where('user_id', $this->id);
+        })->get();
+    }
+
+    public function programStudi(): BelongsTo
+    {
+        return $this->belongsTo(ProgramStudi::class);
+    }
+
+    public function profilAlumni(): HasOne
+    {
+        return $this->hasOne(ProfilAlumni::class);
+    }
+
+    public function surats(): HasMany
+    {
+        return $this->hasMany(Surat::class, 'pemohon_id');
+    }
+
+    public function suratApprovals(): HasMany
+    {
+        return $this->hasMany(SuratApprovalFlow::class, 'approver_id');
+    }
+
+    public function pendaftaranMagangs(): HasMany
+    {
+        return $this->hasMany(PendaftaranMagang::class, 'mahasiswa_id');
+    }
+
+    public function penilaianMagangs(): HasMany
+    {
+        return $this->hasMany(PenilaianMagang::class, 'dosen_id');
+    }
+
+    public function kuesioners(): HasMany
+    {
+        return $this->hasMany(Kuesioner::class, 'pembuat_id');
+    }
+
+    public function lowonganInfos(): HasMany
+    {
+        return $this->hasMany(LowonganInfo::class, 'pembuat_id');
+    }
+
+    public function pembimbingLapangan(): HasOne
+    {
+        return $this->hasOne(PembimbingLapangan::class);
+    }
+
+    // -----------------------------------------------------------------------
+    // Helper Methods — Identity Check
+    // Menggunakan user_type (identity layer) sebagai sumber utama.
+    // Fallback ke role->slug untuk kompatibilitas mundur.
+    // -----------------------------------------------------------------------
+
+    /**
+     * Format standar untuk super-admin user_type.
+     * Gunakan konstanta ini untuk konsistensi dan menghindari typo.
+     */
+    const USER_TYPE_SUPER_ADMIN = 'super-admin';
+
+    public function pagiWorks(): HasMany
+    {
+        return $this->hasMany(PagiWork::class, 'user_id');
     }
 }

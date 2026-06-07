@@ -1,5 +1,10 @@
 <?php
 
+// Hide PHP Version & X-Powered-By header globally
+if (function_exists('header_remove')) {
+    @header_remove('X-Powered-By');
+}
+
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 

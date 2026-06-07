@@ -1,12 +1,12 @@
 <script setup lang="ts">
 type Props = {
-    title: string;
-    description?: string;
-    variant?: 'default' | 'small';
+	title: string;
+	description?: string;
+	variant?: "default" | "small";
 };
 
 withDefaults(defineProps<Props>(), {
-    variant: 'default',
+	variant: "default",
 });
 </script>
 
