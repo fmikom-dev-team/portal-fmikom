@@ -4,16 +4,16 @@ namespace App\Modules\WorkOs\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Services\AuthPlatform\OAuthEngine;
+use App\Modules\WorkOs\Services\AuthPlatform\OAuthEngine;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 
 class OAuthController extends Controller
 {
     protected OAuthEngine $oauthEngine;
-    protected \App\Services\AuthPlatform\SessionEngine $sessionEngine;
+    protected \App\Modules\WorkOs\Services\AuthPlatform\SessionEngine $sessionEngine;
 
-    public function __construct(OAuthEngine $oauthEngine, \App\Services\AuthPlatform\SessionEngine $sessionEngine)
+    public function __construct(OAuthEngine $oauthEngine, \App\Modules\WorkOs\Services\AuthPlatform\SessionEngine $sessionEngine)
     {
         $this->oauthEngine = $oauthEngine;
         $this->sessionEngine = $sessionEngine;

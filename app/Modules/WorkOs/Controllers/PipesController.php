@@ -7,8 +7,8 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Pipes\PipeProvider;
 use App\Models\Pipes\PipeConnection;
-use App\Services\Pipes\ProviderService;
-use App\Services\Pipes\OAuthEngine;
+use App\Modules\WorkOs\Services\Pipes\ProviderService;
+use App\Modules\WorkOs\Services\Pipes\OAuthEngine;
 
 class PipesController extends Controller
 {
@@ -177,7 +177,7 @@ class PipesController extends Controller
     /**
      * Trigger a manual sync for a connection
      */
-    public function syncConnection(PipeConnection $connection, \App\Services\Pipes\SyncEngine $syncEngine)
+    public function syncConnection(PipeConnection $connection, \App\Modules\WorkOs\Services\Pipes\SyncEngine $syncEngine)
     {
         try {
             $syncLog = $syncEngine->triggerSync($connection, 'full');

@@ -4,8 +4,8 @@ namespace App\Modules\WorkOs\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Services\AuthPlatform\MFAEngine;
-use App\Services\AuthPlatform\PasskeyEngine;
+use App\Modules\WorkOs\Services\AuthPlatform\MFAEngine;
+use App\Modules\WorkOs\Services\AuthPlatform\PasskeyEngine;
 use Illuminate\Support\Facades\Auth;
 
 class SecurityController extends Controller

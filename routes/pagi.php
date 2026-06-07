@@ -1,6 +1,6 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ModuleDashboardController;
+use App\Modules\Pagi\Controllers\PagiDashboardController;
 use App\Modules\Pagi\Controllers\AdminDashboardController;
 use App\Modules\Pagi\Controllers\PagiChatController;
 use App\Modules\Pagi\Controllers\PagiWorkController;
@@ -11,16 +11,15 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureFirstTimeLoginComplete::cl
     ->prefix('pagi')
     ->name('module.pagi.')
     ->group(function () {
-        Route::get('/', [ModuleDashboardController::class, 'index'])
-             ->defaults('moduleCode', 'pagi')
+        Route::get('/', [PagiDashboardController::class, 'index'])
              ->name('dashboard');
 
         // Halaman People — dapat diakses semua role user di modul PAGI
-        Route::get('/people', [ModuleDashboardController::class, 'explorePeople'])
+        Route::get('/people', [PagiDashboardController::class, 'explorePeople'])
              ->name('people');
 
         // Halaman Gallery — menampung seluruh karya & galeri mahasiswa
-        Route::get('/gallery', [ModuleDashboardController::class, 'exploreGallery'])
+        Route::get('/gallery', [PagiDashboardController::class, 'exploreGallery'])
              ->name('gallery');
 
         // Halaman Works — Pemilihan Template
@@ -95,15 +94,15 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureFirstTimeLoginComplete::cl
              ->name('messages.unblock');
 
         // Halaman Notifications — dapat diakses semua role user di modul PAGI
-        Route::get('/notifications', [ModuleDashboardController::class, 'notifications'])
+        Route::get('/notifications', [PagiDashboardController::class, 'notifications'])
              ->name('notifications');
-        Route::post('/notifications/mark-all-read', [ModuleDashboardController::class, 'markAllNotificationsRead'])
+        Route::post('/notifications/mark-all-read', [PagiDashboardController::class, 'markAllNotificationsRead'])
              ->name('notifications.mark-all-read');
-        Route::post('/notifications/{id}/mark-read', [ModuleDashboardController::class, 'markNotificationRead'])
+        Route::post('/notifications/{id}/mark-read', [PagiDashboardController::class, 'markNotificationRead'])
              ->name('notifications.mark-read');
-        Route::delete('/notifications/clear-all', [ModuleDashboardController::class, 'clearAllNotifications'])
+        Route::delete('/notifications/clear-all', [PagiDashboardController::class, 'clearAllNotifications'])
              ->name('notifications.clear-all');
-        Route::delete('/notifications/{id}', [ModuleDashboardController::class, 'deleteNotification'])
+        Route::delete('/notifications/{id}', [PagiDashboardController::class, 'deleteNotification'])
              ->name('notifications.delete');
 
 
@@ -128,51 +127,51 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureFirstTimeLoginComplete::cl
              ->name('editor.collaboration.decline');
 
         // User Profile
-        Route::get('/profile', [ModuleDashboardController::class, 'profile'])
+        Route::get('/profile', [PagiDashboardController::class, 'profile'])
              ->name('profile');
-        Route::get('/profile/edit', [ModuleDashboardController::class, 'editProfile'])
+        Route::get('/profile/edit', [PagiDashboardController::class, 'editProfile'])
              ->name('profile.edit');
-        Route::post('/profile/update', [ModuleDashboardController::class, 'updateProfile'])
+        Route::post('/profile/update', [PagiDashboardController::class, 'updateProfile'])
              ->name('profile.update');
-        Route::get('/settings', [ModuleDashboardController::class, 'settings'])
+        Route::get('/settings', [PagiDashboardController::class, 'settings'])
              ->name('settings');
-        Route::post('/settings/update', [ModuleDashboardController::class, 'updateSettings'])
+        Route::post('/settings/update', [PagiDashboardController::class, 'updateSettings'])
              ->name('settings.update');
-        Route::post('/certificates', [ModuleDashboardController::class, 'storeCertificate'])
+        Route::post('/certificates', [PagiDashboardController::class, 'storeCertificate'])
              ->name('certificates.store');
-        Route::get('/certificates/org-logo', [ModuleDashboardController::class, 'getOrgLogo'])
+        Route::get('/certificates/org-logo', [PagiDashboardController::class, 'getOrgLogo'])
              ->name('certificates.org-logo');
-        Route::post('/certificates/org-logo', [ModuleDashboardController::class, 'uploadOrgLogo'])
+        Route::post('/certificates/org-logo', [PagiDashboardController::class, 'uploadOrgLogo'])
              ->name('certificates.org-logo.upload');
-        Route::match(['PUT', 'POST'], '/certificates/{id}', [ModuleDashboardController::class, 'updateCertificate'])
+        Route::match(['PUT', 'POST'], '/certificates/{id}', [PagiDashboardController::class, 'updateCertificate'])
              ->name('certificates.update');
-        Route::delete('/certificates/{id}', [ModuleDashboardController::class, 'destroyCertificate'])
+        Route::delete('/certificates/{id}', [PagiDashboardController::class, 'destroyCertificate'])
              ->name('certificates.destroy');
-        Route::post('/profile/reorder-projects', [ModuleDashboardController::class, 'reorderProjects'])
+        Route::post('/profile/reorder-projects', [PagiDashboardController::class, 'reorderProjects'])
              ->name('profile.reorder-projects');
-        Route::get('/username/check', [ModuleDashboardController::class, 'checkUsername'])
+        Route::get('/username/check', [PagiDashboardController::class, 'checkUsername'])
              ->name('username.check');
 
         // Follow / Unfollow
-        Route::post('/users/{user}/follow', [ModuleDashboardController::class, 'toggleFollow'])
+        Route::post('/users/{user}/follow', [PagiDashboardController::class, 'toggleFollow'])
              ->name('users.follow');
-        Route::get('/users/{user}/relations', [ModuleDashboardController::class, 'getFollowRelations'])
+        Route::get('/users/{user}/relations', [PagiDashboardController::class, 'getFollowRelations'])
              ->name('users.relations');
-        Route::get('/users/search', [ModuleDashboardController::class, 'searchUsers'])
+        Route::get('/users/search', [PagiDashboardController::class, 'searchUsers'])
              ->name('users.search');
 
         // Likes & Comments on Preview items
-        Route::post('/preview/{preview}/like', [ModuleDashboardController::class, 'likePreview'])
+        Route::post('/preview/{preview}/like', [PagiDashboardController::class, 'likePreview'])
              ->name('preview.like');
-        Route::post('/preview/{preview}/comment', [ModuleDashboardController::class, 'commentPreview'])
+        Route::post('/preview/{preview}/comment', [PagiDashboardController::class, 'commentPreview'])
              ->name('preview.comment');
-        Route::post('/preview/{preview}/comment/{comment}/like', [ModuleDashboardController::class, 'likeComment'])
+        Route::post('/preview/{preview}/comment/{comment}/like', [PagiDashboardController::class, 'likeComment'])
              ->name('preview.comment.like');
-        Route::post('/preview/{preview}/comment/{comment}/reply', [ModuleDashboardController::class, 'replyComment'])
+        Route::post('/preview/{preview}/comment/{comment}/reply', [PagiDashboardController::class, 'replyComment'])
              ->name('preview.comment.reply');
-        Route::post('/preview/{preview}/comment/{comment}/reply/{reply}/like', [ModuleDashboardController::class, 'likeReply'])
+        Route::post('/preview/{preview}/comment/{comment}/reply/{reply}/like', [PagiDashboardController::class, 'likeReply'])
              ->name('preview.comment.reply.like');
-        Route::post('/preview/{preview}/view', [ModuleDashboardController::class, 'viewPreview'])
+        Route::post('/preview/{preview}/view', [PagiDashboardController::class, 'viewPreview'])
              ->name('preview.view');
 
         // Report a work (karya mahasiswa)
@@ -286,13 +285,13 @@ Route::prefix('pagi')
     ->group(function () {
         Route::get('/works/v/{user:pagi_username}', [PagiWorkController::class, 'viewPublicPortfolio'])
              ->name('works.view_public');
-        Route::get('/profile/{user}', [ModuleDashboardController::class, 'publicProfile'])
+        Route::get('/profile/{user}', [PagiDashboardController::class, 'publicProfile'])
              ->name('profile.public');
-        Route::get('/users/{user}/works', [ModuleDashboardController::class, 'userWorks'])
+        Route::get('/users/{user}/works', [PagiDashboardController::class, 'userWorks'])
              ->name('users.works');
         Route::get('/cv/{cv}/shared', [PagiCvController::class, 'shareView'])
              ->name('cv.shared');
-        Route::get('/{user:pagi_username}/{tab?}', [ModuleDashboardController::class, 'publicProfile'])
+        Route::get('/{user:pagi_username}/{tab?}', [PagiDashboardController::class, 'publicProfile'])
              ->name('profile.username');
     });
 

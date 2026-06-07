@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Modules\Pagi\Controllers;
+
+use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,7 +20,7 @@ use App\Modules\Pagi\Actions\ReplyCommentAction;
 use App\Modules\Pagi\Actions\LikeCommentAction;
 use App\Modules\Pagi\Actions\LikeReplyAction;
 
-class ModuleDashboardController extends Controller
+class PagiDashboardController extends Controller
 {
     private const ADMIN_ROLES = ['super-admin', 'admin', 'admin-universitas', 'admin-akademik', 'prodi'];
 
@@ -35,24 +37,20 @@ class ModuleDashboardController extends Controller
         protected LikeReplyAction $likeReplyAction
     ) {}
 
-    public function index(Request $request, $moduleCode)
+    public function index(Request $request)
     {
         $role = $request->attributes->get('resolved_role', session('active_role'));
-        $moduleCode = strtoupper($moduleCode);
         $isAdmin = in_array($role, self::ADMIN_ROLES);
 
-        if ($isAdmin && strtolower($moduleCode) === 'pagi') {
+        if ($isAdmin) {
             return redirect()->route('module.pagi.admin.dashboard');
         }
 
-        $moduleFolder = ucfirst(strtolower($moduleCode));
-        $componentName = $isAdmin 
-            ? "Modules/{$moduleFolder}/Admin/Dashboard"
-            : "Modules/{$moduleFolder}/User/" . Str::studly($role) . "Dashboard";
+        $componentName = "Modules/Pagi/User/" . Str::studly($role) . "Dashboard";
 
         $path = resource_path("js/pages/{$componentName}.vue");
         if (!file_exists($path)) {
-            $fallbackName = "Modules/{$moduleFolder}/User/MahasiswaDashboard";
+            $fallbackName = "Modules/Pagi/User/MahasiswaDashboard";
             if (file_exists(resource_path("js/pages/{$fallbackName}.vue"))) {
                 $componentName = $fallbackName;
             } else {
@@ -60,61 +58,58 @@ class ModuleDashboardController extends Controller
             }
         }
 
-        $module = Module::where('code', $moduleCode)->first();
+        $module = Module::where('code', 'PAGI')->first();
         $peopleYouMayKnow = $module
             ? $this->socialService->getPeopleYouMayKnow($module->id, auth()->id())
             : collect();
 
-        $feedProjects = [];
-        if ($moduleCode === 'PAGI') {
-            $feedProjects = \App\Models\PagiWork::with(['user', 'tags'])
-                ->where('is_published', true)
-                ->where(function($q) {
-                    $q->whereNull('visibility')
-                      ->orWhere('visibility', 'Everyone');
-                })
-                ->latest()
-                ->get()
-                ->map(function ($portfolio) {
-                    return [
-                        'id' => $portfolio->id,
-                        'title' => $portfolio->title ?? 'Untitled Project',
-                        'image' => $portfolio->cover_image ? (str_starts_with($portfolio->cover_image, 'http') ? $portfolio->cover_image : asset('storage/' . $portfolio->cover_image)) : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
-                        'author' => $portfolio->user ? $portfolio->user->name : 'Unknown User',
-                        'avatar' => ($portfolio->user && $portfolio->user->foto_path)
-                            ? (str_starts_with($portfolio->user->foto_path, 'http') ? $portfolio->user->foto_path : asset('storage/' . $portfolio->user->foto_path))
-                            : 'https://ui-avatars.com/api/?name=' . urlencode($portfolio->user ? $portfolio->user->name : 'User') . '&background=random',
-                        'likes' => count($portfolio->likes ?? []),
-                        'liked' => auth()->check() ? in_array(auth()->id(), $portfolio->likes ?? []) : false,
-                        'comments' => $this->profileService->formatComments($portfolio->comments ?? []),
-                        'views' => $portfolio->views_count ?? 0,
-                        'views_count' => $portfolio->views_count ?? 0,
-                        'content' => $this->profileService->formatPortfolioContent($portfolio->content),
-                        'tools_used' => $portfolio->tools_used,
-                        'description' => $portfolio->description,
-                        'category' => $portfolio->category,
-                        'tags' => $portfolio->tags->map(fn($t) => $t->name)->toArray(),
-                        'created_at' => $portfolio->created_at->toISOString(),
-                        'resolved_collaborators' => $this->profileService->resolveCollaborators($portfolio),
-                        'reported_by_me' => auth()->check() 
-                            ? \App\Models\PagiReport::where('work_id', $portfolio->id)
-                                ->where('reporter_id', auth()->id())
-                                ->where('status', 'pending')
-                                ->exists()
-                            : false,
-                        'user' => $portfolio->user ? [
-                            'id' => $portfolio->user->id,
-                            'name' => $portfolio->user->name,
-                            'pagi_username' => $portfolio->user->pagi_username,
-                            'avatar' => $portfolio->user->foto_path ? (str_starts_with($portfolio->user->foto_path, 'http') ? $portfolio->user->foto_path : asset('storage/' . $portfolio->user->foto_path)) : null,
-                            'location' => $portfolio->user->location ?? 'Banyumas, Indonesia',
-                        ] : null,
-                    ];
-                });
-        }
+        $feedProjects = \App\Models\PagiWork::with(['user', 'tags'])
+            ->where('is_published', true)
+            ->where(function($q) {
+                $q->whereNull('visibility')
+                  ->orWhere('visibility', 'Everyone');
+            })
+            ->latest()
+            ->get()
+            ->map(function ($portfolio) {
+                return [
+                    'id' => $portfolio->id,
+                    'title' => $portfolio->title ?? 'Untitled Project',
+                    'image' => $portfolio->cover_image ? (str_starts_with($portfolio->cover_image, 'http') ? $portfolio->cover_image : asset('storage/' . $portfolio->cover_image)) : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+                    'author' => $portfolio->user ? $portfolio->user->name : 'Unknown User',
+                    'avatar' => ($portfolio->user && $portfolio->user->foto_path)
+                        ? (str_starts_with($portfolio->user->foto_path, 'http') ? $portfolio->user->foto_path : asset('storage/' . $portfolio->user->foto_path))
+                        : 'https://ui-avatars.com/api/?name=' . urlencode($portfolio->user ? $portfolio->user->name : 'User') . '&background=random',
+                    'likes' => count($portfolio->likes ?? []),
+                    'liked' => auth()->check() ? in_array(auth()->id(), $portfolio->likes ?? []) : false,
+                    'comments' => $this->profileService->formatComments($portfolio->comments ?? []),
+                    'views' => $portfolio->views_count ?? 0,
+                    'views_count' => $portfolio->views_count ?? 0,
+                    'content' => $this->profileService->formatPortfolioContent($portfolio->content),
+                    'tools_used' => $portfolio->tools_used,
+                    'description' => $portfolio->description,
+                    'category' => $portfolio->category,
+                    'tags' => $portfolio->tags->map(fn($t) => $t->name)->toArray(),
+                    'created_at' => $portfolio->created_at->toISOString(),
+                    'resolved_collaborators' => $this->profileService->resolveCollaborators($portfolio),
+                    'reported_by_me' => auth()->check() 
+                        ? \App\Models\PagiReport::where('work_id', $portfolio->id)
+                            ->where('reporter_id', auth()->id())
+                            ->where('status', 'pending')
+                            ->exists()
+                        : false,
+                    'user' => $portfolio->user ? [
+                        'id' => $portfolio->user->id,
+                        'name' => $portfolio->user->name,
+                        'pagi_username' => $portfolio->user->pagi_username,
+                        'avatar' => $portfolio->user->foto_path ? (str_starts_with($portfolio->user->foto_path, 'http') ? $portfolio->user->foto_path : asset('storage/' . $portfolio->user->foto_path)) : null,
+                        'location' => $portfolio->user->location ?? 'Banyumas, Indonesia',
+                    ] : null,
+                ];
+            });
 
         return Inertia::render($componentName, [
-            'moduleName' => $moduleCode,
+            'moduleName' => 'PAGI',
             'roleName' => $role,
             'peopleYouMayKnow' => $peopleYouMayKnow,
             'feedProjects' => $feedProjects,
