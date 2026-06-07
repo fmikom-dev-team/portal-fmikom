@@ -1,18 +1,21 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
-import type { BreadcrumbItem } from '@/types';
+import IdleTimeout from "@/components/IdleTimeout.vue";
+import AppLayout from "@/layouts/app/AppSidebarLayout.vue";
+import type { BreadcrumbItem } from "@/types";
 
-type Props = {
-    breadcrumbs?: BreadcrumbItem[];
-};
-
-withDefaults(defineProps<Props>(), {
-    breadcrumbs: () => [],
-});
+const props = withDefaults(
+	defineProps<{
+		breadcrumbs?: BreadcrumbItem[];
+	}>(),
+	{
+		breadcrumbs: () => [],
+	},
+);
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbs">
+    <AppLayout :breadcrumbs="props.breadcrumbs">
         <slot />
+        <IdleTimeout />
     </AppLayout>
 </template>

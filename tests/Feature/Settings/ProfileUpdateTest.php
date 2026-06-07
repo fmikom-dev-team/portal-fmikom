@@ -1,6 +1,9 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+
+define('NEW_EMAIL', 'newemail@example.com');
 
 test('profile page is displayed', function () {
     $user = User::factory()->create();
@@ -19,7 +22,8 @@ test('profile information can be updated', function () {
         ->actingAs($user)
         ->patch(route('profile.update'), [
             'name' => 'Test User',
-            'email' => 'test@example.com',
+            'bio' => 'New bio content',
+            'location' => 'Bandung, Indonesia',
         ]);
 
     $response
@@ -29,25 +33,51 @@ test('profile information can be updated', function () {
     $user->refresh();
 
     expect($user->name)->toBe('Test User');
-    expect($user->email)->toBe('test@example.com');
-    expect($user->email_verified_at)->toBeNull();
+    expect($user->bio)->toBe('New bio content');
+    expect($user->location)->toBe('Bandung, Indonesia');
 });
 
-test('email verification status is unchanged when the email address is unchanged', function () {
-    $user = User::factory()->create();
+test('user email can be updated from security page with valid password', function () {
+    $user = User::factory()->create([
+        'password' => Hash::make('password123'),
+        'email_verified_at' => now(),
+    ]);
 
     $response = $this
         ->actingAs($user)
-        ->patch(route('profile.update'), [
-            'name' => 'Test User',
-            'email' => $user->email,
+        ->put('/settings/email', [
+            'email' => NEW_EMAIL,
+            'current_password' => 'password123',
         ]);
 
     $response
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('profile.edit'));
+        ->assertRedirect();
 
-    expect($user->refresh()->email_verified_at)->not->toBeNull();
+    $user->refresh();
+
+    expect($user->email)->toBe(NEW_EMAIL);
+    expect($user->email_verified_at)->toBeNull();
+});
+
+test('user email cannot be updated with invalid password', function () {
+    $user = User::factory()->create([
+        'password' => Hash::make('password123'),
+        'email' => 'oldemail@example.com',
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->put('/settings/email', [
+            'email' => NEW_EMAIL,
+            'current_password' => 'wrong-password',
+        ]);
+
+    $response->assertSessionHasErrors('current_password');
+
+    $user->refresh();
+
+    expect($user->email)->toBe('oldemail@example.com');
 });
 
 test('user can delete their account', function () {

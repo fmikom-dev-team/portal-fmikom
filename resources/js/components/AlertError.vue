@@ -1,18 +1,16 @@
 <script setup lang="ts">
-import { AlertCircle } from 'lucide-vue-next';
-import { computed } from 'vue';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { computed } from "vue";
 
 type Props = {
-    errors: string[];
-    title?: string;
+	errors: string[];
+	title?: string;
 };
 
 const props = withDefaults(defineProps<Props>(), {
-    title: 'Something went wrong.',
+	title: "Something went wrong.",
 });
 
-const uniqueErrors = computed(() => Array.from(new Set(props.errors)));
+const _uniqueErrors = computed(() => Array.from(new Set(props.errors)));
 </script>
 
 <template>

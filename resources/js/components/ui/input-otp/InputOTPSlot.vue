@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue"
-import { reactiveOmit } from "@vueuse/core"
-import { useForwardProps } from "reka-ui"
-import { computed } from "vue"
-import { useVueOTPContext } from "vue-input-otp"
-import { cn } from "@/lib/utils"
+import { reactiveOmit } from "@vueuse/core";
+import { useForwardProps } from "reka-ui";
+import type { HTMLAttributes } from "vue";
+import { computed } from "vue";
+import { useVueOTPContext } from "vue-input-otp";
+import { cn } from "@/lib/utils";
 
-const props = defineProps<{ index: number, class?: HTMLAttributes["class"] }>()
+const props = defineProps<{ index: number; class?: HTMLAttributes["class"] }>();
 
-const delegatedProps = reactiveOmit(props, "class")
+const delegatedProps = reactiveOmit(props, "class");
 
-const forwarded = useForwardProps(delegatedProps)
+const forwarded = useForwardProps(delegatedProps);
 
-const context = useVueOTPContext()
+const context = useVueOTPContext();
 
-const slot = computed(() => context?.value.slots[props.index])
+const slot = computed(() => context?.value.slots[props.index]);
 </script>
 
 <template>
