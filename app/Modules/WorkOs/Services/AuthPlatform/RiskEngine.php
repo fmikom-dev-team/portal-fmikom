@@ -2,9 +2,9 @@
 
 namespace App\Modules\WorkOs\Services\AuthPlatform;
 
-use App\Models\User;
 use App\Models\Auth\AuthDevice;
 use App\Models\Auth\AuthLoginAttempt;
+use App\Models\User;
 use Carbon\Carbon;
 
 class RiskEngine
@@ -18,7 +18,7 @@ class RiskEngine
         $score = 0;
 
         // 1. Unrecognized or New Device
-        if (!$device->is_trusted) {
+        if (! $device->is_trusted) {
             $score += 30;
         }
 
@@ -37,7 +37,7 @@ class RiskEngine
         // 3. Impossible Travel / Geo Check (simplified)
         // If the user's last session was from a completely different country within a short time.
         // We'd typically calculate haversine distance divided by time.
-        // Mock logic: 
+        // Mock logic:
         if (isset($geo['country']) && $this->isUnusualCountry($user, $geo['country'])) {
             $score += 40;
         }

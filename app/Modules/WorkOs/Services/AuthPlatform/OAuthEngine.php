@@ -2,16 +2,15 @@
 
 namespace App\Modules\WorkOs\Services\AuthPlatform;
 
-use Laravel\Socialite\Facades\Socialite;
-use App\Models\User;
 use App\Models\Auth\AuthOAuthCredential;
 use App\Models\Auth\AuthOAuthProvider;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Crypt;
+use App\Models\User;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
+use Laravel\Socialite\Facades\Socialite;
 
 class OAuthEngine
 {
@@ -22,7 +21,7 @@ class OAuthEngine
     {
         $providerConfig = AuthOAuthProvider::where('slug', $providerSlug)->where('is_enabled', true)->first();
 
-        if (!$providerConfig) {
+        if (! $providerConfig) {
             throw new Exception("Provider {$providerSlug} is not enabled or does not exist.");
         }
 
@@ -30,7 +29,7 @@ class OAuthEngine
         // or dynamic credentials from the database.
         $configKey = $providerConfig->name === 'GitHub' ? 'github' : strtolower($providerConfig->name);
 
-        if (!$providerConfig->use_demo_credentials) {
+        if (! $providerConfig->use_demo_credentials) {
             // Override config dynamically
             config([
                 "services.{$configKey}.client_id" => $providerConfig->client_id,
@@ -64,13 +63,13 @@ class OAuthEngine
     {
         $providerConfig = AuthOAuthProvider::where('slug', $providerSlug)->where('is_enabled', true)->first();
 
-        if (!$providerConfig) {
+        if (! $providerConfig) {
             throw new Exception("Provider {$providerSlug} is not enabled.");
         }
 
         $configKey = $providerConfig->name === 'GitHub' ? 'github' : strtolower($providerConfig->name);
 
-        if (!$providerConfig->use_demo_credentials) {
+        if (! $providerConfig->use_demo_credentials) {
             config([
                 "services.{$configKey}.client_id" => $providerConfig->client_id,
                 "services.{$configKey}.client_secret" => Crypt::decryptString($providerConfig->client_secret),
@@ -86,8 +85,8 @@ class OAuthEngine
 
         try {
             $socialUser = $driver->user();
-        } catch (\Exception $e) {
-            throw new Exception("Invalid state or token during OAuth callback: " . $e->getMessage());
+        } catch (Exception $e) {
+            throw new Exception('Invalid state or token during OAuth callback: '.$e->getMessage());
         }
 
         // 1. Try to find the user by their existing linked OAuth credential
@@ -102,13 +101,13 @@ class OAuthEngine
 
         // 2. Fallback to searching by email if no linked credential exists
         // Security: Hanya link otomatis jika email lokal sudah terverifikasi (Verified Email Enforcement)
-        if (!$user) {
+        if (! $user) {
             $user = User::where('email', $socialUser->getEmail())
                 ->whereNotNull('email_verified_at')
                 ->first();
         }
 
-        if (!$user) {
+        if (! $user) {
             return [
                 'needs_registration' => true,
                 'oauth_data' => [
@@ -120,7 +119,7 @@ class OAuthEngine
                     'access_token' => Crypt::encryptString($socialUser->token),
                     'refresh_token' => $socialUser->refreshToken ? Crypt::encryptString($socialUser->refreshToken) : null,
                     'expires_at' => $socialUser->expiresIn ? Carbon::now()->addSeconds($socialUser->expiresIn) : null,
-                ]
+                ],
             ];
         }
 
@@ -140,7 +139,7 @@ class OAuthEngine
                         'expires_at' => $socialUser->expiresIn ? Carbon::now()->addSeconds($socialUser->expiresIn) : null,
                     ]
                 );
-            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            } catch (UniqueConstraintViolationException $e) {
                 $credential = AuthOAuthCredential::where('provider_id', $providerConfig->id)
                     ->where('external_id', $socialUser->getId())
                     ->first();
@@ -169,7 +168,7 @@ class OAuthEngine
     {
         $provider = AuthOAuthProvider::where('slug', $providerSlug)->first();
 
-        if (!$provider) {
+        if (! $provider) {
             throw new Exception("Provider {$providerSlug} not found.");
         }
 

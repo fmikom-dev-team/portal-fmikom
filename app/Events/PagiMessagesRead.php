@@ -2,7 +2,6 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -23,8 +22,8 @@ class PagiMessagesRead implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('pagi.chat.' . $this->conversationId),
-            new PrivateChannel('App.Models.User.' . $this->senderId),
+            new PrivateChannel('pagi.chat.'.$this->conversationId),
+            new PrivateChannel('App.Models.User.'.$this->senderId),
         ];
     }
 
@@ -37,9 +36,9 @@ class PagiMessagesRead implements ShouldBroadcast
     {
         return [
             'conversation_id' => $this->conversationId,
-            'receiver_id'     => $this->receiverId,
-            'read_at'         => $this->readAt,
-            'sender_id'       => $this->senderId,
+            'receiver_id' => $this->receiverId,
+            'read_at' => $this->readAt,
+            'sender_id' => $this->senderId,
         ];
     }
 }

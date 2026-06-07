@@ -115,7 +115,7 @@ return new class extends Migration
             $table->text('refresh_token')->nullable(); // Encrypted
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
-            
+
             $table->unique(['provider_id', 'external_id']);
         });
 
@@ -138,17 +138,17 @@ return new class extends Migration
             $table->string('name');
             $table->enum('type', ['saml', 'oidc']);
             $table->boolean('is_active')->default(false);
-            
+
             // SAML fields
             $table->string('idp_entity_id')->nullable();
             $table->string('sso_url')->nullable();
             $table->text('x509_cert')->nullable();
-            
+
             // OIDC fields
             $table->string('issuer_url')->nullable();
             $table->string('client_id')->nullable();
             $table->text('client_secret')->nullable(); // Encrypted
-            
+
             $table->json('domain_mappings')->nullable(); // e.g. ["example.com"]
             $table->timestamps();
             $table->softDeletes();

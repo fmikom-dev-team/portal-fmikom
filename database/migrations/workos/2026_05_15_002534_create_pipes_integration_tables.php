@@ -152,7 +152,7 @@ return new class extends Migration
             $table->decimal('value', 15, 4);
             $table->json('tags')->nullable(); // Additional dimensions
             $table->timestamp('timestamp')->useCurrent();
-            
+
             $table->index(['metric_name', 'timestamp']);
             $table->index(['provider_id', 'timestamp']);
         });

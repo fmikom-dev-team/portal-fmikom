@@ -12,8 +12,9 @@ class PortalAcademicCalendarController extends Controller
     public function index()
     {
         $events = PortalAcademicCalendar::orderBy('start_date', 'asc')->get();
+
         return Inertia::render('Modules/Portal/Admin/AcademicCalendar/Index', [
-            'events' => $events
+            'events' => $events,
         ]);
     }
 
@@ -52,6 +53,7 @@ class PortalAcademicCalendarController extends Controller
     public function destroy(PortalAcademicCalendar $academicCalendar)
     {
         $academicCalendar->delete();
+
         return redirect()->back()->with('success', 'Jadwal akademik berhasil dihapus!');
     }
 }

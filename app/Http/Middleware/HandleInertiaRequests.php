@@ -2,7 +2,15 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Resources\UserResource;
+use App\Models\Pagi\PagiMessage;
+use App\Models\Portal\PortalComment;
+use App\Models\Portal\PortalMenu;
+use App\Models\Portal\PortalPost;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Inertia\Inertia;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -36,27 +44,27 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'flash' => [
-                'success' => fn() => $request->session()->get('success'),
-                'error' => fn() => $request->session()->get('error'),
-                'import_errors' => fn() => $request->session()->get('import_errors'),
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+                'import_errors' => fn () => $request->session()->get('import_errors'),
             ],
             'auth' => [
                 // ⚠️ KEAMANAN: HANYA field yang dibutuhkan UI yang dibagikan ke frontend.
                 // Field sensitif (password, two_factor_secret, otp_code, dll) DILARANG di sini.
-                'user' => $user ? (new \App\Http\Resources\UserResource($user))->resolve() : null,
+                'user' => $user ? (new UserResource($user))->resolve() : null,
                 'session_lifetime' => (int) config('session.lifetime') * 60 * 1000,
             ],
-            'unread_messages_count' => $user ? \App\Models\Pagi\PagiMessage::where('receiver_id', $user->id)->whereNull('read_at')->count() : 0,
+            'unread_messages_count' => $user ? PagiMessage::where('receiver_id', $user->id)->whereNull('read_at')->count() : 0,
             'unread_notifications_count' => $user ? $user->unreadNotifications()->count() : 0,
-            'recent_notifications' => $user ? fn() => $user->notifications()->latest()->limit(30)->get()->map(fn($n) => [
-                'id'      => $n->id,
-                'type'    => $n->data['type']    ?? 'system',
-                'title'   => $n->data['title']   ?? 'PAGI System',
+            'recent_notifications' => $user ? fn () => $user->notifications()->latest()->limit(30)->get()->map(fn ($n) => [
+                'id' => $n->id,
+                'type' => $n->data['type'] ?? 'system',
+                'title' => $n->data['title'] ?? 'PAGI System',
                 'message' => $n->data['message'] ?? '',
-                'avatar'  => $n->data['avatar']  ?? null,
-                'href'    => $n->data['href']     ?? '/pagi',
-                'unread'  => is_null($n->read_at),
-                'time'    => $n->created_at->diffForHumans(),
+                'avatar' => $n->data['avatar'] ?? null,
+                'href' => $n->data['href'] ?? '/pagi',
+                'unread' => is_null($n->read_at),
+                'time' => $n->created_at->diffForHumans(),
                 'created_at' => $n->created_at->toISOString(),
                 'sender_id' => $n->data['sender_id'] ?? null,
                 'portfolio_id' => $n->data['portfolio_id'] ?? null,
@@ -66,31 +74,31 @@ class HandleInertiaRequests extends Middleware
             // Digunakan untuk menampilkan badge modul/role aktif di navbar, sidebar, dll.
             'context' => $user ? [
                 'active_module' => session('active_module'),
-                'active_role'   => session('active_role'),
+                'active_role' => session('active_role'),
             ] : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'pending_comments_count' => fn() => ($user && ($user->isAdmin() || $user->isSuperAdmin())) ? \App\Models\Portal\PortalComment::where('status', 'pending')->count() : 0,
-            'portal_menus' => \Inertia\Inertia::defer(fn() => \Illuminate\Support\Facades\Cache::rememberForever('portal_menus', function () {
-                return \App\Models\Portal\PortalMenu::with(['children.page', 'page'])
+            'pending_comments_count' => fn () => ($user && ($user->isAdmin() || $user->isSuperAdmin())) ? PortalComment::where('status', 'pending')->count() : 0,
+            'portal_menus' => Inertia::defer(fn () => Cache::rememberForever('portal_menus', function () {
+                return PortalMenu::with(['children.page', 'page'])
                     ->whereNull('parent_id')
                     ->orderBy('order')
                     ->get();
             }))->once(),
             // 3 artikel terbaru untuk preview di mega menu "Berita & Media"
-            'featured_posts' => \Inertia\Inertia::defer(fn() => \Illuminate\Support\Facades\Cache::remember('portal_featured_posts', 3600, function () {
-                return \App\Models\Portal\PortalPost::where('is_published', true)
+            'featured_posts' => Inertia::defer(fn () => Cache::remember('portal_featured_posts', 3600, function () {
+                return PortalPost::where('is_published', true)
                     ->select('id', 'title', 'slug', 'excerpt', 'thumbnail', 'published_at', 'created_at')
                     ->latest('published_at')
                     ->limit(1)
                     ->get()
-                    ->map(fn($p) => [
-                        'title'        => $p->title,
-                        'slug'         => $p->slug,
-                        'excerpt'      => $p->excerpt,
-                        'thumbnail'    => $p->thumbnail,
+                    ->map(fn ($p) => [
+                        'title' => $p->title,
+                        'slug' => $p->slug,
+                        'excerpt' => $p->excerpt,
+                        'thumbnail' => $p->thumbnail,
                         'published_at' => $p->published_at
-                            ? \Carbon\Carbon::parse($p->published_at)->translatedFormat('d M Y')
-                            : \Carbon\Carbon::parse($p->created_at)->translatedFormat('d M Y'),
+                            ? Carbon::parse($p->published_at)->translatedFormat('d M Y')
+                            : Carbon::parse($p->created_at)->translatedFormat('d M Y'),
                     ])
                     ->toArray();
             }))->once(),

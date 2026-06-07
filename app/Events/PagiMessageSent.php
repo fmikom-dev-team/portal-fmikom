@@ -14,9 +14,7 @@ class PagiMessageSent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(public PagiMessage $message)
-    {
-    }
+    public function __construct(public PagiMessage $message) {}
 
     /**
      * Broadcast on the private channel for this conversation.
@@ -25,8 +23,8 @@ class PagiMessageSent implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('pagi.chat.' . $this->message->conversation_id),
-            new PrivateChannel('App.Models.User.' . $this->message->receiver_id),
+            new PrivateChannel('pagi.chat.'.$this->message->conversation_id),
+            new PrivateChannel('App.Models.User.'.$this->message->receiver_id),
         ];
     }
 
@@ -54,19 +52,19 @@ class PagiMessageSent implements ShouldBroadcast
         }
 
         return [
-            'id'              => $this->message->id,
+            'id' => $this->message->id,
             'conversation_id' => $this->message->conversation_id,
-            'sender_id'       => $this->message->sender_id,
-            'receiver_id'     => $this->message->receiver_id,
-            'parent_id'       => $this->message->parent_id,
-            'parent'          => $parentData,
-            'body'            => $this->message->body,
-            'created_at'      => $this->message->created_at->toISOString(),
+            'sender_id' => $this->message->sender_id,
+            'receiver_id' => $this->message->receiver_id,
+            'parent_id' => $this->message->parent_id,
+            'parent' => $parentData,
+            'body' => $this->message->body,
+            'created_at' => $this->message->created_at->toISOString(),
             'sender' => [
-                'id'       => $this->message->sender->id,
-                'name'     => $this->message->sender->name,
+                'id' => $this->message->sender->id,
+                'name' => $this->message->sender->name,
                 'foto_path' => $this->message->sender->foto_path ?? null,
-                'metadata'  => $this->message->sender->metadata,
+                'metadata' => $this->message->sender->metadata,
             ],
         ];
     }

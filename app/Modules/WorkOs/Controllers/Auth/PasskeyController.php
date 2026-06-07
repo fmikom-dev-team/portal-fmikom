@@ -3,10 +3,9 @@
 namespace App\Modules\WorkOs\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-
-use Illuminate\Http\Request;
-use App\Modules\WorkOs\Services\AuthPlatform\PasskeyEngine;
 use App\Models\Auth\AuthPasskey;
+use App\Modules\WorkOs\Services\AuthPlatform\PasskeyEngine;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class PasskeyController extends Controller
@@ -28,6 +27,7 @@ class PasskeyController extends Controller
     {
         try {
             $options = $this->passkeyEngine->getRegistrationOptions($request->user());
+
             return response()->json($options);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -38,6 +38,7 @@ class PasskeyController extends Controller
     {
         try {
             $passkey = $this->passkeyEngine->verifyRegistration($request->user(), $request->all());
+
             return response()->json(['message' => 'Passkey registered.', 'passkey' => [
                 'id' => $passkey->id,
                 'name' => $passkey->name,
@@ -52,6 +53,7 @@ class PasskeyController extends Controller
     {
         try {
             $options = $this->passkeyEngine->getAuthenticationOptions();
+
             return response()->json($options);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -64,6 +66,7 @@ class PasskeyController extends Controller
             $user = $this->passkeyEngine->verifyAuthentication($request->all());
             Auth::login($user);
             $request->session()->regenerate(); // Prevent session fixation
+
             return response()->json(['message' => 'Authenticated via passkey.']);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
@@ -76,6 +79,7 @@ class PasskeyController extends Controller
             return response()->json(['error' => 'Unauthorized.'], 403);
         }
         $passkey->delete();
+
         return response()->json(['message' => 'Passkey removed.']);
     }
 
@@ -98,7 +102,7 @@ class PasskeyController extends Controller
             'passkey' => [
                 'id' => $passkey->id,
                 'name' => $passkey->name,
-            ]
+            ],
         ]);
     }
 }

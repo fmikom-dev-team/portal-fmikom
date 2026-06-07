@@ -2,8 +2,9 @@
 
 namespace App\Rules;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Closure;
+use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Translation\PotentiallyTranslatedString;
 
 class PasswordComplexityRule implements ValidationRule
 {
@@ -17,13 +18,13 @@ class PasswordComplexityRule implements ValidationRule
     /**
      * Run the validation rule.
      *
-     * @param  \Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
+     * @param  Closure(string): PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $score = $this->calculateScore($value);
         if ($score < $this->minScore) {
-            $fail("Kata sandi ini terlalu lemah. Silakan gunakan kombinasi karakter yang lebih bervariasi.");
+            $fail('Kata sandi ini terlalu lemah. Silakan gunakan kombinasi karakter yang lebih bervariasi.');
         }
     }
 
@@ -34,7 +35,7 @@ class PasswordComplexityRule implements ValidationRule
     {
         $score = 1;
         $length = strlen($password);
-        
+
         // Base score based on length thresholds
         if ($length >= 10) {
             $score++;
@@ -44,13 +45,13 @@ class PasswordComplexityRule implements ValidationRule
         }
 
         // Diversity of character types
-        $hasUpper   = preg_match('/[A-Z]/', $password);
-        $hasLower   = preg_match('/[a-z]/', $password);
-        $hasDigit   = preg_match('/[0-9]/', $password);
+        $hasUpper = preg_match('/[A-Z]/', $password);
+        $hasLower = preg_match('/[a-z]/', $password);
+        $hasDigit = preg_match('/[0-9]/', $password);
         $hasSpecial = preg_match('/[^A-Za-z0-9]/', $password);
 
         $varieties = $hasUpper + $hasLower + $hasDigit + $hasSpecial;
-        
+
         if ($varieties >= 3) {
             $score++;
         }

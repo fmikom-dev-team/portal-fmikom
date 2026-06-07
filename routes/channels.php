@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Pagi\PagiMessage;
+use App\Models\UserModuleRole;
 use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
@@ -18,12 +18,13 @@ Broadcast::channel('radar.alerts', function ($user) {
 // A user may only subscribe if their ID is one of the two in the conversation ID.
 Broadcast::channel('pagi.chat.{conversationId}', function ($user, string $conversationId) {
     [$idA, $idB] = array_map('intval', explode('_', $conversationId, 2));
+
     return in_array((int) $user->id, [$idA, $idB], true);
 });
 
 Broadcast::channel('pagi.online', function ($user) {
     return [
-        'id'   => $user->id,
+        'id' => $user->id,
         'name' => $user->name,
     ];
 });
@@ -32,10 +33,10 @@ Broadcast::channel('pagi.admin.reports', function ($user) {
     if ($user->user_type === 'super-admin' || $user->user_type === 'admin' || $user->user_type === 'super_admin') {
         return true;
     }
-    return \App\Models\UserModuleRole::where('user_id', $user->id)
+
+    return UserModuleRole::where('user_id', $user->id)
         ->where('is_active', true)
-        ->whereHas('module', fn($q) => $q->where('code', 'PAGI')->where('is_active', true))
-        ->whereHas('role', fn($q) => $q->whereIn('slug', ['super-admin', 'admin']))
+        ->whereHas('module', fn ($q) => $q->where('code', 'PAGI')->where('is_active', true))
+        ->whereHas('role', fn ($q) => $q->whereIn('slug', ['super-admin', 'admin']))
         ->exists();
 });
-

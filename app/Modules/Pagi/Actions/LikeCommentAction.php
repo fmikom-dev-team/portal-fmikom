@@ -2,8 +2,8 @@
 
 namespace App\Modules\Pagi\Actions;
 
-use App\Models\User;
 use App\Models\Pagi\PagiWork;
+use App\Models\User;
 
 class LikeCommentAction
 {
@@ -14,23 +14,24 @@ class LikeCommentAction
     {
         $portfolio = PagiWork::findOrFail($previewId);
         $comments = $portfolio->comments ?? [];
-        
+
         $comments = array_map(function ($c) use ($commentId, $authUser) {
             if ($c['id'] === $commentId) {
-                if (!isset($c['likes']) || !is_array($c['likes'])) {
+                if (! isset($c['likes']) || ! is_array($c['likes'])) {
                     $c['likes'] = [];
                 }
                 if (in_array($authUser->id, $c['likes'])) {
-                    $c['likes'] = array_values(array_filter($c['likes'], fn($id) => $id !== $authUser->id));
+                    $c['likes'] = array_values(array_filter($c['likes'], fn ($id) => $id !== $authUser->id));
                 } else {
                     $c['likes'][] = $authUser->id;
                 }
             }
+
             return $c;
         }, $comments);
-        
+
         $portfolio->update(['comments' => $comments]);
-        
+
         return $comments;
     }
 }

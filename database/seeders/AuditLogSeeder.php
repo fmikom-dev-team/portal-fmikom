@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Audit\AuditLog;
-use App\Models\User;
-use App\Models\Module;
 use App\Models\Audit\AuditSecurityIncident;
+use App\Models\Module;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class AuditLogSeeder extends Seeder
 {
@@ -34,7 +34,7 @@ class AuditLogSeeder extends Seeder
                 'request_method' => 'POST',
                 'request_path' => 'login',
                 'response_status' => 200,
-                'correlation_id' => 'corr_' . bin2hex(random_bytes(8)),
+                'correlation_id' => 'corr_'.bin2hex(random_bytes(8)),
                 'metadata' => ['device' => 'Safari / macOS'],
                 'created_at' => now()->subMinutes(15),
             ],
@@ -48,9 +48,9 @@ class AuditLogSeeder extends Seeder
                 'ip_address' => '182.253.140.10',
                 'user_agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
                 'request_method' => 'PATCH',
-                'request_path' => 'workos/modules/' . ($module1?->id ?? 1),
+                'request_path' => 'workos/modules/'.($module1?->id ?? 1),
                 'response_status' => 200,
-                'correlation_id' => 'corr_' . bin2hex(random_bytes(8)),
+                'correlation_id' => 'corr_'.bin2hex(random_bytes(8)),
                 'metadata' => ['updated_fields' => ['name' => 'Fmikom Academic System and Tracking']],
                 'created_at' => now()->subHours(2),
             ],
@@ -66,7 +66,7 @@ class AuditLogSeeder extends Seeder
                 'request_method' => 'POST',
                 'request_path' => 'workos/roles/assign',
                 'response_status' => 200,
-                'correlation_id' => 'corr_' . bin2hex(random_bytes(8)),
+                'correlation_id' => 'corr_'.bin2hex(random_bytes(8)),
                 'metadata' => ['role' => 'mahasiswa', 'user' => $user2?->email],
                 'created_at' => now()->subHours(5),
             ],
@@ -82,7 +82,7 @@ class AuditLogSeeder extends Seeder
                 'request_method' => 'POST',
                 'request_path' => 'workos/domains/verify',
                 'response_status' => 200,
-                'correlation_id' => 'corr_' . bin2hex(random_bytes(8)),
+                'correlation_id' => 'corr_'.bin2hex(random_bytes(8)),
                 'metadata' => ['domain' => 'fmikom.org'],
                 'created_at' => now()->subDays(1),
             ],
@@ -98,7 +98,7 @@ class AuditLogSeeder extends Seeder
                 'request_method' => 'POST',
                 'request_path' => 'workos/invites',
                 'response_status' => 200,
-                'correlation_id' => 'corr_' . bin2hex(random_bytes(8)),
+                'correlation_id' => 'corr_'.bin2hex(random_bytes(8)),
                 'metadata' => ['invitee_email' => 'dosen@fmikom.org'],
                 'created_at' => now()->subDays(2),
             ],
@@ -114,7 +114,7 @@ class AuditLogSeeder extends Seeder
                 'request_method' => 'POST',
                 'request_path' => 'workos/api_keys',
                 'response_status' => 201,
-                'correlation_id' => 'corr_' . bin2hex(random_bytes(8)),
+                'correlation_id' => 'corr_'.bin2hex(random_bytes(8)),
                 'metadata' => ['key_name' => 'Production API Key'],
                 'created_at' => now()->subDays(3),
             ],
@@ -130,7 +130,7 @@ class AuditLogSeeder extends Seeder
                 'request_method' => 'POST',
                 'request_path' => 'workos/sso/activate',
                 'response_status' => 200,
-                'correlation_id' => 'corr_' . bin2hex(random_bytes(8)),
+                'correlation_id' => 'corr_'.bin2hex(random_bytes(8)),
                 'metadata' => ['provider' => 'Google OAuth Connection'],
                 'created_at' => now()->subDays(4),
             ],
@@ -153,7 +153,7 @@ class AuditLogSeeder extends Seeder
             'request_method' => 'POST',
             'request_path' => 'login',
             'response_status' => 401,
-            'correlation_id' => 'corr_' . bin2hex(random_bytes(8)),
+            'correlation_id' => 'corr_'.bin2hex(random_bytes(8)),
             'metadata' => ['incident_type' => 'brute_force', 'details' => ['attempts' => 12]],
         ]);
 

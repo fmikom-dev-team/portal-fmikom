@@ -3,7 +3,6 @@
 namespace App\Modules\WorkOs\Services\Pipes\Adapters;
 
 use App\Models\Pipes\PipeConnection;
-use Illuminate\Support\Facades\Http;
 
 class GoogleProviderAdapter extends BaseProviderAdapter
 {
@@ -31,9 +30,9 @@ class GoogleProviderAdapter extends BaseProviderAdapter
         if ($response->failed()) {
             // Google API specific error handling
             if ($response->status() === 403) {
-                throw new \Exception("Insufficient permissions or scopes to sync Google Directory: " . $response->body());
+                throw new \Exception('Insufficient permissions or scopes to sync Google Directory: '.$response->body());
             }
-            throw new \Exception("Google Sync Failed: " . $response->body());
+            throw new \Exception('Google Sync Failed: '.$response->body());
         }
 
         $data = $response->json();
@@ -58,6 +57,7 @@ class GoogleProviderAdapter extends BaseProviderAdapter
             $client = $this->getHttpClient($connection);
             // Simple call to user info to verify token works
             $response = $client->get('https://www.googleapis.com/oauth2/v3/userinfo');
+
             return $response->successful();
         } catch (\Exception $e) {
             return false;
@@ -71,7 +71,7 @@ class GoogleProviderAdapter extends BaseProviderAdapter
             'email' => $rawItem['primaryEmail'] ?? null,
             'first_name' => $rawItem['name']['givenName'] ?? null,
             'last_name' => $rawItem['name']['familyName'] ?? null,
-            'is_active' => !($rawItem['suspended'] ?? false),
+            'is_active' => ! ($rawItem['suspended'] ?? false),
             'raw_payload' => $rawItem,
         ];
     }

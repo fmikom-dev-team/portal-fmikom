@@ -18,10 +18,10 @@ class AuthSetting extends Model
     public function getTypedValue(): mixed
     {
         return match ($this->type) {
-            'boolean' => (bool)(int) $this->value,
+            'boolean' => (bool) (int) $this->value,
             'integer' => (int) $this->value,
-            'json'    => json_decode($this->value, true),
-            default   => $this->value,
+            'json' => json_decode($this->value, true),
+            default => $this->value,
         };
     }
 
@@ -34,6 +34,7 @@ class AuthSetting extends Model
     {
         return Cache::remember("auth_setting.{$key}", 300, function () use ($key, $default) {
             $setting = static::where('key', $key)->first();
+
             return $setting ? $setting->getTypedValue() : $default;
         });
     }
@@ -58,7 +59,7 @@ class AuthSetting extends Model
             ['key' => $key],
             [
                 'value' => $valStr,
-                'type'  => $type
+                'type' => $type,
             ]
         );
 
@@ -74,7 +75,7 @@ class AuthSetting extends Model
     {
         return Cache::remember('auth_settings.all', 300, function () {
             return static::all()->mapWithKeys(
-                fn($s) => [$s->key => $s->getTypedValue()]
+                fn ($s) => [$s->key => $s->getTypedValue()]
             )->toArray();
         });
     }
@@ -85,7 +86,7 @@ class AuthSetting extends Model
     public static function getGroup(string $group): array
     {
         return static::where('group', $group)->get()
-            ->mapWithKeys(fn($s) => [$s->key => $s->getTypedValue()])
+            ->mapWithKeys(fn ($s) => [$s->key => $s->getTypedValue()])
             ->toArray();
     }
 }

@@ -3,7 +3,6 @@
 namespace App\Models\Pagi;
 
 use App\Models\User;
-
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -23,13 +22,13 @@ class PagiMessage extends Model
     ];
 
     protected $casts = [
-        'sender_id'   => 'integer',
+        'sender_id' => 'integer',
         'receiver_id' => 'integer',
-        'parent_id'   => 'integer',
-        'read_at'     => 'datetime',
-        'edited_at'   => 'datetime',
-        'is_deleted'  => 'boolean',
-        'reactions'   => 'array',
+        'parent_id' => 'integer',
+        'read_at' => 'datetime',
+        'edited_at' => 'datetime',
+        'is_deleted' => 'boolean',
+        'reactions' => 'array',
         'deleted_for' => 'array',
     ];
 
@@ -41,7 +40,7 @@ class PagiMessage extends Model
     {
         return $query->where(function ($q) use ($userId) {
             $q->whereNull('deleted_for')
-              ->orWhereRaw('NOT JSON_CONTAINS(deleted_for, CAST(? AS JSON), \'$\')', [$userId]);
+                ->orWhereRaw('NOT JSON_CONTAINS(deleted_for, CAST(? AS JSON), \'$\')', [$userId]);
         });
     }
 
@@ -63,6 +62,7 @@ class PagiMessage extends Model
     {
         $ids = [$userA, $userB];
         sort($ids);
+
         return implode('_', $ids);
     }
 

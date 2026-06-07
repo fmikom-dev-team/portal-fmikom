@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\User;
-use App\Models\Auth\AuthSession;
 use App\Models\Auth\AuthLoginAttempt;
+use App\Models\Auth\AuthSession;
+use App\Models\User;
 
 test('unauthorized users cannot clear authentication analytics', function () {
     $nonAdmin = User::factory()->create(['user_type' => 'mahasiswa']);
@@ -15,7 +15,7 @@ test('unauthorized users cannot clear authentication analytics', function () {
 
 test('super admin can clear authentication analytics', function () {
     $admin = User::factory()->create(['user_type' => 'super_admin']);
-    
+
     // Create mock analytics data
     $session = AuthSession::create([
         'user_id' => $admin->id,

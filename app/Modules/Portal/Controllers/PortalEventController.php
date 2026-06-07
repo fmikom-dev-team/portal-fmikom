@@ -5,11 +5,11 @@ namespace App\Modules\Portal\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Portal\PortalEvent;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
-use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
-use Illuminate\Support\Facades\Storage;
+use Intervention\Image\ImageManager;
 
 class PortalEventController extends Controller
 {
@@ -17,16 +17,16 @@ class PortalEventController extends Controller
     {
         $search = $request->input('search');
         $events = PortalEvent::when($search, function ($query, $search) {
-                $query->where('title', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%")
-                      ->orWhere('location', 'like', "%{$search}%");
-            })
+            $query->where('title', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%")
+                ->orWhere('location', 'like', "%{$search}%");
+        })
             ->latest()
             ->get();
 
         return Inertia::render('Modules/Portal/Admin/Events/Index', [
             'events' => $events,
-            'filters' => $request->only(['search'])
+            'filters' => $request->only(['search']),
         ]);
     }
 
@@ -57,7 +57,7 @@ class PortalEventController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'slug' => 'required|string|unique:portal_events,slug,' . $event->id,
+            'slug' => 'required|string|unique:portal_events,slug,'.$event->id,
             'description' => 'required|string',
             'location' => 'nullable|string|max:255',
             'start_time' => 'required|date',
@@ -94,19 +94,19 @@ class PortalEventController extends Controller
 
     private function processAndStoreImage($file, $path)
     {
-        $manager = new ImageManager(new Driver());
+        $manager = new ImageManager(new Driver);
         $image = $manager->read($file);
 
         if ($image->width() > 1200) {
             $image->scale(width: 1200);
         }
 
-        $filename = Str::random(40) . '.webp';
-        $fullPath = $path . '/' . $filename;
+        $filename = Str::random(40).'.webp';
+        $fullPath = $path.'/'.$filename;
 
         $encoded = $image->toWebp(80);
         Storage::disk('public')->put($fullPath, (string) $encoded);
 
-        return '/storage/' . $fullPath;
+        return '/storage/'.$fullPath;
     }
 }

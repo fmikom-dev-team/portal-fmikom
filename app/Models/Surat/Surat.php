@@ -2,11 +2,10 @@
 
 namespace App\Models\Surat;
 
-use App\Models\User;
 use App\Models\Magang\PendaftaranMagang;
-
-use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -15,7 +14,7 @@ class Surat extends Model
 {
     protected $fillable = [
         'jenis_surat_id', 'pemohon_id', 'nomor_surat', 'keperluan',
-        'status', 'isi_surat', 'tanggal_pengajuan', 'tanggal_selesai'
+        'status', 'isi_surat', 'tanggal_pengajuan', 'tanggal_selesai',
     ];
 
     protected $casts = [
@@ -61,6 +60,7 @@ class Surat extends Model
     public function getNextApprover(): ?User
     {
         $flow = $this->approvalFlows()->where('status', 'pending')->orderBy('urutan')->first();
+
         return $flow ? $flow->approver : null;
     }
 

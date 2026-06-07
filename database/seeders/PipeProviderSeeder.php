@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Pipes\PipeProvider;
-use Illuminate\Support\Str;
+use Illuminate\Database\Seeder;
 
 class PipeProviderSeeder extends Seeder
 {
@@ -70,7 +69,7 @@ class PipeProviderSeeder extends Seeder
                 'status' => 'disabled',
                 'logo_url' => 'https://upload.wikimedia.org/wikipedia/commons/f/f9/Salesforce.com_logo.svg',
                 'supported_features' => ['sync', 'webhooks', 'actions'],
-            ]
+            ],
         ];
 
         foreach ($providers as $provider) {

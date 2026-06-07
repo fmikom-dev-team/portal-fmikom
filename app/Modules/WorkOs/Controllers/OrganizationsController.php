@@ -3,45 +3,45 @@
 namespace App\Modules\WorkOs\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Module;
-use App\Models\Auth\AuthInvitation;
 use App\Mail\OrganizationInvitationMail;
+use App\Models\Auth\AuthInvitation;
+use App\Models\Module;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class OrganizationsController extends Controller
 {
-    public function store(Request $r) 
-    { 
-        return app(DashboardController::class)->storeModule($r); 
+    public function store(Request $r)
+    {
+        return app(DashboardController::class)->storeModule($r);
     }
 
-    public function update(Request $r, Module $module) 
-    { 
-        return app(DashboardController::class)->updateModule($r, $module); 
+    public function update(Request $r, Module $module)
+    {
+        return app(DashboardController::class)->updateModule($r, $module);
     }
 
-    public function destroy(Module $module) 
-    { 
-        return app(DashboardController::class)->destroyModule($module); 
+    public function destroy(Module $module)
+    {
+        return app(DashboardController::class)->destroyModule($module);
     }
 
-    public function addRole(Request $r, $m) 
-    { 
-        return app(DashboardController::class)->addModuleRoleMapping($r, $m); 
+    public function addRole(Request $r, $m)
+    {
+        return app(DashboardController::class)->addModuleRoleMapping($r, $m);
     }
 
-    public function removeRole($m, $r) 
-    { 
-        return app(DashboardController::class)->removeModuleRoleMapping($m, $r); 
+    public function removeRole($m, $r)
+    {
+        return app(DashboardController::class)->removeModuleRoleMapping($m, $r);
     }
 
     public function indexInvitations(Module $module)
     {
         $seededKey = "seeded_invites_for_module_{$module->id}";
         $count = AuthInvitation::where('module_id', $module->id)->count();
-        if ($count === 0 && !cache()->has($seededKey)) {
+        if ($count === 0 && ! cache()->has($seededKey)) {
             AuthInvitation::create([
                 'module_id' => $module->id,
                 'email' => 'iha70741@gmail.com',
@@ -57,7 +57,7 @@ class OrganizationsController extends Controller
             ->get();
 
         return response()->json([
-            'invitations' => $invitations
+            'invitations' => $invitations,
         ]);
     }
 
@@ -65,11 +65,11 @@ class OrganizationsController extends Controller
     {
         $r->validate([
             'email' => 'required|email',
-            'role'  => 'required|string',
+            'role' => 'required|string',
         ]);
 
         // Generate unique invitation token
-        $token     = Str::random(64);
+        $token = Str::random(64);
         $expiresAt = now()->addDays(7);
 
         // Inviter name: authenticated user or fallback
@@ -77,14 +77,14 @@ class OrganizationsController extends Controller
 
         // Persist the invitation record
         AuthInvitation::create([
-            'module_id'         => $module->id,
-            'email'             => $r->email,
-            'role'              => ucfirst($r->role),
-            'status'            => 'Pending',
-            'token'             => $token,
-            'invited_by'        => $invitedBy,
+            'module_id' => $module->id,
+            'email' => $r->email,
+            'role' => ucfirst($r->role),
+            'status' => 'Pending',
+            'token' => $token,
+            'invited_by' => $invitedBy,
             'organization_name' => $module->name,
-            'expires_at'        => $expiresAt,
+            'expires_at' => $expiresAt,
         ]);
 
         cache()->put("seeded_invites_for_module_{$module->id}", true, now()->addYears(1));
@@ -95,15 +95,16 @@ class OrganizationsController extends Controller
         // Send real email
         try {
             Mail::to($r->email)->send(new OrganizationInvitationMail(
-                invitedEmail:     $r->email,
+                invitedEmail: $r->email,
                 organizationName: $module->name,
-                role:             ucfirst($r->role),
-                invitedBy:        $invitedBy,
-                acceptUrl:        $acceptUrl,
-                expiresAt:        $expiresAt->format('d M Y, H:i') . ' WIB',
+                role: ucfirst($r->role),
+                invitedBy: $invitedBy,
+                acceptUrl: $acceptUrl,
+                expiresAt: $expiresAt->format('d M Y, H:i').' WIB',
             ));
         } catch (\Exception $e) {
-            \Log::error('Failed to send invitation email: ' . $e->getMessage());
+            \Log::error('Failed to send invitation email: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Invitation saved but email failed to send. Please check your SMTP configuration.',
@@ -112,7 +113,7 @@ class OrganizationsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Invitation email sent to {$r->email} successfully."
+            'message' => "Invitation email sent to {$r->email} successfully.",
         ]);
     }
 
@@ -123,7 +124,7 @@ class OrganizationsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Invitation history cleared successfully.'
+            'message' => 'Invitation history cleared successfully.',
         ]);
     }
 
@@ -136,7 +137,7 @@ class OrganizationsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Invitation removed successfully.'
+            'message' => 'Invitation removed successfully.',
         ]);
     }
 }

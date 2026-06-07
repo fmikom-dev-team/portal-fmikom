@@ -4,10 +4,10 @@ namespace App\Modules\WorkOs\Services\OAuth;
 
 use App\Models\Auth\AuthOAuthCredential;
 use App\Models\Auth\AuthOAuthProvider;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Http;
 
 /**
  * TokenRefreshService — Background OAuth Token Refresh
@@ -39,13 +39,13 @@ class TokenRefreshService
     {
         $provider = $credential->provider;
 
-        if (!$provider) {
+        if (! $provider) {
             throw new Exception("Provider config not found for credential {$credential->id}.");
         }
 
         $refreshToken = $this->decryptRefreshToken($credential);
 
-        if (!$refreshToken) {
+        if (! $refreshToken) {
             throw new Exception("No refresh token stored for credential {$credential->id}.");
         }
 
@@ -68,7 +68,7 @@ class TokenRefreshService
             ->whereNotNull('refresh_token')
             ->where(function ($q) {
                 $q->whereNull('expires_at')
-                  ->orWhere('expires_at', '<=', Carbon::now()->addMinutes($this->refreshWindowMinutes));
+                    ->orWhere('expires_at', '<=', Carbon::now()->addMinutes($this->refreshWindowMinutes));
             })
             ->get();
 
@@ -77,7 +77,7 @@ class TokenRefreshService
                 $this->refresh($credential);
                 $stats['refreshed']++;
             } catch (Exception $e) {
-                logger()->warning("OAuth token refresh failed for credential {$credential->id}: " . $e->getMessage());
+                logger()->warning("OAuth token refresh failed for credential {$credential->id}: ".$e->getMessage());
                 $stats['failed']++;
             }
         }
@@ -108,25 +108,25 @@ class TokenRefreshService
     {
         $endpoint = $this->resolveTokenEndpoint($provider->name);
 
-        $clientId     = $provider->client_id ?? config("services.{$provider->slug}.client_id");
+        $clientId = $provider->client_id ?? config("services.{$provider->slug}.client_id");
         $clientSecret = $provider->client_secret
             ? Crypt::decryptString($provider->client_secret)
             : config("services.{$provider->slug}.client_secret");
 
         $response = Http::asForm()->post($endpoint, [
-            'grant_type'    => 'refresh_token',
+            'grant_type' => 'refresh_token',
             'refresh_token' => $refreshToken,
-            'client_id'     => $clientId,
+            'client_id' => $clientId,
             'client_secret' => $clientSecret,
         ]);
 
-        if (!$response->successful()) {
-            throw new Exception("Token refresh HTTP error {$response->status()} for provider {$provider->name}: " . $response->body());
+        if (! $response->successful()) {
+            throw new Exception("Token refresh HTTP error {$response->status()} for provider {$provider->name}: ".$response->body());
         }
 
         $data = $response->json();
 
-        if (!isset($data['access_token'])) {
+        if (! isset($data['access_token'])) {
             throw new Exception("Token endpoint did not return access_token for {$provider->name}.");
         }
 
@@ -136,13 +136,13 @@ class TokenRefreshService
     protected function resolveTokenEndpoint(string $providerName): string
     {
         return match (strtolower($providerName)) {
-            'google'    => 'https://oauth2.googleapis.com/token',
-            'github'    => 'https://github.com/login/oauth/access_token',
+            'google' => 'https://oauth2.googleapis.com/token',
+            'github' => 'https://github.com/login/oauth/access_token',
             'microsoft' => 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-            'apple'     => 'https://appleid.apple.com/auth/token',
-            'linkedin'  => 'https://www.linkedin.com/oauth/v2/accessToken',
-            'slack'     => 'https://slack.com/api/oauth.v2.access',
-            default     => throw new Exception("Unknown OAuth provider: {$providerName}. Add its token endpoint to TokenRefreshService."),
+            'apple' => 'https://appleid.apple.com/auth/token',
+            'linkedin' => 'https://www.linkedin.com/oauth/v2/accessToken',
+            'slack' => 'https://slack.com/api/oauth.v2.access',
+            default => throw new Exception("Unknown OAuth provider: {$providerName}. Add its token endpoint to TokenRefreshService."),
         };
     }
 
@@ -153,11 +153,11 @@ class TokenRefreshService
         ];
 
         // Not all providers return a new refresh token (keep old if missing)
-        if (!empty($tokens['refresh_token'])) {
+        if (! empty($tokens['refresh_token'])) {
             $data['refresh_token'] = Crypt::encryptString($tokens['refresh_token']);
         }
 
-        if (!empty($tokens['expires_in'])) {
+        if (! empty($tokens['expires_in'])) {
             $data['expires_at'] = Carbon::now()->addSeconds((int) $tokens['expires_in']);
         }
 
@@ -168,13 +168,13 @@ class TokenRefreshService
 
     protected function decryptRefreshToken(AuthOAuthCredential $credential): ?string
     {
-        if (!$credential->refresh_token) {
+        if (! $credential->refresh_token) {
             return null;
         }
 
         try {
             return Crypt::decryptString($credential->refresh_token);
-        } catch (\Exception) {
+        } catch (Exception) {
             return null;
         }
     }

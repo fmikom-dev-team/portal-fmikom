@@ -2,10 +2,10 @@
 
 namespace App\Http\Middleware\Auth;
 
-use Closure;
-use Illuminate\Http\Request;
 use App\Models\Auth\AuthLoginAttempt;
 use Carbon\Carbon;
+use Closure;
+use Illuminate\Http\Request;
 
 /**
  * RiskScore Middleware
@@ -16,6 +16,7 @@ use Carbon\Carbon;
 class RiskScore
 {
     protected int $maxFailedAttempts = 10;
+
     protected int $windowMinutes = 15;
 
     public function handle(Request $request, Closure $next)

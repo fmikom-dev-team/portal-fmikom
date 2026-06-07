@@ -10,7 +10,7 @@ class PerusahaanMitra extends Model
     protected $fillable = [
         'nama', 'alamat', 'kota', 'latitude', 'longitude',
         'radius_valid_meter', 'bidang_industri', 'kontak_person',
-        'telepon', 'email'
+        'telepon', 'email',
     ];
 
     public function pembimbingLapangans(): HasMany
@@ -42,6 +42,7 @@ class PerusahaanMitra extends Model
 
         $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
             cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
+
         return $angle * $earthRadius;
     }
 }

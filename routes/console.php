@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schedule;
 use App\Jobs\CleanExpiredSessions;
 use App\Jobs\RefreshExpiredOAuthTokens;
+use Illuminate\Support\Facades\Schedule;
 
 /*
 |--------------------------------------------------------------------------

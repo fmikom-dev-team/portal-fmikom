@@ -2,14 +2,16 @@
 
 namespace App\Providers;
 
+use App\Models\Auth\AuthSetting;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
-
-use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Support\Facades\RateLimiter;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,11 +32,11 @@ class AppServiceProvider extends ServiceProvider
 
         // Force HTTPS in non-local environments to avoid mixed content issues
         if (config('app.env') !== 'local') {
-            \Illuminate\Support\Facades\URL::forceScheme('https');
+            URL::forceScheme('https');
         }
 
         // Authorization Gate for Laravel Pulse
-        \Illuminate\Support\Facades\Gate::define('viewPulse', function ($user) {
+        Gate::define('viewPulse', function ($user) {
             return method_exists($user, 'isSuperAdmin') && ($user->isSuperAdmin() || $user->isAdmin());
         });
 
@@ -46,7 +48,7 @@ class AppServiceProvider extends ServiceProvider
         // Load migrations from subdirectories
         $mainPath = database_path('migrations');
         if (is_dir($mainPath)) {
-            $directories = glob($mainPath . '/*', GLOB_ONLYDIR);
+            $directories = glob($mainPath.'/*', GLOB_ONLYDIR);
             $paths = array_merge([$mainPath], $directories);
             $this->loadMigrationsFrom($paths);
         }
@@ -64,13 +66,13 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Password::defaults(function () {
-            $min = (int) \App\Models\Auth\AuthSetting::get('email_password.min_length', 10);
+            $min = (int) AuthSetting::get('email_password.min_length', 10);
             $rule = Password::min($min);
 
-            $requireUppercase = (bool) \App\Models\Auth\AuthSetting::get('email_password.require_uppercase', false);
-            $requireLowercase = (bool) \App\Models\Auth\AuthSetting::get('email_password.require_lowercase', false);
-            $requireNumber    = (bool) \App\Models\Auth\AuthSetting::get('email_password.require_number', false);
-            $requireSpecial   = (bool) \App\Models\Auth\AuthSetting::get('email_password.require_special', false);
+            $requireUppercase = (bool) AuthSetting::get('email_password.require_uppercase', false);
+            $requireLowercase = (bool) AuthSetting::get('email_password.require_lowercase', false);
+            $requireNumber = (bool) AuthSetting::get('email_password.require_number', false);
+            $requireSpecial = (bool) AuthSetting::get('email_password.require_special', false);
 
             if ($requireUppercase || $requireLowercase) {
                 $rule->mixedCase();
@@ -84,7 +86,7 @@ class AppServiceProvider extends ServiceProvider
                 $rule->symbols();
             }
 
-            if ((bool) \App\Models\Auth\AuthSetting::get('password.reject_breached', true)) {
+            if ((bool) AuthSetting::get('password.reject_breached', true)) {
                 $rule->uncompromised();
             }
 

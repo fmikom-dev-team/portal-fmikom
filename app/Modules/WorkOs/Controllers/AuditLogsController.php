@@ -3,10 +3,11 @@
 namespace App\Modules\WorkOs\Controllers;
 
 use App\Http\Controllers\Controller;
-
-use Inertia\Inertia;
+use App\Models\Audit\AuditApiRequest;
 use App\Models\Audit\AuditLog;
+use App\Models\Audit\AuditSecurityIncident;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class AuditLogsController extends Controller
 {
@@ -19,12 +20,12 @@ class AuditLogsController extends Controller
             'stats' => [
                 'total_events' => AuditLog::count(),
                 'active_users' => AuditLog::whereNotNull('actor_id')->distinct('actor_id')->count(),
-                'security_incidents' => \App\Models\Audit\AuditSecurityIncident::count(),
+                'security_incidents' => AuditSecurityIncident::count(),
             ],
             'recent_events' => AuditLog::with('actor:id,name,email')
-                                        ->orderBy('created_at', 'desc')
-                                        ->limit(5)
-                                        ->get()
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get(),
         ]);
     }
 
@@ -38,12 +39,12 @@ class AuditLogsController extends Controller
         // Apply filters
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('event_type', 'like', "%{$search}%")
-                  ->orWhere('ip_address', 'like', "%{$search}%")
-                  ->orWhereHas('actor', function($q2) use ($search) {
-                      $q2->where('email', 'like', "%{$search}%");
-                  });
+                    ->orWhere('ip_address', 'like', "%{$search}%")
+                    ->orWhereHas('actor', function ($q2) use ($search) {
+                        $q2->where('email', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -62,7 +63,7 @@ class AuditLogsController extends Controller
         $events = $query->orderBy('created_at', 'desc')->paginate(20);
 
         return response()->json([
-            'events' => $events
+            'events' => $events,
         ]);
     }
 
@@ -71,23 +72,23 @@ class AuditLogsController extends Controller
      */
     public function securityLogs(Request $request)
     {
-        $query = \App\Models\Audit\AuditSecurityIncident::with(['user:id,name,email', 'auditLog']);
+        $query = AuditSecurityIncident::with(['user:id,name,email', 'auditLog']);
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('incident_type', 'like', "%{$search}%")
-                  ->orWhere('ip_address', 'like', "%{$search}%")
-                  ->orWhereHas('user', function($q2) use ($search) {
-                      $q2->where('email', 'like', "%{$search}%");
-                  });
+                    ->orWhere('ip_address', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($q2) use ($search) {
+                        $q2->where('email', 'like', "%{$search}%");
+                    });
             });
         }
 
         $incidents = $query->orderBy('created_at', 'desc')->paginate(20);
 
         return response()->json([
-            'incidents' => $incidents
+            'incidents' => $incidents,
         ]);
     }
 
@@ -96,9 +97,9 @@ class AuditLogsController extends Controller
      */
     public function clear(Request $request)
     {
-        \App\Models\Audit\AuditSecurityIncident::query()->delete();
-        \App\Models\Audit\AuditLog::query()->delete();
-        \App\Models\Audit\AuditApiRequest::query()->delete();
+        AuditSecurityIncident::query()->delete();
+        AuditLog::query()->delete();
+        AuditApiRequest::query()->delete();
 
         return back()->with('success', 'Audit logs cleared successfully.');
     }

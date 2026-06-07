@@ -2,15 +2,15 @@
 
 namespace App\Modules\WorkOs\Services\SSO;
 
-use App\Models\User;
 use App\Models\Auth\AuthSsoConnection;
+use App\Models\User;
 use App\Modules\WorkOs\Services\Auth\LoginService;
+use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Cache;
-use Exception;
+use Illuminate\Support\Str;
 
 /**
  * SamlService — Enterprise SAML 2.0 Integration
@@ -47,10 +47,10 @@ class SamlService
      */
     public function generateMetadata(): string
     {
-        $acsUrl      = route('auth.sso.saml.acs');
-        $slsUrl      = route('auth.sso.saml.sls');
-        $entityId    = config('app.url');
-        $spName      = config('app.name');
+        $acsUrl = route('auth.sso.saml.acs');
+        $slsUrl = route('auth.sso.saml.sls');
+        $entityId = config('app.url');
+        $spName = config('app.name');
 
         // In production: use OneLogin\Saml2\Settings::getSPMetadata()
         return <<<XML
@@ -89,14 +89,14 @@ XML;
         // Cache relay state for CSRF/replay protection (5 minutes)
         Cache::put("sso_relay_{$relayState}", $connection->id, now()->addMinutes(5));
 
-        $requestId  = '_' . Str::uuid()->toString();
+        $requestId = '_'.Str::uuid()->toString();
         $issueInstant = now()->toAtomString();
-        $acsUrl     = route('auth.sso.saml.acs');
-        $entityId   = config('app.url');
+        $acsUrl = route('auth.sso.saml.acs');
+        $entityId = config('app.url');
 
         $ssoUrl = $connection->metadata['sso_url'] ?? null;
 
-        if (!$ssoUrl) {
+        if (! $ssoUrl) {
             throw new Exception("SSO URL not configured for connection {$connection->id}.");
         }
 
@@ -114,9 +114,9 @@ XML;
 </samlp:AuthnRequest>
 XML));
 
-        return $ssoUrl . '?' . http_build_query([
+        return $ssoUrl.'?'.http_build_query([
             'SAMLRequest' => $authRequest,
-            'RelayState'  => $relayState,
+            'RelayState' => $relayState,
         ]);
     }
 
@@ -137,16 +137,16 @@ XML));
     public function processAcsResponse(Request $request): User
     {
         $samlResponse = $request->input('SAMLResponse');
-        $relayState   = $request->input('RelayState');
+        $relayState = $request->input('RelayState');
 
-        if (!$samlResponse) {
+        if (! $samlResponse) {
             throw new Exception('No SAMLResponse in request.');
         }
 
         // Validate relay state (replay attack prevention)
         if ($relayState) {
             $connectionId = Cache::pull("sso_relay_{$relayState}");
-            if (!$connectionId) {
+            if (! $connectionId) {
                 throw new Exception('Invalid or expired SSO relay state.');
             }
         }
@@ -160,7 +160,7 @@ XML));
 
         $email = $attributes['email'] ?? null;
 
-        if (!$email) {
+        if (! $email) {
             throw new Exception('SAML assertion did not contain an email attribute.');
         }
 
@@ -196,8 +196,8 @@ XML));
             $user = User::firstOrCreate(
                 ['email' => $email],
                 [
-                    'name'             => $attributes['name'] ?? $attributes['first_name'] . ' ' . ($attributes['last_name'] ?? ''),
-                    'password'         => Hash::make(Str::random(32)), // Passwordless SSO account
+                    'name' => $attributes['name'] ?? $attributes['first_name'].' '.($attributes['last_name'] ?? ''),
+                    'password' => Hash::make(Str::random(32)), // Passwordless SSO account
                     'email_verified_at' => now(),
                 ]
             );
@@ -213,11 +213,11 @@ XML));
     {
         // In production: parse NameID + AttributeStatement from verified XML
         return [
-            'email'      => null,
-            'name'       => null,
+            'email' => null,
+            'name' => null,
             'first_name' => null,
-            'last_name'  => null,
-            'groups'     => [],
+            'last_name' => null,
+            'groups' => [],
         ];
     }
 }

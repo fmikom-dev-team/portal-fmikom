@@ -2,9 +2,8 @@
 
 namespace App\Models\Kuesioner;
 
-use App\Models\User;
 use App\Models\Alumni\ProfilAlumni;
-
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,7 +12,7 @@ class Kuesioner extends Model
 {
     protected $fillable = [
         'pembuat_id', 'judul', 'deskripsi', 'periode_mulai',
-        'periode_selesai', 'status', 'tujuan'
+        'periode_selesai', 'status', 'tujuan',
     ];
 
     protected $casts = [
@@ -39,14 +38,18 @@ class Kuesioner extends Model
     public function isAktif(): bool
     {
         $now = now();
+
         return $this->status === 'published' && $now->between($this->periode_mulai, $this->periode_selesai);
     }
 
     public function getPersentaseRespons(): float
     {
         $totalAlumni = ProfilAlumni::count();
-        if ($totalAlumni === 0) return 0;
+        if ($totalAlumni === 0) {
+            return 0;
+        }
         $responded = $this->respons()->where('is_complete', true)->count();
+
         return ($responded / $totalAlumni) * 100;
     }
 }

@@ -2,10 +2,11 @@
 
 namespace App\Modules\WorkOs\Services\Radar;
 
-use App\Models\Radar\RadarProtection;
+use App\Events\Radar\ThreatDetected;
 use App\Models\Radar\RadarBlockedItem;
 use App\Models\Radar\RadarDetection;
 use App\Models\Radar\RadarDevice;
+use App\Models\Radar\RadarProtection;
 use App\Models\Radar\RadarSecurityEvent;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -62,7 +63,9 @@ class DetectionEngine
     protected function evaluateBotDetection(Request $request, RadarDevice $device): void
     {
         $protection = $this->getProtection('bot_detection');
-        if (!$protection) return;
+        if (! $protection) {
+            return;
+        }
 
         $userAgent = strtolower($request->userAgent() ?? '');
 
@@ -90,7 +93,7 @@ class DetectionEngine
             $action = $protection->auto_block ? 'Blocked' : 'Logged';
             $this->recordDetection($protection, $device, 'Bot detection', 'Medium', 65, $action, $request->ip(), [
                 'user_agent' => $request->userAgent(),
-                'path'       => $request->path(),
+                'path' => $request->path(),
             ]);
 
             if ($protection->auto_block) {
@@ -104,7 +107,9 @@ class DetectionEngine
     protected function evaluateBruteForce(Request $request, RadarDevice $device): void
     {
         $protection = $this->getProtection('brute_force');
-        if (!$protection) return;
+        if (! $protection) {
+            return;
+        }
 
         $ip = $request->ip();
         $email = $request->input('email', '');
@@ -119,9 +124,9 @@ class DetectionEngine
         if ($attempts >= $threshold) {
             $action = $protection->auto_block ? 'Blocked' : 'Challenged';
             $this->recordDetection($protection, $device, 'Brute force attack', 'High', min(95, 50 + $attempts * 5), $action, $ip, [
-                'email'    => $email,
+                'email' => $email,
                 'attempts' => $attempts,
-                'window'   => "{$windowMinutes}m",
+                'window' => "{$windowMinutes}m",
             ]);
 
             // Reset counter after flagging to avoid spamming detections
@@ -138,11 +143,17 @@ class DetectionEngine
     protected function evaluateUnrecognizedDevice(Request $request, RadarDevice $device): void
     {
         $protection = $this->getProtection('unrecognized_device');
-        if (!$protection) return;
+        if (! $protection) {
+            return;
+        }
 
         // If device was just created (wasRecentlyCreated = new device fingerprint)
-        if (!$device->wasRecentlyCreated) return;
-        if ($device->is_trusted) return;
+        if (! $device->wasRecentlyCreated) {
+            return;
+        }
+        if ($device->is_trusted) {
+            return;
+        }
 
         $email = $request->input('email', '');
 
@@ -150,7 +161,7 @@ class DetectionEngine
         if ($email && User::where('email', $email)->exists()) {
             $action = $protection->auto_block ? 'Blocked' : 'Challenged';
             $this->recordDetection($protection, $device, 'Unrecognized device', 'Low', 40, $action, $request->ip(), [
-                'user'       => $email,
+                'user' => $email,
                 'user_agent' => $request->userAgent(),
             ]);
         }
@@ -161,10 +172,14 @@ class DetectionEngine
     protected function evaluateRepeatSignUp(Request $request, RadarDevice $device): void
     {
         // Only fire on registration routes
-        if (!str_contains($request->path(), 'register')) return;
+        if (! str_contains($request->path(), 'register')) {
+            return;
+        }
 
         $protection = $this->getProtection('repeat_sign_up');
-        if (!$protection) return;
+        if (! $protection) {
+            return;
+        }
 
         $ip = $request->ip();
         $cacheKey = "radar_signup_ip_{$ip}";
@@ -177,7 +192,7 @@ class DetectionEngine
             $email = $request->input('email', '');
             $action = $protection->auto_block ? 'Blocked' : 'Logged';
             $this->recordDetection($protection, $device, 'Repeat sign up', 'Medium', 55, $action, $ip, [
-                'email'    => $email,
+                'email' => $email,
                 'attempts' => $attempts,
             ]);
 
@@ -190,7 +205,9 @@ class DetectionEngine
     protected function evaluateBlockedDomain(Request $request, RadarDevice $device): void
     {
         $email = $request->input('email', '');
-        if (!$email || !str_contains($email, '@')) return;
+        if (! $email || ! str_contains($email, '@')) {
+            return;
+        }
 
         $domain = strtolower(substr($email, strpos($email, '@') + 1));
 
@@ -199,18 +216,20 @@ class DetectionEngine
                 ->where('action', 'Block')
                 ->where(function ($q) use ($domain) {
                     $q->where('value', $domain)
-                      ->orWhere('value', 'LIKE', "%{$domain}%");
+                        ->orWhere('value', 'LIKE', "%{$domain}%");
                 })
                 ->exists();
         });
 
         if ($isBlocked) {
-            $protection = $this->getProtection('domain_protections') 
+            $protection = $this->getProtection('domain_protections')
                 ?? $this->getProtection('disposable_email_domains');
-            if (!$protection) return;
+            if (! $protection) {
+                return;
+            }
 
             $this->recordDetection($protection, $device, 'Restriction enforced', 'Critical', 95, 'Blocked', $request->ip(), [
-                'email'  => $email,
+                'email' => $email,
                 'domain' => $domain,
                 'reason' => 'Blocked domain',
             ]);
@@ -223,28 +242,28 @@ class DetectionEngine
 
     protected function fingerprintDevice(Request $request): RadarDevice
     {
-        $ip        = $request->ip();
+        $ip = $request->ip();
         $userAgent = $request->userAgent() ?? '';
 
         // Fingerprint = hash of IP + User-Agent (stable per device/browser)
-        $fingerprint = hash('sha256', $ip . $userAgent);
+        $fingerprint = hash('sha256', $ip.$userAgent);
 
         $device = RadarDevice::firstOrCreate(
             ['device_fingerprint' => $fingerprint],
             [
-                'ip_address'   => $ip,
-                'user_agent'   => $userAgent,
-                'browser'      => $this->parseBrowser($userAgent),
-                'os'           => $this->parseOs($userAgent),
-                'country'      => null, // Requires GeoIP — can integrate MaxMind/ip-api
-                'city'         => null,
-                'is_trusted'   => false,
+                'ip_address' => $ip,
+                'user_agent' => $userAgent,
+                'browser' => $this->parseBrowser($userAgent),
+                'os' => $this->parseOs($userAgent),
+                'country' => null, // Requires GeoIP — can integrate MaxMind/ip-api
+                'city' => null,
+                'is_trusted' => false,
                 'last_seen_at' => now(),
             ]
         );
 
         // Update last_seen_at on each visit (only on existing devices)
-        if (!$device->wasRecentlyCreated) {
+        if (! $device->wasRecentlyCreated) {
             $device->update(['last_seen_at' => now()]);
         }
 
@@ -260,7 +279,10 @@ class DetectionEngine
     {
         return Cache::remember("radar_protection_{$code}", 300, function () use ($code) {
             $p = RadarProtection::where('code', $code)->first();
-            if (!$p || $p->status === 'Disabled') return null;
+            if (! $p || $p->status === 'Disabled') {
+                return null;
+            }
+
             return $p;
         });
     }
@@ -270,31 +292,31 @@ class DetectionEngine
      */
     public function recordDetection(
         RadarProtection $protection,
-        RadarDevice     $device,
-        string          $type,
-        string          $severity,
-        int             $riskScore,
-        string          $action,
-        string          $ip,
-        array           $metadata
+        RadarDevice $device,
+        string $type,
+        string $severity,
+        int $riskScore,
+        string $action,
+        string $ip,
+        array $metadata
     ): void {
         $detection = RadarDetection::create([
             'radar_protection_id' => $protection->id,
-            'radar_device_id'     => $device->id,
-            'detection_type'      => $type,
-            'severity'            => $severity,
-            'risk_score'          => $riskScore,
-            'action_taken'        => $action,
-            'ip_address'          => $ip,
-            'metadata'            => $metadata,
+            'radar_device_id' => $device->id,
+            'detection_type' => $type,
+            'severity' => $severity,
+            'risk_score' => $riskScore,
+            'action_taken' => $action,
+            'ip_address' => $ip,
+            'metadata' => $metadata,
         ]);
 
         // Broadcast real-time event to WorkOS Radar dashboard
         try {
-            broadcast(new \App\Events\Radar\ThreatDetected($detection));
+            broadcast(new ThreatDetected($detection));
         } catch (\Throwable $e) {
             // Broadcast failure should not break the request
-            \Log::warning('Radar broadcast failed: ' . $e->getMessage());
+            \Log::warning('Radar broadcast failed: '.$e->getMessage());
         }
     }
 
@@ -302,41 +324,69 @@ class DetectionEngine
     {
         try {
             RadarSecurityEvent::create([
-                'user_id'            => auth()->id(),
-                'event_type'         => $type,
-                'ip_address'         => $request->ip(),
+                'user_id' => auth()->id(),
+                'event_type' => $type,
+                'ip_address' => $request->ip(),
                 'device_fingerprint' => $device?->device_fingerprint,
-                'event_data'         => [
-                    'url'    => $request->fullUrl(),
+                'event_data' => [
+                    'url' => $request->fullUrl(),
                     'method' => $request->method(),
                 ],
             ]);
         } catch (\Throwable $e) {
-            \Log::warning('Radar event log failed: ' . $e->getMessage());
+            \Log::warning('Radar event log failed: '.$e->getMessage());
         }
     }
 
     protected function parseBrowser(string $ua): string
     {
         $ua = strtolower($ua);
-        if (str_contains($ua, 'edg/'))    return 'Edge';
-        if (str_contains($ua, 'opr/'))    return 'Opera';
-        if (str_contains($ua, 'chrome/')) return str_contains($ua, 'mobile') ? 'Chrome Mobile' : 'Chrome';
-        if (str_contains($ua, 'firefox/'))return 'Firefox';
-        if (str_contains($ua, 'safari/')) return str_contains($ua, 'mobile') ? 'Safari Mobile' : 'Safari';
-        if (str_contains($ua, 'curl/'))   return 'curl';
-        if (str_contains($ua, 'postman')) return 'Postman';
-        if (str_contains($ua, 'python'))  return 'Python HTTP';
+        if (str_contains($ua, 'edg/')) {
+            return 'Edge';
+        }
+        if (str_contains($ua, 'opr/')) {
+            return 'Opera';
+        }
+        if (str_contains($ua, 'chrome/')) {
+            return str_contains($ua, 'mobile') ? 'Chrome Mobile' : 'Chrome';
+        }
+        if (str_contains($ua, 'firefox/')) {
+            return 'Firefox';
+        }
+        if (str_contains($ua, 'safari/')) {
+            return str_contains($ua, 'mobile') ? 'Safari Mobile' : 'Safari';
+        }
+        if (str_contains($ua, 'curl/')) {
+            return 'curl';
+        }
+        if (str_contains($ua, 'postman')) {
+            return 'Postman';
+        }
+        if (str_contains($ua, 'python')) {
+            return 'Python HTTP';
+        }
+
         return 'Unknown';
     }
 
     protected function parseOs(string $ua): string
     {
-        if (str_contains($ua, 'Windows'))       return 'Windows';
-        if (str_contains($ua, 'Macintosh') || str_contains($ua, 'Mac OS X')) return 'macOS';
-        if (str_contains($ua, 'Android'))       return 'Android';
-        if (str_contains($ua, 'iPhone') || str_contains($ua, 'iPad')) return 'iOS';
-        if (str_contains($ua, 'Linux'))         return 'Linux';
+        if (str_contains($ua, 'Windows')) {
+            return 'Windows';
+        }
+        if (str_contains($ua, 'Macintosh') || str_contains($ua, 'Mac OS X')) {
+            return 'macOS';
+        }
+        if (str_contains($ua, 'Android')) {
+            return 'Android';
+        }
+        if (str_contains($ua, 'iPhone') || str_contains($ua, 'iPad')) {
+            return 'iOS';
+        }
+        if (str_contains($ua, 'Linux')) {
+            return 'Linux';
+        }
+
         return 'Unknown';
     }
 }

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class PertanyaanKuesioner extends Model
 {
     protected $fillable = [
-        'kuesioner_id', 'teks_pertanyaan', 'tipe', 'urutan', 'wajib_diisi'
+        'kuesioner_id', 'teks_pertanyaan', 'tipe', 'urutan', 'wajib_diisi',
     ];
 
     protected $casts = [

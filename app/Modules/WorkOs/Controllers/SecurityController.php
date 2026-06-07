@@ -3,14 +3,17 @@
 namespace App\Modules\WorkOs\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\Auth\AuthMfa;
+use App\Models\User;
 use App\Modules\WorkOs\Services\AuthPlatform\MFAEngine;
 use App\Modules\WorkOs\Services\AuthPlatform\PasskeyEngine;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class SecurityController extends Controller
 {
     protected MFAEngine $mfaEngine;
+
     protected PasskeyEngine $passkeyEngine;
 
     public function __construct(MFAEngine $mfaEngine, PasskeyEngine $passkeyEngine)
@@ -20,12 +23,12 @@ class SecurityController extends Controller
     }
 
     // --- MFA (TOTP) Endpoints ---
-    
+
     public function userMfaStatus(Request $request)
     {
-        $user = Auth::user() ?? \App\Models\User::first();
-        $mfa = \App\Models\Auth\AuthMfa::where('user_id', $user->id)->where('is_active', true)->first();
-        
+        $user = Auth::user() ?? User::first();
+        $mfa = AuthMfa::where('user_id', $user->id)->where('is_active', true)->first();
+
         return response()->json([
             'is_active' => $mfa !== null,
         ]);
@@ -34,10 +37,11 @@ class SecurityController extends Controller
     public function setupMfa(Request $request)
     {
         // Mocking user since there's no real session for the admin testing this right now
-        $user = Auth::user() ?? \App\Models\User::first();
+        $user = Auth::user() ?? User::first();
 
         try {
             $data = $this->mfaEngine->setupTotp($user);
+
             return response()->json($data);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
@@ -47,10 +51,11 @@ class SecurityController extends Controller
     public function verifyMfa(Request $request)
     {
         $request->validate(['code' => 'required|string']);
-        $user = Auth::user() ?? \App\Models\User::first();
+        $user = Auth::user() ?? User::first();
 
         try {
             $data = $this->mfaEngine->verifyAndActivate($user, $request->code);
+
             return response()->json($data);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
@@ -61,10 +66,11 @@ class SecurityController extends Controller
 
     public function registerPasskeyOptions()
     {
-        $user = Auth::user() ?? \App\Models\User::first();
+        $user = Auth::user() ?? User::first();
 
         try {
             $options = $this->passkeyEngine->getRegistrationOptions($user);
+
             return response()->json($options);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -73,10 +79,11 @@ class SecurityController extends Controller
 
     public function verifyPasskeyRegistration(Request $request)
     {
-        $user = Auth::user() ?? \App\Models\User::first();
+        $user = Auth::user() ?? User::first();
 
         try {
             $passkey = $this->passkeyEngine->verifyRegistration($user, $request->all());
+
             return response()->json(['message' => 'Passkey registered successfully', 'passkey' => $passkey]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);

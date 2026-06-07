@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('auth_login_attempts', function (Blueprint $table) {
-            if (!Schema::hasColumn('auth_login_attempts', 'provider')) {
+            if (! Schema::hasColumn('auth_login_attempts', 'provider')) {
                 $table->string('provider')->nullable()->after('is_successful')->index();
             }
         });

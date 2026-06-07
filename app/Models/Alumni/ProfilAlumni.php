@@ -2,9 +2,8 @@
 
 namespace App\Models\Alumni;
 
-use App\Models\User;
 use App\Models\Kuesioner\ResponsKuesioner;
-
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,7 +12,7 @@ class ProfilAlumni extends Model
 {
     protected $fillable = [
         'user_id', 'program_studi_id', 'nim', 'tahun_lulus',
-        'no_telepon', 'linkedin_url', 'foto_path'
+        'no_telepon', 'linkedin_url', 'foto_path',
     ];
 
     public function user(): BelongsTo

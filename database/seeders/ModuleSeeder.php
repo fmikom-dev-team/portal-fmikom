@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Module;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\UserModuleRole;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class ModuleSeeder extends Seeder
@@ -44,7 +44,7 @@ class ModuleSeeder extends Seeder
 
         // 3. SEEDING CONTOH: User dengan banyak role di berbagai Modul
         // ========================================================
-        
+
         // Contoh 1: Pak Muchlisin Maruf (Pemilik Berbagai Role)
         $user1 = User::firstOrCreate(
             ['email' => 'muchlisinmaruf@gmail.com'],
@@ -59,9 +59,9 @@ class ModuleSeeder extends Seeder
         $superAdminRole = Role::where('slug', 'super-admin')->first()->id;
         foreach (['FAST', 'WIMS', 'PAGI', 'TRACE'] as $modCode) {
             UserModuleRole::firstOrCreate([
-                'user_id' => $user1->id, 
-                'module_id' => Module::where('code', $modCode)->first()->id, 
-                'role_id' => $superAdminRole
+                'user_id' => $user1->id,
+                'module_id' => Module::where('code', $modCode)->first()->id,
+                'role_id' => $superAdminRole,
             ]);
         }
 
@@ -77,7 +77,7 @@ class ModuleSeeder extends Seeder
         UserModuleRole::firstOrCreate(['user_id' => $user1->id, 'module_id' => Module::where('code', 'PAGI')->first()->id, 'role_id' => Role::where('slug', 'mitra')->first()->id]);
 
         // ========================================================
-        
+
         // Contoh 2: Andi (Mahasiswa di FAST & PAGI)
         $user2 = User::firstOrCreate(
             ['email' => 'andimahasiswa@example.com'],
@@ -93,15 +93,15 @@ class ModuleSeeder extends Seeder
             'module_id' => Module::where('code', 'PAGI')->first()->id,
             'role_id' => Role::where('slug', 'mahasiswa')->first()->id,
         ]);
-        
+
         UserModuleRole::firstOrCreate([
             'user_id' => $user2->id,
             'module_id' => Module::where('code', 'FAST')->first()->id,
             'role_id' => Role::where('slug', 'mahasiswa')->first()->id,
         ]);
-        
+
         // ========================================================
-        
+
         // Contoh 3: Akun Alumni yang sedang Anda test untuk role pendaftar baru
         // Supaya ketika Anda daftar baru/login bisa langsung di tes
         $user3 = User::firstOrCreate(
@@ -118,7 +118,7 @@ class ModuleSeeder extends Seeder
             'module_id' => Module::where('code', 'TRACE')->first()->id,
             'role_id' => Role::where('slug', 'alumni')->first()->id,
         ]);
-        
+
         UserModuleRole::firstOrCreate([
             'user_id' => $user3->id,
             'module_id' => Module::where('code', 'FAST')->first()->id,

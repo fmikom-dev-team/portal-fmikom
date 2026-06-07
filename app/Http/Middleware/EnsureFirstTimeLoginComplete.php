@@ -25,19 +25,19 @@ class EnsureFirstTimeLoginComplete
         $user = $request->user()?->fresh();
 
         // Pass jika belum login
-        if (!$user) {
+        if (! $user) {
             return $next($request);
         }
 
         // Update user's last_seen_at timestamp (throttled to once per minute)
-        if (!$user->last_seen_at || $user->last_seen_at->addMinutes(1)->isPast()) {
+        if (! $user->last_seen_at || $user->last_seen_at->addMinutes(1)->isPast()) {
             $user->updateQuietly(['last_seen_at' => now()]);
         }
 
         // Route yang dikecualikan dari pengecekan
-        $isOtpRoute  = $request->routeIs('verify.otp') || $request->routeIs('resend.otp');
+        $isOtpRoute = $request->routeIs('verify.otp') || $request->routeIs('resend.otp');
         $isForcePass = $request->routeIs('password.force.*');
-        $isLogout    = $request->routeIs('logout');
+        $isLogout = $request->routeIs('logout');
 
         // Izinkan akses ke route OTP, force change password, dan logout
         if ($isOtpRoute || $isForcePass || $isLogout) {

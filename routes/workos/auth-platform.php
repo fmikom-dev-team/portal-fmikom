@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Modules\WorkOs\Controllers\AuthenticationController;
+use App\Modules\WorkOs\Controllers\OAuthController;
 use App\Modules\WorkOs\Controllers\SecurityController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,6 +60,6 @@ Route::prefix('auth-platform')->name('auth-platform.')->group(function () {
     Route::delete('/analytics/users/{user}', [AuthenticationController::class, 'deleteUser'])->name('analytics.users.delete');
 
     // ── OAuth Admin Redirect ───────────────────────────────────────────────
-    Route::post('/oauth/redirect/{provider}', [\App\Modules\WorkOs\Controllers\OAuthController::class, 'redirect'])
+    Route::post('/oauth/redirect/{provider}', [OAuthController::class, 'redirect'])
         ->name('oauth.redirect');
 });

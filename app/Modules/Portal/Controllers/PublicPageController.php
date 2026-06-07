@@ -3,9 +3,10 @@
 namespace App\Modules\Portal\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\Portal\PortalPage;
 use App\Models\Portal\PortalAcademicCalendar;
 use App\Models\Portal\PortalEvent;
+use App\Models\Portal\PortalPage;
+use Inertia\Inertia;
 
 class PublicPageController extends Controller
 {
@@ -24,7 +25,7 @@ class PublicPageController extends Controller
             $events = PortalEvent::where('status', 'published')->orderBy('start_time', 'asc')->get();
         }
 
-        return \Inertia\Inertia::render('Public/Page', [
+        return Inertia::render('Public/Page', [
             'page' => $page,
             'academicCalendars' => $academicCalendars,
             'events' => $events,

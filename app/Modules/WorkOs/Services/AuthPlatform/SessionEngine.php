@@ -2,13 +2,13 @@
 
 namespace App\Modules\WorkOs\Services\AuthPlatform;
 
-use App\Models\User;
-use App\Models\Auth\AuthSession;
 use App\Models\Auth\AuthDevice;
-use Jenssegers\Agent\Agent;
-use Illuminate\Support\Str;
+use App\Models\Auth\AuthSession;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Jenssegers\Agent\Agent;
 
 class SessionEngine
 {
@@ -24,11 +24,11 @@ class SessionEngine
      */
     public function createSession(User $user, Request $request): AuthSession
     {
-        $agent = new Agent();
+        $agent = new Agent;
         $agent->setUserAgent($request->userAgent());
 
         $ip = $request->ip();
-        
+
         // 1. Resolve Device Fingerprinting
         $device = $this->resolveDevice($user, $agent, $ip, $request->userAgent());
 
@@ -42,7 +42,7 @@ class SessionEngine
         // AuthSession::where('user_id', $user->id)->update(['is_revoked' => true]); // Optional
 
         // 5. Generate Session Token (Opaque Token)
-        $token = hash('sha256', Str::random(60) . time());
+        $token = hash('sha256', Str::random(60).time());
 
         // 6. Persist Session
         $session = AuthSession::create([
@@ -85,7 +85,7 @@ class SessionEngine
     protected function resolveDevice(User $user, Agent $agent, string $ip, ?string $userAgent): AuthDevice
     {
         // Simple hash to represent the device. In production, we'd use Canvas fingerprinting from frontend too.
-        $rawFingerprint = $ip . '|' . $userAgent . '|' . $agent->platform() . '|' . $agent->browser();
+        $rawFingerprint = $ip.'|'.$userAgent.'|'.$agent->platform().'|'.$agent->browser();
         $fingerprint = hash('sha256', $rawFingerprint);
 
         $device = AuthDevice::firstOrCreate(
@@ -94,8 +94,8 @@ class SessionEngine
                 'device_fingerprint' => $fingerprint,
             ],
             [
-                'os' => $agent->platform() ? $agent->platform() . ' ' . $agent->version($agent->platform()) : 'Unknown',
-                'browser' => $agent->browser() ? $agent->browser() . ' ' . $agent->version($agent->browser()) : 'Unknown',
+                'os' => $agent->platform() ? $agent->platform().' '.$agent->version($agent->platform()) : 'Unknown',
+                'browser' => $agent->browser() ? $agent->browser().' '.$agent->version($agent->browser()) : 'Unknown',
                 'is_trusted' => false,
             ]
         );

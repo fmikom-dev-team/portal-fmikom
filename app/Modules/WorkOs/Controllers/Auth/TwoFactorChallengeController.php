@@ -3,13 +3,13 @@
 namespace App\Modules\WorkOs\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-
-use Illuminate\Http\Request;
-use App\Modules\WorkOs\Services\AuthPlatform\MFAEngine;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Auth\AuthAuditLog;
 use App\Models\User;
-use Laravel\Fortify\Http\Responses\TwoFactorLoginResponse;
+use App\Modules\WorkOs\Services\AuthPlatform\MFAEngine;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Laravel\Fortify\Http\Responses\TwoFactorLoginResponse;
 
 class TwoFactorChallengeController extends Controller
 {
@@ -58,7 +58,7 @@ class TwoFactorChallengeController extends Controller
                 Auth::login($user, $request->session()->get('login.remember', false));
 
                 // Log the success audit event
-                \App\Models\Auth\AuthAuditLog::log('auth.login.success', $user->id, ['mfa_used' => true]);
+                AuthAuditLog::log('auth.login.success', $user->id, ['mfa_used' => true]);
 
                 $request->session()->regenerate();
 

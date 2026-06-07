@@ -2,9 +2,9 @@
 
 namespace App\Modules\WorkOs\Services\Pipes;
 
+use App\Jobs\Pipes\ProcessConnectionSync;
 use App\Models\Pipes\PipeConnection;
 use App\Models\Pipes\PipeSyncLog;
-use App\Jobs\Pipes\ProcessConnectionSync;
 use Illuminate\Support\Facades\Log;
 
 class SyncEngine
@@ -21,6 +21,7 @@ class SyncEngine
 
         if ($activeSync) {
             Log::info("Pipes SyncEngine: Sync already running for connection {$connection->id}");
+
             return false;
         }
 
@@ -31,7 +32,7 @@ class SyncEngine
                 ->where('status', 'completed')
                 ->latest('completed_at')
                 ->first();
-            
+
             $checkpoint = $lastSuccess ? $lastSuccess->sync_checkpoint : null;
         }
 
@@ -78,7 +79,7 @@ class SyncEngine
         $syncLog->update([
             'status' => 'failed',
             'completed_at' => now(),
-            'error_message' => $exception->getMessage() . "\n" . $exception->getTraceAsString(),
+            'error_message' => $exception->getMessage()."\n".$exception->getTraceAsString(),
             'latency_ms' => now()->diffInMilliseconds($syncLog->started_at),
         ]);
 

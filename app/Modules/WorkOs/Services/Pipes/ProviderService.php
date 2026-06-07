@@ -15,9 +15,9 @@ class ProviderService
         $query = PipeProvider::query();
 
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('slug', 'like', "%{$search}%");
+                    ->orWhere('slug', 'like', "%{$search}%");
             });
         }
 
@@ -34,7 +34,7 @@ class ProviderService
     public function createProvider(array $data)
     {
         $data['slug'] = Str::slug($data['name']);
-        
+
         // Defaults
         $data['status'] = $data['status'] ?? 'disabled';
         $data['oauth_type'] = $data['oauth_type'] ?? 'oauth2';
@@ -52,6 +52,7 @@ class ProviderService
         }
 
         $provider->update($data);
+
         return $provider;
     }
 }

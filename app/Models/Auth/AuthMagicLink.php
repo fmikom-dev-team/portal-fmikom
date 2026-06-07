@@ -3,7 +3,6 @@
 namespace App\Models\Auth;
 
 use App\Models\User;
-
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,8 +20,8 @@ class AuthMagicLink extends Model
     ];
 
     protected $casts = [
-        'is_used'    => 'boolean',
-        'used_at'    => 'datetime',
+        'is_used' => 'boolean',
+        'used_at' => 'datetime',
         'expires_at' => 'datetime',
     ];
 
@@ -38,6 +37,6 @@ class AuthMagicLink extends Model
 
     public function isValid(): bool
     {
-        return !$this->is_used && !$this->isExpired();
+        return ! $this->is_used && ! $this->isExpired();
     }
 }

@@ -23,6 +23,7 @@ class RefreshExpiredOAuthTokens implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public int $backoff = 60; // seconds between retries
 
     public function handle(TokenRefreshService $service): void

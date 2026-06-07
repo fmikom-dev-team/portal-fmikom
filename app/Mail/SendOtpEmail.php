@@ -2,20 +2,23 @@
 
 namespace App\Mail;
 
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use App\Models\User;
 
 class SendOtpEmail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
     public string $otpCode;
+
     public string $userName;
+
     public string $userEmail;
 
     /**
@@ -24,9 +27,9 @@ class SendOtpEmail extends Mailable implements ShouldQueue
      */
     public function __construct(User $user, string $otpCode)
     {
-        $this->userName  = $user->name;
+        $this->userName = $user->name;
         $this->userEmail = $user->email;
-        $this->otpCode   = $otpCode;
+        $this->otpCode = $otpCode;
     }
 
     /**
@@ -53,7 +56,7 @@ class SendOtpEmail extends Mailable implements ShouldQueue
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

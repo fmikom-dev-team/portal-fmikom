@@ -2,11 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\UserModuleRole;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use App\Models\UserModuleRole;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureModuleAccess
@@ -28,12 +28,13 @@ class EnsureModuleAccess
 
         // 1. Tentukan module dan role dari URL param atau session (fallback)
         $moduleCode = strtoupper($request->route('moduleCode') ?? session('active_module', ''));
-        $roleSlug   = $request->route('roleSlug')   ?? session('active_role', '');
+        $roleSlug = $request->route('roleSlug') ?? session('active_role', '');
 
-        if (!$moduleCode || !$roleSlug) {
+        if (! $moduleCode || ! $roleSlug) {
             if ($request->inertia()) {
                 return response()->json(['message' => 'Konteks modul tidak ditemukan.'], 422);
             }
+
             return redirect()->route('dashboard')
                 ->with('error', 'Silakan pilih modul dan role terlebih dahulu.');
         }
@@ -42,7 +43,7 @@ class EnsureModuleAccess
         $assignment = $this->getAssignment($user->id, $moduleCode, $roleSlug);
 
         // 3. Fallback ke user_type jika tidak ada assignment
-        if (!$assignment) {
+        if (! $assignment) {
             $userType = $user->user_type ?? optional($user->role)->slug ?? null;
 
             if ($roleSlug !== $userType) {
@@ -59,18 +60,19 @@ class EnsureModuleAccess
         if ($assignment && $assignment->expires_at && $assignment->expires_at->isPast()) {
             Cache::forget("module_access_{$user->id}_{$moduleCode}_{$roleSlug}");
             session()->forget(['active_module', 'active_role', 'active_module_at']);
+
             return redirect()->route('dashboard')
                 ->with('error', 'Akses role ini telah kedaluwarsa. Silakan pilih ulang.');
         }
 
         // 5. Cek role spesifik yang diizinkan (dari argumen middleware di route)
-        if (!empty($allowedRoles) && !in_array($roleSlug, $allowedRoles)) {
+        if (! empty($allowedRoles) && ! in_array($roleSlug, $allowedRoles)) {
             abort(403, "Role '{$roleSlug}' tidak memiliki izin di halaman ini.");
         }
 
         // 6. Inject context ke request agar controller tidak perlu baca session langsung
         $request->attributes->set('resolved_module', $moduleCode);
-        $request->attributes->set('resolved_role',   $roleSlug);
+        $request->attributes->set('resolved_role', $roleSlug);
 
         return $next($request);
     }
@@ -84,10 +86,10 @@ class EnsureModuleAccess
         return Cache::remember(
             "module_access_{$userId}_{$moduleCode}_{$roleSlug}",
             now()->addMinutes(5),
-            fn() => UserModuleRole::where('user_id', $userId)
+            fn () => UserModuleRole::where('user_id', $userId)
                 ->where('is_active', true)
-                ->whereHas('module', fn($q) => $q->where('code', $moduleCode)->where('is_active', true))
-                ->whereHas('role',   fn($q) => $q->where('slug', $roleSlug))
+                ->whereHas('module', fn ($q) => $q->where('code', $moduleCode)->where('is_active', true))
+                ->whereHas('role', fn ($q) => $q->where('slug', $roleSlug))
                 ->with(['module', 'role'])
                 ->first()
         );

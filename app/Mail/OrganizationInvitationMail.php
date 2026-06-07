@@ -13,10 +13,15 @@ class OrganizationInvitationMail extends Mailable
     use Queueable, SerializesModels;
 
     public string $invitedEmail;
+
     public string $organizationName;
+
     public string $role;
+
     public string $invitedBy;
+
     public string $acceptUrl;
+
     public string $expiresAt;
 
     public function __construct(
@@ -27,12 +32,12 @@ class OrganizationInvitationMail extends Mailable
         string $acceptUrl,
         string $expiresAt,
     ) {
-        $this->invitedEmail     = $invitedEmail;
+        $this->invitedEmail = $invitedEmail;
         $this->organizationName = $organizationName;
-        $this->role             = $role;
-        $this->invitedBy        = $invitedBy;
-        $this->acceptUrl        = $acceptUrl;
-        $this->expiresAt        = $expiresAt;
+        $this->role = $role;
+        $this->invitedBy = $invitedBy;
+        $this->acceptUrl = $acceptUrl;
+        $this->expiresAt = $expiresAt;
     }
 
     public function envelope(): Envelope

@@ -4,6 +4,4 @@ namespace App\Exceptions;
 
 use Exception;
 
-class PasskeyException extends Exception
-{
-}
+class PasskeyException extends Exception {}

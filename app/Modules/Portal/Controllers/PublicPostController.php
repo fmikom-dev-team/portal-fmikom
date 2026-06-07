@@ -4,16 +4,16 @@ namespace App\Modules\Portal\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Portal\PortalPost;
-use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class PublicPostController extends Controller
 {
     public function show($slug)
     {
-        $post = PortalPost::with(['category', 'user:id,name,foto_path', 'comments' => function($query) {
-                $query->where('status', 'approved')->latest();
-            }])
+        $post = PortalPost::with(['category', 'user:id,name,foto_path', 'comments' => function ($query) {
+            $query->where('status', 'approved')->latest();
+        }])
             ->where('slug', $slug)
             ->whereIn('status', [PortalPost::STATUS_PUBLISHED, PortalPost::STATUS_SCHEDULED])
             ->where('published_at', '<=', now())
@@ -76,7 +76,7 @@ class PublicPostController extends Controller
             ->where('published_at', '<=', now())
             ->when($search, function ($query, $search) {
                 $query->where('title', 'like', "%{$search}%")
-                      ->orWhere('content', 'like', "%{$search}%");
+                    ->orWhere('content', 'like', "%{$search}%");
             })
             ->latest()
             ->paginate(12)
@@ -84,7 +84,7 @@ class PublicPostController extends Controller
 
         return Inertia::render('Modules/Portal/Post/Index', [
             'posts' => $posts,
-            'filters' => $request->only(['search'])
+            'filters' => $request->only(['search']),
         ]);
     }
 }

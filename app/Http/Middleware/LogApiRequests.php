@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Audit\AuditApiRequest;
 use Closure;
 use Illuminate\Http\Request;
-use App\Models\Audit\AuditApiRequest;
 use Symfony\Component\HttpFoundation\Response;
 
 class LogApiRequests
@@ -12,12 +12,12 @@ class LogApiRequests
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
         $startTime = microtime(true);
-        
+
         $response = $next($request);
 
         $endTime = microtime(true);

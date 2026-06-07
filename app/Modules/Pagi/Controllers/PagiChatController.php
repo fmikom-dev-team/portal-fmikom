@@ -2,17 +2,20 @@
 
 namespace App\Modules\Pagi\Controllers;
 
-use App\Http\Controllers\Controller;
-
-use App\Events\PagiMessageSent;
-use App\Events\PagiMessagesRead;
 use App\Events\PagiMessageDeleted;
 use App\Events\PagiMessageEdited;
 use App\Events\PagiMessageReacted;
+use App\Events\PagiMessageSent;
+use App\Events\PagiMessagesRead;
+use App\Events\PagiUnreadCountUpdated;
+use App\Http\Controllers\Controller;
+use App\Models\Module;
 use App\Models\Pagi\PagiMessage;
 use App\Models\User;
+use App\Models\UserModuleRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class PagiChatController extends Controller
@@ -28,11 +31,11 @@ class PagiChatController extends Controller
         // 1. If 'chat' query param exists, ensure it is added to active_chats
         $chatPartnerId = $request->query('chat');
         if ($chatPartnerId) {
-            $partnerId = (int)$chatPartnerId;
+            $partnerId = (int) $chatPartnerId;
             if ($partnerId > 0 && User::where('id', $partnerId)->exists()) {
                 $metadata = $user->metadata ?? [];
                 $activeChats = $metadata['active_chats'] ?? [];
-                if (!in_array($partnerId, $activeChats)) {
+                if (! in_array($partnerId, $activeChats)) {
                     $activeChats[] = $partnerId;
                     $metadata['active_chats'] = $activeChats;
                     $user->update(['metadata' => $metadata]);
@@ -44,17 +47,17 @@ class PagiChatController extends Controller
         // 2. Fetch partner IDs from message history (excluding cleared messages)
         $clearedChats = $user->metadata['cleared_chats'] ?? [];
         $partnerIdsQuery = PagiMessage::where(function ($q) use ($user) {
-                $q->where('sender_id', $user->id)
-                  ->orWhere('receiver_id', $user->id);
-            });
+            $q->where('sender_id', $user->id)
+                ->orWhere('receiver_id', $user->id);
+        });
 
-        if (!empty($clearedChats)) {
+        if (! empty($clearedChats)) {
             $partnerIdsQuery->whereNot(function ($q) use ($clearedChats, $user) {
                 foreach ($clearedChats as $partnerId => $clearedAt) {
-                    $convId = PagiMessage::conversationId($user->id, (int)$partnerId);
+                    $convId = PagiMessage::conversationId($user->id, (int) $partnerId);
                     $q->orWhere(function ($sq) use ($convId, $clearedAt) {
                         $sq->where('conversation_id', $convId)
-                           ->where('created_at', '<=', $clearedAt);
+                            ->where('created_at', '<=', $clearedAt);
                     });
                 }
             });
@@ -75,39 +78,39 @@ class PagiChatController extends Controller
         $unreadCountsQuery = PagiMessage::where('receiver_id', $user->id)
             ->whereNull('read_at');
 
-        if (!empty($clearedChats)) {
+        if (! empty($clearedChats)) {
             $unreadCountsQuery->whereNot(function ($q) use ($clearedChats, $user) {
                 foreach ($clearedChats as $partnerId => $clearedAt) {
-                    $convId = PagiMessage::conversationId($user->id, (int)$partnerId);
+                    $convId = PagiMessage::conversationId($user->id, (int) $partnerId);
                     $q->orWhere(function ($sq) use ($convId, $clearedAt) {
                         $sq->where('conversation_id', $convId)
-                           ->where('created_at', '<=', $clearedAt);
+                            ->where('created_at', '<=', $clearedAt);
                     });
                 }
             });
         }
 
         $unreadCounts = $unreadCountsQuery->groupBy('conversation_id')
-            ->select('conversation_id', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
+            ->select('conversation_id', DB::raw('count(*) as count'))
             ->pluck('count', 'conversation_id');
 
         // 2. Fetch last messages in bulk using groupwise max ID lookup (excluding cleared messages)
         $userId = $user->id;
         $lastMessagesQuery = PagiMessage::whereIn('id', function ($query) use ($userId, $clearedChats) {
-            $query->select(\Illuminate\Support\Facades\DB::raw('MAX(id)'))
+            $query->select(DB::raw('MAX(id)'))
                 ->from('pagi_messages')
                 ->where(function ($q) use ($userId) {
                     $q->where('sender_id', $userId)
-                      ->orWhere('receiver_id', $userId);
+                        ->orWhere('receiver_id', $userId);
                 });
 
-            if (!empty($clearedChats)) {
+            if (! empty($clearedChats)) {
                 $query->whereNot(function ($q) use ($clearedChats, $userId) {
                     foreach ($clearedChats as $partnerId => $clearedAt) {
-                        $convId = PagiMessage::conversationId($userId, (int)$partnerId);
+                        $convId = PagiMessage::conversationId($userId, (int) $partnerId);
                         $q->orWhere(function ($sq) use ($convId, $clearedAt) {
                             $sq->where('conversation_id', $convId)
-                               ->where('created_at', '<=', $clearedAt);
+                                ->where('created_at', '<=', $clearedAt);
                         });
                     }
                 });
@@ -127,38 +130,38 @@ class PagiChatController extends Controller
                 $lastMsg = $lastMessages->get($convId);
                 $unread = $unreadCounts->get($convId, 0);
 
-                $blockedByMe = in_array((int)$partner->id, $user->metadata['blocked_users'] ?? []);
-                $blockedMe = in_array((int)$user->id, $partner->metadata['blocked_users'] ?? []);
-                
+                $blockedByMe = in_array((int) $partner->id, $user->metadata['blocked_users'] ?? []);
+                $blockedMe = in_array((int) $user->id, $partner->metadata['blocked_users'] ?? []);
+
                 $pinnedChats = $user->metadata['pinned_chats'] ?? [];
                 $archivedChats = $user->metadata['archived_chats'] ?? [];
                 $unreadChats = $user->metadata['unread_chats'] ?? [];
 
-                $isPinned = in_array((int)$partner->id, $pinnedChats);
-                $isArchived = in_array((int)$partner->id, $archivedChats);
-                $isManualUnread = in_array((int)$partner->id, $unreadChats);
+                $isPinned = in_array((int) $partner->id, $pinnedChats);
+                $isArchived = in_array((int) $partner->id, $archivedChats);
+                $isManualUnread = in_array((int) $partner->id, $unreadChats);
 
                 // Skip this partner if they have no visible messages (all deleted for me or cleared)
                 // AND they are not in active_chats
-                if (!$lastMsg && !in_array((int)$partner->id, ($user->metadata['active_chats'] ?? []))) {
+                if (! $lastMsg && ! in_array((int) $partner->id, ($user->metadata['active_chats'] ?? []))) {
                     return null;
                 }
 
-                $lastMessageIsDeleted = $lastMsg ? (bool)$lastMsg->is_deleted : false;
+                $lastMessageIsDeleted = $lastMsg ? (bool) $lastMsg->is_deleted : false;
                 $lastMessageIsDeletedForMe = false;
                 if ($lastMsg && $lastMsg->deleted_for) {
                     $deletedFor = array_map('intval', $lastMsg->deleted_for);
-                    if (in_array((int)$user->id, $deletedFor, true)) {
+                    if (in_array((int) $user->id, $deletedFor, true)) {
                         $lastMessageIsDeletedForMe = true;
                     }
                 }
 
                 return [
-                    'id'        => $partner->id,
-                    'name'      => $partner->name,
+                    'id' => $partner->id,
+                    'name' => $partner->name,
                     'foto_path' => $partner->foto_path,
                     'last_seen_at' => $partner->last_seen_at?->toISOString(),
-                    'metadata'  => $partner->metadata,
+                    'metadata' => $partner->metadata,
                     'last_message' => ($lastMessageIsDeleted || $lastMessageIsDeletedForMe) ? '' : $lastMsg?->body,
                     'last_message_at' => $lastMsg?->created_at?->toISOString(),
                     'last_message_sender_id' => $lastMsg?->sender_id,
@@ -179,8 +182,8 @@ class PagiChatController extends Controller
         return Inertia::render('Modules/Pagi/User/Messages', [
             'conversations' => $conversations,
             'authUser' => [
-                'id'       => $user->id,
-                'name'     => $user->name,
+                'id' => $user->id,
+                'name' => $user->name,
                 'foto_path' => $user->foto_path ?? null,
                 'metadata' => $user->metadata,
             ],
@@ -193,7 +196,7 @@ class PagiChatController extends Controller
     public function show(Request $request, User $partner)
     {
         $user = Auth::user();
-        if ((int)$partner->id === (int)$user->id) {
+        if ((int) $partner->id === (int) $user->id) {
             abort(403, 'Anda tidak dapat mengirim pesan kepada diri sendiri.');
         }
 
@@ -203,7 +206,7 @@ class PagiChatController extends Controller
             ->with(['sender:id,name,foto_path', 'parent.sender:id,name']);
 
         if ($cursorId) {
-            $query->where('id', '<', (int)$cursorId);
+            $query->where('id', '<', (int) $cursorId);
         }
 
         // Apply cleared_chats check
@@ -222,7 +225,7 @@ class PagiChatController extends Controller
                 $isDeletedForMe = false;
                 if ($msg->deleted_for) {
                     $deletedFor = array_map('intval', $msg->deleted_for);
-                    if (in_array((int)$user->id, $deletedFor, true)) {
+                    if (in_array((int) $user->id, $deletedFor, true)) {
                         $isDeletedForMe = true;
                     }
                 }
@@ -235,7 +238,7 @@ class PagiChatController extends Controller
                     $parentIsDeletedForMe = false;
                     if ($msg->parent->deleted_for) {
                         $parentDeletedFor = array_map('intval', $msg->parent->deleted_for);
-                        if (in_array((int)$user->id, $parentDeletedFor, true)) {
+                        if (in_array((int) $user->id, $parentDeletedFor, true)) {
                             $parentIsDeletedForMe = true;
                         }
                     }
@@ -247,14 +250,14 @@ class PagiChatController extends Controller
                 }
 
                 return [
-                    'id'         => $msg->id,
-                    'sender_id'  => $msg->sender_id,
-                    'body'       => ($isDeleted || $isDeletedForMe) ? '' : $msg->body,
+                    'id' => $msg->id,
+                    'sender_id' => $msg->sender_id,
+                    'body' => ($isDeleted || $isDeletedForMe) ? '' : $msg->body,
                     'is_deleted' => $isDeleted,
                     'is_deleted_for_me' => $isDeletedForMe,
-                    'edited_at'  => $msg->edited_at?->toISOString(),
-                    'parent_id'  => $msg->parent_id,
-                    'parent'     => $msg->parent ? [
+                    'edited_at' => $msg->edited_at?->toISOString(),
+                    'parent_id' => $msg->parent_id,
+                    'parent' => $msg->parent ? [
                         'id' => $msg->parent->id,
                         'body' => $parentBody,
                         'sender' => [
@@ -262,12 +265,12 @@ class PagiChatController extends Controller
                             'name' => $msg->parent->sender->name,
                         ],
                     ] : null,
-                    'read_at'    => $msg->read_at ? $msg->read_at->toISOString() : null,
+                    'read_at' => $msg->read_at ? $msg->read_at->toISOString() : null,
                     'created_at' => $msg->created_at->toISOString(),
-                    'reactions'  => $msg->reactions ?? [],
+                    'reactions' => $msg->reactions ?? [],
                     'sender' => [
-                        'id'        => $msg->sender->id,
-                        'name'      => $msg->sender->name,
+                        'id' => $msg->sender->id,
+                        'name' => $msg->sender->name,
                         'foto_path' => $msg->sender->foto_path,
                     ],
                 ];
@@ -288,30 +291,30 @@ class PagiChatController extends Controller
         // Clear manual unread status in metadata on the server
         $metadata = $user->metadata ?? [];
         $unreadChats = $metadata['unread_chats'] ?? [];
-        if (in_array((int)$partner->id, $unreadChats)) {
-            $unreadChats = array_values(array_diff($unreadChats, [(int)$partner->id]));
+        if (in_array((int) $partner->id, $unreadChats)) {
+            $unreadChats = array_values(array_diff($unreadChats, [(int) $partner->id]));
             $metadata['unread_chats'] = $unreadChats;
             $user->update(['metadata' => $metadata]);
         }
 
         if ($updatedCount > 0) {
             $conversationId = PagiMessage::conversationId($user->id, $partner->id);
-            broadcast(new \App\Events\PagiMessagesRead($conversationId, $user->id, $now->toISOString(), (int)$partner->id))->toOthers();
+            broadcast(new PagiMessagesRead($conversationId, $user->id, $now->toISOString(), (int) $partner->id))->toOthers();
             $myUnreadCount = PagiMessage::where('receiver_id', $user->id)->whereNull('read_at')->count();
-            broadcast(new \App\Events\PagiUnreadCountUpdated($user->id, $myUnreadCount));
+            broadcast(new PagiUnreadCountUpdated($user->id, $myUnreadCount));
         }
 
-        $blockedByMe = in_array((int)$partner->id, $user->metadata['blocked_users'] ?? []);
-        $blockedMe = in_array((int)$user->id, $partner->metadata['blocked_users'] ?? []);
+        $blockedByMe = in_array((int) $partner->id, $user->metadata['blocked_users'] ?? []);
+        $blockedMe = in_array((int) $user->id, $partner->metadata['blocked_users'] ?? []);
 
         return response()->json([
             'messages' => $messages,
-            'partner'  => [
-                'id'        => $partner->id,
-                'name'      => $partner->name,
+            'partner' => [
+                'id' => $partner->id,
+                'name' => $partner->name,
                 'foto_path' => $partner->foto_path ?? null,
                 'last_seen_at' => $partner->last_seen_at?->toISOString(),
-                'metadata'  => $partner->metadata,
+                'metadata' => $partner->metadata,
             ],
             'conversation_id' => PagiMessage::conversationId($user->id, $partner->id),
             'is_blocked_by_me' => $blockedByMe,
@@ -325,9 +328,9 @@ class PagiChatController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'receiver_id' => ['required', 'integer', 'exists:users,id', 'different:' . Auth::id()],
-            'parent_id'   => ['nullable', 'integer', 'exists:pagi_messages,id'],
-            'body'        => ['required', 'string', 'max:4000'],
+            'receiver_id' => ['required', 'integer', 'exists:users,id', 'different:'.Auth::id()],
+            'parent_id' => ['nullable', 'integer', 'exists:pagi_messages,id'],
+            'body' => ['required', 'string', 'max:4000'],
         ]);
 
         $user = Auth::user();
@@ -347,11 +350,11 @@ class PagiChatController extends Controller
 
         $message = PagiMessage::create([
             'conversation_id' => PagiMessage::conversationId($user->id, $receiverId),
-            'sender_id'       => $user->id,
-            'receiver_id'     => $receiverId,
-            'parent_id'       => $request->parent_id,
-            'body'            => trim($request->body),
-            'reactions'       => [],
+            'sender_id' => $user->id,
+            'receiver_id' => $receiverId,
+            'parent_id' => $request->parent_id,
+            'body' => trim($request->body),
+            'reactions' => [],
         ]);
 
         $message->load(['sender:id,name,foto_path', 'parent.sender:id,name']);
@@ -359,7 +362,7 @@ class PagiChatController extends Controller
         // Ensure receiver is in sender's active chats metadata
         $senderMetadata = $user->metadata ?? [];
         $senderActiveChats = $senderMetadata['active_chats'] ?? [];
-        if (!in_array($receiverId, $senderActiveChats)) {
+        if (! in_array($receiverId, $senderActiveChats)) {
             $senderActiveChats[] = $receiverId;
             $senderMetadata['active_chats'] = $senderActiveChats;
             $user->update(['metadata' => $senderMetadata]);
@@ -368,7 +371,7 @@ class PagiChatController extends Controller
         // Ensure sender is in receiver's active chats metadata
         $receiverMetadata = $receiver->metadata ?? [];
         $receiverActiveChats = $receiverMetadata['active_chats'] ?? [];
-        if (!in_array($user->id, $receiverActiveChats)) {
+        if (! in_array($user->id, $receiverActiveChats)) {
             $receiverActiveChats[] = $user->id;
             $receiverMetadata['active_chats'] = $receiverActiveChats;
             $receiver->update(['metadata' => $receiverMetadata]);
@@ -378,14 +381,14 @@ class PagiChatController extends Controller
 
         // Broadcast receiver's updated unread messages count
         $receiverUnreadCount = PagiMessage::where('receiver_id', $receiverId)->whereNull('read_at')->count();
-        broadcast(new \App\Events\PagiUnreadCountUpdated($receiverId, $receiverUnreadCount))->toOthers();
+        broadcast(new PagiUnreadCountUpdated($receiverId, $receiverUnreadCount))->toOthers();
 
         return response()->json([
-            'id'         => $message->id,
-            'sender_id'  => $message->sender_id,
-            'body'       => $message->body,
-            'parent_id'  => $message->parent_id,
-            'parent'     => $message->parent ? [
+            'id' => $message->id,
+            'sender_id' => $message->sender_id,
+            'body' => $message->body,
+            'parent_id' => $message->parent_id,
+            'parent' => $message->parent ? [
                 'id' => $message->parent->id,
                 'body' => $message->parent->body,
                 'sender' => [
@@ -393,12 +396,12 @@ class PagiChatController extends Controller
                     'name' => $message->parent->sender->name,
                 ],
             ] : null,
-            'read_at'    => null,
+            'read_at' => null,
             'created_at' => $message->created_at->toISOString(),
-            'reactions'  => [],
+            'reactions' => [],
             'sender' => [
-                'id'        => $message->sender->id,
-                'name'      => $message->sender->name,
+                'id' => $message->sender->id,
+                'name' => $message->sender->name,
                 'foto_path' => $message->sender->foto_path,
             ],
         ], 201);
@@ -435,12 +438,12 @@ class PagiChatController extends Controller
         if ($updatedCount > 0) {
             broadcast(new PagiMessagesRead($conversationId, $user->id, $now->toISOString(), $partnerId))->toOthers();
             $myUnreadCount = PagiMessage::where('receiver_id', $user->id)->whereNull('read_at')->count();
-            broadcast(new \App\Events\PagiUnreadCountUpdated($user->id, $myUnreadCount));
+            broadcast(new PagiUnreadCountUpdated($user->id, $myUnreadCount));
         }
 
         return response()->json([
             'success' => true,
-            'read_at' => $now->toISOString()
+            'read_at' => $now->toISOString(),
         ]);
     }
 
@@ -482,7 +485,7 @@ class PagiChatController extends Controller
         if (isset($reactions[$emoji])) {
             $userIds = $reactions[$emoji];
             if (in_array($user->id, $userIds)) {
-                $reactions[$emoji] = array_values(array_filter($userIds, fn($id) => $id !== $user->id));
+                $reactions[$emoji] = array_values(array_filter($userIds, fn ($id) => $id !== $user->id));
                 if (empty($reactions[$emoji])) {
                     unset($reactions[$emoji]);
                 }
@@ -511,7 +514,7 @@ class PagiChatController extends Controller
         $user = Auth::user();
 
         // Hanya sender yang boleh edit
-        if ((int)$message->sender_id !== (int)$user->id) {
+        if ((int) $message->sender_id !== (int) $user->id) {
             return response()->json(['error' => 'Unauthorized. Hanya pengirim yang dapat mengedit pesan.'], 403);
         }
 
@@ -529,7 +532,7 @@ class PagiChatController extends Controller
         $request->validate(['body' => 'required|string|max:5000']);
 
         $message->update([
-            'body'      => $request->body,
+            'body' => $request->body,
             'edited_at' => now(),
         ]);
 
@@ -541,8 +544,8 @@ class PagiChatController extends Controller
         ))->toOthers();
 
         return response()->json([
-            'success'   => true,
-            'body'      => $message->body,
+            'success' => true,
+            'body' => $message->body,
             'edited_at' => $message->edited_at->toISOString(),
         ]);
     }
@@ -558,9 +561,9 @@ class PagiChatController extends Controller
             'delete_type' => ['required', 'in:for_me,for_everyone'],
         ]);
 
-        $user       = Auth::user();
-        $userId     = (int) $user->id;
-        $senderId   = (int) $message->sender_id;
+        $user = Auth::user();
+        $userId = (int) $user->id;
+        $senderId = (int) $message->sender_id;
         $receiverId = (int) $message->receiver_id;
 
         // Hanya sender atau receiver yang boleh menghapus
@@ -568,9 +571,9 @@ class PagiChatController extends Controller
             return response()->json(['error' => 'Unauthorized. Anda bukan bagian dari percakapan ini.'], 403);
         }
 
-        $messageId      = $message->id;
+        $messageId = $message->id;
         $conversationId = $message->conversation_id;
-        $deleteType     = $request->delete_type;
+        $deleteType = $request->delete_type;
 
         if ($deleteType === 'for_everyone') {
             // Hanya sender yang boleh hapus untuk semua orang
@@ -580,9 +583,9 @@ class PagiChatController extends Controller
 
             // Tandai is_deleted → tampil placeholder "Pesan ini telah dihapus" di kedua sisi
             $message->update([
-                'body'       => '',
+                'body' => '',
                 'is_deleted' => true,
-                'edited_at'  => null,
+                'edited_at' => null,
             ]);
 
             // Broadcast ke partner agar ikut update tampilannya
@@ -590,15 +593,15 @@ class PagiChatController extends Controller
         } else {
             // delete_type=for_me → tambah ke deleted_for saja, pihak lain tidak terpengaruh
             $deletedFor = array_map('intval', $message->deleted_for ?? []);
-            if (!in_array($userId, $deletedFor, true)) {
+            if (! in_array($userId, $deletedFor, true)) {
                 $deletedFor[] = $userId;
                 $message->update(['deleted_for' => $deletedFor]);
             }
         }
 
         return response()->json([
-            'success'     => true,
-            'message_id'  => $messageId,
+            'success' => true,
+            'message_id' => $messageId,
             'delete_type' => $deleteType,
         ]);
     }
@@ -637,7 +640,7 @@ class PagiChatController extends Controller
     public function blockUser(Request $request)
     {
         $request->validate([
-            'partner_id' => ['required', 'integer', 'exists:users,id', 'different:' . Auth::id()],
+            'partner_id' => ['required', 'integer', 'exists:users,id', 'different:'.Auth::id()],
         ]);
 
         $user = Auth::user();
@@ -645,7 +648,7 @@ class PagiChatController extends Controller
         $metadata = $user->metadata ?? [];
         $blocked = $metadata['blocked_users'] ?? [];
 
-        if (!in_array($partnerId, $blocked)) {
+        if (! in_array($partnerId, $blocked)) {
             $blocked[] = $partnerId;
         }
 
@@ -661,7 +664,7 @@ class PagiChatController extends Controller
     public function unblockUser(Request $request)
     {
         $request->validate([
-            'partner_id' => ['required', 'integer', 'exists:users,id', 'different:' . Auth::id()],
+            'partner_id' => ['required', 'integer', 'exists:users,id', 'different:'.Auth::id()],
         ]);
 
         $user = Auth::user();
@@ -669,7 +672,7 @@ class PagiChatController extends Controller
         $metadata = $user->metadata ?? [];
         $blocked = $metadata['blocked_users'] ?? [];
 
-        $blocked = array_filter($blocked, fn($id) => (int)$id !== $partnerId);
+        $blocked = array_filter($blocked, fn ($id) => (int) $id !== $partnerId);
 
         $metadata['blocked_users'] = array_values($blocked);
         $user->update(['metadata' => $metadata]);
@@ -684,12 +687,12 @@ class PagiChatController extends Controller
     {
         $user = Auth::user();
         // Get all users in PAGI module except the auth user
-        $pagiModule = \App\Models\Module::where('code', 'PAGI')->first();
-        if (!$pagiModule) {
+        $pagiModule = Module::where('code', 'PAGI')->first();
+        if (! $pagiModule) {
             return response()->json([]);
         }
 
-        $userIds = \App\Models\UserModuleRole::where('module_id', $pagiModule->id)
+        $userIds = UserModuleRole::where('module_id', $pagiModule->id)
             ->where('user_id', '!=', $user->id)
             ->where('is_active', true)
             ->pluck('user_id')
@@ -703,13 +706,13 @@ class PagiChatController extends Controller
             ->select('id', 'name', 'foto_path')
             ->orderBy('name')
             ->get()
-            ->map(fn($u) => [
+            ->map(fn ($u) => [
                 'id' => $u->id,
                 'name' => $u->name,
                 'foto_path' => $u->foto_path,
-                'avatar' => $u->foto_path 
-                    ? (str_starts_with($u->foto_path, 'http') ? $u->foto_path : '/storage/' . $u->foto_path)
-                    : 'https://api.dicebear.com/7.x/initials/svg?seed=' . urlencode($u->name) . '&backgroundColor=3b82f6',
+                'avatar' => $u->foto_path
+                    ? (str_starts_with($u->foto_path, 'http') ? $u->foto_path : '/storage/'.$u->foto_path)
+                    : 'https://api.dicebear.com/7.x/initials/svg?seed='.urlencode($u->name).'&backgroundColor=3b82f6',
             ]);
 
         return response()->json($contacts);
@@ -783,7 +786,7 @@ class PagiChatController extends Controller
         $user = Auth::user();
         $partnerId = (int) $request->partner_id;
         $metadata = $user->metadata ?? [];
-        
+
         $convId = PagiMessage::conversationId($user->id, $partnerId);
         $hasUnread = PagiMessage::where('conversation_id', $convId)
             ->where('receiver_id', $user->id)
@@ -803,10 +806,10 @@ class PagiChatController extends Controller
             $unreadChats = array_values(array_diff($unreadChats, [$partnerId]));
             $status = 'read';
 
-            broadcast(new \App\Events\PagiMessagesRead($convId, $user->id, $now->toISOString(), $partnerId))->toOthers();
+            broadcast(new PagiMessagesRead($convId, $user->id, $now->toISOString(), $partnerId))->toOthers();
         } else {
             // Mark as unread
-            if (!in_array($partnerId, $unreadChats)) {
+            if (! in_array($partnerId, $unreadChats)) {
                 $unreadChats[] = $partnerId;
             }
             $status = 'unread';
@@ -817,7 +820,7 @@ class PagiChatController extends Controller
 
         // Broadcast updated unread count for this user
         $myUnreadCount = PagiMessage::where('receiver_id', $user->id)->whereNull('read_at')->count();
-        broadcast(new \App\Events\PagiUnreadCountUpdated($user->id, $myUnreadCount));
+        broadcast(new PagiUnreadCountUpdated($user->id, $myUnreadCount));
 
         return response()->json(['success' => true, 'status' => $status]);
     }
@@ -865,7 +868,7 @@ class PagiChatController extends Controller
 
         // Broadcast updated unread count for this user
         $myUnreadCount = PagiMessage::where('receiver_id', $user->id)->whereNull('read_at')->count();
-        broadcast(new \App\Events\PagiUnreadCountUpdated($user->id, $myUnreadCount));
+        broadcast(new PagiUnreadCountUpdated($user->id, $myUnreadCount));
 
         return response()->json(['success' => true]);
     }

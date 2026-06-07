@@ -4,6 +4,7 @@ namespace App\Models\Portal;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class PortalSetting extends Model
 {
@@ -11,8 +12,8 @@ class PortalSetting extends Model
 
     protected static function booted()
     {
-        static::saved(fn () => \Illuminate\Support\Facades\Cache::forget('portal_settings'));
-        static::deleted(fn () => \Illuminate\Support\Facades\Cache::forget('portal_settings'));
+        static::saved(fn () => Cache::forget('portal_settings'));
+        static::deleted(fn () => Cache::forget('portal_settings'));
     }
 
     protected $fillable = ['key', 'value'];

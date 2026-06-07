@@ -4,8 +4,6 @@ namespace App\Modules\WorkOs\Services\MFA;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 /**
  * SMSService — SMS-based One-Time Password (OTP)
@@ -26,9 +24,12 @@ use Carbon\Carbon;
  */
 class SMSService
 {
-    protected int $otpLength      = 6;
-    protected int $ttlMinutes     = 10;
-    protected int $maxSends       = 3;
+    protected int $otpLength = 6;
+
+    protected int $ttlMinutes = 10;
+
+    protected int $maxSends = 3;
+
     protected int $sendWindowMins = 5;
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -43,7 +44,7 @@ class SMSService
     {
         $phone = $user->phone_number ?? null;
 
-        if (!$phone) {
+        if (! $phone) {
             throw new \Exception('User does not have a registered phone number.');
         }
 
@@ -84,17 +85,17 @@ class SMSService
     {
         $phone = $user->phone_number ?? null;
 
-        if (!$phone) {
+        if (! $phone) {
             throw new \Exception('No phone number registered for this user.');
         }
 
         $storedHash = Cache::get($this->otpCacheKey($phone));
 
-        if (!$storedHash) {
+        if (! $storedHash) {
             return false; // OTP expired or never sent
         }
 
-        if (!password_verify($code, $storedHash)) {
+        if (! password_verify($code, $storedHash)) {
             return false;
         }
 
@@ -111,13 +112,13 @@ class SMSService
     protected function dispatch(string $phone, string $otp): void
     {
         $gateway = config('services.sms.driver', 'vonage');
-        $message = config('app.name') . " verification code: {$otp}. Expires in {$this->ttlMinutes} minutes. Do not share this code.";
+        $message = config('app.name')." verification code: {$otp}. Expires in {$this->ttlMinutes} minutes. Do not share this code.";
 
         match ($gateway) {
-            'vonage'  => $this->sendViaVonage($phone, $message),
-            'twilio'  => $this->sendViaTwilio($phone, $message),
+            'vonage' => $this->sendViaVonage($phone, $message),
+            'twilio' => $this->sendViaTwilio($phone, $message),
             'aws_sns' => $this->sendViaAwsSns($phone, $message),
-            default   => $this->sendViaLog($phone, $message), // Local/testing fallback
+            default => $this->sendViaLog($phone, $message), // Local/testing fallback
         };
     }
 
@@ -181,11 +182,11 @@ class SMSService
 
     protected function otpCacheKey(string $phone): string
     {
-        return 'sms_otp_' . hash('sha256', $phone);
+        return 'sms_otp_'.hash('sha256', $phone);
     }
 
     protected function sendRateLimitKey(string $phone): string
     {
-        return 'sms_otp_rate_' . hash('sha256', $phone);
+        return 'sms_otp_rate_'.hash('sha256', $phone);
     }
 }

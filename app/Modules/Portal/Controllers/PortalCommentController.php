@@ -12,15 +12,16 @@ class PortalCommentController extends Controller
     public function index()
     {
         $comments = PortalComment::with('post:id,title')->latest()->get();
+
         return Inertia::render('Modules/Portal/Admin/Comments', [
-            'comments' => $comments
+            'comments' => $comments,
         ]);
     }
 
     public function update(Request $request, PortalComment $comment)
     {
         $validated = $request->validate([
-            'status' => 'required|in:pending,approved,spam'
+            'status' => 'required|in:pending,approved,spam',
         ]);
 
         $comment->update($validated);
@@ -31,6 +32,7 @@ class PortalCommentController extends Controller
     public function destroy(PortalComment $comment)
     {
         $comment->delete();
+
         return redirect()->back()->with('success', 'Comment deleted!');
     }
 }

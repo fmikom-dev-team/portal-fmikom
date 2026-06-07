@@ -2,9 +2,8 @@
 
 namespace App\Models\Magang;
 
-use App\Models\User;
 use App\Models\Surat\Surat;
-
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,7 +14,7 @@ class PendaftaranMagang extends Model
     protected $fillable = [
         'mahasiswa_id', 'perusahaan_id', 'dosen_pembimbing_id',
         'pembimbing_lapangan_id', 'surat_tugas_id', 'tanggal_mulai',
-        'tanggal_selesai', 'status'
+        'tanggal_selesai', 'status',
     ];
 
     protected $casts = [
@@ -71,6 +70,7 @@ class PendaftaranMagang extends Model
     public function isActive(): bool
     {
         $now = now();
+
         return $this->status === 'approved' && $now->between($this->tanggal_mulai, $this->tanggal_selesai);
     }
 }

@@ -3,12 +3,21 @@
 namespace App\Modules\WorkOs\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-
-use Illuminate\Http\Request;
+use App\Models\Auth\AuthOAuthCredential;
+use App\Models\Module;
+use App\Models\Role;
+use App\Models\User;
+use App\Models\UserModuleRole;
 use App\Modules\WorkOs\Services\AuthPlatform\OAuthEngine;
 use App\Modules\WorkOs\Services\AuthPlatform\SessionEngine;
-use Illuminate\Support\Facades\Auth;
 use Exception;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
 
 /**
  * OAuthController — PUBLIC endpoints only.
@@ -30,9 +39,10 @@ class OAuthController extends Controller
     {
         try {
             $url = $this->oauthEngine->getAuthorizationUrl($provider);
+
             return redirect()->away($url);
         } catch (Exception $e) {
-            return redirect()->route('login')->with('error', 'OAuth initialization failed: ' . $e->getMessage());
+            return redirect()->route('login')->with('error', 'OAuth initialization failed: '.$e->getMessage());
         }
     }
 
@@ -54,7 +64,8 @@ class OAuthController extends Controller
             // Check if user needs to register first
             if (is_array($result) && isset($result['needs_registration'])) {
                 session()->put('oauth_register_data', $result['oauth_data']);
-                return redirect()->route('auth.oauth.register.view')->with('info', 'Silakan lengkapi pendaftaran untuk menghubungkan akun ' . ucfirst($provider) . ' Anda.');
+
+                return redirect()->route('auth.oauth.register.view')->with('info', 'Silakan lengkapi pendaftaran untuk menghubungkan akun '.ucfirst($provider).' Anda.');
             }
 
             $user = $result;
@@ -73,11 +84,11 @@ class OAuthController extends Controller
 
             // 6. Redirect to dashboard
             return redirect()->intended(route('dashboard', absolute: false))
-                ->with('success', 'Successfully signed in with ' . ucfirst($provider) . '.');
+                ->with('success', 'Successfully signed in with '.ucfirst($provider).'.');
 
         } catch (Exception $e) {
             return redirect()->route('login')
-                ->with('error', 'OAuth authentication failed: ' . $e->getMessage());
+                ->with('error', 'OAuth authentication failed: '.$e->getMessage());
         }
     }
 
@@ -89,6 +100,7 @@ class OAuthController extends Controller
     {
         try {
             $this->oauthEngine->disconnect($request->user(), $provider);
+
             return response()->json(['message' => 'Provider disconnected successfully.']);
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
@@ -100,11 +112,11 @@ class OAuthController extends Controller
      */
     public function registerView(Request $request)
     {
-        if (!session()->has('oauth_register_data')) {
+        if (! session()->has('oauth_register_data')) {
             return redirect()->route('login')->with('error', 'Sesi pendaftaran OAuth kedaluwarsa atau tidak valid.');
         }
 
-        return \Inertia\Inertia::render('auth/OAuthRegister', [
+        return Inertia::render('auth/OAuthRegister', [
             'oauthData' => session()->get('oauth_register_data'),
         ]);
     }
@@ -114,7 +126,7 @@ class OAuthController extends Controller
      */
     public function registerStore(Request $request)
     {
-        if (!session()->has('oauth_register_data')) {
+        if (! session()->has('oauth_register_data')) {
             return redirect()->route('login')->with('error', 'Sesi pendaftaran OAuth kedaluwarsa atau tidak valid.');
         }
 
@@ -123,16 +135,16 @@ class OAuthController extends Controller
         // Validation
         $allowedRoles = ['mahasiswa', 'alumni', 'mitra'];
         $rules = [
-            'role'        => ['required', 'string', \Illuminate\Validation\Rule::in($allowedRoles)],
-            'nomor_induk' => ['required', 'string', 'max:50', \Illuminate\Validation\Rule::unique('users', 'nomor_induk')],
+            'role' => ['required', 'string', Rule::in($allowedRoles)],
+            'nomor_induk' => ['required', 'string', 'max:50', Rule::unique('users', 'nomor_induk')],
         ];
 
         if ($request->role === 'mahasiswa' || $request->role === 'alumni') {
-            $rules['program_studi_id'] = ['required', 'integer', \Illuminate\Validation\Rule::exists('program_studis', 'id')];
+            $rules['program_studi_id'] = ['required', 'integer', Rule::exists('program_studis', 'id')];
         }
 
         if ($request->role === 'alumni') {
-            $rules['tahun_lulus'] = ['required', 'digits:4', 'integer', 'min:1990', 'max:' . date('Y')];
+            $rules['tahun_lulus'] = ['required', 'digits:4', 'integer', 'min:1990', 'max:'.date('Y')];
         }
 
         if ($request->role === 'mitra') {
@@ -141,54 +153,54 @@ class OAuthController extends Controller
         }
 
         $request->validate($rules, [
-            'nomor_induk.unique'  => 'Akun dengan NIM/NIB ini telah terdaftar, silakan login.',
+            'nomor_induk.unique' => 'Akun dengan NIM/NIB ini telah terdaftar, silakan login.',
             'program_studi_id.required' => 'Program Studi wajib dipilih.',
-            'tahun_lulus.required'     => 'Tahun lulus wajib diisi.',
-            'no_telepon.required'       => 'Nomor telepon wajib diisi.',
-            'nama_perusahaan.required'  => 'Nama perusahaan wajib diisi.',
+            'tahun_lulus.required' => 'Tahun lulus wajib diisi.',
+            'no_telepon.required' => 'Nomor telepon wajib diisi.',
+            'nama_perusahaan.required' => 'Nama perusahaan wajib diisi.',
         ]);
 
         // Double check if user with this email was created in the meantime
-        $existingUser = \App\Models\User::where('email', $oauthData['email'])->first();
+        $existingUser = User::where('email', $oauthData['email'])->first();
         if ($existingUser) {
             // Security: Jika akun lokal belum terverifikasi emailnya, jangan lakukan implicit linking untuk mencegah pembajakan akun (Account Takeover)
-            if (!$existingUser->email_verified_at) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    'email' => 'Akun dengan email ini telah terdaftar tetapi belum terverifikasi. Silakan verifikasi email Anda terlebih dahulu.'
+            if (! $existingUser->email_verified_at) {
+                throw ValidationException::withMessages([
+                    'email' => 'Akun dengan email ini telah terdaftar tetapi belum terverifikasi. Silakan verifikasi email Anda terlebih dahulu.',
                 ]);
             }
 
             // Update user_type if not set
-            if (!$existingUser->user_type && $request->role) {
+            if (! $existingUser->user_type && $request->role) {
                 $existingUser->update(['user_type' => $request->role]);
             }
 
             // Link OAuth Credential safely
             try {
-                \App\Models\Auth\AuthOAuthCredential::updateOrCreate(
+                AuthOAuthCredential::updateOrCreate(
                     [
                         'provider_id' => $oauthData['provider_id'],
                         'external_id' => $oauthData['external_id'],
                     ],
                     [
-                        'user_id'      => $existingUser->id,
-                        'email'        => $oauthData['email'],
+                        'user_id' => $existingUser->id,
+                        'email' => $oauthData['email'],
                         'access_token' => $oauthData['access_token'],
-                        'refresh_token'=> $oauthData['refresh_token'] ?? null,
-                        'expires_at'   => $oauthData['expires_at'] ?? null,
+                        'refresh_token' => $oauthData['refresh_token'] ?? null,
+                        'expires_at' => $oauthData['expires_at'] ?? null,
                     ]
                 );
-            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
-                $credential = \App\Models\Auth\AuthOAuthCredential::where('provider_id', $oauthData['provider_id'])
+            } catch (UniqueConstraintViolationException $e) {
+                $credential = AuthOAuthCredential::where('provider_id', $oauthData['provider_id'])
                     ->where('external_id', $oauthData['external_id'])
                     ->first();
                 if ($credential) {
                     $credential->update([
-                        'user_id'      => $existingUser->id,
-                        'email'        => $oauthData['email'],
+                        'user_id' => $existingUser->id,
+                        'email' => $oauthData['email'],
                         'access_token' => $oauthData['access_token'],
-                        'refresh_token'=> $oauthData['refresh_token'] ?? null,
-                        'expires_at'   => $oauthData['expires_at'] ?? null,
+                        'refresh_token' => $oauthData['refresh_token'] ?? null,
+                        'expires_at' => $oauthData['expires_at'] ?? null,
                     ]);
                 } else {
                     throw $e;
@@ -196,9 +208,9 @@ class OAuthController extends Controller
             }
 
             // Ensure they have default module roles if they don't have any
-            if (!\App\Models\UserModuleRole::where('user_id', $existingUser->id)->exists()) {
+            if (! UserModuleRole::where('user_id', $existingUser->id)->exists()) {
                 $roleType = $existingUser->user_type ?: $request->role;
-                $roleObj = \App\Models\Role::where('slug', $roleType)->first();
+                $roleObj = Role::where('slug', $roleType)->first();
                 if ($roleObj) {
                     $defaultModules = [];
                     if ($roleType === 'mahasiswa') {
@@ -209,13 +221,13 @@ class OAuthController extends Controller
                         $defaultModules = ['WIMS', 'TRACE'];
                     }
 
-                    if (!empty($defaultModules)) {
-                        $modules = \App\Models\Module::whereIn('code', $defaultModules)->get();
+                    if (! empty($defaultModules)) {
+                        $modules = Module::whereIn('code', $defaultModules)->get();
                         foreach ($modules as $mod) {
-                            \App\Models\UserModuleRole::create([
-                                'user_id'   => $existingUser->id,
+                            UserModuleRole::create([
+                                'user_id' => $existingUser->id,
                                 'module_id' => $mod->id,
-                                'role_id'   => $roleObj->id,
+                                'role_id' => $roleObj->id,
                                 'is_active' => true,
                             ]);
                         }
@@ -234,17 +246,17 @@ class OAuthController extends Controller
         }
 
         // Create User using server-side session data for name and email
-        $user = \App\Models\User::create([
-            'name'                => $oauthData['name'],
-            'email'               => $oauthData['email'],
-            'password'            => \Illuminate\Support\Str::random(32),
-            'user_type'           => $request->role,
-            'nomor_induk'         => $request->nomor_induk,
-            'status_approval'     => 'approved',
+        $user = User::create([
+            'name' => $oauthData['name'],
+            'email' => $oauthData['email'],
+            'password' => Str::random(32),
+            'user_type' => $request->role,
+            'nomor_induk' => $request->nomor_induk,
+            'status_approval' => 'approved',
             'password_changed_at' => now(),
-            'program_studi_id'    => $request->program_studi_id ?? null,
-            'tahun_lulus'         => $request->tahun_lulus ?? null,
-            'no_telepon'          => $request->no_telepon ?? null,
+            'program_studi_id' => $request->program_studi_id ?? null,
+            'tahun_lulus' => $request->tahun_lulus ?? null,
+            'no_telepon' => $request->no_telepon ?? null,
         ]);
 
         $user->email_verified_at = now();
@@ -252,30 +264,30 @@ class OAuthController extends Controller
 
         // Link OAuth Credential safely
         try {
-            \App\Models\Auth\AuthOAuthCredential::updateOrCreate(
+            AuthOAuthCredential::updateOrCreate(
                 [
                     'provider_id' => $oauthData['provider_id'],
                     'external_id' => $oauthData['external_id'],
                 ],
                 [
-                    'user_id'      => $user->id,
-                    'email'        => $oauthData['email'],
+                    'user_id' => $user->id,
+                    'email' => $oauthData['email'],
                     'access_token' => $oauthData['access_token'],
-                    'refresh_token'=> $oauthData['refresh_token'] ?? null,
-                    'expires_at'   => $oauthData['expires_at'] ?? null,
+                    'refresh_token' => $oauthData['refresh_token'] ?? null,
+                    'expires_at' => $oauthData['expires_at'] ?? null,
                 ]
             );
-        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
-            $credential = \App\Models\Auth\AuthOAuthCredential::where('provider_id', $oauthData['provider_id'])
+        } catch (UniqueConstraintViolationException $e) {
+            $credential = AuthOAuthCredential::where('provider_id', $oauthData['provider_id'])
                 ->where('external_id', $oauthData['external_id'])
                 ->first();
             if ($credential) {
                 $credential->update([
-                    'user_id'      => $user->id,
-                    'email'        => $oauthData['email'],
+                    'user_id' => $user->id,
+                    'email' => $oauthData['email'],
                     'access_token' => $oauthData['access_token'],
-                    'refresh_token'=> $oauthData['refresh_token'] ?? null,
-                    'expires_at'   => $oauthData['expires_at'] ?? null,
+                    'refresh_token' => $oauthData['refresh_token'] ?? null,
+                    'expires_at' => $oauthData['expires_at'] ?? null,
                 ]);
             } else {
                 throw $e;
@@ -286,7 +298,7 @@ class OAuthController extends Controller
         session()->forget('oauth_register_data');
 
         // Auto-assign default module access
-        $roleObj = \App\Models\Role::where('slug', $user->user_type)->first();
+        $roleObj = Role::where('slug', $user->user_type)->first();
         if ($roleObj) {
             $defaultModules = [];
             if ($user->user_type === 'mahasiswa') {
@@ -297,13 +309,13 @@ class OAuthController extends Controller
                 $defaultModules = ['WIMS', 'TRACE'];
             }
 
-            if (!empty($defaultModules)) {
-                $modules = \App\Models\Module::whereIn('code', $defaultModules)->get();
+            if (! empty($defaultModules)) {
+                $modules = Module::whereIn('code', $defaultModules)->get();
                 foreach ($modules as $mod) {
-                    \App\Models\UserModuleRole::create([
-                        'user_id'   => $user->id,
+                    UserModuleRole::create([
+                        'user_id' => $user->id,
                         'module_id' => $mod->id,
-                        'role_id'   => $roleObj->id,
+                        'role_id' => $roleObj->id,
                         'is_active' => true,
                     ]);
                 }

@@ -281,7 +281,9 @@ let onlineChannel: any = null;
 function joinOnlinePresence() {
 	onlineChannel = window.Echo.join("pagi.online")
 		.here((users: Array<{ id: number; name: string }>) => {
-			users.forEach((u) => { onlineUsers.value.add(u.id); });
+			users.forEach((u) => {
+				onlineUsers.value.add(u.id);
+			});
 		})
 		.joining((user: { id: number; name: string }) => {
 			onlineUsers.value.add(user.id);

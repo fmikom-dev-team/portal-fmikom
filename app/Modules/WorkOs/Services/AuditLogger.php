@@ -13,7 +13,7 @@ class AuditLogger
     public static function log(string $eventType, string $severity = 'info', array $metadata = [], $target = null, ?string $correlationId = null)
     {
         $payload = self::buildPayload($eventType, $severity, $metadata, $target, $correlationId);
-        
+
         // Dispatch to background queue for processing to ensure performance
         LogAuditEvent::dispatch($payload);
     }
@@ -35,7 +35,7 @@ class AuditLogger
     protected static function buildPayload(string $eventType, string $severity, array $metadata, $target, ?string $correlationId): array
     {
         $request = request();
-        
+
         $actorId = auth()->check() ? auth()->id() : null;
         $organizationId = null; // Extract from session/context if applicable
 
@@ -69,7 +69,7 @@ class AuditLogger
     protected static function redactSensitiveData(array $data): array
     {
         $sensitiveKeys = ['password', 'password_confirmation', 'token', 'secret', 'card_number', 'cvv'];
-        
+
         foreach ($data as $key => $value) {
             if (is_array($value)) {
                 $data[$key] = self::redactSensitiveData($value);
@@ -77,7 +77,7 @@ class AuditLogger
                 $data[$key] = '[REDACTED]';
             }
         }
-        
+
         return $data;
     }
 }

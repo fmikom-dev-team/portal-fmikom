@@ -2,15 +2,23 @@
 
 namespace App\Providers;
 
+use App\Actions\Auth\RedirectIfMfaRequired;
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Http\Responses\CustomLogoutResponse;
+use App\Models\Auth\AuthOAuthProvider;
+use App\Models\Auth\AuthSetting;
+use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Laravel\Fortify\Actions\AttemptToAuthenticate;
+use Laravel\Fortify\Actions\EnsureLoginIsNotThrottled;
+use Laravel\Fortify\Actions\PrepareAuthenticatedSession;
 use Laravel\Fortify\Contracts\LogoutResponse;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
@@ -46,11 +54,11 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::createUsersUsing(CreateNewUser::class);
 
         Fortify::authenticateUsing(function (Request $request) {
-            $user = \App\Models\User::where('email', $request->email)
+            $user = User::where('email', $request->email)
                 ->orWhere('nomor_induk', $request->email)
                 ->first();
 
-            if ($user && \Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
+            if ($user && Hash::check($request->password, $user->password)) {
                 return $user;
             }
 
@@ -59,10 +67,10 @@ class FortifyServiceProvider extends ServiceProvider
 
         Fortify::authenticateThrough(function (Request $request) {
             return array_filter([
-                config('fortify.limiters.login') ? null : \Laravel\Fortify\Actions\EnsureLoginIsNotThrottled::class,
-                \Laravel\Fortify\Actions\AttemptToAuthenticate::class,
-                \App\Actions\Auth\RedirectIfMfaRequired::class, // Custom MFA interceptor
-                \Laravel\Fortify\Actions\PrepareAuthenticatedSession::class,
+                config('fortify.limiters.login') ? null : EnsureLoginIsNotThrottled::class,
+                AttemptToAuthenticate::class,
+                RedirectIfMfaRequired::class, // Custom MFA interceptor
+                PrepareAuthenticatedSession::class,
             ]);
         });
     }
@@ -77,8 +85,8 @@ class FortifyServiceProvider extends ServiceProvider
             'canRegister' => Features::enabled(Features::registration()),
             'status' => $request->session()->get('status'),
             'error' => $request->session()->get('error'),
-            'oauthProviders' => \App\Models\Auth\AuthOAuthProvider::where('is_enabled', true)->get(['name', 'slug']),
-            'passkeysEnabled' => (bool) \App\Models\Auth\AuthSetting::get('passkeys.enabled', true),
+            'oauthProviders' => AuthOAuthProvider::where('is_enabled', true)->get(['name', 'slug']),
+            'passkeysEnabled' => (bool) AuthSetting::get('passkeys.enabled', true),
         ]));
 
         Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/ResetPassword', [

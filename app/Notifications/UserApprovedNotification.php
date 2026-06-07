@@ -3,7 +3,6 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -36,7 +35,7 @@ class UserApprovedNotification extends Notification
     {
         return (new MailMessage)
             ->subject('Akun SAHABAT Anda Telah Disetujui')
-            ->greeting('Halo, ' . $notifiable->name . '!')
+            ->greeting('Halo, '.$notifiable->name.'!')
             ->line('Kabar baik! Pendaftaran akun Anda di sistem SAHABAT (Sistem Administrasi, Himpunan, dan Basis Aktivitas Terpadu) telah disetujui oleh Admin.')
             ->line('Sekarang Anda dapat mengakses dashboard dan fitur-fitur lainnya sesuai dengan hak akses Anda.')
             ->action('Login ke Dashboard', url('/login'))

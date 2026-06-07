@@ -16,7 +16,7 @@ class InvitationAcceptController extends Controller
     {
         $invitation = AuthInvitation::where('token', $token)->first();
 
-        if (!$invitation) {
+        if (! $invitation) {
             return Inertia::render('Invitations/InvalidToken', [
                 'status' => 'invalid',
                 'message' => 'This invitation link is invalid or has already been used.',
@@ -43,11 +43,11 @@ class InvitationAcceptController extends Controller
         $invitation->update(['status' => 'Accepted']);
 
         return Inertia::render('Invitations/AcceptSuccess', [
-            'status'       => 'accepted',
-            'email'        => $invitation->email,
+            'status' => 'accepted',
+            'email' => $invitation->email,
             'organization' => $invitation->organization_name,
-            'role'         => $invitation->role,
-            'invited_by'   => $invitation->invited_by,
+            'role' => $invitation->role,
+            'invited_by' => $invitation->invited_by,
         ]);
     }
 }

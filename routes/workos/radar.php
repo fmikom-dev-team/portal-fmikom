@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Modules\WorkOs\Controllers\RadarController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,4 +14,3 @@ Route::prefix('radar')->name('radar.')->group(function () {
     Route::delete('/blocked-items/{id}', [RadarController::class, 'destroyBlockedItem'])->name('blocked-items.destroy');
     Route::delete('/detections', [RadarController::class, 'resetDetections'])->name('detections.reset');
 });
-

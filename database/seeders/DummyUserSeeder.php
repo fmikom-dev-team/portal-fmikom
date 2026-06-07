@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
 use App\Models\Role;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class DummyUserSeeder extends Seeder
@@ -21,10 +21,10 @@ class DummyUserSeeder extends Seeder
                 'name' => 'Muchlisin Maruf (Admin)',
                 'password' => Hash::make('admin123'),
                 'user_type' => 'super_admin',
-                'email_verified_at' => now(), 
+                'email_verified_at' => now(),
                 'password_changed_at' => now(),
                 'role_title' => 'Dekan Fakultas Ilmu Komputer',
-                'bio' => "Dekan Fakultas Ilmu Komputer. Berdedikasi dalam riset Artificial Intelligence dan Cloud Computing. Silakan hubungi saya untuk urusan kemahasiswaan atau kolaborasi riset.",
+                'bio' => 'Dekan Fakultas Ilmu Komputer. Berdedikasi dalam riset Artificial Intelligence dan Cloud Computing. Silakan hubungi saya untuk urusan kemahasiswaan atau kolaborasi riset.',
                 'location' => 'Purwokerto, Indonesia',
                 'website' => 'https://muchlisin.dev',
                 'twitter' => 'muchlisin_m',
@@ -43,7 +43,7 @@ class DummyUserSeeder extends Seeder
                 'email_verified_at' => now(),
                 'password_changed_at' => now(),
                 'role_title' => 'Mahasiswa Teknik Informatika',
-                'bio' => "Mahasiswa Teknik Informatika Angkatan 2024. Senang belajar pengembangan web modern menggunakan Laravel, Vue.js, dan Tailwind CSS.",
+                'bio' => 'Mahasiswa Teknik Informatika Angkatan 2024. Senang belajar pengembangan web modern menggunakan Laravel, Vue.js, dan Tailwind CSS.',
                 'location' => 'Purwokerto, Indonesia',
                 'website' => 'https://dummystudent.github.io',
                 'twitter' => 'dummystudent',

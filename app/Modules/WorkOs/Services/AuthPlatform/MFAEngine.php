@@ -2,19 +2,19 @@
 
 namespace App\Modules\WorkOs\Services\AuthPlatform;
 
-use App\Models\User;
-use App\Models\Auth\AuthMfa;
 use App\Models\Auth\AuthBackupCode;
-use PragmaRX\Google2FA\Google2FA;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use Carbon\Carbon;
-use BaconQrCode\Renderer\ImageRenderer;
+use App\Models\Auth\AuthMfa;
+use App\Models\User;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use PragmaRX\Google2FA\Google2FA;
 
 class MFAEngine
 {
@@ -54,7 +54,7 @@ class MFAEngine
         // Generate SVG
         $renderer = new ImageRenderer(
             new RendererStyle(200),
-            new SvgImageBackEnd()
+            new SvgImageBackEnd
         );
         $writer = new Writer($renderer);
         $svg = $writer->writeString($qrCodeUrl);
@@ -72,15 +72,15 @@ class MFAEngine
     {
         $mfa = AuthMfa::where('user_id', $user->id)->where('type', 'totp')->first();
 
-        if (!$mfa) {
-            throw new \Exception("MFA setup has not been initiated.");
+        if (! $mfa) {
+            throw new \Exception('MFA setup has not been initiated.');
         }
 
         $secret = Crypt::decryptString($mfa->secret);
         $valid = $this->google2fa->verifyKey($secret, $code);
 
-        if (!$valid) {
-            throw new \Exception("Invalid verification code.");
+        if (! $valid) {
+            throw new \Exception('Invalid verification code.');
         }
 
         return DB::transaction(function () use ($user, $mfa) {
@@ -106,8 +106,8 @@ class MFAEngine
     {
         $mfa = AuthMfa::where('user_id', $user->id)->where('type', 'totp')->where('is_active', true)->first();
 
-        if (!$mfa) {
-            throw new \Exception("MFA is not active for this user.");
+        if (! $mfa) {
+            throw new \Exception('MFA is not active for this user.');
         }
 
         // Try TOTP first
@@ -120,7 +120,7 @@ class MFAEngine
 
         // Try Backup Codes
         $backupCodes = AuthBackupCode::where('user_id', $user->id)->where('is_used', false)->get();
-        
+
         foreach ($backupCodes as $backupCode) {
             if (Hash::check($code, $backupCode->code_hash)) {
                 // Mark as used
@@ -128,6 +128,7 @@ class MFAEngine
                     'is_used' => true,
                     'used_at' => Carbon::now(),
                 ]);
+
                 return true;
             }
         }

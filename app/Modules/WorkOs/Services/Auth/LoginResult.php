@@ -2,8 +2,8 @@
 
 namespace App\Modules\WorkOs\Services\Auth;
 
-use App\Models\User;
 use App\Models\Auth\AuthSession;
+use App\Models\User;
 
 /**
  * LoginResult — Value Object / DTO
@@ -23,10 +23,10 @@ use App\Models\Auth\AuthSession;
 class LoginResult
 {
     private function __construct(
-        public readonly string       $status,         // 'success' | 'failed' | 'mfa_required' | 'locked'
-        public readonly ?User        $user = null,
+        public readonly string $status,         // 'success' | 'failed' | 'mfa_required' | 'locked'
+        public readonly ?User $user = null,
         public readonly ?AuthSession $session = null,
-        public readonly ?string      $message = null,
+        public readonly ?string $message = null,
     ) {}
 
     // ─── Factory Methods ──────────────────────────────────────────────────────
@@ -57,8 +57,23 @@ class LoginResult
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
-    public function isSuccess(): bool      { return $this->status === 'success'; }
-    public function requiresMfa(): bool    { return $this->status === 'mfa_required'; }
-    public function isLocked(): bool       { return $this->status === 'locked'; }
-    public function hasFailed(): bool      { return $this->status === 'failed'; }
+    public function isSuccess(): bool
+    {
+        return $this->status === 'success';
+    }
+
+    public function requiresMfa(): bool
+    {
+        return $this->status === 'mfa_required';
+    }
+
+    public function isLocked(): bool
+    {
+        return $this->status === 'locked';
+    }
+
+    public function hasFailed(): bool
+    {
+        return $this->status === 'failed';
+    }
 }

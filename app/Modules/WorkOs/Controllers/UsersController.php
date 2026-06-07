@@ -3,19 +3,25 @@
 namespace App\Modules\WorkOs\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\ModuleRole;
-use App\Models\UserModuleRole;
-use Illuminate\Http\Request;
-use Spatie\Permission\Models\Role;
-
+use App\Models\Auth\AuthEmailLog;
+use App\Models\Auth\AuthOAuthCredential;
+use App\Models\Auth\AuthSession;
 /**
  * Dedicated UsersController — extracted from DashboardController
  */
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
+use App\Models\Module;
 use App\Models\ProgramStudi;
+use App\Models\User;
+use App\Models\UserModuleRole;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Csv;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 /**
  * Dedicated UsersController — extracted from DashboardController
@@ -43,35 +49,35 @@ class UsersController extends Controller
             $headers = ['Nama', 'Email', 'Password', 'NIB/Nomor Induk', 'Nama Perusahaan', 'Nomor Telepon'];
         }
 
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
-        
+
         foreach ($headers as $colIndex => $header) {
-            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex + 1);
-            $sheet->setCellValue($colLetter . '1', $header);
-            $sheet->getStyle($colLetter . '1')->getFont()->setBold(true);
+            $colLetter = Coordinate::stringFromColumnIndex($colIndex + 1);
+            $sheet->setCellValue($colLetter.'1', $header);
+            $sheet->getStyle($colLetter.'1')->getFont()->setBold(true);
             $sheet->getColumnDimension($colLetter)->setAutoSize(true);
         }
 
-        $fileName = 'template_' . $type . '_' . date('YmdHis');
+        $fileName = 'template_'.$type.'_'.date('YmdHis');
 
         if ($format === 'xlsx') {
-            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $writer = new Xlsx($spreadsheet);
             $responseHeader = [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'Content-Disposition' => 'attachment; filename="' . $fileName . '.xlsx"',
+                'Content-Disposition' => 'attachment; filename="'.$fileName.'.xlsx"',
             ];
         } else {
-            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Csv($spreadsheet);
+            $writer = new Csv($spreadsheet);
             $responseHeader = [
                 'Content-Type' => 'text/csv',
-                'Content-Disposition' => 'attachment; filename="' . $fileName . '.csv"',
+                'Content-Disposition' => 'attachment; filename="'.$fileName.'.csv"',
             ];
         }
 
         return response()->streamDownload(function () use ($writer) {
             $writer->save('php://output');
-        }, $fileName . '.' . $format, $responseHeader);
+        }, $fileName.'.'.$format, $responseHeader);
     }
 
     public function upload(Request $request)
@@ -137,13 +143,13 @@ class UsersController extends Controller
 
         $missingHeaders = [];
         foreach ($requiredFields as $field) {
-            if (!isset($mapping[$field])) {
+            if (! isset($mapping[$field])) {
                 $missingHeaders[] = str_replace('_', ' ', $field);
             }
         }
 
-        if (!empty($missingHeaders)) {
-            return back()->withErrors(['file' => 'Kolom wajib berikut tidak ditemukan di file: ' . implode(', ', $missingHeaders)]);
+        if (! empty($missingHeaders)) {
+            return back()->withErrors(['file' => 'Kolom wajib berikut tidak ditemukan di file: '.implode(', ', $missingHeaders)]);
         }
 
         // Fetch prodi to map names/codes to IDs
@@ -176,7 +182,7 @@ class UsersController extends Controller
             // 2. Validate email
             if (empty($email)) {
                 $rowErrors[] = 'Email wajib diisi.';
-            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            } elseif (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $rowErrors[] = 'Format email tidak valid.';
             } elseif (User::where('email', $email)->exists()) {
                 $rowErrors[] = 'Email sudah terdaftar di sistem.';
@@ -189,7 +195,7 @@ class UsersController extends Controller
             // 3. Validate nomor induk
             if (in_array('nomor_induk', $requiredFields) && empty($nomorInduk)) {
                 $rowErrors[] = 'Nomor Induk wajib diisi.';
-            } elseif (!empty($nomorInduk)) {
+            } elseif (! empty($nomorInduk)) {
                 if (User::where('nomor_induk', $nomorInduk)->exists()) {
                     $rowErrors[] = 'Nomor Induk sudah terdaftar di sistem.';
                 } elseif (in_array($nomorInduk, $nomorInduksInBatch)) {
@@ -201,7 +207,7 @@ class UsersController extends Controller
 
             // 4. Validate program studi
             $prodiId = null;
-            if (!empty($programStudiVal)) {
+            if (! empty($programStudiVal)) {
                 $matchedProdi = $prodis->first(function ($p) use ($programStudiVal) {
                     return strtolower($p->kode) === strtolower($programStudiVal) ||
                            strtolower($p->nama) === strtolower($programStudiVal);
@@ -210,7 +216,7 @@ class UsersController extends Controller
                 if ($matchedProdi) {
                     $prodiId = $matchedProdi->id;
                 } else {
-                    $rowErrors[] = 'Program Studi "' . $programStudiVal . '" tidak ditemukan. Pilihan: IF, SI, MTK.';
+                    $rowErrors[] = 'Program Studi "'.$programStudiVal.'" tidak ditemukan. Pilihan: IF, SI, MTK.';
                 }
             } elseif (in_array('program_studi', $requiredFields)) {
                 $rowErrors[] = 'Program Studi wajib diisi.';
@@ -221,23 +227,23 @@ class UsersController extends Controller
             if ($userType === 'alumni') {
                 if (empty($tahunLulusVal)) {
                     $rowErrors[] = 'Tahun lulus wajib diisi untuk Alumni.';
-                } elseif (!is_numeric($tahunLulusVal) || strlen($tahunLulusVal) !== 4) {
+                } elseif (! is_numeric($tahunLulusVal) || strlen($tahunLulusVal) !== 4) {
                     $rowErrors[] = 'Tahun lulus harus berupa 4 digit angka.';
                 } else {
-                    $tahunLulus = (int)$tahunLulusVal;
+                    $tahunLulus = (int) $tahunLulusVal;
                 }
             }
 
             // If no password provided, generate default based on nomor_induk
             if (empty($password)) {
-                $password = 'Fmikom@' . ($nomorInduk ?: rand(1000, 9999));
+                $password = 'Fmikom@'.($nomorInduk ?: rand(1000, 9999));
             }
 
-            if (!empty($rowErrors)) {
+            if (! empty($rowErrors)) {
                 $errors[] = [
                     'row' => $rowNum,
                     'email' => $email ?: 'N/A',
-                    'errors' => $rowErrors
+                    'errors' => $rowErrors,
                 ];
             } else {
                 $validRows[] = [
@@ -254,7 +260,7 @@ class UsersController extends Controller
         }
 
         // If there are validation errors, return back with details
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return back()->with('import_errors', $errors);
         }
 
@@ -294,8 +300,8 @@ class UsersController extends Controller
                             $defaultModules = ['WIMS', 'TRACE'];
                         }
 
-                        if (!empty($defaultModules)) {
-                            $modules = \App\Models\Module::whereIn('code', $defaultModules)->get();
+                        if (! empty($defaultModules)) {
+                            $modules = Module::whereIn('code', $defaultModules)->get();
                             foreach ($modules as $mod) {
                                 UserModuleRole::create([
                                     'user_id' => $user->id,
@@ -309,58 +315,58 @@ class UsersController extends Controller
                 }
             });
         } catch (\Exception $e) {
-            return back()->withErrors(['file' => 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage()]);
+            return back()->withErrors(['file' => 'Terjadi kesalahan saat menyimpan data: '.$e->getMessage()]);
         }
 
-        return back()->with('success', count($validRows) . ' user berhasil diimpor.');
+        return back()->with('success', count($validRows).' user berhasil diimpor.');
     }
 
     public function store(Request $request)
     {
-        return app(\App\Modules\WorkOs\Controllers\DashboardController::class)->storeUser($request);
+        return app(DashboardController::class)->storeUser($request);
     }
 
     public function update(Request $request, User $user)
     {
-        return app(\App\Modules\WorkOs\Controllers\DashboardController::class)->updateUser($request, $user);
+        return app(DashboardController::class)->updateUser($request, $user);
     }
 
     public function destroy(User $user)
     {
-        return app(\App\Modules\WorkOs\Controllers\DashboardController::class)->destroyUser($user);
+        return app(DashboardController::class)->destroyUser($user);
     }
 
     public function approve(User $user)
     {
-        return app(\App\Modules\WorkOs\Controllers\DashboardController::class)->approve($user);
+        return app(DashboardController::class)->approve($user);
     }
 
     public function reject(Request $request, User $user)
     {
-        return app(\App\Modules\WorkOs\Controllers\DashboardController::class)->reject($request, $user);
+        return app(DashboardController::class)->reject($request, $user);
     }
 
     public function assignRole(Request $request, User $user)
     {
-        return app(\App\Modules\WorkOs\Controllers\DashboardController::class)->assignRole($request, $user);
+        return app(DashboardController::class)->assignRole($request, $user);
     }
 
     public function addModuleRole(Request $request, User $user)
     {
-        return app(\App\Modules\WorkOs\Controllers\DashboardController::class)->addModuleRole($request, $user);
+        return app(DashboardController::class)->addModuleRole($request, $user);
     }
 
     public function updateModuleRole(Request $request, UserModuleRole $moduleRole)
     {
-        return app(\App\Modules\WorkOs\Controllers\DashboardController::class)->updateModuleRole($request, $moduleRole);
+        return app(DashboardController::class)->updateModuleRole($request, $moduleRole);
     }
 
     public function removeModuleRole(UserModuleRole $moduleRole)
     {
-        return app(\App\Modules\WorkOs\Controllers\DashboardController::class)->removeModuleRole($moduleRole);
+        return app(DashboardController::class)->removeModuleRole($moduleRole);
     }
 
-    public function disconnectOAuth(User $user, \App\Models\Auth\AuthOAuthCredential $credential)
+    public function disconnectOAuth(User $user, AuthOAuthCredential $credential)
     {
         if ($credential->user_id !== $user->id) {
             abort(403, 'Unauthorized action.');
@@ -382,10 +388,10 @@ class UsersController extends Controller
 
         // Synchronize with auth_sessions
         foreach ($laravelSessions as $ls) {
-            $lastActivityAt = \Carbon\Carbon::createFromTimestamp($ls->last_activity);
-            $expiresAt = \Carbon\Carbon::createFromTimestamp($ls->last_activity + config('session.lifetime') * 60);
+            $lastActivityAt = Carbon::createFromTimestamp($ls->last_activity);
+            $expiresAt = Carbon::createFromTimestamp($ls->last_activity + config('session.lifetime') * 60);
 
-            \App\Models\Auth\AuthSession::updateOrCreate(
+            AuthSession::updateOrCreate(
                 [
                     'user_id' => $user->id,
                     'session_token' => $ls->id,
@@ -401,24 +407,24 @@ class UsersController extends Controller
         }
 
         // Mark sessions no longer in the Laravel sessions table as revoked
-        \App\Models\Auth\AuthSession::where('user_id', $user->id)
+        AuthSession::where('user_id', $user->id)
             ->whereNotIn('session_token', $activeSessionTokens)
             ->where('is_revoked', false)
             ->update(['is_revoked' => true]);
 
         // Retrieve and return all synced sessions
-        $sessions = \App\Models\Auth\AuthSession::where('user_id', $user->id)
+        $sessions = AuthSession::where('user_id', $user->id)
             ->latest('last_activity_at')
             ->get();
 
         return response()->json([
-            'sessions' => $sessions
+            'sessions' => $sessions,
         ]);
     }
 
     public function revokeSession(User $user, $sessionId)
     {
-        $session = \App\Models\Auth\AuthSession::where('user_id', $user->id)
+        $session = AuthSession::where('user_id', $user->id)
             ->where('id', $sessionId)
             ->firstOrFail();
 
@@ -433,14 +439,14 @@ class UsersController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Session revoked successfully.'
+            'message' => 'Session revoked successfully.',
         ]);
     }
 
     public function revokeAllSessions(User $user)
     {
         // Fetch active auth_sessions
-        $activeSessions = \App\Models\Auth\AuthSession::where('user_id', $user->id)
+        $activeSessions = AuthSession::where('user_id', $user->id)
             ->where('is_revoked', false)
             ->get();
 
@@ -452,19 +458,19 @@ class UsersController extends Controller
             }
         }
 
-        \App\Models\Auth\AuthSession::where('user_id', $user->id)
+        AuthSession::where('user_id', $user->id)
             ->where('is_revoked', false)
             ->update(['is_revoked' => true]);
 
         return response()->json([
             'success' => true,
-            'message' => 'All active sessions revoked successfully.'
+            'message' => 'All active sessions revoked successfully.',
         ]);
     }
 
     public function clearInactiveSessions(User $user)
     {
-        \App\Models\Auth\AuthSession::where('user_id', $user->id)
+        AuthSession::where('user_id', $user->id)
             ->where(function ($query) {
                 $query->where('is_revoked', true)
                     ->orWhere('expires_at', '<', now());
@@ -473,20 +479,20 @@ class UsersController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Inactive sessions cleared successfully.'
+            'message' => 'Inactive sessions cleared successfully.',
         ]);
     }
 
     public function emails(User $user)
     {
         // Seed some realistic email history if none exists for this user yet
-        $logsCount = \App\Models\Auth\AuthEmailLog::where('user_id', $user->id)->count();
+        $logsCount = AuthEmailLog::where('user_id', $user->id)->count();
         if ($logsCount === 0) {
             $emailsToSeed = [
                 [
                     'email' => $user->email,
                     'subject' => 'Verify your email address for WorkOS Platform',
-                    'body' => "Hello {$user->name},\n\nPlease verify your email by clicking the link: https://fmikom.suntree.my.id/auth/verify?token=" . bin2hex(random_bytes(16)),
+                    'body' => "Hello {$user->name},\n\nPlease verify your email by clicking the link: https://fmikom.suntree.my.id/auth/verify?token=".bin2hex(random_bytes(16)),
                     'status' => 'Delivered',
                     'created_at' => now()->subDays(12)->subHours(2),
                 ],
@@ -500,7 +506,7 @@ class UsersController extends Controller
                 [
                     'email' => $user->email,
                     'subject' => 'Security Alert: New Sign-in Detected',
-                    'body' => "A new sign-in was detected on Chrome (macOS) from IP 182.253.162.88.",
+                    'body' => 'A new sign-in was detected on Chrome (macOS) from IP 182.253.162.88.',
                     'status' => 'Delivered',
                     'created_at' => now()->subDays(3)->subHours(5),
                 ],
@@ -510,30 +516,30 @@ class UsersController extends Controller
                     'body' => "Hi {$user->name},\n\nYour portal account password was successfully updated. If this wasn't you, please contact support immediately.",
                     'status' => 'Delivered',
                     'created_at' => now()->subHours(18),
-                ]
+                ],
             ];
 
             foreach ($emailsToSeed as $seed) {
-                \App\Models\Auth\AuthEmailLog::create(array_merge($seed, ['user_id' => $user->id]));
+                AuthEmailLog::create(array_merge($seed, ['user_id' => $user->id]));
             }
         }
 
-        $logs = \App\Models\Auth\AuthEmailLog::where('user_id', $user->id)
+        $logs = AuthEmailLog::where('user_id', $user->id)
             ->latest('created_at')
             ->get();
 
         return response()->json([
-            'emails' => $logs
+            'emails' => $logs,
         ]);
     }
 
     public function clearEmailHistory(User $user)
     {
-        \App\Models\Auth\AuthEmailLog::where('user_id', $user->id)->delete();
+        AuthEmailLog::where('user_id', $user->id)->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Email history cleared successfully.'
+            'message' => 'Email history cleared successfully.',
         ]);
     }
 }

@@ -3,8 +3,8 @@
 namespace App\Modules\WorkOs\Services\Pipes\Adapters;
 
 use App\Models\Pipes\PipeConnection;
-use Illuminate\Support\Facades\Http;
 use App\Modules\WorkOs\Services\Pipes\OAuthEngine;
+use Illuminate\Support\Facades\Http;
 
 abstract class BaseProviderAdapter implements ProviderAdapterInterface
 {
@@ -22,9 +22,9 @@ abstract class BaseProviderAdapter implements ProviderAdapterInterface
     protected function getHttpClient(PipeConnection $connection)
     {
         $token = $connection->getActiveToken();
-        
+
         // If token is expired or close to expiring (within 5 minutes), refresh it
-        if (!$token || ($token->expires_at && $token->expires_at->subMinutes(5)->isPast())) {
+        if (! $token || ($token->expires_at && $token->expires_at->subMinutes(5)->isPast())) {
             $tokenData = $this->oauthEngine->refreshToken($connection);
             $accessToken = $tokenData['access_token'];
         } else {
@@ -32,9 +32,9 @@ abstract class BaseProviderAdapter implements ProviderAdapterInterface
         }
 
         return Http::withToken($accessToken)
-                   ->baseUrl($connection->provider->api_base_url)
-                   ->timeout(30)
-                   ->retry(3, 100); // Built-in simple retry for transient errors
+            ->baseUrl($connection->provider->api_base_url)
+            ->timeout(30)
+            ->retry(3, 100); // Built-in simple retry for transient errors
     }
 
     /**

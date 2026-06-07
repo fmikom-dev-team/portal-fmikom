@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Modules\WorkOs\Controllers\Auth\PasskeyController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------

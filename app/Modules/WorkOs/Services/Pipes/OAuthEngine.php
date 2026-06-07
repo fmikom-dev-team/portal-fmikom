@@ -2,11 +2,11 @@
 
 namespace App\Modules\WorkOs\Services\Pipes;
 
-use App\Models\Pipes\PipeProvider;
 use App\Models\Pipes\PipeConnection;
 use App\Models\Pipes\PipeConnectionToken;
-use Illuminate\Support\Facades\Http;
+use App\Models\Pipes\PipeProvider;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class OAuthEngine
@@ -22,7 +22,7 @@ class OAuthEngine
         Cache::put("oauth_state_{$state}", true, now()->addMinutes(15));
 
         $scopeStr = implode(' ', $scopes);
-        
+
         $query = http_build_query([
             'client_id' => $provider->client_id,
             'redirect_uri' => $redirectUri,
@@ -33,7 +33,7 @@ class OAuthEngine
             'prompt' => 'consent',
         ]);
 
-        return $provider->auth_url . '?' . $query;
+        return $provider->auth_url.'?'.$query;
     }
 
     /**
@@ -41,8 +41,8 @@ class OAuthEngine
      */
     public function handleCallback(PipeProvider $provider, string $code, string $redirectUri, string $state)
     {
-        if (!Cache::pull("oauth_state_{$state}")) {
-            throw new \Exception("Invalid or expired OAuth state.");
+        if (! Cache::pull("oauth_state_{$state}")) {
+            throw new \Exception('Invalid or expired OAuth state.');
         }
 
         $response = Http::asForm()->post($provider->token_url, [
@@ -54,7 +54,7 @@ class OAuthEngine
         ]);
 
         if ($response->failed()) {
-            throw new \Exception("OAuth token exchange failed: " . $response->body());
+            throw new \Exception('OAuth token exchange failed: '.$response->body());
         }
 
         return $response->json();
@@ -68,8 +68,8 @@ class OAuthEngine
         $provider = $connection->provider;
         $activeToken = $connection->getActiveToken();
 
-        if (!$activeToken || !$activeToken->refresh_token) {
-            throw new \Exception("No refresh token available.");
+        if (! $activeToken || ! $activeToken->refresh_token) {
+            throw new \Exception('No refresh token available.');
         }
 
         $response = Http::asForm()->post($provider->token_url, [
@@ -81,7 +81,7 @@ class OAuthEngine
 
         if ($response->failed()) {
             $connection->update(['status' => 'expired', 'health_status' => 'failing']);
-            throw new \Exception("OAuth token refresh failed: " . $response->body());
+            throw new \Exception('OAuth token refresh failed: '.$response->body());
         }
 
         $data = $response->json();

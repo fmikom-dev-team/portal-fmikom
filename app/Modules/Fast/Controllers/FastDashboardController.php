@@ -4,8 +4,8 @@ namespace App\Modules\Fast\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class FastDashboardController extends Controller
 {
@@ -16,13 +16,13 @@ class FastDashboardController extends Controller
         $role = $request->attributes->get('resolved_role', session('active_role'));
         $isAdmin = in_array($role, self::ADMIN_ROLES);
 
-        $componentName = $isAdmin 
-            ? "Modules/Fast/Admin/Dashboard"
-            : "Modules/Fast/User/" . Str::studly($role) . "Dashboard";
+        $componentName = $isAdmin
+            ? 'Modules/Fast/Admin/Dashboard'
+            : 'Modules/Fast/User/'.Str::studly($role).'Dashboard';
 
         $path = resource_path("js/pages/{$componentName}.vue");
-        if (!file_exists($path)) {
-            $fallbackName = "Modules/Fast/User/MahasiswaDashboard";
+        if (! file_exists($path)) {
+            $fallbackName = 'Modules/Fast/User/MahasiswaDashboard';
             if (file_exists(resource_path("js/pages/{$fallbackName}.vue"))) {
                 $componentName = $fallbackName;
             } else {

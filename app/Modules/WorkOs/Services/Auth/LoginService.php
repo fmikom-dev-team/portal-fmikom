@@ -2,14 +2,15 @@
 
 namespace App\Modules\WorkOs\Services\Auth;
 
-use App\Models\User;
 use App\Models\Auth\AuthLoginAttempt;
-use App\Modules\WorkOs\Services\AuthPlatform\SessionEngine;
+use App\Models\Auth\AuthMfa;
+use App\Models\User;
 use App\Modules\WorkOs\Services\AuthPlatform\MFAEngine;
+use App\Modules\WorkOs\Services\AuthPlatform\SessionEngine;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
 
 /**
  * LoginService — Enterprise Login Flow Orchestrator
@@ -42,9 +43,9 @@ class LoginService
      */
     public function attemptEmailPassword(Request $request): LoginResult
     {
-        $email    = $request->input('email');
+        $email = $request->input('email');
         $password = $request->input('password');
-        $ip       = $request->ip();
+        $ip = $request->ip();
 
         // 1. Lockout check
         if ($this->isLockedOut($email, $ip)) {
@@ -54,8 +55,9 @@ class LoginService
         // 2. Find user
         $user = User::where('email', $email)->first();
 
-        if (!$user || !Hash::check($password, $user->password)) {
+        if (! $user || ! Hash::check($password, $user->password)) {
             $this->recordFailedAttempt($email, $ip, 'invalid_credentials');
+
             return LoginResult::failed('These credentials do not match our records.');
         }
 
@@ -63,6 +65,7 @@ class LoginService
         if ($this->requiresMfa($user)) {
             // Don't create full session yet — return pending state
             $this->recordSuccessfulAttempt($email, $ip);
+
             return LoginResult::mfaRequired($user);
         }
 
@@ -79,11 +82,12 @@ class LoginService
         try {
             $valid = $this->mfaEngine->verifyLogin($user, $code);
         } catch (\Exception $e) {
-            return LoginResult::failed('MFA verification error: ' . $e->getMessage());
+            return LoginResult::failed('MFA verification error: '.$e->getMessage());
         }
 
-        if (!$valid) {
+        if (! $valid) {
             $this->recordFailedAttempt($user->email, $request->ip(), 'mfa_failed');
+
             return LoginResult::failed('Invalid MFA code.');
         }
 
@@ -141,7 +145,7 @@ class LoginService
      */
     protected function requiresMfa(User $user): bool
     {
-        return \App\Models\Auth\AuthMfa::where('user_id', $user->id)
+        return AuthMfa::where('user_id', $user->id)
             ->where('is_active', true)
             ->exists();
     }
@@ -149,9 +153,9 @@ class LoginService
     protected function recordFailedAttempt(string $email, string $ip, string $reason = 'invalid_credentials'): void
     {
         AuthLoginAttempt::create([
-            'email'          => $email,
-            'ip_address'     => $ip,
-            'is_successful'  => false,
+            'email' => $email,
+            'ip_address' => $ip,
+            'is_successful' => false,
             'failure_reason' => $reason,
         ]);
     }
@@ -159,8 +163,8 @@ class LoginService
     protected function recordSuccessfulAttempt(string $email, string $ip): void
     {
         AuthLoginAttempt::create([
-            'email'         => $email,
-            'ip_address'    => $ip,
+            'email' => $email,
+            'ip_address' => $ip,
             'is_successful' => true,
         ]);
     }

@@ -11,7 +11,7 @@ class RadarDetection extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'metadata'    => 'array',
+        'metadata' => 'array',
         'resolved_at' => 'datetime',
     ];
 

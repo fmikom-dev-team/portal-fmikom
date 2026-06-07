@@ -3,18 +3,17 @@
 namespace App\Models\Surat;
 
 use App\Models\User;
-
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SuratApprovalFlow extends Model
 {
     protected $fillable = [
-        'surat_id', 'approver_id', 'urutan', 'status', 'catatan', 'tanggal_aksi'
+        'surat_id', 'approver_id', 'urutan', 'status', 'catatan', 'tanggal_aksi',
     ];
 
     protected $casts = [
-        'tanggal_aksi' => 'datetime'
+        'tanggal_aksi' => 'datetime',
     ];
 
     public function surat(): BelongsTo

@@ -3,17 +3,13 @@
 namespace App\Concerns;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 
 trait HandlesImageCompression
 {
     /**
      * Compress and resize an uploaded image, converting it to WebP.
      *
-     * @param UploadedFile $file
-     * @param string $directory
-     * @param int $maxWidth
-     * @param int $maxHeight
-     * @param int $quality
      * @return string|null The relative storage path of the saved file
      */
     protected function compressAndSaveImage(UploadedFile $file, string $directory = 'profile_photos', int $maxWidth = 400, int $maxHeight = 400, int $quality = 80): ?string
@@ -22,14 +18,14 @@ trait HandlesImageCompression
         @ini_set('memory_limit', '512M');
 
         // Generate a unique filename with .webp extension
-        $filename = uniqid('img_', true) . '.webp';
-        $targetDir = storage_path('app/public/' . $directory);
+        $filename = uniqid('img_', true).'.webp';
+        $targetDir = storage_path('app/public/'.$directory);
 
-        if (!file_exists($targetDir)) {
+        if (! file_exists($targetDir)) {
             mkdir($targetDir, 0755, true);
         }
 
-        $targetPath = $targetDir . '/' . $filename;
+        $targetPath = $targetDir.'/'.$filename;
         $sourcePath = $file->getRealPath();
 
         // Load image based on mime type
@@ -52,7 +48,7 @@ trait HandlesImageCompression
                 break;
         }
 
-        if (!$sourceImage) {
+        if (! $sourceImage) {
             // If GD loading failed or unsupported format, just store normally as fallback
             return $file->store($directory, 'public');
         }
@@ -94,10 +90,10 @@ trait HandlesImageCompression
             $success = @imagewebp($destImage, $targetPath, $quality);
         }
 
-        if (!$success) {
+        if (! $success) {
             // Fallback to JPEG
-            $filename = uniqid('img_', true) . '.jpg';
-            $targetPath = $targetDir . '/' . $filename;
+            $filename = uniqid('img_', true).'.jpg';
+            $targetPath = $targetDir.'/'.$filename;
             $success = @imagejpeg($destImage, $targetPath, $quality);
         }
 
@@ -106,7 +102,7 @@ trait HandlesImageCompression
         imagedestroy($destImage);
 
         if ($success) {
-            return $directory . '/' . $filename;
+            return $directory.'/'.$filename;
         }
 
         // Fallback to normal store if anything failed
@@ -126,14 +122,14 @@ trait HandlesImageCompression
 
         $realPath = $file->getRealPath();
         $mime = $file->getClientMimeType();
-        
+
         // 1. Strict Content validation (check binary/content for script sequences)
         // Skip for image and video files as they are binary and can contain random matching byte sequences.
-        if (!str_starts_with($mime, 'image/') && !str_starts_with($mime, 'video/')) {
+        if (! str_starts_with($mime, 'image/') && ! str_starts_with($mime, 'video/')) {
             $contents = file_get_contents($realPath);
             if (
-                str_contains($contents, '<?php') || 
-                str_contains($contents, '<?=') || 
+                str_contains($contents, '<?php') ||
+                str_contains($contents, '<?=') ||
                 str_contains($contents, '<script') ||
                 preg_match('/<script\b[^>]*>(.*?)<\/script>/is', $contents) ||
                 preg_match('/<\?php\b(.*?)(\?>|$)/is', $contents)
@@ -142,18 +138,18 @@ trait HandlesImageCompression
                 abort(422, 'Security Warning: Dangerous script signatures detected in file content.');
             }
         }
-        $targetDir = storage_path('app/public/' . $directory);
-        if (!file_exists($targetDir)) {
+        $targetDir = storage_path('app/public/'.$directory);
+        if (! file_exists($targetDir)) {
             mkdir($targetDir, 0755, true);
         }
 
         // 2. Video processing — transcode and compress to WebM using FFmpeg
         if (str_starts_with($mime, 'video/')) {
-            $filename = uniqid('vid_', true) . '.webm';
-            $destPath = $targetDir . '/' . $filename;
+            $filename = uniqid('vid_', true).'.webm';
+            $destPath = $targetDir.'/'.$filename;
 
             $ffmpegPath = '/opt/homebrew/bin/ffmpeg';
-            if (!file_exists($ffmpegPath)) {
+            if (! file_exists($ffmpegPath)) {
                 $ffmpegPath = 'ffmpeg';
             }
 
@@ -163,25 +159,26 @@ trait HandlesImageCompression
             // Use VP8 with realtime speed settings to compress and save as WebM
             $command = "{$ffmpegPath} -y -i {$escapedSource} -c:v libvpx -crf 32 -b:v 1M -deadline realtime -cpu-used 4 -c:a libvorbis {$escapedDest} 2>&1";
 
-            \Illuminate\Support\Facades\Log::info("Converting video to WebM: " . $command);
+            Log::info('Converting video to WebM: '.$command);
             exec($command, $output, $resultCode);
 
             if ($resultCode === 0 && file_exists($destPath)) {
-                return $directory . '/' . $filename;
+                return $directory.'/'.$filename;
             }
 
-            \Illuminate\Support\Facades\Log::error("FFmpeg video transcode failed with code {$resultCode}. Output: " . implode("\n", $output));
+            Log::error("FFmpeg video transcode failed with code {$resultCode}. Output: ".implode("\n", $output));
 
             // Fallback to original storage if FFmpeg fails
             $ext = $file->getClientOriginalExtension() ?: 'mp4';
-            $filename = uniqid('vid_fallback_', true) . '.' . $ext;
+            $filename = uniqid('vid_fallback_', true).'.'.$ext;
+
             return $file->storeAs($directory, $filename, 'public');
         }
 
-
         // 3. GIF processing (preserve animation, store securely)
         if ($mime === 'image/gif') {
-            $filename = uniqid('gif_', true) . '.gif';
+            $filename = uniqid('gif_', true).'.gif';
+
             return $file->storeAs($directory, $filename, 'public');
         }
 

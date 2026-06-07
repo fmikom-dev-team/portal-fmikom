@@ -12,16 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('portal_posts', function (Blueprint $table) {
-            if (!Schema::hasColumn('portal_posts', 'excerpt')) {
+            if (! Schema::hasColumn('portal_posts', 'excerpt')) {
                 $table->text('excerpt')->nullable()->after('content');
             }
-            if (!Schema::hasColumn('portal_posts', 'meta_title')) {
+            if (! Schema::hasColumn('portal_posts', 'meta_title')) {
                 $table->string('meta_title')->nullable()->after('meta_description');
             }
-            if (!Schema::hasColumn('portal_posts', 'og_image')) {
+            if (! Schema::hasColumn('portal_posts', 'og_image')) {
                 $table->string('og_image')->nullable()->after('meta_title');
             }
-            if (!Schema::hasColumn('portal_posts', 'tags')) {
+            if (! Schema::hasColumn('portal_posts', 'tags')) {
                 $table->json('tags')->nullable()->after('category_id');
             }
         });

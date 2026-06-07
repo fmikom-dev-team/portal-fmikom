@@ -3,7 +3,6 @@
 namespace App\Models\Auth;
 
 use App\Models\User;
-
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
@@ -36,7 +35,7 @@ class AuthAuditLog extends Model
     ];
 
     protected $casts = [
-        'metadata'    => 'array',
+        'metadata' => 'array',
         'occurred_at' => 'datetime',
     ];
 
@@ -51,13 +50,13 @@ class AuthAuditLog extends Model
         $request = request();
 
         return static::create([
-            'event'       => $event,
-            'user_id'     => $userId,
-            'actor_type'  => 'user',
-            'ip_address'  => $request?->ip(),
-            'user_agent'  => $request?->userAgent(),
-            'metadata'    => $metadata,
-            'severity'    => $severity,
+            'event' => $event,
+            'user_id' => $userId,
+            'actor_type' => 'user',
+            'ip_address' => $request?->ip(),
+            'user_agent' => $request?->userAgent(),
+            'metadata' => $metadata,
+            'severity' => $severity,
             'occurred_at' => now(),
         ]);
     }

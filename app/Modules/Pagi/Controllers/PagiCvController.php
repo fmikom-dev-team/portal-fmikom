@@ -3,15 +3,14 @@
 namespace App\Modules\Pagi\Controllers;
 
 use App\Http\Controllers\Controller;
-
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 use App\Models\Pagi\PagiCv;
 use App\Models\User;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class PagiCvController extends Controller
 {
@@ -26,7 +25,7 @@ class PagiCvController extends Controller
             ->get();
 
         return Inertia::render('Modules/Pagi/User/Cv/CvDashboard', [
-            'cvs' => $cvs
+            'cvs' => $cvs,
         ]);
     }
 
@@ -100,17 +99,19 @@ class PagiCvController extends Controller
         $experience = [];
         $organizations = [];
         $skills = [];
-        
+
         // Let's populate some default skills from profile if available
         $profileSkills = $user->metadata['skills'] ?? [];
         if (is_array($profileSkills)) {
             foreach ($profileSkills as $index => $skillItem) {
                 // skillItem can be a string or an array like {name, percentage}
                 $skillName = is_array($skillItem) ? ($skillItem['name'] ?? '') : (string) $skillItem;
-                if (empty(trim($skillName))) continue;
+                if (empty(trim($skillName))) {
+                    continue;
+                }
                 $skills[] = [
-                    'id'    => $index + 1,
-                    'name'  => $skillName,
+                    'id' => $index + 1,
+                    'name' => $skillName,
                     'level' => is_array($skillItem) ? ($skillItem['percentage'] ?? 80) : 80,
                 ];
             }
@@ -119,17 +120,19 @@ class PagiCvController extends Controller
         $trainings = [];
         $achievements = [];
         $languages = [];
-        
+
         $profileLanguages = $user->metadata['languages'] ?? [];
         if (is_array($profileLanguages)) {
             foreach ($profileLanguages as $index => $langItem) {
                 // langItem can be a string or an array like {language, proficiency}
                 $langName = is_array($langItem) ? ($langItem['language'] ?? $langItem['name'] ?? '') : (string) $langItem;
                 $langProf = is_array($langItem) ? ($langItem['proficiency'] ?? 'Professional working proficiency') : 'Professional working proficiency';
-                if (empty(trim($langName))) continue;
+                if (empty(trim($langName))) {
+                    continue;
+                }
                 $languages[] = [
-                    'id'          => $index + 1,
-                    'name'        => $langName,
+                    'id' => $index + 1,
+                    'name' => $langName,
                     'proficiency' => $langProf,
                 ];
             }
@@ -154,7 +157,7 @@ class PagiCvController extends Controller
                 'trainings',
                 'achievements',
                 'languages',
-                'references'
+                'references',
             ],
             'sections_visibility' => [
                 'summary' => true,
@@ -167,10 +170,10 @@ class PagiCvController extends Controller
                 'achievements' => true,
                 'languages' => true,
                 'references' => true,
-            ]
+            ],
         ];
 
-        $title = $request->title ?: 'CV ' . ucfirst(str_replace('-', ' ', $request->template_id));
+        $title = $request->title ?: 'CV '.ucfirst(str_replace('-', ' ', $request->template_id));
 
         $cv = PagiCv::create([
             'user_id' => $user->id,
@@ -235,10 +238,12 @@ class PagiCvController extends Controller
         if (is_array($profileSkills)) {
             foreach ($profileSkills as $index => $skillItem) {
                 $skillName = is_array($skillItem) ? ($skillItem['name'] ?? '') : (string) $skillItem;
-                if (empty(trim($skillName))) continue;
+                if (empty(trim($skillName))) {
+                    continue;
+                }
                 $skills[] = [
-                    'id'    => $index + 1,
-                    'name'  => $skillName,
+                    'id' => $index + 1,
+                    'name' => $skillName,
                     'level' => is_array($skillItem) ? ($skillItem['percentage'] ?? 80) : 80,
                 ];
             }
@@ -250,10 +255,12 @@ class PagiCvController extends Controller
             foreach ($profileLanguages as $index => $langItem) {
                 $langName = is_array($langItem) ? ($langItem['language'] ?? $langItem['name'] ?? '') : (string) $langItem;
                 $langProf = is_array($langItem) ? ($langItem['proficiency'] ?? 'Professional working proficiency') : 'Professional working proficiency';
-                if (empty(trim($langName))) continue;
+                if (empty(trim($langName))) {
+                    continue;
+                }
                 $languages[] = [
-                    'id'          => $index + 1,
-                    'name'        => $langName,
+                    'id' => $index + 1,
+                    'name' => $langName,
                     'proficiency' => $langProf,
                 ];
             }
@@ -278,7 +285,7 @@ class PagiCvController extends Controller
         }
 
         return Inertia::render('Modules/Pagi/User/Cv/CvBuilder', [
-            'cv' => $cv
+            'cv' => $cv,
         ]);
     }
 
@@ -318,11 +325,11 @@ class PagiCvController extends Controller
 
         // Auto-compute status based on completeness
         $pi = $data['personal_info'] ?? [];
-        $hasBasic = !empty(trim($pi['name'] ?? ''))
-            && !empty(trim($pi['email'] ?? ''))
-            && !empty(trim($pi['phone'] ?? ''))
-            && !empty(trim($pi['summary'] ?? ''));
-        $hasSection = !empty($data['education']) || !empty($data['experience']);
+        $hasBasic = ! empty(trim($pi['name'] ?? ''))
+            && ! empty(trim($pi['email'] ?? ''))
+            && ! empty(trim($pi['phone'] ?? ''))
+            && ! empty(trim($pi['summary'] ?? ''));
+        $hasSection = ! empty($data['education']) || ! empty($data['experience']);
         $data['status'] = ($hasBasic && $hasSection) ? 'published' : 'draft';
 
         $cv->update($data);
@@ -355,7 +362,7 @@ class PagiCvController extends Controller
         }
 
         $newCv = $cv->replicate();
-        $newCv->title = 'Salinan dari ' . $cv->title;
+        $newCv->title = 'Salinan dari '.$cv->title;
         $newCv->save();
 
         return redirect()->route('module.pagi.cv.index')
@@ -392,22 +399,22 @@ class PagiCvController extends Controller
 
         if ($request->file('photo')) {
             $path = $request->file('photo')->store('cv-photos', 'public');
-            
+
             // Update the stored cv record's personal_info with the new path
             $personalInfo = $cv->personal_info ?? [];
-            
+
             // Delete old photo if it exists and is specific to cv
-            if (!empty($personalInfo['foto_path']) && str_contains($personalInfo['foto_path'], 'cv-photos/')) {
+            if (! empty($personalInfo['foto_path']) && str_contains($personalInfo['foto_path'], 'cv-photos/')) {
                 Storage::disk('public')->delete($personalInfo['foto_path']);
             }
-            
+
             $personalInfo['foto_path'] = $path;
             $cv->update(['personal_info' => $personalInfo]);
 
             return response()->json([
                 'success' => true,
                 'path' => $path,
-                'url' => asset('storage/' . $path),
+                'url' => asset('storage/'.$path),
             ]);
         }
 
@@ -441,7 +448,7 @@ class PagiCvController extends Controller
         $pdf->setPaper('a4', 'portrait');
         $pdf->setWarnings(false);
 
-        $filename = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $cv->title), '-')) . '.pdf';
+        $filename = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $cv->title), '-')).'.pdf';
 
         return $pdf->download($filename);
     }
@@ -469,7 +476,7 @@ class PagiCvController extends Controller
         $pdf->setPaper('a4', 'portrait');
         $pdf->setWarnings(false);
 
-        $filename = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $cv->title), '-')) . '.pdf';
+        $filename = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $cv->title), '-')).'.pdf';
 
         return $pdf->stream($filename);
     }
@@ -504,6 +511,7 @@ class PagiCvController extends Controller
             foreach ($value as $key => $val) {
                 $value[$key] = $this->sanitizeInputRecursive($val);
             }
+
             return $value;
         }
 

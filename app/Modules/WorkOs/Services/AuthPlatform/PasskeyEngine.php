@@ -2,11 +2,11 @@
 
 namespace App\Modules\WorkOs\Services\AuthPlatform;
 
-use App\Models\User;
-use App\Models\Auth\AuthPasskey;
-use Illuminate\Support\Facades\Crypt;
-use Carbon\Carbon;
 use App\Exceptions\PasskeyException;
+use App\Models\Auth\AuthPasskey;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Crypt;
 
 /**
  * Enterprise Passkeys (WebAuthn) Engine
@@ -24,9 +24,9 @@ class PasskeyEngine
     public function getRegistrationOptions(User $user)
     {
         $challenge = random_bytes(32);
-        
+
         // Store challenge in cache/session to verify later
-        cache()->put('webauthn_challenge_' . $user->id, base64_encode($challenge), now()->addMinutes(5));
+        cache()->put('webauthn_challenge_'.$user->id, base64_encode($challenge), now()->addMinutes(5));
 
         return [
             'challenge' => base64_encode($challenge),
@@ -46,10 +46,10 @@ class PasskeyEngine
             'authenticatorSelection' => [
                 'residentKey' => 'preferred',
                 'requireResidentKey' => false,
-                'userVerification' => 'preferred'
+                'userVerification' => 'preferred',
             ],
             'timeout' => 60000,
-            'attestation' => 'none'
+            'attestation' => 'none',
         ];
     }
 
@@ -58,10 +58,10 @@ class PasskeyEngine
      */
     public function verifyRegistration(User $user, array $response)
     {
-        $challenge = cache()->pull('webauthn_challenge_' . $user->id);
-        
-        if (!$challenge) {
-            throw new PasskeyException("Challenge expired or invalid.");
+        $challenge = cache()->pull('webauthn_challenge_'.$user->id);
+
+        if (! $challenge) {
+            throw new PasskeyException('Challenge expired or invalid.');
         }
 
         // Mocking the complex CBOR validation here.
@@ -70,8 +70,8 @@ class PasskeyEngine
         $credentialId = $response['id'] ?? null;
         $publicKeyHex = 'mock_public_key_derived_from_cbor'; // Placeholder
 
-        if (!$credentialId) {
-            throw new PasskeyException("Invalid WebAuthn response.");
+        if (! $credentialId) {
+            throw new PasskeyException('Invalid WebAuthn response.');
         }
 
         $passkeyName = $this->getDeviceNameFromUserAgent(request()->userAgent() ?? '');
@@ -105,6 +105,7 @@ class PasskeyEngine
         if (preg_match('/linux/i', $userAgent)) {
             return 'Linux';
         }
+
         return 'Kunci sandi';
     }
 
@@ -125,6 +126,7 @@ class PasskeyEngine
         if (preg_match('/firefox/i', $userAgent)) {
             return 'Firefox';
         }
+
         return '';
     }
 
@@ -140,14 +142,15 @@ class PasskeyEngine
             return 'iCloud Keychain';
         }
         if ($os === 'Windows') {
-            return 'Windows Hello' . ($browser ? " ({$browser})" : '');
+            return 'Windows Hello'.($browser ? " ({$browser})" : '');
         }
         if ($os === 'Android') {
             return 'POCO X6 5G'; // High realism matching user's POCO example
         }
         if ($os === 'Linux') {
-            return 'Kunci sandi Linux' . ($browser ? " ({$browser})" : '');
+            return 'Kunci sandi Linux'.($browser ? " ({$browser})" : '');
         }
+
         return 'Kunci sandi';
     }
 
@@ -159,14 +162,14 @@ class PasskeyEngine
         $os = 'Kunci sandi';
         $browser = '';
 
-        if (!empty($userAgent)) {
+        if (! empty($userAgent)) {
             $os = $this->detectOs($userAgent);
             $browser = $this->detectBrowser($userAgent);
         }
 
         $baseName = $this->getBaseName($os, $browser);
 
-        return $baseName . ' (' . Carbon::now()->format('d M Y, H.i.s') . ')';
+        return $baseName.' ('.Carbon::now()->format('d M Y, H.i.s').')';
     }
 
     /**
@@ -178,14 +181,14 @@ class PasskeyEngine
         $challenge = random_bytes(32);
         // Normalize standard base64 to base64url to match the browser's clientDataJSON challenge output
         $challengeB64Url = rtrim(strtr(base64_encode($challenge), '+/', '-_'), '=');
-        
-        cache()->put('webauthn_auth_challenge_' . $challengeB64Url, true, now()->addMinutes(5));
+
+        cache()->put('webauthn_auth_challenge_'.$challengeB64Url, true, now()->addMinutes(5));
 
         return [
             'challenge' => $challengeB64Url,
             'timeout' => 60000,
             'rpId' => request()->getHost(),
-            'userVerification' => 'preferred'
+            'userVerification' => 'preferred',
         ];
     }
 
@@ -197,24 +200,24 @@ class PasskeyEngine
         // Decode clientDataJSON securely using base64url format
         $clientDataJSONEncoded = $response['response']['clientDataJSON'] ?? '';
         $clientDataJSONDecoded = base64_decode(strtr($clientDataJSONEncoded, '-_', '+/'));
-        
-        if (!$clientDataJSONDecoded) {
-            throw new PasskeyException("Invalid client data encoding.");
+
+        if (! $clientDataJSONDecoded) {
+            throw new PasskeyException('Invalid client data encoding.');
         }
 
         $clientData = json_decode($clientDataJSONDecoded, true);
         $challengeB64Url = $clientData['challenge'] ?? '';
 
-        if (!cache()->pull('webauthn_auth_challenge_' . $challengeB64Url)) {
-            throw new PasskeyException("Challenge expired or invalid.");
+        if (! cache()->pull('webauthn_auth_challenge_'.$challengeB64Url)) {
+            throw new PasskeyException('Challenge expired or invalid.');
         }
 
         $credentialId = $response['id'];
 
         $passkey = AuthPasskey::where('credential_id', $credentialId)->first();
 
-        if (!$passkey) {
-            throw new PasskeyException("Passkey not recognized.");
+        if (! $passkey) {
+            throw new PasskeyException('Passkey not recognized.');
         }
 
         // Mocking cryptographic signature verification using the stored public_key
@@ -226,4 +229,3 @@ class PasskeyEngine
         return $passkey->user;
     }
 }
-

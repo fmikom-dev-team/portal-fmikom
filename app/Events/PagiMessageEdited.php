@@ -2,7 +2,6 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -14,7 +13,7 @@ class PagiMessageEdited implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
-        public int    $messageId,
+        public int $messageId,
         public string $conversationId,
         public string $newBody,
         public string $editedAt
@@ -23,7 +22,7 @@ class PagiMessageEdited implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('pagi.chat.' . $this->conversationId),
+            new PrivateChannel('pagi.chat.'.$this->conversationId),
         ];
     }
 
@@ -35,8 +34,8 @@ class PagiMessageEdited implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'id'        => $this->messageId,
-            'body'      => $this->newBody,
+            'id' => $this->messageId,
+            'body' => $this->newBody,
             'edited_at' => $this->editedAt,
         ];
     }

@@ -1,12 +1,14 @@
 <?php
 
-use App\Models\User;
-use App\Models\Role;
-use App\Models\Module;
+use App\Models\Auth\AuthOAuthCredential;
 use App\Models\Auth\AuthOAuthProvider;
-use App\Models\ProgramStudi;
 use App\Models\Fakultas;
+use App\Models\Module;
+use App\Models\ProgramStudi;
+use App\Models\Role;
+use App\Models\User;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Hash;
 
 const GOOGLE_USER_NAME = 'Google User';
 const GOOGLE_USER_EMAIL = 'googleuser@example.com';
@@ -26,7 +28,7 @@ beforeEach(function () {
     $fakultas = Fakultas::firstOrCreate(['id' => 1], ['nama' => 'FMIKOM', 'kode' => 'FMIKOM']);
     ProgramStudi::firstOrCreate(['id' => 1], ['fakultas_id' => $fakultas->id, 'nama' => 'Informatika', 'kode' => 'IF']);
     ProgramStudi::firstOrCreate(['id' => 2], ['fakultas_id' => $fakultas->id, 'nama' => 'Sistem Informasi', 'kode' => 'SI']);
-    
+
     AuthOAuthProvider::firstOrCreate(['slug' => 'google'], [
         'name' => 'Google',
         'is_enabled' => true,
@@ -201,7 +203,7 @@ test('oauth registration handles existing/orphaned oauth credentials gracefully 
     ];
 
     // Create an orphaned credential in the database (linked to a non-existent or deleted user ID)
-    \App\Models\Auth\AuthOAuthCredential::create([
+    AuthOAuthCredential::create([
         'user_id' => 9999, // Non-existent user
         'provider_id' => $provider->id,
         'external_id' => 'google-id-duplicate-123',
@@ -234,12 +236,12 @@ test('oauth registration handles existing/orphaned oauth credentials gracefully 
 
 test('oauth registration handles verified existing users with same email gracefully by linking and logging in', function () {
     $provider = AuthOAuthProvider::where('slug', 'google')->first();
-    
+
     // Create an existing user with the same email
     $existingUser = User::create([
         'name' => 'Existing User',
         'email' => GOOGLE_NEW_EMAIL,
-        'password' => \Illuminate\Support\Facades\Hash::make('password'),
+        'password' => Hash::make('password'),
         'user_type' => 'mahasiswa',
         'nomor_induk' => '88887777',
         'status_approval' => 'approved',
@@ -278,12 +280,12 @@ test('oauth registration handles verified existing users with same email gracefu
 
 test('oauth registration rejects linking to unverified existing users with same email', function () {
     $provider = AuthOAuthProvider::where('slug', 'google')->first();
-    
+
     // Create an existing user with the same email (unverified!)
     User::create([
         'name' => 'Existing User',
         'email' => GOOGLE_NEW_EMAIL,
-        'password' => \Illuminate\Support\Facades\Hash::make('password'),
+        'password' => Hash::make('password'),
         'user_type' => 'mahasiswa',
         'nomor_induk' => '88887777',
         'status_approval' => 'approved',
@@ -310,5 +312,3 @@ test('oauth registration rejects linking to unverified existing users with same 
     $response->assertSessionHasErrors(['email']);
     $this->assertGuest();
 });
-
-

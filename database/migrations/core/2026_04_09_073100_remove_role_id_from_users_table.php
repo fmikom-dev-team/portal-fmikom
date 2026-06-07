@@ -20,7 +20,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'role_id')) {
+            if (! Schema::hasColumn('users', 'role_id')) {
                 $table->foreignId('role_id')->nullable()->constrained('roles')->nullOnDelete();
             }
         });

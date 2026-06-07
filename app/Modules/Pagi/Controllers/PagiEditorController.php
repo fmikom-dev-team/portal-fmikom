@@ -2,16 +2,21 @@
 
 namespace App\Modules\Pagi\Controllers;
 
+use App\Concerns\HandlesImageCompression;
 use App\Http\Controllers\Controller;
-
-use Illuminate\Http\Request;
-
-use Inertia\Inertia;
+use App\Models\Pagi\PagiTag;
 use App\Models\Pagi\PagiWork;
+use App\Models\User;
+use App\Notifications\PagiNotification;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
 
 class PagiEditorController extends Controller
 {
-    use \App\Concerns\HandlesImageCompression;
+    use HandlesImageCompression;
 
     public function editor(Request $request)
     {
@@ -28,11 +33,11 @@ class PagiEditorController extends Controller
             if (is_array($content)) {
                 foreach ($content as &$block) {
                     if (isset($block['file_path'])) {
-                        $block['preview'] = asset('storage/' . $block['file_path']);
+                        $block['preview'] = asset('storage/'.$block['file_path']);
                     }
                     if (isset($block['file_paths']) && is_array($block['file_paths'])) {
-                        $block['previews'] = array_map(function($path) {
-                            return asset('storage/' . $path);
+                        $block['previews'] = array_map(function ($path) {
+                            return asset('storage/'.$path);
                         }, $block['file_paths']);
                     }
                 }
@@ -45,49 +50,49 @@ class PagiEditorController extends Controller
                 'id' => 1,
                 'url' => 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop',
                 'width' => 1920,
-                'height' => 1080
+                'height' => 1080,
             ],
             [
                 'id' => 2,
                 'url' => 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=1080&auto=format&fit=crop',
                 'width' => 1080,
-                'height' => 1350
+                'height' => 1350,
             ],
             [
                 'id' => 3,
                 'url' => 'https://images.unsplash.com/photo-1605721911519-3dfeb3be25e7?q=80&w=1080&auto=format&fit=crop',
                 'width' => 1080,
-                'height' => 1350
+                'height' => 1350,
             ],
             [
                 'id' => 4,
                 'url' => 'https://images.unsplash.com/photo-1526244434195-e2bd668b549b?q=80&w=1920&auto=format&fit=crop',
                 'width' => 1920,
-                'height' => 1080
+                'height' => 1080,
             ],
             [
                 'id' => 5,
                 'url' => 'https://images.unsplash.com/photo-1554188718-d80a69a4a29c?q=80&w=1920&auto=format&fit=crop',
                 'width' => 1920,
-                'height' => 1080
-            ]
+                'height' => 1080,
+            ],
         ];
 
         return Inertia::render('Modules/Pagi/User/Editor', [
             'editor' => $portfolio,
-            'mockImages' => $images
+            'mockImages' => $images,
         ]);
     }
 
     public function store(Request $request)
     {
         // Log incoming data for debugging
-        \Illuminate\Support\Facades\Log::info('Incoming store request payload:', $request->except(['content', 'cover_image']));
+        Log::info('Incoming store request payload:', $request->except(['content', 'cover_image']));
 
         // Normalize string booleans from FormData
         if ($request->has('is_published')) {
             $request->merge([
-                'is_published' => filter_var($request->is_published, FILTER_VALIDATE_BOOLEAN)
+                'is_published' => filter_var($request->is_published, FILTER_VALIDATE_BOOLEAN),
             ]);
         }
 
@@ -99,6 +104,7 @@ class PagiEditorController extends Controller
                         // Max 20MB limit
                         if ($value->getSize() > 20 * 1024 * 1024) {
                             $fail('Ukuran video maksimal adalah 20MB.');
+
                             return;
                         }
                         // Duration limit 60 seconds
@@ -135,8 +141,8 @@ class PagiEditorController extends Controller
             ];
 
             $request->validate($rules);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            \Illuminate\Support\Facades\Log::error('Store validation failed errors:', $e->errors());
+        } catch (ValidationException $e) {
+            Log::error('Store validation failed errors:', $e->errors());
             throw $e;
         }
 
@@ -167,7 +173,7 @@ class PagiEditorController extends Controller
                     if (isset($newBlock['link']) && is_string($newBlock['link'])) {
                         $newBlock['link'] = strip_tags($newBlock['link']);
                     }
-                    
+
                     // Handle single file (image, video, audio, asset)
                     if ($request->hasFile("content.{$key}.file")) {
                         $file = $request->file("content.{$key}.file");
@@ -181,7 +187,7 @@ class PagiEditorController extends Controller
                         unset($newBlock['file']); // Remove UploadedFile instance
                         unset($newBlock['preview']); // Remove blob URL
                     }
-                    
+
                     // Handle multiple files (photo_grid)
                     if ($request->hasFile("content.{$key}.files")) {
                         $paths = [];
@@ -197,7 +203,7 @@ class PagiEditorController extends Controller
                         unset($newBlock['files']);
                         unset($newBlock['previews']);
                     }
-                    
+
                     $contentData[] = $newBlock;
                 }
             }
@@ -208,7 +214,7 @@ class PagiEditorController extends Controller
         if (is_string($collaborators)) {
             $collaborators = json_decode($collaborators, true) ?: [];
         }
-        if (!is_array($collaborators)) {
+        if (! is_array($collaborators)) {
             $collaborators = [];
         }
         $newCollaborators = [];
@@ -228,12 +234,12 @@ class PagiEditorController extends Controller
                 break;
             }
         }
-        if (!$hasFeaturedDetails && !empty($newCollaborators)) {
+        if (! $hasFeaturedDetails && ! empty($newCollaborators)) {
             $contentData[] = [
                 'type' => 'featured_details',
                 'collaborators' => $newCollaborators,
                 'skills' => [],
-                'tools' => []
+                'tools' => [],
             ];
         }
 
@@ -256,13 +262,13 @@ class PagiEditorController extends Controller
 
         // Send notifications to new collaborators
         foreach ($newCollaborators as $collab) {
-            $targetUser = \App\Models\User::where('name', $collab['name'])->first();
+            $targetUser = User::where('name', $collab['name'])->first();
             if ($targetUser && $targetUser->id !== auth()->id()) {
-                $targetUser->notify(new \App\Notifications\PagiNotification(
+                $targetUser->notify(new PagiNotification(
                     'collaboration',
                     auth()->user()->name,
-                    'mengajak Anda berkolaborasi pada proyek: "' . $portfolio->title . '"',
-                    auth()->user()->foto_path ? (str_starts_with(auth()->user()->foto_path, 'http') ? auth()->user()->foto_path : asset('storage/' . auth()->user()->foto_path)) : null,
+                    'mengajak Anda berkolaborasi pada proyek: "'.$portfolio->title.'"',
+                    auth()->user()->foto_path ? (str_starts_with(auth()->user()->foto_path, 'http') ? auth()->user()->foto_path : asset('storage/'.auth()->user()->foto_path)) : null,
                     '/pagi/notifications',
                     [
                         'portfolio_id' => $portfolio->id,
@@ -274,22 +280,24 @@ class PagiEditorController extends Controller
         }
 
         // Parse and sync tags
-        if ($request->has('tags') && !empty($sanitizedTags)) {
+        if ($request->has('tags') && ! empty($sanitizedTags)) {
             $tagNames = array_map('trim', explode(',', $sanitizedTags));
             $tagIds = [];
             foreach ($tagNames as $name) {
-                if (empty($name)) continue;
-                
-                $slug = \Illuminate\Support\Str::slug($name);
-                $tag = \App\Models\Pagi\PagiTag::firstOrCreate(
+                if (empty($name)) {
+                    continue;
+                }
+
+                $slug = Str::slug($name);
+                $tag = PagiTag::firstOrCreate(
                     ['slug' => $slug],
                     ['name' => $name, 'color' => '#6366f1']
                 );
-                
-                if (!$tag->wasRecentlyCreated) {
+
+                if (! $tag->wasRecentlyCreated) {
                     $tag->increment('usage_count');
                 }
-                
+
                 $tagIds[] = $tag->id;
             }
             $portfolio->tags()->sync($tagIds);
@@ -323,13 +331,13 @@ class PagiEditorController extends Controller
             'cover_image' => ['required', 'file', 'extensions:jpeg,jpg,png,gif,mp4,mov,avi,webm,mkv,3gp', 'max:102400', $videoDurationValidator],
             'skills' => ['required', 'string', function ($attribute, $value, $fail) {
                 $array = json_decode($value, true);
-                if (!is_array($array) || count($array) < 1) {
+                if (! is_array($array) || count($array) < 1) {
                     $fail('Pilih minimal 1 keahlian (skills).');
                 }
             }],
             'tools' => ['required', 'string', function ($attribute, $value, $fail) {
                 $array = json_decode($value, true);
-                if (!is_array($array) || count($array) < 1) {
+                if (! is_array($array) || count($array) < 1) {
                     $fail('Pilih minimal 1 tools.');
                 }
             }],
@@ -376,7 +384,7 @@ class PagiEditorController extends Controller
                 'industry' => $request->input('industry'),
                 'original_work_confirmed' => $request->input('original_work_confirmed') === 'true',
                 'cover_fit' => $request->input('cover_fit', 'cover'),
-            ]
+            ],
         ];
 
         $portfolio = PagiWork::create([
@@ -389,13 +397,13 @@ class PagiEditorController extends Controller
 
         // Send notifications to new collaborators
         foreach ($newCollaborators as $collab) {
-            $targetUser = \App\Models\User::where('name', $collab['name'])->first();
+            $targetUser = User::where('name', $collab['name'])->first();
             if ($targetUser && $targetUser->id !== auth()->id()) {
-                $targetUser->notify(new \App\Notifications\PagiNotification(
+                $targetUser->notify(new PagiNotification(
                     'collaboration',
                     auth()->user()->name,
-                    'mengajak Anda berkolaborasi pada proyek: "' . $portfolio->title . '"',
-                    auth()->user()->foto_path ? (str_starts_with(auth()->user()->foto_path, 'http') ? auth()->user()->foto_path : asset('storage/' . auth()->user()->foto_path)) : null,
+                    'mengajak Anda berkolaborasi pada proyek: "'.$portfolio->title.'"',
+                    auth()->user()->foto_path ? (str_starts_with(auth()->user()->foto_path, 'http') ? auth()->user()->foto_path : asset('storage/'.auth()->user()->foto_path)) : null,
                     '/pagi/notifications',
                     [
                         'portfolio_id' => $portfolio->id,
@@ -409,7 +417,7 @@ class PagiEditorController extends Controller
         $mappedProject = [
             'id' => $portfolio->id,
             'title' => $portfolio->title ?? 'Untitled Project',
-            'image' => $portfolio->cover_image ? (str_starts_with($portfolio->cover_image, 'http') ? $portfolio->cover_image : asset('storage/' . $portfolio->cover_image)) : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+            'image' => $portfolio->cover_image ? (str_starts_with($portfolio->cover_image, 'http') ? $portfolio->cover_image : asset('storage/'.$portfolio->cover_image)) : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
             'content' => $contentData,
             'created_at' => $portfolio->created_at->format('F jS Y'),
             'likes' => 0,
@@ -421,7 +429,7 @@ class PagiEditorController extends Controller
         return response()->json([
             'success' => true,
             'project' => $mappedProject,
-            'message' => 'Karya berhasil ditambahkan!'
+            'message' => 'Karya berhasil ditambahkan!',
         ]);
     }
 
@@ -447,7 +455,7 @@ class PagiEditorController extends Controller
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string|max:2000',
             ]);
-            
+
             $content = $editor->content;
             if (is_array($content)) {
                 foreach ($content as &$block) {
@@ -469,7 +477,7 @@ class PagiEditorController extends Controller
                     'title' => $editor->title,
                     'content' => $content,
                 ],
-                'message' => 'Gallery item updated successfully!'
+                'message' => 'Gallery item updated successfully!',
             ]);
         }
 
@@ -496,13 +504,13 @@ class PagiEditorController extends Controller
             'cover_image' => ['nullable', 'file', 'extensions:jpeg,jpg,png,gif,mp4,mov,avi,webm,mkv,3gp', 'max:102400', $videoDurationValidator],
             'skills' => ['required', 'string', function ($attribute, $value, $fail) {
                 $array = json_decode($value, true);
-                if (!is_array($array) || count($array) < 1) {
+                if (! is_array($array) || count($array) < 1) {
                     $fail('Pilih minimal 1 keahlian (skills).');
                 }
             }],
             'tools' => ['required', 'string', function ($attribute, $value, $fail) {
                 $array = json_decode($value, true);
-                if (!is_array($array) || count($array) < 1) {
+                if (! is_array($array) || count($array) < 1) {
                     $fail('Pilih minimal 1 tools.');
                 }
             }],
@@ -569,7 +577,7 @@ class PagiEditorController extends Controller
                 'industry' => $request->input('industry'),
                 'original_work_confirmed' => $request->input('original_work_confirmed') === 'true',
                 'cover_fit' => $request->input('cover_fit', 'cover'),
-            ]
+            ],
         ];
 
         $editor->update([
@@ -580,13 +588,13 @@ class PagiEditorController extends Controller
 
         // Notify newly added collaborators
         foreach ($notifiedNames as $cName) {
-            $targetUser = \App\Models\User::where('name', $cName)->first();
+            $targetUser = User::where('name', $cName)->first();
             if ($targetUser && $targetUser->id !== auth()->id()) {
-                $targetUser->notify(new \App\Notifications\PagiNotification(
+                $targetUser->notify(new PagiNotification(
                     'collaboration',
                     auth()->user()->name,
-                    'mengajak Anda berkolaborasi pada proyek: "' . $editor->title . '"',
-                    auth()->user()->foto_path ? (str_starts_with(auth()->user()->foto_path, 'http') ? auth()->user()->foto_path : asset('storage/' . auth()->user()->foto_path)) : null,
+                    'mengajak Anda berkolaborasi pada proyek: "'.$editor->title.'"',
+                    auth()->user()->foto_path ? (str_starts_with(auth()->user()->foto_path, 'http') ? auth()->user()->foto_path : asset('storage/'.auth()->user()->foto_path)) : null,
                     '/pagi/notifications',
                     [
                         'portfolio_id' => $editor->id,
@@ -600,7 +608,7 @@ class PagiEditorController extends Controller
         $mappedProject = [
             'id' => $editor->id,
             'title' => $editor->title ?? 'Untitled Project',
-            'image' => $editor->cover_image ? (str_starts_with($editor->cover_image, 'http') ? $editor->cover_image : asset('storage/' . $editor->cover_image)) : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+            'image' => $editor->cover_image ? (str_starts_with($editor->cover_image, 'http') ? $editor->cover_image : asset('storage/'.$editor->cover_image)) : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
             'content' => $contentData,
             'created_at' => $editor->created_at->format('F jS Y'),
             'likes' => $editor->likes ?? 0,
@@ -612,7 +620,7 @@ class PagiEditorController extends Controller
         return response()->json([
             'success' => true,
             'project' => $mappedProject,
-            'message' => 'Karya berhasil diperbarui!'
+            'message' => 'Karya berhasil diperbarui!',
         ]);
     }
 
@@ -623,12 +631,12 @@ class PagiEditorController extends Controller
         }
 
         // Log incoming data for debugging
-        \Illuminate\Support\Facades\Log::info('Incoming update request payload:', $request->except(['content', 'cover_image']));
+        Log::info('Incoming update request payload:', $request->except(['content', 'cover_image']));
 
         // Normalize string booleans from FormData
         if ($request->has('is_published')) {
             $request->merge([
-                'is_published' => filter_var($request->is_published, FILTER_VALIDATE_BOOLEAN)
+                'is_published' => filter_var($request->is_published, FILTER_VALIDATE_BOOLEAN),
             ]);
         }
 
@@ -640,6 +648,7 @@ class PagiEditorController extends Controller
                         // Max 20MB limit
                         if ($value->getSize() > 20 * 1024 * 1024) {
                             $fail('Ukuran video maksimal adalah 20MB.');
+
                             return;
                         }
                         // Duration limit 60 seconds
@@ -676,8 +685,8 @@ class PagiEditorController extends Controller
             ];
 
             $request->validate($rules);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            \Illuminate\Support\Facades\Log::error('Update validation failed errors:', $e->errors());
+        } catch (ValidationException $e) {
+            Log::error('Update validation failed errors:', $e->errors());
             throw $e;
         }
 
@@ -708,7 +717,7 @@ class PagiEditorController extends Controller
                     if (isset($newBlock['link']) && is_string($newBlock['link'])) {
                         $newBlock['link'] = strip_tags($newBlock['link']);
                     }
-                    
+
                     // Handle single file (image, video, audio, asset)
                     if ($request->hasFile("content.{$key}.file")) {
                         $file = $request->file("content.{$key}.file");
@@ -722,7 +731,7 @@ class PagiEditorController extends Controller
                         unset($newBlock['file']); // Remove UploadedFile instance
                         unset($newBlock['preview']); // Remove blob URL
                     }
-                    
+
                     // Handle multiple files (photo_grid)
                     if ($request->hasFile("content.{$key}.files")) {
                         $paths = [];
@@ -740,7 +749,7 @@ class PagiEditorController extends Controller
                         unset($newBlock['files']);
                         unset($newBlock['previews']);
                     }
-                    
+
                     $contentData[] = $newBlock;
                 }
             }
@@ -751,7 +760,7 @@ class PagiEditorController extends Controller
         if (is_string($collaborators)) {
             $collaborators = json_decode($collaborators, true) ?: [];
         }
-        if (!is_array($collaborators)) {
+        if (! is_array($collaborators)) {
             $collaborators = [];
         }
         $existingDetails = collect($editor->content)->firstWhere('type', 'featured_details') ?: [];
@@ -792,12 +801,12 @@ class PagiEditorController extends Controller
                 break;
             }
         }
-        if (!$hasFeaturedDetails && !empty($newCollaborators)) {
+        if (! $hasFeaturedDetails && ! empty($newCollaborators)) {
             $contentData[] = [
                 'type' => 'featured_details',
                 'collaborators' => $newCollaborators,
                 'skills' => [],
-                'tools' => []
+                'tools' => [],
             ];
         }
 
@@ -819,13 +828,13 @@ class PagiEditorController extends Controller
 
         // Send notifications to new collaborators
         foreach ($notifiedNames as $cName) {
-            $targetUser = \App\Models\User::where('name', $cName)->first();
+            $targetUser = User::where('name', $cName)->first();
             if ($targetUser && $targetUser->id !== auth()->id()) {
-                $targetUser->notify(new \App\Notifications\PagiNotification(
+                $targetUser->notify(new PagiNotification(
                     'collaboration',
                     auth()->user()->name,
-                    'mengajak Anda berkolaborasi pada proyek: "' . $editor->title . '"',
-                    auth()->user()->foto_path ? (str_starts_with(auth()->user()->foto_path, 'http') ? auth()->user()->foto_path : asset('storage/' . auth()->user()->foto_path)) : null,
+                    'mengajak Anda berkolaborasi pada proyek: "'.$editor->title.'"',
+                    auth()->user()->foto_path ? (str_starts_with(auth()->user()->foto_path, 'http') ? auth()->user()->foto_path : asset('storage/'.auth()->user()->foto_path)) : null,
                     '/pagi/notifications',
                     [
                         'portfolio_id' => $editor->id,
@@ -838,21 +847,23 @@ class PagiEditorController extends Controller
 
         // Parse and sync tags
         if ($request->has('tags')) {
-            $tagNames = !empty($sanitizedTags) ? array_map('trim', explode(',', $sanitizedTags)) : [];
+            $tagNames = ! empty($sanitizedTags) ? array_map('trim', explode(',', $sanitizedTags)) : [];
             $tagIds = [];
             foreach ($tagNames as $name) {
-                if (empty($name)) continue;
-                
-                $slug = \Illuminate\Support\Str::slug($name);
-                $tag = \App\Models\Pagi\PagiTag::firstOrCreate(
+                if (empty($name)) {
+                    continue;
+                }
+
+                $slug = Str::slug($name);
+                $tag = PagiTag::firstOrCreate(
                     ['slug' => $slug],
                     ['name' => $name, 'color' => '#6366f1']
                 );
-                
-                if (!$tag->wasRecentlyCreated) {
+
+                if (! $tag->wasRecentlyCreated) {
                     $tag->increment('usage_count');
                 }
-                
+
                 $tagIds[] = $tag->id;
             }
             $editor->tags()->sync($tagIds);
@@ -878,14 +889,16 @@ class PagiEditorController extends Controller
         $content = $editor->content ?? [];
 
         // content might be an empty string in edge cases
-        if (!is_array($content)) {
+        if (! is_array($content)) {
             $content = [];
         }
 
         $updated = false;
 
         foreach ($content as $key => $block) {
-            if (!is_array($block)) continue;
+            if (! is_array($block)) {
+                continue;
+            }
             if (isset($block['type']) && $block['type'] === 'featured_details') {
                 $collaborators = $block['collaborators'] ?? [];
                 foreach ($collaborators as $cKey => $collab) {
@@ -908,11 +921,11 @@ class PagiEditorController extends Controller
             // Notify the owner (inviter) that the collaborator accepted
             $owner = $editor->user;
             if ($owner && $owner->id !== $user->id) {
-                $owner->notify(new \App\Notifications\PagiNotification(
+                $owner->notify(new PagiNotification(
                     'collaboration',
                     $user->pagi_username ?: $user->name,
-                    'menerima ajakan kolaborasi pada proyek: "' . $editor->title . '"',
-                    $user->foto_path ? (str_starts_with($user->foto_path, 'http') ? $user->foto_path : asset('storage/' . $user->foto_path)) : null,
+                    'menerima ajakan kolaborasi pada proyek: "'.$editor->title.'"',
+                    $user->foto_path ? (str_starts_with($user->foto_path, 'http') ? $user->foto_path : asset('storage/'.$user->foto_path)) : null,
                     '/pagi/profile',
                     [
                         'portfolio_id' => $editor->id,
@@ -931,18 +944,21 @@ class PagiEditorController extends Controller
         $content = $editor->content ?? [];
 
         // content might be an empty string in edge cases
-        if (!is_array($content)) {
+        if (! is_array($content)) {
             $content = [];
         }
 
         $updated = false;
 
         foreach ($content as $key => $block) {
-            if (!is_array($block)) continue;
+            if (! is_array($block)) {
+                continue;
+            }
             if (isset($block['type']) && $block['type'] === 'featured_details') {
                 $collaborators = $block['collaborators'] ?? [];
-                $collaborators = array_values(array_filter($collaborators, function($collab) use ($user) {
+                $collaborators = array_values(array_filter($collaborators, function ($collab) use ($user) {
                     $cName = is_array($collab) ? ($collab['name'] ?? '') : $collab;
+
                     return $cName !== $user->name;
                 }));
                 $content[$key]['collaborators'] = $collaborators;
@@ -1001,7 +1017,7 @@ class PagiEditorController extends Controller
                 [
                     'type' => 'gallery_item',
                     'description' => $request->description,
-                ]
+                ],
             ],
             'cover_image' => $coverPath,
             'is_published' => true,
@@ -1011,7 +1027,7 @@ class PagiEditorController extends Controller
             'id' => $portfolio->id,
             'user_id' => $portfolio->user_id,
             'title' => $portfolio->title,
-            'image' => asset('storage/' . $portfolio->cover_image),
+            'image' => asset('storage/'.$portfolio->cover_image),
             'content' => $portfolio->content,
             'created_at' => $portfolio->created_at->format('F jS Y'),
             'likes' => 0,
@@ -1028,7 +1044,7 @@ class PagiEditorController extends Controller
                 'id' => auth()->id(),
                 'name' => auth()->user()->name,
                 'pagi_username' => auth()->user()->pagi_username,
-                'avatar' => auth()->user()->foto_path ? (str_starts_with(auth()->user()->foto_path, 'http') ? auth()->user()->foto_path : asset('storage/' . auth()->user()->foto_path)) : null,
+                'avatar' => auth()->user()->foto_path ? (str_starts_with(auth()->user()->foto_path, 'http') ? auth()->user()->foto_path : asset('storage/'.auth()->user()->foto_path)) : null,
                 'location' => auth()->user()->location ?? 'Banyumas, Indonesia',
             ],
         ];
@@ -1036,7 +1052,7 @@ class PagiEditorController extends Controller
         return response()->json([
             'success' => true,
             'project' => $mapped,
-            'message' => 'Gallery item added successfully!'
+            'message' => 'Gallery item added successfully!',
         ]);
     }
 
@@ -1053,6 +1069,7 @@ class PagiEditorController extends Controller
         $html = preg_replace('/href\s*=\s*["\']\s*javascript:[^"\']*["\']/i', 'href="#"', $html);
         // Remove iframe/embed
         $html = preg_replace('/<(iframe|object|embed|applet)\b[^>]*>(.*?)<\/\1>/is', '', $html);
+
         return $html;
     }
 }

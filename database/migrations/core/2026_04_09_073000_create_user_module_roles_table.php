@@ -15,7 +15,7 @@ return new class extends Migration
             $table->foreignId('role_id')->constrained('roles')->onDelete('cascade');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             // Unique constraint to prevent duplicate roles per module for the same user
             $table->unique(['user_id', 'module_id', 'role_id'], 'user_module_role_unique');
         });

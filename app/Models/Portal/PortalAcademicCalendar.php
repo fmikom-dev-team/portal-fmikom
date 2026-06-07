@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class PortalAcademicCalendar extends Model
 {
     protected $table = 'portal_academic_calendars';
-    
+
     protected $guarded = [];
 
     protected $casts = [

@@ -2,6 +2,9 @@
 
 namespace App\Concerns;
 
+use App\Models\Auth\AuthSetting;
+use App\Rules\NotUsedPassword;
+use App\Rules\PasswordComplexityRule;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
@@ -16,14 +19,14 @@ trait PasswordValidationRules
     {
         $rules = ['required', 'string', Password::default(), 'confirmed'];
 
-        $complexity = (int) \App\Models\Auth\AuthSetting::get('email_password.complexity', 3);
+        $complexity = (int) AuthSetting::get('email_password.complexity', 3);
         if ($complexity > 1) {
-            $rules[] = new \App\Rules\PasswordComplexityRule($complexity);
+            $rules[] = new PasswordComplexityRule($complexity);
         }
 
-        $historyCount = (int) \App\Models\Auth\AuthSetting::get('password.history_count', 5);
+        $historyCount = (int) AuthSetting::get('password.history_count', 5);
         if ($historyCount > 0) {
-            $rules[] = new \App\Rules\NotUsedPassword();
+            $rules[] = new NotUsedPassword;
         }
 
         return $rules;

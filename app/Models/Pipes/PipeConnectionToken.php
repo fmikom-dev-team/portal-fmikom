@@ -41,7 +41,9 @@ class PipeConnectionToken extends Model
 
     public function getRefreshTokenAttribute($value)
     {
-        if (!$value) return null;
+        if (! $value) {
+            return null;
+        }
         try {
             return Crypt::decryptString($value);
         } catch (\Exception $e) {

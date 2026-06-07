@@ -2,13 +2,12 @@
 
 namespace App\Http\Middleware\Auth;
 
-use Closure;
-use Illuminate\Http\Request;
 use App\Models\Auth\AuthDevice;
 use App\Models\Auth\AuthSession;
-use Jenssegers\Agent\Agent;
-use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Closure;
+use Illuminate\Http\Request;
+use Jenssegers\Agent\Agent;
 
 /**
  * DeviceFingerprint Middleware
@@ -21,14 +20,14 @@ class DeviceFingerprint
 {
     public function handle(Request $request, Closure $next)
     {
-        if (!$request->user()) {
+        if (! $request->user()) {
             return $next($request);
         }
 
-        $agent = new Agent();
+        $agent = new Agent;
         $agent->setUserAgent($request->userAgent());
 
-        $rawFingerprint = $request->ip() . '|' . $request->userAgent() . '|' . $agent->platform() . '|' . $agent->browser();
+        $rawFingerprint = $request->ip().'|'.$request->userAgent().'|'.$agent->platform().'|'.$agent->browser();
         $fingerprint = hash('sha256', $rawFingerprint);
 
         // Update device last_active_at

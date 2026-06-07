@@ -3,13 +3,14 @@
 namespace App\Models\Portal;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class PortalMenu extends Model
 {
     protected static function booted()
     {
-        static::saved(fn () => \Illuminate\Support\Facades\Cache::forget('portal_menus'));
-        static::deleted(fn () => \Illuminate\Support\Facades\Cache::forget('portal_menus'));
+        static::saved(fn () => Cache::forget('portal_menus'));
+        static::deleted(fn () => Cache::forget('portal_menus'));
     }
 
     protected $guarded = [];

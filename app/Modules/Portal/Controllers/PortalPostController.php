@@ -3,16 +3,16 @@
 namespace App\Modules\Portal\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
-use App\Models\Portal\PortalPost;
 use App\Models\Portal\PortalCategory;
-use Illuminate\Support\Str;
-use Inertia\Inertia;
-use Mews\Purifier\Facades\Purifier;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver;
+use App\Models\Portal\PortalPost;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
 
 class PortalPostController extends Controller
 {
@@ -22,51 +22,51 @@ class PortalPostController extends Controller
         $posts = PortalPost::with('category')
             ->when($search, function ($query, $search) {
                 $query->where('title', 'like', "%{$search}%")
-                      ->orWhere('content', 'like', "%{$search}%");
+                    ->orWhere('content', 'like', "%{$search}%");
             })
             ->latest()
             ->get();
 
         return Inertia::render('Modules/Portal/Admin/Posts/Index', [
             'posts' => $posts,
-            'filters' => $request->only(['search'])
+            'filters' => $request->only(['search']),
         ]);
     }
 
     public function create()
     {
         return Inertia::render('Modules/Portal/Admin/Posts/Create', [
-            'categories' => PortalCategory::all()
+            'categories' => PortalCategory::all(),
         ]);
     }
 
     public function store(Request $request)
     {
-        \Illuminate\Support\Facades\Log::info('Post store attempt', ['user_id' => auth()->id(), 'title' => $request->input('title'), 'slug' => $request->input('slug')]);
+        Log::info('Post store attempt', ['user_id' => auth()->id(), 'title' => $request->input('title'), 'slug' => $request->input('slug')]);
         try {
             $validated = $request->validate([
-                'title'            => 'required|string|max:255',
-                'slug'             => 'required|string|unique:portal_posts,slug',
-                'content'          => 'required|string',
-                'category_id'      => 'nullable|exists:portal_categories,id',
-                'status'           => 'required|in:draft,published,scheduled',
-                'published_at'     => 'nullable|date',
-                'meta_title'       => 'nullable|string|max:255',
+                'title' => 'required|string|max:255',
+                'slug' => 'required|string|unique:portal_posts,slug',
+                'content' => 'required|string',
+                'category_id' => 'nullable|exists:portal_categories,id',
+                'status' => 'required|in:draft,published,scheduled',
+                'published_at' => 'nullable|date',
+                'meta_title' => 'nullable|string|max:255',
                 'meta_description' => 'nullable|string|max:160',
-                'excerpt'          => 'nullable|string',
-                'tags'             => 'nullable|array',
-                'og_image'         => 'nullable|image|max:5120',
-                'thumbnail'        => 'nullable|image|max:5120',
+                'excerpt' => 'nullable|string',
+                'tags' => 'nullable|array',
+                'og_image' => 'nullable|image|max:5120',
+                'thumbnail' => 'nullable|image|max:5120',
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            \Illuminate\Support\Facades\Log::error('STORE Validation Failed:', $e->errors());
+        } catch (ValidationException $e) {
+            Log::error('STORE Validation Failed:', $e->errors());
             throw $e;
         }
 
         // Content is stored as Editor.js JSON — no HTML purification needed.
         // Just verify it's valid JSON (not injected script).
         $content = $request->input('content', '');
-        if (!empty($content)) {
+        if (! empty($content)) {
             $decoded = json_decode($content, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return back()->withErrors(['content' => 'Format konten tidak valid.']);
@@ -93,12 +93,12 @@ class PortalPostController extends Controller
         }
 
         $validated['user_id'] = auth()->id();
-        
+
         if ($validated['status'] === 'published') {
             $publishedAt = $validated['published_at'] ?? null;
             if ($publishedAt && strtotime($publishedAt) > time()) {
                 $validated['status'] = PortalPost::STATUS_SCHEDULED;
-            } elseif (!$publishedAt) {
+            } elseif (! $publishedAt) {
                 $validated['published_at'] = now();
             }
         }
@@ -112,36 +112,36 @@ class PortalPostController extends Controller
     {
         return Inertia::render('Modules/Portal/Admin/Posts/Edit', [
             'post' => $post,
-            'categories' => PortalCategory::all()
+            'categories' => PortalCategory::all(),
         ]);
     }
 
     public function update(Request $request, PortalPost $post)
     {
-        \Illuminate\Support\Facades\Log::info('Post update attempt', ['user_id' => auth()->id(), 'post_id' => $post->id, 'title' => $request->input('title')]);
+        Log::info('Post update attempt', ['user_id' => auth()->id(), 'post_id' => $post->id, 'title' => $request->input('title')]);
         try {
             $validated = $request->validate([
-                'title'            => 'required|string|max:255',
-                'slug'             => 'required|string|unique:portal_posts,slug,' . $post->id,
-                'content'          => 'required|string',
-                'category_id'      => 'nullable|exists:portal_categories,id',
-                'status'           => 'required|in:draft,published,scheduled',
-                'published_at'     => 'nullable|date',
-                'meta_title'       => 'nullable|string|max:255',
+                'title' => 'required|string|max:255',
+                'slug' => 'required|string|unique:portal_posts,slug,'.$post->id,
+                'content' => 'required|string',
+                'category_id' => 'nullable|exists:portal_categories,id',
+                'status' => 'required|in:draft,published,scheduled',
+                'published_at' => 'nullable|date',
+                'meta_title' => 'nullable|string|max:255',
                 'meta_description' => 'nullable|string|max:160',
-                'excerpt'          => 'nullable|string',
-                'tags'             => 'nullable|array',
-                'og_image'         => 'nullable|image|max:5120',
-                'thumbnail'        => 'nullable|image|max:5120',
+                'excerpt' => 'nullable|string',
+                'tags' => 'nullable|array',
+                'og_image' => 'nullable|image|max:5120',
+                'thumbnail' => 'nullable|image|max:5120',
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            \Illuminate\Support\Facades\Log::error('UPDATE Validation Failed:', $e->errors());
+        } catch (ValidationException $e) {
+            Log::error('UPDATE Validation Failed:', $e->errors());
             throw $e;
         }
 
         // Content is Editor.js JSON — store as-is after JSON validation
         $content = $request->input('content', '');
-        if (!empty($content)) {
+        if (! empty($content)) {
             $decoded = json_decode($content, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return back()->withErrors(['content' => 'Format konten tidak valid.']);
@@ -179,7 +179,7 @@ class PortalPostController extends Controller
             $publishedAt = $validated['published_at'] ?? null;
             if ($publishedAt && strtotime($publishedAt) > time()) {
                 $validated['status'] = PortalPost::STATUS_SCHEDULED;
-            } elseif (!$post->published_at && !$publishedAt) {
+            } elseif (! $post->published_at && ! $publishedAt) {
                 $validated['published_at'] = now();
             }
         }
@@ -202,8 +202,9 @@ class PortalPostController extends Controller
         if ($post->og_image) {
             Storage::disk('public')->delete(str_replace('/storage/', '', $post->og_image));
         }
-        
+
         $post->delete();
+
         return redirect()->route('portal-admin.posts.index')->with('success', 'Post deleted successfully!');
     }
 
@@ -220,14 +221,14 @@ class PortalPostController extends Controller
         if ($request->query('by_url') || $request->has('url')) {
             $url = $request->input('url');
 
-            if (!$url || !filter_var($url, FILTER_VALIDATE_URL)) {
+            if (! $url || ! filter_var($url, FILTER_VALIDATE_URL)) {
                 return response()->json(['success' => 0, 'message' => 'URL tidak valid.'], 422);
             }
 
             // Return the URL directly — Editor.js will render it from original URL
             return response()->json([
                 'success' => 1,
-                'file'    => ['url' => $url],
+                'file' => ['url' => $url],
             ]);
         }
 
@@ -244,8 +245,8 @@ class PortalPostController extends Controller
 
             return response()->json([
                 'success' => 1,
-                'file'    => ['url' => $url],
-                'url'     => $url,
+                'file' => ['url' => $url],
+                'url' => $url,
             ]);
         }
 
@@ -263,18 +264,18 @@ class PortalPostController extends Controller
         ]);
 
         if ($request->hasFile('file')) {
-            $file     = $request->file('file');
-            $filename = Str::random(30) . '.' . $file->getClientOriginalExtension();
-            $path     = 'portal/posts/files/' . $filename;
+            $file = $request->file('file');
+            $filename = Str::random(30).'.'.$file->getClientOriginalExtension();
+            $path = 'portal/posts/files/'.$filename;
 
             Storage::disk('public')->put($path, file_get_contents($file->getRealPath()));
 
             return response()->json([
                 'success' => 1,
-                'file'    => [
-                    'url'       => '/storage/' . $path,
-                    'name'      => $file->getClientOriginalName(),
-                    'size'      => $file->getSize(),
+                'file' => [
+                    'url' => '/storage/'.$path,
+                    'name' => $file->getClientOriginalName(),
+                    'size' => $file->getSize(),
                     'extension' => $file->getClientOriginalExtension(),
                 ],
             ]);
@@ -289,15 +290,17 @@ class PortalPostController extends Controller
     public function fetchUrl(Request $request)
     {
         $url = $request->input('url');
-        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
             return response()->json(['success' => 0]);
         }
 
         try {
             $html = @file_get_contents($url);
-            if (!$html) return response()->json(['success' => 0]);
+            if (! $html) {
+                return response()->json(['success' => 0]);
+            }
 
-            $doc = new \DOMDocument();
+            $doc = new \DOMDocument;
             @$doc->loadHTML($html);
 
             $title = '';
@@ -305,14 +308,22 @@ class PortalPostController extends Controller
             $image = '';
 
             $nodes = $doc->getElementsByTagName('title');
-            if ($nodes->length > 0) $title = $nodes->item(0)->nodeValue;
+            if ($nodes->length > 0) {
+                $title = $nodes->item(0)->nodeValue;
+            }
 
             $metas = $doc->getElementsByTagName('meta');
             for ($i = 0; $i < $metas->length; $i++) {
                 $meta = $metas->item($i);
-                if ($meta->getAttribute('property') == 'og:title') $title = $meta->getAttribute('content');
-                if ($meta->getAttribute('name') == 'description' || $meta->getAttribute('property') == 'og:description') $description = $meta->getAttribute('content');
-                if ($meta->getAttribute('property') == 'og:image') $image = $meta->getAttribute('content');
+                if ($meta->getAttribute('property') == 'og:title') {
+                    $title = $meta->getAttribute('content');
+                }
+                if ($meta->getAttribute('name') == 'description' || $meta->getAttribute('property') == 'og:description') {
+                    $description = $meta->getAttribute('content');
+                }
+                if ($meta->getAttribute('property') == 'og:image') {
+                    $image = $meta->getAttribute('content');
+                }
             }
 
             return response()->json([
@@ -321,9 +332,9 @@ class PortalPostController extends Controller
                     'title' => $title ?: $url,
                     'description' => $description,
                     'image' => [
-                        'url' => $image
-                    ]
-                ]
+                        'url' => $image,
+                    ],
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => 0]);
@@ -335,7 +346,7 @@ class PortalPostController extends Controller
      */
     private function processAndStoreImage($file, $path)
     {
-        $manager = new ImageManager(new Driver());
+        $manager = new ImageManager(new Driver);
         $image = $manager->read($file);
 
         // Resize if wider than 1200px
@@ -344,8 +355,8 @@ class PortalPostController extends Controller
         }
 
         // Generate random filename with webp extension
-        $filename = Str::random(40) . '.webp';
-        $fullPath = $path . '/' . $filename;
+        $filename = Str::random(40).'.webp';
+        $fullPath = $path.'/'.$filename;
 
         // Encode as WebP with 80% quality
         $encoded = $image->toWebp(80);
@@ -353,6 +364,6 @@ class PortalPostController extends Controller
         // Store in public disk
         Storage::disk('public')->put($fullPath, (string) $encoded);
 
-        return '/storage/' . $fullPath;
+        return '/storage/'.$fullPath;
     }
 }

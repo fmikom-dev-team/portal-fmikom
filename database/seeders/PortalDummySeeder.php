@@ -1,30 +1,31 @@
 <?php
 
 namespace Database\Seeders;
-use App\Models\Surat\Surat;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
-use App\Models\Portal\PortalSetting;
-use App\Models\Portal\PortalMenu;
-use App\Models\Portal\PortalPost;
-use App\Models\Portal\PortalPage;
 use App\Models\Pagi\PagiWork;
 use App\Models\Portal\PortalAcademicCalendar;
 use App\Models\Portal\PortalEvent;
+use App\Models\Portal\PortalMenu;
+use App\Models\Portal\PortalPage;
+use App\Models\Portal\PortalPost;
+use App\Models\Portal\PortalSetting;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Cache;
 
 class PortalDummySeeder extends Seeder // NOSONAR
 {
     const CATEGORY_MEDIA = 'Berita & Media';
+
     const DATE_TIME_FORMAT = 'Y-m-d H:i:s';
 
     public function run(): void
     {
         // Ambil user pertama sebagai author
         $user = User::first();
-        if (!$user) {
+        if (! $user) {
             $this->command->error('Silakan run DummyUserSeeder terlebih dahulu!');
+
             return;
         }
 
@@ -78,12 +79,12 @@ class PortalDummySeeder extends Seeder // NOSONAR
             'hero_description' => 'Kelola administrasi, magang, alumni, dan portofolio dalam satu sistem terintegrasi. Dibangun untuk memberikan pengalaman terbaik bergaya modern.',
             'hero_gallery' => json_encode([
                 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=2670&auto=format&fit=crop',
-                'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2670&auto=format&fit=crop'
+                'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2670&auto=format&fit=crop',
             ]),
             'partners' => json_encode([
                 ['name' => 'Google', 'logo' => 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg'],
                 ['name' => 'Microsoft', 'logo' => 'https://upload.wikimedia.org/wikipedia/commons/9/96/Microsoft_logo_%282012%29.svg'],
-                ['name' => 'IBM', 'logo' => 'https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg']
+                ['name' => 'IBM', 'logo' => 'https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg'],
             ]),
             'benefits_title' => 'Mengapa Memilih Portal FMIKOM?',
             'benefits_subtitle' => 'Kami membawa standarisasi aplikasi industri (SaaS) ke lingkungan kampus. Transparan, terpusat, dan mudah diakses.',
@@ -92,7 +93,7 @@ class PortalDummySeeder extends Seeder // NOSONAR
             'benefit_2_title' => 'Data Real-Time',
             'benefit_2_desc' => 'Informasi selalu terkini dan akurat langsung dari sumbernya.',
             'benefit_3_title' => 'Keamanan Tinggi',
-            'benefit_3_desc' => 'Sistem SSO dengan proteksi berlapis menjaga keamanan data.'
+            'benefit_3_desc' => 'Sistem SSO dengan proteksi berlapis menjaga keamanan data.',
         ];
 
         foreach ($settings as $key => $value) {
@@ -116,8 +117,8 @@ class PortalDummySeeder extends Seeder // NOSONAR
                 'slug' => $p['slug'],
                 'category' => $p['category'],
                 'content' => $p['content'],
-                'excerpt' => $p['title'] . ' FMIKOM',
-                'is_published' => true
+                'excerpt' => $p['title'].' FMIKOM',
+                'is_published' => true,
             ]);
         }
 
@@ -130,7 +131,7 @@ class PortalDummySeeder extends Seeder // NOSONAR
             'title' => 'Tentang FMIKOM',
             'slug' => 'tentang-fmikom',
             'category' => 'Profil',
-            'content' => <<<HTML
+            'content' => <<<'HTML'
 <p class="lead">Fakultas Ilmu Komputer (FMIKOM) adalah pusat keunggulan akademik and inovasi teknologi yang didedikasikan untuk mendidik generasi pemimpin digital masa depan.</p>
 <div class="my-8 rounded-2xl bg-linear-to-r from-blue-50 to-indigo-50 p-6 dark:from-slate-800 dark:to-slate-900 border border-blue-100 dark:border-slate-800">
     <h3 class="mt-0 text-blue-900 dark:text-blue-200">Sekilas FMIKOM</h3>
@@ -157,7 +158,7 @@ HTML
             'title' => 'Sejarah',
             'slug' => 'sejarah',
             'category' => 'Profil',
-            'content' => <<<HTML
+            'content' => <<<'HTML'
 <p class="lead">Perjalanan FMIKOM dari masa ke masa menunjukkan komitmen kami yang teguh terhadap kualitas dan inovasi pendidikan tinggi komputer di Indonesia.</p>
 <div class="relative border-l border-blue-200 dark:border-slate-700 my-10 ml-4 pl-6 space-y-8">
     <div class="relative">
@@ -191,7 +192,7 @@ HTML
             'title' => 'Visi & Misi',
             'slug' => 'visi-misi',
             'category' => 'Profil',
-            'content' => <<<HTML
+            'content' => <<<'HTML'
 <div class="text-center my-10 p-8 rounded-2xl bg-linear-to-b from-blue-50/50 to-indigo-50/20 dark:from-slate-800/30 border border-blue-100/50 dark:border-slate-800">
     <h2 class="text-2xl font-bold text-blue-900 dark:text-blue-300 mt-0">Visi FMIKOM</h2>
     <blockquote class="border-l-0 text-xl font-medium italic text-slate-700 dark:text-slate-200 my-4 pl-0">
@@ -223,7 +224,7 @@ HTML
             'title' => 'Program Studi',
             'slug' => 'program-studi',
             'category' => 'Profil',
-            'content' => <<<HTML
+            'content' => <<<'HTML'
 <p class="lead">Kami menawarkan program studi modern yang dirancang untuk membekali mahasiswa dengan keterampilan praktis dan teoretis yang sangat dibutuhkan industri digital.</p>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-10 not-prose">
     <div class="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
@@ -255,7 +256,7 @@ HTML
             'title' => 'Struktur Organisasi',
             'slug' => 'struktur-organisasi',
             'category' => 'Profil',
-            'content' => <<<HTML
+            'content' => <<<'HTML'
 <p class="lead">Struktur tata pamong di Fakultas Ilmu Komputer menjamin akuntabilitas, transparansi, dan efisiensi koordinasi akademik maupun operasional.</p>
 <div class="my-8 p-6 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 not-prose">
     <h3 class="text-center mt-0 text-slate-800 dark:text-white font-bold text-base">Bagan Kepemimpinan Fakultas</h3>
@@ -280,7 +281,7 @@ HTML
             'title' => 'Dekan & Kaprodi',
             'slug' => 'dekan-kaprodi',
             'category' => 'Profil',
-            'content' => <<<HTML
+            'content' => <<<'HTML'
 <p class="lead">Kenali pimpinan Fakultas Ilmu Komputer yang berdedikasi tinggi dalam mengawal visi akademik dan pelayanan mahasiswa.</p>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-10 not-prose">
     <div class="flex items-center gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
@@ -324,7 +325,7 @@ HTML
             'title' => 'Dosen & Staff',
             'slug' => 'dosen-staff',
             'category' => 'Profil',
-            'content' => <<<HTML
+            'content' => <<<'HTML'
 <p class="lead">FMIKOM memiliki staf pengajar berkualifikasi tinggi lulusan universitas terkemuka dalam dan luar negeri, aktif dalam riset, publikasi ilmiah, dan pengabdian masyarakat.</p>
 <div class="my-8 overflow-x-auto border border-slate-200 dark:border-slate-700 rounded-xl">
     <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700 my-0">
@@ -369,7 +370,7 @@ HTML
             'title' => 'Akreditasi',
             'slug' => 'akreditasi',
             'category' => 'Profil',
-            'content' => <<<HTML
+            'content' => <<<'HTML'
 <p class="lead">Komitmen FMIKOM terhadap penjaminan mutu pendidikan dibuktikan dengan raihan sertifikat akreditasi nasional yang diakui resmi oleh BAN-PT.</p>
 <div class="my-8 overflow-x-auto border border-slate-200 dark:border-slate-700 rounded-xl">
     <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700 my-0">
@@ -407,7 +408,7 @@ HTML
             'title' => 'Fasilitas',
             'slug' => 'fasilitas',
             'category' => 'Profil',
-            'content' => <<<HTML
+            'content' => <<<'HTML'
 <p class="lead">Untuk menunjang proses perkuliahan dan riset, FMIKOM menyediakan berbagai sarana prasarana modern kelas dunia.</p>
 <div class="space-y-6 my-10 not-prose">
     <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40">
@@ -438,7 +439,7 @@ HTML
             $this->getDekanKaprodiPage(),
             $this->getDosenStaffPage(),
             $this->getAkreditasiPage(),
-            $this->getFasilitasPage()
+            $this->getFasilitasPage(),
         ];
     }
 
@@ -448,7 +449,7 @@ HTML
             'title' => 'Kalender Akademik',
             'slug' => 'kalender-akademik',
             'category' => 'Akademik',
-            'content' => <<<HTML
+            'content' => <<<'HTML'
 <p class="lead">Berikut adalah jadwal kegiatan akademik Fakultas Ilmu Komputer untuk Semester Ganjil Tahun Ajaran 2026/2027.</p>
 <div class="my-8 overflow-x-auto border border-slate-200 dark:border-slate-700 rounded-xl">
     <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700 my-0">
@@ -503,7 +504,7 @@ HTML
             'title' => 'MBKM',
             'slug' => 'mbkm',
             'category' => 'Akademik',
-            'content' => <<<HTML
+            'content' => <<<'HTML'
 <p class="lead">Program Merdeka Belajar Kampus Merdeka (MBKM) memberikan kesempatan bagi mahasiswa untuk mengasah kemampuan sesuai bakat dan minat dengan terjun langsung ke dunia kerja.</p>
 <h2>Jenis Program MBKM di FMIKOM</h2>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 list-none pl-0 my-8 not-prose">
@@ -534,7 +535,7 @@ HTML
             'title' => 'Magang',
             'slug' => 'magang',
             'category' => 'Akademik',
-            'content' => <<<HTML
+            'content' => <<<'HTML'
 <p class="lead">Program Magang Kerja Industri FMIKOM dirancang untuk menyelaraskan keahlian akademis mahasiswa dengan praktik nyata di lapangan.</p>
 <div class="my-8 p-6 bg-linear-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 border border-blue-100 dark:border-slate-800 rounded-2xl">
     <h3 class="mt-0 text-blue-900 dark:text-blue-200 text-lg">💡 Alur Pengajuan Magang (WIMS)</h3>
@@ -556,7 +557,7 @@ HTML
             'title' => 'Pedoman Akademik',
             'slug' => 'pedoman-akademik',
             'category' => 'Akademik',
-            'content' => <<<HTML
+            'content' => <<<'HTML'
 <p class="lead">Buku Pedoman Akademik FMIKOM berisi peraturan, hak, kewajiban, serta panduan kurikulum bagi mahasiswa dalam menempuh studi.</p>
 <div class="p-6 border border-slate-200 dark:border-slate-700 rounded-2xl my-8">
     <h3 class="mt-0 text-base">Bab Utama Buku Pedoman</h3>
@@ -579,7 +580,7 @@ HTML
             'title' => 'Beasiswa',
             'slug' => 'beasiswa',
             'category' => 'Akademik',
-            'content' => <<<HTML
+            'content' => <<<'HTML'
 <p class="lead">Kami mendukung mahasiswa berprestasi dan mahasiswa yang membutuhkan bantuan keuangan melalui berbagai program beasiswa internal maupun eksternal.</p>
 <div class="space-y-4 my-8 not-prose">
     <div class="p-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
@@ -608,7 +609,7 @@ HTML
             'title' => 'Download Dokumen',
             'slug' => 'download-dokumen',
             'category' => 'Akademik',
-            'content' => <<<HTML
+            'content' => <<<'HTML'
 <p class="lead">Unduh semua formulir, panduan, dan dokumen kelengkapan administratif akademik Fakultas Ilmu Komputer di bawah ini.</p>
 <ul class="space-y-3 pl-0 list-none my-8 not-prose">
     <li class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
@@ -645,7 +646,7 @@ HTML
             $this->getMagangPage(),
             $this->getPedomanAkademikPage(),
             $this->getBeasiswaPage(),
-            $this->getDownloadDokumenPage()
+            $this->getDownloadDokumenPage(),
         ];
     }
 
@@ -656,7 +657,7 @@ HTML
                 'title' => 'Pengumuman',
                 'slug' => 'pengumuman',
                 'category' => self::CATEGORY_MEDIA,
-                'content' => <<<HTML
+                'content' => <<<'HTML'
 <p class="lead">Dapatkan informasi resmi dan pengumuman administratif terkini dari jajaran dekanat dan tata usaha Fakultas Ilmu Komputer.</p>
 <div class="space-y-6 my-8 not-prose">
     <div class="p-5 border-l-4 border-blue-600 bg-slate-50 dark:bg-slate-800 rounded-r-xl">
@@ -676,7 +677,7 @@ HTML
                 'title' => 'Agenda Event',
                 'slug' => 'agenda-event',
                 'category' => self::CATEGORY_MEDIA,
-                'content' => <<<HTML
+                'content' => <<<'HTML'
 <p class="lead">Ikuti berbagai kegiatan, webinar, workshop, dan seminar yang diselenggarakan oleh FMIKOM untuk memperluas jaringan dan keahlian Anda.</p>
 <div class="grid grid-cols-1 gap-4 my-8 not-prose">
     <div class="flex gap-4 p-4 border border-slate-200 dark:border-slate-700 rounded-xl">
@@ -706,7 +707,7 @@ HTML
                 'title' => 'Galeri',
                 'slug' => 'galeri',
                 'category' => self::CATEGORY_MEDIA,
-                'content' => <<<HTML
+                'content' => <<<'HTML'
 <p class="lead">Dokumentasi visual berbagai kegiatan akademik, kemahasiswaan, riset, pengabdian masyarakat, dan kehidupan kampus di FMIKOM.</p>
 <div class="grid grid-cols-2 md:grid-cols-3 gap-4 my-8 not-prose">
     <div class="aspect-square bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden relative group">
@@ -734,7 +735,7 @@ HTML
                 'title' => 'Video',
                 'slug' => 'video',
                 'category' => self::CATEGORY_MEDIA,
-                'content' => <<<HTML
+                'content' => <<<'HTML'
 <p class="lead">Video profil fakultas, liputan acara, dan kuliah umum dari para pakar IT terkemuka yang dirilis oleh FMIKOM Channel.</p>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-8 not-prose">
     <div class="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
@@ -757,7 +758,7 @@ HTML
     </div>
 </div>
 HTML
-            ]
+            ],
         ];
     }
 
@@ -768,7 +769,7 @@ HTML
                 'title' => 'Pengajuan Dokumen',
                 'slug' => 'pengajuan-dokumen',
                 'category' => 'Layanan',
-                'content' => <<<HTML
+                'content' => <<<'HTML'
 <p class="lead">Ajukan berbagai permohonan surat keterangan aktif kuliah, rekomendasi beasiswa, pengantar magang, dan dokumen administratif lainnya secara online.</p>
 <div class="my-8 overflow-x-auto border border-slate-200 dark:border-slate-700 rounded-xl">
     <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700 my-0">
@@ -804,7 +805,7 @@ HTML
                 'title' => 'Konsultasi Akademik',
                 'slug' => 'konsultasi-akademik',
                 'category' => 'Layanan',
-                'content' => <<<HTML
+                'content' => <<<'HTML'
 <p class="lead">Layanan konsultasi bimbingan akademik bersama Dosen Wali untuk merencanakan strategi studi, pemilihan mata kuliah, dan mengatasi kendala belajar.</p>
 <div class="my-8 p-6 bg-linear-to-r from-emerald-50 to-teal-50 dark:from-slate-800 dark:to-slate-900 border border-emerald-100 dark:border-slate-800 rounded-2xl">
     <h3 class="mt-0 text-emerald-900 dark:text-emerald-200 text-base">Panduan Konsultasi Dosen Wali</h3>
@@ -821,7 +822,7 @@ HTML
                 'title' => 'FAQ',
                 'slug' => 'faq',
                 'category' => 'Layanan',
-                'content' => <<<HTML
+                'content' => <<<'HTML'
 <p class="lead">Temukan jawaban cepat atas pertanyaan-pertanyaan yang paling sering diajukan mengenai registrasi, perkuliahan, magang, dan layanan kemahasiswaan.</p>
 <div class="space-y-4 my-8 not-prose">
     <div class="p-5 bg-slate-50 dark:bg-slate-800 rounded-xl">
@@ -838,7 +839,7 @@ HTML
     </div>
 </div>
 HTML
-            ]
+            ],
         ];
     }
 
@@ -847,13 +848,13 @@ HTML
         // 3. Seed Top-Level Parent Menus
         $parentMenus = [
             'beranda' => PortalMenu::create(['title' => 'Beranda', 'url' => '/', 'order' => 1]),
-            'profil'  => PortalMenu::create(['title' => 'Profil', 'url' => null, 'order' => 2]),
-            'akademik'=> PortalMenu::create(['title' => 'Akademik', 'url' => null, 'order' => 3]),
-            'media'   => PortalMenu::create(['title' => self::CATEGORY_MEDIA, 'url' => null, 'order' => 4]),
+            'profil' => PortalMenu::create(['title' => 'Profil', 'url' => null, 'order' => 2]),
+            'akademik' => PortalMenu::create(['title' => 'Akademik', 'url' => null, 'order' => 3]),
+            'media' => PortalMenu::create(['title' => self::CATEGORY_MEDIA, 'url' => null, 'order' => 4]),
             'layanan' => PortalMenu::create(['title' => 'Layanan', 'url' => null, 'order' => 5]),
-            'pagi'    => PortalMenu::create(['title' => 'PAGI (Portofolio)', 'url' => '/pagi', 'order' => 6]),
-            'wims'    => PortalMenu::create(['title' => 'WIMS (Layanan Surat)', 'url' => '/wims', 'order' => 7]),
-            'fast'    => PortalMenu::create(['title' => 'FAST (Tracer Alumni)', 'url' => '/fast', 'order' => 8]),
+            'pagi' => PortalMenu::create(['title' => 'PAGI (Portofolio)', 'url' => '/pagi', 'order' => 6]),
+            'wims' => PortalMenu::create(['title' => 'WIMS (Layanan Surat)', 'url' => '/wims', 'order' => 7]),
+            'fast' => PortalMenu::create(['title' => 'FAST (Tracer Alumni)', 'url' => '/fast', 'order' => 8]),
         ];
 
         // 4. Seed Child Menus
@@ -900,7 +901,7 @@ HTML
                 'url' => $url,
                 'portal_page_id' => $pageId,
                 'parent_id' => $parentId,
-                'order' => $cm['order']
+                'order' => $cm['order'],
             ]);
         }
     }
@@ -929,7 +930,7 @@ HTML
                 'status' => 'published',
                 'published_at' => now(),
                 'user_id' => $user->id,
-            ]
+            ],
         ];
 
         foreach ($posts as $post) {
@@ -959,7 +960,7 @@ HTML
                 'category' => 'IoT & Hardware',
                 'content' => json_encode([['type' => 'paragraph', 'data' => ['text' => 'IoT project.']]]),
                 'user_id' => $user->id,
-            ]
+            ],
         ];
 
         foreach ($portfolios as $portfolio) {
@@ -979,7 +980,7 @@ HTML
                 'start_date' => "$currentYear-$currentMonth-02",
                 'end_date' => "$currentYear-$currentMonth-08",
                 'category' => 'registrasi',
-                'color' => 'amber'
+                'color' => 'amber',
             ],
             [
                 'title' => 'Kuliah Umum: Tren Web Development 2026',
@@ -987,7 +988,7 @@ HTML
                 'start_date' => "$currentYear-$currentMonth-12",
                 'end_date' => "$currentYear-$currentMonth-12",
                 'category' => 'kegiatan',
-                'color' => 'green'
+                'color' => 'green',
             ],
             [
                 'title' => 'Masa Perkuliahan Efektif Semester Ganjil',
@@ -995,7 +996,7 @@ HTML
                 'start_date' => "$currentYear-$currentMonth-15",
                 'end_date' => date('Y-m-d', strtotime('+3 months')),
                 'category' => 'akademik',
-                'color' => 'blue'
+                'color' => 'blue',
             ],
             [
                 'title' => 'Libur Hari Lahir Pancasila',
@@ -1003,7 +1004,7 @@ HTML
                 'start_date' => "$currentYear-06-01",
                 'end_date' => "$currentYear-06-01",
                 'category' => 'libur',
-                'color' => 'red'
+                'color' => 'red',
             ],
             [
                 'title' => 'Ujian Tengah Semester (UTS) Ganjil',
@@ -1011,8 +1012,8 @@ HTML
                 'start_date' => date('Y-m-d', strtotime('+1.5 months')),
                 'end_date' => date('Y-m-d', strtotime('+1.5 months + 7 days')),
                 'category' => 'ujian',
-                'color' => 'purple'
-            ]
+                'color' => 'purple',
+            ],
         ];
 
         foreach ($academicEvents as $ac) {
@@ -1032,7 +1033,7 @@ HTML
                 'end_time' => date(self::DATE_TIME_FORMAT, strtotime('+5 days 13:00:00')),
                 'registration_link' => 'https://fmikom.ac.id/register-ai-seminar',
                 'status' => 'published',
-                'thumbnail' => 'https://images.unsplash.com/photo-1591453089816-0fbb971b454c?q=80&w=2670&auto=format&fit=crop'
+                'thumbnail' => 'https://images.unsplash.com/photo-1591453089816-0fbb971b454c?q=80&w=2670&auto=format&fit=crop',
             ],
             [
                 'title' => 'Hackathon FMIKOM 2026: Green Technology Solutions',
@@ -1043,7 +1044,7 @@ HTML
                 'end_time' => date(self::DATE_TIME_FORMAT, strtotime('+17 days 18:00:00')),
                 'registration_link' => 'https://fmikom.ac.id/green-hackathon',
                 'status' => 'published',
-                'thumbnail' => 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=2670&auto=format&fit=crop'
+                'thumbnail' => 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=2670&auto=format&fit=crop',
             ],
             [
                 'title' => 'Workshop Vue 3 & Laravel Inertia untuk Pemula',
@@ -1054,8 +1055,8 @@ HTML
                 'end_time' => date(self::DATE_TIME_FORMAT, strtotime('+3 days 16:30:00')),
                 'registration_link' => null,
                 'status' => 'draft',
-                'thumbnail' => 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=2670&auto=format&fit=crop'
-            ]
+                'thumbnail' => 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=2670&auto=format&fit=crop',
+            ],
         ];
 
         foreach ($eventsData as $ed) {

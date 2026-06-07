@@ -2,8 +2,8 @@
 
 namespace App\Modules\Settings\Controllers;
 
+use App\Concerns\HandlesImageCompression;
 use App\Http\Controllers\Controller;
-
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -27,7 +27,7 @@ class ProfileController extends Controller
         ]);
     }
 
-    use \App\Concerns\HandlesImageCompression;
+    use HandlesImageCompression;
 
     /**
      * Update the user's profile information.
@@ -43,17 +43,17 @@ class ProfileController extends Controller
             ]);
             $path = $this->compressAndSaveImage($request->file('foto'), 'profile_photos', 400, 400, 80);
             if ($path) {
-                if ($user->foto_path && !str_starts_with($user->foto_path, 'http')) {
-                    $oldPath = storage_path('app/public/' . $user->foto_path);
+                if ($user->foto_path && ! str_starts_with($user->foto_path, 'http')) {
+                    $oldPath = storage_path('app/public/'.$user->foto_path);
                     if (file_exists($oldPath)) {
                         @unlink($oldPath);
                     }
                 }
                 $user->foto_path = $path;
             }
-        } elseif ($request->has('avatar_url') && !empty($request->input('avatar_url'))) {
-            if ($user->foto_path && !str_starts_with($user->foto_path, 'http')) {
-                $oldPath = storage_path('app/public/' . $user->foto_path);
+        } elseif ($request->has('avatar_url') && ! empty($request->input('avatar_url'))) {
+            if ($user->foto_path && ! str_starts_with($user->foto_path, 'http')) {
+                $oldPath = storage_path('app/public/'.$user->foto_path);
                 if (file_exists($oldPath)) {
                     @unlink($oldPath);
                 }
@@ -61,8 +61,8 @@ class ProfileController extends Controller
             $user->foto_path = $request->input('avatar_url');
         } elseif ($request->boolean('remove_foto')) {
             if ($user->foto_path) {
-                if (!str_starts_with($user->foto_path, 'http')) {
-                    $oldPath = storage_path('app/public/' . $user->foto_path);
+                if (! str_starts_with($user->foto_path, 'http')) {
+                    $oldPath = storage_path('app/public/'.$user->foto_path);
                     if (file_exists($oldPath)) {
                         @unlink($oldPath);
                     }

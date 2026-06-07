@@ -2,7 +2,6 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -22,7 +21,7 @@ class PagiMessageReacted implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('pagi.chat.' . $this->conversationId),
+            new PrivateChannel('pagi.chat.'.$this->conversationId),
         ];
     }
 

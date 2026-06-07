@@ -2,20 +2,23 @@
 
 namespace App\Modules\Pagi\Controllers;
 
+use App\Events\PagiReportCreated;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
-use App\Models\User;
-use App\Models\Pagi\PagiWork;
 use App\Models\Pagi\PagiReport;
 use App\Models\Pagi\PagiWarning;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Http\JsonResponse;
-use Carbon\Carbon;
-use App\Events\PagiReportCreated;
+use App\Models\Pagi\PagiWork;
+use App\Models\User;
+use App\Models\UserModuleRole;
 use App\Notifications\PagiNotification;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
 
 /**
  * PAGI Admin Dashboard Controller
@@ -52,10 +55,10 @@ class AdminDashboardController extends Controller
         foreach ($latestWorks as $p) {
             if ($p->user) {
                 $recentActivities[] = [
-                    'id' => 'p_' . $p->id,
+                    'id' => 'p_'.$p->id,
                     'type' => 'publish',
                     'title' => 'Karya baru dipublikasikan',
-                    'description' => '"' . $p->title . '" oleh @' . strstr($p->user->email, '@', true),
+                    'description' => '"'.$p->title.'" oleh @'.strstr($p->user->email, '@', true),
                     'actor' => strstr($p->user->email, '@', true),
                     'avatar' => $this->getStorageUrl($p->user->foto_path),
                     'time' => $p->created_at->diffForHumans(),
@@ -69,10 +72,10 @@ class AdminDashboardController extends Controller
         foreach ($latestReports as $r) {
             if ($r->reporter && $r->work) {
                 $recentActivities[] = [
-                    'id' => 'r_' . $r->id,
+                    'id' => 'r_'.$r->id,
                     'type' => 'report',
-                    'title' => 'Laporan baru dari @' . strstr($r->reporter->email, '@', true),
-                    'description' => 'Melaporkan karya "' . $r->work->title . '"',
+                    'title' => 'Laporan baru dari @'.strstr($r->reporter->email, '@', true),
+                    'description' => 'Melaporkan karya "'.$r->work->title.'"',
                     'actor' => strstr($r->reporter->email, '@', true),
                     'avatar' => $this->getStorageUrl($r->reporter->foto_path),
                     'time' => $r->created_at->diffForHumans(),
@@ -86,10 +89,10 @@ class AdminDashboardController extends Controller
         foreach ($latestWarnings as $w) {
             if ($w->user) {
                 $recentActivities[] = [
-                    'id' => 'w_' . $w->id,
+                    'id' => 'w_'.$w->id,
                     'type' => 'warning',
-                    'title' => 'Peringatan dikirim ke @' . strstr($w->user->email, '@', true),
-                    'description' => 'Alasan: ' . $w->reason,
+                    'title' => 'Peringatan dikirim ke @'.strstr($w->user->email, '@', true),
+                    'description' => 'Alasan: '.$w->reason,
                     'actor' => strstr($w->user->email, '@', true),
                     'avatar' => $this->getStorageUrl($w->user->foto_path),
                     'time' => $w->created_at->diffForHumans(),
@@ -114,9 +117,9 @@ class AdminDashboardController extends Controller
                     'id' => $r->work->id,
                     'title' => $r->work->title,
                     'author' => $r->work->user->name ?? 'Student',
-                    'authorHandle' => '@' . strstr($r->work->user->email ?? self::DEFAULT_STUDENT_EMAIL, '@', true),
+                    'authorHandle' => '@'.strstr($r->work->user->email ?? self::DEFAULT_STUDENT_EMAIL, '@', true),
                     'type' => 'Laporan',
-                    'reportedBy' => '@' . strstr($r->reporter->email ?? self::DEFAULT_REPORTER_EMAIL, '@', true),
+                    'reportedBy' => '@'.strstr($r->reporter->email ?? self::DEFAULT_REPORTER_EMAIL, '@', true),
                     'time' => $r->created_at->diffForHumans(),
                     'status' => $r->status === 'pending' ? 'pending' : ($r->work->status === 'hidden' ? 'hidden' : 'active'),
                     'thumbnail' => $this->getStorageUrl($r->work->cover_image),
@@ -125,7 +128,7 @@ class AdminDashboardController extends Controller
                     'category' => $r->work->category ?? 'Design & UI/UX',
                     'reportReason' => $this->getReportReasonLabel($r->reason),
                     'reportDescription' => $r->description ?? 'Tidak ada penjelasan tambahan.',
-                    'reporterHandle' => '@' . strstr($r->reporter->email ?? self::DEFAULT_REPORTER_EMAIL, '@', true),
+                    'reporterHandle' => '@'.strstr($r->reporter->email ?? self::DEFAULT_REPORTER_EMAIL, '@', true),
                 ];
             }
         }
@@ -138,9 +141,9 @@ class AdminDashboardController extends Controller
                     'id' => $p->id,
                     'title' => $p->title,
                     'author' => $p->user->name ?? 'Student',
-                    'authorHandle' => '@' . strstr($p->user->email ?? self::DEFAULT_STUDENT_EMAIL, '@', true),
+                    'authorHandle' => '@'.strstr($p->user->email ?? self::DEFAULT_STUDENT_EMAIL, '@', true),
                     'type' => 'Karya Baru',
-                    'reportedBy' => '@' . strstr($p->user->email ?? self::DEFAULT_STUDENT_EMAIL, '@', true),
+                    'reportedBy' => '@'.strstr($p->user->email ?? self::DEFAULT_STUDENT_EMAIL, '@', true),
                     'time' => $p->created_at->diffForHumans(),
                     'status' => 'pending',
                     'thumbnail' => $this->getStorageUrl($p->cover_image),
@@ -149,7 +152,7 @@ class AdminDashboardController extends Controller
                     'category' => $p->category ?? 'Lainnya',
                     'reportReason' => 'Peninjauan Karya Baru',
                     'reportDescription' => 'Karya baru dipublikasikan dan memerlukan persetujuan admin.',
-                    'reporterHandle' => '@' . strstr($p->user->email ?? self::DEFAULT_STUDENT_EMAIL, '@', true),
+                    'reporterHandle' => '@'.strstr($p->user->email ?? self::DEFAULT_STUDENT_EMAIL, '@', true),
                 ];
             }
         }
@@ -169,7 +172,7 @@ class AdminDashboardController extends Controller
                     'id' => $work->id,
                     'rank' => $rank++,
                     'title' => $work->title,
-                    'author' => '@' . strstr($work->user->email, '@', true),
+                    'author' => '@'.strstr($work->user->email, '@', true),
                     'views' => $work->views_count,
                     'thumbnail' => $this->getStorageUrl($work->cover_image),
                 ];
@@ -177,12 +180,12 @@ class AdminDashboardController extends Controller
         }
 
         return Inertia::render('Modules/Pagi/Admin/Dashboard', [
-            'stats'              => $stats,
-            'moderationSummary'  => $moderationSummary,
-            'recentActivities'   => $recentActivities,
-            'moderationItems'    => $moderationItems,
-            'popularWorks'       => $popularWorks,
-            'chartData'          => $this->buildChartData('7d'),
+            'stats' => $stats,
+            'moderationSummary' => $moderationSummary,
+            'recentActivities' => $recentActivities,
+            'moderationItems' => $moderationItems,
+            'popularWorks' => $popularWorks,
+            'chartData' => $this->buildChartData('7d'),
         ]);
     }
 
@@ -203,9 +206,9 @@ class AdminDashboardController extends Controller
                     'id' => $r->work->id,
                     'title' => $r->work->title,
                     'author' => $r->work->user->name ?? 'Student',
-                    'authorHandle' => '@' . strstr($r->work->user->email ?? self::DEFAULT_STUDENT_EMAIL, '@', true),
+                    'authorHandle' => '@'.strstr($r->work->user->email ?? self::DEFAULT_STUDENT_EMAIL, '@', true),
                     'type' => 'Laporan',
-                    'reportedBy' => '@' . strstr($r->reporter->email ?? self::DEFAULT_REPORTER_EMAIL, '@', true),
+                    'reportedBy' => '@'.strstr($r->reporter->email ?? self::DEFAULT_REPORTER_EMAIL, '@', true),
                     'time' => $r->created_at->diffForHumans(),
                     'status' => $r->status === 'pending' ? 'pending' : ($r->work->status === 'hidden' ? 'hidden' : 'active'),
                     'thumbnail' => $this->getStorageUrl($r->work->cover_image),
@@ -214,7 +217,7 @@ class AdminDashboardController extends Controller
                     'category' => $r->work->category ?? 'Design & UI/UX',
                     'reportReason' => $this->getReportReasonLabel($r->reason),
                     'reportDescription' => $r->description ?? 'Tidak ada penjelasan tambahan.',
-                    'reporterHandle' => '@' . strstr($r->reporter->email ?? self::DEFAULT_REPORTER_EMAIL, '@', true),
+                    'reporterHandle' => '@'.strstr($r->reporter->email ?? self::DEFAULT_REPORTER_EMAIL, '@', true),
                 ];
             }
         }
@@ -228,9 +231,9 @@ class AdminDashboardController extends Controller
                         'id' => $p->id,
                         'title' => $p->title,
                         'author' => $p->user->name,
-                        'authorHandle' => '@' . strstr($p->user->email, '@', true),
+                        'authorHandle' => '@'.strstr($p->user->email, '@', true),
                         'type' => $p->status === 'review' ? 'Karya Baru' : 'Komentar',
-                        'reportedBy' => '@' . strstr($p->user->email, '@', true),
+                        'reportedBy' => '@'.strstr($p->user->email, '@', true),
                         'time' => $p->created_at->diffForHumans(),
                         'status' => $p->status === 'review' ? 'pending' : ($p->status === 'hidden' ? 'hidden' : 'active'),
                         'thumbnail' => $this->getStorageUrl($p->cover_image),
@@ -239,7 +242,7 @@ class AdminDashboardController extends Controller
                         'category' => $p->category ?? 'Lainnya',
                         'reportReason' => 'Peninjauan Karya Baru',
                         'reportDescription' => 'Karya baru dipublikasikan and memerlukan persetujuan admin.',
-                        'reporterHandle' => '@' . strstr($p->user->email, '@', true),
+                        'reporterHandle' => '@'.strstr($p->user->email, '@', true),
                     ];
                 }
             }
@@ -247,8 +250,8 @@ class AdminDashboardController extends Controller
 
         // Summary badges counted dynamically
         $summary = [
-            'pending'  => PagiReport::where('status', 'pending')->count(),
-            'warning'  => PagiWarning::where('is_active', true)->count(),
+            'pending' => PagiReport::where('status', 'pending')->count(),
+            'warning' => PagiWarning::where('is_active', true)->count(),
             'takedown' => PagiWork::where('status', 'hidden')->count(),
             'resolved' => PagiReport::whereIn('status', ['reviewed', 'dismissed', 'actioned'])->count(),
         ];
@@ -274,10 +277,10 @@ class AdminDashboardController extends Controller
                 return [
                     'id' => $u->id,
                     'name' => $u->name,
-                    'handle' => '@' . strstr($u->email, '@', true),
+                    'handle' => '@'.strstr($u->email, '@', true),
                     'email' => $u->email,
                     'nim' => $u->nomor_induk ?: '-',
-                    'prodi' => match ((int)$u->program_studi_id) {
+                    'prodi' => match ((int) $u->program_studi_id) {
                         1 => 'Informatika',
                         2 => 'Sistem Informasi',
                         default => 'Matematika',
@@ -289,7 +292,7 @@ class AdminDashboardController extends Controller
             });
 
         return Inertia::render('Modules/Pagi/Admin/Users/Mahasiswa', [
-            'users' => $users
+            'users' => $users,
         ]);
     }
 
@@ -321,45 +324,45 @@ class AdminDashboardController extends Controller
             $mitras = collect([
                 [
                     'id' => 101,
-                    'name' => "PT Telkom Indonesia",
-                    'email' => "hr@telkom.co.id",
-                    'pic' => "Budi Santoso",
-                    'status' => "active",
+                    'name' => 'PT Telkom Indonesia',
+                    'email' => 'hr@telkom.co.id',
+                    'pic' => 'Budi Santoso',
+                    'status' => 'active',
                     'karyaCount' => 5,
-                    'joinDate' => "12 Sep 2021",
+                    'joinDate' => '12 Sep 2021',
                 ],
                 [
                     'id' => 102,
-                    'name' => "Gojek Tokopedia (GoTo)",
-                    'email' => "partners@goto.com",
-                    'pic' => "Andi Wijaya",
-                    'status' => "active",
+                    'name' => 'Gojek Tokopedia (GoTo)',
+                    'email' => 'partners@goto.com',
+                    'pic' => 'Andi Wijaya',
+                    'status' => 'active',
                     'karyaCount' => 10,
-                    'joinDate' => "15 Oct 2022",
+                    'joinDate' => '15 Oct 2022',
                 ],
                 [
                     'id' => 103,
-                    'name' => "Shopee Indonesia",
-                    'email' => "career@shopee.co.id",
-                    'pic' => "Sinta",
-                    'status' => "warning",
+                    'name' => 'Shopee Indonesia',
+                    'email' => 'career@shopee.co.id',
+                    'pic' => 'Sinta',
+                    'status' => 'warning',
                     'karyaCount' => 2,
-                    'joinDate' => "20 Nov 2022",
+                    'joinDate' => '20 Nov 2022',
                 ],
                 [
                     'id' => 104,
-                    'name' => "Ruangguru",
-                    'email' => "info@ruangguru.com",
-                    'pic' => "Deni",
-                    'status' => "active",
+                    'name' => 'Ruangguru',
+                    'email' => 'info@ruangguru.com',
+                    'pic' => 'Deni',
+                    'status' => 'active',
                     'karyaCount' => 8,
-                    'joinDate' => "10 Jan 2023",
-                ]
+                    'joinDate' => '10 Jan 2023',
+                ],
             ]);
         }
 
         return Inertia::render('Modules/Pagi/Admin/Users/Mitra', [
-            'mitras' => $mitras
+            'mitras' => $mitras,
         ]);
     }
 
@@ -369,7 +372,7 @@ class AdminDashboardController extends Controller
     public function warnUser(Request $request, int $userId)
     {
         $request->validate([
-            'reason'  => 'required|string|max:500',
+            'reason' => 'required|string|max:500',
             'content_id' => 'nullable|integer|exists:pagi_works,id',
         ]);
 
@@ -387,26 +390,26 @@ class AdminDashboardController extends Controller
         // Send notification to the user warned
         $user = User::findOrFail($userId);
         $work = $request->content_id ? PagiWork::find($request->content_id) : null;
-        
+
         $user->notify(new PagiNotification(
             type: 'admin_warning',
             title: 'Peringatan Akun',
-            message: 'Anda menerima peringatan dari admin: ' . $request->reason . ($work ? ' (terkait karya "' . $work->title . '")' : ''),
+            message: 'Anda menerima peringatan dari admin: '.$request->reason.($work ? ' (terkait karya "'.$work->title.'")' : ''),
             avatar: null,
             href: '/pagi/notifications',
             extra: [
                 'warning_id' => $warning->id,
                 'work_id' => $request->content_id,
                 'reason' => $request->reason,
-                'edit_url' => $request->content_id ? '/pagi/editor?id=' . $request->content_id : null,
-                'appeal' => true
+                'edit_url' => $request->content_id ? '/pagi/editor?id='.$request->content_id : null,
+                'appeal' => true,
             ]
         ));
 
         // If it was related to a work, we should also resolve any pending reports on that work and notify reporters
         if ($request->content_id) {
             $workId = $request->content_id;
-            
+
             // Get all pending reports for this work
             $reports = PagiReport::where('work_id', $workId)
                 ->where('status', 'pending')
@@ -417,7 +420,7 @@ class AdminDashboardController extends Controller
                 ->update([
                     'status' => 'actioned',
                     'reviewed_by' => auth()->id() ?: 1,
-                    'admin_note' => 'Peringatan dikirim ke pengguna: ' . $request->reason,
+                    'admin_note' => 'Peringatan dikirim ke pengguna: '.$request->reason,
                     'reviewed_at' => now(),
                 ]);
 
@@ -427,7 +430,7 @@ class AdminDashboardController extends Controller
                     $reporter->notify(new PagiNotification(
                         type: 'system',
                         title: 'Tindakan Laporan',
-                        message: 'Terima kasih atas laporan Anda. Kami telah mengambil tindakan terhadap karya "' . ($work->title ?? 'terkait') . '" yang Anda laporkan.',
+                        message: 'Terima kasih atas laporan Anda. Kami telah mengambil tindakan terhadap karya "'.($work->title ?? 'terkait').'" yang Anda laporkan.',
                         avatar: null,
                         href: '/pagi',
                         extra: [
@@ -449,8 +452,8 @@ class AdminDashboardController extends Controller
     public function hideContent(Request $request, int $workId)
     {
         $request->validate([
-            'reason'  => 'required|string|max:500',
-            'action'  => 'required|in:hide,remove,dismiss',
+            'reason' => 'required|string|max:500',
+            'action' => 'required|in:hide,remove,dismiss',
         ]);
 
         $work = PagiWork::findOrFail($workId);
@@ -462,15 +465,15 @@ class AdminDashboardController extends Controller
         $reports = PagiReport::where('work_id', $workId)->where('status', 'pending')->get();
 
         $reportStatus = match ($request->action) {
-            'remove'  => 'actioned',
+            'remove' => 'actioned',
             'dismiss' => 'dismissed',
-            default   => 'reviewed',
+            default => 'reviewed',
         };
 
         PagiReport::where('work_id', $workId)->where('status', 'pending')->update([
-            'status'      => $reportStatus,
+            'status' => $reportStatus,
             'reviewed_by' => auth()->id() ?: 1,
-            'admin_note'  => $request->reason,
+            'admin_note' => $request->reason,
             'reviewed_at' => now(),
         ]);
 
@@ -487,13 +490,13 @@ class AdminDashboardController extends Controller
     {
         foreach ($reports as $r) {
             $reporter = $r->reporter ?? User::find($r->reporter_id);
-            if (!$reporter) {
+            if (! $reporter) {
                 continue;
             }
             $reporter->notify(new PagiNotification(
                 type: 'system',
                 title: 'Tinjauan Laporan',
-                message: 'Mohon maaf, berdasarkan tinjauan kami, karya "' . $work->title . '" yang Anda laporkan tidak terbukti melanggar panduan.',
+                message: 'Mohon maaf, berdasarkan tinjauan kami, karya "'.$work->title.'" yang Anda laporkan tidak terbukti melanggar panduan.',
                 avatar: null,
                 href: '/pagi',
                 extra: ['work_id' => $workId, 'report_id' => $r->id, 'status' => 'dismissed']
@@ -508,29 +511,29 @@ class AdminDashboardController extends Controller
             $owner->notify(new PagiNotification(
                 type: 'admin_takedown',
                 title: 'Tindakan Moderasi pada Karya Anda',
-                message: 'Karya Anda "' . $work->title . '" telah disembunyikan/dihapus karena: ' . $reason,
+                message: 'Karya Anda "'.$work->title.'" telah disembunyikan/dihapus karena: '.$reason,
                 avatar: null,
                 href: '/pagi/notifications',
                 extra: [
-                    'work_id'   => $workId,
-                    'work_title'=> $work->title,
-                    'action'    => $action,
-                    'reason'    => $reason,
-                    'edit_url'  => '/pagi/editor?id=' . $workId,
-                    'appeal'    => true,
+                    'work_id' => $workId,
+                    'work_title' => $work->title,
+                    'action' => $action,
+                    'reason' => $reason,
+                    'edit_url' => '/pagi/editor?id='.$workId,
+                    'appeal' => true,
                 ]
             ));
         }
 
         foreach ($reports as $r) {
             $reporter = $r->reporter ?? User::find($r->reporter_id);
-            if (!$reporter) {
+            if (! $reporter) {
                 continue;
             }
             $reporter->notify(new PagiNotification(
                 type: 'system',
                 title: 'Tindakan Laporan',
-                message: 'Terima kasih atas laporan Anda. Kami telah mengambil tindakan terhadap karya "' . $work->title . '" yang Anda laporkan.',
+                message: 'Terima kasih atas laporan Anda. Kami telah mengambil tindakan terhadap karya "'.$work->title.'" yang Anda laporkan.',
                 avatar: null,
                 href: '/pagi',
                 extra: ['work_id' => $workId, 'report_id' => $r->id, 'status' => 'actioned']
@@ -544,8 +547,8 @@ class AdminDashboardController extends Controller
     public function storeReport(Request $request)
     {
         $request->validate([
-            'work_id'     => 'required|integer|exists:pagi_works,id',
-            'reason'      => 'required|string|in:inappropriate_content,copyright_violation,spam,harassment,misinformation,other',
+            'work_id' => 'required|integer|exists:pagi_works,id',
+            'reason' => 'required|string|in:inappropriate_content,copyright_violation,spam,harassment,misinformation,other',
             'description' => 'required|string|min:10|max:1000',
         ]);
 
@@ -565,23 +568,23 @@ class AdminDashboardController extends Controller
         }
 
         $report = PagiReport::create([
-            'work_id'     => $workId,
+            'work_id' => $workId,
             'reporter_id' => $userId,
-            'reason'      => $request->reason,
+            'reason' => $request->reason,
             'description' => $request->description,
-            'status'      => 'pending',
+            'status' => 'pending',
         ]);
 
         $work = PagiWork::findOrFail($workId);
         $reporter = auth()->user();
-        $reporterHandle = '@' . strstr($reporter->email, '@', true);
+        $reporterHandle = '@'.strstr($reporter->email, '@', true);
 
         // Broadcast realtime notification to admins via private-pagi.admin.reports channel
         PagiReportCreated::dispatch($report, $work->title, $reporter->name, $reporterHandle);
 
         // Fetch all admins in PAGI module
-        $adminIds = \App\Models\UserModuleRole::whereHas('module', fn($q) => $q->where('code', 'PAGI'))
-            ->whereHas('role', fn($q) => $q->whereIn('slug', ['super-admin', 'admin']))
+        $adminIds = UserModuleRole::whereHas('module', fn ($q) => $q->where('code', 'PAGI'))
+            ->whereHas('role', fn ($q) => $q->whereIn('slug', ['super-admin', 'admin']))
             ->pluck('user_id')
             ->toArray();
 
@@ -596,8 +599,8 @@ class AdminDashboardController extends Controller
         foreach ($admins as $admin) {
             $admin->notify(new PagiNotification(
                 type: 'report',
-                title: 'Laporan Baru: ' . $reporter->name,
-                message: 'Melaporkan karya "' . $work->title . '" karena ' . $reasonText,
+                title: 'Laporan Baru: '.$reporter->name,
+                message: 'Melaporkan karya "'.$work->title.'" karena '.$reasonText,
                 avatar: $avatar,
                 href: '/pagi/admin/moderation',
                 extra: [
@@ -620,33 +623,33 @@ class AdminDashboardController extends Controller
     {
         $request->validate([
             'message' => 'required|string|min:5|max:1000',
-            'action'  => 'required|in:warn,takedown,message',
+            'action' => 'required|in:warn,takedown,message',
             'work_id' => 'nullable|integer|exists:pagi_works,id',
         ]);
 
         $targetUser = User::findOrFail($userId);
         $admin = auth()->user();
 
-        $actionLabel = match($request->action) {
-            'warn'     => 'Peringatan',
+        $actionLabel = match ($request->action) {
+            'warn' => 'Peringatan',
             'takedown' => 'Takedown',
-            default    => 'Pesan Admin',
+            default => 'Pesan Admin',
         };
 
         // Store notification in the DB using Laravel's notification system
         $targetUser->notifications()->create([
-            'id'              => \Illuminate\Support\Str::uuid(),
-            'type'            => 'App\\Notifications\\PagiNotification',
+            'id' => Str::uuid(),
+            'type' => 'App\\Notifications\\PagiNotification',
             'notifiable_type' => User::class,
-            'notifiable_id'   => $userId,
-            'data'            => json_encode([
-                'type'       => $request->action === 'takedown' ? 'admin_takedown' : ($request->action === 'warn' ? 'admin_warning' : 'admin_message'),
-                'title'      => $actionLabel . ' dari Admin',
-                'message'    => $request->message,
-                'work_id'    => $request->work_id,
+            'notifiable_id' => $userId,
+            'data' => json_encode([
+                'type' => $request->action === 'takedown' ? 'admin_takedown' : ($request->action === 'warn' ? 'admin_warning' : 'admin_message'),
+                'title' => $actionLabel.' dari Admin',
+                'message' => $request->message,
+                'work_id' => $request->work_id,
                 'admin_name' => $admin->name ?? 'Admin',
-                'action'     => $request->action,
-                'options'    => $request->action === 'takedown' ? ['takedown', 'delete'] : [],
+                'action' => $request->action,
+                'options' => $request->action === 'takedown' ? ['takedown', 'delete'] : [],
             ]),
             'created_at' => now(),
             'updated_at' => now(),
@@ -663,14 +666,14 @@ class AdminDashboardController extends Controller
         // If warn, also create a PagiWarning
         if ($request->action === 'warn' && $request->work_id) {
             PagiWarning::create([
-                'user_id'   => $userId,
-                'work_id'   => $request->work_id,
+                'user_id' => $userId,
+                'work_id' => $request->work_id,
                 'issued_by' => $admin->id,
-                'severity'  => 'medium',
-                'type'      => 'inappropriate_content',
-                'reason'    => $request->message,
+                'severity' => 'medium',
+                'type' => 'inappropriate_content',
+                'reason' => $request->message,
                 'is_active' => true,
-                'expires_at'=> now()->addDays(30),
+                'expires_at' => now()->addDays(30),
             ]);
         }
 
@@ -682,52 +685,53 @@ class AdminDashboardController extends Controller
      */
     private function buildStats(): array
     {
-        $now       = Carbon::now();
+        $now = Carbon::now();
         $startThis = $now->copy()->startOfMonth();
         $startPrev = $now->copy()->subMonth()->startOfMonth();
-        $endPrev   = $now->copy()->subMonth()->endOfMonth();
+        $endPrev = $now->copy()->subMonth()->endOfMonth();
 
-        $mahasiswaAktif    = User::where('user_type', 'mahasiswa')->where('is_active', true)->count();
-        $karyaPublish      = PagiWork::where('is_published', true)->count();
-        $laporanMasuk      = PagiReport::where('status', 'pending')->count();
-        $warningAktif      = PagiWarning::where('is_active', true)->count();
-        $karyaDitinjau     = PagiWork::where('status', 'review')->count();
+        $mahasiswaAktif = User::where('user_type', 'mahasiswa')->where('is_active', true)->count();
+        $karyaPublish = PagiWork::where('is_published', true)->count();
+        $laporanMasuk = PagiReport::where('status', 'pending')->count();
+        $warningAktif = PagiWarning::where('is_active', true)->count();
+        $karyaDitinjau = PagiWork::where('status', 'review')->count();
 
         // This month counts
         $mahasiswaThisMonth = User::where('user_type', 'mahasiswa')->where('created_at', '>=', $startThis)->count();
-        $karyaThisMonth     = PagiWork::where('is_published', true)->where('created_at', '>=', $startThis)->count();
-        $laporanThisMonth   = PagiReport::where('created_at', '>=', $startThis)->count();
-        $warningThisMonth   = PagiWarning::where('created_at', '>=', $startThis)->count();
+        $karyaThisMonth = PagiWork::where('is_published', true)->where('created_at', '>=', $startThis)->count();
+        $laporanThisMonth = PagiReport::where('created_at', '>=', $startThis)->count();
+        $warningThisMonth = PagiWarning::where('created_at', '>=', $startThis)->count();
 
         // Previous month counts
         $mahasiswaPrevMonth = User::where('user_type', 'mahasiswa')->whereBetween('created_at', [$startPrev, $endPrev])->count();
-        $karyaPrevMonth     = PagiWork::where('is_published', true)->whereBetween('created_at', [$startPrev, $endPrev])->count();
-        $laporanPrevMonth   = PagiReport::whereBetween('created_at', [$startPrev, $endPrev])->count();
-        $warningPrevMonth   = PagiWarning::whereBetween('created_at', [$startPrev, $endPrev])->count();
+        $karyaPrevMonth = PagiWork::where('is_published', true)->whereBetween('created_at', [$startPrev, $endPrev])->count();
+        $laporanPrevMonth = PagiReport::whereBetween('created_at', [$startPrev, $endPrev])->count();
+        $warningPrevMonth = PagiWarning::whereBetween('created_at', [$startPrev, $endPrev])->count();
 
         $calcChange = function (int $cur, int $prev): array {
             if ($prev === 0) {
-                return ['value' => $cur > 0 ? '+' . $cur : '0', 'trend' => $cur > 0 ? 'up' : 'neutral'];
+                return ['value' => $cur > 0 ? '+'.$cur : '0', 'trend' => $cur > 0 ? 'up' : 'neutral'];
             }
             $pct = round((($cur - $prev) / $prev) * 100, 1);
+
             return [
-                'value' => ($pct >= 0 ? '+' : '') . $pct . '%',
+                'value' => ($pct >= 0 ? '+' : '').$pct.'%',
                 'trend' => $pct > 0 ? 'up' : ($pct < 0 ? 'down' : 'neutral'),
             ];
         };
 
         return [
             'mahasiswaAktif' => $mahasiswaAktif,
-            'karyaPublish'   => $karyaPublish,
-            'laporanMasuk'   => $laporanMasuk,
-            'warningAktif'   => $warningAktif,
-            'karyaDitinjau'  => $karyaDitinjau,
+            'karyaPublish' => $karyaPublish,
+            'laporanMasuk' => $laporanMasuk,
+            'warningAktif' => $warningAktif,
+            'karyaDitinjau' => $karyaDitinjau,
             'changes' => [
                 'mahasiswaAktif' => $calcChange($mahasiswaThisMonth, $mahasiswaPrevMonth),
-                'karyaPublish'   => $calcChange($karyaThisMonth, $karyaPrevMonth),
-                'laporanMasuk'   => $calcChange($laporanThisMonth, $laporanPrevMonth),
-                'warningAktif'   => $calcChange($warningThisMonth, $warningPrevMonth),
-                'karyaDitinjau'  => ['value' => $karyaDitinjau . ' menunggu', 'trend' => 'neutral'],
+                'karyaPublish' => $calcChange($karyaThisMonth, $karyaPrevMonth),
+                'laporanMasuk' => $calcChange($laporanThisMonth, $laporanPrevMonth),
+                'warningAktif' => $calcChange($warningThisMonth, $warningPrevMonth),
+                'karyaDitinjau' => ['value' => $karyaDitinjau.' menunggu', 'trend' => 'neutral'],
             ],
         ];
     }
@@ -738,12 +742,12 @@ class AdminDashboardController extends Controller
     private function buildModerationSummary(): array
     {
         return [
-            'total'    => PagiReport::count(),
-            'pending'  => PagiReport::where('status', 'pending')->count(),
-            'warning'  => PagiWarning::where('is_active', true)->count(),
+            'total' => PagiReport::count(),
+            'pending' => PagiReport::where('status', 'pending')->count(),
+            'warning' => PagiWarning::where('is_active', true)->count(),
             'takedown' => PagiWork::where('status', 'hidden')->count(),
             'rejected' => PagiReport::where('status', 'dismissed')->count(),
-            'safe'     => PagiReport::whereIn('status', ['reviewed', 'actioned'])->count(),
+            'safe' => PagiReport::whereIn('status', ['reviewed', 'actioned'])->count(),
         ];
     }
 
@@ -753,8 +757,8 @@ class AdminDashboardController extends Controller
     private function buildChartData(string $range = '7d'): array
     {
         $days = match ($range) {
-            '30d'  => 30,
-            '90d'  => 90,
+            '30d' => 30,
+            '90d' => 90,
             default => 7,
         };
 
@@ -778,26 +782,26 @@ class AdminDashboardController extends Controller
             ->pluck('count', 'date')
             ->toArray();
 
-        $labels   = [];
-        $karya    = [];
-        $laporan  = [];
+        $labels = [];
+        $karya = [];
+        $laporan = [];
         $warnings = [];
 
         for ($i = $days - 1; $i >= 0; $i--) {
             $carbonDate = Carbon::now()->subDays($i);
-            $dateStr    = $carbonDate->toDateString();
+            $dateStr = $carbonDate->toDateString();
 
-            $labels[]   = $this->formatChartLabel($carbonDate, $i, $days);
-            $karya[]    = $karyaCounts[$dateStr] ?? 0;
-            $laporan[]  = $laporanCounts[$dateStr] ?? 0;
+            $labels[] = $this->formatChartLabel($carbonDate, $i, $days);
+            $karya[] = $karyaCounts[$dateStr] ?? 0;
+            $laporan[] = $laporanCounts[$dateStr] ?? 0;
             $warnings[] = $warningCounts[$dateStr] ?? 0;
         }
 
         return [
             'categories' => $labels,
-            'karya'      => $karya,
-            'laporan'    => $laporan,
-            'warnings'   => $warnings,
+            'karya' => $karya,
+            'laporan' => $laporan,
+            'warnings' => $warnings,
         ];
     }
 
@@ -811,9 +815,9 @@ class AdminDashboardController extends Controller
         }
 
         return response()->json([
-            'stats'             => $this->buildStats(),
+            'stats' => $this->buildStats(),
             'moderationSummary' => $this->buildModerationSummary(),
-            'timestamp'         => now()->toISOString(),
+            'timestamp' => now()->toISOString(),
         ]);
     }
 
@@ -823,13 +827,13 @@ class AdminDashboardController extends Controller
     public function apiChart(Request $request): JsonResponse
     {
         $range = $request->input('range', '7d');
-        if (!in_array($range, ['7d', '30d', '90d'])) {
+        if (! in_array($range, ['7d', '30d', '90d'])) {
             $range = '7d';
         }
 
         return response()->json([
             'chartData' => $this->buildChartData($range),
-            'range'     => $range,
+            'range' => $range,
         ]);
     }
 
@@ -839,7 +843,7 @@ class AdminDashboardController extends Controller
     public function apiAdminNotifications(Request $request): JsonResponse
     {
         $user = auth()->user();
-        
+
         $notifications = $user->notifications()
             ->where('type', 'App\\Notifications\\PagiNotification')
             ->latest()
@@ -851,17 +855,18 @@ class AdminDashboardController extends Controller
                 if (is_string($data)) {
                     $data = json_decode($data, true) ?: [];
                 }
+
                 return [
-                    'id'          => $notif->id,
-                    'type'        => $data['type'] ?? 'system',
-                    'title'       => $data['title'] ?? 'PAGI Admin System',
-                    'message'     => $data['message'] ?? '',
-                    'avatar'      => $data['avatar'] ?? null,
-                    'href'        => $data['href'] ?? '/pagi/admin',
-                    'unread'      => is_null($notif->read_at),
-                    'time'        => $notif->created_at->diffForHumans(),
-                    'created_at'  => $notif->created_at->toISOString(),
-                    'extra'       => $data,
+                    'id' => $notif->id,
+                    'type' => $data['type'] ?? 'system',
+                    'title' => $data['title'] ?? 'PAGI Admin System',
+                    'message' => $data['message'] ?? '',
+                    'avatar' => $data['avatar'] ?? null,
+                    'href' => $data['href'] ?? '/pagi/admin',
+                    'unread' => is_null($notif->read_at),
+                    'time' => $notif->created_at->diffForHumans(),
+                    'created_at' => $notif->created_at->toISOString(),
+                    'extra' => $data,
                 ];
             });
 
@@ -871,7 +876,7 @@ class AdminDashboardController extends Controller
 
         return response()->json([
             'notifications' => $notifications,
-            'unreadCount'   => $unreadCount,
+            'unreadCount' => $unreadCount,
         ]);
     }
 
@@ -928,7 +933,7 @@ class AdminDashboardController extends Controller
                 'prodi' => 1,
                 'role_title' => 'Mobile Developer',
                 'bio' => 'Senang memprogram aplikasi mobile native untuk iOS dan Android.',
-            ]
+            ],
         ];
 
         $users = [];
@@ -953,15 +958,15 @@ class AdminDashboardController extends Controller
         // Seed some mitra partner accounts
         $mitrasData = [
             [
-                'name' => "PT Telkom Indonesia",
-                'email' => "hr@telkom.co.id",
-                'pic' => "Budi Santoso",
+                'name' => 'PT Telkom Indonesia',
+                'email' => 'hr@telkom.co.id',
+                'pic' => 'Budi Santoso',
             ],
             [
-                'name' => "Gojek Tokopedia (GoTo)",
-                'email' => "partners@goto.com",
-                'pic' => "Andi Wijaya",
-            ]
+                'name' => 'Gojek Tokopedia (GoTo)',
+                'email' => 'partners@goto.com',
+                'pic' => 'Andi Wijaya',
+            ],
         ];
         foreach ($mitrasData as $mData) {
             User::updateOrCreate(
@@ -1025,7 +1030,7 @@ class AdminDashboardController extends Controller
                 'views_count' => 120,
                 'is_published' => true,
                 'status' => 'active',
-            ]
+            ],
         ];
 
         $ports = [];
@@ -1108,9 +1113,9 @@ class AdminDashboardController extends Controller
                     'workTitle' => $r->work->title ?? 'Karya Dihapus',
                     'userId' => $r->work->user_id ?? null,
                     'author' => $r->work->user->name ?? 'Student',
-                    'authorHandle' => '@' . strstr($r->work->user->email ?? self::DEFAULT_STUDENT_EMAIL, '@', true),
+                    'authorHandle' => '@'.strstr($r->work->user->email ?? self::DEFAULT_STUDENT_EMAIL, '@', true),
                     'reporter' => $r->reporter->name ?? 'Reporter',
-                    'reporterHandle' => '@' . strstr($r->reporter->email ?? self::DEFAULT_REPORTER_EMAIL, '@', true),
+                    'reporterHandle' => '@'.strstr($r->reporter->email ?? self::DEFAULT_REPORTER_EMAIL, '@', true),
                     'reason' => $this->getReportReasonLabel($r->reason),
                     'description' => $r->description ?? 'Tidak ada deskripsi.',
                     'status' => $r->status, // pending, reviewed, dismissed, actioned
@@ -1120,7 +1125,7 @@ class AdminDashboardController extends Controller
             });
 
         return Inertia::render('Modules/Pagi/Admin/Reports/Index', [
-            'reports' => $reports
+            'reports' => $reports,
         ]);
     }
 
@@ -1156,7 +1161,7 @@ class AdminDashboardController extends Controller
                 return [
                     'id' => $w->id,
                     'user' => $w->user->name ?? 'User',
-                    'userHandle' => '@' . strstr($w->user->email ?? 'student@fmikom.ac.id', '@', true),
+                    'userHandle' => '@'.strstr($w->user->email ?? 'student@fmikom.ac.id', '@', true),
                     'userId' => $w->user_id,
                     'workId' => $w->work_id,
                     'workTitle' => $w->work->title ?? null,
@@ -1171,7 +1176,7 @@ class AdminDashboardController extends Controller
             });
 
         return Inertia::render('Modules/Pagi/Admin/Warnings/Index', [
-            'warnings' => $warnings
+            'warnings' => $warnings,
         ]);
     }
 
@@ -1190,7 +1195,7 @@ class AdminDashboardController extends Controller
             ->get()
             ->map(function ($w) {
                 // Find why it was hidden from warnings or reports
-                $reason = PagiWarning::where('work_id', $w->id)->latest()->value('reason') 
+                $reason = PagiWarning::where('work_id', $w->id)->latest()->value('reason')
                     ?? PagiReport::where('work_id', $w->id)->whereIn('status', ['actioned', 'reviewed'])->latest()->value('admin_note')
                     ?? 'Diturunkan oleh admin karena pelanggaran pedoman.';
 
@@ -1198,7 +1203,7 @@ class AdminDashboardController extends Controller
                     'id' => $w->id,
                     'title' => $w->title,
                     'author' => $w->user->name ?? 'Student',
-                    'authorHandle' => '@' . strstr($w->user->email ?? self::DEFAULT_STUDENT_EMAIL, '@', true),
+                    'authorHandle' => '@'.strstr($w->user->email ?? self::DEFAULT_STUDENT_EMAIL, '@', true),
                     'category' => $w->category ?? 'Design & UI/UX',
                     'status' => $w->status, // hidden, removed
                     'reason' => $reason,
@@ -1208,7 +1213,7 @@ class AdminDashboardController extends Controller
             });
 
         return Inertia::render('Modules/Pagi/Admin/Takedowns/Index', [
-            'takedowns' => $takedowns
+            'takedowns' => $takedowns,
         ]);
     }
 
@@ -1229,7 +1234,7 @@ class AdminDashboardController extends Controller
                     'id' => $w->id,
                     'title' => $w->title,
                     'author' => $w->user->name ?? 'Student',
-                    'authorHandle' => '@' . strstr($w->user->email ?? self::DEFAULT_STUDENT_EMAIL, '@', true),
+                    'authorHandle' => '@'.strstr($w->user->email ?? self::DEFAULT_STUDENT_EMAIL, '@', true),
                     'views' => $w->views_count,
                     'category' => $w->category ?? 'Design & UI/UX',
                     'status' => $w->status, // active, warning, hidden, removed, review
@@ -1240,7 +1245,7 @@ class AdminDashboardController extends Controller
             });
 
         return Inertia::render('Modules/Pagi/Admin/Works/Index', [
-            'works' => $works
+            'works' => $works,
         ]);
     }
 
@@ -1270,7 +1275,7 @@ class AdminDashboardController extends Controller
 
     public function resetModeration(Request $request)
     {
-        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
+        Schema::disableForeignKeyConstraints();
 
         // 1. Hapus semua warning
         PagiWarning::truncate();
@@ -1284,7 +1289,7 @@ class AdminDashboardController extends Controller
         // 4. Hapus semua works untuk menghindari duplikasi
         PagiWork::truncate();
 
-        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
+        Schema::enableForeignKeyConstraints();
 
         // 5. Seeding ulang data awal demo yang bersih & rapi
         $this->seedPagiDemoData();
@@ -1318,14 +1323,16 @@ class AdminDashboardController extends Controller
     }
 
     private const DEFAULT_STUDENT_EMAIL = 'student@fmikom.ac.id';
+
     private const DEFAULT_REPORTER_EMAIL = 'reporter@fmikom.ac.id';
 
     private function getStorageUrl(?string $path): ?string
     {
-        if (!$path) {
+        if (! $path) {
             return null;
         }
-        return str_starts_with($path, 'http') ? $path : asset('storage/' . $path);
+
+        return str_starts_with($path, 'http') ? $path : asset('storage/'.$path);
     }
 
     private function getReportReasonLabel(?string $reason): string
@@ -1340,7 +1347,7 @@ class AdminDashboardController extends Controller
         };
     }
 
-    private function formatChartLabel(\Carbon\Carbon $date, int $offsetFromEnd, int $totalDays): string
+    private function formatChartLabel(Carbon $date, int $offsetFromEnd, int $totalDays): string
     {
         if ($totalDays <= 30) {
             return $date->translatedFormat('d M');

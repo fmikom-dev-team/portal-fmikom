@@ -5,7 +5,6 @@ namespace App\Events\Radar;
 use App\Models\Radar\RadarDetection;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -32,7 +31,7 @@ class ThreatDetected implements ShouldBroadcastNow
     {
         // Load relationships to avoid N+1 and get human readable formats
         $this->detection->load(['protection', 'device']);
-        
+
         return [
             'id' => $this->detection->id,
             'type' => $this->detection->detection_type,
@@ -40,7 +39,7 @@ class ThreatDetected implements ShouldBroadcastNow
             'risk_score' => $this->detection->risk_score,
             'action' => $this->detection->action_taken,
             'ip' => $this->detection->ip_address,
-            'device' => $this->detection->device ? $this->detection->device->os . ' ' . $this->detection->device->browser : 'Unknown',
+            'device' => $this->detection->device ? $this->detection->device->os.' '.$this->detection->device->browser : 'Unknown',
             'created_at' => $this->detection->created_at->format('M d, g:i A'),
             'created_at_human' => $this->detection->created_at->diffForHumans(),
         ];

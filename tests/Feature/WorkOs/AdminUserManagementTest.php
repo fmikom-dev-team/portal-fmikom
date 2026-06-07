@@ -1,9 +1,15 @@
 <?php
 
-use App\Models\User;
-use App\Models\Auth\AuthOAuthProvider;
 use App\Models\Auth\AuthOAuthCredential;
+use App\Models\Auth\AuthOAuthProvider;
+use App\Models\Auth\AuthSession;
+use App\Models\Module;
+use App\Models\ProgramStudi;
+use App\Models\Role;
+use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
     // Ensure we have a google oauth provider in the database
@@ -26,7 +32,7 @@ test('unauthorized users cannot update user details', function () {
 
     // CheckRole will redirect them back to dashboard
     $response->assertRedirect(route('dashboard'));
-    
+
     // Check that DB was not updated
     $this->assertDatabaseMissing('users', [
         'id' => $user->id,
@@ -80,7 +86,7 @@ test('admin email update validation prevents duplicates', function () {
 test('unauthorized users cannot disconnect oauth credential', function () {
     $regularUser = User::factory()->create(['user_type' => 'mahasiswa']);
     $user = User::factory()->create();
-    
+
     $credential = AuthOAuthCredential::create([
         'user_id' => $user->id,
         'provider_id' => $this->provider->id,
@@ -102,7 +108,7 @@ test('unauthorized users cannot disconnect oauth credential', function () {
 test('admin can disconnect user oauth credential', function () {
     $admin = User::factory()->create(['user_type' => 'super_admin']);
     $user = User::factory()->create();
-    
+
     $credential = AuthOAuthCredential::create([
         'user_id' => $user->id,
         'provider_id' => $this->provider->id,
@@ -125,7 +131,7 @@ test('cannot disconnect oauth credential of another user', function () {
     $admin = User::factory()->create(['user_type' => 'super_admin']);
     $user = User::factory()->create();
     $otherUser = User::factory()->create();
-    
+
     $credential = AuthOAuthCredential::create([
         'user_id' => $otherUser->id, // belongs to otherUser
         'provider_id' => $this->provider->id,
@@ -148,8 +154,8 @@ test('cannot disconnect oauth credential of another user', function () {
 test('admin can retrieve user sessions list', function () {
     $admin = User::factory()->create(['user_type' => 'super_admin']);
     $user = User::factory()->create();
-    
-    $session = \App\Models\Auth\AuthSession::create([
+
+    $session = AuthSession::create([
         'user_id' => $user->id,
         'session_token' => 'mock-token-1',
         'ip_address' => '127.0.0.1',
@@ -170,8 +176,8 @@ test('admin can retrieve user sessions list', function () {
 test('admin can revoke user session', function () {
     $admin = User::factory()->create(['user_type' => 'super_admin']);
     $user = User::factory()->create();
-    
-    $session = \App\Models\Auth\AuthSession::create([
+
+    $session = AuthSession::create([
         'user_id' => $user->id,
         'session_token' => 'mock-token-1',
         'ip_address' => '127.0.0.1',
@@ -192,8 +198,8 @@ test('admin can revoke user session', function () {
 test('admin can revoke all active sessions for a user', function () {
     $admin = User::factory()->create(['user_type' => 'super_admin']);
     $user = User::factory()->create();
-    
-    $session1 = \App\Models\Auth\AuthSession::create([
+
+    $session1 = AuthSession::create([
         'user_id' => $user->id,
         'session_token' => 'mock-token-1',
         'ip_address' => '127.0.0.1',
@@ -203,7 +209,7 @@ test('admin can revoke all active sessions for a user', function () {
         'last_activity_at' => now(),
     ]);
 
-    $session2 = \App\Models\Auth\AuthSession::create([
+    $session2 = AuthSession::create([
         'user_id' => $user->id,
         'session_token' => 'mock-token-2',
         'ip_address' => '127.0.0.1',
@@ -225,8 +231,8 @@ test('admin can revoke all active sessions for a user', function () {
 test('admin can clear inactive sessions for a user', function () {
     $admin = User::factory()->create(['user_type' => 'super_admin']);
     $user = User::factory()->create();
-    
-    $activeSession = \App\Models\Auth\AuthSession::create([
+
+    $activeSession = AuthSession::create([
         'user_id' => $user->id,
         'session_token' => 'active-token',
         'ip_address' => '127.0.0.1',
@@ -236,7 +242,7 @@ test('admin can clear inactive sessions for a user', function () {
         'last_activity_at' => now(),
     ]);
 
-    $revokedSession = \App\Models\Auth\AuthSession::create([
+    $revokedSession = AuthSession::create([
         'user_id' => $user->id,
         'session_token' => 'revoked-token',
         'ip_address' => '127.0.0.1',
@@ -246,7 +252,7 @@ test('admin can clear inactive sessions for a user', function () {
         'last_activity_at' => now(),
     ]);
 
-    $expiredSession = \App\Models\Auth\AuthSession::create([
+    $expiredSession = AuthSession::create([
         'user_id' => $user->id,
         'session_token' => 'expired-token',
         'ip_address' => '127.0.0.1',
@@ -278,26 +284,26 @@ test('admin can download user template', function () {
 });
 
 test('admin can upload users via csv', function () {
-    $fakultasId = \Illuminate\Support\Facades\DB::table('fakultas')->insertGetId([
+    $fakultasId = DB::table('fakultas')->insertGetId([
         'nama' => 'FMIKOM',
         'kode' => 'FMIKOM',
     ]);
-    
-    $prodi = \App\Models\ProgramStudi::firstOrCreate(['kode' => 'IF'], [
+
+    $prodi = ProgramStudi::firstOrCreate(['kode' => 'IF'], [
         'nama' => 'Informatika',
-        'fakultas_id' => $fakultasId
+        'fakultas_id' => $fakultasId,
     ]);
 
-    \App\Models\Module::firstOrCreate(['code' => 'FAST'], ['name' => 'FAST', 'description' => 'FAST', 'is_active' => true]);
-    \App\Models\Module::firstOrCreate(['code' => 'PAGI'], ['name' => 'PAGI', 'description' => 'PAGI', 'is_active' => true]);
-    \App\Models\Module::firstOrCreate(['code' => 'WIMS'], ['name' => 'WIMS', 'description' => 'WIMS', 'is_active' => true]);
-    \App\Models\Role::firstOrCreate(['slug' => 'mahasiswa'], ['nama' => 'Mahasiswa']);
+    Module::firstOrCreate(['code' => 'FAST'], ['name' => 'FAST', 'description' => 'FAST', 'is_active' => true]);
+    Module::firstOrCreate(['code' => 'PAGI'], ['name' => 'PAGI', 'description' => 'PAGI', 'is_active' => true]);
+    Module::firstOrCreate(['code' => 'WIMS'], ['name' => 'WIMS', 'description' => 'WIMS', 'is_active' => true]);
+    Role::firstOrCreate(['slug' => 'mahasiswa'], ['nama' => 'Mahasiswa']);
 
     $admin = User::factory()->create(['user_type' => 'super_admin']);
     $this->actingAs($admin);
 
     $csvContent = "Nama,Email,Password,NIM,Program Studi\nEko,eko@example.com,pass123,1234567,IF\n";
-    $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('mahasiswa.csv', $csvContent);
+    $file = UploadedFile::fake()->createWithContent('mahasiswa.csv', $csvContent);
 
     $response = $this->post('/workos/users/upload', [
         'file' => $file,
@@ -316,4 +322,3 @@ test('admin can upload users via csv', function () {
         'email_verified_at' => null,
     ]);
 });
-

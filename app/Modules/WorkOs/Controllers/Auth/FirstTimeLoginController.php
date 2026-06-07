@@ -2,20 +2,20 @@
 
 namespace App\Modules\WorkOs\Controllers\Auth;
 
+use App\Concerns\PasswordValidationRules;
 use App\Http\Controllers\Controller;
-
+use App\Mail\SendOtpEmail;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rules\Password;
-use App\Mail\SendOtpEmail;
-use App\Concerns\PasswordValidationRules;
+use Inertia\Inertia;
 
 class FirstTimeLoginController extends Controller
 {
     use PasswordValidationRules;
+
     /**
      * Tampilkan halaman Verifikasi OTP
      */
@@ -24,14 +24,14 @@ class FirstTimeLoginController extends Controller
         $user = $request->user();
 
         // Jika tidak ada OTP atau sudah kadaluarsa, generate baru otomatis
-        if (!$user->otp_code || now()->isAfter($user->otp_expires_at)) {
+        if (! $user->otp_code || now()->isAfter($user->otp_expires_at)) {
             $this->generateAndSendOtp($user);
         }
 
         return Inertia::render('auth/VerifyOtp', [
             'email' => $user->email,
             'expiresAt' => $user->otp_expires_at, // Untuk timer JS
-            'status' => session('status')
+            'status' => session('status'),
         ]);
     }
 
@@ -47,7 +47,7 @@ class FirstTimeLoginController extends Controller
         $user = $request->user();
 
         // Bandingkan OTP menggunakan Hash::check() karena OTP disimpan ter-hash
-        if (!Hash::check($request->otp, $user->otp_code)) {
+        if (! Hash::check($request->otp, $user->otp_code)) {
             return back()->withErrors(['otp' => 'Kode OTP salah atau tidak valid.']);
         }
 
@@ -58,9 +58,9 @@ class FirstTimeLoginController extends Controller
         // Lulus! Update waktu email_verified_at dan aktifkan akun
         $user->forceFill([
             'email_verified_at' => now(),
-            'is_active'         => true,
-            'otp_code'          => null,
-            'otp_expires_at'    => null,
+            'is_active' => true,
+            'otp_code' => null,
+            'otp_expires_at' => null,
         ])->save();
 
         // Jika status masih pending → ke waiting room
@@ -101,7 +101,7 @@ class FirstTimeLoginController extends Controller
         }
 
         // Jika self-registered user (sudah punya password_changed_at), skip force change
-        if (!is_null($request->user()->password_changed_at)) {
+        if (! is_null($request->user()->password_changed_at)) {
             return redirect()->route('dashboard');
         }
 
@@ -118,7 +118,7 @@ class FirstTimeLoginController extends Controller
         ]);
 
         $user = $request->user();
-        
+
         $user->forceFill([
             'password' => Hash::make($validated['password']),
             'password_changed_at' => now(),
@@ -137,14 +137,14 @@ class FirstTimeLoginController extends Controller
 
         $user->forceFill([
             // ⚠️ OTP di-hash sebelum disimpan ke DB — tidak boleh plaintext
-            'otp_code'       => Hash::make($otp),
+            'otp_code' => Hash::make($otp),
             'otp_expires_at' => now()->addMinutes(15),
         ])->save();
 
         try {
             Mail::to($user->email)->queue(new SendOtpEmail($user, $otp));
         } catch (\Exception $e) {
-            Log::error('Gagal mengirim email OTP ke ' . $user->email . ': ' . $e->getMessage());
+            Log::error('Gagal mengirim email OTP ke '.$user->email.': '.$e->getMessage());
         }
 
         // ⚠️ KEAMANAN: OTP tidak pernah di-log sebagai plaintext di production

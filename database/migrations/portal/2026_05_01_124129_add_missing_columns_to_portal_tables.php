@@ -13,7 +13,7 @@ return new class extends Migration
     {
         // Update portal_categories
         Schema::table('portal_categories', function (Blueprint $table) {
-            if (!Schema::hasColumn('portal_categories', 'name')) {
+            if (! Schema::hasColumn('portal_categories', 'name')) {
                 $table->string('name')->after('id');
                 $table->string('slug')->unique()->after('name');
                 $table->text('description')->nullable()->after('slug');
@@ -22,14 +22,14 @@ return new class extends Migration
 
         // Update portal_posts
         Schema::table('portal_posts', function (Blueprint $table) {
-            if (!Schema::hasColumn('portal_posts', 'category_id')) {
+            if (! Schema::hasColumn('portal_posts', 'category_id')) {
                 $table->foreignId('category_id')->nullable()->constrained('portal_categories')->nullOnDelete()->after('id');
             }
         });
 
         // Update portal_pages
         Schema::table('portal_pages', function (Blueprint $table) {
-            if (!Schema::hasColumn('portal_pages', 'title')) {
+            if (! Schema::hasColumn('portal_pages', 'title')) {
                 $table->string('title')->after('id');
                 $table->string('slug')->unique()->after('title');
                 $table->longText('content')->nullable()->after('slug');
@@ -39,7 +39,7 @@ return new class extends Migration
 
         // Update portal_comments
         Schema::table('portal_comments', function (Blueprint $table) {
-            if (!Schema::hasColumn('portal_comments', 'post_id')) {
+            if (! Schema::hasColumn('portal_comments', 'post_id')) {
                 $table->foreignId('post_id')->constrained('portal_posts')->onDelete('cascade')->after('id');
                 $table->string('author_name')->after('post_id');
                 $table->string('author_email')->nullable()->after('author_name');
@@ -50,7 +50,7 @@ return new class extends Migration
 
         // Update portal_media
         Schema::table('portal_media', function (Blueprint $table) {
-            if (!Schema::hasColumn('portal_media', 'filename')) {
+            if (! Schema::hasColumn('portal_media', 'filename')) {
                 $table->string('filename')->after('id');
                 $table->string('path')->after('filename');
                 $table->string('mime_type')->nullable()->after('path');

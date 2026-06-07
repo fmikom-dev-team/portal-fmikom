@@ -1,14 +1,14 @@
 <?php
 
-use App\Models\User;
 use App\Models\Auth\AuthSetting;
-use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 test('password validation enforces min_length setting', function () {
     AuthSetting::set('email_password.enabled', true);
     AuthSetting::set('email_password.min_length', 12);
-    
+
     $user = User::factory()->create();
 
     $response = $this

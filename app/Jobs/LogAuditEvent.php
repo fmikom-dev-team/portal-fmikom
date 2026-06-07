@@ -48,7 +48,7 @@ class LogAuditEvent implements ShouldQueue
                 'details' => $this->payload['metadata']['details'] ?? [],
             ]);
         }
-        
+
         // Broadcast the event to WebSockets for real-time dashboard updates
         // \App\Events\AuditLogCreated::dispatch($auditLog);
     }

@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -138,7 +137,7 @@ test('legacy sertifikat routes redirect to certificates', function () {
 
 test('uploaded files with php or js script tag are rejected', function () {
     Storage::fake('public');
-    
+
     $user = User::factory()->create([
         'email_verified_at' => now(),
         'password_changed_at' => now(),
@@ -159,7 +158,7 @@ test('uploaded files with php or js script tag are rejected', function () {
             'title' => 'AWS Certified Cloud Practitioner',
             'issuer' => 'Amazon Web Services',
             'date' => '2026-01',
-            'newMedia' => [$maliciousFile]
+            'newMedia' => [$maliciousFile],
         ]);
 
     $response->assertStatus(422);
@@ -196,7 +195,7 @@ test('user can upload valid files and they are saved successfully', function () 
             'credentialId' => 'LAR-9988',
             'credentialUrl' => 'https://laracasts.com/verify/12345',
             'skills' => json_encode(['Laravel', 'PHP']),
-            'newMedia' => [$pdfFile, $imageFile]
+            'newMedia' => [$pdfFile, $imageFile],
         ]);
 
     $response->assertStatus(200);
@@ -207,7 +206,7 @@ test('user can upload valid files and they are saved successfully', function () 
     $user->refresh();
     $certs = $user->metadata['certificates'] ?? [];
     $uploadedCert = collect($certs)->firstWhere('title', 'Advanced Laravel');
-    
+
     expect($uploadedCert)->not->toBeNull();
     expect($uploadedCert['issuer'])->toBe('Laracasts');
     expect($uploadedCert['expirationDate'])->toBe('2027-06');
@@ -243,10 +242,9 @@ test('user cannot upload more than 3 files', function () {
                 UploadedFile::fake()->create('proof2.pdf', 100, 'application/pdf'),
                 UploadedFile::fake()->create('proof3.pdf', 100, 'application/pdf'),
                 UploadedFile::fake()->create('proof4.pdf', 100, 'application/pdf'),
-            ]
+            ],
         ]);
 
     $response->assertStatus(302); // Redirect back due to validation error
     $response->assertSessionHasErrors('newMedia');
 });
-

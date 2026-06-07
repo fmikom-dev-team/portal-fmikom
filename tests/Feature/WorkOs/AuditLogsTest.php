@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\User;
+use App\Models\Audit\AuditApiRequest;
 use App\Models\Audit\AuditLog;
 use App\Models\Audit\AuditSecurityIncident;
-use App\Models\Audit\AuditApiRequest;
+use App\Models\User;
 
 test('unauthorized users cannot clear audit logs', function () {
     $nonAdmin = User::factory()->create(['user_type' => 'mahasiswa']);
@@ -16,7 +16,7 @@ test('unauthorized users cannot clear audit logs', function () {
 
 test('super admin can clear audit logs', function () {
     $admin = User::factory()->create(['user_type' => 'super_admin']);
-    
+
     // Create mock audit data
     $log = AuditLog::create([
         'event_type' => 'test.event',
@@ -49,7 +49,7 @@ test('super admin can clear audit logs', function () {
     $response = $this->post(route('workos.audit-logs.clear'));
 
     $response->assertRedirect();
-    
+
     // Check tables are cleared
     $this->assertDatabaseMissing('audit_security_incidents', ['id' => $incident->id]);
     $this->assertDatabaseMissing('audit_logs', ['id' => $log->id]);

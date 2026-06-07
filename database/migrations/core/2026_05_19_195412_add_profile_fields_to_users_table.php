@@ -37,7 +37,7 @@ return new class extends Migration
                 'website',
                 'twitter',
                 'linkedin',
-                'github'
+                'github',
             ]);
         });
     }

@@ -39,7 +39,7 @@ return [
 
     'guards' => [
         'web' => [
-            'driver'   => 'session',
+            'driver' => 'session',
             'provider' => 'users',
             'remember' => 10080, // 7 hari (default Laravel = 576.000 menit / 400 hari)
         ],

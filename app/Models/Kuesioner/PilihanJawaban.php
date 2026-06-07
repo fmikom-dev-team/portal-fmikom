@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class PilihanJawaban extends Model
 {
     protected $fillable = [
-        'pertanyaan_id', 'teks_pilihan', 'nilai'
+        'pertanyaan_id', 'teks_pilihan', 'nilai',
     ];
 
     public function pertanyaan(): BelongsTo

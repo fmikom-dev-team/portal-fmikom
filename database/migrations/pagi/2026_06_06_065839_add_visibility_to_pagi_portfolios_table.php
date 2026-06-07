@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('pagi_portfolios', function (Blueprint $table) {
-            if (!Schema::hasColumn('pagi_portfolios', 'visibility')) {
+            if (! Schema::hasColumn('pagi_portfolios', 'visibility')) {
                 $table->string('visibility')->default('Everyone')->after('is_published');
             }
         });

@@ -3,8 +3,8 @@
 namespace App\Modules\Pagi\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 class PagiWorkController extends Controller
 {

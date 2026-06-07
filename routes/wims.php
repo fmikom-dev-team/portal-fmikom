@@ -1,13 +1,15 @@
 <?php
-use Illuminate\Support\Facades\Route;
-use App\Modules\Wims\Controllers\WimsDashboardController;
 
-Route::middleware(['auth', \App\Http\Middleware\EnsureFirstTimeLoginComplete::class, 'module.context:wims'])
+use App\Http\Middleware\EnsureFirstTimeLoginComplete;
+use App\Modules\Wims\Controllers\WimsDashboardController;
+use Illuminate\Support\Facades\Route;
+
+Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:wims'])
     ->prefix('wims')
     ->name('module.wims.')
     ->group(function () {
         Route::get('/', [WimsDashboardController::class, 'index'])
-             ->name('dashboard');
-             
+            ->name('dashboard');
+
         // Ruang untuk route WIMS lainnya
     });

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('radar_blocked_items', function (Blueprint $table) {
-            if (!Schema::hasColumn('radar_blocked_items', 'action')) {
+            if (! Schema::hasColumn('radar_blocked_items', 'action')) {
                 $table->enum('action', ['Allow', 'Block'])->default('Block')->after('value');
             }
         });

@@ -11,9 +11,9 @@ class RadarDevice extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'geolocation'  => 'array',
-        'is_trusted'   => 'boolean',
-        'is_blocked'   => 'boolean',
+        'geolocation' => 'array',
+        'is_trusted' => 'boolean',
+        'is_blocked' => 'boolean',
         'last_seen_at' => 'datetime',
     ];
 

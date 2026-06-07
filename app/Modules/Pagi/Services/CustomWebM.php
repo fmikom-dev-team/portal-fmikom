@@ -38,8 +38,6 @@ class CustomWebM extends DefaultVideo
 
     /**
      * Check if the format supports B-frames.
-     *
-     * @return bool
      */
     public function supportBFrames(): bool
     {

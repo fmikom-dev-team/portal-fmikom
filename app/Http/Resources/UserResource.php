@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -40,17 +41,17 @@ class UserResource extends JsonResource
             'timezone_extended' => $this->when($isProfileOrSettings, $this->metadata['timezone_extended'] ?? null),
             'languages' => $this->when($isProfileOrSettings, $this->metadata['languages'] ?? []),
             'banner_path' => $this->banner_path,
-            'tanggal_lahir' => $this->when($isProfileOrSettings, $this->tanggal_lahir ? ($this->tanggal_lahir instanceof \Carbon\Carbon ? $this->tanggal_lahir->format('Y-m-d') : \Illuminate\Support\Carbon::parse($this->tanggal_lahir)->format('Y-m-d')) : null),
+            'tanggal_lahir' => $this->when($isProfileOrSettings, $this->tanggal_lahir ? ($this->tanggal_lahir instanceof Carbon ? $this->tanggal_lahir->format('Y-m-d') : \Illuminate\Support\Carbon::parse($this->tanggal_lahir)->format('Y-m-d')) : null),
             'no_telepon' => $this->when($isProfileOrSettings, $this->no_telepon),
             'nomor_induk' => $this->when($isProfileOrSettings, $this->nomor_induk),
             'program_studi_id' => $this->when($isProfileOrSettings, $this->program_studi_id),
             'tahun_lulus' => $this->when($isProfileOrSettings, $this->tahun_lulus),
             'user_type' => $this->user_type,
             'foto_path' => $this->foto_path,
-            'avatar' => $this->foto_path 
-                ? (str_starts_with($this->foto_path, 'http') ? $this->foto_path : '/storage/' . $this->foto_path)
-                : 'https://api.dicebear.com/7.x/initials/svg?seed=' . urlencode($this->name) . '&backgroundColor=3b82f6,6366f1,8b5cf6,ec4899,f43f5e&backgroundType=gradientLinear&bold=true',
-            'unreadNotifications' => $this->when($request->routeIs('portal', '*portal*'), fn() => clone $this->unreadNotifications),
+            'avatar' => $this->foto_path
+                ? (str_starts_with($this->foto_path, 'http') ? $this->foto_path : '/storage/'.$this->foto_path)
+                : 'https://api.dicebear.com/7.x/initials/svg?seed='.urlencode($this->name).'&backgroundColor=3b82f6,6366f1,8b5cf6,ec4899,f43f5e&backgroundType=gradientLinear&bold=true',
+            'unreadNotifications' => $this->when($request->routeIs('portal', '*portal*'), fn () => clone $this->unreadNotifications),
             'role' => $this->whenLoaded('role'), // just in case it's loaded
             'is_admin' => $this->isAdmin(),
             'is_super_admin' => $this->isSuperAdmin(),

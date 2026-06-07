@@ -2,6 +2,8 @@
 
 namespace App\Concerns;
 
+use App\Models\Auth\AuthMfa;
+
 trait UserHelpers
 {
     public function isMahasiswa(): bool
@@ -44,11 +46,11 @@ trait UserHelpers
 
     public function hasEnabledTwoFactorAuthentication(): bool
     {
-        if (app()->environment('testing') && !is_null($this->two_factor_confirmed_at)) {
+        if (app()->environment('testing') && ! is_null($this->two_factor_confirmed_at)) {
             return true;
         }
 
-        return \App\Models\Auth\AuthMfa::where('user_id', $this->id)
+        return AuthMfa::where('user_id', $this->id)
             ->where('is_active', true)
             ->exists();
     }
@@ -60,7 +62,7 @@ trait UserHelpers
     public function getResolvedRoleTitle(): string
     {
         // Jika user sudah set role_title custom (headline), gunakan itu
-        if (!empty($this->role_title)) {
+        if (! empty($this->role_title)) {
             return $this->role_title;
         }
 

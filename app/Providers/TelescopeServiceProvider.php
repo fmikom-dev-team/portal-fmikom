@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Telescope\IncomingEntry;
 use Laravel\Telescope\Telescope;
@@ -51,7 +50,9 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
     {
         Gate::define('viewTelescope', function ($user) {
             // Allow if local environment (all users)
-            if (app()->environment('local')) return true;
+            if (app()->environment('local')) {
+                return true;
+            }
 
             // In production: only super-admin or admin roles
             return method_exists($user, 'isSuperAdmin') && ($user->isSuperAdmin() || $user->isAdmin());

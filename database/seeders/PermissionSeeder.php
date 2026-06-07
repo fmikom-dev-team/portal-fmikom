@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Permission;
 use App\Models\Role;
+use Illuminate\Database\Seeder;
 
 class PermissionSeeder extends Seeder
 {
@@ -71,8 +71,8 @@ class PermissionSeeder extends Seeder
             Permission::firstOrCreate(
                 ['slug' => $perm['slug']],
                 [
-                    'name'        => $perm['name'],
-                    'group'       => $perm['group'],
+                    'name' => $perm['name'],
+                    'group' => $perm['group'],
                     'description' => $perm['description'],
                 ]
             );
@@ -94,7 +94,7 @@ class PermissionSeeder extends Seeder
                 ->whereNotIn('slug', ['auth:settings.manage', 'auth:otp.manage', 'auth:password.manage', 'auth:sso.manage'])
                 ->pluck('id')->toArray();
             $admin->permissions()->sync($adminPerms);
-            $this->command->info("✅ Admin Struktural diberi " . count($adminPerms) . " permissions.");
+            $this->command->info('✅ Admin Struktural diberi '.count($adminPerms).' permissions.');
         }
 
         // Assign permissions ke Dosen

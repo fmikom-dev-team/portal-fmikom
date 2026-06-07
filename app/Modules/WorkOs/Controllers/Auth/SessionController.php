@@ -3,10 +3,9 @@
 namespace App\Modules\WorkOs\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-
-use Illuminate\Http\Request;
 use App\Models\Auth\AuthSession;
 use App\Modules\WorkOs\Services\AuthPlatform\SessionEngine;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class SessionController extends Controller
@@ -27,7 +26,7 @@ class SessionController extends Controller
             ->where('is_revoked', false)
             ->orderByDesc('last_activity_at')
             ->get()
-            ->map(fn($s) => array_merge($s->toArray(), [
+            ->map(fn ($s) => array_merge($s->toArray(), [
                 'is_current' => $s->session_token === $currentToken,
             ]));
 
@@ -55,7 +54,7 @@ class SessionController extends Controller
     {
         $currentToken = $request->session()->get('auth_session_token');
 
-        if (!$currentToken) {
+        if (! $currentToken) {
             return response()->json(['error' => 'Current session not identifiable.'], 400);
         }
 

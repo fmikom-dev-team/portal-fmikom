@@ -2,8 +2,8 @@
 
 namespace App\Modules\Pagi\Actions;
 
-use App\Models\User;
 use App\Models\Pagi\PagiWork;
+use App\Models\User;
 use App\Notifications\PagiNotification;
 
 class LikeWorkAction
@@ -16,12 +16,12 @@ class LikeWorkAction
         $portfolio = PagiWork::findOrFail($previewId);
 
         $likes = $portfolio->likes ?? [];
-        $isNowLiked = !in_array($authUser->id, $likes);
+        $isNowLiked = ! in_array($authUser->id, $likes);
 
         if ($isNowLiked) {
             $likes[] = $authUser->id;
         } else {
-            $likes = array_values(array_filter($likes, fn($id) => $id !== $authUser->id));
+            $likes = array_values(array_filter($likes, fn ($id) => $id !== $authUser->id));
         }
 
         $portfolio->update(['likes' => $likes]);
@@ -31,16 +31,16 @@ class LikeWorkAction
             $owner = $portfolio->user;
             if ($owner) {
                 $avatar = $authUser->foto_path
-                    ? (str_starts_with($authUser->foto_path, 'http') ? $authUser->foto_path : asset('storage/' . $authUser->foto_path))
+                    ? (str_starts_with($authUser->foto_path, 'http') ? $authUser->foto_path : asset('storage/'.$authUser->foto_path))
                     : null;
 
                 try {
                     $owner->notify(new PagiNotification(
                         type: 'like',
                         title: $authUser->pagi_username ?: $authUser->name,
-                        message: 'menyukai postingan Anda: "' . ($portfolio->title ?? 'Untitled Project') . '"',
+                        message: 'menyukai postingan Anda: "'.($portfolio->title ?? 'Untitled Project').'"',
                         avatar: $avatar,
-                        href: '/pagi/profile/' . $portfolio->user_id . '?project=' . $portfolio->id,
+                        href: '/pagi/profile/'.$portfolio->user_id.'?project='.$portfolio->id,
                         extra: [
                             'sender_id' => $authUser->id,
                             'portfolio_id' => $portfolio->id,

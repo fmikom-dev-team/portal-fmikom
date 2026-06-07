@@ -2,8 +2,8 @@
 
 namespace App\Models\Alumni;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class KarirAlumni extends Model
@@ -11,7 +11,7 @@ class KarirAlumni extends Model
     protected $fillable = [
         'alumni_id', 'nama_perusahaan', 'jabatan', 'bidang_industri',
         'kota', 'negara', 'latitude', 'longitude', 'tanggal_mulai',
-        'tanggal_selesai', 'gaji_range', 'status_kerja', 'is_current'
+        'tanggal_selesai', 'gaji_range', 'status_kerja', 'is_current',
     ];
 
     protected $casts = [
@@ -32,10 +32,13 @@ class KarirAlumni extends Model
 
     public function getLokasiGeoJson(): array
     {
-        if (!$this->latitude || !$this->longitude) return [];
+        if (! $this->latitude || ! $this->longitude) {
+            return [];
+        }
+
         return [
             'type' => 'Point',
-            'coordinates' => [$this->longitude, $this->latitude]
+            'coordinates' => [$this->longitude, $this->latitude],
         ];
     }
 }

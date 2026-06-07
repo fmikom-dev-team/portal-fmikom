@@ -21,9 +21,9 @@ class PagiReportCreated implements ShouldBroadcastNow
 
     public function __construct(
         public readonly PagiReport $report,
-        public readonly string     $workTitle,
-        public readonly string     $reporterName,
-        public readonly string     $reporterHandle,
+        public readonly string $workTitle,
+        public readonly string $reporterName,
+        public readonly string $reporterHandle,
     ) {}
 
     /** Broadcast on the shared private admin channel */
@@ -41,13 +41,13 @@ class PagiReportCreated implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'id'              => $this->report->id,
-            'work_id'         => $this->report->work_id,
-            'work_title'      => $this->workTitle,
-            'reporter_name'   => $this->reporterName,
+            'id' => $this->report->id,
+            'work_id' => $this->report->work_id,
+            'work_title' => $this->workTitle,
+            'reporter_name' => $this->reporterName,
             'reporter_handle' => $this->reporterHandle,
-            'reason'          => $this->report->reason,
-            'created_at'      => $this->report->created_at?->toISOString(),
+            'reason' => $this->report->reason,
+            'created_at' => $this->report->created_at?->toISOString(),
         ];
     }
 }

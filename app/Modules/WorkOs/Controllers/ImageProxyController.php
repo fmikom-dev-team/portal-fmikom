@@ -5,7 +5,6 @@ namespace App\Modules\WorkOs\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ImageProxyController extends Controller
 {
@@ -25,11 +24,11 @@ class ImageProxyController extends Controller
             $relativePath = Crypt::decryptString($base64);
 
             // Ensure the path is strictly within the public storage of profile photos
-            if (str_contains($relativePath, '..') || !str_starts_with($relativePath, 'profile_photos/')) {
+            if (str_contains($relativePath, '..') || ! str_starts_with($relativePath, 'profile_photos/')) {
                 abort(403, 'Unauthorized access.');
             }
 
-            if (!Storage::disk('public')->exists($relativePath)) {
+            if (! Storage::disk('public')->exists($relativePath)) {
                 abort(404, 'File not found.');
             }
 

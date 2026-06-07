@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('auth_mfa')) {
+        if (! Schema::hasTable('auth_mfa')) {
             Schema::create('auth_mfa', function (Blueprint $table) {
                 $table->uuid('id')->primary();
                 $table->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -21,7 +21,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('auth_backup_codes')) {
+        if (! Schema::hasTable('auth_backup_codes')) {
             Schema::create('auth_backup_codes', function (Blueprint $table) {
                 $table->uuid('id')->primary();
                 $table->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -32,7 +32,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('auth_passkeys')) {
+        if (! Schema::hasTable('auth_passkeys')) {
             Schema::create('auth_passkeys', function (Blueprint $table) {
                 $table->uuid('id')->primary();
                 $table->foreignId('user_id')->constrained()->cascadeOnDelete();

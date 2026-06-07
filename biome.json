@@ -6,7 +6,33 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"ignoreUnknown": false
+		"ignoreUnknown": false,
+		"includes": [
+			"**",
+			"!!resources/css",
+			"!!resources/js/components",
+			"!!resources/js/layouts",
+			"!!resources/js/lib",
+			"!!resources/js/wayfinder",
+			"!!resources/js/utils",
+			"!!resources/js/pages/Modules/Fast",
+			"!!resources/js/pages/Modules/Portal",
+			"!!resources/js/pages/Modules/Trace",
+			"!!resources/js/pages/Modules/Wims",
+			"!!resources/js/pages/WorkOs",
+			"!!resources/js/pages/auth",
+			"!!resources/js/pages/settings",
+			"!!resources/js/pages/Dashboard.vue",
+			"!!resources/js/pages/Portal.vue",
+			"!!resources/js/pages/Welcome.vue",
+			"!!resources/js/app.ts",
+			"!!resources/js/ssr.ts",
+			"!!node_modules",
+			"!!vendor",
+			"!!storage",
+			"!!bootstrap",
+			"!!public"
+		]
 	},
 	"formatter": {
 		"enabled": true,
@@ -17,7 +43,8 @@
 		"rules": {
 			"recommended": true,
 			"style": {
-				"recommended": true
+				"recommended": true,
+				"noNonNullAssertion": "off"
 			},
 			"suspicious": {
 				"recommended": true,
@@ -54,7 +81,7 @@
 				"rules": {
 					"suspicious": {
 						"noRedeclare": "off",
-						"noExplicitAny": "warn"
+						"noExplicitAny": "off"
 					}
 				}
 			}

@@ -11,8 +11,8 @@ class RadarProtection extends Model
 
     protected $casts = [
         'threshold_config' => 'array',
-        'auto_block'       => 'boolean',
-        'notify_admin'     => 'boolean',
+        'auto_block' => 'boolean',
+        'notify_admin' => 'boolean',
     ];
 
     public function detections(): HasMany

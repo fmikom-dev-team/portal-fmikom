@@ -2,17 +2,14 @@
 
 namespace App\Actions\Auth;
 
-use App\Models\Auth\AuthMfa;
 use Illuminate\Http\Request;
 use Laravel\Fortify\Events\TwoFactorAuthenticationChallenged;
-use Laravel\Fortify\Fortify;
 
 class RedirectIfMfaRequired
 {
     /**
      * Handle the incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  callable  $next
      * @return mixed
      */

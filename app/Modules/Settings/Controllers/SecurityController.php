@@ -3,20 +3,21 @@
 namespace App\Modules\Settings\Controllers;
 
 use App\Http\Controllers\Controller;
-
 use App\Http\Requests\Settings\PasswordUpdateRequest;
 use App\Http\Requests\Settings\TwoFactorAuthenticationRequest;
+use App\Models\Auth\AuthPasskey;
+use App\Models\Auth\AuthSetting;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Fortify\Features;
-use App\Models\Auth\AuthSetting;
-use App\Models\Auth\AuthPasskey;
 
 class SecurityController extends Controller implements HasMiddleware
 {
@@ -73,7 +74,7 @@ class SecurityController extends Controller implements HasMiddleware
         $user = $request->user();
 
         $user->update([
-            'password'       => $request->password,
+            'password' => $request->password,
             'remember_token' => Str::random(60), // cycle token → invalidasi semua device
         ]);
 
@@ -90,16 +91,16 @@ class SecurityController extends Controller implements HasMiddleware
     /**
      * Update the user's email address with high security verification.
      */
-    public function updateEmail(\Illuminate\Http\Request $request): RedirectResponse
+    public function updateEmail(Request $request): RedirectResponse
     {
         $user = $request->user();
 
         $request->validate([
-            'email'            => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
             'current_password' => 'required|string',
         ]);
 
-        if (! \Illuminate\Support\Facades\Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return back()->withErrors([
                 'current_password' => 'The provided password does not match your current password.',
             ]);

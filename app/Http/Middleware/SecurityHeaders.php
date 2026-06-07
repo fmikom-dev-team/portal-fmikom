@@ -4,8 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Vite;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Security Headers Middleware
@@ -29,6 +29,7 @@ class SecurityHeaders
             $response->headers->set('X-Content-Type-Options', 'nosniff');
             $response->headers->set('X-XSS-Protection', '0');
             $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
+
             return $response;
         }
 
@@ -57,11 +58,11 @@ class SecurityHeaders
         // Base connect-src URLs
         $connectSrcUrls = [
             "'self'",
-            "https://openrouter.ai",
-            "https://cdnjs.cloudflare.com",
-            "https://generativelanguage.googleapis.com",
-            "https://cloudflareinsights.com",
-            "https://static.cloudflareinsights.com",
+            'https://openrouter.ai',
+            'https://cdnjs.cloudflare.com',
+            'https://generativelanguage.googleapis.com',
+            'https://cloudflareinsights.com',
+            'https://static.cloudflareinsights.com',
             "ws://{$host}",
             "wss://{$host}",
         ];
@@ -80,9 +81,9 @@ class SecurityHeaders
 
             // If local reverb host, allow variations to prevent cross-origin issues
             if ($reverbHost === 'localhost') {
-                $connectSrcUrls[] = "{$reverbScheme}://127.0.0.1" . ($reverbPort ? ":{$reverbPort}" : '');
+                $connectSrcUrls[] = "{$reverbScheme}://127.0.0.1".($reverbPort ? ":{$reverbPort}" : '');
             } elseif ($reverbHost === '127.0.0.1') {
-                $connectSrcUrls[] = "{$reverbScheme}://localhost" . ($reverbPort ? ":{$reverbPort}" : '');
+                $connectSrcUrls[] = "{$reverbScheme}://localhost".($reverbPort ? ":{$reverbPort}" : '');
             }
         }
 
@@ -100,13 +101,13 @@ class SecurityHeaders
 
         // Also allow local ws/wss for the request host with any port (for HMR, dev servers, etc.)
         if ($isLocalHost) {
-            $connectSrcUrls[] = "ws://localhost:*";
-            $connectSrcUrls[] = "wss://localhost:*";
-            $connectSrcUrls[] = "ws://127.0.0.1:*";
-            $connectSrcUrls[] = "wss://127.0.0.1:*";
+            $connectSrcUrls[] = 'ws://localhost:*';
+            $connectSrcUrls[] = 'wss://localhost:*';
+            $connectSrcUrls[] = 'ws://127.0.0.1:*';
+            $connectSrcUrls[] = 'wss://127.0.0.1:*';
         }
 
-        $connectSrc = "connect-src " . implode(' ', array_unique($connectSrcUrls));
+        $connectSrc = 'connect-src '.implode(' ', array_unique($connectSrcUrls));
 
         $cspDirectives = [
             "default-src 'self'",
@@ -128,8 +129,8 @@ class SecurityHeaders
             "frame-ancestors 'none'",
         ];
 
-        if ($request->isSecure() && !$isLocalHost) {
-            $cspDirectives[] = "upgrade-insecure-requests";
+        if ($request->isSecure() && ! $isLocalHost) {
+            $cspDirectives[] = 'upgrade-insecure-requests';
         }
 
         $csp = implode('; ', $cspDirectives);
@@ -148,7 +149,7 @@ class SecurityHeaders
         $response->headers->set('X-XSS-Protection', '0');
 
         // ── Paksa HTTPS (1 tahun) ────────────────────────────────────────────
-        if ($request->isSecure() && !$isLocalHost) {
+        if ($request->isSecure() && ! $isLocalHost) {
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
         }
 

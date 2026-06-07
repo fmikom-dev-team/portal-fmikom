@@ -22,12 +22,12 @@ class FollowUserAction
         // Update auth user's "following" list
         $authMeta = $authUser->metadata ?? [];
         $following = $authMeta['following'] ?? [];
-        $isNowFollowing = !in_array($targetUser->id, $following);
+        $isNowFollowing = ! in_array($targetUser->id, $following);
 
         if ($isNowFollowing) {
             $following[] = $targetUser->id;
         } else {
-            $following = array_values(array_filter($following, fn($id) => $id !== $targetUser->id));
+            $following = array_values(array_filter($following, fn ($id) => $id !== $targetUser->id));
         }
         $authMeta['following'] = $following;
         $authUser->update(['metadata' => $authMeta]);
@@ -37,11 +37,11 @@ class FollowUserAction
         $followers = $targetMeta['followers'] ?? [];
 
         if ($isNowFollowing) {
-            if (!in_array($authUser->id, $followers)) {
+            if (! in_array($authUser->id, $followers)) {
                 $followers[] = $authUser->id;
             }
         } else {
-            $followers = array_values(array_filter($followers, fn($id) => $id !== $authUser->id));
+            $followers = array_values(array_filter($followers, fn ($id) => $id !== $authUser->id));
         }
         $targetMeta['followers'] = $followers;
         $targetUser->update(['metadata' => $targetMeta]);
@@ -50,7 +50,7 @@ class FollowUserAction
         if ($isNowFollowing) {
             $avatar = null;
             if ($authUser->foto_path) {
-                $avatar = str_starts_with($authUser->foto_path, 'http') ? $authUser->foto_path : asset('storage/' . $authUser->foto_path);
+                $avatar = str_starts_with($authUser->foto_path, 'http') ? $authUser->foto_path : asset('storage/'.$authUser->foto_path);
             }
 
             try {
@@ -59,7 +59,7 @@ class FollowUserAction
                     title: $authUser->pagi_username ?: $authUser->name,
                     message: 'mulai mengikuti Anda.',
                     avatar: $avatar,
-                    href: '/pagi/profile/' . $authUser->id,
+                    href: '/pagi/profile/'.$authUser->id,
                     extra: ['sender_id' => $authUser->id],
                 ));
             } catch (\Throwable $e) {

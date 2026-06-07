@@ -3,8 +3,8 @@
 namespace App\Models\Pagi;
 
 use App\Models\User;
-
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class PagiWork extends Model
 {
@@ -37,13 +37,13 @@ class PagiWork extends Model
     {
         static::saved(function ($work) {
             if ($work->user_id) {
-                \Illuminate\Support\Facades\Cache::forget("pagi_public_profile_{$work->user_id}");
+                Cache::forget("pagi_public_profile_{$work->user_id}");
             }
         });
 
         static::deleted(function ($work) {
             if ($work->user_id) {
-                \Illuminate\Support\Facades\Cache::forget("pagi_public_profile_{$work->user_id}");
+                Cache::forget("pagi_public_profile_{$work->user_id}");
             }
         });
     }

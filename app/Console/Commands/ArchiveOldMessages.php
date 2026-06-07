@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class ArchiveOldMessages extends Command
 {
@@ -38,7 +38,8 @@ class ArchiveOldMessages extends Command
             ->count();
 
         if ($totalMessages === 0) {
-            $this->info("Tidak ada pesan lama yang perlu diarsipkan.");
+            $this->info('Tidak ada pesan lama yang perlu diarsipkan.');
+
             return Command::SUCCESS;
         }
 
@@ -86,6 +87,7 @@ class ArchiveOldMessages extends Command
             });
 
         $this->info("Proses pengarsipan chat berhasil diselesaikan. Total {$archivedCount} pesan dipindahkan.");
+
         return Command::SUCCESS;
     }
 }

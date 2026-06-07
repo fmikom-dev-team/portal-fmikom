@@ -1,8 +1,8 @@
 <?php
 
 namespace App\Models\Kuesioner;
-use App\Models\Alumni\ProfilAlumni;
 
+use App\Models\Alumni\ProfilAlumni;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ResponsKuesioner extends Model
 {
     protected $fillable = [
-        'kuesioner_id', 'alumni_id', 'is_complete', 'tanggal_isi'
+        'kuesioner_id', 'alumni_id', 'is_complete', 'tanggal_isi',
     ];
 
     protected $casts = [
@@ -36,9 +36,12 @@ class ResponsKuesioner extends Model
     public function getProgress(): int
     {
         $totalPertanyaan = $this->kuesioner->pertanyaans()->count();
-        if ($totalPertanyaan === 0) return 100;
-        
+        if ($totalPertanyaan === 0) {
+            return 100;
+        }
+
         $answered = $this->details()->count();
+
         return (int) round(($answered / $totalPertanyaan) * 100);
     }
 }

@@ -2,15 +2,15 @@
 
 namespace App\Models\Magang;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LogbookMagang extends Model
 {
     protected $fillable = [
         'pendaftaran_id', 'tanggal', 'aktivitas_harian',
-        'kompetensi_dicapai', 'catatan_dosen'
+        'kompetensi_dicapai', 'catatan_dosen',
     ];
 
     protected $casts = [

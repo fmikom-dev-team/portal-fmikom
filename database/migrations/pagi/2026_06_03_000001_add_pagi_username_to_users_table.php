@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->string('pagi_username', 30)->nullable()->unique()->after('instagram')
-                  ->comment('Username unik untuk modul PAGI — digunakan untuk pencarian dan identitas komentar');
+                ->comment('Username unik untuk modul PAGI — digunakan untuk pencarian dan identitas komentar');
         });
     }
 

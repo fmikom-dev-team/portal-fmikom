@@ -11,6 +11,7 @@ class PipeMonitoringMetric extends Model
     use HasFactory, HasUuids;
 
     public $timestamps = false; // Using custom timestamp
+
     protected $guarded = [];
 
     protected $casts = [

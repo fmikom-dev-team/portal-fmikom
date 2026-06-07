@@ -11,6 +11,7 @@ class PipeProviderHealth extends Model
     use HasFactory, HasUuids;
 
     protected $table = 'pipe_provider_health';
+
     protected $guarded = [];
 
     protected $casts = [

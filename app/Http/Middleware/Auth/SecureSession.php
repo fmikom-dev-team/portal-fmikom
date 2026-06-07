@@ -2,10 +2,10 @@
 
 namespace App\Http\Middleware\Auth;
 
-use Closure;
-use Illuminate\Http\Request;
 use App\Models\Auth\AuthSession;
 use Carbon\Carbon;
+use Closure;
+use Illuminate\Http\Request;
 
 /**
  * SecureSession Middleware
@@ -20,7 +20,7 @@ class SecureSession
 {
     public function handle(Request $request, Closure $next)
     {
-        if (!$request->user()) {
+        if (! $request->user()) {
             return $next($request);
         }
 
@@ -31,7 +31,7 @@ class SecureSession
                 ->where('user_id', $request->user()->id)
                 ->first();
 
-            if (!$authSession) {
+            if (! $authSession) {
                 return $this->reject($request, 'Session not found.');
             }
 
@@ -41,6 +41,7 @@ class SecureSession
 
             if ($authSession->expires_at && Carbon::now()->isAfter($authSession->expires_at)) {
                 $authSession->update(['is_revoked' => true]);
+
                 return $this->reject($request, 'Session expired.');
             }
 
@@ -56,7 +57,7 @@ class SecureSession
         $request->session()->forget('auth_session_token');
 
         if ($request->expectsJson()) {
-            return response()->json(['error' => 'Session invalid: ' . $reason], 401);
+            return response()->json(['error' => 'Session invalid: '.$reason], 401);
         }
 
         return redirect()->route('login')->with('error', $reason);

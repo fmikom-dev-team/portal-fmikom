@@ -19,6 +19,7 @@ class ProcessConnectionSync implements ShouldQueue
 
     // Retry settings for the entire sync orchestrator
     public $tries = 3;
+
     public $backoff = [60, 300, 600]; // 1m, 5m, 10m
 
     /**
@@ -39,9 +40,9 @@ class ProcessConnectionSync implements ShouldQueue
             $providerSlug = $connection->provider->slug;
 
             // Resolve adapter dynamically
-            $adapterClass = "\\App\\Services\\Pipes\\Adapters\\" . ucfirst($providerSlug) . "ProviderAdapter";
-            
-            if (!class_exists($adapterClass)) {
+            $adapterClass = '\\App\\Services\\Pipes\\Adapters\\'.ucfirst($providerSlug).'ProviderAdapter';
+
+            if (! class_exists($adapterClass)) {
                 throw new \Exception("Adapter class {$adapterClass} not found for provider {$providerSlug}");
             }
 
@@ -79,9 +80,9 @@ class ProcessConnectionSync implements ShouldQueue
             $syncEngine->completeSync($this->syncLog, $checkpoint ?? [], $totalProcessed, 0);
 
         } catch (\Throwable $e) {
-            Log::error("Pipes Sync Failed: " . $e->getMessage());
+            Log::error('Pipes Sync Failed: '.$e->getMessage());
             $syncEngine->failSync($this->syncLog, $e);
-            
+
             // Re-throw to trigger job failure and retries
             throw $e;
         }

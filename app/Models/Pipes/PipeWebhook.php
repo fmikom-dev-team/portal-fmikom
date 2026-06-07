@@ -26,7 +26,9 @@ class PipeWebhook extends Model
 
     public function getSigningSecretAttribute($value)
     {
-        if (!$value) return null;
+        if (! $value) {
+            return null;
+        }
         try {
             return Crypt::decryptString($value);
         } catch (\Exception $e) {

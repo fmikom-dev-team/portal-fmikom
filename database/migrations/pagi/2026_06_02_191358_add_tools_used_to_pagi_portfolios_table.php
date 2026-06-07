@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('pagi_portfolios', function (Blueprint $table) {
-            if (!Schema::hasColumn('pagi_portfolios', 'tools_used')) {
+            if (! Schema::hasColumn('pagi_portfolios', 'tools_used')) {
                 $table->string('tools_used', 255)->nullable()->after('category');
             }
         });

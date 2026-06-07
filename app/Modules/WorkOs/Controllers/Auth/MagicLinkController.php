@@ -3,7 +3,6 @@
 namespace App\Modules\WorkOs\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-
 use Illuminate\Http\Request;
 
 /**
@@ -14,6 +13,7 @@ class MagicLinkController extends Controller
     public function send(Request $request)
     {
         $request->validate(['email' => 'required|email']);
+
         // TODO: Dispatch magic link via MagicLinkService
         return response()->json(['message' => 'Magic link sent if the email exists.']);
     }

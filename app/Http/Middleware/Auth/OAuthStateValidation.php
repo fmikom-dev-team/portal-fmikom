@@ -23,7 +23,7 @@ class OAuthStateValidation
         if ($request->route()->getName() === 'auth.oauth.callback') {
             $state = $request->get('state');
 
-            if (!$state) {
+            if (! $state) {
                 return response()->json(['error' => 'OAuth state parameter missing.'], 400);
             }
 

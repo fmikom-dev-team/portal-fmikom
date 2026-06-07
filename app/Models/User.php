@@ -1,29 +1,29 @@
 <?php
 
 namespace App\Models;
-use App\Models\Surat\Surat;
-use App\Models\Surat\SuratApprovalFlow;
+
 use App\Models\Alumni\ProfilAlumni;
+use App\Models\Auth\AuthOAuthCredential;
 use App\Models\Kuesioner\Kuesioner;
 use App\Models\Magang\LowonganInfo;
 use App\Models\Magang\PembimbingLapangan;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PenilaianMagang;
-use App\Models\Auth\AuthOAuthCredential;
 use App\Models\Pagi\PagiWork;
-
+use App\Models\Surat\Surat;
+use App\Models\Surat\SuratApprovalFlow;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\Module;
-use App\Models\UserModuleRole;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, \App\Concerns\UserHelpers;
+    use \App\Concerns\UserHelpers, HasFactory, Notifiable;
 
     protected $fillable = [
         'name', 'email', 'password', 'program_studi_id',
@@ -56,30 +56,30 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'otp_expires_at'    => 'datetime',
-            'password'          => 'hashed',
-            'is_active'         => 'boolean',
-            'tahun_lulus'       => 'integer',
+            'otp_expires_at' => 'datetime',
+            'password' => 'hashed',
+            'is_active' => 'boolean',
+            'tahun_lulus' => 'integer',
             // user_type = identity layer (mahasiswa, alumni, mitra, dosen, staff)
             // digunakan sebagai fallback role di module jika tidak ada assignment
-            'user_type'         => 'string',
-            'metadata'          => 'array',
-            'tanggal_lahir'     => 'date:Y-m-d',
-            'last_seen_at'      => 'datetime',
+            'user_type' => 'string',
+            'metadata' => 'array',
+            'tanggal_lahir' => 'date:Y-m-d',
+            'last_seen_at' => 'datetime',
         ];
     }
 
     protected static function booted(): void
     {
         static::saved(function ($user) {
-            \Illuminate\Support\Facades\Cache::forget("pagi_public_profile_{$user->id}");
+            Cache::forget("pagi_public_profile_{$user->id}");
 
             if ($user->wasChanged('password') || ($user->wasRecentlyCreated && $user->password)) {
-                \Illuminate\Support\Facades\DB::table('auth_password_histories')->insert([
-                    'user_id'       => $user->id,
+                DB::table('auth_password_histories')->insert([
+                    'user_id' => $user->id,
                     'password_hash' => $user->password,
-                    'created_at'    => now(),
-                    'updated_at'    => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]);
             }
         });
@@ -124,7 +124,7 @@ class User extends Authenticatable
      */
     public function accessibleModules()
     {
-        return Module::whereHas('userRoles', function($query) {
+        return Module::whereHas('userRoles', function ($query) {
             $query->where('user_id', $this->id);
         })->get();
     }

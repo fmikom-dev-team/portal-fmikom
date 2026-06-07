@@ -38,8 +38,8 @@ class SessionCleanupService
      */
     public function run(): array
     {
-        $revoked  = $this->revokeExpired();
-        $purged   = $this->purgeOld();
+        $revoked = $this->revokeExpired();
+        $purged = $this->purgeOld();
         $orphaned = $this->removeOrphaned();
 
         logger()->info('Session cleanup completed', compact('revoked', 'purged', 'orphaned'));
@@ -110,11 +110,11 @@ class SessionCleanupService
         $now = Carbon::now();
 
         return [
-            'total_active'   => AuthSession::where('is_revoked', false)->where('expires_at', '>', $now)->count(),
-            'total_revoked'  => AuthSession::where('is_revoked', true)->count(),
-            'total_expired'  => AuthSession::where('is_revoked', false)->where('expires_at', '<', $now)->count(),
-            'high_risk'      => AuthSession::where('is_revoked', false)->where('risk_score', '>', 60)->count(),
-            'expiring_soon'  => AuthSession::where('is_revoked', false)
+            'total_active' => AuthSession::where('is_revoked', false)->where('expires_at', '>', $now)->count(),
+            'total_revoked' => AuthSession::where('is_revoked', true)->count(),
+            'total_expired' => AuthSession::where('is_revoked', false)->where('expires_at', '<', $now)->count(),
+            'high_risk' => AuthSession::where('is_revoked', false)->where('risk_score', '>', 60)->count(),
+            'expiring_soon' => AuthSession::where('is_revoked', false)
                 ->whereBetween('expires_at', [$now, $now->copy()->addHours(24)])
                 ->count(),
         ];

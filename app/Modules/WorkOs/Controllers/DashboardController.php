@@ -3,22 +3,33 @@
 namespace App\Modules\WorkOs\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use App\Models\User;
-use App\Models\Role;
-use App\Models\Permission;
+use App\Models\Audit\AuditApiRequest;
+use App\Models\Audit\AuditLog;
+use App\Models\Audit\AuditSecurityIncident;
 use App\Models\Module;
-use App\Models\UserModuleRole;
+use App\Models\Permission;
+use App\Models\Radar\RadarBlockedItem;
+use App\Models\Radar\RadarDetection;
+use App\Models\Radar\RadarDevice;
 use App\Models\Radar\RadarProtection;
+use App\Models\Role;
+use App\Models\User;
+use App\Models\UserModuleRole;
 use App\Notifications\UserApprovedNotification;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
 class DashboardController extends Controller // NOSONAR
 {
     private const DATE_FORMAT = 'M d, Y, g:i A';
+
     private const BOT_DETECTION_TYPE = 'Bot detection';
+
     private const BRUTE_FORCE_TYPE = 'Brute force attack';
+
     public function index(Request $request)
     {
         $tab = $request->segment(2) ?? 'overview';
@@ -33,29 +44,30 @@ class DashboardController extends Controller // NOSONAR
             : null;
 
         // Helper to check if a prop should be loaded
-        $shouldLoad = function($propName, $tabsAllowed) use ($tab, $only) {
+        $shouldLoad = function ($propName, $tabsAllowed) use ($tab, $only) {
             // If it's a partial reload, check if this prop is explicitly requested
             if ($only !== null) {
                 return in_array($propName, $only);
             }
+
             // Otherwise (initial page load), load if it matches the current active tab
             return in_array($tab, $tabsAllowed);
         };
 
         return Inertia::render('WorkOs/Dashboard', [
-            'users'            => fn() => $shouldLoad('users', ['users', 'organizations', 'authorization']) ? $this->getUsersData() : [],
-            'roles'            => fn() => $shouldLoad('roles', ['authorization', 'organizations', 'users']) ? $this->getRolesData() : [],
-            'permissions'      => fn() => $shouldLoad('permissions', ['authorization']) ? $this->getPermissionsData() : [],
-            'modules'          => fn() => $shouldLoad('modules', ['organizations', 'users', 'authorization']) ? $this->getModulesData() : [],
-            'stats'            => fn() => $shouldLoad('stats', ['overview', 'authorization']) ? $this->getStats() : [],
-            'pendingCount'     => fn() => User::where('status_approval', 'pending')->count(), // Always load for sidebar badge
-            'radarConfig'      => fn() => $shouldLoad('radarConfig', ['radar']) ? $this->getRadarConfig() : [],
-            'radarStats'       => fn() => $shouldLoad('radarStats', ['radar']) ? $this->getRadarStats() : [],
-            'radarDetections'  => fn() => $shouldLoad('radarDetections', ['radar']) ? $this->getRadarDetections() : [],
-            'radarBlockedItems'=> fn() => $shouldLoad('radarBlockedItems', ['radar']) ? \App\Models\Radar\RadarBlockedItem::all()->toArray() : [],
-            'auditStats'       => fn() => $shouldLoad('auditStats', ['audit-logs']) ? $this->getAuditStats() : [],
-            'auditRecentEvents'=> fn() => $shouldLoad('auditRecentEvents', ['audit-logs']) ? $this->getAuditRecentEvents() : [],
-            'smtpConfig'       => fn() => $shouldLoad('smtpConfig', ['emails']) ? $this->getSmtpConfig() : [],
+            'users' => fn () => $shouldLoad('users', ['users', 'organizations', 'authorization']) ? $this->getUsersData() : [],
+            'roles' => fn () => $shouldLoad('roles', ['authorization', 'organizations', 'users']) ? $this->getRolesData() : [],
+            'permissions' => fn () => $shouldLoad('permissions', ['authorization']) ? $this->getPermissionsData() : [],
+            'modules' => fn () => $shouldLoad('modules', ['organizations', 'users', 'authorization']) ? $this->getModulesData() : [],
+            'stats' => fn () => $shouldLoad('stats', ['overview', 'authorization']) ? $this->getStats() : [],
+            'pendingCount' => fn () => User::where('status_approval', 'pending')->count(), // Always load for sidebar badge
+            'radarConfig' => fn () => $shouldLoad('radarConfig', ['radar']) ? $this->getRadarConfig() : [],
+            'radarStats' => fn () => $shouldLoad('radarStats', ['radar']) ? $this->getRadarStats() : [],
+            'radarDetections' => fn () => $shouldLoad('radarDetections', ['radar']) ? $this->getRadarDetections() : [],
+            'radarBlockedItems' => fn () => $shouldLoad('radarBlockedItems', ['radar']) ? RadarBlockedItem::all()->toArray() : [],
+            'auditStats' => fn () => $shouldLoad('auditStats', ['audit-logs']) ? $this->getAuditStats() : [],
+            'auditRecentEvents' => fn () => $shouldLoad('auditRecentEvents', ['audit-logs']) ? $this->getAuditRecentEvents() : [],
+            'smtpConfig' => fn () => $shouldLoad('smtpConfig', ['emails']) ? $this->getSmtpConfig() : [],
         ]);
     }
 
@@ -64,23 +76,23 @@ class DashboardController extends Controller // NOSONAR
     public function storeUser(Request $request)
     {
         $request->validate([
-            'first_name'  => ['nullable', 'string', 'max:100'],
-            'last_name'   => ['nullable', 'string', 'max:100'],
-            'email'       => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password'    => ['required', 'string', 'min:8'],
-            'user_type'   => ['required', 'in:mahasiswa,alumni,mitra,dosen,staff,super_admin'],
+            'first_name' => ['nullable', 'string', 'max:100'],
+            'last_name' => ['nullable', 'string', 'max:100'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8'],
+            'user_type' => ['required', 'in:mahasiswa,alumni,mitra,dosen,staff,super_admin'],
             'nomor_induk' => ['nullable', 'string', 'max:50', 'unique:users,nomor_induk'],
         ]);
 
         User::create([
-            'name'                => trim($request->first_name . ' ' . $request->last_name) ?: explode('@', $request->email)[0],
-            'email'               => $request->email,
-            'password'            => Hash::make($request->password),
-            'user_type'           => $request->user_type,
-            'nomor_induk'         => $request->nomor_induk,
-            'status_approval'     => 'approved',
-            'is_active'           => true,
-            'email_verified_at'   => now(),
+            'name' => trim($request->first_name.' '.$request->last_name) ?: explode('@', $request->email)[0],
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'user_type' => $request->user_type,
+            'nomor_induk' => $request->nomor_induk,
+            'status_approval' => 'approved',
+            'is_active' => true,
+            'email_verified_at' => now(),
             'password_changed_at' => null,
         ]);
 
@@ -90,31 +102,37 @@ class DashboardController extends Controller // NOSONAR
     public function approve(User $user)
     {
         $user->update(['status_approval' => 'approved', 'is_active' => true]);
-        try { $user->notify(new UserApprovedNotification()); } catch (\Throwable $e) { report($e); }
+        try {
+            $user->notify(new UserApprovedNotification);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         return back()->with('success', 'User berhasil disetujui.');
     }
 
     public function reject(User $user)
     {
         $user->update(['status_approval' => 'rejected', 'is_active' => false]);
+
         return back()->with('success', 'User telah ditolak.');
     }
 
     public function updateUser(Request $request, User $user)
     {
         $request->validate([
-            'name'          => ['sometimes', 'string', 'max:255'],
-            'email'         => ['sometimes', 'required', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'user_type'     => ['sometimes', 'in:mahasiswa,alumni,mitra,dosen,staff,super_admin'],
-            'is_active'     => ['sometimes', 'boolean'],
-            'nomor_induk'   => ['nullable', 'string', 'max:50', 'unique:users,nomor_induk,' . $user->id],
-            'location'      => ['nullable', 'string', 'max:255'],
-            'metadata'      => ['nullable', 'array'],
+            'name' => ['sometimes', 'string', 'max:255'],
+            'email' => ['sometimes', 'required', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'user_type' => ['sometimes', 'in:mahasiswa,alumni,mitra,dosen,staff,super_admin'],
+            'is_active' => ['sometimes', 'boolean'],
+            'nomor_induk' => ['nullable', 'string', 'max:50', 'unique:users,nomor_induk,'.$user->id],
+            'location' => ['nullable', 'string', 'max:255'],
+            'metadata' => ['nullable', 'array'],
             'tanggal_lahir' => ['nullable', 'date'],
         ]);
 
         if ($user->user_type === 'super_admin') {
-            if ($request->has('user_type') && $request->user_type !== 'super_admin' || $request->has('is_active') && !$request->is_active) {
+            if ($request->has('user_type') && $request->user_type !== 'super_admin' || $request->has('is_active') && ! $request->is_active) {
                 if ($user->id === auth()->id()) {
                     return back()->withErrors(['user_type' => 'Anda tidak dapat mendemot atau menonaktifkan akun Super Admin Anda sendiri.']);
                 }
@@ -127,6 +145,7 @@ class DashboardController extends Controller // NOSONAR
         }
 
         $user->update($request->only('name', 'email', 'user_type', 'is_active', 'nomor_induk', 'location', 'metadata', 'tanggal_lahir'));
+
         return back()->with('success', 'User berhasil diperbarui.');
     }
 
@@ -134,8 +153,9 @@ class DashboardController extends Controller // NOSONAR
     {
         abort_if($user->id === auth()->id(), 403, 'Tidak dapat menghapus akun sendiri.');
         abort_if($user->user_type === 'super_admin', 403, 'Akun Super Admin dilindungi. Silakan ubah tipe/role user ini terlebih dahulu jika ingin menghapusnya.');
-        
+
         $user->delete();
+
         return back()->with('success', 'User berhasil dihapus.');
     }
 
@@ -145,7 +165,7 @@ class DashboardController extends Controller // NOSONAR
     {
         $request->validate([
             'module_id' => ['required', 'exists:modules,id'],
-            'role_id'   => ['required', 'exists:roles,id'],
+            'role_id' => ['required', 'exists:roles,id'],
         ]);
 
         $roleIsMapped = \DB::table('module_roles')
@@ -153,7 +173,7 @@ class DashboardController extends Controller // NOSONAR
             ->where('role_id', $request->role_id)
             ->exists();
 
-        if (!$roleIsMapped) {
+        if (! $roleIsMapped) {
             return back()->withErrors(['role_id' => 'Role ini belum diaktifkan/tersedia untuk organisasi tersebut.']);
         }
 
@@ -168,7 +188,7 @@ class DashboardController extends Controller // NOSONAR
 
         $user->moduleRoles()->create([
             'module_id' => $request->module_id,
-            'role_id'   => $request->role_id,
+            'role_id' => $request->role_id,
             'is_active' => true,
         ]);
 
@@ -178,20 +198,22 @@ class DashboardController extends Controller // NOSONAR
     public function updateModuleRole(Request $request, UserModuleRole $moduleRole)
     {
         $request->validate([
-            'role_id'   => ['sometimes', 'exists:roles,id'],
+            'role_id' => ['sometimes', 'exists:roles,id'],
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
         $moduleRole->update([
-            'role_id'   => $request->has('role_id')   ? $request->role_id   : $moduleRole->role_id,
-            'is_active' => $request->has('is_active') ? (bool)$request->is_active : $moduleRole->is_active,
+            'role_id' => $request->has('role_id') ? $request->role_id : $moduleRole->role_id,
+            'is_active' => $request->has('is_active') ? (bool) $request->is_active : $moduleRole->is_active,
         ]);
+
         return back()->with('success', 'Assignment berhasil diperbarui.');
     }
 
     public function removeModuleRole(UserModuleRole $moduleRole)
     {
         $moduleRole->delete();
+
         return back()->with('success', 'Assignment berhasil dihapus.');
     }
 
@@ -199,6 +221,7 @@ class DashboardController extends Controller // NOSONAR
     {
         $request->validate(['user_type' => ['required', 'in:mahasiswa,alumni,mitra,dosen,staff,super_admin']]);
         $user->update(['user_type' => $request->user_type]);
+
         return back()->with('success', 'User type diperbarui.');
     }
 
@@ -207,24 +230,26 @@ class DashboardController extends Controller // NOSONAR
     public function storeRole(Request $request)
     {
         $request->validate([
-            'nama'      => ['required', 'string', 'max:100'],
-            'slug'      => ['required', 'string', 'max:100', 'unique:roles,slug', 'regex:/^[a-z0-9-]+$/'],
+            'nama' => ['required', 'string', 'max:100'],
+            'slug' => ['required', 'string', 'max:100', 'unique:roles,slug', 'regex:/^[a-z0-9-]+$/'],
             'deskripsi' => ['nullable', 'string', 'max:255'],
         ]);
 
         Role::create($request->only('nama', 'slug', 'deskripsi'));
+
         return back()->with('success', "Role '{$request->nama}' berhasil dibuat.");
     }
 
     public function updateRole(Request $request, Role $role)
     {
         $request->validate([
-            'nama'      => ['required', 'string', 'max:100'],
-            'slug'      => ['required', 'string', 'max:100', 'unique:roles,slug,' . $role->id, 'regex:/^[a-z0-9-]+$/'],
+            'nama' => ['required', 'string', 'max:100'],
+            'slug' => ['required', 'string', 'max:100', 'unique:roles,slug,'.$role->id, 'regex:/^[a-z0-9-]+$/'],
             'deskripsi' => ['nullable', 'string', 'max:255'],
         ]);
 
         $role->update($request->only('nama', 'slug', 'deskripsi'));
+
         return back()->with('success', "Role '{$role->nama}' berhasil diperbarui.");
     }
 
@@ -232,17 +257,19 @@ class DashboardController extends Controller // NOSONAR
     {
         $role->permissions()->detach();
         $role->delete();
+
         return back()->with('success', 'Role berhasil dihapus.');
     }
 
     public function syncPermissions(Request $request, Role $role)
     {
         $request->validate([
-            'permission_ids'   => ['nullable', 'array'],
+            'permission_ids' => ['nullable', 'array'],
             'permission_ids.*' => ['exists:permissions,id'],
         ]);
 
         $role->permissions()->sync($request->permission_ids ?? []);
+
         return back()->with('success', "Permissions untuk role '{$role->nama}' berhasil disimpan.");
     }
 
@@ -251,26 +278,28 @@ class DashboardController extends Controller // NOSONAR
     public function storePermission(Request $request)
     {
         $request->validate([
-            'name'        => ['required', 'string', 'max:150'],
-            'slug'        => ['required', 'string', 'max:150', 'unique:permissions,slug', 'regex:/^[a-z0-9-:.]+$/'],
-            'group'       => ['required', 'string', 'max:80'],
+            'name' => ['required', 'string', 'max:150'],
+            'slug' => ['required', 'string', 'max:150', 'unique:permissions,slug', 'regex:/^[a-z0-9-:.]+$/'],
+            'group' => ['required', 'string', 'max:80'],
             'description' => ['nullable', 'string', 'max:255'],
         ]);
 
         Permission::create($request->only('name', 'slug', 'group', 'description'));
+
         return back()->with('success', "Permission '{$request->name}' berhasil dibuat.");
     }
 
     public function updatePermission(Request $request, Permission $permission)
     {
         $request->validate([
-            'name'        => ['required', 'string', 'max:150'],
-            'slug'        => ['required', 'string', 'max:150', 'unique:permissions,slug,' . $permission->id, 'regex:/^[a-z0-9-:.]+$/'],
-            'group'       => ['required', 'string', 'max:80'],
+            'name' => ['required', 'string', 'max:150'],
+            'slug' => ['required', 'string', 'max:150', 'unique:permissions,slug,'.$permission->id, 'regex:/^[a-z0-9-:.]+$/'],
+            'group' => ['required', 'string', 'max:80'],
             'description' => ['nullable', 'string', 'max:255'],
         ]);
 
         $permission->update($request->only('name', 'slug', 'group', 'description'));
+
         return back()->with('success', "Permission '{$permission->name}' berhasil diperbarui.");
     }
 
@@ -278,6 +307,7 @@ class DashboardController extends Controller // NOSONAR
     {
         $permission->roles()->detach();
         $permission->delete();
+
         return back()->with('success', 'Permission berhasil dihapus.');
     }
 
@@ -286,16 +316,16 @@ class DashboardController extends Controller // NOSONAR
     public function storeModule(Request $request)
     {
         $request->validate([
-            'name'        => ['required', 'string', 'max:150'],
-            'code'        => ['required', 'string', 'max:20', 'unique:modules,code', 'regex:/^[A-Z0-9]+$/'],
+            'name' => ['required', 'string', 'max:150'],
+            'code' => ['required', 'string', 'max:20', 'unique:modules,code', 'regex:/^[A-Z0-9]+$/'],
             'description' => ['nullable', 'string', 'max:255'],
         ]);
 
         Module::create([
-            'name'        => $request->name,
-            'code'        => strtoupper($request->code),
+            'name' => $request->name,
+            'code' => strtoupper($request->code),
             'description' => $request->description,
-            'is_active'   => true,
+            'is_active' => true,
         ]);
 
         return back()->with('success', "Organisasi '{$request->name}' berhasil dibuat.");
@@ -304,12 +334,13 @@ class DashboardController extends Controller // NOSONAR
     public function updateModule(Request $request, Module $module)
     {
         $request->validate([
-            'name'        => ['required', 'string', 'max:150'],
-            'is_active'   => ['sometimes', 'boolean'],
+            'name' => ['required', 'string', 'max:150'],
+            'is_active' => ['sometimes', 'boolean'],
             'description' => ['nullable', 'string', 'max:255'],
         ]);
 
         $module->update($request->only('name', 'description', 'is_active'));
+
         return back()->with('success', 'Organisasi berhasil diperbarui.');
     }
 
@@ -317,6 +348,7 @@ class DashboardController extends Controller // NOSONAR
     {
         $module->userRoles()->delete();
         $module->delete();
+
         return back()->with('success', "Organisasi '{$module->name}' berhasil dihapus.");
     }
 
@@ -324,11 +356,11 @@ class DashboardController extends Controller // NOSONAR
     {
         $module = Module::findOrFail($moduleId);
         $request->validate(['role_id' => 'required|exists:roles,id']);
-        
-        if (!$module->roles()->where('role_id', $request->role_id)->exists()) {
+
+        if (! $module->roles()->where('role_id', $request->role_id)->exists()) {
             $module->roles()->attach($request->role_id);
         }
-        
+
         return back()->with('success', 'Role berhasil ditambahkan ke organisasi.');
     }
 
@@ -336,6 +368,7 @@ class DashboardController extends Controller // NOSONAR
     {
         $module = Module::findOrFail($moduleId);
         $module->roles()->detach($roleId);
+
         return back()->with('success', 'Role berhasil dikeluarkan dari organisasi.');
     }
 
@@ -344,7 +377,7 @@ class DashboardController extends Controller // NOSONAR
     public function updateRadarConfig(Request $request)
     {
         $request->validate([
-            'protections'   => ['required', 'array'],
+            'protections' => ['required', 'array'],
             'protections.*.id' => ['required', 'integer'],
             'protections.*.status' => ['required', 'string', 'in:Enabled,Logging,Disabled'],
             'protections.*.auto_block' => ['boolean'],
@@ -380,22 +413,22 @@ class DashboardController extends Controller // NOSONAR
 
         // Security Form Validation
         if ($request->type === 'IP') {
-            if (!filter_var($value, FILTER_VALIDATE_IP)) {
+            if (! filter_var($value, FILTER_VALIDATE_IP)) {
                 $validationError = 'Format IP Address tidak valid.';
             }
         } elseif ($request->type === 'Email') {
-            if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+            if (! filter_var($value, FILTER_VALIDATE_EMAIL)) {
                 $validationError = 'Format Email tidak valid.';
             }
         } elseif ($request->type === 'Domain') {
-            if (!preg_match('/^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/i', $value)) {
+            if (! preg_match('/^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/i', $value)) {
                 $validationError = 'Format Domain tidak valid.';
             }
         }
 
-        if (!$validationError) {
+        if (! $validationError) {
             // Check for duplicates
-            $exists = \App\Models\Radar\RadarBlockedItem::where('type', $request->type)
+            $exists = RadarBlockedItem::where('type', $request->type)
                 ->where('value', $value)
                 ->exists();
 
@@ -408,7 +441,7 @@ class DashboardController extends Controller // NOSONAR
             return response()->json(['message' => $validationError], 422);
         }
 
-        $item = \App\Models\Radar\RadarBlockedItem::create([
+        $item = RadarBlockedItem::create([
             'type' => $request->type,
             'value' => $value,
             'action' => $request->action,
@@ -418,18 +451,18 @@ class DashboardController extends Controller // NOSONAR
         return response()->json([
             'success' => true,
             'message' => 'Item berhasil ditambahkan ke daftar.',
-            'item' => $item
+            'item' => $item,
         ]);
     }
 
     public function destroyBlockedItem($id)
     {
-        $item = \App\Models\Radar\RadarBlockedItem::findOrFail($id);
+        $item = RadarBlockedItem::findOrFail($id);
         $item->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Item berhasil dihapus dari daftar.'
+            'message' => 'Item berhasil dihapus dari daftar.',
         ]);
     }
 
@@ -438,10 +471,10 @@ class DashboardController extends Controller // NOSONAR
     private function getStats(): array
     {
         return [
-            'total_users'   => User::count(),
-            'active_users'  => User::where('is_active', true)->count(),
+            'total_users' => User::count(),
+            'active_users' => User::where('is_active', true)->count(),
             'pending_users' => User::where('status_approval', 'pending')->count(),
-            'total_roles'   => Role::count(),
+            'total_roles' => Role::count(),
             'total_modules' => Module::where('is_active', true)->count(),
         ];
     }
@@ -457,49 +490,49 @@ class DashboardController extends Controller // NOSONAR
                     if (str_starts_with($u->foto_path, 'http')) {
                         $fotoPath = $u->foto_path;
                     } else {
-                        $encrypted = \Illuminate\Support\Facades\Crypt::encryptString($u->foto_path);
+                        $encrypted = Crypt::encryptString($u->foto_path);
                         $urlSafe = str_replace(['+', '/', '='], ['-', '_', ''], $encrypted);
-                        $fotoPath = asset('images/v1/' . $urlSafe);
+                        $fotoPath = asset('images/v1/'.$urlSafe);
                     }
                 }
 
-                $secureId = 'user_' . substr(hash('sha256', $u->id . config('app.key')), 0, 16);
+                $secureId = 'user_'.substr(hash('sha256', $u->id.config('app.key')), 0, 16);
 
                 return [
-                    'id'              => $u->id,
-                    'secure_id'       => $secureId,
-                    'name'            => $u->name,
-                    'email'           => $u->email,
-                    'user_type'       => $u->user_type,
-                    'nomor_induk'     => $u->nomor_induk,
+                    'id' => $u->id,
+                    'secure_id' => $secureId,
+                    'name' => $u->name,
+                    'email' => $u->email,
+                    'user_type' => $u->user_type,
+                    'nomor_induk' => $u->nomor_induk,
                     'status_approval' => $u->status_approval,
-                    'is_active'       => $u->is_active,
-                    'foto_path'       => $fotoPath,
-                    'location'        => $u->location,
-                    'metadata'        => $u->metadata,
-                    'tanggal_lahir'   => $u->tanggal_lahir?->format('Y-m-d'),
-                    'role'            => $u->role ? ['id' => $u->role->id, 'nama' => $u->role->nama, 'slug' => $u->role->slug] : null,
-                    'prodi'           => optional($u->programStudi)->nama,
-                    'created_at'      => $u->created_at?->format(self::DATE_FORMAT),
-                    'module_roles'    => $u->moduleRoles->map(fn($mr) => [
-                        'id'          => $mr->id,
-                        'module_id'   => $mr->module_id,
+                    'is_active' => $u->is_active,
+                    'foto_path' => $fotoPath,
+                    'location' => $u->location,
+                    'metadata' => $u->metadata,
+                    'tanggal_lahir' => $u->tanggal_lahir?->format('Y-m-d'),
+                    'role' => $u->role ? ['id' => $u->role->id, 'nama' => $u->role->nama, 'slug' => $u->role->slug] : null,
+                    'prodi' => optional($u->programStudi)->nama,
+                    'created_at' => $u->created_at?->format(self::DATE_FORMAT),
+                    'module_roles' => $u->moduleRoles->map(fn ($mr) => [
+                        'id' => $mr->id,
+                        'module_id' => $mr->module_id,
                         'module_name' => optional($mr->module)->name,
                         'module_code' => optional($mr->module)->code,
-                        'role_id'     => $mr->role_id,
-                        'role_name'   => optional($mr->role)->nama,
-                        'role_slug'   => optional($mr->role)->slug,
-                        'is_active'   => $mr->is_active,
-                        'created_at'  => $mr->created_at?->format('M d, Y') ?? now()->format('M d, Y'),
+                        'role_id' => $mr->role_id,
+                        'role_name' => optional($mr->role)->nama,
+                        'role_slug' => optional($mr->role)->slug,
+                        'is_active' => $mr->is_active,
+                        'created_at' => $mr->created_at?->format('M d, Y') ?? now()->format('M d, Y'),
                     ])->values()->all(),
-                    'oauth_credentials' => $u->oauthCredentials->map(fn($oc) => [
-                        'id'            => $oc->id,
-                        'provider_id'   => $oc->provider_id,
+                    'oauth_credentials' => $u->oauthCredentials->map(fn ($oc) => [
+                        'id' => $oc->id,
+                        'provider_id' => $oc->provider_id,
                         'provider_name' => optional($oc->provider)->name,
                         'provider_slug' => optional($oc->provider)->slug,
-                        'external_id'   => $oc->external_id,
-                        'email'         => $oc->email,
-                        'created_at'    => $oc->created_at?->format(self::DATE_FORMAT),
+                        'external_id' => $oc->external_id,
+                        'email' => $oc->email,
+                        'created_at' => $oc->created_at?->format(self::DATE_FORMAT),
                     ])->values()->all(),
                 ];
             });
@@ -510,13 +543,13 @@ class DashboardController extends Controller // NOSONAR
         return Role::withCount('permissions')
             ->with('permissions')
             ->get()
-            ->map(fn($r) => [
-                'id'                => $r->id,
-                'nama'              => $r->nama,
-                'slug'              => $r->slug,
-                'deskripsi'         => $r->deskripsi,
+            ->map(fn ($r) => [
+                'id' => $r->id,
+                'nama' => $r->nama,
+                'slug' => $r->slug,
+                'deskripsi' => $r->deskripsi,
                 'permissions_count' => $r->permissions_count,
-                'permissions'       => $r->permissions->map(fn($p) => [
+                'permissions' => $r->permissions->map(fn ($p) => [
                     'id' => $p->id, 'name' => $p->name, 'slug' => $p->slug, 'group' => $p->group,
                 ]),
             ]);
@@ -528,11 +561,11 @@ class DashboardController extends Controller // NOSONAR
             ->orderBy('group')
             ->orderBy('name')
             ->get()
-            ->map(fn($p) => [
-                'id'          => $p->id,
-                'name'        => $p->name,
-                'slug'        => $p->slug,
-                'group'       => $p->group,
+            ->map(fn ($p) => [
+                'id' => $p->id,
+                'name' => $p->name,
+                'slug' => $p->slug,
+                'group' => $p->group,
                 'description' => $p->description,
                 'roles_count' => $p->roles_count,
             ]);
@@ -541,32 +574,31 @@ class DashboardController extends Controller // NOSONAR
     private function getModulesData()
     {
         return Module::withCount([
-            'userRoles as users_count' => fn($q) => $q->where('is_active', true),
+            'userRoles as users_count' => fn ($q) => $q->where('is_active', true),
         ])
-            ->with(['roles' => function($q) {
+            ->with(['roles' => function ($q) {
                 $q->withCount('permissions');
             }])
             ->latest()
             ->get()
-            ->map(fn($m) => [
-                'id'          => $m->id,
-                'code'        => $m->code,
-                'name'        => $m->name,
+            ->map(fn ($m) => [
+                'id' => $m->id,
+                'code' => $m->code,
+                'name' => $m->name,
                 'description' => $m->description,
                 'users_count' => $m->users_count ?? 0,
-                'is_active'   => $m->is_active,
-                'roles'       => $m->roles->map(fn($r) => [
-                    'id'                => $r->id,
-                    'nama'              => $r->nama,
-                    'slug'              => $r->slug,
-                    'deskripsi'         => $r->deskripsi,
-                    'is_default'        => $r->pivot->is_default,
+                'is_active' => $m->is_active,
+                'roles' => $m->roles->map(fn ($r) => [
+                    'id' => $r->id,
+                    'nama' => $r->nama,
+                    'slug' => $r->slug,
+                    'deskripsi' => $r->deskripsi,
+                    'is_default' => $r->pivot->is_default,
                     'permissions_count' => $r->permissions_count,
                 ]),
-                'created_at'  => $m->created_at?->format(self::DATE_FORMAT),
+                'created_at' => $m->created_at?->format(self::DATE_FORMAT),
             ]);
     }
-
 
     private function getRadarConfig(): array
     {
@@ -575,13 +607,13 @@ class DashboardController extends Controller // NOSONAR
 
     private function getRadarStats(): array
     {
-        $total = \App\Models\Radar\RadarDetection::count();
-        $allowed = \App\Models\Radar\RadarDetection::where('action_taken', 'Allowed')->count();
-        $challenged = \App\Models\Radar\RadarDetection::where('action_taken', 'Challenged')->count();
-        $blocked = \App\Models\Radar\RadarDetection::where('action_taken', 'Blocked')->count();
+        $total = RadarDetection::count();
+        $allowed = RadarDetection::where('action_taken', 'Allowed')->count();
+        $challenged = RadarDetection::where('action_taken', 'Challenged')->count();
+        $blocked = RadarDetection::where('action_taken', 'Blocked')->count();
 
         // Breakdown counts (all time)
-        $breakdown = \App\Models\Radar\RadarDetection::select('detection_type', \DB::raw('count(*) as count'))
+        $breakdown = RadarDetection::select('detection_type', \DB::raw('count(*) as count'))
             ->groupBy('detection_type')
             ->pluck('count', 'detection_type')
             ->toArray();
@@ -597,11 +629,11 @@ class DashboardController extends Controller // NOSONAR
 
     private function getRadarDetections(): array
     {
-        return \App\Models\Radar\RadarDetection::with(['protection', 'device'])
+        return RadarDetection::with(['protection', 'device'])
             ->latest()
             ->take(50)
             ->get()
-            ->map(function($d) {
+            ->map(function ($d) {
                 return [
                     'id' => $d->id,
                     'type' => $d->detection_type,
@@ -609,7 +641,7 @@ class DashboardController extends Controller // NOSONAR
                     'risk_score' => $d->risk_score,
                     'action' => $d->action_taken,
                     'ip' => $d->ip_address,
-                    'device' => $d->device ? $d->device->os . ' ' . $d->device->browser : 'Unknown',
+                    'device' => $d->device ? $d->device->os.' '.$d->device->browser : 'Unknown',
                     'country' => $d->device ? $d->device->country : 'Unknown',
                     'city' => $d->device ? $d->device->city : 'Unknown',
                     'metadata' => $d->metadata,
@@ -623,16 +655,16 @@ class DashboardController extends Controller // NOSONAR
     private function getAuditStats(): array
     {
         return [
-            'total_events' => \App\Models\Audit\AuditLog::count(),
-            'active_users' => \App\Models\Audit\AuditLog::whereNotNull('actor_id')->distinct('actor_id')->count(),
-            'security_incidents' => \App\Models\Audit\AuditSecurityIncident::count(),
-            'failed_actions' => \App\Models\Audit\AuditApiRequest::where('status_code', '>=', 400)->count(),
+            'total_events' => AuditLog::count(),
+            'active_users' => AuditLog::whereNotNull('actor_id')->distinct('actor_id')->count(),
+            'security_incidents' => AuditSecurityIncident::count(),
+            'failed_actions' => AuditApiRequest::where('status_code', '>=', 400)->count(),
         ];
     }
 
     private function getAuditRecentEvents(): array
     {
-        return \App\Models\Audit\AuditLog::with('actor:id,name,email')
+        return AuditLog::with('actor:id,name,email')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
@@ -742,7 +774,7 @@ class DashboardController extends Controller // NOSONAR
 
     private function seedRadarDetections()
     {
-        if (\App\Models\Radar\RadarDetection::count() === 0 && !cache()->has('radar_detections_cleared')) {
+        if (RadarDetection::count() === 0 && ! cache()->has('radar_detections_cleared')) {
             $ip_jakarta = implode('.', [182, 253, 140, 23]);
             $ip_sf = implode('.', [104, 244, 72, 115]);
             $ip_berlin = implode('.', [185, 220, 101, 5]);
@@ -804,12 +836,12 @@ class DashboardController extends Controller // NOSONAR
                     'city' => 'Bandung',
                     'is_trusted' => true,
                     'last_seen_at' => now(),
-                ]
+                ],
             ];
 
             $createdDevices = [];
             foreach ($devices as $d) {
-                $createdDevices[] = \App\Models\Radar\RadarDevice::create($d);
+                $createdDevices[] = RadarDevice::create($d);
             }
 
             // Seed detections
@@ -908,7 +940,7 @@ class DashboardController extends Controller // NOSONAR
                 $protection = RadarProtection::where('code', $dd['code'])->first();
                 $device = $createdDevices[$dd['device_idx']];
 
-                \App\Models\Radar\RadarDetection::create([
+                RadarDetection::create([
                     'radar_protection_id' => $protection ? $protection->id : null,
                     'radar_device_id' => $device->id,
                     'detection_type' => $dd['type'],
@@ -925,7 +957,7 @@ class DashboardController extends Controller // NOSONAR
 
     private function seedRadarBlockedItems()
     {
-        if (\App\Models\Radar\RadarBlockedItem::count() === 0 && !cache()->has('radar_blocked_items_seeded')) {
+        if (RadarBlockedItem::count() === 0 && ! cache()->has('radar_blocked_items_seeded')) {
             $ip_kantor = implode('.', [192, 168, 1, 100]);
             $ip_tor = implode('.', [185, 220, 101, 5]);
 
@@ -940,7 +972,7 @@ class DashboardController extends Controller // NOSONAR
             ];
 
             foreach ($blockedItems as $bi) {
-                \App\Models\Radar\RadarBlockedItem::create($bi);
+                RadarBlockedItem::create($bi);
             }
 
             // Mark as seeded so we don't re-seed even if user deletes all items
@@ -955,8 +987,8 @@ class DashboardController extends Controller // NOSONAR
     {
         // Disable FK checks so TRUNCATE works on tables with foreign key constraints
         \DB::statement('SET FOREIGN_KEY_CHECKS=0');
-        \App\Models\Radar\RadarDetection::truncate();
-        \App\Models\Radar\RadarDevice::truncate();
+        RadarDetection::truncate();
+        RadarDevice::truncate();
         \DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
         // Mark so that ensureRadarDataSeeded won't re-seed demo data
@@ -971,20 +1003,20 @@ class DashboardController extends Controller // NOSONAR
     protected function getSmtpConfig()
     {
         return [
-            'host'       => config('mail.mailers.smtp.host') ?? env('MAIL_HOST', 'smtp.gmail.com'),
-            'port'       => (int) (config('mail.mailers.smtp.port') ?? env('MAIL_PORT', 587)),
-            'sender'     => config('mail.from.address') ?? env('MAIL_FROM_ADDRESS', 'nusakreasi.studio@gmail.com'),
+            'host' => config('mail.mailers.smtp.host') ?? env('MAIL_HOST', 'smtp.gmail.com'),
+            'port' => (int) (config('mail.mailers.smtp.port') ?? env('MAIL_PORT', 587)),
+            'sender' => config('mail.from.address') ?? env('MAIL_FROM_ADDRESS', 'nusakreasi.studio@gmail.com'),
             'encryption' => config('mail.mailers.smtp.encryption') ?? env('MAIL_ENCRYPTION', 'tls'),
-            'username'   => config('mail.mailers.smtp.username') ?? env('MAIL_USERNAME', ''),
-            'password'   => config('mail.mailers.smtp.password') ? '********' : '',
-            'status'     => 'Active',
+            'username' => config('mail.mailers.smtp.username') ?? env('MAIL_USERNAME', ''),
+            'password' => config('mail.mailers.smtp.password') ? '********' : '',
+            'status' => 'Active',
         ];
     }
 
     protected function updateEnvFile(array $data)
     {
         $path = base_path('.env');
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             return;
         }
 
@@ -993,7 +1025,7 @@ class DashboardController extends Controller // NOSONAR
         foreach ($data as $key => $value) {
             $pattern = "/^{$key}=.*/m";
             $escapedValue = (str_contains($value, ' ') || str_contains($value, '#')) ? "\"{$value}\"" : $value;
-            
+
             if (preg_match($pattern, $content)) {
                 $content = preg_replace($pattern, "{$key}={$escapedValue}", $content);
             } else {
@@ -1007,12 +1039,12 @@ class DashboardController extends Controller // NOSONAR
     public function updateMailConfig(Request $request)
     {
         $request->validate([
-            'host'       => 'required|string',
-            'port'       => 'required|integer',
-            'sender'     => 'required|email',
+            'host' => 'required|string',
+            'port' => 'required|integer',
+            'sender' => 'required|email',
             'encryption' => 'required|string|in:tls,ssl,none',
-            'username'   => 'nullable|string',
-            'password'   => 'nullable|string',
+            'username' => 'nullable|string',
+            'password' => 'nullable|string',
         ]);
 
         $host = $request->host;
@@ -1040,20 +1072,20 @@ class DashboardController extends Controller // NOSONAR
 
         return response()->json([
             'success' => true,
-            'message' => 'SMTP Configurations updated successfully in .env file.'
+            'message' => 'SMTP Configurations updated successfully in .env file.',
         ]);
     }
 
     public function sendRealTestEmail(Request $request)
     {
         $request->validate([
-            'recipient'  => 'required|email',
-            'host'       => 'required|string',
-            'port'       => 'required|integer',
-            'sender'     => 'required|email',
+            'recipient' => 'required|email',
+            'host' => 'required|string',
+            'port' => 'required|integer',
+            'sender' => 'required|email',
             'encryption' => 'required|string|in:tls,ssl,none',
-            'username'   => 'nullable|string',
-            'password'   => 'nullable|string',
+            'username' => 'nullable|string',
+            'password' => 'nullable|string',
         ]);
 
         $recipient = $request->recipient;
@@ -1085,21 +1117,21 @@ class DashboardController extends Controller // NOSONAR
                 'mail.from.name' => 'WorkOS Diagnostics',
             ]);
 
-            \Illuminate\Support\Facades\Mail::mailer('custom_smtp')
-                ->raw("WorkOS SMTP Connection Test - Your SMTP settings are successfully validated!", function ($message) use ($recipient, $sender) {
+            Mail::mailer('custom_smtp')
+                ->raw('WorkOS SMTP Connection Test - Your SMTP settings are successfully validated!', function ($message) use ($recipient, $sender) {
                     $message->to($recipient)
                         ->from($sender, 'WorkOS Diagnostics')
-                        ->subject("WorkOS SMTP Connection Test");
+                        ->subject('WorkOS SMTP Connection Test');
                 });
 
             return response()->json([
                 'success' => true,
-                'message' => "Test email successfully sent to {$recipient}."
+                'message' => "Test email successfully sent to {$recipient}.",
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'SMTP connection failed: ' . $e->getMessage()
+                'message' => 'SMTP connection failed: '.$e->getMessage(),
             ], 500);
         }
     }

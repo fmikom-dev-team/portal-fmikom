@@ -12,11 +12,11 @@ class CheckRole
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return redirect('/login');
         }
 
@@ -29,7 +29,7 @@ class CheckRole
         }
 
         // Jika user tidak punya role_slug sama sekali, lempar kembali ke dashboard dengan hening
-        if (!$userRoleSlug) {
+        if (! $userRoleSlug) {
             return redirect()->route('dashboard');
         }
 
@@ -41,8 +41,8 @@ class CheckRole
 
         // 2. Proteksi Akses Silang (Cross-Role Protection)
         // Periksa apakah user memiliki salah satu dari role yang diwajibkan oleh Route.
-        if (!empty($roles)) {
-            if (!in_array($userRoleSlug, $roles)) {
+        if (! empty($roles)) {
+            if (! in_array($userRoleSlug, $roles)) {
                 // Kejahatan Ditebas: Mengembalikan user ke dashboard jika tidak memiliki akses
                 return redirect()->route('dashboard');
             }

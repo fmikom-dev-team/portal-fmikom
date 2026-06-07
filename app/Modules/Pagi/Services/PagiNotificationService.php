@@ -14,15 +14,16 @@ class PagiNotificationService
     {
         $rawNotifs = $user->notifications()->latest()->limit(100)->get()->map(function ($notif) {
             $data = $notif->data;
+
             return [
-                'id'      => $notif->id,
-                'type'    => $data['type']    ?? 'system',
-                'title'   => $data['title']   ?? 'PAGI System',
+                'id' => $notif->id,
+                'type' => $data['type'] ?? 'system',
+                'title' => $data['title'] ?? 'PAGI System',
                 'message' => $data['message'] ?? '',
-                'avatar'  => $data['avatar']  ?? null,
-                'href'    => $data['href']     ?? '/pagi',
-                'unread'  => is_null($notif->read_at),
-                'time'    => $notif->created_at->diffForHumans(),
+                'avatar' => $data['avatar'] ?? null,
+                'href' => $data['href'] ?? '/pagi',
+                'unread' => is_null($notif->read_at),
+                'time' => $notif->created_at->diffForHumans(),
                 'created_at' => $notif->created_at->toISOString(),
                 'sender_id' => $data['sender_id'] ?? null,
                 'portfolio_id' => $data['portfolio_id'] ?? null,
@@ -41,10 +42,18 @@ class PagiNotificationService
         $month = $rawNotifs->filter(fn ($n) => Carbon::parse($n['created_at'])->lt($weekStart) && Carbon::parse($n['created_at'])->gte($monthStart));
         $older = $rawNotifs->filter(fn ($n) => Carbon::parse($n['created_at'])->lt($monthStart));
 
-        if ($today->isNotEmpty())  $groups[] = ['group' => 'Hari Ini',  'items' => $today->values()];
-        if ($week->isNotEmpty())   $groups[] = ['group' => 'Minggu Ini', 'items' => $week->values()];
-        if ($month->isNotEmpty())  $groups[] = ['group' => 'Bulan Ini', 'items' => $month->values()];
-        if ($older->isNotEmpty())  $groups[] = ['group' => 'Sebelumnya', 'items' => $older->values()];
+        if ($today->isNotEmpty()) {
+            $groups[] = ['group' => 'Hari Ini',  'items' => $today->values()];
+        }
+        if ($week->isNotEmpty()) {
+            $groups[] = ['group' => 'Minggu Ini', 'items' => $week->values()];
+        }
+        if ($month->isNotEmpty()) {
+            $groups[] = ['group' => 'Bulan Ini', 'items' => $month->values()];
+        }
+        if ($older->isNotEmpty()) {
+            $groups[] = ['group' => 'Sebelumnya', 'items' => $older->values()];
+        }
 
         return [
             'groups' => $groups,

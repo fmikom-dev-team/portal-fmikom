@@ -4,8 +4,8 @@ namespace App\Modules\Trace\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class TraceDashboardController extends Controller
 {
@@ -16,13 +16,13 @@ class TraceDashboardController extends Controller
         $role = $request->attributes->get('resolved_role', session('active_role'));
         $isAdmin = in_array($role, self::ADMIN_ROLES);
 
-        $componentName = $isAdmin 
-            ? "Modules/Trace/Admin/Dashboard"
-            : "Modules/Trace/User/" . Str::studly($role) . "Dashboard";
+        $componentName = $isAdmin
+            ? 'Modules/Trace/Admin/Dashboard'
+            : 'Modules/Trace/User/'.Str::studly($role).'Dashboard';
 
         $path = resource_path("js/pages/{$componentName}.vue");
-        if (!file_exists($path)) {
-            $fallbackName = "Modules/Trace/User/MahasiswaDashboard";
+        if (! file_exists($path)) {
+            $fallbackName = 'Modules/Trace/User/MahasiswaDashboard';
             if (file_exists(resource_path("js/pages/{$fallbackName}.vue"))) {
                 $componentName = $fallbackName;
             } else {

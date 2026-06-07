@@ -26,3 +26,10 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+/IDE
+/scratch
+/biome_output.txt
+/public/sample.mp4
+/public/test_editorjs_save.html
+/storage/give_access.php

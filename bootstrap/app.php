@@ -1,15 +1,22 @@
 <?php
 
+use App\Http\Middleware\Auth\DeviceFingerprint;
+use App\Http\Middleware\Auth\OAuthStateValidation;
+use App\Http\Middleware\Auth\RiskScore;
+use App\Http\Middleware\Auth\SecureSession;
+use App\Http\Middleware\CheckActiveContext;
+use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\EnsureModuleAccess;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\Radar\RadarSecurityShield;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Session\TokenMismatchException;
 
-if (!defined('ROLE_SUPER_ADMIN_SUFFIX')) {
+if (! defined('ROLE_SUPER_ADMIN_SUFFIX')) {
     define('ROLE_SUPER_ADMIN_SUFFIX', ':super-admin');
 }
 
@@ -58,10 +65,10 @@ return Application::configure(basePath: dirname(__DIR__))
             // ──────────────────────────────────────────────────────────────
             // Auth Routes — Admin Only
             // ──────────────────────────────────────────────────────────────
-            Route::middleware(['web', 'auth', \App\Http\Middleware\CheckRole::class . ROLE_SUPER_ADMIN_SUFFIX])
+            Route::middleware(['web', 'auth', CheckRole::class.ROLE_SUPER_ADMIN_SUFFIX])
                 ->group(base_path('routes/auth/password-policies.php'));
 
-            Route::middleware(['web', 'auth', \App\Http\Middleware\CheckRole::class . ROLE_SUPER_ADMIN_SUFFIX])
+            Route::middleware(['web', 'auth', CheckRole::class.ROLE_SUPER_ADMIN_SUFFIX])
                 ->group(base_path('routes/auth/audit.php'));
 
             // ──────────────────────────────────────────────────────────────
@@ -71,7 +78,7 @@ return Application::configure(basePath: dirname(__DIR__))
             $workosMiddleware = [
                 'web',
                 'auth',
-                \App\Http\Middleware\CheckRole::class . ROLE_SUPER_ADMIN_SUFFIX,
+                CheckRole::class.ROLE_SUPER_ADMIN_SUFFIX,
                 'device.fingerprint',
             ];
 
@@ -127,7 +134,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         // Global Middleware (Applies to all HTTP requests - Web, API, etc.)
-        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        $middleware->append(SecurityHeaders::class);
 
         // ──────────────────────────────────────────────────────────────────
         // Global Web Middleware Stack
@@ -142,18 +149,18 @@ return Application::configure(basePath: dirname(__DIR__))
         // ──────────────────────────────────────────────────────────────────
         $middleware->alias([
             // Existing
-            'module.context'   => \App\Http\Middleware\CheckActiveContext::class,
-            'module.access'    => \App\Http\Middleware\EnsureModuleAccess::class,
-            'role'             => \App\Http\Middleware\CheckRole::class,
+            'module.context' => CheckActiveContext::class,
+            'module.access' => EnsureModuleAccess::class,
+            'role' => CheckRole::class,
 
             // Auth Platform — Enterprise Middleware
-            'oauth.state'      => \App\Http\Middleware\Auth\OAuthStateValidation::class,
-            'device.fingerprint' => \App\Http\Middleware\Auth\DeviceFingerprint::class,
-            'secure.session'   => \App\Http\Middleware\Auth\SecureSession::class,
-            'risk.score'       => \App\Http\Middleware\Auth\RiskScore::class,
+            'oauth.state' => OAuthStateValidation::class,
+            'device.fingerprint' => DeviceFingerprint::class,
+            'secure.session' => SecureSession::class,
+            'risk.score' => RiskScore::class,
 
             // Radar Security Shield — attach to auth routes to enable real detections
-            'radar.shield'     => \App\Http\Middleware\Radar\RadarSecurityShield::class,
+            'radar.shield' => RadarSecurityShield::class,
         ]);
 
         // ──────────────────────────────────────────────────────────────────
@@ -164,12 +171,13 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Handle CSRF token mismatch (session expired) for Inertia
-        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) {
+        $exceptions->render(function (TokenMismatchException $e, $request) {
             if ($e && $request->inertia()) {
                 return response()->json([
                     'message' => 'Sesi Anda telah berakhir. Silakan muat ulang halaman.',
                 ], 419);
             }
+
             return redirect()->route('login')
                 ->with('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
         });

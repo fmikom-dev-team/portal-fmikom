@@ -18,24 +18,24 @@ return new class extends Migration
             $table->string('severity')->default('info')->index(); // info, warning, critical
             $table->uuid('actor_id')->nullable()->index();
             $table->uuid('organization_id')->nullable()->index();
-            
+
             // Polymorphic target (e.g., User, Post, Role)
             $table->nullableUuidMorphs('target');
-            
+
             // Network & Device Info
             $table->string('ip_address', 45)->nullable()->index();
             $table->string('user_agent')->nullable();
             $table->string('device_info')->nullable();
-            
+
             // Request Context
             $table->string('request_method', 10)->nullable();
             $table->string('request_path')->nullable();
             $table->integer('response_status')->nullable();
             $table->string('correlation_id')->nullable()->index(); // For tracing distributed requests
-            
+
             // Payload
             $table->json('metadata')->nullable(); // JSON schema for before/after changes, etc.
-            
+
             $table->timestamp('created_at')->useCurrent()->index(); // Indexed for fast range queries
         });
 

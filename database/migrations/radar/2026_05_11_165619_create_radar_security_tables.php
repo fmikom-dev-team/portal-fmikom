@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         // 1. Radar Protections (Configuration for Rules)
-        if (!Schema::hasTable('radar_protections')) {
+        if (! Schema::hasTable('radar_protections')) {
             Schema::create('radar_protections', function (Blueprint $table) {
                 $table->id();
                 $table->string('code')->unique(); // e.g., bot_detection, brute_force, impossible_travel
@@ -25,7 +25,7 @@ return new class extends Migration
         }
 
         // 2. Radar Devices (Fingerprinting)
-        if (!Schema::hasTable('radar_devices')) {
+        if (! Schema::hasTable('radar_devices')) {
             Schema::create('radar_devices', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
@@ -41,13 +41,13 @@ return new class extends Migration
                 $table->boolean('is_blocked')->default(false);
                 $table->timestamp('last_seen_at')->useCurrent();
                 $table->timestamps();
-                
+
                 $table->index(['user_id', 'is_trusted']);
             });
         }
 
         // 3. Radar Detections (Actual Threats Detected)
-        if (!Schema::hasTable('radar_detections')) {
+        if (! Schema::hasTable('radar_detections')) {
             Schema::create('radar_detections', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
@@ -62,14 +62,14 @@ return new class extends Migration
                 $table->text('resolution_note')->nullable();
                 $table->timestamp('resolved_at')->nullable();
                 $table->timestamps();
-                
+
                 $table->index(['created_at', 'detection_type']);
                 $table->index(['ip_address', 'created_at']);
             });
         }
 
         // 4. Radar Blocked Items (Managed/Custom Lists)
-        if (!Schema::hasTable('radar_blocked_items')) {
+        if (! Schema::hasTable('radar_blocked_items')) {
             Schema::create('radar_blocked_items', function (Blueprint $table) {
                 $table->id();
                 $table->enum('type', ['IP', 'Domain', 'Device', 'Email', 'UserAgent']);
@@ -77,13 +77,13 @@ return new class extends Migration
                 $table->text('reason')->nullable();
                 $table->timestamp('expires_at')->nullable();
                 $table->timestamps();
-                
+
                 $table->unique(['type', 'value']);
             });
         }
 
         // 5. Radar Security Events (Audit Log of everything)
-        if (!Schema::hasTable('radar_security_events')) {
+        if (! Schema::hasTable('radar_security_events')) {
             Schema::create('radar_security_events', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();

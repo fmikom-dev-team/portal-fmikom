@@ -18,7 +18,7 @@ return new class extends Migration
                 'spam',
                 'harassment',
                 'misinformation',
-                'other'
+                'other',
             ])->default('other');
             $table->text('description')->nullable();
             $table->enum('status', ['pending', 'reviewed', 'dismissed', 'actioned'])->default('pending');
@@ -40,7 +40,7 @@ return new class extends Migration
                 'spam',
                 'harassment',
                 'repeat_violation',
-                'other'
+                'other',
             ])->default('other');
             $table->text('reason');
             $table->boolean('is_active')->default(true);
@@ -66,16 +66,16 @@ return new class extends Migration
 
         // Add moderation fields to pagi_portfolios if not exists
         Schema::table('pagi_portfolios', function (Blueprint $table) {
-            if (!Schema::hasColumn('pagi_portfolios', 'status')) {
+            if (! Schema::hasColumn('pagi_portfolios', 'status')) {
                 $table->enum('status', ['active', 'warning', 'hidden', 'removed', 'review'])->default('active')->after('is_published');
             }
-            if (!Schema::hasColumn('pagi_portfolios', 'views_count')) {
+            if (! Schema::hasColumn('pagi_portfolios', 'views_count')) {
                 $table->unsignedBigInteger('views_count')->default(0)->after('status');
             }
-            if (!Schema::hasColumn('pagi_portfolios', 'description')) {
+            if (! Schema::hasColumn('pagi_portfolios', 'description')) {
                 $table->text('description')->nullable()->after('title');
             }
-            if (!Schema::hasColumn('pagi_portfolios', 'category')) {
+            if (! Schema::hasColumn('pagi_portfolios', 'category')) {
                 $table->string('category', 100)->nullable()->after('description');
             }
         });

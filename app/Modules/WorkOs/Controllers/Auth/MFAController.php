@@ -3,9 +3,10 @@
 namespace App\Modules\WorkOs\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-
-use Illuminate\Http\Request;
+use App\Models\Auth\AuthMfa;
+use App\Models\User;
 use App\Modules\WorkOs\Services\AuthPlatform\MFAEngine;
+use Illuminate\Http\Request;
 
 class MFAController extends Controller
 {
@@ -15,7 +16,8 @@ class MFAController extends Controller
 
     public function status(Request $request)
     {
-        $mfa = \App\Models\Auth\AuthMfa::where('user_id', $request->user()->id)->first();
+        $mfa = AuthMfa::where('user_id', $request->user()->id)->first();
+
         return response()->json([
             'enabled' => $mfa?->is_active ?? false,
             'type' => $mfa?->type ?? null,
@@ -45,8 +47,10 @@ class MFAController extends Controller
     public function challenge(Request $request)
     {
         $request->validate(['code' => 'required|string', 'user_id' => 'required']);
-        $user = \App\Models\User::find($request->user_id);
-        if (!$user) return response()->json(['error' => 'User not found.'], 404);
+        $user = User::find($request->user_id);
+        if (! $user) {
+            return response()->json(['error' => 'User not found.'], 404);
+        }
         try {
             return response()->json(['valid' => $this->mfaEngine->verifyLogin($user, $request->code)]);
         } catch (\Exception $e) {
@@ -63,10 +67,11 @@ class MFAController extends Controller
     {
         $request->validate(['code' => 'required|string']);
         try {
-            if (!$this->mfaEngine->verifyLogin($request->user(), $request->code)) {
+            if (! $this->mfaEngine->verifyLogin($request->user(), $request->code)) {
                 return response()->json(['error' => 'Invalid confirmation code.'], 400);
             }
             $this->mfaEngine->disable($request->user());
+
             return response()->json(['message' => 'MFA disabled successfully.']);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
@@ -77,9 +82,10 @@ class MFAController extends Controller
     {
         $request->validate(['code' => 'required|string']);
         try {
-            if (!$this->mfaEngine->verifyLogin($request->user(), $request->code)) {
+            if (! $this->mfaEngine->verifyLogin($request->user(), $request->code)) {
                 return response()->json(['error' => 'Invalid TOTP code.'], 400);
             }
+
             return response()->json(['backup_codes' => $this->mfaEngine->generateBackupCodes($request->user())]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
