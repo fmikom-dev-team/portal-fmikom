@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Actions\Pagi;
+namespace App\Modules\Pagi\Actions;
 
 use App\Models\User;
 use App\Models\PagiWork;

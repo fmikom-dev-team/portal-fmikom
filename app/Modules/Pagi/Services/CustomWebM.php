@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Pagi;
+namespace App\Modules\Pagi\Services;
 
 use FFMpeg\Format\Video\DefaultVideo;
 
