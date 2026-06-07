@@ -1,8 +1,11 @@
 <?php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ModuleDashboardController;
-use App\Http\Controllers\Pagi\AdminDashboardController;
-use App\Http\Controllers\PagiChatController;
+use App\Modules\Pagi\Controllers\AdminDashboardController;
+use App\Modules\Pagi\Controllers\PagiChatController;
+use App\Modules\Pagi\Controllers\PagiWorkController;
+use App\Modules\Pagi\Controllers\PagiCvController;
+use App\Modules\Pagi\Controllers\PagiEditorController;
 
 Route::middleware(['auth', \App\Http\Middleware\EnsureFirstTimeLoginComplete::class, 'module.context:pagi'])
     ->prefix('pagi')
@@ -21,37 +24,37 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureFirstTimeLoginComplete::cl
              ->name('gallery');
 
         // Halaman Works — Pemilihan Template
-        Route::get('/works', [\App\Http\Controllers\PagiWorkController::class, 'index'])
+        Route::get('/works', [PagiWorkController::class, 'index'])
              ->name('works');
-        Route::get('/works/preview/{theme}', [\App\Http\Controllers\PagiWorkController::class, 'previewTheme'])
+        Route::get('/works/preview/{theme}', [PagiWorkController::class, 'previewTheme'])
              ->name('works.preview');
-        Route::get('/works/editor/{theme}', [\App\Http\Controllers\PagiWorkController::class, 'editPortfolio'])
+        Route::get('/works/editor/{theme}', [PagiWorkController::class, 'editPortfolio'])
              ->name('works.editor');
-        Route::post('/works/save', [\App\Http\Controllers\PagiWorkController::class, 'savePortfolio'])
+        Route::post('/works/save', [PagiWorkController::class, 'savePortfolio'])
              ->name('works.save');
-        Route::post('/works/select', [\App\Http\Controllers\PagiWorkController::class, 'selectTemplate'])
+        Route::post('/works/select', [PagiWorkController::class, 'selectTemplate'])
              ->name('works.select');
 
         // ── CV Builder Routes ─────────────────────────────────────────────────
-        Route::get('/cv', [\App\Http\Controllers\PagiCvController::class, 'index'])
+        Route::get('/cv', [PagiCvController::class, 'index'])
              ->name('cv.index');
-        Route::get('/cv/templates', [\App\Http\Controllers\PagiCvController::class, 'templates'])
+        Route::get('/cv/templates', [PagiCvController::class, 'templates'])
              ->name('cv.templates');
-        Route::get('/cv/profile-data', [\App\Http\Controllers\PagiCvController::class, 'getProfileData'])
+        Route::get('/cv/profile-data', [PagiCvController::class, 'getProfileData'])
              ->name('cv.profile-data');
-        Route::post('/cv', [\App\Http\Controllers\PagiCvController::class, 'store'])
+        Route::post('/cv', [PagiCvController::class, 'store'])
              ->name('cv.store');
-        Route::get('/cv/{cv}/edit', [\App\Http\Controllers\PagiCvController::class, 'edit'])
+        Route::get('/cv/{cv}/edit', [PagiCvController::class, 'edit'])
              ->name('cv.edit');
-        Route::put('/cv/{cv}', [\App\Http\Controllers\PagiCvController::class, 'update'])
+        Route::put('/cv/{cv}', [PagiCvController::class, 'update'])
              ->name('cv.update');
-        Route::post('/cv/{cv}/duplicate', [\App\Http\Controllers\PagiCvController::class, 'duplicate'])
+        Route::post('/cv/{cv}/duplicate', [PagiCvController::class, 'duplicate'])
              ->name('cv.duplicate');
-        Route::delete('/cv/{cv}', [\App\Http\Controllers\PagiCvController::class, 'destroy'])
+        Route::delete('/cv/{cv}', [PagiCvController::class, 'destroy'])
              ->name('cv.destroy');
-        Route::post('/cv/{cv}/upload-photo', [\App\Http\Controllers\PagiCvController::class, 'uploadPhoto'])
+        Route::post('/cv/{cv}/upload-photo', [PagiCvController::class, 'uploadPhoto'])
              ->name('cv.upload-photo');
-        Route::get('/cv/{cv}/download', [\App\Http\Controllers\PagiCvController::class, 'downloadPdf'])
+        Route::get('/cv/{cv}/download', [PagiCvController::class, 'downloadPdf'])
              ->name('cv.download');
 
 
@@ -105,23 +108,23 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureFirstTimeLoginComplete::cl
 
 
         // Editor Routes
-        Route::get('/editor', [\App\Http\Controllers\PagiEditorController::class, 'editor'])
+        Route::get('/editor', [PagiEditorController::class, 'editor'])
              ->name('editor');
-        Route::post('/editor', [\App\Http\Controllers\PagiEditorController::class, 'store'])
+        Route::post('/editor', [PagiEditorController::class, 'store'])
              ->name('editor.store');
-        Route::post('/editor/quick-store', [\App\Http\Controllers\PagiEditorController::class, 'quickStore'])
+        Route::post('/editor/quick-store', [PagiEditorController::class, 'quickStore'])
              ->name('editor.quick-store');
-        Route::post('/gallery/store', [\App\Http\Controllers\PagiEditorController::class, 'storeGalleryItem'])
+        Route::post('/gallery/store', [PagiEditorController::class, 'storeGalleryItem'])
              ->name('gallery.store');
-        Route::post('/editor/{editor}/quick-update', [\App\Http\Controllers\PagiEditorController::class, 'quickUpdate'])
+        Route::post('/editor/{editor}/quick-update', [PagiEditorController::class, 'quickUpdate'])
              ->name('editor.quick-update');
-        Route::post('/editor/{editor}', [\App\Http\Controllers\PagiEditorController::class, 'update'])
+        Route::post('/editor/{editor}', [PagiEditorController::class, 'update'])
              ->name('editor.update');
-        Route::delete('/editor/{editor}', [\App\Http\Controllers\PagiEditorController::class, 'destroy'])
+        Route::delete('/editor/{editor}', [PagiEditorController::class, 'destroy'])
              ->name('editor.destroy');
-        Route::post('/editor/{editor}/collaboration/accept', [\App\Http\Controllers\PagiEditorController::class, 'acceptCollaboration'])
+        Route::post('/editor/{editor}/collaboration/accept', [PagiEditorController::class, 'acceptCollaboration'])
              ->name('editor.collaboration.accept');
-        Route::post('/editor/{editor}/collaboration/decline', [\App\Http\Controllers\PagiEditorController::class, 'declineCollaboration'])
+        Route::post('/editor/{editor}/collaboration/decline', [PagiEditorController::class, 'declineCollaboration'])
              ->name('editor.collaboration.decline');
 
         // User Profile
@@ -173,7 +176,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureFirstTimeLoginComplete::cl
              ->name('preview.view');
 
         // Report a work (karya mahasiswa)
-        Route::post('/works/report', [\App\Http\Controllers\Pagi\AdminDashboardController::class, 'storeReport'])
+        Route::post('/works/report', [AdminDashboardController::class, 'storeReport'])
              ->name('works.report');
     });
 
@@ -281,13 +284,13 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureFirstTimeLoginComplete::cl
 Route::prefix('pagi')
     ->name('module.pagi.')
     ->group(function () {
-        Route::get('/works/v/{user:pagi_username}', [\App\Http\Controllers\PagiWorkController::class, 'viewPublicPortfolio'])
+        Route::get('/works/v/{user:pagi_username}', [PagiWorkController::class, 'viewPublicPortfolio'])
              ->name('works.view_public');
         Route::get('/profile/{user}', [ModuleDashboardController::class, 'publicProfile'])
              ->name('profile.public');
         Route::get('/users/{user}/works', [ModuleDashboardController::class, 'userWorks'])
              ->name('users.works');
-        Route::get('/cv/{cv}/shared', [\App\Http\Controllers\PagiCvController::class, 'shareView'])
+        Route::get('/cv/{cv}/shared', [PagiCvController::class, 'shareView'])
              ->name('cv.shared');
         Route::get('/{user:pagi_username}/{tab?}', [ModuleDashboardController::class, 'publicProfile'])
              ->name('profile.username');
