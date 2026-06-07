@@ -7,7 +7,7 @@
 		"build:ssr": "vite build && vite build --ssr",
 		"dev": "vite",
 		"dev:full": "concurrently -n \"vite,laravel,queue\" -c \"blue,green,yellow\" \"npm run dev\" \"php artisan serve\" \"php artisan queue:listen\"",
-		"dev:tunnel": "concurrently -n \"laravel,queue,reverb,tunnel\" -c \"green,yellow,blue,magenta\" \"php artisan serve\" \"php artisan queue:listen\" \"php artisan reverb:start\" \"cloudflared tunnel run --token eyJhIjoiYTU4ZjYwODljNmM3OTNmOWY4YjYzYjNjMTllOGM1MzEiLCJzIjoiTW1FMk5HRTROMk10T1RRMU5DMDBaREV3TFdGbE56RXRaak5sWlRNd1lUQmxNVEpsIiwidCI6IjhlYWY3ODYwLWRjNjMtNGY2OC1hNGU5LWM1ODU4MDc4YmYzZCJ9\"",
+		"dev:tunnel": "concurrently -n \"laravel,queue,reverb,tunnel\" -c \"green,yellow,blue,magenta\" \"php artisan serve\" \"php artisan queue:listen\" \"php artisan reverb:start\" \"cloudflared tunnel run --token $CLOUDFLARE_TUNNEL_TOKEN\"",
 		"format": "biome format . --write",
 		"lint": "biome check .",
 		"lint:fix": "biome check . --write",
