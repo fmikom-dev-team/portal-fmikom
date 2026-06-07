@@ -16,7 +16,7 @@ class PagiProfileService
     /**
      * Get profile data formatted for frontend.
      */
-    public function getProfileData(User $user, $requestPagiModuleId = 1): array
+    public function getProfileData(User $user, $requestPagiModuleId = 1, bool $isOwner = true): array
     {
         $projectOrder = $user->metadata['pagi_project_order'] ?? null;
         $projectsQuery = PagiWork::with(['tags', 'user'])
@@ -24,6 +24,14 @@ class PagiProfileService
                 $q->where('user_id', $user->id)
                   ->orWhere('content', 'like', '%' . $user->name . '%');
             });
+
+        if (!$isOwner) {
+            $projectsQuery->where('is_published', true)
+                ->where(function ($q) {
+                    $q->whereNull('visibility')
+                      ->orWhere('visibility', 'Everyone');
+                });
+        }
 
         $projectsCollection = $projectsQuery->get();
         if (is_array($projectOrder)) {
@@ -273,7 +281,7 @@ class PagiProfileService
 
     // --- Private Helper Formatting Methods from ModuleDashboardController ---
 
-    private function formatPortfolioContent($content)
+    public function formatPortfolioContent($content)
     {
         if (empty($content)) return [];
         if (is_string($content)) {
@@ -283,7 +291,7 @@ class PagiProfileService
         return is_array($content) ? $content : [];
     }
 
-    private function formatComments($comments)
+    public function formatComments($comments)
     {
         if (empty($comments)) return [];
         $list = is_string($comments) ? json_decode($comments, true) : $comments;
@@ -312,7 +320,7 @@ class PagiProfileService
         }, $list);
     }
 
-    private function resolveCollaborators($portfolio)
+    public function resolveCollaborators($portfolio)
     {
         if (!$portfolio || !$portfolio->content) return [];
         $content = is_string($portfolio->content) ? json_decode($portfolio->content, true) : $portfolio->content;
