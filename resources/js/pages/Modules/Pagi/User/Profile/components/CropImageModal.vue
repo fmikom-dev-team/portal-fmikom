@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, onUnmounted } from "vue";
-import { ZoomIn, ZoomOut, RotateCcw, RotateCw } from "lucide-vue-next";
 import Cropper from "cropperjs";
+import { RotateCcw, RotateCw, ZoomIn, ZoomOut } from "lucide-vue-next";
+import { nextTick, onUnmounted, ref, watch } from "vue";
 import "cropperjs/dist/cropper.css";
 
 const props = defineProps<{
@@ -33,7 +33,10 @@ const initCropper = () => {
 	if (cropperInstance) {
 		cropperInstance.destroy();
 	}
-	const ratio = cropperAspectRatio.value === "free" ? NaN : Number(cropperAspectRatio.value);
+	const ratio =
+		cropperAspectRatio.value === "free"
+			? NaN
+			: Number(cropperAspectRatio.value);
 	cropperInstance = new Cropper(cropperImageRef.value, {
 		aspectRatio: ratio,
 		viewMode: 1,
@@ -55,8 +58,8 @@ const handleCropSave = () => {
 
 	let cropWidth = 3200;
 	let cropHeight = 410;
-	
-	if (cropperAspectRatio.value !== (3200 / 410)) {
+
+	if (cropperAspectRatio.value !== 3200 / 410) {
 		const data = cropperInstance.getData();
 		cropWidth = Math.round(data.width);
 		cropHeight = Math.round(data.height);
@@ -104,15 +107,18 @@ const rotateRight = () => {
 	cropperInstance?.rotate(90);
 };
 
-watch(() => props.show, (newVal) => {
-	if (newVal) {
-		nextTick(() => {
-			initCropper();
-		});
-	} else {
-		destroyCropper();
-	}
-});
+watch(
+	() => props.show,
+	(newVal) => {
+		if (newVal) {
+			nextTick(() => {
+				initCropper();
+			});
+		} else {
+			destroyCropper();
+		}
+	},
+);
 
 onUnmounted(() => {
 	destroyCropper();

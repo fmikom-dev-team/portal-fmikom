@@ -53,12 +53,10 @@ const activeCardIndex = ref(0);
 const isAnimating = ref(false);
 const swipeDirection = ref<"left" | "right" | null>(null);
 
-// biome-ignore lint/correctness/noUnusedVariables: template
 const showAlumniPopup = ref(true);
 
 const gallery = computed<string[]>(() => props.settings?.hero_gallery || []);
 
-// biome-ignore lint/correctness/noUnusedVariables: template
 const getCardStyle = (i: number) => {
 	const total = gallery.value.length;
 	if (total === 0) return {};
@@ -125,11 +123,9 @@ const prevCard = () => {
 
 // Touch/swipe support
 const touchStartX = ref(0);
-// biome-ignore lint/correctness/noUnusedVariables: template
 const onTouchStart = (e: TouchEvent) => {
 	touchStartX.value = e.touches[0].clientX;
 };
-// biome-ignore lint/correctness/noUnusedVariables: template
 const onTouchEnd = (e: TouchEvent) => {
 	const diff = touchStartX.value - e.changedTouches[0].clientX;
 	if (Math.abs(diff) > 50) {
@@ -138,12 +134,10 @@ const onTouchEnd = (e: TouchEvent) => {
 };
 
 const isMobileMenuOpen = ref(false);
-// biome-ignore lint/correctness/noUnusedVariables: template
 const toggleMobileMenu = () => {
 	isMobileMenuOpen.value = !isMobileMenuOpen.value;
 };
 
-// biome-ignore lint/correctness/noUnusedVariables: template
 const features = [
 	{
 		title: "FAST",
@@ -183,7 +177,6 @@ const features = [
 	},
 ];
 
-// biome-ignore lint/correctness/noUnusedVariables: template
 const benefits = [
 	{
 		title: "Cepat & Terintegrasi",
@@ -211,7 +204,6 @@ const benefits = [
 	},
 ];
 
-// biome-ignore lint/correctness/noUnusedVariables: template
 const userTypes = [
 	{
 		title: "Mahasiswa",
@@ -235,7 +227,6 @@ const userTypes = [
 	},
 ];
 
-// biome-ignore lint/correctness/noUnusedVariables: template
 const newsItems = [
 	{
 		title: "Peluncuran Modul PAGI untuk Mahasiswa",
@@ -266,7 +257,6 @@ const newsItems = [
 	},
 ];
 
-// biome-ignore lint/correctness/noUnusedVariables: template
 const partners = [
 	{
 		name: "Mitra 1",
@@ -294,7 +284,6 @@ const partners = [
 	},
 ];
 
-// biome-ignore lint/correctness/noUnusedVariables: template
 const testimonials = [
 	{
 		quote:
@@ -348,7 +337,6 @@ onMounted(() => {
 	}, 4000);
 });
 
-// biome-ignore lint/correctness/noUnusedVariables: template
 const formatDate = (dateString: string) => {
 	if (!dateString) return "";
 	return new Date(dateString).toLocaleDateString("en-GB", {
@@ -358,7 +346,6 @@ const formatDate = (dateString: string) => {
 	});
 };
 
-// biome-ignore lint/correctness/noUnusedVariables: template
 const extractText = (content: string) => {
 	if (!content) return "";
 	try {
@@ -393,7 +380,6 @@ const extractText = (content: string) => {
 	return content.replace(/<[^>]*>?/gm, "").trim();
 };
 
-// biome-ignore lint/correctness/noUnusedVariables: template
 const currentYear = new Date().getFullYear();
 </script>
 

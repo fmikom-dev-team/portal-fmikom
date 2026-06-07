@@ -48,9 +48,10 @@ class FollowUserAction
 
         // Send real-time notification if following
         if ($isNowFollowing) {
-            $avatar = $authUser->foto_path
-                ? (str_starts_with($authUser->foto_path, 'http') ? $authUser->foto_path : asset('storage/' . $authUser->foto_path))
-                : null;
+            $avatar = null;
+            if ($authUser->foto_path) {
+                $avatar = str_starts_with($authUser->foto_path, 'http') ? $authUser->foto_path : asset('storage/' . $authUser->foto_path);
+            }
 
             try {
                 $targetUser->notify(new PagiNotification(

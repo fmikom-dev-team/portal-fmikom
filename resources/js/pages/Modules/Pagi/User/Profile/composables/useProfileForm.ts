@@ -1,7 +1,12 @@
-import { ref, computed } from "vue";
 import { useForm } from "@inertiajs/vue3";
+import { computed, ref } from "vue";
 
-export function useProfileForm(user: any, props: any, addToast: (msg: string, type?: string) => void, triggerWarning: (title: string, msg: string) => void) {
+export function useProfileForm(
+	user: any,
+	props: any,
+	addToast: (msg: string, type?: string) => void,
+	_triggerWarning: (title: string, msg: string) => void,
+) {
 	const form = useForm({
 		name: "",
 		role_title: "",
@@ -17,11 +22,11 @@ export function useProfileForm(user: any, props: any, addToast: (msg: string, ty
 		foto: null as File | null,
 		avatar_url: "",
 		remove_foto: false,
-		skills: [] as string[],
-		timezone: "" as string | null,
-		timezone_extended: "" as string | null,
-		languages: [] as Array<{ language: string, proficiency: string }>,
-		pagi_username: "" as string,
+		skills: [] as Array<{ name: string; percentage: number }>,
+		timezone: "",
+		timezone_extended: "",
+		languages: [] as Array<{ language: string; proficiency: string }>,
+		pagi_username: "",
 	});
 
 	// Direct-edit modal states
@@ -40,20 +45,26 @@ export function useProfileForm(user: any, props: any, addToast: (msg: string, ty
 	const originalFileName = ref("banner.jpg");
 	const originalFileType = ref("image/jpeg");
 
-	const usernameChangesCount = computed(() => user.value?.metadata?.username_changes_count || 0);
-	const lastUsernameChangedAt = computed(() => user.value?.metadata?.last_username_changed_at || null);
+	const usernameChangesCount = computed(
+		() => user.value?.metadata?.username_changes_count || 0,
+	);
+	const lastUsernameChangedAt = computed(
+		() => user.value?.metadata?.last_username_changed_at || null,
+	);
 
-	const parseSkills = (skillsArray: any[]): Array<{ name: string, percentage: number }> => {
+	const parseSkills = (
+		skillsArray: any[],
+	): Array<{ name: string; percentage: number }> => {
 		if (!Array.isArray(skillsArray)) return [];
-		return skillsArray.map(item => {
-			if (typeof item === 'string') {
-				const parts = item.split(':');
-				if (parts.length === 2 && !isNaN(Number(parts[1]))) {
+		return skillsArray.map((item) => {
+			if (typeof item === "string") {
+				const parts = item.split(":");
+				if (parts.length === 2 && !Number.isNaN(Number(parts[1]))) {
 					return { name: parts[0], percentage: Number(parts[1]) };
 				}
 				return { name: item, percentage: 80 };
 			}
-			if (item && typeof item === 'object' && item.name) {
+			if (item && typeof item === "object" && item.name) {
 				return { name: item.name, percentage: Number(item.percentage) || 80 };
 			}
 			return { name: String(item), percentage: 80 };
@@ -73,14 +84,33 @@ export function useProfileForm(user: any, props: any, addToast: (msg: string, ty
 		form.instagram = user.value.instagram || "";
 		form.tanggal_lahir = user.value.tanggal_lahir || "";
 		form.pagi_username = user.value.pagi_username || "";
-		
-		const s = user.value.skills || user.value.metadata?.skills || props.profileUser?.skills;
-		form.skills = Array.isArray(s) ? parseSkills(s) : parseSkills(['Figma', 'UI/UX Design', 'Vue.js']);
-		
-		form.timezone = user.value.timezone || user.value.metadata?.timezone || props.profileUser?.timezone || "";
-		form.timezone_extended = user.value.timezone_extended || user.value.timezoneExtended || user.value.metadata?.timezone_extended || user.value.metadata?.timezoneExtended || props.profileUser?.timezone_extended || props.profileUser?.timezoneExtended || "No extended hours";
-		
-		const l = user.value.languages || user.value.metadata?.languages || props.profileUser?.languages;
+
+		const s =
+			user.value.skills ||
+			user.value.metadata?.skills ||
+			props.profileUser?.skills;
+		form.skills = Array.isArray(s)
+			? parseSkills(s)
+			: parseSkills(["Figma", "UI/UX Design", "Vue.js"]);
+
+		form.timezone =
+			user.value.timezone ||
+			user.value.metadata?.timezone ||
+			props.profileUser?.timezone ||
+			"";
+		form.timezone_extended =
+			user.value.timezone_extended ||
+			user.value.timezoneExtended ||
+			user.value.metadata?.timezone_extended ||
+			user.value.metadata?.timezoneExtended ||
+			props.profileUser?.timezone_extended ||
+			props.profileUser?.timezoneExtended ||
+			"No extended hours";
+
+		const l =
+			user.value.languages ||
+			user.value.metadata?.languages ||
+			props.profileUser?.languages;
 		form.languages = Array.isArray(l) ? l : [];
 	};
 
@@ -167,14 +197,16 @@ export function useProfileForm(user: any, props: any, addToast: (msg: string, ty
 		});
 	};
 
-	const updateSkills = (newSkills: string[]) => {
+	const updateSkills = (
+		newSkills: Array<{ name: string; percentage: number }>,
+	) => {
 		form.skills = newSkills;
 		form.post("/pagi/profile/update", {
 			preserveScroll: true,
 			onSuccess: () => {
 				initFormValues();
 				addToast("Skills updated successfully!", "success");
-			}
+			},
 		});
 	};
 
@@ -185,7 +217,7 @@ export function useProfileForm(user: any, props: any, addToast: (msg: string, ty
 			onSuccess: () => {
 				initFormValues();
 				addToast("Biography updated successfully!", "success");
-			}
+			},
 		});
 	};
 
@@ -196,11 +228,11 @@ export function useProfileForm(user: any, props: any, addToast: (msg: string, ty
 			onSuccess: () => {
 				initFormValues();
 				addToast("Location updated successfully!", "success");
-			}
+			},
 		});
 	};
 
-	const updateTimezone = (data: { timezone: string, extended: string }) => {
+	const updateTimezone = (data: { timezone: string; extended: string }) => {
 		form.timezone = data.timezone;
 		form.timezone_extended = data.extended;
 		form.post("/pagi/profile/update", {
@@ -208,22 +240,30 @@ export function useProfileForm(user: any, props: any, addToast: (msg: string, ty
 			onSuccess: () => {
 				initFormValues();
 				addToast("Time zone updated successfully!", "success");
-			}
+			},
 		});
 	};
 
-	const updateLanguages = (newLanguages: Array<{ language: string, proficiency: string }>) => {
+	const updateLanguages = (
+		newLanguages: Array<{ language: string; proficiency: string }>,
+	) => {
 		form.languages = newLanguages;
 		form.post("/pagi/profile/update", {
 			preserveScroll: true,
 			onSuccess: () => {
 				initFormValues();
 				addToast("Languages updated successfully!", "success");
-			}
+			},
 		});
 	};
 
-	const updateSocials = (socials: { website?: string, linkedin?: string, github?: string, twitter?: string, instagram?: string }) => {
+	const updateSocials = (socials: {
+		website?: string;
+		linkedin?: string;
+		github?: string;
+		twitter?: string;
+		instagram?: string;
+	}) => {
 		form.website = socials.website || "";
 		form.linkedin = socials.linkedin || "";
 		form.github = socials.github || "";
@@ -234,12 +274,17 @@ export function useProfileForm(user: any, props: any, addToast: (msg: string, ty
 			onSuccess: () => {
 				initFormValues();
 				addToast("Social connections updated successfully!", "success");
-			}
+			},
 		});
 	};
 
 	// Cropper methods
-	const openCropper = (data: { src: string; aspectRatio: number; fileName?: string; fileType?: string }) => {
+	const openCropper = (data: {
+		src: string;
+		aspectRatio: number;
+		fileName?: string;
+		fileType?: string;
+	}) => {
 		cropperImageSrc.value = data.src;
 		cropperAspectRatio.value = data.aspectRatio;
 		if (data.fileName) originalFileName.value = data.fileName;
@@ -268,7 +313,12 @@ export function useProfileForm(user: any, props: any, addToast: (msg: string, ty
 		closeCropper();
 	};
 
-	const handleTriggerCrop = (data: { src: string; aspectRatio: number; fileName: string; fileType: string }) => {
+	const handleTriggerCrop = (data: {
+		src: string;
+		aspectRatio: number;
+		fileName: string;
+		fileType: string;
+	}) => {
 		openCropper(data);
 	};
 

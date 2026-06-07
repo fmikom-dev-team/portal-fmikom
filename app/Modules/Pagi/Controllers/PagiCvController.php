@@ -309,6 +309,13 @@ class PagiCvController extends Controller
 
         $data = $this->sanitizeInputRecursive($data);
 
+        // Force name and email to be the auth user's real name and email
+        $user = auth()->user();
+        if (isset($data['personal_info'])) {
+            $data['personal_info']['name'] = $user->name;
+            $data['personal_info']['email'] = $user->email;
+        }
+
         // Auto-compute status based on completeness
         $pi = $data['personal_info'] ?? [];
         $hasBasic = !empty(trim($pi['name'] ?? ''))

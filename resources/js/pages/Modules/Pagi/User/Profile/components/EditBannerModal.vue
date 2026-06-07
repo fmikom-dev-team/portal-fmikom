@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { Loader2, UploadCloud, X } from "lucide-vue-next";
 import { ref, watch } from "vue";
-import { UploadCloud, X, Loader2 } from "lucide-vue-next";
 import Modal from "../../ui/Modal.vue";
 import Progress from "../../ui/Progress.vue";
 
@@ -10,7 +10,13 @@ const props = defineProps<{
 	form: any;
 }>();
 
-const emit = defineEmits(["close", "submit", "warning", "toast", "trigger-crop"]);
+const emit = defineEmits([
+	"close",
+	"submit",
+	"warning",
+	"toast",
+	"trigger-crop",
+]);
 
 const activeBannerTab = ref<"Upload" | "Presets">("Upload");
 const selectedPresetIndex = ref<number | null>(null);
@@ -76,7 +82,7 @@ const presets = [
 				<circle cx="1600" cy="205" r="450" fill="none" stroke="rgba(99, 102, 241, 0.03)" stroke-width="2"/>
 				<path d="M-100,300 L600,100 L1200,250 L1800,50 L2400,200 L3300,50" fill="none" stroke="url(#lineGrad1)" stroke-width="2" opacity="0.3"/>
 			</svg>
-		`
+		`,
 	},
 	{
 		name: "Aurora Flow",
@@ -125,7 +131,7 @@ const presets = [
 				<path d="M 0 200 Q 800 50 1600 250 T 3200 150 L 3200 410 L 0 410 Z" fill="rgba(255, 255, 255, 0.05)"/>
 				<path d="M 0 300 Q 600 150 1400 350 T 3200 250 L 3200 410 L 0 410 Z" fill="rgba(255, 255, 255, 0.03)"/>
 			</svg>
-		`
+		`,
 	},
 	{
 		name: "Midnight Mesh",
@@ -175,7 +181,7 @@ const presets = [
 					<circle cx="1000" cy="100" r="3" />
 				</g>
 			</svg>
-		`
+		`,
 	},
 	{
 		name: "Monochrome Tech",
@@ -202,7 +208,7 @@ const presets = [
 				<line x1="0" y1="80" x2="3200" y2="80" stroke="#f1f5f9" stroke-width="2"/>
 				<line x1="0" y1="330" x2="3200" y2="330" stroke="#f1f5f9" stroke-width="2"/>
 			</svg>
-		`
+		`,
 	},
 	{
 		name: "Academic Gold",
@@ -234,14 +240,14 @@ const presets = [
 				<rect width="3200" height="410" fill="url(#royalNavyFull)"/>
 				<path d="M 2400 410 C 2700 180, 2800 280, 3200 100" fill="none" stroke="url(#goldGradFull)" stroke-width="3" opacity="0.85"/>
 			</svg>
-		`
-	}
+		`,
+	},
 ];
 
 const selectPreset = (index: number) => {
 	selectedPresetIndex.value = index;
 	const preset = presets[index];
-	
+
 	const svgString = preset.svgFull;
 	const img = new Image();
 	img.onload = () => {
@@ -253,16 +259,20 @@ const selectPreset = (index: number) => {
 			ctx.drawImage(img, 0, 0, 3200, 410);
 			canvas.toBlob((blob) => {
 				if (blob) {
-					const presetFile = new File([blob], `preset-${preset.name.toLowerCase().replace(/\s+/g, "-")}.png`, {
-						type: "image/png"
-					});
+					const presetFile = new File(
+						[blob],
+						`preset-${preset.name.toLowerCase().replace(/\s+/g, "-")}.png`,
+						{
+							type: "image/png",
+						},
+					);
 					props.form.banner = presetFile;
 					bannerPreview.value = URL.createObjectURL(presetFile);
 				}
 			}, "image/png");
 		}
 	};
-	img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgString);
+	img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
 };
 
 const triggerBannerUpload = () => {
@@ -272,13 +282,19 @@ const triggerBannerUpload = () => {
 const handleBannerFile = (file: File) => {
 	// Mime-type verification
 	const validTypes = [
-		"image/jpeg", "image/png", "image/webp", "image/gif",
-		"video/mp4", "video/webm", "video/ogg"
+		"image/jpeg",
+		"image/png",
+		"image/webp",
+		"image/gif",
+		"video/mp4",
+		"video/webm",
+		"video/ogg",
 	];
 	if (!validTypes.includes(file.type)) {
-		emit("warning",
+		emit(
+			"warning",
 			"Invalid File Format",
-			"Please upload a valid image (png, jpg, webp, gif) or video (mp4, webm, ogg)."
+			"Please upload a valid image (png, jpg, webp, gif) or video (mp4, webm, ogg).",
 		);
 		return;
 	}
@@ -293,9 +309,10 @@ const handleBannerFile = (file: File) => {
 		video.onloadedmetadata = () => {
 			window.URL.revokeObjectURL(video.src);
 			if (video.duration > 60.5) {
-				emit("warning",
+				emit(
+					"warning",
 					"Video Terlalu Lama",
-					"Durasi video maksimal adalah 1 menit (60 detik) demi menjaga performa server."
+					"Durasi video maksimal adalah 1 menit (60 detik) demi menjaga performa server.",
 				);
 			} else {
 				selectedPresetIndex.value = null;
@@ -326,7 +343,7 @@ const handleBannerFile = (file: File) => {
 			emit("trigger-crop", {
 				src: event.target.result as string,
 				name: file.name,
-				type: file.type
+				type: file.type,
 			});
 		}
 	};
@@ -369,25 +386,33 @@ const formatBytes = (bytes: number, decimals = 2) => {
 	const dm = decimals < 0 ? 0 : decimals;
 	const sizes = ["Bytes", "KB", "MB", "GB"];
 	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+	return `${parseFloat((bytes / k ** i).toFixed(dm))} ${sizes[i]}`;
 };
 
-watch(() => props.show, (newVal) => {
-	if (newVal) {
-		bannerPreview.value = props.user.banner_path ? "/storage/" + props.user.banner_path : null;
-		props.form.banner = null;
-		selectedPresetIndex.value = null;
-		activeBannerTab.value = "Upload";
-	}
-});
+watch(
+	() => props.show,
+	(newVal) => {
+		if (newVal) {
+			bannerPreview.value = props.user.banner_path
+				? `/storage/${props.user.banner_path}`
+				: null;
+			props.form.banner = null;
+			selectedPresetIndex.value = null;
+			activeBannerTab.value = "Upload";
+		}
+	},
+);
 
 // React to crops saved in parent
-watch(() => props.form.banner, (newVal) => {
-	if (newVal && props.show) {
-		bannerPreview.value = URL.createObjectURL(newVal);
-		selectedPresetIndex.value = null;
-	}
-});
+watch(
+	() => props.form.banner,
+	(newVal) => {
+		if (newVal && props.show) {
+			bannerPreview.value = URL.createObjectURL(newVal);
+			selectedPresetIndex.value = null;
+		}
+	},
+);
 </script>
 
 <template>

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, watch, computed } from "vue";
 import { Link, router } from "@inertiajs/vue3";
-import { Plus, ChevronRight } from "lucide-vue-next";
-import CreatedTab from "./CreatedTab.vue";
+import { ChevronRight, Plus } from "lucide-vue-next";
+import { computed, ref, watch } from "vue";
 import CaseStudyTab from "./CaseStudyTab.vue";
 import CollaboratedTab from "./CollaboratedTab.vue";
+import CreatedTab from "./CreatedTab.vue";
 
 const props = defineProps<{
 	projects?: Array<{
@@ -26,89 +26,121 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-	(e: 'open-project', project: any): void;
-	(e: 'clone-project', title: string): void;
-	(e: 'share-project', project: any): void;
-	(e: 'delete-project', id: number, title: string): void;
-	(e: 'open-add-work'): void;
-	(e: 'edit-quick-work', project: any): void;
-	(e: 'like-updated', data: { id: number; liked: boolean; count: number }): void;
+	(e: "open-project", project: any): void;
+	(e: "clone-project", title: string): void;
+	(e: "share-project", project: any): void;
+	(e: "delete-project", id: number, title: string): void;
+	(e: "open-add-work"): void;
+	(e: "edit-quick-work", project: any): void;
+	(
+		e: "like-updated",
+		data: { id: number; liked: boolean; count: number },
+	): void;
 }>();
 
 const activeWorkFilter = ref("Created"); // "Created", "Case Study", or "Collaborated"
 const localProjects = ref<any[]>([]);
 
-watch(() => props.projects, (newVal) => {
-	if (newVal) {
-		localProjects.value = [...newVal];
-	}
-}, { immediate: true, deep: true });
+watch(
+	() => props.projects,
+	(newVal) => {
+		if (newVal) {
+			localProjects.value = [...newVal];
+		}
+	},
+	{ immediate: true, deep: true },
+);
 
 const isQuickAddProject = (project: any) => {
-	if (!project || !project.content || !Array.isArray(project.content)) return false;
-	return project.content.some((b: any) => b && b.type === 'featured_details');
+	if (!project?.content || !Array.isArray(project.content)) return false;
+	return project.content.some((b: any) => b && b.type === "featured_details");
 };
 
 const isGalleryItem = (project: any) => {
-	if (!project || !project.content || !Array.isArray(project.content)) return false;
-	return project.content.some((b: any) => b && b.type === 'gallery_item');
+	if (!project?.content || !Array.isArray(project.content)) return false;
+	return project.content.some((b: any) => b && b.type === "gallery_item");
 };
 
 const createdProjects = computed(() => {
-	return localProjects.value.filter(p => isQuickAddProject(p) && !isGalleryItem(p) && p.user_id === props.user.id);
+	return localProjects.value.filter(
+		(p) =>
+			isQuickAddProject(p) && !isGalleryItem(p) && p.user_id === props.user.id,
+	);
 });
 
 const caseStudyProjects = computed(() => {
-	return localProjects.value.filter(p => !isQuickAddProject(p) && !isGalleryItem(p) && p.user_id === props.user.id);
+	return localProjects.value.filter(
+		(p) =>
+			!isQuickAddProject(p) && !isGalleryItem(p) && p.user_id === props.user.id,
+	);
 });
 
 const collaboratedProjects = computed(() => {
-	return localProjects.value.filter(p => {
+	return localProjects.value.filter((p) => {
 		if (isGalleryItem(p)) return false;
-		const details = p.content?.find((b: any) => b && b.type === 'featured_details') || {};
+		const details =
+			p.content?.find((b: any) => b && b.type === "featured_details") || {};
 		const collaborators = details.collaborators || [];
-		
-		const hasAcceptedCollaborators = Array.isArray(collaborators) && collaborators.some(c => {
-			const cStatus = typeof c === 'object' ? (c.status ?? 'pending') : 'accepted';
-			return cStatus === 'accepted';
-		});
 
-		const isUserCollaborator = Array.isArray(collaborators) && collaborators.some(c => {
-			const cName = typeof c === 'object' ? c.name : c;
-			const cStatus = typeof c === 'object' ? (c.status ?? 'pending') : 'accepted';
-			
-			if (cStatus !== 'accepted') return false;
+		const hasAcceptedCollaborators =
+			Array.isArray(collaborators) &&
+			collaborators.some((c) => {
+				const cStatus =
+					typeof c === "object" ? (c.status ?? "pending") : "accepted";
+				return cStatus === "accepted";
+			});
 
-			return cName === props.user.name || (props.user.pagi_username && cName === props.user.pagi_username);
-		});
-		
-		const isUserOwnerWithCollaborators = p.user_id === props.user.id && hasAcceptedCollaborators;
-		
+		const isUserCollaborator =
+			Array.isArray(collaborators) &&
+			collaborators.some((c) => {
+				const cName = typeof c === "object" ? c.name : c;
+				const cStatus =
+					typeof c === "object" ? (c.status ?? "pending") : "accepted";
+
+				if (cStatus !== "accepted") return false;
+
+				return (
+					cName === props.user.name ||
+					(props.user.pagi_username && cName === props.user.pagi_username)
+				);
+			});
+
+		const isUserOwnerWithCollaborators =
+			p.user_id === props.user.id && hasAcceptedCollaborators;
+
 		return isUserCollaborator || isUserOwnerWithCollaborators;
 	});
 });
 
 const handleReorder = (newSubOrderIds: number[]) => {
 	const newOrderMap = new Map(newSubOrderIds.map((id, index) => [id, index]));
-	
-	const subTabProjects = localProjects.value.filter(p => newOrderMap.has(p.id));
-	subTabProjects.sort((a, b) => newOrderMap.get(a.id)! - newOrderMap.get(b.id)!);
-	
+
+	const subTabProjects = localProjects.value.filter((p) =>
+		newOrderMap.has(p.id),
+	);
+	subTabProjects.sort(
+		(a, b) => newOrderMap.get(a.id)! - newOrderMap.get(b.id)!,
+	);
+
 	let subTabIdx = 0;
-	const updatedProjects = localProjects.value.map(p => {
+	const updatedProjects = localProjects.value.map((p) => {
 		if (newOrderMap.has(p.id)) {
 			return subTabProjects[subTabIdx++];
 		}
 		return p;
 	});
-	
+
 	localProjects.value = updatedProjects;
-	
-	const orderIds = updatedProjects.map(p => p.id);
-	router.post('/pagi/profile/reorder-projects', { order: orderIds }, {
-		preserveScroll: true,
-		preserveState: true
-	});
+
+	const orderIds = updatedProjects.map((p) => p.id);
+	router.post(
+		"/pagi/profile/reorder-projects",
+		{ order: orderIds },
+		{
+			preserveScroll: true,
+			preserveState: true,
+		},
+	);
 };
 </script>
 

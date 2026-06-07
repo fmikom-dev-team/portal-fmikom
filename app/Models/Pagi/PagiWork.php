@@ -2,6 +2,8 @@
 
 namespace App\Models\Pagi;
 
+use App\Models\User;
+
 use Illuminate\Database\Eloquent\Model;
 
 class PagiWork extends Model

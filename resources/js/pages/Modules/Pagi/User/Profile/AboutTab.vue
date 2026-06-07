@@ -1,6 +1,15 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
-import { Camera, Plus, MapPin, X, ChevronRight, Globe, Linkedin, Github, Twitter, Instagram } from "lucide-vue-next";
+import {
+	Camera,
+	Github,
+	Globe,
+	Instagram,
+	Linkedin,
+	Plus,
+	Twitter,
+	X,
+} from "lucide-vue-next";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import OptimizedImage from "../ui/OptimizedImage.vue";
 
 const props = defineProps<{
@@ -13,21 +22,33 @@ const props = defineProps<{
 	skills: any[];
 	timezone: string | null;
 	timezoneExtended: string | null;
-	languages: Array<{ language: string, proficiency: string }>;
+	languages: Array<{ language: string; proficiency: string }>;
 	isLoading?: boolean;
 }>();
 
 const emit = defineEmits<{
-	(e: 'update-bio', bio: string): void;
-	(e: 'update-skills', skills: any[]): void;
-	(e: 'update-location', location: string): void;
-	(e: 'update-timezone', data: { timezone: string, extended: string }): void;
-	(e: 'update-languages', languages: Array<{ language: string, proficiency: string }>): void;
-	(e: 'update-socials', socials: { website: string, linkedin: string, github: string, twitter: string, instagram: string }): void;
-	(e: 'open-avatar-modal'): void;
-	(e: 'open-socials-modal'): void;
-	(e: 'toggle-follow'): void;
-	(e: 'open-chat'): void;
+	(e: "update-bio", bio: string): void;
+	(e: "update-skills", skills: any[]): void;
+	(e: "update-location", location: string): void;
+	(e: "update-timezone", data: { timezone: string; extended: string }): void;
+	(
+		e: "update-languages",
+		languages: Array<{ language: string; proficiency: string }>,
+	): void;
+	(
+		e: "update-socials",
+		socials: {
+			website: string;
+			linkedin: string;
+			github: string;
+			twitter: string;
+			instagram: string;
+		},
+	): void;
+	(e: "open-avatar-modal"): void;
+	(e: "open-socials-modal"): void;
+	(e: "toggle-follow"): void;
+	(e: "open-chat"): void;
 }>();
 
 // Inline Bio Editor
@@ -40,7 +61,7 @@ const startEditBio = () => {
 };
 
 const submitInlineBio = () => {
-	emit('update-bio', inlineBio.value);
+	emit("update-bio", inlineBio.value);
 	isEditingBio.value = false;
 };
 
@@ -79,7 +100,7 @@ const FMIKOM_SKILL_SUGGESTIONS = [
 	"Tailwind CSS / Bootstrap",
 	"UI/UX Design",
 	"Vue.js / React.js",
-	"Web Development"
+	"Web Development",
 ];
 
 // Dynamic Skills Editor
@@ -88,17 +109,19 @@ const newSkillPercentage = ref(80);
 const showAddSkillInput = ref(false);
 const showSkillSuggestions = ref(false);
 
-const parseSkills = (skillsArray: any[]): Array<{ name: string, percentage: number }> => {
+const parseSkills = (
+	skillsArray: any[],
+): Array<{ name: string; percentage: number }> => {
 	if (!Array.isArray(skillsArray)) return [];
-	return skillsArray.map(item => {
-		if (typeof item === 'string') {
-			const parts = item.split(':');
-			if (parts.length === 2 && !isNaN(Number(parts[1]))) {
+	return skillsArray.map((item) => {
+		if (typeof item === "string") {
+			const parts = item.split(":");
+			if (parts.length === 2 && !Number.isNaN(Number(parts[1]))) {
 				return { name: parts[0], percentage: Number(parts[1]) };
 			}
 			return { name: item, percentage: 80 };
 		}
-		if (item && typeof item === 'object' && item.name) {
+		if (item && typeof item === "object" && item.name) {
 			return { name: item.name, percentage: Number(item.percentage) || 80 };
 		}
 		return { name: String(item), percentage: 80 };
@@ -111,10 +134,12 @@ const parsedSkills = computed(() => {
 
 const filteredSkillSuggestions = computed(() => {
 	const query = newSkill.value.trim().toLowerCase();
-	const currentNames = parsedSkills.value.map(s => s.name.toLowerCase());
-	return FMIKOM_SKILL_SUGGESTIONS.filter(skill => {
+	const currentNames = new Set(
+		parsedSkills.value.map((s) => s.name.toLowerCase()),
+	);
+	return FMIKOM_SKILL_SUGGESTIONS.filter((skill) => {
 		const isMatch = skill.toLowerCase().includes(query);
-		const isAlreadyAdded = currentNames.includes(skill.toLowerCase());
+		const isAlreadyAdded = currentNames.has(skill.toLowerCase());
 		return isMatch && !isAlreadyAdded;
 	});
 });
@@ -127,13 +152,15 @@ const selectSkillSuggestion = (suggestion: string) => {
 const addSkill = () => {
 	if (!newSkill.value.trim()) return;
 	const currentSkills = [...parsedSkills.value];
-	const exists = currentSkills.some(s => s.name.toLowerCase() === newSkill.value.trim().toLowerCase());
+	const exists = currentSkills.some(
+		(s) => s.name.toLowerCase() === newSkill.value.trim().toLowerCase(),
+	);
 	if (!exists) {
 		currentSkills.push({
 			name: newSkill.value.trim(),
-			percentage: newSkillPercentage.value
+			percentage: newSkillPercentage.value,
 		});
-		emit('update-skills', currentSkills);
+		emit("update-skills", currentSkills);
 	}
 	newSkill.value = "";
 	newSkillPercentage.value = 80;
@@ -143,52 +170,58 @@ const addSkill = () => {
 const removeSkill = (index: number) => {
 	const currentSkills = [...parsedSkills.value];
 	currentSkills.splice(index, 1);
-	emit('update-skills', currentSkills);
+	emit("update-skills", currentSkills);
 };
 
 // Inline details editors (one active section at a time)
-const activeEditSection = ref<'location' | 'timezone' | 'languages' | null>(null);
+const activeEditSection = ref<"location" | "timezone" | "languages" | null>(
+	null,
+);
 
 const editLocation = ref("");
 const editTimezone = ref("");
 const editTimezoneExtended = ref("");
-const editLanguages = ref<Array<{ language: string, proficiency: string }>>([]);
+const editLanguages = ref<Array<{ language: string; proficiency: string }>>([]);
 
-const toggleEditSection = (section: 'location' | 'timezone' | 'languages') => {
+const toggleEditSection = (section: "location" | "timezone" | "languages") => {
 	if (activeEditSection.value === section) {
 		activeEditSection.value = null;
 	} else {
 		// Initialize editing values from props
-		if (section === 'location') {
+		if (section === "location") {
 			editLocation.value = props.user.location || "";
-		} else if (section === 'timezone') {
+		} else if (section === "timezone") {
 			editTimezone.value = props.timezone || "";
-			editTimezoneExtended.value = props.timezoneExtended || "No extended hours";
-		} else if (section === 'languages') {
-			editLanguages.value = props.languages && props.languages.length > 0
-				? props.languages.map((l: any) => ({ ...l }))
-				: [{ language: "", proficiency: "" }];
+			editTimezoneExtended.value =
+				props.timezoneExtended || "No extended hours";
+		} else if (section === "languages") {
+			editLanguages.value =
+				props.languages && props.languages.length > 0
+					? props.languages.map((l: any) => ({ ...l }))
+					: [{ language: "", proficiency: "" }];
 		}
 		activeEditSection.value = section;
 	}
 };
 
 const saveLocation = () => {
-	emit('update-location', editLocation.value);
+	emit("update-location", editLocation.value);
 	activeEditSection.value = null;
 };
 
 const saveTimezone = () => {
-	emit('update-timezone', {
+	emit("update-timezone", {
 		timezone: editTimezone.value,
-		extended: editTimezoneExtended.value
+		extended: editTimezoneExtended.value,
 	});
 	activeEditSection.value = null;
 };
 
 const saveLanguages = () => {
-	const filtered = editLanguages.value.filter(l => l.language.trim() && l.proficiency.trim());
-	emit('update-languages', filtered);
+	const filtered = editLanguages.value.filter(
+		(l) => l.language.trim() && l.proficiency.trim(),
+	);
+	emit("update-languages", filtered);
 	activeEditSection.value = null;
 };
 
@@ -237,7 +270,7 @@ onUnmounted(() => {
 					<div class="flex items-center gap-5 mb-5 w-full">
 						<!-- Avatar -->
 						<div 
-							class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 shadow-3xs flex items-center justify-center overflow-hidden shrink-0 relative group"
+							class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border border-slate-200 dark:border-slate-800 bg-linear-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 shadow-3xs flex items-center justify-center overflow-hidden shrink-0 relative group"
 							:class="{ 'cursor-pointer': isOwnProfile }"
 							@click="isOwnProfile ? emit('open-avatar-modal') : null"
 						>
@@ -259,8 +292,8 @@ onUnmounted(() => {
 					</div>
 
 					<!-- Follower Row -->
-					<div class="flex items-center gap-2 mb-3 text-xs text-slate-505 dark:text-slate-400 font-semibold">
-						<img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Maruf" class="w-5 h-5 rounded-full border border-slate-200 dark:border-slate-800" />
+					<div class="flex items-center gap-2 mb-3 text-xs text-slate-550 dark:text-slate-400 font-semibold">
+						<img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Maruf" class="w-5 h-5 rounded-full border border-slate-200 dark:border-slate-800" alt="Maruf Avatar" />
 						<span>Followed by Maruf M</span>
 					</div>
 
@@ -414,7 +447,7 @@ onUnmounted(() => {
 						<!-- Bar preview -->
 						<div class="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
 							<div 
-								class="h-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 transition-all duration-300"
+								class="h-full rounded-full bg-linear-to-r from-indigo-500 to-indigo-600 transition-all duration-300"
 								:style="{ width: newSkillPercentage + '%' }"
 							></div>
 						</div>
@@ -578,7 +611,6 @@ onUnmounted(() => {
 									:class="isOwnProfile ? 'cursor-pointer hover:text-slate-900 dark:hover:text-white' : ''"
 								>
 									<div class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
-										<!-- Clock Icon — fixed with stroke="currentColor" -->
 										<svg xmlns="http://www.w3.org/2000/svg" fill="none" height="16" width="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 shrink-0">
 											<circle cx="12" cy="12" r="10" />
 											<polyline points="12 6 12 12 16 14" />
@@ -595,8 +627,8 @@ onUnmounted(() => {
 								<transition enter-active-class="transition duration-200 ease-out" enter-from-class="transform -translate-y-2 opacity-0" enter-to-class="transform translate-y-0 opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="transform translate-y-0 opacity-100" leave-to-class="transform -translate-y-2 opacity-0">
 									<div v-if="activeEditSection === 'timezone'" class="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-4 text-left mt-1.5">
 										<div class="space-y-1.5">
-											<label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Time Zone</label>
-											<select v-model="editTimezone" class="w-full h-9 px-3 pr-8 rounded-xl border border-slate-200 dark:border-slate-805 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-slate-800 shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_10px_center] bg-[size:16px_16px] bg-no-repeat cursor-pointer">
+											<label for="timezone-select" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Time Zone</label>
+											<select id="timezone-select" v-model="editTimezone" class="w-full h-9 px-3 pr-8 rounded-xl border border-slate-200 dark:border-slate-805 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-slate-800 shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%2F%3E%3C%2Fsvg%3E')] bg-position-[right_10px_center] bg-size-[16px_16px] bg-no-repeat cursor-pointer">
 												<option value="">Select Time Zone</option>
 												<option value="(GMT+7) Western Indonesian Time (WIB)">(GMT+7) Western Indonesian Time (WIB)</option>
 												<option value="(GMT+8) Central Indonesian Time (WITA)">(GMT+8) Central Indonesian Time (WITA)</option>
@@ -611,8 +643,8 @@ onUnmounted(() => {
 											</select>
 										</div>
 										<div class="space-y-1.5">
-											<label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Extended Hours</label>
-											<select v-model="editTimezoneExtended" class="w-full h-9 px-3 pr-8 rounded-xl border border-slate-200 dark:border-slate-805 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-slate-800 shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_10px_center] bg-[size:16px_16px] bg-no-repeat cursor-pointer">
+											<label for="extended-hours-select" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Extended Hours</label>
+											<select id="extended-hours-select" v-model="editTimezoneExtended" class="w-full h-9 px-3 pr-8 rounded-xl border border-slate-200 dark:border-slate-805 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-slate-800 shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%2F%3E%3C%2Fsvg%3E')] bg-position-[right_10px_center] bg-size-[16px_16px] bg-no-repeat cursor-pointer">
 												<option value="No extended hours">No extended hours</option>
 												<option value="1 Hour">1 Hour</option>
 												<option value="2 Hours">2 Hours</option>
@@ -659,7 +691,7 @@ onUnmounted(() => {
 									<div v-if="activeEditSection === 'languages'" class="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-4 text-left mt-1.5">
 										<div v-for="(item, idx) in editLanguages" :key="idx" class="flex gap-2 items-center border-b border-slate-200/50 dark:border-slate-800/50 pb-3 last:border-b-0 last:pb-0">
 											<div class="flex-1 space-y-2">
-												<select v-model="item.language" class="w-full h-9 px-3 pr-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-slate-800 shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_10px_center] bg-[size:16px_16px] bg-no-repeat cursor-pointer">
+												<select v-model="item.language" class="w-full h-9 px-3 pr-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-slate-800 shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%2F%3E%3C%2Fsvg%3E')] bg-position-[right_10px_center] bg-size-[16px_16px] bg-no-repeat cursor-pointer">
 													<option value="">Select language</option>
 													<option value="Indonesian">Indonesian</option>
 													<option value="English">English</option>
@@ -672,7 +704,7 @@ onUnmounted(() => {
 													<option value="French">French</option>
 													<option value="Arabic">Arabic</option>
 												</select>
-												<select v-model="item.proficiency" class="w-full h-9 px-3 pr-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-slate-800 shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_10px_center] bg-[size:16px_16px] bg-no-repeat cursor-pointer">
+												<select v-model="item.proficiency" class="w-full h-9 px-3 pr-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-slate-800 shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%2F%3E%3C%2Fsvg%3E')] bg-position-[right_10px_center] bg-size-[16px_16px] bg-no-repeat cursor-pointer">
 													<option value="">Select proficiency</option>
 													<option value="Native">Native</option>
 													<option value="Fluent">Fluent</option>

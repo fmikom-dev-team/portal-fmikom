@@ -1,0 +1,185 @@
+/* ================================================================
+   WorkOS Design System — FMIKOM Portal
+   Clean, enterprise-grade, Inter-based design tokens
+   ================================================================ */
+
+@import url("https://fonts.bunny.net/css?family=inter:300,400,500,600,700&display=swap");
+
+/* ── Design Tokens ─────────────────────────────────────────────── */
+:root {
+	--wos-font: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+	/* Sidebar */
+	--wos-sidebar-width: 208px;
+	--wos-header-height: 48px;
+
+	/* Colors */
+	--wos-bg: #ffffff;
+	--wos-bg-muted: #f9fafb;
+	--wos-border: #e5e7eb;
+	--wos-border-soft: #f3f4f6;
+	--wos-text: #111827;
+	--wos-text-muted: #6b7280;
+	--wos-text-subtle: #9ca3af;
+	--wos-primary: #2563eb;
+	--wos-primary-light: #eff6ff;
+	--wos-success: #10b981;
+	--wos-warning: #f59e0b;
+	--wos-danger: #ef4444;
+	--wos-accent: #b6ff00;
+
+	/* Shadows */
+	--wos-shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+	--wos-shadow-sm:
+		0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+	--wos-shadow-md:
+		0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+	--wos-shadow-lg:
+		0 10px 15px -3px rgb(0 0 0 / 0.06), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+	--wos-shadow-xl:
+		0 20px 25px -5px rgb(0 0 0 / 0.06), 0 8px 10px -6px rgb(0 0 0 / 0.04);
+	--wos-shadow-card:
+		0 0 0 1px rgba(0, 0, 0, 0.04), 0 2px 24px rgba(0, 0, 0, 0.06);
+	--wos-shadow-card-hover:
+		0 0 0 1px rgba(0, 0, 0, 0.06), 0 4px 32px rgba(0, 0, 0, 0.09);
+
+	/* Radius */
+	--wos-radius-sm: 6px;
+	--wos-radius: 8px;
+	--wos-radius-md: 10px;
+	--wos-radius-lg: 12px;
+	--wos-radius-xl: 16px;
+
+	/* Transitions */
+	--wos-transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+	--wos-transition-md: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+	--wos-transition-lg: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Global Reset for WorkOS scope ─────────────────────────────── */
+.wos-app {
+	font-family: var(--wos-font);
+	font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	text-rendering: optimizeLegibility;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────── */
+.wos-scroll::-webkit-scrollbar {
+	width: 4px;
+	height: 4px;
+}
+.wos-scroll::-webkit-scrollbar-track {
+	background: transparent;
+}
+.wos-scroll::-webkit-scrollbar-thumb {
+	background: #e5e7eb;
+	border-radius: 999px;
+}
+.wos-scroll::-webkit-scrollbar-thumb:hover {
+	background: #d1d5db;
+}
+
+/* ── Shimmer animation ─────────────────────────────────────────── */
+@keyframes wos-shimmer {
+	0% {
+		background-position: -400px 0;
+	}
+	100% {
+		background-position: 400px 0;
+	}
+}
+
+.wos-shimmer {
+	background: linear-gradient(90deg, #f3f4f6 25%, #e9eaec 50%, #f3f4f6 75%);
+	background-size: 800px 100%;
+	animation: wos-shimmer 1.4s ease-in-out infinite;
+}
+
+/* ── Focus ring ─────────────────────────────────────────────────── */
+.wos-focus:focus-visible {
+	outline: 2px solid var(--wos-primary);
+	outline-offset: 2px;
+}
+
+/* ── Nav item active indicator ──────────────────────────────────── */
+.wos-nav-item-active::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 2px;
+	height: 16px;
+	background: var(--wos-text);
+	border-radius: 0 2px 2px 0;
+}
+
+/* ── Code block ─────────────────────────────────────────────────── */
+.wos-code {
+	font-family: "SF Mono", "Fira Code", "Fira Mono", monospace;
+	font-size: 11px;
+}
+
+/* ── Table row hover ────────────────────────────────────────────── */
+.wos-tr:hover td {
+	background-color: #f9fafb;
+}
+
+/* ── Print ──────────────────────────────────────────────────────── */
+@media print {
+	.wos-sidebar,
+	.wos-header {
+		display: none !important;
+	}
+	.wos-main {
+		margin: 0 !important;
+	}
+}
+
+/* ── Clean Premium Card Shadow (global) ─────────────────────────── */
+/*
+ * Single soft shadow — clean, natural, no visible "rings".
+ * Matches the aesthetic of modern apps like Notion, Linear, etc.
+ */
+
+/* Apply to every white card/container inside the WorkOS layout */
+.wos-app .bg-white.rounded-xl,
+.wos-app .bg-white.rounded-lg,
+.wos-app [class*="bg-white"][class*="rounded-xl"],
+.wos-app [class*="bg-white"][class*="rounded-lg"] {
+	border: none !important;
+	box-shadow: var(--wos-shadow-card) !important;
+	transition: box-shadow 180ms ease;
+}
+
+/* Hover lift on clickable cards */
+.wos-app [class*="cursor-pointer"][class*="bg-white"][class*="rounded"]:hover,
+.wos-app [class*="hover:shadow"][class*="bg-white"][class*="rounded"]:hover {
+	box-shadow: var(--wos-shadow-card-hover) !important;
+}
+
+/* ── Exceptions: form controls, buttons, dropdowns ───────────────── */
+.wos-app button.bg-white,
+.wos-app a.bg-white,
+.wos-app input.bg-white,
+.wos-app select.bg-white,
+.wos-app textarea.bg-white {
+	box-shadow: none !important;
+	border: 1px solid #e5e7eb !important;
+}
+
+/* Dropdowns / popovers (absolute positioned) keep their own shadow */
+.wos-app .absolute.bg-white {
+	box-shadow:
+		0 0 0 1px rgba(0, 0, 0, 0.06),
+		0 4px 16px rgba(0, 0, 0, 0.08) !important;
+	border: 1px solid #e9eaeb !important;
+}
+/* Children inside absolute containers reset to border-only */
+.wos-app .absolute .bg-white.rounded-xl,
+.wos-app .absolute .bg-white.rounded-lg {
+	box-shadow: none !important;
+	border: 1px solid #e5e7eb !important;
+}

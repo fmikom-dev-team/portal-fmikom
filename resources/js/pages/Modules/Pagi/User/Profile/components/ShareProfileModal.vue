@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, watch, nextTick } from "vue";
-import { X, Link2, Linkedin } from "lucide-vue-next";
+import { Link2, Linkedin, X } from "lucide-vue-next";
 import QRCode from "qrcode";
+import { nextTick, ref, watch } from "vue";
 import Modal from "../../ui/Modal.vue";
 import OptimizedImage from "../../ui/OptimizedImage.vue";
 
@@ -34,11 +34,14 @@ const generateQrCode = async () => {
 	}
 };
 
-watch(() => props.show, (newVal) => {
-	if (newVal) {
-		generateQrCode();
-	}
-});
+watch(
+	() => props.show,
+	(newVal) => {
+		if (newVal) {
+			generateQrCode();
+		}
+	},
+);
 
 const copyProfileLink = () => {
 	navigator.clipboard.writeText(props.activeShareUrl);

@@ -61,11 +61,26 @@ class PagiProfileService
 
         $projects = $projectsCollection->map(function ($p) use ($user) {
             $creator = $p->user ?? $user;
+
+            $image = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop';
+            if ($p->cover_image) {
+                $image = str_starts_with($p->cover_image, 'http')
+                    ? $p->cover_image
+                    : asset('storage/' . $p->cover_image);
+            }
+
+            $avatar = null;
+            if ($creator->foto_path) {
+                $avatar = str_starts_with($creator->foto_path, 'http')
+                    ? $creator->foto_path
+                    : asset('storage/' . $creator->foto_path);
+            }
+
             return [
                 'id' => $p->id,
                 'user_id' => $p->user_id,
                 'title' => $p->title ?? 'Untitled Project',
-                'image' => $p->cover_image ? (str_starts_with($p->cover_image, 'http') ? $p->cover_image : asset('storage/' . $p->cover_image)) : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+                'image' => $image,
                 'content' => $this->formatPortfolioContent($p->content),
                 'created_at' => $p->created_at->format('F jS Y'),
                 'likes' => count($p->likes ?? []),
@@ -80,9 +95,9 @@ class PagiProfileService
                 'resolved_collaborators' => $this->resolveCollaborators($p),
                 'user' => [
                     'id' => $creator->id,
-                    'name' => $creator->name,
+                    'name' => $this->formatName($creator->name),
                     'pagi_username' => $creator->pagi_username,
-                    'avatar' => $creator->foto_path ? (str_starts_with($creator->foto_path, 'http') ? $creator->foto_path : asset('storage/' . $creator->foto_path)) : null,
+                    'avatar' => $avatar,
                     'location' => $creator->location ?? 'Banyumas, Indonesia',
                 ],
             ];
@@ -105,7 +120,7 @@ class PagiProfileService
 
         $profileUser = [
             'id'            => $user->id,
-            'name'          => $user->name,
+            'name'          => $this->formatName($user->name),
             'email'         => $user->email,
             'pagi_username' => $user->pagi_username,
             'role_title'    => $user->role_title,
@@ -164,20 +179,16 @@ class PagiProfileService
             }
         }
 
-        $textFields = ['name', 'role_title', 'bio', 'location', 'website', 'twitter', 'linkedin', 'github', 'instagram', 'tanggal_lahir', 'pagi_username'];
+        $textFields = ['role_title', 'bio', 'location', 'website', 'twitter', 'linkedin', 'github', 'instagram', 'tanggal_lahir', 'pagi_username'];
         $dataToUpdate = [];
         foreach ($textFields as $field) {
             if ($request->has($field)) {
-                if ($field === 'name') {
+                if ($field === 'pagi_username') {
                     $val = $validatedData[$field] ?? null;
-                    if (!empty($val)) {
-                        $dataToUpdate[$field] = $val;
-                    }
-                } elseif ($field === 'pagi_username') {
-                    $val = $validatedData[$field] ?? null;
-                    $dataToUpdate[$field] = $val ? strtolower(trim($val)) : null;
+                    $dataToUpdate[$field] = $val ? strip_tags(strtolower(trim($val))) : null;
                 } else {
-                    $dataToUpdate[$field] = $validatedData[$field] ?? null;
+                    $val = $validatedData[$field] ?? null;
+                    $dataToUpdate[$field] = is_string($val) ? strip_tags($val) : $val;
                 }
             }
         }
@@ -193,7 +204,7 @@ class PagiProfileService
                 if ($field === 'is_message_enabled') {
                     $metadata['is_message_enabled'] = $request->boolean('is_message_enabled');
                 } else {
-                    $metadata[$field] = $validatedData[$field] ?? null;
+                    $metadata[$field] = $this->sanitizeInputRecursive($validatedData[$field] ?? null);
                 }
                 $metadataChanged = true;
             }
@@ -205,11 +216,8 @@ class PagiProfileService
         if ($request->hasFile('banner')) {
             $path = $this->compressAndSaveBannerOrVideo($request->file('banner'), 'pagi/banners');
             if ($path) {
-                if ($user->banner_path) {
-                    $oldBannerPath = storage_path('app/public/' . $user->banner_path);
-                    if (file_exists($oldBannerPath)) {
-                        @unlink($oldBannerPath);
-                    }
+                if ($user->banner_path && file_exists(storage_path('app/public/' . $user->banner_path))) {
+                    @unlink(storage_path('app/public/' . $user->banner_path));
                 }
                 $user->banner_path = $path;
             }
@@ -218,30 +226,19 @@ class PagiProfileService
         if ($request->hasFile('foto')) {
             $path = $this->compressAndSaveImage($request->file('foto'), 'profile_photos', 400, 400, 80);
             if ($path) {
-                if ($user->foto_path && !str_starts_with($user->foto_path, 'http')) {
-                    $oldPath = storage_path('app/public/' . $user->foto_path);
-                    if (file_exists($oldPath)) {
-                        @unlink($oldPath);
-                    }
+                if ($user->foto_path && !str_starts_with($user->foto_path, 'http') && file_exists(storage_path('app/public/' . $user->foto_path))) {
+                    @unlink(storage_path('app/public/' . $user->foto_path));
                 }
                 $user->foto_path = $path;
             }
         } elseif ($request->has('avatar_url') && !empty($validatedData['avatar_url'])) {
-            if ($user->foto_path && !str_starts_with($user->foto_path, 'http')) {
-                $oldPath = storage_path('app/public/' . $user->foto_path);
-                if (file_exists($oldPath)) {
-                    @unlink($oldPath);
-                }
+            if ($user->foto_path && !str_starts_with($user->foto_path, 'http') && file_exists(storage_path('app/public/' . $user->foto_path))) {
+                @unlink(storage_path('app/public/' . $user->foto_path));
             }
             $user->foto_path = $validatedData['avatar_url'];
         } elseif ($request->boolean('remove_foto')) {
-            if ($user->foto_path) {
-                if (!str_starts_with($user->foto_path, 'http')) {
-                    $oldPath = storage_path('app/public/' . $user->foto_path);
-                    if (file_exists($oldPath)) {
-                        @unlink($oldPath);
-                    }
-                }
+            if ($user->foto_path && !str_starts_with($user->foto_path, 'http') && file_exists(storage_path('app/public/' . $user->foto_path))) {
+                @unlink(storage_path('app/public/' . $user->foto_path));
             }
             $user->foto_path = null;
         }
@@ -299,7 +296,9 @@ class PagiProfileService
 
     public function formatPortfolioContent($content)
     {
-        if (empty($content)) return [];
+        if (empty($content)) {
+            return [];
+        }
         if (is_string($content)) {
             $decoded = json_decode($content, true);
             return is_array($decoded) ? $decoded : [];
@@ -309,52 +308,95 @@ class PagiProfileService
 
     public function formatComments($comments)
     {
-        if (empty($comments)) return [];
-        $list = is_string($comments) ? json_decode($comments, true) : $comments;
-        if (!is_array($list)) return [];
-        return array_map(function($c) {
-            return [
-                'id' => $c['id'] ?? uniqid(),
-                'user_id' => $c['user_id'] ?? null,
-                'name' => $c['name'] ?? 'Anonymous',
-                'avatar' => $c['avatar'] ?? null,
-                'content' => $c['content'] ?? '',
-                'created_at' => $c['created_at'] ?? now()->toISOString(),
-                'likes' => $c['likes'] ?? [],
-                'replies' => isset($c['replies']) ? array_map(function($r) {
+        $result = [];
+        if (!empty($comments)) {
+            $list = is_string($comments) ? json_decode($comments, true) : $comments;
+            if (is_array($list)) {
+                $result = array_map(function($c) {
+                    $replies = [];
+                    if (isset($c['replies']) && is_array($c['replies'])) {
+                        $replies = array_map(function($r) {
+                            return [
+                                'id' => $r['id'] ?? uniqid(),
+                                'user_id' => $r['user_id'] ?? null,
+                                'name' => isset($r['name']) ? $this->formatName($r['name']) : 'Anonymous',
+                                'avatar' => $r['avatar'] ?? null,
+                                'content' => $r['content'] ?? '',
+                                'created_at' => $r['created_at'] ?? now()->toISOString(),
+                                'likes' => $r['likes'] ?? [],
+                            ];
+                        }, $c['replies']);
+                    }
                     return [
-                        'id' => $r['id'] ?? uniqid(),
-                        'user_id' => $r['user_id'] ?? null,
-                        'name' => $r['name'] ?? 'Anonymous',
-                        'avatar' => $r['avatar'] ?? null,
-                        'content' => $r['content'] ?? '',
-                        'created_at' => $r['created_at'] ?? now()->toISOString(),
-                        'likes' => $r['likes'] ?? [],
+                        'id' => $c['id'] ?? uniqid(),
+                        'user_id' => $c['user_id'] ?? null,
+                        'name' => isset($c['name']) ? $this->formatName($c['name']) : 'Anonymous',
+                        'avatar' => $c['avatar'] ?? null,
+                        'content' => $c['content'] ?? '',
+                        'created_at' => $c['created_at'] ?? now()->toISOString(),
+                        'likes' => $c['likes'] ?? [],
+                        'replies' => $replies,
                     ];
-                }, $c['replies']) : [],
-            ];
-        }, $list);
+                }, $list);
+            }
+        }
+        return $result;
     }
 
     public function resolveCollaborators($portfolio)
     {
-        if (!$portfolio || !$portfolio->content) return [];
+        if (!$portfolio || !$portfolio->content) {
+            return [];
+        }
         $content = is_string($portfolio->content) ? json_decode($portfolio->content, true) : $portfolio->content;
-        if (!is_array($content)) return [];
+        if (!is_array($content)) {
+            return [];
+        }
         foreach ($content as $block) {
             if ($block && isset($block['type']) && $block['type'] === 'featured_details') {
                 $collaborators = $block['data']['collaborators'] ?? $block['collaborators'] ?? [];
                 if (!empty($collaborators)) {
-                    $names = is_array($collaborators) ? $collaborators : array_map('trim', explode(',', $collaborators));
+                    $names = [];
+                    $statusMap = [];
+                    if (is_array($collaborators)) {
+                        foreach ($collaborators as $c) {
+                            if (is_array($c)) {
+                                $cName = $c['name'] ?? '';
+                                $cStatus = $c['status'] ?? 'pending';
+                            } else {
+                                $cName = (string) $c;
+                                $cStatus = 'accepted';
+                            }
+                            if (!empty(trim($cName))) {
+                                $names[] = $cName;
+                                $statusMap[$cName] = $cStatus;
+                            }
+                        }
+                    } else {
+                        $names = array_map('trim', explode(',', $collaborators));
+                        foreach ($names as $name) {
+                            $statusMap[$name] = 'accepted';
+                        }
+                    }
+                    $names = array_filter($names);
                     return User::whereIn('name', $names)
                         ->select(['id', 'name', 'pagi_username', 'foto_path'])
                         ->get()
-                        ->map(fn($u) => [
-                            'id' => $u->id,
-                            'name' => $u->name,
-                            'pagi_username' => $u->pagi_username,
-                            'avatar' => $u->foto_path ? (str_starts_with($u->foto_path, 'http') ? $u->foto_path : asset('storage/' . $u->foto_path)) : null,
-                        ])->toArray();
+                        ->map(function ($u) use ($statusMap) {
+                            $avatar = null;
+                            if ($u->foto_path) {
+                                $avatar = str_starts_with($u->foto_path, 'http')
+                                    ? $u->foto_path
+                                    : asset('storage/' . $u->foto_path);
+                            }
+                            return [
+                                'id' => $u->id,
+                                'name' => $this->formatName($u->name),
+                                'pagi_username' => $u->pagi_username,
+                                'avatar' => $avatar,
+                                'status' => $statusMap[$u->name] ?? 'pending',
+                            ];
+                        })->toArray();
                 }
             }
         }
@@ -363,7 +405,9 @@ class PagiProfileService
 
     private function resolveCertificateLogos($certificates)
     {
-        if (!is_array($certificates)) return [];
+        if (!is_array($certificates)) {
+            return [];
+        }
         return array_map(function($cert) {
             $issuer = strtolower($cert['issuer'] ?? '');
             $logo = null;
@@ -381,5 +425,35 @@ class PagiProfileService
             $cert['logo'] = $logo;
             return $cert;
         }, $certificates);
+    }
+
+    /**
+     * Recursively sanitize input to prevent HTML/Script tag injection.
+     */
+    private function sanitizeInputRecursive($value)
+    {
+        if (is_array($value)) {
+            foreach ($value as $key => $val) {
+                $value[$key] = $this->sanitizeInputRecursive($val);
+            }
+            return $value;
+        }
+
+        if (is_string($value)) {
+            return strip_tags($value);
+        }
+
+        return $value;
+    }
+
+    private function formatName(?string $name): string
+    {
+        if (!$name) {
+            return '';
+        }
+        if ($name === strtoupper($name)) {
+            return ucwords(strtolower($name));
+        }
+        return $name;
     }
 }

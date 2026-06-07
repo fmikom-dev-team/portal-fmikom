@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
 import { Link, usePage } from "@inertiajs/vue3";
-import { Loader2 } from "lucide-vue-next";
 import axios from "axios";
+import { Loader2 } from "lucide-vue-next";
+import { computed, ref, watch } from "vue";
 import Modal from "../../ui/Modal.vue";
 import OptimizedImage from "../../ui/OptimizedImage.vue";
 
@@ -24,7 +24,8 @@ const FollbackInProgress = ref<Record<number, boolean>>({});
 const relationsSearchQuery = ref("");
 
 const filteredRelations = computed(() => {
-	const list = props.type === "followers" ? followersList.value : followingList.value;
+	const list =
+		props.type === "followers" ? followersList.value : followingList.value;
 	if (!relationsSearchQuery.value.trim()) return list;
 	const q = relationsSearchQuery.value.toLowerCase().trim();
 	return list.filter((item: any) => item.name?.toLowerCase().includes(q));
@@ -49,12 +50,15 @@ const fetchRelations = async () => {
 	}
 };
 
-watch(() => props.show, (newVal) => {
-	if (newVal) {
-		relationsSearchQuery.value = "";
-		fetchRelations();
-	}
-});
+watch(
+	() => props.show,
+	(newVal) => {
+		if (newVal) {
+			relationsSearchQuery.value = "";
+			fetchRelations();
+		}
+	},
+);
 
 const toggleFollowRelation = async (rel: any) => {
 	const senderId = rel.id;

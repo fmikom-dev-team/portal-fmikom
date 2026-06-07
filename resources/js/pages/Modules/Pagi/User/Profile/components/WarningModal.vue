@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import Modal from "../../ui/Modal.vue";
 import { Info } from "lucide-vue-next";
+import Modal from "../../ui/Modal.vue";
 
 defineProps<{
 	show: boolean;
@@ -8,9 +8,7 @@ defineProps<{
 	message: string;
 }>();
 
-defineEmits<{
-	(e: "close"): void;
-}>();
+defineEmits<(e: "close") => void>();
 </script>
 
 <template>

@@ -1,9 +1,9 @@
+import { copyFileSync, mkdirSync } from "node:fs";
+import { resolve } from "node:path";
 import { wayfinder } from "@laravel/vite-plugin-wayfinder";
 import tailwindcss from "@tailwindcss/vite";
 import vue from "@vitejs/plugin-vue";
 import laravel from "laravel-vite-plugin";
-import { copyFileSync, mkdirSync } from "node:fs";
-import { resolve } from "node:path";
 import { defineConfig, type Plugin } from "vite";
 
 /** Copies ffmpeg-core.{js,wasm} from node_modules to public/ so they can be
@@ -86,7 +86,7 @@ export default defineConfig({
 						"@editorjs/link-autocomplete",
 						"@sotaproject/strikethrough",
 					],
-					"ffmpeg": ["@ffmpeg/ffmpeg", "@ffmpeg/util"],
+					ffmpeg: ["@ffmpeg/ffmpeg", "@ffmpeg/util"],
 				},
 			},
 		},

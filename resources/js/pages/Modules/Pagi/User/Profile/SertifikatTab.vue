@@ -1,13 +1,24 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from "vue";
-import { 
-	Plus, Pencil, Trash2, Loader2, Award, Calendar, ExternalLink, 
-	ChevronLeft, ChevronRight, Tags, FileText, UploadCloud, X,
-	Image as ImageIcon
+import axios from "axios";
+import {
+	Award,
+	Calendar,
+	ChevronLeft,
+	ChevronRight,
+	ExternalLink,
+	FileText,
+	Image as ImageIcon,
+	Loader2,
+	Pencil,
+	Plus,
+	Tags,
+	Trash2,
+	UploadCloud,
+	X,
 } from "lucide-vue-next";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import Modal from "../ui/Modal.vue";
 import Progress from "../ui/Progress.vue";
-import axios from "axios";
 
 // ─── PDF.js Dynamic Loader & Thumbnail Generation ──────────────────────────
 const loadPdfJs = () => {
@@ -16,21 +27,27 @@ const loadPdfJs = () => {
 			resolve((globalThis as any).pdfjsLib);
 			return;
 		}
-		const script = document.createElement('script');
-		script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+		const script = document.createElement("script");
+		script.src =
+			"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
 		script.onload = () => {
 			const pdfjs = (globalThis as any).pdfjsLib;
 			// Load worker code via fetch and convert to Blob URL to bypass CORS limits
-			fetch('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js')
-				.then(res => res.text())
-				.then(workerCode => {
-					const blob = new Blob([workerCode], { type: 'application/javascript' });
+			fetch(
+				"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
+			)
+				.then((res) => res.text())
+				.then((workerCode) => {
+					const blob = new Blob([workerCode], {
+						type: "application/javascript",
+					});
 					pdfjs.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
 					resolve(pdfjs);
 				})
 				.catch(() => {
 					// Fallback to direct CDN URL
-					pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+					pdfjs.GlobalWorkerOptions.workerSrc =
+						"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 					resolve(pdfjs);
 				});
 		};
@@ -44,80 +61,90 @@ const generatePdfThumbnail = async (file: File): Promise<Blob> => {
 	const arrayBuffer = await file.arrayBuffer();
 	const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
 	const page = await pdf.getPage(1);
-	
+
 	const viewport = page.getViewport({ scale: 1 });
-	const canvas = document.createElement('canvas');
-	const context = canvas.getContext('2d');
-	
+	const canvas = document.createElement("canvas");
+	const context = canvas.getContext("2d");
+
 	const desiredWidth = 400;
 	const scale = desiredWidth / viewport.width;
 	const scaledViewport = page.getViewport({ scale });
-	
+
 	canvas.width = scaledViewport.width;
 	canvas.height = scaledViewport.height;
-	
+
 	if (context) {
-		await page.render({ canvasContext: context, viewport: scaledViewport }).promise;
+		await page.render({ canvasContext: context, viewport: scaledViewport })
+			.promise;
 		return new Promise<Blob>((resolve) => {
-			canvas.toBlob((blob) => {
-				if (blob) {
-					resolve(blob);
-				} else {
-					canvas.toBlob((jpgBlob) => {
-						resolve(jpgBlob || new Blob());
-					}, 'image/jpeg', 0.8);
-				}
-			}, 'image/webp', 0.8);
+			canvas.toBlob(
+				(blob) => {
+					if (blob) {
+						resolve(blob);
+					} else {
+						canvas.toBlob(
+							(jpgBlob) => {
+								resolve(jpgBlob || new Blob());
+							},
+							"image/jpeg",
+							0.8,
+						);
+					}
+				},
+				"image/webp",
+				0.8,
+			);
 		});
 	}
-	throw new Error('Canvas context not available');
+	throw new Error("Canvas context not available");
 };
 
 const generatePdfThumbnailFromUrl = async (url: string): Promise<string> => {
 	const pdfjs = await loadPdfJs();
 	const pdf = await pdfjs.getDocument(url).promise;
 	const page = await pdf.getPage(1);
-	
+
 	const viewport = page.getViewport({ scale: 1 });
-	const canvas = document.createElement('canvas');
-	const context = canvas.getContext('2d');
-	
+	const canvas = document.createElement("canvas");
+	const context = canvas.getContext("2d");
+
 	const desiredWidth = 150;
 	const scale = desiredWidth / viewport.width;
 	const scaledViewport = page.getViewport({ scale });
-	
+
 	canvas.width = scaledViewport.width;
 	canvas.height = scaledViewport.height;
-	
+
 	if (context) {
-		await page.render({ canvasContext: context, viewport: scaledViewport }).promise;
-		return canvas.toDataURL('image/jpeg', 0.85);
+		await page.render({ canvasContext: context, viewport: scaledViewport })
+			.promise;
+		return canvas.toDataURL("image/jpeg", 0.85);
 	}
-	throw new Error('Canvas context not available');
+	throw new Error("Canvas context not available");
 };
 
 const pdfThumbnails = ref<Record<string, string>>({});
 const generatingPdfPaths = ref<Record<string, boolean>>({});
 
+import awsIcon from "thesvg/aws";
+import canvaIcon from "thesvg/canva";
+import ciscoIcon from "thesvg/cisco";
+import courseraIcon from "thesvg/coursera";
+import credlyIcon from "thesvg/credly";
 // ─── Organization Logo Imports from thesvg ─────────────────────────────────
-import googleIcon from 'thesvg/google';
-import microsoftIcon from 'thesvg/microsoft';
-import awsIcon from 'thesvg/aws';
-import courseraIcon from 'thesvg/coursera';
-import udemyIcon from 'thesvg/udemy';
-import ciscoIcon from 'thesvg/cisco';
-import oracleIcon from 'thesvg/oracle';
-import redHatIcon from 'thesvg/red-hat';
-import ibmIcon from 'thesvg/ibm';
-import credlyIcon from 'thesvg/credly';
-import linkedinIcon from 'thesvg/linkedin';
-import canvaIcon from 'thesvg/canva';
+import googleIcon from "thesvg/google";
+import ibmIcon from "thesvg/ibm";
+import linkedinIcon from "thesvg/linkedin";
+import microsoftIcon from "thesvg/microsoft";
+import oracleIcon from "thesvg/oracle";
+import redHatIcon from "thesvg/red-hat";
+import udemyIcon from "thesvg/udemy";
 
 // Build data-uri: always use the colorful 'default' SVG (shown on a light background)
 function toDataUri(icon: any): string {
 	// Prefer: variants.default (colorful) > icon.svg > mono
 	const svg = (icon.variants?.default ?? icon.svg) as string;
-	return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+	return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
 }
 
 const props = defineProps<{
@@ -131,79 +158,103 @@ const props = defineProps<{
 		credentialId?: string;
 		credentialUrl?: string;
 		skills?: string[];
-		media?: Array<{ name: string; path: string; type?: string; thumbnail_path?: string }>;
+		media?: Array<{
+			name: string;
+			path: string;
+			type?: string;
+			thumbnail_path?: string;
+		}>;
 	}>;
 	isLoading?: boolean;
 }>();
 
 const emit = defineEmits<{
-	(e: 'add-toast', message: string, type: string): void;
-	(e: 'update-certificates', list: any[]): void;
+	(e: "add-toast", message: string, type: string): void;
+	(e: "update-certificates", list: any[]): void;
 }>();
 
 // Mutable local list of certificates
 const localCerts = ref<any[]>([...(props.certificates || [])]);
-watch(() => props.certificates, (newVal) => {
-	localCerts.value = [...(newVal || [])];
-}, { deep: true });
+watch(
+	() => props.certificates,
+	(newVal) => {
+		localCerts.value = [...(newVal || [])];
+	},
+	{ deep: true },
+);
 
 const loadMissingPdfThumbnails = () => {
 	if (!localCerts.value) return;
-	localCerts.value.forEach(cert => {
+	localCerts.value.forEach((cert) => {
 		if (cert.media) {
 			cert.media.forEach((file: any) => {
-				const isPdf = file.type === 'pdf' || file.path.endsWith('.pdf');
+				const isPdf = file.type === "pdf" || file.path.endsWith(".pdf");
 				if (isPdf && !file.thumbnail_path) {
 					const path = file.path;
-					if (pdfThumbnails.value[path] || generatingPdfPaths.value[path]) return;
-					
+					if (pdfThumbnails.value[path] || generatingPdfPaths.value[path])
+						return;
+
 					generatingPdfPaths.value[path] = true;
-					const url = '/storage/' + path;
-					generatePdfThumbnailFromUrl(url).then(dataUrl => {
-						pdfThumbnails.value[path] = dataUrl;
-						generatingPdfPaths.value[path] = false;
-					}).catch(err => {
-						console.error("Failed to generate client-side thumbnail for", path, err);
-						generatingPdfPaths.value[path] = false;
-					});
+					const url = `/storage/${path}`;
+					generatePdfThumbnailFromUrl(url)
+						.then((dataUrl) => {
+							pdfThumbnails.value[path] = dataUrl;
+							generatingPdfPaths.value[path] = false;
+						})
+						.catch((err) => {
+							console.error(
+								"Failed to generate client-side thumbnail for",
+								path,
+								err,
+							);
+							generatingPdfPaths.value[path] = false;
+						});
 				}
 			});
 		}
 	});
 };
 
-watch(localCerts, () => {
-	loadMissingPdfThumbnails();
-}, { deep: true, immediate: true });
+watch(
+	localCerts,
+	() => {
+		loadMissingPdfThumbnails();
+	},
+	{ deep: true, immediate: true },
+);
 
 // Form state - Add Modal
 const showAddModal = ref(false);
-const formTitle = ref('');
-const formIssuer = ref('');
-const formDate = ref('');
-const formExpirationDate = ref('');
-const formCredentialId = ref('');
-const formCredentialUrl = ref('');
+const formTitle = ref("");
+const formIssuer = ref("");
+const formDate = ref("");
+const formExpirationDate = ref("");
+const formCredentialId = ref("");
+const formCredentialUrl = ref("");
 const formSkills = ref<string[]>([]);
 const formNewMedia = ref<File[]>([]);
 const formNewMediaThumbs = ref<Array<File | null>>([]);
-const formNewMediaPreviews = ref<Array<{ name: string; url: string; type: string; isGenerating: boolean }>>([]);
+const formNewMediaPreviews = ref<
+	Array<{ name: string; url: string; type: string; isGenerating: boolean }>
+>([]);
 const isSubmittingAdd = ref(false);
 
 // Form state - Edit Modal
 const showEditModal = ref(false);
 const editingCertId = ref<number | null>(null);
-const editTitle = ref('');
-const editIssuer = ref('');
-const editDate = ref('');
-const editExpirationDate = ref('');
-const editCredentialId = ref('');
-const editCredentialUrl = ref('');
+const editTitle = ref("");
+const editIssuer = ref("");
+const editDate = ref("");
+const editExpirationDate = ref("");
+const editCredentialId = ref("");
+const editCredentialUrl = ref("");
 const editSkills = ref<string[]>([]);
 const editExistingMedia = ref<any[]>([]);
 const editNewMedia = ref<File[]>([]);
 const editNewMediaThumbs = ref<Array<File | null>>([]);
-const editNewMediaPreviews = ref<Array<{ name: string; url: string; type: string; isGenerating: boolean }>>([]);
+const editNewMediaPreviews = ref<
+	Array<{ name: string; url: string; type: string; isGenerating: boolean }>
+>([]);
 const isSavingEdit = ref(false);
 
 const uploadProgress = ref(0);
@@ -211,7 +262,7 @@ const isUploading = ref(false);
 
 // Date Pickers State
 const pickerYear = ref(new Date().getFullYear());
-const skillInput = ref('');
+const skillInput = ref("");
 const showSkillSuggestions = ref(false);
 const addFileInput = ref<HTMLInputElement | null>(null);
 const editFileInput = ref<HTMLInputElement | null>(null);
@@ -225,8 +276,8 @@ const showAddAutocomplete = ref(false);
 const showEditAutocomplete = ref(false);
 
 // Logo lookup states
-const formLogoUrl = ref('');
-const editLogoUrl = ref('');
+const formLogoUrl = ref("");
+const editLogoUrl = ref("");
 const showAddLogoUpload = ref(false);
 const showEditLogoUpload = ref(false);
 const isCheckingAddLogo = ref(false);
@@ -242,24 +293,26 @@ const checkOrganizationLogo = async (name: string, isEdit: boolean) => {
 	const cleanName = name.trim();
 	if (!cleanName) {
 		if (isEdit) {
-			editLogoUrl.value = '';
+			editLogoUrl.value = "";
 			showEditLogoUpload.value = false;
 		} else {
-			formLogoUrl.value = '';
+			formLogoUrl.value = "";
 			showAddLogoUpload.value = false;
 		}
 		return;
 	}
 
 	// 1. Check popular organizations client-side
-	const isPopular = POPULAR_ORGANIZATIONS.some(o => o.name.toLowerCase() === cleanName.toLowerCase());
+	const isPopular = POPULAR_ORGANIZATIONS.some(
+		(o) => o.name.toLowerCase() === cleanName.toLowerCase(),
+	);
 	if (isPopular) {
 		const popularLogo = getOrgLogo(cleanName);
 		if (isEdit) {
-			editLogoUrl.value = popularLogo || '';
+			editLogoUrl.value = popularLogo || "";
 			showEditLogoUpload.value = false;
 		} else {
-			formLogoUrl.value = popularLogo || '';
+			formLogoUrl.value = popularLogo || "";
 			showAddLogoUpload.value = false;
 		}
 		return;
@@ -270,8 +323,8 @@ const checkOrganizationLogo = async (name: string, isEdit: boolean) => {
 	else isCheckingAddLogo.value = true;
 
 	try {
-		const res = await axios.get('/pagi/certificates/org-logo', {
-			params: { name: cleanName }
+		const res = await axios.get("/pagi/certificates/org-logo", {
+			params: { name: cleanName },
 		});
 
 		if (res.data.success) {
@@ -283,19 +336,19 @@ const checkOrganizationLogo = async (name: string, isEdit: boolean) => {
 				showAddLogoUpload.value = false;
 			}
 		} else if (isEdit) {
-			editLogoUrl.value = '';
+			editLogoUrl.value = "";
 			showEditLogoUpload.value = true;
 		} else {
-			formLogoUrl.value = '';
+			formLogoUrl.value = "";
 			showAddLogoUpload.value = true;
 		}
 	} catch (err) {
 		console.error("Failed to check logo:", err);
 		if (isEdit) {
-			editLogoUrl.value = '';
+			editLogoUrl.value = "";
 			showEditLogoUpload.value = true;
 		} else {
-			formLogoUrl.value = '';
+			formLogoUrl.value = "";
 			showAddLogoUpload.value = true;
 		}
 	} finally {
@@ -328,34 +381,44 @@ const handleLogoUpload = async (e: Event, isEdit: boolean) => {
 
 	const issuerName = isEdit ? editIssuer.value : formIssuer.value;
 	if (!issuerName.trim()) {
-		emit('add-toast', 'Please type the organization name first.', 'error');
-		target.value = '';
+		emit("add-toast", "Please type the organization name first.", "error");
+		target.value = "";
 		return;
 	}
 
-	const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+	const allowedMimes = [
+		"image/jpeg",
+		"image/png",
+		"image/webp",
+		"image/gif",
+		"image/svg+xml",
+	];
 	if (!allowedMimes.includes(file.type)) {
-		emit('add-toast', 'Format logo tidak valid. Gunakan JPEG, PNG, WebP, GIF, atau SVG.', 'error');
-		target.value = '';
+		emit(
+			"add-toast",
+			"Format logo tidak valid. Gunakan JPEG, PNG, WebP, GIF, atau SVG.",
+			"error",
+		);
+		target.value = "";
 		return;
 	}
 
 	if (file.size > 2 * 1024 * 1024) {
-		emit('add-toast', 'Ukuran logo maksimal adalah 2MB.', 'error');
-		target.value = '';
+		emit("add-toast", "Ukuran logo maksimal adalah 2MB.", "error");
+		target.value = "";
 		return;
 	}
 
 	const formData = new FormData();
-	formData.append('name', issuerName.trim());
-	formData.append('logo', file);
+	formData.append("name", issuerName.trim());
+	formData.append("logo", file);
 
 	if (isEdit) isUploadingEditLogo.value = true;
 	else isUploadingAddLogo.value = true;
 
 	try {
-		const res = await axios.post('/pagi/certificates/org-logo', formData, {
-			headers: { 'Content-Type': 'multipart/form-data' }
+		const res = await axios.post("/pagi/certificates/org-logo", formData, {
+			headers: { "Content-Type": "multipart/form-data" },
 		});
 
 		if (res.data.success) {
@@ -365,85 +428,126 @@ const handleLogoUpload = async (e: Event, isEdit: boolean) => {
 			} else {
 				formLogoUrl.value = res.data.url;
 			}
-			emit('add-toast', 'Logo successfully uploaded and cached!', 'success');
+			emit("add-toast", "Logo successfully uploaded and cached!", "success");
 		}
 	} catch (err: any) {
-		emit('add-toast', err.response?.data?.message || 'Failed to upload logo.', 'error');
+		emit(
+			"add-toast",
+			err.response?.data?.message || "Failed to upload logo.",
+			"error",
+		);
 	} finally {
 		if (isEdit) isUploadingEditLogo.value = false;
 		else isUploadingAddLogo.value = false;
-		target.value = '';
+		target.value = "";
 	}
 };
 
 // Curated popular issuing organizations with thesvg logos (full-color, authentic)
 const POPULAR_ORGANIZATIONS = [
-	{ name: "Google",                       hex: '#4285F4', logo: toDataUri(googleIcon) },
-	{ name: "Microsoft",                    hex: '#00A4EF', logo: toDataUri(microsoftIcon) },
-	{ name: "Amazon Web Services (AWS)",    hex: '#232F3E', logo: toDataUri(awsIcon) },
-	{ name: "Coursera",                     hex: '#0056D2', logo: toDataUri(courseraIcon) },
-	{ name: "Udemy",                        hex: '#A435F0', logo: toDataUri(udemyIcon) },
-	{ name: "Cisco",                        hex: '#1BA0D7', logo: toDataUri(ciscoIcon) },
-	{ name: "Oracle",                       hex: '#F80000', logo: toDataUri(oracleIcon) },
-	{ name: "Red Hat",                      hex: '#EE0000', logo: toDataUri(redHatIcon) },
-	{ name: "IBM",                          hex: '#1F70C1', logo: toDataUri(ibmIcon) },
-	{ name: "LinkedIn",                     hex: '#0A66C2', logo: toDataUri(linkedinIcon) },
-	{ name: "Credly",                       hex: '#FF6B00', logo: toDataUri(credlyIcon) },
-	{ name: "Canva",                        hex: '#00C4CC', logo: toDataUri(canvaIcon) },
-	{ name: "BAN-PT",                       hex: '#1a56db', logo: null },
-	{ name: "FMIKOM Academy",               hex: '#7c3aed', logo: null },
+	{ name: "Google", hex: "#4285F4", logo: toDataUri(googleIcon) },
+	{ name: "Microsoft", hex: "#00A4EF", logo: toDataUri(microsoftIcon) },
+	{
+		name: "Amazon Web Services (AWS)",
+		hex: "#232F3E",
+		logo: toDataUri(awsIcon),
+	},
+	{ name: "Coursera", hex: "#0056D2", logo: toDataUri(courseraIcon) },
+	{ name: "Udemy", hex: "#A435F0", logo: toDataUri(udemyIcon) },
+	{ name: "Cisco", hex: "#1BA0D7", logo: toDataUri(ciscoIcon) },
+	{ name: "Oracle", hex: "#F80000", logo: toDataUri(oracleIcon) },
+	{ name: "Red Hat", hex: "#EE0000", logo: toDataUri(redHatIcon) },
+	{ name: "IBM", hex: "#1F70C1", logo: toDataUri(ibmIcon) },
+	{ name: "LinkedIn", hex: "#0A66C2", logo: toDataUri(linkedinIcon) },
+	{ name: "Credly", hex: "#FF6B00", logo: toDataUri(credlyIcon) },
+	{ name: "Canva", hex: "#00C4CC", logo: toDataUri(canvaIcon) },
+	{ name: "BAN-PT", hex: "#1a56db", logo: null },
+	{ name: "FMIKOM Academy", hex: "#7c3aed", logo: null },
 ];
 
 // Helper: find logo/hex for a given issuer name (used in cert card display)
 const getOrgLogo = (issuerName: string): string | null => {
 	if (!issuerName) return null;
 	const lc = issuerName.toLowerCase().trim();
-	const found = POPULAR_ORGANIZATIONS.find(o => o.name.toLowerCase() === lc);
+	const found = POPULAR_ORGANIZATIONS.find((o) => o.name.toLowerCase() === lc);
 	return found?.logo ?? null;
 };
 
 const getOrgHex = (issuerName: string): string => {
-	if (!issuerName) return '#6366f1';
+	if (!issuerName) return "#6366f1";
 	const lc = issuerName.toLowerCase().trim();
-	const found = POPULAR_ORGANIZATIONS.find(o => o.name.toLowerCase() === lc);
-	return found?.hex ?? '#6366f1';
+	const found = POPULAR_ORGANIZATIONS.find((o) => o.name.toLowerCase() === lc);
+	return found?.hex ?? "#6366f1";
 };
 
 // FMIKOM Skills Suggestions
 const SKILLS_SUGGESTIONS = [
-	"Figma", "UI/UX Design", "Vue.js", "Laravel", "Tailwind CSS", 
-	"TypeScript", "Git", "Docker", "Database Systems", "Cloud Computing",
-	"Algoritma & Struktur Data", "Analisis Data", "Artificial Intelligence"
+	"Figma",
+	"UI/UX Design",
+	"Vue.js",
+	"Laravel",
+	"Tailwind CSS",
+	"TypeScript",
+	"Git",
+	"Docker",
+	"Database Systems",
+	"Cloud Computing",
+	"Algoritma & Struktur Data",
+	"Analisis Data",
+	"Artificial Intelligence",
 ];
 
 // Month List
 const MONTHS = [
-	{ name: 'January', val: '01' }, { name: 'February', val: '02' }, { name: 'March', val: '03' }, { name: 'April', val: '04' },
-	{ name: 'May', val: '05' }, { name: 'June', val: '06' }, { name: 'July', val: '07' }, { name: 'August', val: '08' },
-	{ name: 'September', val: '09' }, { name: 'October', val: '10' }, { name: 'November', val: '11' }, { name: 'December', val: '12' }
+	{ name: "January", val: "01" },
+	{ name: "February", val: "02" },
+	{ name: "March", val: "03" },
+	{ name: "April", val: "04" },
+	{ name: "May", val: "05" },
+	{ name: "June", val: "06" },
+	{ name: "July", val: "07" },
+	{ name: "August", val: "08" },
+	{ name: "September", val: "09" },
+	{ name: "October", val: "10" },
+	{ name: "November", val: "11" },
+	{ name: "December", val: "12" },
 ];
 
 // Autocomplete computations
 const filteredAddIssuers = computed(() => {
 	const val = formIssuer.value.toLowerCase().trim();
 	if (!val) return POPULAR_ORGANIZATIONS;
-	return POPULAR_ORGANIZATIONS.filter(org => org.name.toLowerCase().includes(val));
+	return POPULAR_ORGANIZATIONS.filter((org) =>
+		org.name.toLowerCase().includes(val),
+	);
 });
 
 const filteredEditIssuers = computed(() => {
 	const val = editIssuer.value.toLowerCase().trim();
 	if (!val) return POPULAR_ORGANIZATIONS;
-	return POPULAR_ORGANIZATIONS.filter(org => org.name.toLowerCase().includes(val));
+	return POPULAR_ORGANIZATIONS.filter((org) =>
+		org.name.toLowerCase().includes(val),
+	);
 });
 
 // Helper: Format Date string (e.g. 2026-01 to "January 2026")
 const formatMonthYear = (dateStr: string) => {
-	if (!dateStr) return '';
-	if (!dateStr.includes('-')) return dateStr;
-	const [year, month] = dateStr.split('-');
+	if (!dateStr) return "";
+	if (!dateStr.includes("-")) return dateStr;
+	const [year, month] = dateStr.split("-");
 	const monthNames = [
-		'January', 'February', 'March', 'April', 'May', 'June',
-		'July', 'August', 'September', 'October', 'November', 'December'
+		"January",
+		"February",
+		"March",
+		"April",
+		"May",
+		"June",
+		"July",
+		"August",
+		"September",
+		"October",
+		"November",
+		"December",
 	];
 	const mIdx = Number.parseInt(month, 10) - 1;
 	return `${monthNames[mIdx] || month} ${year}`;
@@ -461,8 +565,12 @@ const selectEditIssuer = (name: string) => {
 };
 
 // Year Picker Actions
-const prevYear = () => { pickerYear.value--; };
-const nextYear = () => { pickerYear.value++; };
+const prevYear = () => {
+	pickerYear.value--;
+};
+const nextYear = () => {
+	pickerYear.value++;
+};
 
 // Date Selection
 const selectAddIssueDate = (monthVal: string) => {
@@ -490,7 +598,7 @@ const addSkill = (skill: string) => {
 	const s = skill.trim();
 	if (!s) return;
 	if (formSkills.value.includes(s) || editSkills.value.includes(s)) {
-		skillInput.value = '';
+		skillInput.value = "";
 		showSkillSuggestions.value = false;
 		return;
 	}
@@ -499,7 +607,7 @@ const addSkill = (skill: string) => {
 	} else if (showEditModal.value) {
 		editSkills.value.push(s);
 	}
-	skillInput.value = '';
+	skillInput.value = "";
 	showSkillSuggestions.value = false;
 };
 
@@ -515,37 +623,47 @@ const removeSkill = (index: number) => {
 const filteredSkills = computed(() => {
 	const val = skillInput.value.toLowerCase().trim();
 	if (!val) return SKILLS_SUGGESTIONS;
-	return SKILLS_SUGGESTIONS.filter(s => s.toLowerCase().includes(val));
+	return SKILLS_SUGGESTIONS.filter((s) => s.toLowerCase().includes(val));
 });
 
 // File validation logic (JPEG, PNG, WebP, PDF; Max 20MB)
 const validateAndAddFile = (file: File, isEdit: boolean) => {
-	const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
+	const allowedMimes = [
+		"image/jpeg",
+		"image/png",
+		"image/webp",
+		"image/gif",
+		"application/pdf",
+	];
 	if (!allowedMimes.includes(file.type)) {
-		emit('add-toast', 'Format file tidak valid. Gunakan JPEG, PNG, WebP, GIF, atau PDF.', 'error');
+		emit(
+			"add-toast",
+			"Format file tidak valid. Gunakan JPEG, PNG, WebP, GIF, atau PDF.",
+			"error",
+		);
 		return;
 	}
 	const maxSize = 20 * 1024 * 1024; // 20MB
 	if (file.size > maxSize) {
-		emit('add-toast', 'Ukuran file maksimal adalah 20MB.', 'error');
+		emit("add-toast", "Ukuran file maksimal adalah 20MB.", "error");
 		return;
 	}
 
-	const currentCount = isEdit 
+	const currentCount = isEdit
 		? editExistingMedia.value.length + editNewMedia.value.length
 		: formNewMedia.value.length;
 
 	if (currentCount >= 3) {
-		emit('add-toast', 'Maksimal lampiran adalah 3 file.', 'error');
+		emit("add-toast", "Maksimal lampiran adalah 3 file.", "error");
 		return;
 	}
 
-	const isPdf = file.type === 'application/pdf';
+	const isPdf = file.type === "application/pdf";
 	const previewObj = {
 		name: file.name,
-		url: isPdf ? '' : URL.createObjectURL(file),
-		type: isPdf ? 'pdf' : 'image',
-		isGenerating: isPdf
+		url: isPdf ? "" : URL.createObjectURL(file),
+		type: isPdf ? "pdf" : "image",
+		isGenerating: isPdf,
 	};
 
 	if (isEdit) {
@@ -553,17 +671,21 @@ const validateAndAddFile = (file: File, isEdit: boolean) => {
 		editNewMediaPreviews.value.push(previewObj);
 		const idx = editNewMedia.value.length - 1;
 		editNewMediaThumbs.value.push(null);
-		
+
 		if (isPdf) {
-			generatePdfThumbnail(file).then((blob) => {
-				const thumbFile = new File([blob], file.name + ".webp", { type: "image/webp" });
-				editNewMediaThumbs.value[idx] = thumbFile;
-				editNewMediaPreviews.value[idx].url = URL.createObjectURL(blob);
-				editNewMediaPreviews.value[idx].isGenerating = false;
-			}).catch((err) => {
-				console.error("PDF thumbnail generation failed:", err);
-				editNewMediaPreviews.value[idx].isGenerating = false;
-			});
+			generatePdfThumbnail(file)
+				.then((blob) => {
+					const thumbFile = new File([blob], `${file.name}.webp`, {
+						type: "image/webp",
+					});
+					editNewMediaThumbs.value[idx] = thumbFile;
+					editNewMediaPreviews.value[idx].url = URL.createObjectURL(blob);
+					editNewMediaPreviews.value[idx].isGenerating = false;
+				})
+				.catch((err) => {
+					console.error("PDF thumbnail generation failed:", err);
+					editNewMediaPreviews.value[idx].isGenerating = false;
+				});
 		}
 	} else {
 		formNewMedia.value.push(file);
@@ -572,15 +694,19 @@ const validateAndAddFile = (file: File, isEdit: boolean) => {
 		formNewMediaThumbs.value.push(null);
 
 		if (isPdf) {
-			generatePdfThumbnail(file).then((blob) => {
-				const thumbFile = new File([blob], file.name + ".webp", { type: "image/webp" });
-				formNewMediaThumbs.value[idx] = thumbFile;
-				formNewMediaPreviews.value[idx].url = URL.createObjectURL(blob);
-				formNewMediaPreviews.value[idx].isGenerating = false;
-			}).catch((err) => {
-				console.error("PDF thumbnail generation failed:", err);
-				formNewMediaPreviews.value[idx].isGenerating = false;
-			});
+			generatePdfThumbnail(file)
+				.then((blob) => {
+					const thumbFile = new File([blob], `${file.name}.webp`, {
+						type: "image/webp",
+					});
+					formNewMediaThumbs.value[idx] = thumbFile;
+					formNewMediaPreviews.value[idx].url = URL.createObjectURL(blob);
+					formNewMediaPreviews.value[idx].isGenerating = false;
+				})
+				.catch((err) => {
+					console.error("PDF thumbnail generation failed:", err);
+					formNewMediaPreviews.value[idx].isGenerating = false;
+				});
 		}
 	}
 };
@@ -603,14 +729,14 @@ const handleFileChange = (e: Event, isEdit: boolean) => {
 			validateAndAddFile(file, isEdit);
 		}
 	}
-	target.value = ''; // Reset input element
+	target.value = ""; // Reset input element
 };
 
 // Remove file from list
 const removeNewFile = (index: number, isEdit: boolean) => {
 	if (isEdit) {
 		const preview = editNewMediaPreviews.value[index];
-		if (preview && preview.url && !preview.url.startsWith('http')) {
+		if (preview?.url && !preview.url.startsWith("http")) {
 			URL.revokeObjectURL(preview.url);
 		}
 		editNewMedia.value.splice(index, 1);
@@ -618,7 +744,7 @@ const removeNewFile = (index: number, isEdit: boolean) => {
 		editNewMediaPreviews.value.splice(index, 1);
 	} else {
 		const preview = formNewMediaPreviews.value[index];
-		if (preview && preview.url && !preview.url.startsWith('http')) {
+		if (preview?.url && !preview.url.startsWith("http")) {
 			URL.revokeObjectURL(preview.url);
 		}
 		formNewMedia.value.splice(index, 1);
@@ -633,14 +759,14 @@ const removeExistingFile = (index: number) => {
 
 // CRUD Submits
 const openAddModal = () => {
-	formTitle.value = '';
-	formIssuer.value = '';
-	formLogoUrl.value = '';
+	formTitle.value = "";
+	formIssuer.value = "";
+	formLogoUrl.value = "";
 	showAddLogoUpload.value = false;
-	formDate.value = '';
-	formExpirationDate.value = '';
-	formCredentialId.value = '';
-	formCredentialUrl.value = '';
+	formDate.value = "";
+	formExpirationDate.value = "";
+	formCredentialId.value = "";
+	formCredentialUrl.value = "";
 	formSkills.value = [];
 	formNewMedia.value = [];
 	formNewMediaThumbs.value = [];
@@ -654,8 +780,12 @@ const closeAddModal = () => {
 };
 
 const handleAddCertificate = async () => {
-	if (!formTitle.value.trim() || !formIssuer.value.trim() || !formDate.value.trim()) {
-		emit('add-toast', 'Please fill in all required fields.', 'error');
+	if (
+		!formTitle.value.trim() ||
+		!formIssuer.value.trim() ||
+		!formDate.value.trim()
+	) {
+		emit("add-toast", "Please fill in all required fields.", "error");
 		return;
 	}
 
@@ -664,39 +794,48 @@ const handleAddCertificate = async () => {
 	uploadProgress.value = 0;
 
 	const formData = new FormData();
-	formData.append('title', formTitle.value.trim());
-	formData.append('issuer', formIssuer.value.trim());
-	formData.append('date', formDate.value.trim());
-	formData.append('expirationDate', formExpirationDate.value.trim());
-	formData.append('credentialId', formCredentialId.value.trim());
-	formData.append('credentialUrl', formCredentialUrl.value.trim());
-	formData.append('skills', JSON.stringify(formSkills.value));
+	formData.append("title", formTitle.value.trim());
+	formData.append("issuer", formIssuer.value.trim());
+	formData.append("date", formDate.value.trim());
+	formData.append("expirationDate", formExpirationDate.value.trim());
+	formData.append("credentialId", formCredentialId.value.trim());
+	formData.append("credentialUrl", formCredentialUrl.value.trim());
+	formData.append("skills", JSON.stringify(formSkills.value));
 
 	formNewMedia.value.forEach((file, index) => {
 		formData.append(`newMedia[${index}]`, file);
 		if (formNewMediaThumbs.value[index]) {
-			formData.append(`newMediaThumb[${index}]`, formNewMediaThumbs.value[index]!);
+			formData.append(
+				`newMediaThumb[${index}]`,
+				formNewMediaThumbs.value[index]!,
+			);
 		}
 	});
 
 	try {
-		const res = await axios.post('/pagi/certificates', formData, {
-			headers: { 'Content-Type': 'multipart/form-data' },
+		const res = await axios.post("/pagi/certificates", formData, {
+			headers: { "Content-Type": "multipart/form-data" },
 			onUploadProgress: (progressEvent) => {
 				if (progressEvent.total) {
-					uploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+					uploadProgress.value = Math.round(
+						(progressEvent.loaded * 100) / progressEvent.total,
+					);
 				}
-			}
+			},
 		});
 		if (res.data.success) {
 			localCerts.value = res.data.certificates;
-			emit('update-certificates', res.data.certificates);
-			emit('add-toast', 'Certificate uploaded successfully!', 'success');
+			emit("update-certificates", res.data.certificates);
+			emit("add-toast", "Certificate uploaded successfully!", "success");
 			isSubmittingAdd.value = false;
 			closeAddModal();
 		}
 	} catch (err: any) {
-		emit('add-toast', err.response?.data?.message || 'Failed to upload certificate.', 'error');
+		emit(
+			"add-toast",
+			err.response?.data?.message || "Failed to upload certificate.",
+			"error",
+		);
 	} finally {
 		isSubmittingAdd.value = false;
 		isUploading.value = false;
@@ -706,24 +845,24 @@ const handleAddCertificate = async () => {
 
 const openEditModal = (cert: any) => {
 	editingCertId.value = cert.id;
-	editTitle.value = cert.title || '';
-	editIssuer.value = cert.issuer || '';
-	editLogoUrl.value = cert.logo_url || '';
+	editTitle.value = cert.title || "";
+	editIssuer.value = cert.issuer || "";
+	editLogoUrl.value = cert.logo_url || "";
 	showEditLogoUpload.value = false;
 	if (!cert.logo_url && cert.issuer) {
 		checkOrganizationLogo(cert.issuer, true);
 	}
-	editDate.value = cert.date || '';
-	editExpirationDate.value = cert.expirationDate || '';
-	editCredentialId.value = cert.credentialId || '';
-	editCredentialUrl.value = cert.credentialUrl || '';
+	editDate.value = cert.date || "";
+	editExpirationDate.value = cert.expirationDate || "";
+	editCredentialId.value = cert.credentialId || "";
+	editCredentialUrl.value = cert.credentialUrl || "";
 	editSkills.value = [...(cert.skills || [])];
 	editExistingMedia.value = [...(cert.media || [])];
 	editNewMedia.value = [];
 	editNewMediaThumbs.value = [];
 	editNewMediaPreviews.value = [];
-	pickerYear.value = cert.date && cert.date.includes('-') 
-		? Number.parseInt(cert.date.split('-')[0], 10) 
+	pickerYear.value = cert.date?.includes("-")
+		? Number.parseInt(cert.date.split("-")[0], 10)
 		: new Date().getFullYear();
 	showEditModal.value = true;
 };
@@ -734,8 +873,12 @@ const closeEditModal = () => {
 
 const handleSaveEdit = async () => {
 	if (!editingCertId.value) return;
-	if (!editTitle.value.trim() || !editIssuer.value.trim() || !editDate.value.trim()) {
-		emit('add-toast', 'Please fill in all required fields.', 'error');
+	if (
+		!editTitle.value.trim() ||
+		!editIssuer.value.trim() ||
+		!editDate.value.trim()
+	) {
+		emit("add-toast", "Please fill in all required fields.", "error");
 		return;
 	}
 
@@ -745,41 +888,54 @@ const handleSaveEdit = async () => {
 
 	const formData = new FormData();
 	// Method spoofing for PUT since FormData doesn't support PUT natively in some PHP specs
-	formData.append('_method', 'PUT');
-	formData.append('title', editTitle.value.trim());
-	formData.append('issuer', editIssuer.value.trim());
-	formData.append('date', editDate.value.trim());
-	formData.append('expirationDate', editExpirationDate.value.trim());
-	formData.append('credentialId', editCredentialId.value.trim());
-	formData.append('credentialUrl', editCredentialUrl.value.trim());
-	formData.append('skills', JSON.stringify(editSkills.value));
-	formData.append('existingMedia', JSON.stringify(editExistingMedia.value));
+	formData.append("_method", "PUT");
+	formData.append("title", editTitle.value.trim());
+	formData.append("issuer", editIssuer.value.trim());
+	formData.append("date", editDate.value.trim());
+	formData.append("expirationDate", editExpirationDate.value.trim());
+	formData.append("credentialId", editCredentialId.value.trim());
+	formData.append("credentialUrl", editCredentialUrl.value.trim());
+	formData.append("skills", JSON.stringify(editSkills.value));
+	formData.append("existingMedia", JSON.stringify(editExistingMedia.value));
 
 	editNewMedia.value.forEach((file, index) => {
 		formData.append(`newMedia[${index}]`, file);
 		if (editNewMediaThumbs.value[index]) {
-			formData.append(`newMediaThumb[${index}]`, editNewMediaThumbs.value[index]!);
+			formData.append(
+				`newMediaThumb[${index}]`,
+				editNewMediaThumbs.value[index]!,
+			);
 		}
 	});
 
 	try {
-		const res = await axios.post(`/pagi/certificates/${editingCertId.value}`, formData, {
-			headers: { 'Content-Type': 'multipart/form-data' },
-			onUploadProgress: (progressEvent) => {
-				if (progressEvent.total) {
-					uploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-				}
-			}
-		});
+		const res = await axios.post(
+			`/pagi/certificates/${editingCertId.value}`,
+			formData,
+			{
+				headers: { "Content-Type": "multipart/form-data" },
+				onUploadProgress: (progressEvent) => {
+					if (progressEvent.total) {
+						uploadProgress.value = Math.round(
+							(progressEvent.loaded * 100) / progressEvent.total,
+						);
+					}
+				},
+			},
+		);
 		if (res.data.success) {
 			localCerts.value = res.data.certificates;
-			emit('update-certificates', res.data.certificates);
-			emit('add-toast', 'Certificate updated successfully!', 'success');
+			emit("update-certificates", res.data.certificates);
+			emit("add-toast", "Certificate updated successfully!", "success");
 			isSavingEdit.value = false;
 			closeEditModal();
 		}
 	} catch (err: any) {
-		emit('add-toast', err.response?.data?.message || 'Failed to update certificate.', 'error');
+		emit(
+			"add-toast",
+			err.response?.data?.message || "Failed to update certificate.",
+			"error",
+		);
 	} finally {
 		isSavingEdit.value = false;
 		isUploading.value = false;
@@ -795,11 +951,15 @@ const handleDeleteCertificate = async (id: number, title: string) => {
 		const res = await axios.delete(`/pagi/certificates/${id}`);
 		if (res.data.success) {
 			localCerts.value = res.data.certificates;
-			emit('update-certificates', res.data.certificates);
-			emit('add-toast', 'Certificate deleted successfully!', 'success');
+			emit("update-certificates", res.data.certificates);
+			emit("add-toast", "Certificate deleted successfully!", "success");
 		}
 	} catch (err: any) {
-		emit('add-toast', err.response?.data?.message || 'Failed to delete certificate.', 'error');
+		emit(
+			"add-toast",
+			err.response?.data?.message || "Failed to delete certificate.",
+			"error",
+		);
 	} finally {
 		isDeletingId.value = null;
 	}
@@ -808,27 +968,27 @@ const handleDeleteCertificate = async (id: number, title: string) => {
 // Document Click Event Listeners to close popovers on click outside
 const closeAllPopovers = (e: MouseEvent) => {
 	const target = e.target as HTMLElement;
-	if (!target.closest('.datepicker-container')) {
+	if (!target.closest(".datepicker-container")) {
 		showAddIssuePicker.value = false;
 		showAddExpiryPicker.value = false;
 		showEditIssuePicker.value = false;
 		showEditExpiryPicker.value = false;
 	}
-	if (!target.closest('.autocomplete-container')) {
+	if (!target.closest(".autocomplete-container")) {
 		showAddAutocomplete.value = false;
 		showEditAutocomplete.value = false;
 	}
-	if (!target.closest('.skills-container')) {
+	if (!target.closest(".skills-container")) {
 		showSkillSuggestions.value = false;
 	}
 };
 
 onMounted(() => {
-	document.addEventListener('click', closeAllPopovers);
+	document.addEventListener("click", closeAllPopovers);
 });
 
 onUnmounted(() => {
-	document.removeEventListener('click', closeAllPopovers);
+	document.removeEventListener("click", closeAllPopovers);
 });
 </script>
 

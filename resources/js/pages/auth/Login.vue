@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { Head, useForm } from "@inertiajs/vue3";
+import axios from "axios";
+import { Fingerprint, Loader2 } from "lucide-vue-next";
+import { ref } from "vue";
 import InputError from "@/components/InputError.vue";
 import PasswordInput from "@/components/PasswordInput.vue";
 import TextLink from "@/components/TextLink.vue";
@@ -9,21 +12,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import AuthBase from "@/layouts/AuthLayout.vue";
-import { Fingerprint, Loader2 } from "lucide-vue-next";
-import { ref } from "vue";
-import axios from "axios";
 
 defineOptions({ layout: AuthBase });
 
-const { status, error, canResetPassword, canRegister, oauthProviders, passkeysEnabled } =
-	defineProps<{
-		status?: string;
-		error?: string;
-		canResetPassword?: boolean;
-		canRegister?: boolean;
-		oauthProviders?: Array<{ name: string; slug: string }>;
-		passkeysEnabled?: boolean;
-	}>();
+const {
+	status,
+	error,
+	canResetPassword,
+	canRegister,
+	oauthProviders,
+	passkeysEnabled,
+} = defineProps<{
+	status?: string;
+	error?: string;
+	canResetPassword?: boolean;
+	canRegister?: boolean;
+	oauthProviders?: Array<{ name: string; slug: string }>;
+	passkeysEnabled?: boolean;
+}>();
 
 // Menggunakan useForm standar Inertia untuk menghandle state & submit
 const form = useForm({
@@ -42,7 +48,9 @@ const submit = () => {
 };
 
 const base64ToArrayBuffer = (base64: string) => {
-	const binary_string = globalThis.atob(base64.replaceAll("-", "+").replaceAll("_", "/"));
+	const binary_string = globalThis.atob(
+		base64.replaceAll("-", "+").replaceAll("_", "/"),
+	);
 	const len = binary_string.length;
 	const bytes = new Uint8Array(len);
 	for (let i = 0; i < len; i++) {
@@ -57,7 +65,11 @@ const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
 	for (let i = 0; i < bytes.byteLength; i++) {
 		binary += String.fromCodePoint(bytes[i]);
 	}
-	return globalThis.btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+	return globalThis
+		.btoa(binary)
+		.replaceAll("+", "-")
+		.replaceAll("/", "_")
+		.replaceAll("=", "");
 };
 
 const loginWithPasskey = async () => {
@@ -86,17 +98,22 @@ const loginWithPasskey = async () => {
 			rawId: arrayBufferToBase64(assertion.rawId),
 			type: assertion.type,
 			response: {
-				authenticatorData: arrayBufferToBase64(assertion.response.authenticatorData),
+				authenticatorData: arrayBufferToBase64(
+					assertion.response.authenticatorData,
+				),
 				clientDataJSON: arrayBufferToBase64(assertion.response.clientDataJSON),
 				signature: arrayBufferToBase64(assertion.response.signature),
-				userHandle: assertion.response.userHandle ? arrayBufferToBase64(assertion.response.userHandle) : null,
+				userHandle: assertion.response.userHandle
+					? arrayBufferToBase64(assertion.response.userHandle)
+					: null,
 			},
 		});
 
 		// Reload/redirect to dashboard upon successful login
 		globalThis.location.href = "/dashboard";
 	} catch (e: any) {
-		passkeyError.value = e.response?.data?.error || e.message || "Passkey login failed.";
+		passkeyError.value =
+			e.response?.data?.error || e.message || "Passkey login failed.";
 	} finally {
 		isLoggingInPasskey.value = false;
 	}

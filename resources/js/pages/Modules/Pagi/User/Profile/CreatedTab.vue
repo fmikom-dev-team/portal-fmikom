@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref } from "vue";
 import { Link, usePage } from "@inertiajs/vue3";
-import { Heart, Eye, Pencil, X } from "lucide-vue-next";
+import axios from "axios";
+import { Eye, Heart, Pencil, X } from "lucide-vue-next";
+import { ref } from "vue";
 import OptimizedImage from "../ui/OptimizedImage.vue";
 import VideoLazy from "../ui/VideoLazy.vue";
-import axios from "axios";
 
 const props = defineProps<{
 	projects: any[];
@@ -13,12 +13,15 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-	(e: 'open-project', project: any): void;
-	(e: 'edit-quick-work', project: any): void;
-	(e: 'share-project', project: any): void;
-	(e: 'delete-project', id: number, title: string): void;
-	(e: 'reorder', orderIds: number[]): void;
-	(e: 'like-updated', data: { id: number; liked: boolean; count: number }): void;
+	(e: "open-project", project: any): void;
+	(e: "edit-quick-work", project: any): void;
+	(e: "share-project", project: any): void;
+	(e: "delete-project", id: number, title: string): void;
+	(e: "reorder", orderIds: number[]): void;
+	(
+		e: "like-updated",
+		data: { id: number; liked: boolean; count: number },
+	): void;
 }>();
 
 const page = usePage();
@@ -38,47 +41,59 @@ const toggleLike = async (e: Event, p: any) => {
 	const prevCount = getLikeCount(p);
 	const nextLiked = !prev;
 	const nextCount = prev ? prevCount - 1 : prevCount + 1;
-	
+
 	// Optimistic update
 	likeState.value[p.id] = { liked: nextLiked, count: nextCount };
 	p.liked = nextLiked;
 	p.likes = nextCount;
-	emit('like-updated', { id: p.id, liked: nextLiked, count: nextCount });
+	emit("like-updated", { id: p.id, liked: nextLiked, count: nextCount });
 
 	try {
 		const res = await axios.post(`/pagi/preview/${p.id}/like`);
 		likeState.value[p.id] = { liked: res.data.liked, count: res.data.likes };
 		p.liked = res.data.liked;
 		p.likes = res.data.likes;
-		emit('like-updated', { id: p.id, liked: res.data.liked, count: res.data.likes });
+		emit("like-updated", {
+			id: p.id,
+			liked: res.data.liked,
+			count: res.data.likes,
+		});
 	} catch {
 		// Revert on failure
 		likeState.value[p.id] = { liked: prev, count: prevCount };
 		p.liked = prev;
 		p.likes = prevCount;
-		emit('like-updated', { id: p.id, liked: prev, count: prevCount });
+		emit("like-updated", { id: p.id, liked: prev, count: prevCount });
 	}
 };
 
 const toggleProjectMenu = (id: number) => {
 	activeProjectMenu.value = activeProjectMenu.value === id ? null : id;
 };
-const closeProjectMenu = () => { activeProjectMenu.value = null; };
+const closeProjectMenu = () => {
+	activeProjectMenu.value = null;
+};
 
 const isVideoUrl = (url: string) => {
 	if (!url) return false;
-	return ['mp4', 'webm', 'mov', 'avi', 'mkv', '3gp'].includes(url.split('.').pop()?.toLowerCase() || '');
+	return ["mp4", "webm", "mov", "avi", "mkv", "3gp"].includes(
+		url.split(".").pop()?.toLowerCase() || "",
+	);
 };
 
 const getCoverFit = (project: any) => {
-	if (!project?.content || !Array.isArray(project.content)) return 'cover';
-	const details = project.content.find((b: any) => b?.type === 'featured_details');
-	return details?.cover_fit || 'cover';
+	if (!project?.content || !Array.isArray(project.content)) return "cover";
+	const details = project.content.find(
+		(b: any) => b?.type === "featured_details",
+	);
+	return details?.cover_fit || "cover";
 };
 
 /** Show project creator + accepted collaborators. Creator is always first. Max 5 + overflow. */
 const getCollaborationData = (project: any) => {
-	const accepted = (project.resolved_collaborators || []).filter((c: any) => c.status === 'accepted');
+	const accepted = (project.resolved_collaborators || []).filter(
+		(c: any) => c.status === "accepted",
+	);
 	if (accepted.length === 0) return null; // no badge without at least 1 accepted
 
 	// Build list: owner first, then accepted collabs (skip duplicate)
@@ -96,11 +111,16 @@ const getCollaborationData = (project: any) => {
 	}
 
 	const MAX = 5;
-	return { visible: all.slice(0, MAX), overflow: Math.max(0, all.length - MAX) };
+	return {
+		visible: all.slice(0, MAX),
+		overflow: Math.max(0, all.length - MAX),
+	};
 };
 
 const profileHref = (collab: any) =>
-	collab.pagi_username ? `/pagi/${collab.pagi_username}` : `/pagi/profile/${collab.id}`;
+	collab.pagi_username
+		? `/pagi/${collab.pagi_username}`
+		: `/pagi/profile/${collab.id}`;
 
 const onDragStart = (index: number) => {
 	if (!props.isOwnProfile) return;
@@ -113,7 +133,10 @@ const onDrop = (index: number) => {
 	const [item] = items.splice(draggedIndex.value, 1);
 	items.splice(index, 0, item);
 	draggedIndex.value = null;
-	emit('reorder', items.map(p => p.id));
+	emit(
+		"reorder",
+		items.map((p) => p.id),
+	);
 };
 </script>
 

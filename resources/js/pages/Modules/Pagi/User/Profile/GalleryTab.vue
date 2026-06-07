@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import { 
-	Image as ImageIcon, 
-	Plus, 
-	X, 
-	Heart, 
-	Eye, 
-	UploadCloud,
+import axios from "axios";
+import {
+	Eye,
+	Heart,
+	Image as ImageIcon,
 	MoreHorizontal,
 	Pencil,
+	Plus,
+	Share2,
 	Trash2,
-	Share2
+	UploadCloud,
+	X,
 } from "lucide-vue-next";
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
+import Modal from "../ui/Modal.vue";
 import OptimizedImage from "../ui/OptimizedImage.vue";
 import VideoLazy from "../ui/VideoLazy.vue";
-import Modal from "../ui/Modal.vue";
-import axios from "axios";
 
 const props = defineProps<{
 	projects?: Array<{
@@ -34,17 +34,17 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-	(e: 'open-project', project: any): void;
-	(e: 'delete-project', id: number, title: string): void;
-	(e: 'gallery-item-added', project: any): void;
-	(e: 'gallery-item-updated', project: any): void;
-	(e: 'share-project', project: any): void;
+	(e: "open-project", project: any): void;
+	(e: "delete-project", id: number, title: string): void;
+	(e: "gallery-item-added", project: any): void;
+	(e: "gallery-item-updated", project: any): void;
+	(e: "share-project", project: any): void;
 }>();
 
 // Form & Upload States
 const showUploadModal = ref(false);
-const formTitle = ref('');
-const formDescription = ref('');
+const formTitle = ref("");
+const formDescription = ref("");
 const selectedFile = ref<File | null>(null);
 const filePreview = ref<string | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -53,36 +53,39 @@ const uploadProgress = ref(0);
 const dragActive = ref(false);
 
 const isManualItem = (project: any) => {
-	if (!project || !project.content || !Array.isArray(project.content)) return false;
-	return project.content.some((b: any) => b && b.type === 'gallery_item');
+	if (!project?.content || !Array.isArray(project.content)) return false;
+	return project.content.some((b: any) => b && b.type === "gallery_item");
 };
 
 const isVideoBlock = (block: any) => {
 	if (!block) return false;
 	if (block.mimeType) return block.mimeType.startsWith("video");
-	if (block.file && block.file.type) return block.file.type.startsWith("video");
+	if (block.file?.type) return block.file.type.startsWith("video");
 	if (block.name) {
-		const ext = block.name.split('.').pop()?.toLowerCase();
-		return ['mp4', 'webm', 'mov', 'avi', 'mkv', '3gp'].includes(ext || '');
+		const ext = block.name.split(".").pop()?.toLowerCase();
+		return ["mp4", "webm", "mov", "avi", "mkv", "3gp"].includes(ext || "");
 	}
 	if (block.file_path) {
-		const ext = block.file_path.split('.').pop()?.toLowerCase();
-		return ['mp4', 'webm', 'mov', 'avi', 'mkv', '3gp'].includes(ext || '');
+		const ext = block.file_path.split(".").pop()?.toLowerCase();
+		return ["mp4", "webm", "mov", "avi", "mkv", "3gp"].includes(ext || "");
 	}
 	if (block.preview) {
-		const ext = block.preview.split('?')[0].split('.').pop()?.toLowerCase();
-		return ['mp4', 'webm', 'mov', 'avi', 'mkv', '3gp'].includes(ext || '');
+		const ext = block.preview.split("?")[0].split(".").pop()?.toLowerCase();
+		return ["mp4", "webm", "mov", "avi", "mkv", "3gp"].includes(ext || "");
 	}
 	return false;
 };
 
-const DEFAULT_PLACEHOLDER = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop';
+const DEFAULT_PLACEHOLDER =
+	"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop";
 
 const hiddenGalleryItems = ref<string[]>([]);
 
 onMounted(() => {
 	try {
-		hiddenGalleryItems.value = JSON.parse(localStorage.getItem('pagi_hidden_gallery_items') || '[]');
+		hiddenGalleryItems.value = JSON.parse(
+			localStorage.getItem("pagi_hidden_gallery_items") || "[]",
+		);
 	} catch (e) {
 		console.warn("Failed to parse hidden gallery items:", e);
 		hiddenGalleryItems.value = [];
@@ -91,12 +94,12 @@ onMounted(() => {
 
 const galleryItems = computed(() => {
 	if (!props.projects) return [];
-	
+
 	const items: any[] = [];
-	
+
 	props.projects.forEach((p) => {
 		const projectUrls = new Set<string>();
-		
+
 		// 1. Check if it is a manual gallery item
 		if (isManualItem(p)) {
 			if (p.image) {
@@ -105,7 +108,7 @@ const galleryItems = computed(() => {
 					projectId: p.id,
 					project: p,
 					url: p.image,
-					type: isVideoUrl(p.image) ? 'video' : 'image',
+					type: isVideoUrl(p.image) ? "video" : "image",
 					title: p.title,
 					isManual: true,
 					likes: p.likes || 0,
@@ -123,7 +126,7 @@ const galleryItems = computed(() => {
 					projectId: p.id,
 					project: p,
 					url: p.image,
-					type: isVideoUrl(p.image) ? 'video' : 'image',
+					type: isVideoUrl(p.image) ? "video" : "image",
 					title: p.title,
 					isManual: false,
 					likes: p.likes || 0,
@@ -136,8 +139,8 @@ const galleryItems = computed(() => {
 			if (p.content && Array.isArray(p.content)) {
 				p.content.forEach((block, bIdx) => {
 					if (!block) return;
-					
-					if (block.type === 'image' && block.preview) {
+
+					if (block.type === "image" && block.preview) {
 						if (!projectUrls.has(block.preview)) {
 							projectUrls.add(block.preview);
 							items.push({
@@ -145,7 +148,7 @@ const galleryItems = computed(() => {
 								projectId: p.id,
 								project: p,
 								url: block.preview,
-								type: 'image',
+								type: "image",
 								title: p.title,
 								isManual: false,
 								likes: p.likes || 0,
@@ -153,7 +156,11 @@ const galleryItems = computed(() => {
 								views: p.views || 0,
 							});
 						}
-					} else if (block.type === 'video_audio' && block.preview && isVideoBlock(block)) {
+					} else if (
+						block.type === "video_audio" &&
+						block.preview &&
+						isVideoBlock(block)
+					) {
 						if (!projectUrls.has(block.preview)) {
 							projectUrls.add(block.preview);
 							items.push({
@@ -161,7 +168,7 @@ const galleryItems = computed(() => {
 								projectId: p.id,
 								project: p,
 								url: block.preview,
-								type: 'video',
+								type: "video",
 								title: p.title,
 								isManual: false,
 								likes: p.likes || 0,
@@ -169,7 +176,11 @@ const galleryItems = computed(() => {
 								views: p.views || 0,
 							});
 						}
-					} else if (block.type === 'photo_grid' && block.previews && Array.isArray(block.previews)) {
+					} else if (
+						block.type === "photo_grid" &&
+						block.previews &&
+						Array.isArray(block.previews)
+					) {
 						block.previews.forEach((previewUrl: any, gIdx: number) => {
 							if (!previewUrl) return;
 							if (!projectUrls.has(previewUrl)) {
@@ -179,7 +190,7 @@ const galleryItems = computed(() => {
 									projectId: p.id,
 									project: p,
 									url: previewUrl,
-									type: 'image',
+									type: "image",
 									title: p.title,
 									isManual: false,
 									likes: p.likes || 0,
@@ -193,14 +204,16 @@ const galleryItems = computed(() => {
 			}
 		}
 	});
-	
-	return items.filter(item => !hiddenGalleryItems.value.includes(item.id));
+
+	return items.filter((item) => !hiddenGalleryItems.value.includes(item.id));
 });
 
 const isVideoUrl = (url: string) => {
 	if (!url) return false;
-	const cleanUrl = url.split('?')[0]; // Strip cache busters
-	return ['mp4', 'webm', 'mov', 'avi', 'mkv', '3gp'].includes(cleanUrl.split('.').pop()?.toLowerCase() || '');
+	const cleanUrl = url.split("?")[0]; // Strip cache busters
+	return ["mp4", "webm", "mov", "avi", "mkv", "3gp"].includes(
+		cleanUrl.split(".").pop()?.toLowerCase() || "",
+	);
 };
 
 // File Handlers
@@ -216,28 +229,28 @@ const onDragLeave = () => {
 const onDrop = (e: DragEvent) => {
 	e.preventDefault();
 	dragActive.value = false;
-	if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
+	if (e.dataTransfer?.files?.[0]) {
 		handleFileSelect(e.dataTransfer.files[0]);
 	}
 };
 
 const onFileChange = (e: Event) => {
 	const target = e.target as HTMLInputElement;
-	if (target.files && target.files[0]) {
+	if (target.files?.[0]) {
 		handleFileSelect(target.files[0]);
 	}
 };
 
 const handleFileSelect = (file: File) => {
-	const isImage = file.type.startsWith('image/');
-	const isVideo = file.type.startsWith('video/');
+	const isImage = file.type.startsWith("image/");
+	const isVideo = file.type.startsWith("video/");
 	if (!isImage && !isVideo) {
-		alert('Hanya file gambar atau video yang diperbolehkan.');
+		alert("Hanya file gambar atau video yang diperbolehkan.");
 		return;
 	}
 	const maxSize = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024; // 100MB for video, 10MB for image
 	if (file.size > maxSize) {
-		alert(`Ukuran file maksimal adalah ${isVideo ? '100MB' : '10MB'}.`);
+		alert(`Ukuran file maksimal adalah ${isVideo ? "100MB" : "10MB"}.`);
 		return;
 	}
 	selectedFile.value = file;
@@ -257,8 +270,8 @@ const openUploadModal = () => {
 const closeUploadModal = () => {
 	if (isUploading.value) return;
 	showUploadModal.value = false;
-	formTitle.value = '';
-	formDescription.value = '';
+	formTitle.value = "";
+	formDescription.value = "";
 	selectedFile.value = null;
 	filePreview.value = null;
 };
@@ -269,28 +282,30 @@ const submitGalleryItem = async () => {
 	uploadProgress.value = 0;
 
 	const formData = new FormData();
-	formData.append('cover_image', selectedFile.value);
-	formData.append('title', formTitle.value);
-	formData.append('description', formDescription.value);
+	formData.append("cover_image", selectedFile.value);
+	formData.append("title", formTitle.value);
+	formData.append("description", formDescription.value);
 
 	try {
-		const res = await axios.post('/pagi/gallery/store', formData, {
+		const res = await axios.post("/pagi/gallery/store", formData, {
 			headers: {
-				'Content-Type': 'multipart/form-data'
+				"Content-Type": "multipart/form-data",
 			},
 			onUploadProgress: (progressEvent) => {
 				if (progressEvent.total) {
-					uploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+					uploadProgress.value = Math.round(
+						(progressEvent.loaded * 100) / progressEvent.total,
+					);
 				}
-			}
+			},
 		});
 
 		if (res.data.success) {
-			emit('gallery-item-added', res.data.project);
+			emit("gallery-item-added", res.data.project);
 			closeUploadModal();
 		}
 	} catch (err: any) {
-		alert(err.response?.data?.message || 'Gagal mengunggah item ke galeri.');
+		alert(err.response?.data?.message || "Gagal mengunggah item ke galeri.");
 	} finally {
 		isUploading.value = false;
 		uploadProgress.value = 0;
@@ -306,21 +321,23 @@ const toggleMenu = (itemId: string) => {
 // Edit manual gallery item states
 const showEditModal = ref(false);
 const editingItem = ref<any>(null);
-const editTitle = ref('');
-const editDescription = ref('');
+const editTitle = ref("");
+const editDescription = ref("");
 const isSavingEdit = ref(false);
 
 const handleShare = (item: any) => {
 	activeMenuId.value = null;
-	emit('share-project', item.project);
+	emit("share-project", item.project);
 };
 
 const handleEdit = (item: any) => {
 	activeMenuId.value = null;
 	editingItem.value = item;
-	editTitle.value = item.project.title || '';
-	const descBlock = item.project.content?.find((b: any) => b && b.type === 'gallery_item');
-	editDescription.value = descBlock?.description || '';
+	editTitle.value = item.project.title || "";
+	const descBlock = item.project.content?.find(
+		(b: any) => b && b.type === "gallery_item",
+	);
+	editDescription.value = descBlock?.description || "";
 	showEditModal.value = true;
 };
 
@@ -328,22 +345,27 @@ const submitGalleryItemEdit = async () => {
 	if (!editingItem.value) return;
 	isSavingEdit.value = true;
 	try {
-		const res = await axios.post(`/pagi/editor/${editingItem.value.projectId}/quick-update`, {
-			title: editTitle.value,
-			description: editDescription.value,
-		});
+		const res = await axios.post(
+			`/pagi/editor/${editingItem.value.projectId}/quick-update`,
+			{
+				title: editTitle.value,
+				description: editDescription.value,
+			},
+		);
 		if (res.data.success) {
 			// Update locally
 			editingItem.value.project.title = editTitle.value;
-			const descBlock = editingItem.value.project.content?.find((b: any) => b && b.type === 'gallery_item');
+			const descBlock = editingItem.value.project.content?.find(
+				(b: any) => b && b.type === "gallery_item",
+			);
 			if (descBlock) {
 				descBlock.description = editDescription.value;
 			}
-			emit('gallery-item-updated', editingItem.value.project);
+			emit("gallery-item-updated", editingItem.value.project);
 			showEditModal.value = false;
 		}
 	} catch (err: any) {
-		alert(err.response?.data?.message || 'Gagal mengedit item galeri.');
+		alert(err.response?.data?.message || "Gagal mengedit item galeri.");
 	} finally {
 		isSavingEdit.value = false;
 	}
@@ -352,30 +374,37 @@ const submitGalleryItemEdit = async () => {
 const handleDeleteItem = (item: any) => {
 	activeMenuId.value = null;
 	if (item.isManual) {
-		if (confirm(`Apakah Anda yakin ingin menghapus "${item.title}" dari galeri?`)) {
-			emit('delete-project', item.projectId, item.title);
+		if (
+			confirm(`Apakah Anda yakin ingin menghapus "${item.title}" dari galeri?`)
+		) {
+			emit("delete-project", item.projectId, item.title);
 		}
-	} else if (confirm(`Apakah Anda yakin ingin menyembunyikan visual ini dari galeri?`)) {
+	} else if (
+		confirm(`Apakah Anda yakin ingin menyembunyikan visual ini dari galeri?`)
+	) {
 		// For automatic items, hide locally/persistently in localStorage
 		hiddenGalleryItems.value.push(item.id);
-		localStorage.setItem('pagi_hidden_gallery_items', JSON.stringify(hiddenGalleryItems.value));
+		localStorage.setItem(
+			"pagi_hidden_gallery_items",
+			JSON.stringify(hiddenGalleryItems.value),
+		);
 	}
 };
 
 // Document click listener to close dropdowns when clicking outside
 const closeAllMenus = (e: MouseEvent) => {
 	const target = e.target as HTMLElement;
-	if (target && !target.closest('.dropdown-trigger-container')) {
+	if (target && !target.closest(".dropdown-trigger-container")) {
 		activeMenuId.value = null;
 	}
 };
 
 onMounted(() => {
-	document.addEventListener('click', closeAllMenus);
+	document.addEventListener("click", closeAllMenus);
 });
 
 onUnmounted(() => {
-	document.removeEventListener('click', closeAllMenus);
+	document.removeEventListener("click", closeAllMenus);
 });
 </script>
 

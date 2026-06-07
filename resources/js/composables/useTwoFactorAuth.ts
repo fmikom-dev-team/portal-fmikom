@@ -1,7 +1,6 @@
 import { type ComputedRef, computed, type Ref, ref } from "vue";
 import { recoveryCodes } from "@/routes/two-factor/index";
 
-
 export type UseTwoFactorAuthReturn = {
 	qrCodeSvg: Ref<string | null>;
 	manualSetupKey: Ref<string | null>;

@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
-import { 
-	UploadCloud, 
-	X, 
-	Camera, 
-	Info, 
-	ChevronDown, 
-	ChevronUp, 
-	ExternalLink, 
-	Loader2 
-} from "lucide-vue-next";
 import axios from "axios";
+import {
+	Camera,
+	ChevronDown,
+	ChevronUp,
+	ExternalLink,
+	Info,
+	Loader2,
+	UploadCloud,
+	X,
+} from "lucide-vue-next";
+import { computed, onMounted, ref, watch } from "vue";
 import Modal from "../../ui/Modal.vue";
 import Progress from "../../ui/Progress.vue";
 
@@ -42,7 +42,7 @@ const addWorkForm = ref({
 // UI states
 const isSubmittingWork = ref(false);
 const showMoreDetails = ref(false);
-const coverFit = ref<'cover' | 'contain'>('cover');
+const coverFit = ref<"cover" | "contain">("cover");
 const coverFile = ref<File | null>(null);
 const coverPreviewUrl = ref<string | null>(null);
 const zoomLevel = ref(1.0);
@@ -97,7 +97,7 @@ const FMIKOM_SKILL_SUGGESTIONS = [
 	"Tailwind CSS / Bootstrap",
 	"UI/UX Design",
 	"Vue.js / React.js",
-	"Web Development"
+	"Web Development",
 ];
 
 const toolsSuggestions = [
@@ -119,11 +119,14 @@ const toolsSuggestions = [
 	{ name: "Tableau", category: "math" },
 	{ name: "Excel", category: "math" },
 	{ name: "Jupyter Notebook", category: "math" },
-	{ name: "LaTeX", category: "math" }
+	{ name: "LaTeX", category: "math" },
 ];
 
 const getToolSlug = (name: string) => {
-	return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+	return name
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/(^-|-$)/g, "");
 };
 
 const getUploadStatusMessage = (progress: number) => {
@@ -137,40 +140,56 @@ const getUploadStatusMessage = (progress: number) => {
 
 const isVideoFile = (file: File | null) => {
 	if (!file) return false;
-	return file.type.startsWith('video/');
+	return file.type.startsWith("video/");
 };
 
 const isVideoUrl = (url: string | null): boolean => {
 	if (!url) return false;
-	const cleanUrl = url.split('?')[0].split('#')[0];
-	const ext = cleanUrl.split('.').pop()?.toLowerCase();
-	return ['mp4', 'webm', 'mov', 'avi', 'mkv', '3gp'].includes(ext || '') || url.startsWith('data:video/');
+	const cleanUrl = url.split("?")[0].split("#")[0];
+	const ext = cleanUrl.split(".").pop()?.toLowerCase();
+	return (
+		["mp4", "webm", "mov", "avi", "mkv", "3gp"].includes(ext || "") ||
+		url.startsWith("data:video/")
+	);
 };
 
 // Autocomplete computations
 const filteredSkillsSuggestions = computed(() => {
 	if (!addWorkSkillsInput.value.trim()) return [];
 	const q = addWorkSkillsInput.value.toLowerCase().trim();
-	return FMIKOM_SKILL_SUGGESTIONS.filter(s => s.toLowerCase().includes(q) && !addWorkSkillsTags.value.includes(s));
+	return FMIKOM_SKILL_SUGGESTIONS.filter(
+		(s) => s.toLowerCase().includes(q) && !addWorkSkillsTags.value.includes(s),
+	);
 });
 
 const filteredToolsSuggestions = computed(() => {
 	if (!addWorkToolsInput.value.trim()) return [];
 	const q = addWorkToolsInput.value.toLowerCase().trim();
-	return toolsSuggestions.filter(t => t.name.toLowerCase().includes(q) && !addWorkToolsTags.value.includes(t.name));
+	return toolsSuggestions.filter(
+		(t) =>
+			t.name.toLowerCase().includes(q) &&
+			!addWorkToolsTags.value.includes(t.name),
+	);
 });
 
 // Autocomplete Handlers
 const addSkillTag = () => {
 	const val = addWorkSkillsInput.value.trim().replace(/,/g, "");
-	if (val && addWorkSkillsTags.value.length < 3 && !addWorkSkillsTags.value.includes(val)) {
+	if (
+		val &&
+		addWorkSkillsTags.value.length < 3 &&
+		!addWorkSkillsTags.value.includes(val)
+	) {
 		addWorkSkillsTags.value.push(val);
 	}
 	addWorkSkillsInput.value = "";
 };
 
 const addSkillSuggestion = (skill: string) => {
-	if (addWorkSkillsTags.value.length < 3 && !addWorkSkillsTags.value.includes(skill)) {
+	if (
+		addWorkSkillsTags.value.length < 3 &&
+		!addWorkSkillsTags.value.includes(skill)
+	) {
 		addWorkSkillsTags.value.push(skill);
 	}
 	addWorkSkillsInput.value = "";
@@ -182,7 +201,11 @@ const removeSkillTag = (idx: number) => {
 
 const addToolTag = (toolName: string) => {
 	const val = toolName.trim();
-	if (val && addWorkToolsTags.value.length < 3 && !addWorkToolsTags.value.includes(val)) {
+	if (
+		val &&
+		addWorkToolsTags.value.length < 3 &&
+		!addWorkToolsTags.value.includes(val)
+	) {
 		addWorkToolsTags.value.push(val);
 	}
 	addWorkToolsInput.value = "";
@@ -205,7 +228,9 @@ const handleCollaboratorSearch = () => {
 	isLoadingCollaborators.value = true;
 	searchTimeout = setTimeout(async () => {
 		try {
-			const res = await axios.get(`/pagi/users/search?q=${encodeURIComponent(q)}`);
+			const res = await axios.get(
+				`/pagi/users/search?q=${encodeURIComponent(q)}`,
+			);
 			collaboratorsSuggestions.value = res.data || [];
 		} catch (e) {
 			console.error(e);
@@ -216,7 +241,10 @@ const handleCollaboratorSearch = () => {
 };
 
 const addCollaboratorSuggestion = (username: string) => {
-	if (addWorkCollaboratorsTags.value.length < 3 && !addWorkCollaboratorsTags.value.includes(username)) {
+	if (
+		addWorkCollaboratorsTags.value.length < 3 &&
+		!addWorkCollaboratorsTags.value.includes(username)
+	) {
 		addWorkCollaboratorsTags.value.push(username);
 	}
 	addWorkCollaboratorsInput.value = "";
@@ -226,7 +254,11 @@ const addCollaboratorSuggestion = (username: string) => {
 
 const addCollaboratorTag = () => {
 	const val = addWorkCollaboratorsInput.value.trim();
-	if (val && addWorkCollaboratorsTags.value.length < 3 && !addWorkCollaboratorsTags.value.includes(val)) {
+	if (
+		val &&
+		addWorkCollaboratorsTags.value.length < 3 &&
+		!addWorkCollaboratorsTags.value.includes(val)
+	) {
 		addWorkCollaboratorsTags.value.push(val);
 	}
 	addWorkCollaboratorsInput.value = "";
@@ -241,35 +273,76 @@ const removeCollaboratorTag = (idx: number) => {
 // Cover Image Selection & Verification
 const onCoverFileSelected = (e: Event) => {
 	const input = e.target as HTMLInputElement;
-	if (input.files && input.files[0]) {
+	if (input.files?.[0]) {
 		const file = input.files[0];
-		
-		const allowedImageTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
-		const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
+
+		const allowedImageTypes = [
+			"image/png",
+			"image/jpeg",
+			"image/jpg",
+			"image/gif",
+			"image/webp",
+		];
+		const allowedVideoTypes = [
+			"video/mp4",
+			"video/webm",
+			"video/ogg",
+			"video/quicktime",
+		];
 		const fileType = file.type.toLowerCase();
 		const fileName = file.name.toLowerCase();
-		const extension = fileName.split('.').pop() || '';
-		const forbiddenExtensions = ['php', 'js', 'sh', 'html', 'exe', 'bat', 'cmd', 'py', 'pl', 'jsp', 'asp', 'aspx', 'phar', 'phtml'];
-		
+		const extension = fileName.split(".").pop() || "";
+		const forbiddenExtensions = [
+			"php",
+			"js",
+			"sh",
+			"html",
+			"exe",
+			"bat",
+			"cmd",
+			"py",
+			"pl",
+			"jsp",
+			"asp",
+			"aspx",
+			"phar",
+			"phtml",
+		];
+
 		if (forbiddenExtensions.includes(extension)) {
-			emit("warning", "Format File Dilarang", "Format file ini tidak didukung demi alasan keamanan.");
+			emit(
+				"warning",
+				"Format File Dilarang",
+				"Format file ini tidak didukung demi alasan keamanan.",
+			);
 			input.value = "";
 			return;
 		}
 
-		if (!allowedImageTypes.includes(fileType) && !allowedVideoTypes.includes(fileType)) {
-			emit("warning", "Format File Tidak Valid", "Hanya berkas gambar (PNG, JPG, WEBP, GIF) atau video (MP4, WEBM) yang diperbolehkan.");
+		if (
+			!allowedImageTypes.includes(fileType) &&
+			!allowedVideoTypes.includes(fileType)
+		) {
+			emit(
+				"warning",
+				"Format File Tidak Valid",
+				"Hanya berkas gambar (PNG, JPG, WEBP, GIF) atau video (MP4, WEBM) yang diperbolehkan.",
+			);
 			input.value = "";
 			return;
 		}
 
-		if (fileType.startsWith('video/')) {
-			const video = document.createElement('video');
-			video.preload = 'metadata';
+		if (fileType.startsWith("video/")) {
+			const video = document.createElement("video");
+			video.preload = "metadata";
 			video.onloadedmetadata = () => {
 				window.URL.revokeObjectURL(video.src);
 				if (video.duration > 60.5) {
-					emit("warning", "Durasi Video Terlalu Lama", "Durasi video maksimal adalah 1 menit (60 detik) demi menjaga performa server.");
+					emit(
+						"warning",
+						"Durasi Video Terlalu Lama",
+						"Durasi video maksimal adalah 1 menit (60 detik) demi menjaga performa server.",
+					);
 					input.value = "";
 					coverFile.value = null;
 					coverPreviewUrl.value = null;
@@ -286,7 +359,7 @@ const onCoverFileSelected = (e: Event) => {
 		} else {
 			coverFile.value = file;
 			zoomLevel.value = 1.0;
-			if (coverPreviewUrl.value && coverPreviewUrl.value.startsWith('blob:')) {
+			if (coverPreviewUrl.value?.startsWith("blob:")) {
 				URL.revokeObjectURL(coverPreviewUrl.value);
 			}
 			coverPreviewUrl.value = URL.createObjectURL(file);
@@ -310,7 +383,7 @@ const saveCrop = () => {
 };
 
 const cancelCrop = () => {
-	if (coverPreviewUrl.value && coverPreviewUrl.value.startsWith('blob:')) {
+	if (coverPreviewUrl.value?.startsWith("blob:")) {
 		URL.revokeObjectURL(coverPreviewUrl.value);
 	}
 	coverFile.value = null;
@@ -322,11 +395,19 @@ const cancelCrop = () => {
 
 const quickStoreSubmit = async () => {
 	if (!coverFile.value && !props.isEditingQuickWork) {
-		emit("warning", "Cover Diperlukan", "Silakan unggah foto cover atau video terlebih dahulu.");
+		emit(
+			"warning",
+			"Cover Diperlukan",
+			"Silakan unggah foto cover atau video terlebih dahulu.",
+		);
 		return;
 	}
 	if (!cropSaved.value) {
-		emit("warning", "Penyesuaian Belum Disimpan", "Silakan klik tombol 'Save & Apply' untuk menyimpan penyesuaian cover.");
+		emit(
+			"warning",
+			"Penyesuaian Belum Disimpan",
+			"Silakan klik tombol 'Save & Apply' untuk menyimpan penyesuaian cover.",
+		);
 		return;
 	}
 	if (!addWorkForm.value.title.trim()) {
@@ -334,11 +415,19 @@ const quickStoreSubmit = async () => {
 		return;
 	}
 	if (addWorkSkillsTags.value.length < 1) {
-		emit("warning", "Keahlian (Skills) Diperlukan", "Silakan tambahkan minimal 1 keahlian (skills) yang digunakan.");
+		emit(
+			"warning",
+			"Keahlian (Skills) Diperlukan",
+			"Silakan tambahkan minimal 1 keahlian (skills) yang digunakan.",
+		);
 		return;
 	}
 	if (addWorkToolsTags.value.length < 1) {
-		emit("warning", "Tools Diperlukan", "Silakan tambahkan minimal 1 tools yang digunakan.");
+		emit(
+			"warning",
+			"Tools Diperlukan",
+			"Silakan tambahkan minimal 1 tools yang digunakan.",
+		);
 		return;
 	}
 
@@ -353,33 +442,50 @@ const quickStoreSubmit = async () => {
 		}
 		formData.append("skills", JSON.stringify(addWorkSkillsTags.value));
 		formData.append("tools", JSON.stringify(addWorkToolsTags.value));
-		formData.append("completed_work_link", addWorkForm.value.completed_work_link);
-		formData.append("collaborators", JSON.stringify(addWorkCollaboratorsTags.value));
+		formData.append(
+			"completed_work_link",
+			addWorkForm.value.completed_work_link,
+		);
+		formData.append(
+			"collaborators",
+			JSON.stringify(addWorkCollaboratorsTags.value),
+		);
 		formData.append("client", addWorkForm.value.client);
 		formData.append("start_date", addWorkForm.value.start_date);
 		formData.append("end_date", addWorkForm.value.end_date);
 		formData.append("industry", addWorkForm.value.industry);
-		formData.append("original_work_confirmed", addWorkForm.value.original_work_confirmed ? "true" : "false");
+		formData.append(
+			"original_work_confirmed",
+			addWorkForm.value.original_work_confirmed ? "true" : "false",
+		);
 		formData.append("cover_fit", coverFit.value);
 
-		let res;
+		let res: Awaited<ReturnType<typeof import("axios").default.post>>;
 		if (props.isEditingQuickWork && props.editingQuickWorkId) {
-			res = await axios.post(`/pagi/editor/${props.editingQuickWorkId}/quick-update`, formData, {
-				headers: { "Content-Type": "multipart/form-data" },
-				onUploadProgress: (progressEvent) => {
-					if (progressEvent.total) {
-						quickStoreProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-					}
-				}
-			});
+			res = await axios.post(
+				`/pagi/editor/${props.editingQuickWorkId}/quick-update`,
+				formData,
+				{
+					headers: { "Content-Type": "multipart/form-data" },
+					onUploadProgress: (progressEvent) => {
+						if (progressEvent.total) {
+							quickStoreProgress.value = Math.round(
+								(progressEvent.loaded * 100) / progressEvent.total,
+							);
+						}
+					},
+				},
+			);
 		} else {
 			res = await axios.post("/pagi/editor/quick-store", formData, {
 				headers: { "Content-Type": "multipart/form-data" },
 				onUploadProgress: (progressEvent) => {
 					if (progressEvent.total) {
-						quickStoreProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+						quickStoreProgress.value = Math.round(
+							(progressEvent.loaded * 100) / progressEvent.total,
+						);
 					}
-				}
+				},
 			});
 		}
 
@@ -388,7 +494,11 @@ const quickStoreSubmit = async () => {
 		}
 	} catch (e: any) {
 		console.error(e);
-		emit("toast", e.response?.data?.message || "Gagal menyimpan karya. Coba lagi.", "error");
+		emit(
+			"toast",
+			e.response?.data?.message || "Gagal menyimpan karya. Coba lagi.",
+			"error",
+		);
 	} finally {
 		isSubmittingWork.value = false;
 		isUploadingQuickStore.value = false;
@@ -397,7 +507,8 @@ const quickStoreSubmit = async () => {
 };
 
 const initializeWith = (project: any) => {
-	const details = project.content?.find((b: any) => b && b.type === 'featured_details') || {};
+	const details =
+		project.content?.find((b: any) => b && b.type === "featured_details") || {};
 	addWorkForm.value = {
 		title: project.title || "",
 		cover_image: null,
@@ -409,7 +520,7 @@ const initializeWith = (project: any) => {
 		start_date: details.start_date || "",
 		end_date: details.end_date || "",
 		industry: details.industry || "",
-		original_work_confirmed: details.original_work_confirmed !== false
+		original_work_confirmed: details.original_work_confirmed !== false,
 	};
 
 	addWorkSkillsInput.value = "";
@@ -419,16 +530,20 @@ const initializeWith = (project: any) => {
 	addWorkCollaboratorsInput.value = "";
 	addWorkCollaboratorsTags.value = [...(details.collaborators || [])];
 
-	if (coverPreviewUrl.value && coverPreviewUrl.value.startsWith('blob:')) {
+	if (coverPreviewUrl.value?.startsWith("blob:")) {
 		URL.revokeObjectURL(coverPreviewUrl.value);
 	}
 	coverFile.value = null;
 	coverPreviewUrl.value = project.image || null;
 	zoomLevel.value = 1.0;
 	cropSaved.value = true;
-	coverFit.value = details.cover_fit || 'cover';
+	coverFit.value = details.cover_fit || "cover";
 	imageQualityWarning.value = false;
-	showMoreDetails.value = !!(details.client || details.start_date || details.collaborators?.length);
+	showMoreDetails.value = !!(
+		details.client ||
+		details.start_date ||
+		details.collaborators?.length
+	);
 };
 
 const resetForm = () => {
@@ -443,7 +558,7 @@ const resetForm = () => {
 		start_date: "",
 		end_date: "",
 		industry: "",
-		original_work_confirmed: true
+		original_work_confirmed: true,
 	};
 	addWorkSkillsInput.value = "";
 	addWorkSkillsTags.value = [];
@@ -451,26 +566,29 @@ const resetForm = () => {
 	addWorkToolsTags.value = [];
 	addWorkCollaboratorsInput.value = "";
 	addWorkCollaboratorsTags.value = [];
-	if (coverPreviewUrl.value && coverPreviewUrl.value.startsWith('blob:')) {
+	if (coverPreviewUrl.value?.startsWith("blob:")) {
 		URL.revokeObjectURL(coverPreviewUrl.value);
 	}
 	coverFile.value = null;
 	coverPreviewUrl.value = null;
 	zoomLevel.value = 1.0;
 	cropSaved.value = false;
-	coverFit.value = 'cover';
+	coverFit.value = "cover";
 	imageQualityWarning.value = false;
 };
 
-watch(() => props.show, (newVal) => {
-	if (newVal) {
-		if (props.isEditingQuickWork && props.editingProject) {
-			initializeWith(props.editingProject);
-		} else {
-			resetForm();
+watch(
+	() => props.show,
+	(newVal) => {
+		if (newVal) {
+			if (props.isEditingQuickWork && props.editingProject) {
+				initializeWith(props.editingProject);
+			} else {
+				resetForm();
+			}
 		}
-	}
-});
+	},
+);
 </script>
 
 <template>

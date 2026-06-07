@@ -86,7 +86,7 @@ class User extends Authenticatable
 
         static::deleting(function ($user) {
             if ($user->user_type === 'super_admin') {
-                throw new \Exception('Akun dengan tipe Super Admin dilindungi oleh sistem dan tidak dapat dihapus.');
+                throw new \RuntimeException('Akun dengan tipe Super Admin dilindungi oleh sistem dan tidak dapat dihapus.');
             }
         });
     }

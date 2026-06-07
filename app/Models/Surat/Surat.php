@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Models\Surat;
+
+use App\Models\User;
 use App\Models\Magang\PendaftaranMagang;
 
 use Illuminate\Database\Eloquent\Model;

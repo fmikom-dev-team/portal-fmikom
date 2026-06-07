@@ -16,15 +16,20 @@ class CreateCommentAction
     {
         $portfolio = PagiWork::findOrFail($previewId);
 
+        $avatar = null;
+        if ($authUser->foto_path) {
+            $avatar = str_starts_with($authUser->foto_path, 'http')
+                ? $authUser->foto_path
+                : asset('storage/' . $authUser->foto_path);
+        }
+
         $comments = $portfolio->comments ?? [];
         $newComment = [
             'id'            => uniqid(),
             'user_id'       => $authUser->id,
             'name'          => $authUser->name,
             'pagi_username' => $authUser->pagi_username,
-            'avatar'        => $authUser->foto_path
-                ? (str_starts_with($authUser->foto_path, 'http') ? $authUser->foto_path : asset('storage/' . $authUser->foto_path))
-                : null,
+            'avatar'        => $avatar,
             'body'          => strip_tags($body),
             'created_at'    => now()->toISOString(),
             'time'          => 'baru saja',
@@ -38,9 +43,6 @@ class CreateCommentAction
         if ($portfolio->user_id !== $authUser->id) {
             $owner = $portfolio->user;
             if ($owner) {
-                $avatar = $authUser->foto_path
-                    ? (str_starts_with($authUser->foto_path, 'http') ? $authUser->foto_path : asset('storage/' . $authUser->foto_path))
-                    : null;
 
                 try {
                     $owner->notify(new PagiNotification(

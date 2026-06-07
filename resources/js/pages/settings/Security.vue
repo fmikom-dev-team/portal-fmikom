@@ -1,6 +1,16 @@
 <script setup lang="ts">
 import { Form, Head, useForm, usePage } from "@inertiajs/vue3";
-import { Loader2, ShieldCheck, Fingerprint, Pencil, X, Plus, AlertCircle, CheckCircle2 } from "lucide-vue-next";
+import axios from "axios";
+import {
+	AlertCircle,
+	CheckCircle2,
+	Fingerprint,
+	Loader2,
+	Pencil,
+	Plus,
+	ShieldCheck,
+	X,
+} from "lucide-vue-next";
 import { onUnmounted, ref } from "vue";
 import SecurityController from "@/actions/App/Modules/Settings/Controllers/SecurityController";
 import Heading from "@/components/Heading.vue";
@@ -15,16 +25,19 @@ import AppLayout from "@/layouts/AppLayout.vue";
 import SettingsLayout from "@/layouts/settings/Layout.vue";
 import { edit } from "@/routes/security";
 import { disable, enable } from "@/routes/two-factor/index";
-
 import type { BreadcrumbItem } from "@/types";
-import axios from "axios";
 
 type Props = {
 	canManageTwoFactor?: boolean;
 	requiresConfirmation?: boolean;
 	twoFactorEnabled?: boolean;
 	passkeysEnabled?: boolean;
-	passkeys?: Array<{ id: number; name: string; last_used_at: string | null; created_at: string }>;
+	passkeys?: Array<{
+		id: number;
+		name: string;
+		last_used_at: string | null;
+		created_at: string;
+	}>;
 };
 
 const props = withDefaults(defineProps<Props>(), {
@@ -96,7 +109,7 @@ const saveRename = async (pk: any) => {
 			name: editingPasskeyName.value,
 		});
 		// Find the local item and update its name
-		const index = localPasskeys.value.findIndex(p => p.id === pk.id);
+		const index = localPasskeys.value.findIndex((p) => p.id === pk.id);
 		if (index !== -1) {
 			localPasskeys.value[index].name = data.passkey.name;
 		}
@@ -111,33 +124,35 @@ const formatCreatedDate = (dateString: string) => {
 	return new Date(dateString).toLocaleDateString("id-ID", {
 		day: "numeric",
 		month: "long",
-		year: "numeric"
+		year: "numeric",
 	});
 };
 
 const formatLastUsedDate = (dateString: string | null) => {
 	if (!dateString) return "Belum digunakan";
-	
+
 	const diffMs = Date.now() - new Date(dateString).getTime();
 	const diffMins = Math.floor(diffMs / 60000);
-	
+
 	if (diffMins < 2) return "Baru saja";
 	if (diffMins < 60) return `${diffMins} menit yang lalu`;
-	
+
 	const diffHours = Math.floor(diffMins / 60);
 	if (diffHours < 24) return `${diffHours} jam yang lalu`;
-	
+
 	return new Date(dateString).toLocaleDateString("id-ID", {
 		day: "numeric",
 		month: "long",
 		year: "numeric",
 		hour: "2-digit",
-		minute: "2-digit"
+		minute: "2-digit",
 	});
 };
 
 const base64ToArrayBuffer = (base64: string) => {
-	const binary_string = window.atob(base64.replace(/-/g, "+").replace(/_/g, "/"));
+	const binary_string = window.atob(
+		base64.replace(/-/g, "+").replace(/_/g, "/"),
+	);
 	const len = binary_string.length;
 	const bytes = new Uint8Array(len);
 	for (let i = 0; i < len; i++) {
@@ -152,7 +167,11 @@ const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
 	for (let i = 0; i < bytes.byteLength; i++) {
 		binary += String.fromCharCode(bytes[i]);
 	}
-	return window.btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+	return window
+		.btoa(binary)
+		.replace(/\+/g, "-")
+		.replace(/\//g, "_")
+		.replace(/=/g, "");
 };
 
 const registerNewPasskey = async () => {
@@ -160,7 +179,9 @@ const registerNewPasskey = async () => {
 	passkeyError.value = "";
 	passkeySuccess.value = "";
 	try {
-		const { data: options } = await axios.post("/auth/passkeys/register/options");
+		const { data: options } = await axios.post(
+			"/auth/passkeys/register/options",
+		);
 		options.challenge = base64ToArrayBuffer(options.challenge);
 		options.user.id = base64ToArrayBuffer(options.user.id);
 
@@ -173,7 +194,9 @@ const registerNewPasskey = async () => {
 			rawId: arrayBufferToBase64(credential.rawId),
 			type: credential.type,
 			response: {
-				attestationObject: arrayBufferToBase64(credential.response.attestationObject),
+				attestationObject: arrayBufferToBase64(
+					credential.response.attestationObject,
+				),
 				clientDataJSON: arrayBufferToBase64(credential.response.clientDataJSON),
 			},
 		});
@@ -181,7 +204,8 @@ const registerNewPasskey = async () => {
 		passkeySuccess.value = "Kunci sandi berhasil didaftarkan!";
 		localPasskeys.value.push(data.passkey);
 	} catch (e: any) {
-		passkeyError.value = e.response?.data?.error || e.message || "Gagal mendaftarkan kunci sandi.";
+		passkeyError.value =
+			e.response?.data?.error || e.message || "Gagal mendaftarkan kunci sandi.";
 	} finally {
 		isRegisteringPasskey.value = false;
 	}
@@ -200,16 +224,37 @@ const deletePasskey = async (id: number) => {
 
 const getPasskeyIcon = (name: string) => {
 	const lowercaseName = name.toLowerCase();
-	if (lowercaseName.includes("mac") || lowercaseName.includes("icloud keychain") || lowercaseName.includes("apple") || lowercaseName.includes("iphone") || lowercaseName.includes("ipad")) {
+	if (
+		lowercaseName.includes("mac") ||
+		lowercaseName.includes("icloud keychain") ||
+		lowercaseName.includes("apple") ||
+		lowercaseName.includes("iphone") ||
+		lowercaseName.includes("ipad")
+	) {
 		return "apple";
 	}
-	if (lowercaseName.includes("windows") || lowercaseName.includes("microsoft") || lowercaseName.includes("hello")) {
+	if (
+		lowercaseName.includes("windows") ||
+		lowercaseName.includes("microsoft") ||
+		lowercaseName.includes("hello")
+	) {
 		return "windows";
 	}
-	if (lowercaseName.includes("android") || lowercaseName.includes("poco") || lowercaseName.includes("samsung") || lowercaseName.includes("xiaomi") || lowercaseName.includes("oppo") || lowercaseName.includes("vivo")) {
+	if (
+		lowercaseName.includes("android") ||
+		lowercaseName.includes("poco") ||
+		lowercaseName.includes("samsung") ||
+		lowercaseName.includes("xiaomi") ||
+		lowercaseName.includes("oppo") ||
+		lowercaseName.includes("vivo")
+	) {
 		return "android";
 	}
-	if (lowercaseName.includes("pengelola sandi") || lowercaseName.includes("google") || lowercaseName.includes("google password manager")) {
+	if (
+		lowercaseName.includes("pengelola sandi") ||
+		lowercaseName.includes("google") ||
+		lowercaseName.includes("google password manager")
+	) {
 		return "google";
 	}
 	return "key";

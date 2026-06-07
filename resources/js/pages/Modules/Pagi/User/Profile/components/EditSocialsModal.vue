@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { Globe, Linkedin, Github, Twitter, Instagram, Loader2 } from "lucide-vue-next";
+import {
+	Github,
+	Globe,
+	Instagram,
+	Linkedin,
+	Loader2,
+	Twitter,
+} from "lucide-vue-next";
 import Modal from "../../ui/Modal.vue";
 
 defineProps<{

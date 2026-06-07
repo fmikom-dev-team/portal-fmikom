@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref } from "vue";
 import { Link, usePage } from "@inertiajs/vue3";
-import { Heart, Eye, Pencil, X } from "lucide-vue-next";
+import axios from "axios";
+import { Eye, Heart, Pencil, X } from "lucide-vue-next";
+import { ref } from "vue";
 import OptimizedImage from "../ui/OptimizedImage.vue";
 import VideoLazy from "../ui/VideoLazy.vue";
-import axios from "axios";
 
 const props = defineProps<{
 	projects: any[];
@@ -13,11 +13,14 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-	(e: 'open-project', project: any): void;
-	(e: 'share-project', project: any): void;
-	(e: 'delete-project', id: number, title: string): void;
-	(e: 'reorder', orderIds: number[]): void;
-	(e: 'like-updated', data: { id: number; liked: boolean; count: number }): void;
+	(e: "open-project", project: any): void;
+	(e: "share-project", project: any): void;
+	(e: "delete-project", id: number, title: string): void;
+	(e: "reorder", orderIds: number[]): void;
+	(
+		e: "like-updated",
+		data: { id: number; liked: boolean; count: number },
+	): void;
 }>();
 
 const page = usePage();
@@ -32,23 +35,27 @@ const toggleLike = async (e: Event, p: any) => {
 	const prevCount = getLikeCount(p);
 	const nextLiked = !prev;
 	const nextCount = prev ? prevCount - 1 : prevCount + 1;
-	
+
 	likeState.value[p.id] = { liked: nextLiked, count: nextCount };
 	p.liked = nextLiked;
 	p.likes = nextCount;
-	emit('like-updated', { id: p.id, liked: nextLiked, count: nextCount });
+	emit("like-updated", { id: p.id, liked: nextLiked, count: nextCount });
 
 	try {
 		const res = await axios.post(`/pagi/preview/${p.id}/like`);
 		likeState.value[p.id] = { liked: res.data.liked, count: res.data.likes };
 		p.liked = res.data.liked;
 		p.likes = res.data.likes;
-		emit('like-updated', { id: p.id, liked: res.data.liked, count: res.data.likes });
+		emit("like-updated", {
+			id: p.id,
+			liked: res.data.liked,
+			count: res.data.likes,
+		});
 	} catch {
 		likeState.value[p.id] = { liked: prev, count: prevCount };
 		p.liked = prev;
 		p.likes = prevCount;
-		emit('like-updated', { id: p.id, liked: prev, count: prevCount });
+		emit("like-updated", { id: p.id, liked: prev, count: prevCount });
 	}
 };
 
@@ -69,17 +76,19 @@ const closeProjectMenu = () => {
 
 const isVideoUrl = (url: string) => {
 	if (!url) return false;
-	const ext = url.split('.').pop()?.toLowerCase();
-	return ['mp4', 'webm', 'mov', 'avi', 'mkv', '3gp'].includes(ext || '');
+	const ext = url.split(".").pop()?.toLowerCase();
+	return ["mp4", "webm", "mov", "avi", "mkv", "3gp"].includes(ext || "");
 };
 
 const getCoverFit = (project: any) => {
-	if (!project || !project.content || !Array.isArray(project.content)) return 'cover';
-	const settings = project.content.find((b: any) => b && b.type === 'settings');
-	if (settings && settings.coverFit) return settings.coverFit;
-	const details = project.content.find((b: any) => b && b.type === 'featured_details');
-	if (details && details.cover_fit) return details.cover_fit;
-	return 'cover';
+	if (!project?.content || !Array.isArray(project.content)) return "cover";
+	const settings = project.content.find((b: any) => b && b.type === "settings");
+	if (settings?.coverFit) return settings.coverFit;
+	const details = project.content.find(
+		(b: any) => b && b.type === "featured_details",
+	);
+	if (details?.cover_fit) return details.cover_fit;
+	return "cover";
 };
 
 const onDragStart = (index: number) => {
@@ -93,14 +102,14 @@ const onDragOver = (event: DragEvent) => {
 
 const onDrop = (index: number) => {
 	if (!props.isOwnProfile || draggedIndex.value === null) return;
-	
+
 	const items = [...props.projects];
 	const item = items.splice(draggedIndex.value, 1)[0];
 	items.splice(index, 0, item);
 	draggedIndex.value = null;
 
-	const orderIds = items.map(p => p.id);
-	emit('reorder', orderIds);
+	const orderIds = items.map((p) => p.id);
+	emit("reorder", orderIds);
 };
 </script>
 

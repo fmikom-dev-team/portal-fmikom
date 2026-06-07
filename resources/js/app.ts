@@ -15,39 +15,48 @@ window.axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
 // ── Laravel Echo (Reverb WebSocket) ─────────────────────────────────────────
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
+
 // @ts-expect-error
 window.Pusher = Pusher;
 
 const isHttps = window.location.protocol === "https:";
-const isLocal = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+const isLocal = ["localhost", "127.0.0.1", "::1"].includes(
+	window.location.hostname,
+);
 const wsHost = import.meta.env.VITE_REVERB_HOST || window.location.hostname;
-const wsPort = isHttps && !isLocal ? undefined : (import.meta.env.VITE_REVERB_PORT || 8080);
-const wssPort = isHttps && !isLocal ? undefined : (import.meta.env.VITE_REVERB_PORT || 8080);
-const forceTLS = isHttps || (import.meta.env.VITE_REVERB_SCHEME === "https");
+const wsPort =
+	isHttps && !isLocal ? undefined : import.meta.env.VITE_REVERB_PORT || 8080;
+const wssPort =
+	isHttps && !isLocal ? undefined : import.meta.env.VITE_REVERB_PORT || 8080;
+const forceTLS = isHttps || import.meta.env.VITE_REVERB_SCHEME === "https";
 
 // @ts-expect-error
 window.Echo = new Echo({
-    broadcaster: "reverb",
-    key: import.meta.env.VITE_REVERB_APP_KEY,
-    wsHost,
-    wsPort,
-    wssPort,
-    forceTLS,
-    enabledTransports: ["ws", "wss"],
-    authEndpoint: "/broadcasting/auth",
+	broadcaster: "reverb",
+	key: import.meta.env.VITE_REVERB_APP_KEY,
+	wsHost,
+	wsPort,
+	wssPort,
+	forceTLS,
+	enabledTransports: ["ws", "wss"],
+	authEndpoint: "/broadcasting/auth",
 });
 
 // Connection diagnostics logging
-if (window.Echo && window.Echo.connector && window.Echo.connector.pusher) {
-    const pusherConn = window.Echo.connector.pusher.connection;
-    pusherConn.bind("state_change", (states: { previous: string; current: string }) => {
-        console.log(`[Echo Connection] State changed from "${states.previous}" to "${states.current}"`);
-    });
-    pusherConn.bind("error", (err: any) => {
-        console.error("[Echo Connection] Error details:", err);
-    });
+if (window.Echo?.connector?.pusher) {
+	const pusherConn = window.Echo.connector.pusher.connection;
+	pusherConn.bind(
+		"state_change",
+		(states: { previous: string; current: string }) => {
+			console.log(
+				`[Echo Connection] State changed from "${states.previous}" to "${states.current}"`,
+			);
+		},
+	);
+	pusherConn.bind("error", (err: unknown) => {
+		console.error("[Echo Connection] Error details:", err);
+	});
 }
-
 
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 
@@ -89,29 +98,30 @@ router.on("invalid", (event) => {
 		const customEvent = new CustomEvent("pagi-http-error", {
 			detail: {
 				status,
-				message: "Gagal mengunggah! Ukuran berkas terlalu besar (melebihi batas server 100MB). Hubungi admin jika masalah berlanjut.",
-			}
+				message:
+					"Gagal mengunggah! Ukuran berkas terlalu besar (melebihi batas server 100MB). Hubungi admin jika masalah berlanjut.",
+			},
 		});
 		window.dispatchEvent(customEvent);
 	} else if (status === 422) {
 		event.preventDefault();
 		const responseData = event.detail.response?.data;
 		let errMsg = "Data yang Anda masukkan tidak valid.";
-		if (responseData && responseData.errors) {
+		if (responseData?.errors) {
 			const firstError = Object.values(responseData.errors)[0];
 			if (Array.isArray(firstError)) {
 				errMsg = firstError[0];
-			} else if (typeof firstError === 'string') {
+			} else if (typeof firstError === "string") {
 				errMsg = firstError;
 			}
-		} else if (responseData && responseData.message) {
+		} else if (responseData?.message) {
 			errMsg = responseData.message;
 		}
 		const customEvent = new CustomEvent("pagi-http-error", {
 			detail: {
 				status,
 				message: errMsg,
-			}
+			},
 		});
 		window.dispatchEvent(customEvent);
 	}

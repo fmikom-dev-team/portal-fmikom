@@ -1,58 +1,27 @@
 <script setup lang="ts">
-import { Head, Link, usePage, router } from "@inertiajs/vue3";
-import {
-	BadgeCheck,
-	ChevronDown,
-	ChevronUp,
-	ChevronRight,
-	Eye,
-	Globe,
-	Heart,
-	Info,
-	MessageSquare,
-	Plus,
-	Share,
-	X,
-	MapPin,
-	BarChart3,
-	Sparkles,
-	ExternalLink,
-	Link2,
-	Linkedin,
-	Github,
-	Twitter,
-	Instagram,
-	CheckCircle2,
-	Circle,
-	UploadCloud,
-	Settings,
-	Bell,
-} from "lucide-vue-next";
-import { computed, ref, onMounted, onUnmounted, watch, defineAsyncComponent } from "vue";
+import { Head, Link, router, usePage } from "@inertiajs/vue3";
+import { X } from "lucide-vue-next";
+import { computed, defineAsyncComponent, onMounted, ref, watch } from "vue";
 import Navbar from "../ui/Navbar.vue";
-import Footer from "../ui/Footer.vue";
-import Modal from "../ui/Modal.vue";
-import VideoLazy from "../ui/VideoLazy.vue";
-import OptimizedImage from "../ui/OptimizedImage.vue";
-import Progress from "../ui/Progress.vue";
 import ShareWorkModal from "../ui/ShareWorkModal.vue";
 
 const WorkTab = defineAsyncComponent(() => import("./WorkTab.vue"));
 const GalleryTab = defineAsyncComponent(() => import("./GalleryTab.vue"));
 const SertifikatTab = defineAsyncComponent(() => import("./SertifikatTab.vue"));
 const AboutTab = defineAsyncComponent(() => import("./AboutTab.vue"));
+
 import Preview from "../ui/Preview.vue";
+import AddWorkModal from "./components/AddWorkModal.vue";
+import CropImageModal from "./components/CropImageModal.vue";
+import EditAvatarModal from "./components/EditAvatarModal.vue";
+import EditBannerModal from "./components/EditBannerModal.vue";
 import EditBioModal from "./components/EditBioModal.vue";
 import EditDetailsModal from "./components/EditDetailsModal.vue";
 import EditLocationModal from "./components/EditLocationModal.vue";
 import EditSocialsModal from "./components/EditSocialsModal.vue";
 import EditUsernameModal from "./components/EditUsernameModal.vue";
-import CropImageModal from "./components/CropImageModal.vue";
-import AddWorkModal from "./components/AddWorkModal.vue";
 import ProfileHeader from "./components/ProfileHeader.vue";
 import ProfileTabs from "./components/ProfileTabs.vue";
-import EditAvatarModal from "./components/EditAvatarModal.vue";
-import EditBannerModal from "./components/EditBannerModal.vue";
 import RelationsModal from "./components/RelationsModal.vue";
 import ShareProfileModal from "./components/ShareProfileModal.vue";
 import WarningModal from "./components/WarningModal.vue";
@@ -82,7 +51,23 @@ const props = defineProps<{
 const tabs = ["Work", "Gallery", "Certificates", "About"];
 const page = usePage();
 const user = computed(
-	() => props.profileUser || page.props.auth?.user || { name: "User", email: "", role_title: "", bio: "", location: "", foto_path: "", banner_path: "", website: "", linkedin: "", github: "", twitter: "", instagram: "", tanggal_lahir: "" },
+	() =>
+		props.profileUser ||
+		page.props.auth?.user || {
+			name: "User",
+			email: "",
+			role_title: "",
+			bio: "",
+			location: "",
+			foto_path: "",
+			banner_path: "",
+			website: "",
+			linkedin: "",
+			github: "",
+			twitter: "",
+			instagram: "",
+			tanggal_lahir: "",
+		},
 );
 
 const isOwnProfile = computed(() => {
@@ -91,14 +76,18 @@ const isOwnProfile = computed(() => {
 });
 
 const displayRoleName = computed(() => {
-	const role = props.roleName || (page.props as any).context?.active_role || (page.props.roleName as string) || 'Mahasiswa';
+	const role =
+		props.roleName ||
+		(page.props as any).context?.active_role ||
+		(page.props.roleName as string) ||
+		"Mahasiswa";
 	const r = role.toLowerCase();
-	if (r === 'mahasiswa') return 'Mahasiswa';
-	if (r === 'super-admin' || r === 'super_admin') return 'Super Admin';
-	if (r === 'dosen') return 'Dosen';
-	if (r === 'alumni') return 'Alumni';
-	if (r === 'mitra') return 'Mitra Perusahaan';
-	if (r === 'guest') return 'Tamu';
+	if (r === "mahasiswa") return "Mahasiswa";
+	if (r === "super-admin" || r === "super_admin") return "Super Admin";
+	if (r === "dosen") return "Dosen";
+	if (r === "alumni") return "Alumni";
+	if (r === "mitra") return "Mitra Perusahaan";
+	if (r === "guest") return "Tamu";
 	return role.charAt(0).toUpperCase() + role.slice(1);
 });
 
@@ -160,7 +149,7 @@ const {
 // Instantiate Projects Composable
 const {
 	localProjects,
-	projects,
+	projects: composableProjects,
 	showAddWorkModal,
 	showShareModal,
 	newCreatedProject,
@@ -189,52 +178,53 @@ const {
 
 // Tab Navigation logic
 const getInitialTab = () => {
-	if (typeof window === 'undefined') return 'Work';
-	const path = window.location.pathname;
-	const segments = path.split('/').filter(Boolean);
-	if (segments.length >= 3 && segments[0].toLowerCase() === 'pagi') {
+	if (typeof globalThis.window === "undefined") return "Work";
+	const path = globalThis.window.location.pathname;
+	const segments = path.split("/").filter(Boolean);
+	if (segments.length >= 3 && segments[0].toLowerCase() === "pagi") {
 		const tabSegment = segments[2].toLowerCase();
-		if (tabSegment === 'gallery') return 'Gallery';
-		if (tabSegment === 'certificates') return 'Certificates';
-		if (tabSegment === 'sertifikat') return 'Certificates';
-		if (tabSegment === 'about') return 'About';
-		if (tabSegment === 'work') return 'Work';
+		if (tabSegment === "gallery") return "Gallery";
+		if (tabSegment === "certificates") return "Certificates";
+		if (tabSegment === "sertifikat") return "Certificates";
+		if (tabSegment === "about") return "About";
+		if (tabSegment === "work") return "Work";
 	}
-	const params = new URLSearchParams(window.location.search);
-	const queryTab = params.get('tab');
+	const params = new URLSearchParams(globalThis.window.location.search);
+	const queryTab = params.get("tab");
 	if (queryTab) {
 		const qLower = queryTab.toLowerCase();
-		if (qLower === 'sertifikat' || qLower === 'certificates') return 'Certificates';
-		if (qLower === 'work') return 'Work';
-		if (qLower === 'gallery') return 'Gallery';
-		if (qLower === 'about') return 'About';
+		if (qLower === "sertifikat" || qLower === "certificates")
+			return "Certificates";
+		if (qLower === "work") return "Work";
+		if (qLower === "gallery") return "Gallery";
+		if (qLower === "about") return "About";
 	}
-	return 'Work';
+	return "Work";
 };
 const activeTab = ref(getInitialTab());
 
 watch(activeTab, (newTab) => {
-	if (typeof window !== 'undefined') {
-		const path = window.location.pathname;
-		const segments = path.split('/').filter(Boolean);
-		if (segments.length >= 2 && segments[0].toLowerCase() === 'pagi') {
+	if (typeof globalThis.window !== "undefined") {
+		const path = globalThis.window.location.pathname;
+		const segments = path.split("/").filter(Boolean);
+		if (segments.length >= 2 && segments[0].toLowerCase() === "pagi") {
 			const prefix = segments[0];
 			const username = segments[1];
 			const tabLower = newTab.toLowerCase();
-			let newPathname = '';
-			if (tabLower === 'work') {
+			let newPathname = "";
+			if (tabLower === "work") {
 				newPathname = `/${prefix}/${username}`;
 			} else {
 				newPathname = `/${prefix}/${username}/${tabLower}`;
 			}
-			const url = new URL(window.location.href);
+			const url = new URL(globalThis.window.location.href);
 			url.pathname = newPathname;
-			url.searchParams.delete('tab');
-			window.history.replaceState(null, '', url.toString());
+			url.searchParams.delete("tab");
+			globalThis.window.history.replaceState(null, "", url.toString());
 		} else {
-			const url = new URL(window.location.href);
-			url.searchParams.set('tab', newTab);
-			window.history.replaceState(null, '', url.toString());
+			const url = new URL(globalThis.window.location.href);
+			url.searchParams.set("tab", newTab);
+			globalThis.window.history.replaceState(null, "", url.toString());
 		}
 	}
 });
@@ -248,9 +238,13 @@ const selectWorkTab = () => {
 };
 
 const certificates = ref<any[]>([...(props.profileUser?.certificates || [])]);
-watch(() => props.profileUser?.certificates, (newVal) => {
-	certificates.value = [...(newVal || [])];
-}, { deep: true });
+watch(
+	() => props.profileUser?.certificates,
+	(newVal) => {
+		certificates.value = [...(newVal || [])];
+	},
+	{ deep: true },
+);
 
 // Form opening handlers
 const openLocationModal = () => {
@@ -287,39 +281,40 @@ const openBannerModal = () => {
 };
 
 const isLoading = ref(true);
-const isFollowing = ref(false);
+const followingState = ref(false);
 const isMessageEnabled = ref(true);
 
 onMounted(() => {
 	initFormValues();
 	if (props.isFollowing !== undefined) {
-		isFollowing.value = props.isFollowing;
+		followingState.value = props.isFollowing;
 	} else {
-		isFollowing.value = localStorage.getItem(`follow_${user.value.id}`) === "true";
+		followingState.value =
+			localStorage.getItem(`follow_${user.value.id}`) === "true";
 	}
-	isMessageEnabled.value = user.value.metadata?.is_message_enabled !== false;
+	isMessageEnabled.value = user.value.metadata?.is_message_enabled ?? true;
 
-	const urlParams = new URLSearchParams(window.location.search);
-	const projectId = urlParams.get('project') || urlParams.get('portfolio');
+	const urlParams = new URLSearchParams(globalThis.window.location.search);
+	const projectId = urlParams.get("project") || urlParams.get("portfolio");
 	if (projectId) {
-		const proj = props.projects?.find((p: any) => p.id == projectId);
+		const proj = props.projects?.find((p: any) => p.id === projectId);
 		if (proj) {
 			openProjectModal(proj);
 		}
 	}
 
-	const editParam = urlParams.get('edit');
-	if (editParam === 'username') {
+	const editParam = urlParams.get("edit");
+	if (editParam === "username") {
 		openUsernameModal();
-	} else if (editParam === 'avatar') {
+	} else if (editParam === "avatar") {
 		openAvatarModal();
-	} else if (editParam === 'bio') {
+	} else if (editParam === "bio") {
 		openBioModal();
-	} else if (editParam === 'location') {
+	} else if (editParam === "location") {
 		openLocationModal();
-	} else if (editParam === 'socials') {
+	} else if (editParam === "socials") {
 		openSocialLinksModal();
-	} else if (editParam === 'project') {
+	} else if (editParam === "project") {
 		openAddWorkModal();
 	}
 
@@ -339,18 +334,24 @@ const toggleFollow = async () => {
 	if (isFollowLoading.value) return;
 
 	isFollowLoading.value = true;
-	const prevState = isFollowing.value;
-	isFollowing.value = !isFollowing.value;
+	const prevState = followingState.value;
+	followingState.value = !followingState.value;
 
 	try {
-		const csrfToken = (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)?.content;
+		const csrfToken = (
+			document.querySelector("meta[name=csrf-token]") as HTMLMetaElement
+		)?.content;
 		const res = await fetch(`/pagi/users/${user.value.id}/follow`, {
-			method: 'POST',
-			headers: { 'X-CSRF-TOKEN': csrfToken || '', 'Accept': 'application/json', 'Content-Type': 'application/json' },
+			method: "POST",
+			headers: {
+				"X-CSRF-TOKEN": csrfToken || "",
+				Accept: "application/json",
+				"Content-Type": "application/json",
+			},
 		});
 		const data = await res.json();
-		if (!res.ok) throw new Error(data.error || 'Failed');
-		isFollowing.value = data.following;
+		if (!res.ok) throw new Error(data.error || "Failed");
+		followingState.value = data.following;
 		realFollowersCount.value = data.followers_count;
 		localStorage.setItem(`follow_${user.value.id}`, String(data.following));
 		if (data.following) {
@@ -359,7 +360,8 @@ const toggleFollow = async () => {
 			addToast(`Kamu berhenti mengikuti ${user.value.name}.`, "info");
 		}
 	} catch (e) {
-		isFollowing.value = prevState;
+		console.error(e);
+		followingState.value = prevState;
 		addToast("Gagal memperbarui status follow. Coba lagi.", "error");
 	} finally {
 		isFollowLoading.value = false;
@@ -369,18 +371,22 @@ const toggleFollow = async () => {
 const toggleMessageSwitch = (e: Event) => {
 	e.stopPropagation();
 	isMessageEnabled.value = !isMessageEnabled.value;
-	router.post("/pagi/profile/update", {
-		is_message_enabled: isMessageEnabled.value,
-	}, {
-		preserveScroll: true,
-		onSuccess: () => {
-			if (isMessageEnabled.value) {
-				addToast("Direct messaging has been enabled.", "success");
-			} else {
-				addToast("Direct messaging has been disabled.", "info");
-			}
-		}
-	});
+	router.post(
+		"/pagi/profile/update",
+		{
+			is_message_enabled: isMessageEnabled.value,
+		},
+		{
+			preserveScroll: true,
+			onSuccess: () => {
+				if (isMessageEnabled.value) {
+					addToast("Direct messaging has been enabled.", "success");
+				} else {
+					addToast("Direct messaging has been disabled.", "info");
+				}
+			},
+		},
+	);
 };
 
 const openChat = () => {
@@ -399,28 +405,29 @@ const showProfileShareModal = ref(false);
 const activeShareUrl = ref("");
 
 const generateShareToken = () => {
-	const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+	const chars =
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 	let result = "";
 	for (let i = 0; i < 12; i++) {
 		result += chars.charAt(Math.floor(Math.random() * chars.length));
 	}
-	return btoa(result).replace(/=/g, "").substring(0, 14);
+	return btoa(result).replaceAll("=", "").substring(0, 14);
 };
 
 const shareProfile = () => {
 	const username = user.value.pagi_username;
-	const baseUrl = username 
-		? `${window.location.origin}/pagi/${username}`
-		: `${window.location.origin}/pagi/profile/${user.value.id}`;
+	const baseUrl = username
+		? `${globalThis.window.location.origin}/pagi/${username}`
+		: `${globalThis.window.location.origin}/pagi/profile/${user.value.id}`;
 	const token = generateShareToken();
 	activeShareUrl.value = `${baseUrl}?pagi_share=${token}`;
 	showProfileShareModal.value = true;
 };
 
 const showRelationsModal = ref(false);
-const relationsModalType = ref<'followers' | 'following'>('followers');
+const relationsModalType = ref<"followers" | "following">("followers");
 
-const openRelationsModal = (type: 'followers' | 'following') => {
+const openRelationsModal = (type: "followers" | "following") => {
 	relationsModalType.value = type;
 	showRelationsModal.value = true;
 };
@@ -428,22 +435,32 @@ const openRelationsModal = (type: 'followers' | 'following') => {
 const updateFollowingCount = (following: boolean) => {
 	if (props.profileUser) {
 		if (following) {
-			props.profileUser.following_count = (props.profileUser.following_count ?? 0) + 1;
+			props.profileUser.following_count =
+				(props.profileUser.following_count ?? 0) + 1;
 		} else {
-			props.profileUser.following_count = Math.max(0, (props.profileUser.following_count ?? 1) - 1);
+			props.profileUser.following_count = Math.max(
+				0,
+				(props.profileUser.following_count ?? 1) - 1,
+			);
 		}
 	}
 };
 
 const realFollowersCount = ref<number>(
-	props.profileUser?.followers_count ?? (user.value.metadata?.followers?.length ?? 0)
+	props.profileUser?.followers_count ??
+		user.value.metadata?.followers?.length ??
+		0,
 );
 const dynamicFollowersCount = computed(() => {
 	return realFollowersCount.value;
 });
 
 const dynamicFollowingCount = computed(() => {
-	return props.profileUser?.following_count ?? (user.value.metadata?.following?.length ?? 0);
+	return (
+		props.profileUser?.following_count ??
+		user.value.metadata?.following?.length ??
+		0
+	);
 });
 
 const displayOwnerRoleName = computed(() => {
@@ -451,38 +468,72 @@ const displayOwnerRoleName = computed(() => {
 	if (user.value.role_title) return user.value.role_title;
 	if (user.value.user_type) {
 		const type = user.value.user_type.toLowerCase();
-		if (type === 'mahasiswa') return 'Mahasiswa';
-		if (type === 'super_admin' || type === 'super-admin') return 'Super Admin';
-		if (type === 'dosen') return 'Dosen';
-		if (type === 'alumni') return 'Alumni';
-		if (type === 'mitra') return 'Mitra Perusahaan';
-		return user.value.user_type.charAt(0).toUpperCase() + user.value.user_type.slice(1);
+		if (type === "mahasiswa") return "Mahasiswa";
+		if (type === "super_admin" || type === "super-admin") return "Super Admin";
+		if (type === "dosen") return "Dosen";
+		if (type === "alumni") return "Alumni";
+		if (type === "mitra") return "Mitra Perusahaan";
+		return (
+			user.value.user_type.charAt(0).toUpperCase() +
+			user.value.user_type.slice(1)
+		);
 	}
-	return 'Anggota PAGI';
+	return "Anggota PAGI";
 });
 
 const socialLinks = computed(() => {
 	const links = [];
-	if (user.value.website) links.push({ type: 'website', url: user.value.website, label: 'Website' });
-	if (user.value.linkedin) links.push({ type: 'linkedin', url: user.value.linkedin.startsWith('http') ? user.value.linkedin : `https://linkedin.com/in/${user.value.linkedin}`, label: 'LinkedIn' });
-	if (user.value.github) links.push({ type: 'github', url: user.value.github.startsWith('http') ? user.value.github : `https://github.com/${user.value.github}`, label: 'GitHub' });
-	if (user.value.twitter) links.push({ type: 'twitter', url: user.value.twitter.startsWith('http') ? user.value.twitter : `https://twitter.com/${user.value.twitter}`, label: 'Twitter' });
-	if (user.value.instagram) links.push({ type: 'instagram', url: user.value.instagram.startsWith('http') ? user.value.instagram : `https://instagram.com/${user.value.instagram}`, label: 'Instagram' });
+	if (user.value.website)
+		links.push({ type: "website", url: user.value.website, label: "Website" });
+	if (user.value.linkedin)
+		links.push({
+			type: "linkedin",
+			url: user.value.linkedin.startsWith("http")
+				? user.value.linkedin
+				: `https://linkedin.com/in/${user.value.linkedin}`,
+			label: "LinkedIn",
+		});
+	if (user.value.github)
+		links.push({
+			type: "github",
+			url: user.value.github.startsWith("http")
+				? user.value.github
+				: `https://github.com/${user.value.github}`,
+			label: "GitHub",
+		});
+	if (user.value.twitter)
+		links.push({
+			type: "twitter",
+			url: user.value.twitter.startsWith("http")
+				? user.value.twitter
+				: `https://twitter.com/${user.value.twitter}`,
+			label: "Twitter",
+		});
+	if (user.value.instagram)
+		links.push({
+			type: "instagram",
+			url: user.value.instagram.startsWith("http")
+				? user.value.instagram
+				: `https://instagram.com/${user.value.instagram}`,
+			label: "Instagram",
+		});
 	return links;
 });
 
 // About Tab Details
-const parseSkills = (skillsArray: any[]): Array<{ name: string, percentage: number }> => {
+const parseSkills = (
+	skillsArray: any[],
+): Array<{ name: string; percentage: number }> => {
 	if (!Array.isArray(skillsArray)) return [];
-	return skillsArray.map(item => {
-		if (typeof item === 'string') {
-			const parts = item.split(':');
-			if (parts.length === 2 && !isNaN(Number(parts[1]))) {
+	return skillsArray.map((item) => {
+		if (typeof item === "string") {
+			const parts = item.split(":");
+			if (parts.length === 2 && !Number.isNaN(Number(parts[1]))) {
 				return { name: parts[0], percentage: Number(parts[1]) };
 			}
 			return { name: item, percentage: 80 };
 		}
-		if (item && typeof item === 'object' && item.name) {
+		if (item && typeof item === "object" && item.name) {
 			return { name: item.name, percentage: Number(item.percentage) || 80 };
 		}
 		return { name: String(item), percentage: 80 };
@@ -490,26 +541,56 @@ const parseSkills = (skillsArray: any[]): Array<{ name: string, percentage: numb
 };
 
 const skills = computed(() => {
-	const val = user.value.skills || user.value.metadata?.skills || props.profileUser?.skills;
-	return Array.isArray(val) ? parseSkills(val) : parseSkills(['Figma', 'UI/UX Design', 'Vue.js']);
+	const val =
+		user.value.skills ||
+		user.value.metadata?.skills ||
+		props.profileUser?.skills;
+	return Array.isArray(val)
+		? parseSkills(val)
+		: parseSkills(["Figma", "UI/UX Design", "Vue.js"]);
 });
 
 const timezone = computed(() => {
-	return user.value.timezone || user.value.metadata?.timezone || props.profileUser?.timezone || "";
+	return (
+		user.value.timezone ||
+		user.value.metadata?.timezone ||
+		props.profileUser?.timezone ||
+		""
+	);
 });
 
 const timezoneExtended = computed(() => {
-	return user.value.timezone_extended || user.value.timezoneExtended || user.value.metadata?.timezone_extended || user.value.metadata?.timezoneExtended || props.profileUser?.timezone_extended || props.profileUser?.timezoneExtended || "No extended hours";
+	return (
+		user.value.timezone_extended ||
+		user.value.timezoneExtended ||
+		user.value.metadata?.timezone_extended ||
+		user.value.metadata?.timezoneExtended ||
+		props.profileUser?.timezone_extended ||
+		props.profileUser?.timezoneExtended ||
+		"No extended hours"
+	);
 });
 
 const languages = computed(() => {
-	const langs = user.value.languages || user.value.metadata?.languages || props.profileUser?.languages;
+	const langs =
+		user.value.languages ||
+		user.value.metadata?.languages ||
+		props.profileUser?.languages;
 	return Array.isArray(langs) ? langs : [];
+});
+
+const computedProfileImage = computed(() => {
+	if (!user.value.foto_path) return "";
+	if (user.value.foto_path.startsWith("http")) return user.value.foto_path;
+	const origin =
+		typeof globalThis.window === "undefined"
+			? ""
+			: globalThis.window.location.origin;
+	return `${origin}/storage/${user.value.foto_path}`;
 });
 
 // JSON-LD Structured Data
 const jsonLdString = computed(() => {
-	const origin = typeof window !== "undefined" ? window.location.origin : "";
 	const sameAs = [
 		user.value.website,
 		user.value.linkedin ? `https://linkedin.com/in/${user.value.linkedin}` : "",
@@ -521,16 +602,14 @@ const jsonLdString = computed(() => {
 	return JSON.stringify({
 		"@context": "https://schema.org",
 		"@type": "Person",
-		"name": user.value.name,
-		"jobTitle": user.value.role_title || displayRoleName.value,
-		"description": user.value.bio || "",
-		"image": user.value.foto_path
-			? (user.value.foto_path.startsWith("http")
-				? user.value.foto_path
-				: `${origin}/storage/${user.value.foto_path}`)
-			: "",
-		"url": user.value.pagi_username ? `${origin}/pagi/${user.value.pagi_username}` : `${origin}/pagi/profile/${user.value.id}`,
-		"sameAs": sameAs,
+		name: user.value.name,
+		jobTitle: user.value.role_title || displayRoleName.value,
+		description: user.value.bio || "",
+		image: computedProfileImage.value,
+		url: user.value.pagi_username
+			? `${typeof globalThis.window !== "undefined" ? globalThis.window.location.origin : ""}/pagi/${user.value.pagi_username}`
+			: `${typeof globalThis.window !== "undefined" ? globalThis.window.location.origin : ""}/pagi/profile/${user.value.id}`,
+		sameAs: sameAs,
 	});
 });
 
@@ -538,45 +617,57 @@ const headTitle = computed(() => {
 	if (viewingProject.value) {
 		return `${viewingProject.value.title} by ${user.value.name} — PAGI Portfolio`;
 	}
-	return `${user.value.name} — ${props.moduleName || 'PAGI'} Profile`;
+	return `${user.value.name} — ${props.moduleName || "PAGI"} Profile`;
 });
 
 const headDescription = computed(() => {
 	if (viewingProject.value) {
 		if (viewingProject.value.description) {
-			const cleanDesc = viewingProject.value.description.replace(/<[^>]*>/g, '');
-			return cleanDesc.length > 160 ? cleanDesc.slice(0, 157) + '...' : cleanDesc;
+			const cleanDesc = viewingProject.value.description.replace(
+				/<[^>]*>/g,
+				"",
+			);
+			return cleanDesc.length > 160
+				? `${cleanDesc.slice(0, 157)}...`
+				: cleanDesc;
 		}
 		return `Lihat karya "${viewingProject.value.title}" oleh ${user.value.name} di FMIKOM Portal.`;
 	}
-	return user.value.bio || 'FMIKOM Portal profile page. Hubungkan, kolaborasi, dan eksplorasi karya kreatif mahasiswa.';
+	return (
+		user.value.bio ||
+		"FMIKOM Portal profile page. Hubungkan, kolaborasi, dan eksplorasi karya kreatif mahasiswa."
+	);
 });
 
 const headImage = computed(() => {
-	if (viewingProject.value && viewingProject.value.image) {
+	if (viewingProject.value?.image) {
 		return viewingProject.value.image;
 	}
-	return user.value.foto_path 
-		? (user.value.foto_path.startsWith('http') ? user.value.foto_path : '/storage/' + user.value.foto_path)
-		: '/og-image.png';
+	if (!user.value.foto_path) return "/og-image.png";
+	return user.value.foto_path.startsWith("http")
+		? user.value.foto_path
+		: `/storage/${user.value.foto_path}`;
 });
 
 const headType = computed(() => {
-	return viewingProject.value ? 'article' : 'profile';
+	return viewingProject.value ? "article" : "profile";
 });
 
 const headUrl = computed(() => {
-	const base = user.value.pagi_username ? `/pagi/${user.value.pagi_username}` : `/pagi/profile/${user.value.id}`;
+	const base = user.value.pagi_username
+		? `/pagi/${user.value.pagi_username}`
+		: `/pagi/profile/${user.value.id}`;
 	if (viewingProject.value) {
-		return `${window.location.origin}${base}?project=${viewingProject.value.id}`;
+		return `${globalThis.window.location.origin}${base}?project=${viewingProject.value.id}`;
 	}
-	return `${window.location.origin}${base}`;
+	return `${globalThis.window.location.origin}${base}`;
 });
 </script>
 
 
 <template>
 	<Head :title="headTitle">
+		<title>{{ headTitle }}</title>
 		<!-- Meta Tags -->
 		<meta name="description" :content="headDescription" />
 		
@@ -609,7 +700,7 @@ const headUrl = computed(() => {
 				<ProfileHeader
 					:isLoading="isLoading"
 					:isOwnProfile="isOwnProfile"
-					:isFollowing="isFollowing"
+					:isFollowing="followingState"
 					:isMessageEnabled="isMessageEnabled"
 					:user="user"
 					:displayRoleName="displayRoleName"
@@ -619,7 +710,6 @@ const headUrl = computed(() => {
 					:dynamicFollowersCount="dynamicFollowersCount"
 					:dynamicFollowingCount="dynamicFollowingCount"
 					:socialLinks="socialLinks"
-					:presets="presets"
 					@open-avatar-modal="openAvatarModal"
 					@open-username-modal="openUsernameModal"
 					@open-location-modal="openLocationModal"
@@ -650,7 +740,7 @@ const headUrl = computed(() => {
 				<div class="transition-all duration-300">
 					<WorkTab 
 						v-if="activeTab === 'Work'"
-						:projects="projects"
+						:projects="composableProjects"
 						:isOwnProfile="isOwnProfile"
 						:user="user"
 						:isLoading="isLoading"
@@ -664,7 +754,7 @@ const headUrl = computed(() => {
 					/>
 					<GalleryTab 
 						v-else-if="activeTab === 'Gallery'"
-						:projects="projects"
+						:projects="composableProjects"
 						:isOwnProfile="isOwnProfile"
 						:isLoading="isLoading"
 						@open-project="openProjectModal"
@@ -686,7 +776,7 @@ const headUrl = computed(() => {
 						:profileUser="profileUser"
 						:user="user"
 						:isOwnProfile="isOwnProfile"
-						:isFollowing="isFollowing"
+						:isFollowing="followingState"
 						:isMessageEnabled="isMessageEnabled"
 						:dynamicFollowersCount="dynamicFollowersCount"
 						:skills="skills"
@@ -710,7 +800,7 @@ const headUrl = computed(() => {
 		</div>
 
 		<!-- TOAST ALERTS CONTAINER -->
-		<div class="fixed top-6 right-6 z-[10010] flex flex-col gap-3.5 max-w-xs pointer-events-none">
+		<div class="fixed top-6 right-6 z-10010 flex flex-col gap-3.5 max-w-xs pointer-events-none">
 			<TransitionGroup 
 				enter-active-class="transform transition duration-300 ease-out"
 				enter-from-class="translate-y-2 opacity-0 scale-95"

@@ -454,90 +454,88 @@ class AdminDashboardController extends Controller
         ]);
 
         $work = PagiWork::findOrFail($workId);
-        
+
         if ($request->action !== 'dismiss') {
-            $work->update([
-                'status' => $request->action === 'remove' ? 'removed' : 'hidden'
-            ]);
+            $work->update(['status' => $request->action === 'remove' ? 'removed' : 'hidden']);
         }
 
-        // Get all pending reports for this work to notify their reporters later
-        $reports = PagiReport::where('work_id', $workId)
-            ->where('status', 'pending')
-            ->get();
+        $reports = PagiReport::where('work_id', $workId)->where('status', 'pending')->get();
 
-        // Resolve pending reports
-        PagiReport::where('work_id', $workId)
-            ->where('status', 'pending')
-            ->update([
-                'status' => $request->action === 'remove' ? 'actioned' : ($request->action === 'dismiss' ? 'dismissed' : 'reviewed'),
-                'reviewed_by' => auth()->id() ?: 1,
-                'admin_note' => $request->reason,
-                'reviewed_at' => now(),
-            ]);
+        $reportStatus = match ($request->action) {
+            'remove'  => 'actioned',
+            'dismiss' => 'dismissed',
+            default   => 'reviewed',
+        };
 
-        // Send notifications based on the action
+        PagiReport::where('work_id', $workId)->where('status', 'pending')->update([
+            'status'      => $reportStatus,
+            'reviewed_by' => auth()->id() ?: 1,
+            'admin_note'  => $request->reason,
+            'reviewed_at' => now(),
+        ]);
+
         if ($request->action === 'dismiss') {
-            // TIDAK VALID: Notify all reporters that their reports were not proven
-            foreach ($reports as $r) {
-                $reporter = $r->reporter ?? User::find($r->reporter_id);
-                if ($reporter) {
-                    $reporter->notify(new PagiNotification(
-                        type: 'system',
-                        title: 'Tinjauan Laporan',
-                        message: 'Mohon maaf, berdasarkan tinjauan kami, karya "' . $work->title . '" yang Anda laporkan tidak terbukti melanggar panduan.',
-                        avatar: null,
-                        href: '/pagi',
-                        extra: [
-                            'work_id' => $workId,
-                            'report_id' => $r->id,
-                            'status' => 'dismissed',
-                        ]
-                    ));
-                }
-            }
+            $this->notifyDismissedReporters($reports, $work, $workId);
         } else {
-            // VALID: Notify work owner about the takedown action
-            $owner = $work->user;
-            if ($owner) {
-                $owner->notify(new PagiNotification(
-                    type: 'admin_takedown',
-                    title: 'Tindakan Moderasi pada Karya Anda',
-                    message: 'Karya Anda "' . $work->title . '" telah disembunyikan/dihapus karena: ' . $request->reason,
-                    avatar: null,
-                    href: '/pagi/notifications',
-                    extra: [
-                        'work_id' => $workId,
-                        'work_title' => $work->title,
-                        'action' => $request->action,
-                        'reason' => $request->reason,
-                        'edit_url' => '/pagi/editor?id=' . $workId,
-                        'appeal' => true
-                    ]
-                ));
-            }
-
-            // Also notify all reporters that the work has been taken action on
-            foreach ($reports as $r) {
-                $reporter = $r->reporter ?? User::find($r->reporter_id);
-                if ($reporter) {
-                    $reporter->notify(new PagiNotification(
-                        type: 'system',
-                        title: 'Tindakan Laporan',
-                        message: 'Terima kasih atas laporan Anda. Kami telah mengambil tindakan terhadap karya "' . $work->title . '" yang Anda laporkan.',
-                        avatar: null,
-                        href: '/pagi',
-                        extra: [
-                            'work_id' => $workId,
-                            'report_id' => $r->id,
-                            'status' => 'actioned',
-                        ]
-                    ));
-                }
-            }
+            $this->notifyTakedownParties($reports, $work, $workId, $request->action, $request->reason);
         }
 
         return back()->with('success', 'Konten berhasil dimoderasi.');
+    }
+
+    private function notifyDismissedReporters($reports, PagiWork $work, int $workId): void
+    {
+        foreach ($reports as $r) {
+            $reporter = $r->reporter ?? User::find($r->reporter_id);
+            if (!$reporter) {
+                continue;
+            }
+            $reporter->notify(new PagiNotification(
+                type: 'system',
+                title: 'Tinjauan Laporan',
+                message: 'Mohon maaf, berdasarkan tinjauan kami, karya "' . $work->title . '" yang Anda laporkan tidak terbukti melanggar panduan.',
+                avatar: null,
+                href: '/pagi',
+                extra: ['work_id' => $workId, 'report_id' => $r->id, 'status' => 'dismissed']
+            ));
+        }
+    }
+
+    private function notifyTakedownParties($reports, PagiWork $work, int $workId, string $action, string $reason): void
+    {
+        $owner = $work->user;
+        if ($owner) {
+            $owner->notify(new PagiNotification(
+                type: 'admin_takedown',
+                title: 'Tindakan Moderasi pada Karya Anda',
+                message: 'Karya Anda "' . $work->title . '" telah disembunyikan/dihapus karena: ' . $reason,
+                avatar: null,
+                href: '/pagi/notifications',
+                extra: [
+                    'work_id'   => $workId,
+                    'work_title'=> $work->title,
+                    'action'    => $action,
+                    'reason'    => $reason,
+                    'edit_url'  => '/pagi/editor?id=' . $workId,
+                    'appeal'    => true,
+                ]
+            ));
+        }
+
+        foreach ($reports as $r) {
+            $reporter = $r->reporter ?? User::find($r->reporter_id);
+            if (!$reporter) {
+                continue;
+            }
+            $reporter->notify(new PagiNotification(
+                type: 'system',
+                title: 'Tindakan Laporan',
+                message: 'Terima kasih atas laporan Anda. Kami telah mengambil tindakan terhadap karya "' . $work->title . '" yang Anda laporkan.',
+                avatar: null,
+                href: '/pagi',
+                extra: ['work_id' => $workId, 'report_id' => $r->id, 'status' => 'actioned']
+            ));
+        }
     }
 
     /**
@@ -780,26 +778,16 @@ class AdminDashboardController extends Controller
             ->pluck('count', 'date')
             ->toArray();
 
-        $labels     = [];
-        $karya      = [];
-        $laporan    = [];
-        $warnings   = [];
+        $labels   = [];
+        $karya    = [];
+        $laporan  = [];
+        $warnings = [];
 
         for ($i = $days - 1; $i >= 0; $i--) {
             $carbonDate = Carbon::now()->subDays($i);
             $dateStr    = $carbonDate->toDateString();
 
-            if ($days <= 7) {
-                $labels[] = $carbonDate->translatedFormat('d M');
-            } elseif ($days <= 30) {
-                $labels[] = $carbonDate->translatedFormat('d M');
-            } else {
-                // For 90d, label every 10 days to avoid clutter
-                $labels[] = ($i % 10 === 0 || $i === $days - 1 || $i === 0)
-                    ? $carbonDate->translatedFormat('d M')
-                    : '';
-            }
-
+            $labels[]   = $this->formatChartLabel($carbonDate, $i, $days);
             $karya[]    = $karyaCounts[$dateStr] ?? 0;
             $laporan[]  = $laporanCounts[$dateStr] ?? 0;
             $warnings[] = $warningCounts[$dateStr] ?? 0;
@@ -1350,5 +1338,19 @@ class AdminDashboardController extends Controller
             'misinformation' => 'Misinformasi',
             default => 'Lainnya',
         };
+    }
+
+    private function formatChartLabel(\Carbon\Carbon $date, int $offsetFromEnd, int $totalDays): string
+    {
+        if ($totalDays <= 30) {
+            return $date->translatedFormat('d M');
+        }
+
+        // For 90-day range: only label every 10th day and the first/last
+        $isLabelDay = ($offsetFromEnd % 10 === 0)
+            || $offsetFromEnd === $totalDays - 1
+            || $offsetFromEnd === 0;
+
+        return $isLabelDay ? $date->translatedFormat('d M') : '';
     }
 }

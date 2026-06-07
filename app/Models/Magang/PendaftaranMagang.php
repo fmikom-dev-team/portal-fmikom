@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Models\Magang;
+
+use App\Models\User;
 use App\Models\Surat\Surat;
 
 use Illuminate\Database\Eloquent\Model;

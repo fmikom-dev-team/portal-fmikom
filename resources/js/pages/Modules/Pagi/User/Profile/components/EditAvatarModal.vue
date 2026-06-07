@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { Camera, Loader2, UploadCloud, X } from "lucide-vue-next";
 import { ref, watch } from "vue";
-import { UploadCloud, Camera, X, Loader2 } from "lucide-vue-next";
 import Modal from "../../ui/Modal.vue";
 import Progress from "../../ui/Progress.vue";
 
@@ -25,7 +25,11 @@ const handleFotoChange = (e: Event) => {
 
 	// Validate size (max 2MB)
 	if (file.size > 2 * 1024 * 1024) {
-		emit("warning", "File Terlalu Besar", "Ukuran maksimal foto profil adalah 2MB.");
+		emit(
+			"warning",
+			"File Terlalu Besar",
+			"Ukuran maksimal foto profil adalah 2MB.",
+		);
 		return;
 	}
 
@@ -62,18 +66,23 @@ const formatBytes = (bytes: number, decimals = 2) => {
 	const dm = decimals < 0 ? 0 : decimals;
 	const sizes = ["Bytes", "KB", "MB", "GB"];
 	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+	return `${parseFloat((bytes / k ** i).toFixed(dm))} ${sizes[i]}`;
 };
 
-watch(() => props.show, (newVal) => {
-	if (newVal) {
-		photoPreview.value = props.user.foto_path
-			? (props.user.foto_path.startsWith("http") ? props.user.foto_path : "/storage/" + props.user.foto_path)
-			: null;
-		props.form.foto = null;
-		props.form.remove_foto = false;
-	}
-});
+watch(
+	() => props.show,
+	(newVal) => {
+		if (newVal) {
+			photoPreview.value = props.user.foto_path
+				? props.user.foto_path.startsWith("http")
+					? props.user.foto_path
+					: `/storage/${props.user.foto_path}`
+				: null;
+			props.form.foto = null;
+			props.form.remove_foto = false;
+		}
+	},
+);
 </script>
 
 <template>

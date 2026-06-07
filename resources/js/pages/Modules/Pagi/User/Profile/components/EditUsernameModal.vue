@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
 import { Loader2 } from "lucide-vue-next";
+import { computed, onMounted, ref, watch } from "vue";
 import Modal from "../../ui/Modal.vue";
 
 const props = defineProps<{
@@ -11,28 +11,40 @@ const props = defineProps<{
 
 const emit = defineEmits(["close", "submit"]);
 
-const usernameCheckStatus = ref<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
+const usernameCheckStatus = ref<
+	"idle" | "checking" | "available" | "taken" | "invalid"
+>("idle");
 const usernameSuggestions = ref<string[]>([]);
-const usernameErrorMsg = ref('');
+const usernameErrorMsg = ref("");
 let usernameDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-const usernameChangesCount = computed(() => props.user.metadata?.username_changes_count || 0);
-const lastUsernameChangedAt = computed(() => props.user.metadata?.last_username_changed_at || null);
+const usernameChangesCount = computed(
+	() => props.user.metadata?.username_changes_count || 0,
+);
+const lastUsernameChangedAt = computed(
+	() => props.user.metadata?.last_username_changed_at || null,
+);
 
 const canChangeUsername = computed(() => {
 	if (!props.user.pagi_username) return { allowed: true };
 
 	if (usernameChangesCount.value >= 3) {
-		return { allowed: false, reason: "Batas perubahan username Anda telah habis (Maksimal 3 kali)." };
+		return {
+			allowed: false,
+			reason: "Batas perubahan username Anda telah habis (Maksimal 3 kali).",
+		};
 	}
 
 	if (lastUsernameChangedAt.value) {
 		const lastDate = new Date(lastUsernameChangedAt.value);
-		const diffTime = Math.abs(new Date().getTime() - lastDate.getTime());
+		const diffTime = Math.abs(Date.now() - lastDate.getTime());
 		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 		if (diffDays <= 30) {
 			const daysLeft = 30 - Math.floor(diffTime / (1000 * 60 * 60 * 24));
-			return { allowed: false, reason: `Anda baru saja mengubah username. Silakan tunggu ${daysLeft} hari lagi untuk mengubahnya kembali.` };
+			return {
+				allowed: false,
+				reason: `Anda baru saja mengubah username. Silakan tunggu ${daysLeft} hari lagi untuk mengubahnya kembali.`,
+			};
 		}
 	}
 
@@ -40,8 +52,12 @@ const canChangeUsername = computed(() => {
 });
 
 const usernameEditBlock = computed(() => {
-	const currentUsernameClean = (props.user.pagi_username || '').toLowerCase().trim();
-	const inputUsernameClean = (props.form.pagi_username || '').toLowerCase().trim();
+	const currentUsernameClean = (props.user.pagi_username || "")
+		.toLowerCase()
+		.trim();
+	const inputUsernameClean = (props.form.pagi_username || "")
+		.toLowerCase()
+		.trim();
 	if (inputUsernameClean === currentUsernameClean) {
 		return null;
 	}
@@ -53,55 +69,69 @@ const usernameEditBlock = computed(() => {
 });
 
 const formatDateString = (dateStr: any) => {
-	if (!dateStr) return '';
+	if (!dateStr) return "";
 	const date = new Date(dateStr);
-	return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+	return date.toLocaleDateString("id-ID", {
+		year: "numeric",
+		month: "long",
+		day: "numeric",
+	});
 };
 
 const checkUsernameAvailability = async (val: string) => {
 	if (!val || val.length < 3) {
-		usernameCheckStatus.value = val ? 'invalid' : 'idle';
-		usernameErrorMsg.value = val ? 'Minimal 3 karakter.' : '';
+		usernameCheckStatus.value = val ? "invalid" : "idle";
+		usernameErrorMsg.value = val ? "Minimal 3 karakter." : "";
 		usernameSuggestions.value = [];
 		return;
 	}
 	const formatted = val.toLowerCase();
 	if (!/^[a-z0-9._]+$/.test(formatted)) {
-		usernameCheckStatus.value = 'invalid';
-		usernameErrorMsg.value = 'Hanya boleh huruf kecil, angka, titik (.), dan underscore (_).';
+		usernameCheckStatus.value = "invalid";
+		usernameErrorMsg.value =
+			"Hanya boleh huruf kecil, angka, titik (.), dan underscore (_).";
 		usernameSuggestions.value = [];
 		return;
 	}
-	if (formatted === (props.user.pagi_username || '').toLowerCase()) {
-		usernameCheckStatus.value = 'available';
-		usernameErrorMsg.value = '';
+	if (formatted === (props.user.pagi_username || "").toLowerCase()) {
+		usernameCheckStatus.value = "available";
+		usernameErrorMsg.value = "";
 		usernameSuggestions.value = [];
 		return;
 	}
-	usernameCheckStatus.value = 'checking';
+	usernameCheckStatus.value = "checking";
 	try {
-		const res = await fetch(`/pagi/username/check?username=${encodeURIComponent(formatted)}`, {
-			headers: { 'Accept': 'application/json' },
-		});
+		const res = await fetch(
+			`/pagi/username/check?username=${encodeURIComponent(formatted)}`,
+			{
+				headers: { Accept: "application/json" },
+			},
+		);
 		const data = await res.json();
 		if (data.available) {
-			usernameCheckStatus.value = 'available';
-			usernameErrorMsg.value = '';
+			usernameCheckStatus.value = "available";
+			usernameErrorMsg.value = "";
 			usernameSuggestions.value = [];
 		} else {
-			usernameCheckStatus.value = 'taken';
-			usernameErrorMsg.value = data.error || 'Username sudah digunakan.';
+			usernameCheckStatus.value = "taken";
+			usernameErrorMsg.value = data.error || "Username sudah digunakan.";
 			usernameSuggestions.value = data.suggestions || [];
 		}
 	} catch {
-		usernameCheckStatus.value = 'idle';
+		usernameCheckStatus.value = "idle";
 	}
 };
 
-watch(() => props.form.pagi_username, (val) => {
-	if (usernameDebounceTimer) clearTimeout(usernameDebounceTimer);
-	usernameDebounceTimer = setTimeout(() => checkUsernameAvailability(val), 500);
-});
+watch(
+	() => props.form.pagi_username,
+	(val) => {
+		if (usernameDebounceTimer) clearTimeout(usernameDebounceTimer);
+		usernameDebounceTimer = setTimeout(
+			() => checkUsernameAvailability(val),
+			500,
+		);
+	},
+);
 
 onMounted(() => {
 	if (props.form.pagi_username) {

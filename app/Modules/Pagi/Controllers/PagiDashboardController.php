@@ -76,10 +76,10 @@ class PagiDashboardController extends Controller
                     'id' => $portfolio->id,
                     'title' => $portfolio->title ?? 'Untitled Project',
                     'image' => $portfolio->cover_image ? (str_starts_with($portfolio->cover_image, 'http') ? $portfolio->cover_image : asset('storage/' . $portfolio->cover_image)) : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
-                    'author' => $portfolio->user ? $portfolio->user->name : 'Unknown User',
+                    'author' => $portfolio->user ? (($portfolio->user->name === strtoupper($portfolio->user->name)) ? ucwords(strtolower($portfolio->user->name)) : $portfolio->user->name) : 'Unknown User',
                     'avatar' => ($portfolio->user && $portfolio->user->foto_path)
                         ? (str_starts_with($portfolio->user->foto_path, 'http') ? $portfolio->user->foto_path : asset('storage/' . $portfolio->user->foto_path))
-                        : 'https://ui-avatars.com/api/?name=' . urlencode($portfolio->user ? $portfolio->user->name : 'User') . '&background=random',
+                        : 'https://ui-avatars.com/api/?name=' . urlencode($portfolio->user ? (($portfolio->user->name === strtoupper($portfolio->user->name)) ? ucwords(strtolower($portfolio->user->name)) : $portfolio->user->name) : 'User') . '&background=random',
                     'likes' => count($portfolio->likes ?? []),
                     'liked' => auth()->check() ? in_array(auth()->id(), $portfolio->likes ?? []) : false,
                     'comments' => $this->profileService->formatComments($portfolio->comments ?? []),
@@ -100,7 +100,7 @@ class PagiDashboardController extends Controller
                         : false,
                     'user' => $portfolio->user ? [
                         'id' => $portfolio->user->id,
-                        'name' => $portfolio->user->name,
+                        'name' => ($portfolio->user->name === strtoupper($portfolio->user->name)) ? ucwords(strtolower($portfolio->user->name)) : $portfolio->user->name,
                         'pagi_username' => $portfolio->user->pagi_username,
                         'avatar' => $portfolio->user->foto_path ? (str_starts_with($portfolio->user->foto_path, 'http') ? $portfolio->user->foto_path : asset('storage/' . $portfolio->user->foto_path)) : null,
                         'location' => $portfolio->user->location ?? 'Banyumas, Indonesia',
@@ -352,7 +352,6 @@ class PagiDashboardController extends Controller
         $user = auth()->user();
         
         $request->validate([
-            'name'             => 'nullable|string|max:255',
             'role_title'       => 'nullable|string|max:100',
             'banner'           => [
                 'nullable',
@@ -438,14 +437,18 @@ class PagiDashboardController extends Controller
         $user = auth()->user()->load('programStudi.fakultas');
         $role = $request->attributes->get('resolved_role', session('active_role'));
 
+        // Recalculate progress:
         $progress = 0;
-        if (!empty($user->name)) $progress += 15;
-        if (!empty($user->email)) $progress += 15;
-        if (!empty($user->foto_path)) $progress += 15;
-        if (!empty($user->bio)) $progress += 15;
-        if (!empty($user->location) || !empty($user->metadata['billing_address'])) $progress += 15;
-        if (!empty($user->tanggal_lahir)) $progress += 15;
+        if (!empty($user->name)) $progress += 10;
+        if (!empty($user->email)) $progress += 10;
+        if (!empty($user->foto_path)) $progress += 10;
+        if (!empty($user->bio)) $progress += 10;
+        if (!empty($user->location) || !empty($user->metadata['billing_address'])) $progress += 10;
+        if (!empty($user->tanggal_lahir)) $progress += 10;
+        if (!empty($user->no_telepon)) $progress += 10;
+        if (!empty($user->github) || !empty($user->linkedin) || !empty($user->instagram)) $progress += 10;
         if (!empty($user->metadata['calendar_link'])) $progress += 10;
+        if (!empty($user->pagi_username)) $progress += 10;
 
         $profileUser = [
             'id' => $user->id,
@@ -456,7 +459,7 @@ class PagiDashboardController extends Controller
             'billing_address' => $user->metadata['billing_address'] ?? null,
             'legal_entity_name' => $user->metadata['legal_entity_name'] ?? null,
             'pagi_username' => $user->pagi_username,
-            'progress' => $progress,
+            'progress' => min(100, $progress),
             'bio' => $user->bio ?? 'Through the lens, I create stories worth remembering.',
             'avatar' => $user->foto_path 
                 ? (str_starts_with($user->foto_path, 'http') ? $user->foto_path : '/storage/' . $user->foto_path)
@@ -466,6 +469,23 @@ class PagiDashboardController extends Controller
             'nim_nip' => $user->nim_nip ?? null,
             'program_studi' => $user->programStudi?->nama ?? null,
             'fakultas' => $user->programStudi?->fakultas?->nama ?? null,
+            
+            // Additional Database-backed fields
+            'no_telepon' => $user->no_telepon ?? null,
+            'location' => $user->location ?? null,
+            'website' => $user->website ?? null,
+            'twitter' => $user->twitter ?? null,
+            'linkedin' => $user->linkedin ?? null,
+            'github' => $user->github ?? null,
+            'instagram' => $user->instagram ?? null,
+            
+            // Tab states stored in metadata
+            'subscription' => $user->metadata['subscription'] ?? null,
+            'trade_agent' => $user->metadata['trade_agent'] ?? null,
+            'brand_branding' => $user->metadata['brand_branding'] ?? null,
+            'payment_account' => $user->metadata['payment_account'] ?? null,
+            'rewards' => $user->metadata['rewards'] ?? null,
+            'email_preferences' => $user->metadata['email_preferences'] ?? null,
         ];
 
         return Inertia::render('Modules/Pagi/User/Settings/Index', [
@@ -481,21 +501,98 @@ class PagiDashboardController extends Controller
 
         $request->validate([
             'email' => ['required', 'string', 'email', 'max:255', \Illuminate\Validation\Rule::unique('users', 'email')->ignore($user->id)],
+            'name' => ['nullable', 'string', 'max:255'],
             'tanggal_lahir' => ['nullable', 'date'],
+            'no_telepon' => ['nullable', 'string', 'max:255'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'bio' => ['nullable', 'string', 'max:1000'],
+            'website' => ['nullable', 'string', 'max:255'],
+            'twitter' => ['nullable', 'string', 'max:255'],
+            'linkedin' => ['nullable', 'string', 'max:255'],
+            'github' => ['nullable', 'string', 'max:255'],
+            'instagram' => ['nullable', 'string', 'max:255'],
             'calendar_link' => ['nullable', 'string', 'max:255'],
             'billing_address' => ['nullable', 'string', 'max:500'],
             'legal_entity_name' => ['nullable', 'string', 'max:255'],
+            'pagi_username' => [
+                'nullable',
+                'string',
+                'min:3',
+                'max:30',
+                'regex:/^[a-z0-9._]+$/',
+                \Illuminate\Validation\Rule::unique('users', 'pagi_username')->ignore($user->id),
+            ],
+            // Password change inputs
+            'current_password' => ['nullable', 'required_with:new_password', 'string'],
+            'new_password' => ['nullable', 'string', 'min:8'],
         ]);
 
-        $user->email = $request->email;
-        if ($request->has('tanggal_lahir')) {
-            $user->tanggal_lahir = $request->tanggal_lahir;
+        // Validate current password if changing password
+        if ($request->filled('new_password')) {
+            if (!\Illuminate\Support\Facades\Hash::check($request->current_password, $user->password)) {
+                return back()->withErrors(['current_password' => 'Password saat ini tidak sesuai.']);
+            }
+            $user->password = \Illuminate\Support\Facades\Hash::make($request->new_password);
         }
 
+        // Handle Pagi Username changes limits
+        if ($request->has('pagi_username')) {
+            $oldUsername = $user->pagi_username;
+            $newUsername = $request->input('pagi_username');
+            if ($newUsername !== $oldUsername) {
+                $blacklist = ['explore', 'jobs', 'messages', 'notifications', 'portfolio', 'profile', 'admin', 'users', 'username', 'settings', 'chat', 'auth', 'api', 'dashboard', 'seed-dummy', 'invitations', 'images', 'berita', 'halaman', 'people'];
+                if ($newUsername && in_array(strtolower($newUsername), $blacklist)) {
+                    return back()->withErrors(['pagi_username' => 'Username ini tidak dapat digunakan karena merupakan kata cadangan sistem.']);
+                }
+
+                if (!empty($oldUsername)) {
+                    $metadata = $user->metadata ?? [];
+                    $changesCount = $metadata['username_changes_count'] ?? 0;
+                    $lastChangedAtStr = $metadata['last_username_changed_at'] ?? null;
+
+                    if ($changesCount >= 3) {
+                        return back()->withErrors(['pagi_username' => 'Batas perubahan username Anda telah habis (Maksimal 3 kali).']);
+                    }
+
+                    if ($lastChangedAtStr) {
+                        $lastChangedAt = \Carbon\Carbon::parse($lastChangedAtStr);
+                        if ($lastChangedAt->diffInDays(now()) < 30) {
+                            $daysLeft = 30 - $lastChangedAt->diffInDays(now());
+                            return back()->withErrors(['pagi_username' => "Anda baru saja mengubah username. Silakan tunggu {$daysLeft} hari lagi untuk mengubahnya kembali."]);
+                        }
+                    }
+                    $metadata['username_changes_count'] = $changesCount + 1;
+                } else {
+                    $metadata['username_changes_count'] = 0;
+                }
+                $metadata['last_username_changed_at'] = now()->toIso8601String();
+                $user->pagi_username = strtolower(trim($newUsername));
+            }
+        }
+
+        // Direct columns - email and name updates are disabled to keep them tied to portal credentials
+        if ($request->has('tanggal_lahir')) $user->tanggal_lahir = $request->tanggal_lahir;
+        if ($request->has('no_telepon')) $user->no_telepon = strip_tags($request->no_telepon);
+        if ($request->has('location')) $user->location = strip_tags($request->location);
+        if ($request->has('bio')) $user->bio = strip_tags($request->bio);
+        if ($request->has('website')) $user->website = strip_tags($request->website);
+        if ($request->has('twitter')) $user->twitter = strip_tags($request->twitter);
+        if ($request->has('linkedin')) $user->linkedin = strip_tags($request->linkedin);
+        if ($request->has('github')) $user->github = strip_tags($request->github);
+        if ($request->has('instagram')) $user->instagram = strip_tags($request->instagram);
+
+        // Metadata updates
         $metadata = $user->metadata ?? [];
-        $metadata['calendar_link'] = $request->calendar_link;
-        $metadata['billing_address'] = $request->billing_address;
-        $metadata['legal_entity_name'] = $request->legal_entity_name;
+        if ($request->has('calendar_link')) $metadata['calendar_link'] = strip_tags($request->calendar_link);
+        if ($request->has('billing_address')) $metadata['billing_address'] = strip_tags($request->billing_address);
+        if ($request->has('legal_entity_name')) $metadata['legal_entity_name'] = strip_tags($request->legal_entity_name);
+        if ($request->has('subscription')) $metadata['subscription'] = $this->sanitizeInputRecursive($request->subscription);
+        if ($request->has('trade_agent')) $metadata['trade_agent'] = $this->sanitizeInputRecursive($request->trade_agent);
+        if ($request->has('brand_branding')) $metadata['brand_branding'] = $this->sanitizeInputRecursive($request->brand_branding);
+        if ($request->has('payment_account')) $metadata['payment_account'] = $this->sanitizeInputRecursive($request->payment_account);
+        if ($request->has('rewards')) $metadata['rewards'] = $this->sanitizeInputRecursive($request->rewards);
+        if ($request->has('email_preferences')) $metadata['email_preferences'] = $this->sanitizeInputRecursive($request->email_preferences);
+        
         $user->metadata = $metadata;
 
         $user->save();
@@ -675,5 +772,24 @@ class PagiDashboardController extends Controller
             'metaImage'       => $metaImage,
             'metaType'        => $metaType,
         ];
+    }
+
+    /**
+     * Recursively sanitize input to prevent HTML/Script tag injection.
+     */
+    private function sanitizeInputRecursive($value)
+    {
+        if (is_array($value)) {
+            foreach ($value as $key => $val) {
+                $value[$key] = $this->sanitizeInputRecursive($val);
+            }
+            return $value;
+        }
+
+        if (is_string($value)) {
+            return strip_tags($value);
+        }
+
+        return $value;
     }
 }

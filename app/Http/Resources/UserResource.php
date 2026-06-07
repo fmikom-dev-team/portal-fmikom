@@ -19,7 +19,7 @@ class UserResource extends JsonResource
         return [
             'id' => $this->id,
             'has_uploaded_project' => $this->when($isProfileOrSettings, $this->pagiWorks()->exists()),
-            'name' => $this->name,
+            'name' => ($this->name === strtoupper($this->name)) ? ucwords(strtolower($this->name)) : $this->name,
             'email' => $this->email,
             'pagi_username' => $this->pagi_username,
             'role_title' => $this->getResolvedRoleTitle(),

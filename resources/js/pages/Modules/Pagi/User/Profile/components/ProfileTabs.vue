@@ -1,5 +1,14 @@
 <script setup lang="ts">
-import { MapPin, Pencil, Plus, Globe, Linkedin, Github, Twitter, Instagram } from "lucide-vue-next";
+import {
+	Github,
+	Globe,
+	Instagram,
+	Linkedin,
+	MapPin,
+	Pencil,
+	Plus,
+	Twitter,
+} from "lucide-vue-next";
 
 defineProps<{
 	tabs: string[];
@@ -10,7 +19,11 @@ defineProps<{
 	socialLinks: Array<{ type: string; url: string; label: string }>;
 }>();
 
-const emit = defineEmits(["update:activeTab", "click-location", "click-socials"]);
+const emit = defineEmits([
+	"update:activeTab",
+	"click-location",
+	"click-socials",
+]);
 </script>
 
 <template>

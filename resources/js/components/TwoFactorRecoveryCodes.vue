@@ -14,7 +14,6 @@ import {
 import { useTwoFactorAuth } from "@/composables/useTwoFactorAuth";
 import { regenerateRecoveryCodes } from "@/routes/two-factor/index";
 
-
 const { recoveryCodesList, fetchRecoveryCodes, errors } = useTwoFactorAuth();
 const isRecoveryCodesVisible = ref<boolean>(false);
 const recoveryCodeSectionRef = useTemplateRef("recoveryCodeSectionRef");

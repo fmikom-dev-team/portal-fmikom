@@ -25,21 +25,23 @@ const isLoading = ref(true);
 // Scroll-aware for desktop header (optional shadow)
 const isScrolled = ref(false);
 const handleScroll = () => {
-	isScrolled.value = window.scrollY > 8;
+	isScrolled.value = globalThis.window.scrollY > 8;
 };
 onMounted(() => {
-	window.addEventListener("scroll", handleScroll, { passive: true });
+	globalThis.window.addEventListener("scroll", handleScroll, { passive: true });
 	setTimeout(() => {
 		isLoading.value = false;
 	}, 800);
 });
-onUnmounted(() => window.removeEventListener("scroll", handleScroll));
+onUnmounted(() =>
+	globalThis.window.removeEventListener("scroll", handleScroll),
+);
 </script>
 
 <template>
     <header class="w-full shrink-0">
         <!-- MOBILE HEADER: Blue gradient (Livin'-style), fixed -->
-        <div class="flex md:hidden w-full items-center justify-between px-4 py-3 h-[68px] shrink-0 fixed top-0 left-0 right-0 z-30 bg-gradient-to-r from-[#1d4ed8] to-[#3B82F6]">
+        <div class="flex md:hidden w-full items-center justify-between px-4 py-3 h-[68px] shrink-0 fixed top-0 left-0 right-0 z-30 bg-linear-to-r from-[#1d4ed8] to-[#3B82F6]">
             <!-- Left Side: Skeleton Profile Loader -->
             <div v-if="isLoading" class="flex items-center gap-3 flex-1 min-w-0 animate-pulse">
                 <div class="h-[46px] w-[46px] rounded-full bg-white/20 ring-2 ring-white/10 shadow-sm shrink-0"></div>

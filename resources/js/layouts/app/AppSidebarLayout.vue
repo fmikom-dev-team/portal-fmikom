@@ -1,13 +1,21 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
 import { Link, usePage } from "@inertiajs/vue3";
-import { Home, Globe, Users, GraduationCap, BookOpen, LayoutGrid, PenLine } from "lucide-vue-next";
-import { useCurrentUrl } from "@/composables/useCurrentUrl";
-import { dashboard } from "@/routes";
+import {
+	BookOpen,
+	Globe,
+	GraduationCap,
+	Home,
+	LayoutGrid,
+	PenLine,
+	Users,
+} from "lucide-vue-next";
+import { computed, ref } from "vue";
 import AppContent from "@/components/AppContent.vue";
 import AppShell from "@/components/AppShell.vue";
 import AppSidebar from "@/components/AppSidebar.vue";
 import AppSidebarHeader from "@/components/AppSidebarHeader.vue";
+import { useCurrentUrl } from "@/composables/useCurrentUrl";
+import { dashboard } from "@/routes";
 import type { BreadcrumbItem } from "@/types";
 
 type Props = {

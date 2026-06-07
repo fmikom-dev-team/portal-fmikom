@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
-import { MapPin, X, Loader2 } from "lucide-vue-next";
+import { Loader2, MapPin, X } from "lucide-vue-next";
+import { computed, onMounted, ref, watch } from "vue";
 import Modal from "../../ui/Modal.vue";
 
 const props = defineProps<{
@@ -58,13 +58,13 @@ const cities = [
 	"Mataram, Nusa Tenggara Barat",
 	"Kupang, Nusa Tenggara Timur",
 	"Ambon, Maluku",
-	"Jayapura, Papua"
+	"Jayapura, Papua",
 ];
 
 const filteredCities = computed(() => {
 	if (!searchQuery.value) return cities;
 	const query = searchQuery.value.toLowerCase();
-	return cities.filter(city => city.toLowerCase().includes(query));
+	return cities.filter((city) => city.toLowerCase().includes(query));
 });
 
 const selectCity = (city: string) => {
@@ -80,11 +80,14 @@ const handleSubmit = () => {
 	emit("submit");
 };
 
-watch(() => props.show, (newVal) => {
-	if (newVal) {
-		searchQuery.value = props.form.location || props.userLocation || "";
-	}
-});
+watch(
+	() => props.show,
+	(newVal) => {
+		if (newVal) {
+			searchQuery.value = props.form.location || props.userLocation || "";
+		}
+	},
+);
 
 onMounted(() => {
 	searchQuery.value = props.form.location || props.userLocation || "";

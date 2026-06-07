@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { MapPin, Loader2 } from "lucide-vue-next";
+import { Loader2, MapPin } from "lucide-vue-next";
 import Modal from "../../ui/Modal.vue";
 
 defineProps<{

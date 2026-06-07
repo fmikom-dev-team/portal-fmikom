@@ -72,9 +72,7 @@ class AppServiceProvider extends ServiceProvider
             $requireNumber    = (bool) \App\Models\Auth\AuthSetting::get('email_password.require_number', false);
             $requireSpecial   = (bool) \App\Models\Auth\AuthSetting::get('email_password.require_special', false);
 
-            if ($requireUppercase && $requireLowercase) {
-                $rule->mixedCase();
-            } elseif ($requireUppercase || $requireLowercase) {
+            if ($requireUppercase || $requireLowercase) {
                 $rule->mixedCase();
             }
 

@@ -2,23 +2,23 @@
 import { Head, Link } from "@inertiajs/vue3";
 import {
 	Camera,
-	Pencil,
-	Share,
-	Settings,
-	Image as ImageIcon,
-	UploadCloud,
-	Sparkles,
-	Linkedin,
 	Github,
 	Globe,
-	Twitter,
+	Image as ImageIcon,
 	Instagram,
+	Linkedin,
 	MapPin,
-	Plus
+	Pencil,
+	Plus,
+	Settings,
+	Share,
+	Sparkles,
+	Twitter,
+	UploadCloud,
 } from "lucide-vue-next";
 import { computed } from "vue";
-import VideoLazy from "../../ui/VideoLazy.vue";
 import OptimizedImage from "../../ui/OptimizedImage.vue";
+import VideoLazy from "../../ui/VideoLazy.vue";
 import ProfileStats from "./ProfileStats.vue";
 
 const props = defineProps<{
@@ -34,7 +34,6 @@ const props = defineProps<{
 	dynamicFollowersCount: number;
 	dynamicFollowingCount: number;
 	socialLinks: Array<{ type: string; url: string; label: string }>;
-	presets: any[];
 }>();
 
 const emit = defineEmits([
@@ -49,14 +48,17 @@ const emit = defineEmits([
 	"share-profile",
 	"toggle-follow",
 	"select-work-tab",
-	"open-relations-modal"
+	"open-relations-modal",
 ]);
 
 const isVideoUrl = (url: string | null): boolean => {
 	if (!url) return false;
-	const cleanUrl = url.split('?')[0].split('#')[0];
-	const ext = cleanUrl.split('.').pop()?.toLowerCase();
-	return ['mp4', 'webm', 'mov', 'avi', 'mkv', '3gp'].includes(ext || '') || url.startsWith('data:video/');
+	const cleanUrl = url.split("?")[0].split("#")[0];
+	const ext = cleanUrl.split(".").pop()?.toLowerCase();
+	return (
+		["mp4", "webm", "mov", "avi", "mkv", "3gp"].includes(ext || "") ||
+		url.startsWith("data:video/")
+	);
 };
 </script>
 

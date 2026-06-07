@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Models\Alumni;
+
+use App\Models\User;
 use App\Models\Kuesioner\ResponsKuesioner;
 
 use Illuminate\Database\Eloquent\Model;

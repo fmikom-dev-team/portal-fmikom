@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Models\Kuesioner;
+
+use App\Models\User;
 use App\Models\Alumni\ProfilAlumni;
 
 use Illuminate\Database\Eloquent\Model;
