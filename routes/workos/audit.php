@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuditLogsController;
+use App\Modules\WorkOs\Controllers\AuditLogsController;
 
 /*
 |--------------------------------------------------------------------------

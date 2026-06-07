@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
-use App\Http\Controllers\FirstTimeLoginController;
+use App\Modules\WorkOs\Controllers\Auth\FirstTimeLoginController;
 use App\Http\Middleware\EnsureFirstTimeLoginComplete;
 use App\Modules\Coreportal\Controllers\PortalController;
 

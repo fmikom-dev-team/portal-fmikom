@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, usePage, router, useForm } from "@inertiajs/vue3";
+import { Head, Link, usePage, router } from "@inertiajs/vue3";
 import {
 	BadgeCheck,
 	ChevronDown,
@@ -28,7 +28,7 @@ import {
 	Settings,
 	Bell,
 } from "lucide-vue-next";
-import { computed, ref, onMounted, onUnmounted, nextTick, watch, defineAsyncComponent } from "vue";
+import { computed, ref, onMounted, onUnmounted, watch, defineAsyncComponent } from "vue";
 import Navbar from "../ui/Navbar.vue";
 import Footer from "../ui/Footer.vue";
 import Modal from "../ui/Modal.vue";
@@ -36,7 +36,6 @@ import VideoLazy from "../ui/VideoLazy.vue";
 import OptimizedImage from "../ui/OptimizedImage.vue";
 import Progress from "../ui/Progress.vue";
 import ShareWorkModal from "../ui/ShareWorkModal.vue";
-
 
 const WorkTab = defineAsyncComponent(() => import("./WorkTab.vue"));
 const GalleryTab = defineAsyncComponent(() => import("./GalleryTab.vue"));
@@ -56,7 +55,11 @@ import EditAvatarModal from "./components/EditAvatarModal.vue";
 import EditBannerModal from "./components/EditBannerModal.vue";
 import RelationsModal from "./components/RelationsModal.vue";
 import ShareProfileModal from "./components/ShareProfileModal.vue";
+import WarningModal from "./components/WarningModal.vue";
 
+// Composables
+import { useProfileForm } from "./composables/useProfileForm";
+import { useProfileProjects } from "./composables/useProfileProjects";
 
 const props = defineProps<{
 	moduleName: string;
@@ -99,11 +102,92 @@ const displayRoleName = computed(() => {
 	return role.charAt(0).toUpperCase() + role.slice(1);
 });
 
-// Reactive states backed by localStorage for full interactivity
-const isLoading = ref(true);
-const isFollowing = ref(false);
-const isMessageEnabled = ref(true);
-const activeWorkFilter = ref("Created"); // "Created" or "Collaborated"
+// Toast Notification System
+const toasts = ref<Array<{ id: number; message: string; type: string }>>([]);
+const addToast = (message: string, type = "success") => {
+	const id = Date.now();
+	toasts.value.push({ id, message, type });
+	setTimeout(() => {
+		toasts.value = toasts.value.filter((t) => t.id !== id);
+	}, 3000);
+};
+
+// Warning modal states
+const showWarningModal = ref(false);
+const warningTitle = ref("");
+const warningMessage = ref("");
+
+const triggerWarning = (title: string, message: string) => {
+	warningTitle.value = title;
+	warningMessage.value = message;
+	showWarningModal.value = true;
+};
+
+// Instantiate Form Composable
+const {
+	form,
+	showLocationModal,
+	showLocationOnlyModal,
+	showSocialLinksModal,
+	showBioModal,
+	showAvatarModal,
+	showBannerModal,
+	showUsernameModal,
+	isCropperOpen,
+	cropperImageSrc,
+	cropperAspectRatio,
+	originalFileName,
+	originalFileType,
+	initFormValues,
+	submitLocation,
+	submitLocationOnly,
+	submitSocialLinks,
+	submitBio,
+	submitAvatar,
+	submitBanner,
+	submitUsername,
+	updateSkills,
+	updateBio,
+	updateLocation,
+	updateTimezone,
+	updateLanguages,
+	updateSocials,
+	handleCropSave,
+	handleTriggerCrop,
+	closeCropper,
+} = useProfileForm(user, props, addToast, triggerWarning);
+
+// Instantiate Projects Composable
+const {
+	localProjects,
+	projects,
+	showAddWorkModal,
+	showShareModal,
+	newCreatedProject,
+	activeProjectMenu,
+	toggleProjectMenu,
+	cloneProject,
+	shareProject,
+	getProjectShareUrl,
+	deleteProject,
+	viewingProject,
+	activeProjectSettings,
+	openProjectModal,
+	closeProjectModal,
+	editingQuickWorkId,
+	isEditingQuickWork,
+	editingProject,
+	openAddWorkModal,
+	openEditQuickWorkModal,
+	handleQuickStoreSuccess,
+	handleLikeUpdated,
+	handleGalleryItemUpdated,
+	totalViews,
+	totalLikes,
+	projectCount,
+} = useProfileProjects(props, page, addToast, triggerWarning);
+
+// Tab Navigation logic
 const getInitialTab = () => {
 	if (typeof window === 'undefined') return 'Work';
 	const path = window.location.pathname;
@@ -155,138 +239,12 @@ watch(activeTab, (newTab) => {
 	}
 });
 
-const localProjects = ref<any[]>([...(props.projects || [])]);
-watch(() => props.projects, (newVal) => {
-	localProjects.value = [...(newVal || [])];
-}, { deep: true });
-
-const projects = computed(() => {
-	return localProjects.value;
-});
-
-const handleLikeUpdated = (data: { id: number; liked: boolean; count: number }) => {
-	const proj = localProjects.value?.find((p: any) => p.id === data.id);
-	if (proj) {
-		proj.liked = data.liked;
-		proj.likes = data.count;
-		// trigger deep array reactivity
-		localProjects.value = [...localProjects.value];
+const selectWorkTab = () => {
+	activeTab.value = "Work";
+	const el = document.getElementById("profile_tabs_navigation");
+	if (el) {
+		el.scrollIntoView({ behavior: "smooth" });
 	}
-};
-
-const handleGalleryItemUpdated = (updatedProject: any) => {
-	const idx = localProjects.value.findIndex(p => p.id === updatedProject.id);
-	if (idx !== -1) {
-		const existing = localProjects.value[idx];
-		localProjects.value[idx] = {
-			...existing,
-			title: updatedProject.title,
-			content: updatedProject.content,
-		};
-		localProjects.value = [...localProjects.value];
-	}
-};
-
-// Add Work Modal Reactive States
-const showAddWorkModal = ref(false);
-const showShareModal = ref(false);
-const newCreatedProject = ref<any>(null);
-const isSubmittingWork = ref(false);
-const showMoreDetails = ref(false);
-const coverFit = ref<'cover' | 'contain'>('cover');
-
-const getProjectFit = (project: any) => {
-	if (!project || !project.content || !Array.isArray(project.content)) return 'cover';
-	const settings = project.content.find((b: any) => b && b.type === 'settings');
-	if (settings && settings.coverFit) return settings.coverFit;
-	const details = project.content.find((b: any) => b && b.type === 'featured_details');
-	if (details && details.cover_fit) return details.cover_fit;
-	return 'cover';
-};
-
-const isEditingQuickWork = ref(false);
-const editingQuickWorkId = ref<number | null>(null);
-
-const showLocationOnlyModal = ref(false);
-const searchQuery = ref("");
-const showDropdown = ref(false);
-const cities = [
-	"Banyumas, Jawa Tengah",
-	"Purwokerto, Jawa Tengah",
-	"Cilacap, Jawa Tengah",
-	"Purbalingga, Jawa Tengah",
-	"Banjarnegara, Jawa Tengah",
-	"Semarang, Jawa Tengah",
-	"Surakarta (Solo), Jawa Tengah",
-	"Yogyakarta, DIY",
-	"Sleman, DIY",
-	"Bantul, DIY",
-	"Jakarta Pusat, DKI Jakarta",
-	"Jakarta Selatan, DKI Jakarta",
-	"Jakarta Barat, DKI Jakarta",
-	"Jakarta Timur, DKI Jakarta",
-	"Jakarta Utara, DKI Jakarta",
-	"Bandung, Jawa Barat",
-	"Bogor, Jawa Barat",
-	"Depok, Jawa Barat",
-	"Tangerang, Banten",
-	"Tangerang Selatan, Banten",
-	"Bekasi, Jawa Barat",
-	"Surabaya, Jawa Timur",
-	"Malang, Jawa Timur",
-	"Sidoarjo, Jawa Timur",
-	"Gresik, Jawa Timur",
-	"Medan, Sumatera Utara",
-	"Palembang, Sumatera Selatan",
-	"Pekanbaru, Riau",
-	"Padang, Sumatera Barat",
-	"Bandar Lampung, Lampung",
-	"Banda Aceh, Aceh",
-	"Jambi, Jambi",
-	"Bengkulu, Bengkulu",
-	"Pontianak, Kalimantan Barat",
-	"Banjarmasin, Kalimantan Selatan",
-	"Balikpapan, Kalimantan Timur",
-	"Samarinda, Kalimantan Timur",
-	"Makassar, Sulawesi Selatan",
-	"Manado, Sulawesi Utara",
-	"Denpasar, Bali",
-	"Mataram, Nusa Tenggara Barat",
-	"Kupang, Nusa Tenggara Timur",
-	"Ambon, Maluku",
-	"Jayapura, Papua"
-];
-
-const filteredCities = computed(() => {
-	if (!searchQuery.value) return cities;
-	const query = searchQuery.value.toLowerCase();
-	return cities.filter(city => city.toLowerCase().includes(query));
-});
-
-const openLocationOnlyModal = () => {
-	initFormValues();
-	searchQuery.value = user.value.location || "";
-	showLocationOnlyModal.value = true;
-};
-
-const selectCity = (city: string) => {
-	form.location = city;
-	searchQuery.value = city;
-	showDropdown.value = false;
-};
-
-const submitLocationOnly = () => {
-	if (searchQuery.value && !form.location) {
-		form.location = searchQuery.value;
-	}
-	form.post("/pagi/profile/update", {
-		preserveScroll: true,
-		onSuccess: () => {
-			initFormValues();
-			showLocationOnlyModal.value = false;
-			addToast("Location updated successfully!", "success");
-		},
-	});
 };
 
 const certificates = ref<any[]>([...(props.profileUser?.certificates || [])]);
@@ -294,154 +252,15 @@ watch(() => props.profileUser?.certificates, (newVal) => {
 	certificates.value = [...(newVal || [])];
 }, { deep: true });
 
-// Warning modal states
-const showWarningModal = ref(false);
-const warningTitle = ref("");
-const warningMessage = ref("");
-
-const triggerWarning = (title: string, message: string) => {
-	warningTitle.value = title;
-	warningMessage.value = message;
-	showWarningModal.value = true;
-};
-
-// Form state using Inertia useForm
-const form = useForm({
-	name: "",
-	role_title: "",
-	bio: "",
-	location: "",
-	website: "",
-	twitter: "",
-	linkedin: "",
-	github: "",
-	instagram: "",
-	tanggal_lahir: "",
-	banner: null as File | null,
-	foto: null as File | null,
-	avatar_url: "",
-	remove_foto: false,
-	skills: [] as string[],
-	timezone: "" as string | null,
-	timezone_extended: "" as string | null,
-	languages: [] as Array<{ language: string, proficiency: string }>,
-	pagi_username: "" as string,
-});
-
-// Cropping references
-const isCropperOpen = ref(false);
-const cropperImageSrc = ref("");
-const cropperAspectRatio = ref<number | string>(3200 / 410);
-let originalFileName = "banner.jpg";
-const originalFileType = ref("image/jpeg");
-
-// Modal trigger handlers
-const parseSkills = (skillsArray: any[]): Array<{ name: string, percentage: number }> => {
-	if (!Array.isArray(skillsArray)) return [];
-	return skillsArray.map(item => {
-		if (typeof item === 'string') {
-			const parts = item.split(':');
-			if (parts.length === 2 && !isNaN(Number(parts[1]))) {
-				return { name: parts[0], percentage: Number(parts[1]) };
-			}
-			return { name: item, percentage: 80 };
-		}
-		if (item && typeof item === 'object' && item.name) {
-			return { name: item.name, percentage: Number(item.percentage) || 80 };
-		}
-		return { name: String(item), percentage: 80 };
-	});
-};
-
-// Form initialization
-const initFormValues = () => {
-	form.name = user.value.name || "";
-	form.role_title = user.value.role_title || "";
-	form.bio = user.value.bio || "";
-	form.location = user.value.location || "";
-	form.website = user.value.website || "";
-	form.twitter = user.value.twitter || "";
-	form.linkedin = user.value.linkedin || "";
-	form.github = user.value.github || "";
-	form.instagram = user.value.instagram || "";
-	form.tanggal_lahir = user.value.tanggal_lahir || "";
-	form.pagi_username = user.value.pagi_username || "";
-	const s = user.value.skills || user.value.metadata?.skills || props.profileUser?.skills;
-	form.skills = Array.isArray(s) ? parseSkills(s) : parseSkills(['Figma', 'UI/UX Design', 'Vue.js']);
-	form.timezone = user.value.timezone || user.value.metadata?.timezone || props.profileUser?.timezone || "";
-	form.timezone_extended = user.value.timezone_extended || user.value.timezoneExtended || user.value.metadata?.timezone_extended || user.value.metadata?.timezoneExtended || props.profileUser?.timezone_extended || props.profileUser?.timezoneExtended || "No extended hours";
-	const l = user.value.languages || user.value.metadata?.languages || props.profileUser?.languages;
-	form.languages = Array.isArray(l) ? l : [];
-};
-
-const formatBytes = (bytes: number, decimals = 2) => {
-	if (bytes === 0) return "0 Bytes";
-	const k = 1024;
-	const dm = decimals < 0 ? 0 : decimals;
-	const sizes = ["Bytes", "KB", "MB", "GB"];
-	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
-};
-
-// Direct-edit modal states
-const showLocationModal = ref(false);
-const showSocialLinksModal = ref(false);
-const showBioModal = ref(false);
-const showAvatarModal = ref(false);
-const showBannerModal = ref(false);
-const showUsernameModal = ref(false);
-
-const usernameChangesCount = computed(() => user.value.metadata?.username_changes_count || 0);
-const lastUsernameChangedAt = computed(() => user.value.metadata?.last_username_changed_at || null);
-
-const canChangeUsername = computed(() => {
-	// First time creation is always allowed if current username is null/empty
-	if (!user.value.pagi_username) return { allowed: true };
-
-	// If changes limit reached
-	if (usernameChangesCount.value >= 3) {
-		return { allowed: false, reason: "Batas perubahan username Anda telah habis (Maksimal 3 kali)." };
-	}
-
-	// If duration constraint is active
-	if (lastUsernameChangedAt.value) {
-		const lastDate = new Date(lastUsernameChangedAt.value);
-		const diffTime = Math.abs(new Date().getTime() - lastDate.getTime());
-		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-		if (diffDays <= 30) {
-			const daysLeft = 30 - Math.floor(diffTime / (1000 * 60 * 60 * 24));
-			return { allowed: false, reason: `Anda baru saja mengubah username. Silakan tunggu ${daysLeft} hari lagi untuk mengubahnya kembali.` };
-		}
-	}
-
-	return { allowed: true };
-});
-
-const usernameEditBlock = computed(() => {
-	const currentUsernameClean = (user.value.pagi_username || '').toLowerCase().trim();
-	const inputUsernameClean = (form.pagi_username || '').toLowerCase().trim();
-	if (inputUsernameClean === currentUsernameClean) {
-		return null;
-	}
-	const status = canChangeUsername.value;
-	if (!status.allowed) {
-		return status.reason;
-	}
-	return null;
-});
-
-const formatDateString = (dateStr) => {
-	if (!dateStr) return '';
-	const date = new Date(dateStr);
-	return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
-};
-
-
-
-// Modal trigger handlers
+// Form opening handlers
 const openLocationModal = () => {
 	initFormValues();
 	showLocationModal.value = true;
+};
+
+const openLocationOnlyModal = () => {
+	initFormValues();
+	showLocationOnlyModal.value = true;
 };
 
 const openSocialLinksModal = () => {
@@ -459,17 +278,6 @@ const openUsernameModal = () => {
 	showUsernameModal.value = true;
 };
 
-const submitUsername = () => {
-	form.post("/pagi/profile/update", {
-		preserveScroll: true,
-		onSuccess: () => {
-			initFormValues();
-			showUsernameModal.value = false;
-			addToast("Username berhasil disimpan!", "success");
-		},
-	});
-};
-
 const openAvatarModal = () => {
 	showAvatarModal.value = true;
 };
@@ -478,96 +286,19 @@ const openBannerModal = () => {
 	showBannerModal.value = true;
 };
 
-// Form submission methods
-const submitLocation = () => {
-	form.post("/pagi/profile/update", {
-		preserveScroll: true,
-		onSuccess: () => {
-			initFormValues();
-			showLocationModal.value = false;
-			addToast("Location updated successfully!", "success");
-		},
-	});
-};
-
-const submitSocialLinks = () => {
-	form.post("/pagi/profile/update", {
-		preserveScroll: true,
-		onSuccess: () => {
-			initFormValues();
-			showSocialLinksModal.value = false;
-			addToast("Social links updated successfully!", "success");
-		},
-	});
-};
-
-const submitBio = () => {
-	form.post("/pagi/profile/update", {
-		preserveScroll: true,
-		onSuccess: () => {
-			initFormValues();
-			showBioModal.value = false;
-			addToast("Biography updated successfully!", "success");
-		},
-	});
-};
-
-const submitAvatar = () => {
-	form.post("/pagi/profile/update", {
-		preserveScroll: true,
-		forceFormData: true,
-		onSuccess: () => {
-			initFormValues();
-			showAvatarModal.value = false;
-			form.foto = null;
-			form.remove_foto = false;
-			addToast("Profile avatar updated successfully!", "success");
-		},
-	});
-};
-
-const submitBanner = () => {
-	form.post("/pagi/profile/update", {
-		preserveScroll: true,
-		forceFormData: true,
-		onSuccess: () => {
-			initFormValues();
-			showBannerModal.value = false;
-			form.banner = null;
-			addToast("Featured banner updated successfully!", "success");
-		},
-	});
-};
-
-// Toast Notification System
-const toasts = ref<Array<{ id: number; message: string; type: string }>>([]);
-const addToast = (message: string, type = "success") => {
-	const id = Date.now();
-	toasts.value.push({ id, message, type });
-	setTimeout(() => {
-		toasts.value = toasts.value.filter((t) => t.id !== id);
-	}, 3000);
-};
-
-const handleOutsideClick = (e: MouseEvent) => {
-	const target = e.target as HTMLElement;
-	if (target && !target.closest("#location_search_container")) {
-		showDropdown.value = false;
-	}
-};
+const isLoading = ref(true);
+const isFollowing = ref(false);
+const isMessageEnabled = ref(true);
 
 onMounted(() => {
 	initFormValues();
-	// Load real follow state from server prop first, fallback to localStorage for own profile
 	if (props.isFollowing !== undefined) {
 		isFollowing.value = props.isFollowing;
 	} else {
 		isFollowing.value = localStorage.getItem(`follow_${user.value.id}`) === "true";
 	}
 	isMessageEnabled.value = user.value.metadata?.is_message_enabled !== false;
-	document.addEventListener("click", handleOutsideClick);
 
-	// Check if a specific project was linked to open directly (Instagram style)
 	const urlParams = new URLSearchParams(window.location.search);
 	const projectId = urlParams.get('project') || urlParams.get('portfolio');
 	if (projectId) {
@@ -597,11 +328,7 @@ onMounted(() => {
 	}, 600);
 });
 
-onUnmounted(() => {
-	document.removeEventListener("click", handleOutsideClick);
-});
-
-// Follow toggle — calls real API, updates metadata + sends notification
+// Follow toggle — calls real API
 const isFollowLoading = ref(false);
 const toggleFollow = async () => {
 	if (!page.props.auth?.user) {
@@ -613,13 +340,13 @@ const toggleFollow = async () => {
 
 	isFollowLoading.value = true;
 	const prevState = isFollowing.value;
-	isFollowing.value = !isFollowing.value; // Optimistic
+	isFollowing.value = !isFollowing.value;
 
 	try {
 		const csrfToken = (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)?.content;
 		const res = await fetch(`/pagi/users/${user.value.id}/follow`, {
 			method: 'POST',
-			headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json', 'Content-Type': 'application/json' },
+			headers: { 'X-CSRF-TOKEN': csrfToken || '', 'Accept': 'application/json', 'Content-Type': 'application/json' },
 		});
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.error || 'Failed');
@@ -632,16 +359,15 @@ const toggleFollow = async () => {
 			addToast(`Kamu berhenti mengikuti ${user.value.name}.`, "info");
 		}
 	} catch (e) {
-		isFollowing.value = prevState; // Revert on error
+		isFollowing.value = prevState;
 		addToast("Gagal memperbarui status follow. Coba lagi.", "error");
 	} finally {
 		isFollowLoading.value = false;
 	}
 };
 
-// Message toggle switch handler
 const toggleMessageSwitch = (e: Event) => {
-	e.stopPropagation(); // Prevent message button click redirection
+	e.stopPropagation();
 	isMessageEnabled.value = !isMessageEnabled.value;
 	router.post("/pagi/profile/update", {
 		is_message_enabled: isMessageEnabled.value,
@@ -657,7 +383,6 @@ const toggleMessageSwitch = (e: Event) => {
 	});
 };
 
-// Navigate to chat
 const openChat = () => {
 	if (!page.props.auth?.user) {
 		addToast("Silakan login terlebih dahulu untuk mengirim pesan.", "info");
@@ -692,130 +417,6 @@ const shareProfile = () => {
 	showProfileShareModal.value = true;
 };
 
-const activeProjectMenu = ref<number | null>(null);
-const toggleProjectMenu = (id: number) => {
-	activeProjectMenu.value = activeProjectMenu.value === id ? null : id;
-};
-
-// Project dropdown actions
-const cloneProject = (title: string) => {
-	addToast(`Cloned project: "${title}" successfully!`, "success");
-	activeProjectMenu.value = null;
-};
-
-const shareProject = (project: any) => {
-	newCreatedProject.value = project;
-	showShareModal.value = true;
-};
-
-const getProjectShareUrl = (project: any) => {
-	if (!project) return "";
-	const username = props.user?.pagi_username;
-	const ownerId = props.user?.id;
-	const baseUrl = username
-		? `${window.location.origin}/pagi/${username}`
-		: `${window.location.origin}/pagi/profile/${ownerId}`;
-	return `${baseUrl}?project=${project.id}`;
-};
-
-const deleteProject = async (id: number, title: string) => {
-	activeProjectMenu.value = null;
-	const prevProjects = [...localProjects.value];
-	localProjects.value = localProjects.value.filter(p => p.id !== id);
-	addToast(`Project "${title}" has been deleted.`, "success");
-
-	try {
-		const csrfToken = (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)?.content;
-		const res = await fetch(`/pagi/editor/${id}`, {
-			method: 'DELETE',
-			headers: { 
-				'X-CSRF-TOKEN': csrfToken || '', 
-				'Accept': 'application/json' 
-			},
-		});
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error || 'Failed');
-	} catch (e) {
-		localProjects.value = prevProjects;
-		addToast("Gagal menghapus project. Coba lagi.", "error");
-	}
-};
-
-const viewingProject = ref<any>(null);
-
-const activeProjectSettings = computed(() => {
-	if (!viewingProject.value || !viewingProject.value.content) {
-		return { globalSpacing: 50, canvasBgColor: '', canvasTextColor: '' };
-	}
-	return viewingProject.value.content.find((b: any) => b.type === 'settings') || { globalSpacing: 50, canvasBgColor: '', canvasTextColor: '' };
-});
-
-
-const openProjectModal = (p: any) => {
-	if (!page.props.auth?.user) {
-		addToast("Anda belum login. Silakan login terlebih dahulu untuk melihat karya.", "info");
-		return;
-	}
-	viewingProject.value = p;
-	document.body.style.overflow = "hidden";
-};
-const closeProjectModal = () => {
-	viewingProject.value = null;
-	document.body.style.overflow = "auto";
-};
-
-const commentText = ref('');
-const isSubmittingComment = ref(false);
-const isLikingProject = ref(false);
-
-const toggleLikeProject = async () => {
-	if (!page.props.auth?.user) {
-		addToast("Please log in to appreciate this project.", "info");
-		return;
-	}
-	if (!viewingProject.value || isLikingProject.value) return;
-	isLikingProject.value = true;
-	try {
-		const res = await axios.post(`/pagi/preview/${viewingProject.value.id}/like`);
-		viewingProject.value.liked = res.data.liked;
-		viewingProject.value.likes = res.data.likes;
-		
-		// Update likes in props.projects list too so it reflects in the tab
-		const proj = props.projects?.find((p: any) => p.id === viewingProject.value.id);
-		if (proj) {
-			proj.liked = res.data.liked;
-			proj.likes = res.data.likes;
-		}
-
-		if (res.data.liked) {
-			addToast("Appreciated project!", "success");
-		} else {
-			addToast("Removed appreciation.", "info");
-		}
-	} catch (e) {
-		addToast("Failed to update appreciation.", "error");
-	} finally {
-		isLikingProject.value = false;
-	}
-};
-
-const submitComment = async () => {
-	if (!commentText.value.trim() || !viewingProject.value) return;
-	isSubmittingComment.value = true;
-	try {
-		const res = await axios.post(`/pagi/preview/${viewingProject.value.id}/comment`, {
-			body: commentText.value
-		});
-		viewingProject.value.comments = res.data.comments;
-		commentText.value = '';
-		addToast("Comment posted successfully!", "success");
-	} catch (e) {
-		addToast("Failed to post comment. Please try again.", "error");
-	} finally {
-		isSubmittingComment.value = false;
-	}
-};
-
 const showRelationsModal = ref(false);
 const relationsModalType = ref<'followers' | 'following'>('followers');
 
@@ -834,71 +435,6 @@ const updateFollowingCount = (following: boolean) => {
 	}
 };
 
-const selectWorkTab = () => {
-	activeTab.value = "Work";
-	const el = document.getElementById("profile_tabs_navigation");
-	if (el) {
-		el.scrollIntoView({ behavior: "smooth" });
-	}
-};
-
-const editingProject = ref<any | null>(null);
-
-// Add Work Modal Helper Handlers
-const openAddWorkModal = () => {
-	editingProject.value = null;
-	isEditingQuickWork.value = false;
-	editingQuickWorkId.value = null;
-	showAddWorkModal.value = true;
-};
-
-const openEditQuickWorkModal = (p: any) => {
-	editingProject.value = p;
-	isEditingQuickWork.value = true;
-	editingQuickWorkId.value = p.id;
-	showAddWorkModal.value = true;
-};
-
-const handleQuickStoreSuccess = (project: any) => {
-	if (isEditingQuickWork.value && editingQuickWorkId.value) {
-		const idx = localProjects.value.findIndex(p => p.id === editingQuickWorkId.value);
-		if (idx !== -1) {
-			localProjects.value[idx] = project;
-		}
-		addToast("Karya berhasil diperbarui!", "success");
-	} else {
-		localProjects.value = [project, ...localProjects.value];
-		newCreatedProject.value = project;
-		setTimeout(() => {
-			showShareModal.value = true;
-		}, 300);
-		addToast("Karya berhasil ditambahkan!", "success");
-	}
-	showAddWorkModal.value = false;
-};
-
-
-// Stats computations
-const totalViews = computed(() => {
-	return localProjects.value?.reduce((acc, p) => acc + (Number(p.views) || 0), 0) || 518;
-});
-
-const totalLikes = computed(() => {
-	return localProjects.value?.reduce((acc, p) => {
-		const likesVal = typeof p.likes === 'number' 
-			? p.likes 
-			: (Array.isArray(p.likes) 
-				? p.likes.length 
-				: (typeof p.likes === 'string' ? parseInt(p.likes, 10) || 0 : 0));
-		return acc + likesVal;
-	}, 0) || 0;
-});
-
-const projectCount = computed(() => {
-	return localProjects.value?.length || 0;
-});
-
-// Dynamic Followers Count — driven by real server data
 const realFollowersCount = ref<number>(
 	props.profileUser?.followers_count ?? (user.value.metadata?.followers?.length ?? 0)
 );
@@ -911,11 +447,8 @@ const dynamicFollowingCount = computed(() => {
 });
 
 const displayOwnerRoleName = computed(() => {
-	// Prioritas 1: role PAGI pemilik profil (dikirim dari controller untuk public profile)
 	if (user.value.pagi_role) return user.value.pagi_role;
-	// Prioritas 2: role_title sebagai creative headline (jika user mengisinya sendiri)
 	if (user.value.role_title) return user.value.role_title;
-	// Prioritas 3: fallback ke user_type
 	if (user.value.user_type) {
 		const type = user.value.user_type.toLowerCase();
 		if (type === 'mahasiswa') return 'Mahasiswa';
@@ -928,7 +461,6 @@ const displayOwnerRoleName = computed(() => {
 	return 'Anggota PAGI';
 });
 
-// Helper: Format social urls
 const socialLinks = computed(() => {
 	const links = [];
 	if (user.value.website) links.push({ type: 'website', url: user.value.website, label: 'Website' });
@@ -939,13 +471,24 @@ const socialLinks = computed(() => {
 	return links;
 });
 
-// Filtered projects
-const filteredProjects = computed(() => {
-	if (!localProjects.value) return [];
-	return localProjects.value;
-});
+// About Tab Details
+const parseSkills = (skillsArray: any[]): Array<{ name: string, percentage: number }> => {
+	if (!Array.isArray(skillsArray)) return [];
+	return skillsArray.map(item => {
+		if (typeof item === 'string') {
+			const parts = item.split(':');
+			if (parts.length === 2 && !isNaN(Number(parts[1]))) {
+				return { name: parts[0], percentage: Number(parts[1]) };
+			}
+			return { name: item, percentage: 80 };
+		}
+		if (item && typeof item === 'object' && item.name) {
+			return { name: item.name, percentage: Number(item.percentage) || 80 };
+		}
+		return { name: String(item), percentage: 80 };
+	});
+};
 
-// Dynamic Skills tags
 const skills = computed(() => {
 	const val = user.value.skills || user.value.metadata?.skills || props.profileUser?.skills;
 	return Array.isArray(val) ? parseSkills(val) : parseSkills(['Figma', 'UI/UX Design', 'Vue.js']);
@@ -964,145 +507,7 @@ const languages = computed(() => {
 	return Array.isArray(langs) ? langs : [];
 });
 
-const updateSkills = (newSkills: string[]) => {
-	form.skills = newSkills;
-	form.post("/pagi/profile/update", {
-		preserveScroll: true,
-		onSuccess: () => {
-			initFormValues();
-			addToast("Skills updated successfully!", "success");
-		}
-	});
-};
-
-const updateBio = (newBio: string) => {
-	form.bio = newBio;
-	form.post("/pagi/profile/update", {
-		preserveScroll: true,
-		onSuccess: () => {
-			initFormValues();
-			addToast("Biography updated successfully!", "success");
-		}
-	});
-};
-
-const updateLocation = (newLocation: string) => {
-	form.location = newLocation;
-	form.post("/pagi/profile/update", {
-		preserveScroll: true,
-		onSuccess: () => {
-			initFormValues();
-			addToast("Location updated successfully!", "success");
-		}
-	});
-};
-
-const updateTimezone = (data: { timezone: string, extended: string }) => {
-	form.timezone = data.timezone;
-	form.timezone_extended = data.extended;
-	form.post("/pagi/profile/update", {
-		preserveScroll: true,
-		onSuccess: () => {
-			initFormValues();
-			addToast("Time zone updated successfully!", "success");
-		}
-	});
-};
-
-const updateLanguages = (newLanguages: Array<{ language: string, proficiency: string }>) => {
-	form.languages = newLanguages;
-	form.post("/pagi/profile/update", {
-		preserveScroll: true,
-		onSuccess: () => {
-			initFormValues();
-			addToast("Languages updated successfully!", "success");
-		}
-	});
-};
-
-const updateSocials = (socials: { website?: string, linkedin?: string, github?: string, twitter?: string, instagram?: string }) => {
-	form.website = socials.website || "";
-	form.linkedin = socials.linkedin || "";
-	form.github = socials.github || "";
-	form.twitter = socials.twitter || "";
-	form.instagram = socials.instagram || "";
-	form.post("/pagi/profile/update", {
-		preserveScroll: true,
-		onSuccess: () => {
-			initFormValues();
-			addToast("Social links updated successfully!", "success");
-		}
-	});
-};
-
-// CropperJS delegation handlers
-
-
-
-
-const handleCropSave = (croppedFile: File) => {
-	form.banner = croppedFile;
-	closeCropper();
-};
-
-const handleTriggerCrop = (data: { src: string, name: string, type: string }) => {
-	cropperImageSrc.value = data.src;
-	originalFileName = data.name;
-	originalFileType.value = data.type;
-	isCropperOpen.value = true;
-};
-
-const closeCropper = () => {
-	isCropperOpen.value = false;
-	cropperImageSrc.value = "";
-};
-
-
-
-const getToolSlug = (toolName: string): string => {
-	const name = toolName.toLowerCase().trim();
-	if (name === "figma") return "figma";
-	if (name === "photoshop" || name === "adobe photoshop" || name === "ps") return "photoshop";
-	if (name === "illustrator" || name === "adobe illustrator" || name === "ai") return "illustrator";
-	if (name === "premiere" || name === "premiere pro" || name === "pr" || name === "premierepro") return "premiere";
-	if (name === "vs code" || name === "vscode" || name === "visual studio code" || name === "visual-studio-code") return "visual-studio-code";
-	if (name === "visual studio" || name === "vs") return "visual-studio";
-	if (name === "vue" || name === "vue.js" || name === "vuejs" || name === "vuedotjs") return "vue";
-	if (name === "react" || name === "reactjs" || name === "react.js") return "react";
-	if (name === "tailwind" || name === "tailwindcss" || name === "tailwind css" || name === "tailwind-css") return "tailwind-css";
-	if (name === "laravel") return "laravel";
-	if (name === "php") return "php";
-	if (name === "javascript" || name === "js") return "javascript";
-	if (name === "html" || name === "html5") return "html5";
-	if (name === "css" || name === "css3") return "css";
-	if (name === "git") return "git";
-	if (name === "github") return "github";
-	if (name === "docker") return "docker";
-	if (name === "postman") return "postman";
-	if (name === "canva") return "canva";
-	if (name === "trello") return "trello";
-	if (name === "jira") return "jira";
-	if (name === "sass" || name === "scss") return "sass";
-	if (name === "nodejs" || name === "node" || name === "node.js") return "nodedotjs";
-	if (name === "typescript" || name === "ts") return "typescript";
-	if (name === "python") return "python";
-	if (name === "mysql") return "mysql";
-	if (name === "postgresql" || name === "postgres") return "postgresql";
-	if (name === "mongodb" || name === "mongo") return "mongodb";
-	if (name === "firebase") return "firebase";
-	if (name === "flutter") return "flutter";
-	if (name === "kotlin") return "kotlin";
-	if (name === "swift") return "swift";
-	if (name === "xd" || name === "adobe xd") return "adobe-xd";
-	if (name === "indesign" || name === "adobe indesign") return "adobe-indesign";
-	if (name === "after effects" || name === "ae" || name === "adobe after effects") return "adobe-after-effects";
-	
-	return name
-		.replace(/\.js/g, "dotjs")
-		.replace(/\.net/g, "dotnet")
-		.replace(/[^a-z0-9]+/g, "-");
-};
-
+// JSON-LD Structured Data
 const jsonLdString = computed(() => {
 	const origin = typeof window !== "undefined" ? window.location.origin : "";
 	const sameAs = [
@@ -1370,26 +775,7 @@ const headUrl = computed(() => {
 		<CropImageModal :show="isCropperOpen" :imageSrc="cropperImageSrc" :initialAspectRatio="cropperAspectRatio" :originalFileName="originalFileName" :originalFileType="originalFileType" @close="closeCropper" @save="handleCropSave" />
 
 		<!-- Premium Modern Warning Modal Alert -->
-		<Modal :show="showWarningModal" :title="warningTitle" maxWidth="sm" @close="showWarningModal = false">
-			<div class="flex flex-col items-center gap-4 text-center p-4">
-				<div class="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 flex items-center justify-center text-amber-600 dark:text-amber-400">
-					<Info class="w-6 h-6 animate-pulse" />
-				</div>
-				<h3 class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">Warning</h3>
-				<p class="text-xs text-slate-500 dark:text-slate-400 font-semibold leading-relaxed">
-					{{ warningMessage }}
-				</p>
-			</div>
-			<template #footer>
-				<button 
-					type="button"
-					@click="showWarningModal = false"
-					class="w-full h-11 bg-slate-900 dark:bg-white text-white dark:text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl cursor-pointer shadow-xs hover:bg-slate-800 dark:hover:bg-slate-100"
-				>
-					Acknowledge
-				</button>
-			</template>
-		</Modal>
+		<WarningModal :show="showWarningModal" :title="warningTitle" :message="warningMessage" @close="showWarningModal = false" />
 
 		<!-- 8. Relations (Followers/Following) Modal -->
 		<RelationsModal :show="showRelationsModal" :type="relationsModalType" :userId="user.id" :isOwnProfile="isOwnProfile" @close="showRelationsModal = false" @toast="addToast" @following-count-changed="updateFollowingCount" />
