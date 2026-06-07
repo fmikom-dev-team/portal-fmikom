@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\Settings;
+namespace App\Modules\Settings\Controllers;
 
 use App\Http\Controllers\Controller;
+
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use Illuminate\Contracts\Auth\MustVerifyEmail;

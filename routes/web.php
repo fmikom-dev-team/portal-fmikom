@@ -79,7 +79,7 @@ Route::post('/api/check-user-exists', function (\Illuminate\Http\Request $reques
 // ─── Authenticated Routes ────────────────────────────────────────────────────
 
 // ─── MFA Login Intercept (Overrides Fortify) ───────────────────────────────
-Route::post('/two-factor-challenge', [\App\Http\Controllers\Auth\TwoFactorChallengeController::class, 'store'])
+Route::post('/two-factor-challenge', [\App\Modules\WorkOs\Controllers\Auth\TwoFactorChallengeController::class, 'store'])
     ->middleware(['guest', 'throttle:two-factor'])
     ->name('two-factor.login.store');
 

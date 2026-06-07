@@ -2,7 +2,7 @@
 import { Form, Head, useForm, usePage } from "@inertiajs/vue3";
 import { Loader2, ShieldCheck, Fingerprint, Pencil, X, Plus, AlertCircle, CheckCircle2 } from "lucide-vue-next";
 import { onUnmounted, ref } from "vue";
-import SecurityController from "@/actions/App/Http/Controllers/Settings/SecurityController";
+import SecurityController from "@/actions/App/Modules/Settings/Controllers/SecurityController";
 import Heading from "@/components/Heading.vue";
 import InputError from "@/components/InputError.vue";
 import PasswordInput from "@/components/PasswordInput.vue";

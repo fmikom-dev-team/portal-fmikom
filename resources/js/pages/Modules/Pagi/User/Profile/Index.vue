@@ -27,16 +27,6 @@ import {
 	UploadCloud,
 	Settings,
 	Bell,
-	Image as ImageIcon,
-	Camera,
-	Pencil,
-	Briefcase,
-	Loader2,
-	ZoomIn,
-	ZoomOut,
-	RotateCcw,
-	RotateCw,
-	Paperclip,
 } from "lucide-vue-next";
 import { computed, ref, onMounted, onUnmounted, nextTick, watch, defineAsyncComponent } from "vue";
 import Navbar from "../ui/Navbar.vue";
@@ -751,188 +741,8 @@ const deleteProject = async (id: number, title: string) => {
 	}
 };
 
-// Dynamic Justified Grid Aspect Ratio Preloading & Canvas Resize Observers
-const aspectRatios = ref<Record<string, number>>({});
-const canvasContainer = ref<HTMLElement | null>(null);
-const containerWidth = ref(1200);
-
-const updateContainerWidth = () => {
-	if (canvasContainer.value) {
-		containerWidth.value = canvasContainer.value.clientWidth;
-	}
-};
-
-let resizeObserver: ResizeObserver | null = null;
-
-watch(canvasContainer, (newVal) => {
-	if (newVal) {
-		nextTick(() => {
-			updateContainerWidth();
-			if (typeof ResizeObserver !== "undefined") {
-				if (resizeObserver) resizeObserver.disconnect();
-				resizeObserver = new ResizeObserver(() => {
-					updateContainerWidth();
-				});
-				resizeObserver.observe(newVal);
-			}
-		});
-	} else {
-		if (resizeObserver) {
-			resizeObserver.disconnect();
-			resizeObserver = null;
-		}
-	}
-});
-
-const normalizeSrc = (src: string) => {
-	if (src.startsWith('http') || src.startsWith('blob:')) return src;
-	return '/storage/' + src;
-};
-
-const handleImageLoad = (src: string, event: Event) => {
-	const img = event.target as HTMLImageElement;
-	if (img.naturalWidth && img.naturalHeight) {
-		aspectRatios.value = {
-			...aspectRatios.value,
-			[normalizeSrc(src)]: img.naturalWidth / img.naturalHeight
-		};
-	}
-};
-
-const getAspectRatio = (src: string) => {
-	return aspectRatios.value[normalizeSrc(src)] || 1.5; // Default landscape fallback
-};
-
-const loadImageAspectRatios = (filePaths: string[]) => {
-	filePaths.forEach((src) => {
-		const normalized = normalizeSrc(src);
-		if (aspectRatios.value[normalized]) return;
-		const img = new Image();
-		img.onload = () => {
-			if (img.naturalWidth && img.naturalHeight) {
-				aspectRatios.value = {
-					...aspectRatios.value,
-					[normalized]: img.naturalWidth / img.naturalHeight
-				};
-			}
-		};
-		img.src = normalized;
-	});
-};
-
-const isVideoBlock = (block: any) => {
-	if (!block) return false;
-	if (block.mimeType) return block.mimeType.startsWith('video');
-	if (block.file && block.file.type) return block.file.type.startsWith('video');
-	if (block.name) {
-		const ext = block.name.split('.').pop()?.toLowerCase();
-		return ['mp4', 'webm', 'ogg', 'mov', 'm4v', '3gp'].includes(ext || '');
-	}
-	if (block.file_path) {
-		const ext = block.file_path.split('.').pop()?.split('?')[0].toLowerCase();
-		return ['mp4', 'webm', 'ogg', 'mov', 'm4v', '3gp'].includes(ext || '');
-	}
-	return false;
-};
-
-const isAudioBlock = (block: any) => {
-	if (!block) return false;
-	if (block.mimeType) return block.mimeType.startsWith('audio');
-	if (block.file && block.file.type) return block.file.type.startsWith('audio');
-	if (block.name) {
-		const ext = block.name.split('.').pop()?.toLowerCase();
-		return ['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'].includes(ext || '');
-	}
-	if (block.file_path) {
-		const ext = block.file_path.split('.').pop()?.split('?')[0].toLowerCase();
-		return ['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'].includes(ext || '');
-	}
-	return false;
-};
-
-// flickr-justified-layout algorithm implementation
-const getJustifiedLayout = (filePaths: string[], containerWidth: number, targetHeight: number, gap: number) => {
-	const items = filePaths || [];
-	if (items.length === 0) return [];
-	
-	const rows = [];
-	let i = 0;
-	const n = items.length;
-	
-	while (i < n) {
-		let currentRow = [items[i]];
-		let currentSum = getAspectRatio(items[i]);
-		let j = i + 1;
-		
-		while (j < n) {
-			const nextItem = items[j];
-			const nextAr = getAspectRatio(nextItem);
-			
-			const totalGapsWidth = currentRow.length * gap;
-			const availableWidth = containerWidth - totalGapsWidth;
-			const newHeight = availableWidth / (currentSum + nextAr);
-			
-			const prevGapsWidth = (currentRow.length - 1) * gap;
-			const prevHeight = (containerWidth - prevGapsWidth) / currentSum;
-			
-			if (prevHeight > targetHeight) {
-				currentRow.push(nextItem);
-				currentSum += nextAr;
-				j++;
-			} else {
-				if (Math.abs(newHeight - targetHeight) < Math.abs(prevHeight - targetHeight)) {
-					currentRow.push(nextItem);
-					currentSum += nextAr;
-					j++;
-				} else {
-					break;
-				}
-			}
-		}
-		
-		const isLastRow = (j === n);
-		const totalGapsWidth = (currentRow.length - 1) * gap;
-		const availableWidth = containerWidth - totalGapsWidth;
-		const calculatedHeight = availableWidth / currentSum;
-		
-		if (isLastRow) {
-			const canStretch = currentRow.length >= 2 && calculatedHeight <= 900;
-			const finalHeight = canStretch ? calculatedHeight : Math.min(calculatedHeight, targetHeight);
-			rows.push({
-				items: [...currentRow],
-				height: finalHeight,
-				isLast: !canStretch
-			});
-		} else {
-			rows.push({
-				items: [...currentRow],
-				height: calculatedHeight,
-				isLast: false
-			});
-		}
-		
-		i = j;
-	}
-	
-	return rows;
-};
-
-// Compute dynamic container width based on element clientWidth
-const getContainerWidth = (isFullWidth: boolean) => {
-	if (isFullWidth) return containerWidth.value;
-	return Math.min(containerWidth.value, 896) - 48;
-};
-
 const viewingProject = ref<any>(null);
 
-watch(() => viewingProject.value?.content, (newContent) => {
-	if (!newContent) return;
-	newContent.forEach((block: any) => {
-		if (block.type === "photo_grid" && block.file_paths) {
-			loadImageAspectRatios(block.file_paths);
-		}
-	});
-}, { deep: true, immediate: true });
 const activeProjectSettings = computed(() => {
 	if (!viewingProject.value || !viewingProject.value.content) {
 		return { globalSpacing: 50, canvasBgColor: '', canvasTextColor: '' };
@@ -940,10 +750,6 @@ const activeProjectSettings = computed(() => {
 	return viewingProject.value.content.find((b: any) => b.type === 'settings') || { globalSpacing: 50, canvasBgColor: '', canvasTextColor: '' };
 });
 
-const spacingInPxForView = computed(() => {
-	const spacing = activeProjectSettings.value.globalSpacing !== undefined ? activeProjectSettings.value.globalSpacing : 50;
-	return (spacing / 100) * 80;
-});
 
 const openProjectModal = (p: any) => {
 	if (!page.props.auth?.user) {
