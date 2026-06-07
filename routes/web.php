@@ -5,7 +5,7 @@ use Laravel\Fortify\Features;
 
 use App\Http\Controllers\FirstTimeLoginController;
 use App\Http\Middleware\EnsureFirstTimeLoginComplete;
-use App\Http\Controllers\Coreportal\PortalController;
+use App\Modules\Coreportal\Controllers\PortalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -165,11 +165,11 @@ if (app()->isLocal() || app()->environment('testing')) {
 }
 
 // ─── Invitation Accept (Public) ───────────────────────────────────────────────
-Route::get('/invitations/accept/{token}', [\App\Http\Controllers\WorkOs\InvitationAcceptController::class, 'show'])
+Route::get('/invitations/accept/{token}', [\App\Modules\WorkOs\Controllers\InvitationAcceptController::class, 'show'])
     ->name('invitations.accept');
 
 // ─── Image Proxy Obfuscated Streaming ──────────────────────────────────────────
-Route::get('/images/v1/{encrypted_path}', [\App\Http\Controllers\WorkOs\ImageProxyController::class, 'serve'])
+Route::get('/images/v1/{encrypted_path}', [\App\Modules\WorkOs\Controllers\ImageProxyController::class, 'serve'])
     ->name('images.proxy');
 
 require __DIR__.'/settings.php';
