@@ -41,66 +41,72 @@ class PagiSocialService
      */
     public function explorePeople(int $pagiModuleId): array
     {
-        return UserModuleRole::where('module_id', $pagiModuleId)
+        $userModuleRoles = UserModuleRole::where('module_id', $pagiModuleId)
             ->where('is_active', true)
             ->with(['user.programStudi', 'role'])
             ->get()
-            ->unique('user_id')
-            ->map(function ($umr) {
-                $u = $umr->user;
-                if (!$u) {
-                    return null;
-                }
+            ->unique('user_id');
 
-                $allPortfolios = PagiWork::where('user_id', $u->id)
-                    ->where('is_published', true)
-                    ->where('status', 'active')
-                    ->where(function ($q) {
-                        $q->whereNull('visibility')
-                          ->orWhere('visibility', 'Everyone');
-                    })
-                    ->latest()
-                    ->get();
+        $userIds = $userModuleRoles->pluck('user_id')->filter()->toArray();
 
-                $covers = $allPortfolios->map(function ($p) {
-                    return $p->cover_image
-                        ? (str_starts_with($p->cover_image, 'http') ? $p->cover_image : asset('storage/' . $p->cover_image))
-                        : null;
-                })->filter()->values()->toArray();
-
-                $totalLikes = $allPortfolios->sum(fn($p) => is_array($p->likes) ? count($p->likes) : 0);
-                $totalProjects = $allPortfolios->count();
-
-                $followers = $u->metadata['followers'] ?? [];
-                $followersCount = is_array($followers) ? count($followers) : 0;
-
-                $skills = $u->metadata['skills'] ?? [];
-                $location = $u->location ?? $u->metadata['location'] ?? null;
-
-                return [
-                    'id' => $u->id,
-                    'name' => $u->name,
-                    'email' => $u->email,
-                    'pagi_username' => $u->pagi_username,
-                    'role' => optional($umr->role)->nama ?? 'User',
-                    'foto_path' => $u->foto_path
-                        ? (str_starts_with($u->foto_path, 'http') ? $u->foto_path : asset('storage/' . $u->foto_path))
-                        : null,
-                    'banner_path' => $u->banner_path
-                        ? (str_starts_with($u->banner_path, 'http') ? $u->banner_path : asset('storage/' . $u->banner_path))
-                        : null,
-                    'prodi' => optional($u->programStudi)->nama ?? null,
-                    'covers' => $covers,
-                    'total_likes' => $totalLikes,
-                    'total_projects' => $totalProjects,
-                    'followers_count' => $followersCount,
-                    'skills' => $skills,
-                    'location' => $location,
-                ];
+        $allWorks = PagiWork::whereIn('user_id', $userIds)
+            ->where('is_published', true)
+            ->where('status', 'active')
+            ->where(function ($q) {
+                $q->whereNull('visibility')
+                  ->orWhere('visibility', 'Everyone');
             })
-            ->filter()
-            ->values()
-            ->toArray();
+            ->latest()
+            ->get()
+            ->groupBy('user_id');
+
+        return $userModuleRoles->map(function ($umr) use ($allWorks) {
+            $u = $umr->user;
+            if (!$u) {
+                return null;
+            }
+
+            $allPortfolios = $allWorks->get($u->id) ?? collect();
+
+            $covers = $allPortfolios->map(function ($p) {
+                return $p->cover_image
+                    ? (str_starts_with($p->cover_image, 'http') ? $p->cover_image : asset('storage/' . $p->cover_image))
+                    : null;
+            })->filter()->values()->toArray();
+
+            $totalLikes = $allPortfolios->sum(fn($p) => is_array($p->likes) ? count($p->likes) : 0);
+            $totalProjects = $allPortfolios->count();
+
+            $followers = $u->metadata['followers'] ?? [];
+            $followersCount = is_array($followers) ? count($followers) : 0;
+
+            $skills = $u->metadata['skills'] ?? [];
+            $location = $u->location ?? $u->metadata['location'] ?? null;
+
+            return [
+                'id' => $u->id,
+                'name' => $u->name,
+                'email' => $u->email,
+                'pagi_username' => $u->pagi_username,
+                'role' => optional($umr->role)->nama ?? 'User',
+                'foto_path' => $u->foto_path
+                    ? (str_starts_with($u->foto_path, 'http') ? $u->foto_path : asset('storage/' . $u->foto_path))
+                    : null,
+                'banner_path' => $u->banner_path
+                    ? (str_starts_with($u->banner_path, 'http') ? $u->banner_path : asset('storage/' . $u->banner_path))
+                    : null,
+                'prodi' => optional($u->programStudi)->nama ?? null,
+                'covers' => $covers,
+                'total_likes' => $totalLikes,
+                'total_projects' => $totalProjects,
+                'followers_count' => $followersCount,
+                'skills' => $skills,
+                'location' => $location,
+            ];
+        })
+        ->filter()
+        ->values()
+        ->toArray();
     }
 
     /**
@@ -111,7 +117,7 @@ class PagiSocialService
         $search = $request->input('search');
         $sort = $request->input('sort', 'Recommended');
 
-        $query = PagiWork::with(['user.programStudi'])
+        $query = PagiWork::with(['user.programStudi', 'tags'])
             ->where('is_published', true)
             ->where(function ($q) {
                 $q->whereNull('visibility')

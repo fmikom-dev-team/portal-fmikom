@@ -18,6 +18,22 @@ class PagiProfileService
      */
     public function getProfileData(User $user, $requestPagiModuleId = 1, bool $isOwner = true): array
     {
+        if (!$isOwner) {
+            return \Illuminate\Support\Facades\Cache::remember(
+                "pagi_public_profile_{$user->id}",
+                600,
+                fn() => $this->fetchProfileData($user, $requestPagiModuleId, false)
+            );
+        }
+
+        return $this->fetchProfileData($user, $requestPagiModuleId, true);
+    }
+
+    /**
+     * Fetch raw profile data formatted for frontend.
+     */
+    private function fetchProfileData(User $user, $requestPagiModuleId = 1, bool $isOwner = true): array
+    {
         $projectOrder = $user->metadata['pagi_project_order'] ?? null;
         $projectsQuery = PagiWork::with(['tags', 'user'])
             ->where(function ($q) use ($user) {

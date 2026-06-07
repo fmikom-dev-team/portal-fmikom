@@ -760,30 +760,49 @@ class AdminDashboardController extends Controller
             default => 7,
         };
 
-        $dates      = [];
+        $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
+
+        $karyaCounts = PagiWork::where('created_at', '>=', $startDate)
+            ->selectRaw('DATE(created_at) as date, count(*) as count')
+            ->groupBy('date')
+            ->pluck('count', 'date')
+            ->toArray();
+
+        $laporanCounts = PagiReport::where('created_at', '>=', $startDate)
+            ->selectRaw('DATE(created_at) as date, count(*) as count')
+            ->groupBy('date')
+            ->pluck('count', 'date')
+            ->toArray();
+
+        $warningCounts = PagiWarning::where('created_at', '>=', $startDate)
+            ->selectRaw('DATE(created_at) as date, count(*) as count')
+            ->groupBy('date')
+            ->pluck('count', 'date')
+            ->toArray();
+
         $labels     = [];
         $karya      = [];
         $laporan    = [];
         $warnings   = [];
 
         for ($i = $days - 1; $i >= 0; $i--) {
-            $date     = Carbon::now()->subDays($i)->toDateString();
-            $dates[]  = $date;
+            $carbonDate = Carbon::now()->subDays($i);
+            $dateStr    = $carbonDate->toDateString();
 
             if ($days <= 7) {
-                $labels[] = Carbon::now()->subDays($i)->translatedFormat('d M');
+                $labels[] = $carbonDate->translatedFormat('d M');
             } elseif ($days <= 30) {
-                $labels[] = Carbon::now()->subDays($i)->translatedFormat('d M');
+                $labels[] = $carbonDate->translatedFormat('d M');
             } else {
                 // For 90d, label every 10 days to avoid clutter
                 $labels[] = ($i % 10 === 0 || $i === $days - 1 || $i === 0)
-                    ? Carbon::now()->subDays($i)->translatedFormat('d M')
+                    ? $carbonDate->translatedFormat('d M')
                     : '';
             }
 
-            $karya[]    = PagiWork::whereDate('created_at', $date)->count();
-            $laporan[]  = PagiReport::whereDate('created_at', $date)->count();
-            $warnings[] = PagiWarning::whereDate('created_at', $date)->count();
+            $karya[]    = $karyaCounts[$dateStr] ?? 0;
+            $laporan[]  = $laporanCounts[$dateStr] ?? 0;
+            $warnings[] = $warningCounts[$dateStr] ?? 0;
         }
 
         return [

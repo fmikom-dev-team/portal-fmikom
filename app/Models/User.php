@@ -62,6 +62,8 @@ class User extends Authenticatable
     protected static function booted(): void
     {
         static::saved(function ($user) {
+            \Illuminate\Support\Facades\Cache::forget("pagi_public_profile_{$user->id}");
+
             if ($user->wasChanged('password') || ($user->wasRecentlyCreated && $user->password)) {
                 \Illuminate\Support\Facades\DB::table('auth_password_histories')->insert([
                     'user_id'       => $user->id,
