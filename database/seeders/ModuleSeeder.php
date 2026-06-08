@@ -42,6 +42,26 @@ class ModuleSeeder extends Seeder
             Module::firstOrCreate(['code' => $m['code']], $m);
         }
 
+        // Mapping role yang diizinkan untuk setiap modul (tabel module_roles)
+        $moduleRolesMap = [
+            'FAST' => ['super-admin', 'admin', 'dosen', 'mahasiswa', 'alumni'],
+            'PAGI' => ['super-admin', 'admin', 'dosen', 'mahasiswa', 'alumni', 'mitra'],
+            'WIMS' => ['super-admin', 'admin', 'mahasiswa', 'mitra'],
+            'TRACE' => ['super-admin', 'admin', 'alumni', 'mitra'],
+        ];
+
+        foreach ($moduleRolesMap as $modCode => $roleSlugs) {
+            $module = Module::where('code', $modCode)->first();
+            if ($module) {
+                foreach ($roleSlugs as $slug) {
+                    $role = Role::where('slug', $slug)->first();
+                    if ($role) {
+                        $module->roles()->syncWithoutDetaching([$role->id => ['is_default' => false]]);
+                    }
+                }
+            }
+        }
+
         // 3. SEEDING CONTOH: User dengan banyak role di berbagai Modul
         // ========================================================
 

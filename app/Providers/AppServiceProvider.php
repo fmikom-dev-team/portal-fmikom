@@ -86,7 +86,7 @@ class AppServiceProvider extends ServiceProvider
                 $rule->symbols();
             }
 
-            if ((bool) AuthSetting::get('password.reject_breached', true)) {
+            if ((bool) AuthSetting::get('password.reject_breached', false)) {
                 $rule->uncompromised();
             }
 

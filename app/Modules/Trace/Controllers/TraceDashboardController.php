@@ -18,11 +18,11 @@ class TraceDashboardController extends Controller
 
         $componentName = $isAdmin
             ? 'Modules/Trace/Admin/Dashboard'
-            : 'Modules/Trace/User/'.Str::studly($role).'Dashboard';
+            : 'Modules/Trace/Alumni/'.Str::studly($role).'Dashboard';
 
         $path = resource_path("js/pages/{$componentName}.vue");
         if (! file_exists($path)) {
-            $fallbackName = 'Modules/Trace/User/MahasiswaDashboard';
+            $fallbackName = 'Modules/Trace/Alumni/AlumniDashboard';
             if (file_exists(resource_path("js/pages/{$fallbackName}.vue"))) {
                 $componentName = $fallbackName;
             } else {

@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use App\Models\CareerHistory;
+
+class Employment extends Model
+{
+    use HasFactory;
+
+    protected $table = 'employment';
+
+    protected $fillable = [
+        'career_history_id',
+        'nama_perusahaan',
+        'jabatan',
+        'sektor_industri',
+        'alamat_perusahaan',
+        'gaji_min',
+        'gaji_max',
+    ];
+
+    public function careerHistory()
+    {
+        return $this->belongsTo(CareerHistory::class, 'career_history_id');
+    }
+}

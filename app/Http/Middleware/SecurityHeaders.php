@@ -115,14 +115,15 @@ class SecurityHeaders
             // fonts.bunny.net digunakan oleh project (Instrument Sans), fonts.googleapis.com sebagai fallback
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net",
             "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net data:",
-            "img-src 'self' data: blob: https://ui-avatars.com https://api.dicebear.com https://avatars.dicebear.com https://lh3.googleusercontent.com https://lh4.googleusercontent.com https://lh5.googleusercontent.com https://lh6.googleusercontent.com https://images.unsplash.com https://upload.wikimedia.org https://cdn.jsdelivr.net",
+            "img-src 'self' data: blob: https://ui-avatars.com https://api.dicebear.com https://avatars.dicebear.com https://lh3.googleusercontent.com https://lh4.googleusercontent.com https://lh5.googleusercontent.com https://lh6.googleusercontent.com https://images.unsplash.com https://upload.wikimedia.org https://cdn.jsdelivr.net https://server.arcgisonline.com https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com",
             $connectSrc,
             "media-src 'self' blob:",
             // worker-src: FFmpeg WASM creates a Web Worker from a bundled asset URL.
             // blob: is needed because the Worker internally does import(blob://...) to load ffmpeg-core.js
             "worker-src 'self' blob:",
             // script-src blob: is needed for the Worker's internal dynamic import(blob://...) of ffmpeg-core.js
-            "script-src-elem 'self' 'unsafe-inline' blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com",
+            // "script-src-elem 'self' 'unsafe-inline' blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com",
+            "script-src-elem 'self' 'nonce-{$nonce}'" . ($isLocalHost ? " http://localhost:5173 http://127.0.0.1:5173" : "") . " 'unsafe-inline' blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com",
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",
@@ -157,7 +158,7 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
         // ── Batasi akses fitur browser berbahaya ──────────────────────────────
-        $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=()');
+        $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=(), usb=(), magnetometer=(), gyroscope=()');
 
         // ── Hapus header yang mengidentifikasi teknologi server ───────────────
         $response->headers->remove('X-Powered-By');
