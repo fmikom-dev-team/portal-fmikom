@@ -2,9 +2,9 @@
 
 namespace App\Modules\Wims\Services\Mahasiswa\Logbook;
 
-use App\Models\LogbookMagang;
+use App\Models\Magang\LogbookMagang;
 use App\Models\LogbookPhoto;
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\PendaftaranMagang;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;

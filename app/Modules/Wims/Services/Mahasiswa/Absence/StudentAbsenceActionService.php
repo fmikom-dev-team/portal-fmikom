@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Services\Mahasiswa\Absence;
 
 use App\Models\KetidakhadiranMagang;
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\PendaftaranMagang;
 use App\Services\KetidakhadiranService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;

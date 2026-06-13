@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Controllers\Mitra;
 
 use App\Http\Controllers\Controller;
-use App\Models\PerusahaanMitra;
+use App\Models\Magang\PerusahaanMitra;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringDetailService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringHistoryService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringRegistrationResolverService;

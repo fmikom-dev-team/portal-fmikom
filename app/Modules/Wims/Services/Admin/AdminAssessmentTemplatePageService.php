@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Services\Admin;
 
 use App\Models\AssessmentTemplate;
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\PendaftaranMagang;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;

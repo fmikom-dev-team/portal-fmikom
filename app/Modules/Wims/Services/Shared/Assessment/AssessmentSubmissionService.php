@@ -4,7 +4,7 @@ namespace App\Modules\Wims\Services\Shared\Assessment;
 
 use App\Models\AssessmentSubmission;
 use App\Models\AssessmentTemplate;
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;

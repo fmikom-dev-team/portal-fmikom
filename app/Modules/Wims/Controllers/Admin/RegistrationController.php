@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\PendaftaranMagang;
 use App\Modules\Wims\Services\Admin\AdminRegistrationActionService;
 use App\Modules\Wims\Services\Admin\AdminRegistrationPageService;
 use Illuminate\Http\RedirectResponse;

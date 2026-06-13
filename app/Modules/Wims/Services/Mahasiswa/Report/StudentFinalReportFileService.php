@@ -2,7 +2,7 @@
 
 namespace App\Modules\Wims\Services\Mahasiswa\Report;
 
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\PendaftaranMagang;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 

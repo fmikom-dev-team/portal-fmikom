@@ -2,7 +2,7 @@
 
 namespace App\Modules\Wims\Services\Admin;
 
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\PendaftaranMagang;
 use App\Modules\Wims\Support\AssessmentSummary;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;

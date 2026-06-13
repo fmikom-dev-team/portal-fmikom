@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Services\Mahasiswa\Attendance;
 
 use App\Models\HariLibur;
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\PendaftaranMagang;
 use App\Services\KetidakhadiranService;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;

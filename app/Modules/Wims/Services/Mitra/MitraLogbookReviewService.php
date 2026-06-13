@@ -2,7 +2,7 @@
 
 namespace App\Modules\Wims\Services\Mitra;
 
-use App\Models\LogbookMagang;
+use App\Models\Magang\LogbookMagang;
 
 class MitraLogbookReviewService
 {

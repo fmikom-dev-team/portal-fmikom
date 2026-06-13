@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Controllers\Mahasiswa;
 
 use App\Http\Controllers\Controller;
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\PendaftaranMagang;
 use App\Modules\Wims\Services\Mahasiswa\Attendance\AttendanceActionService;
 use App\Modules\Wims\Services\Mahasiswa\Attendance\AttendanceExportService;
 use App\Modules\Wims\Services\Mahasiswa\Attendance\AttendancePageService;

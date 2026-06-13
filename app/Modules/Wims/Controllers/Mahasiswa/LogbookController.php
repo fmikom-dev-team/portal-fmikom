@@ -4,7 +4,7 @@ namespace App\Modules\Wims\Controllers\Mahasiswa;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Wims\Requests\Mahasiswa\StoreLogbookRequest;
-use App\Models\LogbookMagang;
+use App\Models\Magang\LogbookMagang;
 use App\Modules\Wims\Services\Mahasiswa\Logbook\LogbookActionService;
 use App\Modules\Wims\Services\Mahasiswa\Logbook\LogbookExportService;
 use App\Modules\Wims\Services\Mahasiswa\Logbook\LogbookPageService;

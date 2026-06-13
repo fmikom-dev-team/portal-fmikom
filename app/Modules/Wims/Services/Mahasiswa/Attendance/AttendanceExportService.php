@@ -2,8 +2,8 @@
 
 namespace App\Modules\Wims\Services\Mahasiswa\Attendance;
 
-use App\Models\AbsensiMagang;
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\AbsensiMagang;
+use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
 use App\Services\AttendanceSyncService;
 use Barryvdh\DomPDF\Facade\Pdf;

@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\PendaftaranMagang;
 use App\Modules\Wims\Services\Shared\Placement\PlacementActionService;
 use App\Modules\Wims\Services\Shared\Placement\PlacementIndexService;
 use App\Modules\Wims\Services\Shared\Placement\PlacementWorkflowService;

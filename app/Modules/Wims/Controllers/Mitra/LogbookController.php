@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Controllers\Mitra;
 
 use App\Http\Controllers\Controller;
-use App\Models\LogbookMagang;
+use App\Models\Magang\LogbookMagang;
 use App\Modules\Wims\Services\Mitra\MitraAccessService;
 use App\Modules\Wims\Services\Mitra\MitraLogbookReviewService;
 use Illuminate\Http\RedirectResponse;

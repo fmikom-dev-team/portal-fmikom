@@ -2,11 +2,11 @@
 
 namespace App\Modules\Wims\Services\Dosen;
 
-use App\Models\AbsensiMagang;
+use App\Models\Magang\AbsensiMagang;
 use App\Models\AssessmentSubmission;
 use App\Models\HariLibur;
-use App\Models\LogbookMagang;
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\LogbookMagang;
+use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
 use App\Services\AttendanceSyncService;
 use App\Modules\Wims\Support\AssessmentSummary;

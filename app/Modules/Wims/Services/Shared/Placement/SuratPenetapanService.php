@@ -2,7 +2,7 @@
 
 namespace App\Modules\Wims\Services\Shared\Placement;
 
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\PendaftaranMagang;
 use App\Models\SuratPenetapan;
 
 class SuratPenetapanService

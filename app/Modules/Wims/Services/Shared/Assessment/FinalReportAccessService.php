@@ -2,7 +2,7 @@
 
 namespace App\Modules\Wims\Services\Shared\Assessment;
 
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\PendaftaranMagang;
 use Illuminate\Support\Facades\Storage;
 
 class FinalReportAccessService

@@ -2,7 +2,7 @@
 
 namespace App\Modules\Wims\Services\Shared\Placement;
 
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\PendaftaranMagang;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 

@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Services\Dosen;
 
 use App\Models\AssessmentSubmission;
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
 use App\Modules\Wims\Services\Shared\Assessment\FinalReportAccessService;
 use Illuminate\Http\Request;

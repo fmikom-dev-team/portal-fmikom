@@ -2,10 +2,10 @@
 
 namespace App\Modules\Wims\Support;
 
-use App\Models\AbsensiMagang;
+use App\Models\Magang\AbsensiMagang;
 use App\Models\KetidakhadiranMagang;
-use App\Models\LogbookMagang;
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\LogbookMagang;
+use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
 use App\Services\AttendanceSyncService;
 

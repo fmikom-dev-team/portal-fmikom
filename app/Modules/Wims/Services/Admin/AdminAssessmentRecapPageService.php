@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Services\Admin;
 
 use App\Models\AssessmentSubmission;
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\PendaftaranMagang;
 use App\Modules\Wims\Support\AssessmentSummary;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;

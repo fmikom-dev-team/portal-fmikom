@@ -2,7 +2,7 @@
 
 namespace App\Modules\Wims\Services\Admin;
 
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\PendaftaranMagang;
 
 class AdminRegistrationActionService
 {

@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\PerusahaanMitra;
+use App\Models\Magang\PerusahaanMitra;
 use App\Modules\Wims\Services\Admin\AdminCompanyActionService;
 use App\Modules\Wims\Services\Admin\AdminCompanyPageService;
 use Illuminate\Http\RedirectResponse;

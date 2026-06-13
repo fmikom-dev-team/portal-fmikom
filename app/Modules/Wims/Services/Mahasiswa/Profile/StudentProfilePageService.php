@@ -2,7 +2,7 @@
 
 namespace App\Modules\Wims\Services\Mahasiswa\Profile;
 
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
 
 class StudentProfilePageService

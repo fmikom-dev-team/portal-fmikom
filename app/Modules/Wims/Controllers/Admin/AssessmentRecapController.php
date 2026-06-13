@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\PendaftaranMagang;
 use App\Modules\Wims\Services\Admin\AdminAssessmentRecapExportService;
 use App\Modules\Wims\Services\Admin\AdminAssessmentRecapPageService;
 use Illuminate\Http\Request;

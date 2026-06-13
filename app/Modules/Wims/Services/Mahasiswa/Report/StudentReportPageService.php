@@ -2,9 +2,9 @@
 
 namespace App\Modules\Wims\Services\Mahasiswa\Report;
 
-use App\Models\AbsensiMagang;
-use App\Models\LogbookMagang;
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\AbsensiMagang;
+use App\Models\Magang\LogbookMagang;
+use App\Models\Magang\PendaftaranMagang;
 use App\Modules\Wims\Support\AssessmentSummary;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;

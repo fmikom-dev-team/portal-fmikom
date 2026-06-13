@@ -2,9 +2,9 @@
 
 namespace App\Modules\Wims\Services\Shared\Monitoring;
 
-use App\Models\AbsensiMagang;
-use App\Models\LogbookMagang;
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\AbsensiMagang;
+use App\Models\Magang\LogbookMagang;
+use App\Models\Magang\PendaftaranMagang;
 use Illuminate\Support\Carbon;
 
 class MonitoringDetailService

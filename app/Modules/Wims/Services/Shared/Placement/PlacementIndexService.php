@@ -2,8 +2,8 @@
 
 namespace App\Modules\Wims\Services\Shared\Placement;
 
-use App\Models\PendaftaranMagang;
-use App\Models\PerusahaanMitra;
+use App\Models\Magang\PendaftaranMagang;
+use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;

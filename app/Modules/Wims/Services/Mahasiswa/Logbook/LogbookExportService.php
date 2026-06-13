@@ -2,8 +2,8 @@
 
 namespace App\Modules\Wims\Services\Mahasiswa\Logbook;
 
-use App\Models\LogbookMagang;
-use App\Models\PendaftaranMagang;
+use App\Models\Magang\LogbookMagang;
+use App\Models\Magang\PendaftaranMagang;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;

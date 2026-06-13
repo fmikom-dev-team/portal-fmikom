@@ -2,8 +2,8 @@
 
 namespace App\Modules\Wims\Services\Admin;
 
-use App\Models\PendaftaranMagang;
-use App\Models\PerusahaanMitra;
+use App\Models\Magang\PendaftaranMagang;
+use App\Models\Magang\PerusahaanMitra;
 use App\Models\SuratPenetapan;
 use Carbon\Carbon;
 

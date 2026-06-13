@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Services\Mitra;
 
 use App\Models\KetidakhadiranMagang;
-use App\Models\PerusahaanMitra;
+use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
 use App\Services\MonitoringAlertService;
 class MitraDashboardPageService

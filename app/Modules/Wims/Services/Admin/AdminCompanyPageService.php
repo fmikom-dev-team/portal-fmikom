@@ -2,7 +2,7 @@
 
 namespace App\Modules\Wims\Services\Admin;
 
-use App\Models\PerusahaanMitra;
+use App\Models\Magang\PerusahaanMitra;
 use Carbon\Carbon;
 
 class AdminCompanyPageService

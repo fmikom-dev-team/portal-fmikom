@@ -2,7 +2,7 @@
 
 namespace App\Modules\Wims\Services\Admin;
 
-use App\Models\PerusahaanMitra;
+use App\Models\Magang\PerusahaanMitra;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
