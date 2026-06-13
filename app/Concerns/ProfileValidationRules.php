@@ -17,6 +17,7 @@ trait ProfileValidationRules
         return [
             'name' => $this->nameRules(),
             'email' => $this->emailRules($userId),
+            'program_studi_id' => ['nullable', 'integer', Rule::exists('program_studis', 'id')],
         ];
     }
 

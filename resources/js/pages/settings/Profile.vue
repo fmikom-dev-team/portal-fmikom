@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/DeleteUser.vue';
 import Heading from '@/components/Heading.vue';
@@ -17,9 +17,15 @@ import type { BreadcrumbItem } from '@/types';
 type Props = {
     mustVerifyEmail: boolean;
     status?: string;
+    studyPrograms: Array<{
+        id: number;
+        name: string;
+        code: string;
+        faculty_name?: string | null;
+    }>;
 };
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
     {
@@ -30,6 +36,19 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+const selectedProgramStudiId = ref(user.value.program_studi_id ? String(user.value.program_studi_id) : '');
+
+watch(
+    user,
+    (nextUser) => {
+        selectedProgramStudiId.value = nextUser.program_studi_id ? String(nextUser.program_studi_id) : '';
+    },
+    { deep: true },
+);
+
+const selectedProgramStudi = computed(() =>
+    props.studyPrograms.find((item) => String(item.id) === selectedProgramStudiId.value),
+);
 </script>
 
 <template>
@@ -43,7 +62,7 @@ const user = computed(() => page.props.auth.user);
                 <Heading
                     variant="small"
                     title="Profile information"
-                    description="Update your name and email address"
+                    description="Update your name, email address, and study program"
                 />
 
                 <Form
@@ -78,6 +97,37 @@ const user = computed(() => page.props.auth.user);
                             placeholder="Email address"
                         />
                         <InputError class="mt-2" :message="errors.email" />
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label for="faculty_name">Faculty</Label>
+                        <Input
+                            id="faculty_name"
+                            class="mt-1 block w-full"
+                            :value="selectedProgramStudi?.faculty_name || ''"
+                            placeholder="Will follow the selected study program"
+                            disabled
+                        />
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label for="program_studi_id">Study program</Label>
+                        <select
+                            id="program_studi_id"
+                            v-model="selectedProgramStudiId"
+                            name="program_studi_id"
+                            class="mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            <option value="">Select a study program</option>
+                            <option
+                                v-for="program in studyPrograms"
+                                :key="program.id"
+                                :value="String(program.id)"
+                            >
+                                {{ program.name }}
+                            </option>
+                        </select>
+                        <InputError class="mt-2" :message="errors.program_studi_id" />
                     </div>
 
                     <div v-if="mustVerifyEmail && !user.email_verified_at">

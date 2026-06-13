@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Models\ProgramStudi;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,6 +23,18 @@ class ProfileController extends Controller
         return Inertia::render('settings/Profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
+            'studyPrograms' => ProgramStudi::query()
+                ->with('fakultas:id,nama')
+                ->orderBy('nama')
+                ->get(['id', 'fakultas_id', 'nama', 'kode'])
+                ->map(fn (ProgramStudi $programStudi) => [
+                    'id' => $programStudi->id,
+                    'name' => $programStudi->nama,
+                    'code' => $programStudi->kode,
+                    'faculty_name' => $programStudi->fakultas?->nama,
+                ])
+                ->values()
+                ->all(),
         ]);
     }
 
@@ -30,7 +43,7 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $request->user()->forceFill($request->validated());
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\WimsStudentAlerts;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -35,13 +36,44 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user
+                    ? [
+                        ...$user->toArray(),
+                        'avatar' => $user->photoUrl(),
+                        'photo_url' => $user->photoUrl(),
+                    ]
+                    : null,
             ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
+            'alerts' => fn () => $this->resolveStudentAlerts($request),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
+    }
+
+    /**
+     * @return array<int, array{id: string, message: string}>
+     */
+    private function resolveStudentAlerts(Request $request): array
+    {
+        $user = $request->user();
+
+        if (! $user || ! $request->routeIs('wims.*')) {
+            return [];
+        }
+
+        if (! $user->hasAnyRole(['user', 'super-admin'])) {
+            return [];
+        }
+
+        return app(WimsStudentAlerts::class)->forUser($user);
     }
 }

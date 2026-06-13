@@ -16,7 +16,11 @@ class HandleAppearance
      */
     public function handle(Request $request, Closure $next): Response
     {
-        View::share('appearance', $request->cookie('appearance') ?? 'system');
+        $user = $request->user();
+        $cookieKey = $user ? "appearance_student_{$user->id}" : 'appearance';
+
+        View::share('appearance', $request->cookie($cookieKey) ?? 'system');
+        View::share('appearanceCookieKey', $cookieKey);
 
         return $next($request);
     }

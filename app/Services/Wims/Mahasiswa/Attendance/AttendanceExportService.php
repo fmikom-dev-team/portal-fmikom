@@ -1,0 +1,112 @@
+<?php
+
+namespace App\Services\Wims\Mahasiswa\Attendance;
+
+use App\Models\AbsensiMagang;
+use App\Models\PendaftaranMagang;
+use App\Models\User;
+use App\Services\AttendanceSyncService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Symfony\Component\HttpFoundation\Response;
+
+class AttendanceExportService
+{
+    public function __construct(
+        private readonly AttendanceSyncService $attendanceSyncService,
+    ) {
+    }
+
+    public function download(User $user, string $scope): Response
+    {
+        app()->setLocale('id');
+        Carbon::setLocale('id');
+
+        $student = $user->loadMissing('programStudi');
+        $registrations = PendaftaranMagang::query()
+            ->with([
+                'perusahaan.user',
+                'dosenPembimbing',
+            ])
+            ->forMahasiswa($user->id)
+            ->orderByDesc('tanggal_mulai')
+            ->orderByDesc('id')
+            ->get();
+        $this->attendanceSyncService->syncForRegistrations($registrations);
+
+        $attendanceHistoryQuery = AbsensiMagang::query()
+            ->with('pendaftaran.perusahaan')
+            ->whereHas('pendaftaran', fn ($query) => $query->where('mahasiswa_id', $user->id))
+            ->orderByDesc('tanggal')
+            ->orderByDesc('id');
+
+        $fileNamePrefix = 'riwayat-presensi';
+        $headerRegistration = $registrations->first();
+
+        if ($scope === 'current') {
+            $currentRegistration = PendaftaranMagang::query()
+                ->with([
+                    'mahasiswa.programStudi',
+                    'perusahaan.user',
+                    'dosenPembimbing',
+                ])
+                ->forMahasiswa($user->id)
+                ->orderByDesc('tanggal_mulai')
+                ->orderByDesc('id')
+                ->get()
+                ->first(fn (PendaftaranMagang $registration) => $registration->status === 'aktif' || $registration->isPostInternshipPhase());
+
+            abort_if($currentRegistration === null, 404);
+
+            $attendanceHistoryQuery->where('pendaftaran_id', $currentRegistration->id);
+            $fileNamePrefix = 'riwayat-presensi-periode-ini';
+            $headerRegistration = $currentRegistration;
+        }
+
+        $attendanceHistory = $attendanceHistoryQuery->get();
+        $fileName = $fileNamePrefix . '-' . now()->format('Y-m-d') . '.pdf';
+        $exportRows = $attendanceHistory->map(function (AbsensiMagang $attendance, int $index) {
+            return [
+                'number' => $index + 1,
+                'date' => $attendance->tanggal?->locale('id')->translatedFormat('d F Y') ?? '-',
+                'status' => $this->formatAttendanceStatusLabel($attendance->status),
+                'check_in' => $attendance->timestamp_masuk?->format('H:i:s') ?? '-',
+                'check_out' => $attendance->timestamp_keluar?->format('H:i:s') ?? '-',
+                'remark' => is_null($attendance->lokasi_valid)
+                    ? '-'
+                    : ($attendance->lokasi_valid ? 'Lokasi tervalidasi' : 'Lokasi belum tervalidasi'),
+            ];
+        });
+
+        return Pdf::loadView('pdf.attendance-history', [
+            'student' => [
+                'name' => $student->name ?? '-',
+                'nim' => $student->nim_nip ?: $student->nomor_induk ?: '-',
+                'program_studi' => $student->programStudi?->nama ?? '-',
+            ],
+            'internship' => [
+                'company' => $headerRegistration?->perusahaan?->nama ?? '-',
+                'period' => $headerRegistration?->tanggal_mulai && $headerRegistration?->tanggal_selesai
+                    ? $headerRegistration->tanggal_mulai->locale('id')->translatedFormat('d M Y') . ' - ' . $headerRegistration->tanggal_selesai->locale('id')->translatedFormat('d M Y')
+                    : '-',
+                'supervisor_lecturer' => $headerRegistration?->dosenPembimbing?->name ?? '-',
+                'mentor' => $headerRegistration?->perusahaan?->user?->name ?? '-',
+            ],
+            'rows' => $exportRows,
+        ])
+            ->setPaper('a4', 'landscape')
+            ->download($fileName);
+    }
+
+    private function formatAttendanceStatusLabel(?string $status): string
+    {
+        return match ($status) {
+            'hadir' => 'Hadir',
+            'terlambat' => 'Terlambat',
+            'izin' => 'Izin',
+            'sakit' => 'Sakit',
+            'alfa' => 'Alfa',
+            default => $status ? ucfirst(str_replace('_', ' ', $status)) : '-',
+        };
+    }
+}

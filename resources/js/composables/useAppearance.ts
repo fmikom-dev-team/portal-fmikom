@@ -1,5 +1,6 @@
 import type { ComputedRef, Ref } from 'vue';
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import type { Appearance, ResolvedAppearance } from '@/types';
 
 export type { Appearance, ResolvedAppearance };
@@ -9,6 +10,17 @@ export type UseAppearanceReturn = {
     resolvedAppearance: ComputedRef<ResolvedAppearance>;
     updateAppearance: (value: Appearance) => void;
 };
+
+const STUDENT_COMPONENT_PREFIX = 'Wims/Mahasiswa/';
+const DEFAULT_APPEARANCE_KEY = 'appearance';
+
+export function isStudentThemeRoute(componentName?: string | null): boolean {
+    return (componentName ?? '').startsWith(STUDENT_COMPONENT_PREFIX);
+}
+
+export function resolveAppearanceStorageKey(userId?: number | string | null): string {
+    return userId ? `${DEFAULT_APPEARANCE_KEY}_student_${userId}` : DEFAULT_APPEARANCE_KEY;
+}
 
 export function updateTheme(value: Appearance): void {
     if (typeof window === 'undefined') {
@@ -48,12 +60,12 @@ const mediaQuery = () => {
     return window.matchMedia('(prefers-color-scheme: dark)');
 };
 
-const getStoredAppearance = () => {
+const getStoredAppearance = (userId?: number | string | null) => {
     if (typeof window === 'undefined') {
         return null;
     }
 
-    return localStorage.getItem('appearance') as Appearance | null;
+    return localStorage.getItem(resolveAppearanceStorageKey(userId)) as Appearance | null;
 };
 
 const prefersDark = (): boolean => {
@@ -64,36 +76,73 @@ const prefersDark = (): boolean => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
 };
 
-const handleSystemThemeChange = () => {
-    const currentAppearance = getStoredAppearance();
+const handleSystemThemeChange = (userId?: number | string | null) => {
+    const currentAppearance = getStoredAppearance(userId);
 
     updateTheme(currentAppearance || 'system');
 };
 
-export function initializeTheme(): void {
+export function forceLightTheme(): void {
     if (typeof window === 'undefined') {
         return;
     }
 
-    // Initialize theme from saved preference or default to system...
-    const savedAppearance = getStoredAppearance();
-    updateTheme(savedAppearance || 'system');
+    document.documentElement.classList.remove('dark');
+}
 
-    // Set up system theme change listener...
-    mediaQuery()?.addEventListener('change', handleSystemThemeChange);
+export function syncThemeForComponent(componentName?: string | null, userId?: number | string | null): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    if (!isStudentThemeRoute(componentName)) {
+        forceLightTheme();
+        return;
+    }
+
+    const savedAppearance = getStoredAppearance(userId);
+    updateTheme(savedAppearance || 'system');
+}
+
+export function initializeTheme(componentName?: string | null, userId?: number | string | null): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    syncThemeForComponent(componentName, userId);
+    mediaQuery()?.addEventListener('change', () => handleSystemThemeChange(userId));
 }
 
 const appearance = ref<Appearance>('system');
 
 export function useAppearance(): UseAppearanceReturn {
-    onMounted(() => {
-        const savedAppearance = localStorage.getItem(
-            'appearance',
-        ) as Appearance | null;
+    const page = usePage<{
+        component?: string | null;
+        auth?: {
+            user?: {
+                id?: number | null;
+            } | null;
+        };
+    }>();
+    const currentComponent = computed(() => page.component ?? null);
+    const currentUserId = computed(() => page.props.auth?.user?.id ?? null);
+
+    const syncAppearanceState = (userId?: number | string | null) => {
+        const savedAppearance = getStoredAppearance(userId);
 
         if (savedAppearance) {
             appearance.value = savedAppearance;
+        } else {
+            appearance.value = 'system';
         }
+
+        syncThemeForComponent(currentComponent.value, userId);
+    };
+
+    watch([currentUserId, currentComponent], ([userId]) => {
+        syncAppearanceState(userId);
+    }, {
+        immediate: true,
     });
 
     const resolvedAppearance = computed<ResolvedAppearance>(() => {
@@ -106,12 +155,11 @@ export function useAppearance(): UseAppearanceReturn {
 
     function updateAppearance(value: Appearance) {
         appearance.value = value;
+        const storageKey = resolveAppearanceStorageKey(currentUserId.value);
 
-        // Store in localStorage for client-side persistence...
-        localStorage.setItem('appearance', value);
+        localStorage.setItem(storageKey, value);
 
-        // Store in cookie for SSR...
-        setCookie('appearance', value);
+        setCookie(storageKey, value);
 
         updateTheme(value);
     }

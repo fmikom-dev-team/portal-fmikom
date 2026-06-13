@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'holiday_api' => [
+        'base_url' => env('HOLIDAY_API_BASE_URL', 'https://date.nager.at'),
+        'country_code' => env('HOLIDAY_API_COUNTRY_CODE', 'ID'),
+    ],
+
 ];
