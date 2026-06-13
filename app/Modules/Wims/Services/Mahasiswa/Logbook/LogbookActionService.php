@@ -8,6 +8,7 @@ use App\Models\Magang\PendaftaranMagang;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Throwable;
 
 class LogbookActionService
@@ -41,7 +42,7 @@ class LogbookActionService
                         continue;
                     }
 
-                    $path = $photo->store('logbook', 'public');
+                    $path = $this->storePhoto($photo);
                     $storedPaths[] = $path;
 
                     LogbookPhoto::create([
@@ -94,7 +95,7 @@ class LogbookActionService
                         continue;
                     }
 
-                    $path = $photo->store('logbook', 'public');
+                    $path = $this->storePhoto($photo);
                     $storedPaths[] = $path;
 
                     LogbookPhoto::create([
@@ -114,5 +115,16 @@ class LogbookActionService
         if ($deletedPaths !== []) {
             Storage::disk('public')->delete($deletedPaths);
         }
+    }
+
+    private function storePhoto(UploadedFile $photo): string
+    {
+        $directory = 'logbook';
+        $extension = strtolower($photo->getClientOriginalExtension() ?: $photo->extension() ?: 'bin');
+        $filename = Str::uuid() . '.' . $extension;
+
+        Storage::disk('public')->putFileAs($directory, $photo, $filename);
+
+        return $directory . '/' . $filename;
     }
 }

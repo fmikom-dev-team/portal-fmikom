@@ -5,8 +5,8 @@ namespace App\Modules\Wims\Services\Admin;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
-use App\Services\AttendanceSyncService;
 use App\Modules\Wims\Support\AssessmentSummary;
+use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 

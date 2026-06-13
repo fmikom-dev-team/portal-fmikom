@@ -5,7 +5,7 @@ namespace App\Modules\Wims\Services\Mitra;
 use App\Models\Magang\KetidakhadiranMagang;
 use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
-use App\Services\MonitoringAlertService;
+use App\Modules\Wims\Services\Shared\Monitoring\MonitoringAlertService;
 class MitraDashboardPageService
 {
     public function __construct(

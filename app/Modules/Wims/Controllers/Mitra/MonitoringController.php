@@ -4,11 +4,11 @@ namespace App\Modules\Wims\Controllers\Mitra;
 
 use App\Http\Controllers\Controller;
 use App\Models\Magang\PerusahaanMitra;
+use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringDetailService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringHistoryService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringRegistrationResolverService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringSummaryService;
-use App\Services\AttendanceSyncService;
 use App\Modules\Wims\Services\Mitra\MitraMonitoringOverviewService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

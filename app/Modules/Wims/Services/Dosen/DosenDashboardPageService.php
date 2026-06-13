@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Services\Dosen;
 
 use App\Models\User;
-use App\Services\MonitoringAlertService;
+use App\Modules\Wims\Services\Shared\Monitoring\MonitoringAlertService;
 class DosenDashboardPageService
 {
     public function __construct(

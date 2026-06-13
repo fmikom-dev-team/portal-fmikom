@@ -7,7 +7,7 @@ use App\Models\Magang\KetidakhadiranMagang;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
-use App\Services\AttendanceSyncService;
+use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 
 class WimsStudentAlerts
 {

@@ -6,7 +6,7 @@ use App\Models\Magang\AbsensiMagang;
 use App\Models\Magang\KetidakhadiranMagang;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
-use App\Services\AttendanceSyncService;
+use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 

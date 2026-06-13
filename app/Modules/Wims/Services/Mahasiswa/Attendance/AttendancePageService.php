@@ -6,8 +6,8 @@ use App\Models\Magang\AbsensiMagang;
 use App\Models\Magang\KetidakhadiranMagang;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
-use App\Services\AttendanceSyncService;
-use App\Services\KetidakhadiranService;
+use App\Modules\Wims\Services\Shared\Absence\KetidakhadiranService;
+use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 
 class AttendancePageService
 {

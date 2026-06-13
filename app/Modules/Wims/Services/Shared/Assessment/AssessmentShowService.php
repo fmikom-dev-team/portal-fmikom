@@ -46,6 +46,7 @@ class AssessmentShowService
                     'id' => $template->id,
                     'name' => $template->name,
                     'description' => $template->description,
+                    'assessor_role' => $template->assessor_role,
                     'period_label' => sprintf(
                         '%s - %s',
                         $template->periode_mulai?->translatedFormat('d M Y'),
@@ -67,6 +68,7 @@ class AssessmentShowService
             'submission' => $submission
                 ? [
                     'id' => $submission->id,
+                    'assessor_role' => $submission->assessor_role,
                     'status' => $submission->status,
                     $statusLabelKey => $this->resolveSubmissionStatusLabel($submission->status),
                     'total_score' => $submission->total_score,

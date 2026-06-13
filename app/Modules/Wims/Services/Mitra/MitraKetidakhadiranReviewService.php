@@ -4,7 +4,7 @@ namespace App\Modules\Wims\Services\Mitra;
 
 use App\Models\Magang\KetidakhadiranMagang;
 use App\Models\User;
-use App\Services\KetidakhadiranService;
+use App\Modules\Wims\Services\Shared\Absence\KetidakhadiranService;
 
 class MitraKetidakhadiranReviewService
 {

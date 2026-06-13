@@ -142,10 +142,7 @@ class MonitoringRegistrationResolverService
         return PendaftaranMagang::query()
             ->with(['perusahaan', 'mahasiswa'])
             ->where('mahasiswa_id', $mahasiswaId)
-            ->when(
-                ! $currentUser->hasRole('super-admin'),
-                fn (Builder $query) => $query->where('dosen_pembimbing_id', $currentUser->id),
-            );
+            ->where('dosen_pembimbing_id', $currentUser->id);
     }
 
     private function authorizedCompanyQuery(PerusahaanMitra $company, int $mahasiswaId): Builder

@@ -38,7 +38,7 @@ class LecturerAssessmentWorkflowService
     public function templateUnavailableMessage(PendaftaranMagang $pendaftaran): string
     {
         return sprintf(
-            'Template penilaian tahun %s belum tersedia.',
+            'Template penilaian dosen untuk periode %s belum tersedia.',
             $pendaftaran->tanggal_mulai?->format('Y') ?? 'PKL ini',
         );
     }
@@ -46,8 +46,8 @@ class LecturerAssessmentWorkflowService
     public function validateSubmissionRequest(Request $request, array $allowedComponentIds): array
     {
         return Validator::make($request->all(), [
-            'scores' => ['required', 'array', 'min:' . count($allowedComponentIds)],
-            'scores.*.component_id' => ['required', 'integer', Rule::in($allowedComponentIds)],
+            'scores' => ['required', 'array', 'min:1'],
+            'scores.*.component_id' => ['required', 'integer', 'distinct', Rule::in($allowedComponentIds)],
             'scores.*.score' => ['required', 'numeric', 'min:0', 'max:100'],
             'scores.*.note' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],

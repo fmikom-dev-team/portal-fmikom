@@ -5,7 +5,7 @@ namespace App\Modules\Wims\Services\Mahasiswa\Attendance;
 use App\Models\Magang\AbsensiMagang;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
-use App\Services\AttendanceSyncService;
+use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Symfony\Component\HttpFoundation\Response;

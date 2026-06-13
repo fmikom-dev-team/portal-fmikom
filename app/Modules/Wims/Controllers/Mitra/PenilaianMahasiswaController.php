@@ -62,7 +62,7 @@ class PenilaianMahasiswaController extends Controller
         ]);
 
         $submission = $this->assessmentSubmissionService->resolveLatestSubmission($authorizedPendaftaran, $user, 'mitra');
-        $template = $this->assessmentTemplateResolverService->resolveForRegistration($authorizedPendaftaran, $submission);
+        $template = $this->assessmentTemplateResolverService->resolveForRegistration($authorizedPendaftaran, 'mitra', $submission);
         $payload = $this->assessmentShowService->buildPayload(
             $authorizedPendaftaran,
             $template,
@@ -91,12 +91,12 @@ class PenilaianMahasiswaController extends Controller
         );
 
         $existingSubmission = $this->assessmentSubmissionService->resolveLatestSubmission($authorizedPendaftaran, $user, 'mitra');
-        $template = $this->assessmentTemplateResolverService->resolveForRegistration($authorizedPendaftaran, $existingSubmission);
+        $template = $this->assessmentTemplateResolverService->resolveForRegistration($authorizedPendaftaran, 'mitra', $existingSubmission);
 
         if (! $template) {
             return back()->withErrors([
                 'template' => sprintf(
-                    'Template penilaian tahun %s belum tersedia.',
+                    'Template penilaian mitra untuk periode %s belum tersedia.',
                     $authorizedPendaftaran->tanggal_mulai?->format('Y') ?? 'PKL ini',
                 ),
             ]);
@@ -106,12 +106,12 @@ class PenilaianMahasiswaController extends Controller
         $allowedComponentIds = $this->assessmentSubmissionService->allowedComponentIds($template);
 
         $validated = Validator::make($request->all(), [
-            'scores' => ['required', 'array', 'min:' . count($allowedComponentIds)],
-            'scores.*.component_id' => ['required', 'integer', Rule::in($allowedComponentIds)],
+            'scores' => ['required', 'array', 'min:1'],
+            'scores.*.component_id' => ['required', 'integer', 'distinct', Rule::in($allowedComponentIds)],
             'scores.*.score' => ['required', 'numeric', 'min:0', 'max:100'],
             'scores.*.note' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
-            'action' => ['required', Rule::in(['draft', 'submit'])],
+            'action' => ['required', Rule::in(['draft', 'submitted'])],
         ])->validate();
 
         if ($existingSubmission?->status === 'submitted') {
@@ -125,10 +125,9 @@ class PenilaianMahasiswaController extends Controller
             'mitra',
             $existingSubmission,
             $validated,
-            'submit',
         );
 
-        return back()->with('success', $validated['action'] === 'submit'
+        return back()->with('success', $validated['action'] === 'submitted'
             ? 'Nilai mitra berhasil dikirim.'
             : 'Draft penilaian mitra berhasil disimpan.');
     }

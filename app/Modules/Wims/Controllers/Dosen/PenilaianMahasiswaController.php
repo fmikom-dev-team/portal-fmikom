@@ -55,7 +55,7 @@ class PenilaianMahasiswaController extends Controller
         $this->lecturerAssessmentWorkflowService->loadAssessmentRelations($pendaftaran);
 
         $submission = $this->assessmentSubmissionService->resolveLatestSubmission($pendaftaran, $user, 'dosen');
-        $template = $this->assessmentTemplateResolverService->resolveForRegistration($pendaftaran, $submission);
+        $template = $this->assessmentTemplateResolverService->resolveForRegistration($pendaftaran, 'dosen', $submission);
         $payload = $this->assessmentShowService->buildPayload(
             $pendaftaran,
             $template,
@@ -80,7 +80,7 @@ class PenilaianMahasiswaController extends Controller
         );
 
         $existingSubmission = $this->assessmentSubmissionService->resolveLatestSubmission($pendaftaran, $user, 'dosen');
-        $template = $this->assessmentTemplateResolverService->resolveForRegistration($pendaftaran, $existingSubmission);
+        $template = $this->assessmentTemplateResolverService->resolveForRegistration($pendaftaran, 'dosen', $existingSubmission);
 
         if (! $template) {
             return back()->withErrors([
@@ -103,7 +103,6 @@ class PenilaianMahasiswaController extends Controller
             'dosen',
             $existingSubmission,
             $validated,
-            'submitted',
         );
 
         return back()->with('success', $validated['action'] === 'submitted'

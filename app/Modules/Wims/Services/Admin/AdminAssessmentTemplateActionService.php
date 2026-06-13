@@ -4,7 +4,9 @@ namespace App\Modules\Wims\Services\Admin;
 
 use App\Models\Magang\AssessmentTemplate;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class AdminAssessmentTemplateActionService
 {
@@ -12,10 +14,12 @@ class AdminAssessmentTemplateActionService
     {
         return DB::transaction(function () use ($validated, $userId): AssessmentTemplate {
             $payload = $this->normalizedPayload($validated);
+            $this->assertNoActiveOverlap($payload);
 
             $template = AssessmentTemplate::create([
                 'name' => $payload['name'],
                 'description' => $payload['description'],
+                'assessor_role' => $payload['assessor_role'],
                 'periode_mulai' => $payload['periode_mulai'],
                 'periode_selesai' => $payload['periode_selesai'],
                 'is_active' => $payload['is_active'],
@@ -23,7 +27,6 @@ class AdminAssessmentTemplateActionService
             ]);
 
             $this->syncComponents($template, $payload['components']);
-            $this->syncActiveTemplateState($template);
 
             return $template->fresh('components');
         });
@@ -33,17 +36,18 @@ class AdminAssessmentTemplateActionService
     {
         DB::transaction(function () use ($template, $validated): void {
             $payload = $this->normalizedPayload($validated);
+            $this->assertNoActiveOverlap($payload, $template->id);
 
             $template->update([
                 'name' => $payload['name'],
                 'description' => $payload['description'],
+                'assessor_role' => $payload['assessor_role'],
                 'periode_mulai' => $payload['periode_mulai'],
                 'periode_selesai' => $payload['periode_selesai'],
                 'is_active' => $payload['is_active'],
             ]);
 
             $this->syncComponents($template, $payload['components']);
-            $this->syncActiveTemplateState($template);
         });
     }
 
@@ -54,19 +58,27 @@ class AdminAssessmentTemplateActionService
 
     public function normalizedPayload(array $validated): array
     {
-        $year = (int) $validated['year'];
-        $periodeMulai = Carbon::create($year, 1, 1)->startOfDay()->toDateString();
-        $periodeSelesai = Carbon::create($year, 12, 31)->startOfDay()->toDateString();
+        $year = isset($validated['year']) ? (int) $validated['year'] : null;
+        $periodeMulai = filled($validated['periode_mulai'] ?? null)
+            ? Carbon::parse($validated['periode_mulai'])->startOfDay()->toDateString()
+            : Carbon::create($year, 1, 1)->startOfDay()->toDateString();
+        $periodeSelesai = filled($validated['periode_selesai'] ?? null)
+            ? Carbon::parse($validated['periode_selesai'])->startOfDay()->toDateString()
+            : Carbon::create($year, 12, 31)->startOfDay()->toDateString();
+        $resolvedYear = (int) Carbon::parse($periodeMulai)->format('Y');
+        $assessorRole = (string) $validated['assessor_role'];
+        $roleLabel = $assessorRole === 'dosen' ? 'Dosen' : 'Mitra';
         $templateName = filled($validated['name'] ?? null)
             ? trim((string) $validated['name'])
-            : "Template Penilaian PKL {$year}";
+            : "Template Penilaian {$roleLabel} {$resolvedYear}";
 
         return [
-            'year' => $year,
+            'year' => $resolvedYear,
             'name' => $templateName,
             'description' => filled($validated['description'] ?? null)
                 ? trim((string) $validated['description'])
                 : null,
+            'assessor_role' => $assessorRole,
             'periode_mulai' => $periodeMulai,
             'periode_selesai' => $periodeSelesai,
             'is_active' => (bool) $validated['is_active'],
@@ -87,19 +99,23 @@ class AdminAssessmentTemplateActionService
 
     public function hasLockedComponentChanges(AssessmentTemplate $template, array $validated): bool
     {
-        if (! $template->submissions()->exists()) {
+        if (! $this->hasFinalSubmissions($template)) {
             return false;
         }
 
-        return $this->hasComponentChanges(
-            $template,
-            $this->normalizedPayload($validated)['components'],
-        );
+        return $this->hasStructuralChanges($template, $this->normalizedPayload($validated));
     }
 
     public function hasSubmissions(AssessmentTemplate $template): bool
     {
         return $template->submissions()->exists();
+    }
+
+    public function hasFinalSubmissions(AssessmentTemplate $template): bool
+    {
+        return $template->submissions()
+            ->where('status', 'submitted')
+            ->exists();
     }
 
     private function syncComponents(AssessmentTemplate $template, array $components): void
@@ -133,23 +149,19 @@ class AdminAssessmentTemplateActionService
             ->delete();
     }
 
-    private function syncActiveTemplateState(AssessmentTemplate $template): void
+    private function hasStructuralChanges(AssessmentTemplate $template, array $payload): bool
     {
-        if (! $template->is_active) {
-            return;
+        if ($template->assessor_role !== $payload['assessor_role']) {
+            return true;
         }
 
-        $year = (int) $template->periode_mulai?->format('Y');
+        if (
+            $template->periode_mulai?->toDateString() !== $payload['periode_mulai']
+            || $template->periode_selesai?->toDateString() !== $payload['periode_selesai']
+        ) {
+            return true;
+        }
 
-        AssessmentTemplate::query()
-            ->whereKeyNot($template->id)
-            ->whereYear('periode_mulai', $year)
-            ->whereYear('periode_selesai', $year)
-            ->update(['is_active' => false]);
-    }
-
-    private function hasComponentChanges(AssessmentTemplate $template, array $components): bool
-    {
         $currentComponents = $template->components()
             ->orderBy('sort_order')
             ->orderBy('id')
@@ -164,7 +176,7 @@ class AdminAssessmentTemplateActionService
             ->values()
             ->all();
 
-        $incomingComponents = collect($components)
+        $incomingComponents = collect($payload['components'])
             ->map(fn (array $component) => [
                 'id' => (int) ($component['id'] ?? 0),
                 'name' => $component['name'],
@@ -176,5 +188,30 @@ class AdminAssessmentTemplateActionService
             ->all();
 
         return $currentComponents !== $incomingComponents;
+    }
+
+    private function assertNoActiveOverlap(array $payload, ?int $ignoreTemplateId = null): void
+    {
+        if (! $payload['is_active']) {
+            return;
+        }
+
+        $overlapExists = AssessmentTemplate::query()
+            ->when($ignoreTemplateId !== null, fn (Builder $query) => $query->whereKeyNot($ignoreTemplateId))
+            ->where('assessor_role', $payload['assessor_role'])
+            ->where('is_active', true)
+            ->whereDate('periode_mulai', '<=', $payload['periode_selesai'])
+            ->whereDate('periode_selesai', '>=', $payload['periode_mulai'])
+            ->exists();
+
+        if (! $overlapExists) {
+            return;
+        }
+
+        $roleLabel = $payload['assessor_role'] === 'dosen' ? 'dosen' : 'mitra';
+
+        throw ValidationException::withMessages([
+            'periode_mulai' => "Sudah ada template aktif {$roleLabel} yang periodenya tumpang tindih dengan periode tersebut.",
+        ]);
     }
 }

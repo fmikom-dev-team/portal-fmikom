@@ -22,10 +22,6 @@ class MitraAccessService
 
     public function canReviewAbsence(User $user, KetidakhadiranMagang $ketidakhadiran): bool
     {
-        if ($user->hasRole('super-admin')) {
-            return true;
-        }
-
         $company = $this->resolveCompany($user);
 
         if (! $company) {

@@ -3,11 +3,16 @@
 namespace App\Modules\Wims\Services\Mahasiswa\Report;
 
 use App\Models\Magang\PendaftaranMagang;
-use Illuminate\Support\Facades\Storage;
+use App\Modules\Wims\Services\Shared\Assessment\FinalReportAccessService;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class StudentFinalReportFileService
 {
+    public function __construct(
+        private readonly FinalReportAccessService $finalReportAccessService,
+    ) {
+    }
+
     public function resolveLatestRegistrationWithReport(int $userId): PendaftaranMagang
     {
         $registration = PendaftaranMagang::query()
@@ -23,19 +28,17 @@ class StudentFinalReportFileService
 
     public function view(PendaftaranMagang $registration): BinaryFileResponse
     {
-        $absolutePath = Storage::disk('public')->path($registration->laporan_akhir_path);
-        abort_unless(is_file($absolutePath), 404);
+        $absolutePath = $this->finalReportAccessService->resolveAbsolutePath($registration);
 
         return response()->file($absolutePath, [
-            'Content-Disposition' => 'inline; filename="' . $registration->finalReportDownloadName() . '"',
+            'Content-Disposition' => 'inline; filename="' . $this->finalReportAccessService->resolveDownloadName($registration) . '"',
         ]);
     }
 
     public function download(PendaftaranMagang $registration): BinaryFileResponse
     {
-        $absolutePath = Storage::disk('public')->path($registration->laporan_akhir_path);
-        abort_unless(is_file($absolutePath), 404);
+        $absolutePath = $this->finalReportAccessService->resolveAbsolutePath($registration);
 
-        return response()->download($absolutePath, $registration->finalReportDownloadName());
+        return response()->download($absolutePath, $this->finalReportAccessService->resolveDownloadName($registration));
     }
 }

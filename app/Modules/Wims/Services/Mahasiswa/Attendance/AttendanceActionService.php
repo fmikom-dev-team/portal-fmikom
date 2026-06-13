@@ -4,9 +4,11 @@ namespace App\Modules\Wims\Services\Mahasiswa\Attendance;
 
 use App\Models\Magang\AbsensiMagang;
 use App\Models\Magang\PendaftaranMagang;
-use App\Services\AttendanceService;
+use App\Modules\Wims\Services\Shared\Attendance\AttendanceService;
 use Carbon\CarbonInterface;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AttendanceActionService
 {
@@ -68,7 +70,7 @@ class AttendanceActionService
         ?CarbonInterface $checkedAt = null,
     ): AbsensiMagang {
         $checkedAt ??= now();
-        $photoPath = $photo?->store('absensi', 'public');
+        $photoPath = $this->storePhoto($photo, 'absensi/check-in');
 
         return AbsensiMagang::create([
             'pendaftaran_id' => $pendaftaran->id,
@@ -100,7 +102,7 @@ class AttendanceActionService
         ?CarbonInterface $checkedOutAt = null,
     ): void {
         $checkedOutAt ??= now();
-        $photoPath = $photo?->store('absensi', 'public');
+        $photoPath = $this->storePhoto($photo, 'absensi/check-out');
 
         $attendance->update([
             'timestamp_keluar' => $checkedOutAt,
@@ -112,5 +114,19 @@ class AttendanceActionService
             'distance_keluar' => $locationResult['distance'],
             'foto_bukti_checkout_path' => $photoPath,
         ]);
+    }
+
+    private function storePhoto(?UploadedFile $photo, string $directory): ?string
+    {
+        if (! $photo) {
+            return null;
+        }
+
+        $extension = strtolower($photo->getClientOriginalExtension() ?: $photo->extension() ?: 'bin');
+        $path = $directory . '/' . Str::uuid() . '.' . $extension;
+
+        Storage::disk('public')->putFileAs($directory, $photo, basename($path));
+
+        return $path;
     }
 }

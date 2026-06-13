@@ -8,6 +8,7 @@ use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class AssessmentSubmissionService
 {
@@ -34,10 +35,18 @@ class AssessmentSubmissionService
         string $role,
         ?AssessmentSubmission $existingSubmission,
         array $validated,
-        string $submitActionValue,
     ): void {
-        $allowedComponentIds = $template->components->pluck('id')->all();
-        $scoresByComponent = collect($validated['scores'])->keyBy('component_id');
+        $this->assertRoleMatchesTemplate($template, $role);
+        $this->assertEditable($existingSubmission);
+
+        $allowedComponentIds = $template->components->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $scorePayloads = collect($validated['scores'] ?? [])->values();
+        $scoresByComponent = $scorePayloads->keyBy(fn (array $score) => (int) $score['component_id']);
+        $status = $validated['action'] === 'submitted' ? 'submitted' : 'draft';
+
+        $this->assertNoDuplicateComponents($scorePayloads);
+        $this->assertComponentIdsBelongToTemplate($scoresByComponent, $allowedComponentIds);
+        $this->assertCompletenessForStatus($status, $template, $scoresByComponent);
 
         DB::transaction(function () use (
             $allowedComponentIds,
@@ -45,15 +54,11 @@ class AssessmentSubmissionService
             $pendaftaran,
             $role,
             $scoresByComponent,
-            $submitActionValue,
             $template,
             $user,
-            $validated
+            $validated,
+            $status
         ): void {
-            // Draft dan submit memakai record yang sama agar assessor bisa melanjutkan penilaian
-            // tanpa membuat duplikasi submission untuk pendaftaran dan template yang sama.
-            $status = $validated['action'] === $submitActionValue ? 'submitted' : 'draft';
-
             $submission = AssessmentSubmission::query()->updateOrCreate(
                 [
                     'pendaftaran_magang_id' => $pendaftaran->id,
@@ -71,15 +76,22 @@ class AssessmentSubmissionService
             );
 
             $totalScore = 0;
+            $retainedScoreIds = [];
 
-            foreach ($template->components as $component) {
-                $scorePayload = $scoresByComponent->get($component->id);
-                $score = round((float) ($scorePayload['score'] ?? 0), 2);
-                // Nilai akhir dihitung sebagai akumulasi skor terbobot per komponen template.
+            foreach ($scoresByComponent as $componentId => $scorePayload) {
+                $component = $template->components->firstWhere('id', (int) $componentId);
+                $score = round((float) $scorePayload['score'], 2);
+
+                if ($score < 0 || $score > 100) {
+                    throw ValidationException::withMessages([
+                        'scores' => 'Nilai setiap komponen harus berada pada rentang 0 sampai 100.',
+                    ]);
+                }
+
                 $weightedScore = round($score * ((float) $component->weight_percentage / 100), 2);
                 $totalScore += $weightedScore;
 
-                $submission->scores()->updateOrCreate(
+                $scoreRow = $submission->scores()->updateOrCreate(
                     [
                         'assessment_component_id' => $component->id,
                     ],
@@ -89,12 +101,19 @@ class AssessmentSubmissionService
                         'note' => $scorePayload['note'] ?? null,
                     ],
                 );
+                $retainedScoreIds[] = (int) $scoreRow->id;
             }
 
-            $submission->scores()
-                // Komponen lama dibersihkan agar struktur skor selalu mengikuti template aktif saat disimpan.
-                ->whereNotIn('assessment_component_id', $allowedComponentIds)
-                ->delete();
+            if ($status === 'draft') {
+                $submission->scores()
+                    ->whereNotIn('assessment_component_id', $allowedComponentIds)
+                    ->delete();
+
+                $submission->scores()
+                    ->when($retainedScoreIds !== [], fn ($query) => $query->whereNotIn('id', $retainedScoreIds))
+                    ->when($retainedScoreIds === [], fn ($query) => $query)
+                    ->delete();
+            }
 
             $submission->update([
                 'total_score' => round($totalScore, 2),
@@ -110,5 +129,75 @@ class AssessmentSubmissionService
     public function scoreMap(?AssessmentSubmission $submission): Collection
     {
         return $submission?->scores?->keyBy('assessment_component_id') ?? collect();
+    }
+
+    private function assertRoleMatchesTemplate(AssessmentTemplate $template, string $role): void
+    {
+        if ($template->assessor_role === $role) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'template' => 'Template penilaian tidak sesuai dengan role penilai.',
+        ]);
+    }
+
+    private function assertEditable(?AssessmentSubmission $existingSubmission): void
+    {
+        if (! $existingSubmission || $existingSubmission->status !== 'submitted') {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'submission' => 'Submission yang sudah dikirim tidak dapat diubah.',
+        ]);
+    }
+
+    private function assertNoDuplicateComponents(Collection $scorePayloads): void
+    {
+        $componentIds = $scorePayloads
+            ->pluck('component_id')
+            ->map(fn ($id) => (int) $id)
+            ->values();
+
+        if ($componentIds->count() === $componentIds->unique()->count()) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'scores' => 'Satu komponen hanya boleh memiliki satu nilai dalam satu submission.',
+        ]);
+    }
+
+    private function assertComponentIdsBelongToTemplate(Collection $scoresByComponent, array $allowedComponentIds): void
+    {
+        $invalidComponentId = $scoresByComponent
+            ->keys()
+            ->map(fn ($id) => (int) $id)
+            ->first(fn (int $id) => ! in_array($id, $allowedComponentIds, true));
+
+        if ($invalidComponentId === null) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'scores' => 'Komponen penilaian harus berasal dari template yang sama.',
+        ]);
+    }
+
+    private function assertCompletenessForStatus(
+        string $status,
+        AssessmentTemplate $template,
+        Collection $scoresByComponent,
+    ): void {
+        if ($status !== 'submitted') {
+            return;
+        }
+
+        if ($scoresByComponent->count() !== $template->components->count()) {
+            throw ValidationException::withMessages([
+                'scores' => 'Submission final wajib berisi nilai untuk seluruh komponen template.',
+            ]);
+        }
     }
 }

@@ -8,8 +8,8 @@ use App\Models\Magang\HariLibur;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
-use App\Services\AttendanceSyncService;
 use App\Modules\Wims\Support\AssessmentSummary;
+use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -119,10 +119,7 @@ class DosenMonitoringOverviewService
                     ->where('assessor_id', $lecturer->id)
                     ->where('assessor_role', 'dosen'),
             ])
-            ->when(
-                ! $lecturer->hasRole('super-admin'),
-                fn (Builder $query) => $query->where('dosen_pembimbing_id', $lecturer->id),
-            )
+            ->where('dosen_pembimbing_id', $lecturer->id)
             ->whereIn('status', ['approved', 'aktif', 'selesai'])
             ->orderByDesc('tanggal_mulai')
             ->orderByDesc('id');

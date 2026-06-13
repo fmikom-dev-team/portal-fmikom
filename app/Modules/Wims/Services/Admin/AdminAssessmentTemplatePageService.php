@@ -24,10 +24,12 @@ class AdminAssessmentTemplatePageService
     {
         $search = trim((string) $request->string('search', ''));
         $selectedTemplateId = $request->integer('template') ?: null;
+        $assessorRole = trim((string) $request->string('assessor_role', ''));
 
         $query = AssessmentTemplate::query()
             ->with('components')
             ->orderByDesc('is_active')
+            ->orderBy('assessor_role')
             ->orderByDesc('periode_mulai')
             ->orderByDesc('id');
 
@@ -41,6 +43,10 @@ class AdminAssessmentTemplatePageService
             });
         }
 
+        if (in_array($assessorRole, ['dosen', 'mitra'], true)) {
+            $query->where('assessor_role', $assessorRole);
+        }
+
         $templates = $query
             ->get()
             ->map(fn (AssessmentTemplate $template) => $this->transformTemplate($template))
@@ -52,15 +58,22 @@ class AdminAssessmentTemplatePageService
             'filters' => [
                 'search' => $search,
                 'template' => $selectedTemplateId,
+                'assessor_role' => $assessorRole,
             ],
             'summary' => [
                 'total_templates' => AssessmentTemplate::count(),
                 'active_templates' => AssessmentTemplate::where('is_active', true)->count(),
+                'active_dosen_templates' => AssessmentTemplate::where('is_active', true)->where('assessor_role', 'dosen')->count(),
+                'active_mitra_templates' => AssessmentTemplate::where('is_active', true)->where('assessor_role', 'mitra')->count(),
                 'default_components' => count(self::DEFAULT_COMPONENTS),
                 'available_years' => $years->count(),
             ],
             'templates' => $templates->all(),
             'years' => $years->values()->all(),
+            'roleOptions' => [
+                ['value' => 'dosen', 'label' => 'Dosen'],
+                ['value' => 'mitra', 'label' => 'Mitra'],
+            ],
             'defaultComponents' => collect(self::DEFAULT_COMPONENTS)
                 ->values()
                 ->map(fn (array $component, int $index) => [
@@ -136,6 +149,7 @@ class AdminAssessmentTemplatePageService
             'year' => $template->periode_mulai?->format('Y'),
             'name' => $template->name,
             'description' => $template->description,
+            'assessor_role' => $template->assessor_role,
             'is_active' => $template->is_active,
             'periode_mulai' => $template->periode_mulai?->toDateString(),
             'periode_selesai' => $template->periode_selesai?->toDateString(),

@@ -4,7 +4,7 @@ namespace App\Modules\Wims\Services\Mahasiswa\Attendance;
 
 use App\Models\Magang\HariLibur;
 use App\Models\Magang\PendaftaranMagang;
-use App\Services\KetidakhadiranService;
+use App\Modules\Wims\Services\Shared\Absence\KetidakhadiranService;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 
