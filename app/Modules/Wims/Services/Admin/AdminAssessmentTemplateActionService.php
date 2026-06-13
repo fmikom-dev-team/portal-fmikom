@@ -2,7 +2,7 @@
 
 namespace App\Modules\Wims\Services\Admin;
 
-use App\Models\AssessmentTemplate;
+use App\Models\Magang\AssessmentTemplate;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 

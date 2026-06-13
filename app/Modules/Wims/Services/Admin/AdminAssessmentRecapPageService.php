@@ -2,7 +2,7 @@
 
 namespace App\Modules\Wims\Services\Admin;
 
-use App\Models\AssessmentSubmission;
+use App\Models\Magang\AssessmentSubmission;
 use App\Models\Magang\PendaftaranMagang;
 use App\Modules\Wims\Support\AssessmentSummary;
 use Carbon\CarbonInterface;

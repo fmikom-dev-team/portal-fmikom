@@ -2,7 +2,7 @@
 
 namespace App\Modules\Wims\Services\Dosen;
 
-use App\Models\AssessmentSubmission;
+use App\Models\Magang\AssessmentSubmission;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
 use App\Modules\Wims\Services\Shared\Assessment\FinalReportAccessService;

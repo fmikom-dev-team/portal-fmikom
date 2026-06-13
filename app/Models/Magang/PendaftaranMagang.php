@@ -69,6 +69,11 @@ class PendaftaranMagang extends Model
         return $this->hasOne(PenilaianMagang::class, 'pendaftaran_id');
     }
 
+    public function assessmentSubmissions(): HasMany
+    {
+        return $this->hasMany(AssessmentSubmission::class, 'pendaftaran_magang_id');
+    }
+
     public function suratPenetapan(): HasOne
     {
         return $this->hasOne(SuratPenetapan::class, 'pendaftaran_id');
@@ -82,6 +87,22 @@ class PendaftaranMagang extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'aktif');
+    }
+
+    public function scopeReadyForAssessment(Builder $query, ?CarbonInterface $date = null): Builder
+    {
+        $referenceDate = ($date ?? now())->copy()->startOfDay()->toDateString();
+
+        return $query->where(function (Builder $builder) use ($referenceDate): void {
+            $builder
+                ->where('status', 'selesai')
+                ->orWhere(function (Builder $periodQuery) use ($referenceDate): void {
+                    $periodQuery
+                        ->where('status', 'aktif')
+                        ->whereNotNull('tanggal_selesai')
+                        ->whereDate('tanggal_selesai', '<', $referenceDate);
+                });
+        });
     }
 
     public function isWithinActivePeriod(?CarbonInterface $date = null): bool
@@ -129,6 +150,11 @@ class PendaftaranMagang extends Model
     public function canBeMarkedComplete(?CarbonInterface $date = null): bool
     {
         return $this->status === 'aktif' && $this->hasInternshipPeriodEnded($date);
+    }
+
+    public function isReadyForAssessment(?CarbonInterface $date = null): bool
+    {
+        return $this->isPostInternshipPhase($date);
     }
 
     public function finalReportDownloadName(): string

@@ -2,7 +2,7 @@
 
 namespace App\Modules\Wims\Support;
 
-use App\Models\AssessmentSubmission;
+use App\Models\Magang\AssessmentSubmission;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;

@@ -2,8 +2,8 @@
 
 namespace App\Modules\Wims\Services\Shared\Assessment;
 
-use App\Models\AssessmentSubmission;
-use App\Models\AssessmentTemplate;
+use App\Models\Magang\AssessmentSubmission;
+use App\Models\Magang\AssessmentTemplate;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
 use Illuminate\Support\Collection;

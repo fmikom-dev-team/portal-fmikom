@@ -4,7 +4,7 @@ namespace App\Modules\Wims\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Wims\Requests\Admin\UpsertAssessmentTemplateRequest;
-use App\Models\AssessmentTemplate;
+use App\Models\Magang\AssessmentTemplate;
 use App\Modules\Wims\Services\Admin\AdminAssessmentTemplateActionService;
 use App\Modules\Wims\Services\Admin\AdminAssessmentTemplatePageService;
 use Illuminate\Http\RedirectResponse;
