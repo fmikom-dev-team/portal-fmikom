@@ -4,6 +4,8 @@ namespace App\Models\Magang;
 
 use App\Models\Surat\Surat;
 use App\Models\User;
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -62,6 +64,58 @@ class PendaftaranMagang extends Model
         return $this->hasOne(PenilaianMagang::class, 'pendaftaran_id');
     }
 
+    public function scopeForMahasiswa(Builder $query, int $mahasiswaId): Builder
+    {
+        return $query->where('mahasiswa_id', $mahasiswaId);
+    }
+
+    public function isWithinActivePeriod(?CarbonInterface $date = null): bool
+    {
+        if (! $this->tanggal_mulai || ! $this->tanggal_selesai) {
+            return false;
+        }
+
+        $currentDate = ($date ?? now())->copy()->startOfDay();
+        $tanggalMulai = $this->tanggal_mulai->copy()->startOfDay();
+        $tanggalSelesai = $this->tanggal_selesai->copy()->startOfDay();
+
+        return $currentDate->greaterThanOrEqualTo($tanggalMulai)
+            && $currentDate->lessThanOrEqualTo($tanggalSelesai);
+    }
+
+    public function isActivatedByAdmin(): bool
+    {
+        return $this->status === 'aktif';
+    }
+
+    public function allowsDailyActivity(?CarbonInterface $date = null): bool
+    {
+        return $this->isActivatedByAdmin() && $this->isWithinActivePeriod($date);
+    }
+
+    public function hasInternshipPeriodEnded(?CarbonInterface $date = null): bool
+    {
+        if (! $this->tanggal_selesai) {
+            return false;
+        }
+
+        $currentDate = ($date ?? now())->copy()->startOfDay();
+        $tanggalSelesai = $this->tanggal_selesai->copy()->startOfDay();
+
+        return $currentDate->greaterThan($tanggalSelesai);
+    }
+
+    public function isPostInternshipPhase(?CarbonInterface $date = null): bool
+    {
+        return $this->status === 'selesai'
+            || ($this->status === 'aktif' && $this->hasInternshipPeriodEnded($date));
+    }
+
+    public function canBeMarkedComplete(?CarbonInterface $date = null): bool
+    {
+        return $this->status === 'aktif' && $this->hasInternshipPeriodEnded($date);
+    }
+
     public function getTotalHadir(): int
     {
         return $this->absensis()->where('status', 'hadir')->count();
@@ -73,4 +127,5 @@ class PendaftaranMagang extends Model
 
         return $this->status === 'approved' && $now->between($this->tanggal_mulai, $this->tanggal_selesai);
     }
+
 }

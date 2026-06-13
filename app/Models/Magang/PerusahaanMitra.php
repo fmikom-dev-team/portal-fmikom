@@ -13,6 +13,12 @@ class PerusahaanMitra extends Model
         'telepon', 'email',
     ];
 
+    protected $casts = [
+        'latitude' => 'float',
+        'longitude' => 'float',
+        'radius_valid_meter' => 'float',
+    ];
+
     public function pembimbingLapangans(): HasMany
     {
         return $this->hasMany(PembimbingLapangan::class, 'perusahaan_id');

@@ -5,6 +5,7 @@ namespace App\Models\Magang;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class AbsensiMagang extends Model
 {
@@ -23,6 +24,35 @@ class AbsensiMagang extends Model
     public function pendaftaran(): BelongsTo
     {
         return $this->belongsTo(PendaftaranMagang::class, 'pendaftaran_id');
+    }
+
+    public function resolvedCheckInAt(): ?Carbon
+    {
+        if (! $this->tanggal || ! $this->waktu_masuk) {
+            return null;
+        }
+
+        return Carbon::parse($this->tanggal->toDateString() . ' ' . $this->waktu_masuk);
+    }
+
+    public function resolvedCheckOutAt(): ?Carbon
+    {
+        if (! $this->tanggal || ! $this->waktu_keluar) {
+            return null;
+        }
+
+        return Carbon::parse($this->tanggal->toDateString() . ' ' . $this->waktu_keluar);
+    }
+
+    public function checkInPhotoUrl(): ?string
+    {
+        if (! $this->foto_bukti_path) {
+            return null;
+        }
+
+        return Storage::disk('public')->exists($this->foto_bukti_path)
+            ? '/storage/' . ltrim($this->foto_bukti_path, '/')
+            : null;
     }
 
     public function validateGpsLocation(): bool
