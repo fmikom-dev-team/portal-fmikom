@@ -2,6 +2,7 @@
 
 namespace App\Models\Magang;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -13,12 +14,18 @@ class AbsensiMagang extends Model
         'pendaftaran_id', 'tanggal', 'waktu_masuk', 'waktu_keluar',
         'latitude_masuk', 'longitude_masuk', 'latitude_keluar',
         'longitude_keluar', 'lokasi_valid', 'foto_bukti_path',
-        'status', 'keterangan',
+        'status', 'keterangan', 'timestamp_masuk', 'timestamp_keluar',
+        'distance_masuk', 'distance_keluar', 'foto_bukti_checkout_path',
+        'ip_address', 'user_agent',
     ];
 
     protected $casts = [
         'tanggal' => 'date',
+        'timestamp_masuk' => 'datetime',
+        'timestamp_keluar' => 'datetime',
         'lokasi_valid' => 'boolean',
+        'distance_masuk' => 'float',
+        'distance_keluar' => 'float',
     ];
 
     public function pendaftaran(): BelongsTo
@@ -26,8 +33,12 @@ class AbsensiMagang extends Model
         return $this->belongsTo(PendaftaranMagang::class, 'pendaftaran_id');
     }
 
-    public function resolvedCheckInAt(): ?Carbon
+    public function resolvedCheckInAt(): ?CarbonInterface
     {
+        if ($this->timestamp_masuk) {
+            return $this->timestamp_masuk;
+        }
+
         if (! $this->tanggal || ! $this->waktu_masuk) {
             return null;
         }
@@ -35,8 +46,12 @@ class AbsensiMagang extends Model
         return Carbon::parse($this->tanggal->toDateString() . ' ' . $this->waktu_masuk);
     }
 
-    public function resolvedCheckOutAt(): ?Carbon
+    public function resolvedCheckOutAt(): ?CarbonInterface
     {
+        if ($this->timestamp_keluar) {
+            return $this->timestamp_keluar;
+        }
+
         if (! $this->tanggal || ! $this->waktu_keluar) {
             return null;
         }
@@ -66,6 +81,10 @@ class AbsensiMagang extends Model
 
     public function getDistanceFromOffice(): float
     {
+        if ($this->distance_masuk !== null) {
+            return $this->distance_masuk;
+        }
+
         if (! $this->latitude_masuk || ! $this->longitude_masuk) {
             return 0;
         }
@@ -82,5 +101,16 @@ class AbsensiMagang extends Model
         $out = Carbon::parse($this->waktu_keluar);
 
         return $in->diffInMinutes($out);
+    }
+
+    public function checkOutPhotoUrl(): ?string
+    {
+        if (! $this->foto_bukti_checkout_path) {
+            return null;
+        }
+
+        return Storage::disk('public')->exists($this->foto_bukti_checkout_path)
+            ? '/storage/' . ltrim($this->foto_bukti_checkout_path, '/')
+            : null;
     }
 }

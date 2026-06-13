@@ -10,18 +10,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Str;
 
 class PendaftaranMagang extends Model
 {
     protected $fillable = [
         'mahasiswa_id', 'perusahaan_id', 'dosen_pembimbing_id',
         'pembimbing_lapangan_id', 'surat_tugas_id', 'tanggal_mulai',
-        'tanggal_selesai', 'status',
+        'tanggal_selesai', 'status', 'perusahaan_diminati_nama',
+        'perusahaan_diminati_alamat', 'catatan_pengajuan',
+        'catatan_revisi_admin', 'laporan_akhir_path',
+        'laporan_akhir_original_name', 'laporan_akhir_uploaded_at',
     ];
 
     protected $casts = [
         'tanggal_mulai' => 'date',
         'tanggal_selesai' => 'date',
+        'laporan_akhir_uploaded_at' => 'datetime',
     ];
 
     public function mahasiswa(): BelongsTo
@@ -114,6 +119,24 @@ class PendaftaranMagang extends Model
     public function canBeMarkedComplete(?CarbonInterface $date = null): bool
     {
         return $this->status === 'aktif' && $this->hasInternshipPeriodEnded($date);
+    }
+
+    public function finalReportDownloadName(): string
+    {
+        $studentName = Str::slug((string) ($this->mahasiswa?->name ?? 'mahasiswa'));
+        $studentId = $this->mahasiswa?->nim_nip ?: $this->mahasiswa?->nomor_induk ?: 'tanpa-identitas';
+        $periodStart = $this->tanggal_mulai?->format('Ymd') ?? 'mulai';
+        $periodEnd = $this->tanggal_selesai?->format('Ymd') ?? 'selesai';
+        $extension = pathinfo((string) ($this->laporan_akhir_original_name ?: $this->laporan_akhir_path), PATHINFO_EXTENSION) ?: 'pdf';
+
+        return sprintf(
+            'laporan-akhir-pkl-%s-%s-%s-%s.%s',
+            $studentName ?: 'mahasiswa',
+            Str::slug((string) $studentId) ?: 'tanpa-identitas',
+            $periodStart,
+            $periodEnd,
+            strtolower((string) $extension),
+        );
     }
 
     public function getTotalHadir(): int
