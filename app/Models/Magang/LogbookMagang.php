@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LogbookMagang extends Model
 {
@@ -34,5 +35,10 @@ class LogbookMagang extends Model
     public function reviewedByMitra(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by_mitra_user_id');
+    }
+
+    public function photos(): HasMany
+    {
+        return $this->hasMany(LogbookPhoto::class, 'logbook_id');
     }
 }

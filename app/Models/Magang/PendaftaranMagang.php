@@ -69,9 +69,19 @@ class PendaftaranMagang extends Model
         return $this->hasOne(PenilaianMagang::class, 'pendaftaran_id');
     }
 
+    public function suratPenetapan(): HasOne
+    {
+        return $this->hasOne(SuratPenetapan::class, 'pendaftaran_id');
+    }
+
     public function scopeForMahasiswa(Builder $query, int $mahasiswaId): Builder
     {
         return $query->where('mahasiswa_id', $mahasiswaId);
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('status', 'aktif');
     }
 
     public function isWithinActivePeriod(?CarbonInterface $date = null): bool
