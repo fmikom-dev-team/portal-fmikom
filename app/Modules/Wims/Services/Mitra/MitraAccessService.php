@@ -2,7 +2,7 @@
 
 namespace App\Modules\Wims\Services\Mitra;
 
-use App\Models\KetidakhadiranMagang;
+use App\Models\Magang\KetidakhadiranMagang;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;

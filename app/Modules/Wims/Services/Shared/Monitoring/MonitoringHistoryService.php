@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Services\Shared\Monitoring;
 
 use App\Models\Magang\AbsensiMagang;
-use App\Models\HariLibur;
+use App\Models\Magang\HariLibur;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
 use Carbon\CarbonPeriod;

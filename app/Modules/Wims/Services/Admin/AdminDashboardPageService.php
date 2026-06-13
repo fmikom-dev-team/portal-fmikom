@@ -4,7 +4,7 @@ namespace App\Modules\Wims\Services\Admin;
 
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PerusahaanMitra;
-use App\Models\SuratPenetapan;
+use App\Models\Magang\SuratPenetapan;
 use Carbon\Carbon;
 
 class AdminDashboardPageService

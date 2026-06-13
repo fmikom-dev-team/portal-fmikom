@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Services\Mahasiswa\Dashboard;
 
 use App\Models\Magang\AbsensiMagang;
-use App\Models\KetidakhadiranMagang;
+use App\Models\Magang\KetidakhadiranMagang;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
 use App\Services\AttendanceSyncService;

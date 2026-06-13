@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Services\Mahasiswa\Logbook;
 
 use App\Models\Magang\LogbookMagang;
-use App\Models\LogbookPhoto;
+use App\Models\Magang\LogbookPhoto;
 use App\Models\Magang\PendaftaranMagang;
 use Illuminate\Support\Carbon;
 use Throwable;

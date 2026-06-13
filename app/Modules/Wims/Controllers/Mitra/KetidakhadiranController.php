@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Controllers\Mitra;
 
 use App\Http\Controllers\Controller;
-use App\Models\KetidakhadiranMagang;
+use App\Models\Magang\KetidakhadiranMagang;
 use App\Modules\Wims\Services\Mitra\MitraAccessService;
 use App\Modules\Wims\Services\Mitra\MitraKetidakhadiranReviewService;
 use Illuminate\Http\RedirectResponse;

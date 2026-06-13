@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Controllers\Mahasiswa;
 
 use App\Http\Controllers\Controller;
-use App\Models\KetidakhadiranMagang;
+use App\Models\Magang\KetidakhadiranMagang;
 use App\Modules\Wims\Services\Mahasiswa\Absence\StudentAbsenceActionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
