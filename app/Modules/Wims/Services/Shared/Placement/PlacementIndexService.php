@@ -5,6 +5,7 @@ namespace App\Modules\Wims\Services\Shared\Placement;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
+use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -12,6 +13,11 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class PlacementIndexService
 {
+    public function __construct(
+        private readonly WimsModuleRoleService $wimsModuleRoleService,
+    ) {
+    }
+
     public function buildIndexQuery(Request $request, bool $withRelations = false): Builder
     {
         $status = (string) $request->string('status', 'all');
@@ -142,7 +148,7 @@ class PlacementIndexService
                 ->values()
                 ->all(),
             'dosen' => User::query()
-                ->whereHas('role', fn ($query) => $query->where('slug', 'dosen'))
+                ->whereIn('users.id', $this->wimsModuleRoleService->usersForRole('dosen')->select('users.id'))
                 ->orderBy('name')
                 ->get(['id', 'name'])
                 ->map(fn (User $dosen) => [

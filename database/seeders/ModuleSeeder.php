@@ -20,6 +20,9 @@ class ModuleSeeder extends Seeder
         $roles = [
             ['nama' => 'Super Admin', 'slug' => 'super-admin', 'deskripsi' => 'Administrator Tertinggi'],
             ['nama' => 'Admin Struktural', 'slug' => 'admin', 'deskripsi' => 'Admin Operasional dan Struktural'],
+            ['nama' => 'Admin Universitas', 'slug' => 'admin-universitas', 'deskripsi' => 'Admin universitas untuk pengelolaan lintas modul'],
+            ['nama' => 'Admin Akademik', 'slug' => 'admin-akademik', 'deskripsi' => 'Admin akademik untuk operasional layanan akademik'],
+            ['nama' => 'Koordinator Program Studi', 'slug' => 'prodi', 'deskripsi' => 'Pengelola akademik tingkat program studi'],
             ['nama' => 'Dosen / Struktural', 'slug' => 'dosen', 'deskripsi' => 'Dosen Pengajar FMIKOM'],
             ['nama' => 'Mahasiswa', 'slug' => 'mahasiswa', 'deskripsi' => 'Mahasiswa Aktif FMIKOM'],
             ['nama' => 'Alumni', 'slug' => 'alumni', 'deskripsi' => 'Alumni FMIKOM'],
@@ -33,7 +36,7 @@ class ModuleSeeder extends Seeder
         // 2. Buat Data Master Modules (Aplikasi Inti FMIKOM)
         $modules = [
             ['code' => 'PAGI', 'name' => 'Works and Gallery for Interns', 'description' => 'Sistem galeri karya mahasiswa magang', 'is_active' => true],
-            ['code' => 'WIMS', 'name' => 'Web Information Management System', 'description' => 'Sistem manajemen konten web portal FMIKOM', 'is_active' => true],
+            ['code' => 'WIMS', 'name' => 'Web-based Internship Management System', 'description' => 'Pengelolaan PKL dan magang FMIKOM: pendaftaran, penempatan, presensi, logbook, monitoring, penilaian, dan laporan akhir', 'is_active' => true],
             ['code' => 'FAST', 'name' => 'Fmikom Academic System and Tracking', 'description' => 'Sistem pelacakan dan akademik FMIKOM', 'is_active' => true],
             ['code' => 'TRACE', 'name' => 'Tracer Study System', 'description' => 'Sistem tracer study alumni', 'is_active' => true],
         ];
@@ -46,7 +49,7 @@ class ModuleSeeder extends Seeder
         $moduleRolesMap = [
             'FAST' => ['super-admin', 'admin', 'dosen', 'mahasiswa', 'alumni'],
             'PAGI' => ['super-admin', 'admin', 'dosen', 'mahasiswa', 'alumni', 'mitra'],
-            'WIMS' => ['super-admin', 'admin', 'mahasiswa', 'mitra'],
+            'WIMS' => ['super-admin', 'admin', 'admin-universitas', 'admin-akademik', 'prodi', 'dosen', 'mahasiswa', 'mitra'],
             'TRACE' => ['super-admin', 'admin', 'alumni', 'mitra'],
         ];
 

@@ -3,15 +3,21 @@
 namespace App\Modules\Wims\Services\Admin;
 
 use App\Models\Magang\PerusahaanMitra;
-use App\Models\Role;
 use App\Models\User;
+use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class AdminCompanyActionService
 {
+    public function __construct(
+        private readonly WimsModuleRoleService $wimsModuleRoleService,
+    ) {
+    }
+
     public function validateCompany(Request $request): array
     {
         $validated = $request->validate([
@@ -92,38 +98,40 @@ class AdminCompanyActionService
     {
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'email' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'no_telepon' => ['nullable', 'string', 'max:20'],
             'jabatan' => ['nullable', 'string', 'max:255'],
             'is_active' => ['required', 'boolean'],
         ], [
             'password.confirmed' => 'Konfirmasi password akun mitra tidak cocok.',
-            'email.unique' => 'Email akun mitra sudah digunakan oleh akun lain.',
         ]);
     }
 
     public function createCompanyAccount(PerusahaanMitra $company, array $validated): bool
     {
-        $mitraRole = Role::query()->where('slug', 'mitra')->first();
-
-        if (! $mitraRole) {
+        if (! $this->wimsModuleRoleService->resolveModule() || ! $this->wimsModuleRoleService->resolveRole('mitra')) {
             return false;
         }
 
-        DB::transaction(function () use ($company, $validated, $mitraRole): void {
-            $user = new User();
-            $user->forceFill([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => $validated['password'],
-                'role_id' => $mitraRole->id,
-                'role_title' => $mitraRole->nama,
-                'user_type' => 'mitra',
-                'no_telepon' => $validated['no_telepon'] ?? null,
-                'is_active' => (bool) $validated['is_active'],
-                'email_verified_at' => now(),
-            ])->save();
+        DB::transaction(function () use ($company, $validated): void {
+            $user = User::query()->where('email', $validated['email'])->first();
+
+            if (! $user) {
+                $user = new User();
+                $user->forceFill([
+                    'name' => $validated['name'],
+                    'email' => $validated['email'],
+                    'password' => Hash::make($validated['password']),
+                    'user_type' => 'mitra',
+                    'no_telepon' => $validated['no_telepon'] ?? null,
+                    'is_active' => (bool) $validated['is_active'],
+                    'email_verified_at' => now(),
+                    'password_changed_at' => now(),
+                ])->save();
+            }
+
+            $this->wimsModuleRoleService->ensureAssignment($user, 'mitra', (bool) $validated['is_active']);
 
             $company->update([
                 'user_id' => $user->id,

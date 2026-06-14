@@ -20,6 +20,7 @@ use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringAlertService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -149,6 +150,7 @@ it('builds monitoring alerts from derived status without mutating presentation s
 
 it('stores and replaces final report files safely, and rejects missing downloads', function () {
     Storage::fake('public');
+    File::cleanDirectory(storage_path('framework/testing/disks/public'));
 
     [$student, , , $registration] = makeActiveOperationalRegistration();
     $registration->update(['status' => 'selesai']);
@@ -156,17 +158,27 @@ it('stores and replaces final report files safely, and rejects missing downloads
     $actionService = app(StudentFinalReportActionService::class);
     $fileService = app(StudentFinalReportFileService::class);
 
-    $firstFile = UploadedFile::fake()->create('laporan-awal.pdf', 120, 'application/pdf');
+    $firstFile = UploadedFile::fake()->createWithContent('laporan-awal.pdf', 'first-final-report-content');
     $actionService->upload($registration, $firstFile);
-    $firstPath = $registration->fresh()->laporan_akhir_path;
+    $firstUpload = $registration->fresh();
+    $firstPath = $firstUpload->laporan_akhir_path;
 
-    expect(Storage::disk('public')->exists($firstPath))->toBeTrue();
+    expect($firstPath)->not->toBeNull()
+        ->and($firstUpload->laporan_akhir_original_name)->toBe('laporan-awal.pdf')
+        ->and($firstUpload->laporan_akhir_uploaded_at)->not->toBeNull()
+        ->and(Storage::disk('public')->get($firstPath))->toBe('first-final-report-content');
 
-    $secondFile = UploadedFile::fake()->create('laporan-revisi.pdf', 140, 'application/pdf');
+    unset($firstFile);
+    gc_collect_cycles();
+    Storage::forgetDisk('public');
+    Storage::persistentFake('public');
+
+    $secondFile = UploadedFile::fake()->createWithContent('laporan-revisi.pdf', 'second-final-report-content');
     $actionService->upload($registration->fresh(), $secondFile);
     $updatedRegistration = $registration->fresh();
-
-    expect(Storage::disk('public')->exists($updatedRegistration->laporan_akhir_path))->toBeTrue()
+    expect($updatedRegistration->laporan_akhir_path)->not->toBe($firstPath)
+        ->and(Storage::disk('public')->exists($updatedRegistration->laporan_akhir_path))->toBeTrue()
+        ->and(Storage::disk('public')->get($updatedRegistration->laporan_akhir_path))->toBe('second-final-report-content')
         ->and(Storage::disk('public')->exists($firstPath))->toBeFalse();
 
     $updatedRegistration->update(['laporan_akhir_path' => 'laporan-akhir/hilang.pdf']);
@@ -176,6 +188,7 @@ it('stores and replaces final report files safely, and rejects missing downloads
 
 it('stores attendance photos, absence proof, and logbook photos on the configured disk', function () {
     Storage::fake('public');
+    File::cleanDirectory(storage_path('framework/testing/disks/public'));
 
     [$student, , , $registration] = makeActiveOperationalRegistration();
 

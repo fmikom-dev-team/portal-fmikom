@@ -3,6 +3,7 @@
 namespace App\Modules\Wims\Services\Shared\Placement;
 
 use App\Models\Magang\PendaftaranMagang;
+use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use App\Modules\Wims\Services\Shared\Placement\PlacementIndexService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -12,6 +13,7 @@ class PlacementWorkflowService
 {
     public function __construct(
         private readonly PlacementIndexService $placementIndexService,
+        private readonly WimsModuleRoleService $wimsModuleRoleService,
     ) {
     }
 
@@ -22,13 +24,12 @@ class PlacementWorkflowService
             'dosen_pembimbing_id' => [
                 'required',
                 'integer',
-                Rule::exists('users', 'id')->where(function ($query) {
-                    $query->whereIn('role_id', function ($subQuery) {
-                        $subQuery->select('id')
-                            ->from('roles')
-                            ->where('slug', 'dosen');
-                    });
-                }),
+                Rule::exists('users', 'id'),
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (! $this->wimsModuleRoleService->hasActiveRole((int) $value, 'dosen')) {
+                        $fail('Dosen pembimbing yang dipilih tidak memiliki assignment aktif pada modul WIMS.');
+                    }
+                },
             ],
         ], [
             'perusahaan_id.required' => 'Perusahaan wajib dipilih sebelum penempatan disimpan.',

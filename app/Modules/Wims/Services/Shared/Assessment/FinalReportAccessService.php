@@ -6,6 +6,7 @@ use App\Models\Magang\PendaftaranMagang;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class FinalReportAccessService
 {
@@ -13,13 +14,21 @@ class FinalReportAccessService
 
     public function resolveAbsolutePath(PendaftaranMagang $pendaftaran): string
     {
+        $absolutePath = filled($pendaftaran->laporan_akhir_path)
+            ? $this->normalizeLocalPath(Storage::disk(self::DISK)->path($pendaftaran->laporan_akhir_path))
+            : null;
+
+        if ($absolutePath) {
+            clearstatcache(true, $absolutePath);
+        }
+
         abort_unless(
             filled($pendaftaran->laporan_akhir_path) && Storage::disk(self::DISK)->exists($pendaftaran->laporan_akhir_path),
             404,
             'File laporan akhir tidak ditemukan.',
         );
 
-        return Storage::disk(self::DISK)->path($pendaftaran->laporan_akhir_path);
+        return $absolutePath ?: $this->normalizeLocalPath(Storage::disk(self::DISK)->path($pendaftaran->laporan_akhir_path));
     }
 
     public function storeFinalReport(UploadedFile $file): string
@@ -27,19 +36,60 @@ class FinalReportAccessService
         $directory = 'laporan-akhir';
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'pdf');
         $filename = Str::uuid() . '.' . $extension;
+        $path = $directory . '/' . $filename;
 
-        Storage::disk(self::DISK)->putFileAs($directory, $file, $filename);
+        $contents = file_get_contents($file->getRealPath());
 
-        return $directory . '/' . $filename;
+        if ($contents === false) {
+            throw new RuntimeException('Gagal membaca file laporan akhir yang diunggah.');
+        }
+
+        if (! Storage::disk(self::DISK)->put($path, $contents)) {
+            throw new RuntimeException('Gagal menyimpan file laporan akhir.');
+        }
+
+        clearstatcache(true, $this->normalizeLocalPath(Storage::disk(self::DISK)->path($path)));
+
+        return $path;
     }
 
     public function deleteIfExists(?string $path): void
     {
-        if (! filled($path) || ! Storage::disk(self::DISK)->exists($path)) {
+        if (! filled($path)) {
             return;
         }
 
-        Storage::disk(self::DISK)->delete($path);
+        $disk = Storage::disk(self::DISK);
+        $absolutePath = $this->normalizeLocalPath(Storage::disk(self::DISK)->path($path));
+
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            clearstatcache(true, $absolutePath);
+
+            if (! is_file($absolutePath) && ! $disk->exists($path)) {
+                return;
+            }
+
+            if ($disk->delete($path)) {
+                clearstatcache(true, $absolutePath);
+
+                if (! $disk->exists($path) && ! is_file($absolutePath)) {
+                    return;
+                }
+            }
+
+            usleep(100000);
+        }
+
+        logger()->warning('Failed to delete replaced final report file.', [
+            'disk' => self::DISK,
+            'path' => $path,
+            'absolute_path' => $absolutePath,
+        ]);
+    }
+
+    private function normalizeLocalPath(string $path): string
+    {
+        return str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
     }
 
     public function resolveDownloadName(PendaftaranMagang $pendaftaran): string
