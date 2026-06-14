@@ -47,7 +47,7 @@ class SecurityHeaders
 
         // blob: is required for FFmpeg WASM: the bundled Worker does import(blob://...) for ffmpeg-core.js
         // script-src-elem only covers <script> tags; dynamic import() in Workers uses script-src
-        $scriptSrc = "script-src 'self' 'nonce-{$nonce}' blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com";
+        $scriptSrc ="script-src 'self' 'nonce-{$nonce}' 'strict-dynamic' blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com";
         if (config('app.debug') || app()->environment('local', 'testing')) {
             $scriptSrc .= " 'unsafe-eval'";
         }
@@ -123,7 +123,8 @@ class SecurityHeaders
             "worker-src 'self' blob:",
             // script-src blob: is needed for the Worker's internal dynamic import(blob://...) of ffmpeg-core.js
             // "script-src-elem 'self' 'unsafe-inline' blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com",
-            "script-src-elem 'self' 'nonce-{$nonce}'" . ($isLocalHost ? " http://localhost:5173 http://127.0.0.1:5173" : "") . " 'unsafe-inline' blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com",
+            // "script-src-elem 'self' 'nonce-{$nonce}'" . ($isLocalHost ? " http://localhost:5173 http://127.0.0.1:5173" : "") . " 'unsafe-inline' blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com",
+            "script-src-elem 'self' 'nonce-{$nonce}' 'strict-dynamic'" . ($isLocalHost ? " http://localhost:5173 http://127.0.0.1:5173" : "") . " blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com",
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",

@@ -1,12 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Tracer;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
-use App\Models\Kuesioner;
-use App\Models\DetailJawaban;
 
 class Response extends Model
 {

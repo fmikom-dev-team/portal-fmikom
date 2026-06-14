@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
-use App\Models\Alumni\ProfilAlumni;
 use App\Models\Auth\AuthOAuthCredential;
-use App\Models\Kuesioner\Kuesioner;
 use App\Models\Magang\LowonganInfo;
 use App\Models\Magang\PembimbingLapangan;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PenilaianMagang;
 use App\Models\Pagi\PagiWork;
 use App\Models\Surat\Surat;
+use App\Models\Tracer\ProfilAlumni;
+use App\Models\Tracer\Kuesioner;
+use App\Models\Tracer\MitraProfiles;
 use App\Models\Surat\SuratApprovalFlow;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -134,10 +135,7 @@ class User extends Authenticatable
         return $this->belongsTo(ProgramStudi::class);
     }
 
-    public function profilAlumni(): HasOne
-    {
-        return $this->hasOne(ProfilAlumni::class);
-    }
+
 
     public function surats(): HasMany
     {
@@ -159,11 +157,7 @@ class User extends Authenticatable
         return $this->hasMany(PenilaianMagang::class, 'dosen_id');
     }
 
-    public function kuesioners(): HasMany
-    {
-        return $this->hasMany(Kuesioner::class, 'pembuat_id');
-    }
-
+  
     public function lowonganInfos(): HasMany
     {
         return $this->hasMany(LowonganInfo::class, 'pembuat_id');
@@ -172,6 +166,20 @@ class User extends Authenticatable
     public function pembimbingLapangan(): HasOne
     {
         return $this->hasOne(PembimbingLapangan::class);
+    }
+
+    public function kuesioners()
+    {
+        return $this->hasMany(Kuesioner::class, 'created_by');
+    }
+
+    public function alumniProfile()
+    {
+        return $this->hasOne(ProfilAlumni::class, 'user_id');
+    }
+      public function mitraProfile()
+    {
+        return $this->hasOne(MitraProfiles::class, 'user_id');
     }
 
     // -----------------------------------------------------------------------

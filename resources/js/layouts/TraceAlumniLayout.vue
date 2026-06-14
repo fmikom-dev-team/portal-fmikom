@@ -98,9 +98,9 @@ const navItems = [
     },
     {
         label: "Riwayat Pekerjaan",
-        href: "/trace/karir",
+        href: "/trace/career",
         icon: Briefcase,
-        match: (u: string) => u.startsWith("/trace/karir"),
+        match: (u: string) => u.startsWith("/trace/career"),
     },
     {
         label: "Kuesioner",

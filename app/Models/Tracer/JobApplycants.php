@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Tracer;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Tracer\ProfilAlumni;
 
 class JobApplycants extends Model
 {
@@ -20,6 +21,6 @@ class JobApplycants extends Model
 
     public function alumni()
     {
-        return $this->belongsTo(AlumniProfile::class, 'alumni_id');
+        return $this->belongsTo(ProfilAlumni::class, 'alumni_id');
     }
 }

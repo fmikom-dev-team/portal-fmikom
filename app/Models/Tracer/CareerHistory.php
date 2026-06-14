@@ -4,7 +4,7 @@ namespace App\Models\Tracer;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Tracer\AlumniProfiles;
+use App\Models\Tracer\ProfilAlumni;
 use App\Models\Tracer\Provinsi;
 use App\Models\Tracer\Kota;
 use App\Models\Tracer\Employment;
@@ -47,7 +47,7 @@ class CareerHistory extends Model
 
     public function alumniProfile()
     {
-        return $this->belongsTo(AlumniProfiles::class, 'profil_alumni_id');
+        return $this->belongsTo(ProfilAlumni::class, 'profil_alumni_id');
     }
 
     public function provinsi()

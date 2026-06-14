@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Tracer;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
-use App\Models\Section;
 use Illuminate\Database\Eloquent\SoftDeletes;
 class Kuesioner extends Model
 {

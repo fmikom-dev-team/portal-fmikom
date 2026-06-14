@@ -1,12 +1,9 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Tracer;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Kuesioner;
-use App\Models\Section;
-use App\Models\OpsiJawaban;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Pertanyaan extends Model
@@ -49,10 +46,6 @@ class Pertanyaan extends Model
     |-------------------------
     */
 
-     public function indikator()
-    {
-        return $this->belongsTo(IndikatorLam::class, 'indikator_id');
-    }
     
     // Pertanyaan milik 1 kuesioner
     public function kuesioner()

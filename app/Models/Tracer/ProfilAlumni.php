@@ -43,22 +43,27 @@ class ProfilAlumni extends Model
     }
 
     public function getCompletenessPercentageAttribute()
-    {
-        $percentage = 0;
-        
-        if (!empty($this->nama_lengkap)) $percentage += 10;
-        if (!empty($this->no_hp)) $percentage += 10;
-        if (!empty($this->jenis_kelamin)) $percentage += 10;
+{
+    $percentage = 0;
 
-        if (!empty($this->alamat_rumah)) $percentage += 10;
-        if (!empty($this->provinsi_id) && !empty($this->kota_id)) $percentage += 10;
-        if (!empty($this->latitude_rumah) && !empty($this->longitude_rumah)) $percentage += 10;
+    // Data dari User (via relasi)
+    $user = $this->relationLoaded('user') ? $this->user : $this->user()->first();
+    
+    if (!empty($user?->name)) $percentage += 10;
+    if (!empty($user?->no_telepon)) $percentage += 10;
 
-        $hasCareers = $this->relationLoaded('careers') ? $this->careers->count() > 0 : $this->careers()->exists();
-        if ($hasCareers) {
-            $percentage += 40;
-        }
+    // Data dari ProfilAlumni
+    if (!empty($this->jenis_kelamin)) $percentage += 10;
+    if (!empty($this->angkatan)) $percentage += 10;
+    if (!empty($this->alamat_rumah)) $percentage += 10;
+    if (!empty($this->provinsi_id) && !empty($this->kota_id)) $percentage += 10;
 
-        return $percentage;
-    }
+    // Karir (bobot besar karena ini inti tracer study)
+    $hasCareers = $this->relationLoaded('careers')
+        ? $this->careers->count() > 0
+        : $this->careers()->exists();
+    if ($hasCareers) $percentage += 40;
+
+    return $percentage;
+}
 }

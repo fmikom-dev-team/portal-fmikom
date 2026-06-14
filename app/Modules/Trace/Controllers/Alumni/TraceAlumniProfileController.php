@@ -27,7 +27,6 @@ class TraceAlumniProfileController extends Controller
             );
             
         $alumniData = [
-            // Identitas Utama & Akun (Tabel Users)
             'user_id'                 => $user->id,
             'name'                    => $user->name,
             'email'                   => $user->email,
@@ -39,7 +38,6 @@ class TraceAlumniProfileController extends Controller
             'tanggal_lahir'           => $user->tanggal_lahir,
             'program_studi_id'        => $user->program_studi_id,
             
-            // Profil Sosial Media & Karakter (Tabel Users)
             'bio'                     => $user->bio,
             'location'                => $user->location,
             'website'                 => $user->website,
@@ -48,7 +46,6 @@ class TraceAlumniProfileController extends Controller
             'instagram'               => $user->instagram,
             'twitter'                 => $user->twitter,
 
-            // Data Tracer / Profil Tambahan (Tabel ProfilAlumni)
             'profil_id'               => $profil->id,
             'angkatan'                => $profil->angkatan,
             'alamat_rumah'            => $profil->alamat_rumah,
@@ -85,7 +82,6 @@ class TraceAlumniProfileController extends Controller
         );
 
         $validated = $request->validate([
-            // Users table validation
             'name' => ['required', 'string', 'max:255'],
             'nomor_induk' => ['required', 'string', 'max:50'],
             'tahun_lulus' => ['nullable', 'integer', 'min:1900', 'max:' . (date('Y') + 5)],

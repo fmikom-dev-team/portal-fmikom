@@ -43,6 +43,6 @@ class EducationHistory extends Model
      */
     public function alumniProfile(): BelongsTo
     {
-        return $this->belongsTo(AlumniProfiles::class, 'profil_alumni_id');
+        return $this->belongsTo(ProfilAlumni::class, 'profil_alumni_id');
     }
 }
