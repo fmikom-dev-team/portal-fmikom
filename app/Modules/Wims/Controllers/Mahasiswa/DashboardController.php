@@ -17,6 +17,6 @@ class DashboardController extends Controller
 
     public function index(Request $request): Response
     {
-        return Inertia::render('Wims/Mahasiswa/Dashboard', $this->studentDashboardPageService->build($request->user()));
+        return Inertia::render('Modules/Wims/Mahasiswa/Dashboard', $this->studentDashboardPageService->build($request->user()));
     }
 }

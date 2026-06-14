@@ -23,7 +23,7 @@ class LaporanController extends Controller
 
     public function index(Request $request): Response
     {
-        return Inertia::render('Wims/Mahasiswa/Laporan', $this->studentReportPageService->build($request->user()->id));
+        return Inertia::render('Modules/Wims/Mahasiswa/Laporan/Index', $this->studentReportPageService->build($request->user()->id));
     }
 
     public function store(Request $request): RedirectResponse

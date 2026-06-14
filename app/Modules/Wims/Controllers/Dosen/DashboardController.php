@@ -20,6 +20,6 @@ class DashboardController extends Controller
         /** @var User $user */
         $user = request()->user();
 
-        return Inertia::render('Wims/Dosen/Dashboard', $this->dosenDashboardPageService->build($user));
+        return Inertia::render('Modules/Wims/Dosen/Dashboard', $this->dosenDashboardPageService->build($user));
     }
 }

@@ -20,7 +20,7 @@ class ProfileController extends Controller
 
     public function index(Request $request): Response
     {
-        return Inertia::render('Wims/Mahasiswa/Profile', $this->studentProfilePageService->build($request->user()));
+        return Inertia::render('Modules/Wims/Mahasiswa/Profile/Index', $this->studentProfilePageService->build($request->user()));
     }
 
     public function update(Request $request): RedirectResponse

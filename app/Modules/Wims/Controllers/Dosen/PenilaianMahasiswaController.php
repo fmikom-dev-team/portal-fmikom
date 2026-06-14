@@ -34,7 +34,7 @@ class PenilaianMahasiswaController extends Controller
 
         $payload = $this->assessmentIndexService->buildLecturerData($user);
 
-        return Inertia::render('Wims/Dosen/PenilaianMahasiswa/Index', [
+        return Inertia::render('Modules/Wims/Dosen/PenilaianMahasiswa/Index', [
             'summary' => $payload['summary'],
             'students' => $payload['students'],
         ]);
@@ -64,7 +64,7 @@ class PenilaianMahasiswaController extends Controller
             'wims.dosen.assessments.final-report.download',
         );
 
-        return Inertia::render('Wims/Dosen/PenilaianMahasiswa/Show', $payload);
+        return Inertia::render('Modules/Wims/Dosen/PenilaianMahasiswa/Show', $payload);
     }
 
     public function store(Request $request, PendaftaranMagang $pendaftaran): RedirectResponse

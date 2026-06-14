@@ -21,7 +21,7 @@ class AssessmentTemplateController extends Controller
 
     public function index(Request $request): Response
     {
-        return Inertia::render('Wims/Admin/PenilaianTemplate/Index', $this->pageService->build($request));
+        return Inertia::render('Modules/Wims/Admin/PenilaianTemplate/Index', $this->pageService->build($request));
     }
 
     public function store(UpsertAssessmentTemplateRequest $request): RedirectResponse

@@ -21,7 +21,7 @@ class RegistrationController extends Controller
 
     public function index(Request $request): Response
     {
-        return Inertia::render('Wims/Mahasiswa/Pendaftaran', $this->studentRegistrationPageService->build($request->user()));
+        return Inertia::render('Modules/Wims/Mahasiswa/Pendaftaran/Index', $this->studentRegistrationPageService->build($request->user()));
     }
 
     public function store(StoreRegistrationRequest $request): RedirectResponse

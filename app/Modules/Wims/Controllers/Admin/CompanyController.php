@@ -22,7 +22,7 @@ class CompanyController extends Controller
     public function index(Request $request): Response
     {
         return Inertia::render(
-            'Wims/Admin/Perusahaan/Index',
+            'Modules/Wims/Admin/Perusahaan/Index',
             $this->adminCompanyPageService->build(trim((string) $request->string('search', ''))),
         );
     }

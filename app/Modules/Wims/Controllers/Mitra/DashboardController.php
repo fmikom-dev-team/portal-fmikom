@@ -16,6 +16,6 @@ class DashboardController extends Controller
 
     public function index(): Response
     {
-        return Inertia::render('Wims/Mitra/Dashboard', $this->mitraDashboardPageService->build(auth()->user()));
+        return Inertia::render('Modules/Wims/Mitra/Dashboard', $this->mitraDashboardPageService->build(auth()->user()));
     }
 }

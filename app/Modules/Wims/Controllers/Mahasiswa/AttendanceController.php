@@ -23,7 +23,7 @@ class AttendanceController extends Controller
 
     public function index(Request $request): Response
     {
-        return Inertia::render('Wims/Mahasiswa/Absensi', [
+        return Inertia::render('Modules/Wims/Mahasiswa/Presensi/Index', [
             'attendance' => $this->attendancePageService->build($request->user()),
         ]);
     }

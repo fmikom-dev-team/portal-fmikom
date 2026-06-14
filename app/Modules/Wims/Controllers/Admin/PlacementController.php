@@ -27,7 +27,7 @@ class PlacementController extends Controller
     {
         $placements = $this->placementIndexService->buildPlacements($request);
 
-        return Inertia::render('Wims/Admin/Penempatan/Index', [
+        return Inertia::render('Modules/Wims/Admin/Penempatan/Index', [
             'filters' => $this->placementIndexService->buildFilters($request),
             'summary' => $this->placementIndexService->buildSummary(),
             'placements' => $placements,

@@ -22,7 +22,7 @@ class RegistrationController extends Controller
 
     public function index(Request $request): Response
     {
-        return Inertia::render('Wims/Admin/Pendaftaran/Index', $this->adminRegistrationPageService->build($request));
+        return Inertia::render('Modules/Wims/Admin/Pendaftaran/Index', $this->adminRegistrationPageService->build($request));
     }
 
     public function updateStatus(Request $request, PendaftaranMagang $pendaftaran): RedirectResponse

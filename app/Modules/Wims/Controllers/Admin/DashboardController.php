@@ -16,6 +16,6 @@ class DashboardController extends Controller
 
     public function index(): Response
     {
-        return Inertia::render('Wims/Admin/Dashboard', $this->adminDashboardPageService->build());
+        return Inertia::render('Modules/Wims/Admin/Dashboard', $this->adminDashboardPageService->build());
     }
 }

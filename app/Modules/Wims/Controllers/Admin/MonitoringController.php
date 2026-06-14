@@ -17,6 +17,6 @@ class MonitoringController extends Controller
 
     public function index(Request $request): Response
     {
-        return Inertia::render('Wims/Admin/Monitoring/Index', $this->adminMonitoringPageService->build($request));
+        return Inertia::render('Modules/Wims/Admin/Monitoring/Index', $this->adminMonitoringPageService->build($request));
     }
 }

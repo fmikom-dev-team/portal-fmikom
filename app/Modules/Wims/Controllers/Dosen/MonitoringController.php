@@ -51,7 +51,7 @@ class MonitoringController extends Controller
             })
             ->values();
 
-        return Inertia::render('Wims/Dosen/Monitoring/Index', [
+        return Inertia::render('Modules/Wims/Dosen/Monitoring/Index', [
             'students' => $students->all(),
             'initialStatus' => $request->string('status')->toString(),
         ]);
@@ -94,7 +94,7 @@ class MonitoringController extends Controller
         $attendanceSummary = $this->monitoringSummaryService->buildAttendanceSummary($pendaftaran);
         $logbookSummary = $this->monitoringSummaryService->buildLogbookSummary($pendaftaran);
 
-        return Inertia::render('Wims/Dosen/Monitoring/Show', $this->monitoringDetailService->buildPayload(
+        return Inertia::render('Modules/Wims/Dosen/Monitoring/Show', $this->monitoringDetailService->buildPayload(
             $pendaftaran,
             $todayDate,
             $selectedDate,

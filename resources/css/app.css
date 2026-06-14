@@ -61,6 +61,12 @@
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-ring: var(--sidebar-ring);
 
+	--color-wims-bg: var(--wims-bg);
+	--color-wims-text: var(--wims-text);
+	--color-wims-border: var(--wims-border);
+	--color-wims-card: var(--wims-card);
+	--color-wims-topbar: var(--wims-topbar);
+
 	--shadow-sm:
 		0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
 	--shadow-md:
@@ -102,6 +108,12 @@
 }
 
 :root {
+	--wims-bg: #f8fafc;
+	--wims-text: #0f172a;
+	--wims-border: #e2e8f0;
+	--wims-card: #ffffff;
+	--wims-topbar: rgba(255, 255, 255, 0.95);
+
 	--background: hsl(210 20% 98%);
 	--foreground: hsl(0 0% 3.9%);
 	--card: hsl(0 0% 100%);
@@ -139,6 +151,12 @@
 }
 
 .dark {
+	--wims-bg: #0f172a;
+	--wims-text: #f1f5f9;
+	--wims-border: #1e293b;
+	--wims-card: #1e293b;
+	--wims-topbar: rgba(15, 23, 42, 0.95);
+
 	--background: hsl(0 0% 3.9%);
 	--foreground: hsl(0 0% 98%);
 	--card: hsl(0 0% 3.9%);
@@ -263,4 +281,38 @@
 		rgba(255, 255, 255, 0.07) 60%,
 		rgba(255, 255, 255, 0) 100%
 	);
+}
+
+.scrollbar-thin {
+	scrollbar-width: thin;
+	scrollbar-color: transparent transparent;
+}
+
+.scrollbar-thin:hover {
+	scrollbar-color: rgb(203 213 225) transparent;
+}
+
+.dark .scrollbar-thin:hover {
+	scrollbar-color: rgb(51 65 85) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+	width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+	background: transparent;
+	border-radius: 9999px;
+}
+
+.scrollbar-thin:hover::-webkit-scrollbar-thumb {
+	background: rgb(203 213 225);
+}
+
+.dark .scrollbar-thin:hover::-webkit-scrollbar-thumb {
+	background: rgb(51 65 85);
 }

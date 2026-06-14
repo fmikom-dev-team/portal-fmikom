@@ -21,7 +21,7 @@ class AssessmentRecapController extends Controller
 
     public function index(Request $request): Response
     {
-        return Inertia::render('Wims/Admin/RekapNilai/Index', $this->adminAssessmentRecapPageService->build($request));
+        return Inertia::render('Modules/Wims/Admin/RekapNilai/Index', $this->adminAssessmentRecapPageService->build($request));
     }
 
     public function download(PendaftaranMagang $pendaftaran, string $role): HttpResponse

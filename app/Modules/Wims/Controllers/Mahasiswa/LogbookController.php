@@ -25,7 +25,7 @@ class LogbookController extends Controller
 
     public function index(Request $request): Response
     {
-        return Inertia::render('Wims/Mahasiswa/Logbook', $this->logbookPageService->build($request->user()->id));
+        return Inertia::render('Modules/Wims/Mahasiswa/Logbook/Index', $this->logbookPageService->build($request->user()->id));
     }
 
     public function store(StoreLogbookRequest $request): RedirectResponse
