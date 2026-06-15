@@ -22,8 +22,12 @@ class CheckRole
 
         $user = Auth::user();
 
-        // Ambil slug role dari relasi role, atau fallback ke user_type
-        $userRoleSlug = $user->role ? $user->role->slug : $user->user_type;
+        // Prioritas: resolved_role (dari CheckActiveContext) → session active_role → DB role → user_type
+        $userRoleSlug = $request->attributes->get('resolved_role')
+            ?? session('active_role')
+            ?? ($user->role ? $user->role->slug : null)
+            ?? $user->user_type;
+
         if ($userRoleSlug) {
             $userRoleSlug = str_replace('_', '-', $userRoleSlug);
         }

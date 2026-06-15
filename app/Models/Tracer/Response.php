@@ -17,6 +17,8 @@ class Response extends Model
         'kuesioner_id',
         'submitted_at',
         'angkatan',
+        'stakeholder_name',
+        'stakeholder_email',
     ];
 
     /*

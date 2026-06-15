@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use App\Models\Tracer\EducationHistory;
 use App\Models\Tracer\CareerHistory;
+use App\Models\Tracer\Provinsi;
+use App\Models\Tracer\Kota;
 
 
 class ProfilAlumni extends Model
@@ -25,7 +27,7 @@ class ProfilAlumni extends Model
         'kota_id',
     ];
 
-    protected $appends = ['completeness_percentage'];
+    protected $appends = ['completeness_percentage', 'nim', 'nama_lengkap', 'tahun_lulus', 'photo_path', 'program_studi'];
 
      public function user()
     {
@@ -40,6 +42,41 @@ class ProfilAlumni extends Model
     public function educationHistories()
     {
         return $this->hasMany(EducationHistory::class, 'profil_alumni_id');
+    }
+
+    public function provinsi()
+    {
+        return $this->belongsTo(Provinsi::class);
+    }
+
+    public function kota()
+    {
+        return $this->belongsTo(Kota::class);
+    }
+
+    public function getNimAttribute()
+    {
+        return $this->user?->nomor_induk;
+    }
+
+    public function getNamaLengkapAttribute()
+    {
+        return $this->user?->name;
+    }
+
+    public function getTahunLulusAttribute()
+    {
+        return $this->user?->tahun_lulus;
+    }
+
+    public function getPhotoPathAttribute()
+    {
+        return $this->user?->foto_path;
+    }
+
+    public function getProgramStudiAttribute()
+    {
+        return $this->user?->programStudi?->nama;
     }
 
     public function getCompletenessPercentageAttribute()

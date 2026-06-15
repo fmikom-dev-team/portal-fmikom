@@ -22,6 +22,11 @@ class Employment extends Model
         'gaji_max',
     ];
 
+    protected $casts = [
+        'gaji_min' => 'integer',
+        'gaji_max' => 'integer',
+    ];
+
     public function careerHistory()
     {
         return $this->belongsTo(CareerHistory::class, 'career_history_id');

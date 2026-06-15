@@ -12,6 +12,7 @@ use App\Models\ProgramStudi;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use App\Models\Tracer\ActivityLog;
 
 class TraceAlumniProfileController extends Controller
 {
@@ -135,6 +136,8 @@ class TraceAlumniProfileController extends Controller
             'latitude_rumah' => $validated['latitude_rumah'] ?? null,
             'longitude_rumah' => $validated['longitude_rumah'] ?? null,
         ]);
+
+        ActivityLog::record('profile.updated', 'Memperbarui profil alumni');
 
         return redirect()->back()->with('success', 'Profil karir berhasil diperbarui');
     }

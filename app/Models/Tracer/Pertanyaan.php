@@ -14,7 +14,6 @@ class Pertanyaan extends Model
     protected $fillable = [
         'kuesioner_id',
         'section_id',
-        'indikator_id',
         'teks',
         'tipe',
         'tipe_data',

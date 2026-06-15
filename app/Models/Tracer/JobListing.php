@@ -21,6 +21,13 @@ class JobListing extends Model
         'deadline', 'is_salary_visible'
     ];
 
+    protected $casts = [
+        'salary_min' => 'integer',
+        'salary_max' => 'integer',
+        'is_salary_visible' => 'boolean',
+        'deadline' => 'date',
+    ];
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'user_id');

@@ -18,6 +18,11 @@ class Provinsi extends Model
         'longitude',
     ];
 
+    protected $casts = [
+        'latitude' => 'float',
+        'longitude' => 'float',
+    ];
+
     public function kota()
     {
         return $this->hasMany(Kota::class);

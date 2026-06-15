@@ -4,15 +4,11 @@ import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import {
     Activity,
     ArrowLeft,
-    BarChart3,
-    Bell,
     BookOpen,
-    Briefcase,
-    Building2,
     ChevronDown,
-    ClipboardList,
     FileText,
     GraduationCap,
+    History,
     LayoutDashboard,
     LogOut,
     Search,
@@ -27,6 +23,8 @@ import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
+    SidebarGroup,
+    SidebarGroupLabel,
     SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
@@ -46,6 +44,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useInitials } from "@/composables/useInitials";
 import type { BreadcrumbItem } from "@/types";
 import Breadcrumbs from "@/components/Breadcrumbs.vue";
+import NotificationBell from '@/components/Trace/NotificationBell.vue';
 
 interface TracePageProps extends PageProps {
     auth: { user: any };
@@ -98,35 +97,15 @@ onMounted(() => {
 
 const navGroups = [
     {
-        label: "Menu Utama",
+        label: "Menu",
         items: [
             { label: "Dashboard",        href: "/trace/admin",              icon: LayoutDashboard, match: (u: string) => u === "/trace/admin" },
-            { label: "Statistik",        href: "/trace/admin/statistik",    icon: BarChart3,       match: (u: string) => u.startsWith("/trace/admin/statistik") },
-            { label: "Aktivitas",        href: "/trace/admin/aktivitas",    icon: Activity,        match: (u: string) => u.startsWith("/trace/admin/aktivitas") },
-        ],
-    },
-    {
-        label: "Data Alumni",
-        items: [
-            { label: "Daftar Alumni",    href: "/trace/admin/alumni",       icon: GraduationCap,   match: (u: string) => u.startsWith("/trace/admin/alumni") },
-            { label: "Riwayat Karir",    href: "/trace/admin/karir",        icon: Briefcase,       match: (u: string) => u.startsWith("/trace/admin/karir") },
-            { label: "Kuesioner",        href: "/trace/admin/kuesioner",    icon: BookOpen,        match: (u: string) => u.startsWith("/trace/admin/kuesioner") },
-        ],
-    },
-    {
-        label: "Data Mitra",
-        items: [
-            { label: "Perusahaan",       href: "/trace/admin/perusahaan",   icon: Building2,       match: (u: string) => u.startsWith("/trace/admin/perusahaan") },
-            { label: "Lowongan Magang",  href: "/trace/admin/lowongan",     icon: ClipboardList,   match: (u: string) => u.startsWith("/trace/admin/lowongan") },
-            { label: "Peserta Magang",   href: "/trace/admin/peserta",      icon: Users,           match: (u: string) => u.startsWith("/trace/admin/peserta") },
-        ],
-    },
-    {
-        label: "Sistem",
-        items: [
-            { label: "Laporan",          href: "/trace/admin/laporan",      icon: FileText,        match: (u: string) => u.startsWith("/trace/admin/laporan") },
-            { label: "Keamanan",         href: "/trace/admin/keamanan",     icon: Shield,          match: (u: string) => u.startsWith("/trace/admin/keamanan") },
-            { label: "Pengaturan",       href: "/trace/admin/pengaturan",   icon: Settings,        match: (u: string) => u.startsWith("/trace/admin/pengaturan") },
+            { label: "Daftar Alumni",    href: "/admin/alumni",             icon: GraduationCap,   match: (u: string) => u.startsWith("/admin/alumni") },
+            { label: "Peta Sebaran",     href: "/trace/admin/map",          icon: Activity,        match: (u: string) => u.startsWith("/trace/admin/map") },
+            { label: "Kuesioner",        href: "/admin/quesionnaires",      icon: BookOpen,        match: (u: string) => u.startsWith("/admin/quesionnaires") },
+            { label: "Job & Lowongan",   href: "/trace/admin/jobs",         icon: FileText,    match: (u: string) => u.startsWith("/trace/admin/jobs") },
+            { label: "Events",           href: "/admin/events",             icon: Users,           match: (u: string) => u.startsWith("/admin/events") },
+            { label: "Activity Log",     href: "/trace/admin/activity-log", icon: History,         match: (u: string) => u.startsWith("/trace/admin/activity-log") },
         ],
     },
 ];
@@ -202,7 +181,7 @@ const navGroups = [
                     </SidebarMenuItem>
                 </SidebarMenu>
                 <p class="text-[10px] text-slate-400/80 dark:text-zinc-500 font-semibold text-center mt-4 group-data-[collapsible=icon]:hidden">
-                    &copy; 2026 Portal FMIKOM
+                    &copy; {{ new Date().getFullYear() }} Portal FMIKOM
                 </p>
             </SidebarFooter>
         </Sidebar>
@@ -245,13 +224,7 @@ const navGroups = [
                     </div>
 
                     <!-- Notifications -->
-                    <button class="relative flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-sky-600 dark:hover:bg-slate-800">
-                        <Bell class="h-4 w-4" />
-                        <span
-                            v-if="(page.props.notifications_count ?? 0) > 0"
-                            class="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-sky-500 text-[9px] font-black text-white"
-                        >{{ page.props.notifications_count }}</span>
-                    </button>
+                    <NotificationBell />
 
                     <!-- Profile Dropdown -->
                     <DropdownMenu>

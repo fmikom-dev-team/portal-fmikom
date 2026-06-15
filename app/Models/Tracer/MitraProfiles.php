@@ -7,6 +7,8 @@ use App\Models\User;
 
 class MitraProfiles extends Model
 {
+    protected $table = 'mitra_profiles';
+
     protected $fillable = [
         'user_id',
         'nama_perusahaan',
@@ -19,6 +21,20 @@ class MitraProfiles extends Model
         'provinsi_id',
         'kota_id'
     ];
+    protected $appends = ['logo_url'];
+
+    public function getLogoUrlAttribute(): ?string
+    {
+        if (!$this->logo_path) return null;
+        // Handle both formats: with /storage/ prefix (legacy) and without (current)
+        if (str_starts_with($this->logo_path, '/storage/')) {
+            return $this->logo_path;
+        }
+        if (str_starts_with($this->logo_path, 'http')) {
+            return $this->logo_path;
+        }
+        return '/storage/' . $this->logo_path;
+    }
 
     public function user()
     {

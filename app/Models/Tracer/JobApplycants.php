@@ -7,11 +7,19 @@ use App\Models\Tracer\ProfilAlumni;
 
 class JobApplycants extends Model
 {
-    //
     protected $table = 'job_applycants';
 
     protected $fillable = [
-        'job_id', 'alumni_id', 'cover_letter', 'status', 'applied_at'
+        'job_id', 'alumni_id', 'cover_letter',
+        'attached_cv_ids', 'attached_portfolio_ids',
+        'status', 'applied_at',
+        'reviewer_note', 'reviewed_at',
+    ];
+
+    protected $casts = [
+        'attached_cv_ids' => 'array',
+        'attached_portfolio_ids' => 'array',
+        'reviewed_at' => 'datetime',
     ];
 
     public function jobListing()

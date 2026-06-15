@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
+use App\Models\Tracer\ActivityLog;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -40,6 +44,9 @@ class AppServiceProvider extends ServiceProvider
             return method_exists($user, 'isSuperAdmin') && ($user->isSuperAdmin() || $user->isAdmin());
         });
 
+        // Register Tracer Policies explicitly due to sub-namespace auto-discovery limitation
+        Gate::policy(\App\Models\Tracer\CareerHistory::class, \App\Policies\CareerHistoryPolicy::class);
+
         // ── Pagi Chat Rate Limiting (Flood Prevention) ─────────────────────────
         RateLimiter::for('pagi-chat-send', function ($request) {
             return Limit::perMinute(30)->by($request->user()->id);
@@ -52,6 +59,27 @@ class AppServiceProvider extends ServiceProvider
             $paths = array_merge([$mainPath], $directories);
             $this->loadMigrationsFrom($paths);
         }
+
+        // ── Activity Log: Auth Events ─────────────────────────────────────────
+        Event::listen(Login::class, function (Login $event) {
+            ActivityLog::create([
+                'user_id' => $event->user->id,
+                'action' => 'auth.login',
+                'description' => 'Login ke sistem',
+                'ip_address' => request()->ip(),
+            ]);
+        });
+
+        Event::listen(Logout::class, function (Logout $event) {
+            if ($event->user) {
+                ActivityLog::create([
+                    'user_id' => $event->user->id,
+                    'action' => 'auth.logout',
+                    'description' => 'Logout dari sistem',
+                    'ip_address' => request()->ip(),
+                ]);
+            }
+        });
     }
 
     /**

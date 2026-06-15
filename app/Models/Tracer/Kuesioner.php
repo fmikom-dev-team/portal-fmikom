@@ -29,6 +29,18 @@ class Kuesioner extends Model
 
     /*
     |-------------------------
+    | CASTS
+    |-------------------------
+    */
+    protected $casts = [
+        'date_mulai'   => 'date',
+        'date_selesai' => 'date',
+        'tahun'        => 'integer',
+        'is_active'    => 'boolean',
+    ];
+
+    /*
+    |-------------------------
     | RELATIONSHIPS
     |-------------------------
     */
@@ -37,10 +49,11 @@ class Kuesioner extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
     public function responses()
-{
-    return $this->hasMany(Response::class, 'kuesioner_id');
-}
+    {
+        return $this->hasMany(Response::class, 'kuesioner_id');
+    }
 
     public function sections()
     {

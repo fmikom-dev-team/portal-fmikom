@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm, router } from "@inertiajs/vue3";
+import { Head, useForm, router, usePage } from "@inertiajs/vue3";
 import {
     Plus,
     Briefcase,
@@ -15,7 +15,7 @@ import {
     Info,
     BookOpen,
 } from "lucide-vue-next";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import TraceAlumniLayout from "@/layouts/TraceAlumniLayout.vue";
 import type { BreadcrumbItem } from "@/types";
@@ -93,12 +93,26 @@ const confirmDelete = (career: Career) => {
     showDeleteConfirm.value = true;
 };
 
+const page = usePage();
+
+watch(
+    () => page.props.flash,
+    (flash: any) => {
+        if (flash?.success) {
+            toast.success(flash.success);
+        }
+        if (flash?.error) {
+            toast.error(flash.error);
+        }
+    },
+    { deep: true },
+);
+
 const deleteCareer = () => {
     if (!deletingCareer.value) return;
     router.delete(`/trace/career/${deletingCareer.value.id}`, {
         preserveScroll: true,
         onSuccess: () => {
-            toast.success("Riwayat karir berhasil dihapus");
             showDeleteConfirm.value = false;
             deletingCareer.value = null;
         },
@@ -114,8 +128,6 @@ const setAsCurrent = (career: Career) => {
         {},
         {
             preserveScroll: true,
-            onSuccess: () =>
-                toast.success("Status karir saat ini berhasil diperbarui"),
             onError: () => toast.error("Gagal memperbarui status karir"),
         },
     );
@@ -643,7 +655,11 @@ const setAsCurrent = (career: Career) => {
                     <p class="mb-6 text-sm text-slate-500 dark:text-slate-400">
                         Apakah Anda yakin ingin menghapus riwayat karir di
                         <strong class="text-slate-700 dark:text-slate-200">{{
-                            deletingCareer?.nama_perusahaan
+                            deletingCareer?.status === "lanjut_studi"
+                                ? deletingCareer?.nama_universitas
+                                : deletingCareer?.status === "mencari_kerja"
+                                  ? "Tidak Bekerja"
+                                  : deletingCareer?.nama_perusahaan
                         }}</strong
                         >? Tindakan ini tidak dapat dibatalkan.
                     </p>

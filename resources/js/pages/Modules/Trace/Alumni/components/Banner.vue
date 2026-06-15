@@ -6,8 +6,7 @@ const props = defineProps<{
     roleName: "alumni" | "mitra";
 }>();
 import { UserIcon, BriefcaseIcon } from "lucide-vue-next";
-console.log(props.roleName);
-console.log(props.userName);
+
 const config = {
     alumni: {
         desc: "Kembangkan jaringan profesional Anda, isi kuesioner pelacakan karir, dan pantau sebaran alumni sejawat Anda di sini.",
@@ -43,14 +42,14 @@ const current = computed(() => config[props.roleName]);
         </div>
         <div class="flex gap-2.5 flex-wrap shrink-0">
             <Link
-                href="trace/profile-alumni"
+                href="/trace/profile-alumni"
                 class="flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
             >
                 <UserIcon class="w-4 h-4" />
                 Lihat profil
             </Link>
             <Link
-                href="trace/dashboard"
+                href="/trace/dashboard"
                 class="flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
             >
                 <BriefcaseIcon class="w-4 h-4" />

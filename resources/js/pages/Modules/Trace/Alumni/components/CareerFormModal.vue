@@ -153,44 +153,6 @@ const initMap = () => {
 };
 
 watch(
-    () => props.career,
-    (newCareer) => {
-        if (newCareer) {
-            form.status = newCareer.status;
-            // Work/Business fields
-            form.nama_perusahaan = newCareer.nama_perusahaan || "";
-            form.jabatan = newCareer.jabatan || "";
-            form.sektor_industri = newCareer.sektor_industri || "";
-            form.alamat_perusahaan = newCareer.alamat_perusahaan || "";
-            form.gaji_min = newCareer.gaji_min || null;
-            form.gaji_max = newCareer.gaji_max || null;
-            // Study fields
-            form.nama_universitas = newCareer.nama_universitas || "";
-            form.program_studi_lanjutan =
-                newCareer.program_studi_lanjutan || "";
-            form.jenjang_pendidikan = newCareer.jenjang_pendidikan || "";
-            form.sumber_biaya = newCareer.sumber_biaya || "";
-            form.alamat_universitas = newCareer.alamat_universitas || "";
-            // Location fields - set provinsi first, then kota
-            form.provinsi_id = newCareer.provinsi_id || null;
-            // Use nextTick to ensure provinsi is set before kota
-            nextTick(() => {
-                form.kota_id = newCareer.kota_id || null;
-            });
-            form.latitude = newCareer.latitude || null;
-            form.longitude = newCareer.longitude || null;
-            // Date fields
-            form.tanggal_mulai = newCareer.tanggal_mulai || "";
-            form.tanggal_selesai = newCareer.tanggal_selesai || "";
-            form.is_current = newCareer.is_current;
-        } else {
-            form.reset();
-        }
-    },
-    { immediate: true },
-);
-
-watch(
     () => form.is_current,
     (isCurrent) => {
         if (isCurrent) {
@@ -227,15 +189,54 @@ watch(
 watch(
     () => props.show,
     (isShown) => {
-        if (
-            isShown &&
-            ["bekerja", "wirausaha", "lanjut_studi"].includes(form.status)
-        ) {
-            setTimeout(() => initMap(), 100);
-        } else if (!isShown) {
+        if (isShown) {
+            isInitialLoad = true;
+            if (props.career) {
+                const newCareer = props.career;
+                form.status = newCareer.status;
+                // Work/Business fields
+                form.nama_perusahaan = newCareer.nama_perusahaan || "";
+                form.jabatan = newCareer.jabatan || "";
+                form.sektor_industri = newCareer.sektor_industri || "";
+                form.alamat_perusahaan = newCareer.alamat_perusahaan || "";
+                form.gaji_min = newCareer.gaji_min || null;
+                form.gaji_max = newCareer.gaji_max || null;
+                // Study fields
+                form.nama_universitas = newCareer.nama_universitas || "";
+                form.program_studi_lanjutan =
+                    newCareer.program_studi_lanjutan || "";
+                form.jenjang_pendidikan = newCareer.jenjang_pendidikan || "";
+                form.sumber_biaya = newCareer.sumber_biaya || "";
+                form.alamat_universitas = newCareer.alamat_universitas || "";
+                // Location fields - set provinsi first, then kota
+                form.provinsi_id = newCareer.provinsi_id || null;
+                nextTick(() => {
+                    form.kota_id = newCareer.kota_id || null;
+                });
+                form.latitude = newCareer.latitude || null;
+                form.longitude = newCareer.longitude || null;
+                // Date fields
+                form.tanggal_mulai = newCareer.tanggal_mulai
+                    ? newCareer.tanggal_mulai.substring(0, 10)
+                    : "";
+                form.tanggal_selesai = newCareer.tanggal_selesai
+                    ? newCareer.tanggal_selesai.substring(0, 10)
+                    : "";
+                form.is_current = !!newCareer.is_current;
+            } else {
+                form.reset();
+            }
+
+            if (
+                ["bekerja", "wirausaha", "lanjut_studi"].includes(form.status)
+            ) {
+                setTimeout(() => initMap(), 100);
+            }
+        } else {
             destroyMap();
         }
     },
+    { immediate: true },
 );
 
 onUnmounted(() => {
@@ -296,11 +297,6 @@ const submit = () => {
     form[method](url, {
         preserveScroll: true,
         onSuccess: () => {
-            toast.success(
-                isEditing.value
-                    ? "Riwayat karir berhasil diperbarui"
-                    : "Riwayat karir berhasil ditambahkan",
-            );
             close();
         },
         onError: (errors) => {
@@ -458,12 +454,27 @@ const salaryError = computed(() => {
                             >
                                 Sektor Industri
                             </label>
-                            <input
+                            <select
                                 v-model="form.sektor_industri"
-                                type="text"
                                 class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                placeholder="Contoh: Teknologi Informasi, Perbankan, dll"
-                            />
+                            >
+                                <option value="" disabled>Pilih Sektor Industri</option>
+                                <option value="Teknologi Informasi">Teknologi Informasi</option>
+                                <option value="Pendidikan">Pendidikan</option>
+                                <option value="Keuangan & Perbankan">Keuangan & Perbankan</option>
+                                <option value="Kesehatan">Kesehatan</option>
+                                <option value="Manufaktur">Manufaktur</option>
+                                <option value="Pemerintahan">Pemerintahan</option>
+                                <option value="Perdagangan & E-Commerce">Perdagangan & E-Commerce</option>
+                                <option value="Telekomunikasi">Telekomunikasi</option>
+                                <option value="Konstruksi & Properti">Konstruksi & Properti</option>
+                                <option value="Transportasi & Logistik">Transportasi & Logistik</option>
+                                <option value="Media & Kreatif">Media & Kreatif</option>
+                                <option value="Pertanian & Pangan">Pertanian & Pangan</option>
+                                <option value="Energi & Pertambangan">Energi & Pertambangan</option>
+                                <option value="Pariwisata & Hospitality">Pariwisata & Hospitality</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
                             <p
                                 v-if="form.errors.sektor_industri"
                                 class="mt-1 text-sm text-red-600"

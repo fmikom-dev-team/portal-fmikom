@@ -19,6 +19,11 @@ class Kota extends Model
         'longitude',
     ];
 
+    protected $casts = [
+        'latitude' => 'float',
+        'longitude' => 'float',
+    ];
+
     public function provinsi()
     {
         return $this->belongsTo(Provinsi::class);

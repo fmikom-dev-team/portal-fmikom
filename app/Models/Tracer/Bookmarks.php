@@ -7,8 +7,11 @@ use App\Models\User;
 
 class Bookmarks extends Model
 {
-    //
+    protected $table = 'bookmarks';
+
     protected $fillable = ['user_id', 'job_id'];
+
+    protected $casts = [];
 
     public function user()
     {

@@ -7,6 +7,7 @@ use App\Models\Magang\LowonganInfo;
 use App\Models\Magang\PembimbingLapangan;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PenilaianMagang;
+use App\Models\Pagi\PagiCv;
 use App\Models\Pagi\PagiWork;
 use App\Models\Surat\Surat;
 use App\Models\Tracer\ProfilAlumni;
@@ -193,6 +194,11 @@ class User extends Authenticatable
      * Gunakan konstanta ini untuk konsistensi dan menghindari typo.
      */
     const USER_TYPE_SUPER_ADMIN = 'super-admin';
+
+    public function pagiCvs(): HasMany
+    {
+        return $this->hasMany(PagiCv::class, 'user_id');
+    }
 
     public function pagiWorks(): HasMany
     {

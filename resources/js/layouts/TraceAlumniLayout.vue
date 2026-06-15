@@ -3,16 +3,15 @@ import type { PageProps } from "@inertiajs/core";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import {
     ArrowLeft,
-    Bell,
     BookOpen,
     Briefcase,
     ChevronDown,
+    CalendarDays,
     GraduationCap,
     LayoutDashboard,
     LogOut,
     Settings,
     User,
-    Users,
 } from "lucide-vue-next";
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import AppShell from "@/components/AppShell.vue";
@@ -41,6 +40,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useInitials } from "@/composables/useInitials";
 import type { BreadcrumbItem } from "@/types";
 import Breadcrumbs from "@/components/Breadcrumbs.vue";
+import NotificationBell from '@/components/Trace/NotificationBell.vue';
 
 interface TracePageProps extends PageProps {
     auth: { user: any };
@@ -67,20 +67,26 @@ const { getInitials } = useInitials();
 const isPageLoading = ref(false);
 let loadingTimeout: ReturnType<typeof setTimeout> | null = null;
 
+let startOff: (() => void) | null = null;
+let finishOff: (() => void) | null = null;
+
 onMounted(() => {
-    const startOff = router.on("start", () => {
+    startOff = router.on("start", () => {
         loadingTimeout = setTimeout(() => {
             isPageLoading.value = true;
         }, 150);
     });
-    const finishOff = router.on("finish", () => {
+
+    finishOff = router.on("finish", () => {
         if (loadingTimeout) clearTimeout(loadingTimeout);
         isPageLoading.value = false;
     });
-    onUnmounted(() => {
-        startOff();
-        finishOff();
-    });
+});
+
+onUnmounted(() => {
+    startOff?.();
+    finishOff?.();
+    if (loadingTimeout) clearTimeout(loadingTimeout);
 });
 
 const navItems = [
@@ -109,10 +115,16 @@ const navItems = [
         match: (u: string) => u.startsWith("/trace/kuesioner"),
     },
     {
-        label: "Lowongan",
-        href: "/trace/direktori",
-        icon: Users,
-        match: (u: string) => u.startsWith("/trace/direktori"),
+        label: "Lowongan Kerja",
+        href: "/trace/jobs",
+        icon: Briefcase,
+        match: (u: string) => u.startsWith("/trace/jobs"),
+    },
+    {
+        label: "Events",
+        href: "/trace/events",
+        icon: CalendarDays,
+        match: (u: string) => u.startsWith("/trace/events"),
     },
 ];
 </script>
@@ -219,7 +231,13 @@ const navItems = [
                                 href="/dashboard"
                                 class="flex items-center gap-2.5 px-2"
                             >
-                                <ArrowLeft class="h-4.25 w-4.25 shrink-0" />
+                                <!--
+                                    FIX #6 — h-4.25 dan w-4.25 bukan class Tailwind yang valid
+                                    (Tailwind tidak punya skala .25 untuk sizing).
+                                    Diganti h-[17px] w-[17px] agar konsisten dengan icon lain
+                                    di file ini yang sudah memakai h-[17px].
+                                -->
+                                <ArrowLeft class="h-[17px] w-[17px] shrink-0" />
                                 <span
                                     class="text-[13px] group-data-[collapsible=icon]:hidden select-none"
                                 >
@@ -272,16 +290,7 @@ const navItems = [
                 <!-- Right: Notifications + Profile -->
                 <div class="flex items-center gap-1.5 shrink-0">
                     <!-- Notifications -->
-                    <button
-                        class="relative flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                        aria-label="Notifikasi"
-                    >
-                        <Bell class="h-4 w-4" />
-                        <span
-                            v-if="(page.props.notifications_count ?? 0) > 0"
-                            class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-green-500"
-                        />
-                    </button>
+                    <NotificationBell />
 
                     <!-- Profile Dropdown -->
                     <DropdownMenu>
