@@ -45,10 +45,10 @@ class PermissionSeeder extends Seeder
             ['group' => 'pagi',        'name' => 'Manage Gallery',           'slug' => 'pagi:gallery.manage',         'description' => 'Kelola galeri foto modul PAGI'],
 
             // ─── WIMS ─────────────────────────────────────────────────
-            ['group' => 'wims',        'name' => 'View WIMS Module',         'slug' => 'wims:module.view',            'description' => 'Akses modul Web Information Management'],
-            ['group' => 'wims',        'name' => 'Manage Content',           'slug' => 'wims:content.manage',         'description' => 'CRUD konten web informasi'],
-            ['group' => 'wims',        'name' => 'Publish Content',          'slug' => 'wims:content.publish',        'description' => 'Publikasikan konten'],
-            ['group' => 'wims',        'name' => 'Manage Users WIMS',        'slug' => 'wims:users.manage',           'description' => 'Kelola user dalam modul WIMS'],
+            ['group' => 'wims',        'name' => 'View WIMS Module',         'slug' => 'wims:module.view',            'description' => 'Akses modul Web-based Internship Management System'],
+            ['group' => 'wims',        'name' => 'Manage Internship Operations', 'slug' => 'wims:content.manage',    'description' => 'Kelola operasional magang: perusahaan, pendaftaran, penempatan, monitoring, dan penilaian'],
+            ['group' => 'wims',        'name' => 'Publish Internship Decisions', 'slug' => 'wims:content.publish',  'description' => 'Mengesahkan keputusan operasional magang dan publikasi hasil proses terkait'],
+            ['group' => 'wims',        'name' => 'Manage WIMS Users',        'slug' => 'wims:users.manage',           'description' => 'Kelola assignment user pada modul WIMS'],
 
             // ─── FAST ─────────────────────────────────────────────────
             ['group' => 'fast',        'name' => 'View FAST Module',         'slug' => 'fast:module.view',            'description' => 'Akses modul Academic System'],
