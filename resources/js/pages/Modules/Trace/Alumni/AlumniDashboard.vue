@@ -16,8 +16,10 @@ import {
     CalendarCheck,
     FileText,
     Circle,
+    LayoutDashboard,
 } from "lucide-vue-next";
 import { computed } from "vue";
+import { TPageHeader, TStatCard } from '@/components/trace';
 
 interface CompletenessItem {
     label: string;
@@ -64,23 +66,23 @@ const statusLabel: Record<string, string> = {
 
 const statusColor: Record<string, string> = {
     bekerja:
-        "text-green-600 bg-green-50 dark:bg-green-950/30 dark:text-green-400",
+        "text-[#0C447C] bg-[#0C447C]/5 dark:bg-[#85B7EB]/10 dark:text-[#85B7EB]",
     wirausaha:
-        "text-teal-600 bg-teal-50 dark:bg-teal-950/30 dark:text-teal-400",
+        "text-[#EF9F27] bg-[#EF9F27]/5 dark:bg-[#FAC775]/10 dark:text-[#FAC775]",
     lanjut_studi:
-        "text-blue-600 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-400",
+        "text-[#0C447C] bg-[#0C447C]/5 dark:bg-[#85B7EB]/10 dark:text-[#85B7EB]",
     mencari_kerja:
         "text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400",
 };
 
 const completenessColor = computed(() => {
-    if (props.profileCompleteness.percentage >= 80) return "bg-green-500";
+    if (props.profileCompleteness.percentage >= 80) return "bg-[#0C447C] dark:bg-[#85B7EB]";
     if (props.profileCompleteness.percentage >= 50) return "bg-amber-500";
     return "bg-red-400";
 });
 
 const completenessGradient = computed(() => {
-    if (props.profileCompleteness.percentage >= 80) return "from-green-500 to-emerald-500";
+    if (props.profileCompleteness.percentage >= 80) return "from-[#0C447C] to-[#85B7EB]";
     if (props.profileCompleteness.percentage >= 50) return "from-amber-500 to-orange-500";
     return "from-red-400 to-rose-500";
 });
@@ -91,21 +93,21 @@ const quickActions = [
         desc: "Isi data diri dan domisili Anda",
         href: "/trace/profile-alumni",
         icon: UserIcon,
-        color: "text-green-600 bg-green-50 dark:bg-green-950/30",
+        color: "text-[#0C447C] bg-[#0C447C]/5 dark:text-[#85B7EB] dark:bg-[#85B7EB]/10",
     },
     {
         label: "Riwayat Karir",
         desc: "Kelola data pekerjaan Anda",
         href: "/trace/career",
         icon: BriefcaseIcon,
-        color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30",
+        color: "text-[#0C447C] bg-[#0C447C]/5 dark:text-[#85B7EB] dark:bg-[#85B7EB]/10",
     },
     {
         label: "Isi Kuesioner",
         desc: "Bantu kami meningkatkan kualitas kampus",
         href: "/trace/kuesioner",
         icon: ClipboardListIcon,
-        color: "text-teal-600 bg-teal-50 dark:bg-teal-950/30",
+        color: "text-[#EF9F27] bg-[#EF9F27]/5 dark:text-[#FAC775] dark:bg-[#FAC775]/10",
     },
 ];
 </script>
@@ -118,17 +120,24 @@ const quickActions = [
         :module-name="moduleName"
     >
         <div class="mx-auto space-y-6">
+            <!-- Page Header -->
+            <TPageHeader
+                title="Dashboard"
+                description="Selamat datang kembali — pantau perkembangan karir alumni FMIKOM"
+                :icon="LayoutDashboard"
+            />
+
             <!-- Welcome Banner -->
             <div
-                class="rounded-2xl bg-gradient-to-br from-green-600 to-emerald-700 p-6 text-white shadow-md shadow-green-500/20"
+                class="rounded-2xl bg-gradient-to-br from-[#0C447C] to-[#0C447C]/80 p-6 text-white shadow-md shadow-[#0C447C]/20"
             >
-                <p class="text-sm text-green-100/80 mb-1">
+                <p class="text-sm text-[#85B7EB]/80 mb-1">
                     Selamat datang kembali
                 </p>
                 <h2 class="text-2xl font-bold mb-1">
                     Halo, {{ user?.name?.split(" ")[0] }}! 👋
                 </h2>
-                <p class="text-sm text-green-100/70">
+                <p class="text-sm text-[#85B7EB]/70">
                     Kembangkan jaringan profesional Anda dan pantau perkembangan
                     karir alumni FMIKOM.
                 </p>
@@ -174,7 +183,7 @@ const quickActions = [
                     <span
                         class="text-2xl font-black tabular-nums"
                         :class="{
-                            'text-green-600 dark:text-green-400': profileCompleteness.percentage >= 80,
+                            'text-[#0C447C] dark:text-[#85B7EB]': profileCompleteness.percentage >= 80,
                             'text-amber-600 dark:text-amber-400': profileCompleteness.percentage >= 50 && profileCompleteness.percentage < 80,
                             'text-red-500 dark:text-red-400': profileCompleteness.percentage < 50,
                         }"
@@ -199,12 +208,12 @@ const quickActions = [
                         :key="item.label"
                         class="flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors"
                         :class="item.done
-                            ? 'bg-green-50 dark:bg-green-950/20'
+                            ? 'bg-[#0C447C]/5 dark:bg-[#85B7EB]/10'
                             : 'bg-slate-50 dark:bg-zinc-800/50'"
                     >
                         <CheckCircle2
                             v-if="item.done"
-                            class="h-4 w-4 text-green-500 shrink-0"
+                            class="h-4 w-4 text-[#0C447C] dark:text-[#85B7EB] shrink-0"
                         />
                         <Circle
                             v-else
@@ -213,7 +222,7 @@ const quickActions = [
                         <span
                             class="truncate text-xs font-medium"
                             :class="item.done
-                                ? 'text-green-700 dark:text-green-400'
+                                ? 'text-[#0C447C] dark:text-[#85B7EB]'
                                 : 'text-slate-500 dark:text-slate-400'"
                         >
                             {{ item.label }}
@@ -224,17 +233,17 @@ const quickActions = [
                 <!-- CTA if not complete -->
                 <div
                     v-if="profileCompleteness.percentage < 100"
-                    class="mt-4 flex items-center justify-between rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 px-4 py-3 border border-green-100 dark:border-green-900/30"
+                    class="mt-4 flex items-center justify-between rounded-xl bg-gradient-to-r from-[#0C447C]/5 to-[#85B7EB]/10 dark:from-[#0C447C]/20 dark:to-[#85B7EB]/10 px-4 py-3 border border-[#85B7EB]/20 dark:border-[#85B7EB]/15"
                 >
                     <div class="flex items-center gap-2">
-                        <AlertCircle class="h-4 w-4 text-green-600 dark:text-green-400" />
-                        <span class="text-xs font-semibold text-green-700 dark:text-green-300">
+                        <AlertCircle class="h-4 w-4 text-[#0C447C] dark:text-[#85B7EB]" />
+                        <span class="text-xs font-semibold text-[#0C447C] dark:text-[#85B7EB]">
                             Lengkapi profil Anda untuk meningkatkan visibilitas
                         </span>
                     </div>
                     <Link
                         href="/trace/profile-alumni"
-                        class="inline-flex items-center gap-1 text-xs font-bold text-green-700 dark:text-green-400 hover:underline"
+                        class="inline-flex items-center gap-1 text-xs font-bold text-[#0C447C] dark:text-[#85B7EB] hover:underline"
                     >
                         Lengkapi <ArrowRight class="h-3 w-3" />
                     </Link>
@@ -243,95 +252,56 @@ const quickActions = [
 
             <!-- Quick Stats Row -->
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <!-- Jobs Applied -->
-                <div
-                    class="rounded-2xl border border-slate-100 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 shadow-sm group hover:border-blue-200 dark:hover:border-blue-900/40 transition-colors"
-                >
-                    <div class="flex items-center gap-3 mb-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/30">
-                            <BriefcaseIcon class="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <p class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                            Lamaran Kerja
-                        </p>
-                    </div>
-                    <p class="text-3xl font-black text-slate-900 dark:text-white tabular-nums">
-                        {{ appliedJobsCount }}
-                    </p>
-                    <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                        pekerjaan dilamar
-                    </p>
-                </div>
-
-                <!-- Upcoming Events -->
-                <div
-                    class="rounded-2xl border border-slate-100 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 shadow-sm group hover:border-purple-200 dark:hover:border-purple-900/40 transition-colors"
-                >
-                    <div class="flex items-center gap-3 mb-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 dark:bg-purple-950/30">
-                            <CalendarCheck class="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <p class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                            Event Mendatang
-                        </p>
-                    </div>
-                    <p class="text-3xl font-black text-slate-900 dark:text-white tabular-nums">
-                        {{ upcomingEventsCount }}
-                    </p>
-                    <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                        event terdaftar
-                    </p>
-                </div>
-
-                <!-- Pending Kuesioners -->
-                <div
-                    class="rounded-2xl border border-slate-100 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 shadow-sm group hover:border-amber-200 dark:hover:border-amber-900/40 transition-colors"
-                >
-                    <div class="flex items-center gap-3 mb-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/30">
-                            <FileText class="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                        </div>
-                        <p class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                            Kuesioner Pending
-                        </p>
-                    </div>
-                    <p class="text-3xl font-black text-slate-900 dark:text-white tabular-nums">
-                        {{ pendingKuesionersCount }}
-                    </p>
-                    <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                        belum diisi
-                    </p>
-                </div>
+                <TStatCard
+                    label="Lamaran Kerja"
+                    :value="appliedJobsCount"
+                    :icon="BriefcaseIcon"
+                    color="primary"
+                    trend-label="pekerjaan dilamar"
+                />
+                <TStatCard
+                    label="Event Mendatang"
+                    :value="upcomingEventsCount"
+                    :icon="CalendarCheck"
+                    color="primary"
+                    trend-label="event terdaftar"
+                />
+                <TStatCard
+                    label="Kuesioner Pending"
+                    :value="pendingKuesionersCount"
+                    :icon="FileText"
+                    color="accent"
+                    trend-label="belum diisi"
+                />
             </div>
 
             <!-- Alert: Kuesioner belum diisi -->
             <div
                 v-if="!hasFilledKuesioner"
-                class="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/40 dark:bg-blue-950/20"
+                class="flex items-start gap-3 rounded-xl border border-[#85B7EB]/30 bg-[#0C447C]/5 p-4 dark:border-[#85B7EB]/20 dark:bg-[#0C447C]/20"
             >
                 <ClipboardListIcon
-                    class="h-5 w-5 text-blue-500 shrink-0 mt-0.5"
+                    class="h-5 w-5 text-[#0C447C] dark:text-[#85B7EB] shrink-0 mt-0.5"
                 />
                 <div class="flex-1 min-w-0">
                     <p
-                        class="text-sm font-semibold text-blue-800 dark:text-blue-300"
+                        class="text-sm font-semibold text-[#0C447C] dark:text-[#85B7EB]"
                     >
                         Kuesioner tracer study belum diisi
                     </p>
-                    <p class="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                    <p class="text-xs text-[#0C447C]/70 dark:text-[#85B7EB]/70 mt-0.5">
                         Bantu kami meningkatkan kualitas pendidikan dengan
                         mengisi kuesioner.
                     </p>
                 </div>
                 <Link
                     href="/trace/kuesioner"
-                    class="shrink-0 text-xs font-semibold text-blue-700 dark:text-blue-400 hover:underline flex items-center gap-1"
+                    class="shrink-0 text-xs font-semibold text-[#0C447C] dark:text-[#85B7EB] hover:underline flex items-center gap-1"
                 >
                     Isi sekarang <ArrowRight class="h-3 w-3" />
                 </Link>
             </div>
 
-            <!-- Stats Cards -->
             <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <!-- Kelengkapan Profil -->
                 <div
@@ -406,7 +376,7 @@ const quickActions = [
                             class="h-5 w-5"
                             :class="
                                 hasFilledKuesioner
-                                    ? 'text-green-500'
+                                    ? 'text-[#0C447C] dark:text-[#85B7EB]'
                                     : 'text-slate-300 dark:text-zinc-600'
                             "
                         />
@@ -414,7 +384,7 @@ const quickActions = [
                             class="text-sm font-semibold"
                             :class="
                                 hasFilledKuesioner
-                                    ? 'text-green-600 dark:text-green-400'
+                                    ? 'text-[#0C447C] dark:text-[#85B7EB]'
                                     : 'text-slate-400'
                             "
                         >
@@ -440,7 +410,7 @@ const quickActions = [
                         v-for="action in quickActions"
                         :key="action.href"
                         :href="action.href"
-                        class="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-4 hover:border-green-200 hover:shadow-sm transition-all dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-green-900/40 group"
+                        class="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-4 hover:border-[#85B7EB]/40 hover:shadow-sm transition-all dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-[#85B7EB]/30 group"
                     >
                         <div
                             class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
@@ -459,7 +429,7 @@ const quickActions = [
                             </p>
                         </div>
                         <ArrowRight
-                            class="h-4 w-4 text-slate-300 dark:text-zinc-600 ml-auto shrink-0 group-hover:text-green-500 transition-colors"
+                            class="h-4 w-4 text-slate-300 dark:text-zinc-600 ml-auto shrink-0 group-hover:text-[#0C447C] dark:group-hover:text-[#85B7EB] transition-colors"
                         />
                     </Link>
                 </div>

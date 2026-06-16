@@ -3,10 +3,10 @@
 namespace App\Modules\Trace\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tracer\JobApplycants;
+use App\Models\Tracer\JobApplicant;
 use App\Models\Tracer\JobCategory;
 use App\Models\Tracer\JobListing;
-use App\Models\Tracer\MitraProfiles;
+use App\Models\Tracer\MitraProfile;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,6 +15,7 @@ use App\Notifications\Trace\NewJobPosted;
 use App\Notifications\Trace\JobApprovedForMitra;
 use App\Notifications\Trace\JobRejectedForMitra;
 use App\Models\Tracer\ActivityLog;
+use Illuminate\Support\Facades\Notification;
 
 class JobManagementController extends Controller
 {
@@ -45,7 +46,7 @@ class JobManagementController extends Controller
 
         // Search by title or mitra company name
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhereHas('mitra', function ($mq) use ($search) {
@@ -79,7 +80,7 @@ class JobManagementController extends Controller
 
         $isOwner = $this->isOwner($job);
 
-        $applicants = JobApplycants::where('job_id', $job->id)
+        $applicants = JobApplicant::where('job_id', $job->id)
             ->with(['alumni.user.pagiCvs', 'alumni.user.pagiWorks'])
             ->get();
 
@@ -93,7 +94,7 @@ class JobManagementController extends Controller
     public function create()
     {
         $categories = JobCategory::all();
-        $mitras = MitraProfiles::all();
+        $mitras = MitraProfile::all();
 
         return Inertia::render('Modules/Trace/Admin/Jobs/Create', [
             'categories' => $categories,
@@ -115,9 +116,7 @@ class JobManagementController extends Controller
         if ($job->status === 'published') {
             $companyName = $job->mitra?->nama_perusahaan ?? 'Admin FMIKOM';
             $alumni = User::whereHas('alumniProfile')->get();
-            foreach ($alumni as $user) {
-                $user->notify(new NewJobPosted($job->title, $companyName, $job->id));
-            }
+            Notification::send($alumni, new NewJobPosted($job->title, $companyName, $job->id));
         }
 
         return redirect()->route('module.trace.admin.jobs')
@@ -128,7 +127,7 @@ class JobManagementController extends Controller
     {
         $job = JobListing::with('mitra', 'category')->findOrFail($id);
         $categories = JobCategory::all();
-        $mitras = MitraProfiles::all();
+        $mitras = MitraProfile::all();
 
         return Inertia::render('Modules/Trace/Admin/Jobs/Edit', [
             'job' => $job,
@@ -171,9 +170,7 @@ class JobManagementController extends Controller
         // Notify all alumni about the new job
         $companyName = $job->mitra?->nama_perusahaan ?? 'Admin FMIKOM';
         $alumni = User::whereHas('alumniProfile')->get();
-        foreach ($alumni as $user) {
-            $user->notify(new NewJobPosted($job->title, $companyName, $job->id));
-        }
+        Notification::send($alumni, new NewJobPosted($job->title, $companyName, $job->id));
 
         return back()->with('success', 'Lowongan berhasil disetujui dan dipublikasikan.');
     }
@@ -225,9 +222,7 @@ class JobManagementController extends Controller
             // Notify alumni about new job
             $companyName = $job->mitra?->nama_perusahaan ?? 'Admin FMIKOM';
             $alumni = User::whereHas('alumniProfile')->get();
-            foreach ($alumni as $user) {
-                $user->notify(new NewJobPosted($job->title, $companyName, $job->id));
-            }
+            Notification::send($alumni, new NewJobPosted($job->title, $companyName, $job->id));
         }
 
         return back()->with('success', count($jobs) . ' lowongan berhasil disetujui.');
@@ -291,7 +286,7 @@ class JobManagementController extends Controller
             'note' => 'nullable|string|max:1000',
         ]);
 
-        $applicant = JobApplycants::where('job_id', $job->id)->findOrFail($applicantId);
+        $applicant = JobApplicant::where('job_id', $job->id)->findOrFail($applicantId);
 
         $updateData = [
             'status' => $validated['status'],
@@ -323,14 +318,14 @@ class JobManagementController extends Controller
     {
         return [
             'title' => 'required|string|max:255',
-            'description' => 'required|string',
+            'description' => 'required|string|max:65535',
             'job_category_id' => 'nullable|exists:job_categories,id',
             'experience_level' => 'required|in:fresh_graduate,junior,mid_level,senior,internship',
             'location_type' => 'required|in:onsite,remote,hybrid',
             'location_city' => 'nullable|string',
             'tipe_kerja' => 'required|in:full_time,part_time,magang,freelance',
             'salary_min' => 'nullable|integer|min:0',
-            'salary_max' => 'nullable|integer|min:0',
+            'salary_max' => 'nullable|integer|min:0|gte:salary_min',
             'deadline' => 'nullable|date|after:today',
             'is_salary_visible' => 'boolean',
             'status' => 'in:draft,published,closed',

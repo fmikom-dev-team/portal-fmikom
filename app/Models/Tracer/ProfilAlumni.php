@@ -14,6 +14,8 @@ class ProfilAlumni extends Model
 {
     use HasFactory;
 
+    protected $with = ['user'];
+
     protected $fillable = [
         'user_id',
         'angkatan',
@@ -26,6 +28,8 @@ class ProfilAlumni extends Model
         'provinsi_id',
         'kota_id',
     ];
+
+    protected $hidden = ['nik', 'npwp'];
 
     protected $appends = ['completeness_percentage', 'nim', 'nama_lengkap', 'tahun_lulus', 'photo_path', 'program_studi'];
 

@@ -5,7 +5,7 @@ namespace App\Models\Tracer;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Tracer\ProfilAlumni;
 
-class JobApplycants extends Model
+class JobApplicant extends Model
 {
     protected $table = 'job_applycants';
 

@@ -1,17 +1,12 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
 import { ref, computed } from 'vue';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    CardDescription,
-} from '@/components/ui/card';
+import { TPageHeader, TFormSection } from '@/components/trace';
 import {
     Building2,
     Globe,
@@ -69,29 +64,19 @@ function triggerFileInput() {
 }
 
 function submit() {
-    form.post('/trace/open-job/profile');
+    form.post('/trace/open-job/profile', {
+        onSuccess: () => toast.success('Profil berhasil diperbarui!'),
+        onError: () => toast.error('Gagal menyimpan. Periksa kembali form Anda.'),
+    });
 }
 </script>
 
 <template>
     <TraceMitraLayout title="Profil Perusahaan">
         <div class="mx-auto max-w-3xl">
-            <div class="mb-6">
-                <h1 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-                    <Building2 class="mr-2 inline h-6 w-6 text-violet-600" />
-                    Profil Perusahaan
-                </h1>
-                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Kelola informasi perusahaan Anda
-                </p>
-            </div>
+            <TPageHeader title="Edit Profil" description="Kelola informasi perusahaan Anda" :icon="Building2" class="mb-6" />
 
-            <Card class="rounded-2xl border-slate-100 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                <CardHeader class="pb-4">
-                    <CardTitle class="text-lg">Informasi Perusahaan</CardTitle>
-                    <CardDescription>Data ini akan ditampilkan di halaman lowongan kerja</CardDescription>
-                </CardHeader>
-                <CardContent>
+            <TFormSection title="Informasi Perusahaan" description="Data ini akan ditampilkan di halaman lowongan kerja">
                     <form @submit.prevent="submit" class="space-y-5">
                         <!-- Logo Upload -->
                         <div class="space-y-2">
@@ -172,6 +157,7 @@ function submit() {
                                 rows="4"
                                 class="rounded-xl"
                             />
+                            <p v-if="form.errors.deskripsi" class="text-xs text-red-500">{{ form.errors.deskripsi }}</p>
                         </div>
 
                         <!-- Website -->
@@ -217,6 +203,7 @@ function submit() {
                                     placeholder="08xx-xxxx-xxxx"
                                     class="rounded-xl"
                                 />
+                                <p v-if="form.errors.no_telp" class="text-xs text-red-500">{{ form.errors.no_telp }}</p>
                             </div>
                         </div>
 
@@ -232,6 +219,7 @@ function submit() {
                                 rows="3"
                                 class="rounded-xl"
                             />
+                            <p v-if="form.errors.alamat_lengkap" class="text-xs text-red-500">{{ form.errors.alamat_lengkap }}</p>
                         </div>
 
                         <!-- Submit -->
@@ -246,8 +234,7 @@ function submit() {
                             </Button>
                         </div>
                     </form>
-                </CardContent>
-            </Card>
+            </TFormSection>
         </div>
     </TraceMitraLayout>
 </template>

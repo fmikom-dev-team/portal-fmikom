@@ -2,20 +2,13 @@
 import { Link, router } from '@inertiajs/vue3';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { TPageHeader, TDataTable, TFilterBar, TPagination, TEmptyState } from '@/components/trace';
 import {
     History,
-    Search,
-    Filter,
-    X,
     User as UserIcon,
     Globe,
     Clock,
-    ChevronLeft,
-    ChevronRight,
     Activity,
-    CalendarDays,
     FileText,
 } from 'lucide-vue-next';
 import { ref, watch, computed } from 'vue';
@@ -73,7 +66,7 @@ const search = ref(props.filters.search ?? '');
 const actionFilter = ref(props.filters.action ?? '');
 const dateFrom = ref(props.filters.date_from ?? '');
 const dateTo = ref(props.filters.date_to ?? '');
-const showFilters = ref(false);
+
 
 const hasActiveFilters = computed(() => {
     return !!actionFilter.value || !!dateFrom.value || !!dateTo.value || !!search.value;
@@ -100,6 +93,12 @@ const clearFilters = () => {
     router.get('/trace/admin/activity-log', {}, { preserveState: true, preserveScroll: true });
 };
 
+const onFilterBarChange = (filters: Record<string, string>) => {
+    search.value = filters.search ?? '';
+    actionFilter.value = filters.action ?? '';
+    applyFilters();
+};
+
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 const onSearchInput = () => {
     if (searchTimeout) clearTimeout(searchTimeout);
@@ -117,8 +116,8 @@ const getActionBadge = (action: string): BadgeConfig => {
             darkBg: 'dark:bg-slate-800', darkText: 'dark:text-slate-400', darkBorder: 'dark:border-slate-700',
         },
         job: {
-            label: action, bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200',
-            darkBg: 'dark:bg-violet-950/30', darkText: 'dark:text-violet-400', darkBorder: 'dark:border-violet-800',
+            label: action, bg: 'bg-[#0C447C]/10', text: 'text-[#0C447C]', border: 'border-[#85B7EB]',
+            darkBg: 'dark:bg-[#0C447C]/20', darkText: 'dark:text-[#85B7EB]', darkBorder: 'dark:border-[#0C447C]',
         },
         event: {
             label: action, bg: 'bg-sky-50', text: 'text-sky-700', border: 'border-sky-200',
@@ -209,277 +208,122 @@ const groupedActionTypes = computed(() => {
 <template>
     <TraceAdminLayout title="Activity Log" :breadcrumbs="breadcrumbs">
         <div class="mx-auto max-w-7xl space-y-6">
-            <!-- Header -->
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <div class="flex items-center gap-1.5 text-sky-600 dark:text-sky-400 mb-1">
-                        <History class="h-4 w-4" />
-                        <span class="text-[10px] font-black uppercase tracking-widest">Audit Trail</span>
-                    </div>
-                    <h1 class="text-2xl font-black tracking-tight text-slate-800 dark:text-white">Activity Log</h1>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                        Pantau semua aktivitas pengguna di sistem.
-                    </p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="inline-flex items-center gap-1.5 rounded-xl bg-sky-50 dark:bg-sky-950/30 px-3 py-1.5 text-xs font-bold text-sky-700 dark:text-sky-400 border border-sky-200/50 dark:border-sky-800/30">
+            <TPageHeader
+                title="Activity Log"
+                description="Pantau semua aktivitas pengguna di sistem."
+                :icon="History"
+            >
+                <template #actions>
+                    <span class="inline-flex items-center gap-1.5 rounded-xl bg-[#0C447C]/10 dark:bg-[#85B7EB]/10 px-3 py-1.5 text-xs font-bold text-[#0C447C] dark:text-[#85B7EB] border border-[#0C447C]/20 dark:border-[#85B7EB]/20">
                         <Activity class="h-3.5 w-3.5" />
                         {{ logs.total }} Total Log
                     </span>
+                </template>
+            </TPageHeader>
+
+            <TFilterBar
+                search-placeholder="Cari deskripsi aktivitas..."
+                :filters="[
+                    {
+                        key: 'action',
+                        label: 'Aksi',
+                        options: actionTypes.map(a => ({ value: a, label: a })),
+                    },
+                ]"
+                :model-value="{ search, action: actionFilter }"
+                @filter-change="onFilterBarChange"
+            />
+
+            <!-- Date Range Filters -->
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div class="flex-1 sm:flex-none">
+                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Dari Tanggal</label>
+                    <input v-model="dateFrom" @change="applyFilters" type="date" class="w-full sm:w-[180px] h-9 rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:border-[#0C447C] focus:ring-1 focus:ring-[#85B7EB]/30 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300" />
+                </div>
+                <div class="flex-1 sm:flex-none">
+                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Sampai Tanggal</label>
+                    <input v-model="dateTo" @change="applyFilters" type="date" class="w-full sm:w-[180px] h-9 rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:border-[#0C447C] focus:ring-1 focus:ring-[#85B7EB]/30 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300" />
                 </div>
             </div>
 
-            <!-- Search & Filters -->
-            <Card class="rounded-2xl border-slate-100 dark:border-slate-800 shadow-xs overflow-hidden">
-                <CardContent class="p-4">
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-                        <!-- Search -->
-                        <div class="relative flex-1">
-                            <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                            <input
-                                v-model="search"
-                                @input="onSearchInput"
-                                @keyup.enter="applyFilters"
-                                type="text"
-                                placeholder="Cari deskripsi aktivitas..."
-                                class="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 bg-slate-50/50 text-sm font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-200 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-200 dark:focus:border-sky-600 dark:focus:ring-sky-800 transition-colors"
-                            />
-                        </div>
-
-                        <!-- Toggle Filters -->
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            @click="showFilters = !showFilters"
-                            class="rounded-xl border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 h-10 px-4 gap-2"
-                        >
-                            <Filter class="h-3.5 w-3.5" />
-                            Filter
-                            <span v-if="hasActiveFilters" class="flex h-4 w-4 items-center justify-center rounded-full bg-sky-600 text-[9px] font-bold text-white">!</span>
-                        </Button>
-
-                        <!-- Clear -->
-                        <Button
-                            v-if="hasActiveFilters"
-                            variant="ghost"
-                            size="sm"
-                            @click="clearFilters"
-                            class="rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20 h-10 px-4 gap-2"
-                        >
-                            <X class="h-3.5 w-3.5" />
-                            Reset
-                        </Button>
-                    </div>
-
-                    <!-- Filter Panel -->
-                    <Transition
-                        enter-active-class="transition-all duration-200 ease-out"
-                        enter-from-class="opacity-0 -translate-y-2 max-h-0"
-                        enter-to-class="opacity-100 translate-y-0 max-h-40"
-                        leave-active-class="transition-all duration-150 ease-in"
-                        leave-from-class="opacity-100 translate-y-0 max-h-40"
-                        leave-to-class="opacity-0 -translate-y-2 max-h-0"
-                    >
-                        <div v-if="showFilters" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 overflow-hidden">
-                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                                <!-- Action Type -->
-                                <div>
-                                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Tipe Aksi</label>
-                                    <select
-                                        v-model="actionFilter"
-                                        @change="applyFilters"
-                                        class="w-full h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:focus:border-sky-600 appearance-none"
-                                    >
-                                        <option value="">Semua Aksi</option>
-                                        <template v-for="(actions, group) in groupedActionTypes" :key="group">
-                                            <optgroup :label="String(group).toUpperCase()">
-                                                <option v-for="action in actions" :key="action" :value="action">{{ action }}</option>
-                                            </optgroup>
-                                        </template>
-                                    </select>
-                                </div>
-
-                                <!-- Date From -->
-                                <div>
-                                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Dari Tanggal</label>
-                                    <input
-                                        v-model="dateFrom"
-                                        @change="applyFilters"
-                                        type="date"
-                                        class="w-full h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:focus:border-sky-600"
-                                    />
-                                </div>
-
-                                <!-- Date To -->
-                                <div>
-                                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Sampai Tanggal</label>
-                                    <input
-                                        v-model="dateTo"
-                                        @change="applyFilters"
-                                        type="date"
-                                        class="w-full h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:focus:border-sky-600"
-                                    />
-                                </div>
+            <TDataTable
+                :columns="[
+                    { key: 'user', label: 'Pengguna' },
+                    { key: 'action', label: 'Aksi' },
+                    { key: 'description', label: 'Deskripsi', class: 'hidden sm:table-cell', headerClass: 'hidden sm:table-cell' },
+                    { key: 'ip_address', label: 'IP Address', class: 'hidden lg:table-cell', headerClass: 'hidden lg:table-cell' },
+                    { key: 'created_at', label: 'Waktu', class: 'text-right', headerClass: 'text-right' },
+                ]"
+                :data="logs.data"
+            >
+                <template #cell-user="{ row }">
+                    <div class="flex items-center gap-2.5 min-w-[140px]">
+                        <template v-if="row.user">
+                            <div class="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full ring-2 ring-slate-100 dark:ring-slate-700">
+                                <img :src="getAvatarUrl(row.user)" :alt="row.user.name" class="h-full w-full object-cover" />
                             </div>
-                        </div>
-                    </Transition>
-                </CardContent>
-            </Card>
-
-            <!-- Activity Log Table -->
-            <Card class="rounded-2xl border-slate-100 dark:border-slate-800 shadow-xs overflow-hidden">
-                <CardContent class="p-0">
-                    <div v-if="logs.data.length > 0" class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead>
-                                <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
-                                    <th class="px-5 py-3 text-[10px] font-black uppercase tracking-wider text-slate-400">Pengguna</th>
-                                    <th class="px-5 py-3 text-[10px] font-black uppercase tracking-wider text-slate-400">Aksi</th>
-                                    <th class="px-5 py-3 text-[10px] font-black uppercase tracking-wider text-slate-400 hidden sm:table-cell">Deskripsi</th>
-                                    <th class="px-5 py-3 text-[10px] font-black uppercase tracking-wider text-slate-400 hidden lg:table-cell">IP Address</th>
-                                    <th class="px-5 py-3 text-[10px] font-black uppercase tracking-wider text-slate-400 text-right">Waktu</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-50 dark:divide-slate-800/60">
-                                <tr
-                                    v-for="log in logs.data"
-                                    :key="log.id"
-                                    class="group transition-colors hover:bg-sky-50/30 dark:hover:bg-sky-950/10"
-                                >
-                                    <!-- User -->
-                                    <td class="px-5 py-3.5">
-                                        <div class="flex items-center gap-2.5 min-w-[140px]">
-                                            <template v-if="log.user">
-                                                <div class="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full ring-2 ring-slate-100 dark:ring-slate-700">
-                                                    <img
-                                                        :src="getAvatarUrl(log.user)"
-                                                        :alt="log.user.name"
-                                                        class="h-full w-full object-cover"
-                                                    />
-                                                </div>
-                                                <div class="min-w-0">
-                                                    <p class="text-xs font-bold text-slate-800 dark:text-white truncate max-w-[120px]">
-                                                        {{ log.user.name }}
-                                                    </p>
-                                                    <p class="text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[120px]">
-                                                        {{ log.user.email }}
-                                                    </p>
-                                                </div>
-                                            </template>
-                                            <template v-else>
-                                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-                                                    <UserIcon class="h-3.5 w-3.5 text-slate-400" />
-                                                </div>
-                                                <span class="text-xs text-slate-400 italic">Sistem</span>
-                                            </template>
-                                        </div>
-                                    </td>
-
-                                    <!-- Action Badge -->
-                                    <td class="px-5 py-3.5">
-                                        <span
-                                            class="inline-flex items-center rounded-lg border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
-                                            :class="[
-                                                getActionBadge(log.action).bg,
-                                                getActionBadge(log.action).text,
-                                                getActionBadge(log.action).border,
-                                                getActionBadge(log.action).darkBg,
-                                                getActionBadge(log.action).darkText,
-                                                getActionBadge(log.action).darkBorder,
-                                            ]"
-                                        >
-                                            {{ log.action }}
-                                        </span>
-                                    </td>
-
-                                    <!-- Description -->
-                                    <td class="px-5 py-3.5 hidden sm:table-cell">
-                                        <p class="text-xs font-medium text-slate-700 dark:text-slate-300 max-w-[300px] truncate">
-                                            {{ log.description }}
-                                        </p>
-                                        <p
-                                            v-if="log.properties && Object.keys(log.properties).length > 0"
-                                            class="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[300px]"
-                                        >
-                                            {{ JSON.stringify(log.properties) }}
-                                        </p>
-                                    </td>
-
-                                    <!-- IP -->
-                                    <td class="px-5 py-3.5 hidden lg:table-cell">
-                                        <div v-if="log.ip_address" class="flex items-center gap-1.5">
-                                            <Globe class="h-3 w-3 text-slate-400" />
-                                            <span class="text-xs font-mono text-slate-500 dark:text-slate-400">{{ log.ip_address }}</span>
-                                        </div>
-                                        <span v-else class="text-xs text-slate-300 dark:text-slate-600">—</span>
-                                    </td>
-
-                                    <!-- Timestamp -->
-                                    <td class="px-5 py-3.5 text-right">
-                                        <div class="flex flex-col items-end gap-0.5">
-                                            <span class="text-xs font-bold text-slate-600 dark:text-slate-300">
-                                                {{ formatRelative(log.created_at) }}
-                                            </span>
-                                            <span class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                                                <Clock class="h-2.5 w-2.5" />
-                                                {{ formatDate(log.created_at) }} {{ formatTime(log.created_at) }}
-                                            </span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold text-slate-800 dark:text-white truncate max-w-[120px]">{{ row.user.name }}</p>
+                                <p class="text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[120px]">{{ row.user.email }}</p>
+                            </div>
+                        </template>
+                        <template v-else>
+                            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+                                <UserIcon class="h-3.5 w-3.5 text-slate-400" />
+                            </div>
+                            <span class="text-xs text-slate-400 italic">Sistem</span>
+                        </template>
                     </div>
-
-                    <!-- Empty State -->
-                    <div v-else class="flex flex-col items-center justify-center py-20 text-center">
-                        <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 mb-4">
-                            <FileText class="h-8 w-8 text-slate-300 dark:text-slate-600" />
-                        </div>
-                        <p class="text-sm font-bold text-slate-500 dark:text-slate-400 mb-1">Belum ada aktivitas</p>
-                        <p class="text-xs text-slate-400 dark:text-slate-500 max-w-sm">
-                            Aktivitas pengguna akan muncul di sini saat ada tindakan yang dilakukan di sistem.
-                        </p>
-                        <Button
-                            v-if="hasActiveFilters"
-                            variant="outline"
-                            size="sm"
-                            @click="clearFilters"
-                            class="mt-4 rounded-xl border-slate-200 dark:border-slate-700"
-                        >
-                            <X class="h-3.5 w-3.5 mr-1.5" />
-                            Reset Filter
-                        </Button>
+                </template>
+                <template #cell-action="{ row }">
+                    <span
+                        class="inline-flex items-center rounded-lg border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
+                        :class="[
+                            getActionBadge(row.action).bg,
+                            getActionBadge(row.action).text,
+                            getActionBadge(row.action).border,
+                            getActionBadge(row.action).darkBg,
+                            getActionBadge(row.action).darkText,
+                            getActionBadge(row.action).darkBorder,
+                        ]"
+                    >
+                        {{ row.action }}
+                    </span>
+                </template>
+                <template #cell-description="{ row }">
+                    <p class="text-xs font-medium text-slate-700 dark:text-slate-300 max-w-[300px] truncate">{{ row.description }}</p>
+                    <p v-if="row.properties && Object.keys(row.properties).length > 0" class="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[300px]">
+                        {{ JSON.stringify(row.properties) }}
+                    </p>
+                </template>
+                <template #cell-ip_address="{ row }">
+                    <div v-if="row.ip_address" class="flex items-center gap-1.5">
+                        <Globe class="h-3 w-3 text-slate-400" />
+                        <span class="text-xs font-mono text-slate-500 dark:text-slate-400">{{ row.ip_address }}</span>
                     </div>
-                </CardContent>
-            </Card>
+                    <span v-else class="text-xs text-slate-300 dark:text-slate-600">—</span>
+                </template>
+                <template #cell-created_at="{ row }">
+                    <div class="flex flex-col items-end gap-0.5">
+                        <span class="text-xs font-bold text-slate-600 dark:text-slate-300">{{ formatRelative(row.created_at) }}</span>
+                        <span class="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                            <Clock class="h-2.5 w-2.5" />
+                            {{ formatDate(row.created_at) }} {{ formatTime(row.created_at) }}
+                        </span>
+                    </div>
+                </template>
+                <template #empty>
+                    <TEmptyState
+                        :icon="FileText"
+                        :title="hasActiveFilters ? 'Tidak ada log ditemukan' : 'Belum ada aktivitas'"
+                        :description="hasActiveFilters ? 'Coba ubah filter pencarian Anda.' : 'Aktivitas pengguna akan muncul di sini saat ada tindakan yang dilakukan di sistem.'"
+                        :action-label="hasActiveFilters ? 'Reset Filter' : undefined"
+                        @action="clearFilters"
+                    />
+                </template>
+            </TDataTable>
 
-            <!-- Pagination -->
-            <div v-if="logs.last_page > 1" class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p class="text-xs text-slate-400 dark:text-slate-500">
-                    Menampilkan {{ logs.from }}–{{ logs.to }} dari {{ logs.total }} log
-                    · Halaman {{ logs.current_page }} / {{ logs.last_page }}
-                </p>
-                <nav class="flex items-center gap-1">
-                    <template v-for="(link, idx) in logs.links" :key="idx">
-                        <Link
-                            v-if="link.url"
-                            :href="link.url"
-                            class="flex h-8 min-w-8 items-center justify-center rounded-lg px-2.5 text-xs font-bold transition-colors"
-                            :class="link.active
-                                ? 'bg-sky-600 text-white shadow-sm'
-                                : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'"
-                            v-html="link.label"
-                            preserve-scroll
-                        />
-                        <span
-                            v-else
-                            class="flex h-8 min-w-8 items-center justify-center rounded-lg px-2.5 text-xs text-slate-300 dark:text-slate-600"
-                            v-html="link.label"
-                        />
-                    </template>
-                </nav>
-            </div>
+            <TPagination :links="logs.links" />
         </div>
     </TraceAdminLayout>
 </template>

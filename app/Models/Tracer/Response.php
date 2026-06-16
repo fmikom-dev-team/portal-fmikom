@@ -21,6 +21,8 @@ class Response extends Model
         'stakeholder_email',
     ];
 
+    protected $hidden = ['stakeholder_email'];
+
     /*
     |-------------------------
     | CASTS

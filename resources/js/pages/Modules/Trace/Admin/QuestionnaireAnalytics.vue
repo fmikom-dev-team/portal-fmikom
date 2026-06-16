@@ -17,6 +17,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TPageHeader } from '@/components/trace';
+import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import RespondentList from './components/RespondentList.vue';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, RadialLinearScale, ChartDataLabels);
@@ -51,7 +53,7 @@ let refreshInterval: ReturnType<typeof setInterval> | null = null;
 async function fetchLiveStats() {
     try {
         refreshingLive.value = true;
-        const response = await axios.get(`/admin/quesionnaires/${props.kuesionerId}/live-stats`);
+        const response = await axios.get(`/trace/admin/questionnaires/${props.kuesionerId}/live-stats`);
         liveStats.value = response.data;
     } catch (e) {
         console.error('Failed to fetch live stats', e);
@@ -69,7 +71,7 @@ const fetchAnalytics = async () => {
     loading.value = true;
     error.value = null;
     try {
-        const response = await axios.get(`/admin/quesionnaires/${props.kuesionerId}/analytics`);
+        const response = await axios.get(`/trace/admin/questionnaires/${props.kuesionerId}/analytics`);
         data.value = response.data;
     } catch (err: any) {
         error.value = err?.response?.data?.message || 'Gagal mengambil data analitik';
@@ -81,7 +83,7 @@ const fetchAnalytics = async () => {
 const handleExport = () => {
     exporting.value = true;
     try {
-        window.open(`/admin/quesionnaires/${props.kuesionerId}/export`, '_blank');
+        window.open(`/trace/admin/questionnaires/${props.kuesionerId}/export`, '_blank');
     } catch (err) {
         console.error('Gagal mengekspor data:', err);
     } finally {
@@ -195,7 +197,12 @@ const exportPDF = async () => {
     }
 };
 
-const goBack = () => { router.get('/admin/quesionnaires'); };
+const goBack = () => { router.get('/trace/admin/questionnaires'); };
+
+const breadcrumbs = [
+    { title: 'Manajemen Kuesioner', href: '/trace/admin/questionnaires' },
+    { title: 'Analitik', href: '#' },
+];
 
 onMounted(() => {
     fetchAnalytics();
@@ -275,26 +282,23 @@ const getRadarOptions = (stat: any) => ({
 </script>
 
 <template>
+    <TraceAdminLayout :breadcrumbs="breadcrumbs">
     <div class="min-h-screen bg-slate-50/50 p-6 dark:bg-slate-950/50">
         <div class="mx-auto max-w-7xl">
             <!-- Header with Back Button -->
-            <div class="mb-8 flex items-center gap-4">
-                <Button
-                    variant="outline"
-                    size="icon"
-                    class="h-10 w-10 rounded-xl"
-                    @click="goBack"
-                >
-                    <ArrowLeft class="h-4 w-4" />
-                </Button>
-                <div>
-                    <h1 class="text-2xl font-black tracking-tight">
-                        {{ kuesioner.judul }}
-                    </h1>
-                    <p class="text-sm text-muted-foreground">
-                        {{ kuesioner.subtitle || 'Kuesioner Umum' }}
-                    </p>
-                </div>
+            <div class="mb-8">
+                <TPageHeader :title="kuesioner.judul" :description="kuesioner.subtitle || 'Analisis Hasil Kuesioner'" :icon="BarChart3">
+                    <template #actions>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            class="h-10 w-10 rounded-xl"
+                            @click="goBack"
+                        >
+                            <ArrowLeft class="h-4 w-4" />
+                        </Button>
+                    </template>
+                </TPageHeader>
             </div>
 
             <!-- Live Stats Bar -->
@@ -319,7 +323,7 @@ const getRadarOptions = (stat: any) => ({
                     <span v-if="liveStats.cache_status === 'cached'" class="text-[10px] font-bold text-amber-500 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded-full">Cached</span>
                     <span v-else class="text-[10px] font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full">Fresh</span>
                     <button
-                        class="flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-600 transition-all hover:bg-blue-100 dark:bg-blue-950/30 dark:text-blue-400 dark:hover:bg-blue-950/50"
+                        class="flex items-center gap-1.5 rounded-lg bg-[#0C447C]/10 px-2.5 py-1 text-[11px] font-bold text-[#0C447C] transition-all hover:bg-[#85B7EB]/20 dark:bg-[#0C447C]/20 dark:text-[#85B7EB] dark:hover:bg-[#0C447C]/30"
                         :disabled="refreshingLive"
                         @click="hardRefresh"
                     >
@@ -337,7 +341,7 @@ const getRadarOptions = (stat: any) => ({
                 >
                     <div class="flex items-center gap-3">
                         <div
-                            class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                            class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0C447C] text-white shadow-lg shadow-[#0C447C]/20"
                         >
                             <BarChart3 class="h-6 w-6" />
                         </div>
@@ -349,7 +353,7 @@ const getRadarOptions = (stat: any) => ({
                                 <Badge
                                     v-if="data"
                                     variant="secondary"
-                                    class="rounded-lg border border-blue-200 bg-blue-50 font-bold text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-400"
+                                    class="rounded-lg border border-[#85B7EB] bg-[#0C447C]/10 font-bold text-[#0C447C] dark:border-[#0C447C] dark:bg-[#0C447C]/20 dark:text-[#85B7EB]"
                                 >
                                     {{ data.total_responses }} Responden
                                 </Badge>
@@ -374,7 +378,7 @@ const getRadarOptions = (stat: any) => ({
                                 v-if="exporting"
                                 class="h-4 w-4 animate-spin"
                             />
-                            <Download v-else class="h-4 w-4 text-blue-600" />
+                            <Download v-else class="h-4 w-4 text-[#0C447C]" />
                             Export Excel
                         </Button>
                         <Button
@@ -403,7 +407,7 @@ const getRadarOptions = (stat: any) => ({
                                 :class="[
                                     'relative h-10 rounded-none border-b-2 bg-transparent px-2 pb-2 text-sm font-bold transition-all',
                                     activeView === 'overview'
-                                        ? 'border-blue-600 text-blue-600'
+                                        ? 'border-[#0C447C] text-[#0C447C]'
                                         : 'border-transparent text-muted-foreground hover:text-slate-600',
                                 ]"
                             >
@@ -417,7 +421,7 @@ const getRadarOptions = (stat: any) => ({
                                 :class="[
                                     'relative h-10 rounded-none border-b-2 bg-transparent px-2 pb-2 text-sm font-bold transition-all',
                                     activeView === 'respondents'
-                                        ? 'border-blue-600 text-blue-600'
+                                        ? 'border-[#0C447C] text-[#0C447C]'
                                         : 'border-transparent text-muted-foreground hover:text-slate-600',
                                 ]"
                             >
@@ -465,7 +469,7 @@ const getRadarOptions = (stat: any) => ({
                             class="flex flex-col items-center justify-center py-20"
                         >
                             <Loader2
-                                class="h-10 w-10 animate-spin text-blue-500"
+                                class="h-10 w-10 animate-spin text-[#0C447C]"
                             />
                             <p
                                 class="mt-4 text-sm font-medium text-muted-foreground"
@@ -516,11 +520,11 @@ const getRadarOptions = (stat: any) => ({
                             <!-- Radar Chart for Competency -->
                             <Card
                                 v-if="data.radar_data"
-                                class="overflow-hidden border-none bg-white shadow-sm dark:bg-slate-900/40"
+                                class="overflow-hidden border border-slate-100 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
                             >
                                 <CardHeader class="pb-2">
                                     <div class="flex items-center gap-2">
-                                        <Award class="h-4 w-4 text-blue-500" />
+                                        <Award class="h-4 w-4 text-[#0C447C]" />
                                         <CardTitle class="text-sm font-bold"
                                             >Analisis Kompetensi Lulusan
                                             (CPL)</CardTitle
@@ -550,7 +554,7 @@ const getRadarOptions = (stat: any) => ({
                             >
                                 <div class="flex items-center gap-3 pt-4">
                                     <Badge
-                                        class="rounded-lg bg-blue-600 px-3 py-1 text-[10px] font-black tracking-widest text-white uppercase"
+                                        class="rounded-lg bg-[#0C447C] px-3 py-1 text-[10px] font-black tracking-widest text-white uppercase"
                                     >
                                         Kategori: {{ category.name }}
                                     </Badge>
@@ -566,7 +570,7 @@ const getRadarOptions = (stat: any) => ({
                                         v-for="stat in category.statistics"
                                         :key="stat.question_id"
                                         :data-chart-id="stat.question_id"
-                                        class="group overflow-hidden border-none shadow-sm transition-all hover:shadow-xl dark:bg-slate-900/40"
+                                        class="group overflow-hidden border border-slate-100 shadow-sm transition-all hover:shadow-xl dark:border-zinc-800 dark:bg-zinc-900"
                                     >
                                         <CardHeader
                                             class="border-b bg-slate-50/50 pb-5 dark:bg-slate-900/50"
@@ -606,7 +610,7 @@ const getRadarOptions = (stat: any) => ({
                                                     <!-- Indikator Badge -->
                                                     <Badge
                                                         v-if="stat.indikator"
-                                                        class="rounded-lg border border-blue-200 bg-blue-50 px-2 py-0.5 text-[9px] font-bold text-blue-700 hover:bg-blue-100 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-400"
+                                                        class="rounded-lg border border-[#85B7EB] bg-[#0C447C]/10 px-2 py-0.5 text-[9px] font-bold text-[#0C447C] hover:bg-[#85B7EB]/20 dark:border-[#0C447C] dark:bg-[#0C447C]/20 dark:text-[#85B7EB]"
                                                     >
                                                         {{
                                                             stat.indikator.kode
@@ -634,7 +638,7 @@ const getRadarOptions = (stat: any) => ({
                                                         class="flex-shrink-0 rounded-lg p-1.5 transition-all"
                                                         :class="copiedId === stat.question_id
                                                             ? 'bg-green-50 text-green-600 dark:bg-green-950/40'
-                                                            : 'text-slate-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40 dark:hover:text-blue-400'"
+                                                            : 'text-slate-400 hover:bg-[#85B7EB]/10 hover:text-[#0C447C] dark:hover:bg-[#0C447C]/20 dark:hover:text-[#85B7EB]'"
                                                         :title="copiedId === stat.question_id ? 'Tersalin!' : 'Salin Diagram'"
                                                         @click="copyChart(stat.question_id)"
                                                     >
@@ -681,11 +685,11 @@ const getRadarOptions = (stat: any) => ({
                                                 class="space-y-5"
                                             >
                                                 <!-- Average Badge -->
-                                                <div class="flex items-center justify-between rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 p-5 dark:from-blue-950/30 dark:to-indigo-950/30">
+                                                <div class="flex items-center justify-between rounded-2xl bg-gradient-to-r from-[#0C447C]/5 to-[#85B7EB]/10 p-5 dark:from-[#0C447C]/20 dark:to-[#85B7EB]/10">
                                                     <div>
                                                         <div class="text-[10px] font-black tracking-widest text-slate-400 uppercase">Skor Rata-rata</div>
                                                         <div class="mt-1 flex items-baseline gap-1">
-                                                            <span class="text-3xl font-black tracking-tighter text-blue-600 dark:text-blue-400">{{ stat.analysis.average }}</span>
+                                                            <span class="text-3xl font-black tracking-tighter text-[#0C447C] dark:text-[#85B7EB]">{{ stat.analysis.average }}</span>
                                                             <span class="text-xs font-bold text-slate-400">/ {{ stat.analysis.scale_max || 5 }}.0</span>
                                                         </div>
                                                         <div v-if="stat.analysis.scale_label_min || stat.analysis.scale_label_max" class="mt-1 text-[9px] font-medium text-slate-400">
@@ -724,7 +728,7 @@ const getRadarOptions = (stat: any) => ({
                                             >
                                                 <div class="mb-1 text-[10px] font-black tracking-widest text-slate-400 uppercase">Skor Rata-rata</div>
                                                 <div class="flex items-baseline gap-1">
-                                                    <span class="text-4xl font-black tracking-tighter text-blue-600 dark:text-blue-400">{{ stat.analysis.average }}</span>
+                                                    <span class="text-4xl font-black tracking-tighter text-[#0C447C] dark:text-[#85B7EB]">{{ stat.analysis.average }}</span>
                                                     <span class="text-xs font-bold text-slate-400">/ {{ stat.analysis.scale_max || 5 }}.0</span>
                                                 </div>
                                             </div>
@@ -763,11 +767,11 @@ const getRadarOptions = (stat: any) => ({
                                                         >
                                                             <div class="flex items-center justify-between mb-2">
                                                                 <span class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ row.label }}</span>
-                                                                <span class="text-xs font-black text-blue-600 dark:text-blue-400">{{ row.average }} / {{ stat.analysis.scale_max || 5 }}</span>
+                                                                <span class="text-xs font-black text-[#0C447C] dark:text-[#85B7EB]">{{ row.average }} / {{ stat.analysis.scale_max || 5 }}</span>
                                                             </div>
                                                             <div class="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700">
                                                                 <div
-                                                                    class="h-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
+                                                                    class="h-2 rounded-full bg-gradient-to-r from-[#0C447C] to-[#85B7EB] transition-all duration-500"
                                                                     :style="{ width: row.percent + '%' }"
                                                                 ></div>
                                                             </div>
@@ -780,7 +784,7 @@ const getRadarOptions = (stat: any) => ({
                                                     <div class="mb-2 text-[9px] font-black tracking-widest text-slate-400 uppercase">Keterangan Skala</div>
                                                     <div class="flex flex-wrap gap-3">
                                                         <div v-for="(col, ci) in stat.analysis.columns" :key="ci" class="flex items-center gap-1.5">
-                                                            <span class="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-[9px] font-black text-blue-700 dark:bg-blue-900/40 dark:text-blue-400">{{ ci + 1 }}</span>
+                                                            <span class="flex h-5 w-5 items-center justify-center rounded-full bg-[#85B7EB]/20 text-[9px] font-black text-[#0C447C] dark:bg-[#0C447C]/20 dark:text-[#85B7EB]">{{ ci + 1 }}</span>
                                                             <span class="text-[10px] font-medium text-slate-600 dark:text-slate-400">{{ col }}</span>
                                                         </div>
                                                     </div>
@@ -817,7 +821,7 @@ const getRadarOptions = (stat: any) => ({
                                                     <div
                                                         v-for="(resp, idx) in stat.analysis.recent_responses"
                                                         :key="idx"
-                                                        class="rounded-xl bg-slate-50/80 p-3 text-xs font-medium text-slate-600 transition-colors hover:bg-blue-50/50 dark:bg-slate-800/40 dark:text-slate-300"
+                                                        class="rounded-xl bg-slate-50/80 p-3 text-xs font-medium text-slate-600 transition-colors hover:bg-[#85B7EB]/10 dark:bg-slate-800/40 dark:text-slate-300"
                                                     >
                                                         {{ resp }}
                                                     </div>
@@ -875,6 +879,7 @@ const getRadarOptions = (stat: any) => ({
             </div>
         </div>
     </div>
+    </TraceAdminLayout>
 </template>
 
 <style scoped>

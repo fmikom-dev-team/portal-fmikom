@@ -75,9 +75,10 @@ class AlumniKuesionerController extends Controller
     public function show(int $id): InertiaResponse|RedirectResponse
     {
         try {
-            $kuesioner = Kuesioner::with([
-                'sections.pertanyaans.opsiJawabans',
-            ])->findOrFail($id);
+            $kuesioner = Kuesioner::whereIn('status', ['active', 'published'])
+                ->with([
+                    'sections.pertanyaans.opsiJawabans',
+                ])->findOrFail($id);
 
             // Validasi status & tanggal
             $redirect = $this->checkKuesionerAvailability($kuesioner);

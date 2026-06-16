@@ -20,7 +20,7 @@ class EventController extends Controller
 
         // Search
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%")
@@ -83,6 +83,10 @@ class EventController extends Controller
 
             if ($event->registration_deadline && now()->greaterThan($event->registration_deadline)) {
                 return redirect()->back()->with('error', 'Batas waktu pendaftaran sudah berakhir.');
+            }
+
+            if ($event->event_date && now()->startOfDay()->greaterThan($event->event_date)) {
+                return back()->with('error', 'Event ini sudah berlalu.');
             }
 
             if ($event->max_participants) {

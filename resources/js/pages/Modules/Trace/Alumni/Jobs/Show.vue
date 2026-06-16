@@ -3,6 +3,7 @@ import { Link, router, useForm } from "@inertiajs/vue3";
 import EditorJsRenderer from '@/components/editor/EditorJsRenderer.vue';
 import TraceAlumniLayout from "@/layouts/TraceAlumniLayout.vue";
 import type { BreadcrumbItem } from "@/types";
+import { TPageHeader, TStatusBadge } from '@/components/trace';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -79,13 +80,13 @@ const props = defineProps<{
 const applicationStatusConfig: Record<string, { label: string; class: string; bgClass: string }> = {
     applied: {
         label: 'Menunggu Review',
-        class: 'text-amber-700 dark:text-amber-400',
-        bgClass: 'bg-amber-50 dark:bg-amber-950/20',
+        class: 'text-[#EF9F27] dark:text-[#FAC775]',
+        bgClass: 'bg-[#EF9F27]/10 dark:bg-[#EF9F27]/10',
     },
     reviewed: {
         label: 'Sedang Ditinjau',
-        class: 'text-blue-700 dark:text-blue-400',
-        bgClass: 'bg-blue-50 dark:bg-blue-950/20',
+        class: 'text-[#0C447C] dark:text-[#85B7EB]',
+        bgClass: 'bg-[#0C447C]/10 dark:bg-[#0C447C]/20',
     },
     accepted: {
         label: 'Lamaran Diterima',
@@ -201,20 +202,24 @@ const tipeKerjaLabelMap: Record<string, string> = {
         role-name="Alumni"
     >
         <div class="mx-auto space-y-6">
-            <!-- Back Link -->
-            <Link
-                href="/trace/jobs"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400"
-            >
-                <ArrowLeft class="h-4 w-4" />
-                Kembali ke Lowongan
-            </Link>
+            <!-- Header -->
+            <TPageHeader :title="job.title" :description="job.mitra?.nama_perusahaan" :icon="Briefcase">
+                <template #actions>
+                    <Link
+                        href="/trace/jobs"
+                        class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-[#0C447C] dark:text-slate-400 dark:hover:text-[#85B7EB]"
+                    >
+                        <ArrowLeft class="h-4 w-4" />
+                        Kembali ke Lowongan
+                    </Link>
+                </template>
+            </TPageHeader>
 
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 <!-- Main Content (2 cols) -->
                 <div class="space-y-6 lg:col-span-2">
                     <!-- Job Header Card -->
-                    <Card class="rounded-2xl border-slate-100 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                    <Card class="rounded-2xl border border-slate-200/60 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                         <CardContent class="p-6">
                             <div class="flex items-start gap-4">
                                 <!-- Company Logo -->
@@ -249,7 +254,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                                         <Badge
                                             v-if="job.location_type"
                                             variant="secondary"
-                                            class="rounded-lg bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-600 dark:bg-blue-950/30 dark:text-blue-400"
+                                            class="rounded-lg bg-[#0C447C]/10 px-2.5 py-1 text-[11px] font-medium text-[#0C447C] dark:bg-[#0C447C]/10 dark:text-[#85B7EB]"
                                         >
                                             <MapPin class="mr-1 inline h-3 w-3" />
                                             {{ locationLabelMap[job.location_type] ?? job.location_type }}
@@ -257,7 +262,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                                         <Badge
                                             v-if="job.tipe_kerja"
                                             variant="secondary"
-                                            class="rounded-lg bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400"
+                                            class="rounded-lg bg-[#0C447C]/5 px-2.5 py-1 text-[11px] font-medium text-[#0C447C] dark:bg-[#85B7EB]/10 dark:text-[#85B7EB]"
                                         >
                                             <Briefcase class="mr-1 inline h-3 w-3" />
                                             {{ tipeKerjaLabelMap[job.tipe_kerja] ?? job.tipe_kerja }}
@@ -265,7 +270,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                                         <Badge
                                             v-if="job.category?.nama"
                                             variant="secondary"
-                                            class="rounded-lg bg-violet-50 px-2.5 py-1 text-[11px] font-medium text-violet-600 dark:bg-violet-950/30 dark:text-violet-400"
+                                            class="rounded-lg bg-[#0C447C]/10 px-2.5 py-1 text-[11px] font-medium text-[#0C447C] dark:bg-[#0C447C]/10 dark:text-[#85B7EB]"
                                         >
                                             {{ job.category.nama }}
                                         </Badge>
@@ -276,8 +281,8 @@ const tipeKerjaLabelMap: Record<string, string> = {
                                 <button
                                     class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-all duration-200"
                                     :class="bookmarked
-                                        ? 'border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400'
-                                        : 'border-slate-200 bg-white text-slate-400 hover:border-emerald-200 hover:text-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-emerald-800'"
+                                        ? 'border-[#0C447C]/30 bg-[#0C447C]/5 text-[#0C447C] dark:border-[#85B7EB]/40 dark:bg-[#85B7EB]/10 dark:text-[#85B7EB]'
+                                        : 'border-slate-200 bg-white text-slate-400 hover:border-[#0C447C]/30 hover:text-[#0C447C] dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-[#85B7EB]/40 dark:hover:text-[#85B7EB]'"
                                     :disabled="bookmarkLoading"
                                     @click="toggleBookmark"
                                 >
@@ -288,20 +293,20 @@ const tipeKerjaLabelMap: Record<string, string> = {
 
                             <!-- Meta Row -->
                             <div class="mt-4 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4 text-sm dark:border-zinc-800">
-                                <span v-if="salaryDisplay" class="flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400">
+                                <span v-if="salaryDisplay" class="flex items-center gap-1.5 font-semibold text-[#0C447C] dark:text-[#85B7EB]">
                                     <DollarSign class="h-4 w-4" />
                                     {{ salaryDisplay }}
                                 </span>
                                 <span v-if="job.deadline" class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                                     <Clock class="h-4 w-4" />
                                     Deadline: {{ formatDeadline(job.deadline) }}
-                                    <Badge
+                                    <TStatusBadge
                                         v-if="isDeadlinePassed"
-                                        variant="destructive"
-                                        class="ml-1 rounded-md px-1.5 py-0 text-[10px]"
-                                    >
-                                        Expired
-                                    </Badge>
+                                        status="closed"
+                                        label="Expired"
+                                        size="sm"
+                                        class="ml-1"
+                                    />
                                 </span>
                                 <span class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                                     <Users class="h-4 w-4" />
@@ -312,7 +317,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                     </Card>
 
                     <!-- Description -->
-                    <Card class="rounded-2xl border-slate-100 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                    <Card class="rounded-2xl border border-slate-200/60 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                         <CardHeader class="pb-3">
                             <CardTitle class="text-base font-bold text-slate-900 dark:text-white">
                                 Deskripsi Pekerjaan
@@ -326,7 +331,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                     <!-- Apply Form / Applied Status -->
                     <Card
                         v-if="!isDeadlinePassed"
-                        class="rounded-2xl border-slate-100 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                        class="rounded-2xl border border-slate-200/60 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
                     >
                         <CardHeader class="pb-3">
                             <CardTitle class="text-base font-bold text-slate-900 dark:text-white">
@@ -350,7 +355,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                                         class="h-6 w-6 shrink-0"
                                         :class="myApplication?.status === 'rejected'
                                             ? 'text-red-500 dark:text-red-400'
-                                            : 'text-amber-500 dark:text-amber-400'"
+                                            : 'text-[#EF9F27] dark:text-[#FAC775]'"
                                     />
                                     <div>
                                         <p
@@ -415,7 +420,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                                 <!-- CV Selection -->
                                 <div>
                                     <p class="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                        <FileText class="mr-1 inline h-4 w-4 text-emerald-500" />
+                                        <FileText class="mr-1 inline h-4 w-4 text-[#0C447C] dark:text-[#85B7EB]" />
                                         Lampirkan CV dari PaGI
                                     </p>
                                     <div v-if="myCvs.length > 0" class="space-y-2">
@@ -425,14 +430,14 @@ const tipeKerjaLabelMap: Record<string, string> = {
                                             type="button"
                                             class="flex w-full items-center gap-3 rounded-xl border-2 p-3 text-left transition-all duration-150"
                                             :class="selectedCvIds.includes(cv.id)
-                                                ? 'border-emerald-500 bg-emerald-50/50 dark:border-emerald-600 dark:bg-emerald-950/20'
+                                                ? 'border-[#0C447C] bg-[#0C447C]/5 dark:border-[#85B7EB] dark:bg-[#85B7EB]/10'
                                                 : 'border-slate-100 bg-white hover:border-slate-200 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700'"
                                             @click="toggleCv(cv.id)"
                                         >
                                             <div
                                                 class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors"
                                                 :class="selectedCvIds.includes(cv.id)
-                                                    ? 'bg-emerald-500 text-white'
+                                                    ? 'bg-[#0C447C] text-white dark:bg-[#85B7EB] dark:text-slate-900'
                                                     : 'bg-slate-100 text-slate-400 dark:bg-zinc-800'"
                                             >
                                                 <Check v-if="selectedCvIds.includes(cv.id)" class="h-4 w-4" />
@@ -449,7 +454,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                                         <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Belum ada CV</p>
                                         <Link
                                             href="/pagi/cv"
-                                            class="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
+                                            class="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-[#0C447C] hover:underline dark:text-[#85B7EB]"
                                         >
                                             <ExternalLink class="h-3 w-3" />
                                             Buat CV di PaGI
@@ -461,7 +466,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
 
                                 <Button
                                     type="submit"
-                                    class="h-10 w-full rounded-xl bg-emerald-600 px-6 text-sm font-semibold text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-700"
+                                    class="h-10 w-full rounded-xl bg-[#0C447C] px-6 text-sm font-semibold text-white shadow-sm shadow-[#0C447C]/20 hover:bg-[#0C447C]/90 dark:bg-[#85B7EB] dark:text-slate-900 dark:hover:bg-[#85B7EB]/90"
                                     :disabled="applyForm.processing"
                                 >
                                     <Send class="mr-2 h-4 w-4" />
@@ -488,7 +493,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                 <!-- Sidebar (1 col) -->
                 <div class="space-y-4">
                     <!-- Company Info -->
-                    <Card class="rounded-2xl border-slate-100 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                    <Card class="rounded-2xl border border-slate-200/60 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                         <CardHeader class="pb-3">
                             <CardTitle class="text-sm font-bold text-slate-900 dark:text-white">
                                 Tentang Perusahaan
@@ -529,7 +534,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                                 :href="job.mitra.website"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
+                                class="inline-flex items-center gap-1 text-xs font-semibold text-[#0C447C] hover:underline dark:text-[#85B7EB]"
                             >
                                 Kunjungi Website →
                             </a>
@@ -537,7 +542,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                     </Card>
 
                     <!-- Quick Actions -->
-                    <Card class="rounded-2xl border-slate-100 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                    <Card class="rounded-2xl border border-slate-200/60 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                         <CardContent class="space-y-2 p-4">
                             <Link
                                 href="/trace/jobs/my-applications"

@@ -1,19 +1,15 @@
 <script setup lang="ts">
 import { Link, useForm } from '@inertiajs/vue3';
-import { ArrowLeft } from 'lucide-vue-next';
+import { toast } from 'vue-sonner';
+import { ArrowLeft, Briefcase } from 'lucide-vue-next';
 import TraceMitraLayout from '@/layouts/TraceMitraLayout.vue';
+import { TPageHeader, TFormSection } from '@/components/trace';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import EditorJsEditor from '@/components/editor/EditorJsEditor.vue';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
 
 interface Category {
     id: number;
@@ -70,7 +66,10 @@ function submit() {
     form.transform((data) => ({
         ...data,
         description: data.description ? JSON.stringify(data.description) : '',
-    })).post('/trace/open-job/jobs-listings');
+    })).post('/trace/open-job/jobs-listings', {
+        onSuccess: () => toast.success('Lowongan berhasil dibuat!'),
+        onError: () => toast.error('Gagal menyimpan. Periksa kembali form Anda.'),
+    });
 }
 
 const selectClass = 'flex h-10 w-full rounded-md border border-input bg-background/30 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all appearance-none';
@@ -78,24 +77,22 @@ const selectClass = 'flex h-10 w-full rounded-md border border-input bg-backgrou
 
 <template>
     <TraceMitraLayout title="Buat Lowongan">
-        <!-- Back Link -->
-        <div class="mb-6">
-            <Link
-                href="/trace/open-job/jobs-listings"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-400 transition-colors"
-            >
-                <ArrowLeft class="h-4 w-4" />
-                Kembali ke Daftar Lowongan
-            </Link>
-        </div>
+        <TPageHeader title="Buat Lowongan" description="Buat lowongan kerja baru untuk alumni" :icon="Briefcase" class="mb-6">
+            <template #actions>
+                <Link
+                    href="/trace/open-job/jobs-listings"
+                    class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-[#0C447C] dark:text-slate-400 dark:hover:text-[#85B7EB] transition-colors"
+                >
+                    <ArrowLeft class="h-4 w-4" />
+                    Kembali
+                </Link>
+            </template>
+        </TPageHeader>
 
         <form @submit.prevent="submit" class="max-w-3xl space-y-6">
             <!-- Basic Information -->
-            <Card>
-                <CardHeader>
-                    <CardTitle class="text-lg">Informasi Lowongan</CardTitle>
-                </CardHeader>
-                <CardContent class="space-y-5">
+            <TFormSection title="Informasi Lowongan">
+                <div class="space-y-5">
                     <!-- Title -->
                     <div class="space-y-2">
                         <Label for="title">Judul Lowongan <span class="text-red-500">*</span></Label>
@@ -115,6 +112,7 @@ const selectClass = 'flex h-10 w-full rounded-md border border-input bg-backgrou
                                 v-model="form.description"
                                 placeholder="Deskripsikan pekerjaan, tanggung jawab, dan kualifikasi yang dibutuhkan..."
                                 :min-height="250"
+                                mode="simple"
                             />
                         </div>
                         <p v-if="form.errors.description" class="text-sm text-red-500">{{ form.errors.description }}</p>
@@ -139,15 +137,12 @@ const selectClass = 'flex h-10 w-full rounded-md border border-input bg-backgrou
                         </select>
                         <p v-if="form.errors.job_category_id" class="text-sm text-red-500">{{ form.errors.job_category_id }}</p>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </TFormSection>
 
             <!-- Work Details -->
-            <Card>
-                <CardHeader>
-                    <CardTitle class="text-lg">Detail Pekerjaan</CardTitle>
-                </CardHeader>
-                <CardContent class="space-y-5">
+            <TFormSection title="Detail Pekerjaan">
+                <div class="space-y-5">
                     <!-- Experience Level -->
                     <div class="space-y-2">
                         <Label for="experience_level">Tingkat Pengalaman</Label>
@@ -215,15 +210,12 @@ const selectClass = 'flex h-10 w-full rounded-md border border-input bg-backgrou
                         </select>
                         <p v-if="form.errors.tipe_kerja" class="text-sm text-red-500">{{ form.errors.tipe_kerja }}</p>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </TFormSection>
 
             <!-- Salary & Deadline -->
-            <Card>
-                <CardHeader>
-                    <CardTitle class="text-lg">Gaji & Deadline</CardTitle>
-                </CardHeader>
-                <CardContent class="space-y-5">
+            <TFormSection title="Gaji & Deadline">
+                <div class="space-y-5">
                     <!-- Salary Range -->
                     <div class="space-y-2">
                         <Label>Rentang Gaji (Rp)</Label>
@@ -271,15 +263,12 @@ const selectClass = 'flex h-10 w-full rounded-md border border-input bg-backgrou
                         />
                         <p v-if="form.errors.deadline" class="text-sm text-red-500">{{ form.errors.deadline }}</p>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </TFormSection>
 
             <!-- Status & Submit -->
-            <Card>
-                <CardHeader>
-                    <CardTitle class="text-lg">Publikasi</CardTitle>
-                </CardHeader>
-                <CardContent class="space-y-5">
+            <TFormSection title="Publikasi">
+                <div class="space-y-5">
                     <div class="space-y-2">
                         <Label for="status">Status</Label>
                         <select
@@ -296,15 +285,16 @@ const selectClass = 'flex h-10 w-full rounded-md border border-input bg-backgrou
                             </option>
                         </select>
                         <p class="text-xs text-slate-500 dark:text-slate-400">
-                            Pilih "Published" untuk langsung mempublikasikan lowongan ini.
+                            Pilih "Ajukan Review ke Admin" untuk mengirim lowongan ke admin untuk ditinjau.
                         </p>
+                        <p v-if="form.errors.status" class="text-sm text-red-500">{{ form.errors.status }}</p>
                     </div>
 
                     <div class="flex items-center gap-3 pt-2">
                         <Button
                             type="submit"
                             :disabled="form.processing"
-                            class="rounded-xl bg-violet-600 hover:bg-violet-700 text-white shadow-md shadow-violet-500/20 px-6"
+                            class="rounded-xl bg-[#0C447C] hover:bg-[#0C447C]/90 text-white shadow-md shadow-[#0C447C]/20 px-6"
                         >
                             {{ form.processing ? 'Menyimpan...' : 'Simpan Lowongan' }}
                         </Button>
@@ -314,8 +304,8 @@ const selectClass = 'flex h-10 w-full rounded-md border border-input bg-backgrou
                             </Button>
                         </Link>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </TFormSection>
         </form>
     </TraceMitraLayout>
 </template>

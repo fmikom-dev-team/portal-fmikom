@@ -44,7 +44,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useInitials } from "@/composables/useInitials";
 import type { BreadcrumbItem } from "@/types";
 import Breadcrumbs from "@/components/Breadcrumbs.vue";
-import NotificationBell from '@/components/Trace/NotificationBell.vue';
+import NotificationBell from '@/components/trace/NotificationBell.vue';
 
 interface TracePageProps extends PageProps {
     auth: { user: any };
@@ -64,11 +64,6 @@ withDefaults(
 const page = usePage<TracePageProps>();
 const user = computed(() => page.props.auth?.user);
 const firstName = computed(() => user.value?.name?.split(" ")[0] ?? "Admin");
-const avatarUrl = computed(() =>
-    user.value?.avatar
-        ? user.value.avatar
-        : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.value?.name ?? "A")}&backgroundColor=0369a1&textColor=ffffff`,
-);
 
 const { getInitials } = useInitials();
 
@@ -100,11 +95,11 @@ const navGroups = [
         label: "Menu",
         items: [
             { label: "Dashboard",        href: "/trace/admin",              icon: LayoutDashboard, match: (u: string) => u === "/trace/admin" },
-            { label: "Daftar Alumni",    href: "/admin/alumni",             icon: GraduationCap,   match: (u: string) => u.startsWith("/admin/alumni") },
+            { label: "Daftar Alumni",    href: "/trace/admin/alumni",             icon: GraduationCap,   match: (u: string) => u.startsWith("/trace/admin/alumni") },
             { label: "Peta Sebaran",     href: "/trace/admin/map",          icon: Activity,        match: (u: string) => u.startsWith("/trace/admin/map") },
-            { label: "Kuesioner",        href: "/admin/quesionnaires",      icon: BookOpen,        match: (u: string) => u.startsWith("/admin/quesionnaires") },
+            { label: "Kuesioner",        href: "/trace/admin/questionnaires",      icon: BookOpen,        match: (u: string) => u.startsWith("/trace/admin/questionnaires") },
             { label: "Job & Lowongan",   href: "/trace/admin/jobs",         icon: FileText,    match: (u: string) => u.startsWith("/trace/admin/jobs") },
-            { label: "Events",           href: "/admin/events",             icon: Users,           match: (u: string) => u.startsWith("/admin/events") },
+            { label: "Events",           href: "/trace/admin/events",             icon: Users,           match: (u: string) => u.startsWith("/trace/admin/events") },
             { label: "Activity Log",     href: "/trace/admin/activity-log", icon: History,         match: (u: string) => u.startsWith("/trace/admin/activity-log") },
         ],
     },
@@ -112,7 +107,11 @@ const navGroups = [
 </script>
 
 <template>
-    <Head :title="title ? `${title} — Admin TRACE` : 'Admin TRACE'" />
+    <Head :title="title ? `${title} — Admin TRACE` : 'Admin TRACE'">
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    </Head>
 
     <AppShell variant="sidebar">
         <!-- ═══════════════════════ SIDEBAR ═══════════════════════ -->
@@ -257,7 +256,7 @@ const navGroups = [
                                     </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem :as-child="true">
-                                    <Link class="flex w-full cursor-pointer items-center px-3 py-2 text-xs font-medium text-slate-600 hover:text-sky-600 dark:text-slate-350 dark:hover:text-green-400" href="/dashboard">
+                                    <Link class="flex w-full cursor-pointer items-center px-3 py-2 text-xs font-medium text-slate-600 hover:text-sky-600 dark:text-slate-350 dark:hover:text-sky-400" href="/dashboard">
                                         <LayoutDashboard class="mr-2 h-4 w-4" />
                                         Portal Utama
                                     </Link>
@@ -280,8 +279,15 @@ const navGroups = [
                 </div>
             </header>
 
-            <!-- Page content -->
-            <main class="flex-1 p-4 transition-colors duration-300 sm:p-6 lg:p-8">
+            <!-- Fullscreen content (no skeleton, no padding — for map pages) -->
+            <template v-if="$slots.fullscreen">
+                <div class="flex-1">
+                    <slot name="fullscreen" />
+                </div>
+            </template>
+
+            <!-- Regular page content -->
+            <main v-else class="trace-content flex-1 p-4 transition-colors duration-300 sm:p-6 lg:p-8">
                 <!-- Loading skeleton -->
                 <div v-if="isPageLoading" class="animate-pulse space-y-5">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -316,4 +322,10 @@ const navGroups = [
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
 .dark ::-webkit-scrollbar-thumb { background: #334155; }
+.trace-content {
+    font-family: 'Inter', sans-serif;
+}
+.trace-content h1, .trace-content h2, .trace-content h3, .trace-content h4 {
+    font-family: 'Poppins', sans-serif;
+}
 </style>

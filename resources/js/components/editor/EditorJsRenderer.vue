@@ -27,12 +27,12 @@ const blocks = computed(() => {
             <p v-if="block.type === 'paragraph'" v-html="block.data.text" />
 
             <!-- Header -->
-            <h1 v-else-if="block.type === 'header' && block.data.level === 1" v-html="block.data.text" />
-            <h2 v-else-if="block.type === 'header' && block.data.level === 2" v-html="block.data.text" />
-            <h3 v-else-if="block.type === 'header' && block.data.level === 3" v-html="block.data.text" />
-            <h4 v-else-if="block.type === 'header' && block.data.level === 4" v-html="block.data.text" />
-            <h5 v-else-if="block.type === 'header' && block.data.level === 5" v-html="block.data.text" />
-            <h6 v-else-if="block.type === 'header' && block.data.level === 6" v-html="block.data.text" />
+            <h1 v-else-if="block.type === 'header' && Number(block.data.level) === 1" v-html="block.data.text" />
+            <h2 v-else-if="block.type === 'header' && Number(block.data.level) === 2" v-html="block.data.text" />
+            <h3 v-else-if="block.type === 'header' && Number(block.data.level) === 3" v-html="block.data.text" />
+            <h4 v-else-if="block.type === 'header' && Number(block.data.level) === 4" v-html="block.data.text" />
+            <h5 v-else-if="block.type === 'header' && Number(block.data.level) === 5" v-html="block.data.text" />
+            <h6 v-else-if="block.type === 'header' && (Number(block.data.level) === 6 || !block.data.level)" v-html="block.data.text" />
 
             <!-- List (nested) -->
             <component

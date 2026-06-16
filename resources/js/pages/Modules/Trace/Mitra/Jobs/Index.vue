@@ -2,14 +2,8 @@
 import { Link } from '@inertiajs/vue3';
 import { Briefcase, Plus, Users, Calendar, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import TraceMitraLayout from '@/layouts/TraceMitraLayout.vue';
-import { Badge } from '@/components/ui/badge';
+import { TPageHeader, TStatusBadge, TEmptyState } from '@/components/trace';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
 
 interface Job {
     id: number;
@@ -74,23 +68,16 @@ function formatDate(dateStr: string): string {
 
 <template>
     <TraceMitraLayout title="Lowongan Kerja">
-        <!-- Header -->
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-            <div>
-                <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                    Lowongan Kerja
-                </h1>
-                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Kelola lowongan kerja perusahaan Anda
-                </p>
-            </div>
-            <Link href="/trace/open-job/jobs-listings/create">
-                <Button class="gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white shadow-md shadow-violet-500/20">
-                    <Plus class="h-4 w-4" />
-                    Buat Lowongan Baru
-                </Button>
-            </Link>
-        </div>
+        <TPageHeader title="Lowongan Saya" description="Kelola lowongan kerja perusahaan Anda" :icon="Briefcase" class="mb-6">
+            <template #actions>
+                <Link href="/trace/open-job/jobs-listings/create">
+                    <Button class="gap-2 rounded-xl bg-[#0C447C] hover:bg-[#0C447C]/90 text-white shadow-md shadow-[#0C447C]/20">
+                        <Plus class="h-4 w-4" />
+                        Buat Lowongan Baru
+                    </Button>
+                </Link>
+            </template>
+        </TPageHeader>
 
         <!-- Job List -->
         <div v-if="jobs.data.length > 0" class="space-y-3">
@@ -100,8 +87,8 @@ function formatDate(dateStr: string): string {
                 :href="`/trace/open-job/jobs-listings/${job.id}`"
                 class="block"
             >
-                <Card class="transition-all duration-200 hover:shadow-md hover:border-violet-200 dark:hover:border-violet-800 cursor-pointer">
-                    <CardContent class="p-4 sm:p-5">
+                <div class="rounded-2xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm transition-all duration-200 hover:shadow-md hover:border-[#0C447C]/30 dark:hover:border-[#85B7EB]/30 cursor-pointer">
+                    <div class="p-4 sm:p-5">
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <!-- Left: Info -->
                             <div class="flex-1 min-w-0">
@@ -109,12 +96,7 @@ function formatDate(dateStr: string): string {
                                     <h3 class="text-base font-semibold text-slate-900 dark:text-white truncate">
                                         {{ job.title }}
                                     </h3>
-                                    <span
-                                        class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold"
-                                        :class="statusConfig[job.status]?.class ?? statusConfig.draft.class"
-                                    >
-                                        {{ statusConfig[job.status]?.label ?? job.status }}
-                                    </span>
+                                    <TStatusBadge :status="job.status" :label="statusConfig[job.status]?.label" size="sm" />
                                 </div>
 
                                 <!-- Rejection Reason -->
@@ -144,29 +126,19 @@ function formatDate(dateStr: string): string {
                             <!-- Right: Arrow -->
                             <ChevronRight class="hidden sm:block h-5 w-5 text-slate-300 dark:text-slate-600 shrink-0" />
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             </Link>
         </div>
 
-        <!-- Empty State -->
-        <div v-else class="flex flex-col items-center justify-center py-20">
-            <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 mb-4">
-                <Briefcase class="h-8 w-8 text-slate-400" />
-            </div>
-            <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300">
-                Belum ada lowongan
-            </h3>
-            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400 text-center max-w-sm">
-                Buat lowongan kerja pertama Anda untuk mulai menerima lamaran dari alumni.
-            </p>
-            <Link href="/trace/open-job/jobs-listings/create" class="mt-5">
-                <Button class="gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white">
-                    <Plus class="h-4 w-4" />
-                    Buat Lowongan Baru
-                </Button>
-            </Link>
-        </div>
+        <TEmptyState
+            v-else
+            :icon="Briefcase"
+            title="Belum ada lowongan"
+            description="Buat lowongan kerja pertama Anda untuk mulai menerima lamaran dari alumni."
+            actionLabel="Buat Lowongan Baru"
+            actionHref="/trace/open-job/jobs-listings/create"
+        />
 
         <!-- Pagination -->
         <div v-if="jobs.last_page > 1" class="mt-6 flex items-center justify-center gap-1">

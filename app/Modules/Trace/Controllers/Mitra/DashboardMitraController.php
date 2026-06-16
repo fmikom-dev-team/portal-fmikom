@@ -3,7 +3,7 @@
 namespace App\Modules\Trace\Controllers\Mitra;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tracer\JobApplycants;
+use App\Models\Tracer\JobApplicant;
 use App\Models\Tracer\JobListing;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -19,22 +19,26 @@ class DashboardMitraController extends Controller
             return redirect()->route('module.trace.open-job.mitra-profile-setup');
         }
 
+        $jobStats = JobListing::where('mitra_id', $mitra->id)
+            ->selectRaw("COUNT(*) as total")
+            ->selectRaw("SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END) as active")
+            ->selectRaw("SUM(CASE WHEN status = 'pending_review' THEN 1 ELSE 0 END) as pending")
+            ->first();
+
+        $applicantStats = JobApplicant::whereHas('jobListing', fn($q) => $q->where('mitra_id', $mitra->id))
+            ->selectRaw("COUNT(*) as total")
+            ->selectRaw("SUM(CASE WHEN status = 'applied' THEN 1 ELSE 0 END) as pending")
+            ->first();
+
         $stats = [
-            'total_jobs' => JobListing::where('mitra_id', $mitra->id)->count(),
-            'active_jobs' => JobListing::where('mitra_id', $mitra->id)
-                ->where('status', 'published')
-                ->count(),
-            'pending_jobs' => JobListing::where('mitra_id', $mitra->id)
-                ->where('status', 'pending_review')
-                ->count(),
-            'total_applicants' => JobApplycants::whereHas('jobListing', fn($q) => $q->where('mitra_id', $mitra->id))
-                ->count(),
-            'pending_applicants' => JobApplycants::whereHas('jobListing', fn($q) => $q->where('mitra_id', $mitra->id))
-                ->where('status', 'applied')
-                ->count(),
+            'total_jobs' => (int) $jobStats->total,
+            'active_jobs' => (int) $jobStats->active,
+            'pending_jobs' => (int) $jobStats->pending,
+            'total_applicants' => (int) $applicantStats->total,
+            'pending_applicants' => (int) $applicantStats->pending,
         ];
 
-        $recentApplicants = JobApplycants::whereHas('jobListing', fn($q) => $q->where('mitra_id', $mitra->id))
+        $recentApplicants = JobApplicant::whereHas('jobListing', fn($q) => $q->where('mitra_id', $mitra->id))
             ->with(['alumni.user', 'jobListing:id,title'])
             ->latest()
             ->take(5)

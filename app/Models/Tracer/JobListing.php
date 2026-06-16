@@ -18,7 +18,8 @@ class JobListing extends Model
         'mitra_id', 'job_category_id', 'title', 'description', 
         'experience_level', 'location_type', 'location_city', 
         'tipe_kerja', 'salary_min', 'salary_max', 'status', 
-        'deadline', 'is_salary_visible'
+        'deadline', 'is_salary_visible',
+        'rejection_reason', 'rejected_at'
     ];
 
     protected $casts = [
@@ -35,7 +36,7 @@ class JobListing extends Model
 
     public function mitra()
     {
-        return $this->belongsTo(MitraProfiles::class, 'mitra_id');
+        return $this->belongsTo(MitraProfile::class, 'mitra_id');
     }
 
     public function category()
@@ -45,11 +46,11 @@ class JobListing extends Model
 
     public function applicants()
     {
-        return $this->hasMany(JobApplycants::class, 'job_id');
+        return $this->hasMany(JobApplicant::class, 'job_id');
     }
 
     public function bookmarks()
     {
-        return $this->hasMany(Bookmarks::class, 'job_id');
+        return $this->hasMany(Bookmark::class, 'job_id');
     }
 }

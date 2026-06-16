@@ -17,7 +17,7 @@ class KuesionerController extends Controller
         $query = Kuesioner::withCount('responses');
 
         if ($request->filled('search')) {
-            $search = $request->input('search');
+            $search = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->input('search'));
             $query->where(function ($q) use ($search) {
                 $q->where('judul', 'like', '%' . $search . '%')
                   ->orWhere('subtitle', 'like', '%' . $search . '%');
@@ -32,7 +32,7 @@ class KuesionerController extends Controller
             $query->where('tahun', $request->input('year'));
         }
 
-        return Inertia::render('Modules/Trace/Admin/Quissioner', [
+        return Inertia::render('Modules/Trace/Admin/Questionnaire', [
             'kuesioners' => $query->latest()->paginate(15)->withQueryString(),
             'filters' => $request->only(['search', 'status', 'year']),
             'activeCount' => Inertia::defer(fn () => Kuesioner::where('status', 'active')->count())
@@ -41,7 +41,7 @@ class KuesionerController extends Controller
 
     public function create()
     {
-        return Inertia::render('Modules/Trace/Admin/QuissionerDetail', [
+        return Inertia::render('Modules/Trace/Admin/QuestionnaireDetail', [
             'kuesioner' => [
                 'id' => null,
                 'judul' => '',
@@ -82,7 +82,7 @@ class KuesionerController extends Controller
                 $saveAction->execute($kuesioner, $request->input('sections', []));
                 ActivityLog::record('kuesioner.created', "Membuat kuesioner: {$kuesioner->judul}", $kuesioner);
 
-                return redirect()->route('quesionnaires.index')->with('success', 'Kuesioner berhasil dibuat');
+                return redirect()->route('module.trace.admin.questionnaires.index')->with('success', 'Kuesioner berhasil dibuat');
             });
         } catch (\Exception $e) {
             \Log::error('Kuesioner Save Error: ' . $e->getMessage());
@@ -111,8 +111,9 @@ class KuesionerController extends Controller
                 ]);
 
                 $saveAction->execute($kuesioner, $request->input('sections', []));
+                ActivityLog::record('kuesioner.updated', "Memperbarui kuesioner: {$kuesioner->judul}", $kuesioner);
 
-                return redirect()->route('quesionnaires.index')->with('success', 'Kuesioner berhasil diperbarui');
+                return redirect()->route('module.trace.admin.questionnaires.index')->with('success', 'Kuesioner berhasil diperbarui');
             });
         } catch (\Exception $e) {
             \Log::error('Kuesioner Update Error: ' . $e->getMessage());
@@ -149,7 +150,7 @@ class KuesionerController extends Controller
                     }
                 }
 
-                return redirect()->route('quesionnaires.index')->with('success', 'Kuesioner berhasil diduplikasi');
+                return redirect()->route('module.trace.admin.questionnaires.index')->with('success', 'Kuesioner berhasil diduplikasi');
             });
         } catch (\Exception $e) {
             \Log::error('Kuesioner Duplicate Error: ' . $e->getMessage());
@@ -160,13 +161,13 @@ class KuesionerController extends Controller
     protected function kuesionerRules(): array
     {
         return [
-            'judul'        => 'required|string',
+            'judul'        => 'required|string|max:255',
             'subtitle'     => 'nullable|string',
             'kategori'     => 'nullable|string|in:Alumni,Stakeholder',
             'tahun'        => 'nullable|integer|min:2000|max:' . (date('Y') + 1),
             'date_mulai'   => 'nullable|date',
             'date_selesai' => 'nullable|date|after_or_equal:date_mulai',
-            'deskripsi'    => 'nullable|string',
+            'deskripsi'    => 'nullable|string|max:65535',
             'status'       => 'required|string|in:draft,active,published,closed',
             'sections'     => 'nullable|array',
         ];
@@ -183,7 +184,7 @@ class KuesionerController extends Controller
             'sections.pertanyaans.opsiJawabans',
         ])->findOrFail($id);
 
-        return Inertia::render('Modules/Trace/Admin/QuissionerDetail', [
+        return Inertia::render('Modules/Trace/Admin/QuestionnaireDetail', [
             'kuesioner' => $kuesioner,
         ]);
     }

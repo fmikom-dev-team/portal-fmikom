@@ -5,6 +5,8 @@ import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import type { AlumniPagination } from '@/types/alumni';
 import AlumniBannerHeader from './components/AlumniBannerHeader.vue';
 import AlumniTable from './components/AlumniTable.vue';
+import { GraduationCap } from 'lucide-vue-next';
+import { TPageHeader } from '@/components/trace';
 
 
 interface Props {
@@ -22,7 +24,7 @@ const props = defineProps<Props>();
 const breadcrumbs = [
     {
         title: 'Alumni',
-        href: '/admin/alumni',
+        href: '/trace/admin/alumni',
     },
 ];
 </script>
@@ -34,13 +36,19 @@ const breadcrumbs = [
         <div
             class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4 max-w-7xl mx-auto w-full"
         >
-            <AlumniBannerHeader :total-alumni="totalAlumni" :filters="filters" />  
+            <TPageHeader
+                title="Data Alumni"
+                description="Kelola dan pantau data alumni FMIKOM"
+                :icon="GraduationCap"
+            />
+
+            <AlumniBannerHeader :total-alumni="totalAlumni" :filters="filters" />
 
             <div class="flex flex-col">
                 <AlumniTable :alumni="alumniList.data" />
-                
-                <Pagination 
-                    :links="alumniList.links" 
+
+                <Pagination
+                    :links="alumniList.links"
                     :total="totalAlumni"
                     :count="alumniList.data.length"
                     label="alumni"

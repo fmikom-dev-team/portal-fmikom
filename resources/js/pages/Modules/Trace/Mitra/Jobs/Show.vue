@@ -23,6 +23,7 @@ import {
 } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import TraceMitraLayout from '@/layouts/TraceMitraLayout.vue';
+import { TPageHeader, TStatusBadge, TEmptyState } from '@/components/trace';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -201,14 +202,17 @@ function toggleJobStatus() {
 <template>
     <TraceMitraLayout title="Detail Lowongan" :breadcrumbs="breadcrumbItems">
         <div class="mx-auto space-y-6">
-            <!-- Back Link -->
-            <Link
-                href="/trace/open-job/jobs-listings"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-400"
-            >
-                <ArrowLeft class="h-4 w-4" />
-                Kembali ke Daftar Lowongan
-            </Link>
+            <TPageHeader :title="job.title" :description="job.category?.nama" :icon="Briefcase">
+                <template #actions>
+                    <Link
+                        href="/trace/open-job/jobs-listings"
+                        class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-[#0C447C] dark:text-slate-400 dark:hover:text-[#85B7EB]"
+                    >
+                        <ArrowLeft class="h-4 w-4" />
+                        Kembali
+                    </Link>
+                </template>
+            </TPageHeader>
 
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 <!-- ═══════ Main Content (2 cols) ═══════ -->
@@ -231,12 +235,7 @@ function toggleJobStatus() {
                                     <div class="min-w-0 flex-1">
                                         <div class="flex items-center gap-2.5 flex-wrap">
                                             <h1 class="text-xl font-bold text-slate-900 dark:text-white">{{ job.title }}</h1>
-                                            <span
-                                                class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider"
-                                                :class="[jobStatusConfig[job.status]?.bg, jobStatusConfig[job.status]?.color]"
-                                            >
-                                                {{ jobStatusConfig[job.status]?.label ?? job.status }}
-                                            </span>
+                                            <TStatusBadge :status="job.status" :label="jobStatusConfig[job.status]?.label" size="md" />
                                         </div>
                                         <p v-if="job.category" class="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                             {{ job.category.nama }}
@@ -338,12 +337,7 @@ function toggleJobStatus() {
                                             <p class="text-xs text-slate-500 dark:text-slate-400">{{ applicant.alumni.user.email }}</p>
                                         </div>
                                         <div class="flex items-center gap-2">
-                                            <span
-                                                class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold"
-                                                :class="applicantStatusConfig[applicant.status]?.class"
-                                            >
-                                                {{ applicantStatusConfig[applicant.status]?.label ?? applicant.status }}
-                                            </span>
+                                            <TStatusBadge :status="applicant.status" :label="applicantStatusConfig[applicant.status]?.label" size="sm" />
                                             <ChevronDown
                                                 class="h-4 w-4 text-slate-400 transition-transform"
                                                 :class="expandedApplicant === applicant.id ? 'rotate-180' : ''"
@@ -432,13 +426,12 @@ function toggleJobStatus() {
                             </div>
 
                             <!-- Empty -->
-                            <div v-else class="flex flex-col items-center justify-center py-12">
-                                <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800">
-                                    <Users class="h-6 w-6 text-slate-400" />
-                                </div>
-                                <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Belum ada pelamar</p>
-                                <p class="mt-1 text-xs text-slate-400">Pelamar akan muncul setelah mereka melamar lowongan ini.</p>
-                            </div>
+                            <TEmptyState
+                                v-else
+                                :icon="Users"
+                                title="Belum ada pelamar"
+                                description="Pelamar akan muncul setelah mereka melamar lowongan ini."
+                            />
                         </CardContent>
                     </Card>
                 </div>

@@ -174,7 +174,7 @@ const getCurrentCompany = (item: Alumni) => {
                     <TableCell class="text-right">
                         <div class="flex items-center justify-end gap-2">
                             <Link
-                                :href="`/admin/alumni/${item.id}`"
+                                :href="`/trace/admin/alumni/${item.id}`"
                                 class="px-2 text-sm font-bold text-primary hover:underline"
                             >
                                 Lihat Detail

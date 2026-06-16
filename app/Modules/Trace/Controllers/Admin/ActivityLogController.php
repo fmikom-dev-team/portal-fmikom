@@ -13,7 +13,8 @@ class ActivityLogController extends Controller
         $query = ActivityLog::with('user')->latest();
 
         if ($request->filled('action')) {
-            $query->where('action', 'like', $request->action . '%');
+            $escaped = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->action);
+            $query->where('action', 'like', $escaped . '%');
         }
 
         if ($request->filled('user_id')) {
@@ -21,7 +22,8 @@ class ActivityLogController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where('description', 'like', '%' . $request->search . '%');
+            $escaped = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->search);
+            $query->where('description', 'like', '%' . $escaped . '%');
         }
 
         if ($request->filled('date_from')) {

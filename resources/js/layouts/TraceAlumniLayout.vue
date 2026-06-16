@@ -40,7 +40,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useInitials } from "@/composables/useInitials";
 import type { BreadcrumbItem } from "@/types";
 import Breadcrumbs from "@/components/Breadcrumbs.vue";
-import NotificationBell from '@/components/Trace/NotificationBell.vue';
+import NotificationBell from '@/components/trace/NotificationBell.vue';
 
 interface TracePageProps extends PageProps {
     auth: { user: any };
@@ -130,7 +130,11 @@ const navItems = [
 </script>
 
 <template>
-    <Head :title="title ? `${title} — TRACE Alumni` : 'TRACE — Alumni'" />
+    <Head :title="title ? `${title} — TRACE Alumni` : 'TRACE — Alumni'">
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    </Head>
 
     <AppShell variant="sidebar">
         <Sidebar collapsible="icon">
@@ -143,7 +147,7 @@ const navItems = [
                     class="flex items-center gap-2.5 shrink-0 transition-all duration-300 group-data-[collapsible=icon]:group-hover/header:opacity-0 group-data-[collapsible=icon]:group-hover/header:scale-75"
                 >
                     <div
-                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-700 shadow-sm shadow-green-500/25"
+                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#0C447C] to-[#85B7EB] shadow-sm shadow-[#0C447C]/25"
                     >
                         <GraduationCap class="h-4 w-4 text-white" />
                     </div>
@@ -155,13 +159,13 @@ const navItems = [
                             >TRACE</span
                         >
                         <span
-                            class="text-[9px] font-semibold uppercase tracking-widest text-green-600 dark:text-green-400 mt-0.5"
+                            class="text-[9px] font-semibold uppercase tracking-widest text-[#0C447C] dark:text-[#85B7EB] mt-0.5"
                             >Alumni Portal</span
                         >
                     </div>
                 </Link>
                 <SidebarTrigger
-                    class="shrink-0 bg-transparent text-slate-400 hover:text-green-600 rounded-lg p-1 w-7 h-7 hover:bg-slate-50 dark:hover:bg-zinc-800 border-none shadow-none transition-all duration-200 group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:inset-0 group-data-[collapsible=icon]:m-auto group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:group-hover/header:opacity-100 group-data-[collapsible=icon]:group-hover/header:pointer-events-auto"
+                    class="shrink-0 bg-transparent text-slate-400 hover:text-[#0C447C] rounded-lg p-1 w-7 h-7 hover:bg-slate-50 dark:hover:bg-zinc-800 border-none shadow-none transition-all duration-200 group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:inset-0 group-data-[collapsible=icon]:m-auto group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:group-hover/header:opacity-100 group-data-[collapsible=icon]:group-hover/header:pointer-events-auto"
                 />
             </SidebarHeader>
 
@@ -187,7 +191,7 @@ const navItems = [
                                 class="h-9 rounded-lg transition-all duration-150"
                                 :class="
                                     item.match($page.url)
-                                        ? 'font-semibold text-green-700 bg-green-50 dark:bg-green-950/50 dark:text-green-400 border border-green-100 dark:border-green-900/40'
+                                        ? 'font-semibold text-[#0C447C] bg-[#0C447C]/5 dark:bg-[#85B7EB]/10 dark:text-[#85B7EB] border border-[#0C447C]/10 dark:border-[#85B7EB]/20'
                                         : 'font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50/80 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800/60'
                                 "
                             >
@@ -200,7 +204,7 @@ const navItems = [
                                         class="h-[17px] w-[17px] shrink-0"
                                         :class="
                                             item.match($page.url)
-                                                ? 'text-green-600 dark:text-green-400'
+                                                ? 'text-[#0C447C] dark:text-[#85B7EB]'
                                                 : 'text-slate-400 dark:text-zinc-500'
                                         "
                                     />
@@ -271,7 +275,7 @@ const navItems = [
                     </template>
                     <template v-else>
                         <span
-                            class="rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-green-700 dark:bg-green-950/50 dark:text-green-400 shrink-0"
+                            class="rounded-md bg-[#0C447C]/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#0C447C] dark:bg-[#85B7EB]/15 dark:text-[#85B7EB] shrink-0"
                         >
                             TRACE
                         </span>
@@ -298,7 +302,7 @@ const navItems = [
                             class="flex items-center gap-2 py-1 pl-1.5 pr-2.5 rounded-lg outline-none hover:bg-slate-50 dark:hover:bg-zinc-800/60 border border-transparent hover:border-slate-100 dark:hover:border-zinc-700/50 transition-all duration-200 group"
                         >
                             <Avatar
-                                class="h-7 w-7 overflow-hidden rounded-full ring-1 ring-green-200/60 dark:ring-green-800/40"
+                                class="h-7 w-7 overflow-hidden rounded-full ring-1 ring-[#85B7EB]/40 dark:ring-[#0C447C]/50"
                             >
                                 <AvatarImage
                                     v-if="user?.avatar"
@@ -307,7 +311,7 @@ const navItems = [
                                     class="object-cover"
                                 />
                                 <AvatarFallback
-                                    class="rounded-full bg-green-100 dark:bg-green-900/60 text-green-700 dark:text-green-300 text-[10px] font-bold"
+                                    class="rounded-full bg-[#0C447C]/10 dark:bg-[#0C447C]/20 text-[#0C447C] dark:text-[#85B7EB] text-[10px] font-bold"
                                 >
                                     {{ getInitials(user?.name ?? "A") }}
                                 </AvatarFallback>
@@ -321,7 +325,7 @@ const navItems = [
                                     {{ firstName }}
                                 </span>
                                 <span
-                                    class="text-[9px] font-semibold text-green-600 dark:text-green-400 mt-0.5 uppercase tracking-wider"
+                                    class="text-[9px] font-semibold text-[#0C447C] dark:text-[#85B7EB] mt-0.5 uppercase tracking-wider"
                                 >
                                     {{ roleName }}
                                 </span>
@@ -392,7 +396,7 @@ const navItems = [
             </header>
 
             <!-- Page Content -->
-            <main class="flex-1 p-4 sm:p-5 lg:p-7">
+            <main class="trace-content flex-1 p-4 sm:p-5 lg:p-7">
                 <!-- Loading skeleton -->
                 <div v-if="isPageLoading" class="animate-pulse space-y-4">
                     <div
@@ -443,5 +447,11 @@ const navItems = [
 }
 .dark ::-webkit-scrollbar-thumb {
     background: #334155;
+}
+.trace-content {
+    font-family: 'Inter', sans-serif;
+}
+.trace-content h1, .trace-content h2, .trace-content h3, .trace-content h4 {
+    font-family: 'Poppins', sans-serif;
 }
 </style>

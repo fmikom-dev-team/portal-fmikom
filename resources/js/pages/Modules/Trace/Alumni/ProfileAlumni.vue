@@ -5,7 +5,8 @@ import TraceAlumniLayout from "@/layouts/TraceAlumniLayout.vue";
 import type { BreadcrumbItem } from "@/types";
 import ProfileView from "./components/ProfileView.vue";
 import ProfileEditModal from "./components/ProfileEditModal.vue";
-import { CheckCircle2 } from "lucide-vue-next";
+import { CheckCircle2, UserCircle } from "lucide-vue-next";
+import { TPageHeader } from '@/components/trace';
 import { update } from "@/routes/module/trace/profile-alumni";
 
 const props = defineProps<{
@@ -134,7 +135,13 @@ const submit = () => {
         :role-name="roleName"
     >
         <div class="max-w-6xl mx-auto space-y-6">
-            
+            <!-- Page Header -->
+            <TPageHeader
+                title="Profil Alumni"
+                description="Kelola data profil, domisili, dan informasi tracer study Anda"
+                :icon="UserCircle"
+            />
+
             <!-- Success Alert Banner -->
             <Transition name="slide">
                 <div v-if="showSuccessAlert" class="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 rounded-2xl p-4 flex items-start gap-3 shadow-xs">

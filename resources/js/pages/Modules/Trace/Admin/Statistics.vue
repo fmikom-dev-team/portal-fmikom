@@ -4,6 +4,7 @@ import {
     BarChart3, Users, Briefcase, GraduationCap, Clock, TrendingUp,
     CheckCircle2, Target, BookOpen, FileText, Search,
 } from 'lucide-vue-next';
+import { TPageHeader, TStatCard } from '@/components/trace';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 
 interface ProdiStat {
@@ -102,81 +103,43 @@ const distColors = ['bg-emerald-500', 'bg-blue-500', 'bg-amber-500', 'bg-red-500
         <div class="flex flex-1 flex-col gap-6 p-4 max-w-7xl mx-auto w-full">
 
             <!-- Header -->
-            <div>
-                <h1 class="text-2xl font-black tracking-tight text-slate-800 dark:text-white">
-                    Laporan & Statistik IKU
-                </h1>
-                <p class="mt-1 text-sm text-slate-500">
-                    Indikator Kinerja Utama dan metrik akreditasi tracer study
-                </p>
-            </div>
+            <TPageHeader
+                title="Laporan & Statistik IKU"
+                description="Indikator Kinerja Utama dan metrik akreditasi tracer study"
+                :icon="BarChart3"
+            />
 
             <!-- ============ IKU CARDS ============ -->
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <!-- Total Alumni -->
-                <div class="group relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
-                            <Users class="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                        </div>
-                        <div>
-                            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total Alumni</p>
-                            <p class="text-2xl font-black text-slate-800 dark:text-white">{{ totalAlumni }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Absorption Rate -->
-                <div class="group relative overflow-hidden rounded-2xl border border-emerald-200/60 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-emerald-900/40 dark:bg-slate-900">
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
-                            <CheckCircle2 class="h-5 w-5 text-emerald-600" />
-                        </div>
-                        <div>
-                            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">IKU Penyerapan</p>
-                            <p class="text-2xl font-black" :class="getRateColor(absorptionRate)">{{ absorptionRate }}%</p>
-                        </div>
-                    </div>
-                    <div class="mt-3 h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800">
-                        <div class="h-full rounded-full transition-all duration-700" :class="getRateBarColor(absorptionRate)" :style="`width: ${absorptionRate}%`"></div>
-                    </div>
-                </div>
-
-                <!-- Vertical Alignment -->
-                <div class="group relative overflow-hidden rounded-2xl border border-blue-200/60 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-blue-900/40 dark:bg-slate-900">
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/30">
-                            <Target class="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Keselarasan Vertikal</p>
-                            <p class="text-2xl font-black" :class="getRateColor(verticalRate)">{{ verticalRate }}%</p>
-                        </div>
-                    </div>
-                    <div class="mt-3 h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800">
-                        <div class="h-full rounded-full transition-all duration-700" :class="getRateBarColor(verticalRate)" :style="`width: ${verticalRate}%`"></div>
-                    </div>
-                </div>
-
-                <!-- Avg Waiting Time -->
-                <div class="group relative overflow-hidden rounded-2xl border border-amber-200/60 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-amber-900/40 dark:bg-slate-900">
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/30">
-                            <Clock class="h-5 w-5 text-amber-600" />
-                        </div>
-                        <div>
-                            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Waktu Tunggu Kerja</p>
-                            <p class="text-2xl font-black text-slate-800 dark:text-white">
-                                {{ avgWaitingTime }} <span class="text-sm font-bold text-slate-400">bulan</span>
-                            </p>
-                        </div>
-                    </div>
-                    <p class="mt-2 text-[10px] text-slate-400">Rata-rata dari lulus ke pekerjaan pertama</p>
-                </div>
+                <TStatCard
+                    label="Total Alumni"
+                    :value="totalAlumni"
+                    :icon="Users"
+                    color="slate"
+                />
+                <TStatCard
+                    label="IKU Penyerapan"
+                    :value="`${absorptionRate}%`"
+                    :icon="CheckCircle2"
+                    color="emerald"
+                />
+                <TStatCard
+                    label="Keselarasan Vertikal"
+                    :value="`${verticalRate}%`"
+                    :icon="Target"
+                    color="primary"
+                />
+                <TStatCard
+                    label="Waktu Tunggu Kerja"
+                    :value="`${avgWaitingTime} bulan`"
+                    :icon="Clock"
+                    color="accent"
+                    trend-label="Rata-rata dari lulus ke pekerjaan pertama"
+                />
             </div>
 
             <!-- ============ STATUS KARIR ============ -->
-            <div class="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div class="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                 <h2 class="mb-4 text-sm font-black uppercase tracking-widest text-slate-400">Sebaran Status Karir</h2>
                 <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     <div
@@ -201,7 +164,7 @@ const distColors = ['bg-emerald-500', 'bg-blue-500', 'bg-amber-500', 'bg-red-500
             <!-- ============ WAKTU TUNGGU KERJA ============ -->
             <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <!-- Distribusi Waktu Tunggu -->
-                <div class="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <div class="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                     <div class="mb-4 flex items-center gap-2">
                         <Clock class="h-4 w-4 text-amber-500" />
                         <h2 class="text-sm font-black uppercase tracking-widest text-slate-400">Distribusi Waktu Tunggu</h2>
@@ -271,7 +234,7 @@ const distColors = ['bg-emerald-500', 'bg-blue-500', 'bg-amber-500', 'bg-red-500
             </div>
 
             <!-- ============ PENYERAPAN PER PRODI ============ -->
-            <div class="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div class="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                 <div class="mb-4 flex items-center gap-2">
                     <BarChart3 class="h-4 w-4 text-emerald-500" />
                     <h2 class="text-sm font-black uppercase tracking-widest text-slate-400">Penyerapan per Program Studi</h2>
@@ -315,7 +278,7 @@ const distColors = ['bg-emerald-500', 'bg-blue-500', 'bg-amber-500', 'bg-red-500
             </div>
 
             <!-- ============ KUESIONER STATS ============ -->
-            <div class="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div class="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                 <div class="mb-4 flex items-center gap-2">
                     <FileText class="h-4 w-4 text-purple-500" />
                     <h2 class="text-sm font-black uppercase tracking-widest text-slate-400">Statistik Kuesioner</h2>

@@ -9,7 +9,7 @@ use Inertia\Inertia;
 use App\Models\Tracer\ProfilAlumni;
 use App\Models\Tracer\CareerHistory;
 use App\Models\Pagi\PagiCv;
-use App\Models\Tracer\JobApplycants;
+use App\Models\Tracer\JobApplicant;
 use App\Models\Tracer\EventRegistration;
 use App\Models\Tracer\Kuesioner;
 use App\Models\Tracer\Response;
@@ -65,7 +65,7 @@ class TraceAlumniDashboardController extends Controller
 
         // --- Quick Stats ---
         $appliedJobsCount = $profile
-            ? JobApplycants::where('alumni_id', $profile->id)->count()
+            ? JobApplicant::where('alumni_id', $profile->id)->count()
             : 0;
 
         $upcomingEventsCount = EventRegistration::where('user_id', $user->id)
@@ -76,7 +76,7 @@ class TraceAlumniDashboardController extends Controller
 
         // Kuesioners that are active but the user hasn't responded to yet
         $answeredKuesionerIds = Response::where('user_id', $user->id)->pluck('kuesioner_id');
-        $pendingKuesionersCount = Kuesioner::where('is_active', true)
+        $pendingKuesionersCount = Kuesioner::whereIn('status', ['active', 'published'])
             ->whereNotIn('id', $answeredKuesionerIds)
             ->count();
 

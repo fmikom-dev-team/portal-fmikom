@@ -3,8 +3,8 @@
 namespace App\Modules\Trace\Controllers\Alumni;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tracer\Bookmarks;
-use App\Models\Tracer\JobApplycants;
+use App\Models\Tracer\Bookmark;
+use App\Models\Tracer\JobApplicant;
 use App\Models\Tracer\JobCategory;
 use App\Models\Tracer\JobListing;
 use App\Models\Tracer\ProfilAlumni;
@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use App\Notifications\Trace\JobApplicationSubmitted;
 use App\Models\Tracer\ActivityLog;
+use App\Models\User;
+use Illuminate\Support\Facades\Notification;
 
 class JobBrowseController extends Controller
 {
@@ -55,7 +57,7 @@ class JobBrowseController extends Controller
         }
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")
@@ -70,7 +72,7 @@ class JobBrowseController extends Controller
         $categories = JobCategory::all();
 
         // Get only mitras that have published jobs
-        $mitras = \App\Models\Tracer\MitraProfiles::whereHas('jobListings', function ($q) {
+        $mitras = \App\Models\Tracer\MitraProfile::whereHas('jobListings', function ($q) {
             $q->where('status', 'published');
         })->select('id', 'nama_perusahaan')->orderBy('nama_perusahaan')->get();
 
@@ -93,13 +95,13 @@ class JobBrowseController extends Controller
         $hasApplied = false;
         $myApplication = null;
         if ($alumniProfile) {
-            $myApplication = JobApplycants::where('job_id', $id)
+            $myApplication = JobApplicant::where('job_id', $id)
                 ->where('alumni_id', $alumniProfile->id)
                 ->first();
             $hasApplied = $myApplication !== null;
         }
 
-        $isBookmarked = Bookmarks::where('job_id', $id)
+        $isBookmarked = Bookmark::where('job_id', $id)
             ->where('user_id', auth()->id())
             ->exists();
 
@@ -162,7 +164,7 @@ class JobBrowseController extends Controller
         }
 
         return DB::transaction(function () use ($request, $job, $alumniProfile, $cvIds, $portfolioIds) {
-            $alreadyApplied = JobApplycants::where('job_id', $job->id)
+            $alreadyApplied = JobApplicant::where('job_id', $job->id)
                 ->where('alumni_id', $alumniProfile->id)
                 ->lockForUpdate()
                 ->exists();
@@ -171,7 +173,7 @@ class JobBrowseController extends Controller
                 return redirect()->back()->with('error', 'Anda sudah melamar pada lowongan ini.');
             }
 
-            JobApplycants::create([
+            JobApplicant::create([
                 'job_id' => $job->id,
                 'alumni_id' => $alumniProfile->id,
                 'cover_letter' => $request->cover_letter,
@@ -191,6 +193,14 @@ class JobBrowseController extends Controller
                 ));
             }
 
+            // Notify admins
+            $admins = User::where('user_type', 'admin')->get();
+            Notification::send($admins, new JobApplicationSubmitted(
+                auth()->user()->name,
+                $job->title,
+                $job->id,
+            ));
+
             ActivityLog::record('job.applied', "Melamar lowongan: {$job->title}", $job);
 
             return redirect()->back()->with('success', 'Lamaran berhasil dikirim.');
@@ -201,7 +211,7 @@ class JobBrowseController extends Controller
     {
         $job = JobListing::where('status', 'published')->findOrFail($id);
 
-        $bookmark = Bookmarks::where('user_id', auth()->id())
+        $bookmark = Bookmark::where('user_id', auth()->id())
             ->where('job_id', $job->id)
             ->first();
 
@@ -209,7 +219,7 @@ class JobBrowseController extends Controller
             $bookmark->delete();
             ActivityLog::record('job.unbookmarked', "Menghapus simpanan lowongan: {$job->title}", $job);
         } else {
-            Bookmarks::create([
+            Bookmark::create([
                 'user_id' => auth()->id(),
                 'job_id' => $job->id,
             ]);
@@ -227,7 +237,7 @@ class JobBrowseController extends Controller
             return redirect()->back()->with('error', 'Profil alumni belum lengkap. Silakan lengkapi profil terlebih dahulu.');
         }
 
-        $applications = JobApplycants::where('alumni_id', $alumniProfile->id)
+        $applications = JobApplicant::where('alumni_id', $alumniProfile->id)
             ->whereHas('jobListing')
             ->with(['jobListing.mitra'])
             ->latest()
@@ -240,7 +250,7 @@ class JobBrowseController extends Controller
 
     public function myBookmarks(Request $request)
     {
-        $bookmarks = Bookmarks::where('user_id', auth()->id())
+        $bookmarks = Bookmark::where('user_id', auth()->id())
             ->with(['jobListing' => function ($query) {
                 $query->withTrashed()->with(['mitra', 'category']);
             }])
@@ -254,12 +264,13 @@ class JobBrowseController extends Controller
 
     public function companies(Request $request)
     {
-        $query = \App\Models\Tracer\MitraProfiles::withCount(['jobListings' => function ($q) {
+        $query = \App\Models\Tracer\MitraProfile::withCount(['jobListings' => function ($q) {
             $q->where('status', 'published');
         }]);
 
         // Search
-        if ($search = $request->input('search')) {
+        if ($request->filled('search')) {
+            $search = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->input('search'));
             $query->where('nama_perusahaan', 'like', "%{$search}%");
         }
 
@@ -270,7 +281,7 @@ class JobBrowseController extends Controller
         return Inertia::render('Modules/Trace/Alumni/Jobs/Companies', [
             'companies' => $companies,
             'filters' => [
-                'search' => $search,
+                'search' => $request->input('search'),
             ],
         ]);
     }

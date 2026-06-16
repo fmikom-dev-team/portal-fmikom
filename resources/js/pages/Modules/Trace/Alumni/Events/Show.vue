@@ -2,6 +2,7 @@
 import { Link, router } from '@inertiajs/vue3';
 import TraceAlumniLayout from '@/layouts/TraceAlumniLayout.vue';
 import type { BreadcrumbItem } from '@/types';
+import { TPageHeader } from '@/components/trace';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -95,15 +96,16 @@ const cancelRegistration = () => {
 <template>
     <TraceAlumniLayout title="Detail Event" role-name="Alumni" :breadcrumbs="breadcrumbs">
         <div class="mx-auto max-w-4xl space-y-6">
-            <!-- Back Button -->
-            <div class="flex items-center gap-3">
-                <Button as-child variant="ghost" size="icon-sm" class="rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
-                    <Link href="/trace/events">
-                        <ArrowLeft class="h-4 w-4" />
-                    </Link>
-                </Button>
-                <span class="text-sm font-semibold text-slate-500 dark:text-slate-400">Kembali ke daftar event</span>
-            </div>
+            <!-- Header -->
+            <TPageHeader :title="event.title" description="Detail Event" :icon="CalendarDays">
+                <template #actions>
+                    <Button as-child variant="ghost" size="icon-sm" class="rounded-xl text-slate-400 hover:text-[#0C447C] hover:bg-[#0C447C]/5 dark:hover:text-[#85B7EB] dark:hover:bg-[#85B7EB]/10">
+                        <Link href="/trace/events">
+                            <ArrowLeft class="h-4 w-4" />
+                        </Link>
+                    </Button>
+                </template>
+            </TPageHeader>
 
             <!-- Poster -->
             <div class="rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800">
@@ -128,18 +130,18 @@ const cancelRegistration = () => {
                         <!-- Meta inline -->
                         <div class="flex flex-wrap gap-4 mb-4">
                             <div class="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
-                                <CalendarDays class="h-4 w-4 text-emerald-500" />
+                                <CalendarDays class="h-4 w-4 text-[#0C447C] dark:text-[#85B7EB]" />
                                 {{ formatDateFull(event.event_date) }}
                             </div>
                             <div class="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
-                                <Clock class="h-4 w-4 text-emerald-500" />
+                                <Clock class="h-4 w-4 text-[#0C447C] dark:text-[#85B7EB]" />
                                 {{ event.event_time_start }} — {{ event.event_time_end }}
                             </div>
                         </div>
                     </div>
 
                     <!-- Description -->
-                    <Card class="rounded-2xl border-slate-100 dark:border-slate-800 shadow-xs">
+                    <Card class="rounded-2xl border border-slate-200/60 dark:border-zinc-800 shadow-xs">
                         <CardContent class="p-5">
                             <h3 class="text-sm font-black uppercase tracking-wider text-slate-400 mb-3">Deskripsi</h3>
                             <div class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-line">
@@ -152,17 +154,17 @@ const cancelRegistration = () => {
                 <!-- Sidebar -->
                 <div class="space-y-4">
                     <!-- Info Card -->
-                    <Card class="rounded-2xl border-slate-100 dark:border-slate-800 shadow-xs">
+                    <Card class="rounded-2xl border border-slate-200/60 dark:border-zinc-800 shadow-xs">
                         <CardContent class="p-5 space-y-4">
                             <div class="flex items-start gap-3">
-                                <MapPin class="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                                <MapPin class="h-4 w-4 text-[#0C447C] dark:text-[#85B7EB] shrink-0 mt-0.5" />
                                 <div>
                                     <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Lokasi</p>
                                     <p class="text-sm font-bold text-slate-800 dark:text-white">{{ event.location }}</p>
                                 </div>
                             </div>
                             <div class="flex items-start gap-3">
-                                <Users class="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                                <Users class="h-4 w-4 text-[#0C447C] dark:text-[#85B7EB] shrink-0 mt-0.5" />
                                 <div>
                                     <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Peserta</p>
                                     <p class="text-sm font-bold text-slate-800 dark:text-white">
@@ -172,7 +174,7 @@ const cancelRegistration = () => {
                                 </div>
                             </div>
                             <div class="flex items-start gap-3">
-                                <AlertCircle class="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                                <AlertCircle class="h-4 w-4 text-[#EF9F27] shrink-0 mt-0.5" />
                                 <div>
                                     <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Batas Pendaftaran</p>
                                     <p class="text-sm font-bold" :class="isPastDeadline ? 'text-red-500' : 'text-slate-800 dark:text-white'">
@@ -185,15 +187,15 @@ const cancelRegistration = () => {
                     </Card>
 
                     <!-- Registration Action -->
-                    <Card class="rounded-2xl border-slate-100 dark:border-slate-800 shadow-xs">
+                    <Card class="rounded-2xl border border-slate-200/60 dark:border-zinc-800 shadow-xs">
                         <CardContent class="p-5">
                             <!-- Already registered -->
                             <div v-if="isRegistered" class="space-y-3">
-                                <div class="flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 p-3">
-                                    <CheckCircle2 class="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                <div class="flex items-center gap-2 rounded-xl bg-[#0C447C]/5 dark:bg-[#85B7EB]/10 p-3">
+                                    <CheckCircle2 class="h-5 w-5 text-[#0C447C] dark:text-[#85B7EB] shrink-0" />
                                     <div>
-                                        <p class="text-sm font-bold text-emerald-700 dark:text-emerald-400">Sudah Terdaftar</p>
-                                        <p class="text-[10px] text-emerald-600/80 dark:text-emerald-400/70">Anda telah mendaftar event ini</p>
+                                        <p class="text-sm font-bold text-[#0C447C] dark:text-[#85B7EB]">Sudah Terdaftar</p>
+                                        <p class="text-[10px] text-[#0C447C]/80 dark:text-[#85B7EB]/70">Anda telah mendaftar event ini</p>
                                     </div>
                                 </div>
                                 <Button
@@ -211,7 +213,7 @@ const cancelRegistration = () => {
                             <!-- Can register -->
                             <div v-else-if="canRegister">
                                 <Button
-                                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm"
+                                    class="w-full bg-[#0C447C] hover:bg-[#0C447C]/90 text-white rounded-xl shadow-sm dark:bg-[#85B7EB] dark:text-slate-900 dark:hover:bg-[#85B7EB]/90"
                                     :disabled="isProcessing"
                                     @click="register"
                                 >

@@ -1,16 +1,11 @@
 <script setup>
 import { Head, useForm } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    CardDescription,
-} from '@/components/ui/card';
+import { TFormSection } from '@/components/trace';
 import {
     Building2,
     Globe,
@@ -34,43 +29,32 @@ const form = useForm({
 });
 
 function submit() {
-    form.post('/trace/open-job/profile-setup');
+    form.post('/trace/open-job/profile-setup', {
+        onSuccess: () => toast.success('Profil berhasil dibuat!'),
+        onError: () => toast.error('Gagal menyimpan. Periksa kembali form Anda.'),
+    });
 }
 </script>
 
 <template>
     <Head title="Profil Perusahaan — TRACE Mitra" />
 
-    <div class="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-violet-50/40 to-indigo-50 px-4 py-12">
+    <div class="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-[#85B7EB]/10 to-[#0C447C]/5 px-4 py-12">
         <!-- Background decorative blobs -->
-        <div class="pointer-events-none absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-violet-200/30 blur-3xl" />
-        <div class="pointer-events-none absolute -bottom-32 -right-32 h-[420px] w-[420px] rounded-full bg-indigo-200/25 blur-3xl" />
-        <div class="pointer-events-none absolute left-1/2 top-1/3 h-[300px] w-[300px] -translate-x-1/2 rounded-full bg-purple-100/20 blur-2xl" />
+        <div class="pointer-events-none absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-[#85B7EB]/20 blur-3xl" />
+        <div class="pointer-events-none absolute -bottom-32 -right-32 h-[420px] w-[420px] rounded-full bg-[#0C447C]/15 blur-3xl" />
+        <div class="pointer-events-none absolute left-1/2 top-1/3 h-[300px] w-[300px] -translate-x-1/2 rounded-full bg-[#85B7EB]/10 blur-2xl" />
 
         <div class="relative z-10 w-full max-w-2xl animate-fade-in-up">
-            <Card class="border-white/60 bg-white/70 shadow-xl shadow-violet-100/40 backdrop-blur-xl">
-                <CardHeader class="space-y-4 pb-2 text-center">
-                    <!-- Branded icon -->
-                    <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-violet-500/25">
-                        <Briefcase class="h-8 w-8 text-white" :stroke-width="1.75" />
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <CardTitle class="text-2xl font-bold tracking-tight text-slate-900">
-                            TRACE Mitra
-                        </CardTitle>
-                        <CardDescription class="mx-auto max-w-md text-sm leading-relaxed text-slate-500">
-                            Lengkapi profil perusahaan Anda untuk mulai memposting lowongan kerja
-                        </CardDescription>
-                    </div>
-                </CardHeader>
-
-                <CardContent class="px-6 pb-8 pt-4 sm:px-8">
-                    <form @submit.prevent="submit" class="space-y-5">
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0C447C] to-[#85B7EB] shadow-lg shadow-[#0C447C]/25 mb-6">
+                <Briefcase class="h-8 w-8 text-white" :stroke-width="1.75" />
+            </div>
+            <TFormSection title="TRACE Mitra" description="Lengkapi profil perusahaan Anda untuk mulai memposting lowongan kerja">
+                <form @submit.prevent="submit" class="space-y-5">
                         <!-- Nama Perusahaan -->
                         <div class="space-y-2">
                             <Label for="nama_perusahaan" class="flex items-center gap-2 text-sm font-medium text-slate-700">
-                                <Building2 class="h-4 w-4 text-violet-500" />
+                                <Building2 class="h-4 w-4 text-[#0C447C]" />
                                 Nama Perusahaan
                                 <span class="text-red-400">*</span>
                             </Label>
@@ -80,7 +64,7 @@ function submit() {
                                 type="text"
                                 placeholder="PT Contoh Perusahaan"
                                 required
-                                class="transition-shadow focus:shadow-md focus:shadow-violet-100"
+                                class="transition-shadow focus:shadow-md focus:shadow-[#85B7EB]/30"
                             />
                             <p v-if="form.errors.nama_perusahaan" class="text-xs text-red-500">
                                 {{ form.errors.nama_perusahaan }}
@@ -90,7 +74,7 @@ function submit() {
                         <!-- Deskripsi -->
                         <div class="space-y-2">
                             <Label for="deskripsi" class="flex items-center gap-2 text-sm font-medium text-slate-700">
-                                <Building2 class="h-4 w-4 text-violet-500" />
+                                <Building2 class="h-4 w-4 text-[#0C447C]" />
                                 Deskripsi
                             </Label>
                             <Textarea
@@ -98,7 +82,7 @@ function submit() {
                                 v-model="form.deskripsi"
                                 placeholder="Ceritakan tentang perusahaan Anda..."
                                 rows="3"
-                                class="resize-none transition-shadow focus:shadow-md focus:shadow-violet-100"
+                                class="resize-none transition-shadow focus:shadow-md focus:shadow-[#85B7EB]/30"
                             />
                             <p v-if="form.errors.deskripsi" class="text-xs text-red-500">
                                 {{ form.errors.deskripsi }}
@@ -110,7 +94,7 @@ function submit() {
                             <!-- Website -->
                             <div class="space-y-2">
                                 <Label for="website" class="flex items-center gap-2 text-sm font-medium text-slate-700">
-                                    <Globe class="h-4 w-4 text-violet-500" />
+                                    <Globe class="h-4 w-4 text-[#0C447C]" />
                                     Website
                                 </Label>
                                 <Input
@@ -118,7 +102,7 @@ function submit() {
                                     v-model="form.website"
                                     type="url"
                                     placeholder="https://perusahaan.com"
-                                    class="transition-shadow focus:shadow-md focus:shadow-violet-100"
+                                    class="transition-shadow focus:shadow-md focus:shadow-[#85B7EB]/30"
                                 />
                                 <p v-if="form.errors.website" class="text-xs text-red-500">
                                     {{ form.errors.website }}
@@ -128,7 +112,7 @@ function submit() {
                             <!-- Email Perusahaan -->
                             <div class="space-y-2">
                                 <Label for="email_perusahaan" class="flex items-center gap-2 text-sm font-medium text-slate-700">
-                                    <Mail class="h-4 w-4 text-violet-500" />
+                                    <Mail class="h-4 w-4 text-[#0C447C]" />
                                     Email Perusahaan
                                 </Label>
                                 <Input
@@ -136,7 +120,7 @@ function submit() {
                                     v-model="form.email_perusahaan"
                                     type="email"
                                     placeholder="info@perusahaan.com"
-                                    class="transition-shadow focus:shadow-md focus:shadow-violet-100"
+                                    class="transition-shadow focus:shadow-md focus:shadow-[#85B7EB]/30"
                                 />
                                 <p v-if="form.errors.email_perusahaan" class="text-xs text-red-500">
                                     {{ form.errors.email_perusahaan }}
@@ -147,7 +131,7 @@ function submit() {
                         <!-- No. Telp -->
                         <div class="space-y-2">
                             <Label for="no_telp" class="flex items-center gap-2 text-sm font-medium text-slate-700">
-                                <Phone class="h-4 w-4 text-violet-500" />
+                                <Phone class="h-4 w-4 text-[#0C447C]" />
                                 No. Telp
                             </Label>
                             <Input
@@ -155,7 +139,7 @@ function submit() {
                                 v-model="form.no_telp"
                                 type="tel"
                                 placeholder="(021) 1234-5678"
-                                class="transition-shadow focus:shadow-md focus:shadow-violet-100"
+                                class="transition-shadow focus:shadow-md focus:shadow-[#85B7EB]/30"
                             />
                             <p v-if="form.errors.no_telp" class="text-xs text-red-500">
                                 {{ form.errors.no_telp }}
@@ -165,7 +149,7 @@ function submit() {
                         <!-- Alamat Lengkap -->
                         <div class="space-y-2">
                             <Label for="alamat_lengkap" class="flex items-center gap-2 text-sm font-medium text-slate-700">
-                                <MapPin class="h-4 w-4 text-violet-500" />
+                                <MapPin class="h-4 w-4 text-[#0C447C]" />
                                 Alamat Lengkap
                             </Label>
                             <Textarea
@@ -173,7 +157,7 @@ function submit() {
                                 v-model="form.alamat_lengkap"
                                 placeholder="Jl. Contoh No. 123, Kota, Provinsi"
                                 rows="3"
-                                class="resize-none transition-shadow focus:shadow-md focus:shadow-violet-100"
+                                class="resize-none transition-shadow focus:shadow-md focus:shadow-[#85B7EB]/30"
                             />
                             <p v-if="form.errors.alamat_lengkap" class="text-xs text-red-500">
                                 {{ form.errors.alamat_lengkap }}
@@ -185,7 +169,7 @@ function submit() {
                             <Button
                                 type="submit"
                                 :disabled="form.processing"
-                                class="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/25 transition-all hover:from-violet-700 hover:to-indigo-700 hover:shadow-xl hover:shadow-violet-500/30 active:scale-[0.98]"
+                                class="w-full bg-gradient-to-r from-[#0C447C] to-[#85B7EB] text-white shadow-lg shadow-[#0C447C]/25 transition-all hover:from-[#0C447C]/90 hover:to-[#85B7EB]/90 hover:shadow-xl hover:shadow-[#0C447C]/30 active:scale-[0.98]"
                                 size="lg"
                             >
                                 <template v-if="form.processing">
@@ -200,9 +184,8 @@ function submit() {
                                 </template>
                             </Button>
                         </div>
-                    </form>
-                </CardContent>
-            </Card>
+                </form>
+            </TFormSection>
 
             <!-- Footer note -->
             <p class="mt-6 text-center text-xs text-slate-400">

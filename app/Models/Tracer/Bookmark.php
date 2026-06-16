@@ -5,7 +5,7 @@ namespace App\Models\Tracer;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 
-class Bookmarks extends Model
+class Bookmark extends Model
 {
     protected $table = 'bookmarks';
 

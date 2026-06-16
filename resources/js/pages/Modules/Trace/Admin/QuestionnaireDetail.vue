@@ -28,20 +28,21 @@ import {
     DialogFooter,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { TStatusBadge } from '@/components/trace';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 
 import { KUESIONER_CATEGORIES } from '@/utils/constants';
 import { formatDateForInput } from '@/utils/date';
 import QuestionnaireSectionCard from './components/QuestionnaireSectionCard.vue';
 import QuestionnaireSettingsCard from './components/QuestionnaireSettingsCard.vue';
-import QuissionerPreview from './components/QuissionerPreview.vue';
+import QuestionnairePreview from './components/QuestionnairePreview.vue';
 
 const props = defineProps<{
     kuesioner: any;
 }>();
 
 const breadcrumbs = computed(() => [
-    { title: 'Manajemen Kuesioner', href: '/admin/quesionnaires' },
+    { title: 'Manajemen Kuesioner', href: '/trace/admin/questionnaires' },
     { title: form.judul || 'Kuesioner Baru', href: '#' },
 ]);
 
@@ -127,8 +128,8 @@ const computedStatus = computed(() => {
         if (start > now) {
             return {
                 label: 'Terjadwal',
-                badgeClass: 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400',
-                dotClass: 'bg-blue-500',
+                badgeClass: 'bg-[#0C447C]/10 text-[#0C447C] dark:bg-[#0C447C]/20 dark:text-[#85B7EB]',
+                dotClass: 'bg-[#0C447C]',
             };
         }
     }
@@ -215,17 +216,17 @@ const pendingLeaveUrl = ref('');
 // Intercept back button click
 const handleBack = () => {
     if (hasUnsavedChanges.value) {
-        pendingLeaveUrl.value = '/admin/quesionnaires';
+        pendingLeaveUrl.value = '/trace/admin/questionnaires';
         showLeaveDialog.value = true;
     } else {
-        router.get('/admin/quesionnaires');
+        router.get('/trace/admin/questionnaires');
     }
 };
 
 const confirmLeave = () => {
     hasUnsavedChanges.value = false;
     showLeaveDialog.value = false;
-    router.get(pendingLeaveUrl.value || '/admin/quesionnaires');
+    router.get(pendingLeaveUrl.value || '/trace/admin/questionnaires');
 };
 
 const cancelLeave = () => {
@@ -293,13 +294,13 @@ const doSave = (isAutoSave = false) => {
     };
 
     if (props.kuesioner.id) {
-        form.put(`/admin/quesionnaires/${props.kuesioner.id}`, {
+        form.put(`/trace/admin/questionnaires/${props.kuesioner.id}`, {
             preserveScroll: true,
             onSuccess,
             onError,
         });
     } else {
-        form.post('/admin/quesionnaires', {
+        form.post('/trace/admin/questionnaires', {
             onSuccess,
             onError,
         });
@@ -337,20 +338,18 @@ const saveChanges = () => doSave(false);
                             >{{ form.judul || 'Kuesioner Tanpa Judul' }}</span
                         >
                         <!-- Status Badge — computed from dates -->
-                        <Badge
-                            variant="outline"
-                            class="ml-2 capitalize border-none gap-1.5"
-                            :class="computedStatus.badgeClass"
-                        >
-                            <div class="h-1.5 w-1.5 rounded-full" :class="computedStatus.dotClass"></div>
-                            {{ computedStatus.label }}
-                        </Badge>
+                        <TStatusBadge
+                            :status="computedStatus.label === 'Aktif' ? 'active' : computedStatus.label === 'Draft' ? 'draft' : computedStatus.label === 'Terjadwal' ? 'pending' : 'closed'"
+                            :label="computedStatus.label"
+                            size="sm"
+                            class="ml-2"
+                        />
 
                         <!-- Save State Indicator -->
                         <div class="ml-2 flex items-center gap-1.5 text-[10px] font-bold">
                             <template v-if="saveState === 'saving'">
-                                <Loader2 class="h-3 w-3 animate-spin text-blue-500" />
-                                <span class="text-blue-500">Menyimpan...</span>
+                                <Loader2 class="h-3 w-3 animate-spin text-[#0C447C]" />
+                                <span class="text-[#0C447C]">Menyimpan...</span>
                             </template>
                             <template v-else-if="saveState === 'saved'">
                                 <CheckCircle2 class="h-3 w-3 text-emerald-500" />
@@ -371,7 +370,7 @@ const saveChanges = () => doSave(false);
                             class="h-8 gap-2 rounded-lg transition-all"
                             :class="
                                 activeTab === 'builder'
-                                    ? 'bg-white text-blue-600 shadow-sm dark:bg-slate-700'
+                                    ? 'bg-white text-[#0C447C] shadow-sm dark:bg-slate-700'
                                     : 'text-muted-foreground'
                             "
                             @click="activeTab = 'builder'"
@@ -384,7 +383,7 @@ const saveChanges = () => doSave(false);
                             variant="ghost"
                             size="sm"
                             class="h-8 gap-2 rounded-lg transition-all text-muted-foreground"
-                            @click="window.open(`/admin/quesionnaires/${kuesioner.id}/analytics-page`, '_blank')"
+                            @click="window.open(`/trace/admin/questionnaires/${kuesioner.id}/analytics-page`, '_blank')"
                         >
                             <BarChart2 class="h-4 w-4" />
                             <span class="text-xs font-bold">Analisis</span>
@@ -405,7 +404,7 @@ const saveChanges = () => doSave(false);
                     </Button>
                     <Button
                         size="sm"
-                        class="gap-2 rounded-xl bg-blue-600 hover:bg-blue-700"
+                        class="gap-2 rounded-xl bg-[#0C447C] hover:bg-[#0C447C]/90"
                         :disabled="saveState === 'saving'"
                         @click="saveChanges"
                     >
@@ -465,11 +464,11 @@ const saveChanges = () => doSave(false);
                 </div>
 
                 <Button
-                    class="h-20 w-full gap-4 rounded-[2rem] border-2 border-dashed border-blue-200 bg-blue-50/20 text-lg font-black tracking-tight text-blue-600 shadow-sm transition-all hover:border-blue-400 hover:bg-blue-50 hover:shadow-md dark:border-blue-800 dark:bg-blue-900/5"
+                    class="h-20 w-full gap-4 rounded-[2rem] border-2 border-dashed border-[#85B7EB]/40 bg-[#0C447C]/5 text-lg font-black tracking-tight text-[#0C447C] shadow-sm transition-all hover:border-[#85B7EB] hover:bg-[#0C447C]/10 hover:shadow-md dark:border-[#85B7EB]/30 dark:bg-[#0C447C]/5"
                     @click="addSection"
                 >
                     <div
-                        class="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/30"
+                        class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#0C447C] text-white shadow-lg shadow-[#0C447C]/30"
                     >
                         <Layout class="h-6 w-6" />
                     </div>
@@ -502,7 +501,7 @@ const saveChanges = () => doSave(false);
                         </div>
                     </DialogHeader>
                     <div class="bg-white p-6 lg:p-10 dark:bg-slate-950">
-                        <QuissionerPreview
+                        <QuestionnairePreview
                             :judul="form.judul"
                             :subtitle="form.subtitle"
                             :sections="form.sections"

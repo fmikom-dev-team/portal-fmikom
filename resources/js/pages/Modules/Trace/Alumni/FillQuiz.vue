@@ -8,12 +8,14 @@ import {
     ArrowRight,
     ArrowLeft,
     CheckCircle2,
+    ClipboardList,
 } from "lucide-vue-next";
 import { computed, ref } from "vue";
 import type { BreadcrumbItem } from "@/types";
 import { kuesioner } from "@/routes/module/trace";
 import { store as alumniTracerStore } from "@/routes/module/trace/kuesioner";
 import TraceAlumniLayout from "@/layouts/TraceAlumniLayout.vue";
+import { TPageHeader } from '@/components/trace';
 
 const props = defineProps<{
     kuesioner: any;
@@ -190,43 +192,32 @@ const breadcrumbItems: BreadcrumbItem[] = [
             <div class="mb-8">
                 <Link
                     :href="kuesioner().url"
-                    class="mb-4 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-green-600 dark:text-slate-400 dark:hover:text-green-400"
+                    class="mb-4 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-[#0C447C] dark:text-slate-400 dark:hover:text-[#85B7EB]"
                 >
                     <ChevronLeft class="h-4 w-4" /> Kembali ke Daftar
                 </Link>
-                <div
-                    class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+                <TPageHeader
+                    :title="kuesioner?.judul ?? kuesioner?.title ?? 'Kuesioner'"
+                    :description="kuesioner?.deskripsi ? kuesioner.deskripsi.substring(0, 100) + '...' : ''"
+                    :icon="ClipboardList"
                 >
-                    <div>
-                        <h1
-                            class="text-3xl font-black text-slate-900 dark:text-white"
+                    <template #actions>
+                        <div
+                            class="flex items-center gap-2 rounded-full bg-[#0C447C]/10 px-4 py-2 text-sm font-bold text-[#0C447C] dark:bg-[#85B7EB]/10 dark:text-[#85B7EB]"
                         >
-                            {{ kuesioner.judul }}
-                        </h1>
-                        <p class="mt-1 text-slate-500 dark:text-slate-400">
-                            {{
-                                kuesioner.deskripsi
-                                    ? kuesioner.deskripsi.substring(0, 100) +
-                                      "..."
-                                    : ""
-                            }}
-                        </p>
-                    </div>
-                    <div
-                        class="flex items-center gap-2 rounded-full bg-green-50 px-4 py-2 text-sm font-bold text-green-700 dark:bg-green-950/50 dark:text-green-400"
-                    >
-                        <Info class="h-4 w-4" /> Tracer Study
-                    </div>
-                </div>
+                            <Info class="h-4 w-4" /> Tracer Study
+                        </div>
+                    </template>
+                </TPageHeader>
             </div>
 
             <!-- Description Card -->
             <div
                 v-if="kuesioner.deskripsi && currentVisibleIndex === 0"
-                class="mb-8 overflow-hidden rounded-2xl border border-green-100 bg-green-50/50 p-6 dark:border-green-900/30 dark:bg-green-900/10"
+                class="mb-8 overflow-hidden rounded-2xl border border-[#0C447C]/10 bg-[#0C447C]/5 p-6 dark:border-[#85B7EB]/15 dark:bg-[#0C447C]/10"
             >
                 <p
-                    class="text-sm leading-relaxed text-green-800 dark:text-green-300"
+                    class="text-sm leading-relaxed text-[#0C447C] dark:text-[#85B7EB]"
                 >
                     {{ kuesioner.deskripsi }}
                 </p>
@@ -270,7 +261,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
                 <div
                     class="mb-3 flex justify-between text-sm font-bold text-slate-500 dark:text-slate-400"
                 >
-                    <span class="text-green-600 dark:text-green-400">
+                    <span class="text-[#0C447C] dark:text-[#85B7EB]">
                         Bagian {{ currentVisibleIndex + 1 }} dari
                         {{ visibleSections.length }}
                     </span>
@@ -280,7 +271,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
                     class="h-3 w-full overflow-hidden rounded-full border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800"
                 >
                     <div
-                        class="relative h-full bg-green-600 transition-all duration-500 ease-out"
+                        class="relative h-full bg-[#0C447C] dark:bg-[#85B7EB] transition-all duration-500 ease-out"
                         :style="{ width: progressPercent + '%' }"
                     >
                         <div
@@ -312,10 +303,10 @@ const breadcrumbItems: BreadcrumbItem[] = [
                     >
                         <div
                             v-show="vIdx === currentVisibleIndex"
-                            class="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm transition-all dark:border-slate-800 dark:bg-slate-900"
+                            class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition-all dark:border-zinc-800 dark:bg-zinc-900"
                         >
                             <div
-                                class="border-b border-slate-100 bg-slate-50/50 px-8 py-6 dark:border-slate-800 dark:bg-slate-800/50"
+                                class="border-b border-slate-100 bg-slate-50/50 px-8 py-6 dark:border-zinc-800 dark:bg-zinc-800/50"
                             >
                                 <h2
                                     class="text-xl font-black text-slate-900 dark:text-white"
@@ -678,7 +669,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
                 <!-- Footer / Actions -->
                 <div
-                    class="mt-6 flex flex-col-reverse gap-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:bg-slate-900"
+                    class="mt-6 flex flex-col-reverse gap-4 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800 dark:bg-zinc-900"
                 >
                     <div>
                         <button
@@ -702,7 +693,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
                             v-if="!isLastVisibleSection"
                             type="button"
                             @click="nextSection"
-                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-8 py-4 text-sm font-black text-white shadow-lg shadow-green-500/30 transition-all hover:-translate-y-0.5 hover:bg-green-700 hover:shadow-xl hover:shadow-green-500/40 active:translate-y-0 sm:w-auto"
+                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0C447C] px-8 py-4 text-sm font-black text-white shadow-lg shadow-[#0C447C]/30 transition-all hover:-translate-y-0.5 hover:bg-[#0C447C]/90 hover:shadow-xl hover:shadow-[#0C447C]/40 active:translate-y-0 sm:w-auto dark:bg-[#85B7EB] dark:text-slate-900 dark:shadow-[#85B7EB]/20 dark:hover:bg-[#85B7EB]/90"
                         >
                             SELANJUTNYA
                             <ArrowRight class="h-5 w-5" />
@@ -712,7 +703,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
                             v-else
                             type="submit"
                             :disabled="form.processing || props.hasResponded"
-                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-8 py-4 text-sm font-black text-white shadow-lg shadow-emerald-500/30 transition-all hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-xl hover:shadow-emerald-500/40 active:translate-y-0 disabled:transform-none disabled:opacity-50 disabled:shadow-none sm:w-auto"
+                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0C447C] px-8 py-4 text-sm font-black text-white shadow-lg shadow-[#0C447C]/30 transition-all hover:-translate-y-0.5 hover:bg-[#0C447C]/90 hover:shadow-xl hover:shadow-[#0C447C]/40 active:translate-y-0 disabled:transform-none disabled:opacity-50 disabled:shadow-none sm:w-auto dark:bg-[#85B7EB] dark:text-slate-900 dark:shadow-[#85B7EB]/20 dark:hover:bg-[#85B7EB]/90"
                         >
                             <Send v-if="!form.processing" class="h-5 w-5" />
                             <span

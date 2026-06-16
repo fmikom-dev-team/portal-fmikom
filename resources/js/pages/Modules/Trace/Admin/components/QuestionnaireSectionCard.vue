@@ -162,13 +162,13 @@ const toggleAcuan = (question: any, tag: string) => {
 
 <template>
     <Card
-        class="group/section relative overflow-hidden rounded-2xl border-l-8 border-l-blue-400 shadow-sm"
+        class="group/section relative overflow-hidden rounded-2xl border-l-8 border-l-[#0C447C] shadow-sm"
     >
         <CardHeader class="pb-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <Badge
-                        class="h-7 rounded-lg bg-blue-600 px-2 text-[10px] font-bold hover:bg-blue-600"
+                        class="h-7 rounded-lg bg-[#0C447C] px-2 text-[10px] font-bold hover:bg-[#0C447C]"
                     >
                         BAGIAN {{ sIndex + 1 }} DARI {{ totalSections }}
                     </Badge>
@@ -204,7 +204,7 @@ const toggleAcuan = (question: any, tag: string) => {
                 <div
                     v-for="(question, qIndex) in section.pertanyaans"
                     :key="qIndex"
-                    class="group/question rounded-2xl border border-slate-200 bg-slate-50/50 p-6 shadow-xs transition-all hover:border-blue-200 dark:border-slate-800 dark:bg-slate-900/30 dark:hover:border-blue-900/50"
+                    class="group/question rounded-2xl border border-slate-200 bg-slate-50/50 p-6 shadow-xs transition-all hover:border-[#85B7EB] dark:border-slate-800 dark:bg-slate-900/30 dark:hover:border-[#0C447C]"
                 >
                     <div class="flex items-start gap-4">
                         <div
@@ -300,7 +300,7 @@ const toggleAcuan = (question: any, tag: string) => {
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    class="h-8 gap-2 px-0 text-[11px] font-black tracking-widest text-blue-600 hover:text-blue-700"
+                                    class="h-8 gap-2 px-0 text-[11px] font-black tracking-widest text-[#0C447C] hover:text-[#0C447C]"
                                     @click="addOption(Number(qIndex))"
                                 >
                                     <PlusCircle class="h-3.5 w-3.5" />
@@ -379,7 +379,7 @@ const toggleAcuan = (question: any, tag: string) => {
                             >
                                 <!-- Column Labels -->
                                 <div class="space-y-2">
-                                    <p class="text-[10px] font-black tracking-[0.2em] text-indigo-600 uppercase">
+                                    <p class="text-[10px] font-black tracking-[0.2em] text-[#0C447C] uppercase">
                                         Label Skala (Kolom)
                                     </p>
                                     <div class="space-y-1.5">
@@ -408,7 +408,7 @@ const toggleAcuan = (question: any, tag: string) => {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        class="h-7 gap-1.5 px-0 text-[10px] font-black tracking-widest text-indigo-600 hover:text-indigo-700"
+                                        class="h-7 gap-1.5 px-0 text-[10px] font-black tracking-widest text-[#0C447C] hover:text-[#0C447C]"
                                         @click="addMatrixColumn(Number(qIndex))"
                                     >
                                         <PlusCircle class="h-3 w-3" />
@@ -420,7 +420,7 @@ const toggleAcuan = (question: any, tag: string) => {
 
                                 <!-- Matrix Rows -->
                                 <div class="space-y-2">
-                                    <p class="text-[10px] font-black tracking-[0.2em] text-blue-600 uppercase">
+                                    <p class="text-[10px] font-black tracking-[0.2em] text-[#0C447C] uppercase">
                                         Sub-Pertanyaan (Baris Matrix)
                                     </p>
                                     <div class="space-y-2">
@@ -429,7 +429,7 @@ const toggleAcuan = (question: any, tag: string) => {
                                             :key="rIndex"
                                             class="group/row flex items-center gap-2"
                                         >
-                                            <div class="h-6 w-1 rounded-full bg-blue-200 dark:bg-blue-800"></div>
+                                            <div class="h-6 w-1 rounded-full bg-[#85B7EB] dark:bg-[#0C447C]"></div>
                                             <Input
                                                 v-model="question.matrix_rows[rIndex]"
                                                 placeholder="Contoh: Integritas & Kejujuran"
@@ -449,7 +449,7 @@ const toggleAcuan = (question: any, tag: string) => {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        class="h-8 gap-2 px-0 text-[10px] font-black tracking-widest text-blue-600 hover:text-blue-700"
+                                        class="h-8 gap-2 px-0 text-[10px] font-black tracking-widest text-[#0C447C] hover:text-[#0C447C]"
                                         @click="addMatrixRow(Number(qIndex))"
                                     >
                                         <PlusCircle class="h-3.5 w-3.5" />
@@ -462,12 +462,12 @@ const toggleAcuan = (question: any, tag: string) => {
 
                             <!-- Advanced Settings -->
                             <div
-                                class="mt-4 rounded-2xl border border-blue-100 bg-blue-50/30 p-5 dark:border-blue-900/30 dark:bg-blue-900/10"
+                                class="mt-4 rounded-2xl border border-[#85B7EB]/50 bg-[#0C447C]/5 p-5 dark:border-[#0C447C]/30 dark:bg-[#0C447C]/10"
                             >
                                 <div class="mb-4 flex items-center gap-2">
-                                    <TrendingUp class="h-4 w-4 text-blue-600" />
+                                    <TrendingUp class="h-4 w-4 text-[#0C447C]" />
                                     <p
-                                        class="text-[11px] font-black tracking-[0.15em] text-blue-700 uppercase"
+                                        class="text-[11px] font-black tracking-[0.15em] text-[#0C447C] uppercase"
                                     >
                                         Konfigurasi Analisis & Akreditasi
                                     </p>
@@ -581,8 +581,8 @@ const toggleAcuan = (question: any, tag: string) => {
                                                     question.meta?.acuan?.includes(
                                                         tag,
                                                     )
-                                                        ? 'border-blue-600 bg-blue-600 text-white shadow-md'
-                                                        : 'border-slate-200 bg-white text-slate-500 hover:border-blue-300',
+                                                        ? 'border-[#0C447C] bg-[#0C447C] text-white shadow-md'
+                                                        : 'border-slate-200 bg-white text-slate-500 hover:border-[#85B7EB]',
                                                 ]"
                                             >
                                                 {{ tag }}
@@ -666,7 +666,7 @@ const toggleAcuan = (question: any, tag: string) => {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        class="h-9 gap-2 rounded-xl px-3 font-bold text-slate-500 hover:bg-blue-50 hover:text-blue-600"
+                                        class="h-9 gap-2 rounded-xl px-3 font-bold text-slate-500 hover:bg-[#85B7EB]/10 hover:text-[#0C447C]"
                                         @click="
                                             duplicateQuestion(Number(qIndex))
                                         "
@@ -692,7 +692,7 @@ const toggleAcuan = (question: any, tag: string) => {
 
                 <Button
                     variant="outline"
-                    class="h-14 w-full gap-2 rounded-2xl border-dashed border-slate-300 bg-white/50 text-slate-500 transition-all hover:border-blue-400 hover:bg-blue-50/50 hover:text-blue-600 dark:bg-slate-900/50"
+                    class="h-14 w-full gap-2 rounded-2xl border-dashed border-slate-300 bg-white/50 text-slate-500 transition-all hover:border-[#85B7EB] hover:bg-[#85B7EB]/10 hover:text-[#0C447C] dark:bg-slate-900/50"
                     @click="addQuestion"
                 >
                     <PlusCircle class="h-5 w-5" />

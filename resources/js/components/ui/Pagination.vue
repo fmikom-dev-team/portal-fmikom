@@ -35,7 +35,7 @@ defineProps<{
                 class="flex h-10 min-w-[40px] items-center justify-center rounded-xl px-2 text-sm font-bold transition-colors"
                 :class="[
                     link.active
-                        ? 'bg-blue-600 px-4 text-white shadow-lg shadow-blue-500/20'
+                        ? 'bg-[#0C447C] px-4 text-white shadow-lg shadow-blue-500/20'
                         : 'text-muted-foreground hover:bg-muted',
                     !link.url ? 'pointer-events-none opacity-40' : '',
                     link.label.includes('Previous') ||

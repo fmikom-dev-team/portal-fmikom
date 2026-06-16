@@ -394,7 +394,7 @@ const salaryError = computed(() => {
                         </select>
                         <p
                             v-if="form.errors.status"
-                            class="mt-1 text-sm text-red-600"
+                            class="mt-1 text-sm text-red-500"
                         >
                             {{ form.errors.status }}
                         </p>
@@ -419,7 +419,7 @@ const salaryError = computed(() => {
                                 />
                                 <p
                                     v-if="form.errors.nama_perusahaan"
-                                    class="mt-1 text-sm text-red-600"
+                                    class="mt-1 text-sm text-red-500"
                                 >
                                     {{ form.errors.nama_perusahaan }}
                                 </p>
@@ -440,7 +440,7 @@ const salaryError = computed(() => {
                                 />
                                 <p
                                     v-if="form.errors.jabatan"
-                                    class="mt-1 text-sm text-red-600"
+                                    class="mt-1 text-sm text-red-500"
                                 >
                                     {{ form.errors.jabatan }}
                                 </p>
@@ -477,7 +477,7 @@ const salaryError = computed(() => {
                             </select>
                             <p
                                 v-if="form.errors.sektor_industri"
-                                class="mt-1 text-sm text-red-600"
+                                class="mt-1 text-sm text-red-500"
                             >
                                 {{ form.errors.sektor_industri }}
                             </p>
@@ -507,6 +507,12 @@ const salaryError = computed(() => {
                                         {{ prov.name }}
                                     </option>
                                 </select>
+                                <p
+                                    v-if="form.errors.provinsi_id"
+                                    class="mt-1 text-sm text-red-500"
+                                >
+                                    {{ form.errors.provinsi_id }}
+                                </p>
                             </div>
 
                             <!-- Kota -->
@@ -530,6 +536,12 @@ const salaryError = computed(() => {
                                         {{ city.name }}
                                     </option>
                                 </select>
+                                <p
+                                    v-if="form.errors.kota_id"
+                                    class="mt-1 text-sm text-red-500"
+                                >
+                                    {{ form.errors.kota_id }}
+                                </p>
                             </div>
                         </div>
 
@@ -546,6 +558,12 @@ const salaryError = computed(() => {
                                 class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                 placeholder="Alamat lengkap perusahaan/usaha"
                             />
+                            <p
+                                v-if="form.errors.alamat_perusahaan"
+                                class="mt-1 text-sm text-red-500"
+                            >
+                                {{ form.errors.alamat_perusahaan }}
+                            </p>
                         </div>
 
                         <!-- Map Picker -->
@@ -582,6 +600,18 @@ const salaryError = computed(() => {
                                     }}</span
                                 >
                             </div>
+                            <p
+                                v-if="form.errors.latitude"
+                                class="mt-1 text-sm text-red-500"
+                            >
+                                {{ form.errors.latitude }}
+                            </p>
+                            <p
+                                v-if="form.errors.longitude"
+                                class="mt-1 text-sm text-red-500"
+                            >
+                                {{ form.errors.longitude }}
+                            </p>
                         </div>
 
                         <!-- Gaji Range -->
@@ -600,6 +630,12 @@ const salaryError = computed(() => {
                                     class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                     placeholder="0"
                                 />
+                                <p
+                                    v-if="form.errors.gaji_min"
+                                    class="mt-1 text-sm text-red-500"
+                                >
+                                    {{ form.errors.gaji_min }}
+                                </p>
                             </div>
 
                             <div>
@@ -623,7 +659,7 @@ const salaryError = computed(() => {
                                 />
                                 <p
                                     v-if="salaryError"
-                                    class="mt-1 flex items-center gap-1 text-sm text-red-600"
+                                    class="mt-1 flex items-center gap-1 text-sm text-red-500"
                                 >
                                     <svg
                                         class="h-4 w-4 shrink-0"
@@ -640,7 +676,7 @@ const salaryError = computed(() => {
                                 </p>
                                 <p
                                     v-else-if="form.errors.gaji_max"
-                                    class="mt-1 text-sm text-red-600"
+                                    class="mt-1 text-sm text-red-500"
                                 >
                                     {{ form.errors.gaji_max }}
                                 </p>
@@ -668,7 +704,7 @@ const salaryError = computed(() => {
                                 />
                                 <p
                                     v-if="form.errors.nama_universitas"
-                                    class="mt-1 text-sm text-red-600"
+                                    class="mt-1 text-sm text-red-500"
                                 >
                                     {{ form.errors.nama_universitas }}
                                 </p>
@@ -691,7 +727,7 @@ const salaryError = computed(() => {
                                 />
                                 <p
                                     v-if="form.errors.program_studi_lanjutan"
-                                    class="mt-1 text-sm text-red-600"
+                                    class="mt-1 text-sm text-red-500"
                                 >
                                     {{ form.errors.program_studi_lanjutan }}
                                 </p>
@@ -720,7 +756,7 @@ const salaryError = computed(() => {
                                 </select>
                                 <p
                                     v-if="form.errors.jenjang_pendidikan"
-                                    class="mt-1 text-sm text-red-600"
+                                    class="mt-1 text-sm text-red-500"
                                 >
                                     {{ form.errors.jenjang_pendidikan }}
                                 </p>
@@ -754,7 +790,7 @@ const salaryError = computed(() => {
                                 </select>
                                 <p
                                     v-if="form.errors.sumber_biaya"
-                                    class="mt-1 text-sm text-red-600"
+                                    class="mt-1 text-sm text-red-500"
                                 >
                                     {{ form.errors.sumber_biaya }}
                                 </p>
@@ -785,6 +821,12 @@ const salaryError = computed(() => {
                                         {{ prov.name }}
                                     </option>
                                 </select>
+                                <p
+                                    v-if="form.errors.provinsi_id"
+                                    class="mt-1 text-sm text-red-500"
+                                >
+                                    {{ form.errors.provinsi_id }}
+                                </p>
                             </div>
 
                             <!-- Kota -->
@@ -808,6 +850,12 @@ const salaryError = computed(() => {
                                         {{ city.name }}
                                     </option>
                                 </select>
+                                <p
+                                    v-if="form.errors.kota_id"
+                                    class="mt-1 text-sm text-red-500"
+                                >
+                                    {{ form.errors.kota_id }}
+                                </p>
                             </div>
                         </div>
 
@@ -824,6 +872,12 @@ const salaryError = computed(() => {
                                 class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                 placeholder="Alamat lengkap kampus/universitas"
                             />
+                            <p
+                                v-if="form.errors.alamat_universitas"
+                                class="mt-1 text-sm text-red-500"
+                            >
+                                {{ form.errors.alamat_universitas }}
+                            </p>
                         </div>
 
                         <!-- Map Picker -->
@@ -876,6 +930,12 @@ const salaryError = computed(() => {
                                 type="date"
                                 class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                             />
+                            <p
+                                v-if="form.errors.tanggal_mulai"
+                                class="mt-1 text-sm text-red-500"
+                            >
+                                {{ form.errors.tanggal_mulai }}
+                            </p>
                         </div>
 
                         <div>
@@ -901,7 +961,7 @@ const salaryError = computed(() => {
                             />
                             <p
                                 v-if="dateError"
-                                class="mt-1 flex items-center gap-1 text-sm text-red-600"
+                                class="mt-1 flex items-center gap-1 text-sm text-red-500"
                             >
                                 <svg
                                     class="h-4 w-4 shrink-0"
@@ -918,7 +978,7 @@ const salaryError = computed(() => {
                             </p>
                             <p
                                 v-else-if="form.errors.tanggal_selesai"
-                                class="mt-1 text-sm text-red-600"
+                                class="mt-1 text-sm text-red-500"
                             >
                                 {{ form.errors.tanggal_selesai }}
                             </p>

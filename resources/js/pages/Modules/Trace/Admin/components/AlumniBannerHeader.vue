@@ -1,17 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { useDebounceFn } from '@vueuse/core';
-import { Search, XCircle } from 'lucide-vue-next';
-import { ref, watch, computed } from 'vue';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { ref, computed } from 'vue';
+import { TFilterBar } from '@/components/trace';
 
 
 interface Props {
@@ -36,68 +26,57 @@ const props = withDefaults(defineProps<Props>(), {
     }),
 });
 
-const searchQuery = ref(props.filters.search || '');
-const statusFilter = ref(props.filters.status || 'Semua Status');
-const prodiFilter = ref(props.filters.prodi || 'Semua Prodi');
-const angkatanFilter = ref(props.filters.angkatan || 'Semua Angkatan');
-
 const formattedTotalAlumni = computed(() => {
     return Number(props.totalAlumni).toLocaleString('id-ID');
 });
 
-const hasActiveFilters = computed(() => {
-    return searchQuery.value ||
-        (statusFilter.value && statusFilter.value !== 'Semua Status') ||
-        (prodiFilter.value && prodiFilter.value !== 'Semua Prodi') ||
-        (angkatanFilter.value && angkatanFilter.value !== 'Semua Angkatan');
-});
-
-const statuses = [
-    'Semua Status',
-    'Bekerja',
-    'Belum Bekerja',
-    'Wirausaha',
-    'Lanjut Studi',
-];
-
-const prodis = ['Semua Prodi', 'Informatika', 'Sistem Informasi', 'Matematika'];
-
 // Generate angkatan years from 2010 to current year
 const currentYear = new Date().getFullYear();
-const angkatanOptions = ['Semua Angkatan', ...Array.from({ length: currentYear - 2009 }, (_, i) => String(currentYear - i))];
+const angkatanOptions = Array.from({ length: currentYear - 2009 }, (_, i) => String(currentYear - i));
 
-const handleFilterChange = useDebounceFn(() => {
-    router.get(
-        '/admin/alumni',
-        {
-            search: searchQuery.value,
-            status:
-                statusFilter.value === 'Semua Status'
-                    ? undefined
-                    : statusFilter.value,
-            prodi:
-                prodiFilter.value === 'Semua Prodi'
-                    ? undefined
-                    : prodiFilter.value,
-            angkatan:
-                angkatanFilter.value === 'Semua Angkatan'
-                    ? undefined
-                    : angkatanFilter.value,
-        },
-        { preserveState: true, replace: true },
-    );
-}, 300);
+const filterConfig = computed(() => [
+    {
+        key: 'status',
+        label: 'Status',
+        options: [
+            { value: 'Bekerja', label: 'Bekerja' },
+            { value: 'Belum Bekerja', label: 'Belum Bekerja' },
+            { value: 'Wirausaha', label: 'Wirausaha' },
+            { value: 'Lanjut Studi', label: 'Lanjut Studi' },
+        ],
+    },
+    {
+        key: 'prodi',
+        label: 'Prodi',
+        options: [
+            { value: 'Informatika', label: 'Informatika' },
+            { value: 'Sistem Informasi', label: 'Sistem Informasi' },
+            { value: 'Matematika', label: 'Matematika' },
+        ],
+    },
+    {
+        key: 'angkatan',
+        label: 'Angkatan',
+        options: angkatanOptions.map(a => ({ value: a, label: a })),
+    },
+]);
 
-watch([statusFilter, prodiFilter, angkatanFilter], () => {
-    handleFilterChange();
+const currentFilters = computed(() => {
+    const f: Record<string, string> = {};
+    if (props.filters.search) f.search = props.filters.search;
+    if (props.filters.status && props.filters.status !== 'Semua Status') f.status = props.filters.status;
+    if (props.filters.prodi && props.filters.prodi !== 'Semua Prodi') f.prodi = props.filters.prodi;
+    if (props.filters.angkatan && props.filters.angkatan !== 'Semua Angkatan') f.angkatan = props.filters.angkatan;
+    return f;
 });
 
-function clearFilters() {
-    searchQuery.value = '';
-    statusFilter.value = 'Semua Status';
-    prodiFilter.value = 'Semua Prodi';
-    angkatanFilter.value = 'Semua Angkatan';
-    handleFilterChange();
+function onFilterChange(filters: Record<string, string>) {
+    router.get('/trace/admin/alumni', {
+        search: filters.search || undefined,
+        status: filters.status || undefined,
+        prodi: filters.prodi || undefined,
+        angkatan: filters.angkatan || undefined,
+    }, { preserveState: true, replace: true });
 }
 </script>
 
@@ -142,77 +121,14 @@ function clearFilters() {
             </div>
         </div>
 
-        <div
-            class="relative z-10 flex flex-col gap-4"
-        >
-            <div class="flex flex-col gap-3 md:flex-row md:items-center">
-                <div class="relative w-full max-w-sm">
-                    <Search
-                        class="absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-muted-foreground/60"
-                    />
-                    <Input
-                        v-model="searchQuery"
-                        placeholder="Cari berdasarkan nama, NIM, atau instansi..."
-                        class="h-11 rounded-2xl border-border/40 bg-background/50 pl-10 shadow-sm transition-all focus-visible:ring-primary/20"
-                        @input="handleFilterChange"
-                    />
-                </div>
-
-                <Button
-                    v-if="hasActiveFilters"
-                    variant="ghost"
-                    size="sm"
-                    class="h-11 rounded-2xl text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 font-semibold"
-                    @click="clearFilters"
-                >
-                    <XCircle class="h-4 w-4 mr-1.5" />
-                    Hapus Filter
-                </Button>
-            </div>
-
-            <div class="flex flex-1 flex-wrap items-center gap-3">
-                <!-- Status Filter -->
-                <Select v-model="statusFilter">
-                    <SelectTrigger
-                        class="h-11 w-[160px] rounded-2xl border-border/40 bg-background/50 font-semibold shadow-sm focus:ring-primary/20"
-                    >
-                        <SelectValue placeholder="Pilih Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem v-for="s in statuses" :key="s" :value="s">
-                            {{ s }}
-                        </SelectItem>
-                    </SelectContent>
-                </Select>
-
-                <!-- Prodi Filter -->
-                <Select v-model="prodiFilter">
-                    <SelectTrigger
-                        class="h-11 w-[180px] rounded-2xl border-border/40 bg-background/50 font-semibold shadow-sm focus:ring-primary/20"
-                    >
-                        <SelectValue placeholder="Pilih Prodi" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem v-for="p in prodis" :key="p" :value="p">
-                            {{ p }}
-                        </SelectItem>
-                    </SelectContent>
-                </Select>
-
-                <!-- Angkatan Filter -->
-                <Select v-model="angkatanFilter">
-                    <SelectTrigger
-                        class="h-11 w-[180px] rounded-2xl border-border/40 bg-background/50 font-semibold shadow-sm focus:ring-primary/20"
-                    >
-                        <SelectValue placeholder="Pilih Angkatan" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem v-for="a in angkatanOptions" :key="a" :value="a">
-                            {{ a }}
-                        </SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
+        <div class="relative z-10">
+            <TFilterBar
+                search-placeholder="Cari berdasarkan nama, NIM, atau instansi..."
+                :filters="filterConfig"
+                :model-value="currentFilters"
+                class="border-none shadow-none bg-transparent !p-0 [&>div]:p-0"
+                @filter-change="onFilterChange"
+            />
         </div>
     </section>
 </template>

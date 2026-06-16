@@ -3,9 +3,10 @@
 namespace App\Modules\Trace\Controllers\Mitra;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tracer\MitraProfiles;
+use App\Models\Tracer\MitraProfile;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Modules\Trace\Services\ImageService;
 
 class MitraProfileController extends Controller
 {
@@ -44,14 +45,15 @@ class MitraProfileController extends Controller
 
         // Handle logo upload
         if ($request->hasFile('logo')) {
-            $path = $request->file('logo')->store('mitra-logos', 'public');
-            $validated['logo_path'] = $path;
+            $validated['logo_path'] = ImageService::compressToWebp(
+                $request->file('logo'), 'mitra-logos', quality: 85, maxWidth: 400
+            );
         }
 
         unset($validated['logo']);
         $validated['user_id'] = $user->id;
 
-        MitraProfiles::create($validated);
+        MitraProfile::create($validated);
 
         return redirect()->route('module.trace.open-job.mitra-dashboard')
             ->with('success', 'Profil mitra berhasil dibuat.');
@@ -94,12 +96,9 @@ class MitraProfileController extends Controller
 
         // Handle logo upload
         if ($request->hasFile('logo')) {
-            // Delete old logo if exists
-            if ($mitra->logo_path) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($mitra->logo_path);
-            }
-            $path = $request->file('logo')->store('mitra-logos', 'public');
-            $validated['logo_path'] = $path;
+            $validated['logo_path'] = ImageService::replaceWithWebp(
+                $request->file('logo'), $mitra->logo_path, 'mitra-logos', quality: 85, maxWidth: 400
+            );
         }
 
         unset($validated['logo']);

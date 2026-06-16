@@ -33,7 +33,7 @@ const props = defineProps<{ data: GrowthData }>();
 const selectedProdi = ref<string>('semua');
 const selectedAngkatan = ref<string>('semua');
 
-const barColors = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#818cf8', '#4f46e5'];
+const barColors = ['#0C447C', '#85B7EB', '#3A7BBF', '#5A9BD5', '#1A5A9E', '#0A3560'];
 
 const filteredLabels = computed(() => {
     if (selectedAngkatan.value === 'semua') {
@@ -74,8 +74,8 @@ const filteredData = computed(() => {
         return [{
             label: 'Semua Prodi',
             data: props.data.totals,
-            backgroundColor: 'rgba(99, 102, 241, 0.8)',
-            hoverBackgroundColor: 'rgba(99, 102, 241, 1)',
+            backgroundColor: 'rgba(12, 68, 124, 0.8)',
+            hoverBackgroundColor: 'rgba(12, 68, 124, 1)',
             borderRadius: 8,
             borderSkipped: false as const,
             barPercentage: 0.6,
@@ -146,14 +146,14 @@ const chartOptions = {
         <!-- Header -->
         <div class="flex items-center justify-between px-6 pt-6 pb-1">
             <div class="flex items-center gap-2">
-                <div class="rounded-lg bg-indigo-500/10 p-2">
-                    <TrendingUp class="h-4 w-4 text-indigo-600" />
+                <div class="rounded-lg bg-[#0C447C]/10 p-2">
+                    <TrendingUp class="h-4 w-4 text-[#0C447C] dark:text-[#85B7EB]" />
                 </div>
                 <div>
                     <h3 class="text-base font-black text-slate-800 dark:text-white">Alumni per Angkatan</h3>
                     <p class="text-[10px] font-bold text-slate-400">
                         Menampilkan {{ totalShown }} alumni
-                        <span v-if="selectedProdi !== 'semua'" class="text-indigo-500">• {{ selectedProdi }}</span>
+                        <span v-if="selectedProdi !== 'semua'" class="text-[#0C447C] dark:text-[#85B7EB]">• {{ selectedProdi }}</span>
                     </p>
                 </div>
             </div>
@@ -167,14 +167,14 @@ const chartOptions = {
             </div>
             <select
                 v-model="selectedProdi"
-                class="h-8 rounded-lg bg-slate-50 dark:bg-slate-800 px-3 text-[11px] font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 outline-none focus:border-indigo-500 transition-colors"
+                class="h-8 rounded-lg bg-slate-50 dark:bg-slate-800 px-3 text-[11px] font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 outline-none focus:border-[#0C447C] transition-colors"
             >
                 <option value="semua">Semua Prodi</option>
                 <option v-for="prodi in props.data.prodiList" :key="prodi" :value="prodi">{{ prodi }}</option>
             </select>
             <select
                 v-model="selectedAngkatan"
-                class="h-8 rounded-lg bg-slate-50 dark:bg-slate-800 px-3 text-[11px] font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 outline-none focus:border-indigo-500 transition-colors"
+                class="h-8 rounded-lg bg-slate-50 dark:bg-slate-800 px-3 text-[11px] font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 outline-none focus:border-[#0C447C] transition-colors"
             >
                 <option value="semua">Semua Angkatan</option>
                 <option v-for="a in props.data.angkatanList" :key="a" :value="a">{{ a }}</option>

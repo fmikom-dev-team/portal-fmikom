@@ -12,6 +12,7 @@ import {
 import { show as alumniTracerShow } from "@/routes/module/trace/kuesioner";
 import TraceAlumniLayout from "@/layouts/TraceAlumniLayout.vue";
 import type { BreadcrumbItem } from "@/types";
+import { TPageHeader, TStatusBadge, TEmptyState } from '@/components/trace';
 
 defineProps<{
     kuesioners: any[];
@@ -43,45 +44,37 @@ const formatDateRange = (
 <template>
     <Head title="Kuesioner" />
     <TraceAlumniLayout role-name="Alumni" :breadcrumbs="breadcrumbItems">
-        <div class="mx-auto max-w-6xl">
+        <div class="mx-auto max-w-6xl space-y-6">
             <!-- Header Section -->
-            <div
-                class="mb-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+            <TPageHeader
+                title="Kuesioner"
+                description="Pusat pengisian kuesioner pelacakan alumni FMIKOM."
+                :icon="ClipboardList"
             >
-                <div>
-                    <h1
-                        class="text-3xl font-black text-slate-900 dark:text-white"
-                    >
-                        Tracer Study
-                    </h1>
-                    <p class="mt-1 text-slate-500 dark:text-slate-400">
-                        Pusat pengisian kuesioner pelacakan alumni FMIKOM.
-                    </p>
-                </div>
-                <div class="flex items-center gap-4">
+                <template #actions>
                     <div class="flex flex-col items-end">
                         <span
                             class="text-xs font-bold tracking-widest text-slate-400 uppercase"
                             >Total Kuesioner</span
                         >
                         <span
-                            class="text-2xl font-black text-green-600 dark:text-green-400"
+                            class="text-2xl font-black text-[#0C447C] dark:text-[#85B7EB]"
                             >{{ kuesioners.length }}</span
                         >
                     </div>
-                </div>
-            </div>
+                </template>
+            </TPageHeader>
 
             <!-- Welcome/Info Banner -->
             <div
-                class="mb-10 overflow-hidden rounded-3xl bg-gradient-to-br from-green-500 to-emerald-700 p-8 text-white shadow-xl shadow-green-500/20"
+                class="overflow-hidden rounded-2xl bg-gradient-to-br from-[#0C447C] to-[#0C447C]/80 p-8 text-white shadow-xl shadow-[#0C447C]/20"
             >
                 <div class="flex flex-col gap-8 md:flex-row md:items-center">
                     <div class="flex-1">
                         <h2 class="text-2xl font-black">
                             Kontribusi Anda Sangat Berarti!
                         </h2>
-                        <p class="mt-2 text-green-100 opacity-90">
+                        <p class="mt-2 text-[#85B7EB]/90">
                             Data yang Anda berikan akan membantu Fakultas dalam
                             meningkatkan kualitas kurikulum dan pelayanan bagi
                             mahasiswa di masa depan.
@@ -105,23 +98,22 @@ const formatDateRange = (
                 <div
                     v-for="kuesioner in kuesioners"
                     :key="kuesioner.id"
-                    class="group relative overflow-hidden rounded-3xl border border-slate-100 bg-white p-6 transition-all hover:border-green-200 hover:shadow-xl hover:shadow-green-500/5 dark:border-slate-800 dark:bg-slate-900"
+                    class="group relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-6 transition-all hover:border-[#85B7EB]/40 hover:shadow-xl hover:shadow-[#0C447C]/5 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-[#85B7EB]/30"
                 >
                     <!-- Status Tag -->
                     <div class="mb-4 flex items-center justify-between">
-                        <div
+                        <TStatusBadge
                             v-if="kuesioner.responses_count > 0"
-                            class="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black text-emerald-600 uppercase dark:bg-emerald-900/30 dark:text-emerald-400"
-                        >
-                            <Lock class="h-3 w-3" /> Sudah Diisi &middot;
-                            Terkunci
-                        </div>
-                        <div
+                            status="closed"
+                            label="Sudah Diisi · Terkunci"
+                            size="sm"
+                        />
+                        <TStatusBadge
                             v-else
-                            class="flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-[10px] font-black text-amber-600 uppercase dark:bg-amber-900/30 dark:text-amber-400"
-                        >
-                            <Clock class="h-3 w-3" /> Belum Diisi
-                        </div>
+                            status="pending"
+                            label="Belum Diisi"
+                            size="sm"
+                        />
                         <span
                             class="text-[10px] font-bold tracking-wider text-slate-400 uppercase"
                             >Tahun {{ kuesioner.tahun }}</span
@@ -129,7 +121,7 @@ const formatDateRange = (
                     </div>
 
                     <h3
-                        class="mb-2 text-xl font-black text-slate-900 transition-colors group-hover:text-green-600 dark:text-white"
+                        class="mb-2 text-xl font-black text-slate-900 transition-colors group-hover:text-[#0C447C] dark:text-white dark:group-hover:text-[#85B7EB]"
                     >
                         {{ kuesioner.judul }}
                     </h3>
@@ -143,7 +135,7 @@ const formatDateRange = (
                     </p>
 
                     <div
-                        class="mb-6 flex items-center gap-4 border-t border-slate-50 pt-6 dark:border-slate-800"
+                        class="mb-6 flex items-center gap-4 border-t border-slate-100 pt-6 dark:border-zinc-800"
                     >
                         <div
                             class="flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400"
@@ -166,11 +158,11 @@ const formatDateRange = (
 
                     <Link
                         :href="alumniTracerShow(kuesioner.id).url"
-                        class="flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-sm font-black transition-all"
+                        class="flex w-full items-center justify-center gap-2 rounded-xl py-4 text-sm font-black transition-all"
                         :class="
                             kuesioner.responses_count > 0
                                 ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:hover:bg-emerald-950/40'
-                                : 'bg-slate-50 text-slate-900 group-hover:bg-green-600 group-hover:text-white dark:bg-slate-800 dark:text-white'
+                                : 'bg-[#0C447C]/5 text-[#0C447C] group-hover:bg-[#0C447C] group-hover:text-white dark:bg-[#85B7EB]/10 dark:text-[#85B7EB] dark:group-hover:bg-[#85B7EB] dark:group-hover:text-slate-900'
                         "
                     >
                         <Eye
@@ -191,22 +183,13 @@ const formatDateRange = (
             </div>
 
             <!-- Empty State -->
-            <div
+            <TEmptyState
                 v-else
-                class="flex min-h-100 flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-100 bg-slate-50/30 text-center dark:border-slate-800 dark:bg-slate-900/30"
-            >
-                <div
-                    class="mb-4 rounded-full bg-white p-6 shadow-sm dark:bg-slate-900"
-                >
-                    <ClipboardList class="h-12 w-12 text-slate-300" />
-                </div>
-                <h3 class="text-xl font-black text-slate-900 dark:text-white">
-                    Belum Ada Kuesioner Aktif
-                </h3>
-                <p class="mt-2 text-slate-500 dark:text-slate-400">
-                    Silakan cek kembali di lain waktu.
-                </p>
-            </div>
+                :icon="ClipboardList"
+                title="Belum Ada Kuesioner Aktif"
+                description="Silakan cek kembali di lain waktu."
+                class="min-h-80 rounded-2xl border border-dashed border-slate-200 dark:border-zinc-700"
+            />
         </div>
     </TraceAlumniLayout>
 </template>

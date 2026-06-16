@@ -22,6 +22,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
+import { TPageHeader } from '@/components/trace';
 
 const props = defineProps<{
     alumni: any;
@@ -30,7 +31,7 @@ const props = defineProps<{
 }>();
 
 const breadcrumbs = [
-    { title: 'Kelola Alumni', href: '/admin/alumni' },
+    { title: 'Kelola Alumni', href: '/trace/admin/alumni' },
     { title: props.alumni?.nama_lengkap || 'Detail Alumni', href: '#' },
 ];
 
@@ -106,13 +107,20 @@ const currentStatus =
                 <!-- Back Button & Actions -->
                 <div class="flex items-center justify-between">
                     <Link
-                        href="/admin/alumni"
+                        href="/trace/admin/alumni"
                         class="inline-flex items-center gap-2 text-sm font-bold text-slate-500 transition-colors hover:text-slate-800 dark:hover:text-white"
                     >
                         <ArrowLeft class="h-4 w-4" />
                         Kembali ke Kelola Alumni
                     </Link>
                 </div>
+
+                <!-- Page Header -->
+                <TPageHeader
+                    :title="alumni?.nama_lengkap || 'Detail Alumni'"
+                    :description="`${alumni?.program_studi || ''} · Angkatan ${alumni?.angkatan || ''}`"
+                    :icon="GraduationCap"
+                />
 
                 <!-- ===== HERO CARD ===== -->
                 <div

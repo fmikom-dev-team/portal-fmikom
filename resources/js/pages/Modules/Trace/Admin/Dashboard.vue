@@ -19,8 +19,9 @@ import {
     MapPin,
     Building2,
     Database,
+    LayoutDashboard,
 } from 'lucide-vue-next';
-import StatCard from '@/components/ui/stat-card/StatCard.vue';
+import { TPageHeader, TStatCard } from '@/components/trace';
 import { Skeleton } from '@/components/ui/skeleton';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -184,14 +185,11 @@ const getRateTextColor = (rate: number) => {
         <div class="flex h-full flex-1 flex-col gap-6 p-4 max-w-7xl mx-auto w-full pb-12">
             
             <!-- Welcome Header -->
-            <div class="flex flex-col gap-1">
-                <div class="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
-                    <Sparkles class="h-4 w-4" />
-                    <span class="text-xs font-black uppercase tracking-widest">Pusat Kendali</span>
-                </div>
-                <h1 class="text-3xl font-black tracking-tight text-slate-800 dark:text-white">Dashboard Tracer Study</h1>
-                <p class="text-sm text-slate-500 dark:text-slate-400">Ringkasan analisis sebaran karir alumni dan keaktifan pengisian kuesioner.</p>
-            </div>
+            <TPageHeader
+                title="Dashboard Tracer Study"
+                description="Ringkasan analisis sebaran karir alumni dan keaktifan pengisian kuesioner."
+                :icon="LayoutDashboard"
+            />
  
             <Deferred data="stats">
                 <template #fallback>
@@ -226,32 +224,19 @@ const getRateTextColor = (rate: number) => {
             <!-- ============ KPI CARDS ============ -->
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <template v-if="props.stats">
-                    <StatCard v-bind="props.stats.totalAlumni" />
-                    <StatCard v-bind="props.stats.employmentRate" color="green" />
-                    <StatCard v-bind="props.stats.studiLanjut" color="purple" />
+                    <TStatCard v-bind="props.stats.totalAlumni" />
+                    <TStatCard v-bind="props.stats.employmentRate" color="emerald" />
+                    <TStatCard v-bind="props.stats.studiLanjut" color="violet" />
                     
-                    <!-- Questionnaire Card -->
-                    <div class="relative overflow-hidden rounded-3xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Kuesioner Tracer</span>
-                            <div class="p-2 bg-indigo-500/10 rounded-xl">
-                                <ClipboardCheck class="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                            </div>
-                        </div>
-                        <div class="mt-4 flex items-baseline gap-2">
-                            <span class="text-3xl font-black text-slate-800 dark:text-white leading-none">
-                                {{ props.stats.kuesionerStats.response_rate }}%
-                            </span>
-                            <span class="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 dark:text-emerald-400 px-1.5 py-0.5 rounded-md">Respon Rate</span>
-                        </div>
-                        <div class="mt-3 flex items-center justify-between border-t border-slate-50 dark:border-slate-800/60 pt-3">
-                            <span class="text-[10px] font-bold text-slate-400">{{ props.stats.kuesionerStats.total_kuesioners }} Kuesioner</span>
-                            <span class="text-[10px] font-black text-indigo-600">{{ props.stats.kuesionerStats.total_responses }} Respon</span>
-                        </div>
-                    </div>
-                </template>
-                <template v-else>
-                    <div v-for="i in 4" :key="i" class="h-32 w-full animate-pulse rounded-3xl bg-slate-100 dark:bg-slate-800"></div>
+                    <TStatCard
+                        label="Kuesioner Tracer"
+                        :value="`${props.stats.kuesionerStats.response_rate}%`"
+                        :icon="ClipboardCheck"
+                        trend="Respon Rate"
+                        :trend-up="true"
+                        :trend-label="`${props.stats.kuesionerStats.total_kuesioners} Kuesioner · ${props.stats.kuesionerStats.total_responses} Respon`"
+                        color="violet"
+                    />
                 </template>
             </div>
 
@@ -402,7 +387,7 @@ const getRateTextColor = (rate: number) => {
                             <BookOpen class="h-4 w-4 text-purple-500" />
                             <h3 class="text-sm font-black uppercase tracking-widest text-slate-400">Sebaran Program Studi</h3>
                         </div>
-                        <Link href="/admin/alumni" class="text-[10px] font-black text-blue-600 hover:underline inline-flex items-center gap-0.5">
+                        <Link href="/trace/admin/alumni" class="text-[10px] font-black text-blue-600 hover:underline inline-flex items-center gap-0.5">
                             Lihat Alumni <ArrowRight class="h-3 w-3" />
                         </Link>
                     </div>

@@ -22,6 +22,7 @@ import type { BreadcrumbItem } from "@/types";
 import CareerFormModal from "./components/CareerFormModal.vue";
 import CareerStatsCard from "./components/CareerStatsCard.vue";
 import CareerTimelineCard from "./components/CareerTimelineCard.vue";
+import { TPageHeader, TStatusBadge } from '@/components/trace';
 
 interface Career {
     id: number;
@@ -142,25 +143,21 @@ const setAsCurrent = (career: Career) => {
     >
         <div class="max-w-6xl mx-auto space-y-6">
             <!-- Header -->
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1
-                        class="text-2xl font-bold text-slate-900 dark:text-white"
+            <TPageHeader
+                title="Riwayat Karir"
+                description="Kelola riwayat karir dan pekerjaan Anda"
+                :icon="Briefcase"
+            >
+                <template #actions>
+                    <button
+                        @click="openAddModal"
+                        class="flex items-center gap-2 rounded-lg bg-[#0C447C] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#0C447C]/90 dark:bg-[#85B7EB] dark:text-slate-900 dark:hover:bg-[#85B7EB]/90 shadow-sm shadow-[#0C447C]/20"
                     >
-                        Riwayat Pekerjaan
-                    </h1>
-                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        Kelola riwayat karir dan pekerjaan Anda
-                    </p>
-                </div>
-                <button
-                    @click="openAddModal"
-                    class="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 shadow-sm shadow-green-500/20"
-                >
-                    <Plus class="h-4 w-4" />
-                    <span>Tambah Riwayat</span>
-                </button>
-            </div>
+                        <Plus class="h-4 w-4" />
+                        <span>Tambah Riwayat</span>
+                    </button>
+                </template>
+            </TPageHeader>
 
             <!-- Stats -->
             <CareerStatsCard :stats="stats" />
@@ -177,12 +174,11 @@ const setAsCurrent = (career: Career) => {
                         >
                             Status Saat Ini
                         </h2>
-                        <span
-                            class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40"
-                        >
-                            <CheckCircle class="h-3 w-3" />
-                            Aktif
-                        </span>
+                        <TStatusBadge
+                            status="active"
+                            label="Aktif"
+                            size="md"
+                        />
                     </div>
                     <button
                         @click="openEditModal(currentCareer)"
@@ -602,7 +598,7 @@ const setAsCurrent = (career: Career) => {
                 </p>
                 <button
                     @click="openAddModal"
-                    class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 shadow-sm shadow-green-500/20"
+                    class="inline-flex items-center gap-2 rounded-lg bg-[#0C447C] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#0C447C]/90 dark:bg-[#85B7EB] dark:text-slate-900 dark:hover:bg-[#85B7EB]/90 shadow-sm shadow-[#0C447C]/20"
                 >
                     <Plus class="h-4 w-4" />
                     Tambah Status Karir

@@ -5,7 +5,7 @@ namespace App\Models\Tracer;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 
-class MitraProfiles extends Model
+class MitraProfile extends Model
 {
     protected $table = 'mitra_profiles';
 

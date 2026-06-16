@@ -14,7 +14,7 @@ class RespondenController extends Controller
         $query = ProfilAlumni::with(['user.programStudi', 'careers.employment']);
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->search);
             $query->whereHas('user', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")

@@ -12,7 +12,7 @@ use App\Models\Pagi\PagiWork;
 use App\Models\Surat\Surat;
 use App\Models\Tracer\ProfilAlumni;
 use App\Models\Tracer\Kuesioner;
-use App\Models\Tracer\MitraProfiles;
+use App\Models\Tracer\MitraProfile;
 use App\Models\Surat\SuratApprovalFlow;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -180,7 +180,7 @@ class User extends Authenticatable
     }
       public function mitraProfile()
     {
-        return $this->hasOne(MitraProfiles::class, 'user_id');
+        return $this->hasOne(MitraProfile::class, 'user_id');
     }
 
     // -----------------------------------------------------------------------

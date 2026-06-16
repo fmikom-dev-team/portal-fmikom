@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { useDebounceFn } from '@vueuse/core';
-import { Search, SlidersHorizontal } from 'lucide-vue-next';
+import { Search } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,20 +31,24 @@ const years = [
   { label: '2024', value: '2024' },
 ];
 
-const handleSearch = useDebounceFn(() => {
+function doSearch() {
   router.get(
-    '/admin/quesionnaires',
+    '/trace/admin/questionnaires',
     { 
-      search: search.value, 
+      search: search.value || undefined, 
       status: status.value === 'all' ? undefined : status.value,
       year: year.value === 'all' ? undefined : year.value
     },
     { preserveState: true, replace: true }
   );
-}, 300);
+}
+
+function onSearchKeydown(e: KeyboardEvent) {
+  if (e.key === 'Enter') doSearch();
+}
 
 watch([status, year], () => {
-  handleSearch();
+  doSearch();
 });
 </script>
 
@@ -56,9 +59,16 @@ watch([status, year], () => {
       <Input
         v-model="search"
         placeholder="Cari kuesioner berdasarkan judul atau tahun..."
-        class="h-12 pl-10 pr-4 bg-background/50 border-border/50 focus-visible:ring-primary/20"
-        @input="handleSearch"
+        class="h-12 pl-10 pr-16 bg-background/50 border-border/50 focus-visible:ring-primary/20"
+        @keydown="onSearchKeydown"
       />
+      <button
+        type="button"
+        class="absolute top-1/2 right-3 -translate-y-1/2 flex h-7 items-center rounded-md bg-[#0C447C] px-3 text-xs font-bold text-white transition-all hover:bg-[#0C447C]/80 active:scale-95 dark:bg-[#85B7EB] dark:text-slate-900"
+        @click="doSearch"
+      >
+        Cari
+      </button>
     </div>
 
     <div class="flex items-center gap-3">

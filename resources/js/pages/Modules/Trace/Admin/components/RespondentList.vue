@@ -47,7 +47,7 @@ const fetchRespondents = async () => {
     loading.value = true;
 
     try {
-        const response = await axios.get(`/admin/quesionnaires/${props.kuesionerId}/respondents`);
+        const response = await axios.get(`/trace/admin/questionnaires/${props.kuesionerId}/respondents`);
         respondents.value = response.data.data;
     } catch (error) {
         console.error('Gagal mengambil daftar responden:', error);

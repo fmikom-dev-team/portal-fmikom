@@ -18,6 +18,7 @@ import {
     Briefcase,
     BookOpen,
     BarChart3,
+    Activity,
 } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import { Bar, Pie, Line } from 'vue-chartjs';
@@ -28,6 +29,7 @@ import {
     CardTitle,
     CardDescription,
 } from '@/components/ui/card';
+import { TPageHeader, TStatCard } from '@/components/trace';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 
@@ -173,84 +175,52 @@ const lineChartOptions = {
 
     <TraceAdminLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-6">
+            <!-- Page Header -->
+            <TPageHeader
+                title="Analitik"
+                description="Ikhtisar data alumni dan tren karir"
+                :icon="Activity"
+            />
+
             <!-- KPI Summary Cards -->
             <div class="grid gap-4 md:grid-cols-4">
-                <Card class="border-none shadow-sm dark:bg-slate-900/40">
-                    <CardHeader class="pb-2">
-                        <div class="flex items-center justify-between">
-                            <CardTitle class="text-sm font-medium text-muted-foreground">
-                                Total Alumni
-                            </CardTitle>
-                            <Users class="h-4 w-4 text-blue-500" />
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div class="text-3xl font-bold">{{ totalAlumni }}</div>
-                        <p class="text-xs text-muted-foreground mt-1">
-                            Jumlah total alumni terdaftar
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card class="border-none shadow-sm dark:bg-slate-900/40">
-                    <CardHeader class="pb-2">
-                        <div class="flex items-center justify-between">
-                            <CardTitle class="text-sm font-medium text-muted-foreground">
-                                Tingkat Kelulusan Kerja
-                            </CardTitle>
-                            <Briefcase class="h-4 w-4 text-green-500" />
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div class="text-3xl font-bold">{{ employmentRate }}%</div>
-                        <p class="text-xs text-muted-foreground mt-1">
-                            Alumni yang bekerja/wirausaha
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card class="border-none shadow-sm dark:bg-slate-900/40">
-                    <CardHeader class="pb-2">
-                        <div class="flex items-center justify-between">
-                            <CardTitle class="text-sm font-medium text-muted-foreground">
-                                Lanjut Studi
-                            </CardTitle>
-                            <BookOpen class="h-4 w-4 text-amber-500" />
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div class="text-3xl font-bold">{{ studyRate }}%</div>
-                        <p class="text-xs text-muted-foreground mt-1">
-                            Alumni yang melanjutkan studi
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card class="border-none shadow-sm dark:bg-slate-900/40">
-                    <CardHeader class="pb-2">
-                        <div class="flex items-center justify-between">
-                            <CardTitle class="text-sm font-medium text-muted-foreground">
-                                Response Rate
-                            </CardTitle>
-                            <BarChart3 class="h-4 w-4 text-purple-500" />
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div class="text-3xl font-bold">{{ responseRate }}%</div>
-                        <p class="text-xs text-muted-foreground mt-1">
-                            Tingkat respons kuesioner
-                        </p>
-                    </CardContent>
-                </Card>
+                <TStatCard
+                    label="Total Alumni"
+                    :value="totalAlumni"
+                    :icon="Users"
+                    color="primary"
+                    trend-label="Jumlah total alumni terdaftar"
+                />
+                <TStatCard
+                    label="Tingkat Kerja"
+                    :value="`${employmentRate}%`"
+                    :icon="Briefcase"
+                    color="emerald"
+                    trend-label="Alumni yang bekerja/wirausaha"
+                />
+                <TStatCard
+                    label="Lanjut Studi"
+                    :value="`${studyRate}%`"
+                    :icon="BookOpen"
+                    color="accent"
+                    trend-label="Alumni yang melanjutkan studi"
+                />
+                <TStatCard
+                    label="Response Rate"
+                    :value="`${responseRate}%`"
+                    :icon="BarChart3"
+                    color="primary"
+                    trend-label="Tingkat respons kuesioner"
+                />
             </div>
 
             <!-- Charts Grid -->
             <div class="grid gap-6 lg:grid-cols-2">
                 <!-- Distribusi Status Karir -->
-                <Card class="border-none shadow-sm overflow-hidden dark:bg-slate-900/40">
+                <Card class="overflow-hidden border border-slate-100 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                     <CardHeader class="border-b pb-3 bg-slate-50/50 dark:bg-slate-900/50">
                         <CardTitle class="text-sm font-bold flex items-center gap-2">
-                            <Briefcase class="h-4 w-4 text-blue-500" />
+                            <Briefcase class="h-4 w-4 text-[#0C447C] dark:text-[#85B7EB]" />
                             Distribusi Status Karir Terkini
                         </CardTitle>
                         <CardDescription class="text-xs">
@@ -267,10 +237,10 @@ const lineChartOptions = {
                 </Card>
 
                 <!-- Alumni per Angkatan -->
-                <Card class="border-none shadow-sm overflow-hidden dark:bg-slate-900/40">
+                <Card class="overflow-hidden border border-slate-100 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                     <CardHeader class="border-b pb-3 bg-slate-50/50 dark:bg-slate-900/50">
                         <CardTitle class="text-sm font-bold flex items-center gap-2">
-                            <TrendingUp class="h-4 w-4 text-green-500" />
+                            <TrendingUp class="h-4 w-4 text-[#0C447C] dark:text-[#85B7EB]" />
                             Perkembangan Alumni per Angkatan
                         </CardTitle>
                         <CardDescription class="text-xs">
@@ -288,10 +258,10 @@ const lineChartOptions = {
             </div>
 
             <!-- Top Sektor Industri -->
-            <Card class="border-none shadow-sm overflow-hidden dark:bg-slate-900/40">
+            <Card class="overflow-hidden border border-slate-100 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                 <CardHeader class="border-b pb-3 bg-slate-50/50 dark:bg-slate-900/50">
                     <CardTitle class="text-sm font-bold flex items-center gap-2">
-                        <Briefcase class="h-4 w-4 text-amber-500" />
+                        <Briefcase class="h-4 w-4 text-[#EF9F27] dark:text-[#FAC775]" />
                         7 Sektor Industri Terbesar
                     </CardTitle>
                     <CardDescription class="text-xs">
@@ -308,10 +278,10 @@ const lineChartOptions = {
             </Card>
 
             <!-- Program Studi Distribution -->
-            <Card class="border-none shadow-sm overflow-hidden dark:bg-slate-900/40">
+            <Card class="overflow-hidden border border-slate-100 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                 <CardHeader class="border-b pb-3 bg-slate-50/50 dark:bg-slate-900/50">
                     <CardTitle class="text-sm font-bold flex items-center gap-2">
-                        <Users class="h-4 w-4 text-purple-500" />
+                        <Users class="h-4 w-4 text-[#0C447C] dark:text-[#85B7EB]" />
                         Distribusi Alumni per Program Studi
                     </CardTitle>
                     <CardDescription class="text-xs">

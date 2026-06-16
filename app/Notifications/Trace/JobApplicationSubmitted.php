@@ -22,12 +22,16 @@ class JobApplicationSubmitted extends Notification
 
     public function toArray(object $notifiable): array
     {
+        $isAdmin = $notifiable->user_type === 'admin' || $notifiable->hasRole('admin') || $notifiable->hasRole('super-admin');
+
         return [
             'type' => 'job_application',
             'title' => 'Lamaran Baru',
             'message' => "{$this->alumniName} melamar lowongan \"{$this->jobTitle}\"",
             'icon' => 'briefcase',
-            'href' => "/trace/open-job/jobs-listings/{$this->jobId}",
+            'href' => $isAdmin
+                ? "/trace/admin/jobs/{$this->jobId}"
+                : "/trace/open-job/jobs-listings/{$this->jobId}",
         ];
     }
 }

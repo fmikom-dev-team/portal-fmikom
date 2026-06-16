@@ -3,7 +3,7 @@
 namespace App\Modules\Trace\Controllers\Mitra;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tracer\JobApplycants;
+use App\Models\Tracer\JobApplicant;
 use App\Models\Tracer\JobCategory;
 use App\Models\Tracer\JobListing;
 use App\Models\User;
@@ -12,6 +12,7 @@ use Inertia\Inertia;
 use App\Notifications\Trace\ApplicationStatusChanged;
 use App\Notifications\Trace\JobSubmittedForReview;
 use App\Models\Tracer\ActivityLog;
+use Illuminate\Support\Facades\Notification;
 
 class JobListingController extends Controller
 {
@@ -71,6 +72,11 @@ class JobListingController extends Controller
             $validated['status'] = 'pending_review';
         }
 
+        // Mitra cannot set status to 'closed' on creation
+        if ($validated['status'] === 'closed') {
+            $validated['status'] = 'draft';
+        }
+
         $job = JobListing::create($validated);
         ActivityLog::record('job.created_by_mitra', "Mitra membuat lowongan: {$job->title}", $job);
 
@@ -95,7 +101,7 @@ class JobListingController extends Controller
         // Load applicants with alumni profile, user, and PaGI data
         // Note: User model has pagiWorks() relationship.
         // TODO: Add pagiCvs() relationship to User model when PaGI CV feature is integrated.
-        $applicants = JobApplycants::where('job_id', $job->id)
+        $applicants = JobApplicant::where('job_id', $job->id)
             ->with(['alumni.user.pagiWorks', 'alumni.user.pagiCvs'])
             ->get();
 
@@ -127,6 +133,7 @@ class JobListingController extends Controller
         }
 
         $job->update($validated);
+        ActivityLog::record('job.updated_by_mitra', "Mitra memperbarui lowongan: {$job->title}", $job);
 
         return back()->with('success', 'Lowongan berhasil diperbarui.');
     }
@@ -142,6 +149,7 @@ class JobListingController extends Controller
 
         $job = JobListing::where('mitra_id', $mitra->id)->findOrFail($id);
 
+        ActivityLog::record('job.deleted_by_mitra', "Mitra menghapus lowongan: {$job->title}", $job);
         $job->delete(); // SoftDeletes
 
         return redirect()->route('module.trace.open-job.jobs-listings')
@@ -165,7 +173,7 @@ class JobListingController extends Controller
             'note' => 'nullable|string|max:1000',
         ]);
 
-        $applicant = JobApplycants::where('job_id', $job->id)->findOrFail($applicantId);
+        $applicant = JobApplicant::where('job_id', $job->id)->findOrFail($applicantId);
 
         $updateData = [
             'status' => $validated['status'],
@@ -214,9 +222,7 @@ class JobListingController extends Controller
 
         // Notify all admin users about the new submission
         $admins = User::where('user_type', 'admin')->get();
-        foreach ($admins as $admin) {
-            $admin->notify(new JobSubmittedForReview($job->title, $mitra->nama_perusahaan, $job->id));
-        }
+        Notification::send($admins, new JobSubmittedForReview($job->title, $mitra->nama_perusahaan, $job->id));
 
         return back()->with('success', 'Lowongan berhasil diajukan untuk review.');
     }
@@ -225,14 +231,14 @@ class JobListingController extends Controller
     {
         return [
             'title' => 'required|string|max:255',
-            'description' => 'required|string',
+            'description' => 'required|string|max:65535',
             'job_category_id' => 'nullable|exists:job_categories,id',
             'experience_level' => 'required|in:fresh_graduate,junior,mid_level,senior,internship',
             'location_type' => 'required|in:onsite,remote,hybrid',
             'location_city' => 'nullable|string',
             'tipe_kerja' => 'required|in:full_time,part_time,magang,freelance',
             'salary_min' => 'nullable|integer|min:0',
-            'salary_max' => 'nullable|integer|min:0',
+            'salary_max' => 'nullable|integer|min:0|gte:salary_min',
             'deadline' => 'nullable|date|after:today',
             'is_salary_visible' => 'boolean',
             'status' => 'in:draft,pending_review,closed',

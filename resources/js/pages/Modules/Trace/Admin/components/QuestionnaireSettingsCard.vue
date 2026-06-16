@@ -33,7 +33,7 @@ const form = defineModel<any>('form', { required: true });
             id="judul-input"
           />
         </div>
-        <p v-if="form.errors.judul" class="text-xs font-bold text-destructive flex items-center gap-1">
+        <p v-if="form.errors.judul" class="text-sm font-bold text-red-500 flex items-center gap-1">
           <AlertCircle class="h-3 w-3" />
           {{ form.errors.judul }}
         </p>
@@ -43,7 +43,7 @@ const form = defineModel<any>('form', { required: true });
           placeholder="Sub-judul (contoh: Fakultas Ilmu Komputer)" 
           class="border-none bg-transparent px-0 text-lg font-medium text-muted-foreground focus-visible:ring-0"
         />
-        <p v-if="form.errors.subtitle" class="text-xs font-medium text-destructive">{{ form.errors.subtitle }}</p>
+        <p v-if="form.errors.subtitle" class="text-sm font-medium text-red-500">{{ form.errors.subtitle }}</p>
       </div>
       
       <Separator />
@@ -59,7 +59,7 @@ const form = defineModel<any>('form', { required: true });
               <SelectItem v-for="cat in KUESIONER_CATEGORIES" :key="cat" :value="cat">{{ cat }}</SelectItem>
             </SelectContent>
           </Select>
-          <p v-if="form.errors.kategori" class="text-xs text-destructive">{{ form.errors.kategori }}</p>
+          <p v-if="form.errors.kategori" class="text-sm text-red-500">{{ form.errors.kategori }}</p>
         </div>
 
         <div class="space-y-2">
@@ -72,13 +72,13 @@ const form = defineModel<any>('form', { required: true });
               <SelectItem v-for="year in YEARS" :key="year" :value="year">{{ year }}</SelectItem>
             </SelectContent>
           </Select>
-          <p v-if="form.errors.tahun" class="text-xs text-destructive">{{ form.errors.tahun }}</p>
+          <p v-if="form.errors.tahun" class="text-sm text-red-500">{{ form.errors.tahun }}</p>
         </div>
 
         <div class="space-y-2">
           <Label class="text-[10px] font-bold uppercase tracking-wider">Tanggal Dibuka</Label>
           <Input v-model="form.date_mulai" type="date" class="h-10 bg-slate-50 dark:bg-slate-900 border-none rounded-md" />
-          <p v-if="form.errors.date_mulai" class="text-xs text-destructive flex items-center gap-1">
+          <p v-if="form.errors.date_mulai" class="text-sm text-red-500 flex items-center gap-1">
             <AlertCircle class="h-3 w-3" />
             {{ form.errors.date_mulai }}
           </p>
@@ -87,12 +87,13 @@ const form = defineModel<any>('form', { required: true });
         <div class="space-y-2">
           <Label class="text-[10px] font-bold uppercase tracking-wider">Tanggal Ditutup</Label>
           <Input v-model="form.date_selesai" type="date" class="h-10 bg-slate-50 dark:bg-slate-900 border-none rounded-md" />
-          <p v-if="form.errors.date_selesai" class="text-xs text-destructive flex items-center gap-1">
+          <p v-if="form.errors.date_selesai" class="text-sm text-red-500 flex items-center gap-1">
             <AlertCircle class="h-3 w-3" />
             {{ form.errors.date_selesai }}
           </p>
         </div>
       </div>
+      <p v-if="form.errors.status" class="text-sm text-red-500">{{ form.errors.status }}</p>
 
       <div class="space-y-2 pt-2">
         <Label class="text-[10px] font-bold uppercase tracking-wider">Deskripsi</Label>
@@ -101,7 +102,7 @@ const form = defineModel<any>('form', { required: true });
           placeholder="Tambahkan deskripsi kuesioner Anda..." 
           class="resize-none border-dashed bg-slate-50/50 dark:bg-slate-900/50"
         />
-        <p v-if="form.errors.deskripsi" class="text-xs text-destructive">{{ form.errors.deskripsi }}</p>
+        <p v-if="form.errors.deskripsi" class="text-sm text-red-500">{{ form.errors.deskripsi }}</p>
       </div>
     </CardContent>
   </Card>

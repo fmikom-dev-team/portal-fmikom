@@ -24,7 +24,6 @@ import {
 import { ref, computed } from 'vue';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -32,6 +31,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { TPageHeader, TStatusBadge, TEmptyState, TConfirmDialog } from '@/components/trace';
 
 interface Alumni {
     id: number;
@@ -87,27 +87,20 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: props.job.title, href: `/trace/admin/jobs/${props.job.id}` },
 ];
 
-/* ───── Status configs ───── */
-const jobStatusConfig: Record<string, { label: string; color: string; bg: string }> = {
-    draft:          { label: 'Draft',           color: 'text-slate-600 dark:text-slate-300',     bg: 'bg-slate-100 dark:bg-zinc-800' },
-    pending_review: { label: 'Menunggu Review', color: 'text-amber-700 dark:text-amber-400',     bg: 'bg-amber-50 dark:bg-amber-950/30' },
-    published:      { label: 'Published',       color: 'text-emerald-700 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/30' },
-    rejected:       { label: 'Ditolak',         color: 'text-red-700 dark:text-red-400',         bg: 'bg-red-50 dark:bg-red-950/30' },
-    closed:         { label: 'Ditutup',         color: 'text-slate-500 dark:text-slate-400',     bg: 'bg-slate-50 dark:bg-zinc-800/50' },
-};
-
-const applicantStatusConfig: Record<string, { label: string; class: string }> = {
-    applied:  { label: 'Menunggu', class: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-800' },
-    reviewed: { label: 'Ditinjau', class: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800' },
-    accepted: { label: 'Diterima', class: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800' },
-    rejected: { label: 'Ditolak',  class: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800' },
-};
-
+/* ───── Label maps ───── */
 const experienceLabelMap: Record<string, string> = {
     fresh_graduate: 'Fresh Graduate', junior: 'Junior', mid_level: 'Mid Level', senior: 'Senior', internship: 'Internship',
 };
 const locationLabelMap: Record<string, string> = { onsite: 'On-site', remote: 'Remote', hybrid: 'Hybrid' };
 const tipeKerjaLabelMap: Record<string, string> = { full_time: 'Full-time', part_time: 'Part-time', magang: 'Magang', freelance: 'Freelance' };
+
+/* ───── Applicant status label map ───── */
+const applicantLabelMap: Record<string, string> = {
+    applied: 'Menunggu',
+    reviewed: 'Ditinjau',
+    accepted: 'Diterima',
+    rejected: 'Ditolak',
+};
 
 /* ───── Helpers ───── */
 function formatDate(dateStr: string): string {
@@ -145,27 +138,61 @@ function truncate(str: string | null, max = 80): string {
 /* ───── Actions ───── */
 const processing = ref(false);
 
+const confirmDialog = ref({
+    open: false,
+    title: '',
+    description: '',
+    variant: 'danger' as 'danger' | 'warning' | 'info',
+    action: '' as string,
+});
+
 function approveJob() {
-    if (!confirm('Setujui lowongan ini untuk dipublikasikan?')) return;
-    processing.value = true;
-    router.put(`/trace/admin/jobs/${props.job.id}/approve`, {}, {
-        preserveScroll: true,
-        onFinish: () => { processing.value = false; },
-    });
+    confirmDialog.value = {
+        open: true,
+        title: 'Setujui Lowongan',
+        description: 'Setujui lowongan ini untuk dipublikasikan?',
+        variant: 'info',
+        action: 'approve',
+    };
 }
 
 function rejectJob() {
-    if (!confirm('Tolak lowongan ini?')) return;
-    processing.value = true;
-    router.put(`/trace/admin/jobs/${props.job.id}/reject`, {}, {
-        preserveScroll: true,
-        onFinish: () => { processing.value = false; },
-    });
+    confirmDialog.value = {
+        open: true,
+        title: 'Tolak Lowongan',
+        description: 'Tolak lowongan ini?',
+        variant: 'danger',
+        action: 'reject',
+    };
 }
 
 function deleteJob() {
-    if (!confirm('Apakah Anda yakin ingin menghapus lowongan ini? Tindakan ini tidak dapat dibatalkan.')) return;
-    router.delete(`/trace/admin/jobs/${props.job.id}`);
+    confirmDialog.value = {
+        open: true,
+        title: 'Hapus Lowongan',
+        description: 'Apakah Anda yakin ingin menghapus lowongan ini? Tindakan ini tidak dapat dibatalkan.',
+        variant: 'danger',
+        action: 'delete',
+    };
+}
+
+function handleConfirm() {
+    if (confirmDialog.value.action === 'approve') {
+        processing.value = true;
+        router.put(`/trace/admin/jobs/${props.job.id}/approve`, {}, {
+            preserveScroll: true,
+            onFinish: () => { processing.value = false; confirmDialog.value.open = false; },
+        });
+    } else if (confirmDialog.value.action === 'reject') {
+        processing.value = true;
+        router.put(`/trace/admin/jobs/${props.job.id}/reject`, {}, {
+            preserveScroll: true,
+            onFinish: () => { processing.value = false; confirmDialog.value.open = false; },
+        });
+    } else if (confirmDialog.value.action === 'delete') {
+        router.delete(`/trace/admin/jobs/${props.job.id}`);
+        confirmDialog.value.open = false;
+    }
 }
 
 const processingApplicant = ref<number | null>(null);
@@ -221,27 +248,27 @@ function confirmReview() {
             <!-- Back Link -->
             <Link
                 href="/trace/admin/jobs"
-                class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400"
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-[#0C447C] dark:text-slate-400 dark:hover:text-[#85B7EB]"
             >
                 <ArrowLeft class="h-4 w-4" />
                 Kembali ke Daftar Lowongan
             </Link>
 
             <!-- Pending Review Banner -->
-            <Card v-if="job.status === 'pending_review'" class="rounded-2xl border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20">
+            <Card v-if="job.status === 'pending_review'" class="rounded-2xl border-[#EF9F27]/30 bg-[#EF9F27]/5 dark:border-[#FAC775]/30 dark:bg-[#EF9F27]/5">
                 <CardContent class="p-5">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <h3 class="text-sm font-bold text-amber-800 dark:text-amber-300">
+                            <h3 class="text-sm font-bold text-[#EF9F27] dark:text-[#FAC775]">
                                 <Shield class="mr-1 inline h-4 w-4" />
                                 Lowongan ini menunggu review
                             </h3>
-                            <p class="mt-0.5 text-xs text-amber-600 dark:text-amber-400">
+                            <p class="mt-0.5 text-xs text-[#EF9F27]/80 dark:text-[#FAC775]/80">
                                 Diajukan oleh {{ getSource() }}. Setujui untuk mempublikasikan atau tolak.
                             </p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <Button class="rounded-xl bg-emerald-600 px-5 text-white hover:bg-emerald-700 gap-1.5" :disabled="processing" @click="approveJob">
+                            <Button class="rounded-xl bg-[#0C447C] px-5 text-white hover:bg-[#0C447C]/90 gap-1.5" :disabled="processing" @click="approveJob">
                                 <Check class="h-4 w-4" /> Approve
                             </Button>
                             <Button variant="outline" class="rounded-xl border-red-300 px-5 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 gap-1.5" :disabled="processing" @click="rejectJob">
@@ -271,12 +298,7 @@ function confirmReview() {
                                 <div class="min-w-0 flex-1">
                                     <div class="flex items-center gap-2.5 flex-wrap">
                                         <h1 class="text-xl font-bold text-slate-900 dark:text-white">{{ job.title }}</h1>
-                                        <span
-                                            class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider"
-                                            :class="[jobStatusConfig[job.status]?.bg, jobStatusConfig[job.status]?.color]"
-                                        >
-                                            {{ jobStatusConfig[job.status]?.label ?? job.status }}
-                                        </span>
+                                        <TStatusBadge :status="job.status" size="md" />
                                     </div>
                                     <p class="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">
                                         {{ getSource() }}
@@ -286,19 +308,19 @@ function confirmReview() {
 
                                     <!-- Tags -->
                                     <div class="mt-3 flex flex-wrap gap-1.5">
-                                        <Badge v-if="job.experience_level" variant="secondary" class="rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:bg-zinc-800 dark:text-zinc-400">
+                                        <span v-if="job.experience_level" class="inline-flex items-center rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:bg-zinc-800 dark:text-zinc-400">
                                             <GraduationCap class="mr-1 inline h-3 w-3" />
                                             {{ experienceLabelMap[job.experience_level] ?? job.experience_level }}
-                                        </Badge>
-                                        <Badge v-if="job.location_type" variant="secondary" class="rounded-lg bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-600 dark:bg-blue-950/30 dark:text-blue-400">
+                                        </span>
+                                        <span v-if="job.location_type" class="inline-flex items-center rounded-lg bg-[#0C447C]/5 px-2.5 py-1 text-[11px] font-medium text-[#0C447C] dark:bg-[#85B7EB]/10 dark:text-[#85B7EB]">
                                             <MapPin class="mr-1 inline h-3 w-3" />
                                             {{ locationLabelMap[job.location_type] ?? job.location_type }}
                                             <span v-if="job.location_city" class="ml-0.5 opacity-70">· {{ job.location_city }}</span>
-                                        </Badge>
-                                        <Badge v-if="job.tipe_kerja" variant="secondary" class="rounded-lg bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400">
+                                        </span>
+                                        <span v-if="job.tipe_kerja" class="inline-flex items-center rounded-lg bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400">
                                             <Briefcase class="mr-1 inline h-3 w-3" />
                                             {{ tipeKerjaLabelMap[job.tipe_kerja] ?? job.tipe_kerja }}
-                                        </Badge>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -311,7 +333,7 @@ function confirmReview() {
                                 </span>
                                 <span v-if="job.deadline" class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                                     <Clock class="h-4 w-4" /> Deadline: {{ formatDate(job.deadline) }}
-                                    <Badge v-if="isDeadlinePassed" variant="destructive" class="ml-1 rounded-md px-1.5 py-0 text-[10px]">Expired</Badge>
+                                    <TStatusBadge v-if="isDeadlinePassed" status="closed" label="Expired" size="sm" />
                                 </span>
                                 <span class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                                     <Users class="h-4 w-4" /> {{ applicants.length }} pelamar
@@ -334,7 +356,7 @@ function confirmReview() {
                     <Card class="rounded-2xl border-slate-100 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                         <CardHeader class="pb-3">
                             <div class="flex items-center gap-2.5">
-                                <Users class="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                                <Users class="h-5 w-5 text-[#0C447C] dark:text-[#85B7EB]" />
                                 <CardTitle class="text-base font-bold text-slate-900 dark:text-white">
                                     Daftar Pelamar ({{ applicants.length }})
                                 </CardTitle>
@@ -354,7 +376,7 @@ function confirmReview() {
                                         class="flex w-full items-center gap-3 p-4 text-left"
                                         @click="toggleExpand(applicant.id)"
                                     >
-                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-950/30 dark:text-violet-400">
+                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0C447C]/10 text-sm font-bold text-[#0C447C] dark:bg-[#85B7EB]/10 dark:text-[#85B7EB]">
                                             {{ applicant.alumni.user.name.charAt(0).toUpperCase() }}
                                         </div>
                                         <div class="min-w-0 flex-1">
@@ -362,10 +384,10 @@ function confirmReview() {
                                             <p class="text-xs text-slate-500 dark:text-slate-400">{{ applicant.alumni.user.email }}</p>
                                         </div>
                                         <div class="flex items-center gap-2">
-                                            <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold"
-                                                  :class="applicantStatusConfig[applicant.status]?.class">
-                                                {{ applicantStatusConfig[applicant.status]?.label ?? applicant.status }}
-                                            </span>
+                                            <TStatusBadge
+                                                :status="applicant.status"
+                                                :label="applicantLabelMap[applicant.status] ?? applicant.status"
+                                            />
                                             <ChevronDown class="h-4 w-4 text-slate-400 transition-transform" :class="expandedApplicant === applicant.id ? 'rotate-180' : ''" />
                                         </div>
                                     </button>
@@ -404,7 +426,7 @@ function confirmReview() {
                                             </p>
 
                                             <div v-if="isOwner && applicant.status !== 'accepted' && applicant.status !== 'rejected'" class="flex items-center gap-2 border-t border-slate-100 pt-3 dark:border-zinc-800">
-                                                <Button size="sm" class="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs gap-1 px-4"
+                                                <Button size="sm" class="rounded-lg bg-[#0C447C] hover:bg-[#0C447C]/90 text-white text-xs gap-1 px-4"
                                                         :disabled="processingApplicant === applicant.id" @click="openReviewModal(applicant.id, 'accepted')">
                                                     <Check class="h-3.5 w-3.5" /> Terima Pelamar
                                                 </Button>
@@ -430,13 +452,12 @@ function confirmReview() {
                             </div>
 
                             <!-- Empty -->
-                            <div v-else class="flex flex-col items-center justify-center py-12">
-                                <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800">
-                                    <Users class="h-6 w-6 text-slate-400" />
-                                </div>
-                                <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Belum ada pelamar</p>
-                                <p class="mt-1 text-xs text-slate-400">Pelamar akan muncul setelah mereka melamar lowongan ini.</p>
-                            </div>
+                            <TEmptyState
+                                v-else
+                                :icon="Users"
+                                title="Belum ada pelamar"
+                                description="Pelamar akan muncul setelah mereka melamar lowongan ini."
+                            />
                         </CardContent>
                     </Card>
                 </div>
@@ -502,7 +523,7 @@ function confirmReview() {
                     <Card class="rounded-2xl border-slate-100 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                         <CardContent class="space-y-2 p-4">
                             <Link :href="`/trace/admin/jobs/${job.id}/edit`"
-                                  class="flex w-full items-center gap-2 rounded-xl bg-violet-50 px-3 py-2.5 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-100 dark:bg-violet-950/30 dark:text-violet-400 dark:hover:bg-violet-950/50">
+                                  class="flex w-full items-center gap-2 rounded-xl bg-[#0C447C]/5 px-3 py-2.5 text-sm font-medium text-[#0C447C] transition-colors hover:bg-[#0C447C]/10 dark:bg-[#85B7EB]/10 dark:text-[#85B7EB] dark:hover:bg-[#85B7EB]/20">
                                 <Pencil class="h-4 w-4" />
                                 Edit Lowongan
                             </Link>
@@ -553,7 +574,7 @@ function confirmReview() {
                     <textarea
                         v-model="reviewNote"
                         rows="4"
-                        class="mt-4 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-slate-300"
+                        class="mt-4 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 placeholder-slate-400 focus:border-[#0C447C] focus:outline-none focus:ring-2 focus:ring-[#0C447C]/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-slate-300"
                         :placeholder="reviewTarget?.status === 'accepted'
                             ? 'Contoh: Silakan hubungi HR kami di 08xx untuk jadwal interview...'
                             : 'Contoh: Maaf, kami mencari kandidat dengan pengalaman lebih di bidang...'"
@@ -565,7 +586,7 @@ function confirmReview() {
                         </Button>
                         <Button
                             :class="reviewTarget?.status === 'accepted'
-                                ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                                ? 'bg-[#0C447C] hover:bg-[#0C447C]/90 text-white'
                                 : 'bg-red-600 hover:bg-red-700 text-white'"
                             class="rounded-lg px-5 text-sm font-semibold"
                             :disabled="processingApplicant !== null"
@@ -577,5 +598,17 @@ function confirmReview() {
                 </div>
             </div>
         </Teleport>
+
+        <!-- Confirm Dialog -->
+        <TConfirmDialog
+            :open="confirmDialog.open"
+            :title="confirmDialog.title"
+            :description="confirmDialog.description"
+            :variant="confirmDialog.variant"
+            :confirm-label="confirmDialog.action === 'approve' ? 'Ya, Setujui' : confirmDialog.action === 'reject' ? 'Ya, Tolak' : 'Ya, Hapus'"
+            :loading="processing"
+            @update:open="(v) => confirmDialog.open = v"
+            @confirm="handleConfirm"
+        />
     </TraceAdminLayout>
 </template>
