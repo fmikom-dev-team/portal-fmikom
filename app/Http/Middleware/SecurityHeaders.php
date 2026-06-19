@@ -45,10 +45,29 @@ class SecurityHeaders
 
         $response = $next($request);
 
+        $isLocalEnvironment = config('app.debug') || app()->environment('local', 'testing');
+        $localDevScriptOrigins = [
+            'http://0.0.0.0:5173',
+            'http://127.0.0.1:5173',
+            'http://localhost:5173',
+            'ws://0.0.0.0:5173',
+            'ws://127.0.0.1:5173',
+            'ws://localhost:5173',
+        ];
+
         // blob: is required for FFmpeg WASM: the bundled Worker does import(blob://...) for ffmpeg-core.js
         // script-src-elem only covers <script> tags; dynamic import() in Workers uses script-src
-        $scriptSrc = "script-src 'self' 'nonce-{$nonce}' blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com";
-        if (config('app.debug') || app()->environment('local', 'testing')) {
+        $scriptSrcParts = [
+            "script-src 'self' 'nonce-{$nonce}' blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com",
+        ];
+
+        if ($isLocalEnvironment) {
+            $scriptSrcParts[] = implode(' ', $localDevScriptOrigins);
+        }
+
+        $scriptSrc = implode(' ', $scriptSrcParts);
+
+        if ($isLocalEnvironment) {
             $scriptSrc .= " 'unsafe-eval'";
         }
 
@@ -63,6 +82,7 @@ class SecurityHeaders
             'https://generativelanguage.googleapis.com',
             'https://cloudflareinsights.com',
             'https://static.cloudflareinsights.com',
+            'https://nominatim.openstreetmap.org',
             "ws://{$host}",
             "wss://{$host}",
         ];
@@ -107,22 +127,43 @@ class SecurityHeaders
             $connectSrcUrls[] = 'wss://127.0.0.1:*';
         }
 
+        if ($isLocalEnvironment) {
+            $connectSrcUrls = array_merge($connectSrcUrls, $localDevScriptOrigins, [
+                'http://0.0.0.0:5173',
+                'http://127.0.0.1:5173',
+                'http://localhost:5173',
+            ]);
+        }
+
         $connectSrc = 'connect-src '.implode(' ', array_unique($connectSrcUrls));
 
         $cspDirectives = [
             "default-src 'self'",
             $scriptSrc,
             // fonts.bunny.net digunakan oleh project (Instrument Sans), fonts.googleapis.com sebagai fallback
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net",
+            'style-src '.implode(' ', array_filter([
+                "'self'",
+                "'unsafe-inline'",
+                'https://fonts.googleapis.com',
+                'https://fonts.bunny.net',
+                $isLocalEnvironment ? 'http://0.0.0.0:5173 http://127.0.0.1:5173 http://localhost:5173' : null,
+            ])),
             "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net data:",
-            "img-src 'self' data: blob: https://ui-avatars.com https://api.dicebear.com https://avatars.dicebear.com https://lh3.googleusercontent.com https://lh4.googleusercontent.com https://lh5.googleusercontent.com https://lh6.googleusercontent.com https://images.unsplash.com https://upload.wikimedia.org https://cdn.jsdelivr.net",
+            "img-src 'self' data: blob: https://ui-avatars.com https://api.dicebear.com https://avatars.dicebear.com https://lh3.googleusercontent.com https://lh4.googleusercontent.com https://lh5.googleusercontent.com https://lh6.googleusercontent.com https://images.unsplash.com https://upload.wikimedia.org https://cdn.jsdelivr.net https://tile.openstreetmap.org https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org",
             $connectSrc,
             "media-src 'self' blob:",
             // worker-src: FFmpeg WASM creates a Web Worker from a bundled asset URL.
             // blob: is needed because the Worker internally does import(blob://...) to load ffmpeg-core.js
             "worker-src 'self' blob:",
             // script-src blob: is needed for the Worker's internal dynamic import(blob://...) of ffmpeg-core.js
-            "script-src-elem 'self' 'unsafe-inline' blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com",
+            'script-src-elem '.implode(' ', array_filter([
+                "'self'",
+                "'unsafe-inline'",
+                'blob:',
+                'https://static.cloudflareinsights.com',
+                'https://cdnjs.cloudflare.com',
+                $isLocalEnvironment ? 'http://0.0.0.0:5173 http://127.0.0.1:5173 http://localhost:5173' : null,
+            ])),
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",
@@ -157,7 +198,7 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
         // ── Batasi akses fitur browser berbahaya ──────────────────────────────
-        $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=()');
+        $response->headers->set('Permissions-Policy', $this->buildPermissionsPolicy($request));
 
         // ── Hapus header yang mengidentifikasi teknologi server ───────────────
         $response->headers->remove('X-Powered-By');
@@ -168,5 +209,23 @@ class SecurityHeaders
         }
 
         return $response;
+    }
+    private function buildPermissionsPolicy(Request $request): string
+    {
+        $allowsWimsAttendanceSensors = $request->routeIs(
+            'wims.attendance',
+            'wims.absensi.store',
+            'wims.absensi.checkout',
+        );
+
+        return implode(', ', [
+            $allowsWimsAttendanceSensors ? 'camera=(self)' : 'camera=()',
+            'microphone=()',
+            $allowsWimsAttendanceSensors ? 'geolocation=(self)' : 'geolocation=()',
+            'payment=()',
+            'usb=()',
+            'magnetometer=()',
+            'gyroscope=()',
+        ]);
     }
 }
