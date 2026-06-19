@@ -12,6 +12,12 @@
         th { background: #f3f4f6; text-align: left; }
         .meta td:first-child { width: 180px; font-weight: bold; background: #f9fafb; }
         .muted { color: #6b7280; }
+        .cell-text { line-height: 1.45; white-space: normal; word-break: break-word; }
+        .cell-text p { margin: 0; }
+        .ordered-list { margin: 0; padding: 0 0 0 16px; }
+        .ordered-list li { margin: 0 0 4px 0; line-height: 1.45; }
+        .ordered-list li:last-child { margin-bottom: 0; }
+        .plain-multiline { margin: 0; white-space: pre-line; line-height: 1.45; }
     </style>
 </head>
 <body>
@@ -37,8 +43,8 @@
                 <th>Tanggal</th>
                 <th>Jam Mulai</th>
                 <th>Jam Selesai</th>
-                <th>Aktivitas</th>
-                <th>Kompetensi</th>
+                <th style="width: 24%;">Aktivitas</th>
+                <th style="width: 24%;">Kompetensi</th>
                 <th>Status Review</th>
                 <th>Catatan Mitra</th>
             </tr>
@@ -50,10 +56,32 @@
                 <td>{{ $row['date'] ?? '-' }}</td>
                 <td>{{ $row['start_time'] ?? '-' }}</td>
                 <td>{{ $row['end_time'] ?? '-' }}</td>
-                <td>{{ $row['activity'] ?? '-' }}</td>
-                <td>{{ $row['competency'] ?? '-' }}</td>
+                <td class="cell-text">
+                    @if (!empty($row['activity_items']))
+                        <ol class="ordered-list">
+                            @foreach ($row['activity_items'] as $item)
+                                <li>{{ $item }}</li>
+                            @endforeach
+                        </ol>
+                    @else
+                        <div class="plain-multiline">{!! nl2br(e($row['activity'] ?? '-')) !!}</div>
+                    @endif
+                </td>
+                <td class="cell-text">
+                    @if (!empty($row['competency_items']))
+                        <ol class="ordered-list">
+                            @foreach ($row['competency_items'] as $item)
+                                <li>{{ $item }}</li>
+                            @endforeach
+                        </ol>
+                    @else
+                        <div class="plain-multiline">{!! nl2br(e($row['competency'] ?? '-')) !!}</div>
+                    @endif
+                </td>
                 <td>{{ $row['status'] ?? '-' }}</td>
-                <td>{{ $row['mentor_note'] ?? '-' }}</td>
+                <td class="cell-text">
+                    <div class="plain-multiline">{!! nl2br(e($row['mentor_note'] ?? '-')) !!}</div>
+                </td>
             </tr>
         @empty
             <tr>

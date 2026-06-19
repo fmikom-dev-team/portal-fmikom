@@ -5,6 +5,7 @@ namespace App\Modules\Wims\Services\Admin;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
+use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use App\Modules\Wims\Support\AssessmentSummary;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use Carbon\Carbon;
@@ -14,6 +15,7 @@ class AdminMonitoringPageService
 {
     public function __construct(
         private readonly AttendanceSyncService $attendanceSyncService,
+        private readonly WimsModuleRoleService $wimsModuleRoleService,
     ) {
     }
 
@@ -78,6 +80,10 @@ class AdminMonitoringPageService
             ->withQueryString();
 
         $this->attendanceSyncService->syncForRegistrations($registrations->getCollection());
+        $this->wimsModuleRoleService->preloadContextRoles([
+            ...$registrations->getCollection()->pluck('mahasiswa')->filter()->all(),
+            ...$registrations->getCollection()->pluck('dosenPembimbing')->filter()->all(),
+        ]);
 
         $registrations->through(function (PendaftaranMagang $pendaftaran): array {
             $latestAttendance = $pendaftaran->absensis()
@@ -93,34 +99,41 @@ class AdminMonitoringPageService
 
             return [
                 'id' => $pendaftaran->id,
-                'student_name' => $pendaftaran->mahasiswa?->name,
-                'student_email' => $pendaftaran->mahasiswa?->email,
-                'student_identity' => $pendaftaran->mahasiswa?->nim_nip ?: $pendaftaran->mahasiswa?->nomor_induk,
+                'student' => [
+                    'id' => $pendaftaran->mahasiswa?->id,
+                    'name' => $pendaftaran->mahasiswa?->name,
+                    'email' => $pendaftaran->mahasiswa?->email,
+                    'identity' => $pendaftaran->mahasiswa?->nim_nip ?: $pendaftaran->mahasiswa?->nomor_induk,
+                    'role_context' => $pendaftaran->mahasiswa
+                        ? $this->wimsModuleRoleService->resolveContextRoleData($pendaftaran->mahasiswa, 'mahasiswa')
+                        : null,
+                ],
                 'status' => $pendaftaran->status,
-                'company_name' => $pendaftaran->perusahaan?->nama,
-                'dosen_name' => $pendaftaran->dosenPembimbing?->name,
+                'company' => [
+                    'name' => $pendaftaran->perusahaan?->nama,
+                ],
+                'lecturer' => [
+                    'id' => $pendaftaran->dosenPembimbing?->id,
+                    'name' => $pendaftaran->dosenPembimbing?->name,
+                    'role_context' => $pendaftaran->dosenPembimbing
+                        ? $this->wimsModuleRoleService->resolveContextRoleData($pendaftaran->dosenPembimbing, 'dosen')
+                        : null,
+                ],
                 'period_label' => $this->formatDateRange($pendaftaran->tanggal_mulai, $pendaftaran->tanggal_selesai),
                 'attendance' => [
                     'status' => $latestAttendance?->status,
-                    'label' => $this->attendanceStatusLabel($latestAttendance?->status, $latestAttendance !== null),
                     'date' => $latestAttendance?->tanggal?->translatedFormat('d M Y'),
                 ],
                 'logbook' => [
                     'status' => $latestLogbook?->status,
-                    'label' => $this->logbookStatusLabel($latestLogbook?->status, $latestLogbook !== null),
                     'date' => $latestLogbook?->tanggal?->translatedFormat('d M Y'),
                 ],
                 'report' => [
                     'uploaded' => filled($pendaftaran->laporan_akhir_path),
-                    'label' => filled($pendaftaran->laporan_akhir_path) ? 'Sudah diunggah' : 'Belum diunggah',
                     'uploaded_at' => $pendaftaran->laporan_akhir_uploaded_at?->translatedFormat('d M Y H:i'),
                 ],
                 'evaluation' => [
-                    'nilai_akhir' => $assessmentSummary['dosen']['score'],
-                    'status_penilaian' => $this->mapLegacyAssessmentStatus($assessmentSummary['status_key']),
-                    'status_key' => $assessmentSummary['status_key'],
-                    'status_label' => $assessmentSummary['status_label'],
-                    'label' => $this->resolveAssessmentLabel($assessmentSummary),
+                    'status' => $assessmentSummary['status_key'] ?? null,
                     'dosen_score' => $assessmentSummary['dosen']['score'],
                     'mitra_score' => $assessmentSummary['mitra']['score'],
                     'is_complete' => $assessmentSummary['is_complete'],
@@ -157,8 +170,8 @@ class AdminMonitoringPageService
                     ])
                     ->values()
                     ->all(),
-                'dosen' => User::query()
-                    ->whereHas('role', fn ($query) => $query->where('slug', 'dosen'))
+                'dosen' => $this->wimsModuleRoleService
+                    ->usersForRole('dosen')
                     ->orderBy('name')
                     ->get(['id', 'name'])
                     ->map(fn (User $dosen) => [
@@ -193,65 +206,4 @@ class AdminMonitoringPageService
         return Carbon::parse($date)->translatedFormat('d M Y');
     }
 
-    private function attendanceStatusLabel(?string $status, bool $hasRecord): string
-    {
-        if (! $hasRecord) {
-            return 'Belum ada absensi';
-        }
-
-        return match ($status) {
-            'hadir', 'tepat_waktu' => 'Hadir',
-            'terlambat' => 'Terlambat',
-            'izin' => 'Izin',
-            'sakit' => 'Sakit',
-            'alfa' => 'Alfa',
-            default => ucfirst(str_replace('_', ' ', (string) $status)),
-        };
-    }
-
-    private function logbookStatusLabel(?string $status, bool $hasRecord): string
-    {
-        if (! $hasRecord) {
-            return 'Belum ada logbook';
-        }
-
-        return match ($status) {
-            'approved', 'disetujui' => 'Disetujui',
-            'revisi' => 'Perlu revisi',
-            'rejected' => 'Ditolak',
-            default => 'Menunggu review',
-        };
-    }
-
-    private function mapLegacyAssessmentStatus(?string $statusKey): ?string
-    {
-        return match ($statusKey) {
-            'submitted' => 'selesai',
-            'final_dosen' => 'final_dosen',
-            'final_mitra' => 'final_mitra',
-            'draft' => 'draft',
-            default => null,
-        };
-    }
-
-    private function resolveAssessmentLabel(array $assessmentSummary): string
-    {
-        if (($assessmentSummary['is_complete'] ?? false) === true) {
-            return 'Nilai dosen dan mitra tersedia';
-        }
-
-        if (($assessmentSummary['dosen']['score'] ?? null) !== null) {
-            return 'Nilai dosen tersedia';
-        }
-
-        if (($assessmentSummary['mitra']['score'] ?? null) !== null) {
-            return 'Nilai mitra tersedia';
-        }
-
-        if (($assessmentSummary['status_key'] ?? null) === 'draft') {
-            return 'Draft penilaian';
-        }
-
-        return 'Belum ada penilaian.';
-    }
 }

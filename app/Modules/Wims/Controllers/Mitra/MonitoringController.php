@@ -3,12 +3,12 @@
 namespace App\Modules\Wims\Controllers\Mitra;
 
 use App\Http\Controllers\Controller;
-use App\Models\Magang\PerusahaanMitra;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringDetailService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringHistoryService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringRegistrationResolverService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringSummaryService;
+use App\Modules\Wims\Services\Mitra\MitraAccessService;
 use App\Modules\Wims\Services\Mitra\MitraMonitoringOverviewService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -23,16 +23,16 @@ class MonitoringController extends Controller
         private readonly MonitoringHistoryService $monitoringHistoryService,
         private readonly MonitoringSummaryService $monitoringSummaryService,
         private readonly MonitoringDetailService $monitoringDetailService,
+        private readonly MitraAccessService $mitraAccessService,
     ) {
     }
 
     public function index(Request $request): Response
     {
-        $company = PerusahaanMitra::query()
-            ->where('user_id', $request->user()->id)
-            ->first();
+        $user = $request->user();
+        $company = $this->mitraAccessService->resolveCompany($user);
 
-        $overview = $this->monitoringOverviewService->buildOverview($company, now()->toDateString());
+        $overview = $this->monitoringOverviewService->buildOverview($user, $company, now()->toDateString());
         $allowedStatuses = ['aktif', 'selesai', 'perlu-tindak-lanjut', 'revisi', 'alfa', 'belum-dinilai'];
         $initialStatus = (string) $request->query('status', '');
 
@@ -49,9 +49,8 @@ class MonitoringController extends Controller
 
     public function show(Request $request, string $mahasiswaId): Response
     {
-        $company = PerusahaanMitra::query()
-            ->where('user_id', $request->user()->id)
-            ->first();
+        $user = $request->user();
+        $company = $this->mitraAccessService->resolveCompany($user);
 
         abort_unless($company !== null, 403);
 
@@ -75,7 +74,7 @@ class MonitoringController extends Controller
 
         $attendanceHistory = $this->monitoringHistoryService->buildAttendanceTimeline($pendaftaran);
         $logbookHistory = $this->monitoringHistoryService->buildLogbookHistory($pendaftaran);
-        $assessment = $this->monitoringSummaryService->buildAssessmentSummary($pendaftaran, $request->user(), 'mitra');
+        $assessment = $this->monitoringSummaryService->buildAssessmentSummary($pendaftaran, $user, 'mitra');
         $attendanceSummary = $this->monitoringSummaryService->buildAttendanceSummary($pendaftaran);
         $logbookSummary = $this->monitoringSummaryService->buildLogbookSummary($pendaftaran);
 

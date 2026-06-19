@@ -58,7 +58,7 @@ it('creates the required assessment tables with expected columns', function () {
     ]))->toBeTrue();
 });
 
-it('distinguishes assessment templates for dosen and mitra roles and casts attributes correctly', function () {
+it('distinguishes assessment templates for dosen, mitra, and shared roles and casts attributes correctly', function () {
     $creator = User::factory()->create();
 
     $dosenTemplate = AssessmentTemplate::create([
@@ -78,15 +78,26 @@ it('distinguishes assessment templates for dosen and mitra roles and casts attri
         'is_active' => false,
     ])->fresh();
 
+    $sharedTemplate = AssessmentTemplate::create([
+        'name' => 'Template Bersama 2026',
+        'assessor_role' => 'both',
+        'periode_mulai' => '2026-01-01',
+        'periode_selesai' => '2026-12-31',
+        'is_active' => false,
+    ])->fresh();
+
     expect($dosenTemplate->assessor_role)->toBe('dosen')
         ->and($mitraTemplate->assessor_role)->toBe('mitra')
+        ->and($sharedTemplate->assessor_role)->toBe('both')
         ->and($dosenTemplate->periode_mulai)->toBeInstanceOf(CarbonInterface::class)
         ->and($dosenTemplate->periode_selesai)->toBeInstanceOf(CarbonInterface::class)
         ->and($dosenTemplate->is_active)->toBeBool()
         ->and($dosenTemplate->createdBy?->is($creator))->toBeTrue()
         ->and(AssessmentTemplate::forAssessorRole('dosen')->count())->toBe(1)
         ->and(AssessmentTemplate::active()->count())->toBe(1)
-        ->and($dosenTemplate->isApplicableForDate(now()->setDate(2026, 6, 14)))->toBeTrue();
+        ->and($dosenTemplate->isApplicableForDate(now()->setDate(2026, 6, 14)))->toBeTrue()
+        ->and($sharedTemplate->appliesToAssessorRole('dosen'))->toBeTrue()
+        ->and($sharedTemplate->appliesToAssessorRole('mitra'))->toBeTrue();
 });
 
 it('connects assessment components to templates', function () {

@@ -4,6 +4,7 @@ namespace App\Modules\Wims\Services\Admin;
 
 use App\Models\Magang\AssessmentSubmission;
 use App\Models\Magang\PendaftaranMagang;
+use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use App\Modules\Wims\Support\AssessmentSummary;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,6 +13,11 @@ use Illuminate\Support\Carbon;
 
 class AdminAssessmentRecapPageService
 {
+    public function __construct(
+        private readonly WimsModuleRoleService $wimsModuleRoleService,
+    ) {
+    }
+
     public function build(Request $request): array
     {
         $search = trim((string) $request->string('search', ''));
@@ -20,7 +26,7 @@ class AdminAssessmentRecapPageService
 
         $baseQuery = PendaftaranMagang::query()
             ->with([
-                'mahasiswa:id,name,email,nim_nip,nomor_induk,program_studi_id',
+                'mahasiswa:id,name,email,nomor_induk,program_studi_id',
                 'mahasiswa.programStudi:id,nama',
                 'perusahaan:id,nama',
                 'dosenPembimbing:id,name',
@@ -62,6 +68,10 @@ class AdminAssessmentRecapPageService
             ->paginate(10)
             ->withQueryString();
 
+        $this->wimsModuleRoleService->preloadContextRoles(
+            $registrations->getCollection()->pluck('dosenPembimbing')->filter()->all(),
+        );
+
         $registrations->through(function (PendaftaranMagang $pendaftaran): array {
             $dosenSubmission = AssessmentSummary::latestSubmission($pendaftaran->assessmentSubmissions, 'dosen');
             $mitraSubmission = AssessmentSummary::latestSubmission($pendaftaran->assessmentSubmissions, 'mitra');
@@ -74,8 +84,16 @@ class AdminAssessmentRecapPageService
                     'email' => $pendaftaran->mahasiswa?->email,
                     'program_studi' => $pendaftaran->mahasiswa?->programStudi?->nama,
                 ],
-                'company_name' => $pendaftaran->perusahaan?->nama,
-                'lecturer_name' => $pendaftaran->dosenPembimbing?->name,
+                'company' => [
+                    'name' => $pendaftaran->perusahaan?->nama,
+                ],
+                'lecturer' => [
+                    'id' => $pendaftaran->dosenPembimbing?->id,
+                    'name' => $pendaftaran->dosenPembimbing?->name,
+                    'role_context' => $pendaftaran->dosenPembimbing
+                        ? $this->wimsModuleRoleService->resolveContextRoleData($pendaftaran->dosenPembimbing, 'dosen')
+                        : null,
+                ],
                 'period_label' => $this->formatDateRange(
                     $pendaftaran->tanggal_mulai,
                     $pendaftaran->tanggal_selesai,
@@ -108,6 +126,10 @@ class AdminAssessmentRecapPageService
         $score = $submission?->total_score;
 
         return [
+            'role_context' => [
+                'slug' => $role,
+                'label' => $this->wimsModuleRoleService->labelForRole($role),
+            ],
             'status_key' => $status,
             'status_label' => $this->resolveSubmissionStatusLabel($status),
             'total_score' => $score !== null ? round((float) $score, 2) : null,

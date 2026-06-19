@@ -6,12 +6,14 @@ use App\Models\Magang\KetidakhadiranMagang;
 use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringAlertService;
+use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 class MitraDashboardPageService
 {
     public function __construct(
         private readonly MitraAccessService $mitraAccessService,
         private readonly MitraMonitoringOverviewService $monitoringOverviewService,
         private readonly MonitoringAlertService $monitoringAlertService,
+        private readonly WimsModuleRoleService $wimsModuleRoleService,
     ) {
     }
 
@@ -32,7 +34,7 @@ class MitraDashboardPageService
             ];
         }
 
-        $overview = $this->monitoringOverviewService->buildOverview($company, $today);
+        $overview = $this->monitoringOverviewService->buildOverview($user, $company, $today);
         $warnings = $this->monitoringAlertService->getWarningsForCompany($company);
 
         $pendingAbsenceBaseQuery = KetidakhadiranMagang::query()
@@ -49,7 +51,10 @@ class MitraDashboardPageService
                 'id' => $item->id,
                 'name' => $item->mahasiswa?->name,
                 'nim' => $item->mahasiswa?->nim_nip ?: $item->mahasiswa?->nomor_induk,
-                'company' => $item->perusahaan?->nama,
+                'company' => [
+                    'id' => $item->perusahaan?->id,
+                    'name' => $item->perusahaan?->nama,
+                ],
                 'jenis' => $item->jenis,
                 'alasan' => str($item->alasan)->squish()->limit(120)->toString(),
                 'tanggal_label' => $item->tanggal_mulai && $item->tanggal_selesai
@@ -83,8 +88,13 @@ class MitraDashboardPageService
             'email' => $user->email,
             'phone' => $user->no_telepon,
             'jabatan' => $company?->mitra_jabatan,
-            'company_name' => $company?->nama,
             'company_city' => $company?->kota,
+            'role_context' => $this->wimsModuleRoleService->resolveContextRoleData($user, 'mitra'),
+            'company' => [
+                'id' => $company?->id,
+                'name' => $company?->nama,
+                'city' => $company?->kota,
+            ],
         ];
     }
 

@@ -62,18 +62,8 @@ class MonitoringSummaryService
 
         return [
             'status' => $assessmentSubmission?->status ?? 'not_assessed',
-            'status_label' => $this->resolveAssessmentStatusLabel($assessmentSubmission?->status),
             'total_score' => $assessmentSubmission?->total_score,
             'submitted_at' => $assessmentSubmission?->submitted_at?->translatedFormat('d M Y H:i'),
         ];
-    }
-
-    private function resolveAssessmentStatusLabel(?string $status): string
-    {
-        return match ($status) {
-            'submitted' => 'Sudah Dikirim',
-            'draft' => 'Draft',
-            default => 'Belum Dinilai',
-        };
     }
 }

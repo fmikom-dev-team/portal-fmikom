@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -85,53 +84,61 @@ class AdminCompanyActionService
             $company->loadMissing('user');
 
             $mitraUser = $company->user;
+            $mitraUserId = $mitraUser?->id;
 
             $company->delete();
 
-            if ($mitraUser) {
-                $mitraUser->delete();
+            if (! $mitraUserId) {
+                return;
+            }
+
+            $hasOtherLinkedCompanies = PerusahaanMitra::query()
+                ->where('user_id', $mitraUserId)
+                ->exists();
+
+            if (! $hasOtherLinkedCompanies) {
+                $this->wimsModuleRoleService->ensureAssignment($mitraUser, 'mitra', false);
             }
         });
     }
 
-    public function validateAccount(Request $request): array
+    public function validateAccountLink(Request $request): array
     {
         return $request->validate([
-            'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'no_telepon' => ['nullable', 'string', 'max:20'],
             'jabatan' => ['nullable', 'string', 'max:255'],
-            'is_active' => ['required', 'boolean'],
-        ], [
-            'password.confirmed' => 'Konfirmasi password akun mitra tidak cocok.',
         ]);
     }
 
-    public function createCompanyAccount(PerusahaanMitra $company, array $validated): bool
+    public function linkCompanyPortalAccount(PerusahaanMitra $company, array $validated): bool
     {
         if (! $this->wimsModuleRoleService->resolveModule() || ! $this->wimsModuleRoleService->resolveRole('mitra')) {
             return false;
         }
 
-        DB::transaction(function () use ($company, $validated): void {
-            $user = User::query()->where('email', $validated['email'])->first();
+        $user = User::query()
+            ->where('email', $validated['email'])
+            ->first();
 
-            if (! $user) {
-                $user = new User();
-                $user->forceFill([
-                    'name' => $validated['name'],
-                    'email' => $validated['email'],
-                    'password' => Hash::make($validated['password']),
-                    'user_type' => 'mitra',
-                    'no_telepon' => $validated['no_telepon'] ?? null,
-                    'is_active' => (bool) $validated['is_active'],
-                    'email_verified_at' => now(),
-                    'password_changed_at' => now(),
-                ])->save();
-            }
+        if (! $user) {
+            throw ValidationException::withMessages([
+                'email' => 'Akun Portal dengan email tersebut belum ditemukan.',
+            ]);
+        }
 
-            $this->wimsModuleRoleService->ensureAssignment($user, 'mitra', (bool) $validated['is_active']);
+        $alreadyLinkedCompany = PerusahaanMitra::query()
+            ->where('user_id', $user->id)
+            ->whereKeyNot($company->id)
+            ->first();
+
+        if ($alreadyLinkedCompany) {
+            throw ValidationException::withMessages([
+                'email' => 'Akun Portal ini sudah terhubung ke perusahaan mitra lain.',
+            ]);
+        }
+
+        DB::transaction(function () use ($company, $validated, $user): void {
+            $this->wimsModuleRoleService->ensureAssignment($user, 'mitra', true);
 
             $company->update([
                 'user_id' => $user->id,

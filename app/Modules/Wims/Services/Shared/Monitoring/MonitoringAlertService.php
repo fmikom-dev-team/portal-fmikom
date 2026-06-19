@@ -153,7 +153,10 @@ class MonitoringAlertService
             'pendaftaran_id' => $pendaftaran->id,
             'name' => $pendaftaran->mahasiswa?->name,
             'nim' => $pendaftaran->mahasiswa?->nim_nip ?: $pendaftaran->mahasiswa?->nomor_induk,
-            'company' => $pendaftaran->perusahaan?->nama,
+            'company' => [
+                'id' => $pendaftaran->perusahaan?->id,
+                'name' => $pendaftaran->perusahaan?->nama,
+            ],
             'attendance_missing_days' => $attendanceMissingDays,
             'logbook_missing_days' => $logbookMissingDays,
             'latest_logbook_status' => $latestLogbook?->status,

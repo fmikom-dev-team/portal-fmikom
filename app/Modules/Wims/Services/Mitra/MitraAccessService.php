@@ -6,12 +6,18 @@ use App\Models\Magang\KetidakhadiranMagang;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
+use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 
 class MitraAccessService
 {
+    public function __construct(
+        private readonly WimsModuleRoleService $wimsModuleRoleService,
+    ) {
+    }
+
     public function resolveCompany(?User $user): ?PerusahaanMitra
     {
-        if (! $user) {
+        if (! $user || ! $this->wimsModuleRoleService->hasActiveRole($user->id, 'mitra')) {
             return null;
         }
 

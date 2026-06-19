@@ -73,7 +73,10 @@ class AttendancePageService
 
         return [
             'pendaftaran_id' => $pendaftaran?->id,
-            'company_name' => $pendaftaran?->perusahaan?->nama,
+            'company' => [
+                'id' => $pendaftaran?->perusahaan?->id,
+                'name' => $pendaftaran?->perusahaan?->nama,
+            ],
             'radius' => $pendaftaran?->perusahaan?->radius_valid_meter,
             'office_latitude' => $pendaftaran?->perusahaan?->latitude,
             'office_longitude' => $pendaftaran?->perusahaan?->longitude,
@@ -105,12 +108,7 @@ class AttendancePageService
             'location_status' => is_null($absensiHariIni?->lokasi_valid)
                 ? null
                 : ($absensiHariIni->lokasi_valid ? 'valid' : 'invalid'),
-            'absensi_hari_ini' => [
-                'masuk' => $absensiHariIni?->timestamp_masuk,
-                'keluar' => $absensiHariIni?->timestamp_keluar,
-            ],
             'history_count' => $attendanceHistoryCount,
-            'history_download_url' => $attendanceHistoryCount > 0 ? route('wims.absensi.download') : null,
             'current_period_history_download_url' => $pendaftaran?->id
                 ? route('wims.absensi.download', ['scope' => 'current'])
                 : null,

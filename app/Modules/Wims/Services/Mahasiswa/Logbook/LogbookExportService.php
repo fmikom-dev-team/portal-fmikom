@@ -40,13 +40,18 @@ class LogbookExportService
         $student = $registration->mahasiswa;
         $programStudi = $student?->programStudi;
         $rows = $logbooks->map(function (LogbookMagang $logbook, int $index) {
+            $activityContent = $this->buildStructuredContent($logbook->aktivitas_harian);
+            $competencyContent = $this->buildStructuredContent($logbook->kompetensi_dicapai);
+
             return [
                 'number' => $index + 1,
                 'date' => $this->formatLocalizedDate($logbook->tanggal, 'd F Y'),
                 'start_time' => $this->formatTimeValue($logbook->jam_mulai) ?? '-',
                 'end_time' => $this->formatTimeValue($logbook->jam_selesai) ?? '-',
-                'activity' => $logbook->aktivitas_harian ?? '-',
-                'competency' => $logbook->kompetensi_dicapai ?? '-',
+                'activity' => $activityContent['text'],
+                'activity_items' => $activityContent['items'],
+                'competency' => $competencyContent['text'],
+                'competency_items' => $competencyContent['items'],
                 'status' => $this->formatStatusLabel($logbook->status),
                 'mentor_note' => $logbook->catatan_mitra ?? $logbook->catatan_dosen ?? '-',
             ];
@@ -121,5 +126,64 @@ class LogbookExportService
         } catch (Throwable) {
             return $time;
         }
+    }
+
+    /**
+     * @return array{text: string, items: array<int, string>}
+     */
+    private function buildStructuredContent(?string $value): array
+    {
+        $text = trim(preg_replace("/\r\n?/", "\n", (string) ($value ?? '')) ?? '');
+
+        if ($text === '') {
+            return [
+                'text' => '-',
+                'items' => [],
+            ];
+        }
+
+        return [
+            'text' => $text,
+            'items' => $this->extractOrderedListItems($text),
+        ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function extractOrderedListItems(string $text): array
+    {
+        $lines = preg_split("/\n+/", $text) ?: [];
+        $items = [];
+        $currentIndex = -1;
+        $hasNumberedLine = false;
+
+        foreach ($lines as $line) {
+            $trimmedLine = trim($line);
+
+            if ($trimmedLine === '') {
+                continue;
+            }
+
+            if (preg_match('/^\d+[\.\)]\s*(.+)$/', $trimmedLine, $matches) === 1) {
+                $hasNumberedLine = true;
+                $items[] = trim($matches[1]);
+                $currentIndex = count($items) - 1;
+
+                continue;
+            }
+
+            if ($currentIndex === -1) {
+                return [];
+            }
+
+            $items[$currentIndex] = trim($items[$currentIndex] . ' ' . $trimmedLine);
+        }
+
+        if (! $hasNumberedLine || count($items) < 2) {
+            return [];
+        }
+
+        return array_values(array_filter($items, fn (string $item) => $item !== ''));
     }
 }

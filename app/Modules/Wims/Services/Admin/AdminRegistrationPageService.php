@@ -3,12 +3,18 @@
 namespace App\Modules\Wims\Services\Admin;
 
 use App\Models\Magang\PendaftaranMagang;
+use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Response;
 
 class AdminRegistrationPageService
 {
+    public function __construct(
+        private readonly WimsModuleRoleService $wimsModuleRoleService,
+    ) {
+    }
+
     public function build(Request $request): array
     {
         $status = (string) $request->string('status', 'all');
@@ -43,15 +49,33 @@ class AdminRegistrationPageService
 
         $registrations = $query
             ->paginate(10)
-            ->withQueryString()
-            ->through(fn (PendaftaranMagang $pendaftaran) => [
+            ->withQueryString();
+
+        $this->wimsModuleRoleService->preloadContextRoles(
+            $registrations->getCollection()->pluck('mahasiswa')->filter()->all(),
+        );
+
+        $registrations->through(fn (PendaftaranMagang $pendaftaran) => [
                 'id' => $pendaftaran->id,
-                'student_name' => $pendaftaran->mahasiswa?->name,
-                'student_email' => $pendaftaran->mahasiswa?->email,
-                'student_identity' => $pendaftaran->mahasiswa?->nim_nip ?: $pendaftaran->mahasiswa?->nomor_induk,
-                'proposal_company_name' => $pendaftaran->perusahaan_diminati_nama,
-                'proposal_company_address' => $pendaftaran->perusahaan_diminati_alamat,
-                'final_company_name' => $pendaftaran->perusahaan?->nama,
+                'student' => [
+                    'id' => $pendaftaran->mahasiswa?->id,
+                    'name' => $pendaftaran->mahasiswa?->name,
+                    'email' => $pendaftaran->mahasiswa?->email,
+                    'identity' => $pendaftaran->mahasiswa?->nim_nip ?: $pendaftaran->mahasiswa?->nomor_induk,
+                    'role_context' => $pendaftaran->mahasiswa
+                        ? $this->wimsModuleRoleService->resolveContextRoleData($pendaftaran->mahasiswa, 'mahasiswa')
+                        : null,
+                ],
+                'company' => [
+                    'proposal' => [
+                        'name' => $pendaftaran->perusahaan_diminati_nama,
+                        'address' => $pendaftaran->perusahaan_diminati_alamat,
+                    ],
+                    'final' => [
+                        'id' => $pendaftaran->perusahaan?->id,
+                        'name' => $pendaftaran->perusahaan?->nama,
+                    ],
+                ],
                 'application_note' => $pendaftaran->catatan_pengajuan,
                 'revision_note' => $pendaftaran->catatan_revisi_admin,
                 'tanggal_mulai' => $this->formatDate($pendaftaran->tanggal_mulai),

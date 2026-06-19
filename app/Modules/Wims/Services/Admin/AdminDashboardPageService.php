@@ -18,9 +18,15 @@ class AdminDashboardPageService
             ->get()
             ->map(fn (PendaftaranMagang $pendaftaran) => [
                 'id' => $pendaftaran->id,
-                'student_name' => $pendaftaran->mahasiswa?->name,
-                'student_email' => $pendaftaran->mahasiswa?->email,
-                'company_name' => $pendaftaran->perusahaan?->nama,
+                'student' => [
+                    'id' => $pendaftaran->mahasiswa?->id,
+                    'name' => $pendaftaran->mahasiswa?->name,
+                    'email' => $pendaftaran->mahasiswa?->email,
+                ],
+                'company' => [
+                    'id' => $pendaftaran->perusahaan?->id,
+                    'name' => $pendaftaran->perusahaan?->nama,
+                ],
                 'date_range' => $this->formatDateRange($pendaftaran->tanggal_mulai, $pendaftaran->tanggal_selesai),
                 'status' => $pendaftaran->status,
             ])

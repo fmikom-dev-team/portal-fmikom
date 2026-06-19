@@ -67,12 +67,17 @@ class PlacementIndexService
 
     public function buildPlacements(Request $request): LengthAwarePaginator
     {
-        return $this->buildIndexQuery($request, true)
+        $placements = $this->buildIndexQuery($request, true)
             ->orderByRaw("CASE WHEN status = 'approved' THEN 0 WHEN status = 'aktif' THEN 1 WHEN status = 'selesai' THEN 2 ELSE 3 END")
             ->latest('id')
             ->paginate(10)
-            ->withQueryString()
-            ->through(fn (PendaftaranMagang $pendaftaran) => $this->transformPlacement($pendaftaran));
+            ->withQueryString();
+
+        $this->wimsModuleRoleService->preloadContextRoles(
+            $placements->getCollection()->pluck('mahasiswa')->filter()->all(),
+        );
+
+        return $placements->through(fn (PendaftaranMagang $pendaftaran) => $this->transformPlacement($pendaftaran));
     }
 
     public function buildFilters(Request $request): array
@@ -200,11 +205,20 @@ class PlacementIndexService
 
         return [
             'id' => $pendaftaran->id,
-            'student_name' => $pendaftaran->mahasiswa?->name,
-            'student_email' => $pendaftaran->mahasiswa?->email,
-            'student_identity' => $pendaftaran->mahasiswa?->nim_nip ?: $pendaftaran->mahasiswa?->nomor_induk,
-            'company_name' => $pendaftaran->perusahaan?->nama,
+            'student' => [
+                'id' => $pendaftaran->mahasiswa?->id,
+                'name' => $pendaftaran->mahasiswa?->name,
+                'email' => $pendaftaran->mahasiswa?->email,
+                'identity' => $pendaftaran->mahasiswa?->nim_nip ?: $pendaftaran->mahasiswa?->nomor_induk,
+                'role_context' => $pendaftaran->mahasiswa
+                    ? $this->wimsModuleRoleService->resolveContextRoleData($pendaftaran->mahasiswa, 'mahasiswa')
+                    : null,
+            ],
             'company_id' => $pendaftaran->perusahaan_id,
+            'company' => [
+                'id' => $pendaftaran->perusahaan?->id,
+                'name' => $pendaftaran->perusahaan?->nama,
+            ],
             'dosen_pembimbing_id' => $pendaftaran->dosen_pembimbing_id,
             'tanggal_mulai' => $this->formatDate($pendaftaran->tanggal_mulai),
             'tanggal_selesai' => $this->formatDate($pendaftaran->tanggal_selesai),

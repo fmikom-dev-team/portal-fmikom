@@ -15,16 +15,20 @@ class AssessmentTemplateResolverService
         ?AssessmentSubmission $submission = null,
     ): ?AssessmentTemplate {
         if ($submission?->template) {
-            return $submission->template->assessor_role === $assessorRole
+            return $submission->template->appliesToAssessorRole($assessorRole)
                 ? $submission->template
                 : null;
         }
 
         return AssessmentTemplate::query()
-            ->where('assessor_role', $assessorRole)
+            ->whereIn('assessor_role', [$assessorRole, 'both'])
             ->where('is_active', true)
             ->whereDate('periode_mulai', '<=', $date->toDateString())
             ->whereDate('periode_selesai', '>=', $date->toDateString())
+            ->orderByRaw(
+                "case when assessor_role = ? then 0 when assessor_role = 'both' then 1 else 2 end",
+                [$assessorRole],
+            )
             ->orderByDesc('updated_at')
             ->orderByDesc('id')
             ->first();

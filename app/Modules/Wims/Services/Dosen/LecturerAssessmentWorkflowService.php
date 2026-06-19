@@ -6,6 +6,7 @@ use App\Models\Magang\AssessmentSubmission;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
 use App\Modules\Wims\Services\Shared\Assessment\FinalReportAccessService;
+use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -14,23 +15,25 @@ class LecturerAssessmentWorkflowService
 {
     public function __construct(
         private readonly FinalReportAccessService $finalReportAccessService,
+        private readonly WimsModuleRoleService $wimsModuleRoleService,
     ) {
     }
 
     public function isAuthorized(User $user, PendaftaranMagang $pendaftaran): bool
     {
-        return (int) $pendaftaran->dosen_pembimbing_id === (int) $user->id;
+        return $this->wimsModuleRoleService->hasActiveRole($user->id, 'dosen')
+            && (int) $pendaftaran->dosen_pembimbing_id === (int) $user->id;
     }
 
     public function canAssess(PendaftaranMagang $pendaftaran): bool
     {
-        return $pendaftaran->status === 'selesai';
+        return $pendaftaran->isReadyForAssessment(now());
     }
 
     public function loadAssessmentRelations(PendaftaranMagang $pendaftaran): void
     {
         $pendaftaran->load([
-            'mahasiswa:id,name,email,nim_nip,nomor_induk',
+            'mahasiswa:id,name,email,nomor_induk',
             'perusahaan:id,nama',
         ]);
     }

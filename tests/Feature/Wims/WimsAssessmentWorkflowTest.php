@@ -50,6 +50,13 @@ function makeAssessmentRegistration(): array
 it('requires assessor role and rejects invalid role values in template request', function () {
     $request = new UpsertAssessmentTemplateRequest();
 
+    $sharedRolePayload = makeAssessmentTemplatePayload(['assessor_role' => 'both']);
+    $validator = Validator::make($sharedRolePayload, $request->rules(), $request->messages());
+    $request->merge($sharedRolePayload);
+    $request->withValidator($validator);
+
+    expect($validator->fails())->toBeFalse();
+
     $invalidRolePayload = makeAssessmentTemplatePayload(['assessor_role' => 'admin']);
     $validator = Validator::make($invalidRolePayload, $request->rules(), $request->messages());
     $request->merge($invalidRolePayload);
@@ -89,7 +96,7 @@ it('rejects invalid component weights and invalid period ordering', function () 
         ->and($validator->errors()->has('components.1.weight_percentage'))->toBeTrue();
 });
 
-it('rejects overlapping active templates for the same assessor role but allows different roles', function () {
+it('rejects overlapping active templates when assessor coverage intersects', function () {
     $service = app(AdminAssessmentTemplateActionService::class);
     $creator = User::factory()->create();
 
@@ -112,9 +119,29 @@ it('rejects overlapping active templates for the same assessor role but allows d
     ]), $creator->id);
 
     expect($mitraTemplate->assessor_role)->toBe('mitra');
+
+    expect(fn () => $service->create(makeAssessmentTemplatePayload([
+        'assessor_role' => 'both',
+        'periode_mulai' => '2026-02-01',
+        'periode_selesai' => '2026-03-01',
+    ]), $creator->id))->toThrow(ValidationException::class);
+
+    AssessmentTemplate::query()->delete();
+
+    $service->create(makeAssessmentTemplatePayload([
+        'assessor_role' => 'both',
+        'periode_mulai' => '2026-01-01',
+        'periode_selesai' => '2026-06-30',
+    ]), $creator->id);
+
+    expect(fn () => $service->create(makeAssessmentTemplatePayload([
+        'assessor_role' => 'mitra',
+        'periode_mulai' => '2026-05-01',
+        'periode_selesai' => '2026-12-31',
+    ]), $creator->id))->toThrow(ValidationException::class);
 });
 
-it('resolver selects templates by role and date', function () {
+it('resolver prefers exact template and falls back to shared template by role and date', function () {
     $dosenTemplate = AssessmentTemplate::create([
         'name' => 'Template Dosen',
         'assessor_role' => 'dosen',
@@ -123,9 +150,9 @@ it('resolver selects templates by role and date', function () {
         'is_active' => true,
     ]);
 
-    $mitraTemplate = AssessmentTemplate::create([
-        'name' => 'Template Mitra',
-        'assessor_role' => 'mitra',
+    $sharedTemplate = AssessmentTemplate::create([
+        'name' => 'Template Bersama',
+        'assessor_role' => 'both',
         'periode_mulai' => '2026-01-01',
         'periode_selesai' => '2026-12-31',
         'is_active' => true,
@@ -134,7 +161,7 @@ it('resolver selects templates by role and date', function () {
     $resolver = app(AssessmentTemplateResolverService::class);
 
     expect($resolver->resolveForRoleAndDate('dosen', now()->setDate(2026, 6, 14))?->is($dosenTemplate))->toBeTrue()
-        ->and($resolver->resolveForRoleAndDate('mitra', now()->setDate(2026, 6, 14))?->is($mitraTemplate))->toBeTrue();
+        ->and($resolver->resolveForRoleAndDate('mitra', now()->setDate(2026, 6, 14))?->is($sharedTemplate))->toBeTrue();
 });
 
 it('saves draft submissions partially and computes weighted score on backend', function () {
@@ -179,7 +206,7 @@ it('saves draft submissions partially and computes weighted score on backend', f
         ->and($submission->submitted_at)->toBeNull();
 });
 
-it('requires full component coverage for submitted assessments and enforces matching role', function () {
+it('requires full component coverage for submitted assessments and accepts shared templates for matching assessors', function () {
     [$assessor, , , $registration] = makeAssessmentRegistration();
     $template = AssessmentTemplate::create([
         'name' => 'Template Submit',
@@ -234,6 +261,30 @@ it('requires full component coverage for submitted assessments and enforces matc
     expect($submission->status)->toBe('submitted')
         ->and((float) $submission->total_score)->toBe(85.0)
         ->and($submission->submitted_at)->not->toBeNull();
+
+    $sharedTemplate = AssessmentTemplate::create([
+        'name' => 'Template Bersama',
+        'assessor_role' => 'both',
+        'periode_mulai' => '2027-01-01',
+        'periode_selesai' => '2027-12-31',
+        'is_active' => true,
+    ]);
+    $sharedComponent = AssessmentComponent::create([
+        'assessment_template_id' => $sharedTemplate->id,
+        'name' => 'Komponen Bersama',
+        'weight_percentage' => 100,
+        'sort_order' => 1,
+    ]);
+    $sharedTemplate->load('components');
+
+    $service->saveSubmission($registration, $sharedTemplate, $assessor, 'mitra', null, [
+        'action' => 'submitted',
+        'scores' => [
+            ['component_id' => $sharedComponent->id, 'score' => 88],
+        ],
+    ]);
+
+    expect(AssessmentSubmission::query()->where('assessment_template_id', $sharedTemplate->id)->exists())->toBeTrue();
 });
 
 it('rejects component ids from another template and prevents editing submitted submissions', function () {
@@ -293,4 +344,3 @@ it('rejects component ids from another template and prevents editing submitted s
         ],
     ]))->toThrow(ValidationException::class);
 });
-

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
+use App\Modules\Wims\Services\Mitra\MitraAccessService;
 use App\Modules\Wims\Services\Shared\Assessment\AssessmentIndexService;
 use App\Modules\Wims\Services\Shared\Assessment\AssessmentShowService;
 use App\Modules\Wims\Services\Shared\Assessment\AssessmentSubmissionService;
@@ -27,6 +28,7 @@ class PenilaianMahasiswaController extends Controller
         private readonly AssessmentSubmissionService $assessmentSubmissionService,
         private readonly AssessmentTemplateResolverService $assessmentTemplateResolverService,
         private readonly FinalReportAccessService $finalReportAccessService,
+        private readonly MitraAccessService $mitraAccessService,
     ) {
     }
 
@@ -34,7 +36,7 @@ class PenilaianMahasiswaController extends Controller
     {
         /** @var User $user */
         $user = $request->user();
-        $company = $this->resolveCompany($user);
+        $company = $this->mitraAccessService->resolveCompany($user);
 
         $payload = $this->assessmentIndexService->buildCompanyData($user, $company);
 
@@ -49,15 +51,19 @@ class PenilaianMahasiswaController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $company = $this->resolveCompany($user);
+        $company = $this->mitraAccessService->resolveCompany($user);
         abort_unless($company !== null, 403);
 
         $authorizedPendaftaran = $this->resolveAuthorizedPendaftaran($company, $pendaftaran->id);
         abort_unless($authorizedPendaftaran !== null, 403);
-        abort_if($authorizedPendaftaran->status !== 'selesai', 403, 'Penilaian hanya dapat dilakukan setelah PKL diselesaikan admin.');
+        abort_if(
+            ! $authorizedPendaftaran->isReadyForAssessment(now()),
+            403,
+            'Penilaian hanya dapat dilakukan setelah PKL memasuki tahap penilaian.',
+        );
 
         $authorizedPendaftaran->load([
-            'mahasiswa:id,name,email,nim_nip,nomor_induk',
+            'mahasiswa:id,name,email,nomor_induk',
             'perusahaan:id,nama',
         ]);
 
@@ -79,15 +85,15 @@ class PenilaianMahasiswaController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $company = $this->resolveCompany($user);
+        $company = $this->mitraAccessService->resolveCompany($user);
         abort_unless($company !== null, 403);
 
         $authorizedPendaftaran = $this->resolveAuthorizedPendaftaran($company, $pendaftaran->id);
         abort_unless($authorizedPendaftaran !== null, 403);
         abort_if(
-            $authorizedPendaftaran->status !== 'selesai',
+            ! $authorizedPendaftaran->isReadyForAssessment(now()),
             403,
-            'Penilaian hanya dapat dilakukan setelah PKL selesai.',
+            'Penilaian hanya dapat dilakukan setelah PKL memasuki tahap penilaian.',
         );
 
         $existingSubmission = $this->assessmentSubmissionService->resolveLatestSubmission($authorizedPendaftaran, $user, 'mitra');
@@ -137,7 +143,7 @@ class PenilaianMahasiswaController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $company = $this->resolveCompany($user);
+        $company = $this->mitraAccessService->resolveCompany($user);
         abort_unless($company !== null, 403);
 
         $authorizedPendaftaran = $this->resolveAuthorizedPendaftaran($company, $pendaftaran->id);
@@ -158,7 +164,7 @@ class PenilaianMahasiswaController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $company = $this->resolveCompany($user);
+        $company = $this->mitraAccessService->resolveCompany($user);
         abort_unless($company !== null, 403);
 
         $authorizedPendaftaran = $this->resolveAuthorizedPendaftaran($company, $pendaftaran->id);
@@ -170,13 +176,6 @@ class PenilaianMahasiswaController extends Controller
         abort_unless(is_file($absolutePath), 404);
 
         return response()->download($absolutePath, $authorizedPendaftaran->finalReportDownloadName());
-    }
-
-    private function resolveCompany(User $user): ?PerusahaanMitra
-    {
-        return PerusahaanMitra::query()
-            ->where('user_id', $user->id)
-            ->first();
     }
 
     private function resolveAuthorizedPendaftaran(PerusahaanMitra $company, int $pendaftaranId): ?PendaftaranMagang

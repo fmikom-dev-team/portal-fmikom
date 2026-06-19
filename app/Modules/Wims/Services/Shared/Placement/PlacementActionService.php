@@ -39,18 +39,7 @@ class PlacementActionService
 
     private function markRegistrationsComplete(Collection $registrations): void
     {
-        $completedAt = now();
-
-        $registrations->each(function (PendaftaranMagang $pendaftaran) use ($completedAt): void {
-            $mahasiswa = $pendaftaran->mahasiswa;
-
-            if ($mahasiswa) {
-                $mahasiswa->forceFill([
-                    'has_completed_pkl' => true,
-                    'pkl_completed_at' => $completedAt,
-                ])->save();
-            }
-
+        $registrations->each(function (PendaftaranMagang $pendaftaran): void {
             $pendaftaran->forceFill([
                 'status' => 'selesai',
             ])->save();

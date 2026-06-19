@@ -7,6 +7,7 @@ use App\Models\Magang\KetidakhadiranMagang;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
+use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -14,6 +15,7 @@ class StudentDashboardPageService
 {
     public function __construct(
         private readonly AttendanceSyncService $attendanceSyncService,
+        private readonly WimsModuleRoleService $wimsModuleRoleService,
     ) {
     }
 
@@ -114,8 +116,29 @@ class StudentDashboardPageService
             'registration' => [
                 'status' => $latestRegistration?->status,
                 'dashboard_state' => $dashboardState,
-                'proposal_company_name' => $latestRegistration?->perusahaan_diminati_nama,
-                'final_company_name' => $latestRegistration?->perusahaan?->nama,
+                'company' => [
+                    'proposal' => [
+                        'name' => $latestRegistration?->perusahaan_diminati_nama,
+                    ],
+                    'final' => [
+                        'id' => $latestRegistration?->perusahaan?->id,
+                        'name' => $latestRegistration?->perusahaan?->nama,
+                    ],
+                ],
+                'lecturer' => [
+                    'id' => $latestRegistration?->dosenPembimbing?->id,
+                    'name' => $latestRegistration?->dosenPembimbing?->name,
+                    'role_context' => $latestRegistration?->dosenPembimbing
+                        ? $this->wimsModuleRoleService->resolveContextRoleData($latestRegistration->dosenPembimbing, 'dosen')
+                        : null,
+                ],
+                'mentor' => [
+                    'id' => $latestRegistration?->perusahaan?->user?->id,
+                    'name' => $latestRegistration?->perusahaan?->user?->name,
+                    'role_context' => $latestRegistration?->perusahaan?->user
+                        ? $this->wimsModuleRoleService->resolveContextRoleData($latestRegistration->perusahaan->user, 'mitra')
+                        : null,
+                ],
                 'submitted_at' => $latestRegistration?->created_at?->translatedFormat('d M Y H:i'),
                 'period_label' => $latestRegistration?->tanggal_mulai && $latestRegistration?->tanggal_selesai
                     ? Carbon::parse($latestRegistration->tanggal_mulai)->translatedFormat('d M Y')

@@ -3,10 +3,16 @@
 namespace App\Modules\Wims\Services\Admin;
 
 use App\Models\Magang\PerusahaanMitra;
+use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use Carbon\Carbon;
 
 class AdminCompanyPageService
 {
+    public function __construct(
+        private readonly WimsModuleRoleService $wimsModuleRoleService,
+    ) {
+    }
+
     public function build(string $search): array
     {
         $query = PerusahaanMitra::query()
@@ -25,7 +31,13 @@ class AdminCompanyPageService
         }
 
         $companies = $query
-            ->get()
+            ->get();
+
+        $this->wimsModuleRoleService->preloadContextRoles(
+            $companies->pluck('user')->filter()->all(),
+        );
+
+        $companies = $companies
             ->map(fn (PerusahaanMitra $company) => [
                 'id' => $company->id,
                 'nama' => $company->nama,
@@ -51,6 +63,7 @@ class AdminCompanyPageService
                     'phone' => $company->user->no_telepon,
                     'jabatan' => $company->mitra_jabatan,
                     'is_active' => (bool) $company->user->is_active,
+                    'role_context' => $this->wimsModuleRoleService->resolveContextRoleData($company->user, 'mitra'),
                 ] : null,
             ])
             ->values();

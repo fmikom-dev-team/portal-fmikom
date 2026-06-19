@@ -43,7 +43,7 @@ class AdminAssessmentTemplatePageService
             });
         }
 
-        if (in_array($assessorRole, ['dosen', 'mitra'], true)) {
+        if (in_array($assessorRole, ['dosen', 'mitra', 'both'], true)) {
             $query->where('assessor_role', $assessorRole);
         }
 
@@ -65,14 +65,16 @@ class AdminAssessmentTemplatePageService
                 'active_templates' => AssessmentTemplate::where('is_active', true)->count(),
                 'active_dosen_templates' => AssessmentTemplate::where('is_active', true)->where('assessor_role', 'dosen')->count(),
                 'active_mitra_templates' => AssessmentTemplate::where('is_active', true)->where('assessor_role', 'mitra')->count(),
+                'active_shared_templates' => AssessmentTemplate::where('is_active', true)->where('assessor_role', 'both')->count(),
                 'default_components' => count(self::DEFAULT_COMPONENTS),
                 'available_years' => $years->count(),
             ],
             'templates' => $templates->all(),
             'years' => $years->values()->all(),
             'roleOptions' => [
-                ['value' => 'dosen', 'label' => 'Dosen'],
-                ['value' => 'mitra', 'label' => 'Mitra'],
+                ['value' => 'dosen', 'label' => 'Khusus Dosen'],
+                ['value' => 'mitra', 'label' => 'Khusus Mitra'],
+                ['value' => 'both', 'label' => 'Template Bersama'],
             ],
             'defaultComponents' => collect(self::DEFAULT_COMPONENTS)
                 ->values()
@@ -93,13 +95,15 @@ class AdminAssessmentTemplatePageService
             ->whereNotNull('tanggal_mulai')
             ->distinct()
             ->get()
-            ->map(fn (PendaftaranMagang $pendaftaran) => $pendaftaran->tanggal_mulai?->format('Y'));
+            ->map(fn (PendaftaranMagang $pendaftaran) => $pendaftaran->tanggal_mulai?->format('Y'))
+            ->toBase();
 
         $templateYears = AssessmentTemplate::query()
             ->select(['periode_mulai'])
             ->distinct()
             ->get()
-            ->map(fn (AssessmentTemplate $template) => $template->periode_mulai?->format('Y'));
+            ->map(fn (AssessmentTemplate $template) => $template->periode_mulai?->format('Y'))
+            ->toBase();
 
         $currentYear = (int) now()->format('Y');
         $fallbackYears = collect(range($currentYear - 1, $currentYear + 5))->map(fn (int $year) => (string) $year);
@@ -150,6 +154,7 @@ class AdminAssessmentTemplatePageService
             'name' => $template->name,
             'description' => $template->description,
             'assessor_role' => $template->assessor_role,
+            'assessor_role_label' => $this->assessorRoleLabel($template->assessor_role),
             'is_active' => $template->is_active,
             'periode_mulai' => $template->periode_mulai?->toDateString(),
             'periode_selesai' => $template->periode_selesai?->toDateString(),
@@ -181,5 +186,15 @@ class AdminAssessmentTemplatePageService
         }
 
         return Carbon::parse($date)->translatedFormat('d M Y');
+    }
+
+    private function assessorRoleLabel(string $assessorRole): string
+    {
+        return match ($assessorRole) {
+            'dosen' => 'Dosen',
+            'mitra' => 'Mitra',
+            'both' => 'Dosen & Mitra',
+            default => ucfirst($assessorRole),
+        };
     }
 }

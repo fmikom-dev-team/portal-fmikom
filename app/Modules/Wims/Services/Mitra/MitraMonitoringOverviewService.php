@@ -8,6 +8,8 @@ use App\Models\Magang\HariLibur;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PerusahaanMitra;
+use App\Models\User;
+use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use App\Modules\Wims\Support\AssessmentSummary;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use Carbon\CarbonPeriod;
@@ -19,10 +21,11 @@ class MitraMonitoringOverviewService
 {
     public function __construct(
         private readonly AttendanceSyncService $attendanceSyncService,
+        private readonly WimsModuleRoleService $wimsModuleRoleService,
     ) {
     }
 
-    public function buildOverview(?PerusahaanMitra $company, ?string $today = null): array
+    public function buildOverview(User $mentor, ?PerusahaanMitra $company, ?string $today = null): array
     {
         if (! $company) {
             return [
@@ -34,16 +37,20 @@ class MitraMonitoringOverviewService
         }
 
         $today = $today ?: now()->toDateString();
-        $pendaftarans = $this->buildDashboardQuery($company)->get();
+        $pendaftarans = $this->buildDashboardQuery($mentor, $company)->get();
 
         $this->attendanceSyncService->syncForRegistrations($pendaftarans);
+        $this->wimsModuleRoleService->preloadContextRoles([
+            ...$pendaftarans->pluck('perusahaan.user')->filter()->all(),
+            ...$pendaftarans->pluck('dosenPembimbing')->filter()->all(),
+        ]);
 
         $students = $pendaftarans
-            ->map(function (PendaftaranMagang $pendaftaran) use ($today) {
+            ->map(function (PendaftaranMagang $pendaftaran) use ($mentor, $today) {
                 $assessmentSubmission = AssessmentSummary::latestSubmission(
                     $pendaftaran->assessmentSubmissions,
                     'mitra',
-                    auth()->id(),
+                    $mentor->id,
                 );
                 $phase = $this->resolveDashboardPhase($pendaftaran, $today);
                 $referenceDate = $this->resolveDashboardReferenceDate($pendaftaran, $today);
@@ -73,16 +80,30 @@ class MitraMonitoringOverviewService
                     'email' => $pendaftaran->mahasiswa?->email,
                     'nim' => $pendaftaran->mahasiswa?->nim_nip ?: $pendaftaran->mahasiswa?->nomor_induk,
                     'phone' => $pendaftaran->mahasiswa?->no_telepon,
-                    'company' => $pendaftaran->perusahaan?->nama,
-                    'mentor_name' => $pendaftaran->perusahaan?->user?->name,
-                    'dosen_name' => $pendaftaran->dosenPembimbing?->name,
+                    'company' => [
+                        'id' => $pendaftaran->perusahaan?->id,
+                        'name' => $pendaftaran->perusahaan?->nama,
+                    ],
+                    'mentor' => [
+                        'id' => $pendaftaran->perusahaan?->user?->id,
+                        'name' => $pendaftaran->perusahaan?->user?->name,
+                        'role_context' => $pendaftaran->perusahaan?->user
+                            ? $this->wimsModuleRoleService->resolveContextRoleData($pendaftaran->perusahaan->user, 'mitra')
+                            : null,
+                    ],
+                    'lecturer' => [
+                        'id' => $pendaftaran->dosenPembimbing?->id,
+                        'name' => $pendaftaran->dosenPembimbing?->name,
+                        'role_context' => $pendaftaran->dosenPembimbing
+                            ? $this->wimsModuleRoleService->resolveContextRoleData($pendaftaran->dosenPembimbing, 'dosen')
+                            : null,
+                    ],
                     'period_start' => $this->formatDate($pendaftaran->tanggal_mulai),
                     'period_end' => $this->formatDate($pendaftaran->tanggal_selesai),
                     'submitted_at' => $pendaftaran->created_at?->translatedFormat('d M Y H:i'),
                     'status_pendaftaran' => $pendaftaran->status,
                     'dashboard_phase' => $phase,
                     'attendance_status' => $attendanceStatus,
-                    'attendance_date' => $referenceDate,
                     'check_in_time' => $attendance?->timestamp_masuk?->format('H:i'),
                     'check_out_time' => $attendance?->timestamp_keluar?->format('H:i'),
                     'latest_logbook_id' => $latestLogbook?->id,
@@ -93,7 +114,6 @@ class MitraMonitoringOverviewService
                         ->squish()
                         ->limit(110)
                         ->toString(),
-                    'latest_logbook_activity_full' => $latestLogbook?->aktivitas_harian,
                     'latest_logbook_competency' => $latestLogbook?->kompetensi_dicapai,
                     'latest_logbook_note' => $latestLogbook?->catatan_mitra ?? $latestLogbook?->catatan_dosen,
                     'objective_summary' => $objectiveSummary,
@@ -170,15 +190,17 @@ class MitraMonitoringOverviewService
         ];
     }
 
-    private function buildDashboardQuery(PerusahaanMitra $company): Builder
+    private function buildDashboardQuery(User $mentor, PerusahaanMitra $company): Builder
     {
         return PendaftaranMagang::query()
             ->with([
                 'mahasiswa',
                 'perusahaan',
+                'perusahaan.user',
+                'dosenPembimbing',
                 'assessmentSubmissions' => fn ($query) => AssessmentSummary::orderLatestFirst($query)
                     ->where('assessor_role', 'mitra')
-                    ->where('assessor_id', auth()->id())
+                    ->where('assessor_id', $mentor->id)
                     ->with('template:id,name'),
             ])
             ->whereIn('status', ['approved', 'aktif', 'selesai'])

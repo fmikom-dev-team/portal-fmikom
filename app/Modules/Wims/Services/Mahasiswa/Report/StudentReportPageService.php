@@ -5,12 +5,18 @@ namespace App\Modules\Wims\Services\Mahasiswa\Report;
 use App\Models\Magang\AbsensiMagang;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
+use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use App\Modules\Wims\Support\AssessmentSummary;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 
 class StudentReportPageService
 {
+    public function __construct(
+        private readonly WimsModuleRoleService $wimsModuleRoleService,
+    ) {
+    }
+
     public function build(int $userId): array
     {
         $registration = PendaftaranMagang::query()
@@ -67,10 +73,29 @@ class StudentReportPageService
             'pageState' => $pageState,
             'registration' => $registration ? [
                 'status' => $registration->status,
-                'company_name' => $registration->perusahaan?->nama,
-                'proposal_company_name' => $registration->perusahaan_diminati_nama,
-                'dosen_name' => $registration->dosenPembimbing?->name,
-                'mentor_name' => $registration->perusahaan?->user?->name ?? '-',
+                'company' => [
+                    'proposal' => [
+                        'name' => $registration->perusahaan_diminati_nama,
+                    ],
+                    'final' => [
+                        'id' => $registration->perusahaan?->id,
+                        'name' => $registration->perusahaan?->nama,
+                    ],
+                ],
+                'lecturer' => [
+                    'id' => $registration->dosenPembimbing?->id,
+                    'name' => $registration->dosenPembimbing?->name,
+                    'role_context' => $registration->dosenPembimbing
+                        ? $this->wimsModuleRoleService->resolveContextRoleData($registration->dosenPembimbing, 'dosen')
+                        : null,
+                ],
+                'mentor' => [
+                    'id' => $registration->perusahaan?->user?->id,
+                    'name' => $registration->perusahaan?->user?->name ?? '-',
+                    'role_context' => $registration->perusahaan?->user
+                        ? $this->wimsModuleRoleService->resolveContextRoleData($registration->perusahaan->user, 'mitra')
+                        : null,
+                ],
                 'period_label' => $registration->tanggal_mulai && $registration->tanggal_selesai
                     ? $this->formatLocalizedDate($registration->tanggal_mulai, 'd M Y')
                         . ' - '
@@ -95,11 +120,11 @@ class StudentReportPageService
                 'total_sakit' => $attendanceTotals->get('sakit')?->count() ?? 0,
             ],
             'evaluation' => [
-                'status_penilaian' => $this->mapLegacyAssessmentStatus($assessmentSummary['status_key'] ?? null),
-                'nilai_akhir' => $assessmentSummary['dosen']['score'] ?? null,
-                'tanggal_nilai' => $this->formatLocalizedDate($assessmentSummary['dosen']['submitted_at'] ?? null, 'd M Y H:i'),
                 'finalized_at' => $this->formatLocalizedDate(
-                    ($assessmentSummary['is_complete'] ?? false) ? ($assessmentSummary['latest_submitted_at'] ?? null) : null,
+                    $assessmentSummary['latest_submitted_at']
+                        ?? $assessmentSummary['dosen']['submitted_at']
+                        ?? $assessmentSummary['mitra']['submitted_at']
+                        ?? null,
                     'd M Y H:i',
                 ),
                 'catatan_dosen' => $assessmentSummary['dosen']['notes'] ?? null,
@@ -108,10 +133,6 @@ class StudentReportPageService
                 'is_complete' => $assessmentSummary['is_complete'] ?? false,
                 'dosen_score' => $assessmentSummary['dosen']['score'] ?? null,
                 'mitra_score' => $assessmentSummary['mitra']['score'] ?? null,
-                'dosen_submitted_at' => $this->formatLocalizedDate($assessmentSummary['dosen']['submitted_at'] ?? null, 'd M Y H:i'),
-                'mitra_submitted_at' => $this->formatLocalizedDate($assessmentSummary['mitra']['submitted_at'] ?? null, 'd M Y H:i'),
-                'latest_submitted_at' => $this->formatLocalizedDate($assessmentSummary['latest_submitted_at'] ?? null, 'd M Y H:i'),
-                'dosen_note' => $assessmentSummary['dosen']['notes'] ?? null,
             ],
             'history' => [
                 'attendance' => $attendanceHistory
@@ -206,14 +227,4 @@ class StudentReportPageService
         }
     }
 
-    private function mapLegacyAssessmentStatus(?string $statusKey): ?string
-    {
-        return match ($statusKey) {
-            'submitted' => 'selesai',
-            'final_dosen' => 'final_dosen',
-            'final_mitra' => 'final_mitra',
-            'draft' => 'draft',
-            default => null,
-        };
-    }
 }

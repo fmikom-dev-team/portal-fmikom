@@ -67,7 +67,7 @@ class AdminAssessmentTemplateActionService
             : Carbon::create($year, 12, 31)->startOfDay()->toDateString();
         $resolvedYear = (int) Carbon::parse($periodeMulai)->format('Y');
         $assessorRole = (string) $validated['assessor_role'];
-        $roleLabel = $assessorRole === 'dosen' ? 'Dosen' : 'Mitra';
+        $roleLabel = $this->assessorRoleLabel($assessorRole);
         $templateName = filled($validated['name'] ?? null)
             ? trim((string) $validated['name'])
             : "Template Penilaian {$roleLabel} {$resolvedYear}";
@@ -196,9 +196,11 @@ class AdminAssessmentTemplateActionService
             return;
         }
 
+        $conflictingRoles = $this->conflictingTemplateRoles($payload['assessor_role']);
+
         $overlapExists = AssessmentTemplate::query()
             ->when($ignoreTemplateId !== null, fn (Builder $query) => $query->whereKeyNot($ignoreTemplateId))
-            ->where('assessor_role', $payload['assessor_role'])
+            ->whereIn('assessor_role', $conflictingRoles)
             ->where('is_active', true)
             ->whereDate('periode_mulai', '<=', $payload['periode_selesai'])
             ->whereDate('periode_selesai', '>=', $payload['periode_mulai'])
@@ -208,10 +210,30 @@ class AdminAssessmentTemplateActionService
             return;
         }
 
-        $roleLabel = $payload['assessor_role'] === 'dosen' ? 'dosen' : 'mitra';
+        $roleLabel = strtolower($this->assessorRoleLabel($payload['assessor_role']));
 
         throw ValidationException::withMessages([
             'periode_mulai' => "Sudah ada template aktif {$roleLabel} yang periodenya tumpang tindih dengan periode tersebut.",
         ]);
+    }
+
+    private function conflictingTemplateRoles(string $assessorRole): array
+    {
+        return match ($assessorRole) {
+            'dosen' => ['dosen', 'both'],
+            'mitra' => ['mitra', 'both'],
+            'both' => ['dosen', 'mitra', 'both'],
+            default => [$assessorRole],
+        };
+    }
+
+    private function assessorRoleLabel(string $assessorRole): string
+    {
+        return match ($assessorRole) {
+            'dosen' => 'Dosen',
+            'mitra' => 'Mitra',
+            'both' => 'Dosen & Mitra',
+            default => ucfirst($assessorRole),
+        };
     }
 }

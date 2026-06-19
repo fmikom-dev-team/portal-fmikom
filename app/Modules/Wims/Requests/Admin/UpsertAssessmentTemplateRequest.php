@@ -20,7 +20,7 @@ class UpsertAssessmentTemplateRequest extends FormRequest
         $maxYear = $currentYear + 9;
 
         return [
-            'assessor_role' => ['required', Rule::in(['dosen', 'mitra'])],
+            'assessor_role' => ['required', Rule::in(['dosen', 'mitra', 'both'])],
             'name' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
             'year' => ['nullable', 'integer', 'digits:4', "between:{$minYear},{$maxYear}"],
@@ -40,7 +40,7 @@ class UpsertAssessmentTemplateRequest extends FormRequest
     {
         return [
             'assessor_role.required' => 'Role penilai wajib dipilih.',
-            'assessor_role.in' => 'Role penilai hanya boleh dosen atau mitra.',
+            'assessor_role.in' => 'Role penilai hanya boleh dosen, mitra, atau keduanya.',
             'year.digits' => 'Tahun penilaian harus terdiri dari 4 digit.',
             'year.between' => 'Tahun penilaian harus berada pada rentang yang diizinkan.',
             'periode_mulai.required_without' => 'Periode mulai wajib diisi jika tahun penilaian tidak dipakai.',

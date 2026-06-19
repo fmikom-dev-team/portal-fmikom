@@ -53,7 +53,10 @@ class DosenMonitoringOverviewService
                     'pendaftaran_id' => $pendaftaran->id,
                     'name' => $pendaftaran->mahasiswa?->name,
                     'nim' => $pendaftaran->mahasiswa?->nim_nip ?: $pendaftaran->mahasiswa?->nomor_induk,
-                    'company' => $pendaftaran->perusahaan?->nama,
+                    'company' => [
+                        'id' => $pendaftaran->perusahaan?->id,
+                        'name' => $pendaftaran->perusahaan?->nama,
+                    ],
                     'period_start' => $this->formatDate($pendaftaran->tanggal_mulai),
                     'period_end' => $this->formatDate($pendaftaran->tanggal_selesai),
                     'status_pendaftaran' => $pendaftaran->status,
@@ -69,7 +72,6 @@ class DosenMonitoringOverviewService
                     'has_logbook' => $latestLogbook !== null,
                     'latest_logbook_date' => $latestLogbook?->tanggal?->translatedFormat('d M Y'),
                     'latest_logbook_activity' => $this->summarizeText($latestLogbook?->aktivitas_harian),
-                    'today_date' => $referenceDate,
                     'objective_summary' => $this->buildObjectiveSummary($pendaftaran, $phase, $today, $assessmentSubmission),
                 ];
             })

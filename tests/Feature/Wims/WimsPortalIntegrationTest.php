@@ -7,7 +7,10 @@ use App\Models\Module;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\UserModuleRole;
+use App\Modules\Wims\Services\Dosen\LecturerAssessmentWorkflowService;
+use App\Modules\Wims\Services\Mitra\MitraAccessService;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -278,37 +281,75 @@ it('creates or reactivates mitra assignments without duplicating users or removi
         'role_id' => Role::query()->where('slug', 'mitra')->firstOrFail()->id,
     ]);
 
-    $companyForNewUser = PerusahaanMitra::query()->create([
-        'nama' => 'PT New Mitra',
+    $companyForMissingUser = PerusahaanMitra::query()->create([
+        'nama' => 'PT Missing Mitra',
         'is_active' => true,
     ]);
 
     $this->actingAs($admin)
         ->withSession(['active_module' => 'WIMS', 'active_role' => 'admin'])
         ->from('/wims/admin/perusahaan')
-        ->post(route('wims.admin.companies.account.store', $companyForNewUser), [
-            'name' => 'New Mitra User',
+        ->post(route('wims.admin.companies.account.store', $companyForMissingUser), [
             'email' => 'mitra-new@example.com',
-            'password' => 'secret123',
-            'password_confirmation' => 'secret123',
-            'no_telepon' => '08124',
             'jabatan' => 'Supervisor',
-            'is_active' => true,
         ])
+        ->assertSessionHasErrors(['email'])
         ->assertRedirect('/wims/admin/perusahaan');
 
-    $newUser = User::query()->where('email', 'mitra-new@example.com')->firstOrFail();
+    $this->assertDatabaseMissing('perusahaan_mitras', [
+        'id' => $companyForMissingUser->id,
+        'user_id' => null,
+        'mitra_jabatan' => 'Supervisor',
+    ]);
 
-    $this->assertDatabaseHas('perusahaan_mitras', [
-        'id' => $companyForNewUser->id,
-        'user_id' => $newUser->id,
+    expect(User::query()->where('email', 'mitra-new@example.com')->exists())->toBeFalse();
+});
+
+it('deletes company records without deleting shared portal users and deactivates orphaned WIMS mitra assignments only', function () {
+    $admin = portalReadyUser();
+    assignModuleRole($admin, $this->wimsModule, 'admin');
+
+    $sharedMitra = portalReadyUser([
+        'email' => 'shared-mitra@example.com',
+        'name' => 'Shared Mitra',
+        'user_type' => 'staff',
+    ]);
+
+    assignModuleRole($sharedMitra, $this->wimsModule, 'mitra');
+    assignModuleRole($sharedMitra, $this->pagiModule, 'mitra');
+
+    $company = PerusahaanMitra::query()->create([
+        'nama' => 'PT Shared Mitra',
+        'user_id' => $sharedMitra->id,
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($admin)
+        ->withSession(['active_module' => 'WIMS', 'active_role' => 'admin'])
+        ->from('/wims/admin/perusahaan')
+        ->delete(route('wims.admin.companies.destroy', $company))
+        ->assertRedirect('/wims/admin/perusahaan');
+
+    $this->assertDatabaseMissing('perusahaan_mitras', [
+        'id' => $company->id,
+    ]);
+
+    $this->assertDatabaseHas('users', [
+        'id' => $sharedMitra->id,
+        'email' => 'shared-mitra@example.com',
     ]);
 
     $this->assertDatabaseHas('user_module_roles', [
-        'user_id' => $newUser->id,
+        'user_id' => $sharedMitra->id,
         'module_id' => $this->wimsModule->id,
         'role_id' => Role::query()->where('slug', 'mitra')->firstOrFail()->id,
-        'is_active' => true,
+        'is_active' => false,
+    ]);
+
+    $this->assertDatabaseHas('user_module_roles', [
+        'user_id' => $sharedMitra->id,
+        'module_id' => $this->pagiModule->id,
+        'role_id' => Role::query()->where('slug', 'mitra')->firstOrFail()->id,
     ]);
 });
 
@@ -368,6 +409,110 @@ it('limits placement-related role queries to active WIMS assignments only', func
         ->assertSessionHasNoErrors();
 
     expect($registration->fresh()->dosen_pembimbing_id)->toBe($activeWimsDosen->id);
+});
+
+it('requires active WIMS mitra assignment before resolving company access', function () {
+    $mitraAccessService = app(MitraAccessService::class);
+
+    $activeMitra = portalReadyUser(['name' => 'Active Mitra']);
+    $inactiveMitra = portalReadyUser(['name' => 'Inactive Mitra']);
+
+    assignModuleRole($activeMitra, $this->wimsModule, 'mitra');
+    assignModuleRole($inactiveMitra, $this->wimsModule, 'mitra', false);
+
+    $activeCompany = PerusahaanMitra::query()->create([
+        'nama' => 'PT Active Mitra',
+        'user_id' => $activeMitra->id,
+        'is_active' => true,
+    ]);
+
+    PerusahaanMitra::query()->create([
+        'nama' => 'PT Inactive Mitra',
+        'user_id' => $inactiveMitra->id,
+        'is_active' => true,
+    ]);
+
+    expect($mitraAccessService->resolveCompany($activeMitra)?->id)->toBe($activeCompany->id);
+    expect($mitraAccessService->resolveCompany($inactiveMitra))->toBeNull();
+});
+
+it('requires active WIMS dosen assignment in addition to business relation for lecturer assessment access', function () {
+    $workflowService = app(LecturerAssessmentWorkflowService::class);
+
+    $student = portalReadyUser();
+    $activeLecturer = portalReadyUser(['name' => 'Active Lecturer']);
+    $inactiveLecturer = portalReadyUser(['name' => 'Inactive Lecturer']);
+
+    assignModuleRole($student, $this->wimsModule, 'mahasiswa');
+    assignModuleRole($activeLecturer, $this->wimsModule, 'dosen');
+    assignModuleRole($inactiveLecturer, $this->wimsModule, 'dosen', false);
+
+    $company = PerusahaanMitra::query()->create([
+        'nama' => 'PT Assessment Access',
+        'is_active' => true,
+    ]);
+
+    $registration = PendaftaranMagang::query()->create([
+        'mahasiswa_id' => $student->id,
+        'perusahaan_id' => $company->id,
+        'dosen_pembimbing_id' => $activeLecturer->id,
+        'status' => 'selesai',
+        'tanggal_mulai' => '2026-06-01',
+        'tanggal_selesai' => '2026-06-30',
+    ]);
+
+    expect($workflowService->isAuthorized($activeLecturer, $registration))->toBeTrue();
+    expect($workflowService->isAuthorized($inactiveLecturer, $registration))->toBeFalse();
+
+    $registration->update(['dosen_pembimbing_id' => $inactiveLecturer->id]);
+
+    expect($workflowService->isAuthorized($inactiveLecturer, $registration->fresh()))->toBeFalse();
+});
+
+it('allows admin recap and assessor pages during post-internship phase even if registration status is still aktif', function () {
+    Carbon::setTestNow('2026-07-05 09:00:00');
+
+    $admin = portalReadyUser(['name' => 'Admin WIMS']);
+    $lecturer = portalReadyUser(['name' => 'Dosen WIMS']);
+    $partner = portalReadyUser(['name' => 'Mitra WIMS']);
+    $student = portalReadyUser(['name' => 'Mahasiswa PKL']);
+
+    assignModuleRole($admin, $this->wimsModule, 'admin');
+    assignModuleRole($lecturer, $this->wimsModule, 'dosen');
+    assignModuleRole($partner, $this->wimsModule, 'mitra');
+    assignModuleRole($student, $this->wimsModule, 'mahasiswa');
+
+    $company = PerusahaanMitra::query()->create([
+        'nama' => 'PT Penilaian Aktif',
+        'user_id' => $partner->id,
+        'is_active' => true,
+    ]);
+
+    $registration = PendaftaranMagang::query()->create([
+        'mahasiswa_id' => $student->id,
+        'perusahaan_id' => $company->id,
+        'dosen_pembimbing_id' => $lecturer->id,
+        'status' => 'aktif',
+        'tanggal_mulai' => '2026-06-01',
+        'tanggal_selesai' => '2026-06-30',
+    ]);
+
+    $this->actingAs($admin)
+        ->withSession(['active_module' => 'WIMS', 'active_role' => 'admin'])
+        ->get(route('wims.admin.assessment-recap.index'))
+        ->assertOk();
+
+    $this->actingAs($lecturer)
+        ->withSession(['active_module' => 'WIMS', 'active_role' => 'dosen'])
+        ->get(route('wims.dosen.assessments.show', $registration))
+        ->assertOk();
+
+    $this->actingAs($partner)
+        ->withSession(['active_module' => 'WIMS', 'active_role' => 'mitra'])
+        ->get(route('wims.mitra.assessments.show', $registration))
+        ->assertOk();
+
+    Carbon::setTestNow();
 });
 
 it('registers WIMS routes with modular controllers and official middleware only', function () {

@@ -12,7 +12,9 @@ class WimsDashboardController extends Controller
 
     public function index(Request $request): RedirectResponse
     {
-        $role = $request->attributes->get('resolved_role', session('active_role'));
+        $role = $request->attributes->get('resolved_role');
+
+        abort_unless(is_string($role) && $role !== '', 403, 'Role aktif tidak ditemukan untuk modul WIMS.');
 
         if (in_array($role, self::ADMIN_ROLES, true)) {
             return redirect()->route('wims.admin.dashboard');

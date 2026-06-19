@@ -15,7 +15,7 @@ class AssessmentIndexService
     {
         $pendaftarans = PendaftaranMagang::query()
             ->with([
-                'mahasiswa:id,name,email,nim_nip,nomor_induk',
+                'mahasiswa:id,name,email,nomor_induk',
                 'perusahaan:id,nama',
                 'assessmentSubmissions' => fn ($query) => AssessmentSummary::orderLatestFirst($query)
                     ->where('assessor_id', $user->id)
@@ -23,7 +23,7 @@ class AssessmentIndexService
                     ->with('template:id,name'),
             ])
             ->where('dosen_pembimbing_id', $user->id)
-            ->where('status', 'selesai')
+            ->readyForAssessment(now())
             ->orderByDesc('tanggal_mulai')
             ->orderByDesc('id')
             ->get()
@@ -41,7 +41,10 @@ class AssessmentIndexService
                         'nim' => $pendaftaran->mahasiswa?->nim_nip ?: $pendaftaran->mahasiswa?->nomor_induk,
                         'email' => $pendaftaran->mahasiswa?->email,
                     ],
-                    'company' => $pendaftaran->perusahaan?->nama,
+                    'company' => [
+                        'id' => $pendaftaran->perusahaan?->id,
+                        'name' => $pendaftaran->perusahaan?->nama,
+                    ],
                     'period' => [
                         'start' => $pendaftaran->tanggal_mulai?->toDateString(),
                         'end' => $pendaftaran->tanggal_selesai?->toDateString(),
@@ -50,8 +53,10 @@ class AssessmentIndexService
                     'registration_status' => $pendaftaran->status,
                     'assessment' => [
                         'status_key' => $submission?->status ?? 'not_assessed',
-                        'status' => $this->resolveSubmissionStatusLabel($submission?->status),
-                        'total_score' => $submission?->total_score,
+                        'status_label' => $this->resolveSubmissionStatusLabel($submission?->status),
+                        'total_score' => $submission?->total_score !== null
+                            ? round((float) $submission->total_score, 2)
+                            : null,
                         'submitted_at' => $submission?->submitted_at?->translatedFormat('d M Y H:i'),
                         'template_name' => $submission?->template?->name,
                     ],
@@ -78,7 +83,7 @@ class AssessmentIndexService
 
         $pendaftarans = PendaftaranMagang::query()
             ->with([
-                'mahasiswa:id,name,email,nim_nip,nomor_induk',
+                'mahasiswa:id,name,email,nomor_induk',
                 'perusahaan:id,nama',
                 'assessmentSubmissions' => fn ($query) => AssessmentSummary::orderLatestFirst($query)
                     ->where('assessor_id', $user->id)
@@ -86,7 +91,7 @@ class AssessmentIndexService
                     ->with('template:id,name'),
             ])
             ->where('perusahaan_id', $company->id)
-            ->where('status', 'selesai')
+            ->readyForAssessment(now())
             ->orderByDesc('tanggal_mulai')
             ->orderByDesc('id')
             ->get()
@@ -105,7 +110,10 @@ class AssessmentIndexService
                         'nim' => $pendaftaran->mahasiswa?->nim_nip ?: $pendaftaran->mahasiswa?->nomor_induk,
                         'email' => $pendaftaran->mahasiswa?->email,
                     ],
-                    'company' => $pendaftaran->perusahaan?->nama,
+                    'company' => [
+                        'id' => $pendaftaran->perusahaan?->id,
+                        'name' => $pendaftaran->perusahaan?->nama,
+                    ],
                     'period' => [
                         'start' => $pendaftaran->tanggal_mulai?->toDateString(),
                         'end' => $pendaftaran->tanggal_selesai?->toDateString(),
@@ -115,7 +123,9 @@ class AssessmentIndexService
                     'assessment' => [
                         'status_key' => $statusKey,
                         'status_label' => $this->resolveSubmissionStatusLabel($statusKey),
-                        'total_score' => $submission?->total_score,
+                        'total_score' => $submission?->total_score !== null
+                            ? round((float) $submission->total_score, 2)
+                            : null,
                         'submitted_at' => $submission?->submitted_at?->translatedFormat('d M Y H:i'),
                         'template_name' => $submission?->template?->name,
                     ],

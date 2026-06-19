@@ -65,4 +65,22 @@ class AssessmentTemplate extends Model
         return $currentDate->greaterThanOrEqualTo($this->periode_mulai->copy()->startOfDay())
             && $currentDate->lessThanOrEqualTo($this->periode_selesai->copy()->startOfDay());
     }
+
+    public function appliesToAssessorRole(string $role): bool
+    {
+        if ($this->assessor_role === 'both') {
+            return in_array($role, ['dosen', 'mitra'], true);
+        }
+
+        return $this->assessor_role === $role;
+    }
+
+    public function applicableAssessorRoles(): array
+    {
+        if ($this->assessor_role === 'both') {
+            return ['dosen', 'mitra'];
+        }
+
+        return [$this->assessor_role];
+    }
 }

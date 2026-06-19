@@ -14,7 +14,6 @@ class AssessmentShowService
         ?AssessmentSubmission $submission,
         string $viewRouteName,
         string $downloadRouteName,
-        string $statusLabelKey = 'status_label',
     ): array {
         if ($template) {
             $template->loadMissing('components');
@@ -30,7 +29,10 @@ class AssessmentShowService
                 'name' => $pendaftaran->mahasiswa?->name,
                 'nim' => $pendaftaran->mahasiswa?->nim_nip ?: $pendaftaran->mahasiswa?->nomor_induk,
                 'email' => $pendaftaran->mahasiswa?->email,
-                'company' => $pendaftaran->perusahaan?->nama,
+                'company' => [
+                    'id' => $pendaftaran->perusahaan?->id,
+                    'name' => $pendaftaran->perusahaan?->nama,
+                ],
                 'status_pendaftaran' => $pendaftaran->status,
                 'period_label' => $this->formatPeriodLabel($pendaftaran),
                 'final_report' => $pendaftaran->laporan_akhir_path ? [
@@ -69,8 +71,8 @@ class AssessmentShowService
                 ? [
                     'id' => $submission->id,
                     'assessor_role' => $submission->assessor_role,
-                    'status' => $submission->status,
-                    $statusLabelKey => $this->resolveSubmissionStatusLabel($submission->status),
+                    'status_key' => $submission->status,
+                    'status_label' => $this->resolveSubmissionStatusLabel($submission->status),
                     'total_score' => $submission->total_score,
                     'notes' => $submission->notes,
                     'submitted_at' => $submission->submitted_at?->translatedFormat('d M Y H:i'),

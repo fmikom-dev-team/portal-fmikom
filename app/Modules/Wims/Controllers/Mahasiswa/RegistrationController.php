@@ -28,11 +28,11 @@ class RegistrationController extends Controller
     {
         $user = $request->user();
         $latestRegistration = $this->studentRegistrationPageService->latestRegistration($user->id);
-        $hasCompletedPkl = (bool) $user->has_completed_pkl;
+        $hasCompletedHistory = $this->studentRegistrationPageService->hasCompletedInternshipHistory($user->id);
 
-        if (! $this->studentRegistrationPageService->canSubmitRegistration($latestRegistration, $hasCompletedPkl)) {
+        if (! $this->studentRegistrationPageService->canSubmitRegistration($latestRegistration, $hasCompletedHistory)) {
             return back()->withErrors([
-                'registration' => $hasCompletedPkl
+                'registration' => $hasCompletedHistory
                     ? 'Akun ini sudah pernah menyelesaikan PKL dan tidak dapat mendaftar kembali.'
                     : 'Pendaftaran sedang menunggu keputusan kampus atau periode magang yang berjalan belum selesai.',
             ]);

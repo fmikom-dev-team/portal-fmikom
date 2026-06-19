@@ -60,7 +60,10 @@ class MonitoringDetailService
                 'id' => $pendaftaran->mahasiswa?->id,
                 'name' => $pendaftaran->mahasiswa?->name,
                 'nim' => $pendaftaran->mahasiswa?->nim_nip ?: $pendaftaran->mahasiswa?->nomor_induk,
-                'company' => $pendaftaran->perusahaan?->nama,
+                'company' => [
+                    'id' => $pendaftaran->perusahaan?->id,
+                    'name' => $pendaftaran->perusahaan?->nama,
+                ],
                 'pendaftaran_id' => $pendaftaran->id,
                 'status_pendaftaran' => $pendaftaran->status,
                 'is_ready_for_assessment' => $pendaftaran->isReadyForAssessment(),

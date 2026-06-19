@@ -133,7 +133,7 @@ class AssessmentSubmissionService
 
     private function assertRoleMatchesTemplate(AssessmentTemplate $template, string $role): void
     {
-        if ($template->assessor_role === $role) {
+        if ($template->appliesToAssessorRole($role)) {
             return;
         }
 

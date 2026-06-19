@@ -29,7 +29,7 @@ class LogbookPageService
         $canSubmitToday = $this->canSubmitToday($pendaftaran);
 
         return [
-            'todayLabel' => now()->translatedFormat('l, d F Y'),
+            'todayLabel' => now()->locale('id')->translatedFormat('l, d F Y'),
             'hasPendaftaran' => $pendaftaran !== null,
             'canSubmitToday' => $canSubmitToday,
             'submitBlockedMessage' => $canSubmitToday
@@ -67,8 +67,8 @@ class LogbookPageService
             return 'Logbook belum dibuka. Tunggu sampai admin menetapkan penempatan final dan mengaktifkan PKL/magang Anda.';
         }
 
-        $periodeMulai = $pendaftaran->tanggal_mulai?->translatedFormat('d M Y') ?? '-';
-        $periodeSelesai = $pendaftaran->tanggal_selesai?->translatedFormat('d M Y') ?? '-';
+        $periodeMulai = $pendaftaran->tanggal_mulai?->locale('id')->translatedFormat('d M Y') ?? '-';
+        $periodeSelesai = $pendaftaran->tanggal_selesai?->locale('id')->translatedFormat('d M Y') ?? '-';
 
         return "Logbook hanya dapat diisi sesuai periode PKL yang diajukan, yaitu {$periodeMulai} s/d {$periodeSelesai}.";
     }
@@ -78,7 +78,7 @@ class LogbookPageService
         return [
             'id' => $logbook->id,
             'tanggal' => $logbook->tanggal?->toDateString(),
-            'tanggal_label' => $logbook->tanggal?->translatedFormat('d M Y'),
+            'tanggal_label' => $logbook->tanggal?->locale('id')->translatedFormat('d M Y'),
             'jam_mulai' => $this->formatTimeValue($logbook->jam_mulai),
             'jam_selesai' => $this->formatTimeValue($logbook->jam_selesai),
             'aktivitas_harian' => $logbook->aktivitas_harian,

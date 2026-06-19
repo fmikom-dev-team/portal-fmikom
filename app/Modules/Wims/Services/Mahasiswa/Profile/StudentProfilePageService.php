@@ -4,12 +4,18 @@ namespace App\Modules\Wims\Services\Mahasiswa\Profile;
 
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
+use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 
 class StudentProfilePageService
 {
+    public function __construct(
+        private readonly WimsModuleRoleService $wimsModuleRoleService,
+    ) {
+    }
+
     public function build(User $user): array
     {
-        $user->loadMissing('programStudi.fakultas', 'role');
+        $user->loadMissing('programStudi.fakultas');
 
         $latestRegistration = PendaftaranMagang::query()
             ->with(['perusahaan.user', 'dosenPembimbing'])
@@ -34,16 +40,35 @@ class StudentProfilePageService
                 'program_studi' => $user->programStudi?->nama,
                 'program_studi_code' => $user->programStudi?->kode,
                 'fakultas' => $user->programStudi?->fakultas?->nama,
-                'role' => $user->role?->nama,
+                'role' => $this->wimsModuleRoleService->resolveContextRoleLabel($user, 'mahasiswa') ?? 'Mahasiswa',
                 'status_approval' => $user->status_approval,
                 'is_active' => (bool) $user->is_active,
             ],
             'registration' => $latestRegistration ? [
                 'status' => $latestRegistration->status,
-                'proposal_company_name' => $latestRegistration->perusahaan_diminati_nama,
-                'final_company_name' => $latestRegistration->perusahaan?->nama,
-                'dosen_name' => $latestRegistration->dosenPembimbing?->name,
-                'mentor_name' => $latestRegistration->perusahaan?->user?->name ?? '-',
+                'company' => [
+                    'proposal' => [
+                        'name' => $latestRegistration->perusahaan_diminati_nama,
+                    ],
+                    'final' => [
+                        'id' => $latestRegistration->perusahaan?->id,
+                        'name' => $latestRegistration->perusahaan?->nama,
+                    ],
+                ],
+                'lecturer' => [
+                    'id' => $latestRegistration->dosenPembimbing?->id,
+                    'name' => $latestRegistration->dosenPembimbing?->name,
+                    'role_context' => $latestRegistration->dosenPembimbing
+                        ? $this->wimsModuleRoleService->resolveContextRoleData($latestRegistration->dosenPembimbing, 'dosen')
+                        : null,
+                ],
+                'mentor' => [
+                    'id' => $latestRegistration->perusahaan?->user?->id,
+                    'name' => $latestRegistration->perusahaan?->user?->name ?? '-',
+                    'role_context' => $latestRegistration->perusahaan?->user
+                        ? $this->wimsModuleRoleService->resolveContextRoleData($latestRegistration->perusahaan->user, 'mitra')
+                        : null,
+                ],
                 'period_label' => $latestRegistration->tanggal_mulai && $latestRegistration->tanggal_selesai
                     ? $latestRegistration->tanggal_mulai->translatedFormat('d M Y')
                         . ' - '
