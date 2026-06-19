@@ -130,13 +130,8 @@ const emptyForm = () => ({
 
 const form = reactive(emptyForm());
 const accountForm = reactive({
-    name: '',
     email: '',
-    password: '',
-    password_confirmation: '',
-    no_telepon: '',
     jabatan: '',
-    is_active: true,
 });
 
 const selectedCompany = computed(
@@ -226,11 +221,13 @@ const filteredCompanies = computed(() => {
 const startCreate = () => {
     activeCompanyId.value = null;
     hydrateForm(null);
+    resetPortalAccountForm();
     editorOpen.value = true;
 };
 
 const selectCompany = (companyId: number) => {
     activeCompanyId.value = companyId;
+    resetPortalAccountForm();
     editorOpen.value = true;
 };
 
@@ -239,16 +236,12 @@ const closeEditor = () => {
     deleteDialogOpen.value = false;
     activeCompanyId.value = null;
     hydrateForm(null);
+    resetPortalAccountForm();
 };
 
-const resetMentorForm = () => {
-    accountForm.name = '';
+const resetPortalAccountForm = () => {
     accountForm.email = '';
-    accountForm.password = '';
-    accountForm.password_confirmation = '';
-    accountForm.no_telepon = '';
     accountForm.jabatan = '';
-    accountForm.is_active = true;
 };
 
 const submit = () => {
@@ -307,19 +300,14 @@ const submitMitraAccount = () => {
     router.post(
         `/wims/admin/perusahaan/${selectedCompany.value.id}/account`,
         {
-            name: accountForm.name,
             email: accountForm.email,
-            password: accountForm.password,
-            password_confirmation: accountForm.password_confirmation,
-            no_telepon: accountForm.no_telepon || null,
             jabatan: accountForm.jabatan || null,
-            is_active: accountForm.is_active,
         },
         {
             preserveScroll: true,
             preserveState: true,
             onSuccess: () => {
-                resetMentorForm();
+                resetPortalAccountForm();
             },
             onFinish: () => {
                 accountProcessing.value = false;
@@ -399,7 +387,7 @@ const destroyCompany = () => {
                     class="flex min-h-24 flex-col justify-between rounded-xl border border-zinc-200 bg-white px-5 py-4 shadow-none"
                 >
                     <p class="text-xs font-bold text-slate-500">
-                        Akun Mitra
+                        Akun Portal
                     </p>
                     <p class="mt-2 text-[22px] font-bold tracking-tight text-slate-950 sm:text-[24px]">
                         {{ summary.mitra_accounts ?? 0 }}
@@ -829,11 +817,12 @@ const destroyCompany = () => {
                             </div>
                             <div>
                                 <p class="text-[15px] font-bold text-slate-950">
-                                    Akun Mitra Perusahaan
+                                    Hubungkan Akun Portal
                                 </p>
                                 <p class="text-xs text-slate-500">
-                                    Satu akun mitra akan menjadi akun login dan
-                                    pembimbing mitra untuk perusahaan ini.
+                                    WIMS tidak membuat akun mitra sendiri.
+                                    Hubungkan perusahaan ini ke akun Portal
+                                    yang sudah ada.
                                 </p>
                             </div>
                         </div>
@@ -898,50 +887,40 @@ const destroyCompany = () => {
                             v-else-if="isEditMode"
                             class="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-4 text-center text-sm text-slate-500"
                         >
-                            Belum ada akun mitra untuk perusahaan ini.
+                            Belum ada akun Portal mitra yang terhubung ke
+                            perusahaan ini.
+                        </div>
+
+                        <div
+                            v-if="isEditMode && selectedCompanyAccount"
+                            class="rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-4 text-sm text-blue-700"
+                        >
+                            Perusahaan ini sudah terhubung ke satu akun Portal
+                            mitra. Jika perlu mengganti akun, putuskan relasi
+                            lama melalui alur admin yang disiapkan khusus agar
+                            riwayat assignment tetap aman.
                         </div>
 
                         <form
-                            v-if="isEditMode"
+                            v-else-if="isEditMode"
                             class="grid gap-4 border-t border-zinc-200 pt-5 md:grid-cols-2"
                             autocomplete="off"
                             @submit.prevent="submitMitraAccount"
                         >
-                            <input
-                                type="text"
-                                name="fake_username"
-                                autocomplete="username"
-                                class="hidden"
-                                tabindex="-1"
-                            />
-                            <input
-                                type="password"
-                                name="fake_password"
-                                autocomplete="current-password"
-                                class="hidden"
-                                tabindex="-1"
-                            />
-
                             <Alert
                                 v-if="
-                                    page.props.errors?.name ||
                                     page.props.errors?.email ||
-                                    page.props.errors?.password ||
-                                    page.props.errors?.no_telepon ||
                                     page.props.errors?.jabatan
                                 "
                                 variant="destructive"
                                 class="border-rose-200 bg-rose-50 text-rose-700 md:col-span-2"
                             >
                                 <AlertTitle
-                                    >Data akun mitra belum valid</AlertTitle
+                                    >Data akun Portal belum valid</AlertTitle
                                 >
                                 <AlertDescription>
                                     {{
-                                        page.props.errors?.name ||
                                         page.props.errors?.email ||
-                                        page.props.errors?.password ||
-                                        page.props.errors?.no_telepon ||
                                         page.props.errors?.jabatan
                                     }}
                                 </AlertDescription>
@@ -951,23 +930,7 @@ const destroyCompany = () => {
                                 <span
                                     class="inline-flex items-center gap-1 text-[11px] font-bold tracking-[0.16em] text-slate-500 uppercase"
                                 >
-                                    Nama Mitra
-                                    <span class="text-rose-500">*</span>
-                                </span>
-                                <Input
-                                    v-model="accountForm.name"
-                                    name="account_name"
-                                    autocomplete="off"
-                                    type="text"
-                                    required
-                                    class="h-10 rounded-lg border-zinc-200 bg-white"
-                                />
-                            </label>
-                            <label class="block space-y-2">
-                                <span
-                                    class="inline-flex items-center gap-1 text-[11px] font-bold tracking-[0.16em] text-slate-500 uppercase"
-                                >
-                                    Email Login
+                                    Email Akun Portal
                                     <span class="text-rose-500">*</span>
                                 </span>
                                 <Input
@@ -978,19 +941,11 @@ const destroyCompany = () => {
                                     required
                                     class="h-10 rounded-lg border-zinc-200 bg-white"
                                 />
-                            </label>
-                            <label class="block space-y-2">
-                                <span
-                                    class="text-[11px] font-bold tracking-[0.16em] text-slate-500 uppercase"
-                                    >Nomor Telepon</span
-                                >
-                                <Input
-                                    v-model="accountForm.no_telepon"
-                                    name="account_phone"
-                                    autocomplete="tel"
-                                    type="text"
-                                    class="h-10 rounded-lg border-zinc-200 bg-white"
-                                />
+                                <p class="text-xs text-slate-500">
+                                    Akun harus sudah terdaftar di Portal
+                                    sebelum dapat dihubungkan ke perusahaan
+                                    ini.
+                                </p>
                             </label>
                             <label class="block space-y-2">
                                 <span
@@ -1009,54 +964,6 @@ const destroyCompany = () => {
                                     PIC Mitra.
                                 </p>
                             </label>
-                            <label class="block space-y-2">
-                                <span
-                                    class="inline-flex items-center gap-1 text-[11px] font-bold tracking-[0.16em] text-slate-500 uppercase"
-                                >
-                                    Password Awal
-                                    <span class="text-rose-500">*</span>
-                                </span>
-                                <Input
-                                    v-model="accountForm.password"
-                                    name="account_password"
-                                    autocomplete="new-password"
-                                    type="password"
-                                    required
-                                    class="h-10 rounded-lg border-zinc-200 bg-white"
-                                />
-                            </label>
-                            <label class="block space-y-2">
-                                <span
-                                    class="inline-flex items-center gap-1 text-[11px] font-bold tracking-[0.16em] text-slate-500 uppercase"
-                                >
-                                    Konfirmasi Password
-                                    <span class="text-rose-500">*</span>
-                                </span>
-                                <Input
-                                    v-model="accountForm.password_confirmation"
-                                    name="account_password_confirmation"
-                                    autocomplete="new-password"
-                                    type="password"
-                                    required
-                                    class="h-10 rounded-lg border-zinc-200 bg-white"
-                                />
-                            </label>
-                            <label class="block space-y-2 md:col-span-2">
-                                <span
-                                    class="inline-flex items-center gap-1 text-[11px] font-bold tracking-[0.16em] text-slate-500 uppercase"
-                                >
-                                    Status Akun
-                                    <span class="text-rose-500">*</span>
-                                </span>
-                                <select
-                                    v-model="accountForm.is_active"
-                                    required
-                                    class="h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-900 transition outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
-                                >
-                                    <option :value="true">Aktif</option>
-                                    <option :value="false">Nonaktif</option>
-                                </select>
-                            </label>
                             <div class="flex justify-end md:col-span-2">
                                 <Button
                                     type="submit"
@@ -1064,7 +971,7 @@ const destroyCompany = () => {
                                     :disabled="accountProcessing"
                                 >
                                     <Plus class="size-4" />
-                                    Buat Akun Mitra
+                                    Hubungkan Akun Portal
                                 </Button>
                             </div>
                         </form>
@@ -1073,7 +980,8 @@ const destroyCompany = () => {
                             v-else
                             class="rounded-xl border border-dashed border-zinc-200 bg-white px-4 py-4 text-center text-sm text-slate-500"
                         >
-                            Simpan data perusahaan terlebih dahulu untuk membuat akun mitra.
+                            Simpan data perusahaan terlebih dahulu untuk
+                            menghubungkan akun Portal mitra.
                         </div>
                     </section>
 
@@ -1184,5 +1092,3 @@ const destroyCompany = () => {
     background: #f8fafc;
 }
 </style>
-
-

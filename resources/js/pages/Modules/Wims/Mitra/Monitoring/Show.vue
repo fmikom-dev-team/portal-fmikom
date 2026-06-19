@@ -25,7 +25,10 @@ type StudentProps = {
     id?: number | null;
     name?: string | null;
     nim?: string | null;
-    company?: string | null;
+    company?: {
+        id?: number | null;
+        name?: string | null;
+    } | null;
     pendaftaran_id?: number | null;
     status_pendaftaran?: string | null;
     is_ready_for_assessment?: boolean;
@@ -97,7 +100,6 @@ type SummaryProps = {
 
 type AssessmentProps = {
     status?: string | null;
-    status_label?: string | null;
     total_score?: number | null;
 };
 
@@ -177,6 +179,12 @@ const assessmentStatusClass = computed(() => {
     return 'border-slate-200 bg-slate-50 text-slate-600';
 });
 
+const assessmentStatusLabel = computed(() => {
+    if (assessment.value.status === 'submitted') return 'Sudah Dikirim';
+    if (assessment.value.status === 'draft') return 'Draft';
+    return 'Belum Dinilai';
+});
+
 const formatDateUi = (value?: string | null) => {
     return formatIndonesianDateLabel(value);
 };
@@ -201,13 +209,6 @@ const periodLabel = computed(() => {
     }
 
     return formatDateUi(props.student.period_start || props.student.period_end);
-});
-
-const statusPendaftaranLabel = computed(() => {
-    if (props.student.status_pendaftaran === 'selesai') return 'Selesai';
-    if (props.student.status_pendaftaran === 'aktif') return 'Aktif';
-    if (props.student.status_pendaftaran === 'diterima') return 'Diterima';
-    return props.student.status_pendaftaran ? props.student.status_pendaftaran : '-';
 });
 
 const todayDateLabel = computed(() => formatDateUi(props.today.date));
@@ -291,58 +292,50 @@ const openSelectedDate = (value: string) => {
     <div class="min-h-screen bg-wims-bg">
         <div class="mx-auto flex w-full max-w-[1320px] flex-col gap-4 px-4 py-3 lg:gap-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10">
             <section class="relative overflow-hidden rounded-2xl border border-wims-border/50 bg-wims-card/95 px-5 py-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] sm:px-6 sm:py-6">
+                <button
+                    type="button"
+                    title="Kembali ke Dashboard"
+                    aria-label="Kembali ke Dashboard"
+                    class="absolute top-5 right-5 inline-flex size-9 items-center justify-center rounded-xl border border-wims-border bg-white/90 text-slate-500 transition duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 sm:top-6 sm:right-6 sm:size-10"
+                    @click="goBack"
+                >
+                    <ArrowLeft class="size-4" />
+                </button>
                 <div class="flex flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-start lg:justify-between">
-                    <div class="max-w-3xl">
-                        <h1 class="text-[17px] font-bold tracking-tight text-wims-text sm:text-[20px]">Ringkasan Mahasiswa</h1>
-                        <p class="mt-1.5 text-[12px] leading-5 text-slate-600 sm:text-sm sm:leading-6">Pantau presensi, logbook, dan tindak lanjut mahasiswa PKL secara ringkas.</p>
+                    <div class="max-w-3xl pr-10 sm:pr-12">
+                        <h1 class="text-[20px] font-bold tracking-tight text-wims-text sm:text-[24px] lg:text-[30px]">Ringkasan Mahasiswa</h1>
+                        <p class="mt-1.5 text-[13px] leading-relaxed text-slate-600 sm:text-sm">Pantau presensi, logbook, dan tindak lanjut mahasiswa PKL secara ringkas.</p>
                     </div>
-                    <button
-                        type="button"
-                        class="inline-flex h-9 w-fit self-start items-center gap-1.5 rounded-lg border border-wims-border bg-wims-card px-3 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50 sm:px-3.5 sm:text-xs lg:self-auto"
-                        @click="goBack"
-                    >
-                        <ArrowLeft class="size-3.5" />
-                        Kembali ke Dashboard
-                    </button>
                 </div>
             </section>
 
             <section>
                 <Card class="rounded-2xl border border-wims-border bg-wims-card py-0 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)]">
-                    <CardContent class="px-4 py-4 sm:px-5 sm:py-5">
-                        <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                    <CardContent class="px-5 py-5">
+                        <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                             <div class="min-w-0 flex-1">
-                                <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">Mahasiswa</p>
-                                <p class="mt-2 text-base font-bold text-wims-text">{{ props.student.name || '-' }}</p>
-                                <p class="mt-1 text-sm text-slate-500">{{ props.student.nim || '-' }}</p>
+                                <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">Mahasiswa</p>
+                                <div class="mt-2 flex flex-wrap items-center gap-2">
+                                    <p class="text-[15px] font-bold text-wims-text">{{ props.student.name || '-' }}</p>
+                                    <Badge
+                                        v-if="props.student.status_pendaftaran === 'aktif'"
+                                        variant="outline"
+                                        class="rounded-full border-slate-200 bg-white px-3 py-1 text-[11px] font-bold text-slate-700"
+                                    >
+                                        Aktif
+                                    </Badge>
+                                </div>
+                                <p class="mt-1 text-[11px] text-slate-500">{{ props.student.nim || '-' }}</p>
                             </div>
 
-                            <div class="grid flex-1 gap-3 xl:grid-cols-3 xl:items-stretch">
-                                <div class="rounded-xl border border-wims-border bg-slate-50 px-4 py-3 h-full">
-                                    <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Perusahaan</p>
-                                    <p class="mt-1 text-sm font-bold leading-6 text-wims-text">{{ props.student.company || '-' }}</p>
+                            <div class="w-full max-w-xl space-y-4 xl:flex xl:max-w-sm xl:flex-col xl:items-start xl:text-left">
+                                <div>
+                                    <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Perusahaan</p>
+                                    <p class="mt-1 text-[13px] font-bold leading-5 text-wims-text">{{ props.student.company?.name || '-' }}</p>
                                 </div>
-                                <div class="rounded-xl border border-wims-border bg-slate-50 px-4 py-3 h-full">
-                                    <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Periode PKL</p>
-                                    <p class="mt-1 text-sm font-bold leading-6 text-wims-text">{{ periodLabel }}</p>
-                                </div>
-                                <div class="min-w-0 rounded-xl border border-wims-border bg-slate-50 px-4 py-3 h-full">
-                                    <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Status PKL</p>
-                                    <div class="mt-2 flex flex-col items-start gap-2.5">
-                                        <Badge variant="outline" class="rounded-full px-3 py-1 text-[11px] font-bold border-slate-200 bg-white text-slate-700">
-                                            {{ statusPendaftaranLabel }}
-                                        </Badge>
-                                        <template v-if="isActiveRegistration">
-                                            <div class="flex flex-wrap gap-2">
-                                                <Badge variant="outline" class="w-fit rounded-full px-3 py-1 text-[11px] font-bold" :class="getAttendanceClass(todayAttendance?.status)">
-                                                    Presensi: {{ getAttendanceLabel(todayAttendance?.status) }}
-                                                </Badge>
-                                                <Badge variant="outline" class="w-fit rounded-full px-3 py-1 text-[11px] font-bold" :class="getLogbookClass(todayLogbook?.status)">
-                                                    Logbook: {{ getLogbookLabel(todayLogbook?.status) }}
-                                                </Badge>
-                                            </div>
-                                        </template>
-                                    </div>
+                                <div>
+                                    <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Periode PKL</p>
+                                    <p class="mt-1 text-[13px] font-bold leading-5 text-wims-text">{{ periodLabel }}</p>
                                 </div>
                             </div>
                         </div>
@@ -353,8 +346,8 @@ const openSelectedDate = (value: string) => {
             <section v-if="isCompletedRegistration">
                 <Card class="rounded-2xl border border-wims-border bg-wims-card py-0 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)]">
                     <CardHeader class="px-4 pt-4 pb-3 sm:px-5 sm:pt-5">
-                        <CardTitle class="text-base text-wims-text">Penilaian Mahasiswa</CardTitle>
-                        <CardDescription class="mt-1 text-sm text-slate-600">
+                        <CardTitle class="text-[15px] text-wims-text">Penilaian Mahasiswa</CardTitle>
+                        <CardDescription class="mt-1 text-[11px] leading-5 text-slate-600">
                             Penilaian mitra tersedia setelah mahasiswa menyelesaikan PKL.
                         </CardDescription>
                     </CardHeader>
@@ -363,16 +356,16 @@ const openSelectedDate = (value: string) => {
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <Badge variant="outline" class="rounded-full px-3 py-1 text-[11px] font-bold" :class="assessmentStatusClass">
-                                        {{ assessment.status_label || 'Belum Dinilai' }}
+                                        {{ assessmentStatusLabel }}
                                     </Badge>
-                                    <p v-if="assessment.total_score !== null && assessment.total_score !== undefined" class="text-xs text-slate-600">
+                                    <p v-if="assessment.total_score !== null && assessment.total_score !== undefined" class="text-[11px] text-slate-600">
                                         Nilai Mitra {{ Number(assessment.total_score).toFixed(2) }}/100
                                     </p>
                                 </div>
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    class="h-9 rounded-lg border-[#0F62FE]/20 bg-white px-3.5 text-[13px] font-bold text-[#0F62FE] hover:bg-blue-100 sm:h-10 sm:px-4 sm:text-sm"
+                                    class="h-10 rounded-lg border-[#0F62FE]/20 bg-white px-3.5 text-[13px] font-bold text-[#0F62FE] hover:bg-blue-100 sm:px-4"
                                     @click="openAssessment"
                                 >
                                     {{ assessmentActionLabel }}
@@ -396,8 +389,8 @@ const openSelectedDate = (value: string) => {
             <section class="space-y-4 sm:space-y-5">
                 <Card v-if="isActiveRegistration" class="rounded-2xl border border-wims-border bg-wims-card py-0 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)]">
                     <CardHeader class="px-4 pt-4 pb-3 sm:px-5 sm:pt-5">
-                        <CardTitle class="text-base text-wims-text">Monitoring Hari Ini</CardTitle>
-                        <CardDescription class="mt-1 text-sm text-slate-600">
+                        <CardTitle class="text-[15px] text-wims-text">Monitoring Hari Ini</CardTitle>
+                        <CardDescription class="mt-1 text-[11px] leading-5 text-slate-600">
                             Presensi dan logbook mahasiswa untuk {{ todayDateLabel }}.
                         </CardDescription>
                     </CardHeader>
@@ -405,58 +398,58 @@ const openSelectedDate = (value: string) => {
                         <div class="grid gap-4 xl:grid-cols-2">
                             <div class="rounded-xl border border-wims-border bg-slate-50 px-4 py-4">
                                 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                    <p class="text-sm font-bold text-wims-text">Presensi Hari Ini</p>
+                                    <p class="text-[13px] font-bold text-wims-text">Presensi Hari Ini</p>
                                     <Badge variant="outline" class="w-fit rounded-full px-3 py-1 text-[11px] font-bold" :class="getAttendanceClass(todayAttendance?.status)">
                                         {{ getAttendanceLabel(todayAttendance?.status) }}
                                     </Badge>
                                 </div>
                                 <div class="mt-3 grid gap-3 sm:grid-cols-3">
                                     <div class="rounded-lg border border-wims-border bg-white px-3 py-3">
-                                        <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Masuk</p>
-                                        <p class="mt-1 text-sm font-bold text-wims-text">{{ formatTime(todayAttendance?.check_in) }}</p>
+                                        <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Masuk</p>
+                                        <p class="mt-1 text-[13px] font-bold text-wims-text">{{ formatTime(todayAttendance?.check_in) }}</p>
                                     </div>
                                     <div class="rounded-lg border border-wims-border bg-white px-3 py-3">
-                                        <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Pulang</p>
-                                        <p class="mt-1 text-sm font-bold text-wims-text">{{ formatTime(todayAttendance?.check_out) }}</p>
+                                        <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Pulang</p>
+                                        <p class="mt-1 text-[13px] font-bold text-wims-text">{{ formatTime(todayAttendance?.check_out) }}</p>
                                     </div>
                                     <div class="rounded-lg border border-wims-border bg-white px-3 py-3 sm:col-span-3 xl:col-span-1">
-                                        <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Catatan</p>
-                                        <p class="mt-1 text-sm text-slate-600">{{ todayAttendance?.note || '-' }}</p>
+                                        <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Catatan</p>
+                                        <p class="mt-1 text-[11px] leading-5 text-slate-600">{{ todayAttendance?.note || '-' }}</p>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="rounded-xl border border-wims-border bg-slate-50 px-4 py-4">
                                 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                    <p class="text-sm font-bold text-wims-text">Logbook Hari Ini</p>
+                                    <p class="text-[13px] font-bold text-wims-text">Logbook Hari Ini</p>
                                     <Badge variant="outline" class="w-fit rounded-full px-3 py-1 text-[11px] font-bold" :class="getLogbookClass(todayLogbook?.status)">
                                         {{ getLogbookLabel(todayLogbook?.status) }}
                                     </Badge>
                                 </div>
                                 <div v-if="todayLogbook?.id" class="mt-3 space-y-3">
                                     <div>
-                                        <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Aktivitas</p>
-                                        <p class="mt-1 whitespace-pre-line text-sm leading-6 text-slate-600">{{ todayLogbook?.aktivitas || '-' }}</p>
+                                        <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Aktivitas</p>
+                                        <p class="mt-1 whitespace-pre-line text-[12px] leading-5 text-slate-600">{{ todayLogbook?.aktivitas || '-' }}</p>
                                     </div>
                                     <div>
-                                        <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Kompetensi</p>
-                                        <p class="mt-1 whitespace-pre-line text-sm leading-6 text-slate-600">{{ todayLogbook?.kompetensi || '-' }}</p>
+                                        <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Kompetensi</p>
+                                        <p class="mt-1 whitespace-pre-line text-[12px] leading-5 text-slate-600">{{ todayLogbook?.kompetensi || '-' }}</p>
                                     </div>
                                     <div v-if="todayLogbook?.catatan_mitra">
-                                        <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Catatan Mitra</p>
-                                        <p class="mt-1 whitespace-pre-line text-sm leading-6 text-slate-600">{{ todayLogbook?.catatan_mitra }}</p>
+                                        <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Catatan Mitra</p>
+                                        <p class="mt-1 whitespace-pre-line text-[12px] leading-5 text-slate-600">{{ todayLogbook?.catatan_mitra }}</p>
                                     </div>
                                     <div>
-                                        <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Lampiran</p>
+                                        <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Lampiran</p>
                                         <div v-if="todayImages.length" class="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
                                             <div v-for="image in todayImages" :key="image.id ?? image.url ?? 'image'" class="overflow-hidden rounded-xl border border-wims-border bg-white">
                                                 <img :src="image.url ?? undefined" alt="Lampiran logbook hari ini" class="aspect-square h-full w-full object-cover" />
                                             </div>
                                         </div>
-                                        <p v-else class="mt-1 text-sm text-slate-500">Belum ada lampiran untuk logbook hari ini.</p>
+                                        <p v-else class="mt-1 text-[11px] text-slate-500">Belum ada lampiran untuk logbook hari ini.</p>
                                     </div>
                                 </div>
-                                <p v-else class="mt-3 rounded-lg border border-dashed border-wims-border bg-white px-3 py-3 text-sm text-slate-500">
+                                <p v-else class="mt-3 rounded-lg border border-dashed border-wims-border bg-white px-3 py-3 text-[11px] text-slate-500">
                                     Mahasiswa belum mengisi logbook hari ini.
                                 </p>
                             </div>
@@ -466,10 +459,10 @@ const openSelectedDate = (value: string) => {
                             <div class="space-y-4">
                                 <div class="flex items-center gap-2">
                                     <UserCheck class="size-4 text-[#1554D1]" />
-                                    <p class="text-sm font-bold text-wims-text">Review Mitra</p>
+                                    <p class="text-[13px] font-bold text-wims-text">Review Mitra</p>
                                 </div>
                                 <label class="block space-y-2">
-                                    <span class="text-sm font-medium text-slate-700">Status Review</span>
+                                    <span class="text-[13px] font-medium text-slate-700">Status Review</span>
                                     <select v-model="reviewForm.status" class="h-10 w-full rounded-xl border border-wims-border bg-white px-3.5 text-[13px] text-wims-text transition outline-none focus:border-[#1554D1] focus:ring-2 focus:ring-[#1554D1]/15 sm:h-11 sm:px-4 sm:text-sm">
                                         <option value="disetujui">Disetujui</option>
                                         <option value="revisi">Revisi</option>
@@ -477,11 +470,11 @@ const openSelectedDate = (value: string) => {
                                 </label>
 
                                 <label class="block space-y-2">
-                                    <span class="text-sm font-medium text-slate-700">Catatan Pembimbing Mitra</span>
+                                    <span class="text-[13px] font-medium text-slate-700">Catatan Pembimbing Mitra</span>
                                     <textarea
                                         v-model="reviewForm.catatan_mitra"
                                         rows="5"
-                                        class="min-h-[120px] w-full rounded-xl border border-wims-border bg-white px-4 py-3 text-sm leading-6 text-wims-text transition outline-none focus:border-[#1554D1] focus:ring-2 focus:ring-[#1554D1]/15"
+                                        class="min-h-[120px] w-full rounded-xl border border-wims-border bg-white px-4 py-3 text-[13px] leading-5 text-wims-text transition outline-none focus:border-[#1554D1] focus:ring-2 focus:ring-[#1554D1]/15"
                                         placeholder="Tulis validasi aktivitas atau arahan revisi untuk mahasiswa."
                                     />
                                     <p v-if="reviewForm.errors.catatan_mitra" class="text-xs text-rose-600">
@@ -507,26 +500,26 @@ const openSelectedDate = (value: string) => {
                             <div class="space-y-3">
                                 <div class="flex items-center gap-2">
                                     <UserCheck class="size-4 text-[#1554D1]" />
-                                    <p class="text-sm font-bold text-wims-text">Review Mitra</p>
+                                    <p class="text-[13px] font-bold text-wims-text">Review Mitra</p>
                                 </div>
                                 <div class="grid gap-3 sm:grid-cols-2">
                                     <div class="rounded-lg border border-wims-border bg-slate-50 px-4 py-3">
-                                        <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Status Review</p>
+                                        <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Status Review</p>
                                         <Badge variant="outline" class="mt-2 rounded-full px-3 py-1 text-[11px] font-bold" :class="getLogbookClass(todayLogbook?.status)">
                                             {{ getLogbookLabel(todayLogbook?.status) }}
                                         </Badge>
                                     </div>
                                     <div class="rounded-lg border border-wims-border bg-slate-50 px-4 py-3">
-                                        <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Direview oleh</p>
-                                        <p class="mt-2 text-sm font-medium text-wims-text">{{ todayLogbook?.reviewed_by_name || '-' }}</p>
+                                        <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Direview oleh</p>
+                                        <p class="mt-2 text-[13px] font-medium text-wims-text">{{ todayLogbook?.reviewed_by_name || '-' }}</p>
                                     </div>
                                     <div class="rounded-lg border border-wims-border bg-slate-50 px-4 py-3 sm:col-span-2">
-                                        <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Waktu review</p>
-                                        <p class="mt-2 text-sm font-medium text-wims-text">{{ todayLogbook?.reviewed_at ? formatDateTime(todayLogbook.reviewed_at) : '-' }}</p>
+                                        <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Waktu review</p>
+                                        <p class="mt-2 text-[13px] font-medium text-wims-text">{{ todayLogbook?.reviewed_at ? formatDateTime(todayLogbook.reviewed_at) : '-' }}</p>
                                     </div>
                                     <div class="rounded-lg border border-wims-border bg-slate-50 px-4 py-3 sm:col-span-2">
-                                        <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Catatan Mitra</p>
-                                        <p class="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">{{ todayLogbook?.catatan_mitra || 'Tidak ada catatan mitra.' }}</p>
+                                        <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Catatan Mitra</p>
+                                        <p class="mt-2 whitespace-pre-line text-[12px] leading-5 text-slate-600">{{ todayLogbook?.catatan_mitra || 'Tidak ada catatan mitra.' }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -562,9 +555,9 @@ const openSelectedDate = (value: string) => {
                         <div class="grid items-start gap-4 xl:grid-cols-2">
                             <div class="rounded-xl border border-wims-border bg-slate-50 px-4 py-4">
                                 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                    <p class="text-sm font-bold text-wims-text">Presensi</p>
+                                    <p class="text-[13px] font-bold text-wims-text">Presensi</p>
                                     <div class="flex items-center gap-2">
-                                        <p class="text-xs text-slate-500">{{ selectedDateLabel }}</p>
+                                        <p class="text-[11px] text-slate-500">{{ selectedDateLabel }}</p>
                                         <Badge v-if="selectedAttendance?.status" variant="outline" class="rounded-full px-3 py-1 text-[11px] font-bold" :class="getAttendanceClass(selectedAttendance?.status)">
                                             {{ getAttendanceLabel(selectedAttendance?.status) }}
                                         </Badge>
@@ -573,11 +566,11 @@ const openSelectedDate = (value: string) => {
                                 <div v-if="selectedAttendance?.status" class="mt-3 grid gap-3 sm:grid-cols-3">
                                     <div class="rounded-lg border border-wims-border bg-white px-3 py-3">
                                         <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Masuk</p>
-                                        <p class="mt-1 text-sm font-bold text-wims-text">{{ formatTime(selectedAttendance?.check_in) }}</p>
+                                        <p class="mt-1 text-[13px] font-bold text-wims-text">{{ formatTime(selectedAttendance?.check_in) }}</p>
                                     </div>
                                     <div class="rounded-lg border border-wims-border bg-white px-3 py-3">
                                         <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Pulang</p>
-                                        <p class="mt-1 text-sm font-bold text-wims-text">{{ formatTime(selectedAttendance?.check_out) }}</p>
+                                        <p class="mt-1 text-[13px] font-bold text-wims-text">{{ formatTime(selectedAttendance?.check_out) }}</p>
                                     </div>
                                     <div class="rounded-lg border border-wims-border bg-white px-3 py-3 sm:col-span-3">
                                         <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Catatan</p>
@@ -591,9 +584,9 @@ const openSelectedDate = (value: string) => {
 
                             <div class="rounded-xl border border-wims-border bg-slate-50 px-4 py-4">
                                 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                    <p class="text-sm font-bold text-wims-text">Logbook</p>
+                                    <p class="text-[13px] font-bold text-wims-text">Logbook</p>
                                     <div class="flex items-center gap-2">
-                                        <p class="text-xs text-slate-500">{{ selectedDateLabel }}</p>
+                                        <p class="text-[11px] text-slate-500">{{ selectedDateLabel }}</p>
                                         <Badge v-if="selectedLogbook?.id" variant="outline" class="rounded-full px-3 py-1 text-[11px] font-bold" :class="getLogbookClass(selectedLogbook?.status)">
                                             {{ getLogbookLabel(selectedLogbook?.status) }}
                                         </Badge>
@@ -602,15 +595,15 @@ const openSelectedDate = (value: string) => {
                                 <div v-if="selectedLogbook?.id" class="mt-3 space-y-3">
                                     <div>
                                         <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Aktivitas</p>
-                                        <p class="mt-1 break-words whitespace-pre-line text-sm leading-6 text-slate-600">{{ selectedLogbook?.aktivitas || '-' }}</p>
+                                        <p class="mt-1 break-words whitespace-pre-line text-[12px] leading-5 text-slate-600">{{ selectedLogbook?.aktivitas || '-' }}</p>
                                     </div>
                                     <div>
                                         <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Kompetensi</p>
-                                        <p class="mt-1 break-words whitespace-pre-line text-sm leading-6 text-slate-600">{{ selectedLogbook?.kompetensi || '-' }}</p>
+                                        <p class="mt-1 break-words whitespace-pre-line text-[12px] leading-5 text-slate-600">{{ selectedLogbook?.kompetensi || '-' }}</p>
                                     </div>
                                     <div>
                                         <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Catatan Mitra</p>
-                                        <p class="mt-1 break-words whitespace-pre-line text-sm leading-6 text-slate-600">{{ selectedLogbook?.catatan_mitra || 'Tidak ada catatan mitra.' }}</p>
+                                        <p class="mt-1 break-words whitespace-pre-line text-[12px] leading-5 text-slate-600">{{ selectedLogbook?.catatan_mitra || 'Tidak ada catatan mitra.' }}</p>
                                     </div>
                                     <div>
                                         <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Lampiran</p>
@@ -633,7 +626,7 @@ const openSelectedDate = (value: string) => {
 
             <section class="space-y-4">
                 <div>
-                    <h2 class="text-base font-bold text-wims-text">Riwayat</h2>
+                    <h2 class="text-[15px] font-bold text-wims-text">Riwayat</h2>
                     <p class="mt-1 text-sm text-slate-600">Riwayat presensi dan logbook ditampilkan ringkas untuk pemantauan cepat.</p>
                 </div>
 
@@ -654,7 +647,7 @@ const openSelectedDate = (value: string) => {
                                     v-if="attendanceHistory.length > 7"
                                     type="button"
                                     variant="outline"
-                                    class="h-8 rounded-lg border-wims-border bg-wims-card px-3 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                                    class="h-9 rounded-lg border-wims-border bg-wims-card px-3 text-[13px] font-bold text-slate-700 hover:bg-slate-50"
                                     @click="attendanceHistoryDialogOpen = true"
                                 >
                                     Lihat Semua
@@ -671,7 +664,7 @@ const openSelectedDate = (value: string) => {
                                     <div class="flex flex-col gap-3">
                                         <div class="flex items-start justify-between gap-3">
                                             <div class="min-w-0">
-                                                <p class="text-sm font-bold text-wims-text">
+                                                <p class="text-[13px] font-bold text-wims-text">
                                                     {{ formatDateUi(item.tanggal_label || item.tanggal) }}
                                                 </p>
                                                 <p
@@ -793,8 +786,8 @@ const openSelectedDate = (value: string) => {
                             >
                                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                     <div class="min-w-0 flex-1">
-                                        <p class="text-sm font-bold text-wims-text">{{ formatDateUi(item.tanggal_label || item.tanggal) }}</p>
-                                        <p class="mt-1.5 break-words whitespace-pre-line text-sm leading-6 text-slate-600">{{ item.aktivitas || '-' }}</p>
+                                        <p class="text-[13px] font-bold text-wims-text">{{ formatDateUi(item.tanggal_label || item.tanggal) }}</p>
+                                        <p class="mt-1.5 break-words whitespace-pre-line text-[12px] leading-5 text-slate-600">{{ item.aktivitas || '-' }}</p>
                                         <p v-if="item.catatan_mitra" class="mt-2 break-words text-xs leading-5 text-slate-500">
                                             Catatan mitra: {{ item.catatan_mitra }}
                                         </p>
@@ -830,7 +823,7 @@ const openSelectedDate = (value: string) => {
                             <div class="flex flex-col gap-3">
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="min-w-0">
-                                        <p class="text-sm font-bold text-wims-text">{{ formatDateUi(item.tanggal_label || item.tanggal) }}</p>
+                                        <p class="text-[13px] font-bold text-wims-text">{{ formatDateUi(item.tanggal_label || item.tanggal) }}</p>
                                         <p :class="item.keterangan ? 'text-slate-500' : 'text-slate-400'" class="mt-1 text-xs leading-5 break-words">
                                             {{ item.keterangan || 'Tanpa catatan' }}
                                         </p>
@@ -842,11 +835,11 @@ const openSelectedDate = (value: string) => {
                                 <div class="grid grid-cols-2 gap-3">
                                     <div class="rounded-lg border border-wims-border bg-white px-3 py-2.5">
                                         <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Masuk</p>
-                                        <p class="mt-1 text-sm font-bold text-wims-text">{{ formatTime(item.check_in) }}</p>
+                                        <p class="mt-1 text-[13px] font-bold text-wims-text">{{ formatTime(item.check_in) }}</p>
                                     </div>
                                     <div class="rounded-lg border border-wims-border bg-white px-3 py-2.5">
                                         <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Pulang</p>
-                                        <p class="mt-1 text-sm font-bold text-wims-text">{{ formatTime(item.check_out) }}</p>
+                                        <p class="mt-1 text-[13px] font-bold text-wims-text">{{ formatTime(item.check_out) }}</p>
                                     </div>
                                 </div>
                                 <div class="rounded-lg border border-wims-border bg-white px-3 py-2.5">
@@ -926,8 +919,8 @@ const openSelectedDate = (value: string) => {
                     >
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div class="min-w-0 flex-1">
-                                <p class="text-sm font-bold text-wims-text">{{ formatDateUi(item.tanggal_label || item.tanggal) }}</p>
-                                <p class="mt-1.5 whitespace-pre-line text-sm leading-6 text-slate-600">{{ item.aktivitas || '-' }}</p>
+                                <p class="text-[13px] font-bold text-wims-text">{{ formatDateUi(item.tanggal_label || item.tanggal) }}</p>
+                                <p class="mt-1.5 whitespace-pre-line text-[12px] leading-5 text-slate-600">{{ item.aktivitas || '-' }}</p>
                                 <p v-if="item.kompetensi" class="mt-2 text-xs leading-5 text-slate-500">Kompetensi: {{ item.kompetensi }}</p>
                                 <p v-if="item.catatan_mitra" class="mt-2 text-xs leading-5 text-slate-500">Catatan mitra: {{ item.catatan_mitra }}</p>
                                 <p v-if="item.reviewed_at" class="mt-2 text-xs text-slate-500">
@@ -952,5 +945,3 @@ const openSelectedDate = (value: string) => {
         </Dialog>
     </div>
 </template>
-
-

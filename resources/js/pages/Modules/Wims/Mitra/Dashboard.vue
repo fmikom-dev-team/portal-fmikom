@@ -3,7 +3,6 @@ import { Head, router, useForm } from '@inertiajs/vue3';
 import {
     AlertTriangle,
     Bell,
-    CalendarClock,
     ClipboardList,
     FileClock,
     Users,
@@ -24,7 +23,6 @@ type MentorProps = {
     email?: string | null;
     phone?: string | null;
     jabatan?: string | null;
-    company_name?: string | null;
     company_city?: string | null;
 };
 
@@ -61,13 +59,15 @@ type StudentItem = {
     student_id?: number | null;
     name?: string | null;
     nim?: string | null;
-    company?: string | null;
+    company?: {
+        id?: number | null;
+        name?: string | null;
+    } | null;
     period_start?: string | null;
     period_end?: string | null;
     status_pendaftaran?: string | null;
     dashboard_phase?: 'assigned' | 'upcoming' | 'active' | 'completed' | null;
     attendance_status?: string | null;
-    attendance_date?: string | null;
     check_in_time?: string | null;
     check_out_time?: string | null;
     latest_logbook_id?: number | null;
@@ -75,7 +75,6 @@ type StudentItem = {
     latest_logbook_date?: string | null;
     latest_logbook_sort_date?: string | null;
     latest_logbook_activity?: string | null;
-    latest_logbook_activity_full?: string | null;
     latest_logbook_competency?: string | null;
     latest_logbook_note?: string | null;
     objective_summary?: ObjectiveSummary | null;
@@ -94,7 +93,10 @@ type PendingAbsenceRequestItem = {
     id: number;
     name?: string | null;
     nim?: string | null;
-    company?: string | null;
+    company?: {
+        id?: number | null;
+        name?: string | null;
+    } | null;
     jenis?: string | null;
     alasan?: string | null;
     tanggal_label?: string | null;
@@ -105,7 +107,10 @@ type WarningItem = {
     pendaftaran_id?: number | null;
     name?: string | null;
     nim?: string | null;
-    company?: string | null;
+    company?: {
+        id?: number | null;
+        name?: string | null;
+    } | null;
     attendance_missing_days?: number;
     logbook_missing_days?: number;
     missing_types?: string[];
@@ -156,15 +161,15 @@ const summaryCards = computed(() => [
         icon: Users,
     },
     {
-        label: 'Belum Presensi',
-        value: props.summary.not_present_today ?? 0,
-        caption: 'Mahasiswa aktif yang belum presensi masuk hari ini.',
-        tone: 'text-rose-700',
+        label: 'Mahasiswa Selesai',
+        value: props.summary.completed_students ?? 0,
+        caption: 'Mahasiswa yang telah selesai PKL di mitra ini.',
+        tone: 'text-emerald-700',
         cardClass:
-            'border-rose-100/80 bg-rose-50/38 dark:bg-rose-500/8 dark:border-rose-500/20',
+            'border-emerald-100/80 bg-emerald-50/38 dark:bg-emerald-500/8 dark:border-emerald-500/20',
         iconClass:
-            'border-rose-100 bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:border-rose-500/20 dark:text-rose-400',
-        icon: CalendarClock,
+            'border-emerald-100 bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:border-emerald-500/20 dark:text-emerald-400',
+        icon: FileClock,
     },
     {
         label: 'Perlu Tindak Lanjut',
@@ -192,7 +197,6 @@ const summaryCards = computed(() => [
         value: props.summary.pending_absence_requests ?? 0,
         caption: 'Permintaan izin atau sakit yang menunggu keputusan mitra.',
         tone: 'text-orange-700',
-        mobileClass: 'col-span-2',
         cardClass:
             'border-orange-100/80 bg-orange-50/40 dark:bg-orange-500/8 dark:border-orange-500/20',
         iconClass:
@@ -211,7 +215,7 @@ const matchesSearch = (student: StudentItem) => {
     return (
         (student.name ?? '').toLowerCase().includes(keyword) ||
         (student.nim ?? '').toLowerCase().includes(keyword) ||
-        (student.company ?? '').toLowerCase().includes(keyword)
+        (student.company?.name ?? '').toLowerCase().includes(keyword)
     );
 };
 
@@ -631,26 +635,26 @@ onBeforeUnmount(() => {
             <header class="relative overflow-hidden rounded-2xl border border-wims-border/50 bg-wims-card/95 px-5 py-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] sm:px-6 sm:py-6">
                 <div class="flex flex-col gap-2.5 sm:gap-3">
                     <div class="min-w-0 max-w-3xl">
-                        <h1 class="text-[17px] font-bold tracking-tight text-slate-950 dark:text-slate-100 sm:text-[20px]">
+                        <h1 class="text-[20px] font-bold tracking-tight text-slate-950 dark:text-slate-100 sm:text-[24px] lg:text-[30px]">
                             Ringkasan Operasional Hari Ini
                         </h1>
-                        <p class="mt-1.5 max-w-2xl text-[12px] leading-5 text-slate-600 dark:text-slate-400 sm:text-sm sm:leading-6">
+                        <p class="mt-1.5 max-w-2xl text-[13px] leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm">
                             Ringkasan operasional mahasiswa magang pada portal web, dengan fokus pada tindak lanjut harian, presensi, dan review logbook.
                         </p>
                     </div>
                 </div>
             </header>
 
-            <section class="grid grid-cols-2 gap-3 lg:gap-4 xl:grid-cols-5">
+            <section class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5 lg:gap-4">
                 <Card
                     v-for="card in summaryCards"
                     :key="card.label"
                     class="overflow-hidden rounded-2xl border py-0 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_42px_-30px_rgba(15,23,42,0.25)]"
-                    :class="[card.cardClass, card.mobileClass ?? '']"
+                    :class="card.cardClass"
                 >
                     <CardContent class="px-4 py-4 sm:px-5">
                         <div class="flex items-start justify-between gap-3">
-                            <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 sm:text-xs">
+                            <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
                                 {{ card.label }}
                             </p>
                             <div
@@ -663,7 +667,7 @@ onBeforeUnmount(() => {
                         <p class="mt-1.5 text-[24px] font-bold tracking-tight sm:text-3xl" :class="card.tone">
                             {{ card.value }}
                         </p>
-                        <p class="mt-2 text-[11px] leading-5 text-slate-600 dark:text-slate-400 sm:text-xs">
+                        <p class="mt-2 text-[11px] leading-5 text-slate-600 dark:text-slate-400">
                             {{ card.caption }}
                         </p>
                     </CardContent>
@@ -673,16 +677,16 @@ onBeforeUnmount(() => {
             <section id="warning-section" class="space-y-4">
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div class="max-w-3xl">
-                        <h2 class="text-base font-bold text-wims-text">
+                        <h2 class="text-[15px] font-bold text-wims-text">
                             Perlu Tindak Lanjut
                         </h2>
-                        <p class="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                        <p class="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-400">
                             Daftar ini menampilkan mahasiswa aktif yang melewati ambang keterlambatan presensi atau logbook.
                         </p>
                     </div>
                     <Badge
                         variant="outline"
-                        class="w-fit rounded-full border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+                        class="w-fit rounded-full border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-bold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
                     >
                         {{ props.warnings.length }} kasus
                     </Badge>
@@ -698,17 +702,17 @@ onBeforeUnmount(() => {
                             @click="openWarningMonitoring(warning)"
                         >
                             <div class="min-w-0">
-                                <p class="text-sm font-bold text-wims-text">
+                                <p class="text-[13px] font-bold text-wims-text">
                                     {{ warning.name || 'Mahasiswa' }}
                                 </p>
-                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                    {{ warning.nim || '-' }} • {{ warning.company || 'Perusahaan belum tersedia' }}
+                                <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                    {{ warning.nim || '-' }} • {{ warning.company?.name || 'Perusahaan belum tersedia' }}
                                 </p>
                                 <div class="mt-3 flex flex-wrap gap-2">
                                     <span
                                         v-for="detail in warningDetails(warning)"
                                         :key="detail"
-                                        class="rounded-full border border-amber-200 bg-white px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-500/10 dark:text-amber-200"
+                                        class="rounded-full border border-amber-200 bg-white px-2.5 py-1 text-[11px] font-medium text-amber-800 dark:bg-amber-500/10 dark:text-amber-200"
                                     >
                                         {{ detail }}
                                     </span>
@@ -722,7 +726,7 @@ onBeforeUnmount(() => {
 
                         <p
                             v-if="!props.warnings.length"
-                            class="rounded-xl border border-wims-border bg-slate-50 px-4 py-3 text-sm text-slate-500 dark:bg-slate-800/50 dark:text-slate-400"
+                            class="rounded-xl border border-wims-border bg-slate-50 px-4 py-3 text-[11px] text-slate-500 dark:bg-slate-800/50 dark:text-slate-400"
                         >
                             Belum ada kasus monitoring yang memerlukan tindak lanjut.
                         </p>
@@ -738,16 +742,16 @@ onBeforeUnmount(() => {
                     <CardContent class="space-y-4 px-5 py-5 sm:px-6">
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <h2 class="text-base font-bold text-wims-text">
+                                <h2 class="text-[15px] font-bold text-wims-text">
                                     Pengajuan Ketidakhadiran
                                 </h2>
-                                <p class="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                                <p class="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-400">
                                     Setujui atau tolak izin dan sakit dari mahasiswa bimbingan.
                                 </p>
                             </div>
                             <Badge
                                 variant="outline"
-                                class="rounded-full border-orange-200 bg-orange-50 px-3 py-1 text-xs font-bold text-orange-700 dark:bg-orange-500/15 dark:text-orange-300"
+                                class="rounded-full border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-bold text-orange-700 dark:bg-orange-500/15 dark:text-orange-300"
                             >
                                 {{ props.pendingAbsenceRequests.length }} menunggu
                             </Badge>
@@ -761,32 +765,32 @@ onBeforeUnmount(() => {
                             >
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="min-w-0">
-                                        <p class="text-sm font-bold text-wims-text">
+                                        <p class="text-[13px] font-bold text-wims-text">
                                             {{ item.name || 'Mahasiswa' }}
                                         </p>
-                                        <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                                            {{ item.nim || '-' }} • {{ item.company || 'Perusahaan belum tersedia' }}
+                                        <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                                            {{ item.nim || '-' }} • {{ item.company?.name || 'Perusahaan belum tersedia' }}
                                         </p>
                                     </div>
                                     <Badge
                                         variant="outline"
-                                        class="rounded-full border-orange-200 bg-white px-2.5 py-0.5 text-[10px] font-bold text-orange-700 dark:bg-orange-500/10 dark:text-orange-300"
+                                        class="rounded-full border-orange-200 bg-white px-2.5 py-0.5 text-[11px] font-bold text-orange-700 dark:bg-orange-500/10 dark:text-orange-300"
                                     >
                                         {{ absenceKindLabel(item.jenis) }}
                                     </Badge>
                                 </div>
 
-                                <p class="mt-2 text-xs font-medium text-orange-700 dark:text-orange-300">
+                                <p class="mt-2 text-[11px] font-medium text-orange-700 dark:text-orange-300">
                                     {{ formatDateUi(item.tanggal_label) }}
                                 </p>
-                                <p class="mt-1.5 text-sm leading-5 text-slate-700 dark:text-slate-300">
+                                <p class="mt-1.5 text-[12px] leading-5 text-slate-700 dark:text-slate-300">
                                     {{ item.alasan || '-' }}
                                 </p>
 
                                 <div class="mt-2.5 grid gap-2 sm:grid-cols-2">
                                     <button
                                         type="button"
-                                        class="h-8 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white transition hover:bg-emerald-700 disabled:bg-slate-300 disabled:text-slate-600"
+                                        class="h-9 rounded-lg bg-emerald-600 px-3 text-[13px] font-bold text-white transition hover:bg-emerald-700 disabled:bg-slate-300 disabled:text-slate-600"
                                         :disabled="absenceReviewForm.processing"
                                         @click="approveAbsenceRequest(item.id)"
                                     >
@@ -794,7 +798,7 @@ onBeforeUnmount(() => {
                                     </button>
                                     <button
                                         type="button"
-                                        class="h-8 rounded-lg bg-rose-600 px-3 text-xs font-bold text-white transition hover:bg-rose-700 disabled:bg-slate-300 disabled:text-slate-600"
+                                        class="h-9 rounded-lg bg-rose-600 px-3 text-[13px] font-bold text-white transition hover:bg-rose-700 disabled:bg-slate-300 disabled:text-slate-600"
                                         :disabled="absenceReviewForm.processing"
                                         @click="rejectAbsenceRequest(item.id)"
                                     >
@@ -805,7 +809,7 @@ onBeforeUnmount(() => {
 
                             <p
                                 v-if="!props.pendingAbsenceRequests.length"
-                                class="rounded-xl border border-wims-border bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-500 dark:bg-slate-800/50 dark:text-slate-400"
+                                class="rounded-xl border border-wims-border bg-slate-50 px-4 py-3 text-[11px] leading-5 text-slate-500 dark:bg-slate-800/50 dark:text-slate-400"
                             >
                                 Tidak ada pengajuan izin atau sakit yang menunggu persetujuan saat ini.
                             </p>
@@ -820,16 +824,16 @@ onBeforeUnmount(() => {
                     <CardContent class="space-y-3 px-4 py-4 sm:px-5">
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <h2 class="text-base font-bold text-wims-text">
+                                <h2 class="text-[15px] font-bold text-wims-text">
                                     Board Presensi Hari Ini
                                 </h2>
-                                <p class="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                                <p class="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-400">
                                     Ringkasan mahasiswa aktif yang sudah hadir, terlambat, atau belum presensi masuk.
                                 </p>
                             </div>
                             <Badge
                                 variant="outline"
-                                class="rounded-full border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 dark:bg-blue-500/15 dark:text-blue-300"
+                                class="rounded-full border-blue-200 bg-blue-50 px-3 py-1 text-[11px] font-bold text-blue-700 dark:bg-blue-500/15 dark:text-blue-300"
                             >
                                 {{ props.attendanceBoard.length }} aktif
                             </Badge>
@@ -843,10 +847,10 @@ onBeforeUnmount(() => {
                                     >
                                         <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                             <div class="min-w-0">
-                                                <p class="text-sm font-bold text-wims-text">
+                                                <p class="text-[13px] font-bold text-wims-text">
                                                     {{ student.name || 'Mahasiswa' }}
                                                 </p>
-                                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ student.nim || '-' }}</p>
+                                                <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{{ student.nim || '-' }}</p>
                                             </div>
                                             <Badge
                                                 variant="outline"
@@ -856,7 +860,7 @@ onBeforeUnmount(() => {
                                                 {{ attendanceLabel(student.attendance_status) }}
                                             </Badge>
                                         </div>
-                                        <div class="mt-2 grid gap-2 text-xs text-slate-600 dark:text-slate-400 sm:grid-cols-2">
+                                        <div class="mt-2 grid gap-2 text-[11px] text-slate-600 dark:text-slate-400 sm:grid-cols-2">
                                             <p>Masuk: <span class="font-bold text-wims-text">{{ formatTimeUi(student.check_in_time) }}</span></p>
                                             <p>Pulang: <span class="font-bold text-wims-text">{{ formatTimeUi(student.check_out_time) }}</span></p>
                                         </div>
@@ -864,7 +868,7 @@ onBeforeUnmount(() => {
                         </div>
                         <p
                             v-else
-                            class="rounded-xl border border-wims-border bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-500 dark:bg-slate-800/50 dark:text-slate-400"
+                            class="rounded-xl border border-wims-border bg-slate-50 px-4 py-3 text-[11px] leading-5 text-slate-500 dark:bg-slate-800/50 dark:text-slate-400"
                         >
                             Belum ada mahasiswa aktif yang perlu dipantau pada board presensi.
                         </p>
@@ -878,16 +882,16 @@ onBeforeUnmount(() => {
                     <CardContent class="space-y-3 px-4 py-4 sm:px-5">
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <h2 class="text-base font-bold text-wims-text">
+                                <h2 class="text-[15px] font-bold text-wims-text">
                                     Review Harian Logbook
                                 </h2>
-                                <p class="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                                <p class="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-400">
                                     Prioritaskan logbook yang menunggu review harian atau perlu revisi.
                                 </p>
                             </div>
                             <Badge
                                 variant="outline"
-                                class="rounded-full border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+                                class="rounded-full border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-bold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
                             >
                                 {{ props.reviewBoard.length }} antrean
                             </Badge>
@@ -901,11 +905,11 @@ onBeforeUnmount(() => {
                             >
                                     <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                         <div class="min-w-0">
-                                            <p class="text-sm font-bold text-wims-text">
+                                            <p class="text-[13px] font-bold text-wims-text">
                                                 {{ student.name || 'Mahasiswa' }}
                                             </p>
-                                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                                {{ student.nim || '-' }} • {{ student.company || 'Perusahaan belum tersedia' }}
+                                            <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                                {{ student.nim || '-' }} • {{ student.company?.name || 'Perusahaan belum tersedia' }}
                                             </p>
                                         </div>
                                         <Badge
@@ -916,13 +920,13 @@ onBeforeUnmount(() => {
                                             {{ logbookLabel(student.logbook_status) }}
                                         </Badge>
                                     </div>
-                                    <p class="mt-2 line-clamp-2 text-sm leading-5 text-slate-700 dark:text-slate-300">
+                                    <p class="mt-2 line-clamp-2 text-[12px] leading-5 text-slate-700 dark:text-slate-300">
                                         {{ student.latest_logbook_activity || 'Belum ada ringkasan aktivitas logbook terakhir.' }}
                                     </p>
                                     <div class="mt-2.5 flex justify-end">
                                         <Button
                                             type="button"
-                                            class="h-8 rounded-lg bg-[#0F62FE] px-3 text-xs font-bold text-white hover:bg-[#0050E6]"
+                                            class="h-9 rounded-lg bg-[#0F62FE] px-3 text-[13px] font-bold text-white hover:bg-[#0050E6]"
                                             @click="openMonitoring(student)"
                                         >
                                             Lihat Monitoring
@@ -932,7 +936,7 @@ onBeforeUnmount(() => {
 
                             <p
                                 v-if="!props.reviewBoard.length"
-                                class="rounded-xl border border-wims-border bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-500 dark:bg-slate-800/50 dark:text-slate-400"
+                                class="rounded-xl border border-wims-border bg-slate-50 px-4 py-3 text-[11px] leading-5 text-slate-500 dark:bg-slate-800/50 dark:text-slate-400"
                             >
                                 Tidak ada logbook yang menunggu review saat ini.
                             </p>
@@ -948,17 +952,17 @@ onBeforeUnmount(() => {
             >
                 <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div class="max-w-3xl">
-                        <h2 class="text-base font-bold text-wims-text">
+                        <h2 class="text-[15px] font-bold text-wims-text">
                             {{ section.title }}
                         </h2>
-                        <p class="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                        <p class="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-400">
                             {{ section.description }}
                         </p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2 lg:justify-end">
                         <Badge
                             variant="outline"
-                            class="w-fit rounded-full border-wims-border bg-slate-50 px-3 py-1 text-xs font-bold text-slate-700 dark:bg-slate-800/50 dark:text-slate-300"
+                            class="w-fit rounded-full border-wims-border bg-slate-50 px-3 py-1 text-[11px] font-bold text-slate-700 dark:bg-slate-800/50 dark:text-slate-300"
                         >
                             {{ section.students.length }} mahasiswa
                         </Badge>
@@ -971,7 +975,7 @@ onBeforeUnmount(() => {
                         <Button
                             type="button"
                             variant="outline"
-                            class="h-8 rounded-lg border-wims-border bg-wims-card px-3 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/30"
+                            class="h-9 rounded-lg border-wims-border bg-wims-card px-3 text-[13px] font-bold text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/30"
                             @click="openMonitoringIndex(section.key === 'active' ? 'aktif' : 'selesai')"
                         >
                             Lihat Semua
@@ -992,13 +996,13 @@ onBeforeUnmount(() => {
                             >
                                 <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                                     <div class="min-w-0 lg:flex-1">
-                                        <p class="text-sm font-bold text-wims-text">
+                                        <p class="text-[13px] font-bold text-wims-text">
                                             {{ student.name || 'Mahasiswa' }}
                                         </p>
-                                        <div class="mt-1 flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1">
+                                        <div class="mt-1 flex flex-col gap-1 text-[11px] text-slate-500 dark:text-slate-400 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1">
                                             <span>{{ student.nim || '-' }}</span>
                                             <span class="hidden text-slate-300 sm:inline">•</span>
-                                            <span>{{ student.company || '-' }}</span>
+                                            <span>{{ student.company?.name || '-' }}</span>
                                             <span class="hidden text-slate-300 sm:inline">•</span>
                                             <span>Periode {{ periodLabel(student) }}</span>
                                         </div>
@@ -1008,30 +1012,30 @@ onBeforeUnmount(() => {
                                         <template v-if="section.key === 'active'">
                                             <div class="flex flex-wrap gap-2 lg:justify-end">
                                                 <div class="flex items-center gap-1.5 rounded-full border border-wims-border bg-wims-card px-2.5 py-1">
-                                                    <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400">Presensi</span>
+                                                    <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Presensi</span>
                                                     <Badge
                                                         variant="outline"
-                                                        class="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                                                        class="rounded-full px-2 py-0.5 text-[11px] font-bold"
                                                         :class="attendanceClass(student.attendance_status)"
                                                     >
                                                         {{ attendanceLabel(student.attendance_status) }}
                                                     </Badge>
                                                 </div>
                                                 <div class="flex items-center gap-1.5 rounded-full border border-wims-border bg-wims-card px-2.5 py-1">
-                                                    <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400">Logbook</span>
+                                                    <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Logbook</span>
                                                     <Badge
                                                         variant="outline"
-                                                        class="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                                                        class="rounded-full px-2 py-0.5 text-[11px] font-bold"
                                                         :class="logbookClass(student.logbook_status)"
                                                     >
                                                         {{ logbookLabel(student.logbook_status) }}
                                                     </Badge>
                                                 </div>
                                                 <div class="flex items-center gap-1.5 rounded-full border border-wims-border bg-wims-card px-2.5 py-1">
-                                                    <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400">Laporan</span>
+                                                    <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Laporan</span>
                                                     <Badge
                                                         variant="outline"
-                                                        class="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                                                        class="rounded-full px-2 py-0.5 text-[11px] font-bold"
                                                         :class="reportStatusClass(student.objective_summary?.final_report_uploaded)"
                                                     >
                                                         {{ reportStatusLabel(student.objective_summary?.final_report_uploaded) }}
@@ -1041,7 +1045,7 @@ onBeforeUnmount(() => {
                                             <Button
                                                 type="button"
                                                 variant="outline"
-                                                class="hidden h-9 rounded-lg border-wims-border bg-wims-card px-3 text-sm font-bold text-slate-700 hover:bg-slate-50 sm:inline-flex dark:text-slate-300 dark:hover:bg-slate-700/30"
+                                                class="hidden h-9 rounded-lg border-wims-border bg-wims-card px-3 text-[13px] font-bold text-slate-700 hover:bg-slate-50 sm:inline-flex dark:text-slate-300 dark:hover:bg-slate-700/30"
                                                 @click="openMonitoring(student)"
                                             >
                                                 Lihat Monitoring
@@ -1049,20 +1053,20 @@ onBeforeUnmount(() => {
                                         </template>
 
                                         <template v-else>
-                                            <div class="flex flex-wrap gap-2 lg:justify-end">
-                                                <div class="flex items-center gap-1.5 rounded-full border border-wims-border bg-wims-card px-2.5 py-1">
-                                                    <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400">Penilaian</span>
+                                            <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap lg:justify-end">
+                                                <div class="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-wims-border bg-wims-card px-3 py-2 sm:justify-start sm:gap-1.5 sm:rounded-full sm:px-2.5 sm:py-1">
+                                                    <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Penilaian</span>
                                                     <Badge
                                                         variant="outline"
-                                                        class="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                                                        class="rounded-full px-2 py-0.5 text-[11px] font-bold"
                                                         :class="evaluationStatusClass(student.objective_summary?.evaluation_status)"
                                                     >
                                                         {{ evaluationStatusLabel(student.objective_summary?.evaluation_status) }}
                                                     </Badge>
                                                 </div>
-                                                <div class="flex items-center gap-1.5 rounded-full border border-wims-border bg-wims-card px-2.5 py-1">
-                                                    <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400">Nilai</span>
-                                                    <span class="text-[11px] font-bold text-wims-text">
+                                                <div class="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-wims-border bg-wims-card px-3 py-2 sm:justify-start sm:gap-1.5 sm:rounded-full sm:px-2.5 sm:py-1">
+                                                    <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Nilai</span>
+                                                    <span class="text-[13px] font-bold text-wims-text">
                                                         {{
                                                             student.objective_summary?.evaluation_total_score !== null &&
                                                             student.objective_summary?.evaluation_total_score !== undefined
@@ -1094,11 +1098,11 @@ onBeforeUnmount(() => {
                                     </div>
                                 </div>
 
-                                <div class="mt-2 flex flex-col gap-2 border-t border-wims-border pt-2 sm:hidden">
+                                <div class="mt-3 grid grid-cols-2 gap-2 border-t border-wims-border pt-3 sm:hidden">
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        class="h-9 rounded-lg border-wims-border bg-wims-card px-3 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/30"
+                                        class="h-10 w-full rounded-lg border-wims-border bg-wims-card px-3 text-[13px] font-bold text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/30"
                                         @click="openMonitoring(student)"
                                     >
                                         Lihat Monitoring
@@ -1106,7 +1110,7 @@ onBeforeUnmount(() => {
                                     <Button
                                         v-if="section.key === 'completed' && canAssess(student)"
                                         type="button"
-                                        class="h-9 rounded-lg bg-[#0F62FE] px-3 text-sm font-bold text-white hover:bg-[#0050E6]"
+                                        class="h-10 w-full rounded-lg bg-[#0F62FE] px-3 text-[13px] font-bold text-white hover:bg-[#0050E6]"
                                         @click="openAssessment(student)"
                                     >
                                         {{ assessmentActionLabel(student) }}
@@ -1134,5 +1138,3 @@ onBeforeUnmount(() => {
         </div>
     </div>
 </template>
-
-

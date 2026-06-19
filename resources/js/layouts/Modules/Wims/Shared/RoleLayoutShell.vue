@@ -1,7 +1,8 @@
 ﻿<script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { Bell, BriefcaseBusiness, CheckCheck, CircleAlert, LogOut, Menu, RefreshCw, UserRound, X } from 'lucide-vue-next';
+import { Bell, BriefcaseBusiness, CheckCheck, CircleAlert, GraduationCap, LogOut, Menu, RefreshCw, UserRound, X } from 'lucide-vue-next';
+import AppToast from '@/pages/WorkOs/components/ui/AppToast.vue';
 
 type AuthUser = {
     name?: string | null;
@@ -53,6 +54,8 @@ const isProfileMenuOpen = ref(false);
 const desktopNotificationMenuRef = ref<HTMLElement | null>(null);
 const mobileNotificationMenuRef = ref<HTMLElement | null>(null);
 const profileMenuRef = ref<HTMLElement | null>(null);
+let initialHtmlDarkClass = false;
+let initialBodyDarkClass = false;
 
 const currentPath = computed(() => {
     const [path] = page.url.split('?');
@@ -325,6 +328,36 @@ const closeProfileMenu = () => {
     isProfileMenuOpen.value = false;
 };
 
+const syncRoleDocumentTheme = () => {
+    if (typeof document === 'undefined') {
+        return;
+    }
+
+    const html = document.documentElement;
+    const body = document.body;
+
+    html.classList.add('wims-role-page');
+    body.classList.add('wims-role-page');
+    body.classList.add('wims-role-body');
+    html.classList.remove('dark');
+    body.classList.remove('dark');
+};
+
+const cleanupRoleDocumentTheme = () => {
+    if (typeof document === 'undefined') {
+        return;
+    }
+
+    const html = document.documentElement;
+    const body = document.body;
+
+    html.classList.remove('wims-role-page');
+    body.classList.remove('wims-role-page');
+    body.classList.remove('wims-role-body');
+    html.classList.toggle('dark', initialHtmlDarkClass);
+    body.classList.toggle('dark', initialBodyDarkClass);
+};
+
 const scrollToSection = (target?: string) => {
     if (!target || typeof document === 'undefined') {
         return;
@@ -438,6 +471,12 @@ const pageMeta = computed(() => {
 });
 
 onMounted(() => {
+    if (typeof document !== 'undefined') {
+        initialHtmlDarkClass = document.documentElement.classList.contains('dark');
+        initialBodyDarkClass = document.body.classList.contains('dark');
+    }
+
+    syncRoleDocumentTheme();
     document.addEventListener('click', handleClickOutsideNotification);
     document.addEventListener('click', handleClickOutsideProfileMenu);
 });
@@ -445,17 +484,19 @@ onMounted(() => {
 onBeforeUnmount(() => {
     document.removeEventListener('click', handleClickOutsideNotification);
     document.removeEventListener('click', handleClickOutsideProfileMenu);
+    cleanupRoleDocumentTheme();
 });
 
 watch(currentPath, () => {
     closeNotifications();
     closeProfileMenu();
     closeMenu();
+    syncRoleDocumentTheme();
 });
 </script>
 
 <template>
-    <div class="min-h-screen bg-wims-bg lg:flex lg:h-screen lg:overflow-hidden">
+    <div class="wims-role-shell flex h-screen flex-col overflow-hidden bg-wims-bg lg:flex-row">
         <aside class="hidden lg:flex lg:w-[272px] lg:flex-shrink-0">
             <div class="sticky top-0 flex h-screen w-full flex-col border-r border-wims-border bg-wims-card transition-colors duration-300">
                 <div class="relative flex h-full flex-col px-4 py-6">
@@ -465,11 +506,11 @@ watch(currentPath, () => {
                         :class="
                             isCompanyBrand
                                 ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-teal-50 text-emerald-700'
-                                : 'border-wims-border bg-wims-card'
+                                : 'border-blue-200 bg-gradient-to-br from-blue-50 via-white to-indigo-50 text-blue-700'
                         "
                     >
                         <BriefcaseBusiness v-if="isCompanyBrand" class="size-5" />
-                        <img v-else src="/logo.png" alt="WIMS Logo" class="size-7 object-contain" />
+                        <GraduationCap v-else class="size-5" />
                     </div>
                     <div>
                         <p
@@ -575,14 +616,14 @@ watch(currentPath, () => {
             </div>
         </aside>
 
-        <div class="min-w-0 flex-1 lg:flex lg:h-screen lg:flex-col">
+        <div class="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden">
             <header class="sticky top-0 z-30 hidden border-b border-wims-border bg-wims-topbar backdrop-blur-xl transition-colors duration-300 lg:block">
                 <div class="mx-auto flex w-full max-w-[1320px] items-start justify-between gap-4 px-8 py-4 xl:px-10">
                     <div class="min-w-0 max-w-3xl">
-                        <h1 class="text-[18px] font-bold tracking-tight text-wims-text sm:text-[20px]">
+                        <h1 class="text-base font-semibold text-wims-text">
                             {{ pageMeta.title }}
                         </h1>
-                        <p class="mt-1.5 text-[13px] leading-6 text-slate-600 sm:text-sm">
+                        <p class="mt-1.5 text-[11px] leading-5 text-slate-600">
                             {{ pageMeta.subtitle }}
                         </p>
                     </div>
@@ -986,7 +1027,7 @@ watch(currentPath, () => {
                 </div>
             </header>
 
-            <main class="lg:flex-1 lg:overflow-y-auto">
+            <main class="min-w-0 min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
                 <slot />
             </main>
         </div>
@@ -1015,20 +1056,20 @@ watch(currentPath, () => {
                                 :class="
                                     isCompanyBrand
                                         ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-teal-50 text-emerald-700'
-                                        : 'border-wims-border bg-wims-card'
+                                        : 'border-blue-200 bg-gradient-to-br from-blue-50 via-white to-indigo-50 text-blue-700'
                                 "
                             >
                                 <BriefcaseBusiness v-if="isCompanyBrand" class="size-5" />
-                                <img v-else src="/logo.png" alt="WIMS Logo" class="size-7 object-contain" />
+                                <GraduationCap v-else class="size-5" />
                             </div>
                             <div class="min-w-0">
                                 <p
-                                    class="truncate text-[14px] font-black uppercase tracking-[0.18em] sm:text-[15px] sm:tracking-[0.2em]"
+                                    class="truncate text-[15px] font-black uppercase tracking-[0.2em]"
                                     :class="isCompanyBrand ? 'text-emerald-700' : 'text-blue-600'"
                                 >
                                     {{ isCompanyBrand ? 'MITRA' : 'WIMS' }}
                                 </p>
-                                <p class="mt-0.5 truncate text-[9px] font-medium tracking-wide text-slate-400 sm:text-[10px]">
+                                <p class="mt-0.5 truncate text-[10px] font-medium tracking-wide text-slate-400">
                                     {{ subtitle }}
                                 </p>
                             </div>
@@ -1101,10 +1142,10 @@ watch(currentPath, () => {
                                 <component :is="item.icon" class="size-4" />
                             </div>
                             <div class="min-w-0 flex-1">
-                                <p class="text-[12px] font-semibold leading-none sm:text-[13px]" :class="isActive(item) ? 'text-blue-700' : ''">
+                                <p class="text-[13px] font-semibold leading-none" :class="isActive(item) ? 'text-blue-700' : ''">
                                     {{ item.label }}
                                 </p>
-                                <p class="mt-1 text-[10px] leading-none sm:text-[11px]" :class="isActive(item) ? 'text-blue-500/80' : 'text-slate-400'">
+                                <p class="mt-1 text-[11px] leading-none" :class="isActive(item) ? 'text-blue-500/80' : 'text-slate-400'">
                                     {{ item.description || item.label }}
                                 </p>
                             </div>
@@ -1116,7 +1157,7 @@ watch(currentPath, () => {
                         <div class="rounded-xl border border-wims-border/80 bg-slate-50/80 p-3">
                             <button
                                 type="button"
-                                class="flex w-full items-center justify-center gap-2 rounded-lg text-[11px] font-semibold text-rose-500 transition-all duration-200 hover:bg-rose-50"
+                                class="flex w-full items-center justify-center gap-2 rounded-lg text-sm font-semibold text-rose-500 transition-all duration-200 hover:bg-rose-50"
                                 @click="logout"
                             >
                                 <LogOut class="size-3.5" />
@@ -1127,7 +1168,7 @@ watch(currentPath, () => {
                 </div>
             </div>
         </transition>
+
+        <AppToast />
     </div>
 </template>
-
-

@@ -38,10 +38,21 @@ type PageState = 'not_registered' | 'waiting' | 'active' | 'completed';
 
 type RegistrationProps = {
     status?: string | null;
-    company_name?: string | null;
-    proposal_company_name?: string | null;
-    dosen_name?: string | null;
-    mentor_name?: string | null;
+    company?: {
+        proposal?: {
+            name?: string | null;
+        } | null;
+        final?: {
+            id?: number | null;
+            name?: string | null;
+        } | null;
+    } | null;
+    lecturer?: {
+        name?: string | null;
+    } | null;
+    mentor?: {
+        name?: string | null;
+    } | null;
     period_label?: string | null;
     submitted_at?: string | null;
     laporan_akhir?: {
@@ -65,20 +76,13 @@ type InternshipProps = {
 };
 
 type EvaluationProps = {
-    status_penilaian?: string | null;
     status_key?: string | null;
     status_label?: string | null;
     is_complete?: boolean;
-    nilai_akhir?: number | null;
-    tanggal_nilai?: string | null;
     finalized_at?: string | null;
     catatan_dosen?: string | null;
     dosen_score?: number | null;
     mitra_score?: number | null;
-    dosen_submitted_at?: string | null;
-    mitra_submitted_at?: string | null;
-    latest_submitted_at?: string | null;
-    dosen_note?: string | null;
 };
 
 // Fitur 6: Tipe untuk riwayat aktivitas
@@ -151,20 +155,13 @@ const props = withDefaults(
             total_sakit: null,
         }),
         evaluation: () => ({
-            status_penilaian: null,
             status_key: 'not_assessed',
             status_label: 'Belum Dinilai',
             is_complete: false,
-            nilai_akhir: null,
-            tanggal_nilai: null,
             finalized_at: null,
             catatan_dosen: null,
             dosen_score: null,
             mitra_score: null,
-            dosen_submitted_at: null,
-            mitra_submitted_at: null,
-            latest_submitted_at: null,
-            dosen_note: null,
         }),
         history: () => ({
             attendance: [],
@@ -201,6 +198,7 @@ const attendanceHistory = computed(() => props.history?.attendance ?? []);
 const logbookHistory = computed(() => props.history?.logbook ?? []);
 const attendanceHistoryDialogOpen = ref(false);
 const logbookHistoryDialogOpen = ref(false);
+const evaluationStatusKey = computed(() => props.evaluation.status_key ?? 'not_assessed');
 
 const statusLabel = computed(() => {
     if (props.registration?.status === 'selesai') return 'Selesai';
@@ -229,15 +227,15 @@ const statusClasses = computed(() => {
 });
 
 const evaluationStatusLabel = computed(() => {
-    return props.evaluation.status_label || 'Belum Dinilai';
+    return props.evaluation.status_label ?? 'Belum Dinilai';
 });
 
 const evaluationStatusClasses = computed(() => {
-    if (props.evaluation.status_key === 'submitted')
+    if (evaluationStatusKey.value === 'submitted')
         return 'border-emerald-200 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300';
-    if (['final_dosen', 'final_mitra'].includes(props.evaluation.status_key || ''))
+    if (['final_dosen', 'final_mitra'].includes(evaluationStatusKey.value))
         return 'border-blue-200 bg-blue-50 dark:bg-blue-500/15 text-[#2563EB]';
-    if (props.evaluation.status_key === 'draft')
+    if (evaluationStatusKey.value === 'draft')
         return 'border-amber-200 bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300';
     return 'border-wims-border bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400';
 });
@@ -277,7 +275,7 @@ const timelineSteps = computed(() => [
         label: 'Penilaian',
         desc: 'Dosen dan mitra mengirim nilai',
         done: Boolean(props.evaluation?.is_complete),
-        active: ['final_dosen', 'final_mitra', 'draft'].includes(props.evaluation?.status_key || ''),
+        active: ['final_dosen', 'final_mitra', 'draft'].includes(evaluationStatusKey.value),
     },
 ]);
 
@@ -285,11 +283,11 @@ const timelineSteps = computed(() => [
 const checklistItems = computed(() => [
     {
         label: 'Dosen pembimbing sudah ditetapkan',
-        done: Boolean(props.registration?.dosen_name),
+        done: Boolean(props.registration?.lecturer?.name),
     },
     {
         label: 'Pembimbing lapangan mitra sudah ditetapkan',
-        done: Boolean(props.registration?.mentor_name),
+        done: Boolean(props.registration?.mentor?.name),
     },
     {
         label: 'Periode PKL telah selesai',
@@ -310,6 +308,22 @@ const checklistDoneCount = computed(
 );
 const checklistPercent = computed(
     () => Math.round((checklistDoneCount.value / checklistItems.value.length) * 100),
+);
+
+const proposalCompanyLabel = computed(
+    () => props.registration?.company?.proposal?.name ?? 'Belum ada usulan',
+);
+const currentCompanyLabel = computed(
+    () =>
+        props.registration?.company?.final?.name ??
+        props.registration?.company?.proposal?.name ??
+        'Belum tersedia',
+);
+const lecturerLabel = computed(
+    () => props.registration?.lecturer?.name ?? 'Belum ditetapkan',
+);
+const mentorLabel = computed(
+    () => props.registration?.mentor?.name ?? 'Belum ditetapkan',
 );
 
 // --- FITUR 5: Konversi Nilai ke Huruf -----------------------------------------
@@ -709,7 +723,7 @@ const completionScore = computed(() => {
                                 <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3">
                                     <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Usulan Perusahaan</p>
                                     <p class="mt-1.5 text-sm font-bold text-wims-text">
-                                        {{ props.registration?.proposal_company_name || 'Belum ada usulan' }}
+                                        {{ proposalCompanyLabel }}
                                     </p>
                                 </div>
                                 <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3">
@@ -792,7 +806,7 @@ const completionScore = computed(() => {
                                 <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3">
                                     <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Perusahaan Final</p>
                                     <p class="mt-1.5 break-words text-sm font-bold text-wims-text">
-                                        {{ props.registration?.company_name || 'Belum tersedia' }}
+                                        {{ currentCompanyLabel }}
                                     </p>
                                 </div>
                                 <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3">
@@ -1276,7 +1290,7 @@ const completionScore = computed(() => {
                             <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3">
                                 <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Perusahaan</p>
                                 <p class="mt-1.5 break-words text-sm font-bold text-wims-text">
-                                    {{ props.registration?.company_name || props.registration?.proposal_company_name || 'Belum tersedia' }}
+                                    {{ currentCompanyLabel }}
                                 </p>
                             </div>
                             <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3">
@@ -1288,22 +1302,22 @@ const completionScore = computed(() => {
                             <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3">
                                 <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Dosen Pembimbing</p>
                                 <div class="mt-1.5 flex items-center gap-2">
-                                    <div v-if="props.registration?.dosen_name" class="flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-500/15 text-blue-500">
+                                    <div v-if="props.registration?.lecturer?.name" class="flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-500/15 text-blue-500">
                                         <User class="size-2.5" />
                                     </div>
                                     <p class="break-words text-sm font-bold text-wims-text">
-                                        {{ props.registration?.dosen_name || 'Belum ditetapkan' }}
+                                        {{ lecturerLabel }}
                                     </p>
                                 </div>
                             </div>
                             <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3">
                                 <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Pembimbing Mitra</p>
                                 <div class="mt-1.5 flex items-center gap-2">
-                                    <div v-if="props.registration?.mentor_name" class="flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-500/15 text-emerald-500">
+                                    <div v-if="props.registration?.mentor?.name" class="flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-500/15 text-emerald-500">
                                         <User class="size-2.5" />
                                     </div>
                                     <p class="break-words text-sm font-bold text-wims-text">
-                                        {{ props.registration?.mentor_name || 'Belum ditetapkan' }}
+                                        {{ mentorLabel }}
                                     </p>
                                 </div>
                             </div>
@@ -1422,7 +1436,7 @@ const completionScore = computed(() => {
                                         </div>
                                     </div>
                                     <p class="mt-2.5 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                                        Terakhir diperbarui {{ props.evaluation.finalized_at || props.evaluation.tanggal_nilai || 'belum tersedia' }}.
+                                        Terakhir diperbarui {{ props.evaluation.finalized_at || 'belum tersedia' }}.
                                     </p>
                                 </div>
 
@@ -1459,7 +1473,7 @@ const completionScore = computed(() => {
                                         </div>
                                     </div>
                                     <p class="mt-2.5 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                                        Terakhir diperbarui {{ props.evaluation.finalized_at || props.evaluation.tanggal_nilai || 'belum tersedia' }}.
+                                        Terakhir diperbarui {{ props.evaluation.finalized_at || 'belum tersedia' }}.
                                     </p>
                                 </div>
 
@@ -1485,5 +1499,3 @@ const completionScore = computed(() => {
         </div>
     </div>
 </template>
-
-

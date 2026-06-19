@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { LoaderCircle, MapPinned, Search } from 'lucide-vue-next';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ type SearchResult = {
     display_name: string;
     lat: string;
     lon: string;
+    address?: Record<string, string | undefined>;
 };
 
 const props = defineProps<{
@@ -37,6 +38,65 @@ let leaflet: typeof import('leaflet') | null = null;
 let map: import('leaflet').Map | null = null;
 let marker: import('leaflet').Marker | null = null;
 let markerIconInstance: import('leaflet').DivIcon | null = null;
+let resizeObserver: ResizeObserver | null = null;
+let searchController: AbortController | null = null;
+let reverseGeocodeController: AbortController | null = null;
+
+const ADDRESS_PRIORITY = [
+    'road',
+    'pedestrian',
+    'hamlet',
+    'village',
+    'suburb',
+    'city_district',
+    'town',
+    'city',
+    'municipality',
+    'county',
+    'state_district',
+    'state',
+    'postcode',
+    'country',
+] as const;
+
+const normalizeAddressSegment = (segment: string) => {
+    const normalized = segment
+        .replace(/\s+/g, ' ')
+        .replace(/^Kabupaten\s+/i, '')
+        .replace(/^Kota\s+/i, '')
+        .trim();
+
+    return normalized
+        .replace(/\bCentral Java\b/gi, 'Jawa Tengah')
+        .replace(/\bSpecial Region of Yogyakarta\b/gi, 'DI Yogyakarta');
+};
+
+const formatAddress = (
+    displayName?: string | null,
+    address?: Record<string, string | undefined> | null,
+) => {
+    if (address && Object.keys(address).length > 0) {
+        const segments = ADDRESS_PRIORITY
+            .map((key) => address[key])
+            .filter((value): value is string => Boolean(value))
+            .map(normalizeAddressSegment)
+            .filter(Boolean);
+
+        const uniqueSegments = segments.filter(
+            (segment, index) =>
+                segments.findIndex(
+                    (candidate) =>
+                        candidate.toLocaleLowerCase('id-ID') === segment.toLocaleLowerCase('id-ID'),
+                ) === index,
+        );
+
+        if (uniqueSegments.length > 0) {
+            return uniqueSegments.join(', ');
+        }
+    }
+
+    return normalizeAddressSegment(displayName ?? '');
+};
 
 const clearMarker = () => {
     if (!map || !marker) {
@@ -48,10 +108,14 @@ const clearMarker = () => {
 };
 
 const reverseGeocode = async (latitude: number, longitude: number) => {
+    reverseGeocodeController?.abort();
+    reverseGeocodeController = new AbortController();
+
     try {
         const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&accept-language=id,en&lat=${latitude}&lon=${longitude}`,
             {
+                signal: reverseGeocodeController.signal,
                 headers: {
                     Accept: 'application/json',
                 },
@@ -63,14 +127,22 @@ const reverseGeocode = async (latitude: number, longitude: number) => {
         }
 
         const payload = await response.json();
-        const address = payload.display_name || '';
+        const address = formatAddress(payload.display_name, payload.address);
 
         if (address) {
+            error.value = '';
+            results.value = [];
             emit('update:address', address);
             search.value = address;
         }
     } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') {
+            return;
+        }
+
         error.value = err instanceof Error ? err.message : 'Terjadi kesalahan saat membaca alamat.';
+    } finally {
+        reverseGeocodeController = null;
     }
 };
 
@@ -106,19 +178,36 @@ const setMarker = (latitude: number, longitude: number) => {
     map.setView([latitude, longitude], 16);
 };
 
-const searchLocation = async () => {
-    if (!search.value.trim()) {
-        results.value = [];
+const syncMapSize = () => {
+    if (!map) {
         return;
     }
 
+    requestAnimationFrame(() => {
+        map?.invalidateSize();
+    });
+};
+
+const searchLocation = async () => {
+    const query = search.value.trim();
+
+    if (!query) {
+        results.value = [];
+        error.value = '';
+        return;
+    }
+
+    search.value = query;
     isSearching.value = true;
     error.value = '';
+    searchController?.abort();
+    searchController = new AbortController();
 
     try {
         const response = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(search.value)}`,
+            `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&accept-language=id,en&limit=5&q=${encodeURIComponent(query)}`,
             {
+                signal: searchController.signal,
                 headers: {
                     Accept: 'application/json',
                 },
@@ -130,22 +219,33 @@ const searchLocation = async () => {
         }
 
         results.value = await response.json();
+
+        if (results.value.length === 0) {
+            error.value = 'Alamat tidak ditemukan. Coba gunakan kata kunci yang lebih spesifik.';
+        }
     } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') {
+            return;
+        }
+
         error.value = err instanceof Error ? err.message : 'Terjadi kesalahan saat mencari lokasi.';
     } finally {
         isSearching.value = false;
+        searchController = null;
     }
 };
 
 const selectResult = (result: SearchResult) => {
     const latitude = Number(result.lat);
     const longitude = Number(result.lon);
+    const formattedAddress = formatAddress(result.display_name, result.address);
 
     emit('update:latitude', latitude);
     emit('update:longitude', longitude);
-    emit('update:address', result.display_name);
-    search.value = result.display_name;
+    emit('update:address', formattedAddress);
+    search.value = formattedAddress;
     results.value = [];
+    error.value = '';
 
     setMarker(latitude, longitude);
 };
@@ -186,6 +286,7 @@ onMounted(async () => {
 
         emit('update:latitude', latitude);
         emit('update:longitude', longitude);
+        results.value = [];
         setMarker(latitude, longitude);
         reverseGeocode(latitude, longitude);
     });
@@ -193,9 +294,26 @@ onMounted(async () => {
     if (props.latitude !== null && props.latitude !== undefined && props.longitude !== null && props.longitude !== undefined) {
         setMarker(props.latitude, props.longitude);
     }
+
+    await nextTick();
+    syncMapSize();
+
+    if (mapElement.value && typeof ResizeObserver !== 'undefined') {
+        resizeObserver = new ResizeObserver(() => {
+            syncMapSize();
+        });
+
+        resizeObserver.observe(mapElement.value);
+    }
 });
 
 onBeforeUnmount(() => {
+    searchController?.abort();
+    reverseGeocodeController?.abort();
+    resizeObserver?.disconnect();
+    resizeObserver = null;
+    searchController = null;
+    reverseGeocodeController = null;
     map?.remove();
     map = null;
     marker = null;
@@ -207,10 +325,12 @@ watch(
         if (latitude === null || latitude === undefined || longitude === null || longitude === undefined) {
             clearMarker();
             map?.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+            syncMapSize();
             return;
         }
 
         setMarker(latitude, longitude);
+        syncMapSize();
     },
 );
 
@@ -266,7 +386,7 @@ watch(
                 class="w-full rounded-2xl bg-white px-4 py-3 text-left text-sm text-slate-600 ring-1 ring-slate-200 transition hover:text-slate-900"
                 @click="selectResult(result)"
             >
-                {{ result.display_name }}
+                {{ formatAddress(result.display_name, result.address) }}
             </button>
         </div>
 
@@ -315,5 +435,3 @@ watch(
     background: #ffffff;
 }
 </style>
-
-

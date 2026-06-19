@@ -4,10 +4,10 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import {
     Bell, CheckCheck, CircleAlert, LogOut, Moon, RefreshCw, Sun, X,
 } from 'lucide-vue-next';
-import { useAppearance } from '@/composables/useAppearance';
+import { useWimsStudentAppearance } from '@/composables/useWimsStudentAppearance';
 
 const page = usePage();
-const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
+const { appearance, resolvedAppearance, updateAppearance } = useWimsStudentAppearance();
 
 const currentPath = computed(() => {
     const [path] = page.url.split('?');
@@ -499,5 +499,4 @@ watch(currentPath, () => {
         </div>
     </header>
 </template>
-
 

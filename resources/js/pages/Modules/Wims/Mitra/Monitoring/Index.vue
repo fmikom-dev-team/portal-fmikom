@@ -13,6 +13,13 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { formatIndonesianDateLabel } from '@/lib/date';
 import WimsMitraLayout from '@/layouts/Modules/Wims/Mitra/Layout.vue';
 
@@ -28,15 +35,31 @@ type StudentItem = {
     email?: string | null;
     nim?: string | null;
     phone?: string | null;
-    company?: string | null;
-    mentor_name?: string | null;
-    dosen_name?: string | null;
+    company?: {
+        id?: number | null;
+        name?: string | null;
+    } | null;
+    mentor?: {
+        id?: number | null;
+        name?: string | null;
+        role_context?: {
+            slug?: string | null;
+            label?: string | null;
+        } | null;
+    } | null;
+    lecturer?: {
+        id?: number | null;
+        name?: string | null;
+        role_context?: {
+            slug?: string | null;
+            label?: string | null;
+        } | null;
+    } | null;
     period_start?: string | null;
     period_end?: string | null;
     submitted_at?: string | null;
     status_pendaftaran?: string | null;
     dashboard_phase?: 'assigned' | 'upcoming' | 'active' | 'completed' | null;
-    attendance_date?: string | null;
     latest_logbook_date?: string | null;
 };
 
@@ -47,12 +70,13 @@ const props = defineProps<{
 
 const search = ref('');
 const selectedStudent = ref<StudentItem | null>(null);
-
-const initialFilter = computed(() => {
-    if (props.initialStatus === 'aktif') return 'aktif';
-    if (props.initialStatus === 'selesai') return 'selesai';
-    return 'semua';
-});
+const selectedFilter = ref<'semua' | 'aktif' | 'selesai'>(
+    props.initialStatus === 'aktif'
+        ? 'aktif'
+        : props.initialStatus === 'selesai'
+          ? 'selesai'
+          : 'semua',
+);
 
 const matchesSearch = (student: StudentItem) => {
     const keyword = search.value.trim().toLowerCase();
@@ -61,7 +85,7 @@ const matchesSearch = (student: StudentItem) => {
         return true;
     }
 
-    return [student.name, student.nim, student.company]
+    return [student.name, student.nim, student.company?.name]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(keyword));
 };
@@ -70,9 +94,9 @@ const filteredStudents = computed(() =>
     props.students.filter(
         (student) =>
             matchesSearch(student) &&
-            (initialFilter.value === 'semua' ||
-                (initialFilter.value === 'aktif' && student.dashboard_phase === 'active') ||
-                (initialFilter.value === 'selesai' && student.dashboard_phase === 'completed')),
+            (selectedFilter.value === 'semua' ||
+                (selectedFilter.value === 'aktif' && student.dashboard_phase === 'active') ||
+                (selectedFilter.value === 'selesai' && student.dashboard_phase === 'completed')),
     ),
 );
 
@@ -116,18 +140,12 @@ const resetFilters = () => {
     search.value = '';
 };
 
-const pageTitle = computed(() => {
-    if (initialFilter.value === 'aktif') return 'Mahasiswa Aktif';
-    if (initialFilter.value === 'selesai') return 'Mahasiswa Selesai';
-    return 'Monitoring Mahasiswa';
-});
-
 const pageSubtitle = computed(() => {
-    if (initialFilter.value === 'aktif') {
+    if (selectedFilter.value === 'aktif') {
         return 'Daftar mahasiswa magang yang sedang berjalan di perusahaan mitra.';
     }
 
-    if (initialFilter.value === 'selesai') {
+    if (selectedFilter.value === 'selesai') {
         return 'Daftar mahasiswa yang sudah menyelesaikan periode magang.';
     }
 
@@ -137,11 +155,11 @@ const pageSubtitle = computed(() => {
 const resultLabel = computed(() => {
     const count = filteredStudents.value.length;
 
-    if (initialFilter.value === 'aktif') {
+    if (selectedFilter.value === 'aktif') {
         return `Menampilkan ${count} mahasiswa aktif.`;
     }
 
-    if (initialFilter.value === 'selesai') {
+    if (selectedFilter.value === 'selesai') {
         return `Menampilkan ${count} mahasiswa selesai.`;
     }
 
@@ -149,8 +167,8 @@ const resultLabel = computed(() => {
 });
 
 const emptyTitle = computed(() => {
-    if (initialFilter.value === 'aktif') return 'Belum ada mahasiswa aktif.';
-    if (initialFilter.value === 'selesai') return 'Belum ada mahasiswa selesai.';
+    if (selectedFilter.value === 'aktif') return 'Belum ada mahasiswa aktif.';
+    if (selectedFilter.value === 'selesai') return 'Belum ada mahasiswa selesai.';
     return 'Belum ada mahasiswa bimbingan.';
 });
 
@@ -177,24 +195,24 @@ const studentInitial = (student: StudentItem) => {
     <div class="min-h-screen bg-wims-bg">
         <div class="mx-auto w-full max-w-[1320px] space-y-4 px-4 py-3 lg:space-y-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10">
             <header class="relative overflow-hidden rounded-2xl border border-wims-border/50 bg-wims-card/95 px-5 py-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] sm:px-6 sm:py-6">
+                <button
+                    type="button"
+                    title="Kembali ke Dashboard"
+                    aria-label="Kembali ke Dashboard"
+                    class="absolute top-5 right-5 inline-flex size-9 items-center justify-center rounded-xl border border-wims-border bg-white/90 text-slate-500 transition duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 sm:top-6 sm:right-6 sm:size-10"
+                    @click="router.visit('/wims/mitra/dashboard')"
+                >
+                    <ArrowLeft class="size-4" />
+                </button>
                 <div class="flex flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-start lg:justify-between">
-                    <div class="max-w-3xl">
-                        <h1 class="text-[17px] font-bold tracking-tight text-wims-text sm:text-[20px]">
+                    <div class="max-w-3xl pr-10 sm:pr-12">
+                        <h1 class="text-[20px] font-bold tracking-tight text-wims-text sm:text-[24px] lg:text-[30px]">
                             Daftar Mahasiswa Magang
                         </h1>
-                        <p class="mt-1.5 text-[12px] leading-5 text-slate-600 sm:text-sm sm:leading-6">
+                        <p class="mt-1.5 text-[13px] leading-relaxed text-slate-600 sm:text-sm">
                             {{ pageSubtitle }}
                         </p>
                     </div>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        class="inline-flex h-9 w-fit self-start items-center gap-1.5 rounded-lg border-wims-border bg-wims-card px-3 text-[11px] font-bold text-slate-700 transition duration-200 hover:border-slate-300 hover:bg-slate-50 sm:px-3.5 sm:text-xs lg:self-auto"
-                        @click="router.visit('/wims/mitra/dashboard')"
-                    >
-                        <ArrowLeft class="size-3.5" />
-                        Kembali ke Dashboard
-                    </Button>
                 </div>
             </header>
 
@@ -210,23 +228,35 @@ const studentInitial = (student: StudentItem) => {
                                 class="pl-9"
                             />
                         </div>
-                        <div class="flex flex-col gap-1.5 text-[13px] text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:text-sm lg:justify-end">
-                            <p>{{ resultLabel }}</p>
-                            <button
-                                v-if="search"
-                                type="button"
-                                class="text-left text-[13px] font-bold text-[#0F62FE] hover:text-[#0050E6] sm:text-right sm:text-sm"
-                                @click="resetFilters"
-                            >
-                                Reset search
-                            </button>
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:text-sm lg:justify-end">
+                            <Select v-model="selectedFilter">
+                                <SelectTrigger class="h-10 w-full min-w-[180px] bg-white sm:w-[200px]">
+                                    <SelectValue placeholder="Pilih kategori" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="semua">Semua Kategori</SelectItem>
+                                    <SelectItem value="aktif">Mahasiswa Aktif</SelectItem>
+                                    <SelectItem value="selesai">Mahasiswa Selesai</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <div class="flex flex-col gap-1.5 text-[13px] text-slate-600 sm:items-end sm:text-sm">
+                                <p>{{ resultLabel }}</p>
+                                <button
+                                    v-if="search"
+                                    type="button"
+                                    class="text-left text-[13px] font-bold text-[#0F62FE] hover:text-[#0050E6] sm:text-right sm:text-sm"
+                                    @click="resetFilters"
+                                >
+                                    Reset search
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </CardContent>
             </Card>
 
             <section class="space-y-4">
-                <div v-if="filteredStudents.length" class="space-y-4">
+                <div v-if="filteredStudents.length" class="space-y-6">
                     <Card
                         v-for="student in filteredStudents"
                         :key="student.registration_id"
@@ -253,15 +283,15 @@ const studentInitial = (student: StudentItem) => {
                                     </button>
 
                                     <div class="min-w-0 flex-1 pr-20 sm:pr-0">
-                                        <p class="text-sm font-bold text-wims-text">
+                                        <p class="text-[13px] font-bold text-wims-text">
                                             {{ student.name || 'Mahasiswa' }}
                                         </p>
-                                        <div class="mt-1 flex flex-col gap-1 text-xs text-slate-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1">
+                                        <div class="mt-1 flex flex-col gap-1 text-[11px] text-slate-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1">
                                             <span>{{ student.nim || '-' }}</span>
                                             <span class="hidden text-slate-300 sm:inline">•</span>
-                                            <span>{{ student.company || 'Perusahaan belum tersedia' }}</span>
+                                            <span>{{ student.company?.name || 'Perusahaan belum tersedia' }}</span>
                                             <span class="hidden text-slate-300 sm:inline">•</span>
-                                            <span class="text-[11px] leading-4 sm:text-xs sm:leading-5">Periode {{ periodLabel(student) }}</span>
+                                            <span class="text-[11px] leading-5">Periode {{ periodLabel(student) }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -278,7 +308,7 @@ const studentInitial = (student: StudentItem) => {
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        class="h-10 rounded-lg border-wims-border bg-wims-card px-3.5 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                                        class="h-10 rounded-lg border-wims-border bg-wims-card px-3.5 text-[13px] font-bold text-slate-700 hover:bg-slate-50"
                                         @click="openMonitoring(student)"
                                     >
                                         Lihat Monitoring
@@ -294,10 +324,10 @@ const studentInitial = (student: StudentItem) => {
                     class="rounded-xl border border-dashed border-wims-border bg-wims-card py-0 shadow-none"
                 >
                     <CardContent class="px-5 py-8 text-center">
-                        <p class="text-sm font-bold text-wims-text">
+                        <p class="text-[13px] font-bold text-wims-text">
                             {{ props.students.length ? 'Tidak ada mahasiswa yang cocok.' : emptyTitle }}
                         </p>
-                        <p class="mt-1 text-sm leading-6 text-slate-500">
+                        <p class="mt-1 text-[11px] leading-5 text-slate-500">
                             {{
                                 props.students.length
                                     ? 'Coba ubah kata kunci pencarian atau filter monitoring yang dipakai.'
@@ -315,10 +345,10 @@ const studentInitial = (student: StudentItem) => {
             <div v-if="selectedStudent" class="flex flex-col">
                 <div class="min-h-0 overflow-y-auto overflow-x-hidden px-5 py-5 sm:px-6 sm:py-6">
                     <DialogHeader class="space-y-2 text-left">
-                        <DialogTitle class="text-base font-bold text-wims-text">
+                        <DialogTitle class="text-[15px] font-bold text-wims-text">
                             Profil Mahasiswa
                         </DialogTitle>
-                        <DialogDescription class="text-[13px] leading-6 text-slate-600 sm:text-sm">
+                        <DialogDescription class="text-[13px] leading-relaxed text-slate-600 sm:text-sm">
                             Ringkasan profil mahasiswa magang dalam daftar monitoring mitra.
                         </DialogDescription>
                     </DialogHeader>
@@ -329,10 +359,10 @@ const studentInitial = (student: StudentItem) => {
                                 <div class="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-wims-border bg-white text-xl font-bold text-slate-500 shadow-sm">
                                     <span>{{ studentInitial(selectedStudent) }}</span>
                                 </div>
-                                <p class="mt-3 min-w-0 break-words text-base font-bold text-wims-text">
+                                <p class="mt-3 min-w-0 break-words text-[13px] font-bold text-wims-text">
                                     {{ selectedStudent.name || 'Mahasiswa' }}
                                 </p>
-                                <p class="mt-1 text-sm text-slate-500">
+                                <p class="mt-1 text-[11px] text-slate-500 sm:text-sm">
                                     {{ selectedStudent.nim || '-' }}
                                 </p>
                                 <Badge
@@ -347,13 +377,13 @@ const studentInitial = (student: StudentItem) => {
 
                             <div class="mt-4 space-y-3 border-t border-wims-border pt-4 text-sm">
                                 <div class="min-w-0">
-                                    <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Email</p>
+                                    <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Email</p>
                                     <p class="mt-1 break-all font-medium text-wims-text">
                                         {{ selectedStudent.email || '-' }}
                                     </p>
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Telepon</p>
+                                    <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Telepon</p>
                                     <p class="mt-1 break-words font-medium text-wims-text">
                                         {{ selectedStudent.phone || '-' }}
                                     </p>
@@ -363,42 +393,42 @@ const studentInitial = (student: StudentItem) => {
 
                         <div class="h-fit min-w-0 self-start rounded-xl border border-wims-border bg-wims-card p-5">
                             <div>
-                                <h3 class="text-base font-bold text-wims-text">
+                                <h3 class="text-[15px] font-bold text-wims-text">
                                     Ringkasan Magang
                                 </h3>
-                                <p class="mt-1 text-[13px] leading-6 text-slate-600 sm:text-sm">
+                                <p class="mt-1 text-[11px] leading-5 text-slate-600 sm:text-sm">
                                     Data penempatan mahasiswa pada perusahaan mitra yang sedang dipantau.
                                 </p>
                             </div>
 
                             <div class="mt-4 space-y-2.5">
                                 <div class="min-w-0 rounded-xl border border-wims-border bg-slate-50 px-4 py-3">
-                                    <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Perusahaan</p>
-                                    <p class="mt-1 break-words text-sm font-bold text-wims-text">
-                                        {{ selectedStudent.company || 'Perusahaan belum tersedia' }}
+                                    <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Perusahaan</p>
+                                    <p class="mt-1 break-words text-[13px] font-bold text-wims-text">
+                                        {{ selectedStudent.company?.name || 'Perusahaan belum tersedia' }}
                                     </p>
                                 </div>
                                 <div class="min-w-0 rounded-xl border border-wims-border bg-slate-50 px-4 py-3">
-                                    <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Periode</p>
-                                    <p class="mt-1 break-words text-sm font-bold text-wims-text">
+                                    <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Periode</p>
+                                    <p class="mt-1 break-words text-[13px] font-bold text-wims-text">
                                         {{ periodLabel(selectedStudent) }}
                                     </p>
                                 </div>
                                 <div class="min-w-0 rounded-xl border border-wims-border bg-slate-50 px-4 py-3">
-                                    <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Pembimbing Lapangan</p>
-                                    <p class="mt-1 break-words text-sm font-bold text-wims-text">
-                                        {{ selectedStudent.mentor_name || '-' }}
+                                    <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Pembimbing Lapangan</p>
+                                    <p class="mt-1 break-words text-[13px] font-bold text-wims-text">
+                                        {{ selectedStudent.mentor?.name || '-' }}
                                     </p>
                                 </div>
                                 <div class="min-w-0 rounded-xl border border-wims-border bg-slate-50 px-4 py-3">
-                                    <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Dosen Pembimbing</p>
-                                    <p class="mt-1 break-words text-sm font-bold text-wims-text">
-                                        {{ selectedStudent.dosen_name || '-' }}
+                                    <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Dosen Pembimbing</p>
+                                    <p class="mt-1 break-words text-[13px] font-bold text-wims-text">
+                                        {{ selectedStudent.lecturer?.name || '-' }}
                                     </p>
                                 </div>
                                 <div class="min-w-0 rounded-xl border border-wims-border bg-slate-50 px-4 py-3">
-                                    <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">Terdaftar Pada</p>
-                                    <p class="mt-1 break-words text-sm font-bold text-wims-text">
+                                    <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Terdaftar Pada</p>
+                                    <p class="mt-1 break-words text-[13px] font-bold text-wims-text">
                                         {{ formatDateUi(selectedStudent.submitted_at) }}
                                     </p>
                                 </div>
@@ -412,7 +442,7 @@ const studentInitial = (student: StudentItem) => {
                         <Button
                             type="button"
                             variant="outline"
-                            class="h-10 rounded-lg border-wims-border bg-wims-card px-4 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                            class="h-10 rounded-lg border-wims-border bg-wims-card px-4 text-[13px] font-bold text-slate-700 hover:bg-slate-50"
                             @click="selectedStudent = null"
                         >
                             Tutup
@@ -423,5 +453,3 @@ const studentInitial = (student: StudentItem) => {
         </DialogContent>
     </Dialog>
 </template>
-
-

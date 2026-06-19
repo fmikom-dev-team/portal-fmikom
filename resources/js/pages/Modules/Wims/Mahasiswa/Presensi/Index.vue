@@ -6,12 +6,10 @@ import {
     Camera,
     CheckCircle2,
     Clock3,
-    ImagePlus,
     LoaderCircle,
     LocateFixed,
     LogOut,
     Navigation,
-    Sparkles,
 } from 'lucide-vue-next';
 import {
     computed,
@@ -60,7 +58,10 @@ type AbsenceRequestItem = {
 
 type AttendanceProps = {
     pendaftaran_id?: number | null;
-    company_name?: string | null;
+    company?: {
+        id?: number | null;
+        name?: string | null;
+    } | null;
     radius?: number | null;
     office_latitude?: number | string | null;
     office_longitude?: number | string | null;
@@ -76,10 +77,6 @@ type AttendanceProps = {
     is_late?: boolean | null;
     current_time?: string | null;
     location_status?: string | null;
-    absensi_hari_ini?: {
-        masuk?: string | null;
-        keluar?: string | null;
-    } | null;
     today_absence?: {
         jenis?: string | null;
         status?: string | null;
@@ -87,7 +84,6 @@ type AttendanceProps = {
         tanggal_label?: string | null;
     } | null;
     history_count?: number | null;
-    history_download_url?: string | null;
     current_period_history_download_url?: string | null;
     absence_requests?: AbsenceRequestItem[];
 };
@@ -99,7 +95,6 @@ type PageProps = {
 };
 
 const page = usePage<PageProps>();
-const photoInput = ref<HTMLInputElement | null>(null);
 const videoPreview = ref<HTMLVideoElement | null>(null);
 const timeInterval = ref<number | null>(null);
 const previewUrl = ref<string | null>(null);
@@ -637,10 +632,6 @@ const resetPhotoState = () => {
     cameraError.value = '';
     cameraState.value = 'idle';
     cameraFrameReady.value = false;
-
-    if (photoInput.value) {
-        photoInput.value.value = '';
-    }
 };
 
 const setPhotoFile = (file: File | null) => {
@@ -654,14 +645,6 @@ const setPhotoFile = (file: File | null) => {
     form.photo = file;
 };
 
-const openFilePicker = () => {
-    cameraRequestId.value += 1;
-    stopCamera();
-    cameraError.value = '';
-    cameraFrameReady.value = false;
-    photoInput.value?.click();
-};
-
 const clearVerificationSession = () => {
     cameraRequestId.value += 1;
     stopCamera();
@@ -670,10 +653,6 @@ const clearVerificationSession = () => {
     cameraFrameReady.value = false;
     revokePreview();
     form.photo = null;
-
-    if (photoInput.value) {
-        photoInput.value.value = '';
-    }
 };
 
 const isMobileDevice = () =>
@@ -973,29 +952,11 @@ const createStampedPhotoFile = async (
     });
 };
 
-const createImageElement = (file: File) =>
-    new Promise<HTMLImageElement>((resolve, reject) => {
-        const objectUrl = URL.createObjectURL(file);
-        const image = new Image();
-
-        image.onload = () => {
-            URL.revokeObjectURL(objectUrl);
-            resolve(image);
-        };
-
-        image.onerror = () => {
-            URL.revokeObjectURL(objectUrl);
-            reject(new Error('File foto tidak dapat dibaca.'));
-        };
-
-        image.src = objectUrl;
-    });
-
 const openCamera = async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
         cameraState.value = 'error';
         cameraError.value =
-            'Browser ini tidak mendukung kamera langsung. Gunakan pilih file sebagai cadangan.';
+            'Browser ini tidak mendukung kamera langsung. Gunakan browser atau perangkat yang mendukung akses kamera.';
 
         return false;
     }
@@ -1081,40 +1042,6 @@ const capturePhoto = async () => {
             error instanceof Error
                 ? error.message
                 : 'Gagal memproses hasil kamera. Coba lagi.';
-    }
-};
-
-const handlePhotoChange = async (event: Event) => {
-    const target = event.target as HTMLInputElement;
-    const file = target.files?.[0] ?? null;
-
-    if (!file) {
-        setPhotoFile(null);
-
-        return;
-    }
-
-    try {
-        const image = await createImageElement(file);
-        const stampedFile = await createStampedPhotoFile(
-            image,
-            image.naturalWidth,
-            image.naturalHeight,
-            `absensi-${Date.now()}.jpg`,
-        );
-
-        setPhotoFile(stampedFile);
-    } catch (error) {
-        form.setError(
-            'photo',
-            error instanceof Error
-                ? error.message
-                : 'Foto tidak bisa diproses. Coba pilih file lain.',
-        );
-
-        if (photoInput.value) {
-            photoInput.value.value = '';
-        }
     }
 };
 
@@ -1375,7 +1302,7 @@ onBeforeUnmount(() => {
                 <div class="rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.06)]">
                     <!-- Card Header -->
                     <div class="border-b border-wims-border/50 px-5 py-4 sm:px-6">
-                        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div class="flex items-center gap-3">
                             <div class="flex items-center gap-3">
                                 <div class="flex size-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400">
                                     <Clock3 class="size-5" />
@@ -1385,9 +1312,6 @@ onBeforeUnmount(() => {
                                     <p class="text-[11px] text-slate-500 dark:text-slate-400">Verifikasi lokasi & foto, lalu check-in/out</p>
                                 </div>
                             </div>
-                            <Badge class="w-fit rounded-full border px-2.5 py-0.5 text-[10px] font-bold" :class="statusClasses">
-                                {{ statusLabel }}
-                            </Badge>
                         </div>
                     </div>
 
@@ -1400,8 +1324,6 @@ onBeforeUnmount(() => {
 
                         <!-- Camera / Photo preview area -->
                         <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 p-3">
-                            <input ref="photoInput" type="file" accept="image/*" capture="user" class="hidden" @change="handlePhotoChange" />
-
                             <div v-if="previewUrl" class="overflow-hidden rounded-lg border border-wims-border/60 bg-slate-100 dark:bg-slate-700/50">
                                 <img :src="previewUrl" alt="Preview foto absensi" class="max-h-[200px] w-full object-cover" />
                             </div>
@@ -1432,28 +1354,17 @@ onBeforeUnmount(() => {
                         </div>
 
                         <!-- Action buttons -->
-                        <div class="grid gap-2.5 sm:grid-cols-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                class="h-10 rounded-xl border-wims-border/60 bg-wims-card text-xs font-semibold text-slate-700 dark:text-slate-300 hover:border-blue-300/60 hover:bg-blue-50 dark:hover:bg-blue-500/10 disabled:opacity-50"
-                                :disabled="isVerificationLoading"
-                                @click="startVerification"
-                            >
-                                <LoaderCircle v-if="isVerificationLoading" class="size-3.5 animate-spin" />
-                                <LocateFixed v-else class="size-3.5" />
-                                {{ verificationButtonText }}
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                class="h-10 rounded-xl border-wims-border/60 bg-wims-card text-xs font-semibold text-slate-700 dark:text-slate-300 hover:border-blue-300/60 hover:bg-blue-50 dark:hover:bg-blue-500/10"
-                                @click="openFilePicker"
-                            >
-                                <ImagePlus class="size-3.5" />
-                                Ambil Foto / Pilih File
-                            </Button>
-                        </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            class="h-10 w-full rounded-xl border-wims-border/60 bg-wims-card text-xs font-semibold text-slate-700 dark:text-slate-300 hover:border-blue-300/60 hover:bg-blue-50 dark:hover:bg-blue-500/10 disabled:opacity-50"
+                            :disabled="isVerificationLoading"
+                            @click="startVerification"
+                        >
+                            <LoaderCircle v-if="isVerificationLoading" class="size-3.5 animate-spin" />
+                            <LocateFixed v-else class="size-3.5" />
+                            {{ verificationButtonText }}
+                        </Button>
 
                         <!-- Capture button (when camera ready & inside) -->
                         <Button
@@ -1480,8 +1391,7 @@ onBeforeUnmount(() => {
                             </Button>
                             <Button
                                 type="button"
-                                variant="outline"
-                                class="h-11 w-full rounded-xl border-wims-border/60 bg-wims-card text-[13px] font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/30 disabled:opacity-50"
+                                class="h-11 w-full rounded-xl border border-amber-200 bg-gradient-to-r from-amber-500 to-orange-500 text-[13px] font-bold text-white shadow-lg shadow-amber-500/20 transition-all hover:shadow-amber-500/30 hover:from-amber-500 hover:to-orange-600 active:scale-[0.98] dark:border-amber-400/20 dark:from-amber-500 dark:to-orange-500 dark:shadow-[0_16px_36px_-18px_rgba(120,53,15,0.82)] dark:hover:shadow-[0_18px_40px_-18px_rgba(120,53,15,0.92)] disabled:border-slate-200 disabled:bg-slate-100 disabled:bg-none disabled:text-slate-400 disabled:shadow-none dark:disabled:border-slate-700 dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
                                 :disabled="isCheckoutDisabled"
                                 @click="checkout"
                             >
@@ -1497,16 +1407,16 @@ onBeforeUnmount(() => {
                                 <Badge class="mt-1.5 rounded-full border px-2 py-0.5 text-[10px] font-bold" :class="statusClasses">{{ statusLabel }}</Badge>
                             </div>
                             <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-3 py-2.5">
+                                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Lokasi</p>
+                                <Badge variant="outline" class="mt-1.5 max-w-full rounded-full px-2 py-0.5 text-[10px] font-bold" :class="locationBadgeClasses">{{ locationBadgeLabel }}</Badge>
+                            </div>
+                            <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-3 py-2.5">
                                 <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Jam masuk</p>
                                 <p class="mt-1.5 text-[13px] font-bold text-wims-text">{{ formatAttendanceTime(checkedInAt) }}</p>
                             </div>
                             <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-3 py-2.5">
                                 <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Jam keluar</p>
                                 <p class="mt-1.5 text-[13px] font-bold text-wims-text">{{ formatAttendanceTime(checkedOutAt) }}</p>
-                            </div>
-                            <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-3 py-2.5">
-                                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Lokasi</p>
-                                <Badge variant="outline" class="mt-1.5 max-w-full rounded-full px-2 py-0.5 text-[10px] font-bold" :class="locationBadgeClasses">{{ locationBadgeLabel }}</Badge>
                             </div>
                         </div>
 
@@ -1544,32 +1454,6 @@ onBeforeUnmount(() => {
                             {{ actionHint }}
                         </div>
 
-                        <!-- Technical details -->
-                        <details class="rounded-xl border border-wims-border/60 bg-wims-card/80 backdrop-blur-sm px-4 py-3">
-                            <summary class="cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-300">Detail teknis</summary>
-                            <div class="mt-3 space-y-2.5">
-                                <div class="grid gap-2.5 sm:grid-cols-3">
-                                    <div class="rounded-lg border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-3 py-2.5">
-                                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Jarak</p>
-                                        <p class="mt-1 text-xs font-bold" :class="isOutsideAttendanceArea ? 'text-rose-600 dark:text-rose-400' : locationValidationState === 'inside' ? 'text-emerald-600 dark:text-emerald-400' : 'text-wims-text'">{{ locationDistanceLabel }}</p>
-                                    </div>
-                                    <div class="rounded-lg border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-3 py-2.5">
-                                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Akurasi GPS</p>
-                                        <p class="mt-1 text-xs font-bold text-wims-text">{{ locationAccuracyLabel }}</p>
-                                    </div>
-                                    <div class="rounded-lg border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-3 py-2.5">
-                                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Radius</p>
-                                        <p class="mt-1 text-xs font-bold text-wims-text">{{ attendance.radius ? `${attendance.radius}m` : '-' }}</p>
-                                    </div>
-                                </div>
-                                <div class="rounded-lg border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-3 py-2.5">
-                                    <p class="text-[11px] font-bold text-wims-text">Ringkasan verifikasi</p>
-                                    <p class="mt-1 text-[10px] leading-relaxed text-slate-600 dark:text-slate-400">Lokasi: {{ locationStatusLabel }}. Foto: {{ isPhotoReady ? 'sudah siap dikirim.' : 'belum tersedia.' }}</p>
-                                    <p class="mt-1 text-[10px] leading-relaxed text-slate-600 dark:text-slate-400">{{ isAttendanceReady ? 'Presensi siap dilakukan.' : 'Presensi belum bisa dilakukan sampai lokasi dan foto siap.' }}</p>
-                                </div>
-                            </div>
-                        </details>
-
                         <!-- Form errors -->
                         <p v-if="form.errors.latitude || form.errors.longitude || form.errors.pendaftaran_id" class="rounded-xl border border-rose-200/60 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/10 px-3 py-2 text-xs text-rose-700 dark:text-rose-300">
                             {{ form.errors.latitude || form.errors.longitude || form.errors.pendaftaran_id }}
@@ -1583,14 +1467,9 @@ onBeforeUnmount(() => {
                     <div class="rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.06)]">
                         <div class="p-5 sm:p-6">
                             <div class="flex items-start justify-between gap-3">
-                                <div class="flex items-center gap-3">
-                                    <div class="flex size-10 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400">
-                                        <Sparkles class="size-5" />
-                                    </div>
-                                    <div>
-                                        <p class="text-[15px] font-bold text-wims-text">Ketidakhadiran</p>
-                                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Ajukan izin atau sakit</p>
-                                    </div>
+                                <div>
+                                    <p class="text-[15px] font-bold text-wims-text">Ketidakhadiran</p>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Ajukan izin atau sakit</p>
                                 </div>
                                 <Badge variant="outline" class="shrink-0 rounded-full border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:text-slate-400">
                                     {{ absenceRequests.length }} riwayat
@@ -1624,22 +1503,13 @@ onBeforeUnmount(() => {
                             <div class="mt-4 space-y-2.5">
                                 <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-4 py-3">
                                     <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Perusahaan</p>
-                                    <p class="mt-1.5 text-[13px] font-bold text-wims-text leading-tight">{{ attendance.company_name || 'Belum ada perusahaan' }}</p>
+                                    <p class="mt-1.5 text-[13px] font-bold text-wims-text leading-tight">{{ attendance.company?.name || 'Belum ada perusahaan' }}</p>
                                 </div>
                                 <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-4 py-3">
                                     <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Radius presensi</p>
                                     <p class="mt-1.5 text-[13px] font-bold text-wims-text">{{ attendance.radius ? `${attendance.radius}m` : '-' }}</p>
                                 </div>
 
-                                <details class="rounded-xl border border-wims-border/60 bg-wims-card/80 backdrop-blur-sm px-4 py-3">
-                                    <summary class="cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-300">Detail teknis lokasi</summary>
-                                    <div class="mt-2.5">
-                                        <div class="rounded-lg border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-3 py-2.5">
-                                            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Ambang akurasi GPS</p>
-                                            <p class="mt-1 text-xs font-bold text-wims-text">{{ Math.round(locationAccuracyThreshold) }} m</p>
-                                        </div>
-                                    </div>
-                                </details>
                             </div>
                         </div>
                     </div>
@@ -1676,11 +1546,11 @@ onBeforeUnmount(() => {
                                     <div class="grid gap-2.5 sm:grid-cols-2">
                                         <label class="block space-y-1.5">
                                             <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Tanggal Mulai</span>
-                                            <input v-model="absenceForm.tanggal_mulai" type="date" class="h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card px-3 text-xs text-wims-text transition-colors outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10" />
+                                            <input v-model="absenceForm.tanggal_mulai" type="date" class="student-date-input h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card px-3 text-xs text-wims-text transition-colors outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10" />
                                         </label>
                                         <label class="block space-y-1.5">
                                             <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Tanggal Selesai</span>
-                                            <input v-model="absenceForm.tanggal_selesai" type="date" class="h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card px-3 text-xs text-wims-text transition-colors outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10" />
+                                            <input v-model="absenceForm.tanggal_selesai" type="date" class="student-date-input h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card px-3 text-xs text-wims-text transition-colors outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10" />
                                         </label>
                                     </div>
 
@@ -1764,5 +1634,3 @@ onBeforeUnmount(() => {
         </div>
     </div>
 </template>
-
-

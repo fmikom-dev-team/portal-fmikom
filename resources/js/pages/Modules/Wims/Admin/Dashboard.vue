@@ -33,9 +33,13 @@ type SummaryProps = {
 
 type PendingRegistrationItem = {
     id: number;
-    student_name?: string | null;
-    student_email?: string | null;
-    company_name?: string | null;
+    student?: {
+        name?: string | null;
+        email?: string | null;
+    } | null;
+    company?: {
+        name?: string | null;
+    } | null;
     date_range?: string | null;
     status?: string | null;
 };
@@ -215,7 +219,7 @@ const initials = (name?: string | null) => {
                                     >
                                         {{
                                             initials(
-                                                featuredRegistration.student_name,
+                                                featuredRegistration.student?.name,
                                             )
                                         }}
                                     </div>
@@ -228,7 +232,7 @@ const initials = (name?: string | null) => {
                                                 class="text-sm font-bold text-zinc-950"
                                             >
                                                 {{
-                                                    featuredRegistration.student_name ||
+                                                    featuredRegistration.student?.name ||
                                                     '-'
                                                 }}
                                             </p>
@@ -249,7 +253,7 @@ const initials = (name?: string | null) => {
                                                     class="size-4 text-zinc-400"
                                                 />
                                                 <span class="truncate">{{
-                                                    featuredRegistration.student_email ||
+                                                    featuredRegistration.student?.email ||
                                                     '-'
                                                 }}</span>
                                             </div>
@@ -309,12 +313,12 @@ const initials = (name?: string | null) => {
                                         <p
                                             class="truncate text-sm font-bold text-zinc-900"
                                         >
-                                            {{ item.student_name || '-' }}
+                                            {{ item.student?.name || '-' }}
                                         </p>
                                         <p
                                             class="mt-0.5 truncate text-xs text-zinc-500"
                                         >
-                                            {{ item.student_email || '-' }}
+                                            {{ item.student?.email || '-' }}
                                         </p>
                                     </div>
                                     <div class="flex justify-end">
@@ -425,5 +429,3 @@ const initials = (name?: string | null) => {
         </div>
     </div>
 </template>
-
-

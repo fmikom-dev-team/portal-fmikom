@@ -46,34 +46,43 @@ type OptionItem = {
 
 type MonitoringItem = {
     id: number;
-    student_name?: string | null;
-    student_email?: string | null;
-    student_identity?: string | null;
+    student?: {
+        id?: number | null;
+        name?: string | null;
+        email?: string | null;
+        identity?: string | null;
+        role_context?: {
+            slug?: string | null;
+            label?: string | null;
+        } | null;
+    } | null;
     status?: string | null;
-    company_name?: string | null;
-    dosen_name?: string | null;
+    company?: {
+        name?: string | null;
+    } | null;
+    lecturer?: {
+        id?: number | null;
+        name?: string | null;
+        role_context?: {
+            slug?: string | null;
+            label?: string | null;
+        } | null;
+    } | null;
     period_label?: string | null;
     attendance?: {
         status?: string | null;
-        label?: string | null;
         date?: string | null;
     };
     logbook?: {
         status?: string | null;
-        label?: string | null;
         date?: string | null;
     };
     report?: {
         uploaded?: boolean;
-        label?: string | null;
         uploaded_at?: string | null;
     };
     evaluation?: {
-        nilai_akhir?: number | null;
-        status_penilaian?: string | null;
-        status_key?: string | null;
-        status_label?: string | null;
-        label?: string | null;
+        status?: string | null;
         dosen_score?: number | null;
         mitra_score?: number | null;
         is_complete?: boolean;
@@ -209,11 +218,53 @@ const attendanceClass = (value?: string | null) => {
     return 'text-slate-500';
 };
 
+const attendanceLabel = (value?: string | null) => {
+    if (!value) return 'Belum ada absensi';
+    if (value === 'hadir' || value === 'tepat_waktu') return 'Hadir';
+    if (value === 'terlambat') return 'Terlambat';
+    if (value === 'izin') return 'Izin';
+    if (value === 'sakit') return 'Sakit';
+    if (value === 'alfa') return 'Alfa';
+    return value.replace(/_/g, ' ');
+};
+
 const logbookClass = (value?: string | null) => {
     if (value === 'approved' || value === 'disetujui') return 'text-emerald-700';
     if (value === 'revisi') return 'text-amber-700';
     if (value === 'rejected') return 'text-rose-700';
     return 'text-slate-500';
+};
+
+const logbookLabel = (value?: string | null) => {
+    if (!value) return 'Belum ada logbook';
+    if (value === 'approved' || value === 'disetujui') return 'Disetujui';
+    if (value === 'revisi') return 'Perlu revisi';
+    if (value === 'rejected') return 'Ditolak';
+    return 'Menunggu review';
+};
+
+const reportLabel = (uploaded?: boolean) => {
+    return uploaded ? 'Sudah diunggah' : 'Belum diunggah';
+};
+
+const evaluationLabel = (evaluation?: MonitoringItem['evaluation']) => {
+    if (evaluation?.is_complete) {
+        return 'Nilai dosen dan mitra tersedia';
+    }
+
+    if (evaluation?.dosen_score !== null && evaluation?.dosen_score !== undefined) {
+        return 'Nilai dosen tersedia';
+    }
+
+    if (evaluation?.mitra_score !== null && evaluation?.mitra_score !== undefined) {
+        return 'Nilai mitra tersedia';
+    }
+
+    if (evaluation?.status === 'draft') {
+        return 'Draft penilaian';
+    }
+
+    return 'Belum ada penilaian.';
 };
 
 const attentionBadgeLabel = (item: MonitoringItem) => {
@@ -379,7 +430,7 @@ const studentInitial = (name?: string | null) => {
                                     <div
                                         class="flex size-10 items-center justify-center rounded-lg bg-blue-50 text-[13px] font-bold text-blue-600"
                                     >
-                                        {{ studentInitial(item.student_name) }}
+                                        {{ studentInitial(item.student?.name) }}
                                     </div>
                                     <div class="min-w-0">
                                         <div
@@ -388,7 +439,7 @@ const studentInitial = (name?: string | null) => {
                                             <p
                                                 class="truncate text-sm font-bold text-zinc-950"
                                             >
-                                                {{ item.student_name || '-' }}
+                                                {{ item.student?.name || '-' }}
                                             </p>
                                             <Badge
                                                 variant="outline"
@@ -413,11 +464,11 @@ const studentInitial = (name?: string | null) => {
                                             class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-zinc-500"
                                         >
                                             <span class="truncate">{{
-                                                item.student_email || '-'
+                                                item.student?.email || '-'
                                             }}</span>
                                             <span class="text-zinc-300">|</span>
                                             <span>{{
-                                                item.student_identity ||
+                                                item.student?.identity ||
                                                 'Identitas belum tersedia'
                                             }}</span>
                                         </div>
@@ -426,7 +477,7 @@ const studentInitial = (name?: string | null) => {
                                                 class="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-bold text-slate-600"
                                             >
                                                 {{
-                                                    item.company_name ||
+                                                    item.company?.name ||
                                                     'Belum ada perusahaan final'
                                                 }}
                                             </span>
@@ -434,7 +485,7 @@ const studentInitial = (name?: string | null) => {
                                                 class="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-bold text-slate-600"
                                             >
                                                 {{
-                                                    item.dosen_name ||
+                                                    item.lecturer?.name ||
                                                     'Belum ada dosen pembimbing'
                                                 }}
                                             </span>
@@ -476,7 +527,7 @@ const studentInitial = (name?: string | null) => {
                                                     )
                                                 "
                                             >
-                                                {{ item.attendance?.label || '-' }}
+                                                {{ attendanceLabel(item.attendance?.status) }}
                                             </p>
                                             <p class="mt-1 text-xs text-slate-500">
                                                 {{
@@ -509,7 +560,7 @@ const studentInitial = (name?: string | null) => {
                                                     )
                                                 "
                                             >
-                                                {{ item.logbook?.label || '-' }}
+                                                {{ logbookLabel(item.logbook?.status) }}
                                             </p>
                                             <p class="mt-1 text-xs text-slate-500">
                                                 {{
@@ -542,7 +593,7 @@ const studentInitial = (name?: string | null) => {
                                                         : 'text-zinc-600'
                                                 "
                                             >
-                                                {{ item.report?.label || '-' }}
+                                                {{ reportLabel(item.report?.uploaded) }}
                                             </p>
                                             <p class="mt-1 text-xs text-slate-500">
                                                 {{
@@ -580,10 +631,7 @@ const studentInitial = (name?: string | null) => {
                                                 </p>
                                             </div>
                                             <p class="mt-2 text-xs text-slate-500">
-                                                {{
-                                                    item.evaluation?.label ||
-                                                    'Belum ada penilaian.'
-                                                }}
+                                                {{ evaluationLabel(item.evaluation) }}
                                             </p>
                                         </div>
                                     </div>
@@ -647,5 +695,3 @@ const studentInitial = (name?: string | null) => {
         </Card>
     </div>
 </template>
-
-

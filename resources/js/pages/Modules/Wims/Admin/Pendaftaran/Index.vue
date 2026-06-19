@@ -50,18 +50,28 @@ type Summary = {
 
 type RegistrationItem = {
     id: number;
-    student_name?: string | null;
-    student_email?: string | null;
-    student_identity?: string | null;
-    proposal_company_name?: string | null;
-    proposal_company_address?: string | null;
-    final_company_name?: string | null;
     application_note?: string | null;
     revision_note?: string | null;
     tanggal_mulai?: string | null;
     tanggal_selesai?: string | null;
     status?: string | null;
     dosen_pembimbing_id?: number | null;
+    student?: {
+        id?: number | null;
+        name?: string | null;
+        email?: string | null;
+        identity?: string | null;
+    } | null;
+    company?: {
+        proposal?: {
+            name?: string | null;
+            address?: string | null;
+        } | null;
+        final?: {
+            id?: number | null;
+            name?: string | null;
+        } | null;
+    } | null;
 };
 
 type PaginationLink = {
@@ -418,14 +428,14 @@ const placementLink = (item: RegistrationItem) =>
                                         <div
                                             class="flex size-10 items-center justify-center rounded-lg bg-blue-50 text-[13px] font-bold text-blue-600"
                                         >
-                                            {{ studentInitial(item.student_name) }}
+                                            {{ studentInitial(item.student?.name) }}
                                         </div>
                                         <div class="min-w-0">
                                             <div class="flex flex-wrap items-center gap-2">
                                                 <p
                                                     class="truncate text-sm font-bold text-zinc-950"
                                                 >
-                                                    {{ item.student_name || '-' }}
+                                                    {{ item.student?.name || '-' }}
                                                 </p>
                                                 <Badge
                                                     variant="outline"
@@ -436,11 +446,11 @@ const placementLink = (item: RegistrationItem) =>
                                                 </Badge>
                                             </div>
                                             <p class="mt-1 truncate text-sm text-zinc-500">
-                                                {{ item.student_email || '-' }}
+                                                {{ item.student?.email || '-' }}
                                             </p>
                                             <p class="mt-1 text-xs text-zinc-400">
                                                 {{
-                                                    item.student_identity ||
+                                                    item.student?.identity ||
                                                     'Identitas belum tersedia'
                                                 }}
                                             </p>
@@ -464,13 +474,13 @@ const placementLink = (item: RegistrationItem) =>
                                                     class="mt-1 text-sm font-bold text-zinc-900"
                                                 >
                                                     {{
-                                                        item.proposal_company_name ||
+                                                        item.company?.proposal?.name ||
                                                         'Belum ada usulan perusahaan'
                                                     }}
                                                 </p>
                                                 <p
                                                     v-if="
-                                                        item.proposal_company_address ||
+                                                        item.company?.proposal?.address ||
                                                         !['aktif', 'selesai'].includes(
                                                             item.status || '',
                                                         )
@@ -478,7 +488,7 @@ const placementLink = (item: RegistrationItem) =>
                                                     class="mt-1 text-sm leading-6 text-slate-600"
                                                 >
                                                     {{
-                                                        item.proposal_company_address ||
+                                                        item.company?.proposal?.address ||
                                                         'Kampus dapat menentukan perusahaan pada tahap penempatan.'
                                                     }}
                                                 </p>
@@ -507,7 +517,7 @@ const placementLink = (item: RegistrationItem) =>
                                                     "
                                                 >
                                                     {{
-                                                        item.final_company_name ||
+                                                        item.company?.final?.name ||
                                                         'Belum ditetapkan kampus'
                                                     }}
                                                 </p>
@@ -715,11 +725,11 @@ const placementLink = (item: RegistrationItem) =>
                         class="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-700"
                     >
                         <p class="font-bold text-zinc-900">
-                            {{ revisionTarget?.student_name || '-' }}
+                            {{ revisionTarget?.student?.name || '-' }}
                         </p>
                         <p class="mt-1 text-xs text-zinc-500">
                             {{
-                                revisionTarget?.proposal_company_name ||
+                                revisionTarget?.company?.proposal?.name ||
                                 'Tanpa usulan perusahaan'
                             }}
                         </p>
@@ -770,5 +780,3 @@ const placementLink = (item: RegistrationItem) =>
         </Dialog>
     </div>
 </template>
-
-

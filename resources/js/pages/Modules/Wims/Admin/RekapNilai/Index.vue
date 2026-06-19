@@ -51,8 +51,17 @@ type RecapItem = {
         email?: string | null;
         program_studi?: string | null;
     };
-    company_name?: string | null;
-    lecturer_name?: string | null;
+    company?: {
+        name?: string | null;
+    } | null;
+    lecturer?: {
+        id?: number | null;
+        name?: string | null;
+        role_context?: {
+            slug?: string | null;
+            label?: string | null;
+        } | null;
+    } | null;
     period_label?: string | null;
     registration_status?: string | null;
     dosen_assessment: AssessmentState;
@@ -333,13 +342,13 @@ const openDownload = (url?: string | null) => {
                                         <div>
                                             <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Perusahaan</p>
                                             <p class="mt-1 text-sm font-bold text-zinc-950">
-                                                {{ item.company_name || '-' }}
+                                                {{ item.company?.name || '-' }}
                                             </p>
                                         </div>
                                         <div>
                                             <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Dosen Pembimbing</p>
                                             <p class="mt-1 text-sm text-zinc-700">
-                                                {{ item.lecturer_name || '-' }}
+                                                {{ item.lecturer?.name || '-' }}
                                             </p>
                                         </div>
                                         <div>
@@ -453,8 +462,8 @@ const openDownload = (url?: string | null) => {
                         <div class="mt-5 grid gap-4 sm:grid-cols-2">
                             <div class="rounded-lg border border-zinc-200 bg-zinc-50 px-3.5 py-3 sm:col-span-2">
                                 <p class="text-[11px] font-bold tracking-[0.16em] text-slate-500 uppercase">Penempatan</p>
-                                <p class="mt-1.5 text-sm font-bold text-zinc-950">{{ item.company_name || '-' }}</p>
-                                <p class="mt-1 text-sm text-zinc-700">{{ item.lecturer_name || '-' }}</p>
+                                <p class="mt-1.5 text-sm font-bold text-zinc-950">{{ item.company?.name || '-' }}</p>
+                                <p class="mt-1 text-sm text-zinc-700">{{ item.lecturer?.name || '-' }}</p>
                                 <p class="mt-1 text-xs text-zinc-500">
                                     {{ formatIndonesianDateLabel(item.period_label) }}
                                 </p>
@@ -574,5 +583,3 @@ const openDownload = (url?: string | null) => {
         </Card>
     </div>
 </template>
-
-

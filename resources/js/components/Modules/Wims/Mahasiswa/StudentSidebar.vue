@@ -6,7 +6,9 @@ import {
     CalendarCheck,
     ClipboardList,
     FileText,
+    GraduationCap,
     House,
+    Landmark,
     LogOut,
     UserRound,
 } from 'lucide-vue-next';
@@ -85,8 +87,9 @@ const logout = () => {
             <div class="relative flex h-full flex-col px-4 py-6">
                 <!-- Logo -->
                 <div class="flex items-center gap-3 px-2 pb-8">
-                    <div class="relative flex size-10 items-center justify-center rounded-xl bg-wims-card shadow-[0_1px_6px_-2px_rgba(0,0,0,0.06)] dark:shadow-none border border-wims-border">
-                        <img src="/logo.png" alt="WIMS Logo" class="size-7 object-contain" />
+                    <div class="relative flex size-10 items-center justify-center rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-indigo-50 text-blue-700 shadow-[0_1px_6px_-2px_rgba(0,0,0,0.06)] dark:border-blue-500/30 dark:from-blue-500/15 dark:via-slate-800 dark:to-indigo-500/10 dark:text-blue-300 dark:shadow-none">
+                        <Landmark class="size-5" />
+                        <GraduationCap class="absolute -right-1 -bottom-1 size-3.5 rounded-full bg-wims-card text-blue-500 dark:bg-slate-800 dark:text-blue-300" />
                     </div>
                     <div>
                         <h1 class="text-[15px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">WIMS</h1>
@@ -181,5 +184,4 @@ const logout = () => {
         </div>
     </aside>
 </template>
-
 

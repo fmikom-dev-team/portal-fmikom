@@ -6,6 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { formatIndonesianDateLabel } from '@/lib/date';
 import WimsDosenLayout from '@/layouts/Modules/Wims/Dosen/Layout.vue';
 
@@ -18,7 +25,10 @@ type StudentItem = {
     pendaftaran_id?: number | null;
     name?: string | null;
     nim?: string | null;
-    company?: string | null;
+    company?: {
+        id?: number | null;
+        name?: string | null;
+    } | null;
     period_start?: string | null;
     period_end?: string | null;
     status_pendaftaran?: string | null;
@@ -32,15 +42,14 @@ const props = defineProps<{
     initialStatus?: string;
 }>();
 
-const search = ref('');
-
 const normalizeFilter = (value?: string | null): FilterKey => {
     if (value === 'aktif') return 'aktif';
     if (value === 'selesai') return 'selesai';
     return 'semua';
 };
 
-const initialFilter = computed(() => normalizeFilter(props.initialStatus));
+const search = ref('');
+const selectedFilter = ref<FilterKey>(normalizeFilter(props.initialStatus));
 
 const formatDateUi = (value?: string | null) => formatIndonesianDateLabel(value);
 
@@ -51,17 +60,17 @@ const matchesSearch = (student: StudentItem) => {
         return true;
     }
 
-    return [student.name, student.nim, student.company]
+    return [student.name, student.nim, student.company?.name]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(keyword));
 };
 
 const matchesFilter = (student: StudentItem) => {
-    if (initialFilter.value === 'semua') {
+    if (selectedFilter.value === 'semua') {
         return true;
     }
 
-    if (initialFilter.value === 'aktif') {
+    if (selectedFilter.value === 'aktif') {
         return student.dashboard_phase === 'active';
     }
 
@@ -72,18 +81,12 @@ const filteredStudents = computed(() =>
     props.students.filter((student) => matchesSearch(student) && matchesFilter(student)),
 );
 
-const pageTitle = computed(() => {
-    if (initialFilter.value === 'aktif') return 'Mahasiswa Aktif';
-    if (initialFilter.value === 'selesai') return 'Mahasiswa Selesai';
-    return 'Monitoring Mahasiswa';
-});
-
 const pageSubtitle = computed(() => {
-    if (initialFilter.value === 'aktif') {
+    if (selectedFilter.value === 'aktif') {
         return 'Daftar mahasiswa bimbingan yang sedang menjalani PKL pada periode aktif.';
     }
 
-    if (initialFilter.value === 'selesai') {
+    if (selectedFilter.value === 'selesai') {
         return 'Daftar mahasiswa bimbingan yang sudah menyelesaikan periode PKL.';
     }
 
@@ -93,11 +96,11 @@ const pageSubtitle = computed(() => {
 const resultLabel = computed(() => {
     const count = filteredStudents.value.length;
 
-    if (initialFilter.value === 'aktif') {
+    if (selectedFilter.value === 'aktif') {
         return `Menampilkan ${count} mahasiswa aktif.`;
     }
 
-    if (initialFilter.value === 'selesai') {
+    if (selectedFilter.value === 'selesai') {
         return `Menampilkan ${count} mahasiswa selesai.`;
     }
 
@@ -159,24 +162,24 @@ const studentInitial = (student: StudentItem) => {
     <div class="min-h-screen bg-wims-bg">
         <div class="mx-auto w-full max-w-[1320px] space-y-4 px-4 py-3 lg:space-y-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10">
             <header class="relative overflow-hidden rounded-2xl border border-wims-border/50 bg-wims-card/95 px-5 py-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] sm:px-6 sm:py-6">
+                <button
+                    type="button"
+                    title="Kembali ke Dashboard"
+                    aria-label="Kembali ke Dashboard"
+                    class="absolute top-5 right-5 inline-flex size-9 items-center justify-center rounded-xl border border-wims-border bg-white/90 text-slate-500 transition duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 sm:top-6 sm:right-6 sm:size-10"
+                    @click="router.visit('/wims/dosen/dashboard')"
+                >
+                    <ArrowLeft class="size-4" />
+                </button>
                 <div class="flex flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-start lg:justify-between">
-                    <div class="max-w-3xl">
-                        <h1 class="text-[17px] font-bold tracking-tight text-wims-text sm:text-[20px]">
+                    <div class="max-w-3xl pr-10 sm:pr-12">
+                        <h1 class="text-[20px] font-bold tracking-tight text-wims-text sm:text-[24px] lg:text-[30px]">
                             Daftar Mahasiswa Bimbingan
                         </h1>
-                        <p class="mt-1.5 text-[12px] leading-5 text-slate-600 sm:text-sm sm:leading-6">
+                        <p class="mt-1.5 text-[13px] leading-relaxed text-slate-600 sm:text-sm">
                             {{ pageSubtitle }}
                         </p>
                     </div>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        class="inline-flex h-9 w-fit self-start items-center gap-1.5 rounded-lg border-wims-border bg-wims-card px-3 text-[11px] font-bold text-slate-700 transition duration-200 hover:border-slate-300 hover:bg-slate-50 sm:px-3.5 sm:text-xs lg:self-auto"
-                        @click="router.visit('/wims/dosen/dashboard')"
-                    >
-                        <ArrowLeft class="size-3.5" />
-                        Kembali ke Dashboard
-                    </Button>
                 </div>
             </header>
 
@@ -192,23 +195,35 @@ const studentInitial = (student: StudentItem) => {
                                 class="pl-9"
                             />
                         </div>
-                        <div class="flex flex-col gap-1.5 text-[13px] text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:text-sm lg:justify-end">
-                            <p>{{ resultLabel }}</p>
-                            <button
-                                v-if="search"
-                                type="button"
-                                class="text-left text-[13px] font-bold text-[#0F62FE] hover:text-[#0050E6] sm:text-right sm:text-sm"
-                                @click="resetSearch"
-                            >
-                                Reset search
-                            </button>
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:text-sm lg:justify-end">
+                            <Select v-model="selectedFilter">
+                                <SelectTrigger class="h-10 w-full min-w-[180px] bg-white sm:w-[200px]">
+                                    <SelectValue placeholder="Pilih kategori" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="semua">Semua Kategori</SelectItem>
+                                    <SelectItem value="aktif">Mahasiswa Aktif</SelectItem>
+                                    <SelectItem value="selesai">Mahasiswa Selesai</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <div class="flex flex-col gap-1.5 text-[13px] text-slate-600 sm:items-end sm:text-sm">
+                                <p>{{ resultLabel }}</p>
+                                <button
+                                    v-if="search"
+                                    type="button"
+                                    class="text-left text-[13px] font-bold text-[#0F62FE] hover:text-[#0050E6] sm:text-right sm:text-sm"
+                                    @click="resetSearch"
+                                >
+                                    Reset search
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </CardContent>
             </Card>
 
             <section class="space-y-4">
-                <div v-if="filteredStudents.length" class="space-y-4">
+                <div v-if="filteredStudents.length" class="space-y-6">
                     <Card
                         v-for="student in filteredStudents"
                         :key="student.pendaftaran_id ?? student.id"
@@ -229,15 +244,15 @@ const studentInitial = (student: StudentItem) => {
                                     </div>
 
                                     <div class="min-w-0 flex-1 pr-20 sm:pr-0">
-                                        <p class="text-sm font-bold text-wims-text">
+                                        <p class="text-[13px] font-bold text-wims-text">
                                             {{ student.name || 'Mahasiswa' }}
                                         </p>
-                                        <div class="mt-1 flex flex-col gap-1 text-xs text-slate-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1">
+                                        <div class="mt-1 flex flex-col gap-1 text-[11px] text-slate-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1">
                                             <span>{{ student.nim || '-' }}</span>
                                             <span class="hidden text-slate-300 sm:inline">&bull;</span>
-                                            <span>{{ student.company || 'Perusahaan belum tersedia' }}</span>
+                                            <span>{{ student.company?.name || 'Perusahaan belum tersedia' }}</span>
                                             <span class="hidden text-slate-300 sm:inline">&bull;</span>
-                                            <span class="text-[11px] leading-4 sm:text-xs sm:leading-5">Periode {{ periodLabel(student) }}</span>
+                                            <span class="text-[11px] leading-5">Periode {{ periodLabel(student) }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -253,7 +268,7 @@ const studentInitial = (student: StudentItem) => {
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        class="h-10 rounded-lg border-wims-border bg-wims-card px-3.5 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                                        class="h-10 rounded-lg border-wims-border bg-wims-card px-3.5 text-[13px] font-bold text-slate-700 hover:bg-slate-50"
                                         @click="openMonitoring(student)"
                                     >
                                         Lihat Monitoring
@@ -269,10 +284,10 @@ const studentInitial = (student: StudentItem) => {
                     class="rounded-xl border border-dashed border-wims-border bg-wims-card py-0 shadow-none"
                 >
                     <CardContent class="px-5 py-8 text-center">
-                        <p class="text-sm font-bold text-wims-text">
+                        <p class="text-[13px] font-bold text-wims-text">
                             Tidak ada mahasiswa yang sesuai dengan pencarian.
                         </p>
-                        <p class="mt-1 text-sm leading-6 text-slate-500">
+                        <p class="mt-1 text-[11px] leading-5 text-slate-500">
                             Coba ubah kata kunci pencarian yang dipakai.
                         </p>
                     </CardContent>
@@ -281,5 +296,3 @@ const studentInitial = (student: StudentItem) => {
         </div>
     </div>
 </template>
-
-

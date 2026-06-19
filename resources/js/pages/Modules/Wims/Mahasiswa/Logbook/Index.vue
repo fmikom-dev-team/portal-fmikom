@@ -32,6 +32,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { formatIndonesianDateLabel } from '@/lib/date';
 import logbookRoutes from '@/routes/wims/logbook';
 
 defineOptions({ layout: StudentLayout });
@@ -204,6 +205,17 @@ const statusDotClass = (s?: string | null) => {
     if (v === 'approved') return 'bg-emerald-500';
     if (v === 'rejected') return 'bg-red-500';
     return 'bg-amber-400';
+};
+const logbookDateLabel = (logbook?: Pick<LogbookItem, 'tanggal_label' | 'tanggal'> | null, fallback?: string | null) => {
+    if (logbook?.tanggal_label) {
+        return formatIndonesianDateLabel(logbook.tanggal_label);
+    }
+
+    if (logbook?.tanggal) {
+        return formatIndonesianDateLabel(logbook.tanggal);
+    }
+
+    return formatIndonesianDateLabel(fallback);
 };
 
 /* --- Photo helpers ------------------------------------ */
@@ -569,7 +581,7 @@ watch(
                     <div class="flex items-center gap-2">
                         <div class="hidden items-center gap-1.5 rounded-lg border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 sm:flex">
                             <CalendarDays class="size-3.5 text-blue-500 dark:text-blue-400" />
-                            {{ displayLogbook?.tanggal_label || todayLabel || '-' }}
+                            {{ logbookDateLabel(displayLogbook, todayLabel) }}
                         </div>
                         <span
                             v-if="displayLogbook"
@@ -883,7 +895,7 @@ watch(
                         class="rounded-xl border border-emerald-200/60 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10 px-4 py-3 text-center"
                     >
                         <p class="text-sm font-bold text-emerald-800 dark:text-emerald-300">
-                            Logbook tersimpan untuk {{ displayLogbook?.tanggal_label || todayLabel }}
+                            Logbook tersimpan untuk {{ logbookDateLabel(displayLogbook, todayLabel) }}
                         </p>
                         <p class="mt-0.5 text-xs text-emerald-600 dark:text-emerald-400">
                             Tunggu hari berikutnya untuk membuat entri baru.
@@ -896,7 +908,7 @@ watch(
                     >
                         <div>
                             <p class="text-sm font-bold text-amber-800 dark:text-amber-300">
-                                Perbaiki logbook {{ displayLogbook?.tanggal_label || displayLogbook?.tanggal || '-' }}
+                                Perbaiki logbook {{ logbookDateLabel(displayLogbook) }}
                             </p>
                             <p class="mt-0.5 text-xs text-amber-700 dark:text-amber-400">
                                 Setelah dikirim ulang, status logbook akan kembali menjadi menunggu review mitra.
@@ -939,5 +951,4 @@ watch(
 .lb-enter-from,
 .lb-leave-to { opacity: 0; }
 </style>
-
 

@@ -2,7 +2,7 @@
 import { computed, reactive, ref, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import {
-    BriefcaseBusiness,
+    CircleCheckBig,
     FileText,
     Save,
     Search,
@@ -50,11 +50,17 @@ type OptionItem = {
 
 type PlacementItem = {
     id: number;
-    student_name?: string | null;
-    student_email?: string | null;
-    student_identity?: string | null;
-    company_name?: string | null;
     company_id?: number | null;
+    student?: {
+        id?: number | null;
+        name?: string | null;
+        email?: string | null;
+        identity?: string | null;
+    } | null;
+    company?: {
+        id?: number | null;
+        name?: string | null;
+    } | null;
     dosen_pembimbing_id?: number | null;
     tanggal_mulai?: string | null;
     tanggal_selesai?: string | null;
@@ -327,7 +333,7 @@ const activationHint = (item: PlacementItem) => {
     }
 
     if (item.status === 'selesai') {
-        return 'Siklus PKL sudah ditutup. Data presensi, logbook, dan surat tetap tersimpan sebagai arsip.';
+        return '';
     }
 
     if (!item.can_assign) {
@@ -834,23 +840,44 @@ const studentInitial = (name?: string | null) => {
 
                 <div class="space-y-5">
                     <div
-                        v-for="item in placements.data"
+                        v-for="(item, index) in placements.data"
                         :key="item.id"
-                        class="rounded-xl border border-zinc-200 bg-white px-4 py-4 shadow-none"
+                        class="rounded-xl border px-4 py-4 shadow-none"
+                        :class="
+                            index % 2 === 0
+                                ? 'border-zinc-200 bg-white'
+                                : 'border-slate-200 bg-slate-50/55'
+                        "
                     >
                         <div
                             class="grid gap-4 xl:items-start"
                             :class="
                                 isSavedReadonlyPlacement(item)
-                                    ? 'xl:grid-cols-[minmax(240px,280px)_minmax(0,1fr)]'
+                                    ? 'xl:grid-cols-[minmax(340px,420px)_minmax(0,1fr)]'
                                     : 'xl:grid-cols-[minmax(0,1fr)_minmax(0,280px)_minmax(0,240px)]'
                             "
                         >
-                            <div class="min-w-0">
-                                <div class="flex items-start gap-3">
+                            <div
+                                class="min-w-0"
+                                :class="
+                                    item.status === 'aktif' ||
+                                    item.status === 'selesai' ||
+                                    !item.can_assign
+                                        ? 'xl:col-span-3'
+                                        : ''
+                                "
+                            >
+                                <div
+                                    class="flex flex-col gap-5"
+                                    :class="
+                                        isSavedReadonlyPlacement(item)
+                                            ? ''
+                                            : 'xl:flex-row xl:items-start'
+                                    "
+                                >
                                     <label
                                         v-if="item.can_complete_now"
-                                        class="mt-1 inline-flex shrink-0 items-center"
+                                        class="mt-1 inline-flex shrink-0 items-center xl:pt-2"
                                     >
                                         <input
                                             type="checkbox"
@@ -859,112 +886,91 @@ const studentInitial = (name?: string | null) => {
                                             @change="toggleSelectedCompletion(item.id, ($event.target as HTMLInputElement).checked)"
                                         />
                                     </label>
-                                    <div
-                                        class="flex size-10 items-center justify-center rounded-lg bg-blue-50 text-[13px] font-bold text-blue-600"
-                                    >
-                                        {{ studentInitial(item.student_name) }}
-                                    </div>
-                                    <div class="min-w-0">
+                                    <div class="flex min-w-0 flex-1 items-start gap-3 xl:min-w-[360px] xl:pr-6">
                                         <div
-                                            class="flex flex-wrap items-center gap-2"
+                                            class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[13px] font-bold text-blue-600"
                                         >
-                                            <p
-                                                class="truncate text-sm font-bold text-zinc-950"
-                                            >
-                                                {{ item.student_name || '-' }}
-                                            </p>
-                                            <Badge
-                                                variant="outline"
-                                                class="rounded-full px-2.5 py-0.5 text-[10px] font-bold shadow-none"
-                                                :class="
-                                                    statusClass(item.status)
-                                                "
-                                            >
-                                                {{ statusLabel(item.status) }}
-                                            </Badge>
-                                            <Badge
-                                                v-if="item.status === 'aktif'"
-                                                variant="outline"
-                                                class="rounded-full border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[10px] font-bold text-sky-700 shadow-none"
-                                            >
-                                                Terkunci
-                                            </Badge>
+                                            {{ studentInitial(item.student?.name) }}
                                         </div>
-                                        <p
-                                            class="mt-1 truncate text-xs text-slate-500"
-                                        >
-                                            {{ item.student_email || '-' }}
-                                        </p>
-                                        <p class="mt-1 text-xs text-slate-400">
-                                            {{
-                                                item.student_identity ||
-                                                'Identitas belum tersedia'
-                                            }}
-                                        </p>
-                                        <div
-                                            class="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500"
-                                        >
-                                            <span
-                                                class="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-3 py-1"
-                                            >
-                                                <BriefcaseBusiness
-                                                    class="size-3.5"
-                                                />
-                                                {{
-                                                    item.company_name ||
-                                                    'Belum ada perusahaan'
-                                                }}
-                                            </span>
-                                            <span
-                                                class="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-3 py-1"
-                                            >
-                                                Periode:
-                                                {{ item.tanggal_mulai || '-' }}
-                                                -
-                                                {{
-                                                    item.tanggal_selesai || '-'
-                                                }}
-                                            </span>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex flex-col gap-2">
+                                                <div class="flex flex-wrap items-center gap-2">
+                                                <p
+                                                    class="truncate text-sm font-bold text-zinc-950"
+                                                >
+                                                    {{ item.student?.name || '-' }}
+                                                </p>
+                                                <Badge
+                                                    variant="outline"
+                                                    class="rounded-full px-2.5 py-0.5 text-[10px] font-bold shadow-none"
+                                                    :class="
+                                                        statusClass(item.status)
+                                                    "
+                                                >
+                                                    {{ statusLabel(item.status) }}
+                                                </Badge>
+                                                <Badge
+                                                    v-if="item.status === 'aktif'"
+                                                    variant="outline"
+                                                    class="rounded-full border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[10px] font-bold text-sky-700 shadow-none"
+                                                >
+                                                    Terkunci
+                                                </Badge>
+                                                </div>
+                                                <p
+                                                    class="break-words text-xs text-slate-500"
+                                                >
+                                                    {{
+                                                        item.student?.email || '-'
+                                                    }}
+                                                    <span class="mx-2 text-slate-300">•</span>
+                                                    {{
+                                                        item.student?.identity ||
+                                                        'Identitas belum tersedia'
+                                                    }}
+                                                </p>
+                                                <div class="space-y-1 text-xs text-zinc-900">
+                                                    <p class="break-words">
+                                                        <span class="uppercase tracking-[0.14em]">Mitra</span>
+                                                        <span class="mx-1.5 text-slate-300">•</span>
+                                                        {{ item.company?.name || 'Belum ada perusahaan' }}
+                                                    </p>
+                                                    <p class="break-words">
+                                                        <span class="uppercase tracking-[0.14em]">Dosen Pembimbing</span>
+                                                        <span class="mx-1.5 text-slate-300">•</span>
+                                                        {{
+                                                            resolveDosenLabel(
+                                                                assignmentForms[item.id]?.dosen_pembimbing_id,
+                                                            )
+                                                        }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        v-if="!isSavedReadonlyPlacement(item)"
+                                        class="border-t border-zinc-200 pt-5 text-xs xl:w-[220px] xl:flex-none xl:border-l xl:border-t-0 xl:pt-0 xl:pl-6"
+                                    >
+                                        <div class="min-w-0">
+                                            <p class="text-xs uppercase tracking-[0.14em] text-slate-500">
+                                                Periode
+                                            </p>
+                                            <p class="mt-1 text-xs leading-5 text-zinc-900">
+                                                {{ item.tanggal_mulai || '-' }} - {{ item.tanggal_selesai || '-' }}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             <template v-if="item.status === 'aktif' || item.status === 'selesai' || !item.can_assign">
-                                <div class="grid gap-4 md:grid-cols-2 xl:col-span-2">
-                                    <div class="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-3">
-                                        <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Perusahaan</p>
-                                        <p class="mt-1 text-sm font-bold text-zinc-900">
-                                            {{ item.company_name || 'Belum ada perusahaan' }}
-                                        </p>
-                                    </div>
-                                    <div class="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-3">
-                                        <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Dosen Pembimbing</p>
-                                        <p class="mt-1 text-sm font-bold text-zinc-900">
-                                            {{
-                                                resolveDosenLabel(
-                                                    assignmentForms[item.id]?.dosen_pembimbing_id,
-                                                )
-                                            }}
-                                        </p>
-                                    </div>
-                                    <div class="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-3">
-                                        <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Periode</p>
-                                        <p class="mt-1 text-sm font-bold text-zinc-900">
-                                            {{ item.tanggal_mulai || '-' }} - {{ item.tanggal_selesai || '-' }}
-                                        </p>
-                                    </div>
-                                    <div class="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-3">
-                                        <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Status Penempatan</p>
-                                        <p class="mt-1 text-sm font-bold text-zinc-900">
-                                            {{ rowStatusLabel(item) }}
-                                        </p>
-                                    </div>
-                                </div>
+                                <div class="xl:col-span-2" />
                             </template>
                             <template v-else>
                                 <div :class="isSavedReadonlyPlacement(item) ? '' : 'xl:col-span-2'">
-                                    <div class="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-4">
+                                    <div class="rounded-xl bg-zinc-50/80 px-4 py-4">
                                         <template v-if="isSavedReadonlyPlacement(item)">
                                             <div class="flex flex-col gap-5">
                                                 <div>
@@ -978,8 +984,8 @@ const studentInitial = (name?: string | null) => {
                                                     </div>
                                                 </div>
 
-                                                <div class="grid gap-4 md:grid-cols-3">
-                                                    <div class="rounded-lg border border-zinc-200 bg-white px-3 py-3">
+                                                <div class="grid gap-x-6 gap-y-4 md:grid-cols-3">
+                                                    <div>
                                                         <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Perusahaan</p>
                                                         <p class="mt-1 text-sm font-bold text-zinc-900">
                                                             {{
@@ -989,7 +995,7 @@ const studentInitial = (name?: string | null) => {
                                                             }}
                                                         </p>
                                                     </div>
-                                                    <div class="rounded-lg border border-zinc-200 bg-white px-3 py-3">
+                                                    <div>
                                                         <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Dosen Pembimbing</p>
                                                         <p class="mt-1 text-sm font-bold text-zinc-900">
                                                             {{
@@ -999,7 +1005,7 @@ const studentInitial = (name?: string | null) => {
                                                             }}
                                                         </p>
                                                     </div>
-                                                    <div class="rounded-lg border border-zinc-200 bg-white px-3 py-3">
+                                                    <div>
                                                         <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Periode</p>
                                                         <p class="mt-1 text-sm font-bold text-zinc-900">
                                                             {{ item.tanggal_mulai || '-' }} - {{ item.tanggal_selesai || '-' }}
@@ -1154,6 +1160,7 @@ const studentInitial = (name?: string | null) => {
                                 <div
                                     v-if="
                                         item.status !== 'aktif' &&
+                                        item.status !== 'selesai' &&
                                         !isSavedReadonlyPlacement(item) &&
                                         !(
                                             item.can_assign &&
@@ -1255,92 +1262,79 @@ const studentInitial = (name?: string | null) => {
                         </div>
 
                         <div
-                            class="mt-5 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-4"
+                            class="mt-5 rounded-xl bg-zinc-50/80 px-4 py-4"
                         >
                             <div
-                                class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
+                                class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between"
                             >
                                 <template v-if="shouldShowFullSurat(item)">
-                                    <div class="min-w-0">
-                                        <div class="flex items-center gap-3">
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-start gap-3">
                                             <div
                                                 class="flex size-8 items-center justify-center rounded-lg bg-white text-zinc-700"
                                             >
                                                 <FileText class="size-3.5" />
                                             </div>
                                             <div>
-                                                <p
-                                                    class="text-sm font-bold text-zinc-950"
-                                                >
-                                                    Surat Penetapan
-                                                </p>
-                                                <p class="text-xs text-slate-500">
+                                                <div class="flex flex-wrap items-center gap-2">
+                                                    <p class="text-[15px] font-bold text-zinc-950">
+                                                        Surat Penetapan
+                                                    </p>
+                                                    <Badge
+                                                        variant="outline"
+                                                        class="rounded-full px-2.5 py-0.5 text-[10px] font-bold shadow-none"
+                                                        :class="
+                                                            suratStatusClass(
+                                                                item.surat?.status,
+                                                            )
+                                                        "
+                                                    >
+                                                        {{
+                                                            suratStatusLabel(
+                                                                item.surat?.status,
+                                                            )
+                                                        }}
+                                                    </Badge>
+                                                </div>
+                                                <p class="text-[11px] text-slate-500">
                                                     Ringkasan surat penetapan mahasiswa.
                                                 </p>
                                             </div>
                                         </div>
 
                                         <div
-                                            class="mt-3 flex flex-wrap items-center gap-2"
+                                            class="mt-4 grid gap-x-5 gap-y-4 rounded-xl border border-white/70 bg-white/80 px-4 py-4 text-xs text-zinc-600 md:grid-cols-2 xl:grid-cols-4"
                                         >
-                                            <Badge
-                                                variant="outline"
-                                                class="rounded-full px-2.5 py-0.5 text-[10px] font-bold shadow-none"
-                                                :class="
-                                                    suratStatusClass(
-                                                        item.surat?.status,
-                                                    )
-                                                "
-                                            >
-                                                {{
-                                                    suratStatusLabel(
-                                                        item.surat?.status,
-                                                    )
-                                                }}
-                                            </Badge>
-                                        </div>
-
-                                        <div
-                                            class="mt-3 grid gap-2.5 text-sm text-zinc-600 md:grid-cols-2 xl:grid-cols-4"
-                                        >
-                                            <div
-                                                class="rounded-lg border border-zinc-200 bg-white px-3 py-2.5"
-                                            >
-                                                <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Nomor surat</p>
-                                                <p class="mt-2 font-bold text-zinc-900">
+                                            <div>
+                                                <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Nomor surat</p>
+                                                <p class="mt-1 text-sm text-zinc-900">
                                                     {{
                                                         item.surat?.nomor_surat ||
                                                         '-'
                                                     }}
                                                 </p>
                                             </div>
-                                            <div
-                                                class="rounded-lg border border-zinc-200 bg-white px-3 py-2.5"
-                                            >
-                                                <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Diminta pada</p>
-                                                <p class="mt-2 font-bold text-zinc-900">
+                                            <div>
+                                                <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Diminta pada</p>
+                                                <p class="mt-1 text-sm text-zinc-900">
                                                     {{
                                                         item.surat?.requested_at ||
                                                         '-'
                                                     }}
                                                 </p>
                                             </div>
-                                            <div
-                                                class="rounded-lg border border-zinc-200 bg-white px-3 py-2.5"
-                                            >
-                                                <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Selesai pada</p>
-                                                <p class="mt-2 font-bold text-zinc-900">
+                                            <div>
+                                                <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Selesai pada</p>
+                                                <p class="mt-1 text-sm text-zinc-900">
                                                     {{
                                                         item.surat?.generated_at ||
                                                         '-'
                                                     }}
                                                 </p>
                                             </div>
-                                            <div
-                                                class="rounded-lg border border-zinc-200 bg-white px-3 py-2.5"
-                                            >
-                                                <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Catatan</p>
-                                                <p class="mt-2 line-clamp-2 font-bold text-zinc-900">
+                                            <div>
+                                                <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Catatan</p>
+                                                <p class="mt-1 line-clamp-2 text-sm text-zinc-900">
                                                     {{
                                                         normalizeSuratNote(
                                                             item.surat?.error_message,
@@ -1351,76 +1345,80 @@ const studentInitial = (name?: string | null) => {
                                         </div>
                                     </div>
 
-                                    <div class="flex w-full flex-col gap-2 lg:w-48">
-                                        <Button
-                                            type="button"
-                                            class="h-8 rounded-lg px-3 text-sm font-bold"
-                                            :class="
-                                                item.can_generate_surat
-                                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                                    : 'border border-zinc-200 bg-zinc-100 text-zinc-400 hover:bg-zinc-100'
-                                            "
-                                            :disabled="
-                                                processingId === item.id ||
-                                                !item.can_generate_surat
-                                            "
-                                            @click="generateSurat(item)"
-                                        >
-                                            <FileText class="size-4" />
-                                            {{ suratActionLabel(item) }}
-                                        </Button>
-                                        <p class="text-xs leading-5 text-slate-500">
+                                    <div class="w-full rounded-xl border border-white/70 bg-white/80 p-4 lg:w-[240px] lg:self-center">
+                                        <div class="flex flex-col gap-2">
+                                            <Button
+                                                type="button"
+                                                class="h-8 rounded-lg px-3 text-xs font-bold"
+                                                :class="
+                                                    item.can_generate_surat
+                                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                                        : 'border border-zinc-200 bg-zinc-100 text-zinc-400 hover:bg-zinc-100'
+                                                "
+                                                :disabled="
+                                                    processingId === item.id ||
+                                                    !item.can_generate_surat
+                                                "
+                                                @click="generateSurat(item)"
+                                            >
+                                                <FileText class="size-4" />
+                                                {{ suratActionLabel(item) }}
+                                            </Button>
+                                            <a
+                                                v-if="item.surat?.file_url"
+                                                :href="item.surat.file_url"
+                                                class="inline-flex h-8 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-zinc-300 hover:text-zinc-950"
+                                            >
+                                                Buka Dokumen
+                                            </a>
+                                        </div>
+                                        <p class="mt-3 text-[11px] leading-5 text-slate-500">
                                             {{ suratHint(item) }}
                                         </p>
-                                        <a
-                                            v-if="item.surat?.file_url"
-                                            :href="item.surat.file_url"
-                                            class="inline-flex h-8 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-sm font-bold text-slate-700 transition hover:border-zinc-300 hover:text-zinc-950"
-                                        >
-                                            Buka Dokumen
-                                        </a>
                                     </div>
                                 </template>
                                 <template v-else>
-                                    <div class="flex min-w-0 flex-1 items-center gap-3">
+                                    <div class="flex min-w-0 flex-1 items-start gap-3">
                                         <div
                                             class="flex size-8 items-center justify-center rounded-lg bg-white text-zinc-700"
                                         >
                                             <FileText class="size-3.5" />
                                         </div>
-                                            <div>
-                                                <p class="text-sm font-bold text-zinc-950">
-                                                    Surat Penetapan
-                                                </p>
-                                                <p class="text-xs text-slate-500">
-                                                    {{
-                                                        hasSavedAssignment(item)
-                                                            ? 'Surat belum dibuat untuk penempatan ini.'
-                                                            : 'Surat dapat dibuat setelah penempatan disimpan.'
-                                                    }}
-                                                </p>
-                                            </div>
+                                        <div class="min-w-0">
+                                            <p class="text-[15px] font-bold text-zinc-950">
+                                                Surat Penetapan
+                                            </p>
+                                            <p class="text-[11px] text-slate-500">
+                                                {{
+                                                    hasSavedAssignment(item)
+                                                        ? 'Surat belum dibuat untuk penempatan ini.'
+                                                        : 'Surat dapat dibuat setelah penempatan disimpan.'
+                                                }}
+                                            </p>
                                         </div>
+                                    </div>
 
-                                    <div class="flex w-full flex-col gap-1.5 lg:w-48 lg:items-end">
-                                        <Button
-                                            type="button"
-                                            class="h-8 rounded-lg px-3 text-sm font-bold"
-                                            :class="
-                                                item.can_generate_surat && processingId !== item.id
-                                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                                    : 'cursor-not-allowed border border-zinc-200 bg-zinc-100 text-zinc-400 hover:bg-zinc-100'
-                                            "
-                                            :disabled="
-                                                processingId === item.id ||
-                                                !item.can_generate_surat
-                                            "
-                                            @click="generateSurat(item)"
-                                        >
-                                            <FileText class="size-4" />
-                                            Buat Surat
-                                        </Button>
-                                        <p class="text-[11px] leading-4 text-slate-400 lg:text-right">
+                                    <div class="w-full rounded-xl border border-white/70 bg-white/80 p-4 lg:w-[240px] lg:self-center">
+                                        <div class="flex flex-col gap-2">
+                                            <Button
+                                                type="button"
+                                                class="h-8 rounded-lg px-3 text-xs font-bold"
+                                                :class="
+                                                    item.can_generate_surat && processingId !== item.id
+                                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                                        : 'cursor-not-allowed border border-zinc-200 bg-zinc-100 text-zinc-400 hover:bg-zinc-100'
+                                                "
+                                                :disabled="
+                                                    processingId === item.id ||
+                                                    !item.can_generate_surat
+                                                "
+                                                @click="generateSurat(item)"
+                                            >
+                                                <FileText class="size-4" />
+                                                Buat Surat
+                                            </Button>
+                                        </div>
+                                        <p class="mt-3 text-[10px] leading-5 text-slate-500">
                                             {{
                                                 hasSavedAssignment(item)
                                                     ? 'Pastikan perusahaan, dosen pembimbing, dan periode sudah benar.'
@@ -1486,5 +1484,3 @@ const studentInitial = (name?: string | null) => {
         </Card>
     </div>
 </template>
-
-

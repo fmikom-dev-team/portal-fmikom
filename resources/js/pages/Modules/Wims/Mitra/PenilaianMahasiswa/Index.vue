@@ -3,11 +3,9 @@ import { Head, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import {
     ArrowLeft,
-    CheckCheck,
     ClipboardCheck,
     FilePenLine,
     Search,
-    Users,
 } from 'lucide-vue-next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,7 +30,10 @@ type StudentItem = {
         nim?: string | null;
         email?: string | null;
     };
-    company?: string | null;
+    company?: {
+        id?: number | null;
+        name?: string | null;
+    } | null;
     period: {
         start?: string | null;
         end?: string | null;
@@ -71,7 +72,7 @@ const filteredStudents = computed(() => {
                 item.student.name,
                 item.student.nim,
                 item.student.email,
-                item.company,
+                item.company?.name,
                 item.period.label,
             ]
                 .filter(Boolean)
@@ -90,41 +91,6 @@ const filteredStudents = computed(() => {
 });
 
 const hasStudents = computed(() => props.students.length > 0);
-
-const summaryCards = computed(() => [
-    {
-        label: 'Total Mahasiswa',
-        value: props.summary.total_students,
-        tone: 'text-slate-900',
-        cardClass: 'border-slate-200 bg-slate-50/70',
-        iconClass: 'border-slate-200 bg-white text-slate-600',
-        icon: Users,
-    },
-    {
-        label: 'Belum Dinilai',
-        value: props.summary.not_assessed,
-        tone: 'text-slate-700',
-        cardClass: 'border-amber-100/80 bg-amber-50/45',
-        iconClass: 'border-amber-100 bg-white text-amber-600',
-        icon: ClipboardCheck,
-    },
-    {
-        label: 'Draft',
-        value: props.summary.draft,
-        tone: 'text-amber-700',
-        cardClass: 'border-orange-100/80 bg-orange-50/45',
-        iconClass: 'border-orange-100 bg-white text-orange-600',
-        icon: FilePenLine,
-    },
-    {
-        label: 'Sudah Dikirim',
-        value: props.summary.submitted,
-        tone: 'text-emerald-700',
-        cardClass: 'border-emerald-100/80 bg-emerald-50/45',
-        iconClass: 'border-emerald-100 bg-white text-emerald-600',
-        icon: CheckCheck,
-    },
-]);
 
 const statusLabelClass = (statusKey: StudentItem['assessment']['status_key']) => {
     if (statusKey === 'submitted') {
@@ -190,57 +156,35 @@ const goBack = () => {
     <div class="min-h-screen bg-wims-bg">
         <div class="mx-auto flex w-full max-w-[1320px] flex-col gap-4 px-4 py-3 lg:gap-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10">
             <header class="relative overflow-hidden rounded-2xl border border-wims-border/50 bg-wims-card/95 px-5 py-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] sm:px-6 sm:py-6">
+                <button
+                    type="button"
+                    title="Kembali ke Dashboard"
+                    aria-label="Kembali ke Dashboard"
+                    class="absolute top-5 right-5 inline-flex size-9 items-center justify-center rounded-xl border border-wims-border bg-white/90 text-slate-500 transition duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 sm:top-6 sm:right-6 sm:size-10"
+                    @click="goBack"
+                >
+                    <ArrowLeft class="size-4" />
+                </button>
                 <div class="flex flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-start lg:justify-between">
-                    <div class="max-w-3xl">
-                        <h1 class="text-[17px] font-bold tracking-tight text-wims-text sm:text-[20px]">
+                    <div class="max-w-3xl pr-10 sm:pr-12">
+                        <h1 class="text-[20px] font-bold tracking-tight text-wims-text sm:text-[24px] lg:text-[30px]">
                             Ringkasan Penilaian Mitra
                         </h1>
-                        <p class="mt-1.5 max-w-3xl text-[12px] leading-5 text-slate-600 sm:text-sm sm:leading-6">
+                        <p class="mt-1.5 max-w-3xl text-[13px] leading-relaxed text-slate-600 sm:text-sm">
                             Isi nilai mahasiswa PKL berdasarkan template penilaian yang ditentukan admin.
                         </p>
                     </div>
-                    <button
-                        type="button"
-                        class="inline-flex h-9 w-fit self-start items-center gap-1.5 rounded-lg border border-wims-border bg-wims-card px-3 text-[11px] font-bold text-slate-700 transition duration-200 hover:border-slate-300 hover:bg-slate-50 sm:px-3.5 sm:text-xs lg:self-auto"
-                        @click="goBack"
-                    >
-                        <ArrowLeft class="size-3.5" />
-                        Kembali ke Dashboard
-                    </button>
                 </div>
             </header>
-
-            <section class="grid grid-cols-2 gap-3 lg:gap-4 xl:grid-cols-4">
-                <Card
-                    v-for="card in summaryCards"
-                    :key="card.label"
-                    class="rounded-2xl py-0 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_42px_-28px_rgba(15,23,42,0.24)]"
-                    :class="card.cardClass"
-                >
-                    <CardContent class="px-4 py-4 sm:px-5 sm:py-5">
-                        <div class="flex items-start justify-between gap-4">
-                            <div>
-                                <p class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 sm:text-xs">{{ card.label }}</p>
-                                <p class="mt-1.5 text-[24px] font-bold tracking-tight sm:text-3xl" :class="card.tone">
-                                    {{ card.value }}
-                                </p>
-                            </div>
-                            <div class="flex size-10 items-center justify-center rounded-xl border" :class="card.iconClass">
-                                <component :is="card.icon" class="size-4" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </section>
 
             <Card class="rounded-2xl border border-wims-border bg-wims-card py-0 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)] transition duration-200 hover:shadow-[0_22px_42px_-32px_rgba(15,23,42,0.2)]">
                 <CardHeader class="px-5 pt-5 pb-4 sm:px-6 sm:pt-5">
                     <div class="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div>
-                            <CardTitle class="text-base font-bold text-wims-text">
+                            <CardTitle class="text-[15px] font-bold text-wims-text">
                                 Daftar Mahasiswa
                             </CardTitle>
-                            <CardDescription class="mt-1 text-sm text-slate-600">
+                            <CardDescription class="mt-1 text-[13px] leading-relaxed text-slate-600 sm:text-sm">
                                 Lanjutkan draft, isi nilai baru, atau lihat nilai yang sudah dikirim.
                             </CardDescription>
                         </div>
@@ -251,12 +195,12 @@ const goBack = () => {
                                     v-model="search"
                                     type="text"
                                     placeholder="Cari nama, NIM, atau perusahaan..."
-                                    class="h-9 w-full rounded-lg border border-wims-border bg-white pr-3 pl-9 text-[13px] text-wims-text outline-none transition duration-200 hover:border-slate-300 focus:border-[#0F62FE] focus:ring-2 focus:ring-[#0F62FE]/10 sm:h-10 sm:text-sm"
+                                    class="h-10 w-full rounded-lg border border-wims-border bg-white pr-3 pl-9 text-base text-wims-text outline-none transition duration-200 hover:border-slate-300 focus:border-[#0F62FE] focus:ring-2 focus:ring-[#0F62FE]/10 sm:text-sm"
                                 />
                             </div>
                             <select
                                 v-model="status"
-                                class="h-9 rounded-lg border border-wims-border bg-white px-3 text-[13px] text-wims-text outline-none transition duration-200 hover:border-slate-300 focus:border-[#0F62FE] focus:ring-2 focus:ring-[#0F62FE]/10 sm:h-10 sm:text-sm"
+                                class="h-10 rounded-lg border border-wims-border bg-white px-3 text-base text-wims-text outline-none transition duration-200 hover:border-slate-300 focus:border-[#0F62FE] focus:ring-2 focus:ring-[#0F62FE]/10 sm:text-sm"
                             >
                                 <option value="all">Semua</option>
                                 <option value="not_assessed">Belum Dinilai</option>
@@ -267,17 +211,17 @@ const goBack = () => {
                     </div>
                 </CardHeader>
                 <CardContent class="px-0 pb-0">
-                    <div v-if="filteredStudents.length" class="overflow-x-auto">
+                    <div v-if="filteredStudents.length" class="hidden overflow-x-auto md:block">
                         <table class="min-w-full border-collapse">
                             <thead class="bg-slate-50/70">
                                 <tr class="border-y border-wims-border">
-                                    <th class="px-5 py-3 text-left text-[12px] font-bold uppercase tracking-[0.06em] text-slate-500">Mahasiswa</th>
-                                    <th class="px-5 py-3 text-left text-[12px] font-bold uppercase tracking-[0.06em] text-slate-500">Perusahaan</th>
-                                    <th class="px-5 py-3 text-left text-[12px] font-bold uppercase tracking-[0.06em] text-slate-500">Periode</th>
-                                    <th class="px-5 py-3 text-left text-[12px] font-bold uppercase tracking-[0.06em] text-slate-500">Status Magang</th>
-                                    <th class="px-5 py-3 text-left text-[12px] font-bold uppercase tracking-[0.06em] text-slate-500">Status Penilaian</th>
-                                    <th class="px-5 py-3 text-right text-[12px] font-bold uppercase tracking-[0.06em] text-slate-500">Nilai Mitra</th>
-                                    <th class="px-5 py-3 text-right text-[12px] font-bold uppercase tracking-[0.06em] text-slate-500">Aksi</th>
+                                    <th class="px-5 py-3 text-left text-sm font-bold uppercase tracking-[0.06em] text-slate-500">Mahasiswa</th>
+                                    <th class="px-5 py-3 text-left text-sm font-bold uppercase tracking-[0.06em] text-slate-500">Perusahaan</th>
+                                    <th class="px-5 py-3 text-left text-sm font-bold uppercase tracking-[0.06em] text-slate-500">Periode</th>
+                                    <th class="px-5 py-3 text-left text-sm font-bold uppercase tracking-[0.06em] text-slate-500">Status Magang</th>
+                                    <th class="px-5 py-3 text-left text-sm font-bold uppercase tracking-[0.06em] text-slate-500">Status Penilaian</th>
+                                    <th class="px-5 py-3 text-right text-sm font-bold uppercase tracking-[0.06em] text-slate-500">Nilai Mitra</th>
+                                    <th class="px-5 py-3 text-right text-sm font-bold uppercase tracking-[0.06em] text-slate-500">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -287,13 +231,13 @@ const goBack = () => {
                                     class="border-t border-wims-border bg-white align-top transition duration-200 hover:bg-blue-50/40"
                                 >
                                     <td class="px-5 py-4">
-                                        <p class="text-sm font-bold text-wims-text">{{ item.student.name || 'Mahasiswa' }}</p>
-                                        <p class="mt-1 text-xs text-slate-500">
+                                        <p class="text-[13px] font-bold text-wims-text">{{ item.student.name || 'Mahasiswa' }}</p>
+                                        <p class="mt-1 text-[11px] text-slate-500">
                                             {{ item.student.nim || '-' }} • {{ item.student.email || '-' }}
                                         </p>
                                     </td>
                                     <td class="px-5 py-4 text-sm text-wims-text">
-                                        {{ item.company || '-' }}
+                                        {{ item.company?.name || '-' }}
                                     </td>
                                     <td class="px-5 py-4 text-sm text-wims-text">
                                         {{ formatIndonesianDateLabel(item.period.label) }}
@@ -316,19 +260,19 @@ const goBack = () => {
                                             >
                                                 {{ item.assessment.status_label }}
                                             </Badge>
-                                            <p v-if="item.assessment.submitted_at" class="text-xs text-slate-500">
+                                            <p v-if="item.assessment.submitted_at" class="text-[11px] text-slate-500">
                                                 Dikirim {{ formatIndonesianDateLabel(item.assessment.submitted_at) }}
                                             </p>
                                         </div>
                                     </td>
-                                    <td class="px-5 py-4 text-right text-sm font-bold text-wims-text">
+                                    <td class="px-5 py-4 text-right text-[13px] font-bold text-wims-text">
                                         {{ item.assessment.total_score !== null && item.assessment.total_score !== undefined ? item.assessment.total_score.toFixed(2) : '-' }}
                                     </td>
                                     <td class="px-5 py-4">
                                         <div class="flex justify-end">
                                             <Button
                                                 type="button"
-                                                class="h-9 rounded-lg bg-[#0F62FE] px-3.5 text-sm font-bold text-white shadow-sm transition duration-200 hover:bg-[#0050E6] hover:shadow-md"
+                                                class="h-9 rounded-lg bg-[#0F62FE] px-3.5 text-[13px] font-bold text-white shadow-sm transition duration-200 hover:bg-[#0050E6] hover:shadow-md"
                                                 @click="openAssessment(item.id)"
                                             >
                                                 <FilePenLine class="mr-2 size-4" />
@@ -341,19 +285,86 @@ const goBack = () => {
                         </table>
                     </div>
 
+                    <div v-if="filteredStudents.length" class="space-y-3 px-4 pb-4 md:hidden">
+                        <div
+                            v-for="item in filteredStudents"
+                            :key="`mobile-${item.id}`"
+                            class="rounded-2xl border border-wims-border bg-white px-4 py-4 shadow-[0_12px_28px_-28px_rgba(15,23,42,0.3)]"
+                        >
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p class="text-[13px] font-bold text-wims-text">{{ item.student.name || 'Mahasiswa' }}</p>
+                                    <p class="mt-1 break-words text-[11px] leading-5 text-slate-500">
+                                        {{ item.student.nim || '-' }} &bull; {{ item.student.email || '-' }}
+                                    </p>
+                                </div>
+                                <Badge
+                                    variant="outline"
+                                    class="rounded-full px-3 py-1 text-[11px] font-bold"
+                                    :class="statusLabelClass(item.assessment.status_key)"
+                                >
+                                    {{ item.assessment.status_label }}
+                                </Badge>
+                            </div>
+
+                            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                                <div class="rounded-xl border border-wims-border bg-slate-50/80 px-3.5 py-3">
+                                    <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Perusahaan</p>
+                                    <p class="mt-1.5 text-[13px] font-bold text-wims-text">{{ item.company?.name || '-' }}</p>
+                                </div>
+                                <div class="rounded-xl border border-wims-border bg-slate-50/80 px-3.5 py-3">
+                                    <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Periode</p>
+                                    <p class="mt-1.5 text-[13px] font-bold text-wims-text">
+                                        {{ formatIndonesianDateLabel(item.period.label) }}
+                                    </p>
+                                </div>
+                                <div class="rounded-xl border border-wims-border bg-slate-50/80 px-3.5 py-3">
+                                    <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Status Magang</p>
+                                    <div class="mt-1.5">
+                                        <Badge
+                                            variant="outline"
+                                            class="rounded-full px-3 py-1 text-[11px] font-bold"
+                                            :class="registrationStatusClass(item.registration_status)"
+                                        >
+                                            {{ registrationStatusLabel(item.registration_status) }}
+                                        </Badge>
+                                    </div>
+                                </div>
+                                <div class="rounded-xl border border-wims-border bg-slate-50/80 px-3.5 py-3">
+                                    <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Nilai Mitra</p>
+                                    <p class="mt-1.5 text-[13px] font-bold text-wims-text">
+                                        {{ item.assessment.total_score !== null && item.assessment.total_score !== undefined ? item.assessment.total_score.toFixed(2) : '-' }}
+                                    </p>
+                                    <p v-if="item.assessment.submitted_at" class="mt-1 text-[11px] text-slate-500">
+                                        Dikirim {{ formatIndonesianDateLabel(item.assessment.submitted_at) }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <Button
+                                type="button"
+                                class="mt-4 h-10 w-full rounded-lg bg-[#0F62FE] px-4 text-[13px] font-bold text-white shadow-sm transition duration-200 hover:bg-[#0050E6]"
+                                @click="openAssessment(item.id)"
+                            >
+                                <FilePenLine class="mr-2 size-4" />
+                                {{ actionLabel(item) }}
+                            </Button>
+                        </div>
+                    </div>
+
                     <div v-else class="flex flex-col items-center justify-center gap-3 px-6 py-10 text-center">
                         <div class="flex size-12 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
                             <ClipboardCheck class="size-5" />
                         </div>
                         <div v-if="hasStudents">
-                            <p class="text-sm font-bold text-wims-text">Tidak ada mahasiswa yang sesuai dengan filter.</p>
-                            <p class="mt-1 text-sm text-slate-500">
+                            <p class="text-[13px] font-bold text-wims-text">Tidak ada mahasiswa yang sesuai dengan filter.</p>
+                            <p class="mt-1 text-[11px] text-slate-500">
                                 Coba ubah kata kunci atau filter status penilaian.
                             </p>
                         </div>
                         <div v-else>
-                            <p class="text-sm font-bold text-wims-text">Belum ada mahasiswa yang siap dinilai.</p>
-                            <p class="mt-1 text-sm text-slate-500">
+                            <p class="text-[13px] font-bold text-wims-text">Belum ada mahasiswa yang siap dinilai.</p>
+                            <p class="mt-1 text-[11px] text-slate-500">
                                 Penilaian dapat dilakukan setelah mahasiswa menyelesaikan PKL.
                             </p>
                         </div>
@@ -363,5 +374,3 @@ const goBack = () => {
         </div>
     </div>
 </template>
-
-

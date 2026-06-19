@@ -1,17 +1,21 @@
 ﻿<script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import {
     PencilLine,
     Save,
     Copy,
     Check,
+    Building2,
     GraduationCap,
+    ChevronRight,
     FileText,
     Clock,
     Phone,
     Mail,
+    BookOpen,
     TrendingUp,
+    Zap,
     CircleCheck,
     AlertCircle,
     CalendarDays,
@@ -59,10 +63,21 @@ type ProfileProps = {
 
 type RegistrationProps = {
     status?: string | null;
-    proposal_company_name?: string | null;
-    final_company_name?: string | null;
-    dosen_name?: string | null;
-    mentor_name?: string | null;
+    company?: {
+        proposal?: {
+            name?: string | null;
+        } | null;
+        final?: {
+            id?: number | null;
+            name?: string | null;
+        } | null;
+    } | null;
+    lecturer?: {
+        name?: string | null;
+    } | null;
+    mentor?: {
+        name?: string | null;
+    } | null;
     period_label?: string | null;
     submitted_at?: string | null;
 };
@@ -210,6 +225,16 @@ const registrationStatusClass = computed(() => {
     return 'border-wims-border bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400';
 });
 
+const registrationCompanyLabel = computed(
+    () => props.registration?.company?.final?.name ?? 'Belum ditetapkan kampus',
+);
+const registrationLecturerLabel = computed(
+    () => props.registration?.lecturer?.name ?? 'Belum ditetapkan',
+);
+const registrationMentorLabel = computed(
+    () => props.registration?.mentor?.name ?? 'Belum ditetapkan',
+);
+
 // --- FITUR 1: COPY TO CLIPBOARD -----------------------------------------------
 
 const copiedField = ref<string | null>(null);
@@ -258,18 +283,20 @@ const completionTextColor = computed(() => {
 // --- FITUR 3: INTERNSHIP PROGRESS TRACKER -------------------------------------
 
 const internshipStages = [
-    { key: 'pending', label: 'Pengajuan' },
+    { key: 'draft', label: 'Pengajuan' },
+    { key: 'pending', label: 'Review Kampus' },
     { key: 'approved', label: 'Disetujui' },
-    { key: 'aktif', label: 'Aktif Magang' },
+    { key: 'aktif', label: 'Aktif' },
     { key: 'selesai', label: 'Selesai' },
 ];
 
 const currentStageIndex = computed(() => {
     const status = props.registration?.status;
-    if (status === 'selesai') return 3;
-    if (status === 'aktif') return 2;
-    if (status === 'approved') return 1;
-    if (status === 'pending' || status === 'revisi') return 0;
+    if (status === 'selesai') return 4;
+    if (status === 'aktif') return 3;
+    if (status === 'approved') return 2;
+    if (status === 'pending' || status === 'revisi') return 1;
+    if (status) return 0;
     return -1;
 });
 
@@ -311,6 +338,66 @@ const timelineEvents = computed(() => {
         events.push({ label: 'Magang selesai', date: '—', icon: 'GraduationCap', color: 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/15 border-violet-200' });
     }
     return events;
+});
+
+const quickActions = computed(() => {
+    const status = props.registration?.status;
+    const actions: {
+        label: string;
+        href: string;
+        icon: 'building' | 'book' | 'file' | 'alert';
+        desc: string;
+        color: string;
+    }[] = [];
+
+    if (!status) {
+        actions.push({
+            label: 'Daftar Magang',
+            href: '/wims/pendaftaran',
+            icon: 'building',
+            desc: 'Ajukan pendaftaran PKL baru.',
+            color: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/15 border-blue-200 hover:bg-blue-100 dark:hover:bg-blue-500/20',
+        });
+    }
+
+    if (status === 'revisi') {
+        actions.push({
+            label: 'Perbaiki Pengajuan',
+            href: '/wims/pendaftaran',
+            icon: 'alert',
+            desc: 'Buka ulang halaman pendaftaran untuk revisi.',
+            color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/15 border-amber-200 hover:bg-amber-100 dark:hover:bg-amber-500/20',
+        });
+    }
+
+    if (status === 'aktif' || status === 'selesai') {
+        actions.push({
+            label: 'Logbook Harian',
+            href: '/wims/logbook',
+            icon: 'book',
+            desc: 'Lihat dan kelola catatan aktivitas magang.',
+            color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/15 border-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-500/20',
+        });
+        actions.push({
+            label: 'Laporan Akhir',
+            href: '/wims/laporan',
+            icon: 'file',
+            desc: 'Kelola dokumen laporan akhir magang.',
+            color: 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/15 border-violet-200 hover:bg-violet-100 dark:hover:bg-violet-500/20',
+        });
+    }
+
+    if (status === 'approved' || status === 'pending' || status === 'aktif' || status === 'selesai') {
+        actions.push({
+            label: 'Status Magang',
+            href: '/wims/pendaftaran',
+            icon: 'building',
+            desc: 'Tinjau perusahaan, periode, dan status pengajuan.',
+            color: 'text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 border-wims-border hover:bg-slate-100 dark:hover:bg-slate-700/40',
+        });
+    }
+
+    return actions;
 });
 
 // --- FITUR 5: DRAG & DROP PHOTO ----------------------------------------------
@@ -494,7 +581,7 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                                                 @change="handlePhotoChange"
                                             />
                                             <p v-if="selectedFileName" class="text-xs text-slate-500 dark:text-slate-400">
-                                                ?? {{ selectedFileName }}
+                                                File: {{ selectedFileName }}
                                             </p>
                                             <InputError :message="profileForm.errors.foto_profil" />
                                         </div>
@@ -610,7 +697,7 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                                                     id="tanggal_lahir"
                                                     v-model="profileForm.tanggal_lahir"
                                                     type="date"
-                                                    class="h-11 rounded-lg border-wims-border bg-wims-card"
+                                                    class="student-date-input h-11 rounded-lg border-wims-border bg-wims-card"
                                                 />
                                                 <InputError :message="profileForm.errors.tanggal_lahir" />
                                             </div>
@@ -697,7 +784,7 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                                                 Simpan Perubahan
                                             </Button>
                                             <p v-if="profileForm.recentlySuccessful" class="text-sm text-emerald-700 dark:text-emerald-300">
-                                                ? Profil WIMS berhasil diperbarui.
+                                                Profil WIMS berhasil diperbarui.
                                             </p>
                                         </div>
                                     </section>
@@ -726,15 +813,15 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                                         </div>
                                         <div>
                                             <dt class="text-sm text-slate-500 dark:text-slate-400">Perusahaan</dt>
-                                            <dd class="mt-1 text-sm font-semibold text-wims-text">{{ registration?.final_company_name || 'Belum ditetapkan kampus' }}</dd>
+                                            <dd class="mt-1 text-sm font-semibold text-wims-text">{{ registrationCompanyLabel }}</dd>
                                         </div>
                                         <div>
                                             <dt class="text-sm text-slate-500 dark:text-slate-400">Dosen pembimbing</dt>
-                                            <dd class="mt-1 text-sm font-semibold text-wims-text">{{ registration?.dosen_name || 'Belum ditetapkan' }}</dd>
+                                            <dd class="mt-1 text-sm font-semibold text-wims-text">{{ registrationLecturerLabel }}</dd>
                                         </div>
                                         <div>
                                             <dt class="text-sm text-slate-500 dark:text-slate-400">Pembimbing lapangan mitra</dt>
-                                            <dd class="mt-1 text-sm font-semibold text-wims-text">{{ registration?.mentor_name || 'Belum ditetapkan' }}</dd>
+                                            <dd class="mt-1 text-sm font-semibold text-wims-text">{{ registrationMentorLabel }}</dd>
                                         </div>
                                         <div>
                                             <dt class="text-sm text-slate-500 dark:text-slate-400">Periode PKL</dt>
@@ -789,7 +876,7 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                                     ? 'border-[#0F62FE] bg-[#0F62FE] text-white'
                                     : 'border-wims-border bg-wims-card text-slate-400'"
                             >
-                                <CircleCheck v-if="idx < currentStageIndex" class="size-4" />
+                                <CircleCheck v-if="idx < currentStageIndex || (stage.key === 'selesai' && currentStageIndex === internshipStages.length - 1)" class="size-4" />
                                 <span v-else class="text-[11px] font-bold">{{ idx + 1 }}</span>
                             </div>
                             <span
@@ -806,8 +893,8 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                 </CardContent>
             </Card>
 
-            <!-- Bottom Row: Timeline -->
-            <div class="grid gap-5">
+            <!-- Bottom Row: Timeline + Quick Actions -->
+            <div class="grid gap-5 lg:grid-cols-2">
 
                 <!-- ------------------------------------------------------------
                      FITUR 4 — RIWAYAT AKTIVITAS (TIMELINE)
@@ -856,9 +943,42 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                     </CardContent>
                 </Card>
 
+                <Card class="rounded-xl border border-wims-border bg-wims-card py-0 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)]">
+                    <CardHeader class="border-b border-wims-border/80 px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
+                        <CardTitle class="flex items-center gap-2 text-base text-slate-950 dark:text-white">
+                            <Zap class="size-4 text-slate-400" />
+                            Aksi Cepat
+                        </CardTitle>
+                        <CardDescription class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                            Pintasan ke halaman yang paling sering dipakai.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent class="px-5 py-5 sm:px-6">
+                        <div class="grid gap-2">
+                            <Link
+                                v-for="action in quickActions"
+                                :key="`${action.label}-${action.href}`"
+                                :href="action.href"
+                                class="flex items-center justify-between rounded-lg border px-3.5 py-3 transition-colors"
+                                :class="action.color"
+                            >
+                                <div class="flex items-center gap-3">
+                                    <Building2 v-if="action.icon === 'building'" class="size-4 shrink-0" />
+                                    <BookOpen v-else-if="action.icon === 'book'" class="size-4 shrink-0" />
+                                    <FileText v-else-if="action.icon === 'file'" class="size-4 shrink-0" />
+                                    <AlertCircle v-else class="size-4 shrink-0" />
+                                    <div>
+                                        <p class="text-sm font-medium">{{ action.label }}</p>
+                                        <p class="text-xs opacity-70">{{ action.desc }}</p>
+                                    </div>
+                                </div>
+                                <ChevronRight class="size-4 shrink-0 opacity-50" />
+                            </Link>
+                        </div>
+                    </CardContent>
+                </Card>
+
             </div>
         </div>
     </div>
 </template>
-
-

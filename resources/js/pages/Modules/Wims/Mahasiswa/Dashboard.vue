@@ -94,8 +94,15 @@ type RegistrationProps = {
         | 'active'
         | 'completed'
         | null;
-    proposal_company_name?: string | null;
-    final_company_name?: string | null;
+    company?: {
+        proposal?: {
+            name?: string | null;
+        } | null;
+        final?: {
+            id?: number | null;
+            name?: string | null;
+        } | null;
+    } | null;
     submitted_at?: string | null;
     period_label?: string | null;
 };
@@ -141,8 +148,6 @@ const props = withDefaults(
         registration: () => ({
             status: null,
             dashboard_state: 'not_registered',
-            proposal_company_name: null,
-            final_company_name: null,
             submitted_at: null,
             period_label: null,
         }),
@@ -218,6 +223,12 @@ const remainingDays = computed(() =>
     Number(props.internship.remaining_days ?? 0),
 );
 const animatedRemainingDays = useNumberRoll(remainingDays.value, 1200);
+const registrationCompanyLabel = computed(
+    () =>
+        props.registration?.company?.final?.name ??
+        props.registration?.company?.proposal?.name ??
+        'Belum ada',
+);
 const checkInTimeLabel = computed(
     () => props.attendance.check_in_time ?? 'Belum check-in',
 );
@@ -741,7 +752,7 @@ const showHeroActions = computed(() => dashboardState.value === 'active');
                             <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-4 py-3 transition-colors hover:bg-slate-100/80 dark:hover:bg-slate-700/40">
                                     <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Perusahaan</p>
-                                    <p class="mt-1.5 text-[13px] font-bold leading-5 text-wims-text break-words sm:leading-tight">{{ props.registration.final_company_name || props.registration.proposal_company_name || 'Belum ada' }}</p>
+                                    <p class="mt-1.5 text-[13px] font-bold leading-5 text-wims-text break-words sm:leading-tight">{{ registrationCompanyLabel }}</p>
                                 </div>
                                 <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-4 py-3 transition-colors hover:bg-slate-100/80 dark:hover:bg-slate-700/40">
                                     <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Periode</p>
@@ -903,5 +914,3 @@ const showHeroActions = computed(() => dashboardState.value === 'active');
         </div>
     </div>
 </template>
-
-

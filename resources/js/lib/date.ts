@@ -91,19 +91,48 @@ export function formatIndonesianDateTime(
     return new Intl.DateTimeFormat(INDONESIAN_LOCALE, options).format(date).replace(/\./g, '');
 }
 
-export function formatIndonesianTime(value?: string | null): string {
-    if (!value) {
+export function formatIndonesianTime(value?: string | number | null): string {
+    if (value === null || value === undefined || value === '') {
         return '-';
     }
 
-    const trimmed = value.trim();
+    const normalizedValue = String(value).trim();
+
+    if (!normalizedValue) {
+        return '-';
+    }
+
+    const trimmed = normalizedValue;
+    const digitsOnly = trimmed.replace(/[^\d]/g, '');
 
     if (/^\d{2}:\d{2}(:\d{2})?$/.test(trimmed)) {
         return trimmed.slice(0, 5);
     }
 
-    return formatIndonesianDateTime(trimmed, {
-        hour: '2-digit',
-        minute: '2-digit',
-    });
+    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(trimmed)) {
+        const [hours, minutes] = trimmed.split(':');
+        return `${hours.padStart(2, '0')}:${minutes}`;
+    }
+
+    if (/^\d{3,4}$/.test(digitsOnly)) {
+        const padded = digitsOnly.padStart(4, '0');
+        return `${padded.slice(0, 2)}:${padded.slice(2, 4)}`;
+    }
+
+    if (/^\d{5,6}$/.test(digitsOnly)) {
+        const padded = digitsOnly.padStart(6, '0');
+        return `${padded.slice(0, 2)}:${padded.slice(2, 4)}`;
+    }
+
+    const date = new Date(trimmed);
+
+    if (!Number.isNaN(date.getTime())) {
+        return new Intl.DateTimeFormat(INDONESIAN_LOCALE, {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+        }).format(date).replace(/\./g, ':');
+    }
+
+    return trimmed;
 }

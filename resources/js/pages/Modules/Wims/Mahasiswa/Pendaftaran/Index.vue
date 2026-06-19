@@ -36,11 +36,18 @@ type RegistrationItem = {
     tanggal_selesai?: string | null;
     tanggal_mulai_label?: string | null;
     tanggal_selesai_label?: string | null;
-    proposal_company_name?: string | null;
-    proposal_company_address?: string | null;
     application_note?: string | null;
     revision_note?: string | null;
-    final_company_name?: string | null;
+    company?: {
+        proposal?: {
+            name?: string | null;
+            address?: string | null;
+        } | null;
+        final?: {
+            id?: number | null;
+            name?: string | null;
+        } | null;
+    } | null;
     submitted_at?: string | null;
 };
 type PageState = { can_submit?: boolean; is_revision?: boolean; is_locked?: boolean; completed_once?: boolean };
@@ -85,6 +92,15 @@ const globalError  = computed(() =>
     || (completedOnce.value ? 'PKL sudah pernah diselesaikan pada akun ini. Pendaftaran baru tidak tersedia lagi.' : null),
 );
 
+const proposalCompanyLabel = (registrationItem?: RegistrationItem | null) =>
+    registrationItem?.company?.proposal?.name ?? '—';
+
+const finalCompanyLabel = (registrationItem?: RegistrationItem | null) =>
+    registrationItem?.company?.final?.name ?? '—';
+
+const companyAddressLabel = (registrationItem?: RegistrationItem | null) =>
+    registrationItem?.company?.proposal?.address ?? '—';
+
 // -- UI toggles ----------------------------------------------
 const showChecklist  = ref(true);
 const showLog        = ref(true);
@@ -118,7 +134,7 @@ const steps = computed(() => {
         { key: 'pending',  label: 'Review Kampus', done: ['approved','aktif','selesai'].includes(s ?? ''),       active: s === 'pending' || s === 'revisi' },
         { key: 'approved', label: 'Disetujui',     done: ['aktif','selesai'].includes(s ?? ''),                  active: s === 'approved' },
         { key: 'aktif',    label: 'Aktif',         done: s === 'selesai',                                        active: s === 'aktif' },
-        { key: 'selesai',  label: 'Selesai',       done: false,                                                  active: s === 'selesai' },
+        { key: 'selesai',  label: 'Selesai',       done: s === 'selesai',                                        active: s === 'selesai' },
     ];
 });
 
@@ -233,11 +249,11 @@ const printCard = () => {
                 </div>
                 <span class="badge">${statusLabel(r?.status)}</span>
             </div>
-            <div class="row"><span class="label">Nama Perusahaan Final</span><span class="value">${r?.final_company_name || '—'}</span></div>
-            <div class="row"><span class="label">Usulan Mahasiswa</span><span class="value">${r?.proposal_company_name || '—'}</span></div>
+            <div class="row"><span class="label">Nama Perusahaan Final</span><span class="value">${finalCompanyLabel(r)}</span></div>
+            <div class="row"><span class="label">Usulan Mahasiswa</span><span class="value">${proposalCompanyLabel(r)}</span></div>
             <div class="row"><span class="label">Tanggal Mulai</span><span class="value">${r?.tanggal_mulai_label || '—'}</span></div>
             <div class="row"><span class="label">Tanggal Selesai</span><span class="value">${r?.tanggal_selesai_label || '—'}</span></div>
-            <div class="row"><span class="label">Alamat Perusahaan</span><span class="value">${r?.proposal_company_address || '—'}</span></div>
+            <div class="row"><span class="label">Alamat Perusahaan</span><span class="value">${companyAddressLabel(r)}</span></div>
             <div class="row"><span class="label">Tanggal Pengajuan</span><span class="value">${r?.submitted_at || '—'}</span></div>
             <div class="footer">Dicetak pada ${formatIndonesianDateTime(new Date(), {
                 day: '2-digit',
@@ -388,7 +404,7 @@ const submit = () => {
                                 <Building2 class="size-4 text-emerald-600 dark:text-emerald-400" />
                             </div>
                         </div>
-                        <p class="mt-2.5 text-[14px] font-bold text-wims-text leading-tight truncate">{{ registration?.final_company_name || registration?.proposal_company_name || '—' }}</p>
+                        <p class="mt-2.5 text-[14px] font-bold text-wims-text leading-tight truncate">{{ registration ? (registration.company?.final?.name || registration.company?.proposal?.name || '—') : '—' }}</p>
                         <p class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Perusahaan</p>
                     </div>
                 </div>
@@ -491,8 +507,8 @@ const submit = () => {
                             </div>
                             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Perusahaan Final</p>
                         </div>
-                        <p class="text-sm font-bold leading-snug text-wims-text">{{ registration?.final_company_name || '—' }}</p>
-                        <p v-if="!registration?.final_company_name" class="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">Menunggu keputusan kampus</p>
+                        <p class="text-sm font-bold leading-snug text-wims-text">{{ registration?.company?.final?.name || '—' }}</p>
+                        <p v-if="!registration?.company?.final?.name" class="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">Menunggu keputusan kampus</p>
                     </div>
 
                     <!-- Periode -->
@@ -523,8 +539,8 @@ const submit = () => {
                             </div>
                             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Usulan Mahasiswa</p>
                         </div>
-                        <p class="text-xs font-bold text-wims-text">{{ registration?.proposal_company_name || 'Belum mengusulkan perusahaan' }}</p>
-                        <p class="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">{{ registration?.proposal_company_address || 'Kampus akan menentukan perusahaan mitra yang sesuai.' }}</p>
+                        <p class="text-xs font-bold text-wims-text">{{ registration?.company?.proposal?.name || 'Belum mengusulkan perusahaan' }}</p>
+                        <p class="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">{{ registration?.company?.proposal?.address || 'Kampus akan menentukan perusahaan mitra yang sesuai.' }}</p>
                     </div>
 
                     <!-- Revision Note -->
@@ -644,7 +660,7 @@ const submit = () => {
                                     <div class="relative">
                                         <CalendarDays class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                                         <input v-model="form.tanggal_mulai" type="date" :disabled="isLocked"
-                                            class="h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card pr-3 pl-10 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
+                                            class="student-date-input h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card pr-3 pl-10 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
                                     </div>
                                     <p v-if="form.errors.tanggal_mulai" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.tanggal_mulai }}</p>
                                 </div>
@@ -653,7 +669,7 @@ const submit = () => {
                                     <div class="relative">
                                         <CalendarDays class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                                         <input v-model="form.tanggal_selesai" type="date" :disabled="isLocked"
-                                            class="h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card pr-3 pl-10 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
+                                            class="student-date-input h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card pr-3 pl-10 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
                                     </div>
                                     <p v-if="form.errors.tanggal_selesai" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.tanggal_selesai }}</p>
                                 </div>
@@ -776,5 +792,3 @@ const submit = () => {
         </div>
     </div>
 </template>
-
-
