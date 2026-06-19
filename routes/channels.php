@@ -9,8 +9,7 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 
 // Authorize the radar.alerts channel for Super Admins
 Broadcast::channel('radar.alerts', function ($user) {
-    // Basic check. Modify according to your Spatie permission or logic
-    return $user->user_type === 'super_admin' || $user->hasRole('super-admin');
+    return $user->hasGlobalRole('super-admin');
 });
 
 // ── PAGI Chat private channels ────────────────────────────────────────────────

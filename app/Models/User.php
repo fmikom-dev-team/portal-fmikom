@@ -190,4 +190,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(PagiWork::class, 'user_id');
     }
+
+    public function getNimNipAttribute(): ?string
+    {
+        return $this->attributes['nim_nip'] ?? $this->attributes['nomor_induk'] ?? null;
+    }
 }

@@ -44,7 +44,7 @@ class EnsureModuleAccess
 
         // 3. Fallback ke user_type jika tidak ada assignment
         if (! $assignment) {
-            $userType = $user->user_type ?? optional($user->role)->slug ?? null;
+            $userType = $user->getGlobalRoleSlug();
 
             if ($roleSlug !== $userType) {
                 // Hapus session yang stale (mungkin assignment dicabut admin)

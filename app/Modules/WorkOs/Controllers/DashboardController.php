@@ -511,7 +511,11 @@ class DashboardController extends Controller // NOSONAR
                     'location' => $u->location,
                     'metadata' => $u->metadata,
                     'tanggal_lahir' => $u->tanggal_lahir?->format('Y-m-d'),
-                    'role' => $u->role ? ['id' => $u->role->id, 'nama' => $u->role->nama, 'slug' => $u->role->slug] : null,
+                    'role' => $u->getGlobalRoleSlug() ? [
+                        'id' => null,
+                        'nama' => $u->getGlobalRoleLabel(),
+                        'slug' => $u->getGlobalRoleSlug(),
+                    ] : null,
                     'prodi' => optional($u->programStudi)->nama,
                     'created_at' => $u->created_at?->format(self::DATE_FORMAT),
                     'module_roles' => $u->moduleRoles->map(fn ($mr) => [

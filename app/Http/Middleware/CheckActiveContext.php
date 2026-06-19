@@ -52,7 +52,7 @@ class CheckActiveContext
             }
 
             // Fallback: izinkan jika roleSlug cocok dengan user_type
-            $userType = $user->user_type ?? optional($user->role)->slug;
+            $userType = $user->getGlobalRoleSlug();
 
             return $activeRole === $userType;
         });

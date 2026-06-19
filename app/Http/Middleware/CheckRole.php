@@ -22,11 +22,8 @@ class CheckRole
 
         $user = Auth::user();
 
-        // Ambil slug role dari relasi role, atau fallback ke user_type
-        $userRoleSlug = $user->role ? $user->role->slug : $user->user_type;
-        if ($userRoleSlug) {
-            $userRoleSlug = str_replace('_', '-', $userRoleSlug);
-        }
+        // user_type adalah source of truth untuk role global Portal.
+        $userRoleSlug = $user->getGlobalRoleSlug();
 
         // Jika user tidak punya role_slug sama sekali, lempar kembali ke dashboard dengan hening
         if (! $userRoleSlug) {

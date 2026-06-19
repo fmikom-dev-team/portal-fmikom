@@ -136,7 +136,7 @@ class PortalController extends Controller
 
         if (! $hasAccess) {
             // Fallback: izinkan jika role baru = user_type
-            $userType = $user->user_type ?? optional($user->role)->slug;
+            $userType = $user->getGlobalRoleSlug();
             if ($newRole !== $userType) {
                 return response()->json(['message' => "Role '{$newRole}' tidak valid untuk modul '{$moduleCode}'."], 403);
             }
