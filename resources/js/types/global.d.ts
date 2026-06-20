@@ -22,6 +22,33 @@ declare module "@inertiajs/core" {
 			[key: string]: unknown;
 		};
 	}
+
+	export interface PageProps {
+		auth?: {
+			user?: {
+				id: number;
+				name: string;
+				email: string;
+				avatar?: string | null;
+				pagi_username?: string | null;
+				foto_path?: string | null;
+				location?: string | null;
+				user_type?: string | null;
+				following?: number[];
+				metadata?: {
+					following?: number[];
+					pagi_work_theme?: string | null;
+					pagi_work_palette_index?: number;
+					[key: string]: any;
+				};
+			};
+		};
+		context?: {
+			active_role?: string;
+		};
+		recent_notifications?: any[];
+		[key: string]: any;
+	}
 }
 
 declare module "vue" {

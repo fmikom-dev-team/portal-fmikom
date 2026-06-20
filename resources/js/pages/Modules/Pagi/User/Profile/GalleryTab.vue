@@ -13,25 +13,35 @@ import {
 	X,
 } from "lucide-vue-next";
 import { computed, onMounted, onUnmounted, ref } from "vue";
+import { Skeleton } from "@/components/ui/skeleton";
+import { usePagiProgress } from "../../shared/composables/usePagiProgress";
 import Modal from "../ui/Modal.vue";
 import OptimizedImage from "../ui/OptimizedImage.vue";
 import VideoLazy from "../ui/VideoLazy.vue";
 
-const props = defineProps<{
-	projects?: Array<{
-		id: number;
-		title: string;
-		image: string;
-		likes: number;
-		views: number;
-		content: any;
-		created_at: string;
-		is_verified?: boolean;
-		comments?: any[];
-	}>;
-	isOwnProfile: boolean;
-	isLoading?: boolean;
-}>();
+const { trackUpload } = usePagiProgress();
+
+const props = withDefaults(
+	defineProps<{
+		projects?: Array<{
+			id: number;
+			title: string;
+			image: string;
+			likes: number;
+			views: number;
+			content: any;
+			created_at: string;
+			is_verified?: boolean;
+			comments?: any[];
+		}>;
+		isOwnProfile: boolean;
+		isLoading?: boolean;
+		isStudent?: boolean;
+	}>(),
+	{
+		isStudent: true,
+	},
+);
 
 const emit = defineEmits<{
 	(e: "open-project", project: any): void;
@@ -49,7 +59,6 @@ const selectedFile = ref<File | null>(null);
 const filePreview = ref<string | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 const isUploading = ref(false);
-const uploadProgress = ref(0);
 const dragActive = ref(false);
 
 const isManualItem = (project: any) => {
@@ -241,20 +250,121 @@ const onFileChange = (e: Event) => {
 	}
 };
 
-const handleFileSelect = (file: File) => {
+const compressImageToWebP = (
+	file: File,
+	quality = 0.8,
+	maxDimension = 1920,
+): Promise<File> => {
+	return new Promise((resolve) => {
+		if (!file.type.startsWith("image/")) {
+			resolve(file);
+			return;
+		}
+
+		const img = new Image();
+		const objectUrl = URL.createObjectURL(file);
+
+		img.onload = () => {
+			URL.revokeObjectURL(objectUrl);
+			const canvas = document.createElement("canvas");
+			let width = img.naturalWidth;
+			let height = img.naturalHeight;
+
+			if (width > maxDimension || height > maxDimension) {
+				if (width > height) {
+					height = Math.round((height * maxDimension) / width);
+					width = maxDimension;
+				} else {
+					width = Math.round((width * maxDimension) / height);
+					height = maxDimension;
+				}
+			}
+
+			canvas.width = width;
+			canvas.height = height;
+			const ctx = canvas.getContext("2d");
+			if (ctx) {
+				ctx.drawImage(img, 0, 0, width, height);
+				canvas.toBlob(
+					(blob) => {
+						if (blob) {
+							let baseName = file.name;
+							const lastDotIndex = file.name.lastIndexOf(".");
+							if (lastDotIndex !== -1) {
+								baseName = file.name.substring(0, lastDotIndex);
+							}
+							const newFileName = `${baseName}.webp`;
+							const compressedFile = new File([blob], newFileName, {
+								type: "image/webp",
+								lastModified: Date.now(),
+							});
+							resolve(compressedFile);
+						} else {
+							resolve(file);
+						}
+					},
+					"image/webp",
+					quality,
+				);
+			} else {
+				resolve(file);
+			}
+		};
+		img.onerror = () => {
+			URL.revokeObjectURL(objectUrl);
+			resolve(file);
+		};
+		img.src = objectUrl;
+	});
+};
+
+const handleFileSelect = async (file: File) => {
 	const isImage = file.type.startsWith("image/");
 	const isVideo = file.type.startsWith("video/");
 	if (!isImage && !isVideo) {
 		alert("Hanya file gambar atau video yang diperbolehkan.");
 		return;
 	}
-	const maxSize = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024; // 100MB for video, 10MB for image
-	if (file.size > maxSize) {
-		alert(`Ukuran file maksimal adalah ${isVideo ? "100MB" : "10MB"}.`);
-		return;
+
+	if (isVideo) {
+		const maxVideoSize = 20 * 1024 * 1024; // 20MB
+		if (file.size > maxVideoSize) {
+			alert("Ukuran video terlalu besar! Batas maksimal adalah 20MB.");
+			return;
+		}
+
+		const video = document.createElement("video");
+		video.preload = "metadata";
+		video.onloadedmetadata = () => {
+			URL.revokeObjectURL(video.src);
+			if (video.duration > 60.5) {
+				alert("Durasi video maksimal adalah 1 menit (60 detik).");
+			} else {
+				selectedFile.value = file;
+				filePreview.value = URL.createObjectURL(file);
+			}
+		};
+		video.src = URL.createObjectURL(file);
+	} else {
+		// Image compression
+		const maxImgSize = 5 * 1024 * 1024; // 5MB limit before compression
+		if (file.size > maxImgSize) {
+			alert(
+				"Ukuran gambar asli terlalu besar! Batas maksimal sebelum kompresi adalah 5MB.",
+			);
+			return;
+		}
+
+		try {
+			const compressed = await compressImageToWebP(file);
+			selectedFile.value = compressed;
+			filePreview.value = URL.createObjectURL(compressed);
+		} catch (err) {
+			console.error("Failed to compress image:", err);
+			selectedFile.value = file;
+			filePreview.value = URL.createObjectURL(file);
+		}
 	}
-	selectedFile.value = file;
-	filePreview.value = URL.createObjectURL(file);
 };
 
 const removeSelectedFile = () => {
@@ -279,7 +389,6 @@ const closeUploadModal = () => {
 const submitGalleryItem = async () => {
 	if (!selectedFile.value) return;
 	isUploading.value = true;
-	uploadProgress.value = 0;
 
 	const formData = new FormData();
 	formData.append("cover_image", selectedFile.value);
@@ -287,18 +396,17 @@ const submitGalleryItem = async () => {
 	formData.append("description", formDescription.value);
 
 	try {
-		const res = await axios.post("/pagi/gallery/store", formData, {
-			headers: {
-				"Content-Type": "multipart/form-data",
-			},
-			onUploadProgress: (progressEvent) => {
-				if (progressEvent.total) {
-					uploadProgress.value = Math.round(
-						(progressEvent.loaded * 100) / progressEvent.total,
-					);
-				}
-			},
-		});
+		const res = await trackUpload(
+			(config) =>
+				axios.post("/pagi/gallery/store", formData, {
+					...config,
+					headers: {
+						...config.headers,
+						"Content-Type": "multipart/form-data",
+					},
+				}),
+			"Mengunggah Galeri",
+		);
 
 		if (res.data.success) {
 			emit("gallery-item-added", res.data.project);
@@ -308,7 +416,6 @@ const submitGalleryItem = async () => {
 		alert(err.response?.data?.message || "Gagal mengunggah item ke galeri.");
 	} finally {
 		isUploading.value = false;
-		uploadProgress.value = 0;
 	}
 };
 
@@ -418,7 +525,7 @@ onUnmounted(() => {
 
 			<!-- Buat Galeri Button -->
 			<button 
-				v-if="isOwnProfile"
+				v-if="isOwnProfile && isStudent"
 				@click.prevent="openUploadModal"
 				class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#18181b] hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-950 text-xs font-semibold transition-all duration-300 shadow-sm hover:scale-[1.02] active:scale-[0.98] cursor-pointer border-none shrink-0 w-full sm:w-auto justify-center"
 			>
@@ -429,12 +536,12 @@ onUnmounted(() => {
 
 		<!-- If loading, show skeletons -->
 		<div v-if="isLoading" class="columns-2 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
-			<div 
+			<Skeleton 
 				v-for="n in 8" 
 				:key="n" 
-				class="break-inside-avoid w-full rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse"
+				class="break-inside-avoid w-full rounded-xl"
 				:style="{ height: `${Math.floor(Math.random() * 200) + 180}px` }"
-			></div>
+			/>
 		</div>
 
 		<!-- Pinterest Masonry Layout -->
@@ -445,7 +552,7 @@ onUnmounted(() => {
 				class="break-inside-avoid relative overflow-hidden rounded-xl border border-slate-200/50 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 cursor-pointer shadow-2xs hover:shadow-md transition-all duration-300 group" 
 				@click="emit('open-project', item.project)"
 			>
-				<VideoLazy v-if="item.type === 'video'" :src="item.url" className="w-full h-auto object-cover rounded-xl group-hover:scale-[1.02] transition-transform duration-500" />
+				<VideoLazy v-if="item.type === 'video'" :src="item.url" :muted="true" className="w-full h-auto object-cover rounded-xl group-hover:scale-[1.02] transition-transform duration-500" />
 				<OptimizedImage v-else :src="item.url" :alt="item.title" className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-500" />
 				
 				<!-- Pinterest style gradient overlay -->
@@ -551,11 +658,11 @@ onUnmounted(() => {
 						<p class="text-xs font-black text-slate-700 dark:text-slate-300">
 							Tarik & lepas file di sini, atau <span class="text-blue-600 dark:text-blue-400 hover:underline">pilih file</span>
 						</p>
-						<p class="text-[10px] text-slate-450 dark:text-slate-500">Mendukung Gambar (Maks. 10MB) & Video (Maks. 60 Detik / 100MB)</p>
+						<p class="text-[10px] text-slate-450 dark:text-slate-500">Mendukung Gambar (Maks. 5MB) & Video (Maks. 60 Detik / 20MB)</p>
 					</div>
 
 					<div v-else class="relative w-full h-full min-h-[180px] flex items-center justify-center rounded-xl overflow-hidden group">
-						<video v-if="selectedFile && selectedFile.type.startsWith('video/')" :src="filePreview" class="max-h-[200px] w-auto object-contain rounded-lg shadow-sm" controls>
+						<video v-if="selectedFile && selectedFile.type.startsWith('video/')" :src="filePreview" class="max-h-[200px] w-auto object-contain rounded-lg shadow-sm" controls muted>
 							<track kind="captions" />
 						</video>
 						<img v-else :src="filePreview" alt="Visual preview" class="max-h-[200px] w-auto object-contain rounded-lg shadow-sm" />
@@ -598,14 +705,6 @@ onUnmounted(() => {
 						:disabled="isUploading"
 						class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-450 dark:placeholder-slate-550 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none resize-none"
 					></textarea>
-				</div>
-
-				<!-- Progress Bar -->
-				<div v-if="isUploading" class="space-y-2">
-					<div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
-						<div class="bg-blue-600 h-full transition-all duration-300" :style="{ width: `${uploadProgress}%` }"></div>
-					</div>
-					<p class="text-[11px] font-black text-center text-blue-600">Mengunggah... {{ uploadProgress }}%</p>
 				</div>
 
 				<!-- Modal Actions / Footer -->

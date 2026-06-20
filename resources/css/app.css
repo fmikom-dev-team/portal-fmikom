@@ -1,12 +1,66 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php";
-@source "../../storage/framework/views/*.php";
+/*
+ * Critical Fonts: Only declare fonts used on initial page render.
+ * Non-critical fonts (Plus Jakarta Sans, Outfit, Inter heavy weights)
+ * are declared directly in the components that use them via <style scoped>,
+ * so they do NOT block the initial render of all pages.
+ */
 
-@custom-variant dark (&:is(.dark *));
+/* Instrument Sans — primary UI font, used everywhere */
+@font-face {
+	font-family: 'Instrument Sans';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('/fonts/instrument-sans-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+	font-family: 'Instrument Sans';
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url('/fonts/instrument-sans-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+	font-family: 'Instrument Sans';
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url('/fonts/instrument-sans-latin-600-normal.woff2') format('woff2');
+}
 
-@theme inline {
+/* Inter — used in article/editor content rendering */
+@font-face {
+	font-family: 'Inter';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('/fonts/inter-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+	font-family: 'Inter';
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url('/fonts/inter-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+	font-family: 'Inter';
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url('/fonts/inter-latin-600-normal.woff2') format('woff2');
+}
+
+/* stylelint-disable at-rule-no-unknown */
+@source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php"; /* NOSONAR */
+@source "../../storage/framework/views/*.php"; /* NOSONAR */
+
+@custom-variant dark (&:is(.dark *)); /* NOSONAR */
+
+@theme inline { /* NOSONAR */
 	--breakpoint-xs: 475px;
 
 	--font-sans:
@@ -76,6 +130,18 @@
 		0 2px 4px rgba(15, 23, 42, 0.03), 0 4px 12px rgba(15, 23, 42, 0.04);
 	--shadow-2xl:
 		0 2px 4px rgba(15, 23, 42, 0.03), 0 4px 12px rgba(15, 23, 42, 0.04);
+
+	--color-indigo-50: #eff6ff;
+	--color-indigo-100: #dbeafe;
+	--color-indigo-200: #bfdbfe;
+	--color-indigo-300: #93c5fd;
+	--color-indigo-400: #60a5fa;
+	--color-indigo-500: #3b82f6;
+	--color-indigo-600: #2563eb;
+	--color-indigo-700: #1d4ed8;
+	--color-indigo-800: #1e40af;
+	--color-indigo-900: #1e3a8a;
+	--color-indigo-950: #172554;
 }
 
 /*

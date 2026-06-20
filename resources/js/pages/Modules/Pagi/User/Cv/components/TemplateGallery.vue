@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Head, Link, router } from "@inertiajs/vue3";
 import { ArrowLeft, Check, Sparkles } from "lucide-vue-next";
-import Footer from "../ui/Footer.vue";
-import Navbar from "../ui/Navbar.vue";
+import Footer from "../../ui/Footer.vue";
+import Navbar from "../../ui/Navbar.vue";
 
 const templatesList = [
 	{
@@ -79,7 +79,9 @@ const selectTemplate = (templateId: string) => {
 </script>
 
 <template>
-    <Head title="Pilih Template CV — PAGI" />
+    <Head>
+        <title>Pilih Template CV — PAGI</title>
+    </Head>
 
     <div class="min-h-screen bg-slate-50 dark:bg-zinc-950 font-sans text-slate-900 dark:text-zinc-100">
         <Navbar />

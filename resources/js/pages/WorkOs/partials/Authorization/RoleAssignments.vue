@@ -8,7 +8,7 @@ import {
 	Trash2,
 	UserPlus,
 } from "lucide-vue-next";
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import AppModal from "../../components/ui/AppModal.vue";
 import { formatDate, toast } from "../../composables/useWorkOs";
 
@@ -16,9 +16,13 @@ const props = defineProps<{
 	users: any[];
 	roles: any[];
 	modules: any[];
+	searchQuery?: string;
 }>();
 
 const search = ref("");
+watch(() => props.searchQuery, (val) => {
+	search.value = val || "";
+});
 const showAssignModal = ref(false);
 const showEditModal = ref(false);
 const showRemoveModal = ref(false);
@@ -226,6 +230,7 @@ function submitRemove() {
         <!-- Assignments Table -->
         <div v-else class="rounded-xl overflow-x-auto bg-white border border-gray-200 shadow-sm">
             <table class="w-full text-left whitespace-nowrap">
+                <caption class="sr-only">Tabel Alokasi Peran Pengguna</caption>
                 <thead>
                     <tr class="bg-[#f9fafb] border-b border-gray-200">
                         <th class="px-4 py-3 text-[12px] font-semibold text-gray-800">User</th>

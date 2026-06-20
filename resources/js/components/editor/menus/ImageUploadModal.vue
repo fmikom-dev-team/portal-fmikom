@@ -151,7 +151,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", handleKey));
                     <!-- Preview state -->
                     <div v-if="previewUrl" class="space-y-4">
                         <div class="relative aspect-video rounded-2xl overflow-hidden border border-gray-100 shadow-sm group">
-                            <img :src="previewUrl" class="w-full h-full object-contain bg-gray-50" />
+                            <img :src="previewUrl" alt="Uploaded image preview" class="w-full h-full object-contain bg-gray-50" />
                             <button @click="clearPreview" class="absolute top-2 right-2 w-8 h-8 bg-black/50 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors">
                                 <X class="w-4 h-4" />
                             </button>

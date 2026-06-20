@@ -86,7 +86,7 @@ const copyCodes = () => {
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
             <div class="p-6">
                 <div class="flex items-start gap-4">
-                    <div class="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
+                    <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
                         <Smartphone class="w-6 h-6" />
                     </div>
                     <div>
@@ -100,7 +100,7 @@ const copyCodes = () => {
                         <button 
                             v-else-if="!isActive && !isSetupOpen"
                             @click="startMfaSetup" 
-                            class="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-[13px] font-medium text-white hover:bg-indigo-700 transition-colors shadow-sm"
+                            class="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-[13px] font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
                         >
                             Set up Authenticator App
                         </button>
@@ -143,7 +143,7 @@ const copyCodes = () => {
                                         type="text" 
                                         placeholder="000 000" 
                                         maxlength="6"
-                                        class="w-32 px-3 py-2 text-[14px] tracking-widest text-center border border-gray-300 rounded-md shadow-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                                        class="w-32 px-3 py-2 text-[14px] tracking-widest text-center border border-gray-300 rounded-md shadow-sm focus:ring-1 focus:ring-[#2563eb] focus:border-[#2563eb]"
                                     >
                                     <button 
                                         @click="verifyMfa" 

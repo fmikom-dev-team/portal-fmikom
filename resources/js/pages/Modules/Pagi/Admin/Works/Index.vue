@@ -256,6 +256,7 @@ const submitQuickModeration = () => {
             <!-- ── Desktop Table View (hidden md:block) ── -->
             <div class="hidden md:block rounded-2xl bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 overflow-hidden shadow-sm">
                 <table class="w-full min-w-[700px]">
+                    <caption class="sr-only">Daftar Karya Konten</caption>
                     <thead>
                         <tr class="border-b border-slate-100 dark:border-zinc-800">
                             <th class="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500">Karya</th>

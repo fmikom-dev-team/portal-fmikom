@@ -98,7 +98,7 @@ function resetToDefault() {
                                     v-model="visibility.directorySync" 
                                     type="checkbox" 
                                     :disabled="!isCustomized"
-                                    class="w-4 h-4 text-indigo-600 border-[#d1d5db] rounded focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                                    class="w-4 h-4 text-blue-600 border-[#d1d5db] rounded focus:ring-[#2563eb] disabled:opacity-60 disabled:cursor-not-allowed"
                                 />
                                 <span class="text-[#374151] select-none">Directory Sync</span>
                             </label>
@@ -108,7 +108,7 @@ function resetToDefault() {
                                     v-model="visibility.sso" 
                                     type="checkbox" 
                                     :disabled="!isCustomized"
-                                    class="w-4 h-4 text-indigo-600 border-[#d1d5db] rounded focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                                    class="w-4 h-4 text-blue-600 border-[#d1d5db] rounded focus:ring-[#2563eb] disabled:opacity-60 disabled:cursor-not-allowed"
                                 />
                                 <span class="text-[#374151] select-none">Single Sign-On</span>
                             </label>
@@ -143,7 +143,7 @@ function resetToDefault() {
                 </div>
                 <button 
                     v-if="isCustomized"
-                    class="h-[30px] px-3 bg-indigo-600 text-white rounded-md text-[12px] font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
+                    class="h-[30px] px-3 bg-blue-600 text-white rounded-md text-[12px] font-semibold hover:bg-blue-700 transition-colors shadow-sm"
                     @click="openAddModal"
                 >
                     Add mapping
@@ -151,6 +151,7 @@ function resetToDefault() {
             </div>
             
             <table class="w-full text-left border-collapse">
+                <caption class="sr-only">Attribute Mappings</caption>
                 <thead>
                     <tr class="bg-[#f9fafb] border-b border-[#e5e7eb]">
                         <th class="px-5 py-3 text-[12px] font-semibold text-[#374151]">WorkOS Target Attribute</th>
@@ -208,7 +209,7 @@ function resetToDefault() {
                     Cancel
                 </button>
                 <button
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm"
                     @click="saveChanges"
                 >
                     Save changes
@@ -234,7 +235,7 @@ function resetToDefault() {
                         v-model="newMapping.target"
                         type="text"
                         placeholder="e.g. employeeId, title, department"
-                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors text-[#111827] placeholder:text-slate-400 bg-white"
+                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors text-[#111827] placeholder:text-slate-400 bg-white"
                     />
                 </div>
                 <div>
@@ -244,7 +245,7 @@ function resetToDefault() {
                         v-model="newMapping.source"
                         type="text"
                         placeholder="e.g. profile.employeeId, profile.title"
-                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors text-[#111827] placeholder:text-slate-400 bg-white"
+                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors text-[#111827] placeholder:text-slate-400 bg-white"
                     />
                 </div>
             </div>
@@ -257,7 +258,7 @@ function resetToDefault() {
                     Cancel
                 </button>
                 <button
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50"
                     :disabled="!newMapping.target || !newMapping.source"
                     @click="addMapping"
                 >

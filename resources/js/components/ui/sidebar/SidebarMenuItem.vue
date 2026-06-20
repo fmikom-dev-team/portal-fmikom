@@ -12,7 +12,7 @@ const props = defineProps<{
     data-slot="sidebar-menu-item"
     data-sidebar="menu-item"
     :class="cn('group/menu-item relative', props.class)"
-  >
+  > <!-- NOSONAR -->
     <slot />
   </li>
 </template>

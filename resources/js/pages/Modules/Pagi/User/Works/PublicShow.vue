@@ -398,7 +398,9 @@ const handlePrint = () => {
 </script>
 
 <template>
-	<Head :title="customTitle + ' — Works'" />
+	<Head>
+        <title>{{ customTitle + ' — Works' }}</title>
+    </Head>
 
 	<div class="min-h-screen relative font-sans transition-colors duration-300 flex flex-col">
 		

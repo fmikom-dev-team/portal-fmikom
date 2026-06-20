@@ -136,7 +136,7 @@ function formatDate(dateStr: string | null | undefined): string {
                     v-model="search"
                     type="text"
                     placeholder="Search by email"
-                    class="w-full h-[36px] pl-9 pr-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#6366f1] focus:ring-1 focus:ring-[#6366f1] placeholder:text-[#9ca3af] text-[#111827] transition-colors"
+                    class="w-full h-[36px] pl-9 pr-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] placeholder:text-[#9ca3af] text-[#111827] transition-colors"
                 />
             </div>
             
@@ -149,7 +149,7 @@ function formatDate(dateStr: string | null | undefined): string {
                 Remove history
             </button>
             <button
-                class="h-[36px] px-4 bg-[#6366f1] text-white rounded-md text-[13px] font-semibold hover:bg-[#4f46e5] transition-colors shadow-sm"
+                class="h-[36px] px-4 bg-[#2563eb] text-white rounded-md text-[13px] font-semibold hover:bg-[#1d4ed8] transition-colors shadow-sm"
                 :class="{ 'ml-auto': inviteList.length === 0, 'ml-3': inviteList.length > 0 }"
                 @click="showInviteModal = true"
             >
@@ -160,12 +160,13 @@ function formatDate(dateStr: string | null | undefined): string {
         <!-- Table -->
         <div class="rounded-xl overflow-hidden bg-white ring-1 ring-gray-900/[0.04] shadow-sm">
             <div v-if="isLoading" class="p-12 flex items-center justify-center">
-                <svg class="animate-spin h-6 w-6 text-[#6366f1]" fill="none" viewBox="0 0 24 24">
+                <svg class="animate-spin h-6 w-6 text-[#2563eb]" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
             </div>
             <table v-else class="w-full text-left">
+                <caption class="sr-only">Invitations</caption>
                 <thead>
                     <tr class="bg-[#f9fafb] border-b border-[#e5e7eb]">
                         <th class="px-6 py-3 text-[12px] font-semibold text-[#111827]">Email</th>
@@ -182,7 +183,7 @@ function formatDate(dateStr: string | null | undefined): string {
                     <tr v-for="invite in filtered()" :key="invite.id" class="hover:bg-[#f9fafb] transition-colors group">
                         <td class="px-6 py-3">
                             <div class="flex items-center gap-2.5">
-                                <div class="w-6 h-6 rounded-full bg-[#e0e7ff] flex items-center justify-center text-[11px] font-bold text-[#6366f1] shrink-0">
+                                <div class="w-6 h-6 rounded-full bg-[#eff6ff] flex items-center justify-center text-[11px] font-bold text-[#2563eb] shrink-0">
                                     {{ invite.email.charAt(0).toUpperCase() }}
                                 </div>
                                 <span class="text-[13px] font-medium text-[#111827]">{{ invite.email }}</span>
@@ -235,7 +236,7 @@ function formatDate(dateStr: string | null | undefined): string {
                             type="email" 
                             required
                             placeholder="user@example.com"
-                            class="w-full h-9 px-3 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#6366f1] focus:ring-1 focus:ring-[#6366f1] text-[#111827] bg-white"
+                            class="w-full h-9 px-3 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-[#111827] bg-white"
                         />
                     </div>
                     
@@ -244,7 +245,7 @@ function formatDate(dateStr: string | null | undefined): string {
                         <select 
                             id="invite_role"
                             v-model="inviteRole"
-                            class="w-full h-9 px-2 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#6366f1] text-[#111827] bg-white"
+                            class="w-full h-9 px-2 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] text-[#111827] bg-white"
                         >
                             <option value="member">Member</option>
                             <option value="admin">Admin</option>
@@ -254,7 +255,7 @@ function formatDate(dateStr: string | null | undefined): string {
 
                     <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-gray-100">
                         <button type="button" class="h-9 px-4 border border-[#d1d5db] rounded-md text-xs font-semibold text-[#374151] hover:bg-[#f9fafb] transition-colors bg-white" @click="showInviteModal = false">Cancel</button>
-                        <button type="submit" class="h-9 px-4 bg-[#6366f1] text-white rounded-md text-xs font-semibold hover:bg-[#4f46e5] transition-colors disabled:opacity-60 flex items-center justify-center gap-1.5" :disabled="isSubmitting">
+                        <button type="submit" class="h-9 px-4 bg-[#2563eb] text-white rounded-md text-xs font-semibold hover:bg-[#1d4ed8] transition-colors disabled:opacity-60 flex items-center justify-center gap-1.5" :disabled="isSubmitting">
                             <svg v-if="isSubmitting" class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                             {{ isSubmitting ? 'Sending...' : 'Send invitation' }}
                         </button>

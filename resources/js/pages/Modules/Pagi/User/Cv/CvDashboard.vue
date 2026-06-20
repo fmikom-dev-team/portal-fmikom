@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import { Head, Link, router } from "@inertiajs/vue3";
+import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import {
 	AlertCircle,
 	Check,
-	Clock,
 	Copy,
 	Download,
 	Edit2,
 	ExternalLink,
-	FileDown,
 	FileText,
 	Link2,
 	MoreVertical,
@@ -17,9 +15,20 @@ import {
 	Trash2,
 	X,
 } from "lucide-vue-next";
-import { ref } from "vue";
+import { computed, onMounted, ref } from "vue";
+import { Skeleton } from "@/components/ui/skeleton";
 import Footer from "../ui/Footer.vue";
 import Navbar from "../ui/Navbar.vue";
+import UmumNavbar from "../ui/UmumNavbar.vue";
+
+const isLoading = ref(false);
+
+const page = usePage();
+const flash = computed(() => (page.props.flash || {}) as Record<string, any>);
+const isMahasiswa = computed(() => {
+	const role = (page.props as any).context?.active_role || "mahasiswa";
+	return role.toLowerCase() === "mahasiswa";
+});
 
 const props = defineProps<{
 	cvs: Array<{
@@ -48,8 +57,8 @@ const closeDropdowns = () => {
 };
 
 // Global click handler to close dropdowns when clicking outside
-if (typeof window !== "undefined") {
-	window.addEventListener("click", (e) => {
+if (typeof globalThis.window !== "undefined") {
+	globalThis.window.addEventListener("click", (e) => {
 		const target = e.target as HTMLElement;
 		if (!target.closest(".dropdown-trigger")) {
 			closeDropdowns();
@@ -122,8 +131,8 @@ const shareLink = ref("");
 
 const openShareModal = (cv: any) => {
 	cvToShare.value = cv;
-	if (typeof window !== "undefined") {
-		shareLink.value = `${window.location.origin}/pagi/cv/${cv.id}/shared`;
+	if (typeof globalThis.window !== "undefined") {
+		shareLink.value = `${globalThis.window.location.origin}/pagi/cv/${cv.id}/shared`;
 	}
 	showShareModal.value = true;
 	activeDropdown.value = null;
@@ -147,20 +156,23 @@ const downloadCv = (id: number) => {
 	link.setAttribute("rel", "external");
 	document.body.appendChild(link);
 	link.click();
-	document.body.removeChild(link);
+	link.remove();
 };
 </script>
 
 <template>
-    <Head title="CV Builder Dashboard — PAGI" />
+    <Head title="CV Builder Dashboard — PAGI">
+        <title>CV Builder Dashboard — PAGI</title>
+    </Head>
 
     <div class="min-h-screen bg-slate-50 dark:bg-zinc-950 font-sans text-slate-900 dark:text-zinc-100">
-        <Navbar />
+        <Navbar v-if="isMahasiswa" />
+        <UmumNavbar v-else />
 
         <!-- Header Hero Section -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-slate-900 via-zinc-950 to-indigo-950 border-b border-slate-800/80 dark:border-zinc-900 py-12 px-6">
+        <div class="relative overflow-hidden bg-linear-to-br from-slate-900 via-zinc-950 to-indigo-950 border-b border-slate-800/80 dark:border-zinc-900 py-12 px-6">
             <!-- Glowing dots background -->
-            <div class="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(rgba(255,255,255,0.15)_1px,transparent_1px)] [background-size:20px_20px]"></div>
+            <div class="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(rgba(255,255,255,0.15)_1px,transparent_1px)] bg-size-[20px_20px]"></div>
             
             <div class="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
                 <div class="space-y-2">
@@ -186,17 +198,43 @@ const downloadCv = (id: number) => {
         <!-- Main Content Area -->
         <main class="max-w-6xl mx-auto px-6 py-10">
             <!-- Flash Message Alerts -->
-            <div v-if="$page.props.flash?.success" class="mb-5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-3.5 rounded-lg text-xs font-semibold flex items-center gap-2">
+            <div v-if="flash.success" class="mb-5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-3.5 rounded-lg text-xs font-semibold flex items-center gap-2">
                 <Check class="w-4 h-4 shrink-0" />
-                <span>{{ $page.props.flash.success }}</span>
+                <span>{{ flash.success }}</span>
             </div>
-            <div v-if="$page.props.flash?.error" class="mb-5 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 p-3.5 rounded-lg text-xs font-semibold flex items-center gap-2">
+            <div v-if="flash.error" class="mb-5 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 p-3.5 rounded-lg text-xs font-semibold flex items-center gap-2">
                 <AlertCircle class="w-4 h-4 shrink-0" />
-                <span>{{ $page.props.flash.error }}</span>
+                <span>{{ flash.error }}</span>
+            </div>
+
+            <!-- Loading Skeleton Grid -->
+            <div v-if="isLoading" class="space-y-4 select-none">
+                <Skeleton class="h-4 w-32 rounded mb-4" />
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div v-for="n in 3" :key="n" class="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-900 rounded-xl p-4 flex flex-col justify-between h-[180px]">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <Skeleton class="h-5 w-40 rounded" />
+                                <Skeleton class="h-7 w-7 rounded-lg" />
+                            </div>
+                            <Skeleton class="h-5 w-16 rounded" />
+                            <div class="space-y-2 mt-4">
+                                <div class="flex justify-between flex-wrap gap-1">
+                                    <Skeleton class="h-3 w-16" />
+                                    <Skeleton class="h-3.5 w-24" />
+                                </div>
+                                <div class="flex justify-between flex-wrap gap-1">
+                                    <Skeleton class="h-3 w-20" />
+                                    <Skeleton class="h-3.5 w-32" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- CV List Empty State -->
-            <div v-if="cvs.length === 0" class="text-center py-16 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-900 rounded-xl shadow-xs px-6">
+            <div v-else-if="cvs.length === 0" class="text-center py-16 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-900 rounded-xl shadow-xs px-6">
                 <div class="w-14 h-14 rounded-xl bg-slate-50 dark:bg-zinc-800/50 flex items-center justify-center mx-auto mb-4 text-slate-400 dark:text-zinc-550">
                     <FileText class="w-7 h-7" />
                 </div>
@@ -240,7 +278,8 @@ const downloadCv = (id: number) => {
                                 <div class="relative dropdown-trigger">
                                     <button 
                                         @click.stop="toggleDropdown(cv.id)"
-                                        class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all border-none bg-transparent"
+                                        class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-zinc-550 dark:hover:text-zinc-350 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all border-none bg-transparent"
+                                        aria-label="Opsi CV"
                                     >
                                         <MoreVertical class="w-4 h-4" />
                                     </button>
@@ -378,6 +417,7 @@ const downloadCv = (id: number) => {
                 <button 
                     @click="showShareModal = false"
                     class="absolute top-4 right-4 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors border-none bg-transparent cursor-pointer"
+                    aria-label="Tutup"
                 >
                     <X class="w-4 h-4" />
                 </button>

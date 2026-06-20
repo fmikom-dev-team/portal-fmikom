@@ -181,7 +181,7 @@ const submitDecision = () => {
             <div class="flex items-start gap-4 p-4 rounded-xl bg-slate-50/70 dark:bg-zinc-950/20 border border-slate-100 dark:border-zinc-800/80 shadow-inner">
               <!-- Cover Thumbnail -->
               <div class="h-16 w-16 shrink-0 rounded-xl bg-slate-100 dark:bg-zinc-800 overflow-hidden border border-slate-200/50 dark:border-zinc-700/50 shadow-sm relative group">
-                <img v-if="item.thumbnail" :src="item.thumbnail" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                <img v-if="item.thumbnail" :src="item.thumbnail" :alt="item.title || 'Pratinjau konten'" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
                 <div v-else class="h-full w-full flex items-center justify-center bg-slate-100 dark:bg-zinc-800">
                   <svg class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159" />

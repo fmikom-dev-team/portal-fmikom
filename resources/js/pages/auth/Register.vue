@@ -236,7 +236,9 @@ const nomorIndukPlaceholder = computed(() => {
 
 <template>
     <div class="w-full">
-        <Head title="Register" />
+        <Head>
+        <title>Register</title>
+    </Head>
 
         <!-- Stepper Indicator Responsive -->
         <div class="flex flex-col mb-8 px-1">

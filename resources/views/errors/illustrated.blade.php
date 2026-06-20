@@ -4,19 +4,37 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title') - FMIKOM Portal</title>
-    
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,600,800|inter:400,600,700,900&display=swap" rel="stylesheet" />
 
 
 
     <style>
+        :root {
+            --bg-color: #fafafa;
+            --text-color: #09090b;
+            --text-desc: #52525b;
+            --digits-color: #e4e4e7;
+            --svg-text-color: #71717a;
+            --svg-bg-fill: #fafafa;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #121214;
+                --text-color: #ffffff;
+                --text-desc: #a1a1aa;
+                --digits-color: #3f3f46;
+                --svg-text-color: #52525b;
+                --svg-bg-fill: #121214;
+            }
+        }
+
         body {
-            background-color: #121214;
-            color: #ffffff;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             font-family: 'Instrument Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0;
             overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
         .error-container {
             display: flex;
@@ -51,31 +69,42 @@
             text-align: center;
         }
         .error-title {
-            font-size: 1.875rem;
+            font-size: 2.25rem;
             font-weight: 900;
             margin: 0;
-            letter-spacing: -0.025em;
-            color: #ffffff;
+            letter-spacing: -0.03em;
+            color: var(--text-color);
+            line-height: 1.15;
+        }
+        @media (min-width: 768px) {
+            .error-title {
+                font-size: 3.25rem;
+            }
         }
         .error-desc {
-            font-size: 0.875rem;
-            color: #a1a1aa;
-            margin-top: 0.85rem;
+            font-size: 1rem;
+            color: var(--text-desc);
+            margin-top: 1rem;
             line-height: 1.6;
             font-weight: 500;
+        }
+        @media (min-width: 768px) {
+            .error-desc {
+                font-size: 1.15rem;
+            }
         }
         .btn-goback {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 0.625rem 1.65rem;
+            padding: 0.8rem 2.25rem;
             background-color: #00c853;
             color: #ffffff;
             font-weight: 700;
-            font-size: 0.75rem;
+            font-size: 0.875rem;
             border-radius: 9999px;
             text-decoration: none;
-            margin-top: 1.75rem;
+            margin-top: 2rem;
             box-shadow: 0 4px 14px rgba(0, 200, 83, 0.25);
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             border: none;
@@ -99,7 +128,7 @@
             display: flex;
             align-items: center;
             font-weight: 900;
-            color: #3f3f46;
+            color: var(--digits-color);
             letter-spacing: -0.05em;
             user-select: none;
         }
@@ -126,6 +155,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            color: var(--svg-text-color);
         }
         @media (min-width: 640px) {
             .svg-container {

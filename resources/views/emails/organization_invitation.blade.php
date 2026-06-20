@@ -6,10 +6,10 @@
     <title>Invitation to join {{ $organizationName }}</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f4f6f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f8; padding: 40px 20px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f8; padding: 40px 20px;">
         <tr>
             <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
                     
                     <!-- Header -->
                     <tr>
@@ -42,10 +42,10 @@
                             </p>
 
                             <!-- Info Box -->
-                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f3ff; border: 1px solid #ede9fe; border-radius: 10px; margin-bottom: 28px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f3ff; border: 1px solid #ede9fe; border-radius: 10px; margin-bottom: 28px;">
                                 <tr>
                                     <td style="padding: 20px 24px;">
-                                        <table width="100%" cellpadding="0" cellspacing="0">
+                                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                                             <tr>
                                                 <td width="50%" style="padding-bottom: 12px;">
                                                     <p style="margin: 0; font-size: 11px; font-weight: 600; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.5px;">Organization</p>
@@ -87,7 +87,7 @@
                             </p>
 
                             <!-- Warning -->
-                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; margin-bottom: 8px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; margin-bottom: 8px;">
                                 <tr>
                                     <td style="padding: 14px 18px;">
                                         <p style="margin: 0; font-size: 13px; color: #92400e;">

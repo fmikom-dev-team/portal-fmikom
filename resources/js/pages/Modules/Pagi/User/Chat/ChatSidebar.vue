@@ -333,7 +333,7 @@ const filteredConversations = computed(() => {
                     <!-- Avatar -->
                     <div class="relative shrink-0 pointer-events-none">
                         <div class="h-11 w-11 rounded-full border border-slate-200 dark:border-zinc-700 overflow-hidden bg-slate-100 dark:bg-zinc-800 flex items-center justify-center">
-                            <img v-if="avatarUrl(conv.foto_path)" :src="avatarUrl(conv.foto_path)!" class="w-full h-full object-cover" />
+                            <img v-if="avatarUrl(conv.foto_path)" :src="avatarUrl(conv.foto_path)!" :alt="conv.name" class="w-full h-full object-cover" />
                             <span v-else class="text-sm font-black text-slate-500 dark:text-zinc-400">{{ conv.name.charAt(0) }}</span>
                         </div>
                         <!-- Online green dot in sidebar -->

@@ -26,7 +26,9 @@ const submit = () => {
         title="Forgot password"
         description="Enter your email to receive a password reset link"
     >
-        <Head title="Forgot password" />
+        <Head>
+        <title>Forgot password</title>
+    </Head>
 
         <div
             v-if="status"

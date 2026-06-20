@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router, usePage } from "@inertiajs/vue3";
-import { computed, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref } from "vue";
 import AppLayout from "@/layouts/AppLayout.vue";
 import { dashboard } from "@/routes";
 import type { BreadcrumbItem } from "@/types";
@@ -16,6 +16,12 @@ const page = usePage();
 const user = computed(
 	() => page.props.auth?.user || { name: "User", email: "" },
 );
+const avatarUrl = computed(() => {
+	if (!user.value?.foto_path) return undefined;
+	return user.value.foto_path.startsWith("http")
+		? user.value.foto_path
+		: `/storage/${user.value.foto_path}`;
+});
 const flash = computed(() => (page.props.flash || {}) as Record<string, any>);
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -69,13 +75,30 @@ const userRolesByModule = computed(() => {
 	return map;
 });
 
-// Loading state for skeletons
+const dbModules = computed(() => {
+	const map: Record<string, any> = {};
+	props.accessList.forEach((access) => {
+		if (access.module) {
+			map[access.module.code] = access.module;
+		}
+	});
+	return map;
+});
+
+function getModuleImage(mod: any) {
+	const dbMod = dbModules.value[mod.code];
+	if (dbMod?.logo_path) {
+		return dbMod.logo_path;
+	}
+	return mod.image;
+}
+
+// Loading state for skeletons — resolves after the first paint (no artificial delay)
 const isLoading = ref(true);
 
-onMounted(() => {
-	setTimeout(() => {
-		isLoading.value = false;
-	}, 800);
+onMounted(async () => {
+	await nextTick();
+	isLoading.value = false;
 });
 
 // State untuk Flip Card
@@ -119,7 +142,9 @@ const enterSystem = (moduleCode: string) => {
 </script>
 
 <template>
-    <Head title="Portal SSO" />
+	<Head>
+		<title>Portal SSO</title>
+	</Head>
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <!-- Main Ambient Background -->
@@ -131,15 +156,11 @@ const enterSystem = (moduleCode: string) => {
             <!-- LOADING SKELETON HEADER -->
             <div v-if="isLoading" class="relative z-10 mb-8 sm:mb-12 max-w-3xl animate-pulse">
                 <div class="mb-3 flex items-center gap-2 sm:gap-3">
-                    <div class="h-10 sm:h-12 lg:h-[3.25rem] w-48 bg-slate-200 dark:bg-zinc-800 rounded-xl"></div>
+                    <div class="h-10 sm:h-12 lg:h-13 w-48 bg-slate-200 dark:bg-zinc-800 rounded-xl"></div>
                 </div>
                 <div class="mb-4 sm:mb-5 space-y-2">
-                    <div class="h-9 sm:h-11 lg:h-[3rem] w-[80%] max-w-lg bg-slate-200 dark:bg-zinc-800 rounded-xl"></div>
-                    <div class="h-9 sm:h-11 lg:h-[3rem] w-[60%] max-w-md bg-slate-200 dark:bg-zinc-800 rounded-xl"></div>
-                </div>
-                <div class="space-y-1.5 mt-4">
-                    <div class="h-4 w-[90%] max-w-xl bg-slate-200 dark:bg-zinc-800 rounded-lg"></div>
-                    <div class="h-4 w-[50%] max-w-sm bg-slate-200 dark:bg-zinc-800 rounded-lg"></div>
+                    <div class="h-9 sm:h-11 lg:h-12 w-[80%] max-w-lg bg-slate-200 dark:bg-zinc-800 rounded-xl"></div>
+                    <div class="h-9 sm:h-11 lg:h-12 w-[60%] max-w-md bg-slate-200 dark:bg-zinc-800 rounded-xl"></div>
                 </div>
             </div>
 
@@ -156,11 +177,6 @@ const enterSystem = (moduleCode: string) => {
                 <h2 class="mb-4 sm:mb-5 text-3xl sm:text-4xl lg:text-[3.25rem] font-bold tracking-tight text-[#0f172a] dark:text-gray-200 leading-tight lg:leading-[1.1]">
                     What are your plans <br class="hidden sm:block" /> for today?
                 </h2>
-
-                <!-- Subtle Description text -->
-                <p class="text-sm sm:text-base font-medium sm:font-bold text-[#64748b] dark:text-gray-400 lg:text-lg max-w-2xl leading-relaxed">
-                    This platform is designed to revolutionize the way you organize and access your university modules.
-                </p>
             </div>
 
             <!-- Pesan Info/Error Controller -->
@@ -175,10 +191,10 @@ const enterSystem = (moduleCode: string) => {
             <div v-if="isLoading" class="relative z-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
                 <div 
                     v-for="i in 4" :key="i"
-                    class="h-[380px] sm:h-[400px] w-full rounded-[1.5rem] bg-white p-2 shadow-xl ring-1 ring-black/5 dark:bg-zinc-900 dark:ring-white/10 flex flex-col justify-between animate-pulse"
+                    class="h-[380px] sm:h-[400px] w-full rounded-3xl bg-white p-2 shadow-xl ring-1 ring-black/5 dark:bg-zinc-900 dark:ring-white/10 flex flex-col justify-between animate-pulse"
                 >
                     <!-- Top Header Box Skeleton -->
-                    <div class="relative h-[220px] w-full bg-slate-50 dark:bg-zinc-800/40 rounded-[1rem] flex items-center justify-center border border-slate-100 dark:border-zinc-800">
+                    <div class="relative h-[220px] w-full bg-slate-50 dark:bg-zinc-800/40 rounded-2xl flex items-center justify-center border border-slate-100 dark:border-zinc-800">
                         <div class="h-28 w-28 rounded-full bg-slate-200/60 dark:bg-zinc-700/60"></div>
                         <div class="absolute left-4 top-4 h-6 w-28 bg-slate-200/80 dark:bg-zinc-700/80 rounded-full"></div>
                     </div>
@@ -205,7 +221,7 @@ const enterSystem = (moduleCode: string) => {
                 >
                     <!-- Wrapper Penahan 3D Transform -->
                     <div 
-                        class="preserve-3d relative h-full w-full rounded-[1.5rem] transition-transform duration-[600ms] ease-[cubic-bezier(0.23,1,0.32,1)]"
+                        class="preserve-3d relative h-full w-full rounded-3xl transition-transform duration-600 ease-[cubic-bezier(0.23,1,0.32,1)]"
                         :class="flippedModuleCode === mod.code ? 'rotate-y-180' : ''"
                     >
                     
@@ -213,16 +229,16 @@ const enterSystem = (moduleCode: string) => {
                              DEPANG (FRONT LAYER 1) 
                              ========================= -->
                         <div 
-                            class="backface-hidden absolute inset-0 flex flex-col overflow-hidden rounded-[1.5rem] bg-white p-2 shadow-xl ring-1 ring-black/5 dark:bg-zinc-900 dark:ring-white/10"
+                            class="backface-hidden absolute inset-0 flex flex-col overflow-hidden rounded-3xl bg-white p-2 shadow-xl ring-1 ring-black/5 dark:bg-zinc-900 dark:ring-white/10"
                             :class="(!userRolesByModule[mod.code] || userRolesByModule[mod.code].length === 0) ? 'opacity-80 grayscale cursor-not-allowed' : 'cursor-pointer hover:-translate-y-2 hover:shadow-2xl hover:ring-[#2563EB]/50 transition-all duration-300'"
                             @click="(!userRolesByModule[mod.code] || userRolesByModule[mod.code].length === 0) ? null : flipCard(mod.code)"
                         >
                             <!-- Top Header Box -->
-                            <div class="relative h-[220px] w-full overflow-hidden rounded-[1rem] bg-slate-50 dark:bg-white/5 border border-white/40 dark:border-white/10 shadow-inner">
+                            <div class="relative h-[220px] w-full overflow-hidden rounded-2xl bg-slate-50 dark:bg-white/5 border border-white/40 dark:border-white/10 shadow-inner">
                                 <!-- Subtle Glow Base under SVG -->
                                 <div class="absolute inset-0 flex items-center justify-center p-6">
                                     <div class="absolute h-40 w-40 rounded-full bg-[#2563EB]/10 blur-3xl transition-all duration-500"></div>
-                                    <img :src="mod.image" :alt="mod.name" class="relative z-10 max-h-[140px] max-w-[80%] object-contain transition-transform duration-500 hover:scale-105" />
+                                    <img :src="getModuleImage(mod)" :alt="mod.name" loading="lazy" decoding="async" width="200" height="140" class="relative z-10 max-h-[140px] max-w-[80%] object-contain transition-transform duration-500 hover:scale-105" />
                                 </div>
                                 <!-- Status Overlay -->
                                 <div class="absolute left-4 top-4 z-20">
@@ -237,7 +253,7 @@ const enterSystem = (moduleCode: string) => {
                             </div>
                             <!-- Bottom Detail -->
                             <div class="flex flex-1 flex-col p-4 pt-5">
-                                <h2 class="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent dark:from-white dark:to-gray-400">{{ mod.name }}</h2>
+                                <h2 class="text-xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent dark:from-white dark:to-gray-400">{{ mod.name }}</h2>
                                 <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mt-2 line-clamp-3">{{ mod.desc }}</p>
                                 <!-- Action Button (Dummy, action on card click) -->
                                 <div class="mt-auto pt-6">
@@ -255,13 +271,14 @@ const enterSystem = (moduleCode: string) => {
                              BELAKANG (BACK LAYER 2) 
                              ========================= -->
                         <div 
-                            class="backface-hidden rotate-y-180 absolute inset-0 flex flex-col overflow-hidden rounded-[1.5rem] bg-white p-6 shadow-xl ring-1 ring-black/5 dark:bg-zinc-900 dark:ring-white/10"
+                            class="backface-hidden rotate-y-180 absolute inset-0 flex flex-col overflow-hidden rounded-3xl bg-white p-6 shadow-xl ring-1 ring-black/5 dark:bg-zinc-900 dark:ring-white/10"
                         >
                             <!-- Profile / Top Area -->
                             <div class="flex shrink-0 items-center gap-3 border-b border-gray-100 pb-4 dark:border-zinc-800">
                                 <div class="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-zinc-800 shadow-inner overflow-hidden border border-gray-200 dark:border-zinc-700">
-                                    <!-- Initial Username Avatar -->
-                                    <span class="text-[22px] font-black text-[#2563EB]">{{ user.name.charAt(0) }}</span>
+                                    <!-- Dynamic profile picture if available, otherwise fallback to letter initials -->
+                                    <img v-if="user.foto_path" :src="avatarUrl" :alt="user.name" class="h-full w-full object-cover" />
+                                    <span v-else class="text-[22px] font-black text-[#2563EB]">{{ user.name.charAt(0) }}</span>
                                 </div>
                                 <div class="flex flex-1 flex-col overflow-hidden">
                                     <div class="flex items-center gap-2">
@@ -288,7 +305,7 @@ const enterSystem = (moduleCode: string) => {
                                         class="flex cursor-pointer items-center justify-between rounded-xl border p-3 transition-all duration-200"
                                         :class="selectedRoleSlug[mod.code] === role.slug 
                                             ? 'border-[#2563EB] bg-[#2563EB]/5 shadow-sm ring-1 ring-[#2563EB]/30' 
-                                            : 'border-gray-100/80 bg-gray-50/50 hover:bg-[#2563EB]/5 hover:border-[#2563EB]/40 dark:border-zinc-800 dark:bg-zinc-800/40 dark:hover:bg-[#2563EB]/10 border-transparent'"
+                                            : 'border-gray-100/80 bg-gray-50/50 hover:bg-[#2563EB]/5 hover:border-[#2563EB]/40 dark:border-zinc-800 dark:bg-zinc-800/40 dark:hover:bg-[#2563EB]/10'"
                                     >
                                         <div class="flex items-center gap-3 overflow-hidden">
                                             <!-- Custom Radio -->

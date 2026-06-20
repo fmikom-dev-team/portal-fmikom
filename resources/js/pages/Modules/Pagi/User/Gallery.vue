@@ -275,7 +275,9 @@ const submitReport = async () => {
 </script>
 
 <template>
-	<Head title="PAGI — Student Visual Gallery" />
+	<Head>
+        <title>PAGI — Student Visual Gallery</title>
+    </Head>
 
 	<div class="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-slate-200 dark:selection:bg-slate-800">
 		<Navbar />
@@ -387,13 +389,13 @@ const submitReport = async () => {
 			<!-- Visual Masonry Grid -->
 			<div v-else-if="localGalleryItems && localGalleryItems.length > 0" class="columns-2 sm:columns-2 md:columns-3 lg:columns-4 gap-2.5 space-y-2.5">
 				<div 
-					v-for="item in localGalleryItems" 
+					v-for="(item, idx) in localGalleryItems" 
 					:key="item.id" 
 					class="break-inside-avoid relative overflow-hidden rounded-2xl border border-slate-200/50 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer"
 					@click="openProjectModal(item.portfolio)"
 				>
 					<VideoLazy v-if="item.type === 'video'" :src="item.url" className="w-full h-auto object-cover rounded-2xl group-hover:scale-[1.015] transition-transform duration-500" />
-					<OptimizedImage v-else :src="item.url" :alt="item.title" className="w-full h-auto object-cover group-hover:scale-[1.015] transition-transform duration-500" />
+					<OptimizedImage v-else :src="item.url" :alt="item.title" :fetchpriority="idx < 8 ? 'high' : 'auto'" :loading="idx < 8 ? 'eager' : 'lazy'" className="w-full h-auto object-cover group-hover:scale-[1.015] transition-transform duration-500" />
 					
 					<!-- Three-dot menu button at top right -->
 					<div class="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity" @click.stop>

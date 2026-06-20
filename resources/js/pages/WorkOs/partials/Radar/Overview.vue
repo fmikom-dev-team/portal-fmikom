@@ -47,8 +47,8 @@ onMounted(() => {
 	localDetections.value = [...(props.radarDetections || [])];
 
 	// Real-time listener for Radar threats
-	if (typeof globalThis.window !== "undefined" && (globalThis as any).Echo) {
-		(globalThis as any).Echo.private("radar.alerts").listen(
+	if (typeof globalThis.window !== "undefined" && (globalThis as any).Broadcaster) {
+		(globalThis as any).Broadcaster.private("radar.alerts").listen(
 			String.raw`.App\Events\Radar\ThreatDetected`,
 			(e: any) => {
 				// Enrich with ISO timestamp if not present
@@ -489,7 +489,7 @@ function severityColor(s: string) {
                 v-for="t in ['Overview', 'Detections', 'Configuration']"
                 :key="t"
                 :class="['px-4 py-2.5 text-[13px] font-medium border-b-2 -mb-px transition-colors',
-                    radarTab === t ? 'border-indigo-600 text-indigo-600 font-semibold' : 'border-transparent text-gray-500 hover:text-gray-700']"
+                    radarTab === t ? 'border-blue-600 text-blue-600 font-semibold' : 'border-transparent text-gray-500 hover:text-gray-700']"
                 @click="radarTab = t"
             >
                 {{ t }}
@@ -531,8 +531,8 @@ function severityColor(s: string) {
                         <svg class="w-full h-full overflow-visible" viewBox="0 0 800 160" preserveAspectRatio="none">
                             <defs>
                                 <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.2" />
-                                    <stop offset="100%" stop-color="#4f46e5" stop-opacity="0.0" />
+                                    <stop offset="0%" stop-color="#1d4ed8" stop-opacity="0.2" />
+                                    <stop offset="100%" stop-color="#1d4ed8" stop-opacity="0.0" />
                                 </linearGradient>
                             </defs>
                             
@@ -543,20 +543,20 @@ function severityColor(s: string) {
                             <path :d="areaPath" fill="url(#chartGradient)" />
                             
                             <!-- Main line -->
-                            <path :d="linePath" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <path :d="linePath" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                             
                             <!-- Active Line Indicator -->
-                            <line v-if="hoveredPoint" :x1="hoveredPoint.x" y1="10" :x2="hoveredPoint.x" y2="150" stroke="#4f46e5" stroke-width="1" stroke-dasharray="3 3" />
+                            <line v-if="hoveredPoint" :x1="hoveredPoint.x" y1="10" :x2="hoveredPoint.x" y2="150" stroke="#1d4ed8" stroke-width="1" stroke-dasharray="3 3" />
 
                             <!-- Interactive Nodes -->
-                            <circle v-for="(p, idx) in chartPoints" :key="idx" :cx="p.x" :cy="p.y" :r="hoveredIdx === idx ? 5 : 3" :fill="hoveredIdx === idx ? '#4f46e5' : '#ffffff'" stroke="#4f46e5" stroke-width="2" style="transition: all 0.15s ease;" />
+                            <circle v-for="(p, idx) in chartPoints" :key="idx" :cx="p.x" :cy="p.y" :r="hoveredIdx === idx ? 5 : 3" :fill="hoveredIdx === idx ? '#1d4ed8' : '#ffffff'" stroke="#1d4ed8" stroke-width="2" style="transition: all 0.15s ease;" />
                         </svg>
 
                         <!-- Tooltip Overlay -->
                         <div v-if="hoveredPoint" class="absolute bg-gray-900 text-white rounded-lg shadow-xl px-3 py-2 text-[11px] pointer-events-none transition-all duration-75 z-10" :style="{ left: tooltipX + 'px', top: (tooltipY - 10) + 'px', transform: 'translate(-50%, -100%)' }">
                             <p class="font-medium text-gray-400 mb-0.5">Time: {{ hoveredPoint.label }}</p>
                             <p class="font-semibold text-[13px] text-white flex items-center gap-1.5">
-                                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
                                 {{ hoveredPoint.count }} Detections
                             </p>
                         </div>
@@ -596,7 +596,7 @@ function severityColor(s: string) {
                                 <span class="text-gray-500 font-semibold">{{ ip.count }} ({{ ip.percentage }}%)</span>
                             </div>
                             <div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                                <div class="bg-indigo-600 h-full rounded-full" :style="{ width: ip.percentage + '%' }"></div>
+                                <div class="bg-blue-600 h-full rounded-full" :style="{ width: ip.percentage + '%' }"></div>
                             </div>
                         </div>
                     </div>
@@ -667,7 +667,7 @@ function severityColor(s: string) {
             <div class="flex flex-wrap items-center gap-2 mb-4">
                 <!-- + Type -->
                 <div class="relative filter-popover-container">
-                    <button @click.stop="toggleDropdown('type')" :class="['flex items-center gap-1.5 px-3 py-1.5 border rounded-lg bg-white text-[12px] font-medium transition-colors select-none focus:outline-none', activeFilters.type.length ? 'border-indigo-600 text-indigo-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50']">
+                    <button @click.stop="toggleDropdown('type')" :class="['flex items-center gap-1.5 px-3 py-1.5 border rounded-lg bg-white text-[12px] font-medium transition-colors select-none focus:outline-none', activeFilters.type.length ? 'border-blue-600 text-blue-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50']">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
@@ -678,7 +678,7 @@ function severityColor(s: string) {
                         <div class="px-3 py-1 text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Filter by Type</div>
                         <div class="max-h-48 overflow-y-auto px-1">
                             <label v-for="t in uniqueTypes" :key="t" class="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 rounded cursor-pointer text-[12px] text-gray-700">
-                                <input type="checkbox" :value="t" v-model="activeFilters.type" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5" />
+                                <input type="checkbox" :value="t" v-model="activeFilters.type" class="rounded border-gray-300 text-blue-600 focus:ring-[#2563eb] w-3.5 h-3.5" />
                                 <span class="truncate">{{ t }}</span>
                             </label>
                         </div>
@@ -687,7 +687,7 @@ function severityColor(s: string) {
 
                 <!-- + Action -->
                 <div class="relative filter-popover-container">
-                    <button @click.stop="toggleDropdown('action')" :class="['flex items-center gap-1.5 px-3 py-1.5 border rounded-lg bg-white text-[12px] font-medium transition-colors select-none focus:outline-none', activeFilters.action.length ? 'border-indigo-600 text-indigo-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50']">
+                    <button @click.stop="toggleDropdown('action')" :class="['flex items-center gap-1.5 px-3 py-1.5 border rounded-lg bg-white text-[12px] font-medium transition-colors select-none focus:outline-none', activeFilters.action.length ? 'border-blue-600 text-blue-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50']">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
@@ -698,7 +698,7 @@ function severityColor(s: string) {
                         <div class="px-3 py-1 text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Filter by Action</div>
                         <div class="px-1">
                             <label v-for="a in uniqueActions" :key="a" class="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 rounded cursor-pointer text-[12px] text-gray-700">
-                                <input type="checkbox" :value="a" v-model="activeFilters.action" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5" />
+                                <input type="checkbox" :value="a" v-model="activeFilters.action" class="rounded border-gray-300 text-blue-600 focus:ring-[#2563eb] w-3.5 h-3.5" />
                                 <span>{{ a }}</span>
                             </label>
                         </div>
@@ -707,7 +707,7 @@ function severityColor(s: string) {
 
                 <!-- Date -->
                 <div class="relative filter-popover-container">
-                    <button @click.stop="toggleDropdown('date')" :class="['flex items-center gap-1.5 px-3 py-1.5 border rounded-lg bg-white text-[12px] font-medium transition-colors select-none focus:outline-none', activeFilters.dateRange !== 'all' ? 'border-indigo-600 text-indigo-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50']">
+                    <button @click.stop="toggleDropdown('date')" :class="['flex items-center gap-1.5 px-3 py-1.5 border rounded-lg bg-white text-[12px] font-medium transition-colors select-none focus:outline-none', activeFilters.dateRange !== 'all' ? 'border-blue-600 text-blue-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50']">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -717,7 +717,7 @@ function severityColor(s: string) {
                     <div v-if="activeDropdown === 'date'" class="absolute left-0 mt-2 w-48 rounded-lg bg-white border border-gray-200 shadow-lg py-2 z-30">
                         <div class="px-3 py-1 text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Filter by Date</div>
                         <div class="px-1">
-                            <button v-for="opt in [{val:'24h', label:'Last 24 hours'}, {val:'7d', label:'Last 7 days'}, {val:'30d', label:'Last 30 days'}, {val:'all', label:'All time'}]" :key="opt.val" @click="activeFilters.dateRange = opt.val; activeDropdown = null" :class="['w-full text-left px-3 py-1.5 text-[12px] rounded hover:bg-gray-50', activeFilters.dateRange === opt.val ? 'text-indigo-600 font-medium bg-indigo-50/50' : 'text-gray-700']">
+                            <button v-for="opt in [{val:'24h', label:'Last 24 hours'}, {val:'7d', label:'Last 7 days'}, {val:'30d', label:'Last 30 days'}, {val:'all', label:'All time'}]" :key="opt.val" @click="activeFilters.dateRange = opt.val; activeDropdown = null" :class="['w-full text-left px-3 py-1.5 text-[12px] rounded hover:bg-gray-50', activeFilters.dateRange === opt.val ? 'text-blue-600 font-medium bg-blue-50/50' : 'text-gray-700']">
                                 {{ opt.label }}
                             </button>
                         </div>
@@ -726,7 +726,7 @@ function severityColor(s: string) {
 
                 <!-- User -->
                 <div class="relative filter-popover-container">
-                    <button @click.stop="toggleDropdown('user')" :class="['flex items-center gap-1.5 px-3 py-1.5 border rounded-lg bg-white text-[12px] font-medium transition-colors select-none focus:outline-none', activeFilters.user ? 'border-indigo-600 text-indigo-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50']">
+                    <button @click.stop="toggleDropdown('user')" :class="['flex items-center gap-1.5 px-3 py-1.5 border rounded-lg bg-white text-[12px] font-medium transition-colors select-none focus:outline-none', activeFilters.user ? 'border-blue-600 text-blue-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50']">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
@@ -738,13 +738,13 @@ function severityColor(s: string) {
                             <span>Filter by User/Email</span>
                             <button v-if="activeFilters.user" @click="activeFilters.user = ''" class="text-[10px] text-red-500 hover:text-red-700">Clear</button>
                         </div>
-                        <input type="text" v-model="activeFilters.user" placeholder="Search user or email..." class="w-full px-2.5 py-1.5 text-[12px] border border-gray-200 rounded focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+                        <input type="text" v-model="activeFilters.user" placeholder="Search user or email..." class="w-full px-2.5 py-1.5 text-[12px] border border-gray-200 rounded focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb]" />
                     </div>
                 </div>
 
                 <!-- IP Address -->
                 <div class="relative filter-popover-container">
-                    <button @click.stop="toggleDropdown('ip')" :class="['flex items-center gap-1.5 px-3 py-1.5 border rounded-lg bg-white text-[12px] font-medium transition-colors select-none focus:outline-none', activeFilters.ip ? 'border-indigo-600 text-indigo-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50']">
+                    <button @click.stop="toggleDropdown('ip')" :class="['flex items-center gap-1.5 px-3 py-1.5 border rounded-lg bg-white text-[12px] font-medium transition-colors select-none focus:outline-none', activeFilters.ip ? 'border-blue-600 text-blue-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50']">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                         </svg>
@@ -756,13 +756,13 @@ function severityColor(s: string) {
                             <span>Filter by IP Address</span>
                             <button v-if="activeFilters.ip" @click="activeFilters.ip = ''" class="text-[10px] text-red-500 hover:text-red-700">Clear</button>
                         </div>
-                        <input type="text" v-model="activeFilters.ip" placeholder="Search IP address..." class="w-full px-2.5 py-1.5 text-[12px] border border-gray-200 rounded focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+                        <input type="text" v-model="activeFilters.ip" placeholder="Search IP address..." class="w-full px-2.5 py-1.5 text-[12px] border border-gray-200 rounded focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb]" />
                     </div>
                 </div>
 
                 <!-- Country -->
                 <div class="relative filter-popover-container">
-                    <button @click.stop="toggleDropdown('country')" :class="['flex items-center gap-1.5 px-3 py-1.5 border rounded-lg bg-white text-[12px] font-medium transition-colors select-none focus:outline-none', activeFilters.country ? 'border-indigo-600 text-indigo-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50']">
+                    <button @click.stop="toggleDropdown('country')" :class="['flex items-center gap-1.5 px-3 py-1.5 border rounded-lg bg-white text-[12px] font-medium transition-colors select-none focus:outline-none', activeFilters.country ? 'border-blue-600 text-blue-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50']">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -776,10 +776,10 @@ function severityColor(s: string) {
                             <button v-if="activeFilters.country" @click="activeFilters.country = ''" class="text-[10px] text-red-500 hover:text-red-700">Clear</button>
                         </div>
                         <div class="px-3 pb-2 border-b border-gray-100">
-                            <input type="text" v-model="activeFilters.country" placeholder="Type country code or name..." class="w-full px-2.5 py-1.5 text-[12px] border border-gray-200 rounded focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+                            <input type="text" v-model="activeFilters.country" placeholder="Type country code or name..." class="w-full px-2.5 py-1.5 text-[12px] border border-gray-200 rounded focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb]" />
                         </div>
                         <div class="max-h-36 overflow-y-auto px-1 mt-1" v-if="uniqueCountries.length">
-                            <button v-for="c in uniqueCountries" :key="c" @click="activeFilters.country = c; activeDropdown = null" :class="['w-full text-left px-3 py-1.5 text-[12px] rounded hover:bg-gray-50 truncate', activeFilters.country === c ? 'text-indigo-600 font-medium bg-indigo-50/50' : 'text-gray-700']">
+                            <button v-for="c in uniqueCountries" :key="c" @click="activeFilters.country = c; activeDropdown = null" :class="['w-full text-left px-3 py-1.5 text-[12px] rounded hover:bg-gray-50 truncate', activeFilters.country === c ? 'text-blue-600 font-medium bg-blue-50/50' : 'text-gray-700']">
                                 {{ c }}
                             </button>
                         </div>
@@ -824,6 +824,7 @@ function severityColor(s: string) {
                 
                 <div v-else class="overflow-x-auto">
                     <table class="w-full text-left whitespace-nowrap">
+                        <caption class="sr-only">Threat Detections</caption>
                         <thead>
                             <tr class="bg-gray-50/75 border-b border-gray-100 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
                                 <th class="px-6 py-3.5">Type</th>

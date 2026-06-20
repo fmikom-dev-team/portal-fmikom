@@ -22,6 +22,7 @@ defineProps<{
     >
         <div class="overflow-x-auto">
             <table class="w-full text-left">
+                <caption class="sr-only">Tabel Data WorkOS</caption>
                 <thead>
                     <tr class="border-b border-[#f3f4f6]">
                         <th

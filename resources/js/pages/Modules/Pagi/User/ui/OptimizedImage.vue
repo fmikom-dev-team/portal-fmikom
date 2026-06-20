@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 
 const props = withDefaults(
 	defineProps<{
@@ -18,14 +18,26 @@ const props = withDefaults(
 	},
 );
 
-const emit = defineEmits<(e: "load", event: Event) => void>();
+// Determine if the component is being used as a small avatar or icon
+const isSmall = computed(() => {
+	const cn = props.className || "";
+	return (
+		cn.includes("rounded-full") || /\b(h|w)-(2|3|4|5|6|8|10|12|16)\b/.test(cn)
+	);
+});
 
-const isLoaded = ref(false);
+const isLoaded = ref(isSmall.value);
+const imgRef = ref<HTMLImageElement | null>(null);
 
-const handleLoad = (event: Event) => {
+const handleLoad = () => {
 	isLoaded.value = true;
-	emit("load", event);
 };
+
+onMounted(() => {
+	if (imgRef.value?.complete) {
+		isLoaded.value = true;
+	}
+});
 
 // Generate high performance srcset for popular dynamic media CDNs
 const srcset = computed(() => {
@@ -58,31 +70,37 @@ const srcset = computed(() => {
 	return undefined;
 });
 
-const wrapperHeightClass = computed(() => {
-	if (!isLoaded.value) {
-		return "min-h-[220px] bg-slate-50 dark:bg-slate-900 rounded-xl";
+// Determine constant layout constraints based on className to prevent Vue-driven reflows
+const isHFull = computed(() => {
+	const cn = props.className || "";
+	return (
+		cn.includes("h-full") ||
+		cn.includes("max-h-full") ||
+		cn.includes("absolute inset-0")
+	);
+});
+
+const wrapperClass = computed(() => {
+	if (isSmall.value) {
+		return "inline-flex h-fit w-fit";
 	}
-	if (
-		props.className?.includes("h-full") ||
-		props.className?.includes("max-h-full") ||
-		props.className?.includes("absolute inset-0")
-	) {
-		return "h-full";
-	}
-	return "h-auto";
+	return isHFull.value
+		? "h-full w-full"
+		: "h-auto w-full min-h-[180px] bg-slate-100 dark:bg-zinc-800/80 rounded-xl";
 });
 </script>
 
 <template>
-	<div :class="['relative overflow-hidden w-full flex items-center justify-center', wrapperHeightClass]">
-		<!-- Modern Skeleton Shimmer Placeholder -->
+	<div :class="['relative overflow-hidden flex items-center justify-center', wrapperClass]">
+		<!-- Skeleton Shimmer Placeholder (only for non-small images) -->
 		<div
-			v-if="!isLoaded"
-			class="absolute inset-0 bg-gradient-to-r from-slate-100 via-slate-200/60 to-slate-100 dark:from-zinc-900 dark:via-zinc-800/60 dark:to-zinc-900 animate-shimmer"
+			v-if="!isLoaded && !isSmall"
+			class="absolute inset-0 bg-gradient-to-r from-slate-100 via-slate-200/60 to-slate-100 dark:from-zinc-900 dark:via-zinc-800/60 dark:to-zinc-900 animate-shimmer z-0"
 			style="background-size: 200% 100%;"
 		></div>
 		
 		<img
+			ref="imgRef"
 			:src="src"
 			:alt="alt"
 			:srcset="srcset"
@@ -91,7 +109,12 @@ const wrapperHeightClass = computed(() => {
 			:fetchpriority="fetchpriority"
 			decoding="async"
 			@load="handleLoad"
-			:class="[className, 'transition-opacity duration-500', isLoaded ? 'opacity-100' : 'opacity-0 absolute inset-0']"
+			:class="[
+				className,
+				'transition-opacity duration-300 z-10',
+				isLoaded ? 'opacity-100' : 'opacity-0',
+				isHFull ? 'absolute inset-0' : '',
+			]"
 		/>
 	</div>
 </template>

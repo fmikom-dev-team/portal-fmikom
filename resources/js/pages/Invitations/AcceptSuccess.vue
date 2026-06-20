@@ -11,7 +11,9 @@ const props = defineProps<{
 </script>
 
 <template>
-    <Head title="Invitation Accepted" />
+    <Head>
+        <title>Invitation Accepted</title>
+    </Head>
     <div style="min-height: 100vh; background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #ecfdf5 100%); display: flex; align-items: center; justify-content: center; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <div style="background: white; border-radius: 16px; padding: 48px 40px; max-width: 500px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.08); border: 1px solid #f3f4f6;">
             

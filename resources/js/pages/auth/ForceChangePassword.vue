@@ -56,7 +56,9 @@ const passwordMismatch = computed(() => {
         title="Buat Password Baru"
         description="Amankan akun Anda dengan password baru"
     >
-        <Head title="Ganti Password" />
+        <Head>
+        <title>Ganti Password</title>
+    </Head>
 
         <div class="mb-4 text-sm text-slate-600">
             Ini adalah pertama kalinya Anda masuk. Harap mengubah password default Anda dengan password yang baru dan kuat untuk melanjutkan ke dalam sistem.

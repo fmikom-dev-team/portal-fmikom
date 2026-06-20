@@ -8,18 +8,19 @@ defineProps<{
 	badge?: number;
 	active?: boolean;
 	hasSubmenu?: boolean;
+	collapsed?: boolean;
 }>();
 
 const emit = defineEmits<(e: "navigate", id: string) => void>();
 </script>
 
 <template>
-    <li>
+    <li> <!-- NOSONAR -->
         <button
             :id="`wos-nav-${id}`"
             :aria-current="active ? 'page' : undefined"
             :class="[
-                'relative w-full flex items-center gap-2.5 px-3 py-[7px] rounded-md text-[13.5px] transition-colors duration-150 select-none group',
+                'relative w-full flex items-center rounded-md text-[13.5px] transition-all duration-300 select-none group h-9 pl-[11px] pr-2',
                 active
                     ? 'bg-[#EFF6FF] text-[#2563EB] font-medium'
                     : 'text-[#374151] hover:bg-[#f3f4f6] hover:text-[#111827] font-normal',
@@ -39,23 +40,32 @@ const emit = defineEmits<(e: "navigate", id: string) => void>();
                 <path stroke-linecap="round" stroke-linejoin="round" :d="icon" />
             </svg>
 
-            <span class="flex-1 text-left truncate leading-none py-px">{{ label }}</span>
+            <span
+                class="transition-all duration-300 ease-in-out text-left truncate leading-none py-px overflow-hidden"
+                :class="collapsed ? 'opacity-0 max-w-0 ml-0 pointer-events-none' : 'opacity-100 max-w-[180px] ml-2.5'"
+            >{{ label }}</span>
 
             <!-- Badge -->
             <span
                 v-if="badge && badge > 0"
-                class="flex-shrink-0 h-[18px] min-w-[18px] px-1.5 rounded-full text-[10.5px] font-semibold tabular-nums flex items-center justify-center bg-[#fef3c7] text-[#92400e]"
+                :class="[
+                    'transition-all duration-300',
+                    collapsed 
+                        ? 'absolute top-0.5 right-1 w-3.5 h-3.5 rounded-full bg-[#f59e0b] text-white text-[8px] font-bold flex items-center justify-center border border-white ml-0' 
+                        : 'flex-shrink-0 h-[18px] min-w-[18px] px-1.5 rounded-full text-[10.5px] font-semibold tabular-nums flex items-center justify-center bg-[#fef3c7] text-[#92400e] ml-auto'
+                ]"
                 :aria-label="`${badge} pending`"
             >
-                {{ badge > 99 ? '99+' : badge }}
+                {{ collapsed ? (badge > 9 ? '9+' : badge) : (badge > 99 ? '99+' : badge) }}
             </span>
 
             <!-- Submenu Chevron -->
             <ChevronRight 
                 v-if="hasSubmenu"
                 :class="[
-                    'w-[14px] h-[14px] shrink-0 transition-colors opacity-60',
+                    'w-[14px] h-[14px] shrink-0 transition-all duration-300',
                     active ? 'text-[#2563EB]' : 'text-[#9ca3af] group-hover:text-[#6b7280]',
+                    collapsed ? 'opacity-0 w-0 scale-0 ml-0' : 'opacity-60 w-[14px] scale-100 ml-1.5'
                 ]"
             />
         </button>

@@ -1,11 +1,18 @@
 <script setup lang="ts">
 import { router } from "@inertiajs/vue3";
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { toast, toSlug } from "../../composables/useWorkOs";
 
-const props = defineProps<{ permissions: Array<any> }>();
+const props = defineProps<{
+	permissions: Array<any>;
+	searchQuery?: string;
+}>();
 
 const permSearch = ref("");
+watch(() => props.searchQuery, (val) => {
+	permSearch.value = val || "";
+});
+
 const filteredPerms = computed(() => {
 	if (!permSearch.value.trim()) return props.permissions;
 	const q = permSearch.value.toLowerCase();
@@ -157,6 +164,7 @@ function confirmDelete() {
                 </div>
                 <div class="bg-white border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
                     <table class="w-full text-left whitespace-nowrap">
+                        <caption class="sr-only">Tabel Izin Akses</caption>
                         <thead>
                             <tr class="border-b border-gray-100 bg-gray-50/80">
                                 <th class="px-4 py-2.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Name</th>

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import {
-	Filter,
 	Folder,
 	ListFilter,
 	MapPin,
@@ -9,12 +8,18 @@ import {
 	SlidersHorizontal,
 	User,
 } from "lucide-vue-next";
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+import LazyWrapper from "@/components/Portal/LazyWrapper.vue";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useLoadingState } from "@/composables/useLoadingState";
 import Footer from "./ui/Footer.vue";
 import Navbar from "./ui/Navbar.vue";
 import OptimizedImage from "./ui/OptimizedImage.vue";
 import SidebarPeople from "./ui/SidebarPeople.vue";
+import UmumNavbar from "./ui/UmumNavbar.vue";
 import VideoLazy from "./ui/VideoLazy.vue";
+
+const { isLoading } = useLoadingState();
 
 const props = defineProps<{
 	moduleName: string;
@@ -37,6 +42,13 @@ const props = defineProps<{
 	}>;
 }>();
 const page = usePage();
+
+const isMahasiswa = computed(() => {
+	const role =
+		props.roleName || (page.props as any).context?.active_role || "mahasiswa";
+	return role.toLowerCase() === "mahasiswa";
+});
+
 const user = computed(
 	() => page.props.auth?.user || { name: "User", email: "" },
 );
@@ -168,9 +180,9 @@ const filteredPeople = computed(() => {
 	if (selectedSort.value === "Most Followers") {
 		return [...list].sort((a, b) => {
 			const parseVal = (v: string) => {
-				if (v.includes("M")) return parseFloat(v) * 1000000;
-				if (v.includes("K")) return parseFloat(v) * 1000;
-				return parseFloat(v) || 0;
+				if (v.includes("M")) return Number.parseFloat(v) * 1000000;
+				if (v.includes("K")) return Number.parseFloat(v) * 1000;
+				return Number.parseFloat(v) || 0;
 			};
 			return parseVal(b.fol) - parseVal(a.fol);
 		});
@@ -204,19 +216,28 @@ const loadMore = () => {
 const startChat = (partnerId: number) => {
 	router.visit(`/pagi/messages?chat=${partnerId}`);
 };
+
+const handleBlur = () => {
+	setTimeout(() => {
+		showSuggestions.value = false;
+	}, 200);
+};
 </script>
 
 <template>
-    <Head title="PAGI — People" />
+    <Head title="PAGI — People">
+        <title>PAGI — People</title>
+    </Head>
     <div class="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-slate-200 dark:selection:bg-slate-800">
 
-        <Navbar />
+        <Navbar v-if="isMahasiswa" />
+        <UmumNavbar v-else :roleName="props.roleName" />
 
         <!-- HERO BANNER -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-[#030712] via-[#0b0f19] to-[#1e1b4b] border-b border-slate-900 py-20 px-6 text-center select-none">
+        <div class="relative overflow-hidden bg-linear-to-br from-[#030712] via-[#0b0f19] to-[#1e1b4b] border-b border-slate-900 py-20 px-6 text-center select-none">
             
             <!-- Background Abstract Tech Lines & Dots Grid with lighter points -->
-            <div class="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(rgba(255,255,255,0.15)_1px,transparent_1px)] [background-size:20px_20px]"></div>
+            <div class="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(rgba(255,255,255,0.15)_1px,transparent_1px)] bg-size-[20px_20px]"></div>
             
             <!-- Animated Glowing Mesh-style Blurs -->
             <div class="absolute inset-0 pointer-events-none overflow-hidden">
@@ -245,11 +266,11 @@ const startChat = (partnerId: number) => {
 
 
         <!-- BEHANCE-STYLE FILTER & SEARCH SUBNAVBAR -->
-        <div class="border-b border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-950 py-2.5 sm:py-3.5 select-none sticky top-14 z-40">
+        <div class="border-b border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-955 py-2.5 sm:py-3.5 select-none sticky top-14 z-40">
             <div class="mx-auto max-w-[1400px] px-3 sm:px-4 flex items-center gap-2 sm:gap-3">
 
                 <!-- Left: Filter Toggle Button (icon-only on mobile) -->
-                <button @click="showFilters = !showFilters" class="inline-flex items-center gap-1.5 rounded-full border border-slate-200/85 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 bg-white dark:bg-zinc-950 px-2.5 sm:px-5 py-2 text-xs font-bold text-slate-800 dark:text-zinc-200 shadow-xs transition-all shrink-0">
+                <button @click="showFilters = !showFilters" aria-label="Filter kategori" class="inline-flex items-center gap-1.5 rounded-full border border-slate-200/85 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 bg-white dark:bg-zinc-950 px-2.5 sm:px-5 py-2 text-xs font-bold text-slate-800 dark:text-zinc-200 shadow-xs transition-all shrink-0">
                     <SlidersHorizontal class="h-3.5 w-3.5" />
                     <span class="hidden sm:inline">Filter</span>
                 </button>
@@ -261,14 +282,15 @@ const startChat = (partnerId: number) => {
                         type="text"
                         v-model="searchQuery"
                         @focus="showSuggestions = true"
-                        @blur="setTimeout(() => showSuggestions = false, 200)"
+                        @blur="handleBlur"
                         placeholder="Search PAGI..."
+                        aria-label="Cari kreator"
                         class="flex-1 bg-transparent border-none outline-none text-xs font-semibold text-slate-800 dark:text-zinc-150 placeholder-slate-400 pl-2 py-1.5 w-0 min-w-0"
                     />
 
                     <!-- REALTIME SEARCH SUGGESTIONS DROPDOWN -->
                     <div v-show="showSuggestions && searchSuggestions.length > 0" class="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-2xl shadow-xl z-50 overflow-hidden p-1.5">
-                        <div class="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-550 border-b border-slate-100 dark:border-zinc-800/80 mb-1">
+                        <div class="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-555 border-b border-slate-100 dark:border-zinc-800/80 mb-1">
                             Pencarian Terkini & Saran
                         </div>
                         <button v-for="(sug, idx) in searchSuggestions" :key="idx"
@@ -300,7 +322,7 @@ const startChat = (partnerId: number) => {
 
                 <!-- Right: Sorting Dropdown (icon-only on mobile) -->
                 <div class="relative shrink-0">
-                    <button @click="showSortDropdown = !showSortDropdown" class="inline-flex items-center gap-1.5 rounded-full border border-slate-200/85 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 bg-white dark:bg-zinc-950 px-2.5 sm:px-5 py-2 text-xs font-bold text-slate-800 dark:text-zinc-200 shadow-xs transition-all">
+                    <button @click="showSortDropdown = !showSortDropdown" aria-label="Urutkan kreator" class="inline-flex items-center gap-1.5 rounded-full border border-slate-200/85 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 bg-white dark:bg-zinc-950 px-2.5 sm:px-5 py-2 text-xs font-bold text-slate-800 dark:text-zinc-200 shadow-xs transition-all">
                         <ListFilter class="h-3.5 w-3.5 text-slate-500" />
                         <span class="hidden sm:inline">{{ selectedSort }}</span>
                         <svg class="hidden sm:block w-3 h-3 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': showSortDropdown }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -320,93 +342,130 @@ const startChat = (partnerId: number) => {
                 </div>
 
             </div>
-        </div>
-
-        <!-- GRID -->
+        </div>        <!-- GRID -->
         <main class="mx-auto max-w-[1400px] px-4 py-8 pb-24 md:pb-8">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                <div v-for="p in visiblePeople" :key="p.id"
-                    class="group rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer"
-                    @click="selectPerson(p, filteredPeople.indexOf(p))">
-
-                    <!-- 3 images/videos horizontal strip -->
-                    <div v-if="p.imgs && p.imgs.length > 0" class="relative grid grid-cols-3 gap-0.5 bg-slate-100 dark:bg-zinc-850 h-36">
-                        <div v-for="(img, i) in p.imgs.slice(0, 3)" :key="i" class="overflow-hidden h-36 bg-slate-50 dark:bg-zinc-900">
-                            <VideoLazy v-if="isVideoUrl(img)" :src="img" :autoplay="true" :loop="true" :muted="true" :playsinline="true" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500 pointer-events-none" />
-                            <OptimizedImage v-else :src="img" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Project thumbnail" />
-                        </div>
-                        <!-- Pad remaining columns if user has fewer than 3 works -->
-                        <div v-for="i in Math.max(0, 3 - p.imgs.length)" :key="'pad-' + i" class="h-36 bg-linear-to-br from-slate-50 to-slate-100 dark:from-zinc-900/60 dark:to-zinc-850/60"></div>
-                        <!-- Centered circular avatar overlapping bottom of strip -->
-                        <div class="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-1/2 z-10">
-                            <OptimizedImage :src="p.avatar"
-                                className="h-20 w-20 rounded-full border-4 border-white dark:border-zinc-900 object-cover shadow-lg"
-                                alt="Author avatar" />
-                        </div>
+            <!-- SKELETON LOADER -->
+            <div v-if="isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 select-none">
+                <div v-for="n in 8" :key="n" class="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden p-5 flex flex-col gap-4">
+                    <div class="relative h-36 bg-slate-100 dark:bg-zinc-900/60 rounded-lg overflow-hidden flex items-center justify-center">
+                        <Skeleton class="h-20 w-20 rounded-full border-4 border-white dark:border-zinc-900 absolute bottom-0 translate-y-1/2 shrink-0" />
                     </div>
-                    <!-- Fallback if user has 0 works -->
-                    <div v-else class="relative h-36 bg-linear-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 dark:from-indigo-950/40 dark:via-purple-950/40 dark:to-pink-950/40">
-                        <!-- Centered circular avatar overlapping bottom of strip -->
-                        <div class="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-1/2 z-10">
-                            <OptimizedImage :src="p.avatar"
-                                className="h-20 w-20 rounded-full border-4 border-white dark:border-zinc-900 object-cover shadow-lg"
-                                alt="Author avatar" />
+                    <div class="pt-8 flex flex-col items-center gap-3">
+                        <Skeleton class="h-4 w-32 rounded-full" />
+                        <Skeleton class="h-3 w-24 rounded-full" />
+                        <div class="flex gap-1.5 mt-2">
+                            <Skeleton class="h-6 w-16 rounded-full" />
+                            <Skeleton class="h-6 w-16 rounded-full" />
                         </div>
-                    </div>
-
-                    <!-- Card body -->
-                    <div class="px-5 pt-12 pb-5">
-                        <!-- Name + location -->
-                        <div class="text-center mb-3">
-                            <div class="flex flex-col items-center justify-center gap-0.5 mb-1">
-                                <div class="flex items-center gap-1.5">
-                                    <h3 class="text-sm font-bold text-slate-800 dark:text-zinc-150 leading-tight">{{ p.name }}</h3>
-                                    <img src="/premium.svg" class="w-3.5 h-3.5 shrink-0 select-none" title="Akun Terverifikasi" alt="Verified Badge" />
-                                </div>
-                                <span v-if="p.pagi_username" class="text-[10px] font-bold text-slate-500 dark:text-slate-400">@{{ p.pagi_username }}</span>
+                        <div class="grid grid-cols-3 gap-4 w-full mt-4 border-t border-slate-100 dark:border-zinc-800 pt-4">
+                            <div class="flex flex-col items-center gap-1.5">
+                                <Skeleton class="h-4 w-8 rounded" />
+                                <Skeleton class="h-2.5 w-10 rounded" />
                             </div>
-                            <div class="flex items-center justify-center gap-1 text-xs text-slate-500">
-                                <MapPin class="h-3 w-3 shrink-0" /> {{ p.loc }}
+                            <div class="flex flex-col items-center gap-1.5 border-x border-slate-100 dark:border-zinc-800 px-2">
+                                <Skeleton class="h-4 w-8 rounded" />
+                                <Skeleton class="h-2.5 w-10 rounded" />
+                            </div>
+                            <div class="flex flex-col items-center gap-1.5">
+                                <Skeleton class="h-4 w-8 rounded" />
+                                <Skeleton class="h-2.5 w-10 rounded" />
                             </div>
                         </div>
-
-                        <!-- Skills (limit to 2 tags, neat and tidy) -->
-                        <div class="flex flex-wrap justify-center gap-1.5 mb-4 min-h-[26px]">
-                            <span v-for="skill in p.skills.slice(0, 2)" :key="skill"
-                                class="rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 px-2.5 py-1 text-[11px] font-bold tracking-tight">
-                                {{ skill }}
-                            </span>
-                        </div>
-
-                        <!-- Stats -->
-                        <div class="grid grid-cols-3 gap-2 mb-4">
-                            <div class="text-center">
-                                <p class="text-sm font-black text-slate-800 dark:text-zinc-100">{{ p.appr }}</p>
-                                <p class="text-[10px] text-slate-400 dark:text-zinc-500">Likes</p>
-                            </div>
-                            <div class="text-center border-x border-slate-100 dark:border-zinc-800">
-                                <p class="text-sm font-black text-slate-800 dark:text-zinc-100">{{ p.fol }}</p>
-                                <p class="text-[10px] text-slate-400 dark:text-zinc-500">Followers</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-sm font-black text-slate-800 dark:text-zinc-100">{{ p.proj }}</p>
-                                <p class="text-[10px] text-slate-400 dark:text-zinc-500">Projects</p>
-                            </div>
-                        </div>
-
-                        <!-- Message Button -->
-                        <button v-if="p.id !== user.id" @click.stop="startChat(p.id)" class="w-full rounded-lg border border-slate-200 dark:border-zinc-800 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors">
-                            Message {{ p.name.split(' ')[0] }}
-                        </button>
+                        <Skeleton class="h-9 w-full rounded-lg mt-2" />
                     </div>
                 </div>
             </div>
-            <!-- Load More — only appears when there are more than visibleCount people -->
-            <div v-if="hasMore" class="mt-10 text-center">
-                <button @click="loadMore" class="rounded-xl border-2 border-slate-200 dark:border-zinc-800 px-8 py-3 text-sm font-bold text-slate-600 dark:text-zinc-400 hover:border-[#1769ff] hover:text-[#1769ff] transition-colors">
-                    Load More <span class="opacity-50 text-xs ml-1">({{ filteredPeople.length - visibleCount }} lainnya)</span>
-                </button>
+
+            <template v-else>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                    <LazyWrapper
+                        v-for="p in visiblePeople"
+                        :key="p.id"
+                        placeholderClass="h-[280px]"
+                    >
+                        <div class="group rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-955 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer"
+                            @click="selectPerson(p, filteredPeople.indexOf(p))">
+
+                        <!-- 3 images/videos horizontal strip -->
+                        <div v-if="p.imgs && p.imgs.length > 0" class="relative grid grid-cols-3 gap-0.5 bg-slate-100 dark:bg-zinc-850 h-36">
+                            <div v-for="(img, i) in p.imgs.slice(0, 3)" :key="i" class="overflow-hidden h-36 bg-slate-50 dark:bg-zinc-900">
+                                <VideoLazy v-if="isVideoUrl(img)" :src="img" :autoplay="true" :loop="true" :muted="true" :playsinline="true" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500 pointer-events-none" />
+                                <OptimizedImage v-else :src="img" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Project thumbnail" />
+                            </div>
+                            <!-- Pad remaining columns if user has fewer than 3 works -->
+                            <div v-for="i in Math.max(0, 3 - p.imgs.length)" :key="'pad-' + i" class="h-36 bg-linear-to-br from-slate-50 to-slate-100 dark:from-zinc-900/60 dark:to-zinc-850/60"></div>
+                            <!-- Centered circular avatar overlapping bottom of strip -->
+                            <div class="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-1/2 z-10">
+                                <OptimizedImage :src="p.avatar"
+                                    className="h-20 w-20 rounded-full border-4 border-white dark:border-zinc-900 object-cover shadow-lg"
+                                    alt="Author avatar" />
+                            </div>
+                        </div>
+                        <!-- Fallback if user has 0 works -->
+                        <div v-else class="relative h-36 bg-linear-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 dark:from-indigo-950/40 dark:via-purple-950/40 dark:to-pink-950/40">
+                            <!-- Centered circular avatar overlapping bottom of strip -->
+                            <div class="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-1/2 z-10">
+                                <OptimizedImage :src="p.avatar"
+                                    className="h-20 w-20 rounded-full border-4 border-white dark:border-zinc-900 object-cover shadow-lg"
+                                    alt="Author avatar" />
+                            </div>
+                        </div>
+
+                        <!-- Card body -->
+                        <div class="px-5 pt-12 pb-5">
+                            <!-- Name + location -->
+                            <div class="text-center mb-3">
+                                <div class="flex flex-col items-center justify-center gap-0.5 mb-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <h3 class="text-sm font-bold text-slate-800 dark:text-zinc-150 leading-tight">{{ p.name }}</h3>
+                                        <img src="/premium.svg" class="w-3.5 h-3.5 shrink-0 select-none" title="Akun Terverifikasi" alt="Verified Badge" />
+                                    </div>
+                                    <span v-if="p.pagi_username" class="text-[10px] font-bold text-slate-500 dark:text-slate-400">@{{ p.pagi_username }}</span>
+                                </div>
+                                <div class="flex items-center justify-center gap-1 text-xs text-slate-500">
+                                    <MapPin class="h-3 w-3 shrink-0" /> {{ p.loc }}
+                                </div>
+                            </div>
+
+                            <!-- Skills (limit to 2 tags, neat and tidy) -->
+                            <div class="flex flex-wrap justify-center gap-1.5 mb-4 min-h-[26px]">
+                                <span v-for="skill in p.skills.slice(0, 2)" :key="skill"
+                                    class="rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 px-2.5 py-1 text-[11px] font-bold tracking-tight">
+                                    {{ skill }}
+                                </span>
+                            </div>
+
+                            <!-- Stats -->
+                            <div class="grid grid-cols-3 gap-2 mb-4">
+                                <div class="text-center">
+                                    <p class="text-sm font-black text-slate-800 dark:text-zinc-100">{{ p.appr }}</p>
+                                    <p class="text-[10px] text-slate-400 dark:text-zinc-500">Likes</p>
+                                </div>
+                                <div class="text-center border-x border-slate-100 dark:border-zinc-800">
+                                    <p class="text-sm font-black text-slate-800 dark:text-zinc-100">{{ p.fol }}</p>
+                                    <p class="text-[10px] text-slate-400 dark:text-zinc-500">Followers</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-sm font-black text-slate-800 dark:text-zinc-100">{{ p.proj }}</p>
+                                    <p class="text-[10px] text-slate-400 dark:text-zinc-500">Projects</p>
+                                </div>
+                            </div>
+
+                            <!-- Message Button -->
+                            <button v-if="p.id !== user.id" @click.stop="startChat(p.id)" class="w-full rounded-lg border border-slate-200 dark:border-zinc-800 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors">
+                                Message {{ p.name.split(' ')[0] }}
+                            </button>
+                        </div>
+                    </div>
+                </LazyWrapper>
             </div>
+                <!-- Load More — only appears when there are more than visibleCount people -->
+                <div v-if="hasMore" class="mt-10 text-center">
+                    <button @click="loadMore" class="rounded-xl border-2 border-slate-200 dark:border-zinc-800 px-8 py-3 text-sm font-bold text-slate-600 dark:text-zinc-400 hover:border-[#1769ff] hover:text-[#1769ff] transition-colors">
+                        Load More <span class="opacity-50 text-xs ml-1">({{ filteredPeople.length - visibleCount }} lainnya)</span>
+                    </button>
+                </div>
+            </template>
         </main>
 
         <!-- PEOPLE DETAIL SIDEBAR -->

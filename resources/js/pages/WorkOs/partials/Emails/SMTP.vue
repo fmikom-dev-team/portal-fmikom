@@ -184,7 +184,7 @@ function clearLogsTerminal() {
                         v-model="configForm.host"
                         type="text"
                         placeholder="smtp.example.com"
-                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-gray-900 bg-white"
+                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 bg-white"
                     />
                 </div>
                 <div>
@@ -194,7 +194,7 @@ function clearLogsTerminal() {
                         v-model.number="configForm.port"
                         type="number"
                         placeholder="587"
-                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-gray-900 bg-white"
+                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 bg-white"
                     />
                 </div>
                 <div>
@@ -204,7 +204,7 @@ function clearLogsTerminal() {
                         v-model="configForm.sender"
                         type="email"
                         placeholder="sender@example.com"
-                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-gray-900 bg-white"
+                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 bg-white"
                     />
                 </div>
                 <div>
@@ -212,7 +212,7 @@ function clearLogsTerminal() {
                     <select
                         id="smtp_encryption"
                         v-model="configForm.encryption"
-                        class="w-full h-9 px-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-indigo-500 text-gray-900 bg-white"
+                        class="w-full h-9 px-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] text-gray-900 bg-white"
                     >
                         <option value="tls">TLS (STARTTLS)</option>
                         <option value="ssl">SSL Implicit</option>
@@ -226,7 +226,7 @@ function clearLogsTerminal() {
                         v-model="configForm.username"
                         type="text"
                         placeholder="username"
-                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-gray-900 bg-white"
+                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 bg-white"
                     />
                 </div>
                 <div>
@@ -236,14 +236,14 @@ function clearLogsTerminal() {
                         v-model="configForm.password"
                         type="password"
                         placeholder="••••••••"
-                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-gray-900 bg-white"
+                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 bg-white"
                     />
                 </div>
             </div>
 
             <div class="flex justify-end pt-2">
                 <button
-                    class="h-9 px-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-60"
+                    class="h-9 px-5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-60"
                     :disabled="isSaving"
                     @click="saveSmtpConfig"
                 >
@@ -269,13 +269,13 @@ function clearLogsTerminal() {
                         v-model="testRecipient"
                         type="email"
                         placeholder="recipient@example.com"
-                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-gray-900 bg-white"
+                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 bg-white"
                     />
                 </div>
             </div>
 
             <button
-                class="w-full h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-60 mt-4"
+                class="w-full h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-60 mt-4"
                 :disabled="isSendingTest || !testRecipient"
                 @click="sendTestEmail"
             >
@@ -295,7 +295,7 @@ function clearLogsTerminal() {
             <button @click="clearLogsTerminal" class="text-[10px] text-gray-500 hover:text-gray-300 font-semibold transition-colors">Clear Output</button>
         </div>
         <div class="p-4 font-mono text-[11.5px] text-emerald-400 space-y-1 max-h-60 overflow-y-auto leading-relaxed scroll-mt-2 font-semibold">
-            <div v-for="(log, idx) in testLogsText" :key="idx" :class="[log.startsWith('[SUCCESS]') ? 'text-indigo-400 font-bold' : log.startsWith('[SYSTEM]') ? 'text-gray-400 italic' : log.startsWith('[ERROR]') || log.startsWith('[FATAL]') ? 'text-red-500' : 'text-emerald-400']">
+            <div v-for="(log, idx) in testLogsText" :key="idx" :class="[log.startsWith('[SUCCESS]') ? 'text-blue-400 font-bold' : log.startsWith('[SYSTEM]') ? 'text-gray-400 italic' : log.startsWith('[ERROR]') || log.startsWith('[FATAL]') ? 'text-red-500' : 'text-emerald-400']">
                 {{ log }}
             </div>
         </div>

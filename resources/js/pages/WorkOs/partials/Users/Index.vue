@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router, usePage } from "@inertiajs/vue3";
-import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import {
 	formatDate,
 	generatePassword,
@@ -14,17 +14,90 @@ import {
 import Progress from "../../ui/Progress.vue";
 
 const props = defineProps<{
-	users: Array<any>;
+	users: Array<any> | Record<string, any>;
 	roles?: Array<any>;
 	pendingCount: number;
+	searchQuery?: string;
 }>();
 
 const emit = defineEmits<(e: "openDetail", user: any) => void>();
 
 // ─── SEARCH / FILTER ─────────────────────────────────────────────────────────
+const usersArray = computed(() => {
+	if (!props.users) return [];
+	if (Array.isArray(props.users)) return props.users;
+	if (props.users && Array.isArray(props.users.data)) return props.users.data;
+	return [];
+});
+
 const userSearch = ref("");
 const filterStatus = ref("all");
+
+watch(() => props.searchQuery, (newVal) => {
+	userSearch.value = newVal || "";
+});
+
 const filterRole = ref("all");
+const filterAuth = ref("all");
+const filterMembership = ref("all");
+
+const authDropdownOpen = ref(false);
+const membershipDropdownOpen = ref(false);
+const activeUserMenuId = ref<any>(null);
+
+function toggleUserMenu(id: any, e: MouseEvent) {
+	e.stopPropagation();
+	activeUserMenuId.value = activeUserMenuId.value === id ? null : id;
+}
+
+const filterAuthLabel = computed(() => {
+	if (filterAuth.value === "email") return "Email + Password";
+	if (filterAuth.value === "all") return "All";
+	return filterAuth.value.charAt(0).toUpperCase() + filterAuth.value.slice(1);
+});
+
+const filterRoleLabel = computed(() => {
+	if (filterRole.value === "all") return "All";
+	const matched = availableRoles.value.find((r) => r.value === filterRole.value);
+	return matched ? matched.label : filterRole.value;
+});
+
+const filterMembershipLabel = computed(() => {
+	if (filterMembership.value === "all") return "All";
+	if (filterMembership.value === "active") return "Active";
+	if (filterMembership.value === "pending") return "Pending";
+	if (filterMembership.value === "rejected") return "Inactive";
+	if (filterMembership.value === "deletion_requested") return "Pending Deletion";
+	return filterMembership.value;
+});
+
+let searchTimeout: any = null;
+function applyFilters() {
+	router.visit("/workos/users", {
+		method: "get",
+		data: {
+			search: userSearch.value || undefined,
+			role: filterRole.value !== "all" ? filterRole.value : undefined,
+			auth: filterAuth.value !== "all" ? filterAuth.value : undefined,
+			membership: filterMembership.value !== "all" ? filterMembership.value : undefined,
+			page: 1,
+		},
+		preserveState: true,
+		preserveScroll: true,
+		only: ["users"],
+	});
+}
+
+watch(userSearch, () => {
+	if (searchTimeout) clearTimeout(searchTimeout);
+	searchTimeout = setTimeout(() => {
+		applyFilters();
+	}, 300);
+});
+
+watch([filterRole, filterAuth, filterMembership], () => {
+	applyFilters();
+});
 const userTab = ref<"users" | "invitations">("users");
 const statusDropdownOpen = ref(false);
 const roleDropdownOpen = ref(false);
@@ -47,7 +120,7 @@ const availableRoles = computed(() => {
 		});
 	}
 
-	props.users.forEach((u) => {
+	usersArray.value.forEach((u) => {
 		if (u.role?.slug && !list.some((item) => item.value === u.role.slug)) {
 			list.push({ label: u.role.nama, value: u.role.slug });
 		}
@@ -66,11 +139,16 @@ const availableRoles = computed(() => {
 	return list;
 });
 
+
 const filteredUsers = computed(() => {
-	let r = props.users;
+	let r = usersArray.value;
 
 	if (filterStatus.value !== "all") {
-		r = r.filter((u) => u.status_approval === filterStatus.value);
+		if (filterStatus.value === "deletion_requested") {
+			r = r.filter((u) => u.deletion_requested_at !== null);
+		} else {
+			r = r.filter((u) => u.status_approval === filterStatus.value);
+		}
 	}
 
 	if (filterRole.value !== "all") {
@@ -83,13 +161,6 @@ const filteredUsers = computed(() => {
 		});
 	}
 
-	if (userSearch.value.trim()) {
-		const q = userSearch.value.toLowerCase();
-		r = r.filter(
-			(u) =>
-				u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q),
-		);
-	}
 	return r;
 });
 
@@ -98,10 +169,34 @@ function closeAllDropdowns(e: MouseEvent) {
 	if (!target.closest("[data-dropdown]")) {
 		statusDropdownOpen.value = false;
 		roleDropdownOpen.value = false;
+		authDropdownOpen.value = false;
+		membershipDropdownOpen.value = false;
+		activeUserMenuId.value = null;
 	}
 }
 
-onMounted(() => document.addEventListener("click", closeAllDropdowns));
+onMounted(() => {
+	document.addEventListener("click", closeAllDropdowns);
+	if (typeof window !== "undefined") {
+		const urlParams = new URLSearchParams(window.location.search);
+		const searchParam = urlParams.get("search");
+		if (searchParam) {
+			userSearch.value = searchParam;
+		}
+		const roleParam = urlParams.get("role");
+		if (roleParam) {
+			filterRole.value = roleParam;
+		}
+		const authParam = urlParams.get("auth");
+		if (authParam) {
+			filterAuth.value = authParam;
+		}
+		const membershipParam = urlParams.get("membership");
+		if (membershipParam) {
+			filterMembership.value = membershipParam;
+		}
+	}
+});
 onUnmounted(() => document.removeEventListener("click", closeAllDropdowns));
 
 // ─── MODALS ───────────────────────────────────────────────────────────────────
@@ -277,6 +372,39 @@ function submitCreateUser() {
 		},
 	);
 }
+
+const GOOGLE_SVG = `<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 inline-block" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>`;
+const GITHUB_SVG = `<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 inline-block" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>`;
+const MICROSOFT_SVG = `<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 inline-block" xmlns="http://www.w3.org/2000/svg"><path d="M11.4 24H0V12.6h11.4V24z" fill="#F25022"/><path d="M24 24H12.6V12.6H24V24z" fill="#00A4EF"/><path d="M11.4 11.4H0V0h11.4v11.4z" fill="#7FBA00"/><path d="M24 11.4H12.6V0H24v11.4z" fill="#FFB900"/></svg>`;
+const APPLE_SVG = `<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 inline-block" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701z"/></svg>`;
+
+function handleUserAction(action: string, user: any) {
+	activeUserMenuId.value = null;
+	if (action === "view") {
+		emit("openDetail", user);
+	} else if (action === "approve") {
+		if (confirm(`Approve user ${user.email}?`)) {
+			router.post(`/workos/users/${user.id}/approve`, {}, {
+				preserveScroll: true,
+				onSuccess: () => toast("User approved successfully.", "success")
+			});
+		}
+	} else if (action === "reject") {
+		if (confirm(`Reject user ${user.email}?`)) {
+			router.post(`/workos/users/${user.id}/reject`, {}, {
+				preserveScroll: true,
+				onSuccess: () => toast("User rejected.", "success")
+			});
+		}
+	} else if (action === "delete") {
+		if (confirm(`Are you sure you want to delete user ${user.email}? This action cannot be undone.`)) {
+			router.delete(`/workos/users/${user.id}`, {
+				preserveScroll: true,
+				onSuccess: () => toast("User deleted successfully.", "success")
+			});
+		}
+	}
+}
 </script>
 
 <template>
@@ -299,7 +427,7 @@ function submitCreateUser() {
                     Upload users
                 </button>
                 <button
-                    class="h-[34px] px-4 bg-[#6366f1] text-white rounded-md text-[13px] font-semibold hover:bg-[#4f46e5] transition-colors shadow-sm cursor-pointer"
+                    class="h-[34px] px-4 bg-[#2563eb] text-white rounded-md text-[13px] font-semibold hover:bg-[#1d4ed8] transition-colors shadow-sm cursor-pointer"
                     @click="modal.createUser = true"
                 >
                     {{ userTab === 'users' ? 'Create user' : 'Invite user' }}
@@ -327,85 +455,134 @@ function submitCreateUser() {
         </div>
 
         <!-- Toolbar -->
-        <div v-if="userTab === 'users'" class="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
-            <!-- Search -->
-            <div class="relative w-full sm:w-auto">
-                <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z" />
-                </svg>
-                <input
-                    v-model="userSearch"
-                    type="search"
-                    placeholder="Search"
-                    class="w-full sm:w-[280px] h-[34px] pl-8 pr-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa] transition-colors placeholder:text-[#9ca3af] text-[#111827] shadow-sm"
-                />
-            </div>
-
-            <!-- Status filter -->
-            <div class="relative inline-block text-left" data-dropdown>
-                <button 
-                    @click.stop="statusDropdownOpen = !statusDropdownOpen; roleDropdownOpen = false"
-                    class="flex items-center gap-1.5 h-[34px] px-3 border border-[#d1d5db] rounded-md text-[13px] text-[#4b5563] hover:bg-[#f9fafb] transition-colors bg-white shadow-sm"
-                >
-                    <svg class="w-3.5 h-3.5 text-[#9ca3af]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                    </svg>
-                    Status: <span class="font-semibold text-[#111827]">{{ filterStatus === 'all' ? 'All' : (filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)) }}</span>
-                </button>
-                <div 
-                    v-show="statusDropdownOpen" 
-                    class="absolute left-0 mt-1 w-44 bg-white border border-[#e5e7eb] rounded-lg shadow-lg py-1 z-50"
-                >
-                    <button 
-                        v-for="status in ['all', 'approved', 'pending', 'rejected']" 
-                        :key="status"
-                        @click="filterStatus = status; statusDropdownOpen = false"
-                        class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] hover:bg-[#f9fafb] text-left transition-colors"
-                    >
-                        <span>{{ status === 'all' ? 'All Statuses' : (status.charAt(0).toUpperCase() + status.slice(1)) }}</span>
-                        <svg v-if="filterStatus === status" class="w-3 h-3 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+        <div v-if="userTab === 'users'" class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Search -->
+                <div class="relative w-full sm:w-auto">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
+                    </span>
+                    <input
+                        v-model="userSearch"
+                        type="search"
+                        placeholder="Search"
+                        class="w-full sm:w-[280px] h-[34px] pl-9 pr-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] text-[#111827] shadow-sm bg-white"
+                    />
+                </div>
+
+                <!-- Authentication filter -->
+                <div class="relative inline-block text-left" data-dropdown>
+                    <button 
+                        @click.stop="authDropdownOpen = !authDropdownOpen; roleDropdownOpen = false; membershipDropdownOpen = false"
+                        class="flex items-center gap-1.5 h-[34px] px-3 border border-[#d1d5db] rounded-md text-[13px] text-[#4b5563] hover:bg-[#f9fafb] transition-colors bg-white shadow-sm font-medium cursor-pointer"
+                    >
+                        <span v-html="GENERIC_KEY_SVG" />
+                        <span>{{ filterAuth === 'all' ? '+ Authentication' : 'Authentication: ' + filterAuthLabel }}</span>
                     </button>
+                    <div 
+                        v-show="authDropdownOpen" 
+                        class="absolute left-0 mt-1 w-48 bg-white border border-[#e5e7eb] rounded-lg shadow-lg py-1 z-50"
+                    >
+                        <button 
+                            v-for="authOpt in ['all', 'email', 'google', 'github', 'microsoft', 'apple']" 
+                            :key="authOpt"
+                            @click="filterAuth = authOpt; authDropdownOpen = false"
+                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] hover:bg-[#f9fafb] text-left transition-colors font-medium cursor-pointer"
+                        >
+                            <span>{{ authOpt === 'all' ? 'All Authentications' : (authOpt === 'email' ? 'Email + Password' : authOpt.charAt(0).toUpperCase() + authOpt.slice(1)) }}</span>
+                            <svg v-if="filterAuth === authOpt" class="w-3 h-3 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Roles filter -->
+                <div class="relative inline-block text-left" data-dropdown>
+                    <button 
+                        @click.stop="roleDropdownOpen = !roleDropdownOpen; authDropdownOpen = false; membershipDropdownOpen = false"
+                        class="flex items-center gap-1.5 h-[34px] px-3 border border-[#d1d5db] rounded-md text-[13px] text-[#4b5563] hover:bg-[#f9fafb] transition-colors bg-white shadow-sm font-medium cursor-pointer"
+                    >
+                        <svg class="w-3.5 h-3.5 text-[#9ca3af]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.333 0 4 .667 4 2v1H3v-1c0-1.333 2.667-2 4-2z" />
+                        </svg>
+                        <span>{{ filterRole === 'all' ? 'Roles' : 'Role: ' + filterRoleLabel }}</span>
+                    </button>
+                    <div 
+                        v-show="roleDropdownOpen" 
+                        class="absolute left-0 mt-1 w-52 bg-white border border-[#e5e7eb] rounded-lg shadow-lg py-1 z-50 max-h-60 overflow-y-auto wos-scroll"
+                    >
+                        <button 
+                            @click="filterRole = 'all'; roleDropdownOpen = false"
+                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] hover:bg-[#f9fafb] text-left transition-colors font-medium cursor-pointer"
+                        >
+                            <span>All Roles</span>
+                            <svg v-if="filterRole === 'all'" class="w-3 h-3 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </button>
+                        <button 
+                            v-for="role in availableRoles" 
+                            :key="role.value"
+                            @click="filterRole = role.value; roleDropdownOpen = false"
+                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] hover:bg-[#f9fafb] text-left transition-colors font-medium cursor-pointer"
+                        >
+                            <span>{{ role.label }}</span>
+                            <svg v-if="filterRole === role.value" class="w-3 h-3 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Membership filter -->
+                <div class="relative inline-block text-left" data-dropdown>
+                    <button 
+                        @click.stop="membershipDropdownOpen = !membershipDropdownOpen; authDropdownOpen = false; roleDropdownOpen = false"
+                        class="flex items-center gap-1.5 h-[34px] px-3 border border-[#d1d5db] rounded-md text-[13px] text-[#4b5563] hover:bg-[#f9fafb] transition-colors bg-white shadow-sm font-medium cursor-pointer"
+                    >
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span>{{ filterMembership === 'all' ? '+ Membership' : 'Membership: ' + filterMembershipLabel }}</span>
+                    </button>
+                    <div 
+                        v-show="membershipDropdownOpen" 
+                        class="absolute left-0 mt-1 w-48 bg-white border border-[#e5e7eb] rounded-lg shadow-lg py-1 z-50"
+                    >
+                        <button 
+                            v-for="membOpt in ['all', 'active', 'pending', 'rejected', 'deletion_requested']" 
+                            :key="membOpt"
+                            @click="filterMembership = membOpt; membershipDropdownOpen = false"
+                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] hover:bg-[#f9fafb] text-left transition-colors font-medium cursor-pointer"
+                        >
+                            <span>{{ membOpt === 'all' ? 'All Memberships' : (membOpt === 'active' ? 'Active' : (membOpt === 'pending' ? 'Pending' : (membOpt === 'rejected' ? 'Inactive' : 'Pending Deletion'))) }}</span>
+                            <svg v-if="filterMembership === membOpt" class="w-3 h-3 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Role filter -->
-            <div class="relative inline-block text-left" data-dropdown>
-                <button 
-                    @click.stop="roleDropdownOpen = !roleDropdownOpen; statusDropdownOpen = false"
-                    class="flex items-center gap-1.5 h-[34px] px-3 border border-[#d1d5db] rounded-md text-[13px] text-[#4b5563] hover:bg-[#f9fafb] transition-colors bg-white shadow-sm"
+            <!-- Create / Add user button -->
+            <div class="flex items-center gap-2">
+                <button
+                    v-if="userTab === 'users'"
+                    class="h-[34px] px-4 border border-[#d1d5db] text-[#374151] rounded-md text-[13px] font-semibold hover:bg-[#f9fafb] transition-colors bg-white shadow-sm flex items-center gap-1.5 cursor-pointer"
+                    @click="openUploadModal"
                 >
-                    <svg class="w-3.5 h-3.5 text-[#9ca3af]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <svg class="w-4 h-4 text-[#4b5563]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
-                    Role: <span class="font-semibold text-[#111827] truncate max-w-[120px] inline-block align-bottom leading-none">{{ filterRole === 'all' ? 'All' : (availableRoles.find(r => r.value === filterRole)?.label ?? filterRole) }}</span>
+                    Upload users
                 </button>
-                <div 
-                    v-show="roleDropdownOpen" 
-                    class="absolute left-0 mt-1 w-52 bg-white border border-[#e5e7eb] rounded-lg shadow-lg py-1 z-50 max-h-60 overflow-y-auto wos-scroll"
+                <button
+                    class="h-[34px] px-4 bg-[#2563eb] text-white rounded-md text-[13px] font-semibold hover:bg-[#1d4ed8] transition-colors shadow-sm cursor-pointer"
+                    @click="modal.createUser = true"
                 >
-                    <button 
-                        @click="filterRole = 'all'; roleDropdownOpen = false"
-                        class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] hover:bg-[#f9fafb] text-left transition-colors"
-                    >
-                        <span>All Roles</span>
-                        <svg v-if="filterRole === 'all'" class="w-3 h-3 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                    </button>
-                    <button 
-                        v-for="role in availableRoles" 
-                        :key="role.value"
-                        @click="filterRole = role.value; roleDropdownOpen = false"
-                        class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] hover:bg-[#f9fafb] text-left transition-colors"
-                    >
-                        <span>{{ role.label }}</span>
-                        <svg v-if="filterRole === role.value" class="w-3 h-3 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                    </button>
-                </div>
+                    {{ userTab === 'users' ? 'Create user' : 'Invite user' }}
+                </button>
             </div>
         </div>
         
@@ -419,7 +596,7 @@ function submitCreateUser() {
                 <input
                     type="search"
                     placeholder="Search"
-                    class="w-full sm:w-[280px] h-[34px] pl-8 pr-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa] transition-colors placeholder:text-[#9ca3af] text-[#111827] shadow-sm"
+                    class="w-full sm:w-[280px] h-[34px] pl-8 pr-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] text-[#111827] shadow-sm"
                 />
             </div>
         </div>
@@ -443,25 +620,27 @@ function submitCreateUser() {
         <!-- Users Table -->
         <div v-if="userTab === 'users'" class="border border-[#e5e7eb] rounded-lg overflow-x-auto bg-white shadow-sm">
             <table class="w-full text-left whitespace-nowrap">
+                <caption class="sr-only">Users</caption>
                 <thead>
                     <tr class="bg-[#f9fafb] border-b border-[#e5e7eb]">
                         <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">User</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">Organizations</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">Status</th>
+                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">Authentication</th>
+                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">Roles</th>
+                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">Membership</th>
                         <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">Sign-in count</th>
                         <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">Last sign-in</th>
                         <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] flex items-center gap-1">
                             Created
-                            <svg class="w-3.5 h-3.5 text-[#9ca3af]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <svg class="w-3.5 h-3.5 text-[#111827]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                             </svg>
                         </th>
-                        <th class="px-4 py-3 w-6" />
+                        <th class="px-4 py-3 w-12" />
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-[#e5e7eb]">
                     <tr v-if="filteredUsers.length === 0">
-                        <td colspan="7" class="py-12 text-center text-[13px] text-[#6b7280]">
+                        <td colspan="8" class="py-12 text-center text-[13px] text-[#6b7280]">
                             No users found.
                         </td>
                     </tr>
@@ -484,39 +663,149 @@ function submitCreateUser() {
                             </div>
                         </td>
                         <td class="px-4 py-3">
-                            <span class="text-[13px] text-[#2563EB] hover:underline" v-if="u.module_roles?.length > 0">
-                                {{ u.module_roles[0].module_name || 'Organization' }}
-                                <span v-if="u.module_roles.length > 1" class="text-[#6b7280] no-underline hover:no-underline">(+{{ u.module_roles.length - 1 }})</span>
-                            </span>
-                            <span v-else class="text-[13px] text-[#9ca3af]">None</span>
-                        </td>
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-1.5">
-                                <span class="w-1.5 h-1.5 rounded-full" :class="u.status_approval === 'approved' ? 'bg-[#10b981]' : (u.status_approval === 'pending' ? 'bg-[#f59e0b]' : 'bg-[#ef4444]')" />
-                                <span class="text-[13px] font-medium" :class="u.status_approval === 'approved' ? 'text-[#10b981]' : (u.status_approval === 'pending' ? 'text-[#f59e0b]' : 'text-[#ef4444]')">
-                                    {{ u.status_approval ? u.status_approval.charAt(0).toUpperCase() + u.status_approval.slice(1) : 'Unknown' }}
-                                </span>
+                            <div class="flex items-center gap-1.5 text-[13px] text-gray-700 font-medium">
+                                <template v-if="u.oauth_credentials && u.oauth_credentials.length > 0">
+                                    <span v-for="oc in u.oauth_credentials" :key="oc.id" class="inline-flex items-center gap-1">
+                                        <span v-if="oc.provider_slug === 'google'" v-html="GOOGLE_SVG" />
+                                        <span v-else-if="oc.provider_slug === 'github'" v-html="GITHUB_SVG" />
+                                        <span v-else-if="oc.provider_slug === 'microsoft'" v-html="MICROSOFT_SVG" />
+                                        <span v-else-if="oc.provider_slug === 'apple'" v-html="APPLE_SVG" />
+                                        <span v-else v-html="GENERIC_KEY_SVG" />
+                                        {{ oc.provider_name || (oc.provider_slug.charAt(0).toUpperCase() + oc.provider_slug.slice(1)) }}
+                                    </span>
+                                </template>
+                                <template v-else>
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                        <rect x="3" y="4" width="18" height="16" rx="2" />
+                                        <circle cx="8" cy="10" r="2" />
+                                        <line x1="13" y1="9" x2="18" y2="9" />
+                                        <line x1="13" y1="13" x2="18" y2="13" />
+                                        <line x1="7" y1="16" x2="17" y2="16" />
+                                    </svg>
+                                    Email + Password
+                                </template>
                             </div>
                         </td>
+                        <td class="px-4 py-3 text-[13px] text-[#111827] font-medium">
+                            {{ u.role ? u.role.nama : (u.user_type ? u.user_type.charAt(0).toUpperCase() + u.user_type.slice(1) : 'User') }}
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center gap-1.5 text-[13px] font-medium">
+                                <template v-if="u.deletion_requested_at">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                    <span class="text-amber-600">Pending Deletion</span>
+                                </template>
+                                <template v-else-if="u.status_approval === 'approved' && u.is_active">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                    <span class="text-emerald-600">Active</span>
+                                </template>
+                                <template v-else-if="u.status_approval === 'pending'">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                    <span class="text-amber-500">Pending</span>
+                                </template>
+                                <template v-else>
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                    <span class="text-red-500">Inactive</span>
+                                </template>
+                            </span>
+                        </td>
                         <td class="px-4 py-3 text-[13px] text-[#111827]">
-                            1
+                            {{ u.sign_in_count || 0 }}
                         </td>
-                        <td class="px-4 py-3">
-                            <p class="text-[13px] text-[#111827] leading-tight">{{ u.created_at ? u.created_at.split(', ')[0] + ', ' + u.created_at.split(', ')[1] : 'Unknown' }}</p>
-                            <p class="text-[12px] text-[#6b7280] leading-tight mt-0.5">{{ u.created_at ? u.created_at.split(', ')[2] : '' }}</p>
+                        <td class="px-4 py-3 text-[13px] text-[#111827]">
+                            <template v-if="u.last_sign_in_at">
+                                <p class="leading-tight font-medium">{{ u.last_sign_in_at.split(', ')[0] + ', ' + u.last_sign_in_at.split(', ')[1] }}</p>
+                                <p class="text-[12px] text-[#6b7280] leading-tight mt-0.5">{{ u.last_sign_in_at.split(', ')[2] }}</p>
+                            </template>
+                            <span v-else class="text-gray-400">—</span>
                         </td>
-                        <td class="px-4 py-3">
-                            <p class="text-[13px] text-[#111827] leading-tight">{{ u.created_at ? u.created_at.split(', ')[0].split(' ')[1] : '—' }}</p>
-                            <p class="text-[12px] text-[#6b7280] leading-tight mt-0.5">{{ u.created_at ? u.created_at.split(', ')[2] : '' }}</p>
+                        <td class="px-4 py-3 text-[13px] text-[#111827]">
+                            <template v-if="u.created_at">
+                                <p class="leading-tight font-medium">{{ u.created_at.split(', ')[0] + ', ' + u.created_at.split(', ')[1] }}</p>
+                                <p class="text-[12px] text-[#6b7280] leading-tight mt-0.5">{{ u.created_at.split(', ')[2] }}</p>
+                            </template>
+                            <span v-else class="text-gray-400">—</span>
                         </td>
-                        <td class="px-4 py-3 text-right">
-                            <svg class="w-4 h-4 text-[#d1d5db] group-hover:text-[#9ca3af] transition-colors ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                            </svg>
+                        <td class="px-4 py-3 text-right" @click.stop>
+                            <div class="relative inline-block text-left" data-dropdown>
+                                <button 
+                                    @click="toggleUserMenu(u.id, $event)"
+                                    class="p-1.5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+                                >
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                                    </svg>
+                                </button>
+                                <div 
+                                    v-show="activeUserMenuId === u.id" 
+                                    class="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1"
+                                >
+                                    <button 
+                                        @click="handleUserAction('view', u)"
+                                        class="w-full flex items-center gap-2 px-3.5 py-2 text-[12.5px] text-gray-700 hover:bg-gray-50 text-left transition-colors font-medium cursor-pointer"
+                                    >
+                                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        View details
+                                    </button>
+                                    <template v-if="u.status_approval === 'pending'">
+                                        <button 
+                                            @click="handleUserAction('approve', u)"
+                                            class="w-full flex items-center gap-2 px-3.5 py-2 text-[12.5px] text-emerald-600 hover:bg-gray-50 text-left transition-colors font-medium cursor-pointer"
+                                        >
+                                            <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Approve
+                                        </button>
+                                        <button 
+                                            @click="handleUserAction('reject', u)"
+                                            class="w-full flex items-center gap-2 px-3.5 py-2 text-[12.5px] text-red-600 hover:bg-gray-50 text-left transition-colors font-medium cursor-pointer"
+                                        >
+                                            <svg class="w-3.5 h-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                            Reject
+                                        </button>
+                                    </template>
+                                    <button 
+                                        @click="handleUserAction('delete', u)"
+                                        class="w-full flex items-center gap-2 px-3.5 py-2 text-[12.5px] text-red-600 hover:bg-gray-50 text-left transition-colors font-medium border-t border-gray-100 cursor-pointer"
+                                    >
+                                        <svg class="w-3.5 h-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        Delete user
+                                    </button>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div v-if="userTab === 'users' && props.users && !Array.isArray(props.users) && props.users.links && props.users.total > props.users.per_page" class="mt-4 flex items-center justify-between border-t border-[#e5e7eb] pt-4 px-2">
+            <span class="text-[12.5px] text-[#4b5563]">
+                Showing {{ props.users.from }} to {{ props.users.to }} of {{ props.users.total }} entries
+            </span>
+            <div class="flex items-center gap-1.5">
+                <button
+                    v-for="link in props.users.links"
+                    :key="link.label"
+                    :disabled="!link.url || link.active"
+                    @click="router.visit(link.url, { preserveState: true, only: ['users'] })"
+                    v-html="link.label"
+                    :class="[
+                        'h-[30px] px-3 rounded text-[12.5px] flex items-center justify-center transition-colors border cursor-pointer',
+                        link.active 
+                            ? 'bg-[#2563eb] text-white border-[#2563eb] font-semibold' 
+                            : 'bg-white text-[#374151] border-[#d1d5db] hover:bg-[#f9fafb] disabled:opacity-50 disabled:cursor-not-allowed'
+                    ]"
+                />
+            </div>
         </div>
 
         <!-- ─── CREATE USER MODAL ─── -->
@@ -550,7 +839,7 @@ function submitCreateUser() {
                                             v-model="createForm.first_name"
                                             type="text"
                                             placeholder="Jane (optional)"
-                                            class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa] transition-colors placeholder:text-[#9ca3af] text-[#111827]"
+                                            class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] text-[#111827]"
                                         />
                                     </div>
                                     <div>
@@ -559,7 +848,7 @@ function submitCreateUser() {
                                             v-model="createForm.last_name"
                                             type="text"
                                             placeholder="Doe (optional)"
-                                            class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa] transition-colors placeholder:text-[#9ca3af] text-[#111827]"
+                                            class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] text-[#111827]"
                                         />
                                     </div>
                                 </div>
@@ -571,7 +860,7 @@ function submitCreateUser() {
                                         v-model="createForm.email"
                                         type="email"
                                         placeholder="jane.doe@example.com"
-                                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa] transition-colors placeholder:text-[#9ca3af] text-[#111827]"
+                                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] text-[#111827]"
                                     />
                                 </div>
 
@@ -584,7 +873,7 @@ function submitCreateUser() {
                                                 v-model="createForm.password"
                                                 :type="showPw ? 'text' : 'password'"
                                                 placeholder="At least 10 characters"
-                                                class="w-full h-9 px-3 pr-9 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa] transition-colors placeholder:text-[#9ca3af] text-[#111827]"
+                                                class="w-full h-9 px-3 pr-9 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] text-[#111827]"
                                             />
                                             <button
                                                 type="button"
@@ -614,7 +903,7 @@ function submitCreateUser() {
                                         v-model="createForm.nomor_induk"
                                         type="text"
                                         placeholder="User ID"
-                                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa] transition-colors placeholder:text-[#9ca3af] text-[#111827]"
+                                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] text-[#111827]"
                                     />
                                     <p class="text-[12.5px] text-[#6b7280] mt-1.5 leading-relaxed">
                                         Optional identifier that can be used to link this user to your system.
@@ -638,7 +927,7 @@ function submitCreateUser() {
                                 </button>
                                 <button
                                     :disabled="loading || !createForm.email"
-                                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#6366f1] hover:bg-[#4f46e5] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
                                     @click="submitCreateUser"
                                 >
                                     <svg v-if="loading" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -759,14 +1048,14 @@ function submitCreateUser() {
                                 <div v-if="isUploading" class="border border-[#e2e8f0] rounded-xl p-6 bg-slate-50/50 space-y-4 shadow-sm flex flex-col justify-center">
                                     <div class="flex items-center justify-between text-[13px]">
                                         <span class="font-medium text-[#0f172a] flex items-center gap-2">
-                                            <svg class="w-4 h-4 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <svg class="w-4 h-4 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                             </svg>
                                             Mengunggah berkas...
                                         </span>
-                                        <span class="font-bold text-indigo-600">{{ Math.round(uploadProgress) }}%</span>
+                                        <span class="font-bold text-blue-600">{{ Math.round(uploadProgress) }}%</span>
                                     </div>
-                                    <Progress :value="uploadProgress" variant="line" className="h-2 bg-slate-100" indicatorClassName="bg-indigo-600 rounded-full" />
+                                    <Progress :value="uploadProgress" variant="line" className="h-2 bg-slate-100" indicatorClassName="bg-blue-600 rounded-full" />
                                     <p class="text-[11.5px] text-[#6b7280]">Mohon jangan menutup atau memuat ulang halaman ini sampai proses pengunggahan selesai.</p>
                                 </div>
 
@@ -802,7 +1091,7 @@ function submitCreateUser() {
                                         @drop.prevent="handleDrop"
                                         :class="[
                                             'border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-150',
-                                            isDragOver ? 'border-[#6366f1] bg-[#6366f1]/5' : 'border-[#d1d5db] hover:border-[#9ca3af] bg-white'
+                                            isDragOver ? 'border-[#2563eb] bg-[#2563eb]/5' : 'border-[#d1d5db] hover:border-[#9ca3af] bg-white'
                                         ]"
                                         @click="fileInput?.click()"
                                     >
@@ -863,7 +1152,7 @@ function submitCreateUser() {
                                 <button
                                     v-if="uploadStep === 2"
                                     :disabled="loading || !uploadFile || isUploading"
-                                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#6366f1] hover:bg-[#4f46e5] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer"
                                     @click="submitUpload"
                                 >
                                     <svg v-if="loading && !isUploading" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

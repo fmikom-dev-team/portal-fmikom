@@ -9,8 +9,9 @@ import {
 	Plus,
 	Twitter,
 } from "lucide-vue-next";
+import { nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
-defineProps<{
+const props = defineProps<{
 	tabs: string[];
 	activeTab: string;
 	isLoading: boolean;
@@ -24,26 +25,72 @@ const emit = defineEmits([
 	"click-location",
 	"click-socials",
 ]);
+
+const tabsRef = ref<HTMLElement | null>(null);
+const indicatorStyle = ref<Record<string, string>>({
+	left: "0px",
+	width: "0px",
+	opacity: "0",
+});
+
+const updateIndicator = () => {
+	nextTick(() => {
+		if (!tabsRef.value) return;
+		const activeButton = tabsRef.value.querySelector(
+			".active-tab-btn",
+		) as HTMLElement;
+		if (activeButton) {
+			const left = activeButton.offsetLeft;
+			const width = activeButton.clientWidth;
+			indicatorStyle.value = {
+				left: `${left}px`,
+				width: `${width}px`,
+				opacity: "1",
+			};
+		}
+	});
+};
+
+watch(
+	[() => props.activeTab, () => props.tabs, () => props.isLoading],
+	() => {
+		updateIndicator();
+	},
+	{ deep: true },
+);
+
+onMounted(() => {
+	updateIndicator();
+	window.addEventListener("resize", updateIndicator);
+});
+
+onUnmounted(() => {
+	window.removeEventListener("resize", updateIndicator);
+});
 </script>
 
 <template>
 	<nav id="profile_tabs_navigation" class="border-b border-slate-200 dark:border-slate-800 pb-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8" aria-label="Profile tabs">
 		<!-- Tabs list -->
-		<div class="flex items-center gap-6 overflow-x-auto w-full sm:w-auto" style="scrollbar-width: none;">
+		<div ref="tabsRef" class="flex items-center gap-6 overflow-x-auto overflow-y-hidden w-full sm:w-auto -mb-3 relative" style="scrollbar-width: none;">
 			<button 
 				v-for="tab in tabs" 
 				:key="tab" 
 				@click="emit('update:activeTab', tab)"
 				:class="[
-					'whitespace-nowrap text-sm font-semibold transition-all relative cursor-pointer outline-hidden',
+					'whitespace-nowrap text-sm font-semibold transition-all relative cursor-pointer outline-hidden pb-3',
 					activeTab === tab 
-						? 'text-slate-900 dark:text-white font-bold' 
+						? 'text-slate-900 dark:text-white font-bold active-tab-btn' 
 						: 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
 				]"
 			>
 				{{ tab }}
-				<div v-if="activeTab === tab" class="absolute -bottom-[13px] left-0 w-full h-0.5 bg-slate-900 dark:bg-white rounded-full"></div>
 			</button>
+			<!-- Sliding active indicator -->
+			<div 
+				class="absolute bottom-0 h-0.5 bg-slate-900 dark:bg-white rounded-full transition-all duration-300 ease-out pointer-events-none"
+				:style="indicatorStyle"
+			></div>
 		</div>
 
 		<!-- Right Area: Location & Social Links -->

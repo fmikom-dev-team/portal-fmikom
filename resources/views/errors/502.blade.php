@@ -45,7 +45,7 @@
     </g>
 
     <!-- Roadblock Barrier Main Plank (Horizontal Overlay) -->
-    <g fill="#121214" stroke="currentColor">
+    <g fill="var(--svg-bg-fill)" stroke="currentColor">
         <!-- Main Board -->
         <rect x="12" y="98" width="106" height="24" rx="3" stroke-width="2.2" />
         

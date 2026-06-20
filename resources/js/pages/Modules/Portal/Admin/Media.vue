@@ -84,7 +84,7 @@ const isImage = (mime: string) => mime?.startsWith("image/");
             <div v-if="filteredMedia.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-6">
                 <div v-for="item in filteredMedia" :key="item.id" class="group relative bg-slate-50 dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800 transition-all hover:shadow-xl hover:-translate-y-1">
                     <div class="aspect-square flex items-center justify-center overflow-hidden">
-                        <img v-if="isImage(item.mime_type)" :src="item.path" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                        <img v-if="isImage(item.mime_type)" :src="item.path" :alt="item.filename" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                         <FileIcon v-else class="w-12 h-12 text-slate-300" />
                     </div>
                     <div class="p-3 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-800">

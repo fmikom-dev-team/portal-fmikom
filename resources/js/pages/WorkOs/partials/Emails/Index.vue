@@ -43,7 +43,7 @@ const DEFAULT_LOGS = [
 				<p style="color: #4b5563; font-size: 14px; line-height: 1.5; margin-bottom: 24px;">Hello Ma'ruf Muchlisin,</p>
 				<p style="color: #4b5563; font-size: 14px; line-height: 1.5; margin-bottom: 24px;">Thank you for registering on Portal FMIKOM. To complete your login process, please use the following One-Time Password (OTP) verification code:</p>
 				<div style="background-color: #ffffff; border: 1px solid #d1d5db; border-radius: 6px; padding: 16px; text-align: center; margin-bottom: 24px;">
-					<span style="font-family: monospace; font-size: 24px; font-weight: 700; letter-spacing: 4px; color: #4f46e5;">482093</span>
+					<span style="font-family: monospace; font-size: 24px; font-weight: 700; letter-spacing: 4px; color: #1d4ed8;">482093</span>
 				</div>
 				<p style="color: #4b5563; font-size: 12px; line-height: 1.5;">This verification code is only valid for 10 minutes. If you did not request this email, you can safely ignore it.</p>
 			</div>
@@ -72,7 +72,7 @@ const DEFAULT_LOGS = [
 				<h2 style="color: #111827; font-size: 20px; font-weight: 600; margin-bottom: 16px;">Organization Invitation</h2>
 				<p style="color: #4b5563; font-size: 14px; line-height: 1.5; margin-bottom: 24px;">You have been invited to join the organization <strong>Web Dev</strong> as a <strong>Developer</strong>.</p>
 				<div style="text-align: center; margin-bottom: 24px;">
-					<a href="https://fmikom.suntree.my.id/workos/organizations/invitation" style="background-color: #4f46e5; color: #ffffff; padding: 10px 20px; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 6px; display: inline-block;">Accept Invitation</a>
+					<a href="https://fmikom.suntree.my.id/workos/organizations/invitation" style="background-color: #1d4ed8; color: #ffffff; padding: 10px 20px; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 6px; display: inline-block;">Accept Invitation</a>
 				</div>
 				<p style="color: #4b5563; font-size: 12px; line-height: 1.5;">Invited by Ma'ruf Muchlisin (system@fmikom.org).</p>
 			</div>
@@ -159,7 +159,7 @@ function handleEmailSent(newLog: any) {
             <button
                 v-for="tab in tabs"
                 :key="tab.id"
-                :class="['h-[38px] px-3 pb-3 text-[13px] font-semibold border-b-2 transition-colors whitespace-nowrap', activeTab === tab.id ? 'border-indigo-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900']"
+                :class="['h-[38px] px-3 pb-3 text-[13px] font-semibold border-b-2 transition-colors whitespace-nowrap', activeTab === tab.id ? 'border-blue-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900']"
                 @click="activeTab = tab.id"
             >
                 {{ tab.label }}

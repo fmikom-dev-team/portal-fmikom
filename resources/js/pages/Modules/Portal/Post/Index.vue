@@ -55,7 +55,8 @@ const getAvatarUrl = (user) => {
 </script>
 
 <template>
-    <Head title="Berita Terkini - Portal FMIKOM"></Head>
+    <Head>
+        <title>Berita Terkini - Portal FMIKOM</title></Head>
 
     <div class="min-h-screen bg-white font-sans antialiased text-slate-900">
         <!-- Navigation -->

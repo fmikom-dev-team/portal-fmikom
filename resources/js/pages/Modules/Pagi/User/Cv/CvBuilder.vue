@@ -35,10 +35,10 @@ import {
 } from "lucide-vue-next";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import Navbar from "../ui/Navbar.vue";
-import AutocompleteInput from "./AutocompleteInput.vue";
+import AutocompleteInput from "./components/AutocompleteInput.vue";
 import CvPreview from "./CvPreview.vue";
-import MonthYearPicker from "./MonthYearPicker.vue";
-import ThemeCustomizer from "./ThemeCustomizer.vue";
+import MonthYearPicker from "./components/MonthYearPicker.vue";
+import ThemeCustomizer from "./components/ThemeCustomizer.vue";
 
 const SUGGESTIONS = {
 	jobTitle: [
@@ -829,7 +829,9 @@ const downloadPdf = async () => {
 </script>
 
 <template>
-    <Head :title="`${cvData.title} — CV Builder`" />
+    <Head>
+        <title>{{ `${cvData.title} — CV Builder` }}</title>
+    </Head>
 
     <div class="min-h-screen bg-slate-100 dark:bg-zinc-950 font-sans text-slate-800 dark:text-zinc-100 flex flex-col">
         <!-- Main Top Bar -->
@@ -1037,7 +1039,7 @@ const downloadPdf = async () => {
                                         <div v-if="isUploadingPhoto" class="w-full h-full animate-pulse bg-slate-200 dark:bg-zinc-700 flex items-center justify-center">
                                             <Loader2 class="w-5 h-5 text-indigo-500 animate-spin" />
                                         </div>
-                                        <img v-else-if="cvData.personal_info.foto_path" :src="getPhotoUrl(cvData.personal_info.foto_path)" class="w-full h-full object-cover" />
+                                        <img v-else-if="cvData.personal_info.foto_path" :src="getPhotoUrl(cvData.personal_info.foto_path)" alt="Foto Profil" class="w-full h-full object-cover" />
                                         <div v-else class="w-full h-full flex items-center justify-center text-slate-400 dark:text-zinc-500 font-bold text-lg">
                                             {{ (cvData.personal_info.name || 'U').charAt(0).toUpperCase() }}
                                         </div>

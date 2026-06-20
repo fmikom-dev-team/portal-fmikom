@@ -263,7 +263,9 @@ const themeTitle = computed(() => {
 </script>
 
 <template>
-	<Head :title="'Preview Theme — ' + themeTitle" />
+	<Head>
+        <title>{{ 'Preview Theme — ' + themeTitle }}</title>
+    </Head>
 
 	<div class="h-screen flex flex-col bg-slate-50 dark:bg-zinc-950 font-sans text-slate-900 dark:text-slate-100 overflow-hidden">
 		

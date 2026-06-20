@@ -180,7 +180,9 @@ watch(
 </script>
 
 <template>
-	<Head title="Pengaturan Akun" />
+	<Head>
+        <title>Pengaturan Akun</title>
+    </Head>
 
 	<div class="min-h-screen settings-container flex flex-col">
 		<Navbar />
@@ -836,7 +838,21 @@ watch(
 </template>
 
 <style scoped>
-@import url('https://fonts.bunny.net/css?family=plus-jakarta-sans:300,400,500,600,700,800|outfit:300,400,500,600,700,800');
+/* Non-critical fonts loaded locally only when this settings page is visited */
+@font-face {
+	font-family: 'Plus Jakarta Sans';
+	font-style: normal;
+	font-weight: 400 700;
+	font-display: swap;
+	src: url('/fonts/plus-jakarta-sans-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+	font-family: 'Outfit';
+	font-style: normal;
+	font-weight: 400 700;
+	font-display: swap;
+	src: url('/fonts/outfit-latin-400-normal.woff2') format('woff2');
+}
 
 .settings-container {
 	font-family: 'Plus Jakarta Sans', 'Outfit', system-ui, -apple-system, sans-serif !important;

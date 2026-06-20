@@ -151,6 +151,7 @@ const statusLabel = (status: string) => {
 
                 <div v-else class="overflow-x-auto">
                     <table class="w-full text-left">
+                        <caption class="sr-only">Tabel Postingan Terbaru</caption>
                         <thead>
                             <tr class="text-[11px] font-black text-slate-400 uppercase tracking-widest">
                                 <th class="px-6 py-3 font-black">Judul</th>
@@ -198,6 +199,7 @@ const statusLabel = (status: string) => {
 
                 <div v-else class="overflow-x-auto">
                     <table class="w-full text-left">
+                        <caption class="sr-only">Tabel Komentar Terbaru</caption>
                         <thead>
                             <tr class="text-[11px] font-black text-slate-400 uppercase tracking-widest">
                                 <th class="px-6 py-3 font-black">Pengirim</th>

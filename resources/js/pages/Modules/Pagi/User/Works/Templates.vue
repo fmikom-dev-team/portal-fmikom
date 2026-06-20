@@ -4,9 +4,16 @@ import { ArrowRight, Check, Star } from "lucide-vue-next";
 import { computed, ref } from "vue";
 import Footer from "../ui/Footer.vue";
 import Navbar from "../ui/Navbar.vue";
+import UmumNavbar from "../ui/UmumNavbar.vue";
+
+const page = usePage();
+
+const isMahasiswa = computed(() => {
+	const role = (page.props as any).context?.active_role || "mahasiswa";
+	return role.toLowerCase() === "mahasiswa";
+});
 
 // Access authenticated user info for personalized template previews
-const page = usePage();
 const userName = computed(
 	() => (page.props as any).auth?.user?.name || "Jenny Lee",
 );
@@ -252,7 +259,8 @@ const selectPalette = (themeName: string, idx: number) => {
 	</Head>
 
 	<div class="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-slate-200 dark:selection:bg-slate-800">
-		<Navbar />
+		<Navbar v-if="isMahasiswa" />
+		<UmumNavbar v-else />
 
 		<!-- Header Banner -->
 		<div class="max-w-7xl mx-auto px-6 pt-12 pb-6">

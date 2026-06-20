@@ -75,7 +75,7 @@ const loginTrendOptions = computed(
 			animations: { enabled: true, speed: 400 },
 			fontFamily: "Inter, sans-serif",
 		},
-		colors: ["#6366f1", "#f43f5e"],
+		colors: ["#2563eb", "#f43f5e"],
 		stroke: {
 			curve: "smooth" as const,
 			width: chartType.value === "line" ? 2.5 : 0,
@@ -118,7 +118,7 @@ const providerOptions = computed(
 			fontFamily: "Inter, sans-serif",
 		},
 		labels: Object.keys(data.value?.providerStats ?? {}),
-		colors: ["#6366f1", "#06b6d4", "#f59e0b", "#10b981"],
+		colors: ["#2563eb", "#06b6d4", "#f59e0b", "#10b981"],
 		dataLabels: { enabled: false },
 		legend: { position: "bottom" as const, fontSize: "12px" },
 		plotOptions: { pie: { donut: { size: "65%" } } },
@@ -310,14 +310,14 @@ const clearAnalytics = () => {
                 </button>
 
                 <!-- Date range -->
-                <select v-model="days" class="text-[13px] border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-300">
+                <select v-model="days" class="text-[13px] border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-300">
                     <option :value="1">Last 24h</option>
                     <option :value="7">Last 7 days</option>
                     <option :value="30">Last 30 days</option>
                     <option :value="90">Last 90 days</option>
                 </select>
                 <!-- Interval -->
-                <select v-model="interval" class="text-[13px] border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-300">
+                <select v-model="interval" class="text-[13px] border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-300">
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
                 </select>
@@ -362,15 +362,15 @@ const clearAnalytics = () => {
             <!-- KPI Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <!-- Active Users Card -->
-                <div @click="selectTabAndScroll('active_sessions')" class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md hover:border-indigo-300 transition-all duration-150 group">
+                <div @click="selectTabAndScroll('active_sessions')" class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm cursor-pointer hover:shadow-md hover:border-blue-300 transition-all duration-150 group">
                     <div class="flex items-center justify-between mb-2">
-                        <p class="text-[12px] font-medium text-gray-500 uppercase tracking-wide group-hover:text-indigo-600 transition-colors">Active Users</p>
-                        <Users class="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform" />
+                        <p class="text-[12px] font-medium text-gray-500 uppercase tracking-wide group-hover:text-blue-600 transition-colors">Active Users</p>
+                        <Users class="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform" />
                     </div>
                     <p class="text-2xl font-bold text-gray-900">{{ data.activeSessions }}</p>
                     <p class="text-[12px] text-gray-400 mt-1 flex items-center justify-between">
                         <span>in last {{ days }} day{{ days > 1 ? 's' : '' }}</span>
-                        <span class="text-indigo-500 font-medium text-[11px] opacity-0 group-hover:opacity-100 transition-opacity">View details →</span>
+                        <span class="text-blue-500 font-medium text-[11px] opacity-0 group-hover:opacity-100 transition-opacity">View details →</span>
                     </p>
                 </div>
 
@@ -466,10 +466,10 @@ const clearAnalytics = () => {
                     <div class="flex flex-wrap items-center gap-2 self-start lg:self-auto">
                         <!-- Sub-tabs for drill down -->
                         <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
-                            <button @click="selectedDetailTab = 'active_sessions'" :class="['px-3 py-1.5 rounded-md text-xs font-medium transition-all', selectedDetailTab === 'active_sessions' ? 'bg-white shadow-sm text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700']">
+                            <button @click="selectedDetailTab = 'active_sessions'" :class="['px-3 py-1.5 rounded-md text-xs font-medium transition-all', selectedDetailTab === 'active_sessions' ? 'bg-white shadow-sm text-blue-600 font-semibold' : 'text-gray-500 hover:text-gray-700']">
                                 Active Sessions ({{ data.activeSessions }})
                             </button>
-                            <button @click="selectedDetailTab = 'new_users'" :class="['px-3 py-1.5 rounded-md text-xs font-medium transition-all', selectedDetailTab === 'new_users' ? 'bg-white shadow-sm text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700']">
+                            <button @click="selectedDetailTab = 'new_users'" :class="['px-3 py-1.5 rounded-md text-xs font-medium transition-all', selectedDetailTab === 'new_users' ? 'bg-white shadow-sm text-blue-600 font-semibold' : 'text-gray-500 hover:text-gray-700']">
                                 New Users ({{ data.newUsers }})
                             </button>
                             <button @click="selectedDetailTab = 'failed_logins'" :class="['px-3 py-1.5 rounded-md text-xs font-medium transition-all', selectedDetailTab === 'failed_logins' ? 'bg-white shadow-sm text-red-600 font-semibold' : 'text-gray-500 hover:text-gray-700']">
@@ -482,6 +482,7 @@ const clearAnalytics = () => {
                 <!-- 1. Active Sessions List -->
                 <div v-if="selectedDetailTab === 'active_sessions'" class="overflow-x-auto">
                     <table class="w-full text-left text-xs text-gray-500">
+                        <caption class="sr-only">Tabel Sesi Aktif</caption>
                         <thead class="bg-gray-50 text-[10px] text-gray-400 uppercase font-semibold border-b border-gray-100">
                             <tr>
                                 <th class="px-4 py-2.5">User</th>
@@ -526,6 +527,7 @@ const clearAnalytics = () => {
                 <!-- 2. New Users List -->
                 <div v-else-if="selectedDetailTab === 'new_users'" class="overflow-x-auto">
                     <table class="w-full text-left text-xs text-gray-500">
+                        <caption class="sr-only">Tabel Pengguna Baru</caption>
                         <thead class="bg-gray-50 text-[10px] text-gray-400 uppercase font-semibold border-b border-gray-100">
                             <tr>
                                 <th class="px-4 py-2.5">Name</th>
@@ -561,6 +563,7 @@ const clearAnalytics = () => {
                 <!-- 3. Failed Logins List -->
                 <div v-else-if="selectedDetailTab === 'failed_logins'" class="overflow-x-auto">
                     <table class="w-full text-left text-xs text-gray-500">
+                        <caption class="sr-only">Tabel Gagal Login</caption>
                         <thead class="bg-gray-50 text-[10px] text-gray-400 uppercase font-semibold border-b border-gray-100">
                             <tr>
                                 <th class="px-4 py-2.5">Target Email</th>

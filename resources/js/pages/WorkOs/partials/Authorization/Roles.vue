@@ -1,11 +1,19 @@
 <script setup lang="ts">
 import { router } from "@inertiajs/vue3";
-import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import { toast, toSlug } from "../../composables/useWorkOs";
 
-const props = defineProps<{ roles: Array<any>; permissions: Array<any> }>();
+const props = defineProps<{
+	roles: Array<any>;
+	permissions: Array<any>;
+	searchQuery?: string;
+}>();
 
 const roleSearch = ref("");
+watch(() => props.searchQuery, (val) => {
+	roleSearch.value = val || "";
+});
+
 const filteredRoles = computed(() => {
 	if (!roleSearch.value.trim()) return props.roles;
 	const q = roleSearch.value.toLowerCase();
@@ -175,6 +183,7 @@ function submitPerms() {
         <!-- Table -->
         <div class="bg-white border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
             <table class="w-full text-left whitespace-nowrap">
+                <caption class="sr-only">Tabel Peran dan Izin Akses</caption>
                 <thead>
                     <tr class="border-b border-gray-200">
                         <th class="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Name</th>

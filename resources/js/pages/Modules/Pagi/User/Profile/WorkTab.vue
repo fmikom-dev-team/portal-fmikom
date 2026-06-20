@@ -2,28 +2,35 @@
 import { Link, router } from "@inertiajs/vue3";
 import { ChevronRight, Plus } from "lucide-vue-next";
 import { computed, ref, watch } from "vue";
+import { Skeleton } from "@/components/ui/skeleton";
 import CaseStudyTab from "./CaseStudyTab.vue";
 import CollaboratedTab from "./CollaboratedTab.vue";
 import CreatedTab from "./CreatedTab.vue";
 
-const props = defineProps<{
-	projects?: Array<{
-		id: number;
-		user_id: number;
-		title: string;
-		image: string;
-		likes: number;
-		views: number;
-		content: any;
-		created_at: string;
-		is_verified?: boolean;
-		is_published?: boolean;
-		user?: any;
-	}>;
-	isOwnProfile: boolean;
-	user: any;
-	isLoading?: boolean;
-}>();
+const props = withDefaults(
+	defineProps<{
+		projects?: Array<{
+			id: number;
+			user_id: number;
+			title: string;
+			image: string;
+			likes: number;
+			views: number;
+			content: any;
+			created_at: string;
+			is_verified?: boolean;
+			is_published?: boolean;
+			user?: any;
+		}>;
+		isOwnProfile: boolean;
+		user: any;
+		isLoading?: boolean;
+		isStudent?: boolean;
+	}>(),
+	{
+		isStudent: true,
+	},
+);
 
 const emit = defineEmits<{
 	(e: "open-project", project: any): void;
@@ -53,7 +60,9 @@ watch(
 
 const isQuickAddProject = (project: any) => {
 	if (!project?.content || !Array.isArray(project.content)) return false;
-	return project.content.some((b: any) => b && b.type === "featured_details");
+	return !project.content.some(
+		(b: any) => b && b.type !== "featured_details" && b.type !== "settings",
+	);
 };
 
 const isGalleryItem = (project: any) => {
@@ -182,7 +191,7 @@ const handleReorder = (newSubOrderIds: number[]) => {
 			</div>
 
 			<!-- Action Buttons on the right (Only for own profile) -->
-			<div v-if="isOwnProfile" class="flex items-center gap-5 sm:ml-auto">
+			<div v-if="isOwnProfile && isStudent" class="flex items-center gap-5 sm:ml-auto">
 				<Link 
 					href="/pagi/editor" 
 					class="text-xs font-semibold text-slate-700 hover:text-slate-950 dark:text-slate-355 dark:hover:text-white hover:underline transition-colors"
@@ -201,11 +210,11 @@ const handleReorder = (newSubOrderIds: number[]) => {
 
 		<!-- Loading state / Skeletons -->
 		<div v-if="isLoading" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1.5 sm:gap-2">
-			<div 
+			<Skeleton 
 				v-for="n in 8" 
 				:key="n"
-				class="aspect-[4/3] rounded-[6px] bg-slate-200 dark:bg-slate-800 animate-pulse"
-			></div>
+				class="aspect-[4/3] rounded-[6px]"
+			/>
 		</div>
 
 		<!-- Empty State (No projects at all) -->
@@ -221,7 +230,7 @@ const handleReorder = (newSubOrderIds: number[]) => {
 			</div>
 
 			<!-- Overlaid Content -->
-			<div v-if="isOwnProfile" class="relative z-10 max-w-md flex flex-col items-center text-center p-4">
+			<div v-if="isOwnProfile && isStudent" class="relative z-10 max-w-md flex flex-col items-center text-center p-4">
 				<h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">Feature your work</h2>
 				<p class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-6 max-w-xs leading-relaxed">
 					Share quick snapshots of what you've been working on.
@@ -249,6 +258,22 @@ const handleReorder = (newSubOrderIds: number[]) => {
 					<span>Or, add a full case study</span>
 					<ChevronRight class="w-3.5 h-3.5" />
 				</Link>
+			</div>
+			
+			<div v-else-if="isOwnProfile && !isStudent" class="relative z-10 max-w-sm flex flex-col items-center text-center p-4">
+				<h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">No Projects Yet</h2>
+				<p class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-6 max-w-xs leading-relaxed">
+					Belum ada karya yang diunggah.
+				</p>
+				
+				<div class="flex items-center justify-center gap-3 w-full sm:w-auto">
+					<Link 
+						href="/pagi" 
+						class="flex-1 sm:flex-none rounded-full bg-[#18181b] hover:bg-zinc-800 dark:bg-white dark:text-zinc-955 dark:hover:bg-zinc-100 text-white px-6 py-2.5 text-xs font-semibold shadow-xs text-center transition-colors"
+					>
+						Explore Works
+					</Link>
+				</div>
 			</div>
 			
 			<div v-else class="relative z-10 max-w-sm flex flex-col items-center text-center p-4">

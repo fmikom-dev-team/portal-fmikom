@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { router } from "@inertiajs/vue3";
-import { reactive, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import { formatDate, toast, toSlug } from "../../composables/useWorkOs";
 
 const props = defineProps<{
 	modules: Array<any>;
+	searchQuery?: string;
 }>();
 
 const emit = defineEmits<(e: "open-detail", module: any) => void>();
@@ -45,6 +46,15 @@ function submitCreateModule() {
 		},
 	);
 }
+const filteredModules = computed(() => {
+	if (!props.searchQuery) return props.modules;
+	const q = props.searchQuery.toLowerCase();
+	return props.modules.filter(
+		(m) =>
+			m.name?.toLowerCase().includes(q) ||
+			m.code?.toLowerCase().includes(q)
+	);
+});
 </script>
 
 <template>
@@ -69,6 +79,7 @@ function submitCreateModule() {
         <!-- Table -->
         <div class="bg-white border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
             <table class="w-full text-left whitespace-nowrap">
+                <caption class="sr-only">Organizations</caption>
                 <thead>
                     <tr class="border-b border-gray-200">
                         <th class="px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Name</th>
@@ -80,7 +91,7 @@ function submitCreateModule() {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-if="modules.length === 0">
+                    <tr v-if="filteredModules.length === 0">
                         <td colspan="6" class="py-12 text-center">
                             <div class="flex flex-col items-center gap-2">
                                 <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
@@ -100,7 +111,7 @@ function submitCreateModule() {
                         </td>
                     </tr>
                     <tr
-                        v-for="m in modules"
+                        v-for="m in filteredModules"
                         :key="m.id"
                         class="border-b border-gray-100 last:border-0 hover:bg-gray-50/80 cursor-pointer group transition-colors"
                         @click="emit('open-detail', m)"

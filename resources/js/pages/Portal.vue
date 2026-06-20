@@ -66,7 +66,9 @@ const handleSearch = () => {
 </script>
 
 <template>
-    <Head title="Dashboard - Portal FMIKOM" />
+    <Head>
+        <title>Dashboard - Portal FMIKOM</title>
+    </Head>
 
     <div class="min-h-screen bg-[#eaecf4] dark:bg-slate-900 transition-colors duration-300 flex items-center justify-center p-4 lg:p-8 font-sans selection:bg-[#B6FF00] selection:text-black">
         <!-- Main Application Container -->
@@ -139,7 +141,7 @@ const handleSearch = () => {
                         <h1 class="text-[34px] xl:text-[42px] font-extrabold text-[#0f172a] dark:text-white leading-[1.05] tracking-tight mb-4 flex flex-wrap items-center">
                             Hi, {{ firstName }}! 
                             <span class="inline-flex -space-x-2 ml-3">
-                                <img src="https://api.dicebear.com/7.x/initials/svg?seed=James&backgroundColor=2563eb&textColor=ffffff" class="w-9 h-9 rounded-full border-[3px] border-white relative z-10 shadow-sm" />
+                                <img src="https://api.dicebear.com/7.x/initials/svg?seed=James&backgroundColor=2563eb&textColor=ffffff" alt="Avatar James" class="w-9 h-9 rounded-full border-[3px] border-white relative z-10 shadow-sm" />
                                 <div class="w-9 h-9 rounded-full border-[3px] border-white bg-[#f8f9fc] dark:bg-slate-700/50 flex items-center justify-center relative z-0 text-[#2563EB]">
                                     <PieChart class="w-3.5 h-3.5"/>
                                 </div>
@@ -276,7 +278,7 @@ const handleSearch = () => {
                                 <span class="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg">Package design</span>
                                 <div class="flex items-center gap-2.5">
                                     <span class="text-[10px] font-bold text-slate-400">Rachel Lee</span>
-                                    <img src="https://api.dicebear.com/7.x/initials/svg?seed=Rachel+Lee&backgroundColor=2563eb&textColor=ffffff" class="w-[22px] h-[22px] rounded-full" />
+                                    <img src="https://api.dicebear.com/7.x/initials/svg?seed=Rachel+Lee&backgroundColor=2563eb&textColor=ffffff" alt="Avatar Rachel Lee" class="w-[22px] h-[22px] rounded-full" />
                                 </div>
                             </div>
                         </div>
@@ -359,8 +361,8 @@ const handleSearch = () => {
                             <div class="flex items-center gap-3">
                                 <h2 class="font-extrabold text-[16px] text-slate-800 dark:text-slate-100">Today tasks</h2>
                                 <div class="hidden md:flex -space-x-2">
-                                    <img src="https://api.dicebear.com/7.x/initials/svg?seed=User1&backgroundColor=2563eb&textColor=ffffff" class="w-6 h-6 rounded-full border-2 border-white relative z-20" />
-                                    <img src="https://api.dicebear.com/7.x/initials/svg?seed=User2&backgroundColor=2563eb&textColor=ffffff" class="w-6 h-6 rounded-full border-2 border-white relative z-10" />
+                                    <img src="https://api.dicebear.com/7.x/initials/svg?seed=User1&backgroundColor=2563eb&textColor=ffffff" alt="User Avatar" class="w-6 h-6 rounded-full border-2 border-white relative z-20" />
+                                    <img src="https://api.dicebear.com/7.x/initials/svg?seed=User2&backgroundColor=2563eb&textColor=ffffff" alt="User Avatar" class="w-6 h-6 rounded-full border-2 border-white relative z-10" />
                                     <div class="w-6 h-6 rounded-full border-2 border-white bg-[#B6FF00] text-black text-[8px] font-black flex items-center justify-center relative z-0">+</div>
                                 </div>
                             </div>

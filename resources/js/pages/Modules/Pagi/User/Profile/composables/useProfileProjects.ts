@@ -282,7 +282,12 @@ export function useProfileProjects(
 	});
 
 	const projectCount = computed(() => {
-		return localProjects.value?.length || 0;
+		return (
+			localProjects.value?.filter((p) => {
+				if (!p?.content || !Array.isArray(p.content)) return true;
+				return !p.content.some((b: any) => b && b.type === "gallery_item");
+			}).length || 0
+		);
 	});
 
 	return {

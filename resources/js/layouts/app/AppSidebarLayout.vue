@@ -17,6 +17,15 @@ import AppSidebarHeader from "@/components/AppSidebarHeader.vue";
 import { useCurrentUrl } from "@/composables/useCurrentUrl";
 import { dashboard } from "@/routes";
 import type { BreadcrumbItem } from "@/types";
+import { useLoadingState } from "@/composables/useLoadingState";
+import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton.vue";
+import TableSkeleton from "@/components/skeletons/TableSkeleton.vue";
+import FormSkeleton from "@/components/skeletons/FormSkeleton.vue";
+import PortfolioSkeleton from "@/components/skeletons/PortfolioSkeleton.vue";
+import CVBuilderSkeleton from "@/components/skeletons/CVBuilderSkeleton.vue";
+import ChatSkeleton from "@/components/skeletons/ChatSkeleton.vue";
+import NewsSkeleton from "@/components/skeletons/NewsSkeleton.vue";
+import UserProfileSkeleton from "@/components/skeletons/UserProfileSkeleton.vue";
 
 type Props = {
 	breadcrumbs?: BreadcrumbItem[];
@@ -32,6 +41,33 @@ const user = computed(
 );
 const { isCurrentUrl } = useCurrentUrl();
 
+const { isLoading, loadingType } = useLoadingState();
+
+const isPortalDashboard = computed(() => {
+	return page.component === "Dashboard";
+});
+
+import { onUnmounted, watch } from "vue";
+
+watch(
+	isPortalDashboard,
+	(newValue) => {
+		if (newValue) {
+			document.documentElement.classList.add("portal-dashboard-mobile-bg");
+			document.body.classList.add("portal-dashboard-mobile-bg");
+		} else {
+			document.documentElement.classList.remove("portal-dashboard-mobile-bg");
+			document.body.classList.remove("portal-dashboard-mobile-bg");
+		}
+	},
+	{ immediate: true }
+);
+
+onUnmounted(() => {
+	document.documentElement.classList.remove("portal-dashboard-mobile-bg");
+	document.body.classList.remove("portal-dashboard-mobile-bg");
+});
+
 const isScrolled = ref(false);
 const handleScroll = (e: Event) => {
 	const target = e.target as HTMLElement;
@@ -44,7 +80,7 @@ const handleScroll = (e: Event) => {
         <AppSidebar />
         <!-- bg-transparent on AppContent and blue on wrapper enforced via scoped CSS below -->
         <AppContent variant="sidebar" class="overflow-x-hidden pb-24 md:pb-0 relative z-[1]">
-            <AppSidebarHeader :breadcrumbs="breadcrumbs" />
+            <AppSidebarHeader :breadcrumbs="breadcrumbs" :is-scrolled="isScrolled" />
             <!-- White content card shows rounded-t and shadow ONLY when scrolled on mobile -->
             <div class="md:contents">
                 <div 
@@ -60,7 +96,20 @@ const handleScroll = (e: Event) => {
                         class="hidden max-md:block sticky top-0 left-0 right-0 h-[8px] bg-gradient-to-b from-black/5 to-transparent pointer-events-none z-50 transition-opacity duration-300 ease-out rounded-t-2xl"
                         :class="isScrolled ? 'opacity-100' : 'opacity-0'"
                     ></div>
-                    <slot />
+                    <template v-if="isLoading">
+                        <div class="p-6 sm:p-8 lg:p-10 w-full animate-pulse">
+                            <DashboardSkeleton v-if="loadingType === 'Dashboard'" />
+                            <TableSkeleton v-else-if="loadingType === 'Table'" />
+                            <FormSkeleton v-else-if="loadingType === 'Form'" />
+                            <PortfolioSkeleton v-else-if="loadingType === 'Portfolio'" />
+                            <CVBuilderSkeleton v-else-if="loadingType === 'CVBuilder'" />
+                            <ChatSkeleton v-else-if="loadingType === 'Chat'" />
+                            <NewsSkeleton v-else-if="loadingType === 'News'" />
+                            <UserProfileSkeleton v-else-if="loadingType === 'UserProfile'" />
+                            <FormSkeleton v-else />
+                        </div>
+                    </template>
+                    <slot v-else />
                 </div>
             </div>
         </AppContent>
@@ -186,6 +235,10 @@ const handleScroll = (e: Event) => {
         height: 100% !important;
         background: #0f172a !important;
         background-attachment: fixed !important;
+    }
+    html.portal-dashboard-mobile-bg,
+    body.portal-dashboard-mobile-bg {
+        background: #2563eb !important;
     }
     /* Make sidebar containers transparent so body slate background shows through */
     [data-slot="sidebar-wrapper"] {

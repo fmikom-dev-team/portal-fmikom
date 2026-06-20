@@ -27,7 +27,7 @@ defineProps<{
         </div>
 
         <!-- Body -->
-        <div :class="noPadding ? '' : 'p-5'">
+        <div :class="[noPadding ? '' : 'p-5', 'flex-1']">
             <slot />
         </div>
 

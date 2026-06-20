@@ -44,7 +44,7 @@ const menuItems = [
                     {{ user.name?.charAt(0) }}
                 </div>
                 <div class="min-w-0">
-                    <p class="text-[13px] font-bold text-slate-800 dark:text-zinc-100 truncate">{{ user.name }}</p>
+                    <p class="text-[13px] font-bold text-slate-800 dark:text-zinc-100 truncate uppercase">{{ user.name }}</p>
                     <p class="text-[11px] text-slate-400 dark:text-zinc-500 truncate">{{ user.email }}</p>
                 </div>
             </div>

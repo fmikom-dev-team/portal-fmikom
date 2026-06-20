@@ -243,7 +243,7 @@ const isCustomCreds = computed(() => !form.value.use_demo);
                             <span v-if="p.is_enabled && p.use_demo" class="bg-yellow-100 text-yellow-700 text-[11px] font-medium px-2 py-0.5 rounded-full border border-yellow-200">
                                 Demo credentials
                             </span>
-                            <span v-else-if="p.is_enabled && p.has_custom" class="bg-indigo-50 text-indigo-600 text-[11px] font-medium px-2 py-0.5 rounded-full border border-indigo-100">
+                            <span v-else-if="p.is_enabled && p.has_custom" class="bg-blue-50 text-blue-600 text-[11px] font-medium px-2 py-0.5 rounded-full border border-blue-100">
                                 Custom credentials
                             </span>
                         </div>

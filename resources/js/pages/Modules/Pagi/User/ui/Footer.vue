@@ -101,7 +101,7 @@ const currentYear = computed(() => new Date().getFullYear());
                             class="flex-1 bg-transparent border-none outline-none text-[12px] font-semibold text-slate-800 dark:text-white placeholder-slate-400/80 w-full"
                         />
                         <!-- Nested circular arrow button -->
-                        <button class="w-[38px] h-[38px] rounded-full bg-slate-950 dark:bg-slate-50 text-white dark:text-slate-950 flex items-center justify-center hover:bg-slate-800 dark:hover:bg-slate-200 transition-colors shadow-sm">
+                        <button class="w-[38px] h-[38px] rounded-full bg-slate-950 dark:bg-slate-50 text-white dark:text-slate-950 flex items-center justify-center hover:bg-slate-800 dark:hover:bg-slate-200 transition-colors shadow-sm" aria-label="Subscribe to newsletter">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                             </svg>

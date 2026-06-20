@@ -213,8 +213,8 @@ const saveCors = async () => {
                 <div>
                     <label class="block font-medium text-gray-900 mb-1.5">Maximum session length</label>
                     <div class="flex gap-2">
-                        <input type="number" v-model="lifetime.maxLength" class="w-24 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-indigo-500" />
-                        <select v-model="lifetime.maxUnit" class="w-32 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-indigo-500 bg-white">
+                        <input type="number" v-model="lifetime.maxLength" class="w-24 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-[#2563eb]" />
+                        <select v-model="lifetime.maxUnit" class="w-32 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-[#2563eb] bg-white">
                             <option>Days</option>
                             <option>Hours</option>
                             <option>Minutes</option>
@@ -224,8 +224,8 @@ const saveCors = async () => {
                 <div>
                     <label class="block font-medium text-gray-900 mb-1.5">Access token duration</label>
                     <div class="flex gap-2">
-                        <input type="number" v-model="lifetime.tokenDuration" class="w-24 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-indigo-500" />
-                        <select v-model="lifetime.tokenUnit" class="w-32 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-indigo-500 bg-white">
+                        <input type="number" v-model="lifetime.tokenDuration" class="w-24 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-[#2563eb]" />
+                        <select v-model="lifetime.tokenUnit" class="w-32 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-[#2563eb] bg-white">
                             <option>Days</option>
                             <option>Hours</option>
                             <option>Minutes</option>
@@ -235,8 +235,8 @@ const saveCors = async () => {
                 <div>
                     <label class="block font-medium text-gray-900 mb-1.5">Inactivity timeout <span class="text-gray-400 font-normal">(optional)</span></label>
                     <div class="flex gap-2">
-                        <input type="number" v-model="lifetime.inactivityLength" class="w-24 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-indigo-500" />
-                        <select v-model="lifetime.inactivityUnit" class="w-32 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-indigo-500 bg-white">
+                        <input type="number" v-model="lifetime.inactivityLength" class="w-24 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-[#2563eb]" />
+                        <select v-model="lifetime.inactivityUnit" class="w-32 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-[#2563eb] bg-white">
                             <option>Days</option>
                             <option>Hours</option>
                             <option>Minutes</option>
@@ -246,7 +246,7 @@ const saveCors = async () => {
             </div>
             <template #footer>
                 <button @click="showLifetimeModal = false" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button @click="saveLifetime" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[13px] font-medium hover:bg-indigo-700 transition-colors">Save</button>
+                <button @click="saveLifetime" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 transition-colors">Save</button>
             </template>
         </AppModal>
 
@@ -267,7 +267,7 @@ const saveCors = async () => {
                         Allowed web origins <AlertCircle class="w-3.5 h-3.5 text-gray-400" />
                     </label>
                     <div class="flex gap-2">
-                        <input type="text" v-model="newOrigin" @keyup.enter="addOrigin" placeholder="https://example.com" class="flex-1 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-indigo-500" />
+                        <input type="text" v-model="newOrigin" @keyup.enter="addOrigin" placeholder="https://example.com" class="flex-1 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-[#2563eb]" />
                         <button @click="addOrigin" class="px-4 py-1.5 bg-gray-100 border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-200 transition-colors">+ Add</button>
                     </div>
                     <p class="text-gray-500 text-[12px] mt-2">
@@ -292,7 +292,7 @@ const saveCors = async () => {
             </div>
             <template #footer>
                 <button @click="showCorsModal = false" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button @click="saveCors" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[13px] font-medium hover:bg-indigo-700 transition-colors">Save changes</button>
+                <button @click="saveCors" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 transition-colors">Save changes</button>
             </template>
         </AppModal>
     </div>

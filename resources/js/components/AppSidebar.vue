@@ -4,10 +4,12 @@ import {
 	BookOpen,
 	Globe,
 	GraduationCap,
+	Home,
 	LayoutGrid,
+	PenLine,
 	Users,
 } from "lucide-vue-next";
-import { computed } from "vue";
+import { computed, ref, onMounted } from "vue";
 import AppLogo from "@/components/AppLogo.vue";
 import {
 	Sidebar,
@@ -23,18 +25,30 @@ import {
 } from "@/components/ui/sidebar";
 import { useCurrentUrl } from "@/composables/useCurrentUrl";
 import { dashboard } from "@/routes";
+import SidebarSkeleton from "@/components/skeletons/SidebarSkeleton.vue";
 
 const page = usePage();
 const user = computed(
 	() => page.props.auth?.user || ({} as Record<string, any>),
 );
 const { isCurrentUrl } = useCurrentUrl();
+
+const isLoading = ref(true);
+onMounted(() => {
+	setTimeout(() => {
+		isLoading.value = false;
+	}, 800);
+});
 </script>
 
 <template>
-    <Sidebar collapsible="icon">
+    <SidebarSkeleton v-if="isLoading" />
+    <Sidebar v-else collapsible="icon">
         <!-- Brand Header (Nexus layout style) with Hover Logo Reveal Toggle interaction -->
-        <SidebarHeader class="flex flex-row items-center justify-between p-5 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-4 group-data-[collapsible=icon]:justify-center border-b border-slate-50 dark:border-zinc-900 group/header relative">
+        <SidebarHeader 
+            class="flex flex-row items-center justify-between pl-5 pr-4 border-b border-slate-50 dark:border-zinc-900 group/header relative transition-all duration-300 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center shrink-0"
+            style="height: 76px"
+        >
             <Link :href="dashboard()" class="flex items-center justify-center shrink-0 transition-all duration-300 group-data-[collapsible=icon]:group-hover/header:opacity-0 group-data-[collapsible=icon]:group-hover/header:scale-75">
                 <AppLogo />
             </Link>
@@ -43,10 +57,10 @@ const { isCurrentUrl } = useCurrentUrl();
         </SidebarHeader>
 
         <!-- Sidebar Navigation Sections (Nexus General/Tools/Support layout) -->
-        <SidebarContent class="px-2 py-4 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:gap-0">
+        <SidebarContent class="px-2 py-4 transition-all duration-200 ease-in-out group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-4 group-data-[collapsible=icon]:gap-0">
             <!-- GENERAL SECTION -->
-            <SidebarGroup class="px-3 py-2 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-0 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center">
-                <SidebarGroupLabel class="px-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-400/80 dark:text-zinc-500 mb-2 group-data-[collapsible=icon]:hidden select-none">
+            <SidebarGroup class="px-3 py-2 transition-all duration-300 ease-in-out group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center">
+                <SidebarGroupLabel class="px-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-400/80 dark:text-zinc-500 mb-2 group-data-[collapsible=icon]:mb-0 select-none">
                     General
                 </SidebarGroupLabel>
                 <SidebarMenu class="space-y-1 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:w-full">
@@ -55,7 +69,7 @@ const { isCurrentUrl } = useCurrentUrl();
                             as-child
                             :is-active="isCurrentUrl(dashboard())"
                             tooltip="Dashboard"
-                            class="h-10 rounded-xl transition-all duration-150"
+                            class="h-10 rounded-xl transition-all duration-150 group-data-[collapsible=icon]:size-10!"
                             :class="isCurrentUrl(dashboard()) 
                               ? 'font-bold text-slate-900 bg-slate-105 dark:bg-slate-800 dark:text-slate-100 shadow-sm border border-slate-200/40 dark:border-slate-700/25' 
                               : 'font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900'"
@@ -63,7 +77,7 @@ const { isCurrentUrl } = useCurrentUrl();
                             <Link :href="dashboard()">
                                 <LayoutGrid class="h-[18px] w-[18px] shrink-0 transition-colors" 
                                             :class="isCurrentUrl(dashboard()) ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 group-hover:text-slate-650'" />
-                                <span class="text-[13.5px] group-data-[collapsible=icon]:hidden select-none">Dashboard</span>
+                                <span class="text-[13.5px] transition-all duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0 truncate select-none">Dashboard</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -71,8 +85,8 @@ const { isCurrentUrl } = useCurrentUrl();
             </SidebarGroup>
 
             <!-- MANAGEMENT SECTION (only for super_admin or admin) -->
-            <SidebarGroup v-if="user.is_admin || user.is_super_admin" class="px-3 py-2 mt-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-0 group-data-[collapsible=icon]:mt-0 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center">
-                <SidebarGroupLabel class="px-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-400/80 dark:text-zinc-500 mb-2 group-data-[collapsible=icon]:hidden select-none">
+            <SidebarGroup v-if="user.is_admin || user.is_super_admin" class="px-3 py-2 mt-4 transition-all duration-300 ease-in-out group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2 group-data-[collapsible=icon]:mt-2 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center">
+                <SidebarGroupLabel class="px-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-400/80 dark:text-zinc-500 mb-2 group-data-[collapsible=icon]:mb-0 select-none">
                     Management
                 </SidebarGroupLabel>
                 <SidebarMenu class="space-y-1 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:w-full">
@@ -81,7 +95,7 @@ const { isCurrentUrl } = useCurrentUrl();
                             as-child
                             :is-active="isCurrentUrl('/portal-admin')"
                             tooltip="Portal Admin (Web)"
-                            class="h-10 rounded-xl transition-all duration-150"
+                            class="h-10 rounded-xl transition-all duration-150 group-data-[collapsible=icon]:size-10!"
                             :class="isCurrentUrl('/portal-admin') 
                               ? 'font-bold text-slate-900 bg-slate-105 dark:bg-slate-800 dark:text-slate-100 shadow-sm border border-slate-200/40 dark:border-slate-700/25' 
                               : 'font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900'"
@@ -89,7 +103,7 @@ const { isCurrentUrl } = useCurrentUrl();
                             <Link href="/portal-admin">
                                 <Globe class="h-[18px] w-[18px] shrink-0 transition-colors" 
                                        :class="isCurrentUrl('/portal-admin') ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 group-hover:text-slate-650'" />
-                                <span class="text-[13.5px] group-data-[collapsible=icon]:hidden select-none">Portal Admin (Web)</span>
+                                <span class="text-[13.5px] transition-all duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0 truncate select-none">Portal Admin (Web)</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -99,7 +113,7 @@ const { isCurrentUrl } = useCurrentUrl();
                             as-child
                             :is-active="isCurrentUrl('/workos')"
                             tooltip="Manajemen Role User"
-                            class="h-10 rounded-xl transition-all duration-150"
+                            class="h-10 rounded-xl transition-all duration-150 group-data-[collapsible=icon]:size-10!"
                             :class="isCurrentUrl('/workos') 
                               ? 'font-bold text-slate-900 bg-slate-105 dark:bg-slate-800 dark:text-slate-100 shadow-sm border border-slate-200/40 dark:border-slate-700/25' 
                               : 'font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900'"
@@ -107,7 +121,7 @@ const { isCurrentUrl } = useCurrentUrl();
                             <Link href="/workos">
                                 <Users class="h-[18px] w-[18px] shrink-0 transition-colors" 
                                        :class="isCurrentUrl('/workos') ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 group-hover:text-slate-650'" />
-                                <span class="text-[13.5px] group-data-[collapsible=icon]:hidden select-none">Manajemen Role User</span>
+                                <span class="text-[13.5px] transition-all duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0 truncate select-none">Manajemen Role User</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -115,8 +129,8 @@ const { isCurrentUrl } = useCurrentUrl();
             </SidebarGroup>
 
             <!-- EXTERNAL SERVICES SECTION -->
-            <SidebarGroup class="px-3 py-2 mt-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-0 group-data-[collapsible=icon]:mt-0 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center">
-                <SidebarGroupLabel class="px-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-400/80 dark:text-zinc-500 mb-2 group-data-[collapsible=icon]:hidden select-none">
+            <SidebarGroup class="px-3 py-2 mt-4 transition-all duration-300 ease-in-out group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2 group-data-[collapsible=icon]:mt-2 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center">
+                <SidebarGroupLabel class="px-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-400/80 dark:text-zinc-500 mb-2 group-data-[collapsible=icon]:mb-0 select-none">
                     Layanan UNUGHA
                 </SidebarGroupLabel>
                 <SidebarMenu class="space-y-1 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:w-full">
@@ -124,11 +138,11 @@ const { isCurrentUrl } = useCurrentUrl();
                         <SidebarMenuButton
                             as-child
                             tooltip="Siakad UNUGHA"
-                            class="h-10 rounded-xl transition-all duration-200 font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900"
+                            class="h-10 rounded-xl transition-all duration-200 font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900 group-data-[collapsible=icon]:size-10!"
                         >
                             <a href="https://siakad.unugha.ac.id" target="_blank" rel="noopener noreferrer">
                                 <GraduationCap class="h-[18px] w-[18px] shrink-0 text-slate-400" />
-                                <span class="text-[13.5px] group-data-[collapsible=icon]:hidden select-none">Siakad UNUGHA</span>
+                                <span class="text-[13.5px] transition-all duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0 truncate select-none">Siakad UNUGHA</span>
                             </a>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -137,11 +151,11 @@ const { isCurrentUrl } = useCurrentUrl();
                         <SidebarMenuButton
                             as-child
                             tooltip="SINTA BIMA"
-                            class="h-10 rounded-xl transition-all duration-200 font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900"
+                            class="h-10 rounded-xl transition-all duration-200 font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900 group-data-[collapsible=icon]:size-10!"
                         >
                             <a href="https://bima.kemdikbud.go.id/" target="_blank" rel="noopener noreferrer">
                                 <BookOpen class="h-[18px] w-[18px] shrink-0 text-slate-400" />
-                                <span class="text-[13.5px] group-data-[collapsible=icon]:hidden select-none">SINTA BIMA</span>
+                                <span class="text-[13.5px] transition-all duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0 truncate select-none">SINTA BIMA</span>
                             </a>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -150,11 +164,11 @@ const { isCurrentUrl } = useCurrentUrl();
                         <SidebarMenuButton
                             as-child
                             tooltip="Web Utama UNUGHA"
-                            class="h-10 rounded-xl transition-all duration-200 font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900"
+                            class="h-10 rounded-xl transition-all duration-200 font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900 group-data-[collapsible=icon]:size-10!"
                         >
                             <a href="https://unugha.ac.id" target="_blank" rel="noopener noreferrer">
                                 <Globe class="h-[18px] w-[18px] shrink-0 text-slate-400" />
-                                <span class="text-[13.5px] group-data-[collapsible=icon]:hidden select-none">Web Utama UNUGHA</span>
+                                <span class="text-[13.5px] transition-all duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0 truncate select-none">Web Utama UNUGHA</span>
                             </a>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -163,9 +177,9 @@ const { isCurrentUrl } = useCurrentUrl();
         </SidebarContent>
 
         <!-- Sidebar Footer (Nexus layout style with department card & back to public button) -->
-        <SidebarFooter class="px-5 py-4 border-t border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+        <SidebarFooter class="px-5 py-4 transition-all duration-200 ease-in-out border-t border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-950 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:border-t-0">
             <!-- Small Copyright -->
-            <p class="text-[10px] text-slate-400/80 dark:text-zinc-500 font-semibold text-center mt-4">
+            <p class="text-[10px] text-slate-400/80 dark:text-zinc-500 font-semibold text-center mt-4 transition-all duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:h-0 group-data-[collapsible=icon]:mt-0 overflow-hidden">
                 &copy; 2026 Portal FMIKOM
             </p>
         </SidebarFooter>

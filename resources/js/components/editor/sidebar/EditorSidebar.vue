@@ -4,17 +4,17 @@ import {
 	ChevronDown,
 	ChevronUp,
 	Image as ImageIcon,
-	LayoutList,
 	Link2,
-	PlusCircle,
 	Search,
 	Tag,
 	Text,
 	X,
 } from "lucide-vue-next";
+import axios from "axios";
 import { ref, watch } from "vue";
 import ThumbnailSettings from "../media/ThumbnailSettings.vue";
 import SeoSettings from "../seo/SeoSettings.vue";
+import MediaPickerModal from "../media/MediaPickerModal.vue";
 
 const props = defineProps({
 	form: Object,
@@ -24,6 +24,62 @@ const props = defineProps({
 		default: true,
 	},
 });
+
+const newCategoryName = ref("");
+const isAddingCategory = ref(false);
+const localCategories = ref([]);
+
+const showMediaPicker = ref(false);
+const activeMediaTarget = ref(""); // 'thumbnail' | 'ogImage'
+
+const openMediaPicker = (target) => {
+	activeMediaTarget.value = target;
+	showMediaPicker.value = true;
+};
+
+const handleMediaSelect = (path) => {
+	if (activeMediaTarget.value === "thumbnail") {
+		emit("update:thumbnail", path);
+	} else if (activeMediaTarget.value === "ogImage") {
+		emit("update:ogImage", path);
+	}
+	showMediaPicker.value = false;
+};
+
+watch(() => props.categories, (newVal) => {
+	if (newVal) {
+		localCategories.value = [...newVal];
+	}
+}, { deep: true, immediate: true });
+
+const submitNewCategory = async () => {
+	if (!newCategoryName.value.trim()) return;
+	try {
+		const slug = newCategoryName.value
+			.toLowerCase()
+			.replace(/[^\w\s-]/g, "")
+			.replace(/[\s_-]+/g, "-")
+			.replace(/(?:^-+)|(?:-+$)/g, "");
+			
+		const response = await axios.post("/portal-admin/categories", {
+			name: newCategoryName.value.trim(),
+			slug: slug,
+		}, {
+			headers: { 'Accept': 'application/json' }
+		});
+		
+		if (response.data.success) {
+			const newCat = response.data.category;
+			localCategories.value.push(newCat);
+			props.form.category_id = newCat.id;
+			newCategoryName.value = "";
+			isAddingCategory.value = false;
+		}
+	} catch (error) {
+		console.error("Gagal menambahkan kategori:", error);
+		alert(error.response?.data?.message || "Gagal menambahkan kategori.");
+	}
+};
 
 const emit = defineEmits(["close", "update:thumbnail", "update:ogImage"]);
 
@@ -101,10 +157,47 @@ const removeTag = (index) => {
                 
                 <div v-if="sections.labels" class="space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 mb-1 block">KATEGORI</label>
-                        <select v-model="form.category_id" class="w-full text-sm border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 bg-gray-50/50">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-[10px] font-bold text-slate-500 block">KATEGORI</label>
+                            <button 
+                                v-if="!isAddingCategory" 
+                                type="button" 
+                                @click="isAddingCategory = true" 
+                                class="text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors"
+                            >
+                                + Tambah Kategori
+                            </button>
+                        </div>
+                        
+                        <div v-if="isAddingCategory" class="space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
+                            <input 
+                                type="text" 
+                                v-model="newCategoryName" 
+                                placeholder="Nama kategori baru..." 
+                                @keydown.enter.prevent="submitNewCategory"
+                                class="w-full text-sm border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 bg-gray-50/50" 
+                            />
+                            <div class="flex items-center gap-2">
+                                <button 
+                                    type="button" 
+                                    @click="submitNewCategory"
+                                    class="px-2.5 py-1 text-[11px] font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors cursor-pointer"
+                                >
+                                    Simpan
+                                </button>
+                                <button 
+                                    type="button" 
+                                    @click="isAddingCategory = false; newCategoryName = ''"
+                                    class="px-2.5 py-1 text-[11px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors cursor-pointer"
+                                >
+                                    Batal
+                                </button>
+                            </div>
+                        </div>
+
+                        <select v-else v-model="form.category_id" class="w-full text-sm border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 bg-gray-50/50">
                             <option :value="null">Pilih Kategori</option>
-                            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+                            <option v-for="cat in localCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
                         </select>
                     </div>
 
@@ -196,6 +289,14 @@ const removeTag = (index) => {
                             @update="file => handleFileChange({target: {files: [file]}}, 'ogImage')"
                             @remove="removeImage('ogImage')"
                         />
+                        <button 
+                            type="button" 
+                            @click="openMediaPicker('ogImage')"
+                            class="w-full mt-2 py-2 px-3 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-[11px] font-bold text-slate-600 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                            <ImageIcon class="w-3.5 h-3.5 text-slate-400" />
+                            Pilih dari Galeri
+                        </button>
                     </div>
                 </div>
             </div>
@@ -220,8 +321,22 @@ const removeTag = (index) => {
                         @update="file => handleFileChange({target: {files: [file]}}, 'thumbnail')"
                         @remove="removeImage('thumbnail')"
                     />
+                    <button 
+                        type="button" 
+                        @click="openMediaPicker('thumbnail')"
+                        class="w-full py-2 px-3 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-[11px] font-bold text-slate-600 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                        <ImageIcon class="w-3.5 h-3.5 text-slate-400" />
+                        Pilih dari Galeri
+                    </button>
                 </div>
             </div>
         </div>
     </aside>
+
+    <MediaPickerModal 
+        v-if="showMediaPicker" 
+        @select="handleMediaSelect" 
+        @close="showMediaPicker = false" 
+    />
 </template>

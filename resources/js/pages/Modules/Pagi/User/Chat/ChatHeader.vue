@@ -34,7 +34,7 @@ const emit = defineEmits<{
         <!-- Avatar -->
         <div class="relative shrink-0 pointer-events-none">
             <div class="h-9 w-9 rounded-full border border-slate-200 dark:border-zinc-700 overflow-hidden bg-slate-100 dark:bg-zinc-800 flex items-center justify-center">
-                <img v-if="partner && avatarUrl(partner.foto_path)" :src="avatarUrl(partner!.foto_path)!" class="w-full h-full object-cover" />
+                <img v-if="partner && avatarUrl(partner.foto_path)" :src="avatarUrl(partner!.foto_path)!" :alt="partner?.name || 'Avatar'" class="w-full h-full object-cover" />
                 <span v-else class="text-xs font-black text-slate-500">{{ partner?.name?.charAt(0) }}</span>
             </div>
             <span v-if="isOnline" class="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-white dark:ring-zinc-955"></span>

@@ -103,7 +103,7 @@ const radialTrackPathData = computed(() =>
   >
     <div
       data-slot="progress-indicator"
-      class="h-full w-full flex-1 bg-indigo-600 dark:bg-indigo-500 transition-all duration-300 ease-out"
+      class="h-full w-full flex-1 bg-blue-600 dark:bg-blue-500 transition-all duration-300 ease-out"
       :class="indicatorClassName"
       :style="{ transform: `translateX(-${100 - (value || 0)}%)` }"
     ></div>
@@ -140,7 +140,7 @@ const radialTrackPathData = computed(() =>
         :stroke-dasharray="circumference"
         :stroke-dashoffset="circleOffset"
         stroke-linecap="round"
-        class="text-indigo-600 dark:text-indigo-500 transition-all duration-300 ease-in-out"
+        class="text-blue-600 dark:text-blue-500 transition-all duration-300 ease-in-out"
         :class="indicatorClassName"
       />
     </svg>
@@ -176,7 +176,7 @@ const radialTrackPathData = computed(() =>
         :stroke-width="strokeWidth"
         fill="none"
         stroke-linecap="round"
-        class="text-indigo-600 dark:text-indigo-500 transition-all duration-300 ease-in-out"
+        class="text-blue-600 dark:text-blue-500 transition-all duration-300 ease-in-out"
         :class="indicatorClassName"
       />
     </svg>

@@ -49,14 +49,14 @@ function openLogDetails(log: any) {
                 v-model="searchQuery"
                 type="text"
                 placeholder="Search by recipient or subject..."
-                class="w-full h-[32px] pl-9 pr-3 text-[12.5px] border border-gray-200 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors text-gray-900 bg-white"
+                class="w-full h-[32px] pl-9 pr-3 text-[12.5px] border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors text-gray-900 bg-white"
             />
         </div>
         
         <select
             id="status_filter_select"
             v-model="statusFilter"
-            class="h-[32px] px-2.5 text-[12.5px] border border-gray-200 rounded-md focus:outline-none focus:border-indigo-500 bg-white text-gray-700"
+            class="h-[32px] px-2.5 text-[12.5px] border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] bg-white text-gray-700"
         >
             <option value="all">All Statuses</option>
             <option value="Delivered">Delivered</option>
@@ -66,7 +66,7 @@ function openLogDetails(log: any) {
         <select
             id="type_filter_select"
             v-model="typeFilter"
-            class="h-[32px] px-2.5 text-[12.5px] border border-gray-200 rounded-md focus:outline-none focus:border-indigo-500 bg-white text-gray-700"
+            class="h-[32px] px-2.5 text-[12.5px] border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] bg-white text-gray-700"
         >
             <option value="all">All Types</option>
             <option value="Verification Email">Verification</option>
@@ -91,6 +91,7 @@ function openLogDetails(log: any) {
     <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
+                <caption class="sr-only">Email Dispatch Logs</caption>
                 <thead>
                     <tr class="bg-gray-50/75 border-b border-gray-200/80">
                         <th class="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Recipient</th>
@@ -159,7 +160,7 @@ function openLogDetails(log: any) {
                 <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Shared Variables Payload</span>
                 <div class="bg-gray-50 border border-gray-150 p-2.5 rounded-lg font-mono text-[11.5px] text-gray-700 space-y-1">
                     <div v-for="(val, key) in selectedLog.variables" :key="key">
-                        <span class="text-indigo-600">{{ key }}</span>: "{{ val }}"
+                        <span class="text-blue-600">{{ key }}</span>: "{{ val }}"
                     </div>
                 </div>
             </div>
@@ -169,7 +170,7 @@ function openLogDetails(log: any) {
                 <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Delivery Trace Timeline</span>
                 <div class="space-y-2 border-l border-gray-200 pl-3.5 ml-1">
                     <div v-for="(evt, idx) in selectedLog.events" :key="idx" class="relative">
-                        <span class="absolute -left-[19px] top-1 w-2.5 h-2.5 rounded-full border border-white bg-indigo-500" />
+                        <span class="absolute -left-[19px] top-1 w-2.5 h-2.5 rounded-full border border-white bg-blue-500" />
                         <span class="text-[11px] text-gray-400 font-mono">{{ evt.time }}</span> &bull; 
                         <span class="text-[12.5px] text-gray-700">{{ evt.event }}</span>
                     </div>

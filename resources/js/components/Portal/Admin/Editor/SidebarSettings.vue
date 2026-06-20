@@ -155,7 +155,7 @@ const removeThumbnail = () => {
                 
                 <div v-if="sections.thumbnail" class="space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
                     <div v-if="form.thumbnail_preview || form.thumbnail_url" class="relative group aspect-[16/9] rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
-                        <img :src="form.thumbnail_preview || form.thumbnail_url" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                        <img :src="form.thumbnail_preview || form.thumbnail_url" alt="Thumbnail post preview" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                         <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <button @click="removeThumbnail" class="p-2 bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-red-500 transition-colors">
                                 <X class="w-4 h-4" />

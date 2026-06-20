@@ -373,7 +373,7 @@ const getFormattedDate = (dateStr: string) => {
                             <label class="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1.5">Gambar Cover / Poster</label>
                             <div class="flex items-center gap-4">
                                 <div class="w-24 h-24 rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-900 border border-slate-150 dark:border-slate-700 flex items-center justify-center shrink-0">
-                                    <img v-if="thumbnailPreview" :src="thumbnailPreview" class="w-full h-full object-cover">
+                                    <img v-if="thumbnailPreview" :src="thumbnailPreview" alt="Pratinjau poster event" class="w-full h-full object-cover">
                                     <ImageIcon v-else class="w-8 h-8 text-slate-300" />
                                 </div>
                                 <div class="space-y-1">

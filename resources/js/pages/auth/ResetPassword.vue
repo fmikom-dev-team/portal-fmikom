@@ -75,7 +75,9 @@ const isValid = computed(() => {
         title="Reset Password Baru"
         description="Silakan buat password baru Anda di bawah ini"
     >
-        <Head title="Reset Password" />
+        <Head>
+        <title>Reset Password</title>
+    </Head>
 
         <form @submit.prevent="submit">
             <div class="grid gap-6">

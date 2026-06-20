@@ -85,6 +85,19 @@ const configuredEvents = ref<Record<string, boolean>>({
 	"member.invited": true,
 	"api_key.created": true,
 	"sso.connection.activated": true,
+	"module.accessed": true,
+	"role.switched": true,
+	"user.created": true,
+	"user.updated": true,
+	"user.deleted": true,
+	"role.created": true,
+	"role.updated": true,
+	"role.deleted": true,
+	"permission.created": true,
+	"permission.updated": true,
+	"permission.deleted": true,
+	"organization.created": true,
+	"organization.deleted": true,
 });
 
 // Modal configuration state copy
@@ -239,13 +252,13 @@ onUnmounted(() => {
         <div class="relative">
           <button 
             @click.stop="togglePopover('action', $event)"
-            :class="['h-[32px] px-3 border rounded-md text-[12.5px] font-semibold transition-colors flex items-center gap-1.5', selectedActions.length > 0 ? 'bg-indigo-50/70 border-indigo-200 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50']"
+            :class="['h-[32px] px-3 border rounded-md text-[12.5px] font-semibold transition-colors flex items-center gap-1.5', selectedActions.length > 0 ? 'bg-blue-50/70 border-blue-200 text-blue-600 hover:bg-blue-100 hover:text-blue-700' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50']"
           >
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
             </svg>
             Action
-            <span v-if="selectedActions.length > 0" class="ml-1 bg-indigo-100 text-indigo-700 rounded-full px-1.5 py-0.2 text-[10px] font-bold">
+            <span v-if="selectedActions.length > 0" class="ml-1 bg-blue-100 text-blue-700 rounded-full px-1.5 py-0.2 text-[10px] font-bold">
               {{ selectedActions.length }}
             </span>
           </button>
@@ -263,14 +276,14 @@ onUnmounted(() => {
                   type="checkbox" 
                   :checked="selectedActions.includes(action)"
                   @change="toggleActionFilter(action)"
-                  class="w-3.5 h-3.5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                  class="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-[#2563eb]"
                 />
                 <span class="font-mono text-[11px] bg-gray-50 border border-gray-150 px-1 py-0.5 rounded text-gray-700 hover:bg-gray-100 transition-colors">{{ action }}</span>
               </label>
             </div>
             <div class="border-t border-gray-100 mt-3 pt-2 flex justify-between">
               <button @click="clearActionFilter" class="text-[11px] font-semibold text-gray-500 hover:text-gray-700 transition-colors">Clear</button>
-              <button @click="activePopover = null" class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">Apply</button>
+              <button @click="activePopover = null" class="text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition-colors">Apply</button>
             </div>
           </div>
         </div>
@@ -279,7 +292,7 @@ onUnmounted(() => {
         <div class="relative">
           <button 
             @click.stop="togglePopover('actorName', $event)"
-            :class="['h-[32px] px-3 border rounded-md text-[12.5px] font-semibold transition-colors flex items-center gap-1.5', actorNameSearch ? 'bg-indigo-50/70 border-indigo-200 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50']"
+            :class="['h-[32px] px-3 border rounded-md text-[12.5px] font-semibold transition-colors flex items-center gap-1.5', actorNameSearch ? 'bg-blue-50/70 border-blue-200 text-blue-600 hover:bg-blue-100 hover:text-blue-700' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50']"
           >
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -298,12 +311,12 @@ onUnmounted(() => {
               v-model="actorNameSearch"
               type="text"
               placeholder="Type a name..."
-              class="w-full h-8 px-2.5 text-[12.5px] border border-gray-200 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors text-gray-900 bg-white mb-2.5"
+              class="w-full h-8 px-2.5 text-[12.5px] border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors text-gray-900 bg-white mb-2.5"
               @keydown.enter="activePopover = null"
             />
             <div class="flex justify-between border-t border-gray-100 pt-2">
               <button @click="clearActorNameFilter" class="text-[11px] font-semibold text-gray-500 hover:text-gray-700 transition-colors">Clear</button>
-              <button @click="activePopover = null" class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">Apply</button>
+              <button @click="activePopover = null" class="text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition-colors">Apply</button>
             </div>
           </div>
         </div>
@@ -312,7 +325,7 @@ onUnmounted(() => {
         <div class="relative">
           <button 
             @click.stop="togglePopover('actorId', $event)"
-            :class="['h-[32px] px-3 border rounded-md text-[12.5px] font-semibold transition-colors flex items-center gap-1.5', actorIdSearch ? 'bg-indigo-50/70 border-indigo-200 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50']"
+            :class="['h-[32px] px-3 border rounded-md text-[12.5px] font-semibold transition-colors flex items-center gap-1.5', actorIdSearch ? 'bg-blue-50/70 border-blue-200 text-blue-600 hover:bg-blue-100 hover:text-blue-700' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50']"
           >
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -331,12 +344,12 @@ onUnmounted(() => {
               v-model="actorIdSearch"
               type="text"
               placeholder="Type an email..."
-              class="w-full h-8 px-2.5 text-[12.5px] border border-gray-200 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors text-gray-900 bg-white mb-2.5"
+              class="w-full h-8 px-2.5 text-[12.5px] border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors text-gray-900 bg-white mb-2.5"
               @keydown.enter="activePopover = null"
             />
             <div class="flex justify-between border-t border-gray-100 pt-2">
               <button @click="clearActorIdFilter" class="text-[11px] font-semibold text-gray-500 hover:text-gray-700 transition-colors">Clear</button>
-              <button @click="activePopover = null" class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">Apply</button>
+              <button @click="activePopover = null" class="text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition-colors">Apply</button>
             </div>
           </div>
         </div>
@@ -345,7 +358,7 @@ onUnmounted(() => {
         <div class="relative">
           <button 
             @click.stop="togglePopover('dateRange', $event)"
-            :class="['h-[32px] px-3 border rounded-md text-[12.5px] font-semibold transition-colors flex items-center gap-1.5', dateRange !== 'all' ? 'bg-indigo-50/70 border-indigo-200 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50']"
+            :class="['h-[32px] px-3 border rounded-md text-[12.5px] font-semibold transition-colors flex items-center gap-1.5', dateRange !== 'all' ? 'bg-blue-50/70 border-blue-200 text-blue-600 hover:bg-blue-100 hover:text-blue-700' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50']"
           >
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -361,25 +374,25 @@ onUnmounted(() => {
           >
             <button 
               @click="setDateRange('all')"
-              :class="['w-full px-3.5 py-2 text-left text-[12.5px] transition-colors', dateRange === 'all' ? 'bg-indigo-50/50 text-indigo-600 font-semibold' : 'text-gray-700 hover:bg-gray-50']"
+              :class="['w-full px-3.5 py-2 text-left text-[12.5px] transition-colors', dateRange === 'all' ? 'bg-blue-50/50 text-blue-600 font-semibold' : 'text-gray-700 hover:bg-gray-50']"
             >
               All Time
             </button>
             <button 
               @click="setDateRange('24h')"
-              :class="['w-full px-3.5 py-2 text-left text-[12.5px] transition-colors', dateRange === '24h' ? 'bg-indigo-50/50 text-indigo-600 font-semibold' : 'text-gray-700 hover:bg-gray-50']"
+              :class="['w-full px-3.5 py-2 text-left text-[12.5px] transition-colors', dateRange === '24h' ? 'bg-blue-50/50 text-blue-600 font-semibold' : 'text-gray-700 hover:bg-gray-50']"
             >
               Last 24 Hours
             </button>
             <button 
               @click="setDateRange('7d')"
-              :class="['w-full px-3.5 py-2 text-left text-[12.5px] transition-colors', dateRange === '7d' ? 'bg-indigo-50/50 text-indigo-600 font-semibold' : 'text-gray-700 hover:bg-gray-50']"
+              :class="['w-full px-3.5 py-2 text-left text-[12.5px] transition-colors', dateRange === '7d' ? 'bg-blue-50/50 text-blue-600 font-semibold' : 'text-gray-700 hover:bg-gray-50']"
             >
               Last 7 Days
             </button>
             <button 
               @click="setDateRange('30d')"
-              :class="['w-full px-3.5 py-2 text-left text-[12.5px] transition-colors', dateRange === '30d' ? 'bg-indigo-50/50 text-indigo-600 font-semibold' : 'text-gray-700 hover:bg-gray-50']"
+              :class="['w-full px-3.5 py-2 text-left text-[12.5px] transition-colors', dateRange === '30d' ? 'bg-blue-50/50 text-blue-600 font-semibold' : 'text-gray-700 hover:bg-gray-50']"
             >
               Last 30 Days
             </button>
@@ -390,7 +403,7 @@ onUnmounted(() => {
         <button 
           v-if="activeFiltersCount > 0"
           @click="clearAllFilters"
-          class="h-[32px] px-2.5 text-[12.5px] font-medium text-gray-500 hover:text-indigo-600 transition-colors flex items-center"
+          class="h-[32px] px-2.5 text-[12.5px] font-medium text-gray-500 hover:text-blue-600 transition-colors flex items-center"
         >
           Clear filters
         </button>
@@ -399,7 +412,7 @@ onUnmounted(() => {
       <!-- Actions Dropdown -->
       <div class="relative">
         <button
-          class="h-[32px] px-3.5 bg-indigo-600 text-white rounded-md text-[12.5px] font-semibold hover:bg-indigo-700 transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-60"
+          class="h-[32px] px-3.5 bg-blue-600 text-white rounded-md text-[12.5px] font-semibold hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-60"
           :disabled="isExporting"
           @click.stop="showActionsMenu = !showActionsMenu"
         >
@@ -458,6 +471,7 @@ onUnmounted(() => {
     <div v-else class="rounded-xl overflow-hidden bg-white ring-1 ring-gray-900/4 shadow-(--wos-shadow-card)">
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse whitespace-nowrap">
+          <caption class="sr-only">Audit Log Events</caption>
           <thead>
             <tr class="bg-gray-50/75 border-b border-gray-200/80">
               <th class="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Event</th>
@@ -526,7 +540,7 @@ onUnmounted(() => {
             <input 
               v-model="tempConfiguredEvents[key]" 
               type="checkbox"
-              class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+              class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-[#2563eb]"
             />
             <span class="font-mono text-[11px] text-gray-700">{{ key }}</span>
           </label>
@@ -541,7 +555,7 @@ onUnmounted(() => {
           Cancel
         </button>
         <button
-          class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm"
+          class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm"
           @click="saveEventConfiguration"
         >
           Save changes

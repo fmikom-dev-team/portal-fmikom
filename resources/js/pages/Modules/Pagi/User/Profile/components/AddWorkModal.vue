@@ -11,8 +11,10 @@ import {
 	X,
 } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
+import { usePagiProgress } from "../../../shared/composables/usePagiProgress";
 import Modal from "../../ui/Modal.vue";
-import Progress from "../../ui/Progress.vue";
+
+const { trackUpload } = usePagiProgress();
 
 const props = defineProps<{
 	show: boolean;
@@ -48,8 +50,6 @@ const coverPreviewUrl = ref<string | null>(null);
 const zoomLevel = ref(1.0);
 const cropSaved = ref(false);
 const imageQualityWarning = ref(false);
-const quickStoreProgress = ref(0);
-const isUploadingQuickStore = ref(false);
 
 const addWorkSkillsInput = ref("");
 const addWorkSkillsTags = ref<string[]>([]);
@@ -127,15 +127,6 @@ const getToolSlug = (name: string) => {
 		.toLowerCase()
 		.replace(/[^a-z0-9]+/g, "-")
 		.replace(/(^-|-$)/g, "");
-};
-
-const getUploadStatusMessage = (progress: number) => {
-	if (progress < 5) return "Memulai pengunggahan...";
-	if (progress < 25) return "Mengompresi dan mengoptimalkan berkas...";
-	if (progress < 50) return "Menyiapkan paket pengunggahan...";
-	if (progress < 75) return "Mengunggah berkas ke server...";
-	if (progress < 95) return "Menyimpan perubahan...";
-	return "Selesai!";
 };
 
 const isVideoFile = (file: File | null) => {
@@ -432,8 +423,6 @@ const quickStoreSubmit = async () => {
 	}
 
 	isSubmittingWork.value = true;
-	isUploadingQuickStore.value = true;
-	quickStoreProgress.value = 0;
 	try {
 		const formData = new FormData();
 		formData.append("title", addWorkForm.value.title);
@@ -460,33 +449,35 @@ const quickStoreSubmit = async () => {
 		);
 		formData.append("cover_fit", coverFit.value);
 
-		let res: Awaited<ReturnType<typeof import("axios").default.post>>;
+		let res: any;
 		if (props.isEditingQuickWork && props.editingQuickWorkId) {
-			res = await axios.post(
-				`/pagi/editor/${props.editingQuickWorkId}/quick-update`,
-				formData,
-				{
-					headers: { "Content-Type": "multipart/form-data" },
-					onUploadProgress: (progressEvent) => {
-						if (progressEvent.total) {
-							quickStoreProgress.value = Math.round(
-								(progressEvent.loaded * 100) / progressEvent.total,
-							);
-						}
-					},
-				},
+			res = await trackUpload(
+				(config) =>
+					axios.post(
+						`/pagi/editor/${props.editingQuickWorkId}/quick-update`,
+						formData,
+						{
+							...config,
+							headers: {
+								...config.headers,
+								"Content-Type": "multipart/form-data",
+							},
+						},
+					),
+				"Mengunggah Karya",
 			);
 		} else {
-			res = await axios.post("/pagi/editor/quick-store", formData, {
-				headers: { "Content-Type": "multipart/form-data" },
-				onUploadProgress: (progressEvent) => {
-					if (progressEvent.total) {
-						quickStoreProgress.value = Math.round(
-							(progressEvent.loaded * 100) / progressEvent.total,
-						);
-					}
-				},
-			});
+			res = await trackUpload(
+				(config) =>
+					axios.post("/pagi/editor/quick-store", formData, {
+						...config,
+						headers: {
+							...config.headers,
+							"Content-Type": "multipart/form-data",
+						},
+					}),
+				"Mengunggah Karya",
+			);
 		}
 
 		if (res.data.success) {
@@ -501,8 +492,6 @@ const quickStoreSubmit = async () => {
 		);
 	} finally {
 		isSubmittingWork.value = false;
-		isUploadingQuickStore.value = false;
-		quickStoreProgress.value = 0;
 	}
 };
 
@@ -528,7 +517,11 @@ const initializeWith = (project: any) => {
 	addWorkToolsInput.value = "";
 	addWorkToolsTags.value = [...(details.tools || [])];
 	addWorkCollaboratorsInput.value = "";
-	addWorkCollaboratorsTags.value = [...(details.collaborators || [])];
+	addWorkCollaboratorsTags.value = (details.collaborators || [])
+		.map((c: any) =>
+			typeof c === "object" && c !== null ? c.name || "" : String(c),
+		)
+		.filter(Boolean);
 
 	if (coverPreviewUrl.value?.startsWith("blob:")) {
 		URL.revokeObjectURL(coverPreviewUrl.value);
@@ -594,26 +587,6 @@ watch(
 <template>
 	<Modal :show="show" :title="isEditingQuickWork ? 'Edit featured work on profile' : 'Feature work on profile'" maxWidth="3xl" @close="emit('close')">
 		<div class="relative grid grid-cols-1 lg:grid-cols-12 gap-8 my-2 text-left">
-			<!-- Uploading overlay with radial progress -->
-			<Transition
-				enter-active-class="transition duration-300 ease-out"
-				enter-from-class="opacity-0"
-				enter-to-class="opacity-100"
-				leave-active-class="transition duration-200 ease-in"
-				leave-from-class="opacity-100"
-				leave-to-class="opacity-0"
-			>
-				<div v-if="isUploadingQuickStore" class="absolute inset-0 z-50 bg-white/95 dark:bg-slate-900/95 flex flex-col items-center justify-center p-8 rounded-2xl text-center space-y-6">
-					<div class="w-full max-w-xs space-y-4">
-						<h3 class="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Mengunggah Karya</h3>
-						<Progress :value="quickStoreProgress" className="w-full h-2 bg-slate-100 dark:bg-slate-800" indicatorClassName="bg-indigo-600 dark:bg-indigo-500" />
-						<div class="flex justify-between items-center text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-							<span class="animate-pulse">{{ getUploadStatusMessage(quickStoreProgress) }}</span>
-							<span>{{ Math.round(quickStoreProgress) }}%</span>
-						</div>
-					</div>
-				</div>
-			</Transition>
 			<!-- Left Column: Cover photo (col-span-6) - Stationary -->
 			<div class="lg:col-span-6 flex flex-col gap-4 sticky top-0 self-start">
 				<h3 class="text-xs font-black text-slate-404 dark:text-slate-505 uppercase tracking-wider flex items-center">
@@ -658,6 +631,7 @@ watch(
 								<img 
 									v-else
 									:src="coverPreviewUrl" 
+									alt="Latar Belakang Cover"
 									class="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 scale-110 pointer-events-none select-none"
 								/>
 							</template>
@@ -675,6 +649,7 @@ watch(
 							<img 
 								v-else
 								:src="coverPreviewUrl" 
+								alt="Pratinjau Cover"
 								class="relative z-10"
 								:class="coverFit === 'contain' ? 'max-w-full max-h-full object-contain' : 'w-full h-full object-cover'"
 								:style="{ transform: coverFit === 'contain' ? 'none' : 'scale(' + zoomLevel + ')' }"

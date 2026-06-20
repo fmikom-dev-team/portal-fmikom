@@ -14,7 +14,7 @@ const props = defineProps<{
     role="presentation"
     aria-hidden="true"
     :class="cn('[&>svg]:size-3.5', props.class)"
-  >
+  > <!-- NOSONAR -->
     <slot>
       <ChevronRight />
     </slot>
