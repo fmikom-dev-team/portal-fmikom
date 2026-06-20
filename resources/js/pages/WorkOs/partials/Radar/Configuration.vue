@@ -794,7 +794,7 @@ function disableAllProtection() {
                             @change="toggleStatus" 
                             class="sr-only peer"
                         >
-                        <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-indigo-500/20 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-[#2563eb]/20 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                         <span class="sr-only">Enable protection policy</span>
                     </label>
                     <span class="text-sm font-semibold text-gray-800">Enable</span>
@@ -814,7 +814,7 @@ function disableAllProtection() {
                                     editingProtection.status !== 'Enabled'
                                         ? 'border-gray-200 bg-gray-50/50 opacity-50 cursor-not-allowed select-none' 
                                         : (editingProtection.threshold_config?.decision === 'block'
-                                            ? 'border-2 border-indigo-600 bg-indigo-50/10 cursor-pointer' 
+                                            ? 'border-2 border-blue-600 bg-blue-50/10 cursor-pointer' 
                                             : 'border border-gray-200 hover:border-gray-300 bg-white cursor-pointer')
                                 ]"
                             >
@@ -830,7 +830,7 @@ function disableAllProtection() {
                                     editingProtection.status !== 'Enabled'
                                         ? 'border-gray-200 bg-gray-50/50 opacity-50 cursor-not-allowed select-none' 
                                         : (editingProtection.threshold_config?.decision === 'challenge'
-                                            ? 'border-2 border-indigo-600 bg-indigo-50/10 cursor-pointer' 
+                                            ? 'border-2 border-blue-600 bg-blue-50/10 cursor-pointer' 
                                             : 'border border-gray-200 hover:border-gray-300 bg-white cursor-pointer')
                                 ]"
                             >
@@ -853,7 +853,7 @@ function disableAllProtection() {
                                 type="checkbox" 
                                 v-model="editingProtection.notify_admin" 
                                 :disabled="editingProtection.status !== 'Enabled'"
-                                class="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed" 
+                                class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-[#2563eb] disabled:opacity-50 disabled:cursor-not-allowed" 
                             />
                             <span class="text-[12.5px] text-[#4b5563] leading-normal">Notify admin by email every time this policy takes an action.</span>
                         </label>
@@ -868,7 +868,7 @@ function disableAllProtection() {
                                 type="checkbox" 
                                 v-model="editingProtection.threshold_config.notify_user" 
                                 :disabled="editingProtection.status !== 'Enabled'"
-                                class="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed" 
+                                class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-[#2563eb] disabled:opacity-50 disabled:cursor-not-allowed" 
                             />
                             <span class="text-[12.5px] text-[#4b5563] leading-normal">Notify user by email every time this policy takes an action.</span>
                         </label>

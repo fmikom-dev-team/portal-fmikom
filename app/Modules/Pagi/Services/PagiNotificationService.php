@@ -12,7 +12,21 @@ class PagiNotificationService
      */
     public function getUserNotifications(User $user): array
     {
-        $rawNotifs = $user->notifications()->latest()->limit(100)->get()->map(function ($notif) {
+        $activeRole = strtolower(session('active_role', ''));
+        $activeModule = strtoupper(session('active_module', ''));
+
+        $notifs = $user->notifications()->latest()->limit(100)->get();
+
+        if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
+            $studentNotifTypes = ['like', 'comment', 'follow', 'collaboration'];
+            $notifs = $notifs->filter(function ($n) use ($studentNotifTypes) {
+                $type = $n->data['type'] ?? 'system';
+
+                return ! in_array($type, $studentNotifTypes);
+            });
+        }
+
+        $rawNotifs = $notifs->map(function ($notif) {
             $data = $notif->data;
 
             return [
@@ -55,9 +69,19 @@ class PagiNotificationService
             $groups[] = ['group' => 'Sebelumnya', 'items' => $older->values()];
         }
 
+        $unreadNotifs = $user->unreadNotifications;
+        if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
+            $studentNotifTypes = ['like', 'comment', 'follow', 'collaboration'];
+            $unreadNotifs = $unreadNotifs->filter(function ($n) use ($studentNotifTypes) {
+                $type = $n->data['type'] ?? 'system';
+
+                return ! in_array($type, $studentNotifTypes);
+            });
+        }
+
         return [
             'groups' => $groups,
-            'unreadCount' => $user->unreadNotifications()->count(),
+            'unreadCount' => $unreadNotifs->count(),
         ];
     }
 

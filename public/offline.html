@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sedang Offline - Portal FMIKOM</title>
+    <style>
+        :root {
+            --bg-color: oklch(0.98 0.005 240);
+            --card-bg: oklch(1 0 0 / 0.8);
+            --card-border: oklch(0.92 0.01 240);
+            --text-primary: oklch(0.15 0.01 240);
+            --text-secondary: oklch(0.45 0.01 240);
+            --accent-color: oklch(0.6 0.18 250);
+            --accent-hover: oklch(0.5 0.18 250);
+            --accent-text: oklch(1 0 0);
+            --shadow: 0 10px 30px -10px oklch(0.15 0.01 240 / 0.08);
+            --wifi-icon: oklch(0.6 0.18 250 / 0.15);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: oklch(0.145 0 0);
+                --card-bg: oklch(0.18 0.01 240 / 0.7);
+                --card-border: oklch(0.24 0.01 240);
+                --text-primary: oklch(0.95 0.005 240);
+                --text-secondary: oklch(0.7 0.01 240);
+                --accent-color: oklch(0.65 0.18 250);
+                --accent-hover: oklch(0.55 0.18 250);
+                --accent-text: oklch(0.145 0 0);
+                --shadow: 0 10px 30px -10px oklch(0.05 0.01 240 / 0.5);
+                --wifi-icon: oklch(0.65 0.18 250 / 0.2);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            overflow: hidden;
+            transition: background-color 0.3s ease;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 440px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .icon-wrapper {
+            width: 88px;
+            height: 88px;
+            background-color: var(--wifi-icon);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2rem;
+            position: relative;
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .icon-wrapper svg {
+            width: 42px;
+            height: 42px;
+            color: var(--accent-color);
+        }
+
+        h1 {
+            font-family: 'Instrument Sans', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        p {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 2.25rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 0.875rem 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--accent-text);
+            background-color: var(--accent-color);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 12px oklch(0.6 0.18 250 / 0.25);
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px oklch(0.6 0.18 250 / 0.35);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn svg {
+            margin-right: 8px;
+            width: 18px;
+            height: 18px;
+            stroke-width: 2.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-3.536 4.978 4.978 0 011.414-3.536M3 3l18 18M9.172 9.172a4 4 0 015.656 0M6.343 6.343a8 8 0 000 11.314" />
+            </svg>
+        </div>
+        <h1>Koneksi Terputus</h1>
+        <p>Anda sedang offline atau jaringan tidak stabil. Silakan periksa koneksi internet Anda dan coba lagi.</p>
+        <button class="btn" onclick="retryConnection()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18v3" />
+            </svg>
+            Coba Lagi
+        </button>
+    </div>
+
+    <script>
+        function retryConnection() {
+            // Tampilkan visual loading ringan saat tombol diklik
+            const btn = document.querySelector('.btn');
+            btn.disabled = true;
+            btn.innerHTML = 'Menghubungkan...';
+            
+            // Cek status koneksi sebelum refresh penuh
+            if (navigator.onLine) {
+                window.location.reload();
+            } else {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18v3" />
+                        </svg>
+                        Coba Lagi
+                    `;
+                }, 800);
+            }
+        }
+
+        // Otomatis refresh jika browser mendeteksi koneksi online kembali
+        window.addEventListener('online', () => {
+            window.location.reload();
+        });
+    </script>
+</body>
+</html>

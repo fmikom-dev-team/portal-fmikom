@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Exceptions\SuperAdminProtectionException;
 use App\Models\Alumni\ProfilAlumni;
 use App\Models\Auth\AuthOAuthCredential;
 use App\Models\Kuesioner\Kuesioner;
@@ -9,21 +10,48 @@ use App\Models\Magang\LowonganInfo;
 use App\Models\Magang\PembimbingLapangan;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PenilaianMagang;
+use App\Models\Pagi\PagiActiveChat;
+use App\Models\Pagi\PagiArchivedChat;
+use App\Models\Pagi\PagiClearedChat;
+use App\Models\Pagi\PagiPinnedChat;
+use App\Models\Pagi\PagiUnreadChat;
 use App\Models\Pagi\PagiWork;
 use App\Models\Surat\Surat;
 use App\Models\Surat\SuratApprovalFlow;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string $user_type
+ * @property string|null $nomor_induk
+ * @property string $status_approval
+ * @property bool $is_active
+ * @property string|null $foto_path
+ * @property string|null $location
+ * @property array|null $metadata
+ * @property Carbon|null $tanggal_lahir
+ * @property Role|null $role
+ * @property Collection|UserModuleRole[] $moduleRoles
+ * @property Collection|AuthOAuthCredential[] $oauthCredentials
+ * @property int|null $sign_in_count
+ * @property string|null $last_sign_in_at
+ */
 class User extends Authenticatable
 {
-    use \App\Concerns\UserHelpers, HasFactory, Notifiable;
+    use \App\Concerns\UserHelpers, HasApiTokens, HasFactory, Notifiable, \App\Models\Traits\HasPagiRelations;
 
     protected $fillable = [
         'name', 'email', 'password', 'program_studi_id',
@@ -31,7 +59,7 @@ class User extends Authenticatable
         'nomor_induk', 'status_approval', 'user_type',
         'tahun_lulus', 'otp_code', 'otp_expires_at', 'password_changed_at',
         'role_title', 'bio', 'location', 'website', 'twitter', 'linkedin', 'github', 'instagram',
-        'metadata', 'tanggal_lahir', 'last_seen_at', 'pagi_username',
+        'metadata', 'tanggal_lahir', 'last_seen_at', 'pagi_username', 'deletion_requested_at',
     ];
 
     /**
@@ -66,6 +94,7 @@ class User extends Authenticatable
             'metadata' => 'array',
             'tanggal_lahir' => 'date:Y-m-d',
             'last_seen_at' => 'datetime',
+            'deletion_requested_at' => 'datetime',
         ];
     }
 
@@ -75,18 +104,20 @@ class User extends Authenticatable
             Cache::forget("pagi_public_profile_{$user->id}");
 
             if ($user->wasChanged('password') || ($user->wasRecentlyCreated && $user->password)) {
-                DB::table('auth_password_histories')->insert([
-                    'user_id' => $user->id,
-                    'password_hash' => $user->password,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                DB::afterCommit(function () use ($user) {
+                    DB::table('auth_password_histories')->insert([
+                        'user_id' => $user->id,
+                        'password_hash' => $user->password,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                });
             }
         });
 
         static::deleting(function ($user) {
             if ($user->user_type === 'super_admin') {
-                throw new \RuntimeException('Akun dengan tipe Super Admin dilindungi oleh sistem dan tidak dapat dihapus.');
+                throw new SuperAdminProtectionException('Akun dengan tipe Super Admin dilindungi oleh sistem dan tidak dapat dihapus.');
             }
         });
     }
@@ -175,6 +206,7 @@ class User extends Authenticatable
     }
 
     // -----------------------------------------------------------------------
+
     // Helper Methods — Identity Check
     // Menggunakan user_type (identity layer) sebagai sumber utama.
     // Fallback ke role->slug untuk kompatibilitas mundur.
@@ -186,8 +218,41 @@ class User extends Authenticatable
      */
     const USER_TYPE_SUPER_ADMIN = 'super-admin';
 
-    public function pagiWorks(): HasMany
+    // -----------------------------------------------------------------------
+
+    /**
+     * Centralized helper to assign default module access based on role/user_type.
+     */
+    public function assignDefaultModuleRoles(): void
     {
-        return $this->hasMany(PagiWork::class, 'user_id');
+        $roleObj = Role::query()->where('slug', '=', $this->user_type, 'and')->first();
+        if ($roleObj) {
+            $defaultModules = [];
+            if ($this->user_type === 'mahasiswa' || $this->user_type === 'dosen') {
+                $defaultModules = ['FAST', 'PAGI', 'WIMS'];
+            } elseif ($this->user_type === 'alumni') {
+                $defaultModules = ['TRACE', 'PAGI'];
+            } elseif ($this->user_type === 'mitra') {
+                $defaultModules = ['WIMS', 'TRACE', 'PAGI'];
+            }
+
+            if (! empty($defaultModules)) {
+                $modules = Module::query()->whereIn('code', $defaultModules, 'and', false)->get();
+                foreach ($modules as $mod) {
+                    UserModuleRole::firstOrCreate([
+                        'user_id' => $this->id,
+                        'module_id' => $mod->id,
+                        'role_id' => $roleObj->id,
+                    ], [
+                        'is_active' => true,
+                    ]);
+                }
+            }
+        }
+    }
+
+    public function getNimNipAttribute(): ?string
+    {
+        return $this->attributes['nim_nip'] ?? $this->attributes['nomor_induk'] ?? null;
     }
 }

@@ -25,9 +25,9 @@ beforeEach(function () {
     Module::firstOrCreate(['code' => 'WIMS'], ['name' => 'WIMS', 'is_active' => true]);
     Module::firstOrCreate(['code' => 'TRACE'], ['name' => 'TRACE', 'is_active' => true]);
 
-    $fakultas = Fakultas::firstOrCreate(['id' => 1], ['nama' => 'FMIKOM', 'kode' => 'FMIKOM']);
-    ProgramStudi::firstOrCreate(['id' => 1], ['fakultas_id' => $fakultas->id, 'nama' => 'Informatika', 'kode' => 'IF']);
-    ProgramStudi::firstOrCreate(['id' => 2], ['fakultas_id' => $fakultas->id, 'nama' => 'Sistem Informasi', 'kode' => 'SI']);
+    $fakultas = Fakultas::firstOrCreate(['kode' => 'FMIKOM'], ['nama' => 'FMIKOM']);
+    ProgramStudi::firstOrCreate(['kode' => 'IF'], ['fakultas_id' => $fakultas->id, 'nama' => 'Informatika']);
+    ProgramStudi::firstOrCreate(['kode' => 'SI'], ['fakultas_id' => $fakultas->id, 'nama' => 'Sistem Informasi']);
 
     AuthOAuthProvider::firstOrCreate(['slug' => 'google'], [
         'name' => 'Google',
@@ -79,7 +79,7 @@ test('oauth registration stores user and links provider successfully', function 
         ->post(route('auth.oauth.register.store'), [
             'role' => 'mahasiswa',
             'nomor_induk' => '12345678',
-            'program_studi_id' => 1,
+            'program_studi_id' => ProgramStudi::where('kode', 'IF')->first()->id,
         ]);
 
     $this->assertAuthenticated();
@@ -124,7 +124,7 @@ test('oauth registration stores alumni and links provider successfully', functio
         ->post(route('auth.oauth.register.store'), [
             'role' => 'alumni',
             'nomor_induk' => '87654321',
-            'program_studi_id' => 1,
+            'program_studi_id' => ProgramStudi::where('kode', 'IF')->first()->id,
             'tahun_lulus' => '2024',
         ]);
 
@@ -215,7 +215,7 @@ test('oauth registration handles existing/orphaned oauth credentials gracefully 
         ->post(route('auth.oauth.register.store'), [
             'role' => 'mahasiswa',
             'nomor_induk' => '99998888',
-            'program_studi_id' => 1,
+            'program_studi_id' => ProgramStudi::where('kode', 'IF')->first()->id,
         ]);
 
     $this->assertAuthenticated();
@@ -262,7 +262,7 @@ test('oauth registration handles verified existing users with same email gracefu
         ->post(route('auth.oauth.register.store'), [
             'role' => 'mahasiswa',
             'nomor_induk' => '11112222', // Even if different NIM is submitted
-            'program_studi_id' => 1,
+            'program_studi_id' => ProgramStudi::where('kode', 'IF')->first()->id,
         ]);
 
     $this->assertAuthenticatedAs($existingUser);
@@ -305,10 +305,79 @@ test('oauth registration rejects linking to unverified existing users with same 
         ->post(route('auth.oauth.register.store'), [
             'role' => 'mahasiswa',
             'nomor_induk' => '11112222',
-            'program_studi_id' => 1,
+            'program_studi_id' => ProgramStudi::where('kode', 'IF')->first()->id,
         ]);
 
     // Validation should fail due to unverified email
+    $response->assertSessionHasErrors(['email']);
+    $this->assertGuest();
+});
+
+test('oauth registration rejects linking to inactive existing users', function () {
+    $provider = AuthOAuthProvider::where('slug', 'google')->first();
+
+    // Create an existing inactive user
+    User::create([
+        'name' => 'Inactive User',
+        'email' => GOOGLE_NEW_EMAIL,
+        'password' => Hash::make('password'),
+        'user_type' => 'mahasiswa',
+        'nomor_induk' => '88887777',
+        'status_approval' => 'approved',
+        'email_verified_at' => now(),
+        'is_active' => false,
+    ]);
+
+    $oauthData = [
+        'provider' => 'google',
+        'provider_id' => $provider->id,
+        'external_id' => 'google-id-duplicate-email-123',
+        'name' => 'Google New User Name',
+        'email' => GOOGLE_NEW_EMAIL,
+        'access_token' => Crypt::encryptString('mock-token'),
+    ];
+
+    $response = $this->withSession(['oauth_register_data' => $oauthData])
+        ->post(route('auth.oauth.register.store'), [
+            'role' => 'mahasiswa',
+            'nomor_induk' => '11112222',
+            'program_studi_id' => ProgramStudi::where('kode', 'IF')->first()->id,
+        ]);
+
+    $response->assertSessionHasErrors(['email']);
+    $this->assertGuest();
+});
+
+test('oauth registration rejects linking to unapproved existing users', function () {
+    $provider = AuthOAuthProvider::where('slug', 'google')->first();
+
+    // Create an existing unapproved user
+    User::create([
+        'name' => 'Unapproved User',
+        'email' => GOOGLE_NEW_EMAIL,
+        'password' => Hash::make('password'),
+        'user_type' => 'mahasiswa',
+        'nomor_induk' => '88887777',
+        'status_approval' => 'pending',
+        'email_verified_at' => now(),
+    ]);
+
+    $oauthData = [
+        'provider' => 'google',
+        'provider_id' => $provider->id,
+        'external_id' => 'google-id-duplicate-email-123',
+        'name' => 'Google New User Name',
+        'email' => GOOGLE_NEW_EMAIL,
+        'access_token' => Crypt::encryptString('mock-token'),
+    ];
+
+    $response = $this->withSession(['oauth_register_data' => $oauthData])
+        ->post(route('auth.oauth.register.store'), [
+            'role' => 'mahasiswa',
+            'nomor_induk' => '11112222',
+            'program_studi_id' => ProgramStudi::where('kode', 'IF')->first()->id,
+        ]);
+
     $response->assertSessionHasErrors(['email']);
     $this->assertGuest();
 });

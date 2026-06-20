@@ -195,15 +195,15 @@ function openLogStreamsModal() {
                     Notify this organization's IT contact to set up: Domain Verification, Single Sign-On, Directory Sync, Log Streams and Bring Your Own Key.
                 </p>
                 
-                <div v-if="itContact.status === 'Invited'" class="mt-3 p-3 bg-indigo-50 border border-indigo-100 rounded-md text-xs text-indigo-700 flex items-center gap-2 max-w-fit">
-                    <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                <div v-if="itContact.status === 'Invited'" class="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-md text-xs text-blue-700 flex items-center gap-2 max-w-fit">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
                     Invitation sent to <strong class="font-semibold">{{ itContact.email }}</strong>
                 </div>
 
                 <div class="flex items-center gap-3 mt-4">
                     <button 
                         @click="showInviteItModal = true"
-                        class="h-[32px] px-3 bg-[#6366f1] text-white rounded-md text-sm font-medium hover:bg-[#4f46e5] transition-colors shadow-sm"
+                        class="h-[32px] px-3 bg-[#2563eb] text-white rounded-md text-sm font-medium hover:bg-[#1d4ed8] transition-colors shadow-sm"
                     >
                         {{ itContact.status === 'Invited' ? 'Reinvite IT contact' : 'Invite IT contact' }}
                     </button>
@@ -233,7 +233,7 @@ function openLogStreamsModal() {
                     <!-- Invited / Active Status -->
                     <span 
                         v-else-if="itContact.status === 'Invited'"
-                        class="flex items-center gap-1.5 text-sm font-medium text-indigo-500"
+                        class="flex items-center gap-1.5 text-sm font-medium text-blue-500"
                     >
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 19v-8.93a2 2 0 01.89-1.664l8-5.333a2 2 0 012.22 0l8 5.333A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-2.25-1.5a2 2 0 00-2.22 0l-2.25 1.5"/></svg>
                         Invited
@@ -393,12 +393,12 @@ function openLogStreamsModal() {
                         v-model="inviteItEmail" 
                         type="email" 
                         placeholder="admin@organization.com"
-                        class="w-full h-9 px-3 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#6366f1] focus:ring-1 focus:ring-[#6366f1] text-[#111827]"
+                        class="w-full h-9 px-3 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-[#111827]"
                     />
                 </div>
                 <div class="flex justify-end gap-2 mt-5">
                     <button class="h-9 px-4 border border-[#d1d5db] rounded-md text-xs font-semibold text-[#374151] hover:bg-[#f9fafb] transition-colors" @click="showInviteItModal = false">Cancel</button>
-                    <button class="h-9 px-4 bg-[#6366f1] text-white rounded-md text-xs font-semibold hover:bg-[#4f46e5] transition-colors" @click="submitInviteIt">Send invitation</button>
+                    <button class="h-9 px-4 bg-[#2563eb] text-white rounded-md text-xs font-semibold hover:bg-[#1d4ed8] transition-colors" @click="submitInviteIt">Send invitation</button>
                 </div>
             </div>
         </div>
@@ -419,7 +419,7 @@ function openLogStreamsModal() {
                                     type="checkbox" 
                                     :checked="tempDomainPolicy.allowedMethods.includes(method)"
                                     @change="toggleMethod(method)"
-                                    class="rounded text-[#6366f1] focus:ring-[#6366f1] border-gray-300 w-3.5 h-3.5"
+                                    class="rounded text-[#2563eb] focus:ring-[#2563eb] border-gray-300 w-3.5 h-3.5"
                                 />
                                 {{ method }}
                             </label>
@@ -435,7 +435,7 @@ function openLogStreamsModal() {
                             id="domain_mfa_required"
                             type="checkbox" 
                             v-model="tempDomainPolicy.mfaRequired"
-                            class="rounded text-[#6366f1] focus:ring-[#6366f1] border-gray-300 w-4 h-4 cursor-pointer"
+                            class="rounded text-[#2563eb] focus:ring-[#2563eb] border-gray-300 w-4 h-4 cursor-pointer"
                         />
                     </div>
 
@@ -448,14 +448,14 @@ function openLogStreamsModal() {
                             id="domain_auto_membership"
                             type="checkbox" 
                             v-model="tempDomainPolicy.autoMembership"
-                            class="rounded text-[#6366f1] focus:ring-[#6366f1] border-gray-300 w-4 h-4 cursor-pointer"
+                            class="rounded text-[#2563eb] focus:ring-[#2563eb] border-gray-300 w-4 h-4 cursor-pointer"
                         />
                     </div>
                 </div>
 
                 <div class="flex justify-end gap-2 mt-6 border-t border-gray-100 pt-4">
                     <button class="h-9 px-4 border border-[#d1d5db] rounded-md text-xs font-semibold text-[#374151] hover:bg-[#f9fafb] transition-colors" @click="showDomainPolicyModal = false">Cancel</button>
-                    <button class="h-9 px-4 bg-[#6366f1] text-white rounded-md text-xs font-semibold hover:bg-[#4f46e5] transition-colors" @click="submitDomainPolicy">Save Changes</button>
+                    <button class="h-9 px-4 bg-[#2563eb] text-white rounded-md text-xs font-semibold hover:bg-[#1d4ed8] transition-colors" @click="submitDomainPolicy">Save Changes</button>
                 </div>
             </div>
         </div>
@@ -476,7 +476,7 @@ function openLogStreamsModal() {
                             id="org_sso_domain"
                             type="checkbox" 
                             v-model="tempOrgPolicy.ssoDomainRequired"
-                            class="rounded text-[#6366f1] focus:ring-[#6366f1] border-gray-300 w-4 h-4 cursor-pointer"
+                            class="rounded text-[#2563eb] focus:ring-[#2563eb] border-gray-300 w-4 h-4 cursor-pointer"
                         />
                     </div>
 
@@ -489,7 +489,7 @@ function openLogStreamsModal() {
                             id="org_sso_guest"
                             type="checkbox" 
                             v-model="tempOrgPolicy.ssoGuestRequired"
-                            class="rounded text-[#6366f1] focus:ring-[#6366f1] border-gray-300 w-4 h-4 cursor-pointer"
+                            class="rounded text-[#2563eb] focus:ring-[#2563eb] border-gray-300 w-4 h-4 cursor-pointer"
                         />
                     </div>
 
@@ -502,14 +502,14 @@ function openLogStreamsModal() {
                             id="org_mfa_required"
                             type="checkbox" 
                             v-model="tempOrgPolicy.orgMfaRequired"
-                            class="rounded text-[#6366f1] focus:ring-[#6366f1] border-gray-300 w-4 h-4 cursor-pointer"
+                            class="rounded text-[#2563eb] focus:ring-[#2563eb] border-gray-300 w-4 h-4 cursor-pointer"
                         />
                     </div>
                 </div>
 
                 <div class="flex justify-end gap-2 mt-6 border-t border-gray-100 pt-4">
                     <button class="h-9 px-4 border border-[#d1d5db] rounded-md text-xs font-semibold text-[#374151] hover:bg-[#f9fafb] transition-colors" @click="showOrgPolicyModal = false">Cancel</button>
-                    <button class="h-9 px-4 bg-[#6366f1] text-white rounded-md text-xs font-semibold hover:bg-[#4f46e5] transition-colors" @click="submitOrgPolicy">Save Changes</button>
+                    <button class="h-9 px-4 bg-[#2563eb] text-white rounded-md text-xs font-semibold hover:bg-[#1d4ed8] transition-colors" @click="submitOrgPolicy">Save Changes</button>
                 </div>
             </div>
         </div>
@@ -526,7 +526,7 @@ function openLogStreamsModal() {
                         <select 
                             id="directory_provider"
                             v-model="tempDirSync.provider"
-                            class="w-full h-9 px-2 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#6366f1] text-[#111827]"
+                            class="w-full h-9 px-2 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] text-[#111827]"
                         >
                             <option value="">Select a provider...</option>
                             <option v-for="prov in availableProviders" :key="prov" :value="prov">{{ prov }}</option>
@@ -540,14 +540,14 @@ function openLogStreamsModal() {
                             v-model="tempDirSync.directoryName"
                             type="text"
                             placeholder="e.g. Okta Main Directory"
-                            class="w-full h-9 px-3 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#6366f1] text-[#111827]"
+                            class="w-full h-9 px-3 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] text-[#111827]"
                         />
                     </div>
                 </div>
 
                 <div class="flex justify-end gap-2 mt-6">
                     <button class="h-9 px-4 border border-[#d1d5db] rounded-md text-xs font-semibold text-[#374151] hover:bg-[#f9fafb] transition-colors" @click="showDirSyncModal = false">Cancel</button>
-                    <button class="h-9 px-4 bg-[#6366f1] text-white rounded-md text-xs font-semibold hover:bg-[#4f46e5] transition-colors" @click="submitDirSync">Save Config</button>
+                    <button class="h-9 px-4 bg-[#2563eb] text-white rounded-md text-xs font-semibold hover:bg-[#1d4ed8] transition-colors" @click="submitDirSync">Save Config</button>
                 </div>
             </div>
         </div>
@@ -567,13 +567,13 @@ function openLogStreamsModal() {
                         id="jit_provisioning"
                         type="checkbox" 
                         v-model="tempJitEnabled"
-                        class="rounded text-[#6366f1] focus:ring-[#6366f1] border-gray-300 w-4 h-4 cursor-pointer"
+                        class="rounded text-[#2563eb] focus:ring-[#2563eb] border-gray-300 w-4 h-4 cursor-pointer"
                     />
                 </div>
 
                 <div class="flex justify-end gap-2 mt-6">
                     <button class="h-9 px-4 border border-[#d1d5db] rounded-md text-xs font-semibold text-[#374151] hover:bg-[#f9fafb] transition-colors" @click="showJitModal = false">Cancel</button>
-                    <button class="h-9 px-4 bg-[#6366f1] text-white rounded-md text-xs font-semibold hover:bg-[#4f46e5] transition-colors" @click="submitJit">Save Config</button>
+                    <button class="h-9 px-4 bg-[#2563eb] text-white rounded-md text-xs font-semibold hover:bg-[#1d4ed8] transition-colors" @click="submitJit">Save Config</button>
                 </div>
             </div>
         </div>
@@ -590,7 +590,7 @@ function openLogStreamsModal() {
                         <select 
                             id="retention_period"
                             v-model="tempAuditRetention"
-                            class="w-full h-9 px-2 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#6366f1] text-[#111827]"
+                            class="w-full h-9 px-2 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] text-[#111827]"
                         >
                             <option value="30 days">30 days (Free tier)</option>
                             <option value="90 days">90 days (Growth)</option>
@@ -602,7 +602,7 @@ function openLogStreamsModal() {
 
                 <div class="flex justify-end gap-2 mt-6">
                     <button class="h-9 px-4 border border-[#d1d5db] rounded-md text-xs font-semibold text-[#374151] hover:bg-[#f9fafb] transition-colors" @click="showAuditLogsModal = false">Cancel</button>
-                    <button class="h-9 px-4 bg-[#6366f1] text-white rounded-md text-xs font-semibold hover:bg-[#4f46e5] transition-colors" @click="submitAuditLogs">Save Config</button>
+                    <button class="h-9 px-4 bg-[#2563eb] text-white rounded-md text-xs font-semibold hover:bg-[#1d4ed8] transition-colors" @click="submitAuditLogs">Save Config</button>
                 </div>
             </div>
         </div>
@@ -619,7 +619,7 @@ function openLogStreamsModal() {
                         <select 
                             id="log_destination"
                             v-model="tempLogStreams.destination"
-                            class="w-full h-9 px-2 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#6366f1] text-[#111827]"
+                            class="w-full h-9 px-2 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] text-[#111827]"
                         >
                             <option value="">Select a platform...</option>
                             <option v-for="dest in availableDestinations" :key="dest" :value="dest">{{ dest }}</option>
@@ -633,14 +633,14 @@ function openLogStreamsModal() {
                             v-model="tempLogStreams.endpointUrl"
                             type="url"
                             placeholder="https://http-intake.logs.datadoghq.com/v1/input"
-                            class="w-full h-9 px-3 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#6366f1] text-[#111827]"
+                            class="w-full h-9 px-3 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] text-[#111827]"
                         />
                     </div>
                 </div>
 
                 <div class="flex justify-end gap-2 mt-6">
                     <button class="h-9 px-4 border border-[#d1d5db] rounded-md text-xs font-semibold text-[#374151] hover:bg-[#f9fafb] transition-colors" @click="showLogStreamsModal = false">Cancel</button>
-                    <button class="h-9 px-4 bg-[#6366f1] text-white rounded-md text-xs font-semibold hover:bg-[#4f46e5] transition-colors" @click="submitLogStreams">Save Stream</button>
+                    <button class="h-9 px-4 bg-[#2563eb] text-white rounded-md text-xs font-semibold hover:bg-[#1d4ed8] transition-colors" @click="submitLogStreams">Save Stream</button>
                 </div>
             </div>
         </div>

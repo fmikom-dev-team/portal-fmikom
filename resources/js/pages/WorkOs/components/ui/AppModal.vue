@@ -18,9 +18,11 @@ const props = withDefaults(
 			| "6xl"
 			| "7xl"
 			| "full";
+		zIndexClass?: string;
 	}>(),
 	{
 		size: "md",
+		zIndexClass: "z-60",
 	},
 );
 
@@ -59,7 +61,7 @@ onUnmounted(() => document.removeEventListener("keydown", handleKeydown));
             <dialog
                 v-if="show"
                 open
-                class="fixed inset-0 z-60 flex items-center justify-center bg-transparent border-0 w-screen h-screen max-w-none max-h-none p-0"
+                :class="['fixed inset-0 flex items-center justify-center bg-transparent border-0 w-screen h-screen max-w-none max-h-none p-0', zIndexClass]"
                 :aria-label="title"
                 @click.self="emit('close')"
             >

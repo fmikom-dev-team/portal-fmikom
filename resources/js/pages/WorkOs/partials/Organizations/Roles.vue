@@ -147,7 +147,7 @@ const availableRoles = computed(() => {
                         v-model="search"
                         type="text"
                         placeholder="Search roles..."
-                        class="w-[280px] h-[34px] pl-8 pr-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa] transition-colors placeholder:text-[#9ca3af] text-[#111827]"
+                        class="w-[280px] h-[34px] pl-8 pr-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] text-[#111827]"
                     />
                 </div>
                 <!-- Role type filter -->
@@ -167,7 +167,7 @@ const availableRoles = computed(() => {
                     Edit priority
                 </button>
                 <button 
-                    class="h-[34px] px-3.5 bg-[#6366f1] text-white rounded-md text-[13px] font-semibold hover:bg-[#4f46e5] transition-colors"
+                    class="h-[34px] px-3.5 bg-[#2563eb] text-white rounded-md text-[13px] font-semibold hover:bg-[#1d4ed8] transition-colors"
                     @click="openAdd"
                 >
                     Add role
@@ -178,6 +178,7 @@ const availableRoles = computed(() => {
         <!-- Table -->
         <div class="rounded-xl overflow-hidden bg-white ring-1 ring-gray-900/[0.04]">
             <table class="w-full text-left whitespace-nowrap">
+                <caption class="sr-only">Associated Roles</caption>
                 <thead>
                     <tr class="bg-[#f9fafb] border-b border-[#e5e7eb]">
                         <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">Name</th>
@@ -219,7 +220,7 @@ const availableRoles = computed(() => {
                                 </span>
                                 
                                 <div class="flex items-center gap-3 relative">
-                                    <span v-if="role.id === orgRoles[0]?.id" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold text-indigo-700 border border-indigo-200 bg-indigo-50">
+                                    <span v-if="role.id === orgRoles[0]?.id" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold text-blue-700 border border-blue-200 bg-blue-50">
                                         Default
                                     </span>
                                     <button 
@@ -275,7 +276,7 @@ const availableRoles = computed(() => {
                         </svg>
                         <span class="text-[13.5px] font-medium text-[#374151]">{{ role.nama || role.name }}</span>
                     </div>
-                    <span v-if="index === 0" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold text-indigo-700 border border-indigo-200 bg-indigo-50">
+                    <span v-if="index === 0" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold text-blue-700 border border-blue-200 bg-blue-50">
                         Default
                     </span>
                 </div>
@@ -289,7 +290,7 @@ const availableRoles = computed(() => {
                     Cancel
                 </button>
                 <button
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#6366f1] hover:bg-[#4f46e5] transition-colors shadow-sm"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors shadow-sm"
                     @click="savePriority"
                 >
                     Save changes
@@ -327,7 +328,7 @@ const availableRoles = computed(() => {
                     Cancel
                 </button>
                 <button
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#6366f1] hover:bg-[#4f46e5] transition-colors shadow-sm relative disabled:opacity-50"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors shadow-sm relative disabled:opacity-50"
                     :disabled="isSubmitting || !selectedRoleId"
                     @click="submitAdd"
                 >

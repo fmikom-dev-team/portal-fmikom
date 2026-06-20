@@ -14,7 +14,9 @@ import { store } from "@/routes/password/confirm";
         title="Confirm your password"
         description="This is a secure area of the application. Please confirm your password before continuing."
     >
-        <Head title="Confirm password" />
+        <Head>
+        <title>Confirm password</title>
+    </Head>
 
         <Form
             v-bind="store.form()"

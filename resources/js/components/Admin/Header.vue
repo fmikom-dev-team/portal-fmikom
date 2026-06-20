@@ -142,9 +142,9 @@ onMounted(() => {
 	document.addEventListener("click", handleOutsideClick);
 	fetchNotifications();
 
-	if (window.Echo) {
+	if (window.Broadcaster) {
 		// 1. Subscribe to shared admin reports channel
-		window.Echo.private("pagi.admin.reports").listen(
+		window.Broadcaster.private("pagi.admin.reports").listen(
 			".PagiReportCreated",
 			// biome-ignore lint/suspicious/noExplicitAny: echo listener payload
 			(e: any) => {
@@ -176,7 +176,7 @@ onMounted(() => {
 		// 2. Subscribe to user-specific private channel for direct notifications
 		const userId = page.props.auth?.user?.id;
 		if (userId) {
-			window.Echo.private(`App.Models.User.${userId}`)
+			window.Broadcaster.private(`App.Models.User.${userId}`)
 				// biome-ignore lint/suspicious/noExplicitAny: echo listener payload
 				.listen(".pagi.notification", (data: any) => {
 					handleIncomingNotif(data);
@@ -192,12 +192,12 @@ onMounted(() => {
 onBeforeUnmount(() => {
 	document.removeEventListener("click", handleOutsideClick);
 	const userId = page.props.auth?.user?.id;
-	if (userId && window.Echo) {
+	if (userId && window.Broadcaster) {
 		try {
-			window.Echo.leave(`App.Models.User.${userId}`);
+			window.Broadcaster.leave(`App.Models.User.${userId}`);
 		} catch (_) {}
 		try {
-			window.Echo.leave("pagi.admin.reports");
+			window.Broadcaster.leave("pagi.admin.reports");
 		} catch (_) {}
 	}
 });
@@ -296,7 +296,7 @@ onBeforeUnmount(() => {
                         {{ user.name?.charAt(0) || 'A' }}
                     </div>
                     <div class="hidden md:block text-left">
-                        <p class="text-[12px] font-bold text-slate-800 dark:text-zinc-100 leading-tight">{{ user.name }}</p>
+                        <p class="text-[12px] font-bold text-slate-800 dark:text-zinc-100 leading-tight uppercase">{{ user.name }}</p>
                         <p class="text-[10px] text-slate-400 dark:text-zinc-500 leading-none mt-0.5">Super Admin</p>
                     </div>
                     <svg class="hidden md:block h-3 w-3 text-slate-400 group-hover:text-slate-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">

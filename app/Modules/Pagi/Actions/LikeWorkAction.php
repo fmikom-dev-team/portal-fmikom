@@ -5,6 +5,7 @@ namespace App\Modules\Pagi\Actions;
 use App\Models\Pagi\PagiWork;
 use App\Models\User;
 use App\Notifications\PagiNotification;
+use Illuminate\Support\Facades\Cache;
 
 class LikeWorkAction
 {
@@ -15,16 +16,8 @@ class LikeWorkAction
     {
         $portfolio = PagiWork::findOrFail($previewId);
 
-        $likes = $portfolio->likes ?? [];
-        $isNowLiked = ! in_array($authUser->id, $likes);
-
-        if ($isNowLiked) {
-            $likes[] = $authUser->id;
-        } else {
-            $likes = array_values(array_filter($likes, fn ($id) => $id !== $authUser->id));
-        }
-
-        $portfolio->update(['likes' => $likes]);
+        $portfolio->likesRelation()->toggle($authUser->id);
+        $isNowLiked = $portfolio->likesRelation()->where('user_id', $authUser->id)->exists();
 
         // Send real-time notification to the owner if liked & is not own project
         if ($isNowLiked && $portfolio->user_id !== $authUser->id) {
@@ -52,9 +45,15 @@ class LikeWorkAction
             }
         }
 
+        // Invalidate public caches since the like count has changed
+        Cache::forget('pagi_feed_projects_raw');
+        for ($i = 1; $i <= 5; $i++) {
+            Cache::forget("pagi_gallery_recommended_page_{$i}");
+        }
+
         return [
             'liked' => $isNowLiked,
-            'likes' => count($likes),
+            'likes' => $portfolio->likesRelation()->count(),
         ];
     }
 }

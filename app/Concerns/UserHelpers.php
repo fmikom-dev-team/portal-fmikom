@@ -6,24 +6,70 @@ use App\Models\Auth\AuthMfa;
 
 trait UserHelpers
 {
+    public function photoUrl(): ?string
+    {
+        $path = $this->foto_path ?? null;
+
+        if (! is_string($path) || trim($path) === '') {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        return asset('storage/'.$path);
+    }
+
+    public function getGlobalRoleSlug(): ?string
+    {
+        if (blank($this->user_type)) {
+            return null;
+        }
+
+        return str_replace('_', '-', (string) $this->user_type);
+    }
+
+    public function hasGlobalRole(string ...$roles): bool
+    {
+        $globalRole = $this->getGlobalRoleSlug();
+
+        if (! $globalRole) {
+            return false;
+        }
+
+        return in_array($globalRole, $roles, true);
+    }
+
+    public function getGlobalRoleLabel(): ?string
+    {
+        $roleSlug = $this->getGlobalRoleSlug();
+
+        if (! $roleSlug) {
+            return null;
+        }
+
+        return str($roleSlug)->replace('-', ' ')->headline()->toString();
+    }
+
     public function isMahasiswa(): bool
     {
-        return $this->user_type === 'mahasiswa';
+        return $this->hasGlobalRole('mahasiswa');
     }
 
     public function isDosen(): bool
     {
-        return $this->user_type === 'dosen';
+        return $this->hasGlobalRole('dosen');
     }
 
     public function isAlumni(): bool
     {
-        return $this->user_type === 'alumni';
+        return $this->hasGlobalRole('alumni');
     }
 
     public function isMitra(): bool
     {
-        return $this->user_type === 'mitra';
+        return $this->hasGlobalRole('mitra');
     }
 
     /** @deprecated gunakan isMitra() */
@@ -34,14 +80,12 @@ trait UserHelpers
 
     public function isAdmin(): bool
     {
-        return ($this->role && $this->role->slug === 'admin') || $this->user_type === 'admin';
+        return $this->hasGlobalRole('admin');
     }
 
     public function isSuperAdmin(): bool
     {
-        return ($this->role && $this->role->slug === 'super-admin') ||
-               $this->user_type === self::USER_TYPE_SUPER_ADMIN ||
-               $this->user_type === 'super_admin'; // backward compat — jangan buat user baru dengan format ini
+        return $this->hasGlobalRole(self::USER_TYPE_SUPER_ADMIN);
     }
 
     public function hasEnabledTwoFactorAuthentication(): bool
@@ -57,16 +101,14 @@ trait UserHelpers
 
     /**
      * Get the resolved reader-friendly role title for settings display.
-     * Prioritas: role_title custom user → fallback ke tipe sistem.
+     * Prioritas: role_title custom user -> fallback ke tipe sistem.
      */
     public function getResolvedRoleTitle(): string
     {
-        // Jika user sudah set role_title custom (headline), gunakan itu
         if (! empty($this->role_title)) {
             return $this->role_title;
         }
 
-        // Fallback ke label berdasarkan user_type
         if ($this->isSuperAdmin()) {
             return 'Super Admin';
         } elseif ($this->isAdmin()) {
@@ -81,6 +123,6 @@ trait UserHelpers
             return 'Mitra';
         }
 
-        return ucfirst($this->user_type ?: 'User');
+        return $this->getGlobalRoleLabel() ?? 'User';
     }
 }

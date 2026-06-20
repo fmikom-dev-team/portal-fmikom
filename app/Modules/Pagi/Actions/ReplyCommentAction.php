@@ -3,6 +3,7 @@
 namespace App\Modules\Pagi\Actions;
 
 use App\Models\Pagi\PagiWork;
+use App\Models\Pagi\PagiWorkComment;
 use App\Models\User;
 use App\Notifications\PagiNotification;
 use Illuminate\Support\Str;
@@ -16,59 +17,42 @@ class ReplyCommentAction
     {
         $portfolio = PagiWork::findOrFail($previewId);
 
-        $comments = $portfolio->comments ?? [];
+        $parentCommentRecord = PagiWorkComment::where('uuid', $commentId)->firstOrFail();
 
-        $newReply = [
-            'id' => uniqid(),
-            'user_id' => $authUser->id,
-            'name' => $authUser->name,
-            'avatar' => $authUser->foto_path
-                ? (str_starts_with($authUser->foto_path, 'http') ? $authUser->foto_path : asset('storage/'.$authUser->foto_path))
-                : null,
-            'body' => strip_tags($body),
-            'created_at' => now()->toISOString(),
-            'time' => 'baru saja',
-            'likes' => [],
-        ];
-
-        $comments = array_map(function ($c) use ($commentId, $newReply) {
-            if ($c['id'] === $commentId) {
-                if (! isset($c['replies']) || ! is_array($c['replies'])) {
-                    $c['replies'] = [];
-                }
-                $c['replies'][] = $newReply;
-            }
-
-            return $c;
-        }, $comments);
-
-        $portfolio->update(['comments' => $comments]);
+        PagiWorkComment::create([
+            'uuid'      => (string) Str::uuid(),
+            'work_id'   => $portfolio->id,
+            'user_id'   => $authUser->id,
+            'parent_id' => $parentCommentRecord->id,
+            'body'      => strip_tags($body),
+        ]);
 
         // Notify target user (replied-to user) or original commenter
-        $targetUserId = $replyToUserId;
-        if (! $targetUserId) {
-            $parentComment = collect($comments)->firstWhere('id', $commentId);
-            if ($parentComment && isset($parentComment['user_id'])) {
-                $targetUserId = $parentComment['user_id'];
-            }
-        }
+        $targetUserId = $replyToUserId ?? $parentCommentRecord->user_id;
 
         if ($targetUserId && $targetUserId !== $authUser->id) {
-            $targetUser = User::find($targetUserId);
+            /** @var User|null $targetUser */
+            $targetUser = User::query()->find($targetUserId);
             if ($targetUser) {
-                $avatar = $authUser->foto_path
-                    ? (str_starts_with($authUser->foto_path, 'http') ? $authUser->foto_path : asset('storage/'.$authUser->foto_path))
-                    : null;
+                $avatar = null;
+                if ($authUser->foto_path) {
+                    $avatar = str_starts_with($authUser->foto_path, 'http')
+                        ? $authUser->foto_path
+                        : asset('storage/' . $authUser->foto_path);
+                }
                 try {
-                    $postOwnerName = $portfolio->user ? ($portfolio->user->pagi_username ?: $portfolio->user->name) : 'owner';
+                    $postOwnerName = 'owner';
+                    if ($portfolio->user) {
+                        $postOwnerName = $portfolio->user->pagi_username ?: $portfolio->user->name;
+                    }
                     $targetUser->notify(new PagiNotification(
                         type: 'reply',
                         title: $authUser->pagi_username ?: $authUser->name,
-                        message: 'membalas komentar Anda di postingan '.$postOwnerName.': "'.Str::limit($body, 30).'"',
+                        message: 'membalas komentar Anda di postingan ' . $postOwnerName . ': "' . Str::limit($body, 30) . '"',
                         avatar: $avatar,
-                        href: '/pagi/profile/'.$portfolio->user_id.'?project='.$portfolio->id,
+                        href: '/pagi/profile/' . $portfolio->user_id . '?project=' . $portfolio->id,
                         extra: [
-                            'sender_id' => $authUser->id,
+                            'sender_id'    => $authUser->id,
                             'portfolio_id' => $portfolio->id,
                         ],
                     ));
@@ -78,6 +62,23 @@ class ReplyCommentAction
             }
         }
 
-        return $comments;
+        // Return fresh comments with full eager-load (avoids ->fresh()->comments N+1)
+        return $this->loadFormattedComments($portfolio->id);
+    }
+
+    /**
+     * Load all comments for a work with full eager-loading, returning formatted array.
+     */
+    private function loadFormattedComments(int $workId): array
+    {
+        $work = PagiWork::with([
+            'commentsRelation' => fn ($q) => $q->whereNull('parent_id'),
+            'commentsRelation.user:id,name,pagi_username,foto_path',
+            'commentsRelation.likesRelation',
+            'commentsRelation.replies.user:id,name,pagi_username,foto_path',
+            'commentsRelation.replies.likesRelation',
+        ])->findOrFail($workId);
+
+        return $work->comments;
     }
 }

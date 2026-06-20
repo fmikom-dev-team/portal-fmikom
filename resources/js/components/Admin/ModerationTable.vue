@@ -78,6 +78,7 @@ const _statusLabel = {
         <!-- Table with horizontal scroll on mobile -->
         <div class="overflow-x-auto">
             <table class="w-full min-w-[600px]">
+                <caption class="sr-only">Tabel Moderasi Konten</caption>
                 <thead>
                     <tr class="border-b border-slate-100 dark:border-zinc-800">
                         <th class="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500">Konten</th>

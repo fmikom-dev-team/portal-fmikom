@@ -82,7 +82,6 @@ const blocks = computed(() => parsedData.value?.blocks ?? []);
 </template>
 
 <style>
-@import url('https://fonts.bunny.net/css?family=inter:400,400i,500,600,700,800|plus-jakarta-sans:600,700,800&display=swap');
 
 .editorjs-renderer {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;

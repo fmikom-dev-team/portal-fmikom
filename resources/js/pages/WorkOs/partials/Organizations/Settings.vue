@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router } from "@inertiajs/vue3";
-import { reactive, ref } from "vue";
+import { reactive, ref, watch } from "vue";
 
 const props = defineProps<{ organization?: any }>();
 
@@ -13,15 +13,51 @@ const form = reactive({
 	description: props.organization?.description || "",
 });
 
+const logoFile = ref<File | null>(null);
+const logoPreview = ref<string | null>(props.organization?.logo_path || null);
+const fileInputRef = ref<HTMLInputElement | null>(null);
+
+function handleLogoChange(e: Event) {
+	const files = (e.target as HTMLInputElement).files;
+	if (files && files.length > 0) {
+		const file = files[0];
+		logoFile.value = file;
+		logoPreview.value = URL.createObjectURL(file);
+	}
+}
+
+watch(
+	() => props.organization,
+	(newVal) => {
+		if (newVal) {
+			form.name = newVal.name || "";
+			form.description = newVal.description || "";
+			logoPreview.value = newVal.logo_path || null;
+		}
+	},
+	{ deep: true },
+);
+
 function submitEdit() {
 	if (!props.organization) return;
 	isSubmitting.value = true;
-	router.patch(
+
+	const data: any = {
+		_method: "PATCH",
+		name: form.name,
+		description: form.description,
+	};
+	if (logoFile.value) {
+		data.logo_file = logoFile.value;
+	}
+
+	router.post(
 		`/workos/modules/${props.organization.id}`,
-		{ name: form.name, description: form.description },
+		data,
 		{
 			onSuccess: () => {
 				showEditModal.value = false;
+				logoFile.value = null;
 			},
 			onFinish: () => {
 				isSubmitting.value = false;
@@ -204,6 +240,7 @@ function saveRoleAssignment() {
             <!-- Domain table -->
             <div class="rounded-xl overflow-hidden ring-1 ring-gray-900/[0.04]">
                 <table class="w-full text-left">
+                    <caption class="sr-only">Domains</caption>
                     <thead>
                         <tr class="bg-[#f9fafb] border-b border-[#e5e7eb]">
                             <th class="px-4 py-2.5 text-[12px] font-semibold text-[#111827]">Domain</th>
@@ -229,7 +266,7 @@ function saveRoleAssignment() {
                                 <button 
                                     v-if="dom.status === 'Pending verification'"
                                     @click="verifyDomain(dom.id)"
-                                    class="text-xs text-indigo-600 hover:text-indigo-800 font-medium px-2 py-1 bg-indigo-50 hover:bg-indigo-100 rounded transition-colors"
+                                    class="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 bg-blue-50 hover:bg-blue-100 rounded transition-colors"
                                     title="Verify domain now"
                                 >
                                     Verify
@@ -283,6 +320,7 @@ function saveRoleAssignment() {
                 <!-- Metadata List -->
                 <div v-if="metadataPairs.length" class="border border-[#e5e7eb] rounded-md mb-4 overflow-hidden">
                     <table class="w-full text-left text-xs">
+                        <caption class="sr-only">Metadata</caption>
                         <thead>
                             <tr class="bg-[#f9fafb] border-b border-[#e5e7eb] text-gray-500 font-medium">
                                 <th class="px-3 py-2">Key</th>
@@ -291,7 +329,7 @@ function saveRoleAssignment() {
                         </thead>
                         <tbody class="divide-y divide-[#e5e7eb]">
                             <tr v-for="pair in metadataPairs" :key="pair.key" class="hover:bg-[#f9fafb]">
-                                <td class="px-3 py-2 font-mono text-indigo-600 font-medium">{{ pair.key }}</td>
+                                <td class="px-3 py-2 font-mono text-blue-600 font-medium">{{ pair.key }}</td>
                                 <td class="px-3 py-2 font-mono text-gray-800">{{ pair.value }}</td>
                             </tr>
                         </tbody>
@@ -322,7 +360,7 @@ function saveRoleAssignment() {
                             <div v-for="mapping in roleMappings" :key="mapping.id" class="flex items-center gap-1.5 text-gray-700">
                                 <span class="px-1.5 py-0.5 font-mono bg-gray-200 rounded text-gray-800 text-[10px]">{{ mapping.group }}</span>
                                 <span>mapped to</span>
-                                <strong class="text-indigo-600">{{ mapping.role }}</strong>
+                                <strong class="text-blue-600">{{ mapping.role }}</strong>
                             </div>
                         </div>
 
@@ -384,12 +422,12 @@ function saveRoleAssignment() {
                             type="text" 
                             required
                             placeholder="e.g. unugha.ac.id"
-                            class="w-full h-9 px-3 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#6366f1] text-[#111827]"
+                            class="w-full h-9 px-3 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] text-[#111827]"
                         />
                     </div>
                     <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-gray-100">
                         <button type="button" class="h-9 px-4 border border-[#d1d5db] rounded-md text-xs font-semibold text-[#374151] hover:bg-[#f9fafb] transition-colors" @click="showAddDomainModal = false">Cancel</button>
-                        <button type="submit" class="h-9 px-4 bg-[#6366f1] text-white rounded-md text-xs font-semibold hover:bg-[#4f46e5] transition-colors">Register Domain</button>
+                        <button type="submit" class="h-9 px-4 bg-[#2563eb] text-white rounded-md text-xs font-semibold hover:bg-[#1d4ed8] transition-colors">Register Domain</button>
                     </div>
                 </form>
             </div>
@@ -437,16 +475,16 @@ function saveRoleAssignment() {
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block text-[10px] font-semibold text-[#6b7280] mb-1">Name</label>
-                            <input v-model="newContactName" type="text" placeholder="e.g. Andi" class="w-full h-8 px-2 text-xs border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#6366f1]"/>
+                            <input v-model="newContactName" type="text" placeholder="e.g. Andi" class="w-full h-8 px-2 text-xs border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb]"/>
                         </div>
                         <div>
                             <label class="block text-[10px] font-semibold text-[#6b7280] mb-1">Email</label>
-                            <input v-model="newContactEmail" type="email" placeholder="andi@org.com" class="w-full h-8 px-2 text-xs border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#6366f1]"/>
+                            <input v-model="newContactEmail" type="email" placeholder="andi@org.com" class="w-full h-8 px-2 text-xs border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb]"/>
                         </div>
                     </div>
                     <button 
                         @click="addItContact"
-                        class="w-full h-8 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-md text-xs font-semibold transition-colors mt-2"
+                        class="w-full h-8 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md text-xs font-semibold transition-colors mt-2"
                     >
                         Add Contact
                     </button>
@@ -471,14 +509,14 @@ function saveRoleAssignment() {
                             v-model="pair.key" 
                             type="text" 
                             placeholder="Key" 
-                            class="flex-1 h-8 px-2.5 text-xs font-mono border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500"
+                            class="flex-1 h-8 px-2.5 text-xs font-mono border border-gray-300 rounded-md focus:outline-none focus:border-[#2563eb]"
                         />
                         <span class="text-gray-400">:</span>
                         <input 
                             v-model="pair.value" 
                             type="text" 
                             placeholder="Value" 
-                            class="flex-1 h-8 px-2.5 text-xs font-mono border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500"
+                            class="flex-1 h-8 px-2.5 text-xs font-mono border border-gray-300 rounded-md focus:outline-none focus:border-[#2563eb]"
                         />
                         <button @click="removeMetadataRow(idx)" class="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded">
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -491,13 +529,13 @@ function saveRoleAssignment() {
                 <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
                     <button 
                         @click="addMetadataRow" 
-                        class="h-8 px-3 border border-indigo-200 text-indigo-600 hover:bg-indigo-50 rounded-md text-xs font-semibold transition-colors"
+                        class="h-8 px-3 border border-blue-200 text-blue-600 hover:bg-blue-50 rounded-md text-xs font-semibold transition-colors"
                     >
                         Add row
                     </button>
                     <div class="flex gap-2">
                         <button class="h-9 px-4 border border-[#d1d5db] rounded-md text-xs font-semibold text-[#374151] hover:bg-[#f9fafb] transition-colors" @click="showMetadataModal = false">Cancel</button>
-                        <button class="h-9 px-4 bg-[#6366f1] text-white rounded-md text-xs font-semibold hover:bg-[#4f46e5] transition-colors" @click="saveMetadata">Save changes</button>
+                        <button class="h-9 px-4 bg-[#2563eb] text-white rounded-md text-xs font-semibold hover:bg-[#1d4ed8] transition-colors" @click="saveMetadata">Save changes</button>
                     </div>
                 </div>
             </div>
@@ -516,12 +554,12 @@ function saveRoleAssignment() {
                             v-model="mapping.group" 
                             type="text" 
                             placeholder="IdP Group Name (e.g. Admins)" 
-                            class="flex-1 h-8 px-2.5 text-xs border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 text-gray-800"
+                            class="flex-1 h-8 px-2.5 text-xs border border-gray-300 rounded-md focus:outline-none focus:border-[#2563eb] text-gray-800"
                         />
                         <span class="text-gray-400">➔</span>
                         <select 
                             v-model="mapping.role"
-                            class="w-36 h-8 px-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 text-gray-800"
+                            class="w-36 h-8 px-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:border-[#2563eb] text-gray-800"
                         >
                             <option value="Admin">Admin</option>
                             <option value="Member">Member</option>
@@ -537,13 +575,13 @@ function saveRoleAssignment() {
                 <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
                     <button 
                         @click="addMappingRow" 
-                        class="h-8 px-3 border border-indigo-200 text-indigo-600 hover:bg-indigo-50 rounded-md text-xs font-semibold transition-colors"
+                        class="h-8 px-3 border border-blue-200 text-blue-600 hover:bg-blue-50 rounded-md text-xs font-semibold transition-colors"
                     >
                         Add mapping
                     </button>
                     <div class="flex gap-2">
                         <button class="h-9 px-4 border border-[#d1d5db] rounded-md text-xs font-semibold text-[#374151] hover:bg-[#f9fafb] transition-colors" @click="showRoleAssignmentModal = false">Cancel</button>
-                        <button class="h-9 px-4 bg-[#6366f1] text-white rounded-md text-xs font-semibold hover:bg-[#4f46e5] transition-colors" @click="saveRoleAssignment">Save changes</button>
+                        <button class="h-9 px-4 bg-[#2563eb] text-white rounded-md text-xs font-semibold hover:bg-[#1d4ed8] transition-colors" @click="saveRoleAssignment">Save changes</button>
                     </div>
                 </div>
             </div>
@@ -556,16 +594,27 @@ function saveRoleAssignment() {
                 <div class="space-y-4">
                     <div>
                         <label class="block text-[12px] font-semibold text-[#374151] mb-1">Name</label>
-                        <input v-model="form.name" type="text" class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#6366f1] focus:ring-1 focus:ring-[#6366f1]"/>
+                        <input v-model="form.name" type="text" class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb]"/>
                     </div>
                     <div>
                         <label class="block text-[12px] font-semibold text-[#374151] mb-1">Description</label>
-                        <input v-model="form.description" type="text" class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#6366f1] focus:ring-1 focus:ring-[#6366f1]"/>
+                        <input v-model="form.description" type="text" class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb]"/>
+                    </div>
+                    <div>
+                        <label class="block text-[12px] font-semibold text-[#374151] mb-1.5">Module Logo / Image</label>
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-xs font-semibold overflow-hidden shrink-0">
+                                <img v-if="logoPreview" :src="logoPreview" alt="Logo Module" class="w-full h-full object-cover" />
+                                <span v-else class="text-gray-400">No logo</span>
+                            </div>
+                            <input type="file" ref="fileInputRef" accept="image/*" class="hidden" @change="handleLogoChange" />
+                            <button type="button" @click="fileInputRef?.click()" class="h-8 px-3 border border-gray-300 rounded-md text-xs font-semibold hover:bg-gray-50 text-gray-700">Choose Image</button>
+                        </div>
                     </div>
                 </div>
                 <div class="flex justify-end gap-2 mt-5">
                     <button class="h-9 px-4 border border-[#d1d5db] rounded-md text-[13px] text-[#374151] hover:bg-[#f9fafb] transition-colors" @click="showEditModal = false">Cancel</button>
-                    <button class="h-9 px-4 bg-[#6366f1] text-white rounded-md text-[13px] font-semibold hover:bg-[#4f46e5] transition-colors disabled:opacity-50" :disabled="isSubmitting" @click="submitEdit">Save changes</button>
+                    <button class="h-9 px-4 bg-[#2563eb] text-white rounded-md text-[13px] font-semibold hover:bg-[#1d4ed8] transition-colors disabled:opacity-50" :disabled="isSubmitting" @click="submitEdit">Save changes</button>
                 </div>
             </div>
         </div>

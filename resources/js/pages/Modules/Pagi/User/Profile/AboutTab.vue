@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Link } from "@inertiajs/vue3";
 import {
 	Camera,
 	Github,
@@ -12,19 +13,28 @@ import {
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import OptimizedImage from "../ui/OptimizedImage.vue";
 
-const props = defineProps<{
-	profileUser: any;
-	user: any;
-	isOwnProfile: boolean;
-	isFollowing: boolean;
-	isMessageEnabled: boolean;
-	dynamicFollowersCount: number;
-	skills: any[];
-	timezone: string | null;
-	timezoneExtended: string | null;
-	languages: Array<{ language: string; proficiency: string }>;
-	isLoading?: boolean;
-}>();
+const props = withDefaults(
+	defineProps<{
+		profileUser: any;
+		user: any;
+		isOwnProfile: boolean;
+		isFollowing: boolean;
+		isMessageEnabled: boolean;
+		dynamicFollowersCount: number;
+		dynamicFollowingCount?: number;
+		skills: any[];
+		timezone: string | null;
+		timezoneExtended: string | null;
+		languages: Array<{ language: string; proficiency: string }>;
+		isLoading?: boolean;
+		isStudent?: boolean;
+	}>(),
+	{
+		isLoading: false,
+		isStudent: true,
+		dynamicFollowingCount: 0,
+	},
+);
 
 const emit = defineEmits<{
 	(e: "update-bio", bio: string): void;
@@ -292,15 +302,29 @@ onUnmounted(() => {
 					</div>
 
 					<!-- Follower Row -->
-					<div class="flex items-center gap-2 mb-3 text-xs text-slate-550 dark:text-slate-400 font-semibold">
-						<img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Maruf" class="w-5 h-5 rounded-full border border-slate-200 dark:border-slate-800" alt="Maruf Avatar" />
-						<span>Followed by Maruf M</span>
+					<div v-if="profileUser?.followed_by_user" class="flex items-center gap-2 mb-3 text-xs text-slate-550 dark:text-slate-400 font-semibold">
+						<Link :href="profileUser.followed_by_user.pagi_username ? '/pagi/' + profileUser.followed_by_user.pagi_username : '/pagi/profile/' + profileUser.followed_by_user.id">
+							<img 
+								:src="profileUser.followed_by_user.foto_path || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileUser.followed_by_user.name)}&background=random`" 
+								class="w-5 h-5 rounded-full border border-slate-200 dark:border-slate-800 object-cover cursor-pointer" 
+								alt="Follower Avatar" 
+							/>
+						</Link>
+						<span>
+							Followed by 
+							<Link 
+								:href="profileUser.followed_by_user.pagi_username ? '/pagi/' + profileUser.followed_by_user.pagi_username : '/pagi/profile/' + profileUser.followed_by_user.id" 
+								class="hover:text-indigo-600 font-bold transition-colors cursor-pointer"
+							>
+								{{ profileUser.followed_by_user.name }}
+							</Link>
+						</span>
 					</div>
 
 					<!-- Following/Followers Count -->
 					<div class="text-xs text-slate-505 dark:text-slate-400 font-bold mb-6 flex gap-3">
-						<span><strong>2</strong> following</span>
-						<span><strong>{{ dynamicFollowersCount }}</strong> follower{{ dynamicFollowersCount > 1 ? 's' : '' }}</span>
+						<span><strong>{{ dynamicFollowingCount }}</strong> following</span>
+						<span><strong>{{ dynamicFollowersCount }}</strong> follower{{ dynamicFollowersCount !== 1 ? 's' : '' }}</span>
 					</div>
 
 					<!-- Actions for public visitors -->
@@ -376,11 +400,12 @@ onUnmounted(() => {
 					</div>
 				</template>
 
-				<!-- Divider Line -->
-				<hr class="w-full border-slate-200/60 dark:border-slate-800/80 mb-6" />
+				<!-- Divider Line & Skills Section -->
+				<template v-if="isStudent">
+					<hr class="w-full border-slate-200/60 dark:border-slate-800/80 mb-6" />
 
-				<!-- Dynamic Skills Section (Percentage Bars) -->
-				<div class="w-full space-y-5">
+					<!-- Dynamic Skills Section (Percentage Bars) -->
+					<div class="w-full space-y-5">
 					<div class="flex items-center justify-between">
 						<h3 class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">Skills</h3>
 						<button 
@@ -523,6 +548,7 @@ onUnmounted(() => {
 						</template>
 					</div>
 				</div>
+			</template>
 			</div>
 		</div>
 

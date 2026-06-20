@@ -82,7 +82,7 @@ function handleClose() {
                         class="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-zinc-900/50 text-left transition-colors cursor-pointer"
                     >
                         <div class="h-9 w-9 rounded-full border border-slate-200 dark:border-zinc-700 overflow-hidden bg-slate-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
-                            <img v-if="contact.foto_path" :src="avatarUrl(contact.foto_path)!" class="w-full h-full object-cover" />
+                            <img v-if="contact.foto_path" :src="avatarUrl(contact.foto_path)!" :alt="contact.name" class="w-full h-full object-cover" />
                             <span v-else class="text-xs font-black text-slate-500 dark:text-zinc-400">{{ contact.name.charAt(0) }}</span>
                         </div>
                         <span class="text-xs font-bold text-slate-800 dark:text-zinc-200 truncate">{{ contact.name }}</span>

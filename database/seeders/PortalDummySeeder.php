@@ -82,9 +82,9 @@ class PortalDummySeeder extends Seeder // NOSONAR
                 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2670&auto=format&fit=crop',
             ]),
             'partners' => json_encode([
-                ['name' => 'Google', 'logo' => 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg'],
-                ['name' => 'Microsoft', 'logo' => 'https://upload.wikimedia.org/wikipedia/commons/9/96/Microsoft_logo_%282012%29.svg'],
-                ['name' => 'IBM', 'logo' => 'https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg'],
+                ['name' => 'Google', 'logo' => '/images/partners/google.svg'],
+                ['name' => 'Microsoft', 'logo' => '/images/partners/microsoft.svg'],
+                ['name' => 'IBM', 'logo' => '/images/partners/ibm.svg'],
             ]),
             'benefits_title' => 'Mengapa Memilih Portal FMIKOM?',
             'benefits_subtitle' => 'Kami membawa standarisasi aplikasi industri (SaaS) ke lingkungan kampus. Transparan, terpusat, dan mudah diakses.',
@@ -835,7 +835,7 @@ HTML
     </div>
     <div class="p-5 bg-slate-50 dark:bg-slate-800 rounded-xl">
         <h4 class="font-bold text-slate-800 dark:text-white m-0 text-sm">Bagaimana jika saya kehilangan berkas surat yang sudah ditandatangani Dekan?</h4>
-        <p class="text-sm text-slate-600 dark:text-slate-400 mt-2 mb-0">Anda dapat mengajukan permohonan melalui sistem <strong>WIMS</strong> pada modul layanan surat. Surat yang disetujui akan ditandatangani secara elektronik (TTE) dan dapat langsung diunduh.</p>
+        <p class="text-sm text-slate-600 dark:text-slate-400 mt-2 mb-0">Anda dapat mengakses <strong>WIMS</strong> untuk pengelolaan PKL dan magang, termasuk pendaftaran, monitoring, hingga laporan akhir.</p>
     </div>
 </div>
 HTML
@@ -853,7 +853,7 @@ HTML
             'media' => PortalMenu::create(['title' => self::CATEGORY_MEDIA, 'url' => null, 'order' => 4]),
             'layanan' => PortalMenu::create(['title' => 'Layanan', 'url' => null, 'order' => 5]),
             'pagi' => PortalMenu::create(['title' => 'PAGI (Portofolio)', 'url' => '/pagi', 'order' => 6]),
-            'wims' => PortalMenu::create(['title' => 'WIMS (Layanan Surat)', 'url' => '/wims', 'order' => 7]),
+            'wims' => PortalMenu::create(['title' => 'WIMS (Magang & PKL)', 'url' => '/wims', 'order' => 7]),
             'fast' => PortalMenu::create(['title' => 'FAST (Tracer Alumni)', 'url' => '/fast', 'order' => 8]),
         ];
 

@@ -26,7 +26,15 @@ class PortalCategoryController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        PortalCategory::create($validated);
+        $category = PortalCategory::create($validated);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'category' => $category,
+                'message' => 'Category created successfully!',
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Category created successfully!');
     }

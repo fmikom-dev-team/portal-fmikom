@@ -320,6 +320,22 @@ function confirmDelete() {
 	modal.deleteConfirm = true;
 }
 
+function approveDeletion() {
+	confirmDelete();
+}
+
+function rejectDeletion() {
+	if (!props.user) return;
+	if (confirm("Apakah Anda yakin ingin menolak pengajuan penghapusan akun ini?")) {
+		router.post(`/workos/users/${props.user.id}/reject-deletion`, {}, {
+			onSuccess: () => {
+				toast("Pengajuan penghapusan ditolak.", "success");
+			},
+			onError: () => toast("Gagal menolak pengajuan.", "error"),
+		});
+	}
+}
+
 function deleteUser() {
 	if (!props.user) return;
 
@@ -570,36 +586,11 @@ function sessionStatusTextColor(session: any) {
 }
 
 function getSessionOrganization(session: any) {
-	const defaultModules = ["TRACE", "PAGI"];
-	let modules = defaultModules;
-	if (props.user?.module_roles && props.user.module_roles.length > 0) {
-		const userMods = Array.from(
-			new Set(
-				props.user.module_roles
-					.map((mr: any) => mr.module_code)
-					.filter(Boolean),
-			),
-		);
-		if (userMods.length > 0) {
-			modules = userMods as string[];
-		}
-	}
-	let hash = 0;
-	const str = session.id || "";
-	for (let i = 0; i < str.length; i++) {
-		hash = (str.codePointAt(i) || 0) + ((hash << 5) - hash);
-	}
-	const index = Math.abs(hash) % modules.length;
-	return modules[index];
+	return session.organization || "Portal";
 }
 
 function getSessionAuthentication(session: any) {
-	let hash = 0;
-	const str = session.id || "";
-	for (let i = 0; i < str.length; i++) {
-		hash = (str.codePointAt(i) || 0) + ((hash << 5) - hash);
-	}
-	return hash % 2 === 0 ? "Password" : "Google OAuth";
+	return session.authentication || "Password";
 }
 
 function formatSessionDate(dateStr: string | null | undefined): string {
@@ -705,6 +696,38 @@ const tabs = [
             <a href="#" class="text-[#2563EB] hover:underline" @click.prevent="emit('back')">Users</a>
             <span class="text-[#d1d5db]">/</span>
             <span class="text-[#6b7280]">User details</span>
+        </div>
+
+        <!-- Deletion Request Banner -->
+        <div v-if="user?.deletion_requested_at" class="mb-6 rounded-xl border border-amber-200 bg-amber-50/70 p-5 dark:border-amber-900/40 dark:bg-amber-950/10 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex gap-3">
+                <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                    <svg class="w-5 h-5 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <div>
+                    <h4 class="text-sm font-bold text-amber-900 dark:text-amber-200">Permintaan Penghapusan Akun</h4>
+                    <p class="text-[13px] text-amber-700 dark:text-amber-300 mt-0.5 leading-relaxed">
+                        Pengguna ini telah mengajukan penghapusan akun pada <span class="font-semibold">{{ formatSessionDate(user.deletion_requested_at) }}</span>. 
+                        Silakan tinjau dan setujui atau tolak pengajuan ini.
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <button 
+                    @click="rejectDeletion"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-xs"
+                >
+                    Tolak Pengajuan
+                </button>
+                <button 
+                    @click="approveDeletion"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-red-650 hover:bg-red-700 transition-colors shadow-xs"
+                >
+                    Setujui Penghapusan
+                </button>
+            </div>
         </div>
 
         <!-- Header -->
@@ -998,7 +1021,7 @@ const tabs = [
                         <div class="px-6 py-5">
                             <h3 class="text-[14px] font-semibold text-[#111827] mb-1">Delete user</h3>
                             <div class="text-[13px] text-[#6b7280]">
-                                <p v-if="user?.user_type === 'super_admin'" class="text-indigo-700 font-semibold flex items-start gap-2 mb-1 bg-indigo-50 border border-indigo-200 rounded-lg p-3 leading-normal">
+                                <p v-if="user?.user_type === 'super_admin'" class="text-blue-700 font-semibold flex items-start gap-2 mb-1 bg-blue-50 border border-blue-200 rounded-lg p-3 leading-normal">
                                     <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                     </svg>
@@ -1056,7 +1079,7 @@ const tabs = [
                     </div>
                     
                     <div v-if="isEmailsLoading" class="p-12 flex items-center justify-center">
-                        <svg class="animate-spin h-6 w-6 text-[#6366f1]" fill="none" viewBox="0 0 24 24">
+                        <svg class="animate-spin h-6 w-6 text-[#2563eb]" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -1071,6 +1094,7 @@ const tabs = [
                     </div>
                     <div v-else class="overflow-x-auto">
                         <table class="w-full text-left text-[13px] border-collapse whitespace-nowrap">
+                            <caption class="sr-only">Email History</caption>
                             <thead>
                                 <tr class="bg-gray-50/75 border-b border-gray-200/80">
                                     <th class="px-6 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Status</th>
@@ -1141,7 +1165,7 @@ const tabs = [
 
                 <div class="bg-white border border-[#e5e7eb] rounded-xl overflow-hidden shadow-(--wos-shadow-card)">
                     <div v-if="isSessionsLoading" class="p-12 flex items-center justify-center">
-                        <svg class="animate-spin h-6 w-6 text-[#6366f1]" fill="none" viewBox="0 0 24 24">
+                        <svg class="animate-spin h-6 w-6 text-[#2563eb]" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -1156,6 +1180,7 @@ const tabs = [
                     </div>
                     <div v-else class="overflow-x-auto">
                         <table class="w-full text-left text-[13px] border-collapse whitespace-nowrap">
+                            <caption class="sr-only">User Sessions</caption>
                             <thead>
                                 <tr class="bg-gray-50/75 border-b border-gray-200/80">
                                     <th class="px-6 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Status</th>
@@ -1198,8 +1223,8 @@ const tabs = [
                                         {{ getSessionAuthentication(session) }}
                                     </td>
                                     <!-- Application -->
-                                    <td class="px-6 py-3.5 align-middle text-gray-400">
-                                        —
+                                    <td class="px-6 py-3.5 align-middle text-gray-700 font-medium">
+                                        {{ session.application || 'Portal FMIKOM' }}
                                     </td>
                                     <!-- Chevron -->
                                     <td class="px-6 py-3.5 align-middle text-right">
@@ -1226,7 +1251,7 @@ const tabs = [
                         id="edit_full_name"
                         v-model="editForm.name"
                         type="text"
-                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa] transition-colors text-[#111827]"
+                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors text-[#111827]"
                     />
                 </div>
                 <div>
@@ -1235,7 +1260,7 @@ const tabs = [
                         id="edit_email"
                         v-model="editForm.email"
                         type="email"
-                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa] transition-colors text-[#111827]"
+                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors text-[#111827]"
                     />
                 </div>
                 <div>
@@ -1243,7 +1268,7 @@ const tabs = [
                     <select
                         id="edit_user_type"
                         v-model="editForm.user_type"
-                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa] transition-colors text-[#111827] bg-white"
+                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors text-[#111827] bg-white"
                     >
                         <option value="mahasiswa">Mahasiswa</option>
                         <option value="alumni">Alumni</option>
@@ -1260,7 +1285,7 @@ const tabs = [
                         v-model="editForm.nomor_induk"
                         type="text"
                         placeholder="e.g. NIP/NIM/NIK"
-                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa] transition-colors text-[#111827]"
+                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors text-[#111827]"
                     />
                 </div>
                 <div>
@@ -1270,7 +1295,7 @@ const tabs = [
                         v-model="editForm.location"
                         type="text"
                         placeholder="e.g. Jl. Raya No. 123"
-                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa] transition-colors text-[#111827]"
+                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors text-[#111827]"
                     />
                 </div>
                 <div>
@@ -1279,7 +1304,7 @@ const tabs = [
                         id="edit_tanggal_lahir"
                         v-model="editForm.tanggal_lahir"
                         type="date"
-                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa] transition-colors text-[#111827] bg-white"
+                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors text-[#111827] bg-white"
                     />
                 </div>
                 <div>
@@ -1289,7 +1314,7 @@ const tabs = [
                             type="checkbox"
                             v-model="editForm.is_active"
                             id="is_active_check"
-                            class="w-4 h-4 rounded border-[#d1d5db] text-[#6366f1] focus:ring-[#6366f1]"
+                            class="w-4 h-4 rounded border-[#d1d5db] text-[#2563eb] focus:ring-[#2563eb]"
                         />
                         <label for="is_active_check" class="text-[13px] text-[#4b5563]">Allow user to sign in</label>
                     </div>
@@ -1305,7 +1330,7 @@ const tabs = [
                 </button>
                 <button
                     :disabled="isEditing || !editForm.name || !editForm.email"
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#6366f1] hover:bg-[#4f46e5] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
                     @click="submitEditDetails"
                 >
                     <svg v-if="isEditing" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -1325,7 +1350,7 @@ const tabs = [
                         id="metadata_editor"
                         v-model="metadataForm.json"
                         rows="8"
-                        class="w-full p-3 text-[12px] font-mono border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa] transition-colors text-[#111827] bg-[#f9fafb]"
+                        class="w-full p-3 text-[12px] font-mono border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors text-[#111827] bg-[#f9fafb]"
                         placeholder='{ "key": "value" }'
                     ></textarea>
                     <p v-if="metadataError" class="text-[12px] text-[#ef4444] mt-1">{{ metadataError }}</p>
@@ -1341,7 +1366,7 @@ const tabs = [
                 </button>
                 <button
                     :disabled="isEditingMetadata"
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#6366f1] hover:bg-[#4f46e5] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
                     @click="submitEditMetadata"
                 >
                     <svg v-if="isEditingMetadata" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -1361,7 +1386,7 @@ const tabs = [
                         id="assign_module_id"
                         v-model="assignForm.module_id"
                         :disabled="isModuleSelectLocked"
-                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa] transition-colors text-[#111827] bg-white disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
+                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors text-[#111827] bg-white disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
                     >
                         <option value="" disabled>Select a module</option>
                         <option v-for="m in modules || []" :key="m.id" :value="m.id">{{ m.name }} ({{ m.code }})</option>
@@ -1372,7 +1397,7 @@ const tabs = [
                     <select
                         id="assign_role_id"
                         v-model="assignForm.role_id"
-                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#a78bfa] focus:ring-1 focus:ring-[#a78bfa] transition-colors text-[#111827] bg-white"
+                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors text-[#111827] bg-white"
                     >
                         <option value="" disabled>Select a role</option>
                         <option v-for="r in roles || []" :key="r.id" :value="r.id">{{ r.nama }} ({{ r.slug }})</option>
@@ -1383,7 +1408,7 @@ const tabs = [
                 <button class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] border border-[#d1d5db] hover:bg-[#f3f4f6] transition-colors bg-white shadow-sm" @click="modal.assignModule = false">Cancel</button>
                 <button
                     :disabled="isAssigning || !assignForm.module_id || !assignForm.role_id"
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#6366f1] hover:bg-[#4f46e5] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
                     @click="submitAssignModule"
                 >
                     <svg v-if="isAssigning" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
@@ -1429,7 +1454,7 @@ const tabs = [
         </AppModal>
 
         <!-- GENERIC CONFIRMATION MODAL -->
-        <AppModal :show="confirmModal.show" :title="confirmModal.title" :description="confirmModal.description" @close="confirmModal.show = false">
+        <AppModal :show="confirmModal.show" :title="confirmModal.title" :description="confirmModal.description" zIndexClass="z-[70]" @close="confirmModal.show = false">
             <div class="py-2 text-[13.5px] text-[#4b5563]">
                 {{ confirmModal.message }}
             </div>
@@ -1745,7 +1770,7 @@ const tabs = [
 
                                     <div class="flex items-start text-[13px]">
                                         <span class="w-[100px] shrink-0 text-gray-400 font-normal">Application</span>
-                                        <span class="text-gray-700 font-normal">None</span>
+                                        <span class="text-gray-700 font-medium">{{ selectedSession?.application || 'Portal FMIKOM' }}</span>
                                     </div>
                                 </div>
 

@@ -61,6 +61,18 @@ class LoginService
             return LoginResult::failed('These credentials do not match our records.');
         }
 
+        if (! $user->is_active) {
+            $this->recordFailedAttempt($email, $ip, 'account_disabled');
+
+            return LoginResult::failed('Akun Anda telah dinonaktifkan.');
+        }
+
+        if ($user->status_approval !== 'approved') {
+            $this->recordFailedAttempt($email, $ip, 'account_not_approved');
+
+            return LoginResult::failed('Akun Anda belum disetujui atau telah ditolak.');
+        }
+
         // 3. Check MFA requirement
         if ($this->requiresMfa($user)) {
             // Don't create full session yet — return pending state
@@ -109,8 +121,8 @@ class LoginService
         // Enterprise session record (device + geo + risk score)
         $authSession = $this->sessionEngine->createSession($user, $request);
 
-        // Store opaque token in session for SecureSession middleware
-        $request->session()->put('auth_session_token', $authSession->session_token);
+        // Store opaque token (model UUID) in session for SecureSession middleware
+        $request->session()->put('auth_session_token', $authSession->id);
 
         // Audit log
         $this->recordSuccessfulAttempt($user->email, $request->ip());

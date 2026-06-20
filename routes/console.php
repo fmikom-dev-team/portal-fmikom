@@ -38,3 +38,19 @@ Schedule::command('pagi:chat:archive --days=90')
     ->onOneServer()
     ->withoutOverlapping()
     ->name('pagi:chat-archive');
+
+// Telescope Database Pruner — daily at 03:00
+// Deletes Telescope entries older than 24 hours
+Schedule::command('telescope:prune --hours=24')
+    ->dailyAt('03:00')
+    ->onOneServer()
+    ->withoutOverlapping()
+    ->name('telescope:prune');
+
+// Pulse Database Trimmer — daily at 03:30
+// Trims Pulse storage based on PULSE_STORAGE_KEEP setting
+Schedule::call(fn () => \Laravel\Pulse\Facades\Pulse::trim())
+    ->dailyAt('03:30')
+    ->name('pulse:trim')
+    ->onOneServer();
+

@@ -264,7 +264,7 @@ body {
     <div class="section"><div class="sec-t">Pengalaman Kerja</div>
         @foreach($experience as $exp)
         <div class="entry">
-            <table class="e-table"><tr>
+            <table role="presentation" class="e-table"><tr>
                 <td class="e-title">{{ $exp['position'] ?? '' }} <span style="font-weight:normal;color:#4b5563;">di {{ $exp['company'] ?? '' }}</span></td>
                 <td class="e-date">{{ $dateRange($exp['start_date'] ?? '', $exp['end_date'] ?? '') }}</td>
             </tr></table>
@@ -278,7 +278,7 @@ body {
     <div class="section"><div class="sec-t">Pendidikan</div>
         @foreach($education as $edu)
         <div class="entry">
-            <table class="e-table"><tr>
+            <table role="presentation" class="e-table"><tr>
                 <td class="e-title">{{ $edu['degree'] ?? '' }}{{ !empty($edu['field']) ? ' — '.$edu['field'] : '' }}</td>
                 <td class="e-date">{{ $dateRange($edu['start_date'] ?? '', $edu['end_date'] ?? '', '') }}</td>
             </tr></table>
@@ -293,7 +293,7 @@ body {
     <div class="section"><div class="sec-t">Organisasi</div>
         @foreach($organizations as $org)
         <div class="entry">
-            <table class="e-table"><tr>
+            <table role="presentation" class="e-table"><tr>
                 <td class="e-title">{{ $org['role'] ?? '' }} <span style="font-weight:normal;color:#4b5563;">di {{ $org['name'] ?? '' }}</span></td>
                 <td class="e-date">{{ $dateRange($org['start_date'] ?? '', $org['end_date'] ?? '', '') }}</td>
             </tr></table>
@@ -306,7 +306,7 @@ body {
     @if($sec==='skills' && count($skills) > 0)
     <div class="section"><div class="sec-t">Keahlian</div>
         @if($showCheckbox || $showLogo || $showPercentage)
-        <table style="width:100%;border-collapse:collapse;margin-top:4px;">
+        <table role="presentation" style="width:100%;border-collapse:collapse;margin-top:4px;">
             @foreach(array_chunk($skills, 2) as $row)
             <tr>
                 @foreach($row as $sk)
@@ -318,7 +318,7 @@ body {
                         @if($showLogo && $hasLogo($sk['name']))
                             @php $logoB64 = $getLogoBase64($sk['name']); @endphp
                             @if($logoB64)
-                                <img src="{{ $logoB64 }}" style="width:12px;height:12px;vertical-align:middle;margin-right:4px;" />
+                                <img src="{{ $logoB64 }}" alt="Skill Logo" style="width:12px;height:12px;vertical-align:middle;margin-right:4px;" />
                             @endif
                         @endif
                         <span style="vertical-align:middle;">{{ $sk['name'] }}</span>
@@ -346,7 +346,7 @@ body {
                 @if($showLogo && $hasLogo($sk['name']))
                     @php $logoB64 = $getLogoBase64($sk['name']); @endphp
                     @if($logoB64)
-                        <img src="{{ $logoB64 }}" style="width:11px;height:11px;vertical-align:middle;margin-right:3px;margin-top:-1px;" />
+                        <img src="{{ $logoB64 }}" alt="Skill Logo" style="width:11px;height:11px;vertical-align:middle;margin-right:3px;margin-top:-1px;" />
                     @endif
                 @endif
                 <span style="vertical-align:middle;">{{ $sk['name'] }}</span>
@@ -363,7 +363,7 @@ body {
         @foreach($certifications as $cert)
         @if(!empty($cert['name']))
         <div class="entry">
-            <table class="e-table"><tr>
+            <table role="presentation" class="e-table"><tr>
                 <td class="e-title">{{ $cert['name'] }}</td>
                 <td class="e-date">{{ $cert['date'] ?? '' }}</td>
             </tr></table>
@@ -379,7 +379,7 @@ body {
         @foreach($trainings as $trn)
         @if(!empty($trn['name']))
         <div class="entry">
-            <table class="e-table"><tr>
+            <table role="presentation" class="e-table"><tr>
                 <td class="e-title">{{ $trn['name'] }}</td>
                 <td class="e-date">{{ $trn['date'] ?? '' }}</td>
             </tr></table>
@@ -396,7 +396,7 @@ body {
         @foreach($achievements as $ach)
         @if(!empty($ach['title']))
         <div class="entry">
-            <table class="e-table"><tr>
+            <table role="presentation" class="e-table"><tr>
                 <td class="e-title">{{ $ach['title'] }}</td>
                 <td class="e-date">{{ $ach['date'] ?? '' }}</td>
             </tr></table>
@@ -409,7 +409,7 @@ body {
 
     @if($sec==='languages' && count($languages) > 0)
     <div class="section"><div class="sec-t">Bahasa</div>
-        <table style="width:100%;border-collapse:collapse;">
+        <table role="presentation" style="width:100%;border-collapse:collapse;">
         @foreach($languages as $idx => $ln)
         @if($idx % 3 === 0)
         @if($idx > 0)</tr>@endif
@@ -427,7 +427,7 @@ body {
 
     @if($sec==='references' && count($references) > 0)
     <div class="section"><div class="sec-t">Referensi</div>
-        <table style="width:100%;border-collapse:collapse;">
+        <table role="presentation" style="width:100%;border-collapse:collapse;">
         @foreach($references as $idx => $ref)
         @if($idx % 2 === 0)
         @if($idx > 0)</tr>@endif
@@ -453,12 +453,12 @@ body {
 ═══════════════════════════════════════════════════ --}}
 @elseif($T === 'modern-sidebar')
 <div class="page-sidebar">
-<table class="sb-wrap"><tr>
+<table role="presentation" class="sb-wrap"><tr>
 
 <td class="sb-left">
     @if(!empty($photoSrc))
     <div style="width:72px;height:72px;overflow:hidden;border-radius:50%;margin:0 auto 12px auto;border:2.5px solid {{ $pri }}40;">
-        <img src="{{ $photoSrc }}" style="width:100%;height:100%;display:block;" />
+        <img src="{{ $photoSrc }}" alt="Foto Profil" style="width:100%;height:100%;display:block;" />
     </div>
     @endif
     <div class="sb-name">{{ $personalInfo['name'] ?? '' }}</div>
@@ -510,7 +510,7 @@ body {
     <div class="section"><div class="main-sec-t">Pengalaman Kerja</div>
         @foreach($experience as $exp)
         <div class="entry">
-            <table class="e-table"><tr>
+            <table role="presentation" class="e-table"><tr>
                 <td class="e-title" style="color:{{ $pri }};">{{ $exp['position'] ?? '' }}</td>
                 <td class="e-date">{{ $dateRange($exp['start_date'] ?? '', $exp['end_date'] ?? '') }}</td>
             </tr></table>
@@ -525,7 +525,7 @@ body {
     <div class="section"><div class="main-sec-t">Pendidikan</div>
         @foreach($education as $edu)
         <div class="entry">
-            <table class="e-table"><tr>
+            <table role="presentation" class="e-table"><tr>
                 <td class="e-title">{{ $edu['degree'] ?? '' }}{{ !empty($edu['field']) ? ' — '.$edu['field'] : '' }}</td>
                 <td class="e-date">{{ $dateRange($edu['start_date'] ?? '', $edu['end_date'] ?? '', '') }}</td>
             </tr></table>
@@ -540,7 +540,7 @@ body {
     <div class="section"><div class="main-sec-t">Organisasi</div>
         @foreach($organizations as $org)
         <div class="entry">
-            <table class="e-table"><tr>
+            <table role="presentation" class="e-table"><tr>
                 <td class="e-title">{{ $org['role'] ?? '' }} <span style="font-weight:normal;color:#4b5563;">di {{ $org['name'] ?? '' }}</span></td>
                 <td class="e-date">{{ $dateRange($org['start_date'] ?? '', $org['end_date'] ?? '', '') }}</td>
             </tr></table>
@@ -555,7 +555,7 @@ body {
         @foreach($certifications as $cert)
         @if(!empty($cert['name']))
         <div class="entry">
-            <table class="e-table"><tr>
+            <table role="presentation" class="e-table"><tr>
                 <td class="e-title">{{ $cert['name'] }}</td>
                 <td class="e-date">{{ $cert['date'] ?? '' }}</td>
             </tr></table>
@@ -571,7 +571,7 @@ body {
         @foreach($trainings as $trn)
         @if(!empty($trn['name']))
         <div class="entry">
-            <table class="e-table"><tr>
+            <table role="presentation" class="e-table"><tr>
                 <td class="e-title">{{ $trn['name'] }}</td>
                 <td class="e-date">{{ $trn['date'] ?? '' }}</td>
             </tr></table>
@@ -587,7 +587,7 @@ body {
         @foreach($achievements as $ach)
         @if(!empty($ach['title']))
         <div class="entry">
-            <table class="e-table"><tr>
+            <table role="presentation" class="e-table"><tr>
                 <td class="e-title">{{ $ach['title'] }}</td>
                 <td class="e-date">{{ $ach['date'] ?? '' }}</td>
             </tr></table>
@@ -600,7 +600,7 @@ body {
 
     @if($sec==='references' && count($references) > 0)
     <div class="section"><div class="main-sec-t">Referensi</div>
-        <table style="width:100%;border-collapse:collapse;">
+        <table role="presentation" style="width:100%;border-collapse:collapse;">
         @foreach($references as $idx => $ref)
         @if($idx % 2 === 0)
         @if($idx > 0)</tr>@endif
@@ -640,7 +640,7 @@ body {
     <div class="hdr">
         @if(!empty($photoSrc) && $isStu)
         <div style="float:left;width:72px;height:72px;overflow:hidden;border-radius:8px;margin-right:14px;">
-            <img src="{{ $photoSrc }}" style="width:100%;height:100%;display:block;" />
+            <img src="{{ $photoSrc }}" alt="Foto Profil" style="width:100%;height:100%;display:block;" />
         </div>
         @endif
         <h1>{{ $personalInfo['name'] ?? '' }}</h1>
@@ -668,7 +668,7 @@ body {
         @if($isCrea)<span class="accent"></span>@endif
         @foreach($experience as $exp)
         <div class="entry">
-            <table class="e-table"><tr>
+            <table role="presentation" class="e-table"><tr>
                 <td class="e-title" style="color:{{ $isExec ? '#111827' : $pri }};">{{ $exp['position'] ?? '' }}</td>
                 <td class="e-date">{{ $dateRange($exp['start_date'] ?? '', $exp['end_date'] ?? '') }}</td>
             </tr></table>
@@ -685,7 +685,7 @@ body {
         @if($isCrea)<span class="accent"></span>@endif
         @foreach($education as $edu)
         <div class="entry">
-            <table class="e-table"><tr>
+            <table role="presentation" class="e-table"><tr>
                 <td class="e-title">{{ $edu['degree'] ?? '' }}{{ !empty($edu['field']) ? ' — '.$edu['field'] : '' }}</td>
                 <td class="e-date">{{ $dateRange($edu['start_date'] ?? '', $edu['end_date'] ?? '', '') }}</td>
             </tr></table>
@@ -702,7 +702,7 @@ body {
         @if($isCrea)<span class="accent"></span>@endif
         @foreach($organizations as $org)
         <div class="entry">
-            <table class="e-table"><tr>
+            <table role="presentation" class="e-table"><tr>
                 <td class="e-title">{{ $org['role'] ?? '' }} <span style="font-weight:normal;color:#4b5563;">di {{ $org['name'] ?? '' }}</span></td>
                 <td class="e-date">{{ $dateRange($org['start_date'] ?? '', $org['end_date'] ?? '', '') }}</td>
             </tr></table>
@@ -718,7 +718,7 @@ body {
         @if($isCrea)<span class="accent"></span>@endif
         
         @if($showCheckbox || $showLogo || $showPercentage)
-        <table style="width:100%;border-collapse:collapse;margin-top:4px;">
+        <table role="presentation" style="width:100%;border-collapse:collapse;margin-top:4px;">
             @foreach(array_chunk($skills, 2) as $row)
             <tr>
                 @foreach($row as $sk)
@@ -730,7 +730,7 @@ body {
                         @if($showLogo && $hasLogo($sk['name']))
                             @php $logoB64 = $getLogoBase64($sk['name']); @endphp
                             @if($logoB64)
-                                <img src="{{ $logoB64 }}" style="width:12px;height:12px;vertical-align:middle;margin-right:4px;" />
+                                <img src="{{ $logoB64 }}" alt="Skill Logo" style="width:12px;height:12px;vertical-align:middle;margin-right:4px;" />
                             @endif
                         @endif
                         <span style="vertical-align:middle;">{{ $sk['name'] }}</span>
@@ -758,7 +758,7 @@ body {
                 @if($showLogo && $hasLogo($sk['name']))
                     @php $logoB64 = $getLogoBase64($sk['name']); @endphp
                     @if($logoB64)
-                        <img src="{{ $logoB64 }}" style="width:11px;height:11px;vertical-align:middle;margin-right:3px;margin-top:-1px;" />
+                        <img src="{{ $logoB64 }}" alt="Skill Logo" style="width:11px;height:11px;vertical-align:middle;margin-right:3px;margin-top:-1px;" />
                     @endif
                 @endif
                 <span style="vertical-align:middle;">{{ $sk['name'] }}</span>
@@ -777,7 +777,7 @@ body {
         @foreach($certifications as $cert)
         @if(!empty($cert['name']))
         <div class="entry">
-            <table class="e-table"><tr>
+            <table role="presentation" class="e-table"><tr>
                 <td class="e-title">{{ $cert['name'] }}</td>
                 <td class="e-date">{{ $cert['date'] ?? '' }}</td>
             </tr></table>
@@ -795,7 +795,7 @@ body {
         @foreach($trainings as $trn)
         @if(!empty($trn['name']))
         <div class="entry">
-            <table class="e-table"><tr>
+            <table role="presentation" class="e-table"><tr>
                 <td class="e-title">{{ $trn['name'] }}</td>
                 <td class="e-date">{{ $trn['date'] ?? '' }}</td>
             </tr></table>
@@ -814,7 +814,7 @@ body {
         @foreach($achievements as $ach)
         @if(!empty($ach['title']))
         <div class="entry">
-            <table class="e-table"><tr>
+            <table role="presentation" class="e-table"><tr>
                 <td class="e-title">{{ $ach['title'] }}</td>
                 <td class="e-date">{{ $ach['date'] ?? '' }}</td>
             </tr></table>
@@ -829,7 +829,7 @@ body {
     <div class="section">
         <div class="sec-t">Bahasa</div>
         @if($isCrea)<span class="accent"></span>@endif
-        <table style="width:100%;border-collapse:collapse;">
+        <table role="presentation" style="width:100%;border-collapse:collapse;">
         @foreach($languages as $idx => $ln)
         @if($idx % 3 === 0)
         @if($idx > 0)</tr>@endif
@@ -849,7 +849,7 @@ body {
     <div class="section">
         <div class="sec-t">Referensi</div>
         @if($isCrea)<span class="accent"></span>@endif
-        <table style="width:100%;border-collapse:collapse;">
+        <table role="presentation" style="width:100%;border-collapse:collapse;">
         @foreach($references as $idx => $ref)
         @if($idx % 2 === 0)
         @if($idx > 0)</tr>@endif

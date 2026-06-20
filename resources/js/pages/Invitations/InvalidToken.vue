@@ -9,7 +9,9 @@ const props = defineProps<{
 </script>
 
 <template>
-    <Head :title="status === 'expired' ? 'Invitation Expired' : 'Invalid Invitation'" />
+    <Head>
+        <title>{{ status === 'expired' ? 'Invitation Expired' : 'Invalid Invitation' }}</title>
+    </Head>
     <div style="min-height: 100vh; background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #f0f9ff 100%); display: flex; align-items: center; justify-content: center; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         <div style="background: white; border-radius: 16px; padding: 48px 40px; max-width: 480px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.08); border: 1px solid #f3f4f6;">
             <!-- Icon -->

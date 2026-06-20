@@ -4,8 +4,15 @@ namespace App\Modules\Portal\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Portal\PortalCategory;
+use App\Models\Portal\PortalMedia;
 use App\Models\Portal\PortalPost;
+use App\Models\Portal\PortalSetting;
+use App\Services\VirusScannerService;
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -19,13 +26,18 @@ class PortalPostController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
+
+        $settings = PortalSetting::pluck('value', 'key')->toArray();
+        $perPage = isset($settings['posts_per_page']) && is_numeric($settings['posts_per_page']) ? (int) $settings['posts_per_page'] : 15;
+
         $posts = PortalPost::with('category')
             ->when($search, function ($query, $search) {
                 $query->where('title', 'like', "%{$search}%")
                     ->orWhere('content', 'like', "%{$search}%");
             })
             ->latest()
-            ->get();
+            ->paginate($perPage)
+            ->withQueryString();
 
         return Inertia::render('Modules/Portal/Admin/Posts/Index', [
             'posts' => $posts,
@@ -42,7 +54,7 @@ class PortalPostController extends Controller
 
     public function store(Request $request)
     {
-        Log::info('Post store attempt', ['user_id' => auth()->id(), 'title' => $request->input('title'), 'slug' => $request->input('slug')]);
+        Log::info('Post store attempt', ['user_id' => Auth::id(), 'title' => $request->input('title'), 'slug' => $request->input('slug')]);
         try {
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
@@ -55,9 +67,21 @@ class PortalPostController extends Controller
                 'meta_description' => 'nullable|string|max:160',
                 'excerpt' => 'nullable|string',
                 'tags' => 'nullable|array',
-                'og_image' => 'nullable|image|max:5120',
-                'thumbnail' => 'nullable|image|max:5120',
+                'og_image' => 'nullable',
+                'thumbnail' => 'nullable',
             ]);
+
+            foreach (['og_image', 'thumbnail'] as $field) {
+                if ($request->hasFile($field)) {
+                    $request->validate([
+                        $field => 'image|max:5120',
+                    ]);
+                } elseif ($request->filled($field)) {
+                    $request->validate([
+                        $field => 'string|max:255',
+                    ]);
+                }
+            }
         } catch (ValidationException $e) {
             Log::error('STORE Validation Failed:', $e->errors());
             throw $e;
@@ -67,7 +91,7 @@ class PortalPostController extends Controller
         // Just verify it's valid JSON (not injected script).
         $content = $request->input('content', '');
         if (! empty($content)) {
-            $decoded = json_decode($content, true);
+            json_decode($content, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return back()->withErrors(['content' => 'Format konten tidak valid.']);
             }
@@ -76,12 +100,16 @@ class PortalPostController extends Controller
 
         if ($request->hasFile('thumbnail')) {
             $validated['thumbnail'] = $this->processAndStoreImage($request->file('thumbnail'), 'portal/posts/thumbnails');
+        } elseif ($request->filled('thumbnail')) {
+            $validated['thumbnail'] = $request->input('thumbnail');
         } else {
             unset($validated['thumbnail']);
         }
 
         if ($request->hasFile('og_image')) {
             $validated['og_image'] = $this->processAndStoreImage($request->file('og_image'), 'portal/posts/seo');
+        } elseif ($request->filled('og_image')) {
+            $validated['og_image'] = $request->input('og_image');
         } else {
             unset($validated['og_image']);
         }
@@ -92,7 +120,7 @@ class PortalPostController extends Controller
             $validated['tags'] = json_encode([]);
         }
 
-        $validated['user_id'] = auth()->id();
+        $validated['user_id'] = Auth::id();
 
         if ($validated['status'] === 'published') {
             $publishedAt = $validated['published_at'] ?? null;
@@ -118,7 +146,7 @@ class PortalPostController extends Controller
 
     public function update(Request $request, PortalPost $post)
     {
-        Log::info('Post update attempt', ['user_id' => auth()->id(), 'post_id' => $post->id, 'title' => $request->input('title')]);
+        Log::info('Post update attempt', ['user_id' => Auth::id(), 'post_id' => $post->id, 'title' => $request->input('title')]);
         try {
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
@@ -131,9 +159,21 @@ class PortalPostController extends Controller
                 'meta_description' => 'nullable|string|max:160',
                 'excerpt' => 'nullable|string',
                 'tags' => 'nullable|array',
-                'og_image' => 'nullable|image|max:5120',
-                'thumbnail' => 'nullable|image|max:5120',
+                'og_image' => 'nullable',
+                'thumbnail' => 'nullable',
             ]);
+
+            foreach (['og_image', 'thumbnail'] as $field) {
+                if ($request->hasFile($field)) {
+                    $request->validate([
+                        $field => 'image|max:5120',
+                    ]);
+                } elseif ($request->filled($field)) {
+                    $request->validate([
+                        $field => 'string|max:255',
+                    ]);
+                }
+            }
         } catch (ValidationException $e) {
             Log::error('UPDATE Validation Failed:', $e->errors());
             throw $e;
@@ -142,7 +182,7 @@ class PortalPostController extends Controller
         // Content is Editor.js JSON — store as-is after JSON validation
         $content = $request->input('content', '');
         if (! empty($content)) {
-            $decoded = json_decode($content, true);
+            json_decode($content, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return back()->withErrors(['content' => 'Format konten tidak valid.']);
             }
@@ -151,20 +191,24 @@ class PortalPostController extends Controller
 
         if ($request->hasFile('thumbnail')) {
             // Delete old thumbnail if exists
-            if ($post->thumbnail) {
+            if ($post->thumbnail && ! str_contains($post->thumbnail, 'portal/media/')) {
                 Storage::disk('public')->delete(str_replace('/storage/', '', $post->thumbnail));
             }
             $validated['thumbnail'] = $this->processAndStoreImage($request->file('thumbnail'), 'portal/posts/thumbnails');
+        } elseif ($request->filled('thumbnail') || $request->input('thumbnail') === null) {
+            $validated['thumbnail'] = $request->input('thumbnail');
         } else {
             unset($validated['thumbnail']);
         }
 
         if ($request->hasFile('og_image')) {
             // Delete old og_image if exists
-            if ($post->og_image) {
+            if ($post->og_image && ! str_contains($post->og_image, 'portal/media/')) {
                 Storage::disk('public')->delete(str_replace('/storage/', '', $post->og_image));
             }
             $validated['og_image'] = $this->processAndStoreImage($request->file('og_image'), 'portal/posts/seo');
+        } elseif ($request->filled('og_image') || $request->input('og_image') === null) {
+            $validated['og_image'] = $request->input('og_image');
         } else {
             unset($validated['og_image']);
         }
@@ -225,11 +269,50 @@ class PortalPostController extends Controller
                 return response()->json(['success' => 0, 'message' => 'URL tidak valid.'], 422);
             }
 
-            // Return the URL directly — Editor.js will render it from original URL
-            return response()->json([
-                'success' => 1,
-                'file' => ['url' => $url],
-            ]);
+            // BUG-019: Validate URL safety to prevent tracking pixels and private network access
+            if (! $this->isUrlSafeForFetch($url)) {
+                return response()->json(['success' => 0, 'message' => 'URL tidak diizinkan.'], 422);
+            }
+
+            try {
+                // Fetch external image content
+                $response = Http::timeout(8)
+                    ->connectTimeout(3)
+                    ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; PortalFMIKOM/1.0)'])
+                    ->get($url);
+
+                if (! $response->successful()) {
+                    return response()->json(['success' => 0, 'message' => 'Gagal mengambil gambar dari URL.'], 422);
+                }
+
+                // Verify content-type is an image
+                $contentType = $response->header('Content-Type');
+                if (! str_starts_with($contentType, 'image/')) {
+                    return response()->json(['success' => 0, 'message' => 'URL bukan merupakan gambar.'], 422);
+                }
+
+                $imageContent = $response->body();
+                if (strlen($imageContent) > 10 * 1024 * 1024) {
+                    return response()->json(['success' => 0, 'message' => 'Ukuran gambar melebihi batas 10MB.'], 422);
+                }
+
+                // Process and store the downloaded image content using processAndStoreImage
+                $tempPath = tempnam(sys_get_temp_dir(), 'img_url_');
+                file_put_contents($tempPath, $imageContent);
+
+                try {
+                    $localUrl = $this->processAndStoreImage($tempPath, 'portal/posts/content');
+                } finally {
+                    @unlink($tempPath);
+                }
+
+                return response()->json([
+                    'success' => 1,
+                    'file' => ['url' => $localUrl],
+                ]);
+            } catch (\Exception $e) {
+                return response()->json(['success' => 0, 'message' => 'Gagal mengambil gambar dari URL: '.$e->getMessage()], 500);
+            }
         }
 
         // ── byFile mode (file upload) ──
@@ -265,6 +348,16 @@ class PortalPostController extends Controller
 
         if ($request->hasFile('file')) {
             $file = $request->file('file');
+
+            $scanner = app(VirusScannerService::class);
+            $scanResult = $scanner->scan($file);
+            if (! $scanResult['safe']) {
+                return response()->json([
+                    'success' => 0,
+                    'message' => $scanResult['reason'],
+                ], 422);
+            }
+
             $filename = Str::random(30).'.'.$file->getClientOriginalExtension();
             $path = 'portal/posts/files/'.$filename;
 
@@ -285,7 +378,8 @@ class PortalPostController extends Controller
     }
 
     /**
-     * Fetch URL metadata for Editor.js link block tool
+     * Fetch URL metadata for Editor.js link block tool.
+     * SEC-005 / BUG-018: Strict URL validation blocks SSRF to internal network.
      */
     public function fetchUrl(Request $request)
     {
@@ -294,11 +388,24 @@ class PortalPostController extends Controller
             return response()->json(['success' => 0]);
         }
 
+        // Block SSRF: reject private, loopback, and link-local IP ranges
+        if (! $this->isUrlSafeForFetch($url)) {
+            return response()->json(['success' => 0, 'message' => 'URL tidak diizinkan.']);
+        }
+
         try {
-            $html = @file_get_contents($url);
-            if (! $html) {
-                return response()->json(['success' => 0]);
-            }
+            $client = new Client([
+                'timeout' => 5,
+                'connect_timeout' => 3,
+                'allow_redirects' => ['max' => 3],
+                'verify' => true,
+            ]);
+
+            $response = $client->get($url, [
+                'headers' => ['User-Agent' => 'Mozilla/5.0 (compatible; PortalFMIKOM/1.0)'],
+            ]);
+
+            $html = (string) $response->getBody();
 
             $doc = new \DOMDocument;
             @$doc->loadHTML($html);
@@ -342,10 +449,68 @@ class PortalPostController extends Controller
     }
 
     /**
+     * Validate that a URL is safe to fetch (no internal/private network access).
+     * Blocks RFC 1918 private ranges, loopback, link-local, and SSRF targets.
+     */
+    private function isUrlSafeForFetch(string $url): bool
+    {
+        $parsed = parse_url($url);
+
+        // Only allow http/https
+        if (! isset($parsed['scheme']) || ! in_array(strtolower($parsed['scheme']), ['http', 'https'])) {
+            return false;
+        }
+
+        $host = $parsed['host'] ?? '';
+        if (empty($host)) {
+            return false;
+        }
+
+        // Resolve to IP
+        $ip = gethostbyname($host);
+        if ($ip === $host && ! filter_var($ip, FILTER_VALIDATE_IP)) {
+            return false; // Could not resolve
+        }
+
+        // Block loopback
+        if (in_array($ip, ['127.0.0.1', '::1']) || $host === 'localhost') {
+            return false;
+        }
+
+        // Block private/reserved ranges using PHP built-in flags
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Process image: resize, compress, convert to webp and store.
      */
     private function processAndStoreImage($file, $path)
     {
+        $uploadedFile = $file;
+        if (is_string($file)) {
+            $uploadedFile = new UploadedFile(
+                $file,
+                basename($file),
+                mime_content_type($file),
+                null,
+                true
+            );
+        }
+
+        if ($uploadedFile instanceof UploadedFile) {
+            $scanner = app(VirusScannerService::class);
+            $scanResult = $scanner->scan($uploadedFile);
+            if (! $scanResult['safe']) {
+                throw ValidationException::withMessages([
+                    'thumbnail' => $scanResult['reason'],
+                ]);
+            }
+        }
+
         $manager = new ImageManager(new Driver);
         $image = $manager->read($file);
 
@@ -364,6 +529,26 @@ class PortalPostController extends Controller
         // Store in public disk
         Storage::disk('public')->put($fullPath, (string) $encoded);
 
-        return '/storage/'.$fullPath;
+        $publicUrl = '/storage/'.$fullPath;
+
+        // Automatically save to PortalMedia (Gallery)
+        try {
+            $originalName = is_object($file) && method_exists($file, 'getClientOriginalName')
+                ? $file->getClientOriginalName()
+                : basename($fullPath);
+
+            $size = Storage::disk('public')->size($fullPath);
+
+            PortalMedia::create([
+                'filename' => $originalName,
+                'path' => $publicUrl,
+                'mime_type' => 'image/webp',
+                'size' => $size,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to auto-save post image to PortalMedia: '.$e->getMessage());
+        }
+
+        return $publicUrl;
     }
 }

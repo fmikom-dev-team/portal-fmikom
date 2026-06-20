@@ -42,8 +42,9 @@ const tabs = [
         <!-- Header -->
         <div class="flex items-start gap-4 mb-6">
             <!-- Logo -->
-            <div class="w-12 h-12 rounded-xl bg-[#f3f4f6] border border-[#e5e7eb] flex items-center justify-center text-lg font-semibold text-[#111827] shrink-0 uppercase">
-                {{ organization?.name ? organization.name.substring(0, 2) : 'TO' }}
+            <div class="w-12 h-12 rounded-xl bg-[#f3f4f6] border border-[#e5e7eb] flex items-center justify-center text-lg font-semibold text-[#111827] shrink-0 uppercase overflow-hidden">
+                <img v-if="organization?.logo_path" :src="organization.logo_path" alt="Organization Logo" class="w-full h-full object-cover" />
+                <span v-else>{{ organization?.name ? organization.name.substring(0, 2) : 'TO' }}</span>
             </div>
             
             <div class="flex-1">

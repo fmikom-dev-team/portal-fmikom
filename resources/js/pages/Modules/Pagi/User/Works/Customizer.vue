@@ -419,7 +419,9 @@ const copyShareUrl = () => {
 </script>
 
 <template>
-	<Head title="Customize Works Theme" />
+	<Head>
+        <title>Customize Works Theme</title>
+    </Head>
 
 	<div class="h-screen flex flex-col bg-slate-50 dark:bg-zinc-950 font-sans text-slate-900 dark:text-slate-100 overflow-hidden">
 		

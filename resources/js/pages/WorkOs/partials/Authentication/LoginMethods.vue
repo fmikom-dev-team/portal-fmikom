@@ -371,8 +371,8 @@ const isStrongPreset = computed(() => {
             <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
                 <div class="flex items-start justify-between mb-4">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center border border-indigo-200 shrink-0">
-                            <Mail class="w-5 h-5 text-indigo-600" />
+                        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center border border-blue-200 shrink-0">
+                            <Mail class="w-5 h-5 text-blue-600" />
                         </div>
                         <div>
                             <h3 class="text-[14px] font-semibold text-gray-900">Email + Password</h3>
@@ -485,20 +485,20 @@ const isStrongPreset = computed(() => {
                     <span class="font-medium text-gray-900 text-base">Enable</span>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" v-model="methods.sso.enabled" class="sr-only peer" />
-                        <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:border-gray-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:border-gray-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                 </div>
                 
                 <div class="space-y-3">
                     <label class="flex items-start gap-3 cursor-pointer">
-                        <input type="checkbox" v-model="ssoConfig.auto_provision" class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                        <input type="checkbox" v-model="ssoConfig.auto_provision" class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-[#2563eb]" />
                         <div>
                             <span class="block font-medium text-gray-900">Auto-provision users</span>
                             <span class="block text-gray-500 mt-0.5">Automatically create an account when a user signs in via SSO.</span>
                         </div>
                     </label>
                     <label class="flex items-start gap-3 cursor-pointer">
-                        <input type="checkbox" v-model="ssoConfig.enforce_sso" class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                        <input type="checkbox" v-model="ssoConfig.enforce_sso" class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-[#2563eb]" />
                         <div>
                             <span class="block font-medium text-gray-900">Enforce SSO</span>
                             <span class="block text-gray-500 mt-0.5">Require all matching domains to authenticate via SSO.</span>
@@ -508,7 +508,7 @@ const isStrongPreset = computed(() => {
             </div>
             <template #footer>
                 <button @click="activeModal = null" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button @click="saveSsoSettings" :disabled="saving === 'sso'" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[13px] font-medium hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-60">
+                <button @click="saveSsoSettings" :disabled="saving === 'sso'" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60">
                     <Loader2 v-if="saving === 'sso'" class="w-4 h-4 animate-spin" />
                     Save changes
                 </button>
@@ -528,7 +528,7 @@ const isStrongPreset = computed(() => {
                 <div class="flex items-center gap-3">
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" v-model="methods.email_password.enabled" class="sr-only peer" />
-                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                     <span class="font-medium text-gray-900 text-[14px]">Enable</span>
                 </div>
@@ -543,30 +543,30 @@ const isStrongPreset = computed(() => {
                     <!-- Strong / Custom selector cards -->
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         <div @click="applyStrongPreset"
-                            :class="['border rounded-lg p-3.5 cursor-pointer transition-all', isStrongPreset ? 'border-2 border-indigo-600 bg-white' : 'border-gray-200 hover:border-gray-300']">
-                            <div :class="['font-semibold text-[13px]', isStrongPreset ? 'text-indigo-700' : 'text-gray-900']">Strong</div>
-                            <div :class="['text-[12px] mt-0.5', isStrongPreset ? 'text-indigo-500' : 'text-gray-500']">Recommended for most apps</div>
+                            :class="['border rounded-lg p-3.5 cursor-pointer transition-all', isStrongPreset ? 'border-2 border-blue-600 bg-white' : 'border-gray-200 hover:border-gray-300']">
+                            <div :class="['font-semibold text-[13px]', isStrongPreset ? 'text-blue-700' : 'text-gray-900']">Strong</div>
+                            <div :class="['text-[12px] mt-0.5', isStrongPreset ? 'text-blue-500' : 'text-gray-500']">Recommended for most apps</div>
                         </div>
                         <div @click="() => { methods.email_password.require_uppercase = false; methods.email_password.require_lowercase = false; methods.email_password.require_number = false; methods.email_password.require_special = false; password.reject_breached = false; }"
-                            :class="['border rounded-lg p-3.5 cursor-pointer transition-all', !isStrongPreset ? 'border-2 border-indigo-600 bg-white' : 'border-gray-200 hover:border-gray-300']">
-                            <div :class="['font-semibold text-[13px]', !isStrongPreset ? 'text-indigo-700' : 'text-gray-900']">Custom</div>
-                            <div :class="['text-[12px] mt-0.5', !isStrongPreset ? 'text-indigo-500' : 'text-gray-500']">Full control over every rule</div>
+                            :class="['border rounded-lg p-3.5 cursor-pointer transition-all', !isStrongPreset ? 'border-2 border-blue-600 bg-white' : 'border-gray-200 hover:border-gray-300']">
+                            <div :class="['font-semibold text-[13px]', !isStrongPreset ? 'text-blue-700' : 'text-gray-900']">Custom</div>
+                            <div :class="['text-[12px] mt-0.5', !isStrongPreset ? 'text-blue-500' : 'text-gray-500']">Full control over every rule</div>
                         </div>
                     </div>
 
                     <!-- STRONG: summary bullet list (exactly like reference) -->
                     <div v-if="isStrongPreset" class="border border-gray-200 rounded-lg divide-y divide-gray-100 overflow-hidden">
                         <div class="flex items-center gap-3 px-4 py-3">
-                            <svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                            <svg class="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                             <span class="text-[13px] text-gray-700">Minimum password length of {{ methods.email_password.min_length }} characters</span>
                         </div>
                         <div class="flex items-center gap-3 px-4 py-3">
                             <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                            <span class="text-[13px] text-gray-700">Reject passwords with low complexity (<a href="https://github.com/dropbox/zxcvbn" target="_blank" class="text-indigo-600 hover:underline">zxcvbn</a> score less than {{ methods.email_password.complexity }}).</span>
+                            <span class="text-[13px] text-gray-700">Reject passwords with low complexity (<a href="https://github.com/dropbox/zxcvbn" target="_blank" class="text-blue-600 hover:underline">zxcvbn</a> score less than {{ methods.email_password.complexity }}).</span>
                         </div>
                         <div class="flex items-center gap-3 px-4 py-3">
                             <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                            <span class="text-[13px] text-gray-700">Reject breached passwords, sourced by <a href="https://haveibeenpwned.com" target="_blank" class="text-indigo-600 hover:underline">haveibeenpwned</a>.</span>
+                            <span class="text-[13px] text-gray-700">Reject breached passwords, sourced by <a href="https://haveibeenpwned.com" target="_blank" class="text-blue-600 hover:underline">haveibeenpwned</a>.</span>
                         </div>
                     </div>
 
@@ -575,7 +575,7 @@ const isStrongPreset = computed(() => {
                         <div>
                             <label class="block font-medium text-gray-900 mb-2 text-[13px]">Minimum password length</label>
                             <div class="flex items-center gap-2">
-                                <input type="number" v-model="methods.email_password.min_length" class="w-16 px-3 py-1.5 border border-gray-300 rounded-md text-[13px] focus:ring-1 focus:ring-indigo-500" min="6" max="128" />
+                                <input type="number" v-model="methods.email_password.min_length" class="w-16 px-3 py-1.5 border border-gray-300 rounded-md text-[13px] focus:ring-1 focus:ring-[#2563eb]" min="6" max="128" />
                                 <span class="text-gray-600">characters</span>
                             </div>
                         </div>
@@ -584,7 +584,7 @@ const isStrongPreset = computed(() => {
                             <label class="block font-medium text-gray-900 mb-2 text-[13px]">Minimum complexity <span class="font-normal text-gray-500">(zxcvbn)</span></label>
                             <div class="flex items-center gap-2 mb-1.5">
                                 <button v-for="n in 4" :key="n" @click="methods.email_password.complexity = n"
-                                    :class="['w-8 h-8 rounded border text-[13px] font-medium flex items-center justify-center transition-colors', methods.email_password.complexity === n ? 'border-indigo-600 text-indigo-600 bg-indigo-50' : 'border-gray-300 text-gray-700 hover:bg-gray-50']">
+                                    :class="['w-8 h-8 rounded border text-[13px] font-medium flex items-center justify-center transition-colors', methods.email_password.complexity === n ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-gray-300 text-gray-700 hover:bg-gray-50']">
                                     {{ n }}
                                 </button>
                                 <span :class="['text-[11px] font-semibold px-1.5 py-0.5 rounded border ml-1', complexityColor, complexityBg]">{{ complexityLabel }}</span>
@@ -594,20 +594,20 @@ const isStrongPreset = computed(() => {
                         <div>
                             <label class="block font-medium text-gray-900 mb-2 text-[13px]">Password rules</label>
                             <div class="space-y-1.5">
-                                <label class="flex items-center gap-2 text-gray-600 cursor-pointer"><input type="checkbox" v-model="methods.email_password.require_uppercase" class="rounded border-gray-300 text-indigo-600" /> Uppercase letter</label>
-                                <label class="flex items-center gap-2 text-gray-600 cursor-pointer"><input type="checkbox" v-model="methods.email_password.require_lowercase" class="rounded border-gray-300 text-indigo-600" /> Lowercase letter</label>
-                                <label class="flex items-center gap-2 text-gray-600 cursor-pointer"><input type="checkbox" v-model="methods.email_password.require_number" class="rounded border-gray-300 text-indigo-600" /> Number</label>
-                                <label class="flex items-center gap-2 text-gray-600 cursor-pointer"><input type="checkbox" v-model="methods.email_password.require_special" class="rounded border-gray-300 text-indigo-600" /> Special character</label>
+                                <label class="flex items-center gap-2 text-gray-600 cursor-pointer"><input type="checkbox" v-model="methods.email_password.require_uppercase" class="rounded border-gray-300 text-blue-600" /> Uppercase letter</label>
+                                <label class="flex items-center gap-2 text-gray-600 cursor-pointer"><input type="checkbox" v-model="methods.email_password.require_lowercase" class="rounded border-gray-300 text-blue-600" /> Lowercase letter</label>
+                                <label class="flex items-center gap-2 text-gray-600 cursor-pointer"><input type="checkbox" v-model="methods.email_password.require_number" class="rounded border-gray-300 text-blue-600" /> Number</label>
+                                <label class="flex items-center gap-2 text-gray-600 cursor-pointer"><input type="checkbox" v-model="methods.email_password.require_special" class="rounded border-gray-300 text-blue-600" /> Special character</label>
                             </div>
                         </div>
 
                         <label class="flex items-start gap-2 cursor-pointer">
-                            <input type="checkbox" v-model="password.reject_breached" class="mt-0.5 rounded border-gray-300 text-indigo-600" />
-                            <span class="text-[13px] text-gray-700">Reject breached passwords (<a href="https://haveibeenpwned.com" target="_blank" class="text-indigo-600 hover:underline">haveibeenpwned</a>)</span>
+                            <input type="checkbox" v-model="password.reject_breached" class="mt-0.5 rounded border-gray-300 text-blue-600" />
+                            <span class="text-[13px] text-gray-700">Reject breached passwords (<a href="https://haveibeenpwned.com" target="_blank" class="text-blue-600 hover:underline">haveibeenpwned</a>)</span>
                         </label>
 
                         <label class="flex items-center gap-2 cursor-pointer flex-wrap">
-                            <input type="checkbox" v-model="historyEnabled" class="rounded border-gray-300 text-indigo-600" />
+                            <input type="checkbox" v-model="historyEnabled" class="rounded border-gray-300 text-blue-600" />
                             <span class="text-[13px] text-gray-700">Reject last</span>
                             <input type="number" v-model="password.history_count" :disabled="!historyEnabled" class="w-12 px-2 py-1 border border-gray-300 rounded text-center text-[13px] disabled:opacity-50" min="1" max="20" />
                             <span class="text-[13px] text-gray-700">previously used passwords</span>
@@ -617,7 +617,7 @@ const isStrongPreset = computed(() => {
             </div>
             <template #footer>
                 <button @click="activeModal = null" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-                <button @click="saveEmailPasswordSettings" :disabled="saving === 'email_password'" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[13px] font-semibold hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-60 transition-colors">
+                <button @click="saveEmailPasswordSettings" :disabled="saving === 'email_password'" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-semibold hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60 transition-colors">
                     <Loader2 v-if="saving === 'email_password'" class="w-4 h-4 animate-spin" />
                     Save changes
                 </button>
@@ -638,14 +638,14 @@ const isStrongPreset = computed(() => {
                     <span class="font-medium text-gray-900 text-[14px]">Enable</span>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" v-model="methods.passkeys.enabled" class="sr-only peer" />
-                        <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:border-gray-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:border-gray-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                 </div>
                 
                 <div>
                     <h4 class="font-semibold text-gray-900 text-[14px] mb-3">Options</h4>
                     <label class="flex items-start gap-3 cursor-pointer">
-                        <input type="checkbox" class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked />
+                        <input type="checkbox" class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-[#2563eb]" checked />
                         <div>
                             <span class="block font-medium text-gray-900">Prompt existing users to add a passkey</span>
                             <span class="block text-gray-500 mt-0.5 leading-relaxed">Ask users with a password to create a passkey on their next sign-in. The notice can be dismissed permanently or will show every <strong>2 weeks</strong>.</span>
@@ -655,7 +655,7 @@ const isStrongPreset = computed(() => {
             </div>
             <template #footer>
                 <button @click="activeModal = null" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button @click="savePasskeysSettings" :disabled="saving === 'passkeys'" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[13px] font-medium hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-60">
+                <button @click="savePasskeysSettings" :disabled="saving === 'passkeys'" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60">
                     <Loader2 v-if="saving === 'passkeys'" class="w-4 h-4 animate-spin" />
                     Save changes
                 </button>
@@ -675,7 +675,7 @@ const isStrongPreset = computed(() => {
                     <span class="font-medium text-gray-900 text-[14px]">Enable</span>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" v-model="methods.magic_links.enabled" class="sr-only peer" />
-                        <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:border-gray-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:border-gray-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                 </div>
 
@@ -694,7 +694,7 @@ const isStrongPreset = computed(() => {
             </div>
             <template #footer>
                 <button @click="activeModal = null" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button @click="saveMagicLinksSettings" :disabled="saving === 'magic_links'" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[13px] font-medium hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-60">
+                <button @click="saveMagicLinksSettings" :disabled="saving === 'magic_links'" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60">
                     <Loader2 v-if="saving === 'magic_links'" class="w-4 h-4 animate-spin" />
                     Save changes
                 </button>

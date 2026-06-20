@@ -263,7 +263,9 @@ const getPasskeyIcon = (name: string) => {
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
-        <Head title="Security settings" />
+        <Head>
+        <title>Security settings</title>
+    </Head>
 
         <h1 class="sr-only">Security settings</h1>
 

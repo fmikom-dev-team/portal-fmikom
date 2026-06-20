@@ -432,11 +432,11 @@ const mfaStatusLabel = computed(() => {
                 <div class="flex items-center gap-3">
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" v-model="hostedUiEdit.enabled" class="sr-only peer" />
-                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                     <span class="font-medium text-gray-900 text-[14px]">Enable</span>
                 </div>
-                <p class="text-gray-600 text-[13px]">Users will sign in and sign up using the <span class="text-indigo-600 font-medium">AuthKit</span> hosted UI.</p>
+                <p class="text-gray-600 text-[13px]">Users will sign in and sign up using the <span class="text-blue-600 font-medium">AuthKit</span> hosted UI.</p>
 
                 <hr class="border-gray-200" />
 
@@ -444,9 +444,9 @@ const mfaStatusLabel = computed(() => {
                 <div>
                     <h4 class="font-semibold text-gray-900 text-[14px] mb-3">Identity provider-initiated SSO</h4>
                     <label class="flex items-start gap-3 cursor-pointer">
-                        <input type="checkbox" v-model="hostedUiEdit.idp_sso" class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                        <input type="checkbox" v-model="hostedUiEdit.idp_sso" class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-[#2563eb]" />
                         <span class="text-gray-700 leading-relaxed">
-                            Use AuthKit to handle requests coming from IdPs, and complete authentication flows like email verification before going back to the default <span class="text-indigo-600 font-medium">Redirect URI</span>.
+                            Use AuthKit to handle requests coming from IdPs, and complete authentication flows like email verification before going back to the default <span class="text-blue-600 font-medium">Redirect URI</span>.
                         </span>
                     </label>
                     <div class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-gray-600 text-[12.5px] flex gap-2">
@@ -457,7 +457,7 @@ const mfaStatusLabel = computed(() => {
             </div>
             <template #footer>
                 <button @click="activeModal = null" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button @click="saveHostedUi" :disabled="saving === 'hosted_ui'" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[13px] font-semibold hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-60">
+                <button @click="saveHostedUi" :disabled="saving === 'hosted_ui'" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-semibold hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60">
                     <Loader2 v-if="saving === 'hosted_ui'" class="w-4 h-4 animate-spin" />
                     Save changes
                 </button>
@@ -470,7 +470,7 @@ const mfaStatusLabel = computed(() => {
                 <div class="flex items-center gap-3">
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" v-model="signUpEdit.enabled" class="sr-only peer" />
-                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                     <span class="font-medium text-gray-900 text-[14px]">Enable</span>
                 </div>
@@ -480,7 +480,7 @@ const mfaStatusLabel = computed(() => {
             </div>
             <template #footer>
                 <button @click="activeModal = null" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button @click="saveSignUp" :disabled="saving === 'sign_up'" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[13px] font-semibold hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-60">
+                <button @click="saveSignUp" :disabled="saving === 'sign_up'" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-semibold hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60">
                     <Loader2 v-if="saving === 'sign_up'" class="w-4 h-4 animate-spin" />
                     Save changes
                 </button>
@@ -498,7 +498,7 @@ const mfaStatusLabel = computed(() => {
                             v-model="invitationsEdit.expiry_days"
                             min="1"
                             max="30"
-                            class="w-20 px-3 py-2 border border-gray-300 rounded-lg text-[13px] focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                            class="w-20 px-3 py-2 border border-gray-300 rounded-lg text-[13px] focus:ring-1 focus:ring-[#2563eb] focus:border-[#2563eb]"
                         />
                         <span class="text-gray-600">days</span>
                     </div>
@@ -507,7 +507,7 @@ const mfaStatusLabel = computed(() => {
             </div>
             <template #footer>
                 <button @click="activeModal = null" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button @click="saveInvitations" :disabled="saving === 'invitations'" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[13px] font-semibold hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-60">
+                <button @click="saveInvitations" :disabled="saving === 'invitations'" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-semibold hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60">
                     <Loader2 v-if="saving === 'invitations'" class="w-4 h-4 animate-spin" />
                     Save changes
                 </button>
@@ -523,21 +523,21 @@ const mfaStatusLabel = computed(() => {
 
                 <div class="space-y-4">
                     <label class="flex items-start gap-3 cursor-pointer group">
-                        <input type="radio" v-model="mfaEdit.mode" value="off" class="mt-1 border-gray-300 text-indigo-600 focus:ring-indigo-500 shrink-0" />
+                        <input type="radio" v-model="mfaEdit.mode" value="off" class="mt-1 border-gray-300 text-blue-600 focus:ring-[#2563eb] shrink-0" />
                         <div>
                             <span class="block font-medium text-gray-900">Off</span>
                             <span class="block text-gray-500 mt-0.5">MFA is disabled for all users.</span>
                         </div>
                     </label>
                     <label class="flex items-start gap-3 cursor-pointer">
-                        <input type="radio" v-model="mfaEdit.mode" value="optional" class="mt-1 border-gray-300 text-indigo-600 focus:ring-indigo-500 shrink-0" />
+                        <input type="radio" v-model="mfaEdit.mode" value="optional" class="mt-1 border-gray-300 text-blue-600 focus:ring-[#2563eb] shrink-0" />
                         <div>
                             <span class="block font-medium text-gray-900">Optional</span>
                             <span class="block text-gray-500 mt-0.5">Users may optionally enroll in MFA and enforcement is configured by their organization membership.</span>
                         </div>
                     </label>
                     <label class="flex items-start gap-3 cursor-pointer">
-                        <input type="radio" v-model="mfaEdit.mode" value="required" class="mt-1 border-gray-300 text-indigo-600 focus:ring-indigo-500 shrink-0" />
+                        <input type="radio" v-model="mfaEdit.mode" value="required" class="mt-1 border-gray-300 text-blue-600 focus:ring-[#2563eb] shrink-0" />
                         <div>
                             <span class="block font-medium text-gray-900">Required</span>
                             <span class="block text-gray-500 mt-0.5">All users must enroll in MFA and are challenged each time they sign in.</span>
@@ -547,7 +547,7 @@ const mfaStatusLabel = computed(() => {
             </div>
             <template #footer>
                 <button @click="activeModal = null" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button @click="saveMfa" :disabled="saving === 'mfa'" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[13px] font-semibold hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-60">
+                <button @click="saveMfa" :disabled="saving === 'mfa'" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-semibold hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60">
                     <Loader2 v-if="saving === 'mfa'" class="w-4 h-4 animate-spin" />
                     Save changes
                 </button>
@@ -560,7 +560,7 @@ const mfaStatusLabel = computed(() => {
                 <div class="flex items-center gap-3">
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" v-model="localizationEdit.enabled" class="sr-only peer" />
-                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                     <span class="font-medium text-gray-900 text-[14px]">Enable</span>
                 </div>
@@ -574,7 +574,7 @@ const mfaStatusLabel = computed(() => {
                     <div class="relative">
                         <button
                             @click="langDropdownOpen = !langDropdownOpen"
-                            class="w-full flex items-center justify-between px-3 py-2 border border-gray-300 rounded-lg text-[13px] bg-white hover:border-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            class="w-full flex items-center justify-between px-3 py-2 border border-gray-300 rounded-lg text-[13px] bg-white hover:border-gray-400 focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
                         >
                             <span>{{ LANGUAGES.find(l => l.code === localizationEdit.fallback_language)?.label ?? 'English (US)' }}</span>
                             <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
@@ -582,7 +582,7 @@ const mfaStatusLabel = computed(() => {
 
                         <div v-if="langDropdownOpen" class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
                             <div class="p-2 border-b border-gray-100">
-                                <input v-model="langSearch" type="text" placeholder="Search languages" class="w-full px-3 py-1.5 text-[13px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500" autofocus />
+                                <input v-model="langSearch" type="text" placeholder="Search languages" class="w-full px-3 py-1.5 text-[13px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#2563eb]" autofocus />
                             </div>
                             <div class="max-h-48 overflow-y-auto">
                                 <div v-if="!langSearch && filteredLanguages.length > 0" class="px-3 py-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Common languages</div>
@@ -593,7 +593,7 @@ const mfaStatusLabel = computed(() => {
                                     class="w-full flex items-center justify-between px-3 py-2 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors"
                                 >
                                     <span>{{ lang.label }}</span>
-                                    <Check v-if="lang.code === localizationEdit.fallback_language" class="w-4 h-4 text-indigo-600" />
+                                    <Check v-if="lang.code === localizationEdit.fallback_language" class="w-4 h-4 text-blue-600" />
                                 </button>
                                 <div v-if="filteredLanguages.length === 0" class="px-3 py-3 text-[13px] text-gray-500 text-center">No languages found</div>
                             </div>
@@ -603,7 +603,7 @@ const mfaStatusLabel = computed(() => {
             </div>
             <template #footer>
                 <button @click="activeModal = null; langDropdownOpen = false" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button @click="saveLocalization" :disabled="saving === 'localization'" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[13px] font-semibold hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-60">
+                <button @click="saveLocalization" :disabled="saving === 'localization'" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-semibold hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60">
                     <Loader2 v-if="saving === 'localization'" class="w-4 h-4 animate-spin" />
                     Save changes
                 </button>
@@ -616,7 +616,7 @@ const mfaStatusLabel = computed(() => {
                 <div class="flex items-center gap-3">
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" v-model="impersonationEdit.enabled" class="sr-only peer" />
-                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                     <span class="font-medium text-gray-900 text-[14px]">Enable</span>
                 </div>
@@ -627,7 +627,7 @@ const mfaStatusLabel = computed(() => {
             </div>
             <template #footer>
                 <button @click="activeModal = null" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button @click="saveImpersonation" :disabled="saving === 'user_impersonation'" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-[13px] font-semibold hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-60">
+                <button @click="saveImpersonation" :disabled="saving === 'user_impersonation'" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-semibold hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60">
                     <Loader2 v-if="saving === 'user_impersonation'" class="w-4 h-4 animate-spin" />
                     Save changes
                 </button>

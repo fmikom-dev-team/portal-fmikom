@@ -152,7 +152,9 @@ const nomorIndukPlaceholder = computed(() => {
 
 <template>
     <div class="w-full">
-        <Head title="Pendaftaran Google" />
+        <Head>
+        <title>Pendaftaran Google</title>
+    </Head>
 
         <!-- Stepper Indicator Responsive -->
         <div class="flex flex-col mb-8 px-1">

@@ -14,7 +14,9 @@ const mobileOpen = ref(false);
 </script>
 
 <template>
-    <Head :title="title ? `${title} — Admin PAGI` : 'Admin PAGI'" />
+    <Head>
+        <title>{{ title ? `${title} — Admin PAGI` : 'Admin PAGI' }}</title>
+    </Head>
 
     <div class="min-h-screen bg-[#f8f9fc] dark:bg-zinc-950 font-sans selection:bg-indigo-500 selection:text-white">
 

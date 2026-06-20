@@ -38,13 +38,10 @@ class SessionEngine
         // 3. Evaluate Risk
         $riskScore = $this->riskEngine->calculateRisk($user, $device, $ip, $geo);
 
-        // 4. Invalidate old sessions if single-session policy is enforced
-        // AuthSession::where('user_id', $user->id)->update(['is_revoked' => true]); // Optional
+        // 4. Resolve Laravel Session ID (fallback to random hash if no session, e.g., console/tests)
+        $token = $request->hasSession() ? $request->session()->getId() : hash('sha256', Str::random(60).time());
 
-        // 5. Generate Session Token (Opaque Token)
-        $token = hash('sha256', Str::random(60).time());
-
-        // 6. Persist Session
+        // 5. Persist Session
         $session = AuthSession::create([
             'user_id' => $user->id,
             'device_id' => $device->id,
@@ -54,7 +51,7 @@ class SessionEngine
             'geolocation' => $geo,
             'is_revoked' => false,
             'risk_score' => $riskScore,
-            'expires_at' => Carbon::now()->addDays(7), // Session TTL
+            'expires_at' => Carbon::now()->addMinutes(config('session.lifetime')),
             'last_activity_at' => Carbon::now(),
         ]);
 
@@ -72,10 +69,10 @@ class SessionEngine
     /**
      * Revoke all sessions for a user except current
      */
-    public function revokeOtherSessions(User $user, string $currentSessionToken)
+    public function revokeOtherSessions(User $user, string $currentSessionId)
     {
         AuthSession::where('user_id', $user->id)
-            ->where('session_token', '!=', $currentSessionToken)
+            ->where('id', '!=', $currentSessionId)
             ->update(['is_revoked' => true]);
     }
 

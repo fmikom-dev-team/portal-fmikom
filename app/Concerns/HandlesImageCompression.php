@@ -2,8 +2,11 @@
 
 namespace App\Concerns;
 
+use App\Services\VirusScannerService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 trait HandlesImageCompression
 {
@@ -17,6 +20,30 @@ trait HandlesImageCompression
         // Allocate more memory dynamically for processing large images
         @ini_set('memory_limit', '512M');
 
+        // Validate actual mime type and extension
+        $realMime = $file->getMimeType();
+        $realExt = $file->guessExtension();
+
+        $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $allowedExts = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
+
+        if (! in_array($realMime, $allowedMimes) || ! in_array($realExt, $allowedExts)) {
+            $key = $this->getUploadedFileKey($file);
+            throw ValidationException::withMessages([
+                $key => 'Unggah berkas gagal: Tipe berkas gambar tidak valid atau terindikasi berbahaya.',
+            ]);
+        }
+
+        // Scan for virus signature using ClamAV
+        $scanner = app(VirusScannerService::class);
+        $scanResult = $scanner->scan($file);
+        if (! $scanResult['safe']) {
+            $key = $this->getUploadedFileKey($file);
+            throw ValidationException::withMessages([
+                $key => $scanResult['reason'],
+            ]);
+        }
+
         // Generate a unique filename with .webp extension
         $filename = uniqid('img_', true).'.webp';
         $targetDir = storage_path('app/public/'.$directory);
@@ -28,11 +55,9 @@ trait HandlesImageCompression
         $targetPath = $targetDir.'/'.$filename;
         $sourcePath = $file->getRealPath();
 
-        // Load image based on mime type
-        $mime = $file->getClientMimeType();
         $sourceImage = null;
 
-        switch ($mime) {
+        switch ($realMime) {
             case 'image/jpeg':
             case 'image/jpg':
                 $sourceImage = @imagecreatefromjpeg($sourcePath);
@@ -49,8 +74,11 @@ trait HandlesImageCompression
         }
 
         if (! $sourceImage) {
-            // If GD loading failed or unsupported format, just store normally as fallback
-            return $file->store($directory, 'public');
+            // Throw exception to prevent storing raw fallback (neutralize fake/corrupted images)
+            $key = $this->getUploadedFileKey($file);
+            throw ValidationException::withMessages([
+                $key => 'Unggah berkas gagal: Kerusakan berkas gambar terdeteksi.',
+            ]);
         }
 
         // Get original dimensions
@@ -105,8 +133,10 @@ trait HandlesImageCompression
             return $directory.'/'.$filename;
         }
 
-        // Fallback to normal store if anything failed
-        return $file->store($directory, 'public');
+        $key = $this->getUploadedFileKey($file);
+        throw ValidationException::withMessages([
+            $key => 'Unggah berkas gagal: Gagal memproses gambar.',
+        ]);
     }
 
     /**
@@ -120,63 +150,77 @@ trait HandlesImageCompression
         // Allocate more memory dynamically for processing large images
         @ini_set('memory_limit', '512M');
 
-        $realPath = $file->getRealPath();
-        $mime = $file->getClientMimeType();
-
-        // 1. Strict Content validation (check binary/content for script sequences)
-        // Skip for image and video files as they are binary and can contain random matching byte sequences.
-        if (! str_starts_with($mime, 'image/') && ! str_starts_with($mime, 'video/')) {
-            $contents = file_get_contents($realPath);
-            if (
-                str_contains($contents, '<?php') ||
-                str_contains($contents, '<?=') ||
-                str_contains($contents, '<script') ||
-                preg_match('/<script\b[^>]*>(.*?)<\/script>/is', $contents) ||
-                preg_match('/<\?php\b(.*?)(\?>|$)/is', $contents)
-            ) {
-                // Throw exception or abort immediately if script injection detected
-                abort(422, 'Security Warning: Dangerous script signatures detected in file content.');
-            }
+        // Scan for virus signature using ClamAV
+        $scanner = app(VirusScannerService::class);
+        $scanResult = $scanner->scan($file);
+        if (! $scanResult['safe']) {
+            $key = $this->getUploadedFileKey($file);
+            throw ValidationException::withMessages([
+                $key => $scanResult['reason'],
+            ]);
         }
+
+        $realMime = $file->getMimeType();
+        $realExt = $file->guessExtension();
+
+        $allowedVideoMimes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 'video/3gpp'];
+        $allowedVideoExts = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', '3gp'];
+
+        $allowedImageMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $allowedImageExts = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
+
+        $isImage = in_array($realMime, $allowedImageMimes) && in_array($realExt, $allowedImageExts);
+        $isVideo = in_array($realMime, $allowedVideoMimes) && in_array($realExt, $allowedVideoExts);
+
+        if (! $isImage && ! $isVideo) {
+            $key = $this->getUploadedFileKey($file);
+            throw ValidationException::withMessages([
+                $key => 'Unggah berkas gagal: Tipe berkas tidak didukung atau terindikasi berbahaya.',
+            ]);
+        }
+
         $targetDir = storage_path('app/public/'.$directory);
         if (! file_exists($targetDir)) {
             mkdir($targetDir, 0755, true);
         }
 
-        // 2. Video processing — transcode and compress to WebM using FFmpeg
-        if (str_starts_with($mime, 'video/')) {
-            $filename = uniqid('vid_', true).'.webm';
+        // 2. Video processing — transcode and compress in background
+        if ($isVideo) {
+            $ext = in_array($realExt, $allowedVideoExts) ? $realExt : 'mp4';
+            $filename = uniqid('vid_', true).'.'.$ext;
             $destPath = $targetDir.'/'.$filename;
+
+            // Move the uploaded file to the target location immediately
+            $file->move($targetDir, $filename);
 
             $ffmpegPath = '/opt/homebrew/bin/ffmpeg';
             if (! file_exists($ffmpegPath)) {
                 $ffmpegPath = 'ffmpeg';
             }
 
-            $escapedSource = escapeshellarg($realPath);
-            $escapedDest = escapeshellarg($destPath);
+            $tempDest = $targetDir.'/tmp_'.uniqid('vid_', true).'.'.$ext;
+            $escapedSource = escapeshellarg($destPath);
+            $escapedTempDest = escapeshellarg($tempDest);
 
-            // Use VP8 with realtime speed settings to compress and save as WebM
-            $command = "{$ffmpegPath} -y -i {$escapedSource} -c:v libvpx -crf 32 -b:v 1M -deadline realtime -cpu-used 4 -c:a libvorbis {$escapedDest} 2>&1";
-
-            Log::info('Converting video to WebM: '.$command);
-            exec($command, $output, $resultCode);
-
-            if ($resultCode === 0 && file_exists($destPath)) {
-                return $directory.'/'.$filename;
+            if (strtolower($ext) === 'webm') {
+                $videoCodec = 'libvpx -crf 32 -b:v 1M -deadline realtime -cpu-used 4';
+                $audioCodec = 'libopus';
+            } else {
+                $videoCodec = 'libx264 -crf 28 -preset faster';
+                $audioCodec = 'aac';
             }
 
-            Log::error("FFmpeg video transcode failed with code {$resultCode}. Output: ".implode("\n", $output));
+            $command = "{$ffmpegPath} -y -i {$escapedSource} -c:v {$videoCodec} -c:a {$audioCodec} {$escapedTempDest}";
+            $bgCommand = "({$command} && mv {$escapedTempDest} {$escapedSource} || rm -f {$escapedTempDest}) > /dev/null 2>&1 &";
 
-            // Fallback to original storage if FFmpeg fails
-            $ext = $file->getClientOriginalExtension() ?: 'mp4';
-            $filename = uniqid('vid_fallback_', true).'.'.$ext;
+            Log::info('Triggering background video compression: '.$bgCommand);
+            exec($bgCommand);
 
-            return $file->storeAs($directory, $filename, 'public');
+            return $directory.'/'.$filename;
         }
 
         // 3. GIF processing (preserve animation, store securely)
-        if ($mime === 'image/gif') {
+        if ($realMime === 'image/gif') {
             $filename = uniqid('gif_', true).'.gif';
 
             return $file->storeAs($directory, $filename, 'public');
@@ -184,5 +228,25 @@ trait HandlesImageCompression
 
         // 4. Static Image compression (convert to WebP)
         return $this->compressAndSaveImage($file, $directory, 3200, 410, 80);
+    }
+
+    protected function getUploadedFileKey(UploadedFile $file): string
+    {
+        $request = request();
+        foreach ($request->allFiles() as $inputKey => $uploadedFile) {
+            if (is_array($uploadedFile)) {
+                foreach (Arr::dot($uploadedFile) as $dotKey => $subFile) {
+                    if ($subFile->getRealPath() === $file->getRealPath()) {
+                        return $inputKey.'.'.$dotKey;
+                    }
+                }
+            } else {
+                if ($uploadedFile->getRealPath() === $file->getRealPath()) {
+                    return $inputKey;
+                }
+            }
+        }
+
+        return 'file';
     }
 }

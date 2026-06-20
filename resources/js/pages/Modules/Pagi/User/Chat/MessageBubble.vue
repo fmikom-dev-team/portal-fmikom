@@ -201,7 +201,7 @@ function handleReactAction(emoji: string) {
 
         <!-- Incoming avatar -->
         <div v-if="msg.sender_id !== authUser.id" class="h-7 w-7 rounded-full overflow-hidden bg-slate-200 dark:bg-zinc-700 shrink-0 self-end flex items-center justify-center pointer-events-none">
-            <img v-if="avatarUrl(msg.sender.foto_path)" :src="avatarUrl(msg.sender.foto_path)!" class="w-full h-full object-cover" />
+            <img v-if="avatarUrl(msg.sender.foto_path)" :src="avatarUrl(msg.sender.foto_path)!" :alt="msg.sender.name" class="w-full h-full object-cover" />
             <span v-else class="text-[10px] font-bold text-slate-500">{{ msg.sender.name.charAt(0) }}</span>
         </div>
 

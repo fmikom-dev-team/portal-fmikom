@@ -357,7 +357,7 @@ const getLogoUrl = (toolName: string): string => {
                                             <span v-if="customization.skills_show_checkbox" class="font-black shrink-0" :style="{ color: primaryColor }">✓</span>
                                             
                                             <!-- App Logo -->
-                                            <img v-if="customization.skills_show_logo && hasLogo(sk.name)" :src="getLogoUrl(sk.name)" class="w-4 h-4 shrink-0 object-contain" />
+                                            <img v-if="customization.skills_show_logo && hasLogo(sk.name)" :src="getLogoUrl(sk.name)" :alt="sk.name" class="w-4 h-4 shrink-0 object-contain" />
                                             
                                             <!-- Skill Name -->
                                             <span>{{ sk.name }}</span>
@@ -376,7 +376,7 @@ const getLogoUrl = (toolName: string): string => {
                                 <!-- Default Tags / Badge Layout (with option to show Logo) -->
                                 <div v-else class="flex flex-wrap gap-2 text-[10px] pt-1">
                                     <span v-for="sk in skills" :key="sk.id" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-zinc-100 text-zinc-700 font-bold border border-zinc-200/50">
-                                        <img v-if="customization.skills_show_logo && hasLogo(sk.name)" :src="getLogoUrl(sk.name)" class="w-3.5 h-3.5 shrink-0 object-contain" />
+                                        <img v-if="customization.skills_show_logo && hasLogo(sk.name)" :src="getLogoUrl(sk.name)" :alt="sk.name" class="w-3.5 h-3.5 shrink-0 object-contain" />
                                         <span>{{ sk.name }}</span>
                                         <span class="text-zinc-400 font-normal">({{ sk.level || 50 }}%)</span>
                                     </span>
@@ -454,7 +454,7 @@ const getLogoUrl = (toolName: string): string => {
                 <div class="w-1/3 border-r border-zinc-100 pr-5 space-y-6 text-zinc-700 bg-zinc-50/50 p-4 rounded-2xl">
                     <div class="text-center space-y-2">
                         <div v-if="personalInfo.foto_path" class="w-20 h-20 rounded-full overflow-hidden mx-auto mb-3 border border-zinc-200">
-                            <img :src="getPhotoUrl(personalInfo.foto_path)" class="w-full h-full object-cover" />
+                            <img :src="getPhotoUrl(personalInfo.foto_path)" alt="Foto Profil" class="w-full h-full object-cover" />
                         </div>
                         <h1 class="text-xl font-black tracking-tight text-zinc-800 leading-none">
                             {{ personalInfo.name || 'Nama Lengkap' }}
@@ -613,7 +613,7 @@ const getLogoUrl = (toolName: string): string => {
                 <!-- Header centered/left depending on template -->
                 <div :class="[getTemplateName() === 'executive' ? 'text-center border-b pb-4' : 'text-left border-l-4 pl-4 py-1 border-emerald-500 bg-zinc-50/50 p-4 rounded-r-2xl', 'space-y-2 flex items-center gap-4']">
                     <div v-if="personalInfo.foto_path && getTemplateName() === 'student-resume'" class="w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-zinc-200">
-                        <img :src="getPhotoUrl(personalInfo.foto_path)" class="w-full h-full object-cover" />
+                        <img :src="getPhotoUrl(personalInfo.foto_path)" alt="Foto Profil" class="w-full h-full object-cover" />
                     </div>
                     <div class="flex-1 space-y-2">
                         <h1 :class="[getTemplateName() === 'executive' ? 'text-4xl font-serif text-zinc-900' : 'text-3xl font-extrabold text-zinc-800', 'leading-none']">
@@ -713,7 +713,7 @@ const getLogoUrl = (toolName: string): string => {
                                             <span v-if="customization.skills_show_checkbox" class="font-black shrink-0" :style="{ color: primaryColor }">✓</span>
                                             
                                             <!-- App Logo -->
-                                            <img v-if="customization.skills_show_logo && hasLogo(sk.name)" :src="getLogoUrl(sk.name)" class="w-4 h-4 shrink-0 object-contain" />
+                                            <img v-if="customization.skills_show_logo && hasLogo(sk.name)" :src="getLogoUrl(sk.name)" :alt="sk.name" class="w-4 h-4 shrink-0 object-contain" />
                                             
                                             <!-- Skill Name -->
                                             <span>{{ sk.name }}</span>
@@ -732,7 +732,7 @@ const getLogoUrl = (toolName: string): string => {
                                 <!-- Default Tags / Badge Layout (with option to show Logo) -->
                                 <div v-else class="flex flex-wrap gap-2 text-[10px] pt-1">
                                     <span v-for="sk in skills" :key="sk.id" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-50 border border-zinc-200 text-zinc-700 font-bold">
-                                        <img v-if="customization.skills_show_logo && hasLogo(sk.name)" :src="getLogoUrl(sk.name)" class="w-3.5 h-3.5 shrink-0 object-contain" />
+                                        <img v-if="customization.skills_show_logo && hasLogo(sk.name)" :src="getLogoUrl(sk.name)" :alt="sk.name" class="w-3.5 h-3.5 shrink-0 object-contain" />
                                         <span>{{ sk.name }}</span>
                                         <span class="text-zinc-400 font-normal">({{ sk.level || 50 }}%)</span>
                                     </span>

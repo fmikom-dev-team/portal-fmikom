@@ -3,65 +3,105 @@ import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import type { DefineComponent } from "vue";
 import { createApp, h } from "vue";
 import "../css/app.css";
-import "../css/workos.css";
 import axios from "axios";
 import { initializeTheme } from "@/composables/useAppearance";
+import { useLoadingState } from "@/composables/useLoadingState";
 
-// @ts-expect-error
-window.axios = axios;
-// @ts-expect-error
-window.axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
+(globalThis as any).axios = axios;
+(globalThis as any).axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
+(globalThis as any).axios.defaults.xsrfCookieName = "fm_csrf";
+(globalThis as any).axios.defaults.xsrfHeaderName = "X-XSRF-TOKEN";
+
 
 // ── Laravel Echo (Reverb WebSocket) ─────────────────────────────────────────
-import Echo from "laravel-echo";
-import Pusher from "pusher-js";
+let echoInitialized = false;
 
-// @ts-expect-error
-window.Pusher = Pusher;
+async function initEcho() {
+	if (echoInitialized || (globalThis as any).Broadcaster) return;
+	echoInitialized = true;
 
-const isHttps = window.location.protocol === "https:";
-const isLocal = ["localhost", "127.0.0.1", "::1"].includes(
-	window.location.hostname,
-);
-const wsHost = import.meta.env.VITE_REVERB_HOST || window.location.hostname;
-const wsPort =
-	isHttps && !isLocal ? undefined : import.meta.env.VITE_REVERB_PORT || 8080;
-const wssPort =
-	isHttps && !isLocal ? undefined : import.meta.env.VITE_REVERB_PORT || 8080;
-const forceTLS = isHttps || import.meta.env.VITE_REVERB_SCHEME === "https";
+	try {
+		const [{ default: Echo }, { default: Pusher }] = await Promise.all([
+			import("laravel-echo"),
+			import("pusher-js"),
+		]);
 
-// @ts-expect-error
-window.Echo = new Echo({
-	broadcaster: "reverb",
-	key: import.meta.env.VITE_REVERB_APP_KEY,
-	wsHost,
-	wsPort,
-	wssPort,
-	forceTLS,
-	enabledTransports: ["ws", "wss"],
-	authEndpoint: "/broadcasting/auth",
-});
+		if ((globalThis as any).Pusher) {
+			delete (globalThis as any).Pusher;
+		}
 
-// Connection diagnostics logging
-if (window.Echo?.connector?.pusher) {
-	const pusherConn = window.Echo.connector.pusher.connection;
-	pusherConn.bind(
-		"state_change",
-		(states: { previous: string; current: string }) => {
-			console.log(
-				`[Echo Connection] State changed from "${states.previous}" to "${states.current}"`,
+		const isHttps = globalThis.location.protocol === "https:";
+		const isLocal = ["localhost", "127.0.0.1", "::1"].includes(
+			globalThis.location.hostname,
+		);
+		const wsHost = import.meta.env.VITE_REVERB_HOST || globalThis.location.hostname;
+		const wsPort =
+			isHttps && !isLocal ? undefined : import.meta.env.VITE_REVERB_PORT || 8080;
+		const wssPort =
+			isHttps && !isLocal ? undefined : import.meta.env.VITE_REVERB_PORT || 8080;
+		const forceTLS = isHttps || import.meta.env.VITE_REVERB_SCHEME === "https";
+
+		(globalThis as any).Broadcaster = new Echo({
+			broadcaster: "reverb",
+			key: import.meta.env.VITE_REVERB_APP_KEY,
+			wsHost,
+			wsPort,
+			wssPort,
+			forceTLS,
+			enabledTransports: ["ws", "wss"],
+			authEndpoint: "/broadcasting/auth",
+			Pusher,
+		});
+
+		if ((globalThis as any).Pusher) {
+			delete (globalThis as any).Pusher;
+		}
+
+		const echoConn = (globalThis as any).Broadcaster;
+		if (echoConn?.connector?.pusher) {
+			const pusherConn = echoConn.connector.pusher.connection;
+			pusherConn.bind(
+				"state_change",
+				(states: { previous: string; current: string }) => {
+					console.log(
+						`[Echo Connection] State changed from "${states.previous}" to "${states.current}"`,
+					);
+				},
 			);
-		},
-	);
-	pusherConn.bind("error", (err: unknown) => {
-		console.error("[Echo Connection] Error details:", err);
-	});
+			pusherConn.bind("error", (err: unknown) => {
+				console.error("[Echo Connection] Error details:", err);
+			});
+		}
+	} catch (error) {
+		console.error("Failed to initialize Echo:", error);
+		echoInitialized = false;
+	}
 }
 
-const appName = import.meta.env.VITE_APP_NAME || "Laravel";
+// ── bfcache WebSocket Support ─────────────────────────────────────────
+window.addEventListener("pagehide", () => {
+	if ((globalThis as any).Broadcaster) {
+		(globalThis as any).Broadcaster.disconnect();
+	}
+});
+
+window.addEventListener("pageshow", (event) => {
+	if (event.persisted && (globalThis as any).Broadcaster) {
+		(globalThis as any).Broadcaster.connect();
+	}
+});
+
+const appName = import.meta.env.VITE_APP_NAME || "Portal";
 
 createInertiaApp({
-	title: (title) => (title ? `${title} - ${appName}` : appName),
+	http: {
+		xsrfCookieName: "fm_csrf",
+		xsrfHeaderName: "X-XSRF-TOKEN",
+	},
+	title: (title) => {
+		const brandName = ((router as any).page?.props?.siteSettings as any)?.brand_name || appName;
+		return title ? `${title} - ${brandName}` : brandName;
+	},
 	resolve: (name) =>
 		resolvePageComponent(
 			`./pages/${name}.vue`,
@@ -71,6 +111,11 @@ createInertiaApp({
 		createApp({ render: () => h(App, props) })
 			.use(plugin)
 			.mount(el);
+
+		// Initialize Echo only if the user is authenticated on initial load
+		if (props.initialPage.props.auth?.user) {
+			initEcho();
+		}
 	},
 	progress: {
 		color: "#4B5563",
@@ -80,6 +125,52 @@ createInertiaApp({
 // -----------------------------------------------------------------------
 // Global Inertia Event Handlers
 // -----------------------------------------------------------------------
+
+// biome-ignore lint/correctness/useHookAtTopLevel: Vue composable, not a React hook
+const { startLoading, stopLoading } = useLoadingState();
+let loadingTimeout: ReturnType<typeof setTimeout>;
+
+router.on("start", (event) => {
+	const path = event.detail.visit.url.pathname;
+	loadingTimeout = setTimeout(() => {
+		startLoading(path);
+	}, 120);
+});
+
+router.on("finish", () => {
+	clearTimeout(loadingTimeout);
+	stopLoading();
+});
+
+router.on("success", (event) => {
+	const props = event.detail.page.props as any;
+
+	// Initialize Echo dynamically if user logs in
+	if (props.auth?.user) {
+		initEcho();
+	}
+
+	if (props.siteSettings) {
+		const settings = props.siteSettings;
+		
+		// 1. Dynamic Favicon Swapping
+		if (settings.brand_favicon) {
+			const favicons = document.querySelectorAll("link[rel*='icon']");
+			favicons.forEach(el => el.remove());
+			
+			const newFavicon = document.createElement('link');
+			newFavicon.rel = 'icon';
+			newFavicon.href = settings.brand_favicon;
+			document.head.appendChild(newFavicon);
+		}
+
+		// 2. Dynamic Primary Accent Color
+		if (settings.primary_color) {
+			document.documentElement.style.setProperty('--primary', settings.primary_color);
+			document.documentElement.style.setProperty('--wos-primary', settings.primary_color);
+		}
+	}
+});
 
 /**
  * Handle response yang tidak valid dari server:
@@ -102,7 +193,7 @@ router.on("invalid", (event) => {
 					"Gagal mengunggah! Ukuran berkas terlalu besar (melebihi batas server 100MB). Hubungi admin jika masalah berlanjut.",
 			},
 		});
-		window.dispatchEvent(customEvent);
+		globalThis.dispatchEvent(customEvent);
 	} else if (status === 422) {
 		event.preventDefault();
 		const responseData = event.detail.response?.data;
@@ -123,9 +214,26 @@ router.on("invalid", (event) => {
 				message: errMsg,
 			},
 		});
-		window.dispatchEvent(customEvent);
+		globalThis.dispatchEvent(customEvent);
 	}
 });
 
 // This will set light / dark mode on page load...
 initializeTheme();
+
+// ── PWA Service Worker Registration ──────────────────────────────────────────
+if ("serviceWorker" in navigator) {
+	globalThis.addEventListener("load", () => {
+		navigator.serviceWorker
+			.register("/sw.js")
+			.then((registration) => {
+				console.log(
+					"[PWA] Service Worker registered with scope:",
+					registration.scope,
+				);
+			})
+			.catch((error) => {
+				console.error("[PWA] Service Worker registration failed:", error);
+			});
+	});
+}

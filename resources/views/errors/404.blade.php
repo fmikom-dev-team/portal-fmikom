@@ -38,7 +38,7 @@
         <line x1="74" y1="99" x2="83" y2="108" stroke-width="1.5" opacity="0.6" />
         
         <!-- Glass Frame (Fills background to mask radar lines behind it) -->
-        <circle cx="58" cy="83" r="12" stroke-width="2.5" fill="#121214" />
+        <circle cx="58" cy="83" r="12" stroke-width="2.5" fill="var(--svg-bg-fill)" />
         
         <!-- Lens Glare/Highlight Arc -->
         <path d="M 50 83 A 8 8 0 0 1 58 75" stroke-width="1.2" />

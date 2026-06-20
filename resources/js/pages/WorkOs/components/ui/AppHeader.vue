@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { Link, usePage } from "@inertiajs/vue3";
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 
 defineProps<{
 	activeLabel: string;
 }>();
 
-const emit = defineEmits<(e: "toggleSidebar") => void>();
+const emit = defineEmits<{
+	(e: "toggleSidebar"): void;
+	(e: "search", query: string): void;
+}>();
 
 const page = usePage();
 const authUser = computed(() => (page.props as any).auth?.user);
@@ -16,33 +19,11 @@ const userInitial = computed(() =>
 const userName = computed(() => authUser.value?.name ?? "Admin");
 const userEmail = computed(() => authUser.value?.email ?? "");
 
-// ── Project dropdown ───────────────────────────────────────────────
-const projectOpen = ref(false);
-const currentProject = ref("Web Dev");
-const projects = ["Web Dev", "Production", "Staging App", "FMIKOM Portal"];
+// ── Project & Environment constants ────────────────────────────────
+const currentProject = "Web Dev";
+const currentEnv = "Staging";
+const currentEnvColor = "#f59e0b";
 
-function selectProject(p: string) {
-	currentProject.value = p;
-	projectOpen.value = false;
-}
-
-// ── Environment dropdown ───────────────────────────────────────────
-const envOpen = ref(false);
-const currentEnv = ref("Staging");
-const environments = [
-	{ label: "Staging", color: "#f59e0b" },
-	{ label: "Production", color: "#10b981" },
-	{ label: "Development", color: "#6b7280" },
-];
-const currentEnvColor = computed(
-	() =>
-		environments.find((e) => e.label === currentEnv.value)?.color ?? "#f59e0b",
-);
-
-function selectEnv(e: { label: string; color: string }) {
-	currentEnv.value = e.label;
-	envOpen.value = false;
-}
 
 // ── User dropdown ──────────────────────────────────────────────────
 const userOpen = ref(false);
@@ -51,6 +32,10 @@ const userOpen = ref(false);
 const searchExpanded = ref(false);
 const searchQuery = ref("");
 const searchInputRef = ref<HTMLInputElement | null>(null);
+
+watch(searchQuery, (newVal) => {
+	emit("search", newVal);
+});
 
 function toggleSearch() {
 	searchExpanded.value = !searchExpanded.value;
@@ -65,8 +50,6 @@ function toggleSearch() {
 function closeAll(e: MouseEvent) {
 	const target = e.target as HTMLElement;
 	if (!target.closest("[data-dropdown]")) {
-		projectOpen.value = false;
-		envOpen.value = false;
 		userOpen.value = false;
 		if (!target.closest("[data-search]")) {
 			searchExpanded.value = false;
@@ -75,8 +58,22 @@ function closeAll(e: MouseEvent) {
 	}
 }
 
-onMounted(() => document.addEventListener("click", closeAll));
-onUnmounted(() => document.removeEventListener("click", closeAll));
+function handleGlobalKeydown(e: KeyboardEvent) {
+	if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+		e.preventDefault();
+		toggleSearch();
+	}
+}
+
+onMounted(() => {
+	document.addEventListener("click", closeAll);
+	window.addEventListener("keydown", handleGlobalKeydown);
+});
+
+onUnmounted(() => {
+	document.removeEventListener("click", closeAll);
+	window.removeEventListener("keydown", handleGlobalKeydown);
+});
 </script>
 
 <template>
@@ -97,71 +94,18 @@ onUnmounted(() => document.removeEventListener("click", closeAll));
                 </svg>
             </button>
 
-            <!-- Project dropdown -->
-            <div class="relative hidden sm:block" data-dropdown>
-                <button
-                    class="flex items-center gap-1.5 h-8 px-2 rounded-md text-[13.5px] font-semibold text-[#111827] hover:bg-[#f3f4f6] transition-colors"
-                    @click.stop="projectOpen = !projectOpen; envOpen = false; userOpen = false"
-                >
-                    {{ currentProject }}
-                    <svg class="w-[15px] h-[15px] text-[#9ca3af]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            <!-- Modern Breadcrumbs UI -->
+            <nav class="hidden sm:flex items-center gap-2 text-[13px] font-medium text-[#4b5563] ml-1.5" aria-label="Breadcrumb">
+                <!-- Root / App Name -->
+                <span class="text-[#111827] font-semibold">WorkOS</span>
+                <!-- Separator & Active Page -->
+                <template v-if="activeLabel">
+                    <svg class="w-3.5 h-3.5 text-[#9ca3af] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
-                </button>
-                <!-- Dropdown menu -->
-                <div
-                    v-show="projectOpen"
-                    class="absolute top-full left-0 mt-1 w-44 bg-white border border-[#e5e7eb] rounded-lg shadow-lg py-1 z-50"
-                >
-                    <button
-                        v-for="p in projects"
-                        :key="p"
-                        class="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-[#374151] hover:bg-[#f9fafb] transition-colors text-left"
-                        @click.stop="selectProject(p)"
-                    >
-                        <svg v-if="p === currentProject" class="w-3.5 h-3.5 shrink-0" style="color: #2563EB" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span v-else class="w-3.5 h-3.5 shrink-0" />
-                        <span :class="p === currentProject ? 'font-semibold text-[#111827]' : ''">{{ p }}</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Divider -->
-            <div class="hidden sm:block w-px h-3.5 bg-[#e5e7eb] mx-0.5" aria-hidden="true" />
-
-            <!-- Environment dropdown -->
-            <div class="relative hidden sm:block" data-dropdown>
-                <button
-                    class="flex items-center gap-1.5 h-8 px-2 rounded-md text-[13px] text-[#374151] hover:bg-[#f3f4f6] transition-colors"
-                    @click.stop="envOpen = !envOpen; projectOpen = false; userOpen = false"
-                >
-                    <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: currentEnvColor }" />
-                    {{ currentEnv }}
-                    <svg class="w-[15px] h-[15px] text-[#9ca3af]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </button>
-                <!-- Dropdown menu -->
-                <div
-                    v-show="envOpen"
-                    class="absolute top-full left-0 mt-1 w-44 bg-white border border-[#e5e7eb] rounded-lg shadow-lg py-1 z-50"
-                >
-                    <button
-                        v-for="env in environments"
-                        :key="env.label"
-                        class="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12.5px] text-[#374151] hover:bg-[#f9fafb] transition-colors text-left"
-                        @click.stop="selectEnv(env)"
-                    >
-                        <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: env.color }" />
-                        <span :class="env.label === currentEnv ? 'font-semibold text-[#111827]' : ''">{{ env.label }}</span>
-                        <svg v-if="env.label === currentEnv" class="w-3 h-3 ml-auto shrink-0" style="color: #2563EB" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
+                    <span class="font-semibold text-[#111827] truncate max-w-[120px] sm:max-w-[200px]">{{ activeLabel }}</span>
+                </template>
+            </nav>
         </div>
 
         <!-- ── Right ── -->
@@ -210,14 +154,14 @@ onUnmounted(() => document.removeEventListener("click", closeAll));
                 <button
                     class="flex items-center gap-2 h-9 px-2 hover:bg-[#f9fafb] rounded-md transition-colors text-left"
                     aria-label="User menu"
-                    @click.stop="userOpen = !userOpen; projectOpen = false; envOpen = false"
+                    @click.stop="userOpen = !userOpen"
                 >
                     <div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 overflow-hidden" style="background-color: #2563EB">
                         <img v-if="authUser?.avatar" :src="authUser.avatar" :alt="userName" class="w-full h-full object-cover" />
                         <span v-else>{{ userInitial }}</span>
                     </div>
                     <div class="hidden sm:flex flex-col select-none">
-                        <span class="text-[13px] font-semibold text-[#111827] leading-tight">{{ userName }}</span>
+                        <span class="text-[13px] font-semibold text-[#111827] leading-tight uppercase">{{ userName }}</span>
                         <span class="text-[10px] text-[#6b7280] leading-none mt-0.5">Admin</span>
                     </div>
                     <svg class="w-3.5 h-3.5 text-[#9ca3af] hidden sm:block shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -232,7 +176,7 @@ onUnmounted(() => document.removeEventListener("click", closeAll));
                 >
                     <!-- User info header -->
                     <div class="px-3 py-2 border-b border-[#f3f4f6]">
-                        <p class="text-[12.5px] font-semibold text-[#111827] truncate">{{ userName }}</p>
+                        <p class="text-[12.5px] font-semibold text-[#111827] truncate uppercase">{{ userName }}</p>
                         <p class="text-[11px] text-[#9ca3af] truncate">{{ userEmail }}</p>
                     </div>
 

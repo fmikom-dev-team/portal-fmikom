@@ -62,7 +62,9 @@ const logout = () => {
 
 <template>
     <div class="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4 relative overflow-hidden">
-        <Head title="Waiting Room" />
+        <Head>
+        <title>Waiting Room</title>
+    </Head>
 
         <!-- Background Decor -->
         <div class="absolute inset-0 bg-grid-slate-100/[0.04] bg-[bottom_1px_center] opacity-20" style="mask-image: linear-gradient(to bottom, transparent, black);"></div>

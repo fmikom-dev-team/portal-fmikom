@@ -1,13 +1,23 @@
 <script setup>
-import { Deferred, Link } from "@inertiajs/vue3";
+import { Deferred, Link, usePage } from "@inertiajs/vue3";
 import { ArrowRight, ChevronDown, Layers, Menu, X } from "lucide-vue-next";
-import { ref } from "vue";
+import { ref, computed } from "vue";
+
+const page = usePage();
+const siteSettings = computed(() => page.props.siteSettings || {});
 import { dashboard, login, register } from "@/routes";
 
 const isMobileMenuOpen = ref(false);
 const openMobile = ref(null);
 const activeMenu = ref(null); // controls which flyout is open
 let closeTimer = null;
+
+const getUnsplashSrcset = (url) => {
+	if (!url || !url.includes("images.unsplash.com")) return undefined;
+	const baseUrl = url.split("?")[0];
+	return `${baseUrl}?auto=format&fit=crop&w=220&q=80 220w,
+			${baseUrl}?auto=format&fit=crop&w=440&q=80 440w`;
+};
 
 const toggleMobileMenu = () => {
 	isMobileMenuOpen.value = !isMobileMenuOpen.value;
@@ -192,17 +202,26 @@ const getAccent = (menu) => accentColor[menu.title] || "text-blue-600";
 </script>
 
 <template>
+    <!-- Maintenance Bypass Banner for Admins -->
+    <div v-if="siteSettings.maintenance_mode === '1'" class="bg-amber-600 text-white text-[11px] font-bold text-center py-2 px-4 flex items-center justify-center gap-1.5 z-[100] relative">
+        <span>⚠️</span>
+        <span>Mode Maintenance Aktif. Publik terblokir, Anda melihat halaman ini sebagai Administrator.</span>
+    </div>
+
     <nav class="sticky top-0 z-50 w-full border-b border-gray-100/60 bg-white/80 backdrop-blur-xl transition-all duration-300 shadow-sm shadow-slate-100/50">
         <div class="mx-auto max-w-7xl px-4 xl:px-0">
             <div class="flex h-[68px] items-center justify-between">
                 <!-- Logo -->
                 <div class="flex shrink-0 items-center">
                     <Link href="/" class="group flex items-center gap-2.5">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-[#2563eb] text-white shadow-md shadow-blue-200 transition-transform group-hover:scale-105">
+                        <div v-if="siteSettings.brand_logo" class="h-8 w-8 flex items-center justify-center rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
+                            <img :src="siteSettings.brand_logo" class="h-full w-full object-contain" :alt="siteSettings.brand_name || 'Logo'" width="32" height="32" loading="eager" decoding="async" />
+                        </div>
+                        <div v-else class="flex h-8 w-8 items-center justify-center rounded-xl bg-[#2563eb] text-white shadow-md shadow-blue-200 transition-transform group-hover:scale-105">
                             <Layers class="h-4.5 w-4.5" />
                         </div>
                         <span class="text-lg font-bold tracking-tight text-[#111827]">
-                            Portal <span class="text-[#2563eb]">FMIKOM</span>
+                            {{ siteSettings.brand_name || 'Portal FMIKOM' }}
                         </span>
                     </Link>
                 </div>
@@ -293,8 +312,8 @@ const getAccent = (menu) => accentColor[menu.title] || "text-blue-600";
                                                 <!-- Image — fills full height, fixed width, no card/border -->
 <div class="relative w-[220px] shrink-0 overflow-hidden bg-slate-100">
     <div class="absolute inset-0 bg-linear-to-t from-black/10 to-transparent opacity-0 group-hover/post:opacity-100 transition-opacity duration-300"></div>
-                                                    <img v-if="post.thumbnail" :src="post.thumbnail" :alt="post.title"
-                                                        class="w-full h-full object-cover group-hover/post:scale-[1.03] transition-transform duration-700 ease-out" />
+                                                    <img v-if="post.thumbnail" :src="post.thumbnail" :srcset="getUnsplashSrcset(post.thumbnail)" sizes="220px" :alt="post.title"
+                                                         class="w-full h-full object-cover group-hover/post:scale-[1.03] transition-transform duration-700 ease-out" width="220" height="140" loading="lazy" decoding="async" />
                                                     <div v-else class="w-full h-full flex items-center justify-center bg-linear-to-br from-violet-50 to-indigo-100">
                                                         <svg class="w-10 h-10 text-violet-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />

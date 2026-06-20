@@ -27,7 +27,7 @@ class SessionController extends Controller
             ->orderByDesc('last_activity_at')
             ->get()
             ->map(fn ($s) => array_merge($s->toArray(), [
-                'is_current' => $s->session_token === $currentToken,
+                'is_current' => $s->id === $currentToken || $s->session_token === $currentToken,
             ]));
 
         return response()->json(['sessions' => $sessions]);
@@ -58,7 +58,16 @@ class SessionController extends Controller
             return response()->json(['error' => 'Current session not identifiable.'], 400);
         }
 
-        $this->sessionEngine->revokeOtherSessions($request->user(), $currentToken);
+        $activeSession = AuthSession::where(function ($query) use ($currentToken) {
+            $query->where('id', $currentToken)
+                ->orWhere('session_token', $currentToken);
+        })
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if ($activeSession) {
+            $this->sessionEngine->revokeOtherSessions($request->user(), $activeSession->id);
+        }
 
         return response()->json(['message' => 'All other sessions revoked.']);
     }

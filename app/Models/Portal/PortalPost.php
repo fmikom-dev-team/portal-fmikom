@@ -15,6 +15,9 @@ class PortalPost extends Model
             Cache::forget('portal_featured_posts');
             Cache::forget('portal_latest_posts');
         });
+        static::deleting(function ($post) {
+            $post->comments()->delete();
+        });
         static::deleted(function () {
             Cache::forget('portal_featured_posts');
             Cache::forget('portal_latest_posts');
@@ -32,6 +35,53 @@ class PortalPost extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function getUserAttribute()
+    {
+        $user = $this->getRelationValue('user');
+        if (! $user) {
+            return null;
+        }
+
+        $settings = Cache::rememberForever('portal_settings', function () {
+            return PortalSetting::pluck('value', 'key')->toArray();
+        });
+
+        $authorName = $settings['author_name'] ?? null;
+        $authorImage = $settings['author_image'] ?? null;
+
+        if ($authorName) {
+            $user->setAttribute('name', $authorName);
+        }
+        if ($authorImage) {
+            $user->setAttribute('foto_path', str_replace('/storage/', '', $authorImage));
+        }
+
+        return $user;
+    }
+
+    public function toArray()
+    {
+        $array = parent::toArray();
+
+        $settings = Cache::rememberForever('portal_settings', function () {
+            return PortalSetting::pluck('value', 'key')->toArray();
+        });
+
+        $authorName = $settings['author_name'] ?? null;
+        $authorImage = $settings['author_image'] ?? null;
+
+        if (isset($array['user'])) {
+            if ($authorName) {
+                $array['user']['name'] = $authorName;
+            }
+            if ($authorImage) {
+                $array['user']['foto_path'] = str_replace('/storage/', '', $authorImage);
+            }
+        }
+
+        return $array;
     }
 
     public function category(): BelongsTo

@@ -3,19 +3,20 @@
 namespace App\Modules\WorkOs\Services;
 
 use App\Jobs\LogAuditEvent;
-use Illuminate\Support\Facades\Request;
+use App\Models\Module;
+use Illuminate\Support\Facades\Cache;
 
 class AuditLogger
 {
-    /**
-     * Log a standard audit event asynchronously.
-     */
     public static function log(string $eventType, string $severity = 'info', array $metadata = [], $target = null, ?string $correlationId = null)
     {
         $payload = self::buildPayload($eventType, $severity, $metadata, $target, $correlationId);
 
-        // Dispatch to background queue for processing to ensure performance
-        LogAuditEvent::dispatch($payload);
+        if (app()->isLocal() || app()->runningUnitTests()) {
+            LogAuditEvent::dispatchSync($payload);
+        } else {
+            LogAuditEvent::dispatch($payload);
+        }
     }
 
     /**
@@ -26,18 +27,41 @@ class AuditLogger
         $payload = self::buildPayload('security.incident', $severity, ['incident_type' => $incidentType, 'details' => $details]);
         $payload['is_security_incident'] = true;
 
-        LogAuditEvent::dispatch($payload);
+        if (app()->isLocal() || app()->runningUnitTests()) {
+            LogAuditEvent::dispatchSync($payload);
+        } else {
+            LogAuditEvent::dispatch($payload);
+        }
     }
 
-    /**
-     * Build the standardized payload capturing the request context.
-     */
     protected static function buildPayload(string $eventType, string $severity, array $metadata, $target, ?string $correlationId): array
     {
         $request = request();
 
         $actorId = auth()->check() ? auth()->id() : null;
-        $organizationId = null; // Extract from session/context if applicable
+
+        // Dynamically resolve organization_id
+        $organizationId = null;
+        if ($target && is_object($target)) {
+            if ($target instanceof Module) {
+                $organizationId = $target->id;
+            } elseif (isset($target->organization_id)) {
+                $organizationId = $target->organization_id;
+            }
+        }
+
+        if (! $organizationId && isset($metadata['organization_id'])) {
+            $organizationId = $metadata['organization_id'];
+        }
+
+        if (! $organizationId && session()->has('active_module')) {
+            $moduleCode = session('active_module');
+            $organizationId = Cache::remember("module_id_by_code_{$moduleCode}", 3600, function () use ($moduleCode) {
+                $m = Module::where('code', $moduleCode)->first();
+
+                return $m ? $m->id : null;
+            });
+        }
 
         $targetType = null;
         $targetId = null;

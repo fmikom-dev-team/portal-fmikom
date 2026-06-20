@@ -24,7 +24,9 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbItems">
-        <Head title="Profile settings" />
+        <Head>
+        <title>Profile settings</title>
+    </Head>
 
         <SettingsLayout>
             <!-- Profile Editor Form Component -->

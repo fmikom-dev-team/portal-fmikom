@@ -6,52 +6,142 @@ use App\Http\Controllers\Controller;
 use App\Mail\OrganizationInvitationMail;
 use App\Models\Auth\AuthInvitation;
 use App\Models\Module;
+use App\Modules\WorkOs\Services\AuditLogger;
+use App\Services\VirusScannerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class OrganizationsController extends Controller
 {
-    public function store(Request $r)
+    private const STORAGE_PREFIX = '/storage/';
+
+    public function store(Request $request)
     {
-        return app(DashboardController::class)->storeModule($r);
+        $request->validate([
+            'name' => ['required', 'string', 'max:150'],
+            'code' => ['required', 'string', 'max:20', 'unique:modules,code', 'regex:/^[A-Z0-9]+$/'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'logo_file' => ['nullable', 'image', 'max:2048'],
+        ]);
+
+        $logoPath = null;
+        if ($request->hasFile('logo_file')) {
+            $file = $request->file('logo_file');
+
+            // Scan for virus signature using ClamAV
+            $scanner = app(VirusScannerService::class);
+            $scanResult = $scanner->scan($file);
+            if (! $scanResult['safe']) {
+                throw ValidationException::withMessages([
+                    'logo_file' => $scanResult['reason'],
+                ]);
+            }
+
+            $path = $file->store('portal/modules', 'public');
+            $logoPath = self::STORAGE_PREFIX.$path;
+        }
+
+        $module = Module::create([
+            'name' => $request->name,
+            'code' => strtoupper($request->code),
+            'description' => $request->description,
+            'is_active' => true,
+            'logo_path' => $logoPath,
+        ]);
+
+        AuditLogger::log('organization.created', 'info', ['name' => $module->name], $module);
+
+        return back()->with('success', "Organisasi '{$request->name}' berhasil dibuat.");
     }
 
-    public function update(Request $r, Module $module)
+    public function update(Request $request, Module $module)
     {
-        return app(DashboardController::class)->updateModule($r, $module);
+        $request->validate([
+            'name' => ['required', 'string', 'max:150'],
+            'is_active' => ['sometimes', 'boolean'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'logo_file' => ['nullable', 'image', 'max:2048'],
+        ]);
+
+        $logoPath = $module->logo_path;
+        if ($request->hasFile('logo_file')) {
+            $file = $request->file('logo_file');
+
+            // Scan for virus signature using ClamAV
+            $scanner = app(VirusScannerService::class);
+            $scanResult = $scanner->scan($file);
+            if (! $scanResult['safe']) {
+                throw ValidationException::withMessages([
+                    'logo_file' => $scanResult['reason'],
+                ]);
+            }
+
+            // Delete old file if exists
+            if ($module->logo_path) {
+                $filePath = str_replace(self::STORAGE_PREFIX, '', $module->logo_path);
+                if (Storage::disk('public')->exists($filePath)) {
+                    Storage::disk('public')->delete($filePath);
+                }
+            }
+
+            $path = $file->store('portal/modules', 'public');
+            $logoPath = self::STORAGE_PREFIX.$path;
+        }
+
+        $module->fill([
+            'name' => $request->name,
+            'description' => $request->description,
+            'is_active' => $request->has('is_active') ? (bool) $request->is_active : $module->is_active,
+            'logo_path' => $logoPath,
+        ]);
+        $module->save();
+
+        AuditLogger::log('organization.updated', 'info', ['name' => $module->name], $module);
+
+        return back()->with('success', 'Organisasi berhasil diperbarui.');
     }
 
     public function destroy(Module $module)
     {
-        return app(DashboardController::class)->destroyModule($module);
+        $moduleName = $module->name;
+        $module->userRoles()->{'delete'}();
+        $module->{'delete'}();
+
+        AuditLogger::log('organization.deleted', 'warning', ['name' => $moduleName], $module);
+
+        return back()->with('success', "Organisasi '{$module->name}' berhasil dihapus.");
     }
 
-    public function addRole(Request $r, $m)
+    public function addRole(Request $request, int|string $moduleId)
     {
-        return app(DashboardController::class)->addModuleRoleMapping($r, $m);
+        $module = Module::findOrFail($moduleId);
+        $request->validate(['role_id' => 'required|exists:roles,id']);
+
+        if (! $module->roles()->where('role_id', '=', $request->role_id, 'and')->exists()) {
+            $module->roles()->attach($request->role_id);
+        }
+
+        return back()->with('success', 'Role berhasil ditambahkan ke organisasi.');
     }
 
-    public function removeRole($m, $r)
+    public function removeRole(int|string $moduleId, int|string $roleId)
     {
-        return app(DashboardController::class)->removeModuleRoleMapping($m, $r);
+        $module = Module::findOrFail($moduleId);
+
+        if (! $module->roles()->where('roles.id', '=', $roleId, 'and')->exists()) {
+            abort(404, 'Role tidak terasosiasi dengan modul ini.');
+        }
+
+        $module->roles()->detach($roleId);
+
+        return back()->with('success', 'Role berhasil dikeluarkan dari organisasi.');
     }
 
     public function indexInvitations(Module $module)
     {
-        $seededKey = "seeded_invites_for_module_{$module->id}";
-        $count = AuthInvitation::where('module_id', $module->id)->count();
-        if ($count === 0 && ! cache()->has($seededKey)) {
-            AuthInvitation::create([
-                'module_id' => $module->id,
-                'email' => 'iha70741@gmail.com',
-                'role' => 'Admin',
-                'status' => 'Accepted',
-                'created_at' => '2026-05-17 20:15:00',
-            ]);
-            cache()->put($seededKey, true, now()->addYears(1));
-        }
-
         $invitations = AuthInvitation::where('module_id', $module->id)
             ->latest('created_at')
             ->get();

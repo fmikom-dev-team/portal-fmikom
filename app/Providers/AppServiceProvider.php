@@ -2,16 +2,31 @@
 
 namespace App\Providers;
 
+use App\Models\Auth\AuthEmailLog;
+use App\Models\Auth\AuthLoginAttempt;
+use App\Models\Auth\AuthSession;
 use App\Models\Auth\AuthSetting;
+use App\Models\User;
+use App\Modules\WorkOs\Services\AuditLogger;
+use App\Modules\WorkOs\Services\AuthPlatform\SessionEngine;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,6 +45,133 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
+        // ── Auth Event Listeners for Audit Logging & Session Tracking ─────────────
+        Event::listen(Login::class, function ($event) {
+            $email = $event->user->email;
+            $ip = request()->ip();
+
+            $exists = AuthLoginAttempt::where('email', $email)
+                ->where('ip_address', $ip)
+                ->where('is_successful', true)
+                ->where('created_at', '>=', now()->subSeconds(2))
+                ->exists();
+
+            if (! $exists) {
+                $provider = 'password';
+                if (request()->is('auth/oauth/*')) {
+                    $provider = request()->segment(3);
+                    if ($provider === 'register' || ! $provider) {
+                        $provider = 'oauth';
+                    }
+                } elseif (request()->is('passkeys/*')) {
+                    $provider = 'passkey';
+                } elseif (request()->is('sso/*')) {
+                    $provider = 'sso';
+                }
+
+                AuthLoginAttempt::create([
+                    'email' => $email,
+                    'ip_address' => $ip,
+                    'is_successful' => true,
+                    'provider' => $provider,
+                ]);
+            }
+
+            // Create enterprise auth session for standard/credentials logins (other logins create this manually)
+            $isSpecialLogin = request()->is('auth/oauth/*') || request()->is('passkeys/*') || request()->is('sso/*');
+            if (! $isSpecialLogin) {
+                if (! session()->has('auth_session_token')) {
+                    $sessionEngine = app(SessionEngine::class);
+                    $authSession = $sessionEngine->createSession($event->user, request());
+                    session(['auth_session_token' => $authSession->id]);
+                }
+            }
+
+            AuditLogger::log('user.signed_in', 'info', [
+                'device' => request()->userAgent(),
+            ], $event->user);
+        });
+
+        Event::listen(Logout::class, function ($event) {
+            $token = session('auth_session_token');
+            if ($token) {
+                AuthSession::where('id', $token)->update(['is_revoked' => true]);
+            }
+        });
+
+        // ── Real Email Logging ─────────────────────────────────────────────────────
+        Event::listen(MessageSent::class, function ($event) {
+            $message = $event->message;
+            $toAddresses = $message->getTo();
+
+            foreach ($toAddresses as $address) {
+                $email = $address->getAddress();
+
+                // Find user by email (case-insensitive) to associate log correctly
+                $user = User::whereRaw('LOWER(email) = ?', [strtolower($email)])->first();
+                if ($user) {
+                    $body = '';
+                    if (method_exists($message, 'getHtmlBody') && $message->getHtmlBody()) {
+                        $body = $message->getHtmlBody();
+                    } elseif (method_exists($message, 'getTextBody') && $message->getTextBody()) {
+                        $body = $message->getTextBody();
+                    } elseif (method_exists($message, 'getBody') && $message->getBody()) {
+                        $body = $message->getBody()->toString();
+                    }
+
+                    AuthEmailLog::create([
+                        'user_id' => $user->id,
+                        'email' => $email,
+                        'subject' => $message->getSubject() ?? '(No Subject)',
+                        'body' => $body,
+                        'status' => 'Delivered',
+                    ]);
+                }
+            }
+        });
+
+        Event::listen(Failed::class, function ($event) {
+            $email = $event->credentials['email'] ?? ($event->credentials['username'] ?? 'unknown');
+            $ip = request()->ip();
+
+            $provider = 'password';
+            if (request()->is('auth/oauth/*')) {
+                $provider = request()->segment(3);
+                if ($provider === 'register' || ! $provider) {
+                    $provider = 'oauth';
+                }
+            } elseif (request()->is('passkeys/*')) {
+                $provider = 'passkey';
+            } elseif (request()->is('sso/*')) {
+                $provider = 'sso';
+            }
+
+            AuthLoginAttempt::create([
+                'email' => $email,
+                'ip_address' => $ip,
+                'is_successful' => false,
+                'failure_reason' => 'invalid_credentials',
+                'provider' => $provider,
+            ]);
+
+            AuditLogger::log('user.login_failed', 'warning', [
+                'email' => $email,
+                'device' => request()->userAgent(),
+            ]);
+        });
+
+        Event::listen(PasswordReset::class, function ($event) {
+            AuditLogger::log('user.password_reset', 'info', [
+                'device' => request()->userAgent(),
+            ], $event->user);
+        });
+
+        Event::listen(Registered::class, function ($event) {
+            AuditLogger::log('user.registered', 'info', [
+                'device' => request()->userAgent(),
+            ], $event->user);
+        });
+
         // Force HTTPS in non-local environments to avoid mixed content issues
         if (config('app.env') !== 'local') {
             URL::forceScheme('https');
@@ -39,6 +181,11 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('viewPulse', function ($user) {
             return method_exists($user, 'isSuperAdmin') && ($user->isSuperAdmin() || $user->isAdmin());
         });
+
+        // Force Livewire asset injection only on Pulse routes
+        if (class_exists(Livewire::class) && ! app()->runningInConsole() && request()->is(config('pulse.path', 'pulse').'*')) {
+            Livewire::forceAssetInjection();
+        }
 
         // ── Pagi Chat Rate Limiting (Flood Prevention) ─────────────────────────
         RateLimiter::for('pagi-chat-send', function ($request) {
@@ -51,6 +198,17 @@ class AppServiceProvider extends ServiceProvider
             $directories = glob($mainPath.'/*', GLOB_ONLYDIR);
             $paths = array_merge([$mainPath], $directories);
             $this->loadMigrationsFrom($paths);
+        }
+
+        // Decrypt SMTP password dynamically if encrypted
+        $mailPassword = config('mail.mailers.smtp.password');
+        if (is_string($mailPassword) && str_starts_with($mailPassword, 'base64:')) {
+            try {
+                $decrypted = Crypt::decryptString(substr($mailPassword, 7));
+                config(['mail.mailers.smtp.password' => $decrypted]);
+            } catch (\Throwable $e) {
+                \Log::error('SMTP password decryption failed: '.$e->getMessage());
+            }
         }
     }
 

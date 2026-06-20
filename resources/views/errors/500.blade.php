@@ -32,7 +32,7 @@
 
     <!-- Server Rack Cabinet in center -->
     <g>
-        <rect x="42" y="48" width="46" height="84" rx="4" fill="#121214" stroke-width="2" />
+        <rect x="42" y="48" width="46" height="84" rx="4" fill="var(--svg-bg-fill)" stroke-width="2" />
         
         <!-- Shelf 1 -->
         <line x1="48" y1="58" x2="82" y2="58" stroke-width="1.2" />
@@ -66,7 +66,7 @@
     <!-- Warning / Error Hazard Sign overlay (Centered at 65, 88) -->
     <g class="text-rose-500">
         <!-- Triangle Base -->
-        <path d="M 65 72 L 81 99 L 49 99 Z" fill="#121214" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+        <path d="M 65 72 L 81 99 L 49 99 Z" fill="var(--svg-bg-fill)" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
         <!-- Exclamation Point -->
         <line x1="65" y1="80" x2="65" y2="89" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
         <circle cx="65" cy="94" r="1.2" fill="currentColor" />

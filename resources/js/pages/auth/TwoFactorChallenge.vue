@@ -47,7 +47,9 @@ const code = ref<string>("");
         :title="authConfigContent.title"
         :description="authConfigContent.description"
     >
-        <Head title="Two-factor authentication" />
+        <Head>
+        <title>Two-factor authentication</title>
+    </Head>
 
         <div class="space-y-6">
             <template v-if="!showRecoveryInput">

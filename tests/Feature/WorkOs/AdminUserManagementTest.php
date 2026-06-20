@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Auth\AuthLoginAttempt;
 use App\Models\Auth\AuthOAuthCredential;
 use App\Models\Auth\AuthOAuthProvider;
 use App\Models\Auth\AuthSession;
@@ -7,6 +8,8 @@ use App\Models\Module;
 use App\Models\ProgramStudi;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -321,4 +324,170 @@ test('admin can upload users via csv', function () {
         'is_active' => false,
         'email_verified_at' => null,
     ]);
+});
+
+test('admin can approve user deletion request', function () {
+    $admin = User::factory()->create(['user_type' => 'super_admin']);
+    $user = User::factory()->create([
+        'user_type' => 'mahasiswa',
+        'deletion_requested_at' => now(),
+    ]);
+
+    $this->actingAs($admin);
+
+    $response = $this->post(route('workos.users.approve-deletion', $user));
+
+    $response->assertRedirect();
+    $response->assertSessionHas('success');
+    $this->assertDatabaseMissing('users', ['id' => $user->id]);
+});
+
+test('admin can reject user deletion request', function () {
+    $admin = User::factory()->create(['user_type' => 'super_admin']);
+    $user = User::factory()->create([
+        'user_type' => 'mahasiswa',
+        'deletion_requested_at' => now(),
+    ]);
+
+    $this->actingAs($admin);
+
+    $response = $this->post(route('workos.users.reject-deletion', $user));
+
+    $response->assertRedirect();
+    $response->assertSessionHas('success');
+    $user->refresh();
+    expect($user->deletion_requested_at)->toBeNull();
+});
+
+test('sessions method dynamically revokes expired or missing session payloads', function () {
+    $admin = User::factory()->create(['user_type' => 'super_admin']);
+    $user = User::factory()->create();
+
+    // Active session
+    $session1 = AuthSession::create([
+        'user_id' => $user->id,
+        'session_token' => 'active-token-123',
+        'ip_address' => '127.0.0.1',
+        'user_agent' => 'Mozilla/5.0',
+        'is_revoked' => false,
+        'expires_at' => now()->addMinutes(120),
+        'last_activity_at' => now(),
+    ]);
+
+    // Expired session
+    $session2 = AuthSession::create([
+        'user_id' => $user->id,
+        'session_token' => 'expired-token-123',
+        'ip_address' => '127.0.0.1',
+        'user_agent' => 'Mozilla/5.0',
+        'is_revoked' => false,
+        'expires_at' => now()->subMinutes(120),
+        'last_activity_at' => now(),
+    ]);
+
+    $this->actingAs($admin);
+
+    // Call the sessions endpoint
+    $response = $this->get("/workos/users/{$user->id}/sessions");
+
+    $response->assertOk();
+
+    // Verify expired session is updated to is_revoked = true in DB and returned accordingly
+    $this->assertTrue($session2->fresh()->is_revoked);
+    $this->assertFalse($session1->fresh()->is_revoked);
+});
+
+test('login event listener detects provider from oauth callback path', function () {
+    $user = User::factory()->create();
+
+    // Mock request path pointing to oauth google callback
+    $request = Request::create('/auth/oauth/google/callback', 'GET');
+    $this->app->instance('request', $request);
+
+    // Trigger Login Event
+    event(new Login('web', $user, false));
+
+    // Verify AuthLoginAttempt resolves provider as google
+    $this->assertDatabaseHas('auth_login_attempts', [
+        'email' => $user->email,
+        'provider' => 'google',
+        'is_successful' => true,
+    ]);
+});
+
+test('login event listener detects provider from passkey path', function () {
+    $user = User::factory()->create();
+
+    // Mock request path pointing to passkey login
+    $request = Request::create('/passkeys/login', 'POST');
+    $this->app->instance('request', $request);
+
+    // Trigger Login Event
+    event(new Login('web', $user, false));
+
+    // Verify AuthLoginAttempt resolves provider as passkey
+    $this->assertDatabaseHas('auth_login_attempts', [
+        'email' => $user->email,
+        'provider' => 'passkey',
+        'is_successful' => true,
+    ]);
+});
+
+test('sessions method dynamically resolves application active module and google authentication', function () {
+    $admin = User::factory()->create(['user_type' => 'super_admin']);
+    $user = User::factory()->create();
+
+    // 1. Create a successful login attempt for Google OAuth:
+    AuthLoginAttempt::create([
+        'email' => $user->email,
+        'ip_address' => '127.0.0.1',
+        'is_successful' => true,
+        'provider' => 'google',
+        'created_at' => now(),
+    ]);
+
+    // 2. Create an auth session matching the user and within 5 seconds of the login attempt
+    $session = AuthSession::create([
+        'user_id' => $user->id,
+        'session_token' => 'active-token-with-module-pagi',
+        'ip_address' => '127.0.0.1',
+        'user_agent' => 'Mozilla/5.0',
+        'is_revoked' => false,
+        'expires_at' => now()->addMinutes(120),
+        'last_activity_at' => now(),
+        'created_at' => now(),
+    ]);
+
+    // Mock SessionHandler
+    $sessionHandler = Mockery::mock(SessionHandlerInterface::class);
+    $sessionHandler->shouldReceive('open')->andReturn(true);
+    $sessionHandler->shouldReceive('close')->andReturn(true);
+    $sessionHandler->shouldReceive('read')
+        ->with('active-token-with-module-pagi')
+        ->andReturn(serialize(['active_module' => 'pagi']));
+    $sessionHandler->shouldReceive('read')
+        ->andReturn('');
+    $sessionHandler->shouldReceive('write')->andReturn(true);
+    $sessionHandler->shouldReceive('destroy')->andReturn(true);
+    $sessionHandler->shouldReceive('gc')->andReturn(true);
+
+    // Register custom driver
+    $this->app['session']->extend('mock-driver', function () use ($sessionHandler) {
+        return $sessionHandler;
+    });
+
+    config([
+        'session.driver' => 'mock-driver',
+        'session.test_driver_checkable' => true,
+    ]);
+
+    $this->actingAs($admin);
+
+    // Call the sessions endpoint
+    $response = $this->get("/workos/users/{$user->id}/sessions");
+
+    $response->assertOk();
+
+    $response->assertJsonPath('sessions.0.authentication', 'Google OAuth');
+    $response->assertJsonPath('sessions.0.application', 'PAGI');
 });

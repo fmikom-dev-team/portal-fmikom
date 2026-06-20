@@ -3,6 +3,7 @@
 namespace App\Modules\Pagi\Actions;
 
 use App\Models\Pagi\PagiWork;
+use App\Models\Pagi\PagiWorkComment;
 use App\Models\User;
 
 class LikeCommentAction
@@ -12,26 +13,28 @@ class LikeCommentAction
      */
     public function execute(User $authUser, int $previewId, string $commentId): array
     {
-        $portfolio = PagiWork::findOrFail($previewId);
-        $comments = $portfolio->comments ?? [];
+        // Validate that this comment belongs to the given work
+        $comment = PagiWorkComment::where('uuid', $commentId)->firstOrFail();
 
-        $comments = array_map(function ($c) use ($commentId, $authUser) {
-            if ($c['id'] === $commentId) {
-                if (! isset($c['likes']) || ! is_array($c['likes'])) {
-                    $c['likes'] = [];
-                }
-                if (in_array($authUser->id, $c['likes'])) {
-                    $c['likes'] = array_values(array_filter($c['likes'], fn ($id) => $id !== $authUser->id));
-                } else {
-                    $c['likes'][] = $authUser->id;
-                }
-            }
+        $comment->likesRelation()->toggle($authUser->id);
 
-            return $c;
-        }, $comments);
+        // Return fresh comments with full eager-load (avoids ->fresh()->comments N+1)
+        return $this->loadFormattedComments($previewId);
+    }
 
-        $portfolio->update(['comments' => $comments]);
+    /**
+     * Load all comments for a work with full eager-loading, returning formatted array.
+     */
+    private function loadFormattedComments(int $workId): array
+    {
+        $work = PagiWork::with([
+            'commentsRelation' => fn ($q) => $q->whereNull('parent_id'),
+            'commentsRelation.user:id,name,pagi_username,foto_path',
+            'commentsRelation.likesRelation',
+            'commentsRelation.replies.user:id,name,pagi_username,foto_path',
+            'commentsRelation.replies.likesRelation',
+        ])->findOrFail($workId);
 
-        return $comments;
+        return $work->comments;
     }
 }

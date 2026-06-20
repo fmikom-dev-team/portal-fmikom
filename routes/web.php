@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\EnsureFirstTimeLoginComplete;
+use App\Models\Portal\PortalDocument;
 use App\Models\Portal\PortalPost;
 use App\Models\Portal\PortalSetting;
 use App\Models\Role;
@@ -11,11 +12,13 @@ use App\Modules\Portal\Controllers\PortalAcademicCalendarController;
 use App\Modules\Portal\Controllers\PortalAdminController;
 use App\Modules\Portal\Controllers\PortalCategoryController;
 use App\Modules\Portal\Controllers\PortalCommentController;
+use App\Modules\Portal\Controllers\PortalDocumentController;
 use App\Modules\Portal\Controllers\PortalEventController;
 use App\Modules\Portal\Controllers\PortalMediaController;
 use App\Modules\Portal\Controllers\PortalMenuController;
 use App\Modules\Portal\Controllers\PortalPageController;
 use App\Modules\Portal\Controllers\PortalPostController;
+use App\Modules\Portal\Controllers\PublicDocumentController;
 use App\Modules\Portal\Controllers\PublicPageController;
 use App\Modules\Portal\Controllers\PublicPostController;
 use App\Modules\WorkOs\Controllers\Auth\FirstTimeLoginController;
@@ -64,26 +67,44 @@ Route::get('/', function () {
     $settings['partners'] = isset($settings['partners'])
         ? json_decode($settings['partners'], true) : [];
 
-    $latest_posts = Cache::remember('portal_latest_posts', 3600, function () {
+    $latest_posts = Inertia::defer(fn () => Cache::remember('portal_latest_posts', 3600, function () {
         return PortalPost::with('user:id,name')
-            ->select(['id', 'title', 'slug', 'meta_description', 'thumbnail', 'published_at', 'created_at', 'user_id', 'status'])
+            ->select(['id', 'title', 'slug', 'excerpt', 'meta_description', 'content', 'thumbnail', 'published_at', 'created_at', 'user_id', 'status'])
             ->where('status', PortalPost::STATUS_PUBLISHED)
             ->latest()
             ->take(5)
             ->get();
+    }));
+
+    $pinned_announcement = Cache::remember('portal_pinned_announcement', 3600, function () {
+        return PortalDocument::where('is_pinned', true)
+            ->latest()
+            ->first();
     });
 
     return Inertia::render('Welcome', [
         'canRegister' => Features::enabled(Features::registration()),
         'settings' => $settings,
         'latest_posts' => $latest_posts,
+        'pinned_announcement' => $pinned_announcement,
     ]);
 })->name('home');
 
 Route::get('/berita', [PublicPostController::class, 'index'])->name('portal.posts.index');
 Route::get('/berita/{slug}', [PublicPostController::class, 'show'])->name('portal.posts.show');
-Route::post('/berita/{slug}/comments', [PublicPostController::class, 'storeComment'])->name('portal.posts.comments.store');
+Route::post('/berita/{slug}/comments', [PublicPostController::class, 'storeComment'])->name('portal.posts.comments.store')->middleware('throttle:3,1');
 Route::get('/halaman/{slug}', [PublicPageController::class, 'show'])->name('portal.pages.show');
+Route::get('/dokumen', [PublicDocumentController::class, 'index'])->name('portal.documents.index');
+Route::get('/dokumen/download/{document}', [PublicDocumentController::class, 'download'])->name('portal.documents.download');
+Route::get('/privacy-policy', function () {
+    return Inertia::render('Public/PrivacyPolicy');
+})->name('privacy-policy');
+Route::get('/terms-of-service', function () {
+    return Inertia::render('Public/TermsConditions');
+})->name('terms-service');
+Route::get('/cookie-policy', function () {
+    return Inertia::render('Public/CookiePolicy');
+})->name('cookie-policy');
 
 // API: Unique check for registration (throttled)
 Route::post('/api/check-user-exists', function (Request $request) {
@@ -98,7 +119,8 @@ Route::post('/api/check-user-exists', function (Request $request) {
         'nomor_induk_exists' => $request->nomor_induk
             ? User::where('nomor_induk', $request->nomor_induk)->exists() : false,
     ]);
-})->middleware('throttle:5,1');
+    // SEC-010: 1 request/minute to prevent email/NIM enumeration attacks
+})->middleware('throttle:1,1');
 
 // ─── Authenticated Routes ────────────────────────────────────────────────────
 
@@ -162,6 +184,8 @@ Route::middleware(['auth', CheckRole::class.':super-admin'])
         Route::resource('comments', PortalCommentController::class)->only(['index', 'update', 'destroy']);
         Route::post('menus/reorder', [PortalMenuController::class, 'reorder'])->name('menus.reorder');
         Route::resource('menus', PortalMenuController::class)->only(['index', 'store', 'update', 'destroy']);
+        Route::post('documents/{document}/toggle-pin', [PortalDocumentController::class, 'togglePin'])->name('documents.toggle-pin');
+        Route::resource('documents', PortalDocumentController::class);
         Route::get('/appearance', [PortalAdminController::class, 'appearance'])->name('appearance');
         Route::post('/appearance', [PortalAdminController::class, 'updateAppearance'])->name('appearance.update');
         Route::get('/settings', [PortalAdminController::class, 'settings'])->name('settings');
@@ -177,7 +201,8 @@ if (app()->isLocal() || app()->environment('testing')) {
 
         User::updateOrCreate(
             ['email' => 'muchlisinmaruf@gmail.com'],
-            ['name' => 'Muchlisin Maruf', 'password' => Hash::make('admin123'), 'user_type' => 'super_admin', 'email_verified_at' => now(), 'password_changed_at' => now()]
+            // BUG-015: Use 'super-admin' (hyphen) consistently — do not use 'super_admin' (underscore)
+            ['name' => 'Muchlisin Maruf', 'password' => Hash::make('admin123'), 'user_type' => 'super-admin', 'email_verified_at' => now(), 'password_changed_at' => now()]
         );
         User::updateOrCreate(
             ['email' => 'mahasiswa@example.com'],

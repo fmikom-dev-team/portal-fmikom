@@ -14,3 +14,11 @@ public/build
 public/storage
 docker-compose.yml
 Dockerfile
+.env.*
+frankenphp
+frankenphp-worker.php
+stats.html
+.scannerwork
+sonar-scanner.sh
+tsconfig.sonar.json
+Caddyfile

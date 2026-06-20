@@ -214,4 +214,6 @@ return [
 
     'partitioned' => env('SESSION_PARTITIONED_COOKIE', false),
 
+    'test_driver_checkable' => false,
+
 ];

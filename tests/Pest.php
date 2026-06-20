@@ -1,7 +1,25 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Database\Schema\Blueprint;
 use Tests\TestCase;
+
+Blueprint::macro('dropIndexIfExists', function ($index) {
+    if (is_string($index)) {
+        $fkIndexes = [
+            'pagi_reports_reporter_id_index',
+            'pagi_reports_work_id_status_index',
+            'pagi_work_comments_work_parent_index',
+            'pagi_comment_likes_comment_id_index',
+            'pagi_work_likes_work_id_index'
+        ];
+        if (in_array($index, $fkIndexes)) {
+            return $this;
+        }
+    }
+    $this->dropIndex($index);
+    return $this;
+});
 
 /*
 |--------------------------------------------------------------------------

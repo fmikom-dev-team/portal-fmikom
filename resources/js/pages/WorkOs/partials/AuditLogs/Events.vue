@@ -117,6 +117,7 @@ const openDetail = (event) => {
         <div class="bg-white border border-gray-200 rounded-lg shadow-sm flex-1 flex flex-col overflow-hidden">
             <div class="overflow-x-auto flex-1">
                 <table class="w-full text-left text-[13px] whitespace-nowrap">
+                    <caption class="sr-only">Tabel Log Aktivitas</caption>
                     <thead class="bg-gray-50/80 border-b border-gray-200 text-gray-500 sticky top-0 z-10">
                         <tr>
                             <th class="px-5 py-3 font-medium">Timestamp</th>

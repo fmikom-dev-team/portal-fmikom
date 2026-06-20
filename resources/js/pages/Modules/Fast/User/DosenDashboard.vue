@@ -10,7 +10,9 @@ defineProps<{
 
 <template>
     <AppLayout :breadcrumbs="[{ title: moduleName + ' Dashboard', href: '#' }]">
-        <Head :title="moduleName + ' Dashboard'" />
+        <Head>
+        <title>{{ moduleName + ' Dashboard' }}</title>
+    </Head>
         
         <div class="flex h-full flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
             <div class="relative z-10 mb-8 max-w-3xl">

@@ -53,8 +53,8 @@
 
         <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
         <link rel="dns-prefetch" href="https://fonts.bunny.net">
-        <link rel="preload" as="style" href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600|inter:300,400,500,600,700,800&display=swap">
-        <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600|inter:300,400,500,600,700,800&display=swap" rel="stylesheet" />
+        <link rel="preload" as="style" href="https://fonts.bunny.net/css?family=plus-jakarta-sans:300,400,500,600,700,800|instrument-sans:400,500,600|inter:300,400,500,600,700,800&display=swap">
+        <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:300,400,500,600,700,800|instrument-sans:400,500,600|inter:300,400,500,600,700,800&display=swap" rel="stylesheet" />
 
         @vite(['resources/js/app.ts'])
         @inertiaHead

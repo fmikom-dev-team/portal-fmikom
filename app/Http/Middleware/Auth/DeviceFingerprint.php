@@ -42,7 +42,10 @@ class DeviceFingerprint
         // Update auth session last_activity_at using stored token
         $sessionToken = $request->session()->get('auth_session_token');
         if ($sessionToken) {
-            AuthSession::where('session_token', $sessionToken)
+            AuthSession::where(function ($query) use ($sessionToken) {
+                $query->where('id', $sessionToken)
+                    ->orWhere('session_token', $sessionToken);
+            })
                 ->where('is_revoked', false)
                 ->update(['last_activity_at' => Carbon::now()]);
         }

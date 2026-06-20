@@ -178,7 +178,9 @@ const handleCollaborationResponse = async (
 
 
 <template>
-	<Head :title="moduleName + ' — Notifikasi'" />
+	<Head>
+        <title>{{ moduleName + ' — Notifikasi' }}</title>
+    </Head>
 
 	<div class="min-h-screen bg-slate-50 dark:bg-zinc-950 font-sans text-slate-900 dark:text-zinc-100 flex flex-col">
 		<Navbar />
@@ -280,7 +282,7 @@ const handleCollaborationResponse = async (
 						<div class="flex items-center gap-3 min-w-0 flex-1">
 							<!-- Avatar with type badge -->
 							<div class="relative shrink-0">
-								<img v-if="notif.avatar" :src="notif.avatar" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border border-slate-100 dark:border-zinc-800 bg-slate-50" />
+								<img v-if="notif.avatar" :src="notif.avatar" alt="Avatar" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border border-slate-100 dark:border-zinc-800 bg-slate-50" />
 								<div v-else class="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center border shrink-0"
 									:class="notif.type === 'system'
 										? 'bg-indigo-50 border-indigo-100 dark:bg-indigo-950/30 dark:border-indigo-900 text-indigo-600 dark:text-indigo-400'

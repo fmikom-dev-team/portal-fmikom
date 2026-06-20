@@ -110,7 +110,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <Head :title="title" />
+    <Head>
+        <title>{{ title }}</title>
+    </Head>
 
     <div class="min-h-screen bg-white dark:bg-slate-900 font-sans selection:bg-[#2563EB] selection:text-white transition-colors duration-300">
 

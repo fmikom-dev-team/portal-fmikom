@@ -1209,7 +1209,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <Head title="Pesan | PAGI" />
+    <Head>
+        <title>Pesan | PAGI</title>
+    </Head>
 
     <!-- Full-screen layout — no footer, no bottom padding -->
     <div class="fixed inset-0 flex flex-col h-dvh w-full max-w-full overflow-hidden bg-white dark:bg-zinc-950">
@@ -1345,7 +1347,7 @@ onUnmounted(() => {
             
             <div class="px-4 py-2.5 border-b border-slate-150 dark:border-zinc-800 flex items-center gap-3">
                 <div class="h-8 w-8 rounded-full overflow-hidden bg-slate-100 dark:bg-zinc-850 flex items-center justify-center">
-                    <img v-if="avatarUrl(mobileMenuConv.foto_path)" :src="avatarUrl(mobileMenuConv.foto_path)!" class="w-full h-full object-cover" />
+                    <img v-if="avatarUrl(mobileMenuConv.foto_path)" :src="avatarUrl(mobileMenuConv.foto_path)!" alt="Avatar" class="w-full h-full object-cover" />
                     <span v-else class="text-xs font-black text-slate-500">{{ mobileMenuConv.name.charAt(0) }}</span>
                 </div>
                 <div class="min-w-0">

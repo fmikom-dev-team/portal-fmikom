@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import "../../../../css/workos.css";
 import { ref } from "vue";
 import AppHeader from "../components/ui/AppHeader.vue";
 import AppSidebar from "../components/ui/AppSidebar.vue";
@@ -25,7 +26,10 @@ defineProps<{
 	pendingCount?: number;
 }>();
 
-const emit = defineEmits<(e: "navigate", page: string) => void>();
+const emit = defineEmits<{
+	(e: "navigate", page: string): void;
+	(e: "search", query: string): void;
+}>();
 
 // Mobile sidebar open/close
 const sidebarOpen = ref(false);
@@ -79,6 +83,7 @@ function handleNavigate(id: string) {
             <AppHeader
                 :active-label="activeLabel"
                 @toggle-sidebar="sidebarOpen = !sidebarOpen"
+                @search="emit('search', $event)"
             />
 
             <main

@@ -49,7 +49,8 @@ const props = defineProps({
 </script>
 
 <template>
-    <Head :title="title + ' — Portal FMIKOM'">
+    <Head>
+        <title>{{ title + ' — Portal FMIKOM' }}</title>
         <meta v-if="description" name="description" :content="description">
     </Head>
 

@@ -1,13 +1,66 @@
 @import "tailwindcss";
-
 @import "tw-animate-css";
 
-@source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php";
-@source "../../storage/framework/views/*.php";
+/*
+ * Critical Fonts: Only declare fonts used on initial page render.
+ * Non-critical fonts (Plus Jakarta Sans, Outfit, Inter heavy weights)
+ * are declared directly in the components that use them via <style scoped>,
+ * so they do NOT block the initial render of all pages.
+ */
 
-@custom-variant dark (&:is(.dark *));
+/* Instrument Sans — primary UI font, used everywhere */
+@font-face {
+	font-family: 'Instrument Sans';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('/fonts/instrument-sans-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+	font-family: 'Instrument Sans';
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url('/fonts/instrument-sans-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+	font-family: 'Instrument Sans';
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url('/fonts/instrument-sans-latin-600-normal.woff2') format('woff2');
+}
 
-@theme inline {
+/* Inter — used in article/editor content rendering */
+@font-face {
+	font-family: 'Inter';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('/fonts/inter-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+	font-family: 'Inter';
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url('/fonts/inter-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+	font-family: 'Inter';
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url('/fonts/inter-latin-600-normal.woff2') format('woff2');
+}
+
+/* stylelint-disable at-rule-no-unknown */
+@source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php"; /* NOSONAR */
+@source "../../storage/framework/views/*.php"; /* NOSONAR */
+
+@custom-variant dark (&:is(.dark *)); /* NOSONAR */
+
+@theme inline { /* NOSONAR */
 	--breakpoint-xs: 475px;
 
 	--font-sans:
@@ -61,6 +114,12 @@
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-ring: var(--sidebar-ring);
 
+	--color-wims-bg: var(--wims-bg);
+	--color-wims-text: var(--wims-text);
+	--color-wims-border: var(--wims-border);
+	--color-wims-card: var(--wims-card);
+	--color-wims-topbar: var(--wims-topbar);
+
 	--shadow-sm:
 		0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
 	--shadow-md:
@@ -71,6 +130,18 @@
 		0 2px 4px rgba(15, 23, 42, 0.03), 0 4px 12px rgba(15, 23, 42, 0.04);
 	--shadow-2xl:
 		0 2px 4px rgba(15, 23, 42, 0.03), 0 4px 12px rgba(15, 23, 42, 0.04);
+
+	--color-indigo-50: #eff6ff;
+	--color-indigo-100: #dbeafe;
+	--color-indigo-200: #bfdbfe;
+	--color-indigo-300: #93c5fd;
+	--color-indigo-400: #60a5fa;
+	--color-indigo-500: #3b82f6;
+	--color-indigo-600: #2563eb;
+	--color-indigo-700: #1d4ed8;
+	--color-indigo-800: #1e40af;
+	--color-indigo-900: #1e3a8a;
+	--color-indigo-950: #172554;
 }
 
 /*
@@ -102,6 +173,12 @@
 }
 
 :root {
+	--wims-bg: #f8fafc;
+	--wims-text: #0f172a;
+	--wims-border: #e2e8f0;
+	--wims-card: #ffffff;
+	--wims-topbar: rgba(255, 255, 255, 0.95);
+
 	--background: hsl(210 20% 98%);
 	--foreground: hsl(0 0% 3.9%);
 	--card: hsl(0 0% 100%);
@@ -138,6 +215,175 @@
 	--sidebar: hsl(0 0% 98%);
 }
 
+.wims-shell,
+.wims-role-shell {
+	--wims-bg: #f8fafc;
+	--wims-text: #0f172a;
+	--wims-border: #e2e8f0;
+	--wims-card: #ffffff;
+	--wims-topbar: rgba(255, 255, 255, 0.95);
+
+	--background: hsl(210 33% 98%);
+	--foreground: hsl(0 0% 8.63%);
+	--card: hsl(0 0% 100%);
+	--card-foreground: hsl(0 0% 8.63%);
+	--popover: hsl(0 0% 100%);
+	--popover-foreground: hsl(0 0% 8.63%);
+	--primary: hsl(216 99% 53%);
+	--primary-foreground: hsl(0 0% 100%);
+	--secondary: hsl(210 20% 96.5%);
+	--secondary-foreground: hsl(215 28% 17%);
+	--muted: hsl(210 20% 96.5%);
+	--muted-foreground: hsl(215 10% 35%);
+	--accent: hsl(210 20% 96.5%);
+	--accent-foreground: hsl(215 28% 17%);
+	--destructive: hsl(355 74% 49%);
+	--destructive-foreground: hsl(0 0% 100%);
+	--border: hsl(0 0% 87.84%);
+	--input: hsl(210 17% 81%);
+	--ring: hsl(216 99% 53%);
+	--sidebar-background: hsl(0 0% 100%);
+	--sidebar-foreground: hsl(215 25% 27%);
+	--sidebar-primary: hsl(216 99% 53%);
+	--sidebar-primary-foreground: hsl(0 0% 100%);
+	--sidebar-accent: hsl(210 40% 97%);
+	--sidebar-accent-foreground: hsl(216 84% 32%);
+	--sidebar-border: hsl(0 0% 87.84%);
+	--sidebar-ring: hsl(216 99% 53%);
+	--sidebar: hsl(0 0% 100%);
+	--font-sans:
+		"Plus Jakarta Sans", "Segoe UI", Arial, ui-sans-serif, system-ui,
+		sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+		"Noto Color Emoji";
+
+	font-family:
+		"Plus Jakarta Sans", "Segoe UI", Arial, ui-sans-serif, system-ui,
+		sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+		"Noto Color Emoji";
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+}
+
+.dark .wims-role-shell {
+	--wims-bg: #0f172a;
+	--wims-text: #f1f5f9;
+	--wims-border: #1e293b;
+	--wims-card: #1e293b;
+	--wims-topbar: rgba(15, 23, 42, 0.95);
+
+	--background: hsl(222 47% 11%);
+	--foreground: hsl(210 40% 98%);
+	--card: hsl(217 33% 17%);
+	--card-foreground: hsl(210 40% 98%);
+	--popover: hsl(217 33% 17%);
+	--popover-foreground: hsl(210 40% 98%);
+	--primary: hsl(217 91% 60%);
+	--primary-foreground: hsl(222 47% 11%);
+	--secondary: hsl(217 33% 17%);
+	--secondary-foreground: hsl(210 40% 98%);
+	--muted: hsl(217 33% 17%);
+	--muted-foreground: hsl(215 20% 65%);
+	--accent: hsl(217 33% 17%);
+	--accent-foreground: hsl(210 40% 98%);
+	--destructive: hsl(0 62% 50%);
+	--destructive-foreground: hsl(210 40% 98%);
+	--border: hsl(217 33% 25%);
+	--input: hsl(217 33% 25%);
+	--ring: hsl(217 91% 60%);
+	--chart-1: hsl(217 91% 60%);
+	--chart-2: hsl(142 71% 45%);
+	--chart-3: hsl(38 92% 50%);
+	--chart-4: hsl(199 89% 48%);
+	--chart-5: hsl(0 62% 50%);
+	--sidebar-background: hsl(217 33% 17%);
+	--sidebar-foreground: hsl(210 40% 98%);
+	--sidebar-primary: hsl(217 91% 60%);
+	--sidebar-primary-foreground: hsl(222 47% 11%);
+	--sidebar-accent: hsl(217 33% 25%);
+	--sidebar-accent-foreground: hsl(210 40% 98%);
+	--sidebar-border: hsl(217 33% 25%);
+	--sidebar-ring: hsl(217 91% 60%);
+	--sidebar: hsl(217 33% 17%);
+	background-color: var(--wims-bg);
+}
+
+.wims-shell.wims-student-shell {
+	--wims-bg: #f8fafc;
+	--wims-text: #0f172a;
+	--wims-border: #e2e8f0;
+	--wims-card: #ffffff;
+	--wims-topbar: rgba(255, 255, 255, 0.95);
+
+	--background: hsl(210 33% 98%);
+	--foreground: hsl(222 47% 11%);
+	--card: hsl(0 0% 100%);
+	--card-foreground: hsl(222 47% 11%);
+	--popover: hsl(0 0% 100%);
+	--popover-foreground: hsl(222 47% 11%);
+	--primary: hsl(217 91% 60%);
+	--primary-foreground: hsl(0 0% 100%);
+	--secondary: hsl(210 20% 96.5%);
+	--secondary-foreground: hsl(217 60% 22%);
+	--muted: hsl(210 20% 96.5%);
+	--muted-foreground: hsl(215 16% 40%);
+	--accent: hsl(210 20% 96.5%);
+	--accent-foreground: hsl(217 60% 22%);
+	--destructive: hsl(355 74% 49%);
+	--destructive-foreground: hsl(0 0% 100%);
+	--border: hsl(0 0% 87.84%);
+	--input: hsl(210 17% 81%);
+	--ring: hsl(217 91% 60%);
+	--chart-1: hsl(216 99% 53%);
+	--chart-2: hsl(151 62% 39%);
+	--chart-3: hsl(43 85% 51%);
+	--chart-4: hsl(197 77% 47%);
+	--chart-5: hsl(355 74% 49%);
+}
+
+.wims-shell.wims-student-shell {
+	background-color: var(--wims-bg);
+}
+
+html.wims-role-page,
+body.wims-role-page {
+	background-color: #f8fafc;
+}
+
+body.wims-role-body {
+	font-family:
+		"Plus Jakarta Sans", "Segoe UI", Arial, ui-sans-serif, system-ui,
+		sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+		"Noto Color Emoji";
+	font-feature-settings: "cv11", "ss01";
+	background-color: #f8fafc;
+	color: #161616;
+}
+
+html.wims-student-page,
+body.wims-student-page {
+	background-color: #f8fafc;
+}
+
+body.wims-student-body {
+	font-family:
+		"Plus Jakarta Sans", "Segoe UI", Arial, ui-sans-serif, system-ui,
+		sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+		"Noto Color Emoji";
+	font-feature-settings: "cv11", "ss01";
+	background-color: #f8fafc;
+	color: #161616;
+}
+
+html.wims-student-page.dark,
+body.wims-student-page.dark,
+body.wims-student-body.dark,
+html.wims-role-page.dark,
+body.wims-role-page.dark,
+body.wims-role-body.dark {
+	background-color: #0f172a;
+	color: #f1f5f9;
+}
+
 .dark {
 	--background: hsl(0 0% 3.9%);
 	--foreground: hsl(0 0% 98%);
@@ -172,6 +418,42 @@
 	--sidebar-border: hsl(0 0% 15.9%);
 	--sidebar-ring: hsl(217.2 91.2% 59.8%);
 	--sidebar: hsl(240 5.9% 10%);
+}
+
+.wims-shell.wims-student-dark {
+	--wims-bg: #0f172a;
+	--wims-text: #f1f5f9;
+	--wims-border: #1e293b;
+	--wims-card: #1e293b;
+	--wims-topbar: rgba(15, 23, 42, 0.95);
+
+	--background: hsl(222 47% 11%);
+	--foreground: hsl(210 40% 98%);
+	--card: hsl(217 33% 17%);
+	--card-foreground: hsl(210 40% 98%);
+	--popover: hsl(217 33% 17%);
+	--popover-foreground: hsl(210 40% 98%);
+	--primary: hsl(217 91% 60%);
+	--primary-foreground: hsl(222 47% 11%);
+	--secondary: hsl(217 33% 17%);
+	--secondary-foreground: hsl(210 40% 98%);
+	--muted: hsl(217 33% 17%);
+	--muted-foreground: hsl(215 20% 65%);
+	--accent: hsl(217 33% 17%);
+	--accent-foreground: hsl(210 40% 98%);
+	--destructive: hsl(0 62% 50%);
+	--destructive-foreground: hsl(210 40% 98%);
+	--border: hsl(217 33% 25%);
+	--input: hsl(217 33% 25%);
+	--ring: hsl(217 91% 60%);
+}
+
+.wims-shell.wims-student-shell.wims-student-dark {
+	--wims-card: #1e293b;
+	--wims-topbar: rgba(15, 23, 42, 0.95);
+	--card: hsl(217 33% 17%);
+	--popover: hsl(217 33% 17%);
+	background-color: var(--wims-bg);
 }
 
 @layer base {
@@ -263,4 +545,61 @@
 		rgba(255, 255, 255, 0.07) 60%,
 		rgba(255, 255, 255, 0) 100%
 	);
+}
+
+.scrollbar-thin {
+	scrollbar-width: thin;
+	scrollbar-color: transparent transparent;
+}
+
+.scrollbar-thin:hover {
+	scrollbar-color: rgb(203 213 225) transparent;
+}
+
+.dark .scrollbar-thin:hover {
+	scrollbar-color: rgb(51 65 85) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+	width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+	background: transparent;
+	border-radius: 9999px;
+}
+
+.scrollbar-thin:hover::-webkit-scrollbar-thumb {
+	background: rgb(203 213 225);
+}
+
+.dark .scrollbar-thin:hover::-webkit-scrollbar-thumb {
+    background: rgb(51 65 85);
+}
+
+.student-date-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.72;
+}
+
+.wims-student-page.dark .student-date-input::-webkit-calendar-picker-indicator,
+.wims-student-dark .student-date-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.9) brightness(1.15);
+    opacity: 0.92;
+}
+
+.wims-shell ::selection,
+.wims-role-shell ::selection {
+	background-color: rgb(15 98 254 / 0.18);
+	color: #161616;
+}
+
+.wims-shell.wims-student-dark ::selection,
+.dark .wims-role-shell ::selection {
+	background-color: rgb(59 130 246 / 0.35);
+	color: #f8fafc;
 }

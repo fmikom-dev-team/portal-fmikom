@@ -4,8 +4,11 @@ namespace App\Modules\Pagi\Services;
 
 use App\Concerns\HandlesImageCompression;
 use App\Models\User;
+use App\Services\VirusScannerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class PagiCertificateService
 {
@@ -36,8 +39,19 @@ class PagiCertificateService
 
             foreach ($newMedia as $index => $file) {
                 if ($file->isValid()) {
-                    $mime = $file->getClientMimeType();
+                    $mime = $file->getMimeType();
+                    $realExt = $file->guessExtension();
                     $origName = $file->getClientOriginalName();
+
+                    $allowedImageMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                    $allowedImageExts = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
+
+                    $isImage = in_array($mime, $allowedImageMimes) && in_array($realExt, $allowedImageExts);
+                    $isPdf = $mime === 'application/pdf' && $realExt === 'pdf';
+
+                    if (! $isImage && ! $isPdf) {
+                        return response()->json(['success' => false, 'message' => 'Tipe file tidak didukung. Hanya gambar (jpeg, png, gif, webp) atau PDF yang diperbolehkan.'], 422);
+                    }
 
                     // Scan binary content for injection signatures
                     $realPath = $file->getRealPath();
@@ -55,11 +69,20 @@ class PagiCertificateService
                     $path = null;
                     $thumbPath = null;
 
-                    if (str_starts_with($mime, 'image/')) {
+                    if ($isImage) {
                         $path = $this->compressAndSaveImage($file, 'pagi/certificates', 1200, 1200, 85);
                         $thumbPath = $path;
                     } else {
-                        $path = $file->store('pagi/certificates', 'public');
+                        // Scan non-image file (PDF) with ClamAV before storing
+                        $scanner = app(VirusScannerService::class);
+                        $scanResult = $scanner->scan($file);
+                        if (! $scanResult['safe']) {
+                            return response()->json(['success' => false, 'message' => $scanResult['reason']], 422);
+                        }
+
+                        $uuid = Str::uuid()->toString();
+                        $filename = $uuid.'.pdf';
+                        $path = $file->storeAs('pagi/certificates', $filename, 'public');
                         if (isset($newMediaThumbs[$index]) && $newMediaThumbs[$index]->isValid()) {
                             $thumbFile = $newMediaThumbs[$index];
                             $thumbPath = $this->compressAndSaveImage($thumbFile, 'pagi/certificates/thumbs', 400, 400, 80);
@@ -70,7 +93,7 @@ class PagiCertificateService
                         $mediaList[] = [
                             'name' => $origName,
                             'path' => $path,
-                            'type' => str_starts_with($mime, 'image/') ? 'image' : 'pdf',
+                            'type' => $isImage ? 'image' : 'pdf',
                             'thumbnail_path' => $thumbPath,
                         ];
                     }
@@ -177,34 +200,42 @@ class PagiCertificateService
         }
 
         if ($file && $file->isValid()) {
-            $realPath = $file->getRealPath();
-            $contents = file_get_contents($realPath);
-            if (
-                str_contains($contents, '<?php') ||
-                str_contains($contents, '<?=') ||
-                str_contains($contents, '<script') ||
-                preg_match('/<script\b[^>]*>(.*?)<\/script>/is', $contents) ||
-                preg_match('/<\?php\b(.*?)(\?>|$)/is', $contents)
-            ) {
-                return response()->json(['success' => false, 'message' => 'Security Error: Script signature detected in file content.'], 422);
+            $realMime = $file->getMimeType();
+            $realExt = $file->guessExtension();
+
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+            $allowedExts = ['jpeg', 'jpg', 'png', 'gif', 'webp', 'svg'];
+
+            if (! in_array($realMime, $allowedMimes) || ! in_array($realExt, $allowedExts)) {
+                return response()->json(['success' => false, 'message' => 'Tipe gambar logo tidak valid.'], 422);
             }
 
-            $storageDir = storage_path('app/public/org-logos');
-            if (! file_exists($storageDir)) {
-                @mkdir($storageDir, 0755, true);
+            // Scan organization logo with ClamAV
+            $scanner = app(VirusScannerService::class);
+            $scanResult = $scanner->scan($file);
+            if (! $scanResult['safe']) {
+                return response()->json(['success' => false, 'message' => $scanResult['reason']], 422);
             }
 
+            // Delete existing logos from public disk using Storage facade
             $extensions = ['svg', 'png', 'jpg', 'jpeg', 'webp', 'gif'];
             foreach ($extensions as $ext) {
-                $existing = "{$storageDir}/{$slug}.{$ext}";
-                if (file_exists($existing)) {
-                    @unlink($existing);
+                $existingPath = "org-logos/{$slug}.{$ext}";
+                if (Storage::disk('public')->exists($existingPath)) {
+                    Storage::disk('public')->delete($existingPath);
                 }
             }
 
-            $ext = strtolower($file->getClientOriginalExtension()) ?: 'png';
+            $ext = $realExt ?: 'png';
             $filename = "{$slug}.{$ext}";
-            $file->move($storageDir, $filename);
+
+            if ($ext === 'svg') {
+                $contents = file_get_contents($file->getRealPath());
+                $sanitizedSvg = $this->sanitizeSvg($contents);
+                Storage::disk('public')->put("org-logos/{$filename}", $sanitizedSvg);
+            } else {
+                $file->storeAs('org-logos', $filename, 'public');
+            }
 
             return response()->json([
                 'success' => true,
@@ -270,9 +301,21 @@ class PagiCertificateService
 
             foreach ($newMedia as $index => $file) {
                 if ($file->isValid()) {
-                    $mime = $file->getClientMimeType();
+                    $mime = $file->getMimeType();
+                    $realExt = $file->guessExtension();
                     $origName = $file->getClientOriginalName();
 
+                    $allowedImageMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                    $allowedImageExts = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
+
+                    $isImage = in_array($mime, $allowedImageMimes) && in_array($realExt, $allowedImageExts);
+                    $isPdf = $mime === 'application/pdf' && $realExt === 'pdf';
+
+                    if (! $isImage && ! $isPdf) {
+                        return response()->json(['success' => false, 'message' => 'Tipe file tidak didukung. Hanya gambar (jpeg, png, gif, webp) atau PDF yang diperbolehkan.'], 422);
+                    }
+
+                    // Scan binary content for injection signatures
                     $realPath = $file->getRealPath();
                     $contents = file_get_contents($realPath);
                     if (
@@ -288,11 +331,20 @@ class PagiCertificateService
                     $path = null;
                     $thumbPath = null;
 
-                    if (str_starts_with($mime, 'image/')) {
+                    if ($isImage) {
                         $path = $this->compressAndSaveImage($file, 'pagi/certificates', 1200, 1200, 85);
                         $thumbPath = $path;
                     } else {
-                        $path = $file->store('pagi/certificates', 'public');
+                        // Scan non-image file (PDF) with ClamAV before storing
+                        $scanner = app(VirusScannerService::class);
+                        $scanResult = $scanner->scan($file);
+                        if (! $scanResult['safe']) {
+                            return response()->json(['success' => false, 'message' => $scanResult['reason']], 422);
+                        }
+
+                        $uuid = Str::uuid()->toString();
+                        $filename = $uuid.'.pdf';
+                        $path = $file->storeAs('pagi/certificates', $filename, 'public');
                         if (isset($newMediaThumbs[$index]) && $newMediaThumbs[$index]->isValid()) {
                             $thumbFile = $newMediaThumbs[$index];
                             $thumbPath = $this->compressAndSaveImage($thumbFile, 'pagi/certificates/thumbs', 400, 400, 80);
@@ -303,7 +355,7 @@ class PagiCertificateService
                         $mediaList[] = [
                             'name' => $origName,
                             'path' => $path,
-                            'type' => str_starts_with($mime, 'image/') ? 'image' : 'pdf',
+                            'type' => $isImage ? 'image' : 'pdf',
                             'thumbnail_path' => $thumbPath,
                         ];
                     }
@@ -452,5 +504,51 @@ class PagiCertificateService
         }
 
         return null;
+    }
+
+    private function sanitizeSvg(string $svgContent): string
+    {
+        $dom = new \DOMDocument;
+        libxml_use_internal_errors(true);
+
+        if (! @$dom->loadXML($svgContent, LIBXML_NONET)) {
+            return '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"/>';
+        }
+
+        $xpath = new \DOMXPath($dom);
+
+        $blockedElements = [
+            'script', 'iframe', 'object', 'embed', 'set', 'animate',
+            'animatetransform', 'animatecolor', 'animatemotion', 'handler', 'listener',
+        ];
+
+        foreach ($blockedElements as $element) {
+            $nodes = $xpath->query("//*[local-name()='{$element}']");
+            foreach ($nodes as $node) {
+                $node->parentNode->removeChild($node);
+            }
+        }
+
+        $nodes = $xpath->query('//*');
+        foreach ($nodes as $node) {
+            if ($node instanceof \DOMElement && $node->hasAttributes()) {
+                $attrsToRemove = [];
+                foreach ($node->attributes as $attr) {
+                    $name = strtolower($attr->name);
+                    $val = strtolower(trim($attr->value));
+
+                    if (str_starts_with($name, 'on')) {
+                        $attrsToRemove[] = $attr->name;
+                    } elseif (str_starts_with($val, 'javascript:') || str_starts_with($val, 'data:text/html')) {
+                        $attrsToRemove[] = $attr->name;
+                    }
+                }
+                foreach ($attrsToRemove as $attrName) {
+                    $node->removeAttribute($attrName);
+                }
+            }
+        }
+
+        return $dom->saveXML($dom->documentElement);
     }
 }

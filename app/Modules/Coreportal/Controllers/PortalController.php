@@ -3,6 +3,8 @@
 namespace App\Modules\Coreportal\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Audit\AuditLog;
+use App\Models\Module;
 use App\Models\UserModuleRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,9 +21,12 @@ class PortalController extends Controller
     {
         $user = Auth::user();
 
+        // Clear any active module session context when returning to the main dashboard
+        session()->forget(['active_module', 'active_role', 'active_module_at']);
+
         // Ambil semua hak akses modul dan role yang dimilikinya (eager load untuk hindari N+1)
         // Hanya tampilkan jika role tersebut SUDAH di-mapping ke modul via module_roles (pivot)
-        $userModules = UserModuleRole::with(['module', 'role'])
+        $userModules = UserModuleRole::query()->with(['module', 'role'])
             ->where('user_id', $user->id)
             ->where('is_active', true)
             ->whereHas('module', fn ($q) => $q->where('is_active', true))
@@ -56,7 +61,7 @@ class PortalController extends Controller
         $roleSlug = $request->role_slug;
 
         // Validasi akses ke modul DAN ROLE spesifik ini (mencegah IDOR / manipulasi data)
-        $access = UserModuleRole::with(['role', 'module'])
+        $access = UserModuleRole::query()->with(['role', 'module'])
             ->where('user_id', $user->id)
             ->where('is_active', true)
             ->whereHas('module', fn ($q) => $q->where('code', $moduleCode)->where('is_active', true))
@@ -94,6 +99,16 @@ class PortalController extends Controller
             'active_module_at' => now()->toIso8601String(),
         ]);
 
+        // Write audit log for module access
+        AuditLog::create([
+            'event_type'      => 'module.accessed',
+            'severity'        => 'info',
+            'actor_id'        => $user->id,
+            'organization_id' => $access->module->id,
+            'ip_address'      => request()->ip(),
+            'metadata'        => ['module' => $finalModuleCode, 'role' => $finalRoleSlug],
+        ]);
+
         $routeName = 'module.'.strtolower($finalModuleCode).'.dashboard';
 
         return Route::has($routeName)
@@ -128,7 +143,7 @@ class PortalController extends Controller
         }
 
         // Validasi: user harus punya assignment untuk role baru ini di modul yang sama
-        $hasAccess = UserModuleRole::where('user_id', $user->id)
+        $hasAccess = UserModuleRole::query()->where('user_id', $user->id)
             ->where('is_active', true)
             ->whereHas('module', fn ($q) => $q->where('code', $moduleCode))
             ->whereHas('role', fn ($q) => $q->where('slug', $newRole))
@@ -136,7 +151,7 @@ class PortalController extends Controller
 
         if (! $hasAccess) {
             // Fallback: izinkan jika role baru = user_type
-            $userType = $user->user_type ?? optional($user->role)->slug;
+            $userType = $user->getGlobalRoleSlug();
             if ($newRole !== $userType) {
                 return response()->json(['message' => "Role '{$newRole}' tidak valid untuk modul '{$moduleCode}'."], 403);
             }
@@ -151,6 +166,17 @@ class PortalController extends Controller
         session([
             'active_role' => $newRole,
             'active_module_at' => now()->toIso8601String(),
+        ]);
+
+        // Write audit log for role switch
+        $module = Module::query()->where('code', $moduleCode)->first();
+        AuditLog::create([
+            'event_type'      => 'role.switched',
+            'severity'        => 'info',
+            'actor_id'        => $user->id,
+            'organization_id' => $module?->id,
+            'ip_address'      => request()->ip(),
+            'metadata'        => ['module' => $moduleCode, 'from_role' => $oldRole, 'to_role' => $newRole],
         ]);
 
         return response()->json([

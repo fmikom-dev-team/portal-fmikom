@@ -8,7 +8,9 @@ defineProps<{
 </script>
 
 <template>
-    <Head :title="title ? `${title} – WorkOS` : 'WorkOS'" />
+    <Head>
+        <title>{{ title ? `${title} – WorkOS` : 'WorkOS' }}</title>
+    </Head>
     
     <div 
         class="min-h-screen bg-[#fafafa] flex flex-col justify-center py-12 sm:px-6 lg:px-8"

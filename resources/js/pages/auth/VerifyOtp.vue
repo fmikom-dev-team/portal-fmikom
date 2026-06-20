@@ -92,7 +92,9 @@ const resendOtp = () => {
 
 <template>
     <AuthLayout title="Verifikasi Email" description="Satu langkah lagi!">
-        <Head title="Verifikasi OTP" />
+        <Head>
+        <title>Verifikasi OTP</title>
+    </Head>
 
         <!-- Icon -->
         <div class="flex justify-center mb-6">

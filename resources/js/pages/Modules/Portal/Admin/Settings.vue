@@ -3,12 +3,11 @@ import { router } from "@inertiajs/vue3";
 import {
 	AlertTriangle,
 	CheckCircle2,
-	Globe,
 	MessageSquare,
 	Save,
 	Settings as SettingsIcon,
-	Shield,
-	Users,
+	User,
+	Camera,
 } from "lucide-vue-next";
 import { reactive, ref } from "vue";
 import PortalAdminLayout from "@/layouts/PortalAdminLayout.vue";
@@ -21,29 +20,41 @@ const props = defineProps({
 });
 
 const form = reactive({
-	site_name: props.settings.site_name || "Portal FMIKOM",
-	site_description:
-		props.settings.site_description ||
-		"Sistem informasi terpadu untuk civitas akademika FMIKOM.",
-	admin_email: props.settings.admin_email || "",
 	posts_per_page: props.settings.posts_per_page || "10",
 	allow_comments: props.settings.allow_comments !== "0" ? "1" : "0",
 	moderate_comments: props.settings.moderate_comments !== "0" ? "1" : "0",
-	maintenance_mode: props.settings.maintenance_mode === "1" ? "1" : "0",
-	registration_open: props.settings.registration_open !== "0" ? "1" : "0",
+	author_name: props.settings.author_name || "",
+	author_image_file: null as File | null,
 });
+
+const authorImagePreview = ref(props.settings.author_image || null);
+const fileInput = ref<HTMLInputElement | null>(null);
+
+const handleFileChange = (e: Event) => {
+	const target = e.target as HTMLInputElement;
+	const file = target.files?.[0];
+	if (file) {
+		form.author_image_file = file;
+		authorImagePreview.value = URL.createObjectURL(file);
+	}
+};
+
+const triggerFileInput = () => {
+	fileInput.value?.click();
+};
 
 const isProcessing = ref(false);
 const isSuccess = ref(false);
-const flash = ref("");
 
 const submit = () => {
 	isProcessing.value = true;
+	// Inertia router.post supports multipart/form-data when File objects are present in data
 	router.post("/portal-admin/settings", form, {
 		preserveScroll: true,
 		onSuccess: () => {
 			isProcessing.value = false;
 			isSuccess.value = true;
+			form.author_image_file = null; // reset file input
 			setTimeout(() => (isSuccess.value = false), 3000);
 		},
 		onError: () => {
@@ -78,44 +89,71 @@ const submit = () => {
             <!-- LEFT: Main Settings -->
             <div class="lg:col-span-2 space-y-5">
 
-                <!-- Site Identity -->
+                <!-- Profil Publik Postingan -->
                 <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
                     <div class="flex items-center gap-3 px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800">
                         <div class="w-8 h-8 bg-blue-50 dark:bg-blue-500/10 rounded-lg flex items-center justify-center text-[#2563EB]">
-                            <Globe class="w-4 h-4" />
+                            <User class="w-4 h-4" />
                         </div>
                         <div>
-                            <h3 class="text-[14px] font-black text-slate-800 dark:text-white">Identitas Situs</h3>
-                            <p class="text-[11px] font-medium text-slate-400">Informasi dasar portal Anda</p>
+                            <h3 class="text-[14px] font-black text-slate-800 dark:text-white">Profil Publik Postingan</h3>
+                            <p class="text-[11px] font-medium text-slate-400">Pengaturan author berita & artikel</p>
                         </div>
                     </div>
-                    <div class="p-6 space-y-5">
+                    <div class="p-6 space-y-6">
+                        <!-- Nama Author -->
                         <div>
-                            <label class="block text-[12px] font-bold text-slate-600 dark:text-slate-400 mb-2">Nama Situs</label>
+                            <label class="block text-[12px] font-bold text-slate-600 dark:text-slate-400 mb-2">Nama Author</label>
                             <input
-                                v-model="form.site_name"
+                                v-model="form.author_name"
                                 type="text"
-                                placeholder="Contoh: Portal FMIKOM"
+                                placeholder="Contoh: Admin FMIKOM"
                                 class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-[13px] font-medium text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition-all"
                             />
                         </div>
+
+                        <!-- Foto Profile -->
                         <div>
-                            <label class="block text-[12px] font-bold text-slate-600 dark:text-slate-400 mb-2">Deskripsi Singkat</label>
-                            <textarea
-                                v-model="form.site_description"
-                                rows="3"
-                                placeholder="Deskripsi singkat tentang portal ini..."
-                                class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-[13px] font-medium text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none resize-none transition-all"
-                            ></textarea>
-                        </div>
-                        <div>
-                            <label class="block text-[12px] font-bold text-slate-600 dark:text-slate-400 mb-2">Email Administrator</label>
-                            <input
-                                v-model="form.admin_email"
-                                type="email"
-                                placeholder="admin@fmikom.ac.id"
-                                class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-[13px] font-medium text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition-all"
-                            />
+                            <label class="block text-[12px] font-bold text-slate-600 dark:text-slate-400 mb-3">Foto Profile Author</label>
+                            <div class="flex items-center gap-5">
+                                <!-- Avatar Preview Container -->
+                                <div class="relative group w-20 h-20 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0 shadow-sm transition-all">
+                                    <img v-if="authorImagePreview" :src="authorImagePreview" class="w-full h-full object-cover" alt="Author Avatar" />
+                                    <div v-else class="text-slate-450 dark:text-slate-500">
+                                        <User class="w-8 h-8 opacity-60" />
+                                    </div>
+                                    
+                                    <!-- Hover Overlay -->
+                                    <button 
+                                        type="button" 
+                                        @click="triggerFileInput"
+                                        class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white"
+                                    >
+                                        <Camera class="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                <!-- Upload Button and Help text -->
+                                <div class="space-y-1.5">
+                                    <input
+                                        ref="fileInput"
+                                        type="file"
+                                        accept="image/*"
+                                        class="hidden"
+                                        @change="handleFileChange"
+                                    />
+                                    <button
+                                        type="button"
+                                        @click="triggerFileInput"
+                                        class="px-4 py-2 border border-slate-200 dark:border-slate-750 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl text-[12px] font-bold text-slate-700 dark:text-slate-350 bg-white dark:bg-slate-800 shadow-sm transition-colors cursor-pointer"
+                                    >
+                                        Pilih Foto
+                                    </button>
+                                    <p class="text-[10.5px] font-medium text-slate-400 leading-normal">
+                                        Format JPG, PNG, atau WebP. Ukuran maks 2MB.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -186,73 +224,6 @@ const submit = () => {
             <!-- RIGHT: System Settings -->
             <div class="space-y-5">
 
-                <!-- Access & Security -->
-                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
-                    <div class="flex items-center gap-3 px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800">
-                        <div class="w-8 h-8 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-600">
-                            <Shield class="w-4 h-4" />
-                        </div>
-                        <div>
-                            <h3 class="text-[14px] font-black text-slate-800 dark:text-white">Akses & Keamanan</h3>
-                            <p class="text-[11px] font-medium text-slate-400">Kontrol akses sistem</p>
-                        </div>
-                    </div>
-                    <div class="p-5 space-y-1">
-
-                        <!-- Toggle: Registration Open -->
-                        <div class="flex items-center justify-between py-3">
-                            <div>
-                                <p class="text-[13px] font-bold text-slate-800 dark:text-slate-200">Registrasi Terbuka</p>
-                                <p class="text-[11px] font-medium text-slate-400 mt-0.5">Izinkan pendaftaran akun baru</p>
-                            </div>
-                            <button
-                                type="button"
-                                @click="form.registration_open = form.registration_open === '1' ? '0' : '1'"
-                                :class="[
-                                    'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
-                                    form.registration_open === '1' ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'
-                                ]"
-                            >
-                                <span :class="['inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200', form.registration_open === '1' ? 'translate-x-6' : 'translate-x-1']"></span>
-                            </button>
-                        </div>
-
-                        <div class="border-t border-slate-100 dark:border-slate-700"></div>
-
-                        <!-- Toggle: Maintenance Mode -->
-                        <div class="flex items-center justify-between py-3">
-                            <div>
-                                <p class="text-[13px] font-bold text-slate-800 dark:text-slate-200">Mode Maintenance</p>
-                                <p class="text-[11px] font-medium text-slate-400 mt-0.5">Tampilkan halaman maintenance ke publik</p>
-                            </div>
-                            <button
-                                type="button"
-                                @click="form.maintenance_mode = form.maintenance_mode === '1' ? '0' : '1'"
-                                :class="[
-                                    'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
-                                    form.maintenance_mode === '1' ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-700'
-                                ]"
-                            >
-                                <span :class="['inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200', form.maintenance_mode === '1' ? 'translate-x-6' : 'translate-x-1']"></span>
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
-
-                <!-- Warning if Maintenance -->
-                <div v-if="form.maintenance_mode === '1'" class="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-2xl p-5">
-                    <div class="flex items-start gap-3">
-                        <AlertTriangle class="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
-                        <div>
-                            <p class="text-[13px] font-black text-amber-800 dark:text-amber-400">Mode Maintenance Aktif</p>
-                            <p class="text-[11px] font-medium text-amber-700 dark:text-amber-500 mt-1">
-                                Halaman publik sedang dalam mode maintenance. Pastikan untuk menonaktifkan setelah selesai.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Info Card -->
                 <div class="bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-2xl p-5">
                     <div class="flex items-start gap-3">
@@ -260,7 +231,7 @@ const submit = () => {
                         <div>
                             <p class="text-[13px] font-black text-blue-800 dark:text-blue-300">Tips</p>
                             <p class="text-[11px] font-medium text-blue-700 dark:text-blue-400 mt-1">
-                                Pengaturan ini berdampak langsung pada perilaku portal. Selalu simpan setelah perubahan.
+                                Pengaturan ini berdampak langsung pada postingan berita dan artikel. Selalu simpan setelah perubahan.
                             </p>
                         </div>
                     </div>

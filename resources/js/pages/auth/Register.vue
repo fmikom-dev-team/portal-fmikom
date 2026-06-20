@@ -196,11 +196,11 @@ const passwordCriteria = computed(() => {
 	}
 
 	return {
-		length: p.length >= 8,
+		length: p.length >= 10,
 		lowercase: /[a-z]/.test(p),
 		uppercase: /[A-Z]/.test(p),
 		number: /[0-9]/.test(p),
-		symbol: /[:!@#$%^&*]/.test(p),
+		symbol: /[^A-Za-z0-9]/.test(p),
 	};
 });
 
@@ -213,13 +213,10 @@ const passwordMismatch = computed(() => {
 
 const isPasswordValid = computed(() => {
 	return (
-		passwordCriteria.value.length &&
-		passwordCriteria.value.lowercase &&
-		passwordCriteria.value.uppercase &&
-		passwordCriteria.value.number &&
-		passwordCriteria.value.symbol &&
+		form.password !== "" &&
+		form.password_confirmation !== "" &&
 		!passwordMismatch.value &&
-		form.password !== ""
+		!form.processing
 	);
 });
 
@@ -239,7 +236,9 @@ const nomorIndukPlaceholder = computed(() => {
 
 <template>
     <div class="w-full">
-        <Head title="Register" />
+        <Head>
+        <title>Register</title>
+    </Head>
 
         <!-- Stepper Indicator Responsive -->
         <div class="flex flex-col mb-8 px-1">
@@ -447,15 +446,16 @@ const nomorIndukPlaceholder = computed(() => {
                     <div class="flex items-center gap-2" :class="passwordCriteria.length ? 'text-green-600 font-medium' : ''">
                         <svg v-if="passwordCriteria.length" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <svg v-else class="w-4 h-4 text-slate-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Minimal 8 karakter
+                        Minimal 10 karakter
                     </div>
                     <div class="flex flex-wrap gap-x-4 gap-y-2">
                         <div class="flex items-center gap-2" :class="passwordCriteria.lowercase ? 'text-green-600 font-medium' : ''"><svg v-if="passwordCriteria.lowercase" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><svg v-else class="w-4 h-4 shrink-0 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Huruf kecil</div>
                         <div class="flex items-center gap-2" :class="passwordCriteria.uppercase ? 'text-green-600 font-medium' : ''"><svg v-if="passwordCriteria.uppercase" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><svg v-else class="w-4 h-4 shrink-0 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Huruf besar</div>
                         <div class="flex items-center gap-2" :class="passwordCriteria.number ? 'text-green-600 font-medium' : ''"><svg v-if="passwordCriteria.number" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><svg v-else class="w-4 h-4 shrink-0 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Angka</div>
-                        <div class="flex items-center gap-2" :class="passwordCriteria.symbol ? 'text-green-600 font-medium' : ''"><svg v-if="passwordCriteria.symbol" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><svg v-else class="w-4 h-4 shrink-0 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Simbol (:!@#$%^&*)</div>
+                        <div class="flex items-center gap-2" :class="passwordCriteria.symbol ? 'text-green-600 font-medium' : ''"><svg v-if="passwordCriteria.symbol" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><svg v-else class="w-4 h-4 shrink-0 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Simbol apa pun</div>
                     </div>
                 </div>
+                <InputError :message="form.errors.password_confirmation" />
 
                 <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 flex items-start gap-2.5">
                     <svg class="w-4 h-4 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -464,7 +464,7 @@ const nomorIndukPlaceholder = computed(() => {
 
                 <div class="mt-4 flex gap-3">
                     <Button type="button" variant="outline" @click="backStep" class="w-1/3 rounded-xl h-11 border-slate-200 hover:bg-slate-50 text-slate-600">Kembali</Button>
-                    <Button type="submit" class="w-2/3 bg-[#2563eb] hover:bg-[#3B2DCB] text-white shadow-[0_6px_20px_rgba(82,68,228,0.4)] transition-all h-11 rounded-xl text-md font-medium" :disabled="form.processing || !isPasswordValid">
+                    <Button type="submit" class="w-2/3 bg-[#2563eb] hover:bg-[#3B2DCB] text-white shadow-[0_6px_20px_rgba(82,68,228,0.4)] transition-all h-11 rounded-xl text-md font-medium" :disabled="!isPasswordValid">
                         <Spinner v-if="form.processing" class="mr-2" /> Selesaikan Pendaftaran
                     </Button>
                 </div>

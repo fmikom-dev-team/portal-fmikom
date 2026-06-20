@@ -14,6 +14,7 @@ const props = defineProps<{
 	users?: any[];
 	modules?: any[];
 	stats?: any;
+	searchQuery?: string;
 }>();
 
 const currentTab = computed(() =>
@@ -84,10 +85,10 @@ const handleNavigation = (dest: string) => {
         <!-- Main Content Area -->
         <div class="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12 wos-scroll bg-white">
             <Overview v-if="currentTab === 'overview'" :stats="stats" :roles="roles ?? []" :permissions="permissions ?? []" :users="users ?? []" @navigate="handleNavigation" />
-            <Roles v-else-if="currentTab === 'roles'" :roles="roles ?? []" :permissions="permissions ?? []" @navigate="handleNavigation" />
-            <Permissions v-else-if="currentTab === 'permissions'" :permissions="permissions ?? []" @navigate="handleNavigation" />
-            <RoleAssignments v-else-if="currentTab === 'assignments'" :users="users ?? []" :roles="roles ?? []" :modules="modules ?? []" @navigate="handleNavigation" />
-            <AccessControl v-else-if="currentTab === 'access-control'" :roles="roles ?? []" :permissions="permissions ?? []" @navigate="handleNavigation" />
+            <Roles v-else-if="currentTab === 'roles'" :roles="roles ?? []" :permissions="permissions ?? []" :search-query="searchQuery" @navigate="handleNavigation" />
+            <Permissions v-else-if="currentTab === 'permissions'" :permissions="permissions ?? []" :search-query="searchQuery" @navigate="handleNavigation" />
+            <RoleAssignments v-else-if="currentTab === 'assignments'" :users="users ?? []" :roles="roles ?? []" :modules="modules ?? []" :search-query="searchQuery" @navigate="handleNavigation" />
+            <AccessControl v-else-if="currentTab === 'access-control'" :roles="roles ?? []" :permissions="permissions ?? []" :search-query="searchQuery" @navigate="handleNavigation" />
             <Audit v-else-if="currentTab === 'audit'" @navigate="handleNavigation" />
             
             <div v-else class="text-center py-20">

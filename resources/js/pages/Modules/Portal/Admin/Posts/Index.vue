@@ -10,13 +10,13 @@ import {
 	Sparkles,
 	Trash2,
 } from "lucide-vue-next";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import PortalAdminLayout from "@/layouts/PortalAdminLayout.vue";
 
 const props = defineProps({
 	posts: {
-		type: Array as () => any[],
-		default: () => [],
+		type: Object,
+		default: () => ({ data: [] }),
 	},
 	filters: {
 		type: Object,
@@ -28,6 +28,9 @@ const props = defineProps({
 const localSearch = ref(props.filters.search || "");
 const selectedStatus = ref("all");
 
+// Map paginator list
+const postsList = computed(() => props.posts.data || []);
+
 const confirmDelete = (id: number) => {
 	if (confirm("Apakah Anda yakin ingin menghapus postingan ini?")) {
 		router.delete(`/portal-admin/posts/${id}`);
@@ -36,7 +39,7 @@ const confirmDelete = (id: number) => {
 
 // Filtered posts logic
 const filteredPosts = computed(() => {
-	return props.posts.filter((post) => {
+	return postsList.value.filter((post) => {
 		// Status filter
 		if (
 			selectedStatus.value !== "all" &&
@@ -44,29 +47,20 @@ const filteredPosts = computed(() => {
 		) {
 			return false;
 		}
-		// Search filter (local)
-		if (localSearch.value.trim() !== "") {
-			const query = localSearch.value.toLowerCase();
-			return (
-				post.title?.toLowerCase().includes(query) ||
-				post.content?.toLowerCase().includes(query) ||
-				post.category?.name?.toLowerCase().includes(query)
-			);
-		}
 		return true;
 	});
 });
 
-// Stats counters
-const countAll = computed(() => props.posts.length);
+// Stats counters (based on current page)
+const countAll = computed(() => postsList.value.length);
 const countPublished = computed(
-	() => props.posts.filter((p) => p.status === "published").length,
+	() => postsList.value.filter((p) => p.status === "published").length,
 );
 const countScheduled = computed(
-	() => props.posts.filter((p) => p.status === "scheduled").length,
+	() => postsList.value.filter((p) => p.status === "scheduled").length,
 );
 const countDraft = computed(
-	() => props.posts.filter((p) => p.status === "draft").length,
+	() => postsList.value.filter((p) => p.status === "draft").length,
 );
 
 const getFormattedDate = (dateStr: string) => {
@@ -77,6 +71,15 @@ const getFormattedDate = (dateStr: string) => {
 		month: "short",
 	});
 };
+
+// Watch search to reload from server live
+watch(localSearch, (newSearch) => {
+	router.get(
+		"/portal-admin/posts",
+		{ search: newSearch },
+		{ preserveState: true, replace: true }
+	);
+});
 </script>
 
 <template>
@@ -86,7 +89,7 @@ const getFormattedDate = (dateStr: string) => {
             <div>
                 <h2 class="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                     Postingan
-                    <span class="text-xs font-bold text-slate-400">({{ countAll }})</span>
+                    <span class="text-xs font-bold text-slate-400">({{ posts.total || 0 }})</span>
                 </h2>
             </div>
             
@@ -259,6 +262,42 @@ const getFormattedDate = (dateStr: string) => {
             >
                 <FileText class="w-8 h-8 text-slate-300 mx-auto mb-2 opacity-55" />
                 <p class="text-slate-800 dark:text-white text-xs font-bold">Tidak ada postingan ditemukan</p>
+            </div>
+        </div>
+
+        <!-- Pagination Footer -->
+        <div v-if="posts.links && posts.links.length > 3" class="mt-6 flex items-center justify-between border-t border-slate-150 dark:border-slate-700 px-4 py-3 sm:px-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm">
+            <div class="flex flex-1 justify-between sm:hidden">
+                <Link :href="posts.prev_page_url || '#'" :class="[!posts.prev_page_url ? 'opacity-50 pointer-events-none' : '', 'relative inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-750 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-250']">Previous</Link>
+                <Link :href="posts.next_page_url || '#'" :class="[!posts.next_page_url ? 'opacity-50 pointer-events-none' : '', 'relative ml-3 inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-750 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-250']">Next</Link>
+            </div>
+            <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                        Showing
+                        <span class="font-bold">{{ posts.from || 0 }}</span>
+                        to
+                        <span class="font-bold">{{ posts.to || 0 }}</span>
+                        of
+                        <span class="font-bold">{{ posts.total || 0 }}</span>
+                        results
+                    </p>
+                </div>
+                <div>
+                    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm bg-white dark:bg-slate-800" aria-label="Pagination">
+                        <Link
+                            v-for="(link, i) in posts.links"
+                            :key="i"
+                            :href="link.url || '#'"
+                            :class="[
+                                link.active ? 'z-10 bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-offset-0',
+                                !link.url ? 'opacity-50 pointer-events-none' : '',
+                                'relative inline-flex items-center px-3 py-2 text-xs font-bold ring-1 ring-inset ring-slate-200 dark:ring-slate-700 focus:z-20 focus:outline-offset-0 transition-all'
+                            ]"
+                            v-html="link.label"
+                        />
+                    </nav>
+                </div>
             </div>
         </div>
     </PortalAdminLayout>

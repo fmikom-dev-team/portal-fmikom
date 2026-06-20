@@ -200,7 +200,9 @@ const statusBadge = computed(() =>
 </script>
 
 <template>
-    <Head :title="`Edit: ${form.title}`" />
+    <Head>
+        <title>{{ `Edit: ${form.title}` }}</title>
+    </Head>
 
     <div class="fixed inset-0 flex flex-col bg-white z-[60] font-sans antialiased overflow-hidden">
 
@@ -325,7 +327,7 @@ const statusBadge = computed(() =>
                             {{ form.title || 'Tanpa Judul' }}
                         </h1>
                         <div v-if="form.thumbnail_preview || form.thumbnail_url" class="mb-8 aspect-[16/9] rounded-xl overflow-hidden">
-                            <img :src="form.thumbnail_preview || form.thumbnail_url" class="w-full h-full object-cover" />
+                            <img :src="form.thumbnail_preview || form.thumbnail_url" alt="Pratinjau Thumbnail" class="w-full h-full object-cover" />
                         </div>
                         <BlockRenderer
                             v-if="previewData"

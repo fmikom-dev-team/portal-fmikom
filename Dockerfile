@@ -33,11 +33,13 @@ RUN apk add --no-cache \
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
 
 # Install required PHP extensions
-RUN install-php-extensions pdo_mysql bcmath gd zip opcache pcntl
+RUN install-php-extensions pdo_mysql bcmath gd zip opcache pcntl redis exif
 
 # Configure Nginx, PHP, and Supervisor
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/zz-docker.conf
+COPY docker/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Set working directory

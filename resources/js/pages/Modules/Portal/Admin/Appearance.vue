@@ -296,7 +296,7 @@ const submit = () => {
                                         <div v-for="(img, i) in form.hero_gallery.slice(0, 4)" :key="i"
                                             class="w-12 h-12 rounded-xl overflow-hidden border-2 border-white shadow-md"
                                         >
-                                            <img :src="img" class="w-full h-full object-cover">
+                                            <img :src="img" alt="Gallery image preview" class="w-full h-full object-cover">
                                         </div>
                                         <div v-if="form.hero_gallery.length > 4" class="w-12 h-12 rounded-xl bg-blue-100 border-2 border-white shadow-md flex items-center justify-center">
                                             <span class="text-[11px] font-black text-blue-600">+{{ form.hero_gallery.length - 4 }}</span>
@@ -328,7 +328,7 @@ const submit = () => {
                             <div class="flex flex-wrap gap-2">
                                 <div v-for="img in form.hero_gallery" :key="img"
                                     class="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200 shadow-sm">
-                                    <img :src="img" class="w-full h-full object-cover">
+                                    <img :src="img" alt="Gallery image preview" class="w-full h-full object-cover">
                                     <button @click="removeExistingGallery(img)"
                                         class="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                         <X class="w-4 h-4"/>
@@ -397,7 +397,7 @@ const submit = () => {
                                 <div class="flex flex-wrap gap-2">
                                     <div v-for="logo in form.partners" :key="logo"
                                         class="relative group h-10 w-[72px] rounded-lg overflow-hidden border border-slate-100 bg-white flex items-center justify-center p-1 shadow-sm">
-                                        <img :src="logo" class="max-w-full max-h-full object-contain">
+                                        <img :src="logo" alt="Partner logo" class="max-w-full max-h-full object-contain">
                                         <button @click="removeExistingPartner(logo)"
                                             class="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                             <X class="w-3 h-3"/>
@@ -500,7 +500,7 @@ const submit = () => {
                                 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Sudah Diunggah</p>
                                 <div class="grid grid-cols-4 gap-2">
                                     <div v-for="img in form.hero_gallery" :key="img" class="relative group aspect-square rounded-lg overflow-hidden border border-slate-200">
-                                        <img :src="img" class="w-full h-full object-cover">
+                                        <img :src="img" alt="Gallery image preview" class="w-full h-full object-cover">
                                         <button @click="removeExistingGallery(img)" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <X class="w-3 h-3"/>
                                         </button>
@@ -513,7 +513,7 @@ const submit = () => {
                                 <p class="text-[11px] font-bold text-blue-500 uppercase tracking-wider mb-2">Baru Dipilih ({{ newHeroFilePreviews.length }} file)</p>
                                 <div class="grid grid-cols-4 gap-2">
                                     <div v-for="(preview, i) in newHeroFilePreviews" :key="i" class="relative group aspect-square rounded-lg overflow-hidden border-2 border-blue-300">
-                                        <img :src="preview" class="w-full h-full object-cover">
+                                        <img :src="preview" alt="Gallery image preview" class="w-full h-full object-cover">
                                         <button @click="removeNewHero(i)" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <X class="w-3 h-3"/>
                                         </button>
@@ -538,7 +538,7 @@ const submit = () => {
                                 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Sudah Diunggah</p>
                                 <div class="grid grid-cols-4 gap-2">
                                     <div v-for="img in form.partners" :key="img" class="relative group aspect-video rounded-lg overflow-hidden border border-slate-200 bg-white flex items-center justify-center p-2">
-                                        <img :src="img" class="max-w-full max-h-full object-contain">
+                                        <img :src="img" alt="Partner logo preview" class="max-w-full max-h-full object-contain">
                                         <button @click="removeExistingPartner(img)" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <X class="w-3 h-3"/>
                                         </button>
@@ -551,7 +551,7 @@ const submit = () => {
                                 <p class="text-[11px] font-bold text-blue-500 uppercase tracking-wider mb-2">Baru Dipilih ({{ newPartnerFilePreviews.length }} file)</p>
                                 <div class="grid grid-cols-4 gap-2">
                                     <div v-for="(preview, i) in newPartnerFilePreviews" :key="i" class="relative group aspect-video rounded-lg overflow-hidden border-2 border-blue-300 bg-white flex items-center justify-center p-2">
-                                        <img :src="preview" class="max-w-full max-h-full object-contain">
+                                        <img :src="preview" alt="Partner logo preview" class="max-w-full max-h-full object-contain">
                                         <button @click="removeNewPartner(i)" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <X class="w-3 h-3"/>
                                         </button>
@@ -595,7 +595,7 @@ const submit = () => {
                             <p class="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-3">Gambar Tersimpan ({{ form.hero_gallery.length }})</p>
                             <div class="grid grid-cols-3 gap-3">
                                 <div v-for="img in form.hero_gallery" :key="img" class="relative group aspect-[4/3] rounded-xl overflow-hidden border border-slate-200 shadow-sm">
-                                    <img :src="img" class="w-full h-full object-cover">
+                                    <img :src="img" alt="Gallery image preview" class="w-full h-full object-cover">
                                     <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
                                         <button @click="removeExistingGallery(img)" class="opacity-0 group-hover:opacity-100 bg-red-500 text-white rounded-full p-1.5 transition-opacity shadow-md">
                                             <X class="w-4 h-4"/>
@@ -610,7 +610,7 @@ const submit = () => {
                             <p class="text-[11px] font-black text-blue-500 uppercase tracking-wider mb-3">Akan Diunggah ({{ newHeroFilePreviews.length }})</p>
                             <div class="grid grid-cols-3 gap-3">
                                 <div v-for="(preview, i) in newHeroFilePreviews" :key="i" class="relative group aspect-[4/3] rounded-xl overflow-hidden border-2 border-blue-300 shadow-sm">
-                                    <img :src="preview" class="w-full h-full object-cover">
+                                    <img :src="preview" alt="Gallery image preview" class="w-full h-full object-cover">
                                     <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
                                         <button @click="removeNewHero(i)" class="opacity-0 group-hover:opacity-100 bg-red-500 text-white rounded-full p-1.5 transition-opacity shadow-md">
                                             <X class="w-4 h-4"/>

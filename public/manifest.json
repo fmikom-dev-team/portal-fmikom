@@ -1,0 +1,27 @@
+{
+  "name": "Portal FMIKOM",
+  "short_name": "Portal FMIKOM",
+  "description": "Academic & Creative Network Fakultas Ilmu Komputer. Tempat berbagi karya, portofolio, dan kolaborasi mahasiswa dan creator.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0f172a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/asset/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/asset/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/asset/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

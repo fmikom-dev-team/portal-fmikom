@@ -31,7 +31,7 @@
     <!-- Unsupported / Prohibition Sign overlay (Centered at 65, 90) -->
     <g class="text-rose-500">
         <!-- Prohibitive Circle -->
-        <circle cx="65" cy="90" r="20" stroke="currentColor" stroke-width="3.2" fill="#121214" />
+        <circle cx="65" cy="90" r="20" stroke="currentColor" stroke-width="3.2" fill="var(--svg-bg-fill)" />
         <!-- Diagonal Bar -->
         <line x1="51" y1="76" x2="79" y2="104" stroke="currentColor" stroke-width="3.2" />
     </g>

@@ -13,6 +13,9 @@ Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 Route::post('/emails/config', [DashboardController::class, 'updateMailConfig'])->name('emails.config.update');
 Route::post('/emails/test-send', [DashboardController::class, 'sendRealTestEmail'])->name('emails.test-send');
 
+Route::post('/settings/update', [DashboardController::class, 'updateSystemSettings'])->name('settings.update');
+Route::post('/settings/flush-cache', [DashboardController::class, 'flushSystemCache'])->name('settings.flush-cache');
+
 // SPA catch-all: every sub-path (e.g. /workos/organizations, /workos/users) returns
 // the same Dashboard page — client-side navigation handles the rest
 Route::get('/{any}', [DashboardController::class, 'index'])

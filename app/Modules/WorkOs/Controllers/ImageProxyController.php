@@ -23,13 +23,23 @@ class ImageProxyController extends Controller
 
             $relativePath = Crypt::decryptString($base64);
 
-            // Ensure the path is strictly within the public storage of profile photos
-            if (str_contains($relativePath, '..') || ! str_starts_with($relativePath, 'profile_photos/')) {
-                abort(403, 'Unauthorized access.');
-            }
-
+            // First check if the file exists using Storage
             if (! Storage::disk('public')->exists($relativePath)) {
                 abort(404, 'File not found.');
+            }
+
+            // Ensure the path is strictly within the public storage of profile photos
+            // Resolve real path and base path to prevent URL-encoded path traversal bypasses
+            $absolutePath = Storage::disk('public')->path($relativePath);
+            $realPath = realpath($absolutePath);
+            $basePath = realpath(Storage::disk('public')->path('profile_photos'));
+
+            if ($basePath) {
+                $basePath = rtrim($basePath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+            }
+
+            if (! $realPath || ! $basePath || ! str_starts_with($realPath, $basePath)) {
+                abort(403, 'Unauthorized access.');
             }
 
             $absolutePath = Storage::disk('public')->path($relativePath);

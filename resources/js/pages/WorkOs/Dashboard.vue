@@ -1,26 +1,26 @@
 <script setup lang="ts">
 import { Head, router } from "@inertiajs/vue3";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, defineAsyncComponent, onMounted, ref, watch } from "vue";
 import DashboardLayout from "./layouts/DashboardLayout.vue";
 import AuditLogsEvents from "./partials/AuditLogs/Events.vue";
 import AuditLogsIndex from "./partials/AuditLogs/Index.vue";
 import AuditLogsSecurity from "./partials/AuditLogs/SecurityLogs.vue";
 import Authentication from "./partials/Authentication/Index.vue";
 import Authorization from "./partials/Authorization/Index.vue";
-import Overview from "./partials/Dashboard/Overview.vue";
+const Overview = defineAsyncComponent(() => import("./partials/Dashboard/Overview.vue"));
 import EmailsIndex from "./partials/Emails/Index.vue";
 import NotificationsIndex from "./partials/Notifications/Index.vue";
 import Organizations from "./partials/Organizations/Index.vue";
 import OrganizationDetails from "./partials/Organizations/Show.vue";
 import Placeholder from "./partials/Placeholder.vue";
-import Radar from "./partials/Radar/Overview.vue";
-import SettingsProfile from "./partials/Settings/Profile.vue";
+const Radar = defineAsyncComponent(() => import("./partials/Radar/Overview.vue"));
+import SystemSettings from "./partials/Settings/SystemSettings.vue";
 import Users from "./partials/Users/Index.vue";
 import UserDetails from "./partials/Users/Show.vue";
 
 // ── Props ──────────────────────────────────────────────────────────
 const props = defineProps<{
-	users: any[];
+	users: any;
 	roles: any[];
 	permissions: any[];
 	modules: any[];
@@ -33,7 +33,15 @@ const props = defineProps<{
 	auditStats: any;
 	auditRecentEvents: any[];
 	smtpConfig?: any;
+	systemSettings?: any;
 }>();
+
+const usersArray = computed(() => {
+	if (!props.users) return [];
+	if (Array.isArray(props.users)) return props.users;
+	if (props.users && Array.isArray(props.users.data)) return props.users.data;
+	return [];
+});
 
 const DEFAULT_NOTIFICATIONS = [
 	{
@@ -75,8 +83,8 @@ const DEFAULT_NOTIFICATIONS = [
 ];
 
 const getStoredNotifications = () => {
-	if (typeof window !== "undefined") {
-		const stored = localStorage.getItem("workos_notifications");
+	if (typeof globalThis.window !== "undefined") {
+		const stored = globalThis.localStorage.getItem("workos_notifications");
 		if (stored !== null) {
 			try {
 				return JSON.parse(stored);
@@ -91,8 +99,8 @@ const getStoredNotifications = () => {
 const notifications = ref(getStoredNotifications());
 
 const saveNotifications = () => {
-	if (typeof window !== "undefined") {
-		localStorage.setItem(
+	if (typeof globalThis.window !== "undefined") {
+		globalThis.localStorage.setItem(
 			"workos_notifications",
 			JSON.stringify(notifications.value),
 		);
@@ -111,8 +119,18 @@ const clearNotifications = () => {
 	notifications.value = [];
 };
 
+const markAllNotificationsAsRead = () => {
+	notifications.value.forEach((n: any) => {
+		n.read = true;
+	});
+};
+
+const toggleNotificationRead = (n: any) => {
+	n.read = !n.read;
+};
+
 const unreadNotificationsCount = computed(() => {
-	return notifications.value.filter((n) => !n.read).length;
+	return notifications.value.filter((n: any) => !n.read).length;
 });
 
 // ── State — URL-based navigation with sessionStorage fallback ──────
@@ -194,6 +212,8 @@ if (_urlPage === "users") {
 const activePage = ref<string>(initialPage);
 const selectedUser = ref<any>(null);
 const selectedOrganization = ref<any>(null);
+const searchQuery = ref("");
+const isPageLoading = ref(false);
 
 // Map activePage ID → required props to be loaded dynamically
 const PAGE_REQUIRED_PROPS: Record<string, string[]> = {
@@ -206,6 +226,7 @@ const PAGE_REQUIRED_PROPS: Record<string, string[]> = {
 	radar: ["radarConfig", "radarStats", "radarDetections", "radarBlockedItems"],
 	"audit-logs": ["auditStats", "auditRecentEvents"],
 	emails: ["smtpConfig"],
+	settings: ["systemSettings"],
 };
 
 const loadedProps = ref<Record<string, boolean>>({});
@@ -216,6 +237,12 @@ function isPropEmpty(propName: string): boolean {
 	if (Array.isArray(val) && val.length === 0) return true;
 	if (typeof val === "object" && Object.keys(val).length === 0) return true;
 	return false;
+}
+
+function getThreatSeverityType(severity: string): string {
+	if (severity === "high") return "error";
+	if (severity === "medium") return "warning";
+	return "info";
 }
 
 // Restore org/user objects from props on mount (props are available at this point)
@@ -238,7 +265,7 @@ onMounted(() => {
 		}
 	}
 	if (s.userId) {
-		const user = props.users.find((u: any) => u.id === s.userId);
+		const user = usersArray.value.find((u: any) => u.id === s.userId);
 		if (user) {
 			selectedUser.value = user;
 		} else {
@@ -257,26 +284,27 @@ onMounted(() => {
 		(p) => isPropEmpty(p) && !loadedProps.value[p],
 	);
 	if (propsToLoad.length > 0) {
+		isPageLoading.value = true;
 		propsToLoad.forEach((p) => {
 			loadedProps.value[p] = true;
 		});
-		router.reload({ only: propsToLoad });
+		router.reload({
+			only: propsToLoad,
+			onFinish: () => {
+				isPageLoading.value = false;
+			}
+		});
 	}
 
-	if (typeof globalThis.window !== "undefined" && (globalThis as any).Echo) {
-		(globalThis as any).Echo.private("radar.alerts").listen(
+	if (globalThis.window !== undefined && (globalThis as any).Broadcaster) {
+		(globalThis as any).Broadcaster.private("radar.alerts").listen(
 			"ThreatDetected",
 			(e: any) => {
 				notifications.value.unshift({
 					id: Date.now(),
 					title: `Radar threat payload blocked: ${e.type}`,
 					description: `Threat detected on IP ${e.ip} (${e.device}). Severity: ${e.severity}. Action taken: ${e.action}.`,
-					severity:
-						e.severity === "high"
-							? "error"
-							: e.severity === "medium"
-								? "warning"
-								: "info",
+					severity: getThreatSeverityType(e.severity),
 					time: "Just now",
 					read: false,
 				});
@@ -301,8 +329,9 @@ watch(
 	() => props.users,
 	(newUsers) => {
 		if (selectedUser.value) {
+			const arr = Array.isArray(newUsers) ? newUsers : (newUsers?.data || []);
 			selectedUser.value =
-				newUsers.find((u: any) => u.id === selectedUser.value.id) || null;
+				arr.find((u: any) => u.id === selectedUser.value.id) || null;
 		}
 	},
 	{ deep: true },
@@ -330,6 +359,7 @@ function pushUrl(page: string) {
 }
 
 function navigate(page: string) {
+	isPageLoading.value = true;
 	activePage.value = page;
 	if (page !== "organizations.show") selectedOrganization.value = null;
 	if (page !== "users.show") selectedUser.value = null;
@@ -349,11 +379,28 @@ function navigate(page: string) {
 	const propsToLoad = required.filter(
 		(p) => isPropEmpty(p) && !loadedProps.value[p],
 	);
+
+	const startTime = Date.now();
+	const MIN_LOAD_TIME = 350; // minimum skeleton show time for smooth transition
+
 	if (propsToLoad.length > 0) {
 		propsToLoad.forEach((p) => {
 			loadedProps.value[p] = true;
 		});
-		router.reload({ only: propsToLoad });
+		router.reload({
+			only: propsToLoad,
+			onFinish: () => {
+				const elapsedTime = Date.now() - startTime;
+				const remainingTime = Math.max(0, MIN_LOAD_TIME - elapsedTime);
+				setTimeout(() => {
+					isPageLoading.value = false;
+				}, remainingTime);
+			}
+		});
+	} else {
+		setTimeout(() => {
+			isPageLoading.value = false;
+		}, MIN_LOAD_TIME);
 	}
 
 	const main = document.getElementById("wos-main");
@@ -468,7 +515,9 @@ const activeLabel = computed(() => {
 </script>
 
 <template>
-    <Head title="WorkOS – FMIKOM Portal" />
+    <Head title="WorkOS – FMIKOM Portal">
+        <title>WorkOS – FMIKOM Portal</title>
+    </Head>
 
     <DashboardLayout
         :nav-groups="navGroups"
@@ -477,90 +526,172 @@ const activeLabel = computed(() => {
         :active-label="activeLabel"
         :pending-count="pendingCount"
         @navigate="navigate"
+        @search="searchQuery = $event"
     >
-        <!-- ── Content views ── -->
-        <Overview
-            v-if="activePage === 'overview'"
-            :stats="stats"
-            @navigate="navigate"
-            @open-detail="u => (selectedUser = u)"
-        />
-        <Organizations
-            v-else-if="activePage === 'organizations'"
-            :modules="modules"
-            @open-detail="openOrganization"
-        />
-        <OrganizationDetails
-            v-else-if="activePage === 'organizations.show'"
-            :organization="selectedOrganization"
-            :roles="roles"
-            :users="users"
-            @back="navigate('organizations')"
-        />
-        <Users
-            v-else-if="activePage === 'users'"
-            :users="users"
-            :roles="roles"
-            :pending-count="pendingCount"
-            @open-detail="openUser"
-        />
-        <UserDetails
-            v-else-if="activePage === 'users.show'"
-            :user="selectedUser"
-            :roles="roles"
-            :modules="modules"
-            @back="navigate('users')"
-        />
-        <Authentication 
-            v-else-if="activePage === 'authentication' || ['auth.analytics', 'auth.methods', 'auth.providers', 'auth.features', 'auth.sessions', 'auth.sso'].includes(activePage)" 
-            :active-tab="activePage.startsWith('auth.') ? activePage.replace('auth.', '') : 'analytics'"
-            @navigate="navigate" 
-        />
-        <Authorization
-            v-else-if="activePage === 'authorization' || ['authz.overview', 'authz.roles', 'authz.permissions', 'authz.assignments', 'authz.access-control'].includes(activePage)"
-            :active-tab="activePage.startsWith('authz.') ? activePage.replace('authz.', '') : 'overview'"
-            :roles="roles"
-            :permissions="permissions"
-            :users="users"
-            :modules="modules"
-            :stats="stats"
-            @navigate="navigate"
-        />
-        <Radar
-            v-else-if="activePage === 'radar'"
-            :radar-config="radarConfig"
-            :radar-stats="radarStats"
-            :radar-detections="radarDetections"
-            :radar-blocked-items="radarBlockedItems"
-        />
-        <AuditLogsIndex
-            v-else-if="activePage === 'audit-logs'"
-            :stats="auditStats"
-            :recent_events="auditRecentEvents"
-            @navigate="navigate"
-        />
-        <AuditLogsEvents
-            v-else-if="activePage === 'audit-logs.events'"
-            @navigate="navigate"
-        />
-        <AuditLogsSecurity
-            v-else-if="activePage === 'audit-logs.security'"
-            @navigate="navigate"
-        />
-        <EmailsIndex
-            v-else-if="activePage === 'emails'"
-            :smtp-config="smtpConfig"
-        />
-        <NotificationsIndex
-            v-else-if="activePage === 'notifications'"
-            :notifications="notifications"
-            @mark-all-read="notifications.forEach(n => n.read = true)"
-            @clear-feed="clearNotifications"
-            @toggle-read="n => n.read = !n.read"
-        />
-        <SettingsProfile
-            v-else-if="activePage === 'settings'"
-        />
-        <Placeholder v-else :title="activePage" />
+        <Transition name="fade-slide" mode="out-in">
+            <div :key="activePage + '_' + isPageLoading" class="w-full">
+                <!-- Shimmer Skeleton Loading Page -->
+                <div v-if="isPageLoading" class="px-8 pt-8 pb-12 space-y-6 w-full max-w-[1200px]" style="font-family: var(--wos-font)">
+                    <!-- Title Skeleton -->
+                    <div class="space-y-2">
+                        <div class="h-6 w-48 wos-shimmer rounded-md" />
+                        <div class="h-3 w-80 wos-shimmer rounded-md mt-2" />
+                    </div>
+
+                    <!-- Overview Page Skeleton -->
+                    <div v-if="activePage === 'overview'" class="space-y-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div v-for="i in 4" :key="i" class="bg-white rounded-xl p-5 border border-gray-100 ring-1 ring-gray-900/4 space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <div class="h-3 w-20 wos-shimmer rounded" />
+                                    <div class="h-4 w-4 wos-shimmer rounded" />
+                                </div>
+                                <div class="h-8 w-16 wos-shimmer rounded mt-1" />
+                                <div class="h-2.5 w-32 wos-shimmer rounded mt-2" />
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl p-6 border border-gray-100 ring-1 ring-gray-900/4 space-y-4">
+                            <div class="h-4 w-28 wos-shimmer rounded mb-4" />
+                            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3.5">
+                                <div v-for="i in 6" :key="i" class="h-20 wos-shimmer rounded-xl" />
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            <div class="lg:col-span-2 bg-white rounded-xl p-6 border border-gray-100 ring-1 ring-gray-900/4 space-y-4">
+                                <div class="h-4 w-32 wos-shimmer rounded" />
+                                <div v-for="i in 3" :key="i" class="flex gap-3">
+                                    <div class="w-8 h-8 rounded-full wos-shimmer shrink-0" />
+                                    <div class="flex-1 space-y-2 mt-1">
+                                        <div class="h-3.5 w-full wos-shimmer rounded" />
+                                        <div class="h-2.5 w-24 wos-shimmer rounded" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl p-6 border border-gray-100 ring-1 ring-gray-900/4 space-y-4">
+                                <div class="h-4 w-32 wos-shimmer rounded" />
+                                <div v-for="i in 4" :key="i" class="h-10 wos-shimmer rounded-lg" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- General Data/Table/Form Page Skeleton -->
+                    <div v-else-if="['organizations', 'organizations.show', 'users', 'users.show', 'audit-logs', 'emails', 'settings', 'authentication', 'authorization', 'radar', 'notifications'].includes(activePage) || activePage.startsWith('auth') || activePage.startsWith('audit-logs.')" class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <div class="h-[34px] w-64 wos-shimmer rounded-md" />
+                            <div class="h-[34px] w-28 wos-shimmer rounded-md" />
+                        </div>
+                        <div class="bg-white rounded-xl overflow-hidden ring-1 ring-gray-900/4">
+                            <div class="bg-gray-50 border-b border-gray-100 px-6 py-3 flex gap-4">
+                                <div class="h-3 w-24 wos-shimmer rounded" v-for="i in 4" :key="i" />
+                            </div>
+                            <div class="p-6 space-y-4">
+                                <div v-for="i in 5" :key="i" class="flex gap-4 items-center">
+                                    <div class="h-4 w-full wos-shimmer rounded" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fallback Skeleton -->
+                    <div v-else class="space-y-4">
+                        <div class="bg-white rounded-xl p-6 border border-gray-100 ring-1 ring-gray-900/4 space-y-4">
+                            <div class="h-4 w-full wos-shimmer rounded" v-for="i in 6" :key="i" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Real View rendering when not loading -->
+                <div v-else>
+                    <!-- ── Content views ── -->
+                    <Overview
+                        v-if="activePage === 'overview'"
+                        :stats="stats"
+                        @navigate="navigate"
+                        @open-detail="u => (selectedUser = u)"
+                    />
+                    <Organizations
+                        v-else-if="activePage === 'organizations'"
+                        :modules="modules"
+                        :search-query="searchQuery"
+                        @open-detail="openOrganization"
+                    />
+                    <OrganizationDetails
+                        v-else-if="activePage === 'organizations.show'"
+                        :organization="selectedOrganization"
+                        :roles="roles"
+                        :users="usersArray"
+                        @back="navigate('organizations')"
+                    />
+                    <Users
+                        v-else-if="activePage === 'users'"
+                        :users="users"
+                        :roles="roles"
+                        :pending-count="pendingCount"
+                        :search-query="searchQuery"
+                        @open-detail="openUser"
+                    />
+                    <UserDetails
+                        v-else-if="activePage === 'users.show'"
+                        :user="selectedUser"
+                        :roles="roles"
+                        :modules="modules"
+                        @back="navigate('users')"
+                    />
+                    <Authentication 
+                        v-else-if="activePage === 'authentication' || ['auth.analytics', 'auth.methods', 'auth.providers', 'auth.features', 'auth.sessions', 'auth.sso'].includes(activePage)" 
+                        :active-tab="activePage.startsWith('auth.') ? activePage.replace('auth.', '') : 'analytics'"
+                        @navigate="navigate" 
+                    />
+                    <Authorization
+                        v-else-if="activePage === 'authorization' || ['authz.overview', 'authz.roles', 'authz.permissions', 'authz.assignments', 'authz.access-control'].includes(activePage)"
+                        :active-tab="activePage.startsWith('authz.') ? activePage.replace('authz.', '') : 'overview'"
+                        :roles="roles"
+                        :permissions="permissions"
+                        :users="usersArray"
+                        :modules="modules"
+                        :stats="stats"
+                        :search-query="searchQuery"
+                        @navigate="navigate"
+                    />
+                    <Radar
+                        v-else-if="activePage === 'radar'"
+                        :radar-config="radarConfig"
+                        :radar-stats="radarStats"
+                        :radar-detections="radarDetections"
+                        :radar-blocked-items="radarBlockedItems"
+                    />
+                    <AuditLogsIndex
+                        v-else-if="activePage === 'audit-logs'"
+                        :stats="auditStats"
+                        :recent_events="auditRecentEvents"
+                        @navigate="navigate"
+                    />
+                    <AuditLogsEvents
+                        v-else-if="activePage === 'audit-logs.events'"
+                        @navigate="navigate"
+                    />
+                    <AuditLogsSecurity
+                        v-else-if="activePage === 'audit-logs.security'"
+                        @navigate="navigate"
+                    />
+                    <EmailsIndex
+                        v-else-if="activePage === 'emails'"
+                        :smtp-config="smtpConfig"
+                    />
+                    <NotificationsIndex
+                        v-else-if="activePage === 'notifications'"
+                        :notifications="notifications"
+                        @mark-all-read="markAllNotificationsAsRead"
+                        @clear-feed="clearNotifications"
+                        @toggle-read="toggleNotificationRead"
+                    />
+                    <SystemSettings
+                        v-else-if="activePage === 'settings'"
+                        :settings="systemSettings || {}"
+                    />
+                    <Placeholder v-else :title="activePage" />
+                </div>
+            </div>
+        </Transition>
     </DashboardLayout>
 </template>

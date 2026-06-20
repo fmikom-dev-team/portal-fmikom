@@ -6,6 +6,7 @@ defineProps({ data: Object });
 <template>
     <div class="my-10 overflow-x-auto rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 bg-white">
         <table class="w-full border-collapse text-[14px]">
+            <caption class="sr-only">Tabel Konten Artikel</caption>
             <thead v-if="data.withHeadings && data.content?.length">
                 <tr class="bg-slate-50/50">
                     <th v-for="(cell, ci) in data.content[0]" :key="ci"

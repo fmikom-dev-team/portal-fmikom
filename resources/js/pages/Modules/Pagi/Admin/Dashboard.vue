@@ -1,9 +1,21 @@
 <script setup lang="ts">
 import { usePage } from "@inertiajs/vue3";
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import {
+	computed,
+	defineAsyncComponent,
+	onMounted,
+	onUnmounted,
+	ref,
+} from "vue";
 import ActivityList from "@/components/Admin/ActivityList.vue";
-import ChartCard from "@/components/Admin/ChartCard.vue";
-import ModerationSummary from "@/components/Admin/ModerationSummary.vue";
+
+const ChartCard = defineAsyncComponent(
+	() => import("@/components/Admin/ChartCard.vue"),
+);
+const ModerationSummary = defineAsyncComponent(
+	() => import("@/components/Admin/ModerationSummary.vue"),
+);
+
 import ModerationTable from "@/components/Admin/ModerationTable.vue";
 import StatsCard from "@/components/Admin/StatsCard.vue";
 import ModerationModal from "@/components/Admin/ui/ModerationModal.vue";

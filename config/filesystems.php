@@ -60,6 +60,13 @@ return [
             'report' => false,
         ],
 
+        'local_root' => [
+            'driver' => 'local',
+            'root' => '/',
+            'throw' => false,
+            'report' => false,
+        ],
+
     ],
 
     /*

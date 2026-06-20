@@ -4,15 +4,24 @@ namespace App\Modules\Portal\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Portal\PortalMedia;
+use App\Services\VirusScannerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class PortalMediaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $media = PortalMedia::latest()->get();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'media' => $media,
+            ]);
+        }
 
         return Inertia::render('Modules/Portal/Admin/Media', [
             'media' => $media,
@@ -27,6 +36,14 @@ class PortalMediaController extends Controller
 
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $file) {
+                $scanner = app(VirusScannerService::class);
+                $scanResult = $scanner->scan($file);
+                if (! $scanResult['safe']) {
+                    throw ValidationException::withMessages([
+                        'files' => $scanResult['reason'],
+                    ]);
+                }
+
                 $filename = $file->getClientOriginalName();
                 $path = $file->store('portal/media', 'public');
 

@@ -22,6 +22,7 @@ const props = defineProps({
 	relatedPosts: Array,
 	previousPost: Object,
 	nextPost: Object,
+	settings: Object,
 });
 
 const formatDate = (dateString) => {
@@ -322,7 +323,7 @@ const getAvatarUrl = (user) => {
                 </div>
 
                 <!-- Comments Section (Ultra clean white layout) -->
-                <section class="max-w-3xl mx-auto mt-24 pt-12 border-t border-slate-100">
+                <section v-if="settings?.allow_comments !== '0'" class="max-w-3xl mx-auto mt-24 pt-12 border-t border-slate-100">
                     <h3 class="text-xl font-bold text-slate-900 mb-8 flex items-center gap-2">
                         <span>Komentar</span>
                         <span class="text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">

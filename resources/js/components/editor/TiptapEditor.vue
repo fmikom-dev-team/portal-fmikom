@@ -231,8 +231,6 @@ const editor = useEditor({
 </template>
 
 <style>
-/* ── Google Fonts ── */
-@import url('https://fonts.bunny.net/css?family=inter:400,400i,500,500i,600,700,800|plus-jakarta-sans:500,600,700,800&display=swap');
 
 /* ── Base ── */
 .ProseMirror {

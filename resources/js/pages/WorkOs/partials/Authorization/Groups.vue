@@ -181,6 +181,7 @@ function submitRemove() {
         <!-- Table -->
         <div v-if="filteredGroups.length" class="rounded-xl overflow-x-auto bg-white border border-gray-200 shadow-sm">
             <table class="w-full text-left whitespace-nowrap">
+                <caption class="sr-only">Tabel Grup Otorisasi</caption>
                 <thead>
                     <tr class="bg-[#f9fafb] border-b border-gray-200">
                         <th class="px-4 py-3 text-[12px] font-semibold text-gray-800">Group Name</th>

@@ -8,6 +8,7 @@ use App\Models\Audit\AuditLog;
 use App\Models\Audit\AuditSecurityIncident;
 use App\Models\Module;
 use App\Models\Permission;
+use App\Models\Portal\PortalSetting;
 use App\Models\Radar\RadarBlockedItem;
 use App\Models\Radar\RadarDetection;
 use App\Models\Radar\RadarDevice;
@@ -17,7 +18,9 @@ use App\Models\User;
 use App\Models\UserModuleRole;
 use App\Notifications\UserApprovedNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
@@ -32,6 +35,9 @@ class DashboardController extends Controller // NOSONAR
 
     public function index(Request $request)
     {
+        // Clear any active module session context when returning to the main dashboard
+        session()->forget(['active_module', 'active_role', 'active_module_at']);
+
         $tab = $request->segment(2) ?? 'overview';
 
         if ($tab === 'radar') {
@@ -55,12 +61,14 @@ class DashboardController extends Controller // NOSONAR
         };
 
         return Inertia::render('WorkOs/Dashboard', [
-            'users' => fn () => $shouldLoad('users', ['users', 'organizations', 'authorization']) ? $this->getUsersData() : [],
+            'users' => fn () => $shouldLoad('users', ['users', 'organizations', 'authorization'])
+                ? ['data' => $this->getUsersData(), 'total' => User::query()->count()]
+                : [],
             'roles' => fn () => $shouldLoad('roles', ['authorization', 'organizations', 'users']) ? $this->getRolesData() : [],
             'permissions' => fn () => $shouldLoad('permissions', ['authorization']) ? $this->getPermissionsData() : [],
             'modules' => fn () => $shouldLoad('modules', ['organizations', 'users', 'authorization']) ? $this->getModulesData() : [],
             'stats' => fn () => $shouldLoad('stats', ['overview', 'authorization']) ? $this->getStats() : [],
-            'pendingCount' => fn () => User::where('status_approval', 'pending')->count(), // Always load for sidebar badge
+            'pendingCount' => fn () => User::query()->where('status_approval', 'pending')->count(), // Always load for sidebar badge
             'radarConfig' => fn () => $shouldLoad('radarConfig', ['radar']) ? $this->getRadarConfig() : [],
             'radarStats' => fn () => $shouldLoad('radarStats', ['radar']) ? $this->getRadarStats() : [],
             'radarDetections' => fn () => $shouldLoad('radarDetections', ['radar']) ? $this->getRadarDetections() : [],
@@ -71,7 +79,30 @@ class DashboardController extends Controller // NOSONAR
         ]);
     }
 
-    // ─── USER CRUD ───────────────────────────────────────────────
+    public function updateSystemSettings(Request $request)
+    {
+        $request->validate([
+            'maintenance_mode'    => ['nullable', 'in:0,1'],
+            'maintenance_message' => ['nullable', 'string', 'max:500'],
+            'brand_name'          => ['nullable', 'string', 'max:100'],
+            'brand_description'   => ['nullable', 'string', 'max:500'],
+            'primary_color'       => ['nullable', 'string', 'max:20'],
+            'public_registration' => ['nullable', 'in:0,1'],
+        ]);
+
+        $allowed = ['maintenance_mode', 'maintenance_message', 'brand_name', 'brand_description', 'primary_color', 'public_registration'];
+
+        foreach ($allowed as $key) {
+            if ($request->has($key)) {
+                PortalSetting::updateOrCreate(['key' => $key], ['value' => $request->input($key)]);
+            }
+        }
+
+        cache()->forget('portal_settings');
+
+        return back()->with('success', 'Pengaturan sistem berhasil disimpan.');
+    }
+
 
     public function storeUser(Request $request)
     {
@@ -133,11 +164,11 @@ class DashboardController extends Controller // NOSONAR
 
         if ($user->user_type === 'super_admin') {
             if ($request->has('user_type') && $request->user_type !== 'super_admin' || $request->has('is_active') && ! $request->is_active) {
-                if ($user->id === auth()->id()) {
+                if ($user->id === Auth::id()) {
                     return back()->withErrors(['user_type' => 'Anda tidak dapat mendemot atau menonaktifkan akun Super Admin Anda sendiri.']);
                 }
 
-                $activeSuperAdminsCount = User::where('user_type', 'super_admin')->where('is_active', true)->count();
+                $activeSuperAdminsCount = User::query()->where('user_type', 'super_admin')->where('is_active', true)->count();
                 if ($activeSuperAdminsCount <= 1) {
                     return back()->withErrors(['user_type' => 'Tidak dapat mendemot atau menonaktifkan satu-satunya Super Admin aktif di sistem.']);
                 }
@@ -151,7 +182,7 @@ class DashboardController extends Controller // NOSONAR
 
     public function destroyUser(User $user)
     {
-        abort_if($user->id === auth()->id(), 403, 'Tidak dapat menghapus akun sendiri.');
+        abort_if($user->id === Auth::id(), 403, 'Tidak dapat menghapus akun sendiri.');
         abort_if($user->user_type === 'super_admin', 403, 'Akun Super Admin dilindungi. Silakan ubah tipe/role user ini terlebih dahulu jika ingin menghapusnya.');
 
         $user->delete();
@@ -168,7 +199,7 @@ class DashboardController extends Controller // NOSONAR
             'role_id' => ['required', 'exists:roles,id'],
         ]);
 
-        $roleIsMapped = \DB::table('module_roles')
+        $roleIsMapped = DB::table('module_roles')
             ->where('module_id', $request->module_id)
             ->where('role_id', $request->role_id)
             ->exists();
@@ -471,11 +502,11 @@ class DashboardController extends Controller // NOSONAR
     private function getStats(): array
     {
         return [
-            'total_users' => User::count(),
-            'active_users' => User::where('is_active', true)->count(),
-            'pending_users' => User::where('status_approval', 'pending')->count(),
-            'total_roles' => Role::count(),
-            'total_modules' => Module::where('is_active', true)->count(),
+            'total_users' => User::query()->count(),
+            'active_users' => User::query()->where('is_active', true)->count(),
+            'pending_users' => User::query()->where('status_approval', 'pending')->count(),
+            'total_roles' => Role::query()->count(),
+            'total_modules' => Module::query()->where('is_active', true)->count(),
         ];
     }
 
@@ -504,14 +535,20 @@ class DashboardController extends Controller // NOSONAR
                     'name' => $u->name,
                     'email' => $u->email,
                     'user_type' => $u->user_type,
-                    'nomor_induk' => $u->nomor_induk,
+                    'nomor_induk' => $u->nomor_induk
+                        ? substr($u->nomor_induk, 0, 4).str_repeat('*', max(0, strlen($u->nomor_induk) - 4))
+                        : null,
                     'status_approval' => $u->status_approval,
                     'is_active' => $u->is_active,
                     'foto_path' => $fotoPath,
                     'location' => $u->location,
                     'metadata' => $u->metadata,
                     'tanggal_lahir' => $u->tanggal_lahir?->format('Y-m-d'),
-                    'role' => $u->role ? ['id' => $u->role->id, 'nama' => $u->role->nama, 'slug' => $u->role->slug] : null,
+                    'role' => $u->getGlobalRoleSlug() ? [
+                        'id' => null,
+                        'nama' => $u->getGlobalRoleLabel(),
+                        'slug' => $u->getGlobalRoleSlug(),
+                    ] : null,
                     'prodi' => optional($u->programStudi)->nama,
                     'created_at' => $u->created_at?->format(self::DATE_FORMAT),
                     'module_roles' => $u->moduleRoles->map(fn ($mr) => [
@@ -607,13 +644,13 @@ class DashboardController extends Controller // NOSONAR
 
     private function getRadarStats(): array
     {
-        $total = RadarDetection::count();
-        $allowed = RadarDetection::where('action_taken', 'Allowed')->count();
-        $challenged = RadarDetection::where('action_taken', 'Challenged')->count();
-        $blocked = RadarDetection::where('action_taken', 'Blocked')->count();
+        $total = RadarDetection::query()->count();
+        $allowed = RadarDetection::query()->where('action_taken', 'Allowed')->count();
+        $challenged = RadarDetection::query()->where('action_taken', 'Challenged')->count();
+        $blocked = RadarDetection::query()->where('action_taken', 'Blocked')->count();
 
         // Breakdown counts (all time)
-        $breakdown = RadarDetection::select('detection_type', \DB::raw('count(*) as count'))
+        $breakdown = RadarDetection::query()->select('detection_type', DB::raw('count(*) as count'))
             ->groupBy('detection_type')
             ->pluck('count', 'detection_type')
             ->toArray();
@@ -655,10 +692,10 @@ class DashboardController extends Controller // NOSONAR
     private function getAuditStats(): array
     {
         return [
-            'total_events' => AuditLog::count(),
-            'active_users' => AuditLog::whereNotNull('actor_id')->distinct('actor_id')->count(),
-            'security_incidents' => AuditSecurityIncident::count(),
-            'failed_actions' => AuditApiRequest::where('status_code', '>=', 400)->count(),
+            'total_events' => AuditLog::query()->count(),
+            'active_users' => AuditLog::query()->whereNotNull('actor_id')->distinct('actor_id')->count(),
+            'security_incidents' => AuditSecurityIncident::query()->count(),
+            'failed_actions' => AuditApiRequest::query()->where('status_code', '>=', 400)->count(),
         ];
     }
 
@@ -680,7 +717,7 @@ class DashboardController extends Controller // NOSONAR
 
     private function seedRadarProtections()
     {
-        if (RadarProtection::count() === 0) {
+        if (RadarProtection::query()->count() === 0) {
             $defaultProtections = [
                 [
                     'code' => 'bot_detection',
@@ -774,7 +811,7 @@ class DashboardController extends Controller // NOSONAR
 
     private function seedRadarDetections()
     {
-        if (RadarDetection::count() === 0 && ! cache()->has('radar_detections_cleared')) {
+        if (RadarDetection::query()->count() === 0 && ! cache()->has('radar_detections_cleared')) {
             $ip_jakarta = implode('.', [182, 253, 140, 23]);
             $ip_sf = implode('.', [104, 244, 72, 115]);
             $ip_berlin = implode('.', [185, 220, 101, 5]);
@@ -937,7 +974,7 @@ class DashboardController extends Controller // NOSONAR
             ];
 
             foreach ($detectionsData as $dd) {
-                $protection = RadarProtection::where('code', $dd['code'])->first();
+                $protection = RadarProtection::query()->where('code', $dd['code'])->first();
                 $device = $createdDevices[$dd['device_idx']];
 
                 RadarDetection::create([
@@ -957,7 +994,7 @@ class DashboardController extends Controller // NOSONAR
 
     private function seedRadarBlockedItems()
     {
-        if (RadarBlockedItem::count() === 0 && ! cache()->has('radar_blocked_items_seeded')) {
+        if (RadarBlockedItem::query()->count() === 0 && ! cache()->has('radar_blocked_items_seeded')) {
             $ip_kantor = implode('.', [192, 168, 1, 100]);
             $ip_tor = implode('.', [185, 220, 101, 5]);
 
@@ -986,10 +1023,10 @@ class DashboardController extends Controller // NOSONAR
     public function resetDetections()
     {
         // Disable FK checks so TRUNCATE works on tables with foreign key constraints
-        \DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         RadarDetection::truncate();
         RadarDevice::truncate();
-        \DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
         // Mark so that ensureRadarDataSeeded won't re-seed demo data
         cache()->put('radar_detections_cleared', true, now()->addYears(10));
@@ -1003,11 +1040,11 @@ class DashboardController extends Controller // NOSONAR
     protected function getSmtpConfig()
     {
         return [
-            'host' => config('mail.mailers.smtp.host') ?? env('MAIL_HOST', 'smtp.gmail.com'),
-            'port' => (int) (config('mail.mailers.smtp.port') ?? env('MAIL_PORT', 587)),
-            'sender' => config('mail.from.address') ?? env('MAIL_FROM_ADDRESS', 'nusakreasi.studio@gmail.com'),
-            'encryption' => config('mail.mailers.smtp.encryption') ?? env('MAIL_ENCRYPTION', 'tls'),
-            'username' => config('mail.mailers.smtp.username') ?? env('MAIL_USERNAME', ''),
+            'host' => config('mail.mailers.smtp.host', 'smtp.gmail.com'),
+            'port' => (int) config('mail.mailers.smtp.port', 587),
+            'sender' => config('mail.from.address', 'nusakreasi.studio@gmail.com'),
+            'encryption' => config('mail.mailers.smtp.encryption', 'tls'),
+            'username' => config('mail.mailers.smtp.username', ''),
             'password' => config('mail.mailers.smtp.password') ? '********' : '',
             'status' => 'Active',
         ];
@@ -1065,7 +1102,9 @@ class DashboardController extends Controller // NOSONAR
             $envData['MAIL_USERNAME'] = $username;
         }
         if ($password !== null && $password !== '********') {
-            $envData['MAIL_PASSWORD'] = $password;
+            // Encrypt the password before writing to .env for security
+            $encrypted = 'base64:'.\Illuminate\Support\Facades\Crypt::encryptString($password);
+            $envData['MAIL_PASSWORD'] = $encrypted;
         }
 
         $this->updateEnvFile($envData);
@@ -1097,7 +1136,7 @@ class DashboardController extends Controller // NOSONAR
         $password = $request->password;
 
         if ($password === '********') {
-            $password = config('mail.mailers.smtp.password') ?? env('MAIL_PASSWORD', '');
+            $password = config('mail.mailers.smtp.password', '');
         }
 
         $smtpConfig = [

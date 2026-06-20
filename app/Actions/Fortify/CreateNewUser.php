@@ -8,7 +8,6 @@ use App\Mail\SendOtpEmail;
 use App\Models\Module;
 use App\Models\Role;
 use App\Models\User;
-use App\Models\UserModuleRole;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -75,29 +74,7 @@ class CreateNewUser implements CreatesNewUsers
         ]);
 
         // Auto-assign default module access berdasarkan role/user_type
-        $roleObj = Role::where('slug', $user->user_type)->first();
-        if ($roleObj) {
-            $defaultModules = [];
-            if ($user->user_type === 'mahasiswa') {
-                $defaultModules = ['FAST', 'PAGI', 'WIMS'];
-            } elseif ($user->user_type === 'alumni') {
-                $defaultModules = ['TRACE', 'PAGI'];
-            } elseif ($user->user_type === 'mitra') {
-                $defaultModules = ['WIMS', 'TRACE'];
-            }
-
-            if (! empty($defaultModules)) {
-                $modules = Module::whereIn('code', $defaultModules)->get();
-                foreach ($modules as $mod) {
-                    UserModuleRole::create([
-                        'user_id' => $user->id,
-                        'module_id' => $mod->id,
-                        'role_id' => $roleObj->id,
-                        'is_active' => true,
-                    ]);
-                }
-            }
-        }
+        $user->assignDefaultModuleRoles();
 
         // Kirim OTP ke email setelah akun dibuat
         $this->generateAndSendOtp($user);

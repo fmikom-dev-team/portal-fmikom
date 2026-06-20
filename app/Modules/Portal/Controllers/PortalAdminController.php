@@ -8,12 +8,17 @@ use App\Models\Portal\PortalComment;
 use App\Models\Portal\PortalMedia;
 use App\Models\Portal\PortalPost;
 use App\Models\Portal\PortalSetting;
+use App\Concerns\HandlesImageCompression;
+use App\Services\VirusScannerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class PortalAdminController extends Controller
 {
+    use HandlesImageCompression;
+
     public function index()
     {
         $totalPosts = PortalPost::count();
@@ -82,8 +87,10 @@ class PortalAdminController extends Controller
         if ($request->hasFile('hero_gallery_files')) {
             $gallery = json_decode(PortalSetting::where('key', 'hero_gallery')->value('value') ?: '[]', true);
             foreach ($request->file('hero_gallery_files') as $file) {
-                $path = $file->store('portal/gallery', 'public');
-                $gallery[] = '/storage/'.$path;
+                $path = $this->compressAndSaveImage($file, 'portal/gallery', 1200, 800);
+                if ($path) {
+                    $gallery[] = '/storage/'.$path;
+                }
             }
             PortalSetting::updateOrCreate(['key' => 'hero_gallery'], ['value' => json_encode($gallery)]);
         }
@@ -92,8 +99,10 @@ class PortalAdminController extends Controller
         if ($request->hasFile('partner_files')) {
             $partners = json_decode(PortalSetting::where('key', 'partners')->value('value') ?: '[]', true);
             foreach ($request->file('partner_files') as $file) {
-                $path = $file->store('portal/partners', 'public');
-                $partners[] = '/storage/'.$path;
+                $path = $this->compressAndSaveImage($file, 'portal/partners', 400, 150);
+                if ($path) {
+                    $partners[] = '/storage/'.$path;
+                }
             }
             PortalSetting::updateOrCreate(['key' => 'partners'], ['value' => json_encode($partners)]);
         }
@@ -138,18 +147,35 @@ class PortalAdminController extends Controller
     public function updateSettings(Request $request)
     {
         $validated = $request->validate([
-            'site_name' => 'nullable|string|max:100',
-            'site_description' => 'nullable|string|max:255',
-            'admin_email' => 'nullable|email|max:100',
             'posts_per_page' => 'nullable|integer|min:1|max:100',
             'allow_comments' => 'nullable|string',
             'moderate_comments' => 'nullable|string',
-            'maintenance_mode' => 'nullable|string',
-            'registration_open' => 'nullable|string',
+            'author_name' => 'nullable|string|max:100',
+            'author_image_file' => 'nullable|image|max:2048',
         ]);
 
         foreach ($validated as $key => $value) {
-            PortalSetting::updateOrCreate(['key' => $key], ['value' => $value ?? '']);
+            if ($key !== 'author_image_file') {
+                PortalSetting::updateOrCreate(['key' => $key], ['value' => $value ?? '']);
+            }
+        }
+
+        if ($request->hasFile('author_image_file')) {
+            $file = $request->file('author_image_file');
+
+            // Delete old file if exists to prevent storage accumulation
+            $oldPath = PortalSetting::where('key', 'author_image')->value('value');
+            if ($oldPath) {
+                $filePath = str_replace('/storage/', '', $oldPath);
+                if (Storage::disk('public')->exists($filePath)) {
+                    Storage::disk('public')->delete($filePath);
+                }
+            }
+
+            $path = $this->compressAndSaveImage($file, 'portal/author', 300, 300);
+            if ($path) {
+                PortalSetting::updateOrCreate(['key' => 'author_image'], ['value' => '/storage/'.$path]);
+            }
         }
 
         return redirect()->back()->with('success', 'Pengaturan berhasil disimpan!');

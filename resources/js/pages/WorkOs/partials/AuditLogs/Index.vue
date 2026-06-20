@@ -165,6 +165,7 @@ const resetAuditLogs = () => {
             
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-[13px]">
+                    <caption class="sr-only">Tabel Log Aktivitas Terbaru</caption>
                     <thead class="bg-gray-50/50 border-b border-gray-200 text-gray-500">
                         <tr>
                             <th class="px-5 py-3 font-medium">Event</th>

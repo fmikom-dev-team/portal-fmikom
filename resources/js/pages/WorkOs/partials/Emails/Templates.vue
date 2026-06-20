@@ -17,7 +17,7 @@ const templates = {
     <p style="color: #4b5563; font-size: 14px; line-height: 1.5; margin-bottom: 24px;">Hello {{ name }},</p>
     <p style="color: #4b5563; font-size: 14px; line-height: 1.5; margin-bottom: 24px;">To complete your login process, please use the following One-Time Password (OTP) verification code:</p>
     <div style="background-color: #ffffff; border: 1px solid #d1d5db; border-radius: 6px; padding: 16px; text-align: center; margin-bottom: 24px;">
-        <span style="font-family: monospace; font-size: 24px; font-weight: 700; letter-spacing: 4px; color: #4f46e5;">{{ otp_code }}</span>
+        <span style="font-family: monospace; font-size: 24px; font-weight: 700; letter-spacing: 4px; color: #1d4ed8;">{{ otp_code }}</span>
     </div>
     <p style="color: #4b5563; font-size: 12px; line-height: 1.5;">This verification code is only valid for {{ expiry }}. If you did not request this email, you can safely ignore it.</p>
 </div>`,
@@ -32,7 +32,7 @@ const templates = {
     <h2 style="color: #111827; font-size: 20px; font-weight: 600; margin-bottom: 16px;">Organization Invitation</h2>
     <p style="color: #4b5563; font-size: 14px; line-height: 1.5; margin-bottom: 24px;">You have been invited to join the organization <strong>{{ orgName }}</strong> as a <strong>{{ role }}</strong>.</p>
     <div style="text-align: center; margin-bottom: 24px;">
-        <a href="{{ link }}" style="background-color: #4f46e5; color: #ffffff; padding: 10px 20px; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 6px; display: inline-block;">Accept Invitation</a>
+        <a href="{{ link }}" style="background-color: #1d4ed8; color: #ffffff; padding: 10px 20px; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 6px; display: inline-block;">Accept Invitation</a>
     </div>
     <p style="color: #4b5563; font-size: 12px; line-height: 1.5;">Invited by {{ inviter }}.</p>
 </div>`,
@@ -95,7 +95,7 @@ const renderedSubject = computed(() => {
         <button
             v-for="(t, key) in templates"
             :key="key"
-            :class="['w-full text-left p-4 rounded-xl border transition-all flex flex-col gap-1', selectedTemplate === key ? 'bg-indigo-50/50 border-indigo-200 ring-1 ring-indigo-500/20' : 'bg-white border-gray-200 hover:bg-gray-50']"
+            :class="['w-full text-left p-4 rounded-xl border transition-all flex flex-col gap-1', selectedTemplate === key ? 'bg-blue-50/50 border-blue-200 ring-1 ring-blue-500/20' : 'bg-white border-gray-200 hover:bg-gray-50']"
             @click="selectedTemplate = key"
         >
             <span class="text-[13px] font-bold text-gray-900">{{ t.name }}</span>
@@ -120,12 +120,12 @@ const renderedSubject = computed(() => {
             <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Live Variables Payload Editor</span>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div v-for="v in (templates as any)[selectedTemplate].vars" :key="v" class="space-y-1">
-                    <label :for="'var_' + v" class="block text-[11px] font-bold text-indigo-600 font-mono">{{ v }}</label>
+                    <label :for="'var_' + v" class="block text-[11px] font-bold text-blue-600 font-mono">{{ v }}</label>
                     <input
                         :id="'var_' + v"
                         v-model="variables[v]"
                         type="text"
-                        class="w-full h-8 px-2.5 text-[12px] border border-gray-200 rounded-md focus:outline-none focus:border-indigo-500 text-gray-900 bg-white"
+                        class="w-full h-8 px-2.5 text-[12px] border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] text-gray-900 bg-white"
                     />
                 </div>
             </div>
@@ -136,13 +136,13 @@ const renderedSubject = computed(() => {
             <div class="flex items-center justify-between border-b border-gray-100 pb-1">
                 <div class="flex items-center gap-4">
                     <button
-                        :class="['pb-2 text-[12px] font-semibold border-b-2 transition-colors', previewMode === 'preview' ? 'border-indigo-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900']"
+                        :class="['pb-2 text-[12px] font-semibold border-b-2 transition-colors', previewMode === 'preview' ? 'border-blue-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900']"
                         @click="previewMode = 'preview'"
                     >
                         Live Rendered Preview
                     </button>
                     <button
-                        :class="['pb-2 text-[12px] font-semibold border-b-2 transition-colors', previewMode === 'code' ? 'border-indigo-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900']"
+                        :class="['pb-2 text-[12px] font-semibold border-b-2 transition-colors', previewMode === 'code' ? 'border-blue-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900']"
                         @click="previewMode = 'code'"
                     >
                         HTML Code Source
@@ -169,7 +169,7 @@ const renderedSubject = computed(() => {
                         </div>
                         <button
                             id="fullscreen_preview_button"
-                            class="flex items-center gap-1.5 h-[26px] px-2 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 hover:text-indigo-600 transition-colors shadow-sm cursor-pointer shrink-0"
+                            class="flex items-center gap-1.5 h-[26px] px-2 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 hover:text-blue-600 transition-colors shadow-sm cursor-pointer shrink-0"
                             @click="showFullscreenModal = true"
                         >
                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

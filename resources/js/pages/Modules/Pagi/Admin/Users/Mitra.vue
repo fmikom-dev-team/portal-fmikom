@@ -128,6 +128,7 @@ const statusLabel: Record<string, string> = {
             <!-- Table -->
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[640px]">
+                    <caption class="sr-only">Daftar Mitra</caption>
                     <thead>
                         <tr class="border-b border-slate-100 dark:border-zinc-800">
                             <th class="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Nama Perusahaan</th>

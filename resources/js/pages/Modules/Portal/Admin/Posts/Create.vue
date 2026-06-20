@@ -46,7 +46,7 @@ watch(
 				.toLowerCase()
 				.replace(/[^\w\s-]/g, "")
 				.replace(/[\s_-]+/g, "-")
-				.replace(/^-+|-+$/g, "");
+				.replace(/(?:^-+)|(?:-+$)/g, "");
 		}
 	},
 );
@@ -168,7 +168,9 @@ const previewData = computed(() => {
 </script>
 
 <template>
-    <Head title="Buat Berita Baru" />
+    <Head>
+        <title>Buat Berita Baru</title>
+    </Head>
 
     <div class="fixed inset-0 flex flex-col bg-white z-[60] font-sans antialiased overflow-hidden">
 
@@ -305,7 +307,7 @@ const previewData = computed(() => {
                             {{ form.title || 'Tanpa Judul' }}
                         </h1>
                         <div v-if="form.thumbnail_preview" class="mb-8 aspect-[16/9] rounded-xl overflow-hidden">
-                            <img :src="form.thumbnail_preview" class="w-full h-full object-cover" />
+                            <img :src="form.thumbnail_preview" alt="Pratinjau Thumbnail" class="w-full h-full object-cover" />
                         </div>
                         <BlockRenderer
                             v-if="previewData"

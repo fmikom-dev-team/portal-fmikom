@@ -1,0 +1,1123 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method App\\Actions\\Fortify\\CreateNewUser\:\:passwordRules\(\) should return array\<int, array\<mixed\>\|Illuminate\\Contracts\\Validation\\Rule\|string\> but returns list\<int, App\\Rules\\NotUsedPassword\|App\\Rules\\PasswordComplexityRule\|Illuminate\\Validation\\Rules\\Password\|string\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Actions/Fortify/CreateNewUser.php
+
+		-
+			message: '#^Parameter \#1 \$string of function str_pad expects string, int\<0, 999999\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Actions/Fortify/CreateNewUser.php
+
+		-
+			message: '#^Method App\\Actions\\Fortify\\ResetUserPassword\:\:passwordRules\(\) should return array\<int, array\<mixed\>\|Illuminate\\Contracts\\Validation\\Rule\|string\> but returns list\<int, App\\Rules\\NotUsedPassword\|App\\Rules\\PasswordComplexityRule\|Illuminate\\Validation\\Rules\\Password\|string\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Actions/Fortify/ResetUserPassword.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Console/Commands/OptimizeExistingMedia.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$body\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/PagiMessageSent.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Events/PagiMessageSent.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$metadata\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/PagiMessageSent.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/PagiMessageSent.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$sender\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Events/PagiMessageSent.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$browser\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/Radar/ThreatDetected.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$os\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/Radar/ThreatDetected.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Http/Middleware/Auth/SecureSession.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Http/Middleware/AutoOptimizeUploads.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Middleware/CheckActiveContext.php
+
+		-
+			message: '#^Cannot call method addMinutes\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Middleware/EnsureFirstTimeLoginComplete.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\UserModuleRole\:\:\$expires_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Middleware/EnsureModuleAccess.php
+
+		-
+			message: '#^Relation ''children'' is not found in App\\Models\\Portal\\PortalMenu model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Middleware/HandleInertiaRequests.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type Laravel\\Sanctum\\PersonalAccessToken\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Middleware/LogApiRequests.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Settings\\PasswordUpdateRequest\:\:passwordRules\(\) should return array\<int, array\<mixed\>\|Illuminate\\Contracts\\Validation\\Rule\|string\> but returns list\<int, App\\Rules\\NotUsedPassword\|App\\Rules\\PasswordComplexityRule\|Illuminate\\Validation\\Rules\\Password\|string\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Requests/Settings/PasswordUpdateRequest.php
+
+		-
+			message: '#^Method App\\Http\\Requests\\Settings\\ProfileDeleteRequest\:\:passwordRules\(\) should return array\<int, array\<mixed\>\|Illuminate\\Contracts\\Validation\\Rule\|string\> but returns list\<int, App\\Rules\\NotUsedPassword\|App\\Rules\\PasswordComplexityRule\|Illuminate\\Validation\\Rules\\Password\|string\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Requests/Settings/ProfileDeleteRequest.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$banner_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$bio\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$deletion_requested_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$foto_path\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$github\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$instagram\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$linkedin\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$location\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$metadata\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$no_telepon\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$nomor_induk\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$pagi_username\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$program_studi_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$tahun_lulus\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$tanggal_lahir\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$twitter\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$unreadNotifications\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$user_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$website\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:getResolvedRoleTitle\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:isAdmin\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:isSuperAdmin\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:pagiFollowers\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:pagiFollowing\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:pagiWorks\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Comparison operation "\>" between 0 and 0 is always false\.$#'
+			identifier: greater.alwaysFalse
+			count: 1
+			path: app/Jobs/Pipes/ProcessSyncBatch.php
+
+		-
+			message: '#^Dead catch \- Exception is never thrown in the try block\.$#'
+			identifier: catch.neverThrown
+			count: 1
+			path: app/Jobs/Pipes/ProcessSyncBatch.php
+
+		-
+			message: '#^Parameter \$to of class Illuminate\\Mail\\Mailables\\Envelope constructor expects array\<int, Illuminate\\Mail\\Mailables\\Address\|string\>, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Mail/OrganizationInvitationMail.php
+
+		-
+			message: '#^Parameter \$to of class Illuminate\\Mail\\Mailables\\Envelope constructor expects array\<int, Illuminate\\Mail\\Mailables\\Address\|string\>, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Mail/SendOtpEmail.php
+
+		-
+			message: '#^Class App\\Models\\Alumni\\ProgramStudi not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Models/Alumni/ProfilAlumni.php
+
+		-
+			message: '#^Method App\\Models\\Alumni\\ProfilAlumni\:\:getCurrentKarir\(\) should return App\\Models\\Alumni\\KarirAlumni\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Alumni/ProfilAlumni.php
+
+		-
+			message: '#^Parameter \#1 \$related of method Illuminate\\Database\\Eloquent\\Model\:\:belongsTo\(\) expects class\-string\<Illuminate\\Database\\Eloquent\\Model\>, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Models/Alumni/ProfilAlumni.php
+
+		-
+			message: '#^Method App\\Models\\Auth\\AuthAuditLog\:\:log\(\) should return static\(App\\Models\\Auth\\AuthAuditLog\) but returns App\\Models\\Auth\\AuthAuditLog\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Auth/AuthAuditLog.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Http\\Request\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Models/Auth/AuthAuditLog.php
+
+		-
+			message: '#^Class App\\Models\\Auth\\Module not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Models/Auth/AuthInvitation.php
+
+		-
+			message: '#^Parameter \#1 \$related of method Illuminate\\Database\\Eloquent\\Model\:\:belongsTo\(\) expects class\-string\<Illuminate\\Database\\Eloquent\\Model\>, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Models/Auth/AuthInvitation.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:pertanyaans\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Models/Kuesioner/ResponsKuesioner.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$perusahaan\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Models/Magang/AbsensiMagang.php
+
+		-
+			message: '#^Method App\\Models\\Magang\\AbsensiMagang\:\:getDurasiKerja\(\) should return int but returns float\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Magang/AbsensiMagang.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$approver\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Surat/Surat.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Coreportal/Controllers/PortalController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Coreportal/Controllers/PortalController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Coreportal/Controllers/PortalController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Coreportal/Controllers/PortalController.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Modules/Coreportal/Controllers/PortalController.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 2
+			path: app/Modules/Coreportal/Controllers/PortalController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Pagi\\PagiWork\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Actions/CreateCommentAction.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Pagi\\PagiWork\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Actions/LikeWorkAction.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Pagi\\PagiWork\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Actions/ReplyCommentAction.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Pagi\\PagiWork\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$cover_image\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$foto_path\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$title\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:notify\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
+
+		-
+			message: '#^Call to function is_string\(\) with array will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
+
+		-
+			message: '#^Comparison operation "\>\=" between 6 and 3 is always true\.$#'
+			identifier: greaterOrEqual.alwaysTrue
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
+			identifier: larastan.relationExistence
+			count: 6
+			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$body\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Pagi/Controllers/PagiChatController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$deleted_for\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Controllers/PagiChatController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$foto_path\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Pagi/Controllers/PagiChatController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Modules/Pagi/Controllers/PagiChatController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_deleted\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Controllers/PagiChatController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Pagi/Controllers/PagiChatController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$sender\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Modules/Pagi/Controllers/PagiChatController.php
+
+		-
+			message: '#^Cannot call method toISOString\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Modules/Pagi/Controllers/PagiChatController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Pagi\\PagiMessage\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Pagi/Controllers/PagiChatController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\User\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Pagi/Controllers/PagiChatController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Pagi\\PagiWork\:\:\$tags\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Modules/Pagi/Controllers/PagiDashboardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Pagi\\PagiWork\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Pagi/Controllers/PagiDashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$fakultas\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Controllers/PagiDashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Pagi/Controllers/PagiDashboardController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Modules/Pagi/Controllers/PagiDashboardController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\ProgramStudi\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Pagi/Controllers/PagiDashboardController.php
+
+		-
+			message: '#^Relation ''tags'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Modules/Pagi/Controllers/PagiDashboardController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Modules/Pagi/Controllers/PagiDashboardController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nama" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Pagi/Controllers/PagiDashboardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Pagi\\PagiWork\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Controllers/PagiEditorController.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: app/Modules/Pagi/Controllers/PagiEditorController.php
+
+		-
+			message: '#^Relation ''tags'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Pagi/Controllers/PagiEditorController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Pagi\\PagiWork\:\:\$tags\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Services/PagiProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model&object\{pivot\: Illuminate\\Database\\Eloquent\\Relations\\Pivot\}\:\:\$foto_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Services/PagiProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model&object\{pivot\: Illuminate\\Database\\Eloquent\\Relations\\Pivot\}\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Services/PagiProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model&object\{pivot\: Illuminate\\Database\\Eloquent\\Relations\\Pivot\}\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Services/PagiProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model&object\{pivot\: Illuminate\\Database\\Eloquent\\Relations\\Pivot\}\:\:\$pagi_username\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Services/PagiProfileService.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Modules/Pagi/Services/PagiProfileService.php
+
+		-
+			message: '#^Relation ''tags'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Pagi/Services/PagiProfileService.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Pagi/Services/PagiProfileService.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type stdClass\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Pagi/Services/PagiProfileService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Pagi\\PagiWork\:\:\$tags\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$banner_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$content\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$foto_path\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$pagi_username\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$programStudi\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\UserModuleRole\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 2
+			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
+			message: '#^Parameter \#1 \$p of method App\\Modules\\Pagi\\Services\\PagiSocialService\:\:buildPortfolioData\(\) expects App\\Models\\Pagi\\PagiWork, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
+			message: '#^Parameter \#1 \$p of method App\\Modules\\Pagi\\Services\\PagiSocialService\:\:extractAutoItems\(\) expects App\\Models\\Pagi\\PagiWork, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
+			message: '#^Parameter \#1 \$p of method App\\Modules\\Pagi\\Services\\PagiSocialService\:\:extractManualItems\(\) expects App\\Models\\Pagi\\PagiWork, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
+			message: '#^Relation ''children'' is not found in App\\Models\\Portal\\PortalMenu model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Portal/Controllers/PortalMenuController.php
+
+		-
+			message: '#^Relation ''comments'' is not found in App\\Models\\Portal\\PortalPost model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Portal/Controllers/PublicPostController.php
+
+		-
+			message: '#^Relation ''device'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/AuditController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/AuditController.php
+
+		-
+			message: '#^Cannot call method isFuture\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/FirstTimeLoginController.php
+
+		-
+			message: '#^Method App\\Modules\\WorkOs\\Controllers\\Auth\\FirstTimeLoginController\:\:passwordRules\(\) should return array\<int, array\<mixed\>\|Illuminate\\Contracts\\Validation\\Rule\|string\> but returns list\<int, App\\Rules\\NotUsedPassword\|App\\Rules\\PasswordComplexityRule\|Illuminate\\Validation\\Rules\\Password\|string\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/FirstTimeLoginController.php
+
+		-
+			message: '#^Parameter \#1 \$string of function str_pad expects string, int\<0, 999999\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/FirstTimeLoginController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>is_active" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/MFAController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>type" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/MFAController.php
+
+		-
+			message: '#^Relation ''device'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/SessionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Auth\\AuthSession\:\:\$device\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Auth\\AuthSession\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+
+		-
+			message: '#^Call to static method first\(\) on an unknown class App\\Modules\\WorkOs\\Controllers\\Module\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 2
+			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Pagination\\AbstractPaginator\<int,App\\Models\\Auth\\AuthSession\>\:\:through\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+
+		-
+			message: '#^Relation ''device'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Auth\\AuthAuditLog model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>browser" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>code" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Module\:\:\$roles\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Relation ''roles'' is not found in App\\Models\\Module model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/WorkOs/Controllers/OrganizationsController.php
+
+		-
+			message: '#^Relation ''actions'' is not found in App\\Models\\Pipes\\PipeWorkflow model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/WorkOs/Controllers/PipesController.php
+
+		-
+			message: '#^Relation ''organization'' is not found in App\\Models\\Pipes\\PipeConnection model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/WorkOs/Controllers/PipesController.php
+
+		-
+			message: '#^Relation ''organization'' is not found in App\\Models\\Pipes\\PipeWorkflow model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/WorkOs/Controllers/PipesController.php
+
+		-
+			message: '#^Relation ''provider'' is not found in App\\Models\\Pipes\\PipeConnection model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/WorkOs/Controllers/PipesController.php
+
+		-
+			message: '#^Relation ''triggers'' is not found in App\\Models\\Pipes\\PipeWorkflow model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/WorkOs/Controllers/PipesController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Pipes\\PipeConnection model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/WorkOs/Controllers/PipesController.php
+
+		-
+			message: '#^Call to an undefined method App\\Modules\\WorkOs\\Controllers\\UsersController\:\:extractHeaderMapping\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/UsersController.php
+
+		-
+			message: '#^Call to an undefined method App\\Modules\\WorkOs\\Controllers\\UsersController\:\:getRequiredFields\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/UsersController.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 2
+			path: app/Modules/WorkOs/Controllers/UsersController.php
+
+		-
+			message: '#^Method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\User\>\:\:whereNotNull\(\) invoked with 3 parameters, 1\-2 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Modules/WorkOs/Controllers/UsersController.php
+
+		-
+			message: '#^Relation ''device'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/WorkOs/Controllers/UsersController.php
+
+		-
+			message: '#^Static method App\\Modules\\WorkOs\\Services\\AuditLogger\:\:buildPayload\(\) invoked with 3 parameters, 5 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Modules/WorkOs/Services/AuditLogger.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 5
+			path: app/Modules/WorkOs/Services/AuditLogger.php
+
+		-
+			message: '#^Call to an undefined method Laravel\\Socialite\\Contracts\\Provider\:\:scopes\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Modules/WorkOs/Services/AuthPlatform/OAuthEngine.php
+
+		-
+			message: '#^Call to an undefined method Laravel\\Socialite\\Contracts\\Provider\:\:stateless\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Modules/WorkOs/Services/AuthPlatform/OAuthEngine.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Auth\\AuthPasskey\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Services/AuthPlatform/PasskeyEngine.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$browser\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Services/DashboardStatsService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$city\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Services/DashboardStatsService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$country\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Services/DashboardStatsService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$os\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Services/DashboardStatsService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Radar\\RadarDetection\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/WorkOs/Services/DashboardStatsService.php
+
+		-
+			message: '#^Relation ''provider'' is not found in App\\Models\\Auth\\AuthOAuthCredential model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/WorkOs/Services/OAuth/TokenRefreshService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Pipes\\PipeConnection\:\:\$provider\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Services/Pipes/Adapters/BaseProviderAdapter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Pipes\\PipeConnection\:\:\$provider\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Services/Pipes/OAuthEngine.php
+
+		-
+			message: '#^Access to protected property App\\Models\\Pipes\\PipeSyncLog\:\:\$connection\.$#'
+			identifier: property.protected
+			count: 2
+			path: app/Modules/WorkOs/Services/Pipes/SyncEngine.php
+
+		-
+			message: '#^Cannot call method update\(\) on string\|UnitEnum\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Modules/WorkOs/Services/Pipes/SyncEngine.php
+
+		-
+			message: '#^Cannot call method isAdmin\(\) on class\-string\|object\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Providers/AppServiceProvider.php
+
+		-
+			message: '#^Cannot call method isAdmin\(\) on class\-string\|object\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Providers/HorizonServiceProvider.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 3
+			path: app/Services/VirusScannerService.php

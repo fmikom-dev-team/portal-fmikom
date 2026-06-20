@@ -2,8 +2,10 @@
 
 namespace App\Modules\Pagi\Actions;
 
+use App\Models\Pagi\PagiFollow;
 use App\Models\User;
 use App\Notifications\PagiNotification;
+use Illuminate\Support\Facades\Cache;
 
 class FollowUserAction
 {
@@ -19,32 +21,27 @@ class FollowUserAction
             throw new \InvalidArgumentException('Cannot follow yourself');
         }
 
-        // Update auth user's "following" list
-        $authMeta = $authUser->metadata ?? [];
-        $following = $authMeta['following'] ?? [];
-        $isNowFollowing = ! in_array($targetUser->id, $following);
+        // DB-002: Use relational pagi_follows table instead of user metadata JSON arrays to prevent race conditions.
+        $isNowFollowing = ! PagiFollow::query()->where('follower_id', '=', $authUser->id, 'and')
+            ->where('following_id', '=', $targetUser->id, 'and')
+            ->exists();
 
         if ($isNowFollowing) {
-            $following[] = $targetUser->id;
+            PagiFollow::query()->firstOrCreate([
+                'follower_id' => $authUser->id,
+                'following_id' => $targetUser->id,
+            ]);
         } else {
-            $following = array_values(array_filter($following, fn ($id) => $id !== $targetUser->id));
+            PagiFollow::query()->where('follower_id', '=', $authUser->id, 'and')
+                ->where('following_id', '=', $targetUser->id, 'and')
+                ->delete();
         }
-        $authMeta['following'] = $following;
-        $authUser->update(['metadata' => $authMeta]);
 
-        // Update target user's "followers" list
-        $targetMeta = $targetUser->metadata ?? [];
-        $followers = $targetMeta['followers'] ?? [];
+        $followersCount = count(PagiFollow::query()->where('following_id', '=', $targetUser->id, 'and')->get());
 
-        if ($isNowFollowing) {
-            if (! in_array($authUser->id, $followers)) {
-                $followers[] = $authUser->id;
-            }
-        } else {
-            $followers = array_values(array_filter($followers, fn ($id) => $id !== $authUser->id));
-        }
-        $targetMeta['followers'] = $followers;
-        $targetUser->update(['metadata' => $targetMeta]);
+        // Bust public profile caches so isFollowing and followers_count are accurate on refresh
+        Cache::forget("pagi_public_profile_{$targetUser->id}");
+        Cache::forget("pagi_public_profile_{$authUser->id}");
 
         // Send real-time notification if following
         if ($isNowFollowing) {
@@ -69,7 +66,7 @@ class FollowUserAction
 
         return [
             'following' => $isNowFollowing,
-            'followers_count' => count($followers),
+            'followers_count' => $followersCount,
         ];
     }
 }

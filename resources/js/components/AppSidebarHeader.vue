@@ -13,19 +13,32 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useInitials } from "@/composables/useInitials";
 import { edit as editProfile } from "@/routes/profile";
 
+const props = withDefaults(
+	defineProps<{
+		isScrolled?: boolean;
+	}>(),
+	{
+		isScrolled: false,
+	},
+);
+
 const page = usePage();
 const user = computed(
 	() => page.props.auth?.user || { name: "User", email: "" },
 );
 const { getInitials } = useInitials();
 
+const isPortalDashboard = computed(() => {
+	return page.component === "Dashboard";
+});
+
 // Loading state for profile skeleton
 const isLoading = ref(true);
 
 // Scroll-aware for desktop header (optional shadow)
-const isScrolled = ref(false);
+const isDesktopScrolled = ref(false);
 const handleScroll = () => {
-	isScrolled.value = globalThis.window.scrollY > 8;
+	isDesktopScrolled.value = globalThis.window.scrollY > 8;
 };
 onMounted(() => {
 	globalThis.window.addEventListener("scroll", handleScroll, { passive: true });
@@ -36,12 +49,26 @@ onMounted(() => {
 onUnmounted(() =>
 	globalThis.window.removeEventListener("scroll", handleScroll),
 );
+
+const isHeaderScrolled = computed(() => {
+	return props.isScrolled || isDesktopScrolled.value;
+});
 </script>
 
 <template>
     <header class="w-full shrink-0">
-        <!-- MOBILE HEADER: Blue gradient (Livin'-style), fixed -->
-        <div class="flex md:hidden w-full items-center justify-between px-4 py-3 h-[68px] shrink-0 fixed top-0 left-0 right-0 z-30 bg-linear-to-r from-[#1d4ed8] to-[#3B82F6]">
+        <!-- MOBILE HEADER: Blue gradient or flat #2563eb, fixed with premium shadow -->
+        <div 
+            class="flex md:hidden w-full items-center justify-between px-4 py-3 h-[68px] shrink-0 fixed top-0 left-0 right-0 transition-all duration-300"
+            :class="isPortalDashboard 
+                ? [
+                    'bg-[#2563eb] border-b border-blue-500/20 z-[45]',
+                    isHeaderScrolled 
+                        ? 'shadow-[0_12px_40px_rgba(0,0,0,0.32)] border-blue-500/10' 
+                        : 'shadow-none'
+                  ]
+                : 'bg-linear-to-r from-[#1d4ed8] to-[#3B82F6] z-30'"
+        >
             <!-- Left Side: Skeleton Profile Loader -->
             <div v-if="isLoading" class="flex items-center gap-3 flex-1 min-w-0 animate-pulse">
                 <div class="h-[46px] w-[46px] rounded-full bg-white/20 ring-2 ring-white/10 shadow-sm shrink-0"></div>
@@ -59,7 +86,7 @@ onUnmounted(() =>
                     </AvatarFallback>
                 </Avatar>
                 <div class="flex flex-col text-left leading-tight min-w-0">
-                    <span class="text-sm font-extrabold tracking-tight text-white truncate max-w-[160px]">{{ user.name }}</span>
+                    <span class="text-sm font-extrabold tracking-tight text-white truncate max-w-[160px] uppercase">{{ user.name }}</span>
                     <span class="text-[11px] font-medium text-blue-100 mt-0.5 truncate max-w-[160px]">
                         {{ user.role_title || 'User / Mahasiswa' }}
                     </span>

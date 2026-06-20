@@ -2,11 +2,13 @@
 
 use App\Http\Middleware\EnsureFirstTimeLoginComplete;
 use App\Modules\Pagi\Controllers\AdminDashboardController;
+use App\Modules\Pagi\Controllers\AdminUserController;
+use App\Modules\Pagi\Controllers\AdminModerationController;
+use App\Modules\Pagi\Controllers\AdminWorkController;
 use App\Modules\Pagi\Controllers\PagiChatController;
 use App\Modules\Pagi\Controllers\PagiCvController;
 use App\Modules\Pagi\Controllers\PagiDashboardController;
 use App\Modules\Pagi\Controllers\PagiEditorController;
-use App\Modules\Pagi\Controllers\PagiWorkController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:pagi'])
@@ -24,17 +26,26 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
         Route::get('/gallery', [PagiDashboardController::class, 'exploreGallery'])
             ->name('gallery');
 
-        // Halaman Works — Pemilihan Template
-        Route::get('/works', [PagiWorkController::class, 'index'])
-            ->name('works');
-        Route::get('/works/preview/{theme}', [PagiWorkController::class, 'previewTheme'])
-            ->name('works.preview');
-        Route::get('/works/editor/{theme}', [PagiWorkController::class, 'editPortfolio'])
-            ->name('works.editor');
-        Route::post('/works/save', [PagiWorkController::class, 'savePortfolio'])
-            ->name('works.save');
-        Route::post('/works/select', [PagiWorkController::class, 'selectTemplate'])
-            ->name('works.select');
+        // Halaman Works — Pemilihan Template (Temporarily Disabled)
+        Route::get('/works', function () {
+            return redirect()->route('module.pagi.dashboard')->with('error', 'Fitur Works sementara dinonaktifkan.');
+        })->name('works');
+
+        Route::get('/works/preview/{theme}', function () {
+            return redirect()->route('module.pagi.dashboard')->with('error', 'Fitur Works sementara dinonaktifkan.');
+        })->name('works.preview');
+
+        Route::get('/works/editor/{theme}', function () {
+            return redirect()->route('module.pagi.dashboard')->with('error', 'Fitur Works sementara dinonaktifkan.');
+        })->name('works.editor');
+
+        Route::post('/works/save', function () {
+            return redirect()->route('module.pagi.dashboard')->with('error', 'Fitur Works sementara dinonaktifkan.');
+        })->name('works.save');
+
+        Route::post('/works/select', function () {
+            return redirect()->route('module.pagi.dashboard')->with('error', 'Fitur Works sementara dinonaktifkan.');
+        })->name('works.select');
 
         // ── CV Builder Routes ─────────────────────────────────────────────────
         Route::get('/cv', [PagiCvController::class, 'index'])
@@ -160,21 +171,35 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('users.search');
 
         // Likes & Comments on Preview items
+        // BUG-FE-001: throttled to prevent count inflation and DoS
         Route::post('/preview/{preview}/like', [PagiDashboardController::class, 'likePreview'])
+            ->middleware('throttle:30,1')
             ->name('preview.like');
         Route::post('/preview/{preview}/comment', [PagiDashboardController::class, 'commentPreview'])
+            ->middleware('throttle:20,1')
             ->name('preview.comment');
         Route::post('/preview/{preview}/comment/{comment}/like', [PagiDashboardController::class, 'likeComment'])
+            ->middleware('throttle:30,1')
             ->name('preview.comment.like');
         Route::post('/preview/{preview}/comment/{comment}/reply', [PagiDashboardController::class, 'replyComment'])
+            ->middleware('throttle:20,1')
             ->name('preview.comment.reply');
         Route::post('/preview/{preview}/comment/{comment}/reply/{reply}/like', [PagiDashboardController::class, 'likeReply'])
+            ->middleware('throttle:30,1')
             ->name('preview.comment.reply.like');
         Route::post('/preview/{preview}/view', [PagiDashboardController::class, 'viewPreview'])
+            ->middleware('throttle:60,1')
             ->name('preview.view');
 
+        // Lazy-load endpoint — called only when user opens the project modal.
+        // Returns the heavy payload (content blocks + comments) that is intentionally
+        // excluded from the initial page load to keep the Inertia response small.
+        Route::get('/preview/{preview}/data', [PagiDashboardController::class, 'previewData'])
+            ->middleware('throttle:60,1')
+            ->name('preview.data');
+
         // Report a work (karya mahasiswa)
-        Route::post('/works/report', [AdminDashboardController::class, 'storeReport'])
+        Route::post('/works/report', [AdminModerationController::class, 'storeReport'])
             ->name('works.report');
     });
 
@@ -190,14 +215,14 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('dashboard');
 
         // Moderasi Konten
-        Route::get('/moderation', [AdminDashboardController::class, 'moderation'])
+        Route::get('/moderation', [AdminModerationController::class, 'moderation'])
             ->name('moderation');
 
         // Users Management
-        Route::get('/users/mahasiswa', [AdminDashboardController::class, 'mahasiswa'])
+        Route::get('/users/mahasiswa', [AdminUserController::class, 'mahasiswa'])
             ->name('users.mahasiswa');
 
-        Route::get('/users/mitra', [AdminDashboardController::class, 'mitra'])
+        Route::get('/users/mitra', [AdminUserController::class, 'mitra'])
             ->name('users.mitra');
 
         // Analytics
@@ -205,7 +230,7 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('analytics');
 
         // Reports
-        Route::get('/reports', [AdminDashboardController::class, 'reports'])
+        Route::get('/reports', [AdminWorkController::class, 'reports'])
             ->name('reports');
 
         // Settings
@@ -217,15 +242,15 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('logs');
 
         // Warnings
-        Route::get('/warnings', [AdminDashboardController::class, 'warnings'])
+        Route::get('/warnings', [AdminWorkController::class, 'warnings'])
             ->name('warnings');
 
         // Takedowns
-        Route::get('/takedowns', [AdminDashboardController::class, 'takedowns'])
+        Route::get('/takedowns', [AdminWorkController::class, 'takedowns'])
             ->name('takedowns');
 
         // Works
-        Route::get('/works', [AdminDashboardController::class, 'works'])
+        Route::get('/works', [AdminWorkController::class, 'works'])
             ->name('works');
 
         // Gallery
@@ -241,26 +266,26 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('roles');
 
         // Moderation Actions — POST only for CSRF protection
-        Route::post('/users/{user}/warn', [AdminDashboardController::class, 'warnUser'])
+        Route::post('/users/{user}/warn', [AdminUserController::class, 'warnUser'])
             ->name('users.warn');
 
-        Route::post('/content/work/{work}/moderate', [AdminDashboardController::class, 'hideContent'])
+        Route::post('/content/work/{work}/moderate', [AdminModerationController::class, 'hideContent'])
             ->name('content.moderate');
 
         // Admin send notification to work owner
-        Route::post('/users/{user}/notify', [AdminDashboardController::class, 'sendNotificationToUser'])
+        Route::post('/users/{user}/notify', [AdminUserController::class, 'sendNotificationToUser'])
             ->name('users.notify');
 
         // Reset moderation & warnings data
-        Route::post('/reset-moderation', [AdminDashboardController::class, 'resetModeration'])
+        Route::post('/reset-moderation', [AdminModerationController::class, 'resetModeration'])
             ->name('reset-moderation');
 
         // Revoke user warning
-        Route::post('/warnings/{warning}/revoke', [AdminDashboardController::class, 'revokeWarning'])
+        Route::post('/warnings/{warning}/revoke', [AdminUserController::class, 'revokeWarning'])
             ->name('warnings.revoke');
 
         // Restore takedown work
-        Route::post('/takedowns/{work}/restore', [AdminDashboardController::class, 'restoreContent'])
+        Route::post('/takedowns/{work}/restore', [AdminModerationController::class, 'restoreContent'])
             ->name('takedowns.restore');
 
         // Realtime stats polling endpoint (JSON)
@@ -281,13 +306,17 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
 Route::prefix('pagi')
     ->name('module.pagi.')
     ->group(function () {
-        Route::get('/works/v/{user:pagi_username}', [PagiWorkController::class, 'viewPublicPortfolio'])
-            ->name('works.view_public');
+        Route::get('/works/v/{user:pagi_username}', function () {
+            return redirect()->route('module.pagi.dashboard')->with('error', 'Fitur Works sementara dinonaktifkan.');
+        })->name('works.view_public');
         Route::get('/profile/{user}', [PagiDashboardController::class, 'publicProfile'])
             ->name('profile.public');
         Route::get('/users/{user}/works', [PagiDashboardController::class, 'userWorks'])
             ->name('users.works');
+        // SEC-004: CV share requires auth to prevent unauthenticated IDOR enumeration of all student CVs.
+        // Signed URL or token-based sharing can be implemented in the future.
         Route::get('/cv/{cv}/shared', [PagiCvController::class, 'shareView'])
+            ->middleware('auth')
             ->name('cv.shared');
         Route::get('/{user:pagi_username}/{tab?}', [PagiDashboardController::class, 'publicProfile'])
             ->name('profile.username');

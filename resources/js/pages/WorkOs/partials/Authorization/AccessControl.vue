@@ -1,15 +1,19 @@
 <script setup lang="ts">
 import { router } from "@inertiajs/vue3";
 import { Check, Loader2, Search, Shield } from "lucide-vue-next";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { toast } from "../../composables/useWorkOs";
 
 const props = defineProps<{
 	roles: any[];
 	permissions: any[];
+	searchQuery?: string;
 }>();
 
 const search = ref("");
+watch(() => props.searchQuery, (val) => {
+	search.value = val || "";
+});
 const savingRoleIds = ref<number[]>([]);
 
 // Group permissions by their group attribute
@@ -110,6 +114,7 @@ function togglePermission(role: any, permissionId: number) {
         <!-- Matrix Table -->
         <div v-if="permissions.length && roles.length" class="rounded-xl border border-gray-200 overflow-x-auto bg-white shadow-sm">
             <table class="w-full text-left whitespace-nowrap border-collapse">
+                <caption class="sr-only">Matriks Kontrol Akses Peran dan Izin</caption>
                 <thead>
                     <tr class="bg-[#f9fafb] border-b border-gray-200">
                         <th class="px-4 py-3 text-[12px] font-semibold text-gray-800 w-[320px] sticky left-0 bg-[#f9fafb] border-r border-gray-200">

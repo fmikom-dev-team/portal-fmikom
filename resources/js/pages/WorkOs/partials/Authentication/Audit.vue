@@ -99,14 +99,14 @@ const timeAgo = (iso: string) => {
                 <input v-model="searchInput" @input="onSearchInput" placeholder="Search events..." class="text-[13px] flex-1 outline-none placeholder-gray-400" />
             </div>
             <select v-model="filters.severity" @change="loadLogs()"
-                class="text-[13px] border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-300 text-gray-600 bg-white">
+                class="text-[13px] border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-300 text-gray-600 bg-white">
                 <option value="">All severities</option>
                 <option value="info">Info</option>
                 <option value="warning">Warning</option>
                 <option value="critical">Critical</option>
             </select>
             <select v-model="filters.days" @change="loadLogs()"
-                class="text-[13px] border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-300 text-gray-600 bg-white">
+                class="text-[13px] border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-300 text-gray-600 bg-white">
                 <option :value="1">Last 24h</option>
                 <option :value="7">Last 7 days</option>
                 <option :value="30">Last 30 days</option>
@@ -121,6 +121,7 @@ const timeAgo = (iso: string) => {
             </div>
 
             <table v-else class="w-full text-[13px]">
+                <caption class="sr-only">Tabel Log Audit Otentikasi</caption>
                 <thead class="bg-gray-50 border-b border-gray-100">
                     <tr>
                         <th class="text-left px-4 py-2.5 font-medium text-gray-500">Event</th>

@@ -129,11 +129,11 @@ function triggerRedeliver(delivery: any) {
             <button
                 v-for="tab in tabs"
                 :key="tab.id"
-                :class="['h-[38px] px-3 pb-3 text-[13px] font-semibold border-b-2 transition-colors whitespace-nowrap', activeTab === tab.id ? 'border-indigo-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900']"
+                :class="['h-[38px] px-3 pb-3 text-[13px] font-semibold border-b-2 transition-colors whitespace-nowrap', activeTab === tab.id ? 'border-blue-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900']"
                 @click="activeTab = tab.id"
             >
                 {{ tab.label }}
-                <span v-if="tab.id === 'feed' && unreadCount > 0" class="ml-1 px-1.5 py-0.2 text-[10px] font-bold text-white bg-indigo-600 rounded-full">
+                <span v-if="tab.id === 'feed' && unreadCount > 0" class="ml-1 px-1.5 py-0.2 text-[10px] font-bold text-white bg-blue-600 rounded-full">
                     {{ unreadCount }}
                 </span>
             </button>
@@ -147,7 +147,7 @@ function triggerRedeliver(delivery: any) {
             <div class="flex items-center gap-2">
                 <select
                     v-model="severityFilter"
-                    class="h-[32px] px-2.5 text-[12.5px] border border-gray-200 rounded-md focus:outline-none focus:border-indigo-500 bg-white text-gray-700"
+                    class="h-[32px] px-2.5 text-[12.5px] border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] bg-white text-gray-700"
                 >
                     <option value="all">All Alerts</option>
                     <option value="error">Errors</option>
@@ -180,7 +180,7 @@ function triggerRedeliver(delivery: any) {
             <div
                 v-for="notif in filteredNotifications"
                 :key="notif.id"
-                :class="['p-4 rounded-xl border transition-all flex items-start gap-3 bg-white border-gray-200', !notif.read ? 'ring-1 ring-indigo-500/10 bg-indigo-50/5 border-indigo-100 shadow-sm' : '']"
+                :class="['p-4 rounded-xl border transition-all flex items-start gap-3 bg-white border-gray-200', !notif.read ? 'ring-1 ring-blue-500/10 bg-blue-50/5 border-blue-100 shadow-sm' : '']"
             >
                 <!-- Severity Dot -->
                 <span
@@ -204,7 +204,7 @@ function triggerRedeliver(delivery: any) {
                 <!-- Read Toggle Button -->
                 <button
                     @click="toggleRead(notif)"
-                    class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition-colors shrink-0 px-2 py-0.5 hover:bg-indigo-50/60 rounded"
+                    class="text-[11px] font-semibold text-blue-600 hover:text-blue-800 transition-colors shrink-0 px-2 py-0.5 hover:bg-blue-50/60 rounded"
                 >
                     {{ notif.read ? 'Mark unread' : 'Mark read' }}
                 </button>
@@ -236,7 +236,7 @@ function triggerRedeliver(delivery: any) {
                         type="url"
                         :disabled="!isEditingWebhook"
                         placeholder="https://yourserver.com/webhook-endpoint"
-                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-gray-900 bg-white disabled:bg-gray-50 disabled:text-gray-500"
+                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 bg-white disabled:bg-gray-50 disabled:text-gray-500"
                     />
                 </div>
 
@@ -284,7 +284,7 @@ function triggerRedeliver(delivery: any) {
                                 v-model="subscribedEvents[key]"
                                 type="checkbox"
                                 :disabled="!isEditingWebhook"
-                                class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-[#2563eb]"
                             />
                             <span class="font-mono text-[11.5px] text-gray-700">{{ key }}</span>
                         </label>
@@ -301,7 +301,7 @@ function triggerRedeliver(delivery: any) {
                     Cancel
                 </button>
                 <button
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center gap-1.5"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center gap-1.5"
                     :disabled="isSavingWebhook"
                     @click="saveWebhookConfig"
                 >

@@ -33,7 +33,7 @@ const handleFileChange = (e) => {
 <template>
     <div class="space-y-3">
         <div v-if="previewUrl" :class="['relative group rounded-2xl overflow-hidden border border-gray-100 shadow-sm', aspectRatio]">
-            <img :src="previewUrl" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+            <img :src="previewUrl" alt="Thumbnail preview" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
             <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <button @click="emit('remove')" class="p-2 bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-red-500 transition-colors">
                     <X class="w-4 h-4" />

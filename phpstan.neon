@@ -1,0 +1,15 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+
+    paths:
+        - app/
+
+    # Level 5 is a good starting level balance between safety and strictness
+    level: 5
+
+    # Optional: exclude specific paths or ignore specific errors if needed
+    # excludePaths:
+    #     - app/Http/Middleware/SomeMiddleware.php

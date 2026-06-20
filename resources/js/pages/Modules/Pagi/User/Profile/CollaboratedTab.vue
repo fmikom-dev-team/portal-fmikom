@@ -89,7 +89,9 @@ const getCoverFit = (project: any) => {
 
 const isQuickAddProject = (project: any) => {
 	if (!project?.content || !Array.isArray(project.content)) return false;
-	return project.content.some((b: any) => b?.type === "featured_details");
+	return !project.content.some(
+		(b: any) => b && b.type !== "featured_details" && b.type !== "settings",
+	);
 };
 
 const canManageProject = (project: any) =>
@@ -171,10 +173,10 @@ const onDrop = (index: number) => {
 				>
 					<template v-if="getCoverFit(p) === 'contain'">
 						<VideoLazy v-if="isVideoUrl(p.image)" :src="p.image" :autoplay="true" :loop="true" :muted="true" :playsinline="true" className="absolute inset-0 h-full w-full object-cover blur-xl opacity-40 scale-110 pointer-events-none" />
-						<OptimizedImage v-else :src="p.image" :alt="p.title" className="absolute inset-0 h-full w-full object-cover blur-xl opacity-40 scale-110 pointer-events-none" />
+						<OptimizedImage v-else :src="p.image" :alt="p.title" :fetchpriority="idx < 8 ? 'high' : 'auto'" :loading="idx < 8 ? 'eager' : 'lazy'" className="absolute inset-0 h-full w-full object-cover blur-xl opacity-40 scale-110 pointer-events-none" />
 					</template>
 					<VideoLazy v-if="isVideoUrl(p.image)" :src="p.image" :autoplay="true" :loop="true" :muted="true" :playsinline="true" :className="getCoverFit(p) === 'contain' ? 'max-w-full max-h-full object-contain z-10 relative transition-transform duration-500 group-hover:scale-102' : 'h-full w-full object-cover z-10 relative transition-transform duration-500 group-hover:scale-105'" />
-					<OptimizedImage v-else :src="p.image" :alt="p.title" :className="getCoverFit(p) === 'contain' ? 'max-w-full max-h-full object-contain z-10 relative transition-transform duration-500 group-hover:scale-102' : 'h-full w-full object-cover z-10 relative transition-transform duration-500 group-hover:scale-105'" />
+					<OptimizedImage v-else :src="p.image" :alt="p.title" :fetchpriority="idx < 8 ? 'high' : 'auto'" :loading="idx < 8 ? 'eager' : 'lazy'" :className="getCoverFit(p) === 'contain' ? 'max-w-full max-h-full object-contain z-10 relative transition-transform duration-500 group-hover:scale-102' : 'h-full w-full object-cover z-10 relative transition-transform duration-500 group-hover:scale-105'" />
 				</div>
 
 				<!-- Top-left badges: Draft + Collaboration stacked -->
