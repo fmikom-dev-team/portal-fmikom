@@ -1,25 +1,7 @@
 <?php
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Database\Schema\Blueprint;
+use App\Models\User;
 use Tests\TestCase;
-
-Blueprint::macro('dropIndexIfExists', function ($index) {
-    if (is_string($index)) {
-        $fkIndexes = [
-            'pagi_reports_reporter_id_index',
-            'pagi_reports_work_id_status_index',
-            'pagi_work_comments_work_parent_index',
-            'pagi_comment_likes_comment_id_index',
-            'pagi_work_likes_work_id_index'
-        ];
-        if (in_array($index, $fkIndexes)) {
-            return $this;
-        }
-    }
-    $this->dropIndex($index);
-    return $this;
-});
 
 /*
 |--------------------------------------------------------------------------
@@ -33,7 +15,7 @@ Blueprint::macro('dropIndexIfExists', function ($index) {
 */
 
 pest()->extend(TestCase::class)
-    ->use(RefreshDatabase::class)
+    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Feature');
 
 /*
@@ -65,4 +47,12 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+function createUserWithType(string $userType, array $attributes = []): User
+{
+    return User::factory()->create(array_merge([
+        'user_type' => $userType,
+        'role_title' => $attributes['role_title'] ?? ucwords(str_replace(['-', '_'], ' ', $userType)),
+    ], $attributes));
 }

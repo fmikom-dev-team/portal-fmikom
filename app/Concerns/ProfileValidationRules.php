@@ -17,13 +17,6 @@ trait ProfileValidationRules
         return [
             'name' => $this->nameRules(),
             'email' => $this->emailRules($userId),
-            'role_title' => ['nullable', 'string', 'max:100'],
-            'bio' => ['nullable', 'string', 'max:1000'],
-            'location' => ['nullable', 'string', 'max:100'],
-            'website' => ['nullable', 'string', 'max:255'],
-            'twitter' => ['nullable', 'string', 'max:100'],
-            'linkedin' => ['nullable', 'string', 'max:100'],
-            'github' => ['nullable', 'string', 'max:100'],
         ];
     }
 

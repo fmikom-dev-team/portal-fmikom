@@ -1,9 +1,6 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
-
-define('NEW_EMAIL', 'newemail@example.com');
 
 test('profile page is displayed', function () {
     $user = User::factory()->create();
@@ -22,8 +19,7 @@ test('profile information can be updated', function () {
         ->actingAs($user)
         ->patch(route('profile.update'), [
             'name' => 'Test User',
-            'bio' => 'New bio content',
-            'location' => 'Bandung, Indonesia',
+            'email' => 'test@example.com',
         ]);
 
     $response
@@ -33,51 +29,25 @@ test('profile information can be updated', function () {
     $user->refresh();
 
     expect($user->name)->toBe('Test User');
-    expect($user->bio)->toBe('New bio content');
-    expect($user->location)->toBe('Bandung, Indonesia');
+    expect($user->email)->toBe('test@example.com');
+    expect($user->email_verified_at)->toBeNull();
 });
 
-test('user email can be updated from security page with valid password', function () {
-    $user = User::factory()->create([
-        'password' => Hash::make('password123'),
-        'email_verified_at' => now(),
-    ]);
+test('email verification status is unchanged when the email address is unchanged', function () {
+    $user = User::factory()->create();
 
     $response = $this
         ->actingAs($user)
-        ->put('/settings/email', [
-            'email' => NEW_EMAIL,
-            'current_password' => 'password123',
+        ->patch(route('profile.update'), [
+            'name' => 'Test User',
+            'email' => $user->email,
         ]);
 
     $response
         ->assertSessionHasNoErrors()
-        ->assertRedirect();
+        ->assertRedirect(route('profile.edit'));
 
-    $user->refresh();
-
-    expect($user->email)->toBe(NEW_EMAIL);
-    expect($user->email_verified_at)->toBeNull();
-});
-
-test('user email cannot be updated with invalid password', function () {
-    $user = User::factory()->create([
-        'password' => Hash::make('password123'),
-        'email' => 'oldemail@example.com',
-    ]);
-
-    $response = $this
-        ->actingAs($user)
-        ->put('/settings/email', [
-            'email' => NEW_EMAIL,
-            'current_password' => 'wrong-password',
-        ]);
-
-    $response->assertSessionHasErrors('current_password');
-
-    $user->refresh();
-
-    expect($user->email)->toBe('oldemail@example.com');
+    expect($user->refresh()->email_verified_at)->not->toBeNull();
 });
 
 test('user can delete their account', function () {
@@ -112,72 +82,4 @@ test('correct password must be provided to delete account', function () {
         ->assertRedirect(route('profile.edit'));
 
     expect($user->fresh())->not->toBeNull();
-});
-
-test('user can request account deletion with valid password', function () {
-    $user = User::factory()->create([
-        'password' => Hash::make('password123'),
-        'user_type' => 'mahasiswa',
-    ]);
-
-    $response = $this
-        ->actingAs($user)
-        ->post(route('profile.request-deletion'), [
-            'password' => 'password123',
-        ]);
-
-    $response->assertSessionHasNoErrors();
-    $user->refresh();
-    expect($user->deletion_requested_at)->not->toBeNull();
-});
-
-test('user cannot request account deletion with invalid password', function () {
-    $user = User::factory()->create([
-        'password' => Hash::make('password123'),
-        'user_type' => 'mahasiswa',
-    ]);
-
-    $response = $this
-        ->actingAs($user)
-        ->from(route('profile.edit'))
-        ->post(route('profile.request-deletion'), [
-            'password' => 'wrong-password',
-        ]);
-
-    $response->assertSessionHasErrors('password');
-    $user->refresh();
-    expect($user->deletion_requested_at)->toBeNull();
-});
-
-test('user can cancel account deletion request', function () {
-    $user = User::factory()->create([
-        'user_type' => 'mahasiswa',
-        'deletion_requested_at' => now(),
-    ]);
-
-    $response = $this
-        ->actingAs($user)
-        ->post(route('profile.cancel-deletion'));
-
-    $response->assertSessionHasNoErrors();
-    $user->refresh();
-    expect($user->deletion_requested_at)->toBeNull();
-});
-
-test('superadmin cannot request account deletion', function () {
-    $user = User::factory()->create([
-        'password' => Hash::make('password123'),
-        'user_type' => 'super_admin',
-    ]);
-
-    $response = $this
-        ->actingAs($user)
-        ->from(route('profile.edit'))
-        ->post(route('profile.request-deletion'), [
-            'password' => 'password123',
-        ]);
-
-    $response->assertSessionHasErrors('password');
-    $user->refresh();
-    expect($user->deletion_requested_at)->toBeNull();
 });

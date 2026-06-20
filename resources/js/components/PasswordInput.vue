@@ -1,24 +1,22 @@
 <script setup lang="ts">
-import { Eye, EyeOff } from "lucide-vue-next";
-import type { HTMLAttributes } from "vue";
-import { ref, useTemplateRef } from "vue";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { Eye, EyeOff } from 'lucide-vue-next';
+import { ref, useTemplateRef } from 'vue';
+import type { HTMLAttributes } from 'vue';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 defineOptions({ inheritAttrs: false });
 
 const props = defineProps<{
-	class?: HTMLAttributes["class"];
+    class?: HTMLAttributes['class'];
 }>();
 
-const model = defineModel<string | number>();
-
 const showPassword = ref(false);
-const inputRef = useTemplateRef("inputRef");
+const inputRef = useTemplateRef('inputRef');
 
 defineExpose({
-	$el: inputRef,
-	focus: () => inputRef.value?.$el?.focus(),
+    $el: inputRef,
+    focus: () => inputRef.value?.$el?.focus(),
 });
 </script>
 
@@ -26,7 +24,6 @@ defineExpose({
     <div class="relative">
         <Input
             ref="inputRef"
-            v-model="model"
             :type="showPassword ? 'text' : 'password'"
             :class="cn('pr-10', props.class)"
             v-bind="$attrs"

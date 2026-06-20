@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { Link, usePage } from "@inertiajs/vue3";
-import AppLogoIcon from "@/components/AppLogoIcon.vue";
-import { home } from "@/routes";
+import { Link, usePage } from '@inertiajs/vue3';
+import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import { home } from '@/routes';
 
 const page = usePage();
 const name = page.props.name;
 
-const { title, description } = defineProps<{
-	title?: string;
-	description?: string;
+defineProps<{
+    title?: string;
+    description?: string;
 }>();
 </script>
 

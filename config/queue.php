@@ -75,14 +75,10 @@ return [
 
         'deferred' => [
             'driver' => 'deferred',
-            'retry_after' => 90,
-            'timeout' => 60,
         ],
 
         'background' => [
             'driver' => 'background',
-            'retry_after' => 90,
-            'timeout' => 60,
         ],
 
         'failover' => [
@@ -91,8 +87,6 @@ return [
                 'database',
                 'deferred',
             ],
-            'retry_after' => 90,
-            'timeout' => 60,
         ],
 
     ],

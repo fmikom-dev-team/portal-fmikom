@@ -3,7 +3,6 @@
 use App\Models\User;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
-use Laravel\Fortify\Fortify;
 
 test('login screen can be rendered', function () {
     $response = $this->get(route('login'));
@@ -18,6 +17,22 @@ test('users can authenticate using the login screen', function () {
         'email' => $user->email,
         'password' => 'password',
     ]);
+
+    $this->assertAuthenticated();
+    $response->assertRedirect(route('dashboard', absolute: false));
+});
+
+test('login ignores stale intended admin history when switching accounts', function () {
+    $user = createUserWithType('mahasiswa');
+
+    $response = $this
+        ->withSession([
+            'url.intended' => route('admin.history', absolute: false),
+        ])
+        ->post(route('login.store'), [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
 
     $this->assertAuthenticated();
     $response->assertRedirect(route('dashboard', absolute: false));
@@ -80,46 +95,4 @@ test('users are rate limited', function () {
     ]);
 
     $response->assertTooManyRequests();
-});
-
-test('inactive users cannot authenticate using the login screen', function () {
-    $user = User::factory()->create([
-        'is_active' => false,
-    ]);
-
-    $response = $this->post(route('login.store'), [
-        'email' => $user->email,
-        'password' => 'password',
-    ]);
-
-    $this->assertGuest();
-    $response->assertSessionHasErrors([Fortify::username()]);
-});
-
-test('unapproved users cannot authenticate using the login screen', function () {
-    $user = User::factory()->create([
-        'status_approval' => 'pending',
-    ]);
-
-    $response = $this->post(route('login.store'), [
-        'email' => $user->email,
-        'password' => 'password',
-    ]);
-
-    $this->assertGuest();
-    $response->assertSessionHasErrors([Fortify::username()]);
-});
-
-test('rejected users cannot authenticate using the login screen', function () {
-    $user = User::factory()->create([
-        'status_approval' => 'rejected',
-    ]);
-
-    $response = $this->post(route('login.store'), [
-        'email' => $user->email,
-        'password' => 'password',
-    ]);
-
-    $this->assertGuest();
-    $response->assertSessionHasErrors([Fortify::username()]);
 });

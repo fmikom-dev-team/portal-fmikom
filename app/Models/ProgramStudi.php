@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
-use App\Models\Alumni\ProfilAlumni;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProgramStudi extends Model
 {
+    protected $table = 'program_studis';
+
     protected $fillable = ['fakultas_id', 'nama', 'kode'];
 
     public function fakultas(): BelongsTo
@@ -19,10 +20,5 @@ class ProgramStudi extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
-    }
-
-    public function profilAlumnis(): HasMany
-    {
-        return $this->hasMany(ProfilAlumni::class);
     }
 }

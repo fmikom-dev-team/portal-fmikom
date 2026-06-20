@@ -1,36 +1,82 @@
 <?php
 
-use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
 
 test('guests are redirected to the login page', function () {
-    $response = $this->get(route('dashboard'));
-    $response->assertRedirect(route('login'));
+    $this->get(route('dashboard'))
+        ->assertRedirect(route('login'));
 });
 
-test('authenticated users can visit the dashboard', function () {
-    $user = User::factory()->create();
-    $this->actingAs($user);
+test('authenticated users can visit the laravel dashboard page', function () {
+    $user = createUserWithType('mahasiswa');
 
-    $response = $this->get(route('dashboard'));
-    $response->assertOk();
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertRedirect(route('mahasiswa.dashboard'));
 });
 
-test('visiting the dashboard clears active module session context', function () {
-    $user = User::factory()->create();
-    $this->actingAs($user);
+test('admin users are redirected to the admin dashboard after login redirect route', function () {
+    $user = createUserWithType('admin');
 
-    // Seed session with active module keys
-    session([
-        'active_module' => 'PAGI',
-        'active_role' => 'mahasiswa',
-        'active_module_at' => now()->toIso8601String(),
-    ]);
+    $this->actingAs($user)
+        ->get(route('redirect.dashboard'))
+        ->assertRedirect(route('admin.dashboard'));
+});
 
-    $response = $this->get(route('dashboard'));
-    $response->assertOk();
+test('mahasiswa users are redirected to the fast user dashboard after login redirect route', function () {
+    $user = createUserWithType('mahasiswa');
 
-    // Verify session keys are forgotten
-    expect(session('active_module'))->toBeNull();
-    expect(session('active_role'))->toBeNull();
-    expect(session('active_module_at'))->toBeNull();
+    $this->actingAs($user)
+        ->get(route('redirect.dashboard'))
+        ->assertRedirect(route('mahasiswa.dashboard'));
+});
+
+test('dosen users are redirected to the dosen dashboard after login redirect route', function () {
+    $user = createUserWithType('dosen');
+
+    $this->actingAs($user)
+        ->get(route('redirect.dashboard'))
+        ->assertRedirect(route('dosen.dashboard'));
+});
+
+test('kaprodi users are redirected to the kaprodi dashboard after login redirect route', function () {
+    $user = createUserWithType('kaprodi');
+
+    $this->actingAs($user)
+        ->get(route('redirect.dashboard'))
+        ->assertRedirect(route('kaprodi.dashboard'));
+});
+
+test('dekan users are redirected to the dekan dashboard after login redirect route', function () {
+    $user = createUserWithType('dekan');
+
+    $this->actingAs($user)
+        ->get(route('redirect.dashboard'))
+        ->assertRedirect(route('dekan.dashboard'));
+});
+
+test('admin users cannot access the fast user dashboard directly', function () {
+    $user = createUserWithType('admin');
+
+    $this->actingAs($user)
+        ->get(route('fast.user.dashboard'))
+        ->assertForbidden();
+});
+
+test('mahasiswa users cannot access the admin dashboard directly', function () {
+    $user = createUserWithType('mahasiswa');
+
+    $this->actingAs($user)
+        ->get(route('admin.dashboard'))
+        ->assertForbidden();
+});
+
+test('mahasiswa users cannot access the approval dashboard directly', function () {
+    $user = createUserWithType('mahasiswa');
+
+    $this->actingAs($user)
+        ->get(route('approval.dashboard'))
+        ->assertForbidden();
 });

@@ -26,15 +26,40 @@ class UserFactory extends Factory
     {
         return [
             'name' => fake()->name(),
+            'role_title' => 'Mahasiswa',
+            'user_type' => 'mahasiswa',
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'tanggal_lahir' => null,
+            'tahun_lulus' => null,
+            'otp_code' => null,
+            'otp_expires_at' => null,
+            'password_changed_at' => null,
+            'banner_path' => null,
+            'bio' => null,
+            'location' => null,
+            'metadata' => null,
+            'website' => null,
+            'twitter' => null,
+            'linkedin' => null,
+            'github' => null,
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
-            'password_changed_at' => now(),
         ];
+    }
+
+    public function configure(): static
+    {
+        return $this->afterMaking(function (User $user): void {
+            $userType = trim((string) ($user->user_type ?? ''));
+            $roleTitle = trim((string) ($user->role_title ?? ''));
+
+            $user->user_type = $userType !== '' ? $userType : 'mahasiswa';
+            $user->role_title = $roleTitle !== '' ? $roleTitle : 'Mahasiswa';
+        });
     }
 
     /**

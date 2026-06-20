@@ -2,257 +2,220 @@
 
 namespace App\Models;
 
-use App\Exceptions\SuperAdminProtectionException;
-use App\Models\Alumni\ProfilAlumni;
-use App\Models\Auth\AuthOAuthCredential;
-use App\Models\Kuesioner\Kuesioner;
-use App\Models\Magang\LowonganInfo;
-use App\Models\Magang\PembimbingLapangan;
-use App\Models\Magang\PendaftaranMagang;
-use App\Models\Magang\PenilaianMagang;
-use App\Models\Pagi\PagiActiveChat;
-use App\Models\Pagi\PagiArchivedChat;
-use App\Models\Pagi\PagiClearedChat;
-use App\Models\Pagi\PagiPinnedChat;
-use App\Models\Pagi\PagiUnreadChat;
-use App\Models\Pagi\PagiWork;
-use App\Models\Surat\Surat;
-use App\Models\Surat\SuratApprovalFlow;
-use Illuminate\Database\Eloquent\Collection;
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use Laravel\Sanctum\HasApiTokens;
+use Laravel\Fortify\TwoFactorAuthenticatable;
 
-/**
- * @property int $id
- * @property string $name
- * @property string $email
- * @property string $user_type
- * @property string|null $nomor_induk
- * @property string $status_approval
- * @property bool $is_active
- * @property string|null $foto_path
- * @property string|null $location
- * @property array|null $metadata
- * @property Carbon|null $tanggal_lahir
- * @property Role|null $role
- * @property Collection|UserModuleRole[] $moduleRoles
- * @property Collection|AuthOAuthCredential[] $oauthCredentials
- * @property int|null $sign_in_count
- * @property string|null $last_sign_in_at
- */
 class User extends Authenticatable
 {
-    use \App\Concerns\UserHelpers, HasApiTokens, HasFactory, Notifiable, \App\Models\Traits\HasPagiRelations;
-
-    protected $fillable = [
-        'name', 'email', 'password', 'program_studi_id',
-        'no_telepon', 'foto_path', 'banner_path', 'is_active',
-        'nomor_induk', 'status_approval', 'user_type',
-        'tahun_lulus', 'otp_code', 'otp_expires_at', 'password_changed_at',
-        'role_title', 'bio', 'location', 'website', 'twitter', 'linkedin', 'github', 'instagram',
-        'metadata', 'tanggal_lahir', 'last_seen_at', 'pagi_username', 'deletion_requested_at',
-    ];
+    /** @use HasFactory<UserFactory> */
+    use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
     /**
-     * ⚠️ KEAMANAN — Semua field sensitif WAJIB tersembunyi dari serialisasi JSON/array.
-     * Ini adalah lapis kedua keamanan selain filter di HandleInertiaRequests.php
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
      */
-    protected $hidden = [
+    protected $fillable = [
+        'name',
+        'role_title',
+        'user_type',
+        'email',
         'password',
-        'remember_token',
-        'two_factor_secret',
-        'two_factor_recovery_codes',
-        'two_factor_confirmed_at',
+        'program_studi_id',
+        'nim_nip',
+        'nomor_induk',
+        'tanggal_lahir',
+        'tahun_lulus',
         'otp_code',
         'otp_expires_at',
         'password_changed_at',
-        'nomor_induk',
-        'clearHistory',
-        'encryptHistory',
+        'no_telepon',
+        'foto_path',
+        'banner_path',
+        'bio',
+        'location',
+        'metadata',
+        'website',
+        'twitter',
+        'linkedin',
+        'github',
+        'is_active',
+        'status_approval',
     ];
 
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'password',
+        'otp_code',
+        'otp_expires_at',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'remember_token',
+    ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
-            'otp_expires_at' => 'datetime',
             'password' => 'hashed',
-            'is_active' => 'boolean',
+            'two_factor_confirmed_at' => 'datetime',
+            'tanggal_lahir' => 'date',
             'tahun_lulus' => 'integer',
-            // user_type = identity layer (mahasiswa, alumni, mitra, dosen, staff)
-            // digunakan sebagai fallback role di module jika tidak ada assignment
-            'user_type' => 'string',
+            'otp_expires_at' => 'datetime',
+            'password_changed_at' => 'datetime',
             'metadata' => 'array',
-            'tanggal_lahir' => 'date:Y-m-d',
-            'last_seen_at' => 'datetime',
-            'deletion_requested_at' => 'datetime',
+            'is_active' => 'boolean',
         ];
     }
 
-    protected static function booted(): void
-    {
-        static::saved(function ($user) {
-            Cache::forget("pagi_public_profile_{$user->id}");
-
-            if ($user->wasChanged('password') || ($user->wasRecentlyCreated && $user->password)) {
-                DB::afterCommit(function () use ($user) {
-                    DB::table('auth_password_histories')->insert([
-                        'user_id' => $user->id,
-                        'password_hash' => $user->password,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                });
-            }
-        });
-
-        static::deleting(function ($user) {
-            if ($user->user_type === 'super_admin') {
-                throw new SuperAdminProtectionException('Akun dengan tipe Super Admin dilindungi oleh sistem dan tidak dapat dihapus.');
-            }
-        });
-    }
-
     /**
-     * Relasi ke SSO global role (super-admin, admin, dll).
-     * Digunakan hanya untuk CheckRole middleware (portal-level).
-     * Untuk otorisasi modul, gunakan UserModuleRole + active_role session.
-     *
-     * @deprecated Gunakan user_type untuk identity, UserModuleRole untuk otorisasi modul.
+     * @return BelongsTo<ProgramStudi, $this>
      */
-    public function role(): BelongsTo
-    {
-        return $this->belongsTo(Role::class);
-    }
-
-    /**
-     * Relasi ke pivot table custom untuk Multi-Module SSO
-     */
-    public function moduleRoles(): HasMany
-    {
-        return $this->hasMany(UserModuleRole::class);
-    }
-
-    /**
-     * Relasi ke akun OAuth yang terhubung.
-     */
-    public function oauthCredentials(): HasMany
-    {
-        return $this->hasMany(AuthOAuthCredential::class);
-    }
-
-    /**
-     * Mengambil daftar modul unik yang bisa diakses user ini
-     */
-    public function accessibleModules()
-    {
-        return Module::whereHas('userRoles', function ($query) {
-            $query->where('user_id', $this->id);
-        })->get();
-    }
-
     public function programStudi(): BelongsTo
     {
         return $this->belongsTo(ProgramStudi::class);
     }
 
-    public function profilAlumni(): HasOne
+    public function hasFastUserRole(): bool
     {
-        return $this->hasOne(ProfilAlumni::class);
+        return $this->isMahasiswa()
+            || $this->isDosen();
     }
 
-    public function surats(): HasMany
+    public function userTypeSlug(): string
     {
-        return $this->hasMany(Surat::class, 'pemohon_id');
-    }
+        $userType = $this->normalizedUserType((string) ($this->user_type ?? ''));
 
-    public function suratApprovals(): HasMany
-    {
-        return $this->hasMany(SuratApprovalFlow::class, 'approver_id');
-    }
-
-    public function pendaftaranMagangs(): HasMany
-    {
-        return $this->hasMany(PendaftaranMagang::class, 'mahasiswa_id');
-    }
-
-    public function penilaianMagangs(): HasMany
-    {
-        return $this->hasMany(PenilaianMagang::class, 'dosen_id');
-    }
-
-    public function kuesioners(): HasMany
-    {
-        return $this->hasMany(Kuesioner::class, 'pembuat_id');
-    }
-
-    public function lowonganInfos(): HasMany
-    {
-        return $this->hasMany(LowonganInfo::class, 'pembuat_id');
-    }
-
-    public function pembimbingLapangan(): HasOne
-    {
-        return $this->hasOne(PembimbingLapangan::class);
-    }
-
-    // -----------------------------------------------------------------------
-
-    // Helper Methods — Identity Check
-    // Menggunakan user_type (identity layer) sebagai sumber utama.
-    // Fallback ke role->slug untuk kompatibilitas mundur.
-    // -----------------------------------------------------------------------
-
-    /**
-     * Format standar untuk super-admin user_type.
-     * Gunakan konstanta ini untuk konsistensi dan menghindari typo.
-     */
-    const USER_TYPE_SUPER_ADMIN = 'super-admin';
-
-    // -----------------------------------------------------------------------
-
-    /**
-     * Centralized helper to assign default module access based on role/user_type.
-     */
-    public function assignDefaultModuleRoles(): void
-    {
-        $roleObj = Role::query()->where('slug', '=', $this->user_type, 'and')->first();
-        if ($roleObj) {
-            $defaultModules = [];
-            if ($this->user_type === 'mahasiswa' || $this->user_type === 'dosen') {
-                $defaultModules = ['FAST', 'PAGI', 'WIMS'];
-            } elseif ($this->user_type === 'alumni') {
-                $defaultModules = ['TRACE', 'PAGI'];
-            } elseif ($this->user_type === 'mitra') {
-                $defaultModules = ['WIMS', 'TRACE', 'PAGI'];
-            }
-
-            if (! empty($defaultModules)) {
-                $modules = Module::query()->whereIn('code', $defaultModules, 'and', false)->get();
-                foreach ($modules as $mod) {
-                    UserModuleRole::firstOrCreate([
-                        'user_id' => $this->id,
-                        'module_id' => $mod->id,
-                        'role_id' => $roleObj->id,
-                    ], [
-                        'is_active' => true,
-                    ]);
-                }
-            }
+        if ($userType !== '') {
+            return $userType;
         }
+
+        return 'mahasiswa';
     }
 
-    public function getNimNipAttribute(): ?string
+    public function roleDisplayName(): string
     {
-        return $this->attributes['nim_nip'] ?? $this->attributes['nomor_induk'] ?? null;
+        $roleTitle = trim((string) ($this->role_title ?? ''));
+
+        if ($roleTitle !== '') {
+            return $roleTitle;
+        }
+
+        return $this->displayRoleTitle($this->userTypeSlug());
+    }
+
+    public function roleSlug(): string
+    {
+        return $this->userTypeSlug();
+    }
+
+    public function hasRole(string ...$roles): bool
+    {
+        $roleSlug = $this->roleSlug();
+
+        return in_array($roleSlug, array_map(
+            static fn (string $role): string => str($role)->slug()->toString(),
+            $roles,
+        ), true);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin');
+    }
+
+    public function isApprover(): bool
+    {
+        return $this->isKaprodi() || $this->isDekan();
+    }
+
+    public function isKaprodi(): bool
+    {
+        return str($this->roleSlug())->contains('kaprodi');
+    }
+
+    public function isDekan(): bool
+    {
+        return str($this->roleSlug())->contains('dekan');
+    }
+
+    public function isMahasiswa(): bool
+    {
+        $roleSlug = $this->roleSlug();
+
+        return str($roleSlug)->contains('mahasiswa');
+    }
+
+    public function isDosen(): bool
+    {
+        $roleSlug = $this->roleSlug();
+
+        return $roleSlug === 'lecturer'
+            || str($roleSlug)->contains('dosen');
+    }
+
+    public function isLab(): bool
+    {
+        $roleSlug = $this->roleSlug();
+
+        return str($roleSlug)->contains('lab');
+    }
+
+    public function isSekfak(): bool
+    {
+        $roleSlug = $this->roleSlug();
+
+        return str($roleSlug)->contains('sekfak')
+            || str($roleSlug)->contains('sekretaris');
+    }
+
+    public function hasStaffAccess(): bool
+    {
+        return $this->isAdmin() || $this->isApprover();
+    }
+
+    public function dashboardRouteName(): string
+    {
+        return match (true) {
+            $this->isAdmin() => 'admin.dashboard',
+            $this->isKaprodi() => 'kaprodi.dashboard',
+            $this->isDekan() => 'dekan.dashboard',
+            $this->isDosen() => 'dosen.dashboard',
+            $this->isMahasiswa() => 'mahasiswa.dashboard',
+            default => abort(403),
+        };
+    }
+
+    private function normalizedUserType(string $value): string
+    {
+        $slug = str($value)->trim()->slug()->toString();
+
+        return match ($slug) {
+            'super_admin', 'super-admin' => 'admin',
+            default => $slug,
+        };
+    }
+
+    private function displayRoleTitle(string $userType): string
+    {
+        return match ($userType) {
+            'admin' => 'Admin',
+            'super_admin' => 'Super Admin',
+            default => ucwords(str_replace(['-', '_'], ' ', $userType)),
+        };
     }
 }

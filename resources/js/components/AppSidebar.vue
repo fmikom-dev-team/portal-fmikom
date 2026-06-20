@@ -1,187 +1,149 @@
 <script setup lang="ts">
-import { Link, usePage } from "@inertiajs/vue3";
+import { Link, usePage } from '@inertiajs/vue3';
+import { BookOpen, FileCheck2, FilePlus2, FileStack, FolderGit2, LayoutGrid, ScrollText, History, Archive, Clock } from 'lucide-vue-next';
+import { computed } from 'vue';
+import AppLogo from '@/components/AppLogo.vue';
+import NavFooter from '@/components/NavFooter.vue';
+import NavMain from '@/components/NavMain.vue';
+import NavUser from '@/components/NavUser.vue';
 import {
-	BookOpen,
-	Globe,
-	GraduationCap,
-	Home,
-	LayoutGrid,
-	PenLine,
-	Users,
-} from "lucide-vue-next";
-import { computed, ref, onMounted } from "vue";
-import AppLogo from "@/components/AppLogo.vue";
-import {
-	Sidebar,
-	SidebarContent,
-	SidebarFooter,
-	SidebarGroup,
-	SidebarGroupLabel,
-	SidebarHeader,
-	SidebarMenu,
-	SidebarMenuButton,
-	SidebarMenuItem,
-	SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { useCurrentUrl } from "@/composables/useCurrentUrl";
-import { dashboard } from "@/routes";
-import SidebarSkeleton from "@/components/skeletons/SidebarSkeleton.vue";
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+} from '@/components/ui/sidebar';
+import { dashboard } from '@/routes';
+import type { NavItem } from '@/types';
 
-const page = usePage();
-const user = computed(
-	() => page.props.auth?.user || ({} as Record<string, any>),
-);
-const { isCurrentUrl } = useCurrentUrl();
+type PageProps = {
+    auth?: {
+        user?: {
+            user_type?: string | null;
+            role_title?: string | null;
+        } | null;
+    };
+};
 
-const isLoading = ref(true);
-onMounted(() => {
-	setTimeout(() => {
-		isLoading.value = false;
-	}, 800);
+const page = usePage<PageProps>();
+
+const roleSlug = computed(() => {
+    const slug = String(page.props.auth?.user?.user_type ?? '').trim().toLowerCase();
+
+    if (slug !== '') {
+        return slug;
+    }
+
+    return String(page.props.auth?.user?.role_title ?? '').trim().toLowerCase();
 });
+
+const mainNavItems = computed<NavItem[]>(() => {
+    if (roleSlug.value.includes('admin')) {
+        return [
+            {
+                title: 'Dashboard',
+                href: '/admin/dashboard',
+                icon: LayoutGrid,
+            },
+            {
+                title: 'Pembuatan Surat',
+                href: '/admin/surat/create',
+                icon: FilePlus2,
+            },
+            {
+                title: 'Semua Pengajuan',
+                href: '/admin/dashboard',
+                icon: FileStack,
+            },
+            {
+                title: 'Template Surat',
+                href: '/admin/templates',
+                icon: ScrollText,
+            },
+        ];
+    }
+
+    if (roleSlug.value.includes('kaprodi') || roleSlug.value.includes('dekan')) {
+        return [
+            {
+                title: 'Dashboard Approval',
+                href: `/${roleSlug.value}/dashboard`,
+                icon: FileCheck2,
+            },
+            {
+                title: 'Antrian Approval',
+                href: `/${roleSlug.value}/antrian`,
+                icon: Clock,
+            },
+            {
+                title: 'Riwayat Approval',
+                href: `/${roleSlug.value}/arsip`,
+                icon: Archive,
+            },
+        ];
+    }
+
+    if (roleSlug.value.includes('mahasiswa') || roleSlug.value.includes('dosen')) {
+        return [
+            {
+                title: 'Dashboard',
+                href: `/${roleSlug.value}/dashboard`,
+                icon: LayoutGrid,
+            },
+            {
+                title: 'Riwayat',
+                href: `/${roleSlug.value}/history`,
+                icon: History,
+            },
+        ];
+    }
+
+    return [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+            icon: LayoutGrid,
+        },
+    ];
+});
+
+const footerNavItems: NavItem[] = [
+    {
+        title: 'Repository',
+        href: 'https://github.com/laravel/vue-starter-kit',
+        icon: FolderGit2,
+    },
+    {
+        title: 'Documentation',
+        href: 'https://laravel.com/docs/starter-kits#vue',
+        icon: BookOpen,
+    },
+];
 </script>
 
 <template>
-    <SidebarSkeleton v-if="isLoading" />
-    <Sidebar v-else collapsible="icon">
-        <!-- Brand Header (Nexus layout style) with Hover Logo Reveal Toggle interaction -->
-        <SidebarHeader 
-            class="flex flex-row items-center justify-between pl-5 pr-4 border-b border-slate-50 dark:border-zinc-900 group/header relative transition-all duration-300 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center shrink-0"
-            style="height: 76px"
-        >
-            <Link :href="dashboard()" class="flex items-center justify-center shrink-0 transition-all duration-300 group-data-[collapsible=icon]:group-hover/header:opacity-0 group-data-[collapsible=icon]:group-hover/header:scale-75">
-                <AppLogo />
-            </Link>
-            <!-- Toggle Sidebar button - absolute centered when collapsed, fades in beautifully on hovering the logo brand area -->
-            <SidebarTrigger class="sidebar-trigger-btn shrink-0 bg-transparent text-slate-400 hover:text-indigo-600 rounded-lg p-1 w-7 h-7 hover:bg-slate-50 dark:hover:bg-zinc-900 border-none shadow-none transition-all duration-305 group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:inset-0 group-data-[collapsible=icon]:m-auto group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:group-hover/header:opacity-100 group-data-[collapsible=icon]:group-hover/header:pointer-events-auto" />
+    <Sidebar collapsible="icon" variant="inset">
+        <SidebarHeader>
+            <SidebarMenu>
+                <SidebarMenuItem>
+                    <SidebarMenuButton size="lg" as-child>
+                        <Link :href="dashboard()">
+                            <AppLogo />
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarMenu>
         </SidebarHeader>
 
-        <!-- Sidebar Navigation Sections (Nexus General/Tools/Support layout) -->
-        <SidebarContent class="px-2 py-4 transition-all duration-200 ease-in-out group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-4 group-data-[collapsible=icon]:gap-0">
-            <!-- GENERAL SECTION -->
-            <SidebarGroup class="px-3 py-2 transition-all duration-300 ease-in-out group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center">
-                <SidebarGroupLabel class="px-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-400/80 dark:text-zinc-500 mb-2 group-data-[collapsible=icon]:mb-0 select-none">
-                    General
-                </SidebarGroupLabel>
-                <SidebarMenu class="space-y-1 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:w-full">
-                    <SidebarMenuItem class="group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
-                        <SidebarMenuButton
-                            as-child
-                            :is-active="isCurrentUrl(dashboard())"
-                            tooltip="Dashboard"
-                            class="h-10 rounded-xl transition-all duration-150 group-data-[collapsible=icon]:size-10!"
-                            :class="isCurrentUrl(dashboard()) 
-                              ? 'font-bold text-slate-900 bg-slate-105 dark:bg-slate-800 dark:text-slate-100 shadow-sm border border-slate-200/40 dark:border-slate-700/25' 
-                              : 'font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900'"
-                        >
-                            <Link :href="dashboard()">
-                                <LayoutGrid class="h-[18px] w-[18px] shrink-0 transition-colors" 
-                                            :class="isCurrentUrl(dashboard()) ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 group-hover:text-slate-650'" />
-                                <span class="text-[13.5px] transition-all duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0 truncate select-none">Dashboard</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarGroup>
-
-            <!-- MANAGEMENT SECTION (only for super_admin or admin) -->
-            <SidebarGroup v-if="user.is_admin || user.is_super_admin" class="px-3 py-2 mt-4 transition-all duration-300 ease-in-out group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2 group-data-[collapsible=icon]:mt-2 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center">
-                <SidebarGroupLabel class="px-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-400/80 dark:text-zinc-500 mb-2 group-data-[collapsible=icon]:mb-0 select-none">
-                    Management
-                </SidebarGroupLabel>
-                <SidebarMenu class="space-y-1 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:w-full">
-                    <SidebarMenuItem class="group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
-                        <SidebarMenuButton
-                            as-child
-                            :is-active="isCurrentUrl('/portal-admin')"
-                            tooltip="Portal Admin (Web)"
-                            class="h-10 rounded-xl transition-all duration-150 group-data-[collapsible=icon]:size-10!"
-                            :class="isCurrentUrl('/portal-admin') 
-                              ? 'font-bold text-slate-900 bg-slate-105 dark:bg-slate-800 dark:text-slate-100 shadow-sm border border-slate-200/40 dark:border-slate-700/25' 
-                              : 'font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900'"
-                        >
-                            <Link href="/portal-admin">
-                                <Globe class="h-[18px] w-[18px] shrink-0 transition-colors" 
-                                       :class="isCurrentUrl('/portal-admin') ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 group-hover:text-slate-650'" />
-                                <span class="text-[13.5px] transition-all duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0 truncate select-none">Portal Admin (Web)</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-
-                    <SidebarMenuItem class="group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
-                        <SidebarMenuButton
-                            as-child
-                            :is-active="isCurrentUrl('/workos')"
-                            tooltip="Manajemen Role User"
-                            class="h-10 rounded-xl transition-all duration-150 group-data-[collapsible=icon]:size-10!"
-                            :class="isCurrentUrl('/workos') 
-                              ? 'font-bold text-slate-900 bg-slate-105 dark:bg-slate-800 dark:text-slate-100 shadow-sm border border-slate-200/40 dark:border-slate-700/25' 
-                              : 'font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900'"
-                        >
-                            <Link href="/workos">
-                                <Users class="h-[18px] w-[18px] shrink-0 transition-colors" 
-                                       :class="isCurrentUrl('/workos') ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 group-hover:text-slate-650'" />
-                                <span class="text-[13.5px] transition-all duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0 truncate select-none">Manajemen Role User</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarGroup>
-
-            <!-- EXTERNAL SERVICES SECTION -->
-            <SidebarGroup class="px-3 py-2 mt-4 transition-all duration-300 ease-in-out group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2 group-data-[collapsible=icon]:mt-2 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center">
-                <SidebarGroupLabel class="px-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-400/80 dark:text-zinc-500 mb-2 group-data-[collapsible=icon]:mb-0 select-none">
-                    Layanan UNUGHA
-                </SidebarGroupLabel>
-                <SidebarMenu class="space-y-1 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:w-full">
-                    <SidebarMenuItem class="group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
-                        <SidebarMenuButton
-                            as-child
-                            tooltip="Siakad UNUGHA"
-                            class="h-10 rounded-xl transition-all duration-200 font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900 group-data-[collapsible=icon]:size-10!"
-                        >
-                            <a href="https://siakad.unugha.ac.id" target="_blank" rel="noopener noreferrer">
-                                <GraduationCap class="h-[18px] w-[18px] shrink-0 text-slate-400" />
-                                <span class="text-[13.5px] transition-all duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0 truncate select-none">Siakad UNUGHA</span>
-                            </a>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-
-                    <SidebarMenuItem class="group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
-                        <SidebarMenuButton
-                            as-child
-                            tooltip="SINTA BIMA"
-                            class="h-10 rounded-xl transition-all duration-200 font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900 group-data-[collapsible=icon]:size-10!"
-                        >
-                            <a href="https://bima.kemdikbud.go.id/" target="_blank" rel="noopener noreferrer">
-                                <BookOpen class="h-[18px] w-[18px] shrink-0 text-slate-400" />
-                                <span class="text-[13.5px] transition-all duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0 truncate select-none">SINTA BIMA</span>
-                            </a>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-
-                    <SidebarMenuItem class="group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
-                        <SidebarMenuButton
-                            as-child
-                            tooltip="Web Utama UNUGHA"
-                            class="h-10 rounded-xl transition-all duration-200 font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900 group-data-[collapsible=icon]:size-10!"
-                        >
-                            <a href="https://unugha.ac.id" target="_blank" rel="noopener noreferrer">
-                                <Globe class="h-[18px] w-[18px] shrink-0 text-slate-400" />
-                                <span class="text-[13.5px] transition-all duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0 truncate select-none">Web Utama UNUGHA</span>
-                            </a>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarGroup>
+        <SidebarContent>
+            <NavMain :items="mainNavItems" />
         </SidebarContent>
 
-        <!-- Sidebar Footer (Nexus layout style with department card & back to public button) -->
-        <SidebarFooter class="px-5 py-4 transition-all duration-200 ease-in-out border-t border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-950 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:border-t-0">
-            <!-- Small Copyright -->
-            <p class="text-[10px] text-slate-400/80 dark:text-zinc-500 font-semibold text-center mt-4 transition-all duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:h-0 group-data-[collapsible=icon]:mt-0 overflow-hidden">
-                &copy; 2026 Portal FMIKOM
-            </p>
+        <SidebarFooter>
+            <NavFooter :items="footerNavItems" />
+            <NavUser />
         </SidebarFooter>
     </Sidebar>
     <slot />
