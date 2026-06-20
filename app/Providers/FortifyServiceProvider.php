@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Laravel\Fortify\Actions\AttemptToAuthenticate;
 use Laravel\Fortify\Actions\EnsureLoginIsNotThrottled;
@@ -59,6 +60,18 @@ class FortifyServiceProvider extends ServiceProvider
                 ->first();
 
             if ($user && Hash::check($request->password, $user->password)) {
+                if (! $user->is_active) {
+                    throw ValidationException::withMessages([
+                        Fortify::username() => __('Akun Anda telah dinonaktifkan.'),
+                    ]);
+                }
+
+                if ($user->status_approval !== 'approved') {
+                    throw ValidationException::withMessages([
+                        Fortify::username() => __('Akun Anda belum disetujui atau telah ditolak.'),
+                    ]);
+                }
+
                 return $user;
             }
 

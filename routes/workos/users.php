@@ -16,6 +16,8 @@ Route::prefix('users')->name('users.')->group(function () {
     Route::delete('/{user}', [UsersController::class, 'destroy'])->name('destroy');
     Route::post('/{user}/approve', [UsersController::class, 'approve'])->name('approve');
     Route::post('/{user}/reject', [UsersController::class, 'reject'])->name('reject');
+    Route::post('/{user}/approve-deletion', [UsersController::class, 'approveDeletion'])->name('approve-deletion');
+    Route::post('/{user}/reject-deletion', [UsersController::class, 'rejectDeletion'])->name('reject-deletion');
     Route::patch('/{user}/assign-role', [UsersController::class, 'assignRole'])->name('assign-role');
     Route::post('/{user}/module-roles', [UsersController::class, 'addModuleRole'])->name('module-roles.store');
     Route::delete('/{user}/oauth/{credential}', [UsersController::class, 'disconnectOAuth'])->name('oauth.disconnect');

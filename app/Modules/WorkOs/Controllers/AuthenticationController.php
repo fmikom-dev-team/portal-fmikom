@@ -11,134 +11,22 @@ use App\Models\Auth\AuthPasskey;
 use App\Models\Auth\AuthSession;
 use App\Models\Auth\AuthSetting;
 use App\Models\User;
+use App\Models\Module;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Auth;
 
 class AuthenticationController extends Controller
 {
-    // =========================================================================
-    // ANALYTICS
-    // =========================================================================
+    protected \App\Modules\WorkOs\Services\Sessions\AuthSessionService $sessionService;
 
-    public function analytics(Request $request)
+    public function __construct(\App\Modules\WorkOs\Services\Sessions\AuthSessionService $sessionService)
     {
-        $days = min((int) $request->get('days', 7), 365);
-        $interval = $request->get('interval', 'daily'); // daily, weekly
-        $startDate = Carbon::now()->subDays($days)->startOfDay();
-
-        // 1. User Stats
-        $totalUsers = User::count();
-        $newUsers = User::where('created_at', '>=', $startDate)->count();
-
-        // 2. Active sessions in period
-        $activeSessions = AuthSession::where('last_activity_at', '>=', $startDate)
-            ->where('is_revoked', false)
-            ->distinct('user_id')
-            ->count('user_id');
-
-        // 3. Login Attempts
-        $attempts = AuthLoginAttempt::where('created_at', '>=', $startDate)->get();
-        $totalAttempts = $attempts->count();
-        $successAttempts = $attempts->where('is_successful', true)->count();
-        $failedAttempts = $totalAttempts - $successAttempts;
-        $successRate = $totalAttempts > 0 ? round(($successAttempts / $totalAttempts) * 100, 1) : 0;
-
-        // 4. MFA Adoption
-        $mfaUsers = AuthMfa::where('is_active', true)->distinct('user_id')->count('user_id');
-        $mfaAdoption = $totalUsers > 0 ? round(($mfaUsers / $totalUsers) * 100, 1) : 0;
-
-        // 5. Passkeys Registered
-        $passkeyUsers = AuthPasskey::distinct('user_id')->count('user_id');
-
-        // 6. Provider Distribution
-        $providerStats = AuthLoginAttempt::where('created_at', '>=', $startDate)
-            ->whereNotNull('provider')
-            ->select('provider', DB::raw('count(*) as count'))
-            ->groupBy('provider')
-            ->pluck('count', 'provider')
-            ->toArray();
-
-        // 7. Daily/Weekly Trends for chart
-        $groupFormat = $interval === 'weekly' ? '%Y-%u' : '%Y-%m-%d';
-        $trends = AuthLoginAttempt::select(
-            DB::raw("DATE_FORMAT(created_at, '{$groupFormat}') as period"),
-            DB::raw('COUNT(*) as total'),
-            DB::raw('SUM(CASE WHEN is_successful = 1 THEN 1 ELSE 0 END) as successful'),
-            DB::raw('SUM(CASE WHEN is_successful = 0 THEN 1 ELSE 0 END) as failed')
-        )
-            ->where('created_at', '>=', $startDate)
-            ->groupBy('period')
-            ->orderBy('period')
-            ->get();
-
-        // 8. Risk distribution of active sessions
-        $riskDistribution = [
-            'safe' => AuthSession::where('is_revoked', false)->where('risk_score', '<=', 20)->count(),
-            'medium' => AuthSession::where('is_revoked', false)->whereBetween('risk_score', [21, 60])->count(),
-            'high' => AuthSession::where('is_revoked', false)->where('risk_score', '>', 60)->count(),
-        ];
-
-        // 9. Real-time detailed lists for interactive drill-down
-        $activeSessionsList = AuthSession::with(['user:id,name,email', 'device'])
-            ->where('last_activity_at', '>=', $startDate)
-            ->where('is_revoked', false)
-            ->orderByDesc('last_activity_at')
-            ->take(10)
-            ->get()
-            ->map(function ($s) {
-                return [
-                    'id' => $s->id,
-                    'user_name' => $s->user?->name ?? 'Unknown',
-                    'user_email' => $s->user?->email ?? '-',
-                    'ip_address' => $s->ip_address,
-                    'device' => $s->device?->browser ?? 'Unknown',
-                    'risk_level' => $s->risk_score > 60 ? 'high' : ($s->risk_score > 20 ? 'medium' : 'safe'),
-                    'last_active' => $s->last_activity_at?->diffForHumans() ?? '-',
-                ];
-            });
-
-        $newUsersList = User::where('created_at', '>=', $startDate)
-            ->orderByDesc('created_at')
-            ->take(10)
-            ->get()
-            ->map(function ($u) {
-                return [
-                    'id' => $u->id,
-                    'name' => $u->name,
-                    'email' => $u->email,
-                    'user_type' => $u->user_type,
-                    'created_at' => $u->created_at?->diffForHumans() ?? '-',
-                ];
-            });
-
-        $failedLoginsList = AuthLoginAttempt::where('created_at', '>=', $startDate)
-            ->where('is_successful', false)
-            ->orderByDesc('created_at')
-            ->take(10)
-            ->get()
-            ->map(function ($attempt) {
-                return [
-                    'id' => $attempt->id,
-                    'email' => $attempt->email ?? 'Unknown',
-                    'ip_address' => $attempt->ip_address ?? '-',
-                    'provider' => $attempt->provider ?? 'Email/Password',
-                    'reason' => $attempt->failure_reason ?? 'Invalid credentials',
-                    'time' => $attempt->created_at?->diffForHumans() ?? '-',
-                ];
-            });
-
-        $data = compact(
-            'totalUsers', 'newUsers', 'activeSessions',
-            'totalAttempts', 'successAttempts', 'failedAttempts', 'successRate',
-            'mfaAdoption', 'mfaUsers', 'passkeyUsers',
-            'providerStats', 'trends', 'riskDistribution',
-            'activeSessionsList', 'newUsersList', 'failedLoginsList'
-        );
-
-        return response()->json($data);
+        $this->sessionService = $sessionService;
     }
 
     // =========================================================================
@@ -284,7 +172,7 @@ class AuthenticationController extends Controller
 
     public function providers()
     {
-        $providers = AuthOAuthProvider::orderBy('name')->get()->map(function ($p) {
+        $providers = AuthOAuthProvider::query()->orderBy('name', 'asc')->get()->map(function ($p) {
             return [
                 'id' => $p->id,
                 'name' => $p->name,
@@ -294,7 +182,7 @@ class AuthenticationController extends Controller
                 'has_custom' => ! empty($p->client_id),
                 'client_id' => $p->client_id,
                 'scopes' => $p->scopes,
-                'redirect_uri' => url("/auth/oauth/{$p->slug}/callback"),
+                'redirect_uri' => url("/auth/oauth/{$p->slug}/callback", []),
             ];
         });
 
@@ -311,7 +199,7 @@ class AuthenticationController extends Controller
             'scopes' => 'sometimes|nullable|string',
         ]);
 
-        $provider = AuthOAuthProvider::where('slug', $slug)->firstOrFail();
+        $provider = AuthOAuthProvider::query()->where('slug', '=', $slug)->firstOrFail();
 
         $data = [];
 
@@ -333,7 +221,7 @@ class AuthenticationController extends Controller
             $data['client_secret'] = Crypt::encryptString($request->client_secret);
         }
 
-        $provider->update($data);
+        $provider->fill($data)->save();
 
         // Bust cache
         Cache::forget("oauth_provider.{$slug}");
@@ -357,55 +245,22 @@ class AuthenticationController extends Controller
 
     public function sessions(Request $request)
     {
-        $query = AuthSession::with(['user:id,name,email', 'device'])
-            ->orderBy('last_activity_at', 'desc');
+        $payload = $this->sessionService->getSessionsData($request);
 
-        // Filter
-        if ($request->boolean('revoked')) {
-            $query->where('is_revoked', true);
-        } else {
-            $query->where('is_revoked', false);
-        }
-
-        if ($request->filled('risk_level')) {
-            match ($request->risk_level) {
-                'high' => $query->where('risk_score', '>', 60),
-                'medium' => $query->whereBetween('risk_score', [21, 60]),
-                'safe' => $query->where('risk_score', '<=', 20),
-                default => null,
-            };
-        }
-
-        $sessions = $query->paginate(20)->through(function ($s) {
-            return [
-                'id' => $s->id,
-                'user' => $s->user,
-                'device' => $s->device,
-                'ip_address' => $s->ip_address,
-                'geolocation' => $s->geolocation,
-                'risk_score' => $s->risk_score,
-                'risk_level' => $s->risk_score > 60 ? 'high' : ($s->risk_score > 20 ? 'medium' : 'safe'),
-                'is_revoked' => $s->is_revoked,
-                'last_activity_at' => $s->last_activity_at?->toISOString(),
-                'expires_at' => $s->expires_at?->toISOString(),
-                'created_at' => $s->created_at?->toISOString(),
-            ];
-        });
-
-        $stats = Cache::remember('auth.session.stats', 60, function () {
-            return [
-                'total_active' => AuthSession::where('is_revoked', false)->count(),
-                'total_revoked' => AuthSession::where('is_revoked', true)->count(),
-                'high_risk' => AuthSession::where('is_revoked', false)->where('risk_score', '>', 60)->count(),
-            ];
-        });
-
-        return response()->json(['sessions' => $sessions, 'stats' => $stats]);
+        return response()->json($payload);
     }
 
     public function revokeSession(Request $request, AuthSession $session)
     {
-        $session->update(['is_revoked' => true]);
+        if ($session->session_token) {
+            try {
+                Session::getHandler()->destroy($session->session_token);
+            } catch (\Throwable $e) {
+                // Ignore errors
+            }
+        }
+
+        $session->fill(['is_revoked' => true])->save();
 
         AuthAuditLog::log('auth.session.revoked', $request->user()?->id, [
             'session_id' => $session->id,
@@ -420,16 +275,28 @@ class AuthenticationController extends Controller
 
     public function revokeAllSessions(Request $request)
     {
-        $count = AuthSession::where('is_revoked', false)->update(['is_revoked' => true]);
+        $activeSessions = AuthSession::where('is_revoked', '=', false, 'and')->get();
+        $sessionHandler = Session::getHandler();
+
+        foreach ($activeSessions as $s) {
+            if ($s->session_token) {
+                try {
+                    $sessionHandler->destroy($s->session_token);
+                } catch (\Throwable $e) {
+                    // Ignore errors
+                }
+            }
+            $s->fill(['is_revoked' => true])->save();
+        }
 
         AuthAuditLog::log('auth.session.revoke_all', $request->user()?->id, [
-            'count' => $count,
+            'count' => count($activeSessions),
         ], 'warning');
 
         Cache::forget('auth.session.stats');
         Cache::flush();
 
-        return response()->json(['message' => "{$count} sessions revoked."]);
+        return response()->json(['message' => count($activeSessions).' sessions revoked.']);
     }
 
     public function sessionsConfig()
@@ -507,81 +374,19 @@ class AuthenticationController extends Controller
         return response()->json(['message' => 'Settings saved successfully.']);
     }
 
-    public function previewJwt(Request $request)
+    public function previewJwt(Request $request, \App\Modules\WorkOs\Services\AuthPlatform\JwtTemplateCompiler $compiler)
     {
         $request->validate([
             'jwtCode' => 'required|string',
             'userId' => 'required|exists:users,id',
         ]);
 
-        $user = User::find($request->userId);
-        $module = Module::first();
+        $user = User::findOrFail($request->userId);
+        $module = Module::query()->first();
 
-        $firstName = explode(' ', $user->name)[0] ?? 'Someone';
-        $lastName = count(explode(' ', $user->name)) > 1 ? implode(' ', array_slice(explode(' ', $user->name), 1)) : 'Unknown';
+        $result = $compiler->compile($request->jwtCode, $user, $module);
 
-        $context = [
-            'user' => [
-                'id' => $user->id,
-                'email' => $user->email,
-                'name' => $user->name,
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'metadata' => [
-                    'language' => 'id-ID',
-                ],
-            ],
-            'organization' => [
-                'name' => $module?->name ?? 'FMIKOM Staging Org',
-                'code' => $module?->code ?? 'fmikom-staging',
-                'metadata' => [
-                    'tier' => 'enterprise',
-                ],
-                'domains' => [
-                    ['domain' => 'fmikom.org'],
-                ],
-            ],
-        ];
-
-        $template = $request->jwtCode;
-
-        // Compile template
-        // Replace liquid-like expressions: {{ path.to.var || 'default' }}
-        $compiled = preg_replace_callback('/\{\{\s*([^\}]+)\s*\}\}/', function ($matches) use ($context) {
-            $expression = trim($matches[1]);
-
-            // Handle fallback operator "||"
-            $parts = explode('||', $expression);
-
-            foreach ($parts as $part) {
-                $part = trim($part);
-
-                // String literal check
-                if (preg_match('/^[\'"](.*)[\'"]$/', $part, $strMatch)) {
-                    return $strMatch[1];
-                }
-
-                // Resolve path from context
-                $val = data_get($context, $part);
-                if ($val !== null && $val !== '') {
-                    return is_array($val) ? json_encode($val) : (string) $val;
-                }
-            }
-
-            return '';
-        }, $template);
-
-        // Format beautifully if valid JSON
-        $decoded = json_decode($compiled, true);
-        if (json_last_error() === JSON_ERROR_NONE) {
-            $compiled = json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        }
-
-        return response()->json([
-            'compiled' => $compiled,
-            'user' => $context['user'],
-            'organization' => $context['organization'],
-        ]);
+        return response()->json($result);
     }
 
     // =========================================================================
@@ -590,8 +395,8 @@ class AuthenticationController extends Controller
 
     public function mfaStatus()
     {
-        $totalUsers = User::count();
-        $mfaUsers = AuthMfa::where('is_active', true)->distinct('user_id')->count('user_id');
+        $totalUsers = User::query()->count('*');
+        $mfaUsers = AuthMfa::query()->where('is_active', '=', true, 'and')->distinct()->count('user_id');
 
         return response()->json([
             'total_users' => $totalUsers,
@@ -658,32 +463,4 @@ class AuthenticationController extends Controller
         return response()->json(['message' => 'Password policy updated.']);
     }
 
-    public function deleteFailedLogin(AuthLoginAttempt $attempt)
-    {
-        $attempt->delete();
-        Cache::flush();
-
-        return response()->json(['message' => 'Failed login record cleared.']);
-    }
-
-    public function deleteUser(User $user)
-    {
-        abort_if($user->id === auth()->id(), 403, 'Tidak dapat menghapus akun sendiri.');
-        abort_if($user->user_type === 'super_admin', 403, 'Akun Super Admin dilindungi. Silakan ubah tipe/role user ini terlebih dahulu jika ingin menghapusnya.');
-
-        $user->delete();
-        Cache::flush();
-
-        return response()->json(['message' => 'User deleted successfully.']);
-    }
-
-    public function clearAnalytics(Request $request)
-    {
-        // Delete all active sessions and login attempts
-        AuthSession::query()->delete();
-        AuthLoginAttempt::query()->delete();
-        Cache::flush();
-
-        return response()->json(['success' => true, 'message' => 'Analytics data reset successfully.']);
-    }
 }

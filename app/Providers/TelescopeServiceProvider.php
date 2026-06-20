@@ -54,8 +54,8 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
                 return true;
             }
 
-            // In production: only super-admin or admin roles
-            return method_exists($user, 'isSuperAdmin') && ($user->isSuperAdmin() || $user->isAdmin());
+            // In production: only super-admin role
+            return method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin();
         });
     }
 }

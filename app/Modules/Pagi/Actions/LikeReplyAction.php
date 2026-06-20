@@ -3,6 +3,7 @@
 namespace App\Modules\Pagi\Actions;
 
 use App\Models\Pagi\PagiWork;
+use App\Models\Pagi\PagiWorkComment;
 use App\Models\User;
 
 class LikeReplyAction
@@ -12,32 +13,27 @@ class LikeReplyAction
      */
     public function execute(User $authUser, int $previewId, string $commentId, string $replyId): array
     {
-        $portfolio = PagiWork::findOrFail($previewId);
-        $comments = $portfolio->comments ?? [];
+        $reply = PagiWorkComment::where('uuid', $replyId)->firstOrFail();
 
-        $comments = array_map(function ($c) use ($commentId, $replyId, $authUser) {
-            if ($c['id'] === $commentId && ! empty($c['replies'])) {
-                $c['replies'] = array_map(function ($r) use ($replyId, $authUser) {
-                    if ($r['id'] === $replyId) {
-                        if (! isset($r['likes']) || ! is_array($r['likes'])) {
-                            $r['likes'] = [];
-                        }
-                        if (in_array($authUser->id, $r['likes'])) {
-                            $r['likes'] = array_values(array_filter($r['likes'], fn ($id) => $id !== $authUser->id));
-                        } else {
-                            $r['likes'][] = $authUser->id;
-                        }
-                    }
+        $reply->likesRelation()->toggle($authUser->id);
 
-                    return $r;
-                }, $c['replies']);
-            }
+        // Return fresh comments with full eager-load (avoids ->fresh()->comments N+1)
+        return $this->loadFormattedComments($previewId);
+    }
 
-            return $c;
-        }, $comments);
+    /**
+     * Load all comments for a work with full eager-loading, returning formatted array.
+     */
+    private function loadFormattedComments(int $workId): array
+    {
+        $work = PagiWork::with([
+            'commentsRelation' => fn ($q) => $q->whereNull('parent_id'),
+            'commentsRelation.user:id,name,pagi_username,foto_path',
+            'commentsRelation.likesRelation',
+            'commentsRelation.replies.user:id,name,pagi_username,foto_path',
+            'commentsRelation.replies.likesRelation',
+        ])->findOrFail($workId);
 
-        $portfolio->update(['comments' => $comments]);
-
-        return $comments;
+        return $work->comments;
     }
 }

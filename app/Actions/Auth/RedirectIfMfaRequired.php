@@ -3,6 +3,7 @@
 namespace App\Actions\Auth;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Fortify\Events\TwoFactorAuthenticationChallenged;
 
 class RedirectIfMfaRequired
@@ -23,7 +24,7 @@ class RedirectIfMfaRequired
 
             if ($mfaActive) {
                 // Logout the user temporarily
-                auth()->logout();
+                Auth::logout();
 
                 // Store their ID in the session for the challenge phase
                 $request->session()->put([

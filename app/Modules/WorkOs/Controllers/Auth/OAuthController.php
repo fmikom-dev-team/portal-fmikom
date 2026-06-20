@@ -5,7 +5,6 @@ namespace App\Modules\WorkOs\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Auth\AuthOAuthCredential;
 use App\Models\Module;
-use App\Models\Role;
 use App\Models\User;
 use App\Models\UserModuleRole;
 use App\Modules\WorkOs\Services\AuthPlatform\OAuthEngine;
@@ -42,7 +41,9 @@ class OAuthController extends Controller
 
             return redirect()->away($url);
         } catch (Exception $e) {
-            return redirect()->route('login')->with('error', 'OAuth initialization failed: '.$e->getMessage());
+            logger()->error('OAuth redirect failed: '.$e->getMessage(), ['exception' => $e]);
+
+            return redirect()->route('login')->with('error', 'Gagal memulai autentikasi OAuth. Silakan coba lagi.');
         }
     }
 
@@ -70,6 +71,14 @@ class OAuthController extends Controller
 
             $user = $result;
 
+            // Check if user is active and approved
+            if (! $user->is_active) {
+                return redirect()->route('login')->with('error', 'Akun Anda telah dinonaktifkan.');
+            }
+            if ($user->status_approval !== 'approved') {
+                return redirect()->route('login')->with('error', 'Akun Anda belum disetujui atau telah ditolak.');
+            }
+
             // 2. Authenticate the user (creates Laravel session)
             Auth::login($user, remember: false);
 
@@ -79,16 +88,18 @@ class OAuthController extends Controller
             // 4. Create enterprise session record with device fingerprint + risk score
             $session = $this->sessionEngine->createSession($user, $request);
 
-            // 5. Store auth session token in the Laravel session for quick lookup
-            $request->session()->put('auth_session_token', $session->session_token);
+            // 5. Store auth session token (model UUID) in the Laravel session for quick lookup
+            $request->session()->put('auth_session_token', $session->id);
 
             // 6. Redirect to dashboard
             return redirect()->intended(route('dashboard', absolute: false))
                 ->with('success', 'Successfully signed in with '.ucfirst($provider).'.');
 
         } catch (Exception $e) {
+            logger()->error('OAuth callback failed: '.$e->getMessage(), ['exception' => $e]);
+
             return redirect()->route('login')
-                ->with('error', 'OAuth authentication failed: '.$e->getMessage());
+                ->with('error', 'Autentikasi OAuth gagal atau sesi telah kedaluwarsa. Silakan coba login kembali.');
         }
     }
 
@@ -209,37 +220,30 @@ class OAuthController extends Controller
 
             // Ensure they have default module roles if they don't have any
             if (! UserModuleRole::where('user_id', $existingUser->id)->exists()) {
-                $roleType = $existingUser->user_type ?: $request->role;
-                $roleObj = Role::where('slug', $roleType)->first();
-                if ($roleObj) {
-                    $defaultModules = [];
-                    if ($roleType === 'mahasiswa') {
-                        $defaultModules = ['FAST', 'PAGI', 'WIMS'];
-                    } elseif ($roleType === 'alumni') {
-                        $defaultModules = ['TRACE', 'PAGI'];
-                    } elseif ($roleType === 'mitra') {
-                        $defaultModules = ['WIMS', 'TRACE'];
-                    }
-
-                    if (! empty($defaultModules)) {
-                        $modules = Module::whereIn('code', $defaultModules)->get();
-                        foreach ($modules as $mod) {
-                            UserModuleRole::create([
-                                'user_id' => $existingUser->id,
-                                'module_id' => $mod->id,
-                                'role_id' => $roleObj->id,
-                                'is_active' => true,
-                            ]);
-                        }
-                    }
+                if (! $existingUser->user_type && $request->role) {
+                    $existingUser->user_type = $request->role;
+                    $existingUser->save();
                 }
+                $existingUser->assignDefaultModuleRoles();
+            }
+
+            // Check if user is active and approved
+            if (! $existingUser->is_active) {
+                throw ValidationException::withMessages([
+                    'email' => 'Akun Anda telah dinonaktifkan.',
+                ]);
+            }
+            if ($existingUser->status_approval !== 'approved') {
+                throw ValidationException::withMessages([
+                    'email' => 'Akun Anda belum disetujui atau telah ditolak.',
+                ]);
             }
 
             session()->forget('oauth_register_data');
             Auth::login($existingUser, remember: false);
             $request->session()->regenerate();
             $session = $this->sessionEngine->createSession($existingUser, $request);
-            $request->session()->put('auth_session_token', $session->session_token);
+            $request->session()->put('auth_session_token', $session->id);
 
             return redirect()->intended(route('dashboard', absolute: false))
                 ->with('success', 'Akun Anda sudah terdaftar dan berhasil dihubungkan.');
@@ -298,29 +302,7 @@ class OAuthController extends Controller
         session()->forget('oauth_register_data');
 
         // Auto-assign default module access
-        $roleObj = Role::where('slug', $user->user_type)->first();
-        if ($roleObj) {
-            $defaultModules = [];
-            if ($user->user_type === 'mahasiswa') {
-                $defaultModules = ['FAST', 'PAGI', 'WIMS'];
-            } elseif ($user->user_type === 'alumni') {
-                $defaultModules = ['TRACE', 'PAGI'];
-            } elseif ($user->user_type === 'mitra') {
-                $defaultModules = ['WIMS', 'TRACE'];
-            }
-
-            if (! empty($defaultModules)) {
-                $modules = Module::whereIn('code', $defaultModules)->get();
-                foreach ($modules as $mod) {
-                    UserModuleRole::create([
-                        'user_id' => $user->id,
-                        'module_id' => $mod->id,
-                        'role_id' => $roleObj->id,
-                        'is_active' => true,
-                    ]);
-                }
-            }
-        }
+        $user->assignDefaultModuleRoles();
 
         // Log the user in
         Auth::login($user, remember: false);
@@ -330,7 +312,7 @@ class OAuthController extends Controller
 
         // Create enterprise session record
         $session = $this->sessionEngine->createSession($user, $request);
-        $request->session()->put('auth_session_token', $session->session_token);
+        $request->session()->put('auth_session_token', $session->id);
 
         return redirect()->intended(route('dashboard', absolute: false))
             ->with('success', 'Pendaftaran berhasil. Akun Google Anda telah terhubung.');

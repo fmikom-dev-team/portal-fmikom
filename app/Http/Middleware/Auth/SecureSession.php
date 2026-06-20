@@ -6,6 +6,7 @@ use App\Models\Auth\AuthSession;
 use Carbon\Carbon;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 /**
  * SecureSession Middleware
@@ -27,7 +28,10 @@ class SecureSession
         $token = $request->session()->get('auth_session_token');
 
         if ($token) {
-            $authSession = AuthSession::where('session_token', $token)
+            $authSession = AuthSession::where(function ($query) use ($token) {
+                $query->where('id', $token)
+                    ->orWhere('session_token', $token);
+            })
                 ->where('user_id', $request->user()->id)
                 ->first();
 
@@ -43,6 +47,25 @@ class SecureSession
                 $authSession->update(['is_revoked' => true]);
 
                 return $this->reject($request, 'Session expired.');
+            }
+
+            // Sync with current Laravel Session ID if it changed (e.g. after regeneration)
+            if ($request->hasSession() && $authSession->session_token !== $request->session()->getId()) {
+                $existing = AuthSession::where('session_token', $request->session()->getId())->first();
+                if ($existing) {
+                    $existing->update(['is_revoked' => true, 'session_token' => 'invalidated_'.Str::random(10)]);
+                }
+
+                $authSession->update([
+                    'session_token' => $request->session()->getId(),
+                    'expires_at' => Carbon::now()->addMinutes(config('session.lifetime')),
+                    'last_activity_at' => Carbon::now(),
+                ]);
+            } else {
+                $authSession->update([
+                    'expires_at' => Carbon::now()->addMinutes(config('session.lifetime')),
+                    'last_activity_at' => Carbon::now(),
+                ]);
             }
 
             // Share risk score with downstream handlers

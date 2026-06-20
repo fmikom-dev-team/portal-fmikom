@@ -1,6 +1,9 @@
 <?php
 
+use App\Models\Module;
+use App\Models\Role;
 use App\Models\User;
+use App\Models\UserModuleRole;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -11,6 +14,7 @@ test('authenticated user can upload a certificate', function () {
         'user_type' => 'mahasiswa',
         'pagi_username' => 'testuser',
     ]);
+    setupPagiContext($user);
 
     $response = $this
         ->actingAs($user)
@@ -44,6 +48,7 @@ test('authenticated user can update a certificate', function () {
         'user_type' => 'mahasiswa',
         'pagi_username' => 'testuser',
     ]);
+    setupPagiContext($user);
 
     // Initialize with a custom certificate list in metadata
     $metadata = $user->metadata ?? [];
@@ -87,6 +92,7 @@ test('authenticated user can delete a certificate', function () {
         'user_type' => 'mahasiswa',
         'pagi_username' => 'testuser',
     ]);
+    setupPagiContext($user);
 
     // Initialize with a custom certificate
     $metadata = $user->metadata ?? [];
@@ -144,6 +150,7 @@ test('uploaded files with php or js script tag are rejected', function () {
         'user_type' => 'mahasiswa',
         'pagi_username' => 'testuser',
     ]);
+    setupPagiContext($user);
 
     // Create a malicious file content
     $maliciousFile = UploadedFile::fake()->createWithContent('malicious.pdf', '<?php echo "evil"; ?>');
@@ -177,6 +184,7 @@ test('user can upload valid files and they are saved successfully', function () 
         'user_type' => 'mahasiswa',
         'pagi_username' => 'testuser',
     ]);
+    setupPagiContext($user);
 
     $pdfFile = UploadedFile::fake()->create('proof.pdf', 500, 'application/pdf');
     $imageFile = UploadedFile::fake()->image('proof.png', 100, 100);
@@ -214,7 +222,7 @@ test('user can upload valid files and they are saved successfully', function () 
     expect($uploadedCert['skills'])->toBe(['Laravel', 'PHP']);
     expect(count($uploadedCert['media']))->toBe(2);
     expect($uploadedCert['media'][0]['name'])->toBe('proof.pdf');
-    expect($uploadedCert['media'][1]['name'])->toBe('proof.png');
+    expect($uploadedCert['media'][1]['name'])->toBe('proof.webp');
 });
 
 test('user cannot upload more than 3 files', function () {
@@ -226,6 +234,7 @@ test('user cannot upload more than 3 files', function () {
         'user_type' => 'mahasiswa',
         'pagi_username' => 'testuser',
     ]);
+    setupPagiContext($user);
 
     $response = $this
         ->actingAs($user)
@@ -248,3 +257,21 @@ test('user cannot upload more than 3 files', function () {
     $response->assertStatus(302); // Redirect back due to validation error
     $response->assertSessionHasErrors('newMedia');
 });
+
+function setupPagiContext(User $user): void
+{
+    $module = Module::firstOrCreate(['code' => 'PAGI'], [
+        'name' => 'PAGI',
+        'is_active' => true,
+    ]);
+    $role = Role::firstOrCreate(['slug' => 'mahasiswa'], [
+        'nama' => 'Mahasiswa',
+    ]);
+    UserModuleRole::firstOrCreate([
+        'user_id' => $user->id,
+        'module_id' => $module->id,
+        'role_id' => $role->id,
+    ], [
+        'is_active' => true,
+    ]);
+}

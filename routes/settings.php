@@ -18,6 +18,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('throttle:3,1')
         ->name('profile.destroy');
 
+    Route::post('settings/profile/deletion-request', [ProfileController::class, 'requestDeletion'])
+        ->middleware('throttle:5,1')
+        ->name('profile.request-deletion');
+
+    Route::post('settings/profile/deletion-request/cancel', [ProfileController::class, 'cancelDeletionRequest'])
+        ->name('profile.cancel-deletion');
+
     Route::get('settings/security', [SecurityController::class, 'edit'])->name('security.edit');
 
     Route::put('settings/password', [SecurityController::class, 'update'])

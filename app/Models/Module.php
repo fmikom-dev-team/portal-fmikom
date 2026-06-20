@@ -15,6 +15,7 @@ class Module extends Model
         'name',
         'description',
         'is_active',
+        'logo_path',
     ];
 
     /**

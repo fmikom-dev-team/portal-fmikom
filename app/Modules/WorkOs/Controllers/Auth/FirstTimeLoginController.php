@@ -46,13 +46,15 @@ class FirstTimeLoginController extends Controller
 
         $user = $request->user();
 
+        // BUG-001: Check expiry FIRST — before hash comparison.
+        // An expired-but-correct OTP must never succeed.
+        if (is_null($user->otp_expires_at) || now()->isAfter($user->otp_expires_at)) {
+            return back()->withErrors(['otp' => 'Kode OTP sudah kadaluarsa. Silakan minta ulang.']);
+        }
+
         // Bandingkan OTP menggunakan Hash::check() karena OTP disimpan ter-hash
         if (! Hash::check($request->otp, $user->otp_code)) {
             return back()->withErrors(['otp' => 'Kode OTP salah atau tidak valid.']);
-        }
-
-        if (now()->isAfter($user->otp_expires_at)) {
-            return back()->withErrors(['otp' => 'Kode OTP sudah kadaluarsa. Silakan minta ulang.']);
         }
 
         // Lulus! Update waktu email_verified_at dan aktifkan akun
@@ -63,10 +65,10 @@ class FirstTimeLoginController extends Controller
             'otp_expires_at' => null,
         ])->save();
 
-        // Jika status masih pending → ke waiting room
-        // Jika sudah approved (mis. admin-created) → lanjut ke force change password
+        // BUG-020: Route 'waiting.room' does not exist. Redirect to dashboard with a
+        // status message for pending users. They will see a pending/waiting state UI there.
         if ($user->status_approval === 'pending') {
-            return redirect()->route('waiting.room')->with('status', 'Email berhasil diverifikasi! Pendaftaran Anda sedang diproses oleh admin.');
+            return redirect()->route('dashboard')->with('status', 'Email berhasil diverifikasi! Pendaftaran Anda sedang diproses oleh admin.');
         }
 
         // Lanjut ke step berikutnya (force change password jika admin-created)
@@ -80,8 +82,11 @@ class FirstTimeLoginController extends Controller
     {
         $user = $request->user();
 
-        // Cegah spam resend
-        if ($user->otp_expires_at && now()->diffInMinutes($user->otp_expires_at) > 13) {
+        // BUG-007: The original check was inverted. otp_expires_at is set 15 minutes
+        // in the future at creation. A fresh OTP has diff ~15min, which was incorrectly
+        // blocking the resend. Corrected: block resend if OTP was created < 2 minutes ago
+        // (i.e., expires_at is still > 13 minutes from now).
+        if ($user->otp_expires_at && $user->otp_expires_at->isFuture() && now()->diffInMinutes($user->otp_expires_at) > 13) {
             return back()->withErrors(['otp' => 'Tunggu beberapa saat sebelum mengirim ulang.']);
         }
 

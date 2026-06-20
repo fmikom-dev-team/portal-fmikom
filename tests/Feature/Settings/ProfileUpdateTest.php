@@ -113,3 +113,71 @@ test('correct password must be provided to delete account', function () {
 
     expect($user->fresh())->not->toBeNull();
 });
+
+test('user can request account deletion with valid password', function () {
+    $user = User::factory()->create([
+        'password' => Hash::make('password123'),
+        'user_type' => 'mahasiswa',
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->post(route('profile.request-deletion'), [
+            'password' => 'password123',
+        ]);
+
+    $response->assertSessionHasNoErrors();
+    $user->refresh();
+    expect($user->deletion_requested_at)->not->toBeNull();
+});
+
+test('user cannot request account deletion with invalid password', function () {
+    $user = User::factory()->create([
+        'password' => Hash::make('password123'),
+        'user_type' => 'mahasiswa',
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->from(route('profile.edit'))
+        ->post(route('profile.request-deletion'), [
+            'password' => 'wrong-password',
+        ]);
+
+    $response->assertSessionHasErrors('password');
+    $user->refresh();
+    expect($user->deletion_requested_at)->toBeNull();
+});
+
+test('user can cancel account deletion request', function () {
+    $user = User::factory()->create([
+        'user_type' => 'mahasiswa',
+        'deletion_requested_at' => now(),
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->post(route('profile.cancel-deletion'));
+
+    $response->assertSessionHasNoErrors();
+    $user->refresh();
+    expect($user->deletion_requested_at)->toBeNull();
+});
+
+test('superadmin cannot request account deletion', function () {
+    $user = User::factory()->create([
+        'password' => Hash::make('password123'),
+        'user_type' => 'super_admin',
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->from(route('profile.edit'))
+        ->post(route('profile.request-deletion'), [
+            'password' => 'password123',
+        ]);
+
+    $response->assertSessionHasErrors('password');
+    $user->refresh();
+    expect($user->deletion_requested_at)->toBeNull();
+});

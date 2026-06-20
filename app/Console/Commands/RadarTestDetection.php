@@ -6,6 +6,7 @@ use App\Models\Radar\RadarDetection;
 use App\Models\Radar\RadarDevice;
 use App\Models\Radar\RadarProtection;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class RadarTestDetection extends Command
 {
@@ -99,10 +100,10 @@ class RadarTestDetection extends Command
     public function handle(): int
     {
         if ($this->option('clear')) {
-            \DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
             RadarDetection::truncate();
             RadarDevice::truncate();
-            \DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
             cache()->forget('radar_detections_cleared');
             $this->line('<fg=yellow>✓ All detections cleared.</>');
         }

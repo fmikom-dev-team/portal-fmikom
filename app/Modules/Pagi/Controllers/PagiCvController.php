@@ -5,22 +5,55 @@ namespace App\Modules\Pagi\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Pagi\PagiCv;
 use App\Models\User;
+use App\Modules\Pagi\Services\PagiCvService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class PagiCvController extends Controller
+class PagiCvController extends Controller implements HasMiddleware
 {
+    protected PagiCvService $cvService;
+
+    private const ERROR_ACCESS_DENIED = 'Akses ditolak: Fitur CV Builder hanya tersedia untuk Mahasiswa dan Alumni.';
+    private const ERROR_UNAUTHORIZED = 'Unauthorized access.';
+    private const ERROR_UNAUTHORIZED_ACTION = 'Unauthorized';
+
+    public function __construct(PagiCvService $cvService)
+    {
+        $this->cvService = $cvService;
+    }
+
+    public static function middleware(): array
+    {
+        return [
+            new Middleware(function ($request, $next) {
+                $role = $request->attributes->get('resolved_role', session('active_role'));
+                if (! in_array(strtolower($role), ['mahasiswa', 'alumni'])) {
+                    if ($request->wantsJson()) {
+                        return response()->json(['message' => self::ERROR_ACCESS_DENIED], 403);
+                    }
+
+                    return redirect()->route('module.pagi.dashboard')
+                        ->with('error', self::ERROR_ACCESS_DENIED);
+                }
+
+                return $next($request);
+            }, except: ['shareView']),
+        ];
+    }
+
     /**
      * Display a list of the user's CVs.
      */
     public function index(Request $request): Response
     {
-        $user = auth()->user();
-        $cvs = PagiCv::where('user_id', $user->id)
+        $user = Auth::user();
+        $cvs = PagiCv::query()->where('user_id', $user->id)
             ->orderBy('updated_at', 'desc')
             ->get();
 
@@ -34,14 +67,14 @@ class PagiCvController extends Controller
      */
     public function templates(Request $request)
     {
-        $user = auth()->user();
-        $existingCvsCount = PagiCv::where('user_id', $user->id)->count();
+        $user = Auth::user();
+        $existingCvsCount = PagiCv::query()->where('user_id', $user->id)->count('*');
         if ($existingCvsCount >= 3) {
             return redirect()->route('module.pagi.cv.index')
                 ->with('error', 'Batas maksimal pembuatan CV adalah 3.');
         }
 
-        return Inertia::render('Modules/Pagi/User/Cv/TemplateGallery');
+        return Inertia::render('Modules/Pagi/User/Cv/components/TemplateGallery');
     }
 
     /**
@@ -54,147 +87,16 @@ class PagiCvController extends Controller
             'title' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $user = auth()->user();
+        $user = Auth::user();
 
-        // Limit maximum CVs to 3
-        $existingCvsCount = PagiCv::where('user_id', $user->id)->count();
-        if ($existingCvsCount >= 3) {
+        try {
+            $cv = $this->cvService->createCv($user, $request->template_id, $request->title);
+            return redirect()->route('module.pagi.cv.edit', ['cv' => $cv->id])
+                ->with('success', 'CV berhasil dibuat!');
+        } catch (\RuntimeException $e) {
             return redirect()->route('module.pagi.cv.index')
-                ->with('error', 'Batas maksimal pembuatan CV adalah 3.');
+                ->with('error', $e->getMessage());
         }
-
-        // Gather initial personal info from profile
-        $personalInfo = [
-            'name' => $user->name,
-            'email' => $user->email,
-            'phone' => $user->metadata['phone'] ?? '',
-            'location' => $user->location ?? 'Banyumas, Indonesia',
-            'website' => $user->website ?? '',
-            'linkedin' => $user->linkedin ?? '',
-            'github' => $user->github ?? '',
-            'instagram' => $user->instagram ?? '',
-            'job_title' => $user->role_title ?? '',
-            'summary' => $user->bio ?? '',
-            'foto_path' => $user->foto_path ?? '',
-        ];
-
-        // Gather initial certificates from profile metadata
-        $certificates = [];
-        $profileCertificates = $user->metadata['certificates'] ?? [];
-        if (is_array($profileCertificates)) {
-            foreach ($profileCertificates as $index => $cert) {
-                $certificates[] = [
-                    'id' => $index + 1,
-                    'name' => $cert['title'] ?? '',
-                    'issuer' => $cert['issuer'] ?? '',
-                    'date' => $cert['date'] ?? '',
-                    'credential_id' => $cert['credentialId'] ?? '',
-                    'credential_url' => '',
-                ];
-            }
-        }
-
-        // Initialize empty lists
-        $education = [];
-        $experience = [];
-        $organizations = [];
-        $skills = [];
-
-        // Let's populate some default skills from profile if available
-        $profileSkills = $user->metadata['skills'] ?? [];
-        if (is_array($profileSkills)) {
-            foreach ($profileSkills as $index => $skillItem) {
-                // skillItem can be a string or an array like {name, percentage}
-                $skillName = is_array($skillItem) ? ($skillItem['name'] ?? '') : (string) $skillItem;
-                if (empty(trim($skillName))) {
-                    continue;
-                }
-                $skills[] = [
-                    'id' => $index + 1,
-                    'name' => $skillName,
-                    'level' => is_array($skillItem) ? ($skillItem['percentage'] ?? 80) : 80,
-                ];
-            }
-        }
-
-        $trainings = [];
-        $achievements = [];
-        $languages = [];
-
-        $profileLanguages = $user->metadata['languages'] ?? [];
-        if (is_array($profileLanguages)) {
-            foreach ($profileLanguages as $index => $langItem) {
-                // langItem can be a string or an array like {language, proficiency}
-                $langName = is_array($langItem) ? ($langItem['language'] ?? $langItem['name'] ?? '') : (string) $langItem;
-                $langProf = is_array($langItem) ? ($langItem['proficiency'] ?? 'Professional working proficiency') : 'Professional working proficiency';
-                if (empty(trim($langName))) {
-                    continue;
-                }
-                $languages[] = [
-                    'id' => $index + 1,
-                    'name' => $langName,
-                    'proficiency' => $langProf,
-                ];
-            }
-        }
-
-        $references = [];
-
-        // Setup theme/customization default based on template
-        $customization = [
-            'primary_color' => $this->getDefaultColorForTemplate($request->template_id),
-            'font_family' => 'GT Standard M',
-            'font_size' => '11pt',
-            'line_height' => '1.4',
-            'spacing' => 'normal', // compact, normal, loose
-            'section_order' => [
-                'summary',
-                'experience',
-                'education',
-                'organizations',
-                'skills',
-                'certifications',
-                'trainings',
-                'achievements',
-                'languages',
-                'references',
-            ],
-            'sections_visibility' => [
-                'summary' => true,
-                'experience' => true,
-                'education' => true,
-                'organizations' => true,
-                'skills' => true,
-                'certifications' => true,
-                'trainings' => true,
-                'achievements' => true,
-                'languages' => true,
-                'references' => true,
-            ],
-        ];
-
-        $title = $request->title ?: 'CV '.ucfirst(str_replace('-', ' ', $request->template_id));
-
-        $cv = PagiCv::create([
-            'user_id' => $user->id,
-            'title' => $title,
-            'template_id' => $request->template_id,
-            'personal_info' => $personalInfo,
-            'education' => $education,
-            'experience' => $experience,
-            'organizations' => $organizations,
-            'skills' => $skills,
-            'certifications' => $certificates,
-            'trainings' => $trainings,
-            'achievements' => $achievements,
-            'languages' => $languages,
-            'references' => $references,
-            'customization' => $customization,
-            'status' => 'draft',
-        ]);
-
-        return redirect()->route('module.pagi.cv.edit', ['cv' => $cv->id])
-            ->with('success', 'CV berhasil dibuat!');
     }
 
     /**
@@ -202,76 +104,10 @@ class PagiCvController extends Controller
      */
     public function getProfileData(Request $request)
     {
-        $user = auth()->user();
+        $user = Auth::user();
+        $profileData = $this->cvService->mapUserProfileToCvData($user);
 
-        $personalInfo = [
-            'name' => $user->name,
-            'email' => $user->email,
-            'phone' => $user->metadata['phone'] ?? '',
-            'location' => $user->location ?? 'Banyumas, Indonesia',
-            'website' => $user->website ?? '',
-            'linkedin' => $user->linkedin ?? '',
-            'github' => $user->github ?? '',
-            'instagram' => $user->instagram ?? '',
-            'job_title' => $user->role_title ?? '',
-            'summary' => $user->bio ?? '',
-            'foto_path' => $user->foto_path ?? '',
-        ];
-
-        $certificates = [];
-        $profileCertificates = $user->metadata['certificates'] ?? [];
-        if (is_array($profileCertificates)) {
-            foreach ($profileCertificates as $index => $cert) {
-                $certificates[] = [
-                    'id' => $index + 1,
-                    'name' => $cert['title'] ?? '',
-                    'issuer' => $cert['issuer'] ?? '',
-                    'date' => $cert['date'] ?? '',
-                    'credential_id' => $cert['credentialId'] ?? '',
-                    'credential_url' => '',
-                ];
-            }
-        }
-
-        $skills = [];
-        $profileSkills = $user->metadata['skills'] ?? [];
-        if (is_array($profileSkills)) {
-            foreach ($profileSkills as $index => $skillItem) {
-                $skillName = is_array($skillItem) ? ($skillItem['name'] ?? '') : (string) $skillItem;
-                if (empty(trim($skillName))) {
-                    continue;
-                }
-                $skills[] = [
-                    'id' => $index + 1,
-                    'name' => $skillName,
-                    'level' => is_array($skillItem) ? ($skillItem['percentage'] ?? 80) : 80,
-                ];
-            }
-        }
-
-        $languages = [];
-        $profileLanguages = $user->metadata['languages'] ?? [];
-        if (is_array($profileLanguages)) {
-            foreach ($profileLanguages as $index => $langItem) {
-                $langName = is_array($langItem) ? ($langItem['language'] ?? $langItem['name'] ?? '') : (string) $langItem;
-                $langProf = is_array($langItem) ? ($langItem['proficiency'] ?? 'Professional working proficiency') : 'Professional working proficiency';
-                if (empty(trim($langName))) {
-                    continue;
-                }
-                $languages[] = [
-                    'id' => $index + 1,
-                    'name' => $langName,
-                    'proficiency' => $langProf,
-                ];
-            }
-        }
-
-        return response()->json([
-            'personal_info' => $personalInfo,
-            'skills' => $skills,
-            'certifications' => $certificates,
-            'languages' => $languages,
-        ]);
+        return response()->json($profileData);
     }
 
     /**
@@ -279,9 +115,8 @@ class PagiCvController extends Controller
      */
     public function edit(Request $request, PagiCv $cv): Response
     {
-        // Check owner
-        if ($cv->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized access.');
+        if ($cv->user_id !== Auth::id()) {
+            abort(403, self::ERROR_UNAUTHORIZED);
         }
 
         return Inertia::render('Modules/Pagi/User/Cv/CvBuilder', [
@@ -290,17 +125,17 @@ class PagiCvController extends Controller
     }
 
     /**
-     * Update the CV details (autosave & save).
+     * Update CV data.
      */
     public function update(Request $request, PagiCv $cv)
     {
-        if ($cv->user_id !== auth()->id()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+        if ($cv->user_id !== Auth::id()) {
+            return response()->json(['error' => self::ERROR_UNAUTHORIZED_ACTION], 403);
         }
 
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'status' => ['nullable', 'string', 'in:draft,published'], // will be overridden server-side
+            'status' => ['nullable', 'string', 'in:draft,published'],
             'personal_info' => ['nullable', 'array'],
             'education' => ['nullable', 'array'],
             'experience' => ['nullable', 'array'],
@@ -314,25 +149,8 @@ class PagiCvController extends Controller
             'customization' => ['nullable', 'array'],
         ]);
 
-        $data = $this->sanitizeInputRecursive($data);
-
-        // Force name and email to be the auth user's real name and email
-        $user = auth()->user();
-        if (isset($data['personal_info'])) {
-            $data['personal_info']['name'] = $user->name;
-            $data['personal_info']['email'] = $user->email;
-        }
-
-        // Auto-compute status based on completeness
-        $pi = $data['personal_info'] ?? [];
-        $hasBasic = ! empty(trim($pi['name'] ?? ''))
-            && ! empty(trim($pi['email'] ?? ''))
-            && ! empty(trim($pi['phone'] ?? ''))
-            && ! empty(trim($pi['summary'] ?? ''));
-        $hasSection = ! empty($data['education']) || ! empty($data['experience']);
-        $data['status'] = ($hasBasic && $hasSection) ? 'published' : 'draft';
-
-        $cv->update($data);
+        $user = Auth::user();
+        $this->cvService->updateCv($cv, $user, $data);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -350,23 +168,18 @@ class PagiCvController extends Controller
      */
     public function duplicate(Request $request, PagiCv $cv): RedirectResponse
     {
-        if ($cv->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized access.');
+        if ($cv->user_id !== Auth::id()) {
+            abort(403, self::ERROR_UNAUTHORIZED);
         }
 
-        // Limit maximum CVs to 3
-        $existingCvsCount = PagiCv::where('user_id', auth()->id())->count();
-        if ($existingCvsCount >= 3) {
+        try {
+            $this->cvService->duplicateCv($cv, Auth::id());
             return redirect()->route('module.pagi.cv.index')
-                ->with('error', 'Batas maksimal pembuatan CV adalah 3.');
+                ->with('success', 'CV berhasil diduplikasi!');
+        } catch (\RuntimeException $e) {
+            return redirect()->route('module.pagi.cv.index')
+                ->with('error', $e->getMessage());
         }
-
-        $newCv = $cv->replicate();
-        $newCv->title = 'Salinan dari '.$cv->title;
-        $newCv->save();
-
-        return redirect()->route('module.pagi.cv.index')
-            ->with('success', 'CV berhasil diduplikasi!');
     }
 
     /**
@@ -374,8 +187,8 @@ class PagiCvController extends Controller
      */
     public function destroy(Request $request, PagiCv $cv): RedirectResponse
     {
-        if ($cv->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized access.');
+        if ($cv->user_id !== Auth::id()) {
+            abort(403, self::ERROR_UNAUTHORIZED);
         }
 
         $cv->delete();
@@ -389,36 +202,24 @@ class PagiCvController extends Controller
      */
     public function uploadPhoto(Request $request, PagiCv $cv)
     {
-        if ($cv->user_id !== auth()->id()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+        if ($cv->user_id !== Auth::id()) {
+            return response()->json(['error' => self::ERROR_UNAUTHORIZED_ACTION], 403);
         }
 
         $request->validate([
             'photo' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
         ]);
 
-        if ($request->file('photo')) {
-            $path = $request->file('photo')->store('cv-photos', 'public');
-
-            // Update the stored cv record's personal_info with the new path
-            $personalInfo = $cv->personal_info ?? [];
-
-            // Delete old photo if it exists and is specific to cv
-            if (! empty($personalInfo['foto_path']) && str_contains($personalInfo['foto_path'], 'cv-photos/')) {
-                Storage::disk('public')->delete($personalInfo['foto_path']);
-            }
-
-            $personalInfo['foto_path'] = $path;
-            $cv->update(['personal_info' => $personalInfo]);
-
+        try {
+            $path = $this->cvService->uploadPhoto($cv, $request->file('photo'));
             return response()->json([
                 'success' => true,
                 'path' => $path,
                 'url' => asset('storage/'.$path),
             ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
         }
-
-        return response()->json(['error' => 'File not found'], 400);
     }
 
     /**
@@ -426,28 +227,11 @@ class PagiCvController extends Controller
      */
     public function downloadPdf(Request $request, PagiCv $cv)
     {
-        if ($cv->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized access.');
+        if ($cv->user_id !== Auth::id()) {
+            abort(403, self::ERROR_UNAUTHORIZED);
         }
 
-        $pdf = Pdf::loadView('pdf.cv', [
-            'cv' => $cv,
-            'personalInfo' => $cv->personal_info ?? [],
-            'education' => $cv->education ?? [],
-            'experience' => $cv->experience ?? [],
-            'organizations' => $cv->organizations ?? [],
-            'skills' => $cv->skills ?? [],
-            'certifications' => $cv->certifications ?? [],
-            'trainings' => $cv->trainings ?? [],
-            'achievements' => $cv->achievements ?? [],
-            'languages' => $cv->languages ?? [],
-            'references' => $cv->references ?? [],
-            'customization' => $cv->customization ?? [],
-        ]);
-
-        $pdf->setPaper('a4', 'portrait');
-        $pdf->setWarnings(false);
-
+        $pdf = $this->generatePdf($cv);
         $filename = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $cv->title), '-')).'.pdf';
 
         return $pdf->download($filename);
@@ -458,6 +242,24 @@ class PagiCvController extends Controller
      */
     public function shareView(PagiCv $cv)
     {
+        $user = Auth::user();
+
+        // Allow if owner, otherwise only allow published CVs
+        if ($cv->user_id !== $user?->id && $cv->status !== 'published') {
+            abort(403, 'CV ini bersifat privat atau belum dipublikasikan.');
+        }
+
+        $pdf = $this->generatePdf($cv);
+        $filename = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $cv->title), '-')).'.pdf';
+
+        return $pdf->stream($filename);
+    }
+
+    /**
+     * Helper to load view and generate PDF.
+     */
+    private function generatePdf(PagiCv $cv)
+    {
         $pdf = Pdf::loadView('pdf.cv', [
             'cv' => $cv,
             'personalInfo' => $cv->personal_info ?? [],
@@ -476,49 +278,6 @@ class PagiCvController extends Controller
         $pdf->setPaper('a4', 'portrait');
         $pdf->setWarnings(false);
 
-        $filename = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $cv->title), '-')).'.pdf';
-
-        return $pdf->stream($filename);
-    }
-
-    /**
-     * Helper to get default template accent colors.
-     */
-    private function getDefaultColorForTemplate(string $templateId): string
-    {
-        switch ($templateId) {
-            case 'ats-professional':
-                return '#1e3a8a'; // Blue 900
-            case 'modern-sidebar':
-                return '#0ea5e9'; // Cyan 500
-            case 'executive':
-                return '#111827'; // Dark Slate
-            case 'creative-minimal':
-                return '#6b21a8'; // Purple 800
-            case 'student-resume':
-                return '#10b981'; // Emerald 500
-            default:
-                return '#1e293b';
-        }
-    }
-
-    /**
-     * Recursively sanitize input to prevent HTML/Script tag injection.
-     */
-    private function sanitizeInputRecursive($value)
-    {
-        if (is_array($value)) {
-            foreach ($value as $key => $val) {
-                $value[$key] = $this->sanitizeInputRecursive($val);
-            }
-
-            return $value;
-        }
-
-        if (is_string($value)) {
-            return strip_tags($value);
-        }
-
-        return $value;
+        return $pdf;
     }
 }

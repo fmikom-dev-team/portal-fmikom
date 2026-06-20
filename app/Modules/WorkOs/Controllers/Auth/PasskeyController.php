@@ -64,6 +64,14 @@ class PasskeyController extends Controller
     {
         try {
             $user = $this->passkeyEngine->verifyAuthentication($request->all());
+
+            if (! $user->is_active) {
+                return response()->json(['error' => 'Akun Anda telah dinonaktifkan.'], 403);
+            }
+            if ($user->status_approval !== 'approved') {
+                return response()->json(['error' => 'Akun Anda belum disetujui atau telah ditolak.'], 403);
+            }
+
             Auth::login($user);
             $request->session()->regenerate(); // Prevent session fixation
 

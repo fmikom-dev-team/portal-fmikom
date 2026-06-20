@@ -32,10 +32,10 @@ class UserResource extends JsonResource
             'github' => $this->when($isProfileOrSettings, $this->github),
             'instagram' => $this->when($isProfileOrSettings, $this->instagram),
             'metadata' => $this->when($isProfileOrSettings, $this->metadata),
-            'following' => $this->metadata['following'] ?? [],
-            'works_count' => $this->pagiWorks()->count(),
-            'certificates_count' => count($this->metadata['certificates'] ?? []) ?: 2,
-            'followers_count' => count($this->metadata['followers'] ?? []),
+            'following' => $this->when($isProfileOrSettings, fn () => $this->pagiFollowing()->pluck('following_id')->toArray()),
+            'works_count' => $this->when($isProfileOrSettings, fn () => $this->pagiWorks()->count()),
+            'certificates_count' => $this->when($isProfileOrSettings, fn () => count($this->metadata['certificates'] ?? []) ?: 2),
+            'followers_count' => $this->when($isProfileOrSettings, fn () => $this->pagiFollowers()->count()),
             'skills' => $this->when($isProfileOrSettings, $this->metadata['skills'] ?? ['Figma', 'UI/UX Design', 'Vue.js']),
             'timezone' => $this->when($isProfileOrSettings, $this->metadata['timezone'] ?? null),
             'timezone_extended' => $this->when($isProfileOrSettings, $this->metadata['timezone_extended'] ?? null),
@@ -47,6 +47,7 @@ class UserResource extends JsonResource
             'program_studi_id' => $this->when($isProfileOrSettings, $this->program_studi_id),
             'tahun_lulus' => $this->when($isProfileOrSettings, $this->tahun_lulus),
             'user_type' => $this->user_type,
+            'deletion_requested_at' => $this->deletion_requested_at ? $this->deletion_requested_at->toISOString() : null,
             'foto_path' => $this->foto_path,
             'avatar' => $this->foto_path
                 ? (str_starts_with($this->foto_path, 'http') ? $this->foto_path : '/storage/'.$this->foto_path)

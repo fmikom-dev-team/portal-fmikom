@@ -16,11 +16,11 @@ class AuditLogsController extends Controller
      */
     public function index(Request $request)
     {
-        return Inertia::render('Modules/Radar/AuditLogs/Index', [
+        return Inertia::render('WorkOs/partials/AuditLogs/Index', [
             'stats' => [
-                'total_events' => AuditLog::count(),
-                'active_users' => AuditLog::whereNotNull('actor_id')->distinct('actor_id')->count(),
-                'security_incidents' => AuditSecurityIncident::count(),
+                'total_events' => AuditLog::query()->count('*'),
+                'active_users' => AuditLog::query()->whereNotNull('actor_id', 'and')->distinct()->count('actor_id'),
+                'security_incidents' => AuditSecurityIncident::query()->count('*'),
             ],
             'recent_events' => AuditLog::with('actor:id,name,email')
                 ->orderBy('created_at', 'desc')

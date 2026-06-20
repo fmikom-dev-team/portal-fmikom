@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\WorkOs\Controllers\AuthenticationController;
+use App\Modules\WorkOs\Controllers\AuthAnalyticsController;
 use App\Modules\WorkOs\Controllers\OAuthController;
 use App\Modules\WorkOs\Controllers\SecurityController;
 use Illuminate\Support\Facades\Route;
@@ -15,8 +16,8 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth-platform')->name('auth-platform.')->group(function () {
 
     // ── Analytics ──────────────────────────────────────────────────────────
-    Route::get('/analytics', [AuthenticationController::class, 'analytics'])->name('analytics');
-    Route::post('/analytics/clear', [AuthenticationController::class, 'clearAnalytics'])->name('analytics.clear');
+    Route::get('/analytics', [AuthAnalyticsController::class, 'analytics'])->name('analytics');
+    Route::post('/analytics/clear', [AuthAnalyticsController::class, 'clearAnalytics'])->name('analytics.clear');
 
     // ── Login Methods ──────────────────────────────────────────────────────
     Route::get('/methods', [AuthenticationController::class, 'methods'])->name('methods');
@@ -56,8 +57,8 @@ Route::prefix('auth-platform')->name('auth-platform.')->group(function () {
     Route::get('/audit-logs', [AuthenticationController::class, 'auditLogs'])->name('audit-logs');
 
     // ── Analytics Item Clear/Delete ────────────────────────────────────────
-    Route::delete('/analytics/failed-logins/{attempt}', [AuthenticationController::class, 'deleteFailedLogin'])->name('analytics.failed-logins.delete');
-    Route::delete('/analytics/users/{user}', [AuthenticationController::class, 'deleteUser'])->name('analytics.users.delete');
+    Route::delete('/analytics/failed-logins/{attempt}', [AuthAnalyticsController::class, 'deleteFailedLogin'])->name('analytics.failed-logins.delete');
+    Route::delete('/analytics/users/{user}', [AuthAnalyticsController::class, 'deleteUser'])->name('analytics.users.delete');
 
     // ── OAuth Admin Redirect ───────────────────────────────────────────────
     Route::post('/oauth/redirect/{provider}', [OAuthController::class, 'redirect'])

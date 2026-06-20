@@ -4,19 +4,24 @@ namespace App\Modules\WorkOs\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Auth\AuthEmailLog;
+use App\Models\Auth\AuthLoginAttempt;
 use App\Models\Auth\AuthOAuthCredential;
-use App\Models\Auth\AuthSession;
+use App\Modules\WorkOs\Services\AuditLogger;
+use App\Notifications\UserApprovedNotification;
+use Illuminate\Support\Facades\Auth;
 /**
  * Dedicated UsersController — extracted from DashboardController
  */
+use App\Models\Auth\AuthSession;
 use App\Models\Module;
 use App\Models\ProgramStudi;
 use App\Models\User;
 use App\Models\UserModuleRole;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -28,342 +33,195 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
  */
 class UsersController extends Controller
 {
-    public function template(Request $request)
-    {
-        $request->validate([
-            'type' => ['required', 'in:mahasiswa,alumni,dosen,mitra'],
-            'format' => ['required', 'in:csv,xlsx'],
-        ]);
-
-        $type = $request->type;
-        $format = $request->format;
-
-        $headers = [];
-        if ($type === 'mahasiswa') {
-            $headers = ['Nama', 'Email', 'Password', 'NIM', 'Program Studi'];
-        } elseif ($type === 'alumni') {
-            $headers = ['Nama', 'Email', 'Password', 'NIM', 'Program Studi', 'Tahun Lulus', 'Nomor Telepon'];
-        } elseif ($type === 'dosen') {
-            $headers = ['Nama', 'Email', 'Password', 'NIP/NIDN', 'Program Studi', 'Nomor Telepon'];
-        } elseif ($type === 'mitra') {
-            $headers = ['Nama', 'Email', 'Password', 'NIB/Nomor Induk', 'Nama Perusahaan', 'Nomor Telepon'];
-        }
-
-        $spreadsheet = new Spreadsheet;
-        $sheet = $spreadsheet->getActiveSheet();
-
-        foreach ($headers as $colIndex => $header) {
-            $colLetter = Coordinate::stringFromColumnIndex($colIndex + 1);
-            $sheet->setCellValue($colLetter.'1', $header);
-            $sheet->getStyle($colLetter.'1')->getFont()->setBold(true);
-            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
-        }
-
-        $fileName = 'template_'.$type.'_'.date('YmdHis');
-
-        if ($format === 'xlsx') {
-            $writer = new Xlsx($spreadsheet);
-            $responseHeader = [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'Content-Disposition' => 'attachment; filename="'.$fileName.'.xlsx"',
-            ];
-        } else {
-            $writer = new Csv($spreadsheet);
-            $responseHeader = [
-                'Content-Type' => 'text/csv',
-                'Content-Disposition' => 'attachment; filename="'.$fileName.'.csv"',
-            ];
-        }
-
-        return response()->streamDownload(function () use ($writer) {
-            $writer->save('php://output');
-        }, $fileName.'.'.$format, $responseHeader);
-    }
-
-    public function upload(Request $request)
-    {
-        $request->validate([
-            'file' => ['required', 'file', 'mimes:csv,txt,xlsx', 'max:1048576'],
-            'user_type' => ['required', 'in:mahasiswa,alumni,dosen,mitra'],
-        ]);
-
-        $file = $request->file('file');
-        $userType = $request->user_type;
-
-        try {
-            $spreadsheet = IOFactory::load($file->getRealPath());
-            $sheet = $spreadsheet->getActiveSheet();
-            $rows = $sheet->toArray(null, true, true, true);
-        } catch (\Exception $e) {
-            return back()->withErrors(['file' => 'Gagal membaca file. Pastikan format file benar (.csv / .xlsx).']);
-        }
-
-        if (count($rows) <= 1) {
-            return back()->withErrors(['file' => 'File kosong atau tidak memiliki baris data.']);
-        }
-
-        // Get headers from first row
-        $headerRow = array_shift($rows);
-        $headers = array_map(function ($val) {
-            return strtolower(trim(preg_replace('/[^a-zA-Z0-9\s]/', '', $val)));
-        }, $headerRow);
-
-        // Define column mappings
-        $mapping = [];
-        foreach ($headers as $colLetter => $headerName) {
-            if (in_array($headerName, ['name', 'nama', 'fullname', 'nama lengkap'])) {
-                $mapping['name'] = $colLetter;
-            } elseif (in_array($headerName, ['email', 'surel'])) {
-                $mapping['email'] = $colLetter;
-            } elseif (in_array($headerName, ['password', 'kata sandi', 'sandi'])) {
-                $mapping['password'] = $colLetter;
-            } elseif (in_array($headerName, ['nim', 'nip', 'nidn', 'nib', 'nomor induk', 'id', 'external id'])) {
-                $mapping['nomor_induk'] = $colLetter;
-            } elseif (in_array($headerName, ['program studi', 'prodi', 'jurusan'])) {
-                $mapping['program_studi'] = $colLetter;
-            } elseif (in_array($headerName, ['tahun lulus', 'tahun'])) {
-                $mapping['tahun_lulus'] = $colLetter;
-            } elseif (in_array($headerName, ['nomor telepon', 'no telepon', 'telepon', 'no hp', 'hp', 'telp'])) {
-                $mapping['no_telepon'] = $colLetter;
-            } elseif (in_array($headerName, ['nama perusahaan', 'perusahaan', 'company'])) {
-                $mapping['nama_perusahaan'] = $colLetter;
-            }
-        }
-
-        // Validate required headers present
-        $requiredFields = ['name', 'email'];
-        if ($userType === 'mahasiswa' || $userType === 'alumni') {
-            $requiredFields[] = 'nomor_induk';
-            $requiredFields[] = 'program_studi';
-        } elseif ($userType === 'dosen') {
-            $requiredFields[] = 'nomor_induk';
-        } elseif ($userType === 'mitra') {
-            $requiredFields[] = 'nomor_induk';
-        }
-
-        $missingHeaders = [];
-        foreach ($requiredFields as $field) {
-            if (! isset($mapping[$field])) {
-                $missingHeaders[] = str_replace('_', ' ', $field);
-            }
-        }
-
-        if (! empty($missingHeaders)) {
-            return back()->withErrors(['file' => 'Kolom wajib berikut tidak ditemukan di file: '.implode(', ', $missingHeaders)]);
-        }
-
-        // Fetch prodi to map names/codes to IDs
-        $prodis = ProgramStudi::all();
-
-        $errors = [];
-        $validRows = [];
-        $emailsInBatch = [];
-        $nomorInduksInBatch = [];
-
-        foreach ($rows as $index => $row) {
-            $rowNum = $index + 2; // 1-based index (including header row)
-
-            $name = isset($mapping['name']) ? trim($row[$mapping['name']]) : '';
-            $email = isset($mapping['email']) ? trim($row[$mapping['email']]) : '';
-            $password = isset($mapping['password']) ? trim($row[$mapping['password']]) : '';
-            $nomorInduk = isset($mapping['nomor_induk']) ? trim($row[$mapping['nomor_induk']]) : '';
-            $programStudiVal = isset($mapping['program_studi']) ? trim($row[$mapping['program_studi']]) : '';
-            $tahunLulusVal = isset($mapping['tahun_lulus']) ? trim($row[$mapping['tahun_lulus']]) : '';
-            $noTelepon = isset($mapping['no_telepon']) ? trim($row[$mapping['no_telepon']]) : '';
-            $namaPerusahaan = isset($mapping['nama_perusahaan']) ? trim($row[$mapping['nama_perusahaan']]) : '';
-
-            $rowErrors = [];
-
-            // 1. Validate name
-            if (empty($name)) {
-                $rowErrors[] = 'Nama wajib diisi.';
-            }
-
-            // 2. Validate email
-            if (empty($email)) {
-                $rowErrors[] = 'Email wajib diisi.';
-            } elseif (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $rowErrors[] = 'Format email tidak valid.';
-            } elseif (User::where('email', $email)->exists()) {
-                $rowErrors[] = 'Email sudah terdaftar di sistem.';
-            } elseif (in_array($email, $emailsInBatch)) {
-                $rowErrors[] = 'Email duplikat dalam file ini.';
-            } else {
-                $emailsInBatch[] = $email;
-            }
-
-            // 3. Validate nomor induk
-            if (in_array('nomor_induk', $requiredFields) && empty($nomorInduk)) {
-                $rowErrors[] = 'Nomor Induk wajib diisi.';
-            } elseif (! empty($nomorInduk)) {
-                if (User::where('nomor_induk', $nomorInduk)->exists()) {
-                    $rowErrors[] = 'Nomor Induk sudah terdaftar di sistem.';
-                } elseif (in_array($nomorInduk, $nomorInduksInBatch)) {
-                    $rowErrors[] = 'Nomor Induk duplikat dalam file ini.';
-                } else {
-                    $nomorInduksInBatch[] = $nomorInduk;
-                }
-            }
-
-            // 4. Validate program studi
-            $prodiId = null;
-            if (! empty($programStudiVal)) {
-                $matchedProdi = $prodis->first(function ($p) use ($programStudiVal) {
-                    return strtolower($p->kode) === strtolower($programStudiVal) ||
-                           strtolower($p->nama) === strtolower($programStudiVal);
-                });
-
-                if ($matchedProdi) {
-                    $prodiId = $matchedProdi->id;
-                } else {
-                    $rowErrors[] = 'Program Studi "'.$programStudiVal.'" tidak ditemukan. Pilihan: IF, SI, MTK.';
-                }
-            } elseif (in_array('program_studi', $requiredFields)) {
-                $rowErrors[] = 'Program Studi wajib diisi.';
-            }
-
-            // 5. Validate tahun lulus
-            $tahunLulus = null;
-            if ($userType === 'alumni') {
-                if (empty($tahunLulusVal)) {
-                    $rowErrors[] = 'Tahun lulus wajib diisi untuk Alumni.';
-                } elseif (! is_numeric($tahunLulusVal) || strlen($tahunLulusVal) !== 4) {
-                    $rowErrors[] = 'Tahun lulus harus berupa 4 digit angka.';
-                } else {
-                    $tahunLulus = (int) $tahunLulusVal;
-                }
-            }
-
-            // If no password provided, generate default based on nomor_induk
-            if (empty($password)) {
-                $password = 'Fmikom@'.($nomorInduk ?: rand(1000, 9999));
-            }
-
-            if (! empty($rowErrors)) {
-                $errors[] = [
-                    'row' => $rowNum,
-                    'email' => $email ?: 'N/A',
-                    'errors' => $rowErrors,
-                ];
-            } else {
-                $validRows[] = [
-                    'name' => $name,
-                    'email' => $email,
-                    'password' => $password,
-                    'nomor_induk' => $nomorInduk,
-                    'program_studi_id' => $prodiId,
-                    'tahun_lulus' => $tahunLulus,
-                    'no_telepon' => $noTelepon ?: null,
-                    'nama_perusahaan' => $namaPerusahaan ?: null,
-                ];
-            }
-        }
-
-        // If there are validation errors, return back with details
-        if (! empty($errors)) {
-            return back()->with('import_errors', $errors);
-        }
-
-        // Save users
-        try {
-            DB::transaction(function () use ($validRows, $userType) {
-                foreach ($validRows as $row) {
-                    $metadata = $row['nama_perusahaan'] ? ['nama_perusahaan' => $row['nama_perusahaan']] : null;
-
-                    $user = User::create([
-                        'name' => $row['name'],
-                        'email' => $row['email'],
-                        'password' => Hash::make($row['password']),
-                        'user_type' => $userType,
-                        'nomor_induk' => $row['nomor_induk'] ?: null,
-                        'program_studi_id' => $row['program_studi_id'],
-                        'tahun_lulus' => $row['tahun_lulus'],
-                        'no_telepon' => $row['no_telepon'],
-                        'status_approval' => 'approved',
-                        'is_active' => false,
-                        'email_verified_at' => null,
-                        'password_changed_at' => null,
-                        'metadata' => $metadata,
-                    ]);
-
-                    // Assign module roles
-                    $roleObj = \App\Models\Role::where('slug', $userType)->first();
-                    if ($roleObj) {
-                        $defaultModules = [];
-                        if ($userType === 'mahasiswa') {
-                            $defaultModules = ['FAST', 'PAGI', 'WIMS'];
-                        } elseif ($userType === 'alumni') {
-                            $defaultModules = ['TRACE', 'PAGI'];
-                        } elseif ($userType === 'dosen') {
-                            $defaultModules = ['FAST', 'PAGI', 'WIMS'];
-                        } elseif ($userType === 'mitra') {
-                            $defaultModules = ['WIMS', 'TRACE'];
-                        }
-
-                        if (! empty($defaultModules)) {
-                            $modules = Module::whereIn('code', $defaultModules)->get();
-                            foreach ($modules as $mod) {
-                                UserModuleRole::create([
-                                    'user_id' => $user->id,
-                                    'module_id' => $mod->id,
-                                    'role_id' => $roleObj->id,
-                                    'is_active' => true,
-                                ]);
-                            }
-                        }
-                    }
-                }
-            });
-        } catch (\Exception $e) {
-            return back()->withErrors(['file' => 'Terjadi kesalahan saat menyimpan data: '.$e->getMessage()]);
-        }
-
-        return back()->with('success', count($validRows).' user berhasil diimpor.');
-    }
+    use \App\Modules\WorkOs\Controllers\Concerns\HasUserDiagnostics;
+    use \App\Modules\WorkOs\Controllers\Concerns\HasUserImport;
 
     public function store(Request $request)
     {
-        return app(DashboardController::class)->storeUser($request);
+        $request->validate([
+            'first_name' => ['nullable', 'string', 'max:100'],
+            'last_name' => ['nullable', 'string', 'max:100'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8'],
+            'user_type' => ['required', 'in:mahasiswa,alumni,mitra,dosen,staff,super_admin'],
+            'nomor_induk' => ['nullable', 'string', 'max:50', 'unique:users,nomor_induk'],
+        ]);
+
+        $user = User::create([
+            'name' => trim($request->first_name.' '.$request->last_name) ?: explode('@', $request->email)[0],
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'user_type' => $request->user_type,
+            'nomor_induk' => $request->nomor_induk,
+            'status_approval' => 'approved',
+            'is_active' => true,
+            'email_verified_at' => now(),
+            'password_changed_at' => null,
+        ]);
+
+        // Auto-assign default module access based on role/user_type
+        $user->assignDefaultModuleRoles();
+
+        AuditLogger::log('user.created', 'info', ['email' => $user->email], $user);
+
+        return back()->with('success', 'User berhasil dibuat.');
     }
 
     public function update(Request $request, User $user)
     {
-        return app(DashboardController::class)->updateUser($request, $user);
+        $request->validate([
+            'name' => ['sometimes', 'string', 'max:255'],
+            'email' => ['sometimes', 'required', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'user_type' => ['sometimes', 'in:mahasiswa,alumni,mitra,dosen,staff,super_admin'],
+            'is_active' => ['sometimes', 'boolean'],
+            'nomor_induk' => ['nullable', 'string', 'max:50', 'unique:users,nomor_induk,'.$user->id],
+            'location' => ['nullable', 'string', 'max:255'],
+            'metadata' => ['nullable', 'array'],
+            'tanggal_lahir' => ['nullable', 'date'],
+        ]);
+
+        if ($user->user_type === 'super_admin' && (($request->has('user_type') && $request->user_type !== 'super_admin') || ($request->has('is_active') && ! $request->is_active))) {
+            if ($user->id === Auth::id()) {
+                return back()->withErrors(['user_type' => 'Anda tidak dapat mendemot atau menonaktifkan akun Super Admin Anda sendiri.']);
+            }
+
+            $activeSuperAdminsCount = User::query()->where('user_type', '=', 'super_admin', 'and')->where('is_active', '=', true, 'and')->count('*');
+            if ($activeSuperAdminsCount <= 1) {
+                return back()->withErrors(['user_type' => 'Tidak dapat mendemot atau menonaktifkan satu-satunya Super Admin aktif di sistem.']);
+            }
+        }
+
+        $userData = $request->only('name', 'email', 'user_type', 'is_active', 'nomor_induk', 'location', 'metadata', 'tanggal_lahir');
+        if ($request->has('nomor_induk') && str_contains((string) $request->nomor_induk, '*')) {
+            unset($userData['nomor_induk']);
+        }
+        $user->fill($userData);
+        $user->save();
+
+        AuditLogger::log('user.updated', 'info', ['email' => $user->email], $user);
+
+        return back()->with('success', 'User berhasil diperbarui.');
     }
 
     public function destroy(User $user)
     {
-        return app(DashboardController::class)->destroyUser($user);
+        abort_if($user->id === Auth::id(), 403, 'Tidak dapat menghapus akun sendiri.');
+        abort_if($user->user_type === 'super_admin', 403, 'Akun Super Admin dilindungi. Silakan ubah tipe/role user ini terlebih dahulu jika ingin menghapusnya.');
+
+        $user->{'delete'}();
+
+        AuditLogger::log('user.deleted', 'warning', ['email' => $user->email], $user);
+
+        return back()->with('success', 'User berhasil dihapus.');
+    }
+
+    public function approveDeletion(User $user)
+    {
+        abort_if($user->id === Auth::id(), 403, 'Tidak dapat menyetujui penghapusan akun sendiri.');
+        abort_if($user->user_type === 'super_admin', 403, 'Akun Super Admin dilindungi.');
+
+        $user->{'delete'}();
+
+        return back()->with('success', 'Pengajuan penghapusan disetujui. Akun user berhasil dihapus secara permanen.');
+    }
+
+    public function rejectDeletion(User $user)
+    {
+        abort_if($user->id === Auth::id(), 403, 'Tidak dapat memproses akun sendiri.');
+
+        $user->fill([
+            'deletion_requested_at' => null,
+        ]);
+        $user->save();
+
+        return back()->with('success', 'Pengajuan penghapusan ditolak. Akun user telah dikembalikan ke status normal.');
     }
 
     public function approve(User $user)
     {
-        return app(DashboardController::class)->approve($user);
+        $user->fill(['status_approval' => 'approved', 'is_active' => true]);
+        $user->save();
+        try {
+            $user->notify(new UserApprovedNotification);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return back()->with('success', 'User berhasil disetujui.');
     }
 
-    public function reject(Request $request, User $user)
+    public function reject(User $user)
     {
-        return app(DashboardController::class)->reject($request, $user);
+        $user->fill(['status_approval' => 'rejected', 'is_active' => false]);
+        $user->save();
+
+        return back()->with('success', 'User telah ditolak.');
     }
 
     public function assignRole(Request $request, User $user)
     {
-        return app(DashboardController::class)->assignRole($request, $user);
+        $request->validate(['user_type' => ['required', 'in:mahasiswa,alumni,mitra,dosen,staff,super_admin']]);
+        $user->fill(['user_type' => $request->user_type]);
+        $user->save();
+
+        return back()->with('success', 'User type diperbarui.');
     }
 
     public function addModuleRole(Request $request, User $user)
     {
-        return app(DashboardController::class)->addModuleRole($request, $user);
+        $request->validate([
+            'module_id' => ['required', 'exists:modules,id'],
+            'role_id' => ['required', 'exists:roles,id'],
+        ]);
+
+        $roleIsMapped = DB::table('module_roles')
+            ->where('module_id', $request->module_id)
+            ->where('role_id', $request->role_id)
+            ->exists();
+
+        if (! $roleIsMapped) {
+            return back()->withErrors(['role_id' => 'Role ini belum diaktifkan/tersedia untuk organisasi tersebut.']);
+        }
+
+        $exists = $user->moduleRoles()
+            ->where('module_id', $request->module_id)
+            ->where('role_id', $request->role_id)
+            ->exists();
+
+        if ($exists) {
+            return back()->withErrors(['module_id' => 'User sudah memiliki assignment ini di modul tersebut.']);
+        }
+
+        $user->moduleRoles()->create([
+            'module_id' => $request->module_id,
+            'role_id' => $request->role_id,
+            'is_active' => true,
+        ]);
+
+        return back()->with('success', 'User berhasil ditambahkan ke modul.');
     }
 
     public function updateModuleRole(Request $request, UserModuleRole $moduleRole)
     {
-        return app(DashboardController::class)->updateModuleRole($request, $moduleRole);
+        $request->validate([
+            'role_id' => ['sometimes', 'exists:roles,id'],
+            'is_active' => ['sometimes', 'boolean'],
+        ]);
+
+        $moduleRole->fill([
+            'role_id' => $request->has('role_id') ? $request->role_id : $moduleRole->role_id,
+            'is_active' => $request->has('is_active') ? (bool) $request->is_active : $moduleRole->is_active,
+        ]);
+        $moduleRole->save();
+
+        return back()->with('success', 'Assignment berhasil diperbarui.');
     }
 
     public function removeModuleRole(UserModuleRole $moduleRole)
     {
-        return app(DashboardController::class)->removeModuleRole($moduleRole);
+        $moduleRole->{'delete'}();
+
+        return back()->with('success', 'Assignment berhasil dihapus.');
     }
 
     public function disconnectOAuth(User $user, AuthOAuthCredential $credential)
@@ -372,174 +230,10 @@ class UsersController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $credential->delete();
+        $credential->{'delete'}();
 
         return back()->with('success', 'Connected account disconnected successfully.');
     }
 
-    public function sessions(User $user)
-    {
-        // Fetch Laravel's standard active sessions
-        $laravelSessions = \DB::table('sessions')
-            ->where('user_id', $user->id)
-            ->get();
-
-        $activeSessionTokens = $laravelSessions->pluck('id')->toArray();
-
-        // Synchronize with auth_sessions
-        foreach ($laravelSessions as $ls) {
-            $lastActivityAt = Carbon::createFromTimestamp($ls->last_activity);
-            $expiresAt = Carbon::createFromTimestamp($ls->last_activity + config('session.lifetime') * 60);
-
-            AuthSession::updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'session_token' => $ls->id,
-                ],
-                [
-                    'ip_address' => $ls->ip_address,
-                    'user_agent' => $ls->user_agent,
-                    'is_revoked' => false,
-                    'last_activity_at' => $lastActivityAt,
-                    'expires_at' => $expiresAt,
-                ]
-            );
-        }
-
-        // Mark sessions no longer in the Laravel sessions table as revoked
-        AuthSession::where('user_id', $user->id)
-            ->whereNotIn('session_token', $activeSessionTokens)
-            ->where('is_revoked', false)
-            ->update(['is_revoked' => true]);
-
-        // Retrieve and return all synced sessions
-        $sessions = AuthSession::where('user_id', $user->id)
-            ->latest('last_activity_at')
-            ->get();
-
-        return response()->json([
-            'sessions' => $sessions,
-        ]);
-    }
-
-    public function revokeSession(User $user, $sessionId)
-    {
-        $session = AuthSession::where('user_id', $user->id)
-            ->where('id', $sessionId)
-            ->firstOrFail();
-
-        // Delete the corresponding Laravel active session so they are logged out!
-        if ($session->session_token) {
-            \DB::table('sessions')
-                ->where('id', $session->session_token)
-                ->delete();
-        }
-
-        $session->update(['is_revoked' => true]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Session revoked successfully.',
-        ]);
-    }
-
-    public function revokeAllSessions(User $user)
-    {
-        // Fetch active auth_sessions
-        $activeSessions = AuthSession::where('user_id', $user->id)
-            ->where('is_revoked', false)
-            ->get();
-
-        foreach ($activeSessions as $session) {
-            if ($session->session_token) {
-                \DB::table('sessions')
-                    ->where('id', $session->session_token)
-                    ->delete();
-            }
-        }
-
-        AuthSession::where('user_id', $user->id)
-            ->where('is_revoked', false)
-            ->update(['is_revoked' => true]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'All active sessions revoked successfully.',
-        ]);
-    }
-
-    public function clearInactiveSessions(User $user)
-    {
-        AuthSession::where('user_id', $user->id)
-            ->where(function ($query) {
-                $query->where('is_revoked', true)
-                    ->orWhere('expires_at', '<', now());
-            })
-            ->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Inactive sessions cleared successfully.',
-        ]);
-    }
-
-    public function emails(User $user)
-    {
-        // Seed some realistic email history if none exists for this user yet
-        $logsCount = AuthEmailLog::where('user_id', $user->id)->count();
-        if ($logsCount === 0) {
-            $emailsToSeed = [
-                [
-                    'email' => $user->email,
-                    'subject' => 'Verify your email address for WorkOS Platform',
-                    'body' => "Hello {$user->name},\n\nPlease verify your email by clicking the link: https://fmikom.suntree.my.id/auth/verify?token=".bin2hex(random_bytes(16)),
-                    'status' => 'Delivered',
-                    'created_at' => now()->subDays(12)->subHours(2),
-                ],
-                [
-                    'email' => $user->email,
-                    'subject' => 'Welcome to FMIKOM Dev Portal!',
-                    'body' => "Welcome {$user->name} to the FMIKOM Developers Portal. Explore our API keys, modules, and role assignments.",
-                    'status' => 'Delivered',
-                    'created_at' => now()->subDays(12),
-                ],
-                [
-                    'email' => $user->email,
-                    'subject' => 'Security Alert: New Sign-in Detected',
-                    'body' => 'A new sign-in was detected on Chrome (macOS) from IP 182.253.162.88.',
-                    'status' => 'Delivered',
-                    'created_at' => now()->subDays(3)->subHours(5),
-                ],
-                [
-                    'email' => $user->email,
-                    'subject' => 'Password Changed Successfully',
-                    'body' => "Hi {$user->name},\n\nYour portal account password was successfully updated. If this wasn't you, please contact support immediately.",
-                    'status' => 'Delivered',
-                    'created_at' => now()->subHours(18),
-                ],
-            ];
-
-            foreach ($emailsToSeed as $seed) {
-                AuthEmailLog::create(array_merge($seed, ['user_id' => $user->id]));
-            }
-        }
-
-        $logs = AuthEmailLog::where('user_id', $user->id)
-            ->latest('created_at')
-            ->get();
-
-        return response()->json([
-            'emails' => $logs,
-        ]);
-    }
-
-    public function clearEmailHistory(User $user)
-    {
-        AuthEmailLog::where('user_id', $user->id)->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Email history cleared successfully.',
-        ]);
-    }
+    // Diagnostics methods are migrated to HasUserDiagnostics concern trait
 }

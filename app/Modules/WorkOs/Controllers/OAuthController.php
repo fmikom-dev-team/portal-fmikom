@@ -49,9 +49,11 @@ class OAuthController extends Controller
             // Enterprise Session Management: create an auth_sessions record with risk score
             $session = $this->sessionEngine->createSession($user, $request);
 
+            // Store opaque token (model UUID) in session for SecureSession middleware
+            $request->session()->put('auth_session_token', $session->id);
+
             // Redirect back to the frontend application (or dashboard)
             return redirect('/workos/dashboard?login=success&session_token='.$session->session_token);
-
         } catch (Exception $e) {
             // Redirect to frontend with error
             return redirect('/workos/dashboard?error=oauth_failed&message='.urlencode($e->getMessage()));

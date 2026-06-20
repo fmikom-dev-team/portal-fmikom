@@ -104,4 +104,36 @@ class ProfileController extends Controller
 
         return redirect('/');
     }
+
+    /**
+     * Request account deletion.
+     */
+    public function requestDeletion(ProfileDeleteRequest $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($user->user_type === 'super_admin') {
+            return back()->withErrors(['password' => 'Akun Super Admin dilindungi dan tidak dapat diajukan untuk penghapusan.']);
+        }
+
+        $user->update([
+            'deletion_requested_at' => now(),
+        ]);
+
+        return back()->with('success', 'Pengajuan penghapusan akun berhasil dikirim. Menunggu persetujuan admin.');
+    }
+
+    /**
+     * Cancel account deletion request.
+     */
+    public function cancelDeletionRequest(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        $user->update([
+            'deletion_requested_at' => null,
+        ]);
+
+        return back()->with('success', 'Pengajuan penghapusan akun berhasil dibatalkan.');
+    }
 }
