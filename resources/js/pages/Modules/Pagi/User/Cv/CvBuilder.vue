@@ -35,8 +35,8 @@ import {
 } from "lucide-vue-next";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import Navbar from "../ui/Navbar.vue";
-import AutocompleteInput from "./components/AutocompleteInput.vue";
 import CvPreview from "./CvPreview.vue";
+import AutocompleteInput from "./components/AutocompleteInput.vue";
 import MonthYearPicker from "./components/MonthYearPicker.vue";
 import ThemeCustomizer from "./components/ThemeCustomizer.vue";
 

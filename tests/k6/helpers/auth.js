@@ -1,5 +1,5 @@
-import http from 'k6/http';
 import { check } from 'k6';
+import http from 'k6/http';
 
 /**
  * Melakukan login ke aplikasi Laravel dengan mengekstrak CSRF token terlebih dahulu.
