@@ -35,7 +35,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register Telescope only in non-production or when the package is installed (dev dependency).
+        // In production Docker builds, Telescope is excluded via --no-dev, so we guard with class_exists.
+        if (class_exists(\Laravel\Telescope\TelescopeApplicationServiceProvider::class)) {
+            $this->app->register(\App\Providers\TelescopeServiceProvider::class);
+        }
     }
 
     /**
