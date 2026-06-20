@@ -8,6 +8,7 @@ use App\Models\Audit\AuditLog;
 use App\Models\Audit\AuditSecurityIncident;
 use App\Models\Module;
 use App\Models\Permission;
+use App\Models\Portal\PortalSetting;
 use App\Models\Radar\RadarBlockedItem;
 use App\Models\Radar\RadarDetection;
 use App\Models\Radar\RadarDevice;
@@ -32,6 +33,9 @@ class DashboardController extends Controller // NOSONAR
 
     public function index(Request $request)
     {
+        // Clear any active module session context when returning to the main dashboard
+        session()->forget(['active_module', 'active_role', 'active_module_at']);
+
         $tab = $request->segment(2) ?? 'overview';
 
         if ($tab === 'radar') {
@@ -55,7 +59,9 @@ class DashboardController extends Controller // NOSONAR
         };
 
         return Inertia::render('WorkOs/Dashboard', [
-            'users' => fn () => $shouldLoad('users', ['users', 'organizations', 'authorization']) ? $this->getUsersData() : [],
+            'users' => fn () => $shouldLoad('users', ['users', 'organizations', 'authorization'])
+                ? ['data' => $this->getUsersData(), 'total' => User::count()]
+                : [],
             'roles' => fn () => $shouldLoad('roles', ['authorization', 'organizations', 'users']) ? $this->getRolesData() : [],
             'permissions' => fn () => $shouldLoad('permissions', ['authorization']) ? $this->getPermissionsData() : [],
             'modules' => fn () => $shouldLoad('modules', ['organizations', 'users', 'authorization']) ? $this->getModulesData() : [],
@@ -71,7 +77,30 @@ class DashboardController extends Controller // NOSONAR
         ]);
     }
 
-    // ─── USER CRUD ───────────────────────────────────────────────
+    public function updateSystemSettings(Request $request)
+    {
+        $request->validate([
+            'maintenance_mode'    => ['nullable', 'in:0,1'],
+            'maintenance_message' => ['nullable', 'string', 'max:500'],
+            'brand_name'          => ['nullable', 'string', 'max:100'],
+            'brand_description'   => ['nullable', 'string', 'max:500'],
+            'primary_color'       => ['nullable', 'string', 'max:20'],
+            'public_registration' => ['nullable', 'in:0,1'],
+        ]);
+
+        $allowed = ['maintenance_mode', 'maintenance_message', 'brand_name', 'brand_description', 'primary_color', 'public_registration'];
+
+        foreach ($allowed as $key) {
+            if ($request->has($key)) {
+                PortalSetting::updateOrCreate(['key' => $key], ['value' => $request->input($key)]);
+            }
+        }
+
+        cache()->forget('portal_settings');
+
+        return back()->with('success', 'Pengaturan sistem berhasil disimpan.');
+    }
+
 
     public function storeUser(Request $request)
     {
@@ -504,7 +533,9 @@ class DashboardController extends Controller // NOSONAR
                     'name' => $u->name,
                     'email' => $u->email,
                     'user_type' => $u->user_type,
-                    'nomor_induk' => $u->nomor_induk,
+                    'nomor_induk' => $u->nomor_induk
+                        ? substr($u->nomor_induk, 0, 4).str_repeat('*', max(0, strlen($u->nomor_induk) - 4))
+                        : null,
                     'status_approval' => $u->status_approval,
                     'is_active' => $u->is_active,
                     'foto_path' => $fotoPath,
@@ -1069,7 +1100,9 @@ class DashboardController extends Controller // NOSONAR
             $envData['MAIL_USERNAME'] = $username;
         }
         if ($password !== null && $password !== '********') {
-            $envData['MAIL_PASSWORD'] = $password;
+            // Encrypt the password before writing to .env for security
+            $encrypted = 'base64:'.\Illuminate\Support\Facades\Crypt::encryptString($password);
+            $envData['MAIL_PASSWORD'] = $encrypted;
         }
 
         $this->updateEnvFile($envData);
