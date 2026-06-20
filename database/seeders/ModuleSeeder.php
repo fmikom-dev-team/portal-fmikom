@@ -75,8 +75,13 @@ class ModuleSeeder extends Seeder
                 'name' => 'Muchlisin Maruf',
                 'password' => Hash::make('password123'),
                 'is_active' => true,
+                'user_type' => 'super-admin',
             ]
         );
+
+        if ($user1->user_type !== 'super-admin') {
+            $user1->update(['user_type' => 'super-admin']);
+        }
 
         // --- Role Super Admin (Akses Semua Modul) ---
         $superAdminRole = Role::where('slug', 'super-admin')->first()->id;
