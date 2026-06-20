@@ -12,8 +12,11 @@ import { useLoadingState } from "@/composables/useLoadingState";
 (globalThis as any).axios.defaults.xsrfCookieName = "fm_csrf";
 (globalThis as any).axios.defaults.xsrfHeaderName = "X-XSRF-TOKEN";
 
+const runtimeImport = new Function(
+	"specifier",
+	"return import(specifier);",
+) as (specifier: string) => Promise<{ default: any }>;
 
-// ── Laravel Echo (Reverb WebSocket) ─────────────────────────────────────────
 let echoInitialized = false;
 
 async function initEcho() {
@@ -22,8 +25,8 @@ async function initEcho() {
 
 	try {
 		const [{ default: Echo }, { default: Pusher }] = await Promise.all([
-			import("laravel-echo"),
-			import("pusher-js"),
+			runtimeImport("laravel-echo"),
+			runtimeImport("pusher-js"),
 		]);
 
 		if ((globalThis as any).Pusher) {
@@ -78,7 +81,6 @@ async function initEcho() {
 	}
 }
 
-// ── bfcache WebSocket Support ─────────────────────────────────────────
 window.addEventListener("pagehide", () => {
 	if ((globalThis as any).Broadcaster) {
 		(globalThis as any).Broadcaster.disconnect();
@@ -112,7 +114,6 @@ createInertiaApp({
 			.use(plugin)
 			.mount(el);
 
-		// Initialize Echo only if the user is authenticated on initial load
 		if (props.initialPage.props.auth?.user) {
 			initEcho();
 		}
@@ -122,11 +123,6 @@ createInertiaApp({
 	},
 });
 
-// -----------------------------------------------------------------------
-// Global Inertia Event Handlers
-// -----------------------------------------------------------------------
-
-// biome-ignore lint/correctness/useHookAtTopLevel: Vue composable, not a React hook
 const { startLoading, stopLoading } = useLoadingState();
 let loadingTimeout: ReturnType<typeof setTimeout>;
 
@@ -145,44 +141,34 @@ router.on("finish", () => {
 router.on("success", (event) => {
 	const props = event.detail.page.props as any;
 
-	// Initialize Echo dynamically if user logs in
 	if (props.auth?.user) {
 		initEcho();
 	}
 
 	if (props.siteSettings) {
 		const settings = props.siteSettings;
-		
-		// 1. Dynamic Favicon Swapping
+
 		if (settings.brand_favicon) {
 			const favicons = document.querySelectorAll("link[rel*='icon']");
-			favicons.forEach(el => el.remove());
-			
-			const newFavicon = document.createElement('link');
-			newFavicon.rel = 'icon';
+			favicons.forEach((el) => el.remove());
+
+			const newFavicon = document.createElement("link");
+			newFavicon.rel = "icon";
 			newFavicon.href = settings.brand_favicon;
 			document.head.appendChild(newFavicon);
 		}
 
-		// 2. Dynamic Primary Accent Color
 		if (settings.primary_color) {
-			document.documentElement.style.setProperty('--primary', settings.primary_color);
-			document.documentElement.style.setProperty('--wos-primary', settings.primary_color);
+			document.documentElement.style.setProperty("--primary", settings.primary_color);
+			document.documentElement.style.setProperty("--wos-primary", settings.primary_color);
 		}
 	}
 });
 
-/**
- * Handle response yang tidak valid dari server:
- * - 401 Unauthorized  → session habis atau belum login
- * - 419 Token Mismatch → CSRF token expired (session habis)
- * Keduanya redirect ke /login tanpa full page reload yang kasar.
- */
 router.on("invalid", (event) => {
 	const status = event.detail.response?.status;
 	if (status === 401 || status === 419) {
 		event.preventDefault();
-		// Inertia visit ke login — lebih smooth daripada window.location
 		router.visit("/login", { replace: true });
 	} else if (status === 413) {
 		event.preventDefault();
@@ -218,10 +204,8 @@ router.on("invalid", (event) => {
 	}
 });
 
-// This will set light / dark mode on page load...
 initializeTheme();
 
-// ── PWA Service Worker Registration ──────────────────────────────────────────
 if ("serviceWorker" in navigator) {
 	globalThis.addEventListener("load", () => {
 		navigator.serviceWorker
