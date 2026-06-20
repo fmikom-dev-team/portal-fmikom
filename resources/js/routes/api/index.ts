@@ -1,4 +1,5 @@
 import fast from './fast'
+
 const api = {
     fast: Object.assign(fast, fast),
 }
