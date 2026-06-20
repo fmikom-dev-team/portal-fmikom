@@ -16,6 +16,8 @@ RUN npm ci
 COPY . .
 # Copy wayfinder-generated files from composer stage so vite plugin skips re-generating
 COPY --from=composer-builder /app/resources/js/wayfinder ./resources/js/wayfinder
+# SKIP_WAYFINDER=1 tells vite.config.ts to exclude the wayfinder plugin (no PHP in this stage)
+ENV SKIP_WAYFINDER=1
 RUN npm run build
 
 # Stage 3: Production Runtime
