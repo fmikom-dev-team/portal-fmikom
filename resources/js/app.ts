@@ -12,11 +12,6 @@ import { useLoadingState } from "@/composables/useLoadingState";
 (globalThis as any).axios.defaults.xsrfCookieName = "fm_csrf";
 (globalThis as any).axios.defaults.xsrfHeaderName = "X-XSRF-TOKEN";
 
-const runtimeImport = new Function(
-	"specifier",
-	"return import(specifier);",
-) as (specifier: string) => Promise<{ default: any }>;
-
 let echoInitialized = false;
 
 async function initEcho() {
@@ -25,8 +20,8 @@ async function initEcho() {
 
 	try {
 		const [{ default: Echo }, { default: Pusher }] = await Promise.all([
-			runtimeImport("laravel-echo"),
-			runtimeImport("pusher-js"),
+			import("laravel-echo"),
+			import("pusher-js"),
 		]);
 
 		if ((globalThis as any).Pusher) {
