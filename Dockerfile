@@ -1,18 +1,22 @@
-# Stage 1: Build Frontend Assets
-FROM node:22-alpine AS frontend-builder
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-
-# Stage 2: Install Composer Dependencies
+# Stage 1: Install Composer Dependencies & Generate Wayfinder
 FROM composer:2 AS composer-builder
 WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignore-platform-reqs
 COPY . .
 RUN composer dump-autoload --no-dev --classmap-authoritative
+# Generate wayfinder route files (requires php, available in this stage via composer image)
+RUN php artisan wayfinder:generate || true
+
+# Stage 2: Build Frontend Assets
+FROM node:22-alpine AS frontend-builder
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+# Copy wayfinder-generated files from composer stage so vite plugin skips re-generating
+COPY --from=composer-builder /app/resources/js/wayfinder ./resources/js/wayfinder
+RUN npm run build
 
 # Stage 3: Production Runtime
 FROM php:8.4-fpm-alpine AS production-runtime

@@ -44,7 +44,7 @@ export default defineConfig({
 		copyFFmpegCore(),
 		visualizer({
 			filename: "stats.html",
-			open: true,
+			open: false, // disabled in production/CI — no browser available
 			gzipSize: true,
 			brotliSize: true,
 		}) as Plugin,
