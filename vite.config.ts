@@ -38,13 +38,15 @@ export default defineConfig({
 				},
 			},
 		}),
-		wayfinder({
-			formVariants: true,
-		}),
+		// Skip wayfinder in Docker/CI build — PHP not available in Node stage.
+		// Files are pre-generated in composer-builder and copied before npm run build.
+		...(process.env.SKIP_WAYFINDER !== "1"
+			? [wayfinder({ formVariants: true })]
+			: []),
 		copyFFmpegCore(),
 		visualizer({
 			filename: "stats.html",
-			open: true,
+			open: false, // disabled in production/CI — no browser available
 			gzipSize: true,
 			brotliSize: true,
 		}) as Plugin,
