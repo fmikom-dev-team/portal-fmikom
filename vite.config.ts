@@ -4,6 +4,7 @@ import { wayfinder } from "@laravel/vite-plugin-wayfinder";
 import tailwindcss from "@tailwindcss/vite";
 import vue from "@vitejs/plugin-vue";
 import laravel from "laravel-vite-plugin";
+import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig, type Plugin } from "vite";
 
 /** Copies ffmpeg-core.{js,wasm} from node_modules to public/ so they can be
@@ -41,52 +42,101 @@ export default defineConfig({
 			formVariants: true,
 		}),
 		copyFFmpegCore(),
+		visualizer({
+			filename: "stats.html",
+			open: true,
+			gzipSize: true,
+			brotliSize: true,
+		}) as Plugin,
 	],
 	server: {
 		host: "0.0.0.0",
 	},
 	build: {
-		// Prevent browser warnings about CSS preloaded but not used immediately.
-		// Inertia lazy-loads page components, so their CSS is not needed on initial render.
-		modulePreload: false,
+		target: "es2022",
+		// Polyfill ensures Safari <17 also benefits from modulepreload.
+		// Using the object form (vs bare `true`) also enables preloading of
+		// dynamically-imported Inertia page chunks, not just the entry point.
+		modulePreload: {
+			polyfill: true,
+			resolveDependencies(filename, deps) {
+				return deps.filter(
+					(dep) =>
+						!dep.includes("chart-vendor") &&
+						!dep.includes("editor-") &&
+						!dep.includes("ffmpeg"),
+				);
+			},
+		},
 		cssCodeSplit: true,
 		chunkSizeWarningLimit: 1000,
 		rollupOptions: {
 			output: {
-				manualChunks: {
-					"vue-vendor": [
-						"vue",
-						"@inertiajs/vue3",
-						"@inertiajs/core",
-						"axios",
-						"lucide-vue-next",
-					],
-					"chart-vendor": ["apexcharts", "vue3-apexcharts"],
-					"editor-core": ["@editorjs/editorjs"],
-					"editor-media": [
-						"@editorjs/image",
-						"@editorjs/attaches",
-						"@editorjs/embed",
-						"@editorjs/link",
-					],
-					"editor-code": ["@editorjs/code", "@editorjs/table"],
-					"editor-basic": [
-						"@editorjs/paragraph",
-						"@editorjs/header",
-						"@editorjs/nested-list",
-						"@editorjs/quote",
-						"@editorjs/checklist",
-						"@editorjs/delimiter",
-						"@editorjs/raw",
-					],
-					"editor-inline": [
-						"@editorjs/inline-code",
-						"@editorjs/marker",
-						"@editorjs/underline",
-						"@editorjs/link-autocomplete",
-						"@sotaproject/strikethrough",
-					],
-					ffmpeg: ["@ffmpeg/ffmpeg", "@ffmpeg/util"],
+				/**
+				 * Granular manual chunk splitting:
+				 * - Keeps each vendor group small so the browser can cache them
+				 *   independently and parse only what's needed per page.
+				 * - Using a function (vs object) gives Vite full control over
+				 *   modules NOT in our list (they go into auto-named chunks).
+				 */
+				manualChunks(id) {
+					// Vue & Inertia core — loaded on every page, grouped to prevent circular dependency TDZ errors
+					if (
+						id.includes("node_modules/vue/") ||
+						id.includes("node_modules/@vue/") ||
+						id.includes("node_modules/@inertiajs/") ||
+						id.includes("node_modules/axios/") ||
+						id.includes("preload-helper")
+					) {
+						return "vue-runtime";
+					}
+					// Charts — only needed on analytics/dashboard pages
+					if (
+						id.includes("node_modules/apexcharts") ||
+						id.includes("node_modules/vue3-apexcharts")
+					) {
+						return "chart-vendor";
+					}
+					// Editor.js core — large, lazy-loaded only in editor views
+					if (id.includes("node_modules/@editorjs/editorjs")) {
+						return "editor-core";
+					}
+					// Editor.js plugins — split further so non-media editors don't pull media
+					if (
+						id.includes("@editorjs/image") ||
+						id.includes("@editorjs/attaches") ||
+						id.includes("@editorjs/embed") ||
+						id.includes("@editorjs/link")
+					) {
+						return "editor-media";
+					}
+					if (id.includes("@editorjs/code") || id.includes("@editorjs/table")) {
+						return "editor-code";
+					}
+					if (
+						id.includes("@editorjs/paragraph") ||
+						id.includes("@editorjs/header") ||
+						id.includes("@editorjs/nested-list") ||
+						id.includes("@editorjs/quote") ||
+						id.includes("@editorjs/checklist") ||
+						id.includes("@editorjs/delimiter") ||
+						id.includes("@editorjs/raw")
+					) {
+						return "editor-basic";
+					}
+					if (
+						id.includes("@editorjs/inline-code") ||
+						id.includes("@editorjs/marker") ||
+						id.includes("@editorjs/underline") ||
+						id.includes("@editorjs/link-autocomplete") ||
+						id.includes("@sotaproject/strikethrough")
+					) {
+						return "editor-inline";
+					}
+					// FFmpeg — very large, lazy-loaded only when video upload is triggered
+					if (id.includes("node_modules/@ffmpeg/")) {
+						return "ffmpeg";
+					}
 				},
 			},
 		},

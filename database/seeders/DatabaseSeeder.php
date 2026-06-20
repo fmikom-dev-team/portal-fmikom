@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             ModuleSeeder::class,
+            RadarSeeder::class,
         ]);
     }
 }

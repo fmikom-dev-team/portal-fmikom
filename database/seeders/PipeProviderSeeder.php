@@ -19,7 +19,7 @@ class PipeProviderSeeder extends Seeder
                 'token_url' => 'https://oauth2.googleapis.com/token',
                 'api_base_url' => 'https://www.googleapis.com',
                 'status' => 'enabled',
-                'logo_url' => 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg',
+                'logo_url' => '/images/providers/google.svg',
                 'supported_features' => ['sync', 'webhooks'],
             ],
             [
@@ -31,7 +31,7 @@ class PipeProviderSeeder extends Seeder
                 'token_url' => 'https://slack.com/api/oauth.v2.access',
                 'api_base_url' => 'https://slack.com/api',
                 'status' => 'enabled',
-                'logo_url' => 'https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg',
+                'logo_url' => '/images/providers/slack.svg',
                 'supported_features' => ['sync', 'webhooks', 'actions'],
             ],
             [
@@ -43,7 +43,7 @@ class PipeProviderSeeder extends Seeder
                 'token_url' => 'https://github.com/login/oauth/access_token',
                 'api_base_url' => 'https://api.github.com',
                 'status' => 'enabled',
-                'logo_url' => 'https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg',
+                'logo_url' => '/images/providers/github.svg',
                 'supported_features' => ['sync', 'webhooks'],
             ],
             [
@@ -55,7 +55,7 @@ class PipeProviderSeeder extends Seeder
                 'token_url' => 'https://api.notion.com/v1/oauth/token',
                 'api_base_url' => 'https://api.notion.com/v1',
                 'status' => 'enabled',
-                'logo_url' => 'https://upload.wikimedia.org/wikipedia/commons/e/e9/Notion-logo.svg',
+                'logo_url' => '/images/providers/notion.svg',
                 'supported_features' => ['sync'],
             ],
             [
@@ -67,7 +67,7 @@ class PipeProviderSeeder extends Seeder
                 'token_url' => 'https://login.salesforce.com/services/oauth2/token',
                 'api_base_url' => 'https://api.salesforce.com',
                 'status' => 'disabled',
-                'logo_url' => 'https://upload.wikimedia.org/wikipedia/commons/f/f9/Salesforce.com_logo.svg',
+                'logo_url' => '/images/providers/salesforce.svg',
                 'supported_features' => ['sync', 'webhooks', 'actions'],
             ],
         ];

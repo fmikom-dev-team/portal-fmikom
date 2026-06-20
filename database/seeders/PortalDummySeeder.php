@@ -82,9 +82,9 @@ class PortalDummySeeder extends Seeder // NOSONAR
                 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2670&auto=format&fit=crop',
             ]),
             'partners' => json_encode([
-                ['name' => 'Google', 'logo' => 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg'],
-                ['name' => 'Microsoft', 'logo' => 'https://upload.wikimedia.org/wikipedia/commons/9/96/Microsoft_logo_%282012%29.svg'],
-                ['name' => 'IBM', 'logo' => 'https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg'],
+                ['name' => 'Google', 'logo' => '/images/partners/google.svg'],
+                ['name' => 'Microsoft', 'logo' => '/images/partners/microsoft.svg'],
+                ['name' => 'IBM', 'logo' => '/images/partners/ibm.svg'],
             ]),
             'benefits_title' => 'Mengapa Memilih Portal FMIKOM?',
             'benefits_subtitle' => 'Kami membawa standarisasi aplikasi industri (SaaS) ke lingkungan kampus. Transparan, terpusat, dan mudah diakses.',
