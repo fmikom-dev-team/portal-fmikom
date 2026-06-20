@@ -33,3 +33,12 @@ yarn-error.log
 /public/sample.mp4
 /public/test_editorjs_save.html
 /storage/give_access.php
+/stats.html
+/sonar-scanner.sh
+/tsconfig.sonar.json
+/.scannerwork
+
+**/caddy
+frankenphp
+frankenphp-worker.php
+/testing
