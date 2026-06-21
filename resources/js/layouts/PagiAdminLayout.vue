@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Head } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { Head, usePage } from "@inertiajs/vue3";
+import { ref, computed } from "vue";
 import Header from "@/components/Admin/Header.vue";
 import MobileSidebar from "@/components/Admin/MobileSidebar.vue";
 import Sidebar from "@/components/Admin/Sidebar.vue";
@@ -9,6 +9,8 @@ defineProps<{
 	title?: string;
 }>();
 
+const page = usePage();
+const siteSettings = computed(() => (page.props as any).siteSettings || {});
 const collapsed = ref(false);
 const mobileOpen = ref(false);
 </script>
@@ -50,7 +52,7 @@ const mobileOpen = ref(false);
             <!-- Footer -->
             <footer class="px-6 py-4 border-t border-slate-100 dark:border-zinc-800">
                 <p class="text-[11px] text-slate-400 dark:text-zinc-600 text-center">
-                    KaryaKampus Admin — PAGI Module · {{ new Date().getFullYear() }}
+                    {{ siteSettings.brand_name || 'Portal FMIKOM' }} Admin — PAGI Module · {{ new Date().getFullYear() }}
                 </p>
             </footer>
         </div>

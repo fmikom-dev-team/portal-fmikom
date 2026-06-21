@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { Link } from "@inertiajs/vue3";
+import { Link, usePage } from "@inertiajs/vue3";
 import { computed } from "vue";
 
+const page = usePage();
+const siteSettings = computed(() => (page.props as any).siteSettings || {});
 const currentYear = computed(() => new Date().getFullYear());
 </script>
 
@@ -21,7 +23,7 @@ const currentYear = computed(() => new Date().getFullYear());
                         </div>
                         <div>
                             <span class="text-[13px] font-black text-slate-800 dark:text-zinc-100 uppercase tracking-wider">PAGI</span>
-                            <span class="text-[9px] block font-black text-slate-400 dark:text-zinc-500 tracking-widest leading-none">FMIKOM</span>
+                            <span class="text-[9px] block font-black text-slate-400 dark:text-zinc-500 tracking-widest leading-none">{{ siteSettings.brand_name || 'FMIKOM' }}</span>
                         </div>
                     </div>
                     <p class="text-[11.5px] leading-relaxed text-slate-450 dark:text-zinc-400 font-medium">
@@ -114,7 +116,7 @@ const currentYear = computed(() => new Date().getFullYear());
             <div class="pt-8 border-t border-slate-100 dark:border-zinc-900 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="text-left">
                     <p class="text-[11px] font-semibold text-slate-400 dark:text-zinc-500">
-                        &copy; {{ currentYear }} PAGI FMIKOM • Hak Cipta Dilindungi • Made with Faculty of Computer Science
+                        &copy; {{ currentYear }} PAGI {{ siteSettings.brand_name || 'FMIKOM' }} • Hak Cipta Dilindungi • Made with Faculty of Computer Science
                     </p>
                 </div>
             </div>
