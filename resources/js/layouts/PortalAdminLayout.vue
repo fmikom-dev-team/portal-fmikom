@@ -43,6 +43,7 @@ const props = defineProps({
 const page = usePage<CustomPageProps>();
 const user = computed(() => page.props.auth?.user);
 const firstName = computed(() => user.value?.name || "Admin");
+const siteSettings = computed(() => (page.props as any).siteSettings || {});
 
 const isDark = useDark({
 	selector: "html",
@@ -127,21 +128,27 @@ onUnmounted(() => {
             <!-- Logo Row -->
             <div class="flex items-center justify-between px-4 h-[68px] shrink-0 border-b border-slate-100 dark:border-slate-800">
                 <div class="flex items-center gap-2 overflow-hidden min-w-0">
-                    <div class="grid grid-cols-3 gap-0.5 w-[22px] h-[22px] shrink-0">
-                        <div class="bg-[#2563EB] rounded-full w-[6px] h-[6px]"></div>
-                        <div class="bg-[#2563EB] rounded-full w-[6px] h-[6px]"></div>
-                        <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
-                        <div class="bg-[#2563EB] rounded-full w-[6px] h-[6px]"></div>
-                        <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
-                        <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
-                        <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
-                        <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
-                        <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
+                    <div 
+                        class="w-[30px] h-[30px] rounded-[7px] flex items-center justify-center shrink-0 overflow-hidden"
+                        :style="{ backgroundColor: siteSettings.brand_logo ? 'transparent' : '#2563EB' }"
+                    >
+                        <img v-if="siteSettings.brand_logo" :src="siteSettings.brand_logo" alt="Brand Logo" class="w-full h-full object-contain" />
+                        <div v-else class="grid grid-cols-3 gap-0.5 w-[22px] h-[22px] shrink-0">
+                            <div class="bg-[#2563EB] rounded-full w-[6px] h-[6px]"></div>
+                            <div class="bg-[#2563EB] rounded-full w-[6px] h-[6px]"></div>
+                            <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
+                            <div class="bg-[#2563EB] rounded-full w-[6px] h-[6px]"></div>
+                            <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
+                            <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
+                            <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
+                            <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
+                            <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
+                        </div>
                     </div>
                     <span
                         class="font-black text-[17px] tracking-wide text-slate-900 dark:text-white whitespace-nowrap transition-all duration-200 origin-left"
                         :class="sidebarCollapsed ? 'opacity-0 scale-x-0 w-0' : 'opacity-100 scale-x-100 ml-1'"
-                    >MESQUITE</span>
+                    >{{ siteSettings.brand_name || 'Portal FMIKOM' }}</span>
                 </div>
 
                 <!-- Desktop: Collapse Toggle -->
