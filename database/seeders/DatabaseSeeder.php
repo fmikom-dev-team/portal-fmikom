@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             ModuleSeeder::class,
             RadarSeeder::class,
             FakultasProdiSeeder::class,
+            DummyUserSeeder::class,
             SuratCategorySeeder::class,
             JenisSuratSeeder::class,
             SuratTemplateSeeder::class,

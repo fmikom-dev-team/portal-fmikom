@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\Module;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\UserModuleRole;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -12,10 +14,18 @@ class DummyUserSeeder extends Seeder
     public function run(): void
     {
         $roleAdmin = Role::firstOrCreate(['slug' => 'super-admin'], ['nama' => 'Super Admin']);
-        $roleUser = Role::firstOrCreate(['slug' => 'user'], ['nama' => 'User / Mahasiswa']);
+        $roleMahasiswa = Role::firstOrCreate(['slug' => 'mahasiswa'], ['nama' => 'Mahasiswa']);
+        $fastModule = Module::firstOrCreate(
+            ['code' => 'FAST'],
+            [
+                'name' => 'Fmikom Academic System and Tracking',
+                'description' => 'Sistem pelacakan dan akademik FMIKOM',
+                'is_active' => true,
+            ]
+        );
 
         // Akun Admin Muchlisin
-        User::updateOrCreate(
+        $admin = User::updateOrCreate(
             ['email' => 'muchlisinmaruf@gmail.com'],
             [
                 'name' => 'Muchlisin Maruf (Admin)',
@@ -32,9 +42,87 @@ class DummyUserSeeder extends Seeder
                 'github' => 'muchlisin',
             ]
         );
+        $this->assignFastRole($admin, $fastModule, $roleAdmin);
+
+        $fastAdminRole = Role::firstOrCreate(
+            ['slug' => 'admin'],
+            ['nama' => 'Admin Struktural']
+        );
+        $fastDosenRole = Role::firstOrCreate(
+            ['slug' => 'dosen'],
+            ['nama' => 'Dosen / Struktural']
+        );
+        $fastKaprodiRole = Role::firstOrCreate(
+            ['slug' => 'kaprodi'],
+            ['nama' => 'Kaprodi']
+        );
+        $fastDekanRole = Role::firstOrCreate(
+            ['slug' => 'dekan'],
+            ['nama' => 'Dekan']
+        );
+
+        // Akun admin FAST untuk pengelolaan portal/approval
+        $fastAdmin = User::updateOrCreate(
+            ['email' => 'fast.admin@fmikom.test'],
+            [
+                'name' => 'FAST Admin',
+                'password' => Hash::make('admin123'),
+                'user_type' => 'admin',
+                'email_verified_at' => now(),
+                'password_changed_at' => now(),
+                'role_title' => 'Admin FAST',
+                'location' => 'FMIKOM UNUGHA',
+            ]
+        );
+        $this->assignFastRole($fastAdmin, $fastModule, $fastAdminRole);
+
+        // Akun Kaprodi FAST
+        $kaprodi = User::updateOrCreate(
+            ['email' => 'fast.kaprodi@fmikom.test'],
+            [
+                'name' => 'FAST Kaprodi',
+                'password' => Hash::make('kaprodi123'),
+                'user_type' => 'dosen',
+                'email_verified_at' => now(),
+                'password_changed_at' => now(),
+                'role_title' => 'Kaprodi',
+                'location' => 'FMIKOM UNUGHA',
+            ]
+        );
+        $this->assignFastRole($kaprodi, $fastModule, $fastKaprodiRole);
+
+        // Akun Dekan FAST
+        $dekan = User::updateOrCreate(
+            ['email' => 'fast.dekan@fmikom.test'],
+            [
+                'name' => 'FAST Dekan',
+                'password' => Hash::make('dekan123'),
+                'user_type' => 'dosen',
+                'email_verified_at' => now(),
+                'password_changed_at' => now(),
+                'role_title' => 'Dekan',
+                'location' => 'FMIKOM UNUGHA',
+            ]
+        );
+        $this->assignFastRole($dekan, $fastModule, $fastDekanRole);
+
+        // Akun Dosen FAST
+        $dosen = User::updateOrCreate(
+            ['email' => 'fast.dosen@fmikom.test'],
+            [
+                'name' => 'FAST Dosen',
+                'password' => Hash::make('dosen123'),
+                'user_type' => 'dosen',
+                'email_verified_at' => now(),
+                'password_changed_at' => now(),
+                'role_title' => 'Dosen',
+                'location' => 'FMIKOM UNUGHA',
+            ]
+        );
+        $this->assignFastRole($dosen, $fastModule, $fastDosenRole);
 
         // Akun Pelajar Dummy
-        User::updateOrCreate(
+        $student = User::updateOrCreate(
             ['email' => 'mahasiswa@example.com'],
             [
                 'name' => 'Dummy Mahasiswa',
@@ -51,5 +139,17 @@ class DummyUserSeeder extends Seeder
                 'github' => 'dummystudent',
             ]
         );
+        $this->assignFastRole($student, $fastModule, $roleMahasiswa);
+    }
+
+    private function assignFastRole(User $user, Module $module, Role $role): void
+    {
+        UserModuleRole::firstOrCreate([
+            'user_id' => $user->id,
+            'module_id' => $module->id,
+            'role_id' => $role->id,
+        ], [
+            'is_active' => true,
+        ]);
     }
 }
