@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $jenisSurat = JenisSurat::query()
+        $jenisSurat = JenisSurat::withoutGlobalScopes()
             ->whereIn('nama', ['Keterangan Lulus', 'Surat Keterangan Lulus'])
             ->with('template')
             ->first();
