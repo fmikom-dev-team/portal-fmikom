@@ -235,16 +235,6 @@ class PagiChatService
                 'updated_at' => now(),
             ]);
 
-            // Delete cleared chat rows so both can see new messages in their conversation list
-            DB::table('pagi_cleared_chats')
-                ->where(function ($q) use ($user, $receiverId) {
-                    $q->where(function ($sq) use ($user, $receiverId) {
-                        $sq->where('user_id', $user->id)->where('partner_id', $receiverId);
-                    })->orWhere(function ($sq) use ($user, $receiverId) {
-                        $sq->where('user_id', $receiverId)->where('partner_id', $user->id);
-                    });
-                })->delete();
-
             return $msg;
         });
 
