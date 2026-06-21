@@ -76,6 +76,10 @@ class DashboardController extends Controller // NOSONAR
             'auditStats' => fn () => $shouldLoad('auditStats', ['audit-logs']) ? $this->getAuditStats() : [],
             'auditRecentEvents' => fn () => $shouldLoad('auditRecentEvents', ['audit-logs']) ? $this->getAuditRecentEvents() : [],
             'smtpConfig' => fn () => $shouldLoad('smtpConfig', ['emails']) ? $this->getSmtpConfig() : [],
+            'notifications' => fn () => $shouldLoad('notifications', ['notifications']) ? $this->getNotificationsForUser($request->user()) : [],
+            'unreadNotificationsCount' => fn () => $request->user()
+                ? $request->user()->unreadNotifications()->where('type', \App\Notifications\WorkOsAlert::class)->count()
+                : 0,
         ]);
     }
 
@@ -1173,6 +1177,116 @@ class DashboardController extends Controller // NOSONAR
                 'success' => false,
                 'message' => 'SMTP connection failed: '.$e->getMessage(),
             ], 500);
+        }
+    }
+
+    public function markAllNotificationsRead(Request $request)
+    {
+        $request->user()->unreadNotifications()
+            ->where('type', \App\Notifications\WorkOsAlert::class)
+            ->update(['read_at' => now()]);
+
+        return back()->with('success', 'Semua notifikasi berhasil ditandai sebagai dibaca.');
+    }
+
+    public function clearNotifications(Request $request)
+    {
+        $request->user()->notifications()
+            ->where('type', \App\Notifications\WorkOsAlert::class)
+            ->delete();
+
+        return back()->with('success', 'Log aktivitas berhasil dikosongkan.');
+    }
+
+    public function toggleNotificationRead(Request $request, $id)
+    {
+        $notification = $request->user()->notifications()->findOrFail($id);
+
+        if (is_null($notification->read_at)) {
+            $notification->markAsRead();
+        } else {
+            $notification->update(['read_at' => null]);
+        }
+
+        return back();
+    }
+
+    private function getNotificationsForUser(User $user): array
+    {
+        $hasAlerts = $user->notifications()
+            ->where('type', \App\Notifications\WorkOsAlert::class)
+            ->exists();
+        
+        if (!$hasAlerts) {
+            $this->seedDefaultNotificationsForUser($user);
+        }
+
+        return $user->notifications()
+            ->where('type', \App\Notifications\WorkOsAlert::class)
+            ->latest()
+            ->get()
+            ->map(function ($n) {
+                return [
+                    'id' => $n->id,
+                    'title' => $n->data['title'] ?? '',
+                    'description' => $n->data['description'] ?? '',
+                    'severity' => $n->data['severity'] ?? 'info',
+                    'time' => $n->created_at->diffForHumans(),
+                    'read' => !is_null($n->read_at),
+                ];
+            })
+            ->toArray();
+    }
+
+    private function seedDefaultNotificationsForUser(User $user)
+    {
+        $now = now();
+        $defaultAlerts = [
+            [
+                'title' => 'Radar threat payload blocked',
+                'description' => 'SQL injection payload detected on endpoint POST /login. Threat origin: 185.220.101.4 (Russia).',
+                'severity' => 'error',
+                'read' => false,
+                'hours_ago' => 0,
+            ],
+            [
+                'title' => 'Webhook delivery failed',
+                'description' => 'Event `sso.connection.activated` failed to dispatch to https://api.fmikom.org/webhooks (500 Internal Error).',
+                'severity' => 'warning',
+                'read' => false,
+                'hours_ago' => 1,
+            ],
+            [
+                'title' => 'New Okta SAML Connection',
+                'description' => "SSO Connection 'okta-saml-fmikom' was successfully configured and activated by admin@fmikom.org.",
+                'severity' => 'success',
+                'read' => true,
+                'hours_ago' => 4,
+            ],
+            [
+                'title' => 'System update applied',
+                'description' => 'WorkOS database seeders updated to incorporate new regional threat lists (2,408 rules updated).',
+                'severity' => 'info',
+                'read' => true,
+                'hours_ago' => 24,
+            ],
+        ];
+
+        foreach ($defaultAlerts as $alert) {
+            DB::table('notifications')->insert([
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'type' => \App\Notifications\WorkOsAlert::class,
+                'notifiable_type' => get_class($user),
+                'notifiable_id' => $user->id,
+                'data' => json_encode([
+                    'title' => $alert['title'],
+                    'description' => $alert['description'],
+                    'severity' => $alert['severity'],
+                ]),
+                'read_at' => $alert['read'] ? $now->copy()->subHours($alert['hours_ago']) : null,
+                'created_at' => $now->copy()->subHours($alert['hours_ago']),
+                'updated_at' => $now->copy()->subHours($alert['hours_ago']),
+            ]);
         }
     }
 }
