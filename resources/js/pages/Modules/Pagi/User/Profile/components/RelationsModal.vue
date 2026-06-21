@@ -31,9 +31,10 @@ const filteredRelations = computed(() => {
 	return list.filter((item: any) => item.name?.toLowerCase().includes(q));
 });
 
-const isFollowingBack = (senderId: number) => {
-	const following = (page.props.auth?.user as any)?.metadata?.following ?? [];
-	return following.includes(senderId);
+const isFollowingBack = (senderId: any) => {
+	const following = (page.props.auth?.user as any)?.following ?? (page.props.auth?.user as any)?.metadata?.following ?? [];
+	const sId = Number(senderId);
+	return following.some((id: any) => Number(id) === sId);
 };
 
 const fetchRelations = async () => {
@@ -70,19 +71,24 @@ const toggleFollowRelation = async (rel: any) => {
 		const authUser = page.props.auth?.user as any;
 		if (!authUser) return;
 
-		const following = authUser.metadata?.following ?? [];
+		let following = authUser.following ?? authUser.metadata?.following ?? [];
+		following = [...following];
+		const sId = Number(senderId);
+
 		if (res.data.following) {
-			if (!following.includes(senderId)) following.push(senderId);
+			if (!following.some((id: any) => Number(id) === sId)) {
+				following.push(sId);
+			}
 			emit("toast", `Mulai mengikuti ${rel.name}!`, "success");
 		} else {
-			const idx = following.indexOf(senderId);
-			if (idx > -1) following.splice(idx, 1);
+			following = following.filter((id: any) => Number(id) !== sId);
 			emit("toast", `Berhenti mengikuti ${rel.name}.`, "info");
 		}
 		if (!authUser.metadata) {
 			authUser.metadata = {};
 		}
 		authUser.metadata.following = following;
+		authUser.following = following;
 
 		// Reactively update following count in parent if own profile
 		if (props.isOwnProfile) {

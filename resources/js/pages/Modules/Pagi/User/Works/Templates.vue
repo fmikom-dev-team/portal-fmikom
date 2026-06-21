@@ -2,7 +2,6 @@
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { ArrowRight, Check, Star } from "lucide-vue-next";
 import { computed, ref } from "vue";
-import Footer from "../ui/Footer.vue";
 import Navbar from "../ui/Navbar.vue";
 import UmumNavbar from "../ui/UmumNavbar.vue";
 
@@ -658,7 +657,6 @@ const selectPalette = (themeName: string, idx: number) => {
 			</div>
 		</div>
 
-		<Footer />
 	</div>
 </template>
 

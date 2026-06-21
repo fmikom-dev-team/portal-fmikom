@@ -24,7 +24,6 @@ import {
 	Twitter,
 } from "lucide-vue-next";
 import { computed, ref } from "vue";
-import Footer from "../ui/Footer.vue";
 import Navbar from "../ui/Navbar.vue";
 import Preview from "../ui/Preview.vue";
 
@@ -449,8 +448,7 @@ const handlePrint = () => {
 			/>
 		</div>
 
-		<!-- Footer (hidden in print) -->
-		<Footer class="no-print" />
+
 
 		<!-- Project Detail Modal (hidden in print) -->
 		<Preview

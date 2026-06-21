@@ -374,11 +374,15 @@ const toggleFollow = async () => {
 			if (!page.props.auth.user.metadata) {
 				page.props.auth.user.metadata = {};
 			}
-			let list = page.props.auth.user.metadata.following || [];
+			let list = page.props.auth.user.following ?? page.props.auth.user.metadata?.following ?? [];
+			list = [...list];
+			const targetId = Number(user.value.id);
 			if (data.following) {
-				list.push(user.value.id);
+				if (!list.some((id: any) => Number(id) === targetId)) {
+					list.push(targetId);
+				}
 			} else {
-				list = list.filter((id: number) => id !== user.value.id);
+				list = list.filter((id: any) => Number(id) !== targetId);
 			}
 			page.props.auth.user.metadata.following = list;
 			page.props.auth.user.following = list;

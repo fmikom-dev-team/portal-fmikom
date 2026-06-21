@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from "@inertiajs/vue3";
 import { ArrowLeft, Check, Sparkles } from "lucide-vue-next";
-import Footer from "../../ui/Footer.vue";
 import Navbar from "../../ui/Navbar.vue";
 
 const templatesList = [
@@ -297,6 +296,5 @@ const selectTemplate = (templateId: string) => {
             </div>
         </main>
 
-        <Footer />
     </div>
 </template>

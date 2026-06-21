@@ -16,7 +16,6 @@ import {
 	X,
 } from "lucide-vue-next";
 import { computed, ref, watch } from "vue";
-import Footer from "../ui/Footer.vue";
 import UmumNavbar from "../ui/UmumNavbar.vue";
 
 const activeSections = ref({
@@ -730,7 +729,6 @@ watch(
 			<span>Pengaturan akun berhasil disimpan!</span>
 		</div>
 
-		<Footer />
 	</div>
 </template>
 

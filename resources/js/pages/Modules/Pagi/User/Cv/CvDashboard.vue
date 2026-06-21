@@ -17,7 +17,6 @@ import {
 } from "lucide-vue-next";
 import { computed, onMounted, ref } from "vue";
 import { Skeleton } from "@/components/ui/skeleton";
-import Footer from "../ui/Footer.vue";
 import Navbar from "../ui/Navbar.vue";
 import UmumNavbar from "../ui/UmumNavbar.vue";
 
@@ -500,6 +499,5 @@ const downloadCv = (id: number) => {
             </div>
         </div>
 
-        <Footer />
     </div>
 </template>

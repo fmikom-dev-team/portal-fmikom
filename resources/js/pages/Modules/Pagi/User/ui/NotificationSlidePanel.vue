@@ -122,9 +122,10 @@ const handleNotifClick = (notif: any) => {
 
 const FollbackInProgress = ref<Record<number, boolean>>({});
 
-const isFollowingBack = (senderId: number) => {
-	const following = page.props.auth?.user?.metadata?.following ?? [];
-	return following.includes(senderId);
+const isFollowingBack = (senderId: any) => {
+	const following = page.props.auth?.user?.following ?? page.props.auth?.user?.metadata?.following ?? [];
+	const sId = Number(senderId);
+	return following.some((id: any) => Number(id) === sId);
 };
 
 const toggleFollback = async (notif: any) => {
@@ -147,17 +148,25 @@ const toggleFollback = async (notif: any) => {
 			},
 		});
 		const data = await res.json();
-		const following = page.props.auth.user.metadata?.following ?? [];
+		let following = page.props.auth?.user?.following ?? page.props.auth?.user?.metadata?.following ?? [];
+		following = [...following];
+		const sId = Number(senderId);
+
 		if (data.following) {
-			if (!following.includes(senderId)) following.push(senderId);
+			if (!following.some((id: any) => Number(id) === sId)) {
+				following.push(sId);
+			}
 		} else {
-			const idx = following.indexOf(senderId);
-			if (idx > -1) following.splice(idx, 1);
+			following = following.filter((id: any) => Number(id) !== sId);
 		}
-		if (!page.props.auth.user.metadata) {
-			page.props.auth.user.metadata = {};
+
+		if (page.props.auth?.user) {
+			if (!page.props.auth.user.metadata) {
+				page.props.auth.user.metadata = {};
+			}
+			page.props.auth.user.metadata.following = following;
+			page.props.auth.user.following = following;
 		}
-		page.props.auth.user.metadata.following = following;
 	} catch (e) {
 		console.error("Follback failed:", e);
 	} finally {

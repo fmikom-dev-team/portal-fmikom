@@ -25,9 +25,8 @@ import {
 	Users,
 	X,
 } from "lucide-vue-next";
-import { computed, defineAsyncComponent, onMounted, ref, watch } from "vue";
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from "vue";
 import { Skeleton } from "@/components/ui/skeleton";
-import Footer from "../ui/Footer.vue";
 import OptimizedImage from "../ui/OptimizedImage.vue";
 
 const Preview = defineAsyncComponent(() => import("../ui/Preview.vue"));
@@ -313,8 +312,12 @@ const openProjectModal = async (p: any) => {
 
 const closeProjectModal = () => {
 	viewingProject.value = null;
-	document.body.style.overflow = "auto";
+	document.body.style.overflow = "";
 };
+
+onUnmounted(() => {
+	document.body.style.overflow = "";
+});
 
 const isVideoUrl = (url: string) => {
 	if (!url) return false;
@@ -574,7 +577,7 @@ const handleLikeProject = async (p: any) => {
 			</div>
 		</div>
 
-		<Footer />
+
 
 		<!-- PREVIEW PORTFOLIO MODAL -->
 		<Preview 

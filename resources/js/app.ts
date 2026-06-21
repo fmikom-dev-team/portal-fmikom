@@ -137,6 +137,10 @@ router.on("finish", () => {
 	stopLoading();
 });
 
+router.on("navigate", () => {
+	document.body.style.overflow = "";
+});
+
 router.on("success", (event) => {
 	const props = event.detail.page.props as any;
 

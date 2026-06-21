@@ -32,7 +32,7 @@ class UserResource extends JsonResource
             'github' => $this->when($isProfileOrSettings, $this->github),
             'instagram' => $this->when($isProfileOrSettings, $this->instagram),
             'metadata' => $this->when($isProfileOrSettings, $this->metadata),
-            'following' => $this->when($isProfileOrSettings, fn () => $this->pagiFollowing()->pluck('following_id')->toArray()),
+            'following' => $this->when($isProfileOrSettings || ($request->user() && $this->id === $request->user()->id), fn () => $this->pagiFollowing()->pluck('following_id')->toArray()),
             'works_count' => $this->when($isProfileOrSettings, fn () => $this->pagiWorks()->count()),
             'certificates_count' => $this->when($isProfileOrSettings, fn () => count($this->metadata['certificates'] ?? []) ?: 2),
             'followers_count' => $this->when($isProfileOrSettings, fn () => $this->pagiFollowers()->count()),

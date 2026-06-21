@@ -17,7 +17,6 @@ import {
 	X,
 } from "lucide-vue-next";
 import { computed, ref, watch } from "vue";
-import Footer from "../ui/Footer.vue";
 import Navbar from "../ui/Navbar.vue";
 import FmikomIdCard from "./FmikomIdCard.vue";
 
@@ -833,7 +832,6 @@ watch(
 			<span>Pengaturan akun berhasil disimpan!</span>
 		</div>
 
-		<Footer />
 	</div>
 </template>
 

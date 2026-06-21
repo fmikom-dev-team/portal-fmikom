@@ -21,6 +21,7 @@ import {
 	computed,
 	defineAsyncComponent,
 	onMounted,
+	onUnmounted,
 	ref,
 	shallowRef,
 	watch,
@@ -28,7 +29,6 @@ import {
 import LazyWrapper from "@/components/Portal/LazyWrapper.vue";
 import PortfolioSkeleton from "@/components/skeletons/PortfolioSkeleton.vue";
 import { useLoadingState } from "@/composables/useLoadingState";
-import Footer from "./ui/Footer.vue";
 import Navbar from "./ui/Navbar.vue";
 import OptimizedImage from "./ui/OptimizedImage.vue";
 
@@ -410,8 +410,12 @@ const openProjectModal = async (p: any) => {
 
 const closeProjectModal = () => {
 	viewingProject.value = null;
-	document.body.style.overflow = "auto";
+	document.body.style.overflow = "";
 };
+
+onUnmounted(() => {
+	document.body.style.overflow = "";
+});
 
 const isVideoUrl = (url: string) => {
 	if (!url) return false;
@@ -742,8 +746,6 @@ const handleSearchBlur = () => {
             </div>
             </template>
         </main>
-        
-        <Footer />
 
         <Preview 
             v-if="viewingProject" 

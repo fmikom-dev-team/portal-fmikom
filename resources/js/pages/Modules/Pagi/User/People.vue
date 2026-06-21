@@ -12,7 +12,6 @@ import { computed, onMounted, ref, watch } from "vue";
 import LazyWrapper from "@/components/Portal/LazyWrapper.vue";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadingState } from "@/composables/useLoadingState";
-import Footer from "./ui/Footer.vue";
 import Navbar from "./ui/Navbar.vue";
 import OptimizedImage from "./ui/OptimizedImage.vue";
 import SidebarPeople from "./ui/SidebarPeople.vue";
@@ -477,7 +476,6 @@ const handleBlur = () => {
             @navigate="navigate"
         />
 
-        <Footer />
     </div>
 </template>
 

@@ -16,8 +16,7 @@ import {
 	SlidersHorizontal,
 	X,
 } from "lucide-vue-next";
-import { computed, onMounted, ref, watch } from "vue";
-import Footer from "./ui/Footer.vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import Navbar from "./ui/Navbar.vue";
 import OptimizedImage from "./ui/OptimizedImage.vue";
 import Preview from "./ui/Preview.vue";
@@ -199,8 +198,12 @@ const openProjectModal = async (p: any) => {
 
 const closeProjectModal = () => {
 	viewingProject.value = null;
-	document.body.style.overflow = "auto";
+	document.body.style.overflow = "";
 };
+
+onUnmounted(() => {
+	document.body.style.overflow = "";
+});
 
 const getAcceptedCollaborators = (item: any) => {
 	const collabs = item.portfolio?.resolved_collaborators || [];
@@ -509,7 +512,6 @@ const submitReport = async () => {
 			@select-portfolio="viewingProject = $event"
 		/>
 
-		<Footer />
 	</div>
 
 	<!-- SHARE MODAL -->

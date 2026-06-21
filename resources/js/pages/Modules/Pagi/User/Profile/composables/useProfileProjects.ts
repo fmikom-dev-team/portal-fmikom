@@ -1,4 +1,4 @@
-import { computed, ref, watch } from "vue";
+import { computed, onUnmounted, ref, watch } from "vue";
 
 export function useProfileProjects(
 	props: any,
@@ -105,6 +105,10 @@ export function useProfileProjects(
 		viewingProject.value = null;
 		document.body.style.overflow = "";
 	};
+
+	onUnmounted(() => {
+		document.body.style.overflow = "";
+	});
 
 	const toggleLikeProject = async () => {
 		if (!viewingProject.value) return;
