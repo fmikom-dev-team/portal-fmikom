@@ -215,7 +215,7 @@ const getAccent = (menu) => accentColor[menu.title] || "text-blue-600";
                 <div class="flex shrink-0 items-center">
                     <Link href="/" class="group flex items-center gap-2.5">
                         <div v-if="siteSettings.brand_logo" class="h-8 w-8 flex items-center justify-center rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
-                            <img :src="siteSettings.brand_logo" class="h-full w-full object-contain" :alt="siteSettings.brand_name || 'Logo'" width="32" height="32" loading="eager" decoding="async" />
+                            <img :src="siteSettings.brand_logo" class="h-full w-full object-contain" alt="" width="32" height="32" loading="eager" decoding="async" />
                         </div>
                         <div v-else class="flex h-8 w-8 items-center justify-center rounded-xl bg-[#2563eb] text-white shadow-md shadow-blue-200 transition-transform group-hover:scale-105">
                             <Layers class="h-4.5 w-4.5" />
@@ -425,7 +425,7 @@ const getAccent = (menu) => accentColor[menu.title] || "text-blue-600";
                 </div>
 
                 <!-- Mobile hamburger -->
-                <button @click="toggleMobileMenu" class="flex items-center justify-center md:hidden rounded-xl p-2 text-slate-500 hover:bg-slate-100 transition-colors">
+                <button @click="toggleMobileMenu" class="flex items-center justify-center md:hidden rounded-xl p-2 text-slate-500 hover:bg-slate-100 transition-colors" aria-label="Toggle mobile menu">
                     <Menu v-if="!isMobileMenuOpen" class="h-5 w-5" />
                     <X v-else class="h-5 w-5" />
                 </button>
