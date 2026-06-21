@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\LetterTypeController::show
 * @see app/Modules/Fast/Controllers/Mahasiswa/LetterTypeController.php:13
@@ -66,6 +66,43 @@ show.head = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number
     url: show.url(args, options),
     method: 'head',
 })
+
+/**
+* @see \App\Modules\Fast\Controllers\Mahasiswa\LetterTypeController::show
+* @see app/Modules/Fast/Controllers/Mahasiswa/LetterTypeController.php:13
+* @route '/jenis-surat/{jenisSurat}'
+*/
+const showForm = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: show.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Mahasiswa\LetterTypeController::show
+* @see app/Modules/Fast/Controllers/Mahasiswa/LetterTypeController.php:13
+* @route '/jenis-surat/{jenisSurat}'
+*/
+showForm.get = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: show.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Mahasiswa\LetterTypeController::show
+* @see app/Modules/Fast/Controllers/Mahasiswa/LetterTypeController.php:13
+* @route '/jenis-surat/{jenisSurat}'
+*/
+showForm.head = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: show.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+show.form = showForm
 
 const LetterTypeController = { show }
 

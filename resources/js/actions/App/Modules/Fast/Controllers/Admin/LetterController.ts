@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Admin\LetterController::generate
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:182
@@ -64,6 +64,42 @@ generate4dc0087b29b62374302632a274ce7cf8.head = (args: { id: string | number } |
 /**
 * @see \App\Modules\Fast\Controllers\Admin\LetterController::generate
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:182
+* @route '/documents/surat/{id}/generate'
+*/
+const generate4dc0087b29b62374302632a274ce7cf8Form = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: generate4dc0087b29b62374302632a274ce7cf8.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::generate
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:182
+* @route '/documents/surat/{id}/generate'
+*/
+generate4dc0087b29b62374302632a274ce7cf8Form.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: generate4dc0087b29b62374302632a274ce7cf8.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::generate
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:182
+* @route '/documents/surat/{id}/generate'
+*/
+generate4dc0087b29b62374302632a274ce7cf8Form.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: generate4dc0087b29b62374302632a274ce7cf8.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+generate4dc0087b29b62374302632a274ce7cf8.form = generate4dc0087b29b62374302632a274ce7cf8Form
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::generate
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:182
 * @route '/admin/surat/{id}/generate'
 */
 const generate03a498acc6b7534dc5a6f2f7299d0045 = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -124,6 +160,43 @@ generate03a498acc6b7534dc5a6f2f7299d0045.head = (args: { id: string | number } |
 })
 
 /**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::generate
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:182
+* @route '/admin/surat/{id}/generate'
+*/
+const generate03a498acc6b7534dc5a6f2f7299d0045Form = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: generate03a498acc6b7534dc5a6f2f7299d0045.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::generate
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:182
+* @route '/admin/surat/{id}/generate'
+*/
+generate03a498acc6b7534dc5a6f2f7299d0045Form.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: generate03a498acc6b7534dc5a6f2f7299d0045.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::generate
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:182
+* @route '/admin/surat/{id}/generate'
+*/
+generate03a498acc6b7534dc5a6f2f7299d0045Form.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: generate03a498acc6b7534dc5a6f2f7299d0045.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+generate03a498acc6b7534dc5a6f2f7299d0045.form = generate03a498acc6b7534dc5a6f2f7299d0045Form
+
+/**
 * Multiple routes resolve to \App\Modules\Fast\Controllers\Admin\LetterController::generate, so this export is a
 * dictionary keyed by URI rather than a callable. Call a specific route with `generate['<uri>'](...)`,
 * or import the route by name from your generated `routes/` directory.
@@ -178,6 +251,43 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::create
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:26
+* @route '/admin/surat/create'
+*/
+const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: create.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::create
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:26
+* @route '/admin/surat/create'
+*/
+createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: create.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::create
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:26
+* @route '/admin/surat/create'
+*/
+createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: create.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+create.form = createForm
+
+/**
 * @see \App\Modules\Fast\Controllers\Admin\LetterController::selectType
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:55
 * @route '/admin/surat/select-type'
@@ -210,6 +320,28 @@ selectType.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: selectType.url(options),
     method: 'post',
 })
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::selectType
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:55
+* @route '/admin/surat/select-type'
+*/
+const selectTypeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: selectType.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::selectType
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:55
+* @route '/admin/surat/select-type'
+*/
+selectTypeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: selectType.url(options),
+    method: 'post',
+})
+
+selectType.form = selectTypeForm
 
 /**
 * @see \App\Modules\Fast\Controllers\Admin\LetterController::form
@@ -280,6 +412,43 @@ form.head = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number
 })
 
 /**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::form
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:68
+* @route '/admin/surat/form/{jenisSurat}'
+*/
+const formForm = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: form.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::form
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:68
+* @route '/admin/surat/form/{jenisSurat}'
+*/
+formForm.get = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: form.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::form
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:68
+* @route '/admin/surat/form/{jenisSurat}'
+*/
+formForm.head = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: form.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+form.form = formForm
+
+/**
 * @see \App\Modules\Fast\Controllers\Admin\LetterController::previewPage
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:97
 * @route '/admin/surat/preview'
@@ -324,6 +493,43 @@ previewPage.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::previewPage
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:97
+* @route '/admin/surat/preview'
+*/
+const previewPageForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: previewPage.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::previewPage
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:97
+* @route '/admin/surat/preview'
+*/
+previewPageForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: previewPage.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::previewPage
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:97
+* @route '/admin/surat/preview'
+*/
+previewPageForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: previewPage.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+previewPage.form = previewPageForm
+
+/**
 * @see \App\Modules\Fast\Controllers\Admin\LetterController::preview
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:85
 * @route '/admin/surat/preview'
@@ -358,6 +564,28 @@ preview.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 })
 
 /**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::preview
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:85
+* @route '/admin/surat/preview'
+*/
+const previewForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: preview.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::preview
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:85
+* @route '/admin/surat/preview'
+*/
+previewForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: preview.url(options),
+    method: 'post',
+})
+
+preview.form = previewForm
+
+/**
 * @see \App\Modules\Fast\Controllers\Admin\LetterController::store
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:161
 * @route '/admin/surat/store'
@@ -390,6 +618,28 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: store.url(options),
     method: 'post',
 })
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::store
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:161
+* @route '/admin/surat/store'
+*/
+const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: store.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::store
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:161
+* @route '/admin/surat/store'
+*/
+storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: store.url(options),
+    method: 'post',
+})
+
+store.form = storeForm
 
 /**
 * @see \App\Modules\Fast\Controllers\Admin\LetterController::edit
@@ -454,6 +704,43 @@ edit.head = (args: { id: string | number } | [id: string | number ] | string | n
 })
 
 /**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::edit
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:199
+* @route '/admin/surat/{id}/edit'
+*/
+const editForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: edit.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::edit
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:199
+* @route '/admin/surat/{id}/edit'
+*/
+editForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: edit.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::edit
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:199
+* @route '/admin/surat/{id}/edit'
+*/
+editForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: edit.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+edit.form = editForm
+
+/**
 * @see \App\Modules\Fast\Controllers\Admin\LetterController::update
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:237
 * @route '/admin/surat/{id}'
@@ -504,6 +791,38 @@ update.patch = (args: { id: string | number } | [id: string | number ] | string 
     url: update.url(args, options),
     method: 'patch',
 })
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::update
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:237
+* @route '/admin/surat/{id}'
+*/
+const updateForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: update.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'PATCH',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\LetterController::update
+* @see app/Modules/Fast/Controllers/Admin/LetterController.php:237
+* @route '/admin/surat/{id}'
+*/
+updateForm.patch = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: update.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'PATCH',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+update.form = updateForm
 
 const LetterController = { generate, create, selectType, form, previewPage, preview, store, edit, update }
 

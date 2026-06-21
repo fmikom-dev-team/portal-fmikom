@@ -3,6 +3,7 @@ import type { PageProps } from "@inertiajs/core";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { useDark } from "@vueuse/core";
 import {
+	Archive,
 	Bell,
 	Calendar,
 	CalendarDays,
@@ -72,6 +73,8 @@ const handleSearch = () => {
 		target = "/portal-admin/pages";
 	} else if (url.startsWith("/portal-admin/academic-calendars")) {
 		target = "/portal-admin/academic-calendars";
+	} else if (url.startsWith("/portal-admin/documents")) {
+		target = "/portal-admin/documents";
 	}
 	router.get(target, { search: searchQuery.value }, { preserveState: true });
 };
@@ -83,6 +86,7 @@ const searchPlaceholder = computed(() => {
 	if (url.startsWith("/portal-admin/pages")) return "Cari halaman...";
 	if (url.startsWith("/portal-admin/academic-calendars"))
 		return "Cari agenda...";
+	if (url.startsWith("/portal-admin/documents")) return "Cari dokumen...";
 	return "Cari sesuatu...";
 });
 
@@ -311,6 +315,22 @@ onUnmounted(() => {
                     >
                         <Calendar class="w-[18px] h-[18px] shrink-0" />
                         <span v-if="!sidebarCollapsed" class="truncate">Event & Kegiatan</span>
+                    </Link>
+
+                    <!-- Arsip Dokumen -->
+                    <Link
+                        href="/portal-admin/documents"
+                        :class="[
+                            $page.url.startsWith('/portal-admin/documents')
+                                ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
+                                : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
+                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4',
+                            sidebarCollapsed ? 'justify-center px-0' : 'px-4'
+                        ]"
+                        :title="sidebarCollapsed ? 'Arsip Dokumen' : undefined"
+                    >
+                        <Archive class="w-[18px] h-[18px] shrink-0" />
+                        <span v-if="!sidebarCollapsed" class="truncate">Arsip Dokumen</span>
                     </Link>
                 </nav>
 

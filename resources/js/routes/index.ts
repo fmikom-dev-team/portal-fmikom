@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults, validateParameters } from './../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults, validateParameters } from './../wayfinder'
 /**
 * @see \Laravel\Fortify\Http\Controllers\AuthenticatedSessionController::login
 * @see vendor/laravel/fortify/src/Http/Controllers/AuthenticatedSessionController.php:47
@@ -44,6 +44,43 @@ login.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
+* @see \Laravel\Fortify\Http\Controllers\AuthenticatedSessionController::login
+* @see vendor/laravel/fortify/src/Http/Controllers/AuthenticatedSessionController.php:47
+* @route '/login'
+*/
+const loginForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: login.url(options),
+    method: 'get',
+})
+
+/**
+* @see \Laravel\Fortify\Http\Controllers\AuthenticatedSessionController::login
+* @see vendor/laravel/fortify/src/Http/Controllers/AuthenticatedSessionController.php:47
+* @route '/login'
+*/
+loginForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: login.url(options),
+    method: 'get',
+})
+
+/**
+* @see \Laravel\Fortify\Http\Controllers\AuthenticatedSessionController::login
+* @see vendor/laravel/fortify/src/Http/Controllers/AuthenticatedSessionController.php:47
+* @route '/login'
+*/
+loginForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: login.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+login.form = loginForm
+
+/**
 * @see \Laravel\Fortify\Http\Controllers\AuthenticatedSessionController::logout
 * @see vendor/laravel/fortify/src/Http/Controllers/AuthenticatedSessionController.php:100
 * @route '/logout'
@@ -76,6 +113,28 @@ logout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: logout.url(options),
     method: 'post',
 })
+
+/**
+* @see \Laravel\Fortify\Http\Controllers\AuthenticatedSessionController::logout
+* @see vendor/laravel/fortify/src/Http/Controllers/AuthenticatedSessionController.php:100
+* @route '/logout'
+*/
+const logoutForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: logout.url(options),
+    method: 'post',
+})
+
+/**
+* @see \Laravel\Fortify\Http\Controllers\AuthenticatedSessionController::logout
+* @see vendor/laravel/fortify/src/Http/Controllers/AuthenticatedSessionController.php:100
+* @route '/logout'
+*/
+logoutForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: logout.url(options),
+    method: 'post',
+})
+
+logout.form = logoutForm
 
 /**
 * @see \Laravel\Fortify\Http\Controllers\RegisteredUserController::register
@@ -122,6 +181,43 @@ register.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
+* @see \Laravel\Fortify\Http\Controllers\RegisteredUserController::register
+* @see vendor/laravel/fortify/src/Http/Controllers/RegisteredUserController.php:41
+* @route '/register'
+*/
+const registerForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: register.url(options),
+    method: 'get',
+})
+
+/**
+* @see \Laravel\Fortify\Http\Controllers\RegisteredUserController::register
+* @see vendor/laravel/fortify/src/Http/Controllers/RegisteredUserController.php:41
+* @route '/register'
+*/
+registerForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: register.url(options),
+    method: 'get',
+})
+
+/**
+* @see \Laravel\Fortify\Http\Controllers\RegisteredUserController::register
+* @see vendor/laravel/fortify/src/Http/Controllers/RegisteredUserController.php:41
+* @route '/register'
+*/
+registerForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: register.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+register.form = registerForm
+
+/**
 * @see vendor/laravel/pulse/src/PulseServiceProvider.php:116
 * @route '/secure-pulse-9a2c'
 */
@@ -160,6 +256,40 @@ pulse.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: pulse.url(options),
     method: 'head',
 })
+
+/**
+* @see vendor/laravel/pulse/src/PulseServiceProvider.php:116
+* @route '/secure-pulse-9a2c'
+*/
+const pulseForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: pulse.url(options),
+    method: 'get',
+})
+
+/**
+* @see vendor/laravel/pulse/src/PulseServiceProvider.php:116
+* @route '/secure-pulse-9a2c'
+*/
+pulseForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: pulse.url(options),
+    method: 'get',
+})
+
+/**
+* @see vendor/laravel/pulse/src/PulseServiceProvider.php:116
+* @route '/secure-pulse-9a2c'
+*/
+pulseForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: pulse.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+pulse.form = pulseForm
 
 /**
 * @see \Laravel\Telescope\Http\Controllers\HomeController::telescope
@@ -228,6 +358,43 @@ telescope.head = (args?: { view?: string | number } | [view: string | number ] |
 })
 
 /**
+* @see \Laravel\Telescope\Http\Controllers\HomeController::telescope
+* @see vendor/laravel/telescope/src/Http/Controllers/HomeController.php:15
+* @route '/secure-telescope-8f3b/{view?}'
+*/
+const telescopeForm = (args?: { view?: string | number } | [view: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: telescope.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \Laravel\Telescope\Http\Controllers\HomeController::telescope
+* @see vendor/laravel/telescope/src/Http/Controllers/HomeController.php:15
+* @route '/secure-telescope-8f3b/{view?}'
+*/
+telescopeForm.get = (args?: { view?: string | number } | [view: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: telescope.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \Laravel\Telescope\Http\Controllers\HomeController::telescope
+* @see vendor/laravel/telescope/src/Http/Controllers/HomeController.php:15
+* @route '/secure-telescope-8f3b/{view?}'
+*/
+telescopeForm.head = (args?: { view?: string | number } | [view: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: telescope.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+telescope.form = telescopeForm
+
+/**
 * @see routes/web.php:56
 * @route '/'
 */
@@ -266,6 +433,40 @@ home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: home.url(options),
     method: 'head',
 })
+
+/**
+* @see routes/web.php:56
+* @route '/'
+*/
+const homeForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: home.url(options),
+    method: 'get',
+})
+
+/**
+* @see routes/web.php:56
+* @route '/'
+*/
+homeForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: home.url(options),
+    method: 'get',
+})
+
+/**
+* @see routes/web.php:56
+* @route '/'
+*/
+homeForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: home.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+home.form = homeForm
 
 /**
 * @see routes/web.php:99
@@ -308,6 +509,40 @@ privacyPolicy.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
 })
 
 /**
+* @see routes/web.php:99
+* @route '/privacy-policy'
+*/
+const privacyPolicyForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: privacyPolicy.url(options),
+    method: 'get',
+})
+
+/**
+* @see routes/web.php:99
+* @route '/privacy-policy'
+*/
+privacyPolicyForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: privacyPolicy.url(options),
+    method: 'get',
+})
+
+/**
+* @see routes/web.php:99
+* @route '/privacy-policy'
+*/
+privacyPolicyForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: privacyPolicy.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+privacyPolicy.form = privacyPolicyForm
+
+/**
 * @see routes/web.php:102
 * @route '/terms-of-service'
 */
@@ -348,6 +583,40 @@ termsService.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
+* @see routes/web.php:102
+* @route '/terms-of-service'
+*/
+const termsServiceForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: termsService.url(options),
+    method: 'get',
+})
+
+/**
+* @see routes/web.php:102
+* @route '/terms-of-service'
+*/
+termsServiceForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: termsService.url(options),
+    method: 'get',
+})
+
+/**
+* @see routes/web.php:102
+* @route '/terms-of-service'
+*/
+termsServiceForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: termsService.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+termsService.form = termsServiceForm
+
+/**
 * @see routes/web.php:105
 * @route '/cookie-policy'
 */
@@ -386,6 +655,40 @@ cookiePolicy.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: cookiePolicy.url(options),
     method: 'head',
 })
+
+/**
+* @see routes/web.php:105
+* @route '/cookie-policy'
+*/
+const cookiePolicyForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: cookiePolicy.url(options),
+    method: 'get',
+})
+
+/**
+* @see routes/web.php:105
+* @route '/cookie-policy'
+*/
+cookiePolicyForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: cookiePolicy.url(options),
+    method: 'get',
+})
+
+/**
+* @see routes/web.php:105
+* @route '/cookie-policy'
+*/
+cookiePolicyForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: cookiePolicy.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+cookiePolicy.form = cookiePolicyForm
 
 /**
 * @see \App\Modules\Coreportal\Controllers\PortalController::dashboard
@@ -432,6 +735,43 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
+* @see \App\Modules\Coreportal\Controllers\PortalController::dashboard
+* @see app/Modules/Coreportal/Controllers/PortalController.php:20
+* @route '/dashboard'
+*/
+const dashboardForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: dashboard.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Coreportal\Controllers\PortalController::dashboard
+* @see app/Modules/Coreportal/Controllers/PortalController.php:20
+* @route '/dashboard'
+*/
+dashboardForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: dashboard.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Coreportal\Controllers\PortalController::dashboard
+* @see app/Modules/Coreportal/Controllers/PortalController.php:20
+* @route '/dashboard'
+*/
+dashboardForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: dashboard.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+dashboard.form = dashboardForm
+
+/**
 * @see \Inertia\Controller::__invoke
 * @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
 * @route '/portal'
@@ -475,3 +815,39 @@ portal.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+/**
+* @see \Inertia\Controller::__invoke
+* @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
+* @route '/portal'
+*/
+const portalForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: portal.url(options),
+    method: 'get',
+})
+
+/**
+* @see \Inertia\Controller::__invoke
+* @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
+* @route '/portal'
+*/
+portalForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: portal.url(options),
+    method: 'get',
+})
+
+/**
+* @see \Inertia\Controller::__invoke
+* @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
+* @route '/portal'
+*/
+portalForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: portal.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+portal.form = portalForm

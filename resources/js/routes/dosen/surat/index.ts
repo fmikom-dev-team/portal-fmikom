@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\HistoryController::cancel
 * @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:168
@@ -50,6 +50,28 @@ cancel.post = (args: { id: string | number } | [id: string | number ] | string |
     url: cancel.url(args, options),
     method: 'post',
 })
+
+/**
+* @see \App\Modules\Fast\Controllers\Dosen\HistoryController::cancel
+* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:168
+* @route '/dosen/surat/{id}/cancel'
+*/
+const cancelForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: cancel.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Dosen\HistoryController::cancel
+* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:168
+* @route '/dosen/surat/{id}/cancel'
+*/
+cancelForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: cancel.url(args, options),
+    method: 'post',
+})
+
+cancel.form = cancelForm
 
 const surat = {
     cancel: Object.assign(cancel, cancel),

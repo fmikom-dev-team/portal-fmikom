@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::detail
 * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:42
@@ -60,6 +60,43 @@ detail.head = (args: { id: string | number } | [id: string | number ] | string |
     url: detail.url(args, options),
     method: 'head',
 })
+
+/**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::detail
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:42
+* @route '/approval/surat/{id}/detail'
+*/
+const detailForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: detail.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::detail
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:42
+* @route '/approval/surat/{id}/detail'
+*/
+detailForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: detail.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::detail
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:42
+* @route '/approval/surat/{id}/detail'
+*/
+detailForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: detail.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+detail.form = detailForm
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::show
@@ -124,6 +161,43 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 })
 
 /**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::show
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:47
+* @route '/approval/surat/{id}'
+*/
+const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: show.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::show
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:47
+* @route '/approval/surat/{id}'
+*/
+showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: show.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::show
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:47
+* @route '/approval/surat/{id}'
+*/
+showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: show.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+show.form = showForm
+
+/**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::approve
 * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:57
 * @route '/approval/surat/{id}/approve'
@@ -174,6 +248,28 @@ approve.post = (args: { id: string | number } | [id: string | number ] | string 
     url: approve.url(args, options),
     method: 'post',
 })
+
+/**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::approve
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:57
+* @route '/approval/surat/{id}/approve'
+*/
+const approveForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: approve.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::approve
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:57
+* @route '/approval/surat/{id}/approve'
+*/
+approveForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: approve.url(args, options),
+    method: 'post',
+})
+
+approve.form = approveForm
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::reject
@@ -228,6 +324,28 @@ reject.post = (args: { id: string | number } | [id: string | number ] | string |
 })
 
 /**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::reject
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:67
+* @route '/approval/surat/{id}/reject'
+*/
+const rejectForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: reject.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::reject
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:67
+* @route '/approval/surat/{id}/reject'
+*/
+rejectForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: reject.url(args, options),
+    method: 'post',
+})
+
+reject.form = rejectForm
+
+/**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::finalReject
 * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:72
 * @route '/approval/surat/{id}/final-reject'
@@ -280,6 +398,28 @@ finalReject.post = (args: { id: string | number } | [id: string | number ] | str
 })
 
 /**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::finalReject
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:72
+* @route '/approval/surat/{id}/final-reject'
+*/
+const finalRejectForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: finalReject.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::finalReject
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:72
+* @route '/approval/surat/{id}/final-reject'
+*/
+finalRejectForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: finalReject.url(args, options),
+    method: 'post',
+})
+
+finalReject.form = finalRejectForm
+
+/**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::note
 * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:62
 * @route '/approval/surat/{id}/note'
@@ -330,6 +470,28 @@ note.post = (args: { id: string | number } | [id: string | number ] | string | n
     url: note.url(args, options),
     method: 'post',
 })
+
+/**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::note
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:62
+* @route '/approval/surat/{id}/note'
+*/
+const noteForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: note.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::note
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:62
+* @route '/approval/surat/{id}/note'
+*/
+noteForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: note.url(args, options),
+    method: 'post',
+})
+
+note.form = noteForm
 
 const surat = {
     detail: Object.assign(detail, detail),

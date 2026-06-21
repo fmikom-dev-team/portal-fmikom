@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
 import surat from './surat'
 import lampiran from './lampiran'
 /**
@@ -46,6 +46,43 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::dashboard
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:22
+* @route '/approval/dashboard'
+*/
+const dashboardForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: dashboard.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::dashboard
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:22
+* @route '/approval/dashboard'
+*/
+dashboardForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: dashboard.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::dashboard
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:22
+* @route '/approval/dashboard'
+*/
+dashboardForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: dashboard.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+dashboard.form = dashboardForm
+
+/**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::antrian
 * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:27
 * @route '/approval/antrian'
@@ -90,6 +127,43 @@ antrian.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::antrian
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:27
+* @route '/approval/antrian'
+*/
+const antrianForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: antrian.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::antrian
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:27
+* @route '/approval/antrian'
+*/
+antrianForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: antrian.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::antrian
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:27
+* @route '/approval/antrian'
+*/
+antrianForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: antrian.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+antrian.form = antrianForm
+
+/**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::arsip
 * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:32
 * @route '/approval/arsip'
@@ -132,6 +206,43 @@ arsip.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: arsip.url(options),
     method: 'head',
 })
+
+/**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::arsip
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:32
+* @route '/approval/arsip'
+*/
+const arsipForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: arsip.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::arsip
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:32
+* @route '/approval/arsip'
+*/
+arsipForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: arsip.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::arsip
+* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:32
+* @route '/approval/arsip'
+*/
+arsipForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: arsip.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+arsip.form = arsipForm
 
 const approval = {
     dashboard: Object.assign(dashboard, dashboard),
