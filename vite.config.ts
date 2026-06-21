@@ -68,7 +68,7 @@ export default defineConfig(async () => {
 			...(visualizerPlugin ? [visualizerPlugin] : []),
 		],
 		server: {
-			host: "0.0.0.0",
+			host: "localhost",
 		},
 		build: {
 			target: "es2022",

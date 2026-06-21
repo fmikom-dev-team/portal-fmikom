@@ -75,7 +75,7 @@ Route::middleware(['auth', 'verified'])
 | Legacy alias /fast/user/*
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'verified', 'fast.user'])
+Route::middleware(['auth', 'verified', 'module.context:fast'])
     ->prefix('fast/user')
     ->name('fast.user.')
     ->group(function (): void {
@@ -124,7 +124,7 @@ $userRoutes = function (
         ->name('surat.cancel');
 };
 
-Route::middleware(['auth', 'verified', 'fast.user'])->group(function () use ($userRoutes): void {
+Route::middleware(['auth', 'verified', 'module.context:fast'])->group(function () use ($userRoutes): void {
     Route::prefix('mahasiswa')
         ->name('mahasiswa.')
         ->group(function () use ($userRoutes): void {
@@ -321,4 +321,3 @@ Route::middleware(['auth', 'verified'])
             ->middleware('admin.access')
             ->name('surat.generate-document');
     });
-
