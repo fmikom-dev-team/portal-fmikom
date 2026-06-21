@@ -168,6 +168,7 @@ Route::middleware(['auth'])->group(function () {
 require __DIR__.'/pagi.php';
 require __DIR__.'/wims.php';
 require __DIR__.'/fast.php';
+require __DIR__.'/qr_verification.php';
 require __DIR__.'/trace.php';
 
 // ─── Portal Admin ────────────────────────────────────────────────────────────

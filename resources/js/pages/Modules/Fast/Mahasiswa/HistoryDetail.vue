@@ -1,4 +1,8 @@
 <script setup lang="ts">
+defineOptions({
+    inheritAttrs: false,
+});
+
 import FastLayout from '@/layouts/Modules/Fast/FastLayout.vue';
 import DocumentPreviewModal from '@/components/DocumentPreviewModal.vue';
 import { Head, Link } from '@inertiajs/vue3';
@@ -382,12 +386,20 @@ function statusClass(status: string) {
     return statusClassMap[status] ?? 'bg-slate-50 text-slate-700 border-slate-200';
 }
 
+function isPdfDocumentUrl(source: string): boolean {
+    try {
+        return new URL(source, window.location.origin).pathname.endsWith('/pdf');
+    } catch {
+        return source.includes('/pdf');
+    }
+}
+
 function openPreview() {
     const source = surat.value.generatedDocumentUrl || surat.value.previewTemplateUrl;
     if (!source) return;
 
     viewerOpen.value = true;
-    viewerType.value = source.endsWith('/pdf') ? 'pdf' : 'html';
+    viewerType.value = isPdfDocumentUrl(source) ? 'pdf' : 'html';
     viewerUrl.value = source;
     viewerTitle.value = documentTitle.value;
 }

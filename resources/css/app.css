@@ -172,6 +172,42 @@
 	}
 }
 
+@layer components {
+	.fast-btn {
+		@apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all duration-200;
+		@apply focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30;
+		@apply disabled:pointer-events-none disabled:opacity-50;
+	}
+
+	.fast-btn-primary {
+		@apply bg-primary text-primary-foreground shadow-sm shadow-blue-200/40;
+		@apply hover:-translate-y-0.5 hover:bg-primary/95 hover:shadow-md hover:shadow-blue-200/50 active:translate-y-0;
+	}
+
+	.fast-btn-outline {
+		@apply border border-slate-200 bg-white text-slate-700 shadow-sm;
+		@apply hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900;
+	}
+
+	.fast-btn-soft {
+		@apply border border-slate-200 bg-slate-50 text-slate-700 shadow-sm;
+		@apply hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900;
+	}
+
+	.fast-btn-danger {
+		@apply bg-destructive text-destructive-foreground shadow-sm shadow-red-200/50;
+		@apply hover:-translate-y-0.5 hover:bg-destructive/90 hover:shadow-md hover:shadow-red-200/60 active:translate-y-0;
+	}
+
+	.fast-btn-ghost {
+		@apply text-slate-600 hover:bg-slate-100 hover:text-slate-900;
+	}
+
+	.fast-btn-icon {
+		@apply size-9 p-0;
+	}
+}
+
 :root {
 	--wims-bg: #f8fafc;
 	--wims-text: #0f172a;
@@ -215,6 +251,7 @@
 	--sidebar: hsl(0 0% 98%);
 }
 
+.fast-shell,
 .wims-shell,
 .wims-role-shell {
 	--wims-bg: #f8fafc;

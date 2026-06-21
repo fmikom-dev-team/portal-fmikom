@@ -171,6 +171,27 @@ class SuratDocumentGeneratorService
         return strtoupper($classificationCode);
     }
 
+    protected function normalizeTopMargin(string $marginTop): string
+    {
+        $value = trim($marginTop);
+
+        if ($value === '') {
+            return '12mm';
+        }
+
+        if (preg_match('/^(\d+(?:\.\d+)?)\s*mm$/i', $value, $matches) === 1) {
+            $adjusted = max(2, (float) $matches[1] - 10);
+            return rtrim(rtrim(number_format($adjusted, 1, '.', ''), '0'), '.') . 'mm';
+        }
+
+        if (is_numeric($value)) {
+            $adjusted = max(2, (float) $value - 10);
+            return rtrim(rtrim(number_format($adjusted, 1, '.', ''), '0'), '.') . 'mm';
+        }
+
+        return $value;
+    }
+
     protected function makeOutputPath(Surat $surat): string
     {
         $surat->loadMissing('jenisSurat');
@@ -210,6 +231,7 @@ class SuratDocumentGeneratorService
         $footerHtml = (string) ($viewPayload['footerHtml'] ?? '');
         $tempDir    = $this->resolveMpdfTempDir();
         $settings   = TemplateGlobalSetting::allAsArray();
+        $marginTop  = $this->normalizeTopMargin((string) ($settings['margin_top'] ?? '15mm'));
 
         $fontFamilyKop = SuratKomponenRenderer::fontFamilyStack(
             SuratKomponenRenderer::resolveFontFamily($settings, 'font_family_kop'),
@@ -275,11 +297,11 @@ CSS;
         $mpdf = new Mpdf([
             'mode'          => 'utf-8',
             'format'        => 'A4',
-            'margin_top'    => 38,
+            'margin_top'    => $marginTop,
             'margin_bottom' => 16,
             'margin_left'   => 15,
             'margin_right'  => 15,
-            'margin_header' => 5,
+            'margin_header' => 3,
             'margin_footer' => 6,
             'default_font'   => $fontFamilyBody,
             'fontDir'        => $fontDir,
@@ -288,7 +310,7 @@ CSS;
             'cacheCleanupInterval' => app()->runningUnitTests() ? false : 3600,
         ]);
 
-        $mpdf->SetHTMLHeader('<div style="width:100%;">' . $headerHtml . '</div>');
+        $mpdf->SetHTMLHeader('<div style="width:100%; margin-top: -1mm;">' . $headerHtml . '</div>');
         $mpdf->SetHTMLFooter('<div style="width:100%;">' . $footerHtml . '</div>');
 
         // Tulis style sekali, lalu body sekali (jangan duplikat).
@@ -330,6 +352,7 @@ CSS;
             '--allow-file-access-from-files',
             '--print-to-pdf=' . $pdfPath,
             '--print-to-pdf-no-header',
+            '--no-pdf-header-footer',
             'file:///' . str_replace('\\', '/', $htmlPath),
         ]);
 

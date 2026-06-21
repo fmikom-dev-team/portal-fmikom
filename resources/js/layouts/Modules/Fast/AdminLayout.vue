@@ -361,7 +361,7 @@ function batteryIcon() {
 <template>
     <Head :title="title" />
 
-    <div class="flex h-screen overflow-hidden bg-slate-50 font-sans">
+    <div class="fast-shell flex h-screen overflow-hidden bg-slate-50 font-sans">
         <!-- Mobile overlay -->
         <Transition name="fade">
             <div
