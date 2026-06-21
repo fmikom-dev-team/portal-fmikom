@@ -2,7 +2,7 @@
 // resources/js/pages/Modules/Fast/Admin/templates/Index.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import {
     Plus,
     Eye,
@@ -864,15 +864,119 @@ const settingsData = ref<Record<string, string>>(
         (props.globalSettings ?? []).map((s) => [s.key, s.value ?? '']),
     ),
 );
+const defaultKopLogoUrl = '/images/kop-logo-temp.png';
+const logoFile = ref<File | null>(null);
+const logoInputRef = ref<HTMLInputElement | null>(null);
+const logoBlobUrl = ref<string | null>(null);
+const logoPreviewUrl = ref(resolveLogoPreviewUrl(settingsData.value['logo_path']));
+
+function resolveLogoPreviewUrl(path?: string | null): string {
+    const value = (path ?? '').trim();
+
+    if (!value) {
+        return defaultKopLogoUrl;
+    }
+
+    if (
+        value.startsWith('http://')
+        || value.startsWith('https://')
+        || value.startsWith('data:')
+        || value.startsWith('/')
+    ) {
+        if (value.startsWith('/public/')) {
+            return `/${value.slice('/public/'.length)}`;
+        }
+
+        return value;
+    }
+
+    if (value.startsWith('public/')) {
+        return `/${value.slice('public/'.length)}`;
+    }
+
+    if (value.startsWith('storage/')) {
+        return `/${value}`;
+    }
+
+    return `/${value.replace(/^\/+/, '')}`;
+}
+
+function syncLogoPreview(path?: string | null) {
+    if (logoBlobUrl.value) {
+        URL.revokeObjectURL(logoBlobUrl.value);
+        logoBlobUrl.value = null;
+    }
+
+    logoPreviewUrl.value = resolveLogoPreviewUrl(path);
+}
+
+function onLogoFileChange(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0] ?? null;
+
+    logoFile.value = file;
+
+    if (!file) {
+        syncLogoPreview(settingsData.value['logo_path']);
+        return;
+    }
+
+    if (logoBlobUrl.value) {
+        URL.revokeObjectURL(logoBlobUrl.value);
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    logoBlobUrl.value = objectUrl;
+    logoPreviewUrl.value = objectUrl;
+}
+
+function clearLogoSelection() {
+    logoFile.value = null;
+    if (logoInputRef.value) {
+        logoInputRef.value.value = '';
+    }
+    syncLogoPreview(settingsData.value['logo_path']);
+}
+
+watch(
+    () => props.globalSettings,
+    (newSettings) => {
+        settingsData.value = Object.fromEntries(
+            (newSettings ?? []).map((s) => [s.key, s.value ?? '']),
+        );
+
+        if (!logoFile.value) {
+            syncLogoPreview(settingsData.value['logo_path']);
+        }
+    },
+    { deep: true },
+);
+
+watch(showGlobalSettings, (isOpen) => {
+    if (isOpen && !logoFile.value) {
+        syncLogoPreview(settingsData.value['logo_path']);
+    }
+});
+
+onBeforeUnmount(() => {
+    if (logoBlobUrl.value) {
+        URL.revokeObjectURL(logoBlobUrl.value);
+    }
+});
 
 function saveGlobalSettings() {
     router.post(
         '/admin/settings/template',
-        { settings: settingsData.value },
+        { settings: settingsData.value, logo_file: logoFile.value },
         {
             preserveScroll: true,
+            forceFormData: true,
             onSuccess: () => {
                 showGlobalSettings.value = false;
+                logoFile.value = null;
+                if (logoInputRef.value) {
+                    logoInputRef.value.value = '';
+                }
             },
         },
     );
@@ -900,7 +1004,6 @@ const kopKeys = [
     'nama_fakultas',
     'singkatan',
     'keputusan',
-    'logo_path',
 ];
 const footerKeys = [
     'nama_instansi_footer',
@@ -2775,6 +2878,51 @@ function settingLabel(key: string): string {
                                         />
                                     </label>
                                 </template>
+                                <div class="space-y-2 rounded-lg border border-blue-100 bg-white/80 p-3">
+                                    <div class="flex items-start gap-3">
+                                        <div class="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                                            <img
+                                                :src="logoPreviewUrl"
+                                                alt="Preview Logo Kop"
+                                                class="h-full w-full object-contain p-1"
+                                            />
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <p class="text-[10px] font-medium text-slate-700">
+                                                Logo Kop Surat
+                                            </p>
+                                            <p class="mt-0.5 break-all text-[10px] text-slate-500">
+                                                {{ settingsData['logo_path'] || defaultKopLogoUrl }}
+                                            </p>
+                                            <input
+                                                ref="logoInputRef"
+                                                type="file"
+                                                accept="image/*"
+                                                class="sr-only"
+                                                @change="onLogoFileChange"
+                                            />
+                                            <div class="mt-3 flex flex-wrap gap-2">
+                                                <button
+                                                    type="button"
+                                                    class="inline-flex items-center rounded-lg border border-blue-200 bg-blue-600 px-3 py-1.5 text-[10px] font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                                                    @click="logoInputRef?.click()"
+                                                >
+                                                    Upload / Ganti Logo
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-semibold text-slate-600 transition hover:bg-slate-50"
+                                                    @click="clearLogoSelection"
+                                                >
+                                                    Reset Preview
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-[10px] text-blue-600">
+                                        Logo ini dipakai untuk kop surat saja. Jika kosong, sistem otomatis memakai file default kop lama.
+                                    </p>
+                                </div>
                                 <label
                                     v-if="settingsData['logo_kop_position'] !== undefined"
                                     class="block space-y-1"

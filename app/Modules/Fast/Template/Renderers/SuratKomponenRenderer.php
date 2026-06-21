@@ -121,7 +121,6 @@ class SuratKomponenRenderer
         $namaFakultas = strtoupper(trim($settings['nama_fakultas'] ?? 'FAKULTAS MATEMATIKA DAN ILMU KOMPUTER'));
         $singkatan    = strtoupper(trim($settings['singkatan'] ?? ''));
         $keputusan    = trim($settings['keputusan'] ?? 'Keputusan Kemendikbud RI Nomor : 264/E/O/2014 Tanggal 23 Juli 2014');
-        $logoPath     = $settings['logo_path'] ?? '';
         $logoPosition = strtolower(trim((string) ($settings['logo_kop_position'] ?? 'top')));
         $fontSizeH1   = trim((string) ($settings['font_size_kop_instansi'] ?? '17pt')) ?: '17pt';
         $fontSizeFak  = trim((string) ($settings['font_size_kop_fakultas'] ?? '13pt')) ?: '13pt';
@@ -134,21 +133,7 @@ class SuratKomponenRenderer
             $renderMode === 'pdf' ? 'pdf' : 'browser'
         );
 
-        // Logo
-        $logoHtml = '';
-        if (!empty($logoPath)) {
-            $fullPath = storage_path('app/public/' . $logoPath);
-            if (file_exists($fullPath)) {
-                $mime    = mime_content_type($fullPath) ?: 'image/png';
-                $encoded = base64_encode(file_get_contents($fullPath));
-                $logoHtml = "<img src=\"data:{$mime};base64,{$encoded}\" alt=\"Logo\" style=\"display:block; margin:0 auto 4px; height:70px; width:auto;\">";
-            }
-        }
-        // Fallback logo sementara
-        if (empty($logoHtml) && file_exists(public_path('images/kop-logo-temp.png'))) {
-            $encoded  = base64_encode(file_get_contents(public_path('images/kop-logo-temp.png')));
-            $logoHtml = "<img src=\"data:image/png;base64,{$encoded}\" alt=\"Logo\" style=\"display:block; margin:0 auto 4px; height:70px; width:auto;\">";
-        }
+        $logoHtml = static::logoHtml($settings);
 
         // Singkatan: hanya tampil jika ada
         $singkatanHtml = !empty($singkatan) ? " ({$singkatan})" : '';
@@ -192,6 +177,82 @@ HTML;
     </div>
 </section>
 HTML;
+    }
+
+    public static function resolveLogoDataUri(array $settings = []): string
+    {
+        $candidates = array_values(array_filter([
+            trim((string) ($settings['logo_path'] ?? '')),
+            '/images/kop-logo-temp.png',
+            'images/kop-logo-temp.png',
+            'public/images/kop-logo-temp.png',
+        ]));
+
+        foreach ($candidates as $candidate) {
+            $dataUri = static::filePathToDataUri($candidate);
+            if ($dataUri !== null) {
+                return $dataUri;
+            }
+        }
+
+        return '';
+    }
+
+    public static function logoHtml(array $settings = []): string
+    {
+        $dataUri = static::resolveLogoDataUri($settings);
+
+        if ($dataUri === '') {
+            return '';
+        }
+
+        return "<img src=\"{$dataUri}\" alt=\"Logo\" style=\"display:block; margin:0 auto 4px; height:70px; width:auto;\">";
+    }
+
+    protected static function filePathToDataUri(string $path): ?string
+    {
+        $path = trim($path);
+
+        if ($path === '') {
+            return null;
+        }
+
+        if (str_starts_with($path, 'data:')) {
+            return $path;
+        }
+
+        $resolvedPath = null;
+
+        if (str_starts_with($path, '/storage/')) {
+            $resolvedPath = storage_path('app/public/' . ltrim(substr($path, strlen('/storage/')), '/'));
+        } elseif (str_starts_with($path, 'storage/')) {
+            $resolvedPath = storage_path('app/public/' . ltrim(substr($path, strlen('storage/')), '/'));
+        } elseif (str_starts_with($path, '/asset/')) {
+            $resolvedPath = public_path(ltrim($path, '/'));
+        } elseif (str_starts_with($path, 'asset/')) {
+            $resolvedPath = public_path($path);
+        } elseif (str_starts_with($path, '/public/')) {
+            $resolvedPath = public_path(ltrim(substr($path, strlen('/public/')), '/'));
+        } elseif (str_starts_with($path, 'public/')) {
+            $resolvedPath = public_path(substr($path, strlen('public/')));
+        } elseif (str_starts_with($path, '/images/')) {
+            $resolvedPath = public_path(ltrim($path, '/'));
+        } elseif (str_starts_with($path, 'images/')) {
+            $resolvedPath = public_path($path);
+        } elseif (preg_match('/^https?:\\/\\//i', $path)) {
+            return null;
+        } else {
+            $resolvedPath = public_path(ltrim($path, '/'));
+        }
+
+        if (! $resolvedPath || ! file_exists($resolvedPath)) {
+            return null;
+        }
+
+        $mimeType = mime_content_type($resolvedPath) ?: 'image/png';
+        $encoded = base64_encode((string) file_get_contents($resolvedPath));
+
+        return "data:{$mimeType};base64,{$encoded}";
     }
     // Persis seperti gambar: Nama Instansi bold | Baris alamat | Baris email+telp+fax
     public static function renderFooter(array $settings = []): string
@@ -743,6 +804,3 @@ HTML;
         return TemplatePlaceholderReplacer::replace($teks, $data, false);
     }
 }
-
-
-

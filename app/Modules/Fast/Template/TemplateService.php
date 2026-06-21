@@ -10,7 +10,6 @@ use App\Modules\Fast\Template\Renderers\SuratKomponenRenderer;
 use App\Modules\Fast\Template\Parsers\TemplatePlaceholderReplacer;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\File;
 
 class TemplateService
 {
@@ -810,16 +809,14 @@ HTML,
 
     protected function resolveLogoDataUri(mixed $fallback = null): string
     {
-        $path = public_path('images/kop-logo-temp.png');
+        $settings = \App\Models\TemplateGlobalSetting::allAsArray();
+        $dataUri = SuratKomponenRenderer::resolveLogoDataUri($settings);
 
-        if (!File::exists($path)) {
-            return (string) ($fallback ?? '');
+        if ($dataUri !== '') {
+            return $dataUri;
         }
 
-        $mimeType = File::mimeType($path) ?: 'image/png';
-        $encoded  = base64_encode((string) File::get($path));
-
-        return "data:{$mimeType};base64,{$encoded}";
+        return (string) ($fallback ?? '');
     }
 
 
@@ -937,5 +934,3 @@ HTML,
         return $words[$number] ?? Str::headline((string) $number);
     }
 }
-
-
