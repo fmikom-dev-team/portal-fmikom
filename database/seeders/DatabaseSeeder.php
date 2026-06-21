@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ModuleSeeder::class,
             RadarSeeder::class,
+            FakultasProdiSeeder::class,
             SuratCategorySeeder::class,
             JenisSuratSeeder::class,
             SuratTemplateSeeder::class,

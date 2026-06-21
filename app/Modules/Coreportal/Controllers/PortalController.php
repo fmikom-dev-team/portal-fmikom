@@ -109,9 +109,9 @@ class PortalController extends Controller
             'metadata'        => ['module' => $finalModuleCode, 'role' => $finalRoleSlug],
         ]);
 
-        $routeName = 'module.'.strtolower($finalModuleCode).'.dashboard';
+        $routeName = $this->resolveModuleDashboardRoute($finalModuleCode, $finalRoleSlug);
 
-        return Route::has($routeName)
+        return $routeName
             ? redirect()->route($routeName)
             : back()->with('info', "Modul {$finalModuleCode} dipilih, namun halamannya belum tersedia.");
     }
@@ -184,5 +184,29 @@ class PortalController extends Controller
             'active_role' => $newRole,
             'active_module' => $moduleCode,
         ]);
+    }
+
+    /**
+     * Resolve dashboard route name for the selected module and role.
+     *
+     * FAST uses dedicated role-based dashboards, while older modules still
+     * rely on the generic module.{code}.dashboard convention when available.
+     */
+    private function resolveModuleDashboardRoute(string $moduleCode, string $roleSlug): ?string
+    {
+        if (strtoupper($moduleCode) === 'FAST') {
+            return match (strtolower($roleSlug)) {
+                'admin', 'super-admin', 'super_admin', 'admin-universitas', 'admin-akademik', 'prodi' => 'admin.dashboard',
+                'kaprodi' => 'kaprodi.dashboard',
+                'dekan' => 'dekan.dashboard',
+                'dosen' => 'dosen.dashboard',
+                'mahasiswa', 'alumni' => 'fast.user.dashboard',
+                default => 'fast.user.dashboard',
+            };
+        }
+
+        $routeName = 'module.'.strtolower($moduleCode).'.dashboard';
+
+        return Route::has($routeName) ? $routeName : null;
     }
 }

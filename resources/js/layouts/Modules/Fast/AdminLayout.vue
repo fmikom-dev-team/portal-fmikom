@@ -2,6 +2,7 @@
 // File: resources/js/layouts/Modules/Fast/AdminLayout.vue
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
+import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import NotificationBell from '@/components/Modules/Fast/NotificationBell.vue';
 import {
     LayoutDashboard,
@@ -70,6 +71,7 @@ const props = withDefaults(
 );
 
 const page = usePage<PageProps>();
+const siteSettings = computed(() => (page.props as any).siteSettings || {});
 const sidebarOpen = ref(true);
 const mobileOpen = ref(false);
 const isMobile = ref(false);
@@ -86,6 +88,13 @@ const userInitials = computed(() =>
         .map((n: string) => n[0])
         .join('')
         .toUpperCase(),
+);
+const brandLogo = computed(
+    () => siteSettings.value.brand_logo || '/asset/brand-logo.webp',
+);
+const hasBrandLogo = computed(() => !!siteSettings.value.brand_logo);
+const brandName = computed(
+    () => siteSettings.value.brand_name || 'FMIKOM',
 );
 const notifCount = computed(
     () => page.props.notifications?.count ?? page.props.notif_count ?? 0,
@@ -363,21 +372,45 @@ function batteryIcon() {
         >
             <!-- Logo -->
             <div
-                class="flex h-14 shrink-0 items-center gap-2.5 border-b border-slate-100 px-3"
+                class="flex h-14 shrink-0 items-center border-b border-slate-100"
+                :class="sidebarExpanded ? 'gap-2.5 px-3' : 'justify-center px-2'"
             >
-                <img
-                    src="/logo.png"
-                    alt="Logo Kampus"
-                    class="h-8 w-auto shrink-0 rounded-md object-contain"
-                />
-                <div v-if="sidebarExpanded" class="min-w-0 overflow-hidden">
+                <div
+                    class="flex shrink-0 items-center justify-center overflow-hidden transition-all duration-300 select-none"
+                    :class="
+                        hasBrandLogo
+                            ? 'bg-transparent border border-slate-200'
+                            : 'bg-gradient-to-br from-[#6366f1] to-[#4f46e5] text-white shadow-lg shadow-indigo-100'
+                    "
+                    :style="{
+                        width: sidebarExpanded ? '36px' : '32px',
+                        height: sidebarExpanded ? '36px' : '32px',
+                        borderRadius: sidebarExpanded ? '0.75rem' : '0.7rem',
+                    }"
+                >
+                    <img
+                        v-if="hasBrandLogo"
+                        :src="brandLogo"
+                        :alt="brandName"
+                        class="h-full w-full object-contain"
+                    />
+                    <AppLogoIcon
+                        v-else
+                        :class="sidebarExpanded ? 'h-[18px] w-[18px]' : 'h-4 w-4'"
+                        class="text-white"
+                    />
+                </div>
+                <div
+                    v-if="sidebarExpanded"
+                    class="min-w-0 flex-1 overflow-hidden"
+                >
                     <p
-                        class="truncate text-[13px] font-bold tracking-tight text-slate-900"
+                        class="truncate text-[13px] font-bold tracking-tight text-slate-900 leading-tight"
                     >
                         FAST Academic
                     </p>
                     <p
-                        class="text-[10px] tracking-widest text-slate-400 uppercase"
+                        class="mt-0.5 text-[10px] tracking-widest text-slate-400 uppercase leading-none"
                     >
                         FMIKOM
                     </p>
@@ -485,12 +518,12 @@ function batteryIcon() {
         <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
             <!-- Topbar -->
             <header
-                class="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 lg:px-5"
+                class="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3 lg:h-14 lg:px-5"
             >
                 <div class="flex items-center gap-3">
                     <button
                         type="button"
-                        class="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                        class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 md:p-1.5"
                         @click="toggleSidebar"
                     >
                         <Menu class="size-5" />
@@ -511,16 +544,16 @@ function batteryIcon() {
                     <div class="relative" data-profile-menu>
                         <button
                             type="button"
-                            class="flex items-center gap-2 rounded-xl bg-slate-50 px-2 py-2 text-left transition-colors hover:bg-slate-100"
+                            class="flex items-center gap-2 rounded-xl bg-slate-50 px-2 py-1.5 text-left transition-colors hover:bg-slate-100 md:px-2 md:py-2"
                             aria-label="Profil pengguna"
                             @click.stop="toggleProfileMenu"
                         >
                             <span
-                                class="grid size-7 shrink-0 place-items-center rounded-lg bg-blue-500 text-[11px] font-bold text-white shadow-sm"
+                                class="grid size-7 shrink-0 place-items-center rounded-lg bg-blue-500 text-[11px] font-bold text-white shadow-sm md:size-7"
                             >
                                 {{ userInitials }}
                             </span>
-                            <span class="hidden sm:block min-w-0">
+                            <span class="hidden min-w-0 sm:block">
                                 <span
                                     class="block truncate text-xs font-semibold text-slate-900"
                                 >
@@ -584,6 +617,7 @@ function batteryIcon() {
                     </div>
 
                     <NotificationBell
+                        class="hidden md:block"
                         :count="notifCount"
                         :items="notifItems"
                         aria-label="Notifikasi Approval"

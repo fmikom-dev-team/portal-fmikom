@@ -30,6 +30,22 @@ trait UserHelpers
         return str_replace('_', '-', (string) $this->user_type);
     }
 
+    /**
+     * Backward-compatible alias used by older FAST code paths.
+     */
+    public function userTypeSlug(): ?string
+    {
+        return $this->getResolvedRoleSlug();
+    }
+
+    /**
+     * Backward-compatible label helper used by older FAST code paths.
+     */
+    public function roleDisplayName(): string
+    {
+        return $this->getResolvedRoleLabel();
+    }
+
     public function hasGlobalRole(string ...$roles): bool
     {
         $globalRole = $this->getGlobalRoleSlug();
@@ -39,6 +55,32 @@ trait UserHelpers
         }
 
         return in_array($globalRole, $roles, true);
+    }
+
+    public function hasRole(string ...$roles): bool
+    {
+        $normalizedRoles = array_values(array_filter(array_map(
+            fn (string $role): string => $this->normalizeRoleSlug($role),
+            $roles,
+        )));
+
+        if ($normalizedRoles === []) {
+            return false;
+        }
+
+        $candidateRoles = array_values(array_filter([
+            $this->getResolvedRoleSlug(),
+            $this->normalizeRoleSlug($this->role?->slug ?? null),
+            $this->normalizeRoleSlug(session('active_role')),
+        ]));
+
+        foreach ($this->moduleRoles as $moduleRole) {
+            $candidateRoles[] = $this->normalizeRoleSlug($moduleRole->role?->slug ?? null);
+        }
+
+        $candidateRoles = array_values(array_unique(array_filter($candidateRoles)));
+
+        return (bool) array_intersect($normalizedRoles, $candidateRoles);
     }
 
     public function getGlobalRoleLabel(): ?string
@@ -124,5 +166,42 @@ trait UserHelpers
         }
 
         return $this->getGlobalRoleLabel() ?? 'User';
+    }
+
+    public function getResolvedRoleSlug(): ?string
+    {
+        $activeRole = $this->normalizeRoleSlug(session('active_role'));
+
+        if ($activeRole) {
+            return $activeRole;
+        }
+
+        return $this->getGlobalRoleSlug();
+    }
+
+    public function getResolvedRoleLabel(): string
+    {
+        $activeRole = $this->getResolvedRoleSlug();
+
+        if ($activeRole) {
+            return str($activeRole)->replace('-', ' ')->headline()->toString();
+        }
+
+        return $this->getResolvedRoleTitle();
+    }
+
+    protected function normalizeRoleSlug(mixed $role): ?string
+    {
+        if (! is_string($role)) {
+            return null;
+        }
+
+        $role = trim(strtolower($role));
+
+        if ($role === '') {
+            return null;
+        }
+
+        return str_replace('_', '-', $role);
     }
 }
