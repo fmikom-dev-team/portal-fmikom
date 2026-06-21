@@ -1,29 +1,37 @@
 <script setup lang="ts">
 import { Head, Link } from "@inertiajs/vue3";
 import {
+	ArrowRight,
 	BookOpen,
 	Briefcase,
-	GraduationCap,
-	FileText,
-	ChevronRight,
-	Info,
 	Calendar,
-	Megaphone,
-	Video,
-	Image,
-	ArrowRight,
-	Lock,
-	ShieldCheck,
-	Scale,
+	ChevronRight,
+	FileText,
 	Globe,
+	GraduationCap,
+	Image,
+	Info,
+	Lock,
 	MapPin,
+	Megaphone,
+	Scale,
+	ShieldCheck,
+	Video,
 } from "lucide-vue-next";
-import PublicNavbar from "@/components/Portal/PublicNavbar.vue";
 import PublicFooter from "@/components/Portal/PublicFooter.vue";
+import PublicNavbar from "@/components/Portal/PublicNavbar.vue";
 
 defineProps<{
-	categories: Record<string, Array<{ id: number; title: string; slug: string; category: string }>>;
-	latestPosts: Array<{ id: number; title: string; slug: string; created_at: string }>;
+	categories: Record<
+		string,
+		Array<{ id: number; title: string; slug: string; category: string }>
+	>;
+	latestPosts: Array<{
+		id: number;
+		title: string;
+		slug: string;
+		created_at: string;
+	}>;
 }>();
 
 // Map icons to categories
