@@ -59,6 +59,7 @@ const currentYear = new Date().getFullYear();
                                 <li><Link href="/berita" class="text-[13px] text-slate-700 hover:text-slate-900 transition-colors">Berita</Link></li>
                                 <li><Link href="/halaman/tentang-fmikom" class="text-[13px] text-slate-700 hover:text-slate-900 transition-colors">Tentang FMIKOM</Link></li>
                                 <li><Link href="/halaman/visi-misi" class="text-[13px] text-slate-700 hover:text-slate-900 transition-colors">Visi & Misi</Link></li>
+                                <li><Link href="/sitemap" class="text-[13px] text-slate-700 hover:text-slate-900 transition-colors">Sitemap</Link></li>
                             </ul>
                         </div>
 

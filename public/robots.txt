@@ -1,2 +1,6 @@
 User-agent: *
-Disallow:
+Disallow: /workos/
+Disallow: /admin/
+Disallow: /dashboard
+
+Sitemap: https://fmikom.madinku.web.id/sitemap.xml
