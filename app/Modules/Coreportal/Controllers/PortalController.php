@@ -194,18 +194,30 @@ class PortalController extends Controller
      */
     private function resolveModuleDashboardRoute(string $moduleCode, string $roleSlug): ?string
     {
-        if (strtoupper($moduleCode) === 'FAST') {
-            return match (strtolower($roleSlug)) {
+        $module = strtoupper($moduleCode);
+        $role = strtolower($roleSlug);
+
+        if ($module === 'FAST') {
+            return match ($role) {
                 'admin', 'super-admin', 'super_admin', 'admin-universitas', 'admin-akademik', 'prodi' => 'admin.dashboard',
-                'kaprodi' => 'kaprodi.dashboard',
-                'dekan' => 'dekan.dashboard',
+                'kaprodi', 'dekan' => 'approval.dashboard',
                 'dosen' => 'dosen.dashboard',
                 'mahasiswa', 'alumni' => 'fast.user.dashboard',
                 default => 'fast.user.dashboard',
             };
         }
 
-        $routeName = 'module.'.strtolower($moduleCode).'.dashboard';
+        if ($module === 'WIMS') {
+            return match ($role) {
+                'dosen' => 'wims.dosen.dashboard',
+                'mahasiswa' => 'wims.dashboard',
+                'mitra' => 'wims.mitra.dashboard',
+                'super-admin', 'admin', 'admin-universitas', 'admin-akademik', 'prodi' => 'wims.admin.dashboard',
+                default => Route::has('module.wims.dashboard') ? 'module.wims.dashboard' : null,
+            };
+        }
+
+        $routeName = 'module.'.strtolower($module).'.dashboard';
 
         return Route::has($routeName) ? $routeName : null;
     }
