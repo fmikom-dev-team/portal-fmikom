@@ -85,12 +85,13 @@ class DashboardController extends Controller // NOSONAR
             'maintenance_mode'    => ['nullable', 'in:0,1'],
             'maintenance_message' => ['nullable', 'string', 'max:500'],
             'brand_name'          => ['nullable', 'string', 'max:100'],
+            'brand_subtitle'      => ['nullable', 'string', 'max:150'],
             'brand_description'   => ['nullable', 'string', 'max:500'],
             'primary_color'       => ['nullable', 'string', 'max:20'],
             'public_registration' => ['nullable', 'in:0,1'],
         ]);
 
-        $allowed = ['maintenance_mode', 'maintenance_message', 'brand_name', 'brand_description', 'primary_color', 'public_registration'];
+        $allowed = ['maintenance_mode', 'maintenance_message', 'brand_name', 'brand_subtitle', 'brand_description', 'primary_color', 'public_registration'];
 
         foreach ($allowed as $key) {
             if ($request->has($key)) {
