@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // resources/js/pages/Modules/Fast/Admin/templates/Index.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
-import { Head, Link, useForm, router } from '@inertiajs/vue3';
+import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import {
     Plus,
@@ -17,6 +17,8 @@ import {
     ChevronDown,
     ChevronUp,
     FileText,
+    CheckCircle2,
+    AlertCircle,
 } from 'lucide-vue-next';
 import {
     Dialog,
@@ -201,6 +203,12 @@ type GlobalSetting = {
     value?: string | null;
     tipe: string;
 };
+type PageProps = {
+    flash?: {
+        success?: string;
+        error?: string;
+    };
+};
 const props = withDefaults(
     defineProps<{
         jenisSurats?: JenisSuratItem[];
@@ -219,12 +227,47 @@ const props = withDefaults(
         globalSettings: () => [],
     },
 );
+const page = usePage<PageProps>();
 const sidebarSearch = ref('');
 const categoryFilter = ref<'all' | string>('all');
 const statusFilter = ref<'all' | 'active' | 'inactive'>('all');
 const showAddDialog = ref(false);
 const showGlobalSettings = ref(false);
 const activeTab = ref<'template' | 'fields' | 'meta'>('template');
+const toastMessage = ref('');
+const toastVariant = ref<'success' | 'error'>('success');
+let toastTimer: ReturnType<typeof window.setTimeout> | null = null;
+
+function showToast(message: string, variant: 'success' | 'error' = 'success') {
+    if (toastTimer !== null) {
+        window.clearTimeout(toastTimer);
+        toastTimer = null;
+    }
+
+    toastMessage.value = '';
+    toastVariant.value = variant;
+    window.setTimeout(() => {
+        toastMessage.value = message;
+        toastTimer = window.setTimeout(() => {
+            toastMessage.value = '';
+            toastTimer = null;
+        }, 2800);
+    }, 0);
+}
+
+watch(
+    () => [page.props.flash?.success, page.props.flash?.error],
+    ([success, error]) => {
+        if (typeof success === 'string' && success.trim()) {
+            showToast(success, 'success');
+            return;
+        }
+        if (typeof error === 'string' && error.trim()) {
+            showToast(error, 'error');
+        }
+    },
+    { immediate: true },
+);
 function openAddDialog() {
     showAddDialog.value = true;
 }
@@ -750,6 +793,10 @@ function saveTemplate() {
         preserveScroll: true,
         onSuccess: () => {
             form.clearErrors();
+            showToast('Template berhasil disimpan.', 'success');
+        },
+        onError: () => {
+            showToast('Gagal menyimpan template. Periksa kembali data.', 'error');
         },
     });
 }
@@ -856,6 +903,10 @@ function submitAdd() {
         onSuccess: () => {
             showAddDialog.value = false;
             addForm.reset();
+            showToast('Jenis surat baru berhasil dibuat.', 'success');
+        },
+        onError: () => {
+            showToast('Gagal membuat jenis surat baru.', 'error');
         },
     });
 }
@@ -977,6 +1028,10 @@ function saveGlobalSettings() {
                 if (logoInputRef.value) {
                     logoInputRef.value.value = '';
                 }
+                showToast('Pengaturan kop & footer berhasil disimpan.', 'success');
+            },
+            onError: () => {
+                showToast('Gagal menyimpan pengaturan kop & footer.', 'error');
             },
         },
     );
@@ -987,14 +1042,33 @@ function toggleActive(id: number, nama: string, current: boolean) {
         router.patch(
             `/admin/templates/${id}/toggle-active`,
             {},
-            { preserveScroll: true },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    showToast(
+                        `${current ? 'Template dinonaktifkan.' : 'Template diaktifkan.'}`,
+                        'success',
+                    );
+                },
+                onError: () => {
+                    showToast('Gagal memperbarui status template.', 'error');
+                },
+            },
         );
     }
 }
 
 function duplicate(id: number) {
     if (confirm('Duplikat jenis surat ini beserta semua isinya?')) {
-        router.post(`/admin/templates/${id}/duplicate`);
+        router.post(`/admin/templates/${id}/duplicate`, {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                showToast('Template berhasil diduplikasi.', 'success');
+            },
+            onError: () => {
+                showToast('Gagal menduplikasi template.', 'error');
+            },
+        });
     }
 }
 
@@ -1171,7 +1245,7 @@ function settingLabel(key: string): string {
 
                 <button
                     type="button"
-                    class="fast-btn fast-btn-soft h-11 px-4 text-sm font-semibold text-blue-700"
+                    class="fast-btn fast-btn-outline h-11 px-4 text-sm font-semibold text-blue-700"
                     @click="resetTemplateFilters"
                 >
                     Reset Filter
@@ -1296,7 +1370,7 @@ function settingLabel(key: string): string {
                     <div class="flex shrink-0 flex-wrap justify-end gap-2">
                         <button
                             type="button"
-                        class="fast-btn fast-btn-outline flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-700"
+                            class="fast-btn fast-btn-outline flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-700"
                             @click="duplicate(selectedJenisSurat.id)"
                         >
                             <Copy class="size-3.5 text-slate-500" /> Duplikat
@@ -1342,29 +1416,62 @@ function settingLabel(key: string): string {
                         </button>
                     </div>
                 </div>
-                <div class="mt-4 flex gap-1 border-t border-slate-100 pt-4">
-                    <button
-                        v-for="tab in ['template', 'fields', 'meta'] as const"
-                        :key="tab"
-                        type="button"
-                        class="fast-btn px-3 py-1.5 text-xs font-medium"
-                        :class="
-                            activeTab === tab
-                                ? 'fast-btn-primary'
-                                : 'fast-btn-outline'
-                        "
-                        @click="activeTab = tab"
-                    >
-                        {{
-                            tab === 'template'
-                                ? 'Isi Surat'
-                                : tab === 'fields'
-                                  ? 'Field Dinamis'
-                                  : 'Info & Meta'
-                        }}
-                    </button>
+                <div class="mt-4 border-t border-slate-100 pt-4">
+                    <div class="flex gap-1 overflow-x-auto">
+                        <button
+                            v-for="tab in ['template', 'fields', 'meta'] as const"
+                            :key="tab"
+                            type="button"
+                            class="fast-btn shrink-0 px-3 py-1.5 text-xs font-medium transition"
+                            :aria-pressed="activeTab === tab"
+                            :class="
+                                activeTab === tab
+                                    ? 'fast-btn-primary'
+                                    : 'fast-btn-outline'
+                            "
+                            @click="activeTab = tab"
+                        >
+                            {{
+                                tab === 'template'
+                                    ? 'Isi Surat'
+                                    : tab === 'fields'
+                                      ? 'Field Dinamis'
+                                      : 'Info & Meta'
+                            }}
+                        </button>
+                    </div>
                 </div>
             </div>
+        <Transition
+            enter-active-class="transition duration-300 ease-out"
+            enter-from-class="translate-y-3 opacity-0"
+            enter-to-class="translate-y-0 opacity-100"
+            leave-active-class="transition duration-200 ease-in"
+            leave-from-class="translate-y-0 opacity-100"
+            leave-to-class="translate-y-3 opacity-0"
+        >
+            <div
+                v-if="toastMessage"
+                class="fixed top-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border px-4 py-3 shadow-lg"
+                :class="
+                    toastVariant === 'success'
+                        ? 'border-blue-200 bg-blue-50 text-blue-800'
+                        : 'border-red-200 bg-red-50 text-red-800'
+                "
+            >
+                <div class="flex items-center gap-2.5">
+                    <CheckCircle2
+                        v-if="toastVariant === 'success'"
+                        class="size-5 shrink-0 text-blue-500"
+                    />
+                    <AlertCircle
+                        v-else
+                        class="size-5 shrink-0 text-red-500"
+                    />
+                    <p class="text-sm font-medium">{{ toastMessage }}</p>
+                </div>
+            </div>
+        </Transition>
             <div v-if="activeTab === 'template'" class="space-y-4">
                 <div
                     class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-800"
@@ -1393,7 +1500,7 @@ function settingLabel(key: string): string {
                                 v-for="tipe in group.items"
                                 :key="tipe"
                                 type="button"
-                                class="fast-btn fast-btn-outline rounded-lg px-2.5 py-1 text-[11px] font-medium text-slate-700"
+                                class="fast-btn fast-btn-primary rounded-lg px-2.5 py-1 text-[11px] font-medium"
                                 @click="addKomponen(tipe as any)"
                             >
                                 {{ tipeLabel[tipe] }}
@@ -1401,13 +1508,13 @@ function settingLabel(key: string): string {
                         </div>
                     </div>
                     <div class="flex flex-wrap items-center gap-1.5">
-                        <button
-                            type="button"
-                            class="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 transition-colors hover:bg-blue-100"
-                            @click="addCenteredNomorPreset"
-                        >
-                            Preset Nomor Tengah
-                        </button>
+                    <button
+                        type="button"
+                        class="fast-btn fast-btn-outline rounded-lg border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 transition-colors hover:border-blue-300 hover:bg-blue-100"
+                        @click="addCenteredNomorPreset"
+                    >
+                        Preset Nomor Tengah
+                    </button>
                         <span
                             class="ml-1 text-[10px] text-slate-400"
                             >Placeholder:</span
@@ -1433,7 +1540,7 @@ function settingLabel(key: string): string {
                 <div
                     v-for="(komp, idx) in komponen"
                     :key="idx"
-                    class="rounded-2xl border p-4"
+                    class="rounded-2xl border p-4 shadow-sm"
                     :class="
                         tipeBorder[komp.type] ?? 'border-slate-200 bg-white'
                     "
@@ -1590,7 +1697,7 @@ function settingLabel(key: string): string {
                         </div>
                         <button
                             type="button"
-                            class="flex items-center gap-1 text-xs font-medium text-blue-700"
+                            class="fast-btn fast-btn-outline h-8 px-3 text-xs font-medium text-blue-700"
                             @click="addPenerima(komp)"
                         >
                             <Plus class="size-3.5" /> Tambah Penerima
@@ -2081,7 +2188,7 @@ function settingLabel(key: string): string {
                         </div>
                         <button
                             type="button"
-                            class="flex items-center gap-1 text-xs font-medium text-blue-700"
+                            class="fast-btn fast-btn-outline h-8 px-3 text-xs font-medium text-blue-700"
                             @click="addKolom(komp)"
                         >
                             <Plus class="size-3.5" /> Tambah Kolom
@@ -2126,7 +2233,7 @@ function settingLabel(key: string): string {
                         </div>
                         <button
                             type="button"
-                            class="flex items-center gap-1 text-xs font-medium text-blue-700"
+                            class="fast-btn fast-btn-outline h-8 px-3 text-xs font-medium text-blue-700"
                             @click="addTembusan(komp)"
                         >
                             <Plus class="size-3.5" /> Tambah
@@ -2773,7 +2880,7 @@ function settingLabel(key: string): string {
                     <Button
                         type="button"
                         variant="outline"
-                        class="rounded-xl text-slate-700"
+                        class="rounded-xl border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300 hover:bg-blue-100"
                         @click="closeAddDialog"
                         >Batal</Button
                     >
@@ -3297,7 +3404,7 @@ function settingLabel(key: string): string {
                     <Button
                         type="button"
                         variant="outline"
-                        class="rounded-xl text-slate-700"
+                        class="rounded-xl border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300 hover:bg-blue-100"
                         @click="closeGlobalSettings"
                         >Batal</Button
                     >
