@@ -539,7 +539,7 @@ function fieldError(name: string): string | undefined {
                                 </p>
                                 <button
                                     type="button"
-                                    class="fast-btn fast-btn-primary px-4 py-2 text-sm"
+                                    class="fast-btn fast-btn-primary inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap px-4 py-2 text-sm leading-none"
                                     @click="openForm(jenis)"
                                 >
                                     Ajukan Surat
