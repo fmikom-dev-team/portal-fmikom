@@ -14,7 +14,7 @@ import { useLoadingState } from "@/composables/useLoadingState";
 
 let echoInitialized = false;
 
-async function initEcho() {
+async function initEcho(reverbProps?: { key?: string; host?: string; port?: string | number; scheme?: string }) {
 	if (echoInitialized || (globalThis as any).Broadcaster) return;
 	echoInitialized = true;
 
@@ -32,16 +32,17 @@ async function initEcho() {
 		const isLocal = ["localhost", "127.0.0.1", "::1"].includes(
 			globalThis.location.hostname,
 		);
-		const wsHost = import.meta.env.VITE_REVERB_HOST || globalThis.location.hostname;
+		const wsHost = reverbProps?.host || import.meta.env.VITE_REVERB_HOST || globalThis.location.hostname;
 		const wsPort =
-			isHttps && !isLocal ? undefined : import.meta.env.VITE_REVERB_PORT || 8080;
+			reverbProps?.port || (isHttps && !isLocal ? undefined : import.meta.env.VITE_REVERB_PORT || 8080);
 		const wssPort =
-			isHttps && !isLocal ? undefined : import.meta.env.VITE_REVERB_PORT || 8080;
-		const forceTLS = isHttps || import.meta.env.VITE_REVERB_SCHEME === "https";
+			reverbProps?.port || (isHttps && !isLocal ? undefined : import.meta.env.VITE_REVERB_PORT || 8080);
+		const forceTLS = reverbProps?.scheme === "https" || isHttps || import.meta.env.VITE_REVERB_SCHEME === "https";
+		const reverbAppKey = reverbProps?.key || import.meta.env.VITE_REVERB_APP_KEY;
 
 		(globalThis as any).Broadcaster = new Echo({
 			broadcaster: "reverb",
-			key: import.meta.env.VITE_REVERB_APP_KEY,
+			key: reverbAppKey,
 			wsHost,
 			wsPort,
 			wssPort,
@@ -110,7 +111,7 @@ createInertiaApp({
 			.mount(el);
 
 		if (props.initialPage.props.auth?.user) {
-			initEcho();
+			initEcho(props.initialPage.props.reverb as any);
 		}
 	},
 	progress: {
@@ -137,7 +138,7 @@ router.on("success", (event) => {
 	const props = event.detail.page.props as any;
 
 	if (props.auth?.user) {
-		initEcho();
+		initEcho(props.reverb);
 	}
 
 	if (props.siteSettings) {

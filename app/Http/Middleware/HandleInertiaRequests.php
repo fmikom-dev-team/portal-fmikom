@@ -44,6 +44,12 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'reverb' => [
+                'key' => config('broadcasting.connections.reverb.key'),
+                'host' => config('broadcasting.vite_reverb.host') ?: config('broadcasting.connections.reverb.options.host'),
+                'port' => config('broadcasting.vite_reverb.port') ?: config('broadcasting.connections.reverb.options.port'),
+                'scheme' => config('broadcasting.vite_reverb.scheme') ?: config('broadcasting.connections.reverb.options.scheme'),
+            ],
             'siteSettings' => Cache::rememberForever('portal_settings', function () {
                 $raw = PortalSetting::pluck('value', 'key')->toArray();
                 $raw['brand_name'] = $raw['brand_name'] ?? 'Portal FMIKOM';
