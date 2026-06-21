@@ -84,7 +84,7 @@ export default defineConfig(async () => {
 				},
 			},
 			cssCodeSplit: true,
-			chunkSizeWarningLimit: 1000,
+			chunkSizeWarningLimit: 1500,
 			rollupOptions: {
 				output: {
 					manualChunks(id) {
