@@ -342,6 +342,7 @@ const authzRelated = [{ id: "audit-logs", label: "Audit Logs" }];
                     :id="item.id"
                     :label="item.label"
                     :icon="item.icon"
+                    :badge="item.badge"
                     :active="isActive(item.id)"
                     :collapsed="collapsed"
                     @navigate="emit('navigate', $event)"

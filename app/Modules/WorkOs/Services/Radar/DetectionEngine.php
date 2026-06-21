@@ -318,6 +318,20 @@ class DetectionEngine
             // Broadcast failure should not break the request
             \Log::warning('Radar broadcast failed: '.$e->getMessage());
         }
+
+        // Send a WorkOS notification to all active Super Admins
+        try {
+            $superAdmins = User::where('user_type', 'super-admin')->where('is_active', true)->get();
+            foreach ($superAdmins as $admin) {
+                $admin->notify(new \App\Notifications\WorkOsAlert(
+                    title: "Radar threat payload blocked: {$type}",
+                    description: "Threat detected on IP {$ip} ({$device->os} {$device->browser}). Severity: {$severity}. Action taken: {$action}.",
+                    severity: strtolower($severity) === 'critical' ? 'error' : (strtolower($severity) === 'high' ? 'error' : (strtolower($severity) === 'medium' ? 'warning' : 'info'))
+                ));
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('WorkOS alert notification failed: '.$e->getMessage());
+        }
     }
 
     protected function logEvent(string $type, Request $request, ?RadarDevice $device = null): void

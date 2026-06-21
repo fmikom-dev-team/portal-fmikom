@@ -34,6 +34,8 @@ const props = defineProps<{
 	auditRecentEvents: any[];
 	smtpConfig?: any;
 	systemSettings?: any;
+	notifications?: any[];
+	unreadNotificationsCount?: number;
 }>();
 
 const usersArray = computed(() => {
@@ -43,94 +45,28 @@ const usersArray = computed(() => {
 	return [];
 });
 
-const DEFAULT_NOTIFICATIONS = [
-	{
-		id: 1,
-		title: "Radar threat payload blocked",
-		description:
-			"SQL injection payload detected on endpoint POST /login. Threat origin: 185.220.101.4 (Russia).",
-		severity: "error",
-		time: "10 mins ago",
-		read: false,
-	},
-	{
-		id: 2,
-		title: "Webhook delivery failed",
-		description:
-			"Event `sso.connection.activated` failed to dispatch to https://api.fmikom.org/webhooks (500 Internal Error).",
-		severity: "warning",
-		time: "1 hour ago",
-		read: false,
-	},
-	{
-		id: 3,
-		title: "New Okta SAML Connection",
-		description:
-			"SSO Connection 'okta-saml-fmikom' was successfully configured and activated by admin@fmikom.org.",
-		severity: "success",
-		time: "4 hours ago",
-		read: true,
-	},
-	{
-		id: 4,
-		title: "System update applied",
-		description:
-			"WorkOS database seeders updated to incorporate new regional threat lists (2,408 rules updated).",
-		severity: "info",
-		time: "1 day ago",
-		read: true,
-	},
-];
-
-const getStoredNotifications = () => {
-	if (typeof globalThis.window !== "undefined") {
-		const stored = globalThis.localStorage.getItem("workos_notifications");
-		if (stored !== null) {
-			try {
-				return JSON.parse(stored);
-			} catch (e) {
-				console.error(e);
-			}
-		}
-	}
-	return DEFAULT_NOTIFICATIONS;
-};
-
-const notifications = ref(getStoredNotifications());
-
-const saveNotifications = () => {
-	if (typeof globalThis.window !== "undefined") {
-		globalThis.localStorage.setItem(
-			"workos_notifications",
-			JSON.stringify(notifications.value),
-		);
-	}
-};
-
-watch(
-	notifications,
-	() => {
-		saveNotifications();
-	},
-	{ deep: true },
-);
+const notifications = computed(() => props.notifications || []);
 
 const clearNotifications = () => {
-	notifications.value = [];
+	router.post("/workos/notifications/clear", {}, {
+		preserveScroll: true,
+	});
 };
 
 const markAllNotificationsAsRead = () => {
-	notifications.value.forEach((n: any) => {
-		n.read = true;
+	router.post("/workos/notifications/mark-all-read", {}, {
+		preserveScroll: true,
 	});
 };
 
 const toggleNotificationRead = (n: any) => {
-	n.read = !n.read;
+	router.post(`/workos/notifications/${n.id}/toggle-read`, {}, {
+		preserveScroll: true,
+	});
 };
 
 const unreadNotificationsCount = computed(() => {
-	return notifications.value.filter((n: any) => !n.read).length;
+	return props.unreadNotificationsCount ?? 0;
 });
 
 // ── State — URL-based navigation with sessionStorage fallback ──────
@@ -226,6 +162,7 @@ const PAGE_REQUIRED_PROPS: Record<string, string[]> = {
 	radar: ["radarConfig", "radarStats", "radarDetections", "radarBlockedItems"],
 	"audit-logs": ["auditStats", "auditRecentEvents"],
 	emails: ["smtpConfig"],
+	notifications: ["notifications"],
 	settings: ["systemSettings"],
 };
 
@@ -300,13 +237,8 @@ onMounted(() => {
 		(globalThis as any).Broadcaster.private("radar.alerts").listen(
 			"ThreatDetected",
 			(e: any) => {
-				notifications.value.unshift({
-					id: Date.now(),
-					title: `Radar threat payload blocked: ${e.type}`,
-					description: `Threat detected on IP ${e.ip} (${e.device}). Severity: ${e.severity}. Action taken: ${e.action}.`,
-					severity: getThreatSeverityType(e.severity),
-					time: "Just now",
-					read: false,
+				router.reload({
+					only: ["notifications", "unreadNotificationsCount"],
 				});
 			},
 		);
