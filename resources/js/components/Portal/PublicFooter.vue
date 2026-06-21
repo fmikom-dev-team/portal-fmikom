@@ -1,6 +1,9 @@
 <script setup>
-import { Link } from "@inertiajs/vue3";
+import { Link, usePage } from "@inertiajs/vue3";
+import { computed } from "vue";
 
+const page = usePage();
+const siteSettings = computed(() => page.props.siteSettings || {});
 const currentYear = new Date().getFullYear();
 </script>
 
@@ -12,10 +15,14 @@ const currentYear = new Date().getFullYear();
                     <!-- Brand & Info -->
                     <div class="md:col-span-5 lg:col-span-5">
                         <Link href="/" class="flex items-center gap-2 mb-6">
-                            <div class="flex h-8 w-8 items-center justify-center rounded-[8px] bg-black text-white shadow-sm">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" /></svg>
+                            <div 
+                                class="flex h-8 w-8 items-center justify-center rounded-[8px] overflow-hidden shrink-0"
+                                :class="siteSettings.brand_logo ? 'bg-transparent' : 'bg-black text-white shadow-sm'"
+                            >
+                                <img v-if="siteSettings.brand_logo" :src="siteSettings.brand_logo" class="h-full w-full object-contain" alt="Logo" />
+                                <svg v-else class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" /></svg>
                             </div>
-                            <span class="text-[17px] font-bold tracking-tight text-slate-900">Portal FMIKOM</span>
+                            <span class="text-[17px] font-bold tracking-tight text-slate-900">{{ siteSettings.brand_name || 'Portal FMIKOM' }}</span>
                         </Link>
                         <p class="text-[13.5px] leading-[1.7] text-slate-700 mb-8 max-w-[280px] pr-4">
                             Portal informasi akademik, berita, dan layanan mahasiswa terintegrasi yang memudahkan akses informasi perkuliahan Anda.
@@ -82,7 +89,7 @@ const currentYear = new Date().getFullYear();
                 <!-- Bottom Bar -->
                 <div class="mt-14 pt-7 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p class="text-[13px] text-slate-700">
-                        &copy; {{ currentYear }} Portal FMIKOM. All rights reserved.
+                        &copy; {{ currentYear }} {{ siteSettings.brand_name || 'Portal FMIKOM' }}. All rights reserved.
                     </p>
                     <div class="flex gap-5 text-[13px] text-slate-700">
                         <Link href="/privacy-policy" class="hover:text-slate-900 transition-colors underline decoration-slate-300 hover:decoration-slate-400 underline-offset-[3px]">Privacy Policy</Link>
@@ -98,7 +105,7 @@ const currentYear = new Date().getFullYear();
             <div class="absolute top-0 text-[30vw] md:text-[25vw] lg:text-[20rem] font-black text-slate-300/40 select-none pointer-events-none tracking-tighter leading-none whitespace-nowrap z-10"
                  aria-hidden="true"
                  style="-webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%); mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%);">
-                FMIKOM
+                {{ siteSettings.brand_name || 'FMIKOM' }}
             </div>
         </div>
     </footer>
