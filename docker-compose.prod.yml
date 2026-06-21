@@ -8,6 +8,7 @@ services:
       dockerfile: Dockerfile
     image: fmikom-portal:latest
     container_name: fmikom_app
+    hostname: fmikom-app
     restart: unless-stopped
     ports:
       - "${PORT:-80}:80"
