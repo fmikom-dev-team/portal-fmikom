@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, usePage } from "@inertiajs/vue3";
+import { Deferred, Head, Link, usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import {
 	AlertCircle,
@@ -538,14 +538,15 @@ const handleSearchBlur = () => {
 
         <!-- MAIN -->
         <main class="mx-auto max-w-[1400px] px-4 pt-10 pb-24 md:pb-16 transition-all duration-300">
-
-            <!-- SKELETON LOADER -->
-            <div v-if="isLoading" class="space-y-8 select-none">
-                <PortfolioSkeleton />
-            </div>
-
-            <!-- FOLLOWING EMPTY STATE -->
-            <div v-else-if="isFollowingEmpty" class="flex flex-col items-center justify-center py-24 text-center">
+            <Deferred data="['feedProjects', 'followingFeedProjects']">
+                <template #fallback>
+                    <div class="space-y-8 select-none">
+                        <PortfolioSkeleton />
+                    </div>
+                </template>
+                <template #default>
+                    <!-- FOLLOWING EMPTY STATE -->
+            <div v-if="isFollowingEmpty" class="flex flex-col items-center justify-center py-24 text-center">
                 <div class="w-20 h-20 rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-6 shadow-lg shadow-indigo-500/30">
                     <svg class="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -745,6 +746,8 @@ const handleSearchBlur = () => {
                 </button>
             </div>
             </template>
+                </template>
+            </Deferred>
         </main>
 
         <Preview 

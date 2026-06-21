@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router, usePage } from "@inertiajs/vue3";
+import { Deferred, Head, Link, router, usePage } from "@inertiajs/vue3";
 import {
 	Folder,
 	ListFilter,
@@ -90,7 +90,7 @@ const toPagiTitleCase = (str: string): string => {
 };
 
 const allPeople = computed(() => {
-	return props.peopleYouMayKnow.map((p) => {
+	return (props.peopleYouMayKnow || []).map((p) => {
 		const skillsArray = p.skills || [];
 		const parsedSkills = skillsArray.map((s: any) =>
 			typeof s === "string" ? s : s.name || "",
@@ -343,128 +343,131 @@ const handleBlur = () => {
             </div>
         </div>        <!-- GRID -->
         <main class="mx-auto max-w-[1400px] px-4 py-8 pb-24 md:pb-8">
-            <!-- SKELETON LOADER -->
-            <div v-if="isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 select-none">
-                <div v-for="n in 8" :key="n" class="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden p-5 flex flex-col gap-4">
-                    <div class="relative h-36 bg-slate-100 dark:bg-zinc-900/60 rounded-lg overflow-hidden flex items-center justify-center">
-                        <Skeleton class="h-20 w-20 rounded-full border-4 border-white dark:border-zinc-900 absolute bottom-0 translate-y-1/2 shrink-0" />
-                    </div>
-                    <div class="pt-8 flex flex-col items-center gap-3">
-                        <Skeleton class="h-4 w-32 rounded-full" />
-                        <Skeleton class="h-3 w-24 rounded-full" />
-                        <div class="flex gap-1.5 mt-2">
-                            <Skeleton class="h-6 w-16 rounded-full" />
-                            <Skeleton class="h-6 w-16 rounded-full" />
-                        </div>
-                        <div class="grid grid-cols-3 gap-4 w-full mt-4 border-t border-slate-100 dark:border-zinc-800 pt-4">
-                            <div class="flex flex-col items-center gap-1.5">
-                                <Skeleton class="h-4 w-8 rounded" />
-                                <Skeleton class="h-2.5 w-10 rounded" />
+            <Deferred data="peopleYouMayKnow">
+                <template #fallback>
+                    <!-- SKELETON LOADER -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 select-none">
+                        <div v-for="n in 8" :key="n" class="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden p-5 flex flex-col gap-4">
+                            <div class="relative h-36 bg-slate-100 dark:bg-zinc-900/60 rounded-lg overflow-hidden flex items-center justify-center">
+                                <Skeleton class="h-20 w-20 rounded-full border-4 border-white dark:border-zinc-900 absolute bottom-0 translate-y-1/2 shrink-0" />
                             </div>
-                            <div class="flex flex-col items-center gap-1.5 border-x border-slate-100 dark:border-zinc-800 px-2">
-                                <Skeleton class="h-4 w-8 rounded" />
-                                <Skeleton class="h-2.5 w-10 rounded" />
-                            </div>
-                            <div class="flex flex-col items-center gap-1.5">
-                                <Skeleton class="h-4 w-8 rounded" />
-                                <Skeleton class="h-2.5 w-10 rounded" />
-                            </div>
-                        </div>
-                        <Skeleton class="h-9 w-full rounded-lg mt-2" />
-                    </div>
-                </div>
-            </div>
-
-            <template v-else>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                    <LazyWrapper
-                        v-for="p in visiblePeople"
-                        :key="p.id"
-                        placeholderClass="h-[280px]"
-                    >
-                        <div class="group rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-955 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer"
-                            @click="selectPerson(p, filteredPeople.indexOf(p))">
-
-                        <!-- 3 images/videos horizontal strip -->
-                        <div v-if="p.imgs && p.imgs.length > 0" class="relative grid grid-cols-3 gap-0.5 bg-slate-100 dark:bg-zinc-850 h-36">
-                            <div v-for="(img, i) in p.imgs.slice(0, 3)" :key="i" class="overflow-hidden h-36 bg-slate-50 dark:bg-zinc-900">
-                                <VideoLazy v-if="isVideoUrl(img)" :src="img" :autoplay="true" :loop="true" :muted="true" :playsinline="true" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500 pointer-events-none" />
-                                <OptimizedImage v-else :src="img" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Project thumbnail" />
-                            </div>
-                            <!-- Pad remaining columns if user has fewer than 3 works -->
-                            <div v-for="i in Math.max(0, 3 - p.imgs.length)" :key="'pad-' + i" class="h-36 bg-linear-to-br from-slate-50 to-slate-100 dark:from-zinc-900/60 dark:to-zinc-850/60"></div>
-                            <!-- Centered circular avatar overlapping bottom of strip -->
-                            <div class="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-1/2 z-10">
-                                <OptimizedImage :src="p.avatar"
-                                    className="h-20 w-20 rounded-full border-4 border-white dark:border-zinc-900 object-cover shadow-lg"
-                                    alt="Author avatar" />
-                            </div>
-                        </div>
-                        <!-- Fallback if user has 0 works -->
-                        <div v-else class="relative h-36 bg-linear-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 dark:from-indigo-950/40 dark:via-purple-950/40 dark:to-pink-950/40">
-                            <!-- Centered circular avatar overlapping bottom of strip -->
-                            <div class="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-1/2 z-10">
-                                <OptimizedImage :src="p.avatar"
-                                    className="h-20 w-20 rounded-full border-4 border-white dark:border-zinc-900 object-cover shadow-lg"
-                                    alt="Author avatar" />
-                            </div>
-                        </div>
-
-                        <!-- Card body -->
-                        <div class="px-5 pt-12 pb-5">
-                            <!-- Name + location -->
-                            <div class="text-center mb-3">
-                                <div class="flex flex-col items-center justify-center gap-0.5 mb-1">
-                                    <div class="flex items-center gap-1.5">
-                                        <h3 class="text-sm font-bold text-slate-800 dark:text-zinc-150 leading-tight">{{ p.name }}</h3>
-                                        <img src="/premium.svg" class="w-3.5 h-3.5 shrink-0 select-none" title="Akun Terverifikasi" alt="Verified Badge" />
+                            <div class="pt-8 flex flex-col items-center gap-3">
+                                <Skeleton class="h-4 w-32 rounded-full" />
+                                <Skeleton class="h-3 w-24 rounded-full" />
+                                <div class="flex gap-1.5 mt-2">
+                                    <Skeleton class="h-6 w-16 rounded-full" />
+                                    <Skeleton class="h-6 w-16 rounded-full" />
+                                </div>
+                                <div class="grid grid-cols-3 gap-4 w-full mt-4 border-t border-slate-100 dark:border-zinc-800 pt-4">
+                                    <div class="flex flex-col items-center gap-1.5">
+                                        <Skeleton class="h-4 w-8 rounded" />
+                                        <Skeleton class="h-2.5 w-10 rounded" />
                                     </div>
-                                    <span v-if="p.pagi_username" class="text-[10px] font-bold text-slate-500 dark:text-slate-400">@{{ p.pagi_username }}</span>
+                                    <div class="flex flex-col items-center gap-1.5 border-x border-slate-100 dark:border-zinc-800 px-2">
+                                        <Skeleton class="h-4 w-8 rounded" />
+                                        <Skeleton class="h-2.5 w-10 rounded" />
+                                    </div>
+                                    <div class="flex flex-col items-center gap-1.5">
+                                        <Skeleton class="h-4 w-8 rounded" />
+                                        <Skeleton class="h-2.5 w-10 rounded" />
+                                    </div>
                                 </div>
-                                <div class="flex items-center justify-center gap-1 text-xs text-slate-500">
-                                    <MapPin class="h-3 w-3 shrink-0" /> {{ p.loc }}
-                                </div>
+                                <Skeleton class="h-9 w-full rounded-lg mt-2" />
                             </div>
-
-                            <!-- Skills (limit to 2 tags, neat and tidy) -->
-                            <div class="flex flex-wrap justify-center gap-1.5 mb-4 min-h-[26px]">
-                                <span v-for="skill in p.skills.slice(0, 2)" :key="skill"
-                                    class="rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 px-2.5 py-1 text-[11px] font-bold tracking-tight">
-                                    {{ skill }}
-                                </span>
-                            </div>
-
-                            <!-- Stats -->
-                            <div class="grid grid-cols-3 gap-2 mb-4">
-                                <div class="text-center">
-                                    <p class="text-sm font-black text-slate-800 dark:text-zinc-100">{{ p.appr }}</p>
-                                    <p class="text-[10px] text-slate-400 dark:text-zinc-500">Likes</p>
-                                </div>
-                                <div class="text-center border-x border-slate-100 dark:border-zinc-800">
-                                    <p class="text-sm font-black text-slate-800 dark:text-zinc-100">{{ p.fol }}</p>
-                                    <p class="text-[10px] text-slate-400 dark:text-zinc-500">Followers</p>
-                                </div>
-                                <div class="text-center">
-                                    <p class="text-sm font-black text-slate-800 dark:text-zinc-100">{{ p.proj }}</p>
-                                    <p class="text-[10px] text-slate-400 dark:text-zinc-500">Projects</p>
-                                </div>
-                            </div>
-
-                            <!-- Message Button -->
-                            <button v-if="p.id !== user.id" @click.stop="startChat(p.id)" class="w-full rounded-lg border border-slate-200 dark:border-zinc-800 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors">
-                                Message {{ p.name.split(' ')[0] }}
-                            </button>
                         </div>
                     </div>
-                </LazyWrapper>
-            </div>
-                <!-- Load More — only appears when there are more than visibleCount people -->
-                <div v-if="hasMore" class="mt-10 text-center">
-                    <button @click="loadMore" class="rounded-xl border-2 border-slate-200 dark:border-zinc-800 px-8 py-3 text-sm font-bold text-slate-600 dark:text-zinc-400 hover:border-[#1769ff] hover:text-[#1769ff] transition-colors">
-                        Load More <span class="opacity-50 text-xs ml-1">({{ filteredPeople.length - visibleCount }} lainnya)</span>
-                    </button>
-                </div>
-            </template>
+                </template>
+                <template #default>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                        <LazyWrapper
+                            v-for="p in visiblePeople"
+                            :key="p.id"
+                            placeholderClass="h-[280px]"
+                        >
+                            <div class="group rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-955 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer"
+                                @click="selectPerson(p, filteredPeople.indexOf(p))">
+
+                            <!-- 3 images/videos horizontal strip -->
+                            <div v-if="p.imgs && p.imgs.length > 0" class="relative grid grid-cols-3 gap-0.5 bg-slate-100 dark:bg-zinc-850 h-36">
+                                <div v-for="(img, i) in p.imgs.slice(0, 3)" :key="i" class="overflow-hidden h-36 bg-slate-50 dark:bg-zinc-900">
+                                    <VideoLazy v-if="isVideoUrl(img)" :src="img" :autoplay="true" :loop="true" :muted="true" :playsinline="true" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500 pointer-events-none" />
+                                    <OptimizedImage v-else :src="img" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Project thumbnail" />
+                                </div>
+                                <!-- Pad remaining columns if user has fewer than 3 works -->
+                                <div v-for="i in Math.max(0, 3 - p.imgs.length)" :key="'pad-' + i" class="h-36 bg-linear-to-br from-slate-50 to-slate-100 dark:from-zinc-900/60 dark:to-zinc-850/60"></div>
+                                <!-- Centered circular avatar overlapping bottom of strip -->
+                                <div class="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-1/2 z-10">
+                                    <OptimizedImage :src="p.avatar"
+                                        className="h-20 w-20 rounded-full border-4 border-white dark:border-zinc-900 object-cover shadow-lg"
+                                        alt="Author avatar" />
+                                </div>
+                            </div>
+                            <!-- Fallback if user has 0 works -->
+                            <div v-else class="relative h-36 bg-linear-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 dark:from-indigo-950/40 dark:via-purple-950/40 dark:to-pink-950/40">
+                                <!-- Centered circular avatar overlapping bottom of strip -->
+                                <div class="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-1/2 z-10">
+                                    <OptimizedImage :src="p.avatar"
+                                        className="h-20 w-20 rounded-full border-4 border-white dark:border-zinc-900 object-cover shadow-lg"
+                                        alt="Author avatar" />
+                                </div>
+                            </div>
+
+                            <!-- Card body -->
+                            <div class="px-5 pt-12 pb-5">
+                                <!-- Name + location -->
+                                <div class="text-center mb-3">
+                                    <div class="flex flex-col items-center justify-center gap-0.5 mb-1">
+                                        <div class="flex items-center gap-1.5">
+                                            <h3 class="text-sm font-bold text-slate-800 dark:text-zinc-150 leading-tight">{{ p.name }}</h3>
+                                            <img src="/premium.svg" class="w-3.5 h-3.5 shrink-0 select-none" title="Akun Terverifikasi" alt="Verified Badge" />
+                                        </div>
+                                        <span v-if="p.pagi_username" class="text-[10px] font-bold text-slate-500 dark:text-slate-400">@{{ p.pagi_username }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-center gap-1 text-xs text-slate-500">
+                                        <MapPin class="h-3 w-3 shrink-0" /> {{ p.loc }}
+                                    </div>
+                                </div>
+
+                                <!-- Skills (limit to 2 tags, neat and tidy) -->
+                                <div class="flex flex-wrap justify-center gap-1.5 mb-4 min-h-[26px]">
+                                    <span v-for="skill in p.skills.slice(0, 2)" :key="skill"
+                                        class="rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 px-2.5 py-1 text-[11px] font-bold tracking-tight">
+                                        {{ skill }}
+                                    </span>
+                                </div>
+
+                                <!-- Stats -->
+                                <div class="grid grid-cols-3 gap-2 mb-4">
+                                    <div class="text-center">
+                                        <p class="text-sm font-black text-slate-800 dark:text-zinc-100">{{ p.appr }}</p>
+                                        <p class="text-[10px] text-slate-400 dark:text-zinc-500">Likes</p>
+                                    </div>
+                                    <div class="text-center border-x border-slate-100 dark:border-zinc-800">
+                                        <p class="text-sm font-black text-slate-800 dark:text-zinc-100">{{ p.fol }}</p>
+                                        <p class="text-[10px] text-slate-400 dark:text-zinc-500">Followers</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-sm font-black text-slate-800 dark:text-zinc-100">{{ p.proj }}</p>
+                                        <p class="text-[10px] text-slate-400 dark:text-zinc-500">Projects</p>
+                                    </div>
+                                </div>
+
+                                <!-- Message Button -->
+                                <button v-if="p.id !== user.id" @click.stop="startChat(p.id)" class="w-full rounded-lg border border-slate-200 dark:border-zinc-800 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors">
+                                    Message {{ p.name.split(' ')[0] }}
+                                </button>
+                            </div>
+                        </div>
+                        </LazyWrapper>
+                    </div>
+                    <!-- Load More — only appears when there are more than visibleCount people -->
+                    <div v-if="hasMore" class="mt-10 text-center">
+                        <button @click="loadMore" class="rounded-xl border-2 border-slate-200 dark:border-zinc-800 px-8 py-3 text-sm font-bold text-slate-600 dark:text-zinc-400 hover:border-[#1769ff] hover:text-[#1769ff] transition-colors">
+                            Load More <span class="opacity-50 text-xs ml-1">({{ filteredPeople.length - visibleCount }} lainnya)</span>
+                        </button>
+                    </div>
+                </template>
+            </Deferred>
         </main>
 
         <!-- PEOPLE DETAIL SIDEBAR -->

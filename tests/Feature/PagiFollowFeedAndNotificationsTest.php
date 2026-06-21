@@ -73,8 +73,22 @@ test('user following list and feed projects work correctly', function () {
         ->get(route('module.pagi.dashboard'));
 
     $dashboardResponse->assertOk();
-    $props = $dashboardResponse->original->getData()['page']['props'];
+    $page = $dashboardResponse->original->getData()['page'];
+    $component = $page['component'];
+    $version = $page['version'] ?? null;
 
+    // Fetch deferred prop using partial reload request headers
+    $deferredResponse = $this
+        ->actingAs($userA)
+        ->withSession(['active_module' => 'pagi', 'active_role' => 'alumni'])
+        ->get(route('module.pagi.dashboard'), [
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => $version,
+            'X-Inertia-Partial-Component' => $component,
+            'X-Inertia-Partial-Data' => 'followingFeedProjects',
+        ]);
+
+    $props = $deferredResponse->json()['props'];
     $followingProjects = collect($props['followingFeedProjects']);
     expect($followingProjects)->not->toBeEmpty();
     expect($followingProjects->firstWhere('id', $workB->id))->not->toBeNull();
