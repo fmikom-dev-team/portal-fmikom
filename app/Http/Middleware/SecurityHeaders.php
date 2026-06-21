@@ -22,7 +22,11 @@ class SecurityHeaders
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->is('telescope*') || $request->is('pulse*') || $request->is('livewire*')) {
+        $telescopePath = config('telescope.path', 'telescope') . '*';
+        $pulsePath = config('pulse.path', 'pulse') . '*';
+        $horizonPath = config('horizon.path', 'horizon') . '*';
+
+        if ($request->is($telescopePath) || $request->is($pulsePath) || $request->is($horizonPath) || $request->is('livewire*')) {
             $response = $next($request);
             $response->headers->set('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * 'unsafe-inline' ws: wss:; img-src * data: blob:; style-src * 'unsafe-inline';");
             $response->headers->set('X-Frame-Options', 'DENY');
