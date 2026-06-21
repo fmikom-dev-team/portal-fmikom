@@ -178,7 +178,8 @@ CSS;
 
         // Margin dari global settings
         $settings     = \App\Models\TemplateGlobalSetting::allAsArray();
-        $marginTop    = $settings['margin_top']    ?? '15mm';
+        $marginTop    = $this->normalizeTopMargin($settings['margin_top'] ?? '15mm');
+        $paddingTop   = $this->normalizeWrapperTopPadding($settings['margin_top'] ?? '15mm');
         $marginRight  = $settings['margin_right']  ?? '15mm';
         $marginBottom = $settings['margin_bottom'] ?? '12mm';
         $marginLeft   = $settings['margin_left']   ?? '15mm';
@@ -196,7 +197,6 @@ CSS;
 
         $pageStyle  = "@page { margin: {$marginTop} {$marginRight} {$marginBottom} {$marginLeft}; size: A4 portrait; }";
         $styles     = $this->documentStyles();
-
         // CSS custom per template (margin, indent, dll)
         $customCss = $template?->css_style ? "
         /* Custom CSS per template */
@@ -211,9 +211,9 @@ CSS;
             <title>{$safeTitle}</title>
             <style>
                 {$fontVars}
-                @page { margin: 0; size: A4 portrait; }
                 {$styles}
                 {$customCss}
+                @page { margin: 0; size: A4 portrait; }
                 html, body {
                     background: #fff;
                     color: #0f172a;
@@ -226,10 +226,12 @@ CSS;
                     box-sizing: border-box;
                     position: relative;
                     width: 100%;
-                    min-height: 297mm;
-                    padding: {$marginTop} {$marginRight} {$marginBottom} {$marginLeft};
-                    display: flex;
-                    flex-direction: column;
+                    height: 297mm;
+                    overflow: hidden;
+                    break-after: avoid;
+                    page-break-after: avoid;
+                    padding: calc({$paddingTop} + 6mm) {$marginRight} calc({$marginBottom} + 18mm) {$marginLeft};
+                    display: block;
                 }
                 .preview-sheet__header {
                     width: 100%;
@@ -238,12 +240,20 @@ CSS;
                 .preview-sheet__body {
                     width: 100%;
                     box-sizing: border-box;
-                    flex: 1 1 auto;
+                    min-height: 0;
+                    overflow: hidden;
                 }
                 .preview-sheet__footer {
-                    width: 100%;
+                    position: absolute;
+                    left: 50%;
+                    bottom: calc({$marginBottom} + 1mm);
+                    transform: translateX(-50%);
                     box-sizing: border-box;
-                    margin-top: auto;
+                    width: calc(100% - {$marginLeft} - {$marginRight});
+                    margin-top: 0;
+                    break-inside: avoid;
+                    page-break-inside: avoid;
+                    text-align: center;
                 }
                 .preview-sheet__footer > * {
                     margin-top: 0;
@@ -281,6 +291,44 @@ CSS;
     public function documentStyles(): string
     {
         return self::DOCUMENT_STYLES;
+    }
+
+    protected function normalizeTopMargin(string $marginTop): string
+    {
+        $value = trim($marginTop);
+
+        if ($value === '') {
+            return '12mm';
+        }
+
+        if (preg_match('/^(\d+(?:\.\d+)?)\s*mm$/i', $value, $matches) === 1) {
+            $adjusted = max(2, (float) $matches[1] - 10);
+            return rtrim(rtrim(number_format($adjusted, 1, '.', ''), '0'), '.') . 'mm';
+        }
+
+        if (is_numeric($value)) {
+            $adjusted = max(2, (float) $value - 10);
+            return rtrim(rtrim(number_format($adjusted, 1, '.', ''), '0'), '.') . 'mm';
+        }
+
+        return $value;
+    }
+
+    protected function normalizeWrapperTopPadding(string $marginTop): string
+    {
+        $value = $this->normalizeTopMargin($marginTop);
+
+        if (preg_match('/^(\d+(?:\.\d+)?)\s*mm$/i', $value, $matches) === 1) {
+            $adjusted = max(0, (float) $matches[1] - 5);
+            return rtrim(rtrim(number_format($adjusted, 1, '.', ''), '0'), '.') . 'mm';
+        }
+
+        if (is_numeric($value)) {
+            $adjusted = max(0, (float) $value - 5);
+            return rtrim(rtrim(number_format($adjusted, 1, '.', ''), '0'), '.') . 'mm';
+        }
+
+        return $value;
     }
 
 
@@ -321,7 +369,7 @@ CSS;
         } else {
             $renderedBody = $this->replacePlaceholders($body, $placeholderValues);
         }
-        $renderedBody = '<div class="surat-content" style="flex: 1 0 auto;">' . $renderedBody . '</div>';
+        $renderedBody = '<div class="surat-content" style="width: 100%; min-height: 0;">' . $renderedBody . '</div>';
 
         $header = !empty(trim((string) ($template->template_header ?? '')))
             ? $this->replacePlaceholders((string) $template->template_header, $placeholderValues)
@@ -329,7 +377,7 @@ CSS;
 
         $footer = !empty(trim((string) ($template->template_footer ?? '')))
             ? $this->replacePlaceholders((string) $template->template_footer, $placeholderValues)
-            : \App\Modules\Fast\Template\Renderers\SuratKomponenRenderer::renderFooter($settings);
+            : \App\Modules\Fast\Template\Renderers\SuratKomponenRenderer::renderFooter($settings, $placeholderValues);
 
         // return implode("\n", array_filter([$header, $renderedBody, $footer]));
         return [

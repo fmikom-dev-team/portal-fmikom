@@ -46,6 +46,15 @@ trait UserHelpers
         return $this->getResolvedRoleLabel();
     }
 
+    /**
+     * FAST legacy compatibility helper.
+     * Submission flow only allows mahasiswa and dosen.
+     */
+    public function hasFastUserRole(): bool
+    {
+        return $this->isMahasiswa() || $this->isDosen();
+    }
+
     public function hasGlobalRole(string ...$roles): bool
     {
         $globalRole = $this->getGlobalRoleSlug();

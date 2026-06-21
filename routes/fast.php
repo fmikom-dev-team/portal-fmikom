@@ -47,6 +47,23 @@ $documentRoutes = function (): void {
          ->name('lampiran.preview');
  };
 
+$publicDocumentRoutes = function (): void {
+    Route::get('/surat/{id}/template-preview', [DashboardController::class, 'previewTemplate'])
+        ->whereNumber('id')
+        ->name('surat.template-preview');
+    Route::get('/surat/{id}/generated-document', [DashboardController::class, 'previewGeneratedDocument'])
+        ->whereNumber('id')
+        ->name('surat.generated-document');
+    Route::get('/surat/{id}/pdf', [DashboardController::class, 'downloadPdf'])
+        ->whereNumber('id')
+        ->name('surat.pdf');
+};
+
+Route::middleware(['signed'])
+    ->prefix('documents/public')
+    ->name('documents.public.')
+    ->group($publicDocumentRoutes);
+
 Route::middleware(['auth', 'verified'])
     ->prefix('documents')
     ->name('documents.')

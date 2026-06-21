@@ -7,6 +7,7 @@ use App\Models\Surat;
 use App\Models\SuratHistory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -118,11 +119,11 @@ class HistoryController extends Controller
                     'action' => $history->action,
                     'actor' => $history->user?->name ?? null,
                 ])->values(),
-                'previewTemplateUrl' => route('documents.surat.generated-document', $surat->id, absolute: false),
+                'previewTemplateUrl' => $this->signedDocumentRoute('surat.template-preview', $surat->id),
                 'generatedDocumentUrl' => $surat->status === Surat::STATUS_FINISHED
-                    ? route('documents.surat.pdf', $surat->id, absolute: false)
-                    : route('documents.surat.generated-document', $surat->id, absolute: false),
-                'pdfUrl' => route('documents.surat.pdf', $surat->id, absolute: false),
+                    ? $this->signedDocumentRoute('surat.pdf', $surat->id)
+                    : $this->signedDocumentRoute('surat.generated-document', $surat->id),
+                'pdfUrl' => $this->signedDocumentRoute('surat.pdf', $surat->id),
                 'canDownloadPdf' => $surat->status === Surat::STATUS_FINISHED,
             ],
         ]);
@@ -136,6 +137,15 @@ class HistoryController extends Controller
     protected function basePath(): string
     {
         return '/fast/user';
+    }
+
+    protected function signedDocumentRoute(string $routeName, int $suratId): string
+    {
+        return URL::temporarySignedRoute(
+            'documents.public.'.$routeName,
+            now()->addMinutes(15),
+            ['id' => $suratId],
+        );
     }
 
     protected function detailPageName(): string

@@ -22,6 +22,7 @@ class SecurityHeaders
 {
     public function handle(Request $request, Closure $next): Response
     {
+        $allowsDocumentEmbedding = $this->allowsDocumentEmbedding($request);
         $telescopePath = config('telescope.path', 'telescope') . '*';
         $pulsePath = config('pulse.path', 'pulse') . '*';
         $horizonPath = config('horizon.path', 'horizon') . '*';
@@ -171,7 +172,7 @@ class SecurityHeaders
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",
-            "frame-ancestors 'none'",
+            $allowsDocumentEmbedding ? "frame-ancestors 'self'" : "frame-ancestors 'none'",
         ];
 
         if ($request->isSecure() && ! $isLocalHost) {
@@ -184,7 +185,7 @@ class SecurityHeaders
         // ── Anti-Clickjacking ────────────────────────────────────────────────
         // Ditetapkan ke DENY karena CSP frame-ancestors 'none' sudah menangani ini.
         // X-Frame-Options sebagai fallback untuk browser lama yang tidak support CSP.
-        $response->headers->set('X-Frame-Options', 'DENY');
+        $response->headers->set('X-Frame-Options', $allowsDocumentEmbedding ? 'SAMEORIGIN' : 'DENY');
 
         // ── Anti MIME Sniffing ───────────────────────────────────────────────
         $response->headers->set('X-Content-Type-Options', 'nosniff');
@@ -214,6 +215,15 @@ class SecurityHeaders
 
         return $response;
     }
+    private function allowsDocumentEmbedding(Request $request): bool
+    {
+        return $request->is(
+            'documents/surat/*',
+            'documents/public/surat/*',
+            'admin/surat/*',
+        );
+    }
+
     private function buildPermissionsPolicy(Request $request): string
     {
         $allowsWimsAttendanceSensors = $request->routeIs(

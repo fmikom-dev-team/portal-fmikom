@@ -206,7 +206,7 @@ HTML;
             return '';
         }
 
-        return "<img src=\"{$dataUri}\" alt=\"Logo\" style=\"display:block; margin:0 auto 4px; height:70px; width:auto;\">";
+        return "<img src=\"{$dataUri}\" alt=\"Logo\" style=\"display:block; margin:0 auto 0; height:56px; width:auto;\">";
     }
 
     protected static function filePathToDataUri(string $path): ?string
@@ -255,7 +255,7 @@ HTML;
         return "data:{$mimeType};base64,{$encoded}";
     }
     // Persis seperti gambar: Nama Instansi bold | Baris alamat | Baris email+telp+fax
-    public static function renderFooter(array $settings = []): string
+    public static function renderFooter(array $settings = [], array $data = []): string
     {
         $footerHtml = $settings['footer_html'] ?? '';
         if (!empty(trim($footerHtml))) {
@@ -271,8 +271,8 @@ HTML;
         $email   = trim((string) ($settings['email'] ?? ''));
         $telepon = trim((string) ($settings['telepon'] ?? ''));
         $fax     = trim((string) ($settings['fax'] ?? ''));
-        $fontSizeInstansi = trim((string) ($settings['font_size_footer_instansi'] ?? '8.8pt')) ?: '8.8pt';
-        $fontSizeDetail   = trim((string) ($settings['font_size_footer_detail'] ?? '7.0pt')) ?: '7.0pt';
+        $fontSizeInstansi = trim((string) ($settings['font_size_footer_instansi'] ?? '8.4pt')) ?: '8.4pt';
+        $fontSizeDetail   = trim((string) ($settings['font_size_footer_detail'] ?? '6.6pt')) ?: '6.6pt';
         $footerBorder     = trim((string) ($settings['footer_border_thickness'] ?? '2px')) ?: '2px';
         $renderMode       = (string) ($data['__render_mode'] ?? 'preview');
         $footerFont       = static::fontFamilyStack(
@@ -292,24 +292,24 @@ HTML;
         ]);
         $baris2 = implode(' ', $baris2Parts);
 
-        $content = '<div style="width: 100%; font-family: ' . $footerFont . ';">';
-        $content .= '<div style="border-top: ' . $footerBorder . ' solid ' . $warna . '; margin-bottom: 1px;"></div>';
-        $content .= '<div style="border-top: 0.8px solid ' . $warna . '; margin-bottom: 1px;"></div>';
+        $content = '<div style="width: 100%; max-width: 100%; font-family: ' . $footerFont . '; text-align: center;">';
+        $content .= '<div style="border-top: ' . $footerBorder . ' solid ' . $warna . '; margin-bottom: 0.5mm;"></div>';
+        $content .= '<div style="border-top: 0.8px solid ' . $warna . '; margin-bottom: 0.5mm;"></div>';
 
         if ($namaInstansi !== '') {
-            $content .= '<p style="color: ' . $warna . '; font-size: ' . $fontSizeInstansi . '; font-weight: 700; text-align: center; margin: 0; line-height: 1.12; letter-spacing: 0.03em;">'
+            $content .= '<p style="color: ' . $warna . '; font-size: ' . $fontSizeInstansi . '; font-weight: 700; text-align: center; margin: 0; line-height: 1.06; letter-spacing: 0.03em;">'
                 . $namaInstansi
                 . '</p>';
         }
 
         if ($baris1 !== '') {
-            $content .= '<p style="font-size: ' . $fontSizeDetail . '; text-align: center; margin: 0; line-height: 1.08; color: ' . $warna . ';">'
+            $content .= '<p style="font-size: ' . $fontSizeDetail . '; text-align: center; margin: 0; line-height: 1.02; color: ' . $warna . ';">'
                 . $baris1
                 . '</p>';
         }
 
         if ($baris2 !== '') {
-            $content .= '<p style="font-size: ' . $fontSizeDetail . '; text-align: center; margin: 0; line-height: 1.08; color: ' . $warna . ';">'
+            $content .= '<p style="font-size: ' . $fontSizeDetail . '; text-align: center; margin: 0; line-height: 1.02; color: ' . $warna . ';">'
                 . $baris2
                 . '</p>';
         }
