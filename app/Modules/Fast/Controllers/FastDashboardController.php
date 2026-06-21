@@ -4,7 +4,6 @@ namespace App\Modules\Fast\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class FastDashboardController extends Controller
@@ -14,20 +13,19 @@ class FastDashboardController extends Controller
     public function index(Request $request)
     {
         $role = $request->attributes->get('resolved_role', session('active_role'));
-        $isAdmin = in_array($role, self::ADMIN_ROLES);
+        $normalizedRole = strtolower((string) $role);
 
-        $componentName = $isAdmin
-            ? 'Modules/Fast/Admin/Dashboard'
-            : 'Modules/Fast/User/'.Str::studly($role).'Dashboard';
+        $componentName = match (true) {
+            in_array($normalizedRole, self::ADMIN_ROLES, true) => 'Modules/Fast/Admin/Dashboard',
+            $normalizedRole === 'kaprodi' => 'Modules/Fast/Kaprodi/approval/Index',
+            $normalizedRole === 'dekan' => 'Modules/Fast/Dekan/approval/Index',
+            $normalizedRole === 'dosen' => 'Modules/Fast/Dosen/Dashboard',
+            $normalizedRole === 'mahasiswa' => 'Modules/Fast/Mahasiswa/Dashboard',
+            default => 'Modules/Fast/Mahasiswa/Dashboard',
+        };
 
-        $path = resource_path("js/pages/{$componentName}.vue");
-        if (! file_exists($path)) {
-            $fallbackName = 'Modules/Fast/User/MahasiswaDashboard';
-            if (file_exists(resource_path("js/pages/{$fallbackName}.vue"))) {
-                $componentName = $fallbackName;
-            } else {
-                abort(404, "Dashboard Template untuk Role '{$role}' belum dibuat di {$componentName}.vue");
-            }
+        if (! file_exists(resource_path("js/pages/{$componentName}.vue"))) {
+            abort(404, "Dashboard Template untuk Role '{$role}' belum tersedia di {$componentName}.vue");
         }
 
         return Inertia::render($componentName, [

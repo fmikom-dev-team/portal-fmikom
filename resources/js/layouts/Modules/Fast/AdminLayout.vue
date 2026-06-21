@@ -36,6 +36,10 @@ type PageProps = {
             user_type?: string | null;
         };
     };
+    context?: {
+        active_module?: string | null;
+        active_role?: string | null;
+    } | null;
     flash?: { success?: string; error?: string; warning?: string };
     notif_count?: number;
     notif_count_revision_admin?: number;
@@ -81,6 +85,9 @@ const user = computed(() => page.props.auth?.user);
 const userName = computed(() => user.value?.name ?? 'Admin');
 const userRole = computed(() => user.value?.role_title ?? 'Administrator');
 const userSlug = computed(() => user.value?.user_type ?? 'admin');
+const activeRoleSlug = computed(() =>
+    String(page.props.context?.active_role ?? userSlug.value ?? '').toLowerCase(),
+);
 const userInitials = computed(() =>
     userName.value
         .split(' ')
@@ -134,7 +141,7 @@ type NavItem = {
 };
 
 const navItems = computed<NavItem[]>(() => {
-    const slug = userSlug.value;
+    const slug = activeRoleSlug.value;
     const isAdminRole = ['admin'].includes(slug);
     const isApproverRole = ['kaprodi', 'dekan'].includes(slug);
     const isDosenRole =

@@ -60,6 +60,10 @@ class ApprovalService
             ->withQueryString();
 
         return inertia('approval/Index', [
+            'context' => [
+                'active_module' => 'FAST',
+                'active_role' => $normalizedRole,
+            ],
             'role' => [
                 'name' => $roleName,
                 'slug' => $roleSlug,
@@ -122,6 +126,10 @@ class ApprovalService
         $surats = $query->latest()->paginate(10)->through(fn (Surat $surat): array => $this->serializeSuratListItem($surat))->withQueryString();
 
         return inertia('approval/Queue', [
+            'context' => [
+                'active_module' => 'FAST',
+                'active_role' => $normalizedRole,
+            ],
             'role' => ['name' => $roleName, 'slug' => $roleSlug],
             'surats' => $surats,
             'filters' => [
@@ -179,6 +187,10 @@ class ApprovalService
             ->withQueryString();
 
         return inertia('approval/Archive', [
+            'context' => [
+                'active_module' => 'FAST',
+                'active_role' => $normalizedRole,
+            ],
             'role' => ['name' => $roleName, 'slug' => $roleSlug],
             'surats' => $surats,
             'filters' => [
@@ -233,6 +245,10 @@ class ApprovalService
             ->withQueryString();
 
         return inertia('approval/Download', [
+            'context' => [
+                'active_module' => 'FAST',
+                'active_role' => $normalizedRole,
+            ],
             'role' => ['name' => $roleName, 'slug' => $roleSlug],
             'surats' => $surats,
             'filters' => [
@@ -272,6 +288,10 @@ class ApprovalService
         };
 
         return inertia('approval/Show', array_merge([
+            'context' => [
+                'active_module' => 'FAST',
+                'active_role' => $normalizedRole,
+            ],
             'role' => [
                 'name' => $roleName,
                 'slug' => $roleSlug,
