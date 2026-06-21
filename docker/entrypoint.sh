@@ -40,6 +40,9 @@ echo "Setting storage permissions..."
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
+echo "Creating storage symlink..."
+php artisan storage:link --force || true
+
 # Caching Laravel configuration, routes, and views for production optimization
 echo "Caching Laravel assets and configurations..."
 php artisan config:cache
