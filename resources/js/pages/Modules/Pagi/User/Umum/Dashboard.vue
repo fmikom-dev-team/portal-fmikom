@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, usePage } from "@inertiajs/vue3";
+import { Deferred, Head, Link, usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import {
 	AlertCircle,
@@ -434,22 +434,26 @@ const handleLikeProject = async (p: any) => {
 					</div>
 				</div>
 
-				<!-- SKELETON LOADER -->
-				<div v-if="isLoading" class="grid grid-cols-2 lg:grid-cols-4 gap-4 select-none">
-					<div v-for="n in 8" :key="n" class="flex flex-col gap-2">
-						<Skeleton class="aspect-4/3 rounded-md w-full" />
-						<div class="flex items-center gap-2">
-							<Skeleton class="h-6 w-6 rounded-full shrink-0" />
-							<div class="flex-1 space-y-1.5 min-w-0">
-								<Skeleton class="h-3 w-3/4 rounded" />
-								<Skeleton class="h-2 w-1/2 rounded" />
+				<Deferred data="['feedProjects', 'followingFeedProjects', 'stats']">
+					<template #fallback>
+						<!-- SKELETON LOADER -->
+						<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 select-none">
+							<div v-for="n in 8" :key="n" class="flex flex-col gap-2">
+								<Skeleton class="aspect-4/3 rounded-md w-full" />
+								<div class="flex items-center gap-2">
+									<Skeleton class="h-6 w-6 rounded-full shrink-0" />
+									<div class="flex-1 space-y-1.5 min-w-0">
+										<Skeleton class="h-3 w-3/4 rounded" />
+										<Skeleton class="h-2 w-1/2 rounded" />
+									</div>
+								</div>
 							</div>
 						</div>
-					</div>
-				</div>
+					</template>
+					<template #default>
 
-				<!-- FOLLOWING EMPTY STATE -->
-				<div v-else-if="isFollowingEmpty" class="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800 rounded-3xl p-8 shadow-sm w-full">
+						<!-- FOLLOWING EMPTY STATE -->
+						<div v-if="isFollowingEmpty" class="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800 rounded-3xl p-8 shadow-sm w-full">
 					<div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-5 shadow-lg shadow-indigo-500/20">
 						<svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
 							<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -563,17 +567,19 @@ const handleLikeProject = async (p: any) => {
 					</button>
 				</div>
 
-				<!-- Empty State -->
-				<div v-else class="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800 rounded-3xl p-8 shadow-xs w-full">
-					<div class="h-16 w-16 rounded-full bg-slate-50 dark:bg-zinc-800 flex items-center justify-center text-slate-400 mb-4">
-						<Search class="h-8 w-8 text-slate-400 dark:text-zinc-500" />
-					</div>
-					<h3 class="text-base font-black text-slate-900 dark:text-white">Tidak ada karya yang cocok</h3>
-					<p class="text-xs text-slate-500 dark:text-zinc-400 font-semibold max-w-sm mt-2">Coba ubah kata kunci pencarian Anda atau atur ulang filter kategori.</p>
-					<button @click="resetFilters" class="mt-5 px-5 py-2.5 rounded-full bg-indigo-650 text-white text-xs font-bold hover:bg-indigo-755 transition-all shadow-md cursor-pointer border-none">
-						Atur Ulang Filter
-					</button>
-				</div>
+						<!-- Empty State -->
+						<div v-else class="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800 rounded-3xl p-8 shadow-xs w-full">
+							<div class="h-16 w-16 rounded-full bg-slate-50 dark:bg-zinc-800 flex items-center justify-center text-slate-400 mb-4">
+								<Search class="h-8 w-8 text-slate-400 dark:text-zinc-500" />
+							</div>
+							<h3 class="text-base font-black text-slate-900 dark:text-white">Tidak ada karya yang cocok</h3>
+							<p class="text-xs text-slate-500 dark:text-zinc-400 font-semibold max-w-sm mt-2">Coba ubah kata kunci pencarian Anda atau atur ulang filter kategori.</p>
+							<button @click="resetFilters" class="mt-5 px-5 py-2.5 rounded-full bg-indigo-650 text-white text-xs font-bold hover:bg-indigo-755 transition-all shadow-md cursor-pointer border-none">
+								Atur Ulang Filter
+							</button>
+						</div>
+					</template>
+				</Deferred>
 			</div>
 		</div>
 

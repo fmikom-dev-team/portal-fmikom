@@ -100,10 +100,10 @@ class PagiDashboardController extends Controller implements HasMiddleware
         return Inertia::render($componentName, [
             'moduleName' => 'PAGI',
             'roleName' => $role,
-            'peopleYouMayKnow' => fn () => $this->loadPeopleRecommendation(),
-            'feedProjects' => fn () => $this->loadFeed(),
-            'followingFeedProjects' => fn () => $this->loadFollowingFeed(),
-            'stats' => fn () => $this->buildVisitorStats($role),
+            'peopleYouMayKnow' => Inertia::defer(fn () => $this->loadPeopleRecommendation()),
+            'feedProjects' => Inertia::defer(fn () => $this->loadFeed()),
+            'followingFeedProjects' => Inertia::defer(fn () => $this->loadFollowingFeed()),
+            'stats' => Inertia::defer(fn () => $this->buildVisitorStats($role)),
         ]);
     }
 
@@ -244,12 +244,11 @@ class PagiDashboardController extends Controller implements HasMiddleware
     {
         $role = $request->attributes->get('resolved_role', session('active_role'));
         $module = Module::query()->where('code', 'PAGI')->first();
-        $people = $module ? $this->socialService->explorePeople($module->id) : collect();
 
         return Inertia::render('Modules/Pagi/User/People', [
             'moduleName' => 'PAGI',
             'roleName' => $role,
-            'peopleYouMayKnow' => $people,
+            'peopleYouMayKnow' => Inertia::defer(fn () => $module ? $this->socialService->explorePeople($module->id) : collect()),
         ]);
     }
 

@@ -54,6 +54,8 @@ class PagiSocialService
             $userModuleRoles = UserModuleRole::where('module_id', $pagiModuleId)
                 ->where('is_active', true)
                 ->with(['user.programStudi', 'role'])
+                ->latest('id')
+                ->limit(80)
                 ->get()
                 ->unique('user_id');
 
@@ -227,6 +229,7 @@ class PagiSocialService
             'tags',
             'likesRelation',
         ])
+            ->withCount('commentsRelation')
             ->where('is_published', true)
             ->where(function ($q) {
                 $q->whereNull('visibility')->orWhere('visibility', 'Everyone');
@@ -308,7 +311,7 @@ class PagiSocialService
             'is_manual'      => $isManual,
             'likes'          => is_array($p->likes) ? count($p->likes) : 0,
             'views'          => $p->views_count ?? 0,
-            'comments_count' => $p->commentsRelation()->count(),
+            'comments_count' => $p->comments_relation_count ?? $p->commentsRelation()->count(),
             'author'         => $authorData,
             'portfolio'      => $portfolioData,
         ];
