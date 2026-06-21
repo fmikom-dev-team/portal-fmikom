@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
 import surat from './surat'
 import lampiran from './lampiran'
 import archive from './archive'
@@ -51,6 +51,43 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
+* @see \App\Modules\Fast\Controllers\Admin\DashboardController::dashboard
+* @see app/Modules/Fast/Controllers/Admin/DashboardController.php:22
+* @route '/admin/dashboard'
+*/
+const dashboardForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: dashboard.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\DashboardController::dashboard
+* @see app/Modules/Fast/Controllers/Admin/DashboardController.php:22
+* @route '/admin/dashboard'
+*/
+dashboardForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: dashboard.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\DashboardController::dashboard
+* @see app/Modules/Fast/Controllers/Admin/DashboardController.php:22
+* @route '/admin/dashboard'
+*/
+dashboardForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: dashboard.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+dashboard.form = dashboardForm
+
+/**
 * @see \App\Modules\Fast\Controllers\Admin\HistoryController::history
 * @see app/Modules/Fast/Controllers/Admin/HistoryController.php:14
 * @route '/admin/history'
@@ -93,6 +130,43 @@ history.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: history.url(options),
     method: 'head',
 })
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\HistoryController::history
+* @see app/Modules/Fast/Controllers/Admin/HistoryController.php:14
+* @route '/admin/history'
+*/
+const historyForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: history.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\HistoryController::history
+* @see app/Modules/Fast/Controllers/Admin/HistoryController.php:14
+* @route '/admin/history'
+*/
+historyForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: history.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\HistoryController::history
+* @see app/Modules/Fast/Controllers/Admin/HistoryController.php:14
+* @route '/admin/history'
+*/
+historyForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: history.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+history.form = historyForm
 
 const admin = {
     surat: Object.assign(surat, surat),

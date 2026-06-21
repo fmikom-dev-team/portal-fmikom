@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Admin\DashboardController::preview
 * @see app/Modules/Fast/Controllers/Admin/DashboardController.php:47
@@ -60,6 +60,43 @@ preview.head = (args: { id: string | number } | [id: string | number ] | string 
     url: preview.url(args, options),
     method: 'head',
 })
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\DashboardController::preview
+* @see app/Modules/Fast/Controllers/Admin/DashboardController.php:47
+* @route '/documents/lampiran/{id}/preview'
+*/
+const previewForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: preview.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\DashboardController::preview
+* @see app/Modules/Fast/Controllers/Admin/DashboardController.php:47
+* @route '/documents/lampiran/{id}/preview'
+*/
+previewForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: preview.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\DashboardController::preview
+* @see app/Modules/Fast/Controllers/Admin/DashboardController.php:47
+* @route '/documents/lampiran/{id}/preview'
+*/
+previewForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: preview.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+preview.form = previewForm
 
 const lampiran = {
     preview: Object.assign(preview, preview),

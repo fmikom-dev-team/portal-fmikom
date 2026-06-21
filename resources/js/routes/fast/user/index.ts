@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 import submissions from './submissions'
 import history3c919d from './history'
 import surat from './surat'
@@ -97,6 +97,113 @@ index.options = (options?: RouteQueryOptions): RouteDefinition<'options'> => ({
 })
 
 /**
+* @see \Illuminate\Routing\RedirectController::__invoke
+* @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+* @route '/fast/user'
+*/
+const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: index.url(options),
+    method: 'get',
+})
+
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+* @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+* @route '/fast/user'
+*/
+indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: index.url(options),
+    method: 'get',
+})
+
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+* @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+* @route '/fast/user'
+*/
+indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: index.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+* @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+* @route '/fast/user'
+*/
+indexForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: index.url(options),
+    method: 'post',
+})
+
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+* @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+* @route '/fast/user'
+*/
+indexForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: index.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'PUT',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+* @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+* @route '/fast/user'
+*/
+indexForm.patch = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: index.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'PATCH',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+* @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+* @route '/fast/user'
+*/
+indexForm.delete = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: index.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'DELETE',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+/**
+* @see \Illuminate\Routing\RedirectController::__invoke
+* @see vendor/laravel/framework/src/Illuminate/Routing/RedirectController.php:19
+* @route '/fast/user'
+*/
+indexForm.options = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: index.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'OPTIONS',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+index.form = indexForm
+
+/**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\DashboardController::dashboard
 * @see app/Modules/Fast/Controllers/Mahasiswa/DashboardController.php:18
 * @route '/fast/user/dashboard'
@@ -139,6 +246,43 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: dashboard.url(options),
     method: 'head',
 })
+
+/**
+* @see \App\Modules\Fast\Controllers\Mahasiswa\DashboardController::dashboard
+* @see app/Modules/Fast/Controllers/Mahasiswa/DashboardController.php:18
+* @route '/fast/user/dashboard'
+*/
+const dashboardForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: dashboard.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Mahasiswa\DashboardController::dashboard
+* @see app/Modules/Fast/Controllers/Mahasiswa/DashboardController.php:18
+* @route '/fast/user/dashboard'
+*/
+dashboardForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: dashboard.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Mahasiswa\DashboardController::dashboard
+* @see app/Modules/Fast/Controllers/Mahasiswa/DashboardController.php:18
+* @route '/fast/user/dashboard'
+*/
+dashboardForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: dashboard.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+dashboard.form = dashboardForm
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\SubmissionController::ajukan
@@ -185,6 +329,43 @@ ajukan.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
+* @see \App\Modules\Fast\Controllers\Mahasiswa\SubmissionController::ajukan
+* @see app/Modules/Fast/Controllers/Mahasiswa/SubmissionController.php:29
+* @route '/fast/user/ajukan'
+*/
+const ajukanForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: ajukan.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Mahasiswa\SubmissionController::ajukan
+* @see app/Modules/Fast/Controllers/Mahasiswa/SubmissionController.php:29
+* @route '/fast/user/ajukan'
+*/
+ajukanForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: ajukan.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Mahasiswa\SubmissionController::ajukan
+* @see app/Modules/Fast/Controllers/Mahasiswa/SubmissionController.php:29
+* @route '/fast/user/ajukan'
+*/
+ajukanForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: ajukan.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+ajukan.form = ajukanForm
+
+/**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::history
 * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:15
 * @route '/fast/user/history'
@@ -227,6 +408,43 @@ history.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: history.url(options),
     method: 'head',
 })
+
+/**
+* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::history
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:15
+* @route '/fast/user/history'
+*/
+const historyForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: history.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::history
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:15
+* @route '/fast/user/history'
+*/
+historyForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: history.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::history
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:15
+* @route '/fast/user/history'
+*/
+historyForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: history.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+history.form = historyForm
 
 const user = {
     index: Object.assign(index, index),

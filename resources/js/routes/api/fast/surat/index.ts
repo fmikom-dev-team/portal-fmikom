@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\SuratController::index
 * @see app/Http/Controllers/Api/SuratController.php:22
@@ -44,6 +44,43 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
+* @see \App\Http\Controllers\Api\SuratController::index
+* @see app/Http/Controllers/Api/SuratController.php:22
+* @route '/api/fast/surat'
+*/
+const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: index.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Api\SuratController::index
+* @see app/Http/Controllers/Api/SuratController.php:22
+* @route '/api/fast/surat'
+*/
+indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: index.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Api\SuratController::index
+* @see app/Http/Controllers/Api/SuratController.php:22
+* @route '/api/fast/surat'
+*/
+indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: index.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+index.form = indexForm
+
+/**
 * @see \App\Http\Controllers\Api\SuratController::store
 * @see app/Http/Controllers/Api/SuratController.php:61
 * @route '/api/fast/surat'
@@ -76,6 +113,28 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: store.url(options),
     method: 'post',
 })
+
+/**
+* @see \App\Http\Controllers\Api\SuratController::store
+* @see app/Http/Controllers/Api/SuratController.php:61
+* @route '/api/fast/surat'
+*/
+const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: store.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\SuratController::store
+* @see app/Http/Controllers/Api/SuratController.php:61
+* @route '/api/fast/surat'
+*/
+storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: store.url(options),
+    method: 'post',
+})
+
+store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::show
@@ -146,6 +205,43 @@ show.head = (args: { surat: number | { id: number } } | [surat: number | { id: n
 })
 
 /**
+* @see \App\Http\Controllers\Api\SuratController::show
+* @see app/Http/Controllers/Api/SuratController.php:75
+* @route '/api/fast/surat/{surat}'
+*/
+const showForm = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: show.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Api\SuratController::show
+* @see app/Http/Controllers/Api/SuratController.php:75
+* @route '/api/fast/surat/{surat}'
+*/
+showForm.get = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: show.url(args, options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Api\SuratController::show
+* @see app/Http/Controllers/Api/SuratController.php:75
+* @route '/api/fast/surat/{surat}'
+*/
+showForm.head = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: show.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+show.form = showForm
+
+/**
 * @see \App\Http\Controllers\Api\SuratController::adminValidation
 * @see app/Http/Controllers/Api/SuratController.php:111
 * @route '/api/fast/surat/{surat}/admin-validation'
@@ -202,6 +298,28 @@ adminValidation.post = (args: { surat: number | { id: number } } | [surat: numbe
     url: adminValidation.url(args, options),
     method: 'post',
 })
+
+/**
+* @see \App\Http\Controllers\Api\SuratController::adminValidation
+* @see app/Http/Controllers/Api/SuratController.php:111
+* @route '/api/fast/surat/{surat}/admin-validation'
+*/
+const adminValidationForm = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: adminValidation.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\SuratController::adminValidation
+* @see app/Http/Controllers/Api/SuratController.php:111
+* @route '/api/fast/surat/{surat}/admin-validation'
+*/
+adminValidationForm.post = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: adminValidation.url(args, options),
+    method: 'post',
+})
+
+adminValidation.form = adminValidationForm
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::approval
@@ -262,6 +380,28 @@ approval.post = (args: { surat: number | { id: number } } | [surat: number | { i
 })
 
 /**
+* @see \App\Http\Controllers\Api\SuratController::approval
+* @see app/Http/Controllers/Api/SuratController.php:123
+* @route '/api/fast/surat/{surat}/approval'
+*/
+const approvalForm = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: approval.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\SuratController::approval
+* @see app/Http/Controllers/Api/SuratController.php:123
+* @route '/api/fast/surat/{surat}/approval'
+*/
+approvalForm.post = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: approval.url(args, options),
+    method: 'post',
+})
+
+approval.form = approvalForm
+
+/**
 * @see \App\Http\Controllers\Api\SuratController::generateDocument
 * @see app/Http/Controllers/Api/SuratController.php:137
 * @route '/api/fast/surat/{surat}/generate-document'
@@ -318,6 +458,28 @@ generateDocument.post = (args: { surat: number | { id: number } } | [surat: numb
     url: generateDocument.url(args, options),
     method: 'post',
 })
+
+/**
+* @see \App\Http\Controllers\Api\SuratController::generateDocument
+* @see app/Http/Controllers/Api/SuratController.php:137
+* @route '/api/fast/surat/{surat}/generate-document'
+*/
+const generateDocumentForm = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: generateDocument.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Api\SuratController::generateDocument
+* @see app/Http/Controllers/Api/SuratController.php:137
+* @route '/api/fast/surat/{surat}/generate-document'
+*/
+generateDocumentForm.post = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: generateDocument.url(args, options),
+    method: 'post',
+})
+
+generateDocument.form = generateDocumentForm
 
 const surat = {
     index: Object.assign(index, index),

@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Admin\QrManageController::index
 * @see app/Modules/Fast/Controllers/Admin/QrManageController.php:17
@@ -42,6 +42,43 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: index.url(options),
     method: 'head',
 })
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\QrManageController::index
+* @see app/Modules/Fast/Controllers/Admin/QrManageController.php:17
+* @route '/admin/qr'
+*/
+const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: index.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\QrManageController::index
+* @see app/Modules/Fast/Controllers/Admin/QrManageController.php:17
+* @route '/admin/qr'
+*/
+indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: index.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\QrManageController::index
+* @see app/Modules/Fast/Controllers/Admin/QrManageController.php:17
+* @route '/admin/qr'
+*/
+indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: index.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+index.form = indexForm
 
 /**
 * @see \App\Modules\Fast\Controllers\Admin\QrManageController::revoke
@@ -94,6 +131,28 @@ revoke.post = (args: { id: string | number } | [id: string | number ] | string |
     url: revoke.url(args, options),
     method: 'post',
 })
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\QrManageController::revoke
+* @see app/Modules/Fast/Controllers/Admin/QrManageController.php:74
+* @route '/admin/qr/{id}/revoke'
+*/
+const revokeForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: revoke.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Modules\Fast\Controllers\Admin\QrManageController::revoke
+* @see app/Modules/Fast/Controllers/Admin/QrManageController.php:74
+* @route '/admin/qr/{id}/revoke'
+*/
+revokeForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: revoke.url(args, options),
+    method: 'post',
+})
+
+revoke.form = revokeForm
 
 const qr = {
     index: Object.assign(index, index),
