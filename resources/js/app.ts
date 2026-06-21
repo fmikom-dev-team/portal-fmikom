@@ -52,6 +52,9 @@ async function initEcho(reverbProps?: { key?: string; host?: string; port?: stri
 			Pusher,
 		});
 
+		// Fallback for components that still reference window.Echo
+		(globalThis as any).Echo = (globalThis as any).Broadcaster;
+
 		if ((globalThis as any).Pusher) {
 			delete (globalThis as any).Pusher;
 		}
