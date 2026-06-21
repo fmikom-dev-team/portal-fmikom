@@ -96,6 +96,11 @@ Route::post('/berita/{slug}/comments', [PublicPostController::class, 'storeComme
 Route::get('/halaman/{slug}', [PublicPageController::class, 'show'])->name('portal.pages.show');
 Route::get('/dokumen', [PublicDocumentController::class, 'index'])->name('portal.documents.index');
 Route::get('/dokumen/download/{document}', [PublicDocumentController::class, 'download'])->name('portal.documents.download');
+
+// Sitemap Routes
+Route::get('/sitemap.xml', [PublicPageController::class, 'sitemapXml'])->name('portal.sitemap.xml');
+Route::get('/sitemap', [PublicPageController::class, 'sitemapHtml'])->name('portal.sitemap');
+
 Route::get('/privacy-policy', function () {
     return Inertia::render('Public/PrivacyPolicy');
 })->name('privacy-policy');
