@@ -370,7 +370,8 @@ const currentYear = new Date().getFullYear();
 
 <template>
     <Head>
-        <title>Welcome to Portal FMIKOM</title>
+        <title>{{ settings.brand_name || 'Portal FMIKOM' }} - {{ settings.hero_subtitle || 'Sistem Informasi Terpadu' }}</title>
+        <meta name="description" :content="settings.brand_description || 'Sistem informasi terpadu untuk civitas akademika FMIKOM.'" />
     </Head>
 
     <div

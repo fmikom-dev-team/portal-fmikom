@@ -34,6 +34,7 @@ const isSuccess = ref(false);
 
 const form = reactive({
 	brand_name: props.settings.brand_name || "Portal FMIKOM",
+	brand_subtitle: props.settings.brand_subtitle || "Fakultas Matematika dan Ilmu Komputer",
 	brand_description: props.settings.brand_description || "Sistem informasi terpadu untuk civitas akademika FMIKOM.",
 	brand_logo_file: null as File | null,
 	brand_favicon_file: null as File | null,
@@ -263,15 +264,27 @@ const flushCache = async () => {
 							<Sparkles class="w-4 h-4 text-amber-500" /> Identitas Visual Aplikasi
 						</h3>
 						
-						<!-- App/Brand Name -->
-						<div class="space-y-2">
-							<label class="block text-[12px] font-bold text-gray-700">Nama Aplikasi</label>
-							<input
-								v-model="form.brand_name"
-								type="text"
-								placeholder="Contoh: Portal FMIKOM"
-								class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3.5 py-2.5 text-[13px] font-medium text-gray-800 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
-							/>
+						<!-- App/Brand Name & Subtitle -->
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div class="space-y-2">
+								<label class="block text-[12px] font-bold text-gray-700">Nama Aplikasi</label>
+								<input
+									v-model="form.brand_name"
+									type="text"
+									placeholder="Contoh: Portal FMIKOM"
+									class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3.5 py-2.5 text-[13px] font-medium text-gray-800 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
+								/>
+							</div>
+
+							<div class="space-y-2">
+								<label class="block text-[12px] font-bold text-gray-700">Sub-Nama Aplikasi (Fakultas / Instansi)</label>
+								<input
+									v-model="form.brand_subtitle"
+									type="text"
+									placeholder="Contoh: Fakultas Matematika dan Ilmu Komputer"
+									class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3.5 py-2.5 text-[13px] font-medium text-gray-800 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
+								/>
+							</div>
 						</div>
 
 						<!-- App/Brand Short Description -->

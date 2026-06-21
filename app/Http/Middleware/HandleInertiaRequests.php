@@ -53,6 +53,7 @@ class HandleInertiaRequests extends Middleware
             'siteSettings' => Cache::rememberForever('portal_settings', function () {
                 $raw = PortalSetting::pluck('value', 'key')->toArray();
                 $raw['brand_name'] = $raw['brand_name'] ?? 'Portal FMIKOM';
+                $raw['brand_subtitle'] = $raw['brand_subtitle'] ?? 'Fakultas Matematika dan Ilmu Komputer';
                 $raw['brand_logo'] = $raw['brand_logo'] ?? '/asset/brand-logo.webp';
                 $raw['brand_favicon'] = $raw['brand_favicon'] ?? '/asset/favicon.ico';
 

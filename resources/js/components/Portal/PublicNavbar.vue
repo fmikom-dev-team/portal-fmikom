@@ -214,15 +214,20 @@ const getAccent = (menu) => accentColor[menu.title] || "text-blue-600";
                 <!-- Logo -->
                 <div class="flex shrink-0 items-center">
                     <Link href="/" class="group flex items-center gap-2.5">
-                        <div v-if="siteSettings.brand_logo" class="h-8 w-8 flex items-center justify-center rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
+                        <div v-if="siteSettings.brand_logo" class="h-8 w-8 flex items-center justify-center overflow-hidden bg-transparent">
                             <img :src="siteSettings.brand_logo" class="h-full w-full object-contain" alt="" width="32" height="32" loading="eager" decoding="async" />
                         </div>
                         <div v-else class="flex h-8 w-8 items-center justify-center rounded-xl bg-[#2563eb] text-white shadow-md shadow-blue-200 transition-transform group-hover:scale-105">
                             <Layers class="h-4.5 w-4.5" />
                         </div>
-                        <span class="text-lg font-bold tracking-tight text-[#111827]">
-                            {{ siteSettings.brand_name || 'Portal FMIKOM' }}
-                        </span>
+                        <div class="flex flex-col">
+                            <span class="text-md font-bold tracking-tight text-[#111827] leading-tight">
+                                {{ siteSettings.brand_name || 'Portal FMIKOM' }}
+                            </span>
+                            <span class="text-[10px] font-medium text-slate-500 tracking-tight leading-none mt-0.5">
+                                {{ siteSettings.brand_subtitle || 'Fakultas Matematika dan Ilmu Komputer' }}
+                            </span>
+                        </div>
                     </Link>
                 </div>
 
