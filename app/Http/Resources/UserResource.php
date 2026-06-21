@@ -52,7 +52,7 @@ class UserResource extends JsonResource
             'avatar' => $this->foto_path
                 ? (str_starts_with($this->foto_path, 'http') ? $this->foto_path : '/storage/'.$this->foto_path)
                 : 'https://api.dicebear.com/7.x/initials/svg?seed='.urlencode($this->name).'&backgroundColor=3b82f6,6366f1,8b5cf6,ec4899,f43f5e&backgroundType=gradientLinear&bold=true',
-            'unreadNotifications' => $this->when($request->routeIs('portal', '*portal*'), fn () => clone $this->unreadNotifications),
+            'unreadNotifications' => $this->when($request->routeIs('portal', '*portal*'), fn () => $this->unreadNotifications()->latest()->limit(10)->get()),
             'role' => $this->whenLoaded('role'), // just in case it's loaded
             'is_admin' => $this->isAdmin(),
             'is_super_admin' => $this->isSuperAdmin(),

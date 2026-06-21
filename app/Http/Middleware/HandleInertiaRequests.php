@@ -80,33 +80,25 @@ class HandleInertiaRequests extends Middleware
                 ? Cache::remember("unread_notif_count_{$user->id}_".session('active_role', ''), 30, function () use ($user) {
                     $activeRole = strtolower(session('active_role', ''));
                     $activeModule = strtoupper(session('active_module', ''));
-                    $unreadNotifs = $user->unreadNotifications;
+                    $query = $user->unreadNotifications();
 
                     if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
-                        $studentNotifTypes = ['like', 'comment', 'follow', 'collaboration'];
-                        $unreadNotifs = $unreadNotifs->filter(function ($n) use ($studentNotifTypes) {
-                            $type = $n->data['type'] ?? 'system';
-
-                            return ! in_array($type, $studentNotifTypes);
-                        });
+                        $query->whereNotIn('data->type', ['like', 'comment', 'follow', 'collaboration']);
                     }
 
-                    return $unreadNotifs->count();
+                    return $query->count();
                 })
                 : 0,
             'recent_notifications' => $user ? fn () => Cache::remember("recent_notifs_{$user->id}_".session('active_role', ''), 30, function () use ($user) {
                 $activeRole = strtolower(session('active_role', ''));
                 $activeModule = strtoupper(session('active_module', ''));
-                $notifs = $user->notifications()->latest()->limit(30)->get();
+                $query = $user->notifications()->latest();
 
                 if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
-                    $studentNotifTypes = ['like', 'comment', 'follow', 'collaboration'];
-                    $notifs = $notifs->filter(function ($n) use ($studentNotifTypes) {
-                        $type = $n->data['type'] ?? 'system';
-
-                        return ! in_array($type, $studentNotifTypes);
-                    });
+                    $query->whereNotIn('data->type', ['like', 'comment', 'follow', 'collaboration']);
                 }
+
+                $notifs = $query->limit(30)->get();
 
                 return $notifs->map(fn ($n) => [
                     'id' => $n->id,
