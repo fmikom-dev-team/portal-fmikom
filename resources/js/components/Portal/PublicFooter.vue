@@ -19,7 +19,7 @@ const currentYear = new Date().getFullYear();
                                 class="flex h-8 w-8 items-center justify-center rounded-[8px] overflow-hidden shrink-0"
                                 :class="siteSettings.brand_logo ? 'bg-transparent' : 'bg-black text-white shadow-sm'"
                             >
-                                <img v-if="siteSettings.brand_logo" :src="siteSettings.brand_logo" class="h-full w-full object-contain" alt="Logo" />
+                                <img v-if="siteSettings.brand_logo" :src="siteSettings.brand_logo" class="h-full w-full object-contain" alt="" />
                                 <svg v-else class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" /></svg>
                             </div>
                             <span class="text-[17px] font-bold tracking-tight text-slate-900">{{ siteSettings.brand_name || 'Portal FMIKOM' }}</span>

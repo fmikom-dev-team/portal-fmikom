@@ -430,6 +430,7 @@ const currentYear = new Date().getFullYear();
         <!-- NAVBAR -->
         <PublicNavbar v-if="settings?.show_navbar !== '0'" />
 
+        <main id="main-content">
         <!-- HERO SECTION -->
         <section
             v-if="settings?.show_hero !== '0'"
@@ -776,6 +777,7 @@ const currentYear = new Date().getFullYear();
         <LazyWrapper>
             <AlumniMap />
         </LazyWrapper>
+        </main>
 
         <!-- FOOTER -->
         <PublicFooter />
