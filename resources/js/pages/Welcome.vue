@@ -469,7 +469,7 @@ const currentYear = new Date().getFullYear();
                 >
                     <!-- Text Content -->
                     <div
-                        class="hide-animate slide-left mx-auto max-w-2xl text-center lg:mx-0 lg:text-left"
+                        class="mx-auto max-w-2xl text-center lg:mx-0 lg:text-left"
                     >
                         <div
                             class="mb-6 inline-flex items-center rounded-full border border-gray-200 bg-white/50 px-3 py-1 text-sm font-semibold text-[#2563eb] shadow-sm backdrop-blur-sm"
@@ -509,28 +509,19 @@ const currentYear = new Date().getFullYear();
                         <div
                             class="mt-10 flex items-center justify-center gap-4 text-sm font-medium text-[#4b5563] lg:justify-start"
                         >
-                            <div
-                                class="hide-animate scale-in flex items-center gap-1.5"
-                                style="transition-delay: 300ms"
-                            >
+                            <div class="flex items-center gap-1.5">
                                 <CheckCircle2
                                     class="h-4 w-4 rounded-full bg-gray-900 text-[#b6ff00]"
                                 />
                                 Mudah
                             </div>
-                            <div
-                                class="hide-animate scale-in flex items-center gap-1.5"
-                                style="transition-delay: 450ms"
-                            >
+                            <div class="flex items-center gap-1.5">
                                 <CheckCircle2
                                     class="h-4 w-4 rounded-full bg-gray-900 text-[#b6ff00]"
                                 />
                                 Cepat
                             </div>
-                            <div
-                                class="hide-animate scale-in flex items-center gap-1.5"
-                                style="transition-delay: 600ms"
-                            >
+                            <div class="flex items-center gap-1.5">
                                 <CheckCircle2
                                     class="h-4 w-4 rounded-full bg-gray-900 text-[#b6ff00]"
                                 />
@@ -541,8 +532,7 @@ const currentYear = new Date().getFullYear();
 
                     <!-- Hero Gallery Card Stack -->
                     <div
-                        class="hide-animate slide-right relative mx-auto w-full max-w-[500px] lg:max-w-none flex items-center justify-center min-h-[400px]"
-                        style="transition-delay: 200ms"
+                        class="relative mx-auto w-full max-w-[500px] lg:max-w-none flex items-center justify-center min-h-[400px]"
                     >
                         <HeroGallery :gallery="gallery" />
                     </div>
