@@ -35,6 +35,12 @@ class SecurityHeaders
             $response->headers->set('X-XSS-Protection', '0');
             $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
+            // Add modern security headers to dev/livewire tools for consistency
+            $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
+            $response->headers->set('Cross-Origin-Embedder-Policy', 'unsafe-none');
+            $response->headers->set('Cross-Origin-Resource-Policy', 'same-origin');
+            $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');
+
             return $response;
         }
 
@@ -149,6 +155,7 @@ class SecurityHeaders
             'style-src '.implode(' ', array_filter([
                 "'self'",
                 "'unsafe-inline'",
+                "'nonce-{$nonce}'",
                 'https://fonts.googleapis.com',
                 'https://fonts.bunny.net',
                 $isLocalEnvironment ? 'http://0.0.0.0:5173 http://127.0.0.1:5173 http://localhost:5173' : null,
@@ -163,7 +170,7 @@ class SecurityHeaders
             // script-src blob: is needed for the Worker's internal dynamic import(blob://...) of ffmpeg-core.js
             'script-src-elem '.implode(' ', array_filter([
                 "'self'",
-                "'unsafe-inline'",
+                $isLocalEnvironment ? "'unsafe-inline'" : "'nonce-{$nonce}'",
                 'blob:',
                 'https://static.cloudflareinsights.com',
                 'https://cdnjs.cloudflare.com',
@@ -175,7 +182,10 @@ class SecurityHeaders
             $allowsDocumentEmbedding ? "frame-ancestors 'self'" : "frame-ancestors 'none'",
         ];
 
-        if ($request->isSecure() && ! $isLocalHost) {
+        // Support proxy / Cloudflare SSL termination
+        $isSecure = $request->isSecure() || strtolower($request->header('X-Forwarded-Proto', '')) === 'https';
+
+        if ($isSecure && ! $isLocalHost) {
             $cspDirectives[] = 'upgrade-insecure-requests';
         }
 
@@ -195,7 +205,7 @@ class SecurityHeaders
         $response->headers->set('X-XSS-Protection', '0');
 
         // ── Paksa HTTPS (1 tahun) ────────────────────────────────────────────
-        if ($request->isSecure() && ! $isLocalHost) {
+        if ($isSecure && ! $isLocalHost) {
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
         }
 
@@ -204,6 +214,12 @@ class SecurityHeaders
 
         // ── Batasi akses fitur browser berbahaya ──────────────────────────────
         $response->headers->set('Permissions-Policy', $this->buildPermissionsPolicy($request));
+
+        // ── Cross-Origin Security Headers ────────────────────────────────────
+        $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
+        $response->headers->set('Cross-Origin-Embedder-Policy', 'unsafe-none');
+        $response->headers->set('Cross-Origin-Resource-Policy', 'same-origin');
+        $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');
 
         // ── Hapus header yang mengidentifikasi teknologi server ───────────────
         $response->headers->remove('X-Powered-By');

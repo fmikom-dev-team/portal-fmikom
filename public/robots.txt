@@ -1,6 +1,5 @@
 User-agent: *
-Disallow: /workos/
-Disallow: /admin/
-Disallow: /dashboard
+Allow: /
 
 Sitemap: https://fmikom.madinku.web.id/sitemap.xml
+
