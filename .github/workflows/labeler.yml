@@ -1,0 +1,22 @@
+# Workflow untuk pelabelan Pull Request otomatis
+# https://github.com/actions/labeler
+
+name: "Pull Request Labeler"
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Auto Labeler
+        uses: actions/labeler@v5
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          sync-labels: true

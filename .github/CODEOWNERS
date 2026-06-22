@@ -1,0 +1,13 @@
+# Definisi pemilik kode otomatis (Code Owners)
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Pemilik default untuk seluruh isi repositori:
+* @Mrmarc-bit
+
+# Pemilik khusus untuk berkas konfigurasi sistem & workflow CI/CD:
+/.github/workflows/ @Mrmarc-bit
+/composer.json @Mrmarc-bit
+/package.json @Mrmarc-bit
+
+# Pemilik khusus untuk middleware keamanan:
+/app/Http/Middleware/SecurityHeaders.php @Mrmarc-bit

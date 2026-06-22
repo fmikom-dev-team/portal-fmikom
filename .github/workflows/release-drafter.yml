@@ -1,0 +1,23 @@
+# Workflow untuk membuat rancangan (draft) rilis dan changelog otomatis
+# https://github.com/release-drafter/release-drafter
+
+name: Release Drafter
+
+on:
+  push:
+    # Hanya terpicu ketika ada penggabungan (merge) ke branch utama produksi (main)
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  update_release_draft:
+    runs-on: ubuntu-latest
+    steps:
+      # Membuat/memperbarui draft release di repositori GitHub
+      - uses: release-drafter/release-drafter@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
