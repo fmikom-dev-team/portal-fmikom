@@ -19,29 +19,43 @@ class AdminCompanyActionService
 
     public function validateCompany(Request $request): array
     {
+        $isCreate = ! $request->route('company');
+        $required = fn (string $field): array => $isCreate ? ['required'] : ['nullable'];
+
         $validated = $request->validate([
             'nama' => ['required', 'string', 'max:255'],
-            'alamat' => ['nullable', 'string'],
-            'kota' => ['nullable', 'string', 'max:255'],
+            'alamat' => [...$required('alamat'), 'string'],
+            'kota' => [...$required('kota'), 'string', 'max:255'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
-            'radius_valid_meter' => ['nullable', 'numeric', 'min:10', 'max:5000'],
-            'jam_masuk' => ['nullable', 'date_format:H:i'],
-            'jam_pulang' => ['nullable', 'date_format:H:i'],
-            'toleransi_terlambat_menit' => ['nullable', 'integer', 'min:0', 'max:240'],
+            'radius_valid_meter' => [...$required('radius_valid_meter'), 'numeric', 'min:10', 'max:5000'],
+            'jam_masuk' => [...$required('jam_masuk'), 'date_format:H:i'],
+            'jam_pulang' => [...$required('jam_pulang'), 'date_format:H:i'],
+            'toleransi_terlambat_menit' => [...$required('toleransi_terlambat_menit'), 'integer', 'min:0', 'max:240'],
             'hari_kerja' => ['required', 'array', 'min:1'],
             'hari_kerja.*' => ['required', 'string', Rule::in(PerusahaanMitra::workingDayOptions())],
-            'bidang_industri' => ['nullable', 'string', 'max:255'],
+            'bidang_industri' => [...$required('bidang_industri'), 'string', 'max:255'],
             'kontak_person' => ['nullable', 'string', 'max:255'],
             'telepon' => ['nullable', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:255'],
             'is_active' => ['required', 'boolean'],
         ], [
+            'nama.required' => 'Nama perusahaan wajib diisi.',
+            'alamat.required' => 'Alamat perusahaan wajib diisi.',
+            'kota.required' => 'Kota wajib diisi.',
+            'radius_valid_meter.required' => 'Radius presensi wajib diisi.',
+            'radius_valid_meter.min' => 'Radius absensi minimal 10 meter.',
+            'jam_masuk.required' => 'Jam masuk wajib diisi.',
+            'jam_masuk.date_format' => 'Format jam masuk harus HH:mm.',
+            'jam_pulang.required' => 'Jam pulang wajib diisi.',
+            'jam_pulang.date_format' => 'Format jam pulang harus HH:mm.',
+            'toleransi_terlambat_menit.required' => 'Toleransi terlambat wajib diisi.',
+            'toleransi_terlambat_menit.min' => 'Toleransi terlambat minimal 0 menit.',
+            'toleransi_terlambat_menit.max' => 'Toleransi terlambat maksimal 240 menit.',
             'latitude.between' => 'Latitude lokasi perusahaan tidak valid.',
             'longitude.between' => 'Longitude lokasi perusahaan tidak valid.',
-            'radius_valid_meter.min' => 'Radius absensi minimal 10 meter.',
-            'jam_masuk.date_format' => 'Format jam masuk harus HH:mm.',
-            'jam_pulang.date_format' => 'Format jam pulang harus HH:mm.',
+            'bidang_industri.required' => 'Bidang industri wajib diisi.',
+            'email.email' => 'Format email perusahaan tidak valid.',
             'hari_kerja.required' => 'Hari kerja perusahaan wajib dipilih.',
         ]);
 

@@ -6,7 +6,9 @@ import {
     BriefcaseBusiness,
     ClipboardCheck,
     ClipboardList,
+    CheckCircle2,
     FileCheck2,
+    AlertTriangle,
     LayoutDashboard,
     LogOut,
     Menu,
@@ -41,6 +43,31 @@ const currentPath = computed(() => {
 
 const user = computed(() => page.props.auth?.user);
 const flash = computed(() => page.props.flash ?? {});
+const flashBannerDismissed = ref(false);
+let flashBannerTimeout: ReturnType<typeof setTimeout> | null = null;
+const flashBanner = computed(() => {
+    if (flashBannerDismissed.value) {
+        return null;
+    }
+
+    if (flash.value.error) {
+        return {
+            type: 'error' as const,
+            title: 'Terjadi kendala',
+            message: flash.value.error,
+        };
+    }
+
+    if (flash.value.success) {
+        return {
+            type: 'success' as const,
+            title: 'Berhasil',
+            message: flash.value.success,
+        };
+    }
+
+    return null;
+});
 const userInitials = computed(() => {
     const name = user.value?.name?.trim();
 
@@ -54,15 +81,9 @@ const userInitials = computed(() => {
         .map((part) => part.charAt(0).toUpperCase())
         .join('');
 });
-const toast = ref<{
-    message: string;
-    type: 'success' | 'error';
-} | null>(null);
 const isMenuOpen = ref(false);
 let initialHtmlDarkClass = false;
 let initialBodyDarkClass = false;
-
-let toastTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const syncAdminDocumentTheme = () => {
     if (typeof document === 'undefined') {
@@ -98,30 +119,23 @@ const closeMenu = () => {
     isMenuOpen.value = false;
 };
 
-const showToast = (message: string, type: 'success' | 'error') => {
-    toast.value = { message, type };
-
-    if (toastTimeout) {
-        clearTimeout(toastTimeout);
-    }
-
-    toastTimeout = setTimeout(() => {
-        toast.value = null;
-        toastTimeout = null;
-    }, 3200);
+const dismissFlashBanner = () => {
+    flashBannerDismissed.value = true;
 };
 
 watch(
     flash,
-    (value) => {
-        if (value.error) {
-            showToast(value.error, 'error');
-            return;
+    () => {
+        flashBannerDismissed.value = false;
+
+        if (flashBannerTimeout) {
+            clearTimeout(flashBannerTimeout);
         }
 
-        if (value.success) {
-            showToast(value.success, 'success');
-        }
+        flashBannerTimeout = setTimeout(() => {
+            flashBannerDismissed.value = true;
+            flashBannerTimeout = null;
+        }, 3500);
     },
     { immediate: true, deep: true },
 );
@@ -136,8 +150,8 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-    if (toastTimeout) {
-        clearTimeout(toastTimeout);
+    if (flashBannerTimeout) {
+        clearTimeout(flashBannerTimeout);
     }
 
     cleanupAdminDocumentTheme();
@@ -441,38 +455,54 @@ const activePageHeader = computed(
                 </header>
 
                 <main class="min-h-0 flex-1 overflow-y-auto">
+                    <div
+                        v-if="flashBanner"
+                        class="mx-auto w-full max-w-[1320px] px-4 pt-4 sm:px-6 lg:px-8"
+                    >
+                        <div
+                            class="flex items-start gap-3 rounded-xl border px-4 py-3 shadow-sm"
+                            :class="
+                                flashBanner.type === 'error'
+                                    ? 'border-rose-200 bg-rose-50 text-rose-700'
+                                    : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                            "
+                        >
+                            <div
+                                class="mt-0.5 flex size-8 items-center justify-center rounded-lg"
+                                :class="
+                                    flashBanner.type === 'error'
+                                        ? 'bg-rose-100 text-rose-600'
+                                        : 'bg-emerald-100 text-emerald-600'
+                                "
+                            >
+                                <CheckCircle2
+                                    v-if="flashBanner.type === 'success'"
+                                    class="size-4"
+                                />
+                                <AlertTriangle v-else class="size-4" />
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-sm font-bold">
+                                    {{ flashBanner.title }}
+                                </p>
+                                <p class="mt-1 text-sm leading-5">
+                                    {{ flashBanner.message }}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                class="mt-0.5 inline-flex size-8 items-center justify-center rounded-lg text-current transition hover:bg-white/70"
+                                aria-label="Tutup notifikasi"
+                                @click="dismissFlashBanner"
+                            >
+                                <X class="size-4" />
+                            </button>
+                        </div>
+                    </div>
                     <slot />
                 </main>
             </div>
         </div>
-
-        <transition
-            enter-active-class="transition duration-200 ease-out"
-            enter-from-class="translate-y-2 opacity-0"
-            enter-to-class="translate-y-0 opacity-100"
-            leave-active-class="transition duration-150 ease-in"
-            leave-from-class="translate-y-0 opacity-100"
-            leave-to-class="translate-y-2 opacity-0"
-        >
-            <div
-                v-if="toast"
-                class="fixed top-4 right-4 z-50 w-full max-w-sm rounded-xl border bg-white px-4 py-3 shadow-sm sm:top-6 sm:right-6"
-                :class="
-                    toast.type === 'error'
-                        ? 'border-rose-200 text-rose-700'
-                        : 'border-emerald-200 text-emerald-700'
-                "
-            >
-                <p class="text-sm font-bold">
-                    {{
-                        toast.type === 'error' ? 'Terjadi kendala' : 'Berhasil'
-                    }}
-                </p>
-                <p class="mt-1 text-sm leading-5">
-                    {{ toast.message }}
-                </p>
-            </div>
-        </transition>
 
         <transition
             enter-active-class="transition duration-200 ease-out"
