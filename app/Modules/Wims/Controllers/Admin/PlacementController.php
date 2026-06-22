@@ -18,8 +18,7 @@ class PlacementController extends Controller
         private readonly PlacementIndexService $placementIndexService,
         private readonly PlacementActionService $placementActionService,
         private readonly PlacementWorkflowService $placementWorkflowService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {
