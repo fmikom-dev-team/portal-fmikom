@@ -65,6 +65,7 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
         Route::delete('/cv/{cv}', [PagiCvController::class, 'destroy'])
             ->name('cv.destroy');
         Route::post('/cv/{cv}/upload-photo', [PagiCvController::class, 'uploadPhoto'])
+            ->middleware('throttle:uploads')
             ->name('cv.upload-photo');
         Route::get('/cv/{cv}/download', [PagiCvController::class, 'downloadPdf'])
             ->name('cv.download');
@@ -120,14 +121,17 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
         Route::get('/editor', [PagiEditorController::class, 'editor'])
             ->name('editor');
         Route::post('/editor', [PagiEditorController::class, 'store'])
+            ->middleware('throttle:uploads')
             ->name('editor.store');
         Route::post('/editor/quick-store', [PagiEditorController::class, 'quickStore'])
             ->name('editor.quick-store');
         Route::post('/gallery/store', [PagiEditorController::class, 'storeGalleryItem'])
+            ->middleware('throttle:uploads')
             ->name('gallery.store');
         Route::post('/editor/{editor}/quick-update', [PagiEditorController::class, 'quickUpdate'])
             ->name('editor.quick-update');
         Route::post('/editor/{editor}', [PagiEditorController::class, 'update'])
+            ->middleware('throttle:uploads')
             ->name('editor.update');
         Route::delete('/editor/{editor}', [PagiEditorController::class, 'destroy'])
             ->name('editor.destroy');
@@ -142,18 +146,22 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
         Route::get('/profile/edit', [PagiDashboardController::class, 'editProfile'])
             ->name('profile.edit');
         Route::post('/profile/update', [PagiDashboardController::class, 'updateProfile'])
+            ->middleware('throttle:uploads')
             ->name('profile.update');
         Route::get('/settings', [PagiDashboardController::class, 'settings'])
             ->name('settings');
         Route::post('/settings/update', [PagiDashboardController::class, 'updateSettings'])
             ->name('settings.update');
         Route::post('/certificates', [PagiDashboardController::class, 'storeCertificate'])
+            ->middleware('throttle:uploads')
             ->name('certificates.store');
         Route::get('/certificates/org-logo', [PagiDashboardController::class, 'getOrgLogo'])
             ->name('certificates.org-logo');
         Route::post('/certificates/org-logo', [PagiDashboardController::class, 'uploadOrgLogo'])
+            ->middleware('throttle:uploads')
             ->name('certificates.org-logo.upload');
         Route::match(['PUT', 'POST'], '/certificates/{id}', [PagiDashboardController::class, 'updateCertificate'])
+            ->middleware('throttle:uploads')
             ->name('certificates.update');
         Route::delete('/certificates/{id}', [PagiDashboardController::class, 'destroyCertificate'])
             ->name('certificates.destroy');
