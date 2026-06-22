@@ -45,6 +45,22 @@ class Kuesioner extends Model
     |-------------------------
     */
 
+    /*
+    |-------------------------
+    | SCOPES
+    |-------------------------
+    */
+
+    public function scopeActive($query)
+    {
+        return $query->whereIn('status', ['active', 'published']);
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('status', 'published');
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');

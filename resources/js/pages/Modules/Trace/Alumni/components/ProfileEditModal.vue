@@ -1,27 +1,48 @@
 <script setup lang="ts">
 import { computed, watch } from "vue";
 import {
-    BookOpen,
-    Briefcase,
-    Calendar,
     ChevronDown,
-    Globe,
     GraduationCap,
     Info,
-    Linkedin,
     Loader2,
     MapPin,
-    Phone,
-    Plus,
     Save,
     User,
     X,
 } from "lucide-vue-next";
-import MapPicker from "./MapPicker.vue";
+import PersonalInfoFields from "./PersonalInfoFields.vue";
+import LocationPicker from "@/components/Trace/LocationPicker.vue";
+import type { InertiaForm } from '@inertiajs/vue3';
+
+interface ProfileFormData {
+    name: string;
+    nomor_induk: string;
+    tahun_lulus: number | null;
+    no_telepon: string;
+    program_studi_id: number | string;
+    bio: string;
+    location: string;
+    website: string;
+    github: string;
+    instagram: string;
+    twitter: string;
+    linkedin: string;
+    jenis_kelamin: string;
+    angkatan: number | string;
+    nik: string;
+    npwp: string;
+    provinsi_id: number | string;
+    kota_id: number | string;
+    alamat_rumah: string;
+    latitude_rumah: number | null;
+    longitude_rumah: number | null;
+    email?: string;
+    [key: string]: unknown;
+}
 
 const props = defineProps<{
     isOpen: boolean;
-    form: any;
+    form: InertiaForm<ProfileFormData>;
     provinsis: { id: number; name: string }[];
     kotas: { id: number; name: string; provinsi_id: number }[];
     programStudis: { id: number; nama: string; kode: string }[];
@@ -31,28 +52,6 @@ const emit = defineEmits<{
     (e: "close"): void;
     (e: "submit"): void;
 }>();
-
-const filteredCities = computed(() => {
-    if (!props.form.provinsi_id) return [];
-    return props.kotas.filter(
-        (city) => city.provinsi_id === parseInt(props.form.provinsi_id),
-    );
-});
-
-watch(
-    () => props.form.provinsi_id,
-    (newProv, oldProv) => {
-        // Reset city ONLY if province has actually changed to a different value (and not on initial loading)
-        if (oldProv !== undefined && newProv !== oldProv) {
-            props.form.kota_id = "";
-        }
-    },
-);
-
-const updateLocation = (loc: { lat: number; lng: number }) => {
-    props.form.latitude_rumah = loc.lat;
-    props.form.longitude_rumah = loc.lng;
-};
 </script>
 
 <template>
@@ -363,163 +362,7 @@ const updateLocation = (loc: { lat: number; lng: number }) => {
                         </div>
 
                         <!-- ══════════════════ SECTION 3: BIO & MEDIA SOSIAL ══════════════════ -->
-                        <div
-                            class="bg-slate-50/50 dark:bg-slate-950/10 rounded-2xl border border-slate-100 dark:border-slate-850 p-5 space-y-4"
-                        >
-                            <div class="flex items-center gap-2 mb-2">
-                                <Globe class="w-4 h-4 text-green-500" />
-                                <span
-                                    class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider"
-                                    >Biodata & Media Sosial</span
-                                >
-                            </div>
-
-                            <div class="space-y-4">
-                                <!-- Biodata Singkat -->
-                                <div class="space-y-1.5">
-                                    <label
-                                        class="block text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                                        >Bio</label
-                                    >
-                                    <textarea
-                                        v-model="form.bio"
-                                        rows="3"
-                                        placeholder=""
-                                        class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-semibold text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
-                                    ></textarea>
-                                    <p
-                                        v-if="form.errors.bio"
-                                        class="text-xs font-medium text-rose-500"
-                                    >
-                                        {{ form.errors.bio }}
-                                    </p>
-                                </div>
-
-                                <div
-                                    class="grid grid-cols-1 sm:grid-cols-2 gap-4"
-                                >
-                                    <!-- Lokasi -->
-                                    <div class="space-y-1.5">
-                                        <label
-                                            class="block text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                                            >Lokasi / Domisili Kota</label
-                                        >
-                                        <input
-                                            v-model="form.location"
-                                            type="text"
-                                            placeholder="Contoh: Jakarta Selatan, DKI Jakarta"
-                                            class="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-semibold text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                                        />
-                                        <p
-                                            v-if="form.errors.location"
-                                            class="text-xs font-medium text-rose-500"
-                                        >
-                                            {{ form.errors.location }}
-                                        </p>
-                                    </div>
-
-                                    <!-- Website -->
-                                    <div class="space-y-1.5">
-                                        <label
-                                            class="block text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                                            >Website URL</label
-                                        >
-                                        <input
-                                            v-model="form.website"
-                                            type="url"
-                                            placeholder="https://example.com"
-                                            class="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-semibold text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                                        />
-                                        <p
-                                            v-if="form.errors.website"
-                                            class="text-xs font-medium text-rose-500"
-                                        >
-                                            {{ form.errors.website }}
-                                        </p>
-                                    </div>
-
-                                    <!-- LinkedIn -->
-                                    <div class="space-y-1.5">
-                                        <label
-                                            class="block text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                                            >LinkedIn URL / Username</label
-                                        >
-                                        <input
-                                            v-model="form.linkedin"
-                                            type="text"
-                                            placeholder="Username LinkedIn"
-                                            class="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-semibold text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                                        />
-                                        <p
-                                            v-if="form.errors.linkedin"
-                                            class="text-xs font-medium text-rose-500"
-                                        >
-                                            {{ form.errors.linkedin }}
-                                        </p>
-                                    </div>
-
-                                    <!-- GitHub -->
-                                    <div class="space-y-1.5">
-                                        <label
-                                            class="block text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                                            >GitHub Username</label
-                                        >
-                                        <input
-                                            v-model="form.github"
-                                            type="text"
-                                            placeholder="Username Github"
-                                            class="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-semibold text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                                        />
-                                        <p
-                                            v-if="form.errors.github"
-                                            class="text-xs font-medium text-rose-500"
-                                        >
-                                            {{ form.errors.github }}
-                                        </p>
-                                    </div>
-
-                                    <!-- Instagram -->
-                                    <div class="space-y-1.5">
-                                        <label
-                                            class="block text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                                            >Username Instagram</label
-                                        >
-                                        <input
-                                            v-model="form.instagram"
-                                            type="text"
-                                            placeholder="Instagram Username"
-                                            class="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-semibold text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                                        />
-                                        <p
-                                            v-if="form.errors.instagram"
-                                            class="text-xs font-medium text-rose-500"
-                                        >
-                                            {{ form.errors.instagram }}
-                                        </p>
-                                    </div>
-
-                                    <!-- Twitter -->
-                                    <div class="space-y-1.5">
-                                        <label
-                                            class="block text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                                            >Twitter Username</label
-                                        >
-                                        <input
-                                            v-model="form.twitter"
-                                            type="text"
-                                            placeholder="Twitter Username"
-                                            class="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-semibold text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                                        />
-                                        <p
-                                            v-if="form.errors.twitter"
-                                            class="text-xs font-medium text-rose-500"
-                                        >
-                                            {{ form.errors.twitter }}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <PersonalInfoFields :form="form" />
 
                         <!-- ══════════════════ SECTION 4: ALAMAT & PETA ══════════════════ -->
                         <div
@@ -534,85 +377,6 @@ const updateLocation = (loc: { lat: number; lng: number }) => {
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <!-- Provinsi -->
-                                <div class="space-y-1.5">
-                                    <label
-                                        class="block text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                                        >Provinsi Domisili</label
-                                    >
-                                    <div class="relative">
-                                        <select
-                                            v-model="form.provinsi_id"
-                                            class="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-semibold text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all appearance-none cursor-pointer"
-                                            style="color-scheme: light"
-                                        >
-                                            <option value="">
-                                                Pilih Provinsi...
-                                            </option>
-                                            <option
-                                                v-for="prov in provinsis"
-                                                :key="prov.id"
-                                                :value="prov.id"
-                                            >
-                                                {{ prov.name }}
-                                            </option>
-                                        </select>
-                                        <div
-                                            class="pointer-events-none absolute inset-y-0 right-3.5 flex items-center"
-                                        >
-                                            <ChevronDown
-                                                class="w-4 h-4 text-slate-400"
-                                            />
-                                        </div>
-                                    </div>
-                                    <p
-                                        v-if="form.errors.provinsi_id"
-                                        class="text-xs font-medium text-rose-500"
-                                    >
-                                        {{ form.errors.provinsi_id }}
-                                    </p>
-                                </div>
-
-                                <!-- Kota / Kabupaten -->
-                                <div class="space-y-1.5">
-                                    <label
-                                        class="block text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                                        >Kota / Kabupaten</label
-                                    >
-                                    <div class="relative">
-                                        <select
-                                            v-model="form.kota_id"
-                                            :disabled="!form.provinsi_id"
-                                            class="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-semibold text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                            style="color-scheme: light"
-                                        >
-                                            <option value="">
-                                                Pilih Kota/Kabupaten...
-                                            </option>
-                                            <option
-                                                v-for="city in filteredCities"
-                                                :key="city.id"
-                                                :value="city.id"
-                                            >
-                                                {{ city.name }}
-                                            </option>
-                                        </select>
-                                        <div
-                                            class="pointer-events-none absolute inset-y-0 right-3.5 flex items-center"
-                                        >
-                                            <ChevronDown
-                                                class="w-4 h-4 text-slate-400"
-                                            />
-                                        </div>
-                                    </div>
-                                    <p
-                                        v-if="form.errors.kota_id"
-                                        class="text-xs font-medium text-rose-500"
-                                    >
-                                        {{ form.errors.kota_id }}
-                                    </p>
-                                </div>
-
                                 <!-- Alamat Lengkap -->
                                 <div class="space-y-1.5 sm:col-span-2">
                                     <label
@@ -633,23 +397,16 @@ const updateLocation = (loc: { lat: number; lng: number }) => {
                                     </p>
                                 </div>
 
-                                <!-- Map Picker Integration -->
+                                <!-- LocationPicker replaces province/city selects + MapPicker -->
                                 <div class="space-y-2 sm:col-span-2">
-                                    <label
-                                        class="block text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5"
-                                    >
-                                        <MapPin
-                                            class="w-3.5 h-3.5 text-green-500"
-                                        />
-                                        Lokasi pada Peta (Klik / Seret Pin)
-                                    </label>
-
-                                    <!-- Render MapPicker only when modal is open to ensure container element exists -->
-                                    <MapPicker
+                                    <LocationPicker
                                         v-if="isOpen"
-                                        :latitude="form.latitude_rumah"
-                                        :longitude="form.longitude_rumah"
-                                        @update:location="updateLocation"
+                                        v-model:province-id="form.provinsi_id"
+                                        v-model:city-id="form.kota_id"
+                                        v-model:latitude="form.latitude_rumah"
+                                        v-model:longitude="form.longitude_rumah"
+                                        :provinces="provinsis"
+                                        :cities="kotas"
                                     />
                                     <p
                                         class="text-[10px] text-slate-400 dark:text-slate-500 leading-normal"

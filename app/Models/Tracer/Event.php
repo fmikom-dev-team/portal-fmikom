@@ -34,6 +34,22 @@ class Event extends Model
         'registration_deadline' => 'date',
     ];
 
+    /*
+    |-------------------------
+    | SCOPES
+    |-------------------------
+    */
+
+    public function scopePublished($query)
+    {
+        return $query->where('status', 'published');
+    }
+
+    public function scopeUpcoming($query)
+    {
+        return $query->published()->where('event_date', '>=', now()->startOfDay());
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

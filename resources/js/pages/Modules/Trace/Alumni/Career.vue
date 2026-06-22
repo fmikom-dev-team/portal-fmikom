@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm, router, usePage } from "@inertiajs/vue3";
+import { Head, useForm, router } from "@inertiajs/vue3";
 import {
     Plus,
     Briefcase,
@@ -15,10 +15,11 @@ import {
     Info,
     BookOpen,
 } from "lucide-vue-next";
-import { ref, watch } from "vue";
+import { ref } from "vue";
 import { toast } from "vue-sonner";
 import TraceAlumniLayout from "@/layouts/TraceAlumniLayout.vue";
 import type { BreadcrumbItem } from "@/types";
+import type { Lokasi } from "@/types/trace";
 import CareerFormModal from "./components/CareerFormModal.vue";
 import CareerStatsCard from "./components/CareerStatsCard.vue";
 import CareerTimelineCard from "./components/CareerTimelineCard.vue";
@@ -60,8 +61,8 @@ const props = defineProps<{
     careerHistory: Career[];
     educationHistory: Career[];
     stats: Stats;
-    provinces: any[];
-    cities: any[];
+    provinces: Lokasi[];
+    cities: Lokasi[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -93,21 +94,6 @@ const confirmDelete = (career: Career) => {
     deletingCareer.value = career;
     showDeleteConfirm.value = true;
 };
-
-const page = usePage();
-
-watch(
-    () => page.props.flash,
-    (flash: any) => {
-        if (flash?.success) {
-            toast.success(flash.success);
-        }
-        if (flash?.error) {
-            toast.error(flash.error);
-        }
-    },
-    { deep: true },
-);
 
 const deleteCareer = () => {
     if (!deletingCareer.value) return;
@@ -145,7 +131,7 @@ const setAsCurrent = (career: Career) => {
             <!-- Header -->
             <TPageHeader
                 title="Riwayat Karir"
-                description="Kelola riwayat karir dan pekerjaan Anda"
+                description="Catat dan kelola perjalanan karir Anda."
                 :icon="Briefcase"
             >
                 <template #actions>

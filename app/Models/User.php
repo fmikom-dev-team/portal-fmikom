@@ -183,6 +183,21 @@ class User extends Authenticatable
         return $this->hasOne(MitraProfile::class, 'user_id');
     }
 
+    public function eventRegistrations(): HasMany
+    {
+        return $this->hasMany(\App\Models\Tracer\EventRegistration::class);
+    }
+
+    public function kuesionerResponses(): HasMany
+    {
+        return $this->hasMany(\App\Models\Tracer\Response::class);
+    }
+
+    public function bookmarks(): HasMany
+    {
+        return $this->hasMany(\App\Models\Tracer\Bookmark::class);
+    }
+
     // -----------------------------------------------------------------------
     // Helper Methods — Identity Check
     // Menggunakan user_type (identity layer) sebagai sumber utama.

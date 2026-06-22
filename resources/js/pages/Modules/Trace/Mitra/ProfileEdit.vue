@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { ref, computed } from 'vue';
@@ -65,8 +65,7 @@ function triggerFileInput() {
 
 function submit() {
     form.post('/trace/open-job/profile', {
-        onSuccess: () => toast.success('Profil berhasil diperbarui!'),
-        onError: () => toast.error('Gagal menyimpan. Periksa kembali form Anda.'),
+        onError: () => toast.error('Gagal memperbarui profil mitra. Periksa kembali form Anda.'),
     });
 }
 </script>

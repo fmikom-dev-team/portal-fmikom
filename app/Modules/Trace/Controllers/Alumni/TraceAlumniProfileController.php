@@ -3,6 +3,8 @@
 namespace App\Modules\Trace\Controllers\Alumni;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Trace\UpdateAlumniProfileRequest;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Tracer\ProfilAlumni;
@@ -10,13 +12,14 @@ use App\Models\Tracer\Provinsi;
 use App\Models\Tracer\Kota;
 use App\Models\ProgramStudi;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use App\Models\Tracer\ActivityLog;
 
 class TraceAlumniProfileController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): InertiaResponse
     {
         $user = Auth::user();
         $roleName = $request->attributes->get('resolved_role', session('active_role'));
@@ -53,8 +56,8 @@ class TraceAlumniProfileController extends Controller
             'latitude_rumah'          => $profil->latitude_rumah,
             'longitude_rumah'         => $profil->longitude_rumah,
             'jenis_kelamin'           => $profil->jenis_kelamin,
-            'nik'                     => $profil->nik,
-            'npwp'                    => $profil->npwp,
+            'nik'                     => $profil->nik ? str_repeat('*', 12) . substr($profil->nik, -4) : null,
+            'npwp'                    => $profil->npwp ? str_repeat('*', max(0, strlen($profil->npwp) - 4)) . substr($profil->npwp, -4) : null,
             'provinsi_id'             => $profil->provinsi_id,
             'kota_id'                 => $profil->kota_id,
             'completeness_percentage' => $profil->completeness_percentage,
@@ -67,13 +70,13 @@ class TraceAlumniProfileController extends Controller
         return Inertia::render('Modules/Trace/Alumni/ProfileAlumni', [
             'roleName'   => $roleName,
             'alumni' => $alumniData,
-            'provinsis' => Provinsi::orderBy('name')->get(['id', 'name']),
-            'kotas' => Kota::orderBy('name')->get(['id', 'name', 'provinsi_id']),
-            'programStudis' => ProgramStudi::orderBy('nama')->get(['id', 'nama', 'kode'])
+            'provinsis' => Cache::remember('trace_provinsi_all', 3600, fn () => Provinsi::orderBy('name')->get(['id', 'name'])),
+            'kotas' => Cache::remember('trace_kota_all', 3600, fn () => Kota::orderBy('name')->get(['id', 'name', 'provinsi_id'])),
+            'programStudis' => Cache::remember('trace_prodi_all', 3600, fn () => ProgramStudi::orderBy('nama')->get(['id', 'nama', 'kode']))
         ]);
     }
 
-    public function update(Request $request)
+    public function update(UpdateAlumniProfileRequest $request): RedirectResponse
     {
         $user = Auth::user();
         
@@ -82,60 +85,38 @@ class TraceAlumniProfileController extends Controller
             ['angkatan' => $user->tahun_lulus ?? null]
         );
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'nomor_induk' => ['required', 'string', 'max:50'],
-            'tahun_lulus' => ['nullable', 'integer', 'min:1900', 'max:' . (date('Y') + 5)],
-            'no_telepon' => ['nullable', 'string', 'max:25'],
-            'program_studi_id' => ['nullable', 'exists:program_studis,id'],
-            'bio' => ['nullable', 'string', 'max:1000'],
-            'location' => ['nullable', 'string', 'max:255'],
-            'website' => ['nullable', 'url', 'max:255'],
-            'github' => ['nullable', 'string', 'max:255'],
-            'instagram' => ['nullable', 'string', 'max:255'],
-            'twitter' => ['nullable', 'string', 'max:255'],
-            'linkedin' => ['nullable', 'string', 'max:255'],
+        $validated = $request->validated();
 
-            // ProfilAlumni table validation
-            'jenis_kelamin' => ['nullable', 'in:L,P'],
-            'angkatan' => ['required', 'integer', 'min:1900', 'max:' . (date('Y') + 5)],
-            'nik' => ['nullable', 'string', 'size:16'],
-            'npwp' => ['nullable', 'string', 'max:30'],
-            'provinsi_id' => ['nullable', 'exists:provinsi,id'],
-            'kota_id' => ['nullable', 'exists:kota,id'],
-            'alamat_rumah' => ['nullable', 'string'],
-            'latitude_rumah' => ['nullable', 'numeric'],
-            'longitude_rumah' => ['nullable', 'numeric'],
-        ]);
+        DB::transaction(function () use ($user, $profil, $validated) {
+            // Update User
+            $user->update([
+                'name' => $validated['name'],
+                'nomor_induk' => $validated['nomor_induk'],
+                'tahun_lulus' => $validated['tahun_lulus'],
+                'no_telepon' => $validated['no_telepon'],
+                'program_studi_id' => $validated['program_studi_id'],
+                'bio' => $validated['bio'] ?? null,
+                'location' => $validated['location'] ?? null,
+                'website' => $validated['website'] ?? null,
+                'github' => $validated['github'] ?? null,
+                'instagram' => $validated['instagram'] ?? null,
+                'twitter' => $validated['twitter'] ?? null,
+                'linkedin' => $validated['linkedin'] ?? null,
+            ]);
 
-        // Update User
-        $user->update([
-            'name' => $validated['name'],
-            'nomor_induk' => $validated['nomor_induk'],
-            'tahun_lulus' => $validated['tahun_lulus'],
-            'no_telepon' => $validated['no_telepon'],
-            'program_studi_id' => $validated['program_studi_id'],
-            'bio' => $validated['bio'] ?? null,
-            'location' => $validated['location'] ?? null,
-            'website' => $validated['website'] ?? null,
-            'github' => $validated['github'] ?? null,
-            'instagram' => $validated['instagram'] ?? null,
-            'twitter' => $validated['twitter'] ?? null,
-            'linkedin' => $validated['linkedin'] ?? null,
-        ]);
-
-        // Update ProfilAlumni
-        $profil->update([
-            'jenis_kelamin' => $validated['jenis_kelamin'] ?? null,
-            'angkatan' => $validated['angkatan'],
-            'nik' => $validated['nik'] ?? null,
-            'npwp' => $validated['npwp'] ?? null,
-            'provinsi_id' => $validated['provinsi_id'] ?? null,
-            'kota_id' => $validated['kota_id'] ?? null,
-            'alamat_rumah' => $validated['alamat_rumah'] ?? null,
-            'latitude_rumah' => $validated['latitude_rumah'] ?? null,
-            'longitude_rumah' => $validated['longitude_rumah'] ?? null,
-        ]);
+            // Update ProfilAlumni
+            $profil->update([
+                'jenis_kelamin' => $validated['jenis_kelamin'] ?? null,
+                'angkatan' => $validated['angkatan'],
+                'nik' => $validated['nik'] ?? null,
+                'npwp' => $validated['npwp'] ?? null,
+                'provinsi_id' => $validated['provinsi_id'] ?? null,
+                'kota_id' => $validated['kota_id'] ?? null,
+                'alamat_rumah' => $validated['alamat_rumah'] ?? null,
+                'latitude_rumah' => $validated['latitude_rumah'] ?? null,
+                'longitude_rumah' => $validated['longitude_rumah'] ?? null,
+            ]);
+        });
 
         ActivityLog::record('profile.updated', 'Memperbarui profil alumni');
 

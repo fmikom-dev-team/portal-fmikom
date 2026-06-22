@@ -3,21 +3,25 @@
 namespace App\Modules\Trace\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Trace\StoreEventRequest;
+use App\Http\Requests\Trace\UpdateEventRequest;
 use App\Models\Tracer\Event;
 use App\Models\Tracer\EventRegistration;
 use App\Models\User;
 use App\Notifications\Trace\NewEventCreated;
 use Illuminate\Support\Facades\Notification;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use App\Models\Tracer\ActivityLog;
 use App\Modules\Trace\Services\ImageService;
 
 class EventController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): InertiaResponse
     {
         $query = Event::withCount('registrations');
 
@@ -48,25 +52,22 @@ class EventController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(): InertiaResponse
     {
         return Inertia::render('Modules/Trace/Admin/Events/Create');
     }
 
-    public function store(Request $request)
+    public function store(StoreEventRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string|max:65535',
-            'location' => 'nullable|string|max:255',
-            'event_date' => 'required|date',
-            'event_time_start' => 'nullable|date_format:H:i',
-            'event_time_end' => 'nullable|date_format:H:i|after:event_time_start',
-            'registration_deadline' => 'nullable|date|before_or_equal:event_date',
-            'max_participants' => 'nullable|integer|min:1',
-            'status' => 'required|in:draft,published,closed',
-            'poster' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
+        $validated = $request->validated();
+
+        // Normalize time to H:i format
+        if (!empty($validated['event_time_start'])) {
+            $validated['event_time_start'] = substr($validated['event_time_start'], 0, 5);
+        }
+        if (!empty($validated['event_time_end'])) {
+            $validated['event_time_end'] = substr($validated['event_time_end'], 0, 5);
+        }
 
         if ($request->hasFile('poster')) {
             $validated['poster_path'] = ImageService::compressToWebp(
@@ -81,15 +82,23 @@ class EventController extends Controller
         ActivityLog::record('event.created', "Membuat event: {$event->title}", $event);
 
         if ($event->status === 'published') {
-            $alumni = User::whereHas('alumniProfile')->get();
-            Notification::send($alumni, new NewEventCreated($event->title, \Carbon\Carbon::parse($event->event_date)->format('d M Y'), $event->id));
+            // Use cursor to avoid loading all alumni into memory
+            User::whereHas('alumniProfile')
+                ->select('id', 'name', 'email')
+                ->chunkById(200, function ($alumni) use ($event) {
+                    Notification::send($alumni, new NewEventCreated(
+                        $event->title,
+                        \Carbon\Carbon::parse($event->event_date)->format('d M Y'),
+                        $event->id
+                    ));
+                });
         }
 
         return redirect()->route('module.trace.admin.events.index')
             ->with('success', 'Event berhasil dibuat.');
     }
 
-    public function show($id)
+    public function show($id): InertiaResponse
     {
         $event = Event::withCount('registrations')
             ->findOrFail($id);
@@ -105,7 +114,7 @@ class EventController extends Controller
         ]);
     }
 
-    public function edit($id)
+    public function edit($id): InertiaResponse
     {
         $event = Event::findOrFail($id);
 
@@ -114,22 +123,19 @@ class EventController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateEventRequest $request, $id): RedirectResponse
     {
         $event = Event::findOrFail($id);
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string|max:65535',
-            'location' => 'nullable|string|max:255',
-            'event_date' => 'required|date',
-            'event_time_start' => 'nullable|date_format:H:i',
-            'event_time_end' => 'nullable|date_format:H:i|after:event_time_start',
-            'registration_deadline' => 'nullable|date|before_or_equal:event_date',
-            'max_participants' => 'nullable|integer|min:1',
-            'status' => 'required|in:draft,published,closed',
-            'poster' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
+        $validated = $request->validated();
+
+        // Normalize time to H:i format for consistent storage
+        if (!empty($validated['event_time_start'])) {
+            $validated['event_time_start'] = substr($validated['event_time_start'], 0, 5);
+        }
+        if (!empty($validated['event_time_end'])) {
+            $validated['event_time_end'] = substr($validated['event_time_end'], 0, 5);
+        }
 
         if ($request->hasFile('poster')) {
             $validated['poster_path'] = ImageService::replaceWithWebp(
@@ -145,7 +151,7 @@ class EventController extends Controller
             ->with('success', 'Event berhasil diperbarui.');
     }
 
-    public function updateStatus(Request $request, $id)
+    public function updateStatus(Request $request, $id): RedirectResponse
     {
         $event = Event::findOrFail($id);
 
@@ -153,39 +159,50 @@ class EventController extends Controller
             'status' => 'required|in:draft,published,closed',
         ]);
 
+        // Prevent invalid status transitions
+        $invalidTransitions = [
+            'closed' => ['draft'],
+        ];
+
+        if (isset($invalidTransitions[$event->status]) && in_array($validated['status'], $invalidTransitions[$event->status])) {
+            return back()->with('error', 'Tidak dapat mengubah status dari "' . $event->status . '" ke "' . $validated['status'] . '".');
+        }
+
         $event->update($validated);
         ActivityLog::record('event.status_changed', "Mengubah status event: {$event->title} → {$request->status}", $event, ['status' => $request->status]);
 
         return back()->with('success', 'Status event berhasil diperbarui.');
     }
 
-    public function markAttendance(Request $request, $eventId, $registrationId)
+    public function markAttendance(Request $request, $eventId, $registrationId): RedirectResponse
     {
         $registration = EventRegistration::where('event_id', $eventId)->findOrFail($registrationId);
 
-        $registration->update([
-            'attended_at' => $registration->attended_at ? null : now(),
-        ]);
+        // Determine new state before update to avoid stale model issues
+        $wasAttended = !is_null($registration->attended_at);
+        $newAttendedAt = $wasAttended ? null : now();
 
-        ActivityLog::record(
-            'event.attendance',
-            $registration->attended_at ? 'Mencatat kehadiran' : 'Membatalkan kehadiran',
-            $registration
-        );
+        $registration->update(['attended_at' => $newAttendedAt]);
 
-        return back()->with('success', $registration->attended_at ? 'Kehadiran dicatat.' : 'Kehadiran dibatalkan.');
+        $action = $wasAttended ? 'Membatalkan kehadiran' : 'Mencatat kehadiran';
+        ActivityLog::record('event.attendance', $action, $registration);
+
+        $message = $wasAttended ? 'Kehadiran dibatalkan.' : 'Kehadiran dicatat.';
+        return back()->with('success', $message);
     }
 
-    public function destroy($id)
+    public function destroy($id): RedirectResponse
     {
         $event = Event::findOrFail($id);
 
-        if ($event->poster_path) {
-            Storage::disk('public')->delete($event->poster_path);
-        }
+        $posterPath = $event->poster_path;
 
         ActivityLog::record('event.deleted', "Menghapus event: {$event->title}", $event);
         $event->delete();
+
+        if ($posterPath) {
+            Storage::disk('public')->delete($posterPath);
+        }
 
         return redirect()->route('module.trace.admin.events.index')
             ->with('success', 'Event berhasil dihapus.');

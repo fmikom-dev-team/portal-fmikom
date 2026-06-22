@@ -3,9 +3,10 @@
 namespace App\Notifications\Trace;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class JobApplicationSubmitted extends Notification
+class JobApplicationSubmitted extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -22,7 +23,7 @@ class JobApplicationSubmitted extends Notification
 
     public function toArray(object $notifiable): array
     {
-        $isAdmin = $notifiable->user_type === 'admin' || $notifiable->hasRole('admin') || $notifiable->hasRole('super-admin');
+        $isAdmin = in_array($notifiable->user_type, ['admin', 'staff', 'super-admin']);
 
         return [
             'type' => 'job_application',

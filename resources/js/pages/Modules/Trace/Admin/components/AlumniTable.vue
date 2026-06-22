@@ -113,38 +113,37 @@ const getCurrentCompany = (item: Alumni) => {
                         <div class="flex items-center gap-3">
                             <Avatar class="h-10 w-10 border border-border/50">
                                 <AvatarImage
-                                    v-if="item.photo_path"
+                                    v-if="item.user?.foto_path"
                                     :src="
-                                        item.photo_path.startsWith('http')
-                                            ? item.photo_path
-                                            : `/storage/${item.photo_path}`
+                                        item.user.foto_path.startsWith('http')
+                                            ? item.user.foto_path
+                                            : `/storage/${item.user.foto_path}`
                                     "
-                                    :alt="item.nama_lengkap || item.user?.name"
+                                    :alt="item.user?.name"
                                 />
                                 <AvatarFallback
                                     class="bg-primary/10 text-xs font-bold text-primary"
                                 >
                                     {{
                                         getDisplayName(
-                                            item.nama_lengkap ||
-                                                item.user?.name,
+                                            item.user?.name,
                                         )
                                     }}
                                 </AvatarFallback>
                             </Avatar>
                             <div class="flex flex-col">
                                 <span class="font-bold text-foreground">{{
-                                    item.nama_lengkap || item.user?.name
+                                    item.user?.name
                                 }}</span>
                                 <span class="text-xs text-muted-foreground"
-                                    >{{ item.nim }} -
-                                    {{ item.program_studi }}</span
+                                    >{{ item.user?.nomor_induk || '-' }} -
+                                    {{ item.user?.program_studi?.nama || '-' }}</span
                                 >
                             </div>
                         </div>
                     </TableCell>
                     <TableCell class="font-medium text-muted-foreground">{{
-                        item.tahun_lulus
+                        item.user?.tahun_lulus || '-'
                     }}</TableCell>
                     <TableCell>
                         <Badge

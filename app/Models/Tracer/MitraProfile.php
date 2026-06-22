@@ -3,10 +3,13 @@
 namespace App\Models\Tracer;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
 
 class MitraProfile extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'mitra_profiles';
 
     protected $fillable = [
@@ -21,6 +24,13 @@ class MitraProfile extends Model
         'provinsi_id',
         'kota_id'
     ];
+
+    protected $casts = [
+        'provinsi_id' => 'integer',
+        'kota_id' => 'integer',
+        'deleted_at' => 'datetime',
+    ];
+
     protected $appends = ['logo_url'];
 
     public function getLogoUrlAttribute(): ?string

@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { useForm, usePage } from "@inertiajs/vue3";
+import { toast } from "vue-sonner";
 import TraceAlumniLayout from "@/layouts/TraceAlumniLayout.vue";
 import type { BreadcrumbItem } from "@/types";
+import type { CareerHistory, EducationHistory } from "@/types/trace";
 import ProfileView from "./components/ProfileView.vue";
 import ProfileEditModal from "./components/ProfileEditModal.vue";
 import { CheckCircle2, UserCircle } from "lucide-vue-next";
-import { TPageHeader } from '@/components/trace';
+import { TPageHeader } from "@/components/trace";
 import { update } from "@/routes/module/trace/profile-alumni";
 
 const props = defineProps<{
@@ -43,8 +45,8 @@ const props = defineProps<{
         kota_id: number | null;
         completeness_percentage: number;
 
-        careers: any[];
-        education_histories: any[];
+        careers: CareerHistory[];
+        education_histories: EducationHistory[];
     };
     provinsis: { id: number; name: string }[];
     kotas: { id: number; name: string; provinsi_id: number }[];
@@ -72,7 +74,7 @@ const form = useForm({
     instagram: props.alumni.instagram || "",
     twitter: props.alumni.twitter || "",
     linkedin: props.alumni.linkedin || "",
-    
+
     jenis_kelamin: props.alumni.jenis_kelamin || "",
     angkatan: props.alumni.angkatan || "",
     nik: props.alumni.nik || "",
@@ -84,7 +86,6 @@ const form = useForm({
     longitude_rumah: props.alumni.longitude_rumah,
 });
 
-// Watch for prop updates (after successful submission) to sync form values
 watch(
     () => props.alumni,
     (newVal) => {
@@ -111,7 +112,7 @@ watch(
         form.latitude_rumah = newVal.latitude_rumah;
         form.longitude_rumah = newVal.longitude_rumah;
     },
-    { deep: true }
+    { deep: true },
 );
 
 const submit = () => {
@@ -123,6 +124,9 @@ const submit = () => {
             setTimeout(() => {
                 showSuccessAlert.value = false;
             }, 4000);
+        },
+        onError: () => {
+            toast.error("Gagal menyimpan profil. Periksa kembali data Anda.");
         },
     });
 };
@@ -138,23 +142,36 @@ const submit = () => {
             <!-- Page Header -->
             <TPageHeader
                 title="Profil Alumni"
-                description="Kelola data profil, domisili, dan informasi tracer study Anda"
+                description="Perbarui data diri, domisili, dan kontak Anda."
                 :icon="UserCircle"
             />
 
-            <!-- Success Alert Banner -->
             <Transition name="slide">
-                <div v-if="showSuccessAlert" class="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 rounded-2xl p-4 flex items-start gap-3 shadow-xs">
-                    <CheckCircle2 class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <div
+                    v-if="showSuccessAlert"
+                    class="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 rounded-2xl p-4 flex items-start gap-3 shadow-xs"
+                >
+                    <CheckCircle2
+                        class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5"
+                    />
                     <div>
-                        <p class="text-sm font-bold text-emerald-800 dark:text-emerald-250">Pembaruan Berhasil</p>
-                        <p class="text-xs font-semibold text-emerald-600 dark:text-emerald-400/90 mt-0.5">Profil karir dan data domisili tracer study Anda telah berhasil disimpan.</p>
+                        <p
+                            class="text-sm font-bold text-emerald-800 dark:text-emerald-250"
+                        >
+                            Pembaruan Berhasil
+                        </p>
+                        <p
+                            class="text-xs font-semibold text-emerald-600 dark:text-emerald-400/90 mt-0.5"
+                        >
+                            Profil karir dan data domisili tracer study Anda
+                            telah berhasil disimpan.
+                        </p>
                     </div>
                 </div>
             </Transition>
 
             <!-- Profile Read-Only View -->
-            <ProfileView 
+            <ProfileView
                 :alumni="alumni"
                 :programStudis="programStudis"
                 :provinsis="provinsis"
@@ -163,7 +180,7 @@ const submit = () => {
             />
 
             <!-- Profile Edit Modal -->
-            <ProfileEditModal 
+            <ProfileEditModal
                 :isOpen="isEditOpen"
                 :form="form"
                 :provinsis="provinsis"
@@ -177,6 +194,13 @@ const submit = () => {
 </template>
 
 <style scoped>
-.slide-enter-active, .slide-leave-active { transition: all 0.3s ease-out; }
-.slide-enter-from, .slide-leave-to { opacity: 0; transform: translateY(-12px); }
+.slide-enter-active,
+.slide-leave-active {
+    transition: all 0.3s ease-out;
+}
+.slide-enter-from,
+.slide-leave-to {
+    opacity: 0;
+    transform: translateY(-12px);
+}
 </style>

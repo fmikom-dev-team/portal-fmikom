@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link, router, useForm } from "@inertiajs/vue3";
+import { toast } from 'vue-sonner';
 import EditorJsRenderer from '@/components/editor/EditorJsRenderer.vue';
 import TraceAlumniLayout from "@/layouts/TraceAlumniLayout.vue";
 import type { BreadcrumbItem } from "@/types";
@@ -128,6 +129,7 @@ function submitApplication() {
     applyForm.attached_cv_ids = selectedCvIds.value;
     applyForm.post(`/trace/jobs/${props.job.id}/apply`, {
         preserveScroll: true,
+        onError: () => { toast.error('Gagal mengirim lamaran.'); },
     });
 }
 
@@ -140,6 +142,9 @@ function toggleBookmark() {
             preserveScroll: true,
             onSuccess: () => {
                 bookmarked.value = !bookmarked.value;
+            },
+            onError: () => {
+                toast.error('Gagal memperbarui bookmark.');
             },
             onFinish: () => {
                 bookmarkLoading.value = false;

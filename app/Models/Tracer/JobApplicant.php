@@ -7,7 +7,7 @@ use App\Models\Tracer\ProfilAlumni;
 
 class JobApplicant extends Model
 {
-    protected $table = 'job_applycants';
+    protected $table = 'job_applicants';
 
     protected $fillable = [
         'job_id', 'alumni_id', 'cover_letter',
@@ -19,6 +19,7 @@ class JobApplicant extends Model
     protected $casts = [
         'attached_cv_ids' => 'array',
         'attached_portfolio_ids' => 'array',
+        'applied_at' => 'datetime',
         'reviewed_at' => 'datetime',
     ];
 

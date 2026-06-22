@@ -56,8 +56,7 @@ const removePoster = () => {
 const submit = () => {
     form.post('/trace/admin/events', {
         forceFormData: true,
-        onSuccess: () => toast.success('Event berhasil dibuat!'),
-        onError: () => toast.error('Gagal menyimpan. Periksa kembali form Anda.'),
+        onError: () => toast.error('Gagal menyimpan event. Periksa kembali form Anda.'),
     });
 };
 </script>
@@ -74,7 +73,7 @@ const submit = () => {
                 </Button>
                 <TPageHeader
                     title="Buat Event Baru"
-                    description="Isi form di bawah untuk membuat event."
+                    description="Lengkapi informasi berikut untuk membuat event baru."
                     :icon="CalendarPlus"
                 />
             </div>

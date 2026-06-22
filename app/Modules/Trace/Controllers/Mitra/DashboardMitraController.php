@@ -5,41 +5,49 @@ namespace App\Modules\Trace\Controllers\Mitra;
 use App\Http\Controllers\Controller;
 use App\Models\Tracer\JobApplicant;
 use App\Models\Tracer\JobListing;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class DashboardMitraController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): InertiaResponse|RedirectResponse
     {
-        $user = $request->user();
-        $mitra = $user->mitraProfile;
+        $mitra = $request->user()->mitraProfile;
 
         if (!$mitra) {
             return redirect()->route('module.trace.open-job.mitra-profile-setup');
         }
 
-        $jobStats = JobListing::where('mitra_id', $mitra->id)
-            ->selectRaw("COUNT(*) as total")
-            ->selectRaw("SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END) as active")
-            ->selectRaw("SUM(CASE WHEN status = 'pending_review' THEN 1 ELSE 0 END) as pending")
-            ->first();
+        $mitraId = $mitra->id;
 
-        $applicantStats = JobApplicant::whereHas('jobListing', fn($q) => $q->where('mitra_id', $mitra->id))
-            ->selectRaw("COUNT(*) as total")
-            ->selectRaw("SUM(CASE WHEN status = 'applied' THEN 1 ELSE 0 END) as pending")
-            ->first();
+        // Cache per-mitra stats for 5 minutes
+        $stats = Cache::remember("trace_mitra_dashboard_{$mitraId}", now()->addMinutes(5), function () use ($mitraId) {
+            $jobStats = JobListing::where('mitra_id', $mitraId)
+                ->selectRaw("COUNT(*) as total")
+                ->selectRaw("SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END) as active")
+                ->selectRaw("SUM(CASE WHEN status = 'pending_review' THEN 1 ELSE 0 END) as pending")
+                ->first();
 
-        $stats = [
-            'total_jobs' => (int) $jobStats->total,
-            'active_jobs' => (int) $jobStats->active,
-            'pending_jobs' => (int) $jobStats->pending,
-            'total_applicants' => (int) $applicantStats->total,
-            'pending_applicants' => (int) $applicantStats->pending,
-        ];
+            $applicantStats = JobApplicant::whereHas('jobListing', fn($q) => $q->where('mitra_id', $mitraId))
+                ->selectRaw("COUNT(*) as total")
+                ->selectRaw("SUM(CASE WHEN status = 'applied' THEN 1 ELSE 0 END) as pending")
+                ->first();
 
-        $recentApplicants = JobApplicant::whereHas('jobListing', fn($q) => $q->where('mitra_id', $mitra->id))
-            ->with(['alumni.user', 'jobListing:id,title'])
+            return [
+                'total_jobs' => (int) $jobStats->total,
+                'active_jobs' => (int) $jobStats->active,
+                'pending_jobs' => (int) $jobStats->pending,
+                'total_applicants' => (int) $applicantStats->total,
+                'pending_applicants' => (int) $applicantStats->pending,
+            ];
+        });
+
+        // Recent applicants are always fresh (not cached)
+        $recentApplicants = JobApplicant::whereHas('jobListing', fn($q) => $q->where('mitra_id', $mitraId))
+            ->with(['alumni.user:id,name,email,foto_path', 'jobListing:id,title'])
             ->latest()
             ->take(5)
             ->get();

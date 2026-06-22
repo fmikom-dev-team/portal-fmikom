@@ -14,8 +14,12 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use App\Services\AuditLogService;
+use App\Modules\Trace\Services\AuditLogService;
+use App\Modules\Trace\Actions\SubmitKuesionerResponseAction;
 use App\Models\Tracer\ActivityLog;
+use App\Models\User;
+use App\Notifications\Trace\KuesionerResponseSubmitted;
+use Illuminate\Support\Facades\Notification;
 
 /**
  * AlumniKuesionerController
@@ -137,119 +141,25 @@ class AlumniKuesionerController extends Controller
      */
     public function store(Request $request, int $id): RedirectResponse
     {
+        $action = new SubmitKuesionerResponseAction();
+
         try {
             $kuesioner = Kuesioner::with('sections.pertanyaans.opsiJawabans')->findOrFail($id);
 
-            // FIX #1 — Validasi status & tanggal juga di store,
+            // Validasi status & tanggal juga di store,
             // bukan hanya di show(), agar tidak bisa bypass via API langsung.
             $redirect = $this->checkKuesionerAvailability($kuesioner);
             if ($redirect) {
                 return $redirect;
             }
 
-            // FIX #2 — Satu validasi saja, langsung bangun rules lengkap.
-            // IMPORTANT: Semua pertanyaan harus punya rules (minimal 'nullable')
-            // agar Validator mengembalikan semua jawaban di $validated['answers'].
-            $rules = [
-                'answers' => ['required', 'array'],
-            ];
-
-            foreach ($kuesioner->sections as $section) {
-                foreach ($section->pertanyaans as $pertanyaan) {
-                    if ($pertanyaan->tipe === 'matrix') {
-                        $rows = $pertanyaan->meta['rows'] ?? [];
-                        foreach ($rows as $row) {
-                            $rules["answers.{$pertanyaan->id}.{$row}"] = $pertanyaan->is_required
-                                ? ['required']
-                                : ['nullable'];
-                        }
-                    } elseif ($pertanyaan->tipe === 'checkbox') {
-                        $rules["answers.{$pertanyaan->id}"] = $pertanyaan->is_required
-                            ? ['required', 'array', 'min:1']
-                            : ['nullable'];
-                    } else {
-                        $rules["answers.{$pertanyaan->id}"] = $pertanyaan->is_required
-                            ? ['required']
-                            : ['nullable'];
-                    }
-                }
-            }
-
+            $rules     = $action->buildValidationRules($kuesioner);
             $validated = Validator::make($request->all(), $rules)->validate();
             $answers   = $validated['answers'];
 
-            // FIX #4 — Pindahkan duplicate check ke dalam transaksi
-            // dan gunakan lockForUpdate() agar aman dari race condition.
-            // Sebelumnya check & insert dipisah sehingga dua request
-            // bersamaan bisa lolos keduanya.
             try {
-                DB::transaction(function () use ($kuesioner, $answers) {
-                    $alreadyResponded = DB::table('responses')
-                        ->where('kuesioner_id', $kuesioner->id)
-                        ->where('user_id', auth()->id())
-                        ->lockForUpdate()
-                        ->exists();
-
-                    if ($alreadyResponded) {
-                        // Melempar exception akan membuat transaksi otomatis di-rollback
-                        throw new \RuntimeException('already_responded');
-                    }
-
-                    $responseId = DB::table('responses')->insertGetId([
-                        'kuesioner_id' => $kuesioner->id,
-                        'user_id'      => auth()->id(),
-                        'submitted_at' => now(),
-                        'created_at'   => now(),
-                        'updated_at'   => now(),
-                    ]);
-
-                    // Pre-load semua pertanyaan + opsi sekaligus (hindari N+1)
-                    $pertanyaans = Pertanyaan::whereIn('id', array_keys($answers))
-                        ->with('opsiJawabans')
-                        ->get()
-                        ->keyBy('id');
-
-                    $detailRows = [];
-
-                    foreach ($answers as $pertanyaanId => $jawaban) {
-                        $pertanyaan  = $pertanyaans->get($pertanyaanId);
-                        $opsiId      = null;
-                        $jawabanText = is_array($jawaban) ? json_encode($jawaban) : $jawaban;
-
-                        if ($pertanyaan && in_array($pertanyaan->tipe, ['radio', 'dropdown', 'checkbox'])) {
-                            if (is_array($jawaban)) {
-                                $jawabanText = json_encode($jawaban);
-                            } elseif (is_numeric($jawaban)) {
-                                $opsi = $pertanyaan->opsiJawabans->find($jawaban);
-                                if ($opsi) {
-                                    $opsiId      = $opsi->id;
-                                    $jawabanText = $opsi->label;
-                                }
-                            } else {
-                                $opsi = $pertanyaan->opsiJawabans->firstWhere('label', $jawaban);
-                                if ($opsi) {
-                                    $opsiId = $opsi->id;
-                                }
-                            }
-                        }
-
-                        $detailRows[] = [
-                            'response_id'     => $responseId,
-                            'pertanyaan_id'   => $pertanyaanId,
-                            'opsi_jawaban_id' => $opsiId,
-                            'jawaban_text'    => $jawabanText,
-                            'created_at'      => now(),
-                            'updated_at'      => now(),
-                        ];
-                    }
-
-                    if (! empty($detailRows)) {
-                        DB::table('detail_jawabans')->insert($detailRows);
-                    }
-                });
-
+                $action->execute($kuesioner, $answers, auth()->id());
             } catch (\RuntimeException $e) {
-                // Tangani already_responded terpisah agar pesan error tepat
                 if ($e->getMessage() === 'already_responded') {
                     Log::warning('Duplicate questionnaire submission attempt', [
                         'user_id'      => auth()->id(),
@@ -274,6 +184,16 @@ class AlumniKuesionerController extends Controller
             ]);
 
             ActivityLog::record('kuesioner.submitted', "Mengisi kuesioner: {$kuesioner->judul}", $kuesioner);
+
+            // Notify admins about new kuesioner response
+            $totalResponses = Response::where('kuesioner_id', $kuesioner->id)->count();
+            $admins = User::where('user_type', 'admin')->get();
+            Notification::send($admins, new KuesionerResponseSubmitted(
+                auth()->user()->name,
+                $kuesioner->judul,
+                $kuesioner->id,
+                $totalResponses,
+            ));
 
             Log::info('Questionnaire response submitted', [
                 'user_id'      => auth()->id(),

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('jobs_listings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('mitra_id')->constrained('mitra_profiles')->cascadeOnDelete();
             $table->foreignId('job_category_id') ->nullable()->constrained('job_categories')->onDelete('set null');
             $table->string('title');
@@ -35,6 +35,9 @@ return new class extends Migration
             $table->index('status');
             $table->index('experience_level');
             $table->index(['status', 'deadline']);
+            $table->index('user_id');
+            $table->index('tipe_kerja');
+            $table->index('location_type');
         });
     }
 

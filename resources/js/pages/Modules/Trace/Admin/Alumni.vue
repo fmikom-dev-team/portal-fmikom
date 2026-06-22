@@ -38,7 +38,7 @@ const breadcrumbs = [
         >
             <TPageHeader
                 title="Data Alumni"
-                description="Kelola dan pantau data alumni FMIKOM"
+                description="Kelola data alumni dan pantau perkembangan karir mereka."
                 :icon="GraduationCap"
             />
 

@@ -3,9 +3,10 @@
 namespace App\Notifications\Trace;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class EventRegistrationConfirmed extends Notification
+class EventRegistrationConfirmed extends Notification implements ShouldQueue
 {
     use Queueable;
 

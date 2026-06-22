@@ -41,6 +41,7 @@ $baseMiddleware = ['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
 Route::middleware($baseMiddleware)
     ->prefix('trace')
     ->name('module.trace.')
+    ->where(['id' => '[0-9]+'])
     ->group(function () {
         // Dashboard — routes user based on their role
         Route::get('/', [TraceDashboardController::class, 'index'])->name('dashboard');
@@ -57,6 +58,7 @@ Route::middleware($baseMiddleware)
 Route::middleware([...$baseMiddleware, 'role:alumni', 'throttle:30,1'])
     ->prefix('trace')
     ->name('module.trace.')
+    ->where(['id' => '[0-9]+'])
     ->group(function () {
         // Profile
         Route::get('/profile-alumni', [TraceAlumniProfileController::class, 'index'])->name('profile-alumni');
@@ -79,6 +81,7 @@ Route::middleware([...$baseMiddleware, 'role:alumni', 'throttle:30,1'])
 Route::middleware([...$baseMiddleware, 'role:alumni', 'throttle:30,1'])
     ->prefix('trace/jobs')
     ->name('module.trace.jobs.')
+    ->where(['id' => '[0-9]+'])
     ->group(function () {
         Route::get('/', [JobBrowseController::class, 'index'])->name('index');
         Route::get('/my-applications', [JobBrowseController::class, 'myApplications'])->name('my-applications');
@@ -93,6 +96,7 @@ Route::middleware([...$baseMiddleware, 'role:alumni', 'throttle:30,1'])
 Route::middleware([...$baseMiddleware, 'role:alumni', 'throttle:30,1'])
     ->prefix('trace/events')
     ->name('module.trace.events.')
+    ->where(['id' => '[0-9]+'])
     ->group(function () {
         Route::get('/', [AlumniEventController::class, 'index'])->name('index');
         Route::get('/my-events', [AlumniEventController::class, 'myEvents'])->name('my-events');
@@ -107,6 +111,7 @@ Route::middleware([...$baseMiddleware, 'role:alumni', 'throttle:30,1'])
 Route::middleware([...$baseMiddleware, 'role:admin,super-admin', 'throttle:60,1'])
     ->prefix('trace/admin')
     ->name('module.trace.')
+    ->where(['id' => '[0-9]+', 'jobId' => '[0-9]+', 'applicantId' => '[0-9]+'])
     ->group(function () {
         Route::get('/', [DashboardAdminController::class, 'index'])->name('admin.dashboard');
 
@@ -138,6 +143,7 @@ Route::middleware([...$baseMiddleware, 'role:admin,super-admin', 'throttle:60,1'
 Route::middleware([...$baseMiddleware, 'role:admin,super-admin', 'throttle:60,1'])
     ->prefix('trace/admin/questionnaires')
     ->name('module.trace.admin.questionnaires.')
+    ->where(['id' => '[0-9]+'])
     ->group(function () {
         Route::get('/', [KuesionerController::class, 'index'])->name('index');
         Route::get('/create', [KuesionerController::class, 'create'])->name('create');
@@ -159,6 +165,7 @@ Route::middleware([...$baseMiddleware, 'role:admin,super-admin', 'throttle:60,1'
 Route::middleware([...$baseMiddleware, 'role:admin,super-admin', 'throttle:60,1'])
     ->prefix('trace/admin/alumni')
     ->name('module.trace.admin.alumni.')
+    ->where(['id' => '[0-9]+'])
     ->group(function () {
         Route::get('/', [RespondenController::class, 'index'])->name('index');
         Route::get('/{id}', [RespondenController::class, 'show'])->name('show');
@@ -168,6 +175,7 @@ Route::middleware([...$baseMiddleware, 'role:admin,super-admin', 'throttle:60,1'
 Route::middleware([...$baseMiddleware, 'role:admin,super-admin', 'throttle:60,1'])
     ->prefix('trace/admin/events')
     ->name('module.trace.admin.events.')
+    ->where(['id' => '[0-9]+', 'eventId' => '[0-9]+', 'registrationId' => '[0-9]+'])
     ->group(function () {
         Route::get('/', [AdminEventController::class, 'index'])->name('index');
         Route::get('/create', [AdminEventController::class, 'create'])->name('create');
@@ -186,23 +194,29 @@ Route::middleware([...$baseMiddleware, 'role:admin,super-admin', 'throttle:60,1'
 Route::middleware([...$baseMiddleware, 'role:admin,super-admin,mitra', 'throttle:30,1'])
     ->prefix('trace/open-job')
     ->name('module.trace.open-job.')
+    ->where(['id' => '[0-9]+', 'jobId' => '[0-9]+', 'applicantId' => '[0-9]+'])
     ->group(function () {
-        // Dashboard
-        Route::get('/dashboard', [DashboardMitraController::class, 'index'])->name('mitra-dashboard');
-
-        // Profile
+        // Profile setup — accessible WITHOUT existing mitra profile
         Route::get('/profile-setup', [MitraProfileController::class, 'setup'])->name('mitra-profile-setup');
         Route::post('/profile-setup', [MitraProfileController::class, 'store'])->name('mitra-profile-setup.store');
-        Route::get('/profile', [MitraProfileController::class, 'edit'])->name('mitra-profile');
-        Route::put('/profile', [MitraProfileController::class, 'update'])->name('mitra-profile.update');
 
-        // Job Listings
-        Route::get('/jobs-listings', [JobListingController::class, 'index'])->name('jobs-listings');
-        Route::get('/jobs-listings/create', [JobListingController::class, 'create'])->name('mitra.jobs-listings.create');
-        Route::post('/jobs-listings', [JobListingController::class, 'store'])->name('mitra.jobs-listings.store');
-        Route::get('/jobs-listings/{id}', [JobListingController::class, 'show'])->name('detail-job');
-        Route::put('/jobs-listings/{id}', [JobListingController::class, 'update'])->name('mitra.jobs-listings.update');
-        Route::delete('/jobs-listings/{id}', [JobListingController::class, 'destroy'])->name('mitra.jobs-listings.destroy');
-        Route::put('/jobs-listings/{jobId}/applicants/{applicantId}/status', [JobListingController::class, 'updateApplicantStatus'])->name('mitra.applicant-status');
-        Route::put('/jobs-listings/{id}/submit-review', [JobListingController::class, 'submitForReview'])->name('mitra.jobs-listings.submit-review');
+        // All other routes — require existing mitra profile
+        Route::middleware(\App\Http\Middleware\EnsureMitraProfileExists::class)->group(function () {
+            // Dashboard
+            Route::get('/dashboard', [DashboardMitraController::class, 'index'])->name('mitra-dashboard');
+
+            // Profile edit
+            Route::get('/profile', [MitraProfileController::class, 'edit'])->name('mitra-profile');
+            Route::put('/profile', [MitraProfileController::class, 'update'])->name('mitra-profile.update');
+
+            // Job Listings
+            Route::get('/jobs-listings', [JobListingController::class, 'index'])->name('jobs-listings');
+            Route::get('/jobs-listings/create', [JobListingController::class, 'create'])->name('mitra.jobs-listings.create');
+            Route::post('/jobs-listings', [JobListingController::class, 'store'])->name('mitra.jobs-listings.store');
+            Route::get('/jobs-listings/{id}', [JobListingController::class, 'show'])->name('detail-job');
+            Route::put('/jobs-listings/{id}', [JobListingController::class, 'update'])->name('mitra.jobs-listings.update');
+            Route::delete('/jobs-listings/{id}', [JobListingController::class, 'destroy'])->name('mitra.jobs-listings.destroy');
+            Route::put('/jobs-listings/{jobId}/applicants/{applicantId}/status', [JobListingController::class, 'updateApplicantStatus'])->name('mitra.applicant-status');
+            Route::put('/jobs-listings/{id}/submit-review', [JobListingController::class, 'submitForReview'])->name('mitra.jobs-listings.submit-review');
+        });
     });

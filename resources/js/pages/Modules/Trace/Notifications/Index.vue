@@ -111,7 +111,6 @@ function markAllRead() {
 
 function handleClick(notif: Notification) {
     if (notif.unread) markRead(notif.id);
-    router.visit(notif.href || '/trace');
 }
 
 // Group notifications by date
@@ -195,16 +194,15 @@ const unreadCount = computed(() => {
                         <div
                             v-for="notif in items"
                             :key="notif.id"
-                            @click="handleClick(notif)"
-                            class="flex items-start gap-4 rounded-2xl border border-transparent px-5 py-4 transition-all cursor-pointer group"
+                            class="flex items-start gap-4 rounded-2xl border border-transparent px-5 py-4 transition-all group"
                             :class="notif.unread
-                                ? 'bg-white border-slate-100 shadow-sm hover:shadow-md dark:bg-zinc-800/60 dark:border-zinc-700 dark:hover:border-zinc-600'
+                                ? 'bg-white border-slate-100 shadow-sm dark:bg-zinc-800/60 dark:border-zinc-700'
                                 : 'hover:bg-slate-50 dark:hover:bg-zinc-800/30'"
                         >
                             <!-- Icon -->
                             <div class="shrink-0 mt-0.5">
                                 <div
-                                    class="flex h-11 w-11 items-center justify-center rounded-xl transition-transform group-hover:scale-105"
+                                    class="flex h-11 w-11 items-center justify-center rounded-xl"
                                     :class="getIconColor(notif.type)"
                                 >
                                     <component :is="getIcon(notif.type)" class="h-5 w-5" />
@@ -227,7 +225,15 @@ const unreadCount = computed(() => {
                                             <Clock class="h-3 w-3" />
                                             {{ notif.time }}
                                         </span>
-                                        <div v-if="notif.unread" class="h-2.5 w-2.5 rounded-full bg-[#0C447C] dark:bg-[#85B7EB] animate-pulse" />
+                                        <!-- Mark read button (hover) -->
+                                        <button
+                                            v-if="notif.unread"
+                                            @click.stop="markRead(notif.id)"
+                                            class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-[10px] font-semibold text-[#0C447C] dark:text-[#85B7EB] hover:text-[#0a3968] dark:hover:text-white bg-slate-100 dark:bg-zinc-700 hover:bg-slate-200 dark:hover:bg-zinc-600 rounded-md px-2 py-0.5"
+                                        >
+                                            Tandai dibaca
+                                        </button>
+                                        <div v-if="notif.unread" class="h-2.5 w-2.5 rounded-full bg-[#0C447C] dark:bg-[#85B7EB] animate-pulse group-hover:opacity-0 transition-opacity" />
                                     </div>
                                 </div>
                                 <p class="text-[13px] text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed">

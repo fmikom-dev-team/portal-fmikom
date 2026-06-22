@@ -3,6 +3,7 @@
 namespace App\Models\Tracer;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
 use App\Models\Tracer\EducationHistory;
 use App\Models\Tracer\CareerHistory;
@@ -12,9 +13,8 @@ use App\Models\Tracer\Kota;
 
 class ProfilAlumni extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
-    protected $with = ['user'];
 
     protected $fillable = [
         'user_id',
@@ -31,7 +31,16 @@ class ProfilAlumni extends Model
 
     protected $hidden = ['nik', 'npwp'];
 
-    protected $appends = ['completeness_percentage', 'nim', 'nama_lengkap', 'tahun_lulus', 'photo_path', 'program_studi'];
+    protected $casts = [
+        'latitude_rumah' => 'float',
+        'longitude_rumah' => 'float',
+        'angkatan' => 'integer',
+        'provinsi_id' => 'integer',
+        'kota_id' => 'integer',
+        'deleted_at' => 'datetime',
+    ];
+
+    protected $appends = ['completeness_percentage'];
 
      public function user()
     {
@@ -81,6 +90,22 @@ class ProfilAlumni extends Model
     public function getProgramStudiAttribute()
     {
         return $this->user?->programStudi?->nama;
+    }
+
+    /**
+     * Masked NIK — hanya tampilkan 6 digit awal untuk identifikasi.
+     */
+    public function getNikMaskedAttribute(): ?string
+    {
+        return $this->nik ? substr($this->nik, 0, 6) . '••••••••••' : null;
+    }
+
+    /**
+     * Masked NPWP — hanya tampilkan 4 digit awal.
+     */
+    public function getNpwpMaskedAttribute(): ?string
+    {
+        return $this->npwp ? substr($this->npwp, 0, 4) . '•••••••••••' : null;
     }
 
     public function getCompletenessPercentageAttribute()

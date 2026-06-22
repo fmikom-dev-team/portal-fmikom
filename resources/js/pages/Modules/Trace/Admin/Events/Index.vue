@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -77,16 +78,22 @@ function applyFilters() {
             date_from: dateFrom.value || undefined,
             date_to: dateTo.value || undefined,
         },
-        { preserveState: true, replace: true },
+        { preserveState: true, preserveScroll: true, replace: true },
     );
 }
 
+const debouncedApplyFilters = useDebounceFn(() => {
+    applyFilters();
+}, 400);
+
+// Debounce search input
 const debouncedSearch = useDebounceFn(() => {
     applyFilters();
 }, 400);
 
+// Watch status/date changes with debounce to prevent excessive requests
 watch([statusFilter, dateFrom, dateTo], () => {
-    applyFilters();
+    debouncedApplyFilters();
 });
 
 function clearFilters() {
@@ -100,13 +107,18 @@ function clearFilters() {
 const onFilterBarChange = (filters: Record<string, string>) => {
     searchQuery.value = filters.search ?? '';
     statusFilter.value = filters.status ?? 'all';
-    applyFilters();
+    // Don't call applyFilters directly — the watch will handle it via debounce
+    // Only call for search changes since watch doesn't cover searchQuery
+    if (filters.search !== undefined) {
+        debouncedSearch();
+    }
 };
 
 /* ───── Delete event ───── */
 function deleteEvent() {
     if (confirmDeleteId.value) {
         router.delete(`/trace/admin/events/${confirmDeleteId.value}`, {
+            onError: () => toast.error('Gagal menghapus event.'),
             onFinish: () => { confirmDeleteId.value = null; },
         });
     }
@@ -130,7 +142,7 @@ const formatDate = (dateStr: string) => {
         <div class="mx-auto max-w-7xl space-y-6">
             <TPageHeader
                 title="Events"
-                description="Kelola event dan kegiatan alumni."
+                description="Buat, kelola, dan pantau kegiatan untuk alumni."
                 :icon="CalendarCheck"
             >
                 <template #actions>
@@ -164,11 +176,11 @@ const formatDate = (dateStr: string) => {
             <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
                 <div class="flex-1 sm:flex-none">
                     <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Dari</label>
-                    <input v-model="dateFrom" @change="applyFilters" type="date" class="w-full sm:w-[180px] h-9 rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:border-[#0C447C] focus:ring-1 focus:ring-[#85B7EB]/30 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300" />
+                    <input v-model="dateFrom" type="date" class="w-full sm:w-[180px] h-9 rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:border-[#0C447C] focus:ring-1 focus:ring-[#85B7EB]/30 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300" />
                 </div>
                 <div class="flex-1 sm:flex-none">
                     <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Sampai</label>
-                    <input v-model="dateTo" @change="applyFilters" type="date" class="w-full sm:w-[180px] h-9 rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:border-[#0C447C] focus:ring-1 focus:ring-[#85B7EB]/30 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300" />
+                    <input v-model="dateTo" type="date" class="w-full sm:w-[180px] h-9 rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-sm font-medium text-slate-700 focus:outline-none focus:border-[#0C447C] focus:ring-1 focus:ring-[#85B7EB]/30 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300" />
                 </div>
             </div>
 

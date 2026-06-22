@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import axios from 'axios';
+import type { KuesionerSection } from '@/types/trace';
+import { toast } from 'vue-sonner';
 import {
     Chart as ChartJS,
     Title,
@@ -67,7 +69,7 @@ const props = defineProps({
 
 const loading = ref(true);
 const exporting = ref(false);
-const data = ref<any>(null);
+const data = ref<Record<string, unknown> | null>(null);
 const activeView = ref('overview');
 const selectedSection = ref('all');
 
@@ -80,7 +82,8 @@ const fetchAnalytics = async () => {
         );
         data.value = response.data;
     } catch (error) {
-        console.error('Gagal mengambil data analitik:', error);
+
+        toast.error('Gagal memuat data analitik.');
     } finally {
         loading.value = false;
     }
@@ -105,7 +108,8 @@ const handleExport = async () => {
         link.click();
         document.body.removeChild(link);
     } catch (error) {
-        console.error('Gagal mengekspor data:', error);
+
+        toast.error('Gagal memuat data analitik.');
     } finally {
         exporting.value = false;
     }
@@ -125,7 +129,7 @@ return data.value.sections;
 }
 
     return data.value.sections.filter(
-        (s: any) => s.id.toString() === selectedSection.value,
+        (s: KuesionerSection) => s.id.toString() === selectedSection.value,
     );
 });
 
@@ -139,20 +143,22 @@ return data.value.categories;
 }
 
     return data.value.categories
-        .map((cat: any) => ({
+        .map((cat: { name: string; statistics: Array<{ section_id?: number; [key: string]: unknown }> }) => ({
             ...cat,
             statistics: cat.statistics.filter(
-                (stat: any) =>
+                (stat: { section_id?: number; [key: string]: unknown }) =>
                     stat.section_id?.toString() === selectedSection.value,
             ),
         }))
-        .filter((cat: any) => cat.statistics.length > 0);
+        .filter((cat: { name: string; statistics: unknown[] }) => cat.statistics.length > 0);
 });
 
-const getChartData = (stat: any) => {
-    if (stat.analysis.distribution) {
+const getChartData = (stat: Record<string, unknown>) => {
+    const analysis = stat.analysis as Record<string, unknown>;
+    if (analysis.distribution) {
+        const dist = analysis.distribution as Array<{ label: string; count: number }>;
         return {
-            labels: stat.analysis.distribution.map((d: any) => d.label),
+            labels: dist.map((d: { label: string; count: number }) => d.label),
             datasets: [
                 {
                     label: 'Jumlah Responden',
@@ -165,7 +171,7 @@ const getChartData = (stat: any) => {
                         '#ec4899',
                         '#EF9F27',
                     ],
-                    data: stat.analysis.distribution.map((d: any) => d.count),
+                    data: dist.map((d: { label: string; count: number }) => d.count),
                     borderRadius: 8,
                 },
             ],
@@ -175,19 +181,21 @@ const getChartData = (stat: any) => {
     return { labels: [], datasets: [] };
 };
 
-const getScaleBarData = (stat: any) => {
-    if (stat.analysis.distribution) {
-        const total = stat.analysis.total_responses || 1;
+const getScaleBarData = (stat: Record<string, unknown>) => {
+    const analysis = stat.analysis as Record<string, unknown>;
+    if (analysis.distribution) {
+        const dist = analysis.distribution as Array<{ label: string; count: number }>;
+        const total = (analysis.total_responses as number) || 1;
         return {
-            labels: stat.analysis.distribution.map((d: any) => d.label),
+            labels: dist.map((d: { label: string; count: number }) => d.label),
             datasets: [
                 {
                     label: 'Jumlah',
-                    backgroundColor: stat.analysis.distribution.map((_: any, i: number) => {
+                    backgroundColor: dist.map((_: unknown, i: number) => {
                         const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#0C447C', '#85B7EB', '#ec4899', '#EF9F27', '#14b8a6', '#84cc16'];
                         return colors[i % colors.length];
                     }),
-                    data: stat.analysis.distribution.map((d: any) => d.count),
+                    data: dist.map((d: { label: string; count: number }) => d.count),
                     borderRadius: 6,
                     barThickness: 28,
                 },
@@ -197,10 +205,12 @@ const getScaleBarData = (stat: any) => {
     return { labels: [], datasets: [] };
 };
 
-const getTrendData = (stat: any) => {
-    if (stat.analysis.trend && stat.analysis.trend.length > 0) {
+const getTrendData = (stat: Record<string, unknown>) => {
+    const analysis = stat.analysis as Record<string, unknown>;
+    if (analysis.trend && (analysis.trend as Array<unknown>).length > 0) {
+        const trend = analysis.trend as Array<{ tahun: string; value: number }>;
         return {
-            labels: stat.analysis.trend.map((t: any) => t.tahun),
+            labels: trend.map((t: { tahun: string; value: number }) => t.tahun),
             datasets: [
                 {
                     label: 'Indeks Capaian',
@@ -208,7 +218,7 @@ const getTrendData = (stat: any) => {
                     backgroundColor: 'rgba(12, 68, 124, 0.1)',
                     fill: true,
                     tension: 0.4,
-                    data: stat.analysis.trend.map((t: any) => t.value),
+                    data: trend.map((t: { tahun: string; value: number }) => t.value),
                 },
             ],
         };
@@ -226,7 +236,7 @@ const chartOptions = {
             labels: {
                 usePointStyle: true,
                 padding: 20,
-                font: { size: 10, weight: 'bold' as any },
+                font: { size: 10, weight: 'bold' as const },
             },
         },
     },
@@ -242,11 +252,11 @@ const scaleBarOptions = {
     scales: {
         x: {
             beginAtZero: true,
-            ticks: { stepSize: 1, font: { size: 11, weight: 'bold' as any } },
+            ticks: { stepSize: 1, font: { size: 11, weight: 'bold' as const } },
             grid: { display: false },
         },
         y: {
-            ticks: { font: { size: 12, weight: 'bold' as any } },
+            ticks: { font: { size: 12, weight: 'bold' as const } },
             grid: { display: false },
         },
     },
@@ -259,16 +269,16 @@ const lineChartOptions = {
     scales: { y: { beginAtZero: true, max: 5 } },
 };
 
-const getRadarOptions = (stat: any) => ({
+const getRadarOptions = (stat: Record<string, unknown>) => ({
     responsive: true,
     maintainAspectRatio: false,
     scales: {
         r: {
             angleLines: { display: true },
             suggestedMin: 0,
-            suggestedMax: stat.analysis?.scale_max || 5,
+            suggestedMax: (stat.analysis as Record<string, unknown>)?.scale_max || 5,
             ticks: { stepSize: 1, font: { size: 9 } },
-            pointLabels: { font: { size: 11, weight: 'bold' as any } },
+            pointLabels: { font: { size: 11, weight: 'bold' as const } },
         },
     },
     plugins: { legend: { position: 'bottom' as const } },

@@ -31,7 +31,6 @@ return new class extends Migration
             
             $table->timestamps();
             
-            $table->index('kuesioner_id');
             $table->index('section_id');
             $table->index('tipe');
             $table->index(['kuesioner_id', 'section_id']);

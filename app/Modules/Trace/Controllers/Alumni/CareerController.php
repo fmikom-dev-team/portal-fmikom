@@ -10,8 +10,9 @@ use Illuminate\Http\RedirectResponse;
 use App\Models\Tracer\CareerHistory;
 use App\Models\Tracer\Provinsi;
 use App\Models\Tracer\Kota;
-use App\Services\CareerService;
+use App\Modules\Trace\Services\CareerService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Models\Tracer\ActivityLog;
 
@@ -66,7 +67,7 @@ class CareerController extends Controller
             'yearsOfExperience' => $this->careerService->calculateYearsOfExperience($careers),
         ];
 
-        Log::info('Career history viewed', [
+        Log::debug('Career history viewed', [
             'user_id' => $user->id,
             'profile_id' => $profile->id,
         ]);
@@ -76,8 +77,8 @@ class CareerController extends Controller
             'careerHistory' => $careerHistory,
             'educationHistory' => $educationHistory,
             'stats' => $stats,
-            'provinces' => Provinsi::all(),
-            'cities' => Kota::all(),
+            'provinces' => Cache::remember('trace_provinsi_all', 3600, fn () => Provinsi::select('id', 'name')->orderBy('name')->get()),
+            'cities' => Cache::remember('trace_kota_all', 3600, fn () => Kota::select('id', 'name', 'provinsi_id')->orderBy('name')->get()),
             'roleName' => $role
         ]);
     }
@@ -98,7 +99,7 @@ class CareerController extends Controller
 
             $this->careerService->store($profile, $validated);
 
-            Log::info('Career record created', [
+            Log::debug('Career record created', [
                 'user_id' => $user->id,
                 'profile_id' => $profile->id,
                 'status' => $validated['status'],
@@ -142,7 +143,7 @@ class CareerController extends Controller
 
             $this->careerService->update($career, $validated);
 
-            Log::info('Career record updated', [
+            Log::debug('Career record updated', [
                 'user_id' => $user->id,
                 'career_id' => $career->id,
                 'status' => $validated['status'],
@@ -190,7 +191,7 @@ class CareerController extends Controller
 
             $this->authorize('delete', $career);
 
-            if ($profile->careers()->count() <= 1) {
+            if ($profile->careers->count() <= 1) {
                 Log::warning('Attempted to delete only career record', [
                     'user_id' => $user->id,
                     'career_id' => $id,
@@ -211,7 +212,7 @@ class CareerController extends Controller
                 }
             }
 
-            Log::info('Career record deleted', [
+            Log::debug('Career record deleted', [
                 'user_id' => $user->id,
                 'career_id' => $id,
                 'was_current' => $wasCurrent,
@@ -252,7 +253,7 @@ class CareerController extends Controller
 
             $this->careerService->setCurrent($career);
 
-            Log::info('Career set as current', [
+            Log::debug('Career set as current', [
                 'user_id' => $user->id,
                 'career_id' => $id,
             ]);

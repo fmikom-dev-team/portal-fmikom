@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
 import EditorJsRenderer from '@/components/editor/EditorJsRenderer.vue';
 import {
     ArrowLeft,
@@ -34,8 +35,8 @@ import {
 } from '@/components/ui/card';
 import type { BreadcrumbItem } from '@/types';
 
-interface PagiWork { id: number; [key: string]: any; }
-interface PagiCv { id: number; [key: string]: any; }
+interface PagiWork { id: number; [key: string]: unknown; }
+interface PagiCv { id: number; [key: string]: unknown; }
 
 interface Alumni {
     id: number;
@@ -155,7 +156,7 @@ function getAttachedCvs(applicant: Applicant) {
     const allCvs = applicant.alumni.user.pagi_cvs ?? [];
     if (!allCvs.length) return [];
     if (applicant.attached_cv_ids?.length) {
-        return allCvs.filter((cv: any) => applicant.attached_cv_ids!.includes(cv.id));
+        return allCvs.filter((cv: PagiCv) => applicant.attached_cv_ids!.includes(cv.id));
     }
     return allCvs;
 }
@@ -181,6 +182,7 @@ function confirmReview() {
         { status: reviewTarget.value.status, note: reviewNote.value || null },
         {
             preserveScroll: true,
+            onError: () => { toast.error('Gagal memperbarui status pelamar.'); },
             onFinish: () => {
                 processing.value = null;
                 showReviewModal.value = false;
@@ -191,10 +193,13 @@ function confirmReview() {
 }
 
 function toggleJobStatus() {
+    const toastCallbacks = {
+        onError: () => { toast.error('Gagal memperbarui status lowongan.'); },
+    };
     if (props.job.status === 'draft' || props.job.status === 'rejected') {
-        router.put(`/trace/open-job/jobs-listings/${props.job.id}/submit-review`, {}, { preserveScroll: true });
+        router.put(`/trace/open-job/jobs-listings/${props.job.id}/submit-review`, {}, { preserveScroll: true, ...toastCallbacks });
     } else if (props.job.status === 'published') {
-        router.put(`/trace/open-job/jobs-listings/${props.job.id}`, { status: 'closed' }, { preserveScroll: true });
+        router.put(`/trace/open-job/jobs-listings/${props.job.id}`, { status: 'closed' }, { preserveScroll: true, ...toastCallbacks });
     }
 }
 </script>

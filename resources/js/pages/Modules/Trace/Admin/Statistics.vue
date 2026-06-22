@@ -105,7 +105,7 @@ const distColors = ['bg-emerald-500', 'bg-blue-500', 'bg-amber-500', 'bg-red-500
             <!-- Header -->
             <TPageHeader
                 title="Laporan & Statistik IKU"
-                description="Indikator Kinerja Utama dan metrik akreditasi tracer study"
+                description="Metrik kinerja dan capaian akreditasi tracer study."
                 :icon="BarChart3"
             />
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -89,6 +90,7 @@ const formatDateTime = (dateStr: string) => {
 const toggleStatus = (newStatus: string) => {
     router.put(`/trace/admin/events/${props.event.id}/status`, { status: newStatus }, {
         preserveScroll: true,
+        onError: () => toast.error('Gagal memperbarui status event.'),
     });
 };
 
@@ -98,6 +100,7 @@ const toggleAttendance = (registrationId: number) => {
     loadingAttendance.value = registrationId;
     router.post(`/trace/admin/events/${props.event.id}/registrations/${registrationId}/attendance`, {}, {
         preserveScroll: true,
+        onError: () => toast.error('Gagal memperbarui kehadiran.'),
         onFinish: () => {
             loadingAttendance.value = null;
         },
@@ -118,7 +121,7 @@ const toggleAttendance = (registrationId: number) => {
                     </Button>
                     <TPageHeader
                         :title="event.title"
-                        description="Detail Event"
+                        description="Informasi lengkap dan data peserta"
                         :icon="CalendarCheck"
                     />
                 </div>

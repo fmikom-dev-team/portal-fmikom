@@ -8,9 +8,13 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('profil_alumnis', function (Blueprint $table) {
-            $table->index('angkatan');
-        });
+        try {
+            Schema::table('profil_alumnis', function (Blueprint $table) {
+                $table->index('angkatan');
+            });
+        } catch (\Exception $e) {
+            // Index already exists
+        }
 
         Schema::table('career_history', function (Blueprint $table) {
             $table->index(['latitude', 'longitude']);

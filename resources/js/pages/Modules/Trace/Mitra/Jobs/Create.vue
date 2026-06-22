@@ -67,8 +67,7 @@ function submit() {
         ...data,
         description: data.description ? JSON.stringify(data.description) : '',
     })).post('/trace/open-job/jobs-listings', {
-        onSuccess: () => toast.success('Lowongan berhasil dibuat!'),
-        onError: () => toast.error('Gagal menyimpan. Periksa kembali form Anda.'),
+        onError: () => toast.error('Gagal menyimpan lowongan. Periksa kembali form Anda.'),
     });
 }
 

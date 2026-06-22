@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
 import EditorJsRenderer from '@/components/editor/EditorJsRenderer.vue';
 import {
     ArrowLeft,
@@ -24,6 +25,7 @@ import {
 import { ref, computed } from 'vue';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import type { BreadcrumbItem } from '@/types';
+import type { PaginationLinks } from '@/types/trace';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -40,8 +42,8 @@ interface Alumni {
         name: string;
         email: string;
         pagi_username?: string;
-        pagi_works?: Array<{ id: number; [key: string]: any }>;
-        pagi_cvs?: Array<{ id: number; [key: string]: any }>;
+        pagi_works?: Array<{ id: number; [key: string]: unknown }>;
+        pagi_cvs?: Array<{ id: number; [key: string]: unknown }>;
     };
 }
 
@@ -77,9 +79,17 @@ interface Job {
 
 const props = defineProps<{
     job: Job;
-    applicants: Applicant[];
+    applicants: {
+        data: Applicant[];
+        links: PaginationLinks;
+        meta?: { total: number };
+        total?: number;
+    };
     isOwner: boolean;
 }>();
+
+const applicantList = computed(() => props.applicants.data ?? []);
+const applicantTotal = computed(() => props.applicants.meta?.total ?? props.applicants.total ?? props.applicants.data?.length ?? 0);
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/trace/admin' },
@@ -181,16 +191,20 @@ function handleConfirm() {
         processing.value = true;
         router.put(`/trace/admin/jobs/${props.job.id}/approve`, {}, {
             preserveScroll: true,
+            onError: () => toast.error('Gagal menyetujui lowongan.'),
             onFinish: () => { processing.value = false; confirmDialog.value.open = false; },
         });
     } else if (confirmDialog.value.action === 'reject') {
         processing.value = true;
         router.put(`/trace/admin/jobs/${props.job.id}/reject`, {}, {
             preserveScroll: true,
+            onError: () => toast.error('Gagal menolak lowongan.'),
             onFinish: () => { processing.value = false; confirmDialog.value.open = false; },
         });
     } else if (confirmDialog.value.action === 'delete') {
-        router.delete(`/trace/admin/jobs/${props.job.id}`);
+        router.delete(`/trace/admin/jobs/${props.job.id}`, {
+            onError: () => toast.error('Gagal menghapus lowongan.'),
+        });
         confirmDialog.value.open = false;
     }
 }
@@ -206,7 +220,7 @@ function getAttachedCvs(applicant: Applicant) {
     const allCvs = applicant.alumni.user.pagi_cvs ?? [];
     if (!allCvs.length) return [];
     if (applicant.attached_cv_ids?.length) {
-        return allCvs.filter((cv: any) => applicant.attached_cv_ids!.includes(cv.id));
+        return allCvs.filter((cv: { id: number; [key: string]: unknown }) => applicant.attached_cv_ids!.includes(cv.id));
     }
     return allCvs;
 }
@@ -232,6 +246,7 @@ function confirmReview() {
         { status: reviewTarget.value.status, note: reviewNote.value || null },
         {
             preserveScroll: true,
+            onError: () => toast.error('Gagal memperbarui status pelamar.'),
             onFinish: () => {
                 processingApplicant.value = null;
                 showReviewModal.value = false;
@@ -336,7 +351,7 @@ function confirmReview() {
                                     <TStatusBadge v-if="isDeadlinePassed" status="closed" label="Expired" size="sm" />
                                 </span>
                                 <span class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-                                    <Users class="h-4 w-4" /> {{ applicants.length }} pelamar
+                                    <Users class="h-4 w-4" /> {{ applicantTotal }} pelamar
                                 </span>
                             </div>
                         </CardContent>
@@ -358,14 +373,14 @@ function confirmReview() {
                             <div class="flex items-center gap-2.5">
                                 <Users class="h-5 w-5 text-[#0C447C] dark:text-[#85B7EB]" />
                                 <CardTitle class="text-base font-bold text-slate-900 dark:text-white">
-                                    Daftar Pelamar ({{ applicants.length }})
+                                    Daftar Pelamar ({{ applicantTotal }})
                                 </CardTitle>
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div v-if="applicants.length > 0" class="space-y-3">
+                            <div v-if="applicantList.length > 0" class="space-y-3">
                                 <div
-                                    v-for="applicant in applicants"
+                                    v-for="applicant in applicantList"
                                     :key="applicant.id"
                                     class="rounded-xl border border-slate-100 transition-all dark:border-zinc-800"
                                     :class="expandedApplicant === applicant.id ? 'bg-slate-50/50 dark:bg-zinc-800/20' : ''"

@@ -109,7 +109,7 @@ const isToday = (event: Event) => {
     <TraceAlumniLayout title="Events" role-name="Alumni" :breadcrumbs="breadcrumbs">
         <div class="mx-auto space-y-6">
             <!-- Header -->
-            <TPageHeader title="Events" description="Temukan dan ikuti event menarik untuk alumni." :icon="CalendarDays">
+            <TPageHeader title="Event Alumni" description="Temukan event seru dan kembangkan jaringan Anda." :icon="CalendarDays">
                 <template #actions>
                     <Button as-child variant="outline" class="rounded-xl border-[#0C447C]/20 text-[#0C447C] hover:bg-[#0C447C]/5 dark:border-[#85B7EB]/30 dark:text-[#85B7EB] dark:hover:bg-[#85B7EB]/10">
                         <Link href="/trace/events/my-events" class="inline-flex items-center gap-2">

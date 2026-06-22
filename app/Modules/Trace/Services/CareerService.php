@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Modules\Trace\Services;
 
 use App\Models\Tracer\ProfilAlumni;
 use App\Models\Tracer\CareerHistory;

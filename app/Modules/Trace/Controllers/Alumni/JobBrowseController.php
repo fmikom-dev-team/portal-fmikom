@@ -2,6 +2,7 @@
 
 namespace App\Modules\Trace\Controllers\Alumni;
 
+use App\Modules\Trace\Actions\ApplyToJobAction;
 use App\Http\Controllers\Controller;
 use App\Models\Tracer\Bookmark;
 use App\Models\Tracer\JobApplicant;
@@ -10,9 +11,11 @@ use App\Models\Tracer\JobListing;
 use App\Models\Tracer\ProfilAlumni;
 use App\Models\Pagi\PagiCv;
 use App\Models\Pagi\PagiWork;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use App\Notifications\Trace\JobApplicationSubmitted;
 use App\Models\Tracer\ActivityLog;
 use App\Models\User;
@@ -20,7 +23,7 @@ use Illuminate\Support\Facades\Notification;
 
 class JobBrowseController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): InertiaResponse
     {
         $query = JobListing::where('status', 'published')
             ->with(['category', 'mitra'])
@@ -69,7 +72,9 @@ class JobBrowseController extends Controller
 
         $jobs = $query->latest()->paginate(12)->withQueryString();
 
-        $categories = JobCategory::all();
+        $categories = Cache::remember('trace_job_categories', now()->addHours(1), function () {
+            return JobCategory::select('id', 'nama')->get();
+        });
 
         // Get only mitras that have published jobs
         $mitras = \App\Models\Tracer\MitraProfile::whereHas('jobListings', function ($q) {
@@ -84,7 +89,7 @@ class JobBrowseController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($id): InertiaResponse
     {
         $job = JobListing::where('status', 'published')
             ->with(['mitra', 'category'])
@@ -105,8 +110,8 @@ class JobBrowseController extends Controller
             ->where('user_id', auth()->id())
             ->exists();
 
-        $myCvs = PagiCv::where('user_id', auth()->id())->get();
-        $myWorks = PagiWork::where('user_id', auth()->id())->get();
+        $myCvs = PagiCv::where('user_id', auth()->id())->select('id', 'title')->get();
+        $myWorks = PagiWork::where('user_id', auth()->id())->select('id', 'title')->get();
 
         return Inertia::render('Modules/Trace/Alumni/Jobs/Show', [
             'job' => $job,
@@ -118,7 +123,7 @@ class JobBrowseController extends Controller
         ]);
     }
 
-    public function apply(Request $request, $id)
+    public function apply(Request $request, $id, ApplyToJobAction $action): RedirectResponse
     {
         $request->validate([
             'cover_letter' => 'nullable|string',
@@ -136,78 +141,40 @@ class JobBrowseController extends Controller
 
         $job = JobListing::where('status', 'published')->findOrFail($id);
 
-        // Check if deadline has passed
-        if ($job->deadline && now()->greaterThan($job->deadline)) {
-            return redirect()->back()->with('error', 'Batas waktu lamaran sudah berakhir.');
+        $result = $action->execute($job, $alumniProfile, $request->only([
+            'cover_letter',
+            'attached_cv_ids',
+            'attached_portfolio_ids',
+        ]), auth()->id());
+
+        if (isset($result['error'])) {
+            return redirect()->back()->with('error', $result['error']);
         }
 
-        // Validate that selected CVs belong to the current user
-        $cvIds = $request->attached_cv_ids ?? [];
-        if (!empty($cvIds)) {
-            $validCvCount = PagiCv::where('user_id', auth()->id())
-                ->whereIn('id', $cvIds)
-                ->count();
-            if ($validCvCount !== count($cvIds)) {
-                return redirect()->back()->with('error', 'CV yang dipilih tidak valid.');
-            }
-        }
-
-        // Validate that selected portfolios belong to the current user
-        $portfolioIds = $request->attached_portfolio_ids ?? [];
-        if (!empty($portfolioIds)) {
-            $validWorkCount = PagiWork::where('user_id', auth()->id())
-                ->whereIn('id', $portfolioIds)
-                ->count();
-            if ($validWorkCount !== count($portfolioIds)) {
-                return redirect()->back()->with('error', 'Portfolio yang dipilih tidak valid.');
-            }
-        }
-
-        return DB::transaction(function () use ($request, $job, $alumniProfile, $cvIds, $portfolioIds) {
-            $alreadyApplied = JobApplicant::where('job_id', $job->id)
-                ->where('alumni_id', $alumniProfile->id)
-                ->lockForUpdate()
-                ->exists();
-
-            if ($alreadyApplied) {
-                return redirect()->back()->with('error', 'Anda sudah melamar pada lowongan ini.');
-            }
-
-            JobApplicant::create([
-                'job_id' => $job->id,
-                'alumni_id' => $alumniProfile->id,
-                'cover_letter' => $request->cover_letter,
-                'attached_cv_ids' => !empty($cvIds) ? $cvIds : null,
-                'attached_portfolio_ids' => !empty($portfolioIds) ? $portfolioIds : null,
-                'status' => 'applied',
-                'applied_at' => now(),
-            ]);
-
-            // Notify mitra about new application
-            $mitraUser = $job->mitra?->user;
-            if ($mitraUser) {
-                $mitraUser->notify(new JobApplicationSubmitted(
-                    auth()->user()->name,
-                    $job->title,
-                    $job->id,
-                ));
-            }
-
-            // Notify admins
-            $admins = User::where('user_type', 'admin')->get();
-            Notification::send($admins, new JobApplicationSubmitted(
+        // Notify mitra about new application
+        $mitraUser = $job->mitra?->user;
+        if ($mitraUser) {
+            $mitraUser->notify(new JobApplicationSubmitted(
                 auth()->user()->name,
                 $job->title,
                 $job->id,
             ));
+        }
 
-            ActivityLog::record('job.applied', "Melamar lowongan: {$job->title}", $job);
+        // Notify admins
+        $admins = User::where('user_type', 'admin')->get();
+        Notification::send($admins, new JobApplicationSubmitted(
+            auth()->user()->name,
+            $job->title,
+            $job->id,
+        ));
 
-            return redirect()->back()->with('success', 'Lamaran berhasil dikirim.');
-        });
+        ActivityLog::record('job.applied', "Melamar lowongan: {$job->title}", $job);
+
+        return redirect()->back()->with('success', 'Lamaran berhasil dikirim.');
     }
 
-    public function toggleBookmark($id)
+    public function toggleBookmark($id): RedirectResponse
     {
         $job = JobListing::where('status', 'published')->findOrFail($id);
 
@@ -229,7 +196,7 @@ class JobBrowseController extends Controller
         return redirect()->back();
     }
 
-    public function myApplications(Request $request)
+    public function myApplications(Request $request): InertiaResponse|RedirectResponse
     {
         $alumniProfile = ProfilAlumni::where('user_id', auth()->id())->first();
 
@@ -248,7 +215,7 @@ class JobBrowseController extends Controller
         ]);
     }
 
-    public function myBookmarks(Request $request)
+    public function myBookmarks(Request $request): InertiaResponse
     {
         $bookmarks = Bookmark::where('user_id', auth()->id())
             ->with(['jobListing' => function ($query) {
@@ -262,7 +229,7 @@ class JobBrowseController extends Controller
         ]);
     }
 
-    public function companies(Request $request)
+    public function companies(Request $request): InertiaResponse
     {
         $query = \App\Models\Tracer\MitraProfile::withCount(['jobListings' => function ($q) {
             $q->where('status', 'published');

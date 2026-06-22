@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
 import {
     Bookmark,
     Briefcase,
@@ -86,6 +87,7 @@ function formatDate(d: string): string {
 function removeBookmark(jobId: number) {
     router.post(`/trace/jobs/${jobId}/bookmark`, {}, {
         preserveScroll: true,
+        onError: () => { toast.error('Gagal menghapus bookmark.'); },
     });
 }
 </script>

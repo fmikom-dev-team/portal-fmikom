@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
+import { toast } from 'vue-sonner';
 import {
     Chart as ChartJS, Title, Tooltip, Legend, BarElement,
     CategoryScale, LinearScale, PointElement, LineElement,
@@ -19,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TPageHeader } from '@/components/trace';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
+import type { KuesionerSection } from '@/types/trace';
 import RespondentList from './components/RespondentList.vue';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, RadialLinearScale, ChartDataLabels);
@@ -31,7 +33,7 @@ const props = defineProps({
 const loading = ref(true);
 const exporting = ref(false);
 const exportingPdf = ref(false);
-const data = ref<any>(null);
+const data = ref<Record<string, unknown> | null>(null);
 const activeView = ref('overview');
 const selectedSection = ref('all');
 const error = ref<string | null>(null);
@@ -56,7 +58,8 @@ async function fetchLiveStats() {
         const response = await axios.get(`/trace/admin/questionnaires/${props.kuesionerId}/live-stats`);
         liveStats.value = response.data;
     } catch (e) {
-        console.error('Failed to fetch live stats', e);
+
+        toast.error('Gagal memuat data analitik.');
     } finally {
         refreshingLive.value = false;
     }
@@ -73,8 +76,8 @@ const fetchAnalytics = async () => {
     try {
         const response = await axios.get(`/trace/admin/questionnaires/${props.kuesionerId}/analytics`);
         data.value = response.data;
-    } catch (err: any) {
-        error.value = err?.response?.data?.message || 'Gagal mengambil data analitik';
+    } catch (err: unknown) {
+        error.value = (err as Record<string, unknown>)?.response ? ((err as Record<string, { data?: { message?: string } }>).response?.data?.message || 'Gagal mengambil data analitik') : 'Gagal mengambil data analitik';
     } finally {
         loading.value = false;
     }
@@ -85,7 +88,8 @@ const handleExport = () => {
     try {
         window.open(`/trace/admin/questionnaires/${props.kuesionerId}/export`, '_blank');
     } catch (err) {
-        console.error('Gagal mengekspor data:', err);
+
+        toast.error('Gagal memuat data analitik.');
     } finally {
         setTimeout(() => { exporting.value = false; }, 1500);
     }
@@ -113,7 +117,8 @@ const copyChart = async (statId: string | number) => {
             setTimeout(() => { copiedId.value = null; }, 2000);
         }, 'image/png');
     } catch (err) {
-        console.error('Gagal menyalin diagram:', err);
+
+        toast.error('Gagal memuat data analitik.');
     }
 };
 
@@ -191,7 +196,8 @@ const exportPDF = async () => {
         const filename = `Laporan_${(props.kuesioner.judul || 'Kuesioner').replace(/[^a-zA-Z0-9]/g, '_')}_${now.toISOString().slice(0, 10)}.pdf`;
         pdf.save(filename);
     } catch (err) {
-        console.error('Gagal export PDF:', err);
+
+        toast.error('Gagal memuat data analitik.');
     } finally {
         exportingPdf.value = false;
     }
@@ -217,33 +223,37 @@ onUnmounted(() => {
 const filteredSections = computed(() => {
     if (!data.value?.sections) return [];
     if (selectedSection.value === 'all') return data.value.sections;
-    return data.value.sections.filter((s: any) => s.id.toString() === selectedSection.value);
+    return data.value.sections.filter((s: KuesionerSection) => s.id.toString() === selectedSection.value);
 });
 
 const filteredCategories = computed(() => {
     if (!data.value?.categories) return [];
     if (selectedSection.value === 'all') return data.value.categories;
     return data.value.categories
-        .map((cat: any) => ({ ...cat, statistics: cat.statistics.filter((stat: any) => stat.section_id?.toString() === selectedSection.value) }))
-        .filter((cat: any) => cat.statistics.length > 0);
+        .map((cat: { name: string; statistics: Array<{ section_id?: number; [key: string]: unknown }> }) => ({ ...cat, statistics: cat.statistics.filter((stat: { section_id?: number; [key: string]: unknown }) => stat.section_id?.toString() === selectedSection.value) }))
+        .filter((cat: { name: string; statistics: unknown[] }) => cat.statistics.length > 0);
 });
 
-const getChartData = (stat: any) => {
-    if (stat.analysis.distribution) {
+const getChartData = (stat: Record<string, unknown>) => {
+    const analysis = stat.analysis as Record<string, unknown>;
+    if (analysis.distribution) {
+        const dist = analysis.distribution as Array<{ label: string; count: number }>;
         return {
-            labels: stat.analysis.distribution.map((d: any) => d.label),
-            datasets: [{ label: 'Jumlah Responden', backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#6366f1'], data: stat.analysis.distribution.map((d: any) => d.count), borderRadius: 8 }],
+            labels: dist.map((d: { label: string; count: number }) => d.label),
+            datasets: [{ label: 'Jumlah Responden', backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#6366f1'], data: dist.map((d: { label: string; count: number }) => d.count), borderRadius: 8 }],
         };
     }
     return { labels: [], datasets: [] };
 };
 
-const getScaleBarData = (stat: any) => {
-    if (stat.analysis.distribution) {
+const getScaleBarData = (stat: Record<string, unknown>) => {
+    const analysis = stat.analysis as Record<string, unknown>;
+    if (analysis.distribution) {
+        const dist = analysis.distribution as Array<{ label: string; count: number }>;
         const colors = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#14b8a6','#84cc16'];
         return {
-            labels: stat.analysis.distribution.map((d: any) => d.label),
-            datasets: [{ label: 'Jumlah', backgroundColor: stat.analysis.distribution.map((_: any, i: number) => colors[i % colors.length]), data: stat.analysis.distribution.map((d: any) => d.count), borderRadius: 6, barThickness: 28 }],
+            labels: dist.map((d: { label: string; count: number }) => d.label),
+            datasets: [{ label: 'Jumlah', backgroundColor: dist.map((_: unknown, i: number) => colors[i % colors.length]), data: dist.map((d: { label: string; count: number }) => d.count), borderRadius: 6, barThickness: 28 }],
         };
     }
     return { labels: [], datasets: [] };
@@ -252,11 +262,11 @@ const getScaleBarData = (stat: any) => {
 const chartOptions = {
     responsive: true, maintainAspectRatio: false,
     plugins: {
-        legend: { position: 'bottom' as const, labels: { usePointStyle: true, padding: 20, font: { size: 10, weight: 'bold' as any } } },
+        legend: { position: 'bottom' as const, labels: { usePointStyle: true, padding: 20, font: { size: 10, weight: 'bold' as const } } },
         datalabels: {
             color: '#fff',
-            font: { weight: 'bold' as any, size: 12 },
-            formatter: (value: number, ctx: any) => {
+            font: { weight: 'bold' as const, size: 12 },
+            formatter: (value: number, ctx: Record<string, unknown>) => {
                 const total = ctx.dataset.data.reduce((a: number, b: number) => a + b, 0);
                 const pct = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
                 return +pct >= 5 ? `${pct}%` : '';
@@ -269,14 +279,14 @@ const scaleBarOptions = {
     indexAxis: 'y' as const, responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false }, datalabels: { display: false } },
     scales: {
-        x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11, weight: 'bold' as any } }, grid: { display: false } },
-        y: { ticks: { font: { size: 12, weight: 'bold' as any } }, grid: { display: false } },
+        x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11, weight: 'bold' as const } }, grid: { display: false } },
+        y: { ticks: { font: { size: 12, weight: 'bold' as const } }, grid: { display: false } },
     },
 };
 
-const getRadarOptions = (stat: any) => ({
+const getRadarOptions = (stat: Record<string, unknown>) => ({
     responsive: true, maintainAspectRatio: false,
-    scales: { r: { angleLines: { display: true }, suggestedMin: 0, suggestedMax: stat.analysis?.scale_max || 5, ticks: { stepSize: 1, font: { size: 9 } }, pointLabels: { font: { size: 11, weight: 'bold' as any } } } },
+    scales: { r: { angleLines: { display: true }, suggestedMin: 0, suggestedMax: (stat.analysis as Record<string, unknown>)?.scale_max || 5, ticks: { stepSize: 1, font: { size: 9 } }, pointLabels: { font: { size: 11, weight: 'bold' as const } } } },
     plugins: { legend: { position: 'bottom' as const }, datalabels: { display: false } },
 });
 </script>

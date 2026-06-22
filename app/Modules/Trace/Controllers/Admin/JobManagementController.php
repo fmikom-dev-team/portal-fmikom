@@ -3,13 +3,19 @@
 namespace App\Modules\Trace\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Trace\StoreJobRequest;
+use App\Http\Requests\Trace\UpdateJobRequest;
 use App\Models\Tracer\JobApplicant;
 use App\Models\Tracer\JobCategory;
 use App\Models\Tracer\JobListing;
 use App\Models\Tracer\MitraProfile;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use App\Notifications\Trace\ApplicationStatusChanged;
 use App\Notifications\Trace\NewJobPosted;
 use App\Notifications\Trace\JobApprovedForMitra;
@@ -28,7 +34,7 @@ class JobManagementController extends Controller
         return $job->user_id === auth()->id() && $job->mitra_id === null;
     }
 
-    public function index(Request $request)
+    public function index(Request $request): InertiaResponse
     {
         $query = JobListing::with(['mitra', 'category'])
             ->withCount('applicants')
@@ -56,13 +62,15 @@ class JobManagementController extends Controller
         }
 
         $jobs = $query->paginate(15)->withQueryString();
-        $categories = JobCategory::all();
+        $categories = JobCategory::select('id', 'nama')->get();
 
-        $stats = [
-            'total' => JobListing::count(),
-            'pending_review' => JobListing::where('status', 'pending_review')->count(),
-            'published' => JobListing::where('status', 'published')->count(),
-        ];
+        $stats = Cache::remember('trace_job_stats', now()->addMinutes(5), function () {
+            return [
+                'total' => JobListing::count(),
+                'pending_review' => JobListing::where('status', 'pending_review')->count(),
+                'published' => JobListing::where('status', 'published')->count(),
+            ];
+        });
 
         return Inertia::render('Modules/Trace/Admin/Jobs/Index', [
             'jobs' => $jobs,
@@ -72,7 +80,7 @@ class JobManagementController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($id): InertiaResponse
     {
         $job = JobListing::with(['mitra', 'category', 'creator'])
             ->withCount('applicants')
@@ -82,7 +90,7 @@ class JobManagementController extends Controller
 
         $applicants = JobApplicant::where('job_id', $job->id)
             ->with(['alumni.user.pagiCvs', 'alumni.user.pagiWorks'])
-            ->get();
+            ->paginate(15);
 
         return Inertia::render('Modules/Trace/Admin/Jobs/Show', [
             'job' => $job,
@@ -91,10 +99,10 @@ class JobManagementController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(): InertiaResponse
     {
-        $categories = JobCategory::all();
-        $mitras = MitraProfile::all();
+        $categories = JobCategory::select('id', 'nama')->get();
+        $mitras = MitraProfile::select('id', 'nama_perusahaan')->get();
 
         return Inertia::render('Modules/Trace/Admin/Jobs/Create', [
             'categories' => $categories,
@@ -102,12 +110,11 @@ class JobManagementController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreJobRequest $request): RedirectResponse
     {
-        $validated = $request->validate($this->validationRules());
+        $validated = $request->validated();
 
         $validated['user_id'] = auth()->id();
-        $validated['mitra_id'] = $request->input('mitra_id');
         $validated['status'] = $validated['status'] ?? 'published';
 
         $job = JobListing::create($validated);
@@ -115,19 +122,22 @@ class JobManagementController extends Controller
 
         if ($job->status === 'published') {
             $companyName = $job->mitra?->nama_perusahaan ?? 'Admin FMIKOM';
-            $alumni = User::whereHas('alumniProfile')->get();
-            Notification::send($alumni, new NewJobPosted($job->title, $companyName, $job->id));
+            User::whereHas('alumniProfile')->select('id', 'name', 'email')->chunkById(200, function ($alumni) use ($job, $companyName) {
+                Notification::send($alumni, new NewJobPosted($job->title, $companyName, $job->id));
+            });
         }
+
+        Cache::forget('trace_job_stats');
 
         return redirect()->route('module.trace.admin.jobs')
             ->with('success', 'Lowongan berhasil dibuat.');
     }
 
-    public function edit($id)
+    public function edit($id): InertiaResponse
     {
         $job = JobListing::with('mitra', 'category')->findOrFail($id);
-        $categories = JobCategory::all();
-        $mitras = MitraProfile::all();
+        $categories = JobCategory::select('id', 'nama')->get();
+        $mitras = MitraProfile::select('id', 'nama_perusahaan')->get();
 
         return Inertia::render('Modules/Trace/Admin/Jobs/Edit', [
             'job' => $job,
@@ -136,17 +146,15 @@ class JobManagementController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateJobRequest $request, $id): RedirectResponse
     {
         $job = JobListing::findOrFail($id);
-        $validated = $request->validate($this->validationRules());
-
-        if ($request->has('mitra_id')) {
-            $validated['mitra_id'] = $request->input('mitra_id');
-        }
+        $validated = $request->validated();
 
         $job->update($validated);
         ActivityLog::record('job.updated', "Memperbarui lowongan: {$job->title}", $job);
+
+        Cache::forget('trace_job_stats');
 
         return redirect()->route('module.trace.admin.jobs.show', $job->id)
             ->with('success', 'Lowongan berhasil diperbarui.');
@@ -154,7 +162,7 @@ class JobManagementController extends Controller
 
     // ── Moderation (all jobs) ───────────────────────────────────────────
 
-    public function approve($id)
+    public function approve($id): RedirectResponse
     {
         $job = JobListing::with('mitra.user')->where('status', 'pending_review')->findOrFail($id);
 
@@ -167,19 +175,28 @@ class JobManagementController extends Controller
             $mitraUser->notify(new JobApprovedForMitra($job->title, $job->id));
         }
 
-        // Notify all alumni about the new job
+        // Notify all alumni about the new job (chunked to avoid memory issues)
         $companyName = $job->mitra?->nama_perusahaan ?? 'Admin FMIKOM';
-        $alumni = User::whereHas('alumniProfile')->get();
-        Notification::send($alumni, new NewJobPosted($job->title, $companyName, $job->id));
+        User::whereHas('alumniProfile')
+            ->select('id', 'name', 'email')
+            ->chunkById(200, function ($alumni) use ($job, $companyName) {
+                Notification::send($alumni, new NewJobPosted($job->title, $companyName, $job->id));
+            });
+
+        Cache::forget('trace_job_stats');
 
         return back()->with('success', 'Lowongan berhasil disetujui dan dipublikasikan.');
     }
 
-    public function reject(Request $request, $id)
+    public function reject(Request $request, $id): RedirectResponse
     {
         $job = JobListing::with('mitra.user')->where('status', 'pending_review')->findOrFail($id);
 
-        $reason = $request->input('rejection_reason', '');
+        $validated = $request->validate([
+            'rejection_reason' => 'nullable|string|max:500',
+        ]);
+
+        $reason = $validated['rejection_reason'] ?? '';
 
         $job->update([
             'status' => 'rejected',
@@ -194,41 +211,55 @@ class JobManagementController extends Controller
             $mitraUser->notify(new JobRejectedForMitra($job->title, $job->id, $reason ?: null));
         }
 
+        Cache::forget('trace_job_stats');
+
         return back()->with('success', 'Lowongan berhasil ditolak.' . ($reason ? " Alasan: {$reason}" : ''));
     }
 
-    public function bulkApprove(Request $request)
+    public function bulkApprove(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'ids' => 'required|array|min:1',
             'ids.*' => 'integer|exists:jobs_listings,id',
         ]);
 
-        $jobs = JobListing::whereIn('id', $validated['ids'])
+        $jobs = JobListing::with('mitra.user')
+            ->whereIn('id', $validated['ids'])
             ->where('status', 'pending_review')
             ->get();
 
-        foreach ($jobs as $job) {
-            $job->update(['status' => 'published']);
+        // Update statuses within a transaction for data integrity
+        DB::transaction(function () use ($jobs) {
+            foreach ($jobs as $job) {
+                $job->update(['status' => 'published']);
+                ActivityLog::record('job.approved', "Menyetujui lowongan: {$job->title}", $job);
+            }
+        });
 
-            // Notify mitra
+        // Send notifications AFTER transaction commits (outside transaction)
+        foreach ($jobs as $job) {
             $mitraUser = $job->mitra?->user;
             if ($mitraUser) {
                 $mitraUser->notify(new JobApprovedForMitra($job->title, $job->id));
             }
-
-            ActivityLog::record('job.approved', "Menyetujui lowongan: {$job->title}", $job);
-
-            // Notify alumni about new job
-            $companyName = $job->mitra?->nama_perusahaan ?? 'Admin FMIKOM';
-            $alumni = User::whereHas('alumniProfile')->get();
-            Notification::send($alumni, new NewJobPosted($job->title, $companyName, $job->id));
         }
+
+        // Notify alumni for each approved job (chunked to avoid memory issues)
+        foreach ($jobs as $job) {
+            $companyName = $job->mitra?->nama_perusahaan ?? 'Admin FMIKOM';
+            User::whereHas('alumniProfile')
+                ->select('id', 'name', 'email')
+                ->chunkById(200, function ($alumni) use ($job, $companyName) {
+                    Notification::send($alumni, new NewJobPosted($job->title, $companyName, $job->id));
+                });
+        }
+
+        Cache::forget('trace_job_stats');
 
         return back()->with('success', count($jobs) . ' lowongan berhasil disetujui.');
     }
 
-    public function bulkReject(Request $request)
+    public function bulkReject(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'ids' => 'required|array|min:1',
@@ -237,34 +268,43 @@ class JobManagementController extends Controller
         ]);
 
         $reason = $validated['rejection_reason'] ?? '';
-        $jobs = JobListing::whereIn('id', $validated['ids'])
+        $jobs = JobListing::with('mitra.user')
+            ->whereIn('id', $validated['ids'])
             ->where('status', 'pending_review')
             ->get();
 
-        foreach ($jobs as $job) {
-            $job->update([
-                'status' => 'rejected',
-                'rejection_reason' => $reason ?: null,
-                'rejected_at' => now(),
-            ]);
+        DB::transaction(function () use ($jobs, $reason) {
+            foreach ($jobs as $job) {
+                $job->update([
+                    'status' => 'rejected',
+                    'rejection_reason' => $reason ?: null,
+                    'rejected_at' => now(),
+                ]);
+                ActivityLog::record('job.rejected', "Menolak lowongan: {$job->title}", $job, ['reason' => $reason]);
+            }
+        });
 
+        // Notifications AFTER transaction commits
+        foreach ($jobs as $job) {
             $mitraUser = $job->mitra?->user;
             if ($mitraUser) {
                 $mitraUser->notify(new JobRejectedForMitra($job->title, $job->id, $reason ?: null));
             }
-
-            ActivityLog::record('job.rejected', "Menolak lowongan: {$job->title}", $job, ['reason' => $reason]);
         }
+
+        Cache::forget('trace_job_stats');
 
         return back()->with('success', count($jobs) . ' lowongan berhasil ditolak.');
     }
 
-    public function destroy($id)
+    public function destroy($id): RedirectResponse
     {
         $job = JobListing::findOrFail($id);
 
         ActivityLog::record('job.deleted', "Menghapus lowongan: {$job->title}", $job);
         $job->delete();
+
+        Cache::forget('trace_job_stats');
 
         return redirect()->route('module.trace.admin.jobs')
             ->with('success', 'Lowongan berhasil dihapus.');
@@ -272,7 +312,7 @@ class JobManagementController extends Controller
 
     // ── Applicant Management (owner only) ───────────────────────────────
 
-    public function updateApplicantStatus(Request $request, $jobId, $applicantId)
+    public function updateApplicantStatus(Request $request, $jobId, $applicantId): RedirectResponse
     {
         $job = JobListing::findOrFail($jobId);
 
@@ -314,22 +354,5 @@ class JobManagementController extends Controller
         return back()->with('success', 'Status pelamar berhasil diperbarui.');
     }
 
-    private function validationRules(): array
-    {
-        return [
-            'title' => 'required|string|max:255',
-            'description' => 'required|string|max:65535',
-            'job_category_id' => 'nullable|exists:job_categories,id',
-            'experience_level' => 'required|in:fresh_graduate,junior,mid_level,senior,internship',
-            'location_type' => 'required|in:onsite,remote,hybrid',
-            'location_city' => 'nullable|string',
-            'tipe_kerja' => 'required|in:full_time,part_time,magang,freelance',
-            'salary_min' => 'nullable|integer|min:0',
-            'salary_max' => 'nullable|integer|min:0|gte:salary_min',
-            'deadline' => 'nullable|date|after:today',
-            'is_salary_visible' => 'boolean',
-            'status' => 'in:draft,published,closed',
-            'mitra_id' => 'nullable|exists:mitra_profiles,id',
-        ];
-    }
+
 }

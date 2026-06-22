@@ -3,9 +3,10 @@
 namespace App\Notifications\Trace;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class JobApprovedForMitra extends Notification
+class JobApprovedForMitra extends Notification implements ShouldQueue
 {
     use Queueable;
 

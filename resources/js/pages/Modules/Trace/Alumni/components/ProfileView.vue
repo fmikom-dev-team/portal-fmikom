@@ -21,7 +21,36 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 const props = defineProps<{
-    alumni: any;
+    alumni: {
+        user_id: number;
+        name: string;
+        email: string;
+        nomor_induk: string;
+        no_telepon: string | null;
+        foto_path: string | null;
+        banner_path: string | null;
+        tahun_lulus: number | null;
+        tanggal_lahir: string | null;
+        program_studi_id: number | null;
+        bio: string | null;
+        location: string | null;
+        website: string | null;
+        linkedin: string | null;
+        github: string | null;
+        instagram: string | null;
+        twitter: string | null;
+        profil_id: number;
+        angkatan: number | null;
+        alamat_rumah: string | null;
+        latitude_rumah: number | null;
+        longitude_rumah: number | null;
+        jenis_kelamin: 'L' | 'P' | null;
+        nik: string | null;
+        npwp: string | null;
+        provinsi_id: number | null;
+        kota_id: number | null;
+        completeness_percentage: number;
+    };
     programStudis: { id: number; nama: string; kode: string }[];
     provinsis: { id: number; name: string }[];
     kotas: { id: number; name: string; provinsi_id: number }[];

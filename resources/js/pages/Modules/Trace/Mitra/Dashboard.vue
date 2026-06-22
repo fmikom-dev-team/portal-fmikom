@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import {
     Briefcase,
@@ -15,6 +15,8 @@ import TraceMitraLayout from '@/layouts/TraceMitraLayout.vue';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TPageHeader, TStatCard, TStatusBadge, TEmptyState } from '@/components/trace';
 import Button from '@/components/ui/button/Button.vue';
+import { ref, onMounted, nextTick } from 'vue';
+import { TSkeleton } from '@/components/trace';
 
 const props = defineProps({
     mitra: Object,
@@ -22,9 +24,14 @@ const props = defineProps({
     recentApplicants: Array,
 });
 
+const isReady = ref(false);
+onMounted(() => {
+    nextTick(() => { isReady.value = true; });
+});
+
 const statusConfig = {
     applied: { label: 'Melamar', class: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800/40' },
-    reviewed: { label: 'Ditinjau', class: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800/40' },
+    reviewed: { label: 'Sedang Ditinjau', class: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800/40' },
     accepted: { label: 'Diterima', class: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40' },
     rejected: { label: 'Ditolak', class: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800/40' },
 };
@@ -54,7 +61,7 @@ const formatDate = (dateStr) => {
         <div class="flex h-full flex-1 flex-col gap-6 max-w-7xl mx-auto w-full pb-12">
 
             <!-- Header -->
-            <TPageHeader title="Dashboard Mitra" :description="`Selamat datang, ${mitra?.nama_perusahaan ?? 'Mitra'}. Kelola lowongan kerja dan pantau pelamar dari satu tempat.`" :icon="Briefcase">
+            <TPageHeader title="Dashboard Mitra" :description="`Halo, ${mitra?.nama_perusahaan ?? 'Mitra'}! Kelola lowongan dan pantau pelamar Anda di sini.`" :icon="Briefcase">
                 <template #actions>
                     <Link href="/trace/open-job/jobs-listings/create">
                         <Button class="gap-2 rounded-xl bg-[#0C447C] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#0C447C]/25 transition-all hover:shadow-xl hover:bg-[#0C447C]/90">
@@ -65,16 +72,32 @@ const formatDate = (dateStr) => {
                 </template>
             </TPageHeader>
 
+            <!-- Stat Cards Skeleton -->
+            <div v-if="!isReady" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <TSkeleton variant="stat-card" :count="4" />
+            </div>
             <!-- Stat Cards -->
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <TStatCard label="Total Lowongan" :value="stats?.total_jobs ?? 0" :icon="Briefcase" color="primary" />
                 <TStatCard label="Lowongan Aktif" :value="stats?.active_jobs ?? 0" :icon="CheckCircle" color="emerald" />
                 <TStatCard label="Total Pelamar" :value="stats?.total_applicants ?? 0" :icon="Users" color="primary" />
                 <TStatCard label="Pelamar Menunggu" :value="stats?.pending_applicants ?? 0" :icon="Clock" color="accent" />
             </div>
 
+            <!-- Quick Links Skeleton -->
+            <div v-if="!isReady" class="grid gap-4 sm:grid-cols-3">
+                <div v-for="i in 3" :key="i" class="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+                    <div class="flex items-center gap-3">
+                        <TSkeleton variant="circle" width="40px" height="40px" />
+                        <div class="space-y-2 flex-1">
+                            <TSkeleton variant="text" width="60%" />
+                            <TSkeleton variant="text" width="80%" height="10px" />
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!-- Quick Links -->
-            <div class="grid gap-4 sm:grid-cols-3">
+            <div v-else class="grid gap-4 sm:grid-cols-3">
                 <Link
                     href="/trace/open-job/jobs-listings/create"
                     class="group relative overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition-all duration-200 hover:shadow-md hover:border-[#85B7EB] dark:hover:border-[#0C447C]"
@@ -84,8 +107,8 @@ const formatDate = (dateStr) => {
                             <Plus class="h-5 w-5 text-white" />
                         </div>
                         <div>
-                            <h3 class="text-sm font-bold text-slate-800 dark:text-white">Buat Lowongan Baru</h3>
-                            <p class="text-[11px] text-slate-400 dark:text-slate-500">Publikasi posisi untuk alumni</p>
+                            <h3 class="text-sm font-bold text-slate-800 dark:text-white">Tambah Lowongan</h3>
+                            <p class="text-[11px] text-slate-400 dark:text-slate-500">Buat & publikasikan lowongan baru</p>
                         </div>
                     </div>
                     <ArrowRight class="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 dark:text-slate-700 transition-all duration-200 group-hover:text-[#0C447C] group-hover:translate-x-1" />
@@ -100,8 +123,8 @@ const formatDate = (dateStr) => {
                             <Eye class="h-5 w-5 text-white" />
                         </div>
                         <div>
-                            <h3 class="text-sm font-bold text-slate-800 dark:text-white">Lihat Pelamar</h3>
-                            <p class="text-[11px] text-slate-400 dark:text-slate-500">Kelola lamaran masuk</p>
+                            <h3 class="text-sm font-bold text-slate-800 dark:text-white">Kelola Pelamar</h3>
+                            <p class="text-[11px] text-slate-400 dark:text-slate-500">Tinjau & proses lamaran masuk</p>
                         </div>
                     </div>
                     <ArrowRight class="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 dark:text-slate-700 transition-all duration-200 group-hover:text-[#0C447C] group-hover:translate-x-1" />
@@ -117,15 +140,35 @@ const formatDate = (dateStr) => {
                         </div>
                         <div>
                             <h3 class="text-sm font-bold text-slate-800 dark:text-white">Profil Perusahaan</h3>
-                            <p class="text-[11px] text-slate-400 dark:text-slate-500">Edit info perusahaan</p>
+                            <p class="text-[11px] text-slate-400 dark:text-slate-500">Perbarui informasi perusahaan</p>
                         </div>
                     </div>
                     <ArrowRight class="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 dark:text-slate-700 transition-all duration-200 group-hover:text-emerald-500 group-hover:translate-x-1" />
                 </Link>
             </div>
 
+            <!-- Recent Applicants Skeleton -->
+            <div v-if="!isReady" class="overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+                <div class="flex items-center justify-between border-b border-slate-50 dark:border-slate-800/60 px-6 py-4">
+                    <div class="flex items-center gap-2">
+                        <TSkeleton variant="circle" width="32px" height="32px" />
+                        <TSkeleton variant="text" width="120px" />
+                    </div>
+                    <TSkeleton variant="text" width="70px" height="12px" />
+                </div>
+                <div class="divide-y divide-slate-50 dark:divide-slate-800/60">
+                    <div v-for="i in 4" :key="i" class="flex items-center gap-4 px-6 py-4">
+                        <TSkeleton variant="circle" width="40px" height="40px" />
+                        <div class="flex-1 space-y-2">
+                            <TSkeleton variant="text" width="50%" />
+                            <TSkeleton variant="text" width="70%" height="10px" />
+                        </div>
+                        <TSkeleton variant="text" width="60px" height="20px" />
+                    </div>
+                </div>
+            </div>
             <!-- Recent Applicants -->
-            <Card class="overflow-hidden rounded-2xl border-slate-100 dark:border-slate-800 shadow-xs">
+            <Card v-else class="overflow-hidden rounded-2xl border-slate-100 dark:border-slate-800 shadow-xs">
                 <CardHeader class="flex flex-row items-center justify-between border-b border-slate-50 dark:border-slate-800/60 px-6 py-4">
                     <div class="flex items-center gap-2">
                         <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0C447C]/10 dark:bg-[#0C447C]/20">
@@ -182,7 +225,7 @@ const formatDate = (dateStr) => {
                     </div>
 
                     <!-- Empty State -->
-                    <TEmptyState v-else :icon="Users" title="Belum ada pelamar" description="Pelamar yang melamar ke lowongan Anda akan muncul di sini." actionLabel="Buat Lowongan Pertama" actionHref="/trace/open-job/jobs-listings/create" />
+                    <TEmptyState v-else :icon="Users" title="Belum ada pelamar masuk" description="Pelamar akan muncul di sini setelah Anda mempublikasikan lowongan." actionLabel="Buat Lowongan Sekarang" actionHref="/trace/open-job/jobs-listings/create" />
                 </CardContent>
             </Card>
 

@@ -3,7 +3,7 @@
 namespace App\Modules\Trace\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\DashboardStatsService;
+use App\Modules\Trace\Services\DashboardStatsService;
 use Inertia\Inertia;
 
 class DashboardAdminController extends Controller

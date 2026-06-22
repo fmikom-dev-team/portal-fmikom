@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { router } from "@inertiajs/vue3";
+import { toast } from 'vue-sonner';
 import {
     FileText,
     MoreVertical,
@@ -120,7 +121,7 @@ const editQuestionnaire = () => {
 };
 
 const viewAnalytics = () => {
-    router.get(`/trace/admin/questionnaires/${props.kuesioner.id}/analytics-page`);
+    window.open(`/trace/admin/questionnaires/${props.kuesioner.id}/analytics-page`, '_blank');
 };
 
 const showDuplicateDialog = ref(false);
@@ -128,12 +129,16 @@ const showDeleteDialog = ref(false);
 
 const duplicateQuestionnaire = () => {
     showDuplicateDialog.value = false;
-    router.post(`/trace/admin/questionnaires/${props.kuesioner.id}/duplicate`);
+    router.post(`/trace/admin/questionnaires/${props.kuesioner.id}/duplicate`, {}, {
+        onError: () => toast.error('Gagal menduplikasi kuesioner.'),
+    });
 };
 
 const deleteQuestionnaire = () => {
     showDeleteDialog.value = false;
-    router.delete(`/trace/admin/questionnaires/${props.kuesioner.id}`);
+    router.delete(`/trace/admin/questionnaires/${props.kuesioner.id}`, {
+        onError: () => toast.error('Gagal menghapus kuesioner.'),
+    });
 };
 </script>
 

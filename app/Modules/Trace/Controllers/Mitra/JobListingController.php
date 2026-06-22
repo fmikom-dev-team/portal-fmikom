@@ -7,8 +7,10 @@ use App\Models\Tracer\JobApplicant;
 use App\Models\Tracer\JobCategory;
 use App\Models\Tracer\JobListing;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use App\Notifications\Trace\ApplicationStatusChanged;
 use App\Notifications\Trace\JobSubmittedForReview;
 use App\Models\Tracer\ActivityLog;
@@ -16,10 +18,9 @@ use Illuminate\Support\Facades\Notification;
 
 class JobListingController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): InertiaResponse|RedirectResponse
     {
-        $user = $request->user();
-        $mitra = $user->mitraProfile;
+        $mitra = $request->user()->mitraProfile;
 
         if (!$mitra) {
             return redirect()->route('module.trace.open-job.mitra-profile-setup');
@@ -36,14 +37,8 @@ class JobListingController extends Controller
         ]);
     }
 
-    public function create(Request $request)
+    public function create(Request $request): InertiaResponse
     {
-        $user = $request->user();
-        $mitra = $user->mitraProfile;
-
-        if (!$mitra) {
-            return redirect()->route('module.trace.open-job.mitra-profile-setup');
-        }
 
         $categories = JobCategory::all();
 
@@ -52,7 +47,7 @@ class JobListingController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $user = $request->user();
         $mitra = $user->mitraProfile;
@@ -84,10 +79,9 @@ class JobListingController extends Controller
             ->with('success', 'Lowongan berhasil dibuat.');
     }
 
-    public function show(Request $request, $id)
+    public function show(Request $request, $id): InertiaResponse|RedirectResponse
     {
-        $user = $request->user();
-        $mitra = $user->mitraProfile;
+        $mitra = $request->user()->mitraProfile;
 
         if (!$mitra) {
             return redirect()->route('module.trace.open-job.mitra-profile-setup');
@@ -114,10 +108,9 @@ class JobListingController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, $id): RedirectResponse
     {
-        $user = $request->user();
-        $mitra = $user->mitraProfile;
+        $mitra = $request->user()->mitraProfile;
 
         if (!$mitra) {
             return redirect()->route('module.trace.open-job.mitra-profile-setup');
@@ -138,10 +131,9 @@ class JobListingController extends Controller
         return back()->with('success', 'Lowongan berhasil diperbarui.');
     }
 
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, $id): RedirectResponse
     {
-        $user = $request->user();
-        $mitra = $user->mitraProfile;
+        $mitra = $request->user()->mitraProfile;
 
         if (!$mitra) {
             return redirect()->route('module.trace.open-job.mitra-profile-setup');
@@ -156,10 +148,9 @@ class JobListingController extends Controller
             ->with('success', 'Lowongan berhasil dihapus.');
     }
 
-    public function updateApplicantStatus(Request $request, $jobId, $applicantId)
+    public function updateApplicantStatus(Request $request, $jobId, $applicantId): RedirectResponse
     {
-        $user = $request->user();
-        $mitra = $user->mitraProfile;
+        $mitra = $request->user()->mitraProfile;
 
         if (!$mitra) {
             return redirect()->route('module.trace.open-job.mitra-profile-setup');
@@ -203,10 +194,9 @@ class JobListingController extends Controller
         return back()->with('success', 'Status pelamar berhasil diperbarui.');
     }
 
-    public function submitForReview(Request $request, $id)
+    public function submitForReview(Request $request, $id): RedirectResponse
     {
-        $user = $request->user();
-        $mitra = $user->mitraProfile;
+        $mitra = $request->user()->mitraProfile;
 
         if (!$mitra) {
             return redirect()->route('module.trace.open-job.mitra-profile-setup');

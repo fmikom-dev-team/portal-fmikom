@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import axios from 'axios';
+import { toast } from 'vue-sonner';
 import { Loader2, Mail, Calendar, User } from 'lucide-vue-next';
 import { ref, onMounted } from 'vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -50,7 +51,8 @@ const fetchRespondents = async () => {
         const response = await axios.get(`/trace/admin/questionnaires/${props.kuesionerId}/respondents`);
         respondents.value = response.data.data;
     } catch (error) {
-        console.error('Gagal mengambil daftar responden:', error);
+
+        toast.error('Gagal memuat daftar responden.');
     } finally {
         loading.value = false;
     }

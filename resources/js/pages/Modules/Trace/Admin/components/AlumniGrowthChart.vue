@@ -119,8 +119,8 @@ const chartOptions = {
             displayColors: true,
             boxPadding: 4,
             callbacks: {
-                title: (items: any) => `Angkatan ${items[0].label}`,
-                label: (ctx: any) => ` ${ctx.dataset.label}: ${ctx.parsed.y} Alumni`,
+                title: (items: Record<string, unknown>[]) => `Angkatan ${(items[0] as Record<string, unknown>).label}`,
+                label: (ctx: Record<string, unknown>) => ` ${(ctx.dataset as Record<string, unknown>).label}: ${(ctx.parsed as Record<string, unknown>).y} Alumni`,
             }
         },
     },
@@ -142,7 +142,7 @@ const chartOptions = {
 </script>
 
 <template>
-    <div class="overflow-hidden rounded-3xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+    <div class="overflow-hidden rounded-3xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs">
         <!-- Header -->
         <div class="flex items-center justify-between px-6 pt-6 pb-1">
             <div class="flex items-center gap-2">
@@ -152,7 +152,7 @@ const chartOptions = {
                 <div>
                     <h3 class="text-base font-black text-slate-800 dark:text-white">Alumni per Angkatan</h3>
                     <p class="text-[10px] font-bold text-slate-400">
-                        Menampilkan {{ totalShown }} alumni
+                        Total {{ totalShown }} alumni ditampilkan
                         <span v-if="selectedProdi !== 'semua'" class="text-[#0C447C] dark:text-[#85B7EB]">• {{ selectedProdi }}</span>
                     </p>
                 </div>
@@ -160,21 +160,21 @@ const chartOptions = {
         </div>
 
         <!-- Filters -->
-        <div class="flex items-center gap-3 px-6 py-3">
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3 px-6 py-3">
             <div class="flex items-center gap-1.5">
                 <Filter class="h-3 w-3 text-slate-400" />
                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Filter</span>
             </div>
             <select
                 v-model="selectedProdi"
-                class="h-8 rounded-lg bg-slate-50 dark:bg-slate-800 px-3 text-[11px] font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 outline-none focus:border-[#0C447C] transition-colors"
+                class="h-8 flex-1 sm:flex-none rounded-lg bg-slate-50 dark:bg-zinc-800 px-3 text-[11px] font-bold text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 outline-none focus:border-[#0C447C] transition-colors min-w-0"
             >
                 <option value="semua">Semua Prodi</option>
                 <option v-for="prodi in props.data.prodiList" :key="prodi" :value="prodi">{{ prodi }}</option>
             </select>
             <select
                 v-model="selectedAngkatan"
-                class="h-8 rounded-lg bg-slate-50 dark:bg-slate-800 px-3 text-[11px] font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 outline-none focus:border-[#0C447C] transition-colors"
+                class="h-8 flex-1 sm:flex-none rounded-lg bg-slate-50 dark:bg-zinc-800 px-3 text-[11px] font-bold text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 outline-none focus:border-[#0C447C] transition-colors min-w-0"
             >
                 <option value="semua">Semua Angkatan</option>
                 <option v-for="a in props.data.angkatanList" :key="a" :value="a">{{ a }}</option>
@@ -189,7 +189,7 @@ const chartOptions = {
         </div>
 
         <!-- Legend (when showing per-prodi for single angkatan) -->
-        <div v-if="selectedAngkatan !== 'semua' && selectedProdi === 'semua'" class="px-6 pb-4 flex flex-wrap gap-3 border-t border-slate-50 dark:border-slate-800 pt-3">
+        <div v-if="selectedAngkatan !== 'semua' && selectedProdi === 'semua'" class="px-6 pb-4 flex flex-wrap gap-3 border-t border-slate-50 dark:border-zinc-800 pt-3">
             <div v-for="(prodi, i) in props.data.prodiList" :key="prodi" class="flex items-center gap-1.5">
                 <div class="h-2.5 w-2.5 rounded-sm" :style="`background:${barColors[i % barColors.length]}`"></div>
                 <span class="text-[10px] font-bold text-slate-500">{{ prodi }}</span>

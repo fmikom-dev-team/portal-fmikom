@@ -210,7 +210,7 @@ const groupedActionTypes = computed(() => {
         <div class="mx-auto max-w-7xl space-y-6">
             <TPageHeader
                 title="Activity Log"
-                description="Pantau semua aktivitas pengguna di sistem."
+                description="Riwayat seluruh aktivitas pengguna dalam sistem."
                 :icon="History"
             >
                 <template #actions>

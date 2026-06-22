@@ -25,6 +25,8 @@ return new class extends Migration
 
             $table->index('user_id');
             $table->index(['provinsi_id', 'kota_id']);
+            $table->index('jenis_kelamin');
+            $table->index('angkatan');
         });
     }
 

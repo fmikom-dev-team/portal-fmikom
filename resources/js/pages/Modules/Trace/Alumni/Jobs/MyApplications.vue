@@ -95,7 +95,7 @@ function mapStatusLabel(status: string): string | undefined {
     >
         <div class="mx-auto space-y-6">
             <!-- Page Header -->
-            <TPageHeader title="Lamaran Saya" description="Pantau status lamaran pekerjaan Anda" :icon="FileText">
+            <TPageHeader title="Lamaran Saya" description="Lacak progres lamaran kerja Anda." :icon="FileText">
                 <template #actions>
                     <Button as-child variant="ghost" size="icon-sm" class="rounded-xl text-slate-400 hover:text-[#0C447C] hover:bg-[#0C447C]/5 dark:hover:text-[#85B7EB] dark:hover:bg-[#85B7EB]/10">
                         <Link href="/trace/jobs">

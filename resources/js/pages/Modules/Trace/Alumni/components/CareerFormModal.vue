@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { useForm } from "@inertiajs/vue3";
-import L from "leaflet";
-import { X, MapPin } from "lucide-vue-next";
+import { X } from "lucide-vue-next";
 import { watch, computed, ref, nextTick, onUnmounted } from "vue";
 import { toast } from "vue-sonner";
-import "leaflet/dist/leaflet.css";
+import EmploymentFields from "./EmploymentFields.vue";
+import EducationFields from "./EducationFields.vue";
+import LocationPicker from "@/components/Trace/LocationPicker.vue";
+import type { Lokasi } from "@/types/trace";
 
 interface Career {
     id: number;
@@ -36,8 +38,8 @@ interface Career {
 const props = defineProps<{
     show: boolean;
     career?: Career | null;
-    provinces: any[];
-    cities: any[];
+    provinces: Lokasi[];
+    cities: Lokasi[];
 }>();
 
 const emit = defineEmits<{
@@ -71,86 +73,46 @@ const form = useForm({
     is_current: false,
 });
 
-// Map Picker
-const mapContainer = ref<HTMLElement | null>(null);
-let map: L.Map | null = null;
-let marker: L.Marker | null = null;
-
 const isEditing = computed(() => !!props.career);
 
-const filteredCities = computed(() => {
-    if (!form.provinsi_id) {
-        return [];
-    }
-
-    return props.cities.filter((city) => city.provinsi_id === form.provinsi_id);
+const needsCompanyInfo = computed(() => {
+    return ["bekerja", "wirausaha"].includes(form.status);
 });
 
-const destroyMap = () => {
-    if (map) {
-        map.remove();
-        map = null;
-        marker = null;
+const needsUniversityInfo = computed(() => {
+    return form.status === "lanjut_studi";
+});
+
+const needsLocation = computed(() => {
+    return ["bekerja", "wirausaha", "lanjut_studi"].includes(form.status);
+});
+
+// Date validation: tanggal_selesai cannot be before tanggal_mulai
+const dateError = computed(() => {
+    if (!form.is_current && form.tanggal_mulai && form.tanggal_selesai) {
+        const mulai = new Date(form.tanggal_mulai);
+        const selesai = new Date(form.tanggal_selesai);
+
+        if (selesai < mulai) {
+            return "Tanggal selesai tidak boleh lebih awal dari tanggal mulai.";
+        }
     }
-};
 
-const initMap = () => {
-    nextTick(() => {
-        if (!mapContainer.value) {
-            return;
-        }
+    return null;
+});
 
-        if (map) {
-            return;
-        }
+// Salary validation: gaji_max cannot be less than gaji_min
+const salaryError = computed(() => {
+    if (
+        form.gaji_min !== null &&
+        form.gaji_max !== null &&
+        form.gaji_max < form.gaji_min
+    ) {
+        return "Gaji maksimum tidak boleh lebih kecil dari gaji minimum.";
+    }
 
-        const defaultLat = form.latitude || -6.2088;
-        const defaultLng = form.longitude || 106.8456;
-
-        map = L.map(mapContainer.value, {
-            center: [defaultLat, defaultLng],
-            zoom: 13,
-            zoomControl: true,
-        });
-
-        L.tileLayer(
-            "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-            {
-                attribution: "&copy; CARTO",
-                subdomains: "abcd",
-                maxZoom: 20,
-            },
-        ).addTo(map);
-
-        const iconColor = form.status === "lanjut_studi" ? "purple" : "blue";
-        marker = L.marker([defaultLat, defaultLng], {
-            draggable: true,
-            icon: L.divIcon({
-                className: "custom-div-icon",
-                html: `<div class="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-${iconColor}-600 shadow-lg shadow-${iconColor}-500/50"><div class="h-2 w-2 rounded-full bg-white"></div></div>`,
-                iconSize: [32, 32],
-                iconAnchor: [16, 16],
-            }),
-        }).addTo(map);
-
-        marker.on("dragend", () => {
-            const position = marker!.getLatLng();
-            form.latitude = position.lat;
-            form.longitude = position.lng;
-        });
-
-        map.on("click", (e) => {
-            marker!.setLatLng(e.latlng);
-            form.latitude = e.latlng.lat;
-            form.longitude = e.latlng.lng;
-        });
-
-        if (!form.latitude || !form.longitude) {
-            form.latitude = defaultLat;
-            form.longitude = defaultLng;
-        }
-    });
-};
+    return null;
+});
 
 watch(
     () => form.is_current,
@@ -161,36 +123,10 @@ watch(
     },
 );
 
-// Only reset kota when provinsi changes manually (not during initial load)
-let isInitialLoad = true;
-watch(
-    () => form.provinsi_id,
-    () => {
-        if (!isInitialLoad) {
-            form.kota_id = null;
-        }
-
-        isInitialLoad = false;
-    },
-);
-
-watch(
-    () => form.status,
-    (newStatus) => {
-        destroyMap();
-
-        if (["bekerja", "wirausaha", "lanjut_studi"].includes(newStatus)) {
-            initMap();
-        }
-    },
-    { immediate: true },
-);
-
 watch(
     () => props.show,
     (isShown) => {
         if (isShown) {
-            isInitialLoad = true;
             if (props.career) {
                 const newCareer = props.career;
                 form.status = newCareer.status;
@@ -208,11 +144,9 @@ watch(
                 form.jenjang_pendidikan = newCareer.jenjang_pendidikan || "";
                 form.sumber_biaya = newCareer.sumber_biaya || "";
                 form.alamat_universitas = newCareer.alamat_universitas || "";
-                // Location fields - set provinsi first, then kota
+                // Location fields
                 form.provinsi_id = newCareer.provinsi_id || null;
-                nextTick(() => {
-                    form.kota_id = newCareer.kota_id || null;
-                });
+                form.kota_id = newCareer.kota_id || null;
                 form.latitude = newCareer.latitude || null;
                 form.longitude = newCareer.longitude || null;
                 // Date fields
@@ -226,25 +160,12 @@ watch(
             } else {
                 form.reset();
             }
-
-            if (
-                ["bekerja", "wirausaha", "lanjut_studi"].includes(form.status)
-            ) {
-                setTimeout(() => initMap(), 100);
-            }
-        } else {
-            destroyMap();
         }
     },
     { immediate: true },
 );
 
-onUnmounted(() => {
-    destroyMap();
-});
-
 const close = () => {
-    destroyMap();
     emit("update:show", false);
     emit("close");
     form.reset();
@@ -299,47 +220,11 @@ const submit = () => {
         onSuccess: () => {
             close();
         },
-        onError: (errors) => {
-            console.error("Validation errors:", errors);
+        onError: () => {
             toast.error("Gagal menyimpan riwayat karir");
         },
     });
 };
-
-const needsCompanyInfo = computed(() => {
-    return ["bekerja", "wirausaha"].includes(form.status);
-});
-
-const needsUniversityInfo = computed(() => {
-    return form.status === "lanjut_studi";
-});
-
-// Date validation: tanggal_selesai cannot be before tanggal_mulai
-const dateError = computed(() => {
-    if (!form.is_current && form.tanggal_mulai && form.tanggal_selesai) {
-        const mulai = new Date(form.tanggal_mulai);
-        const selesai = new Date(form.tanggal_selesai);
-
-        if (selesai < mulai) {
-            return "Tanggal selesai tidak boleh lebih awal dari tanggal mulai.";
-        }
-    }
-
-    return null;
-});
-
-// Salary validation: gaji_max cannot be less than gaji_min
-const salaryError = computed(() => {
-    if (
-        form.gaji_min !== null &&
-        form.gaji_max !== null &&
-        form.gaji_max < form.gaji_min
-    ) {
-        return "Gaji maksimum tidak boleh lebih kecil dari gaji minimum.";
-    }
-
-    return null;
-});
 </script>
 
 <template>
@@ -402,520 +287,24 @@ const salaryError = computed(() => {
 
                     <!-- Company Info (only for bekerja/wirausaha) -->
                     <template v-if="needsCompanyInfo">
-                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <!-- Nama Perusahaan -->
-                            <div>
-                                <label
-                                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                >
-                                    Nama Perusahaan
-                                    <span class="text-red-500">*</span>
-                                </label>
-                                <input
-                                    v-model="form.nama_perusahaan"
-                                    type="text"
-                                    class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                    required
-                                />
-                                <p
-                                    v-if="form.errors.nama_perusahaan"
-                                    class="mt-1 text-sm text-red-500"
-                                >
-                                    {{ form.errors.nama_perusahaan }}
-                                </p>
-                            </div>
-
-                            <!-- Jabatan -->
-                            <div>
-                                <label
-                                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                >
-                                    Jabatan <span class="text-red-500">*</span>
-                                </label>
-                                <input
-                                    v-model="form.jabatan"
-                                    type="text"
-                                    class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                    required
-                                />
-                                <p
-                                    v-if="form.errors.jabatan"
-                                    class="mt-1 text-sm text-red-500"
-                                >
-                                    {{ form.errors.jabatan }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Sektor Industri -->
-                        <div>
-                            <label
-                                class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                            >
-                                Sektor Industri
-                            </label>
-                            <select
-                                v-model="form.sektor_industri"
-                                class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                            >
-                                <option value="" disabled>Pilih Sektor Industri</option>
-                                <option value="Teknologi Informasi">Teknologi Informasi</option>
-                                <option value="Pendidikan">Pendidikan</option>
-                                <option value="Keuangan & Perbankan">Keuangan & Perbankan</option>
-                                <option value="Kesehatan">Kesehatan</option>
-                                <option value="Manufaktur">Manufaktur</option>
-                                <option value="Pemerintahan">Pemerintahan</option>
-                                <option value="Perdagangan & E-Commerce">Perdagangan & E-Commerce</option>
-                                <option value="Telekomunikasi">Telekomunikasi</option>
-                                <option value="Konstruksi & Properti">Konstruksi & Properti</option>
-                                <option value="Transportasi & Logistik">Transportasi & Logistik</option>
-                                <option value="Media & Kreatif">Media & Kreatif</option>
-                                <option value="Pertanian & Pangan">Pertanian & Pangan</option>
-                                <option value="Energi & Pertambangan">Energi & Pertambangan</option>
-                                <option value="Pariwisata & Hospitality">Pariwisata & Hospitality</option>
-                                <option value="Lainnya">Lainnya</option>
-                            </select>
-                            <p
-                                v-if="form.errors.sektor_industri"
-                                class="mt-1 text-sm text-red-500"
-                            >
-                                {{ form.errors.sektor_industri }}
-                            </p>
-                        </div>
-
-                        <!-- Location -->
-                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <!-- Provinsi -->
-                            <div>
-                                <label
-                                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                >
-                                    Provinsi
-                                </label>
-                                <select
-                                    v-model="form.provinsi_id"
-                                    class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                >
-                                    <option :value="null">
-                                        Pilih Provinsi
-                                    </option>
-                                    <option
-                                        v-for="prov in provinces"
-                                        :key="prov.id"
-                                        :value="prov.id"
-                                    >
-                                        {{ prov.name }}
-                                    </option>
-                                </select>
-                                <p
-                                    v-if="form.errors.provinsi_id"
-                                    class="mt-1 text-sm text-red-500"
-                                >
-                                    {{ form.errors.provinsi_id }}
-                                </p>
-                            </div>
-
-                            <!-- Kota -->
-                            <div>
-                                <label
-                                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                >
-                                    Kota/Kabupaten
-                                </label>
-                                <select
-                                    v-model="form.kota_id"
-                                    :disabled="!form.provinsi_id"
-                                    class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:bg-gray-100 disabled:cursor-not-allowed dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:disabled:bg-slate-900"
-                                >
-                                    <option :value="null">Pilih Kota</option>
-                                    <option
-                                        v-for="city in filteredCities"
-                                        :key="city.id"
-                                        :value="city.id"
-                                    >
-                                        {{ city.name }}
-                                    </option>
-                                </select>
-                                <p
-                                    v-if="form.errors.kota_id"
-                                    class="mt-1 text-sm text-red-500"
-                                >
-                                    {{ form.errors.kota_id }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Alamat -->
-                        <div>
-                            <label
-                                class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                            >
-                                Alamat Lengkap Perusahaan/Usaha
-                            </label>
-                            <textarea
-                                v-model="form.alamat_perusahaan"
-                                rows="3"
-                                class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                placeholder="Alamat lengkap perusahaan/usaha"
-                            />
-                            <p
-                                v-if="form.errors.alamat_perusahaan"
-                                class="mt-1 text-sm text-red-500"
-                            >
-                                {{ form.errors.alamat_perusahaan }}
-                            </p>
-                        </div>
-
-                        <!-- Map Picker -->
-                        <div>
-                            <label
-                                class="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-                            >
-                                <MapPin class="h-4 w-4 text-blue-500" /> Lokasi
-                                Perusahaan/Usaha pada Peta (Klik / Geser Pin)
-                            </label>
-                            <div
-                                ref="mapContainer"
-                                class="h-64 w-full rounded-lg border border-gray-200 shadow-sm dark:border-slate-800"
-                                style="z-index: 10"
-                            ></div>
-                            <div
-                                class="mt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400"
-                            >
-                                <span
-                                    >Pilih lokasi perusahaan/usaha untuk
-                                    pemetaan sebaran alumni (WebGIS).</span
-                                >
-                                <span class="font-mono"
-                                    >Lat:
-                                    {{
-                                        form.latitude
-                                            ? Number(form.latitude).toFixed(5)
-                                            : "-"
-                                    }}, Lng:
-                                    {{
-                                        form.longitude
-                                            ? Number(form.longitude).toFixed(5)
-                                            : "-"
-                                    }}</span
-                                >
-                            </div>
-                            <p
-                                v-if="form.errors.latitude"
-                                class="mt-1 text-sm text-red-500"
-                            >
-                                {{ form.errors.latitude }}
-                            </p>
-                            <p
-                                v-if="form.errors.longitude"
-                                class="mt-1 text-sm text-red-500"
-                            >
-                                {{ form.errors.longitude }}
-                            </p>
-                        </div>
-
-                        <!-- Gaji Range -->
-                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <div>
-                                <label
-                                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                >
-                                    Gaji Minimum (Rp)
-                                </label>
-                                <input
-                                    v-model.number="form.gaji_min"
-                                    type="number"
-                                    min="0"
-                                    step="100000"
-                                    class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                    placeholder="0"
-                                />
-                                <p
-                                    v-if="form.errors.gaji_min"
-                                    class="mt-1 text-sm text-red-500"
-                                >
-                                    {{ form.errors.gaji_min }}
-                                </p>
-                            </div>
-
-                            <div>
-                                <label
-                                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                >
-                                    Gaji Maximum (Rp)
-                                </label>
-                                <input
-                                    v-model.number="form.gaji_max"
-                                    type="number"
-                                    min="0"
-                                    step="100000"
-                                    :class="[
-                                        'w-full rounded-lg border px-4 py-2.5 text-gray-900 focus:ring-2 dark:bg-slate-800 dark:text-white',
-                                        salaryError
-                                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
-                                            : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 dark:border-slate-700',
-                                    ]"
-                                    placeholder="0"
-                                />
-                                <p
-                                    v-if="salaryError"
-                                    class="mt-1 flex items-center gap-1 text-sm text-red-500"
-                                >
-                                    <svg
-                                        class="h-4 w-4 shrink-0"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                    >
-                                        <path
-                                            fill-rule="evenodd"
-                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                                            clip-rule="evenodd"
-                                        />
-                                    </svg>
-                                    {{ salaryError }}
-                                </p>
-                                <p
-                                    v-else-if="form.errors.gaji_max"
-                                    class="mt-1 text-sm text-red-500"
-                                >
-                                    {{ form.errors.gaji_max }}
-                                </p>
-                            </div>
-                        </div>
+                        <EmploymentFields :form="form" />
                     </template>
 
                     <!-- University Info (only for lanjut_studi) -->
                     <template v-if="needsUniversityInfo">
-                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <!-- Nama Universitas -->
-                            <div>
-                                <label
-                                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                >
-                                    Nama Perguruan Tinggi / Universitas
-                                    <span class="text-red-500">*</span>
-                                </label>
-                                <input
-                                    v-model="form.nama_universitas"
-                                    type="text"
-                                    class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                    placeholder="Contoh: Universitas Indonesia"
-                                    required
-                                />
-                                <p
-                                    v-if="form.errors.nama_universitas"
-                                    class="mt-1 text-sm text-red-500"
-                                >
-                                    {{ form.errors.nama_universitas }}
-                                </p>
-                            </div>
-
-                            <!-- Program Studi Lanjutan -->
-                            <div>
-                                <label
-                                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                >
-                                    Program Studi Lanjutan
-                                    <span class="text-red-500">*</span>
-                                </label>
-                                <input
-                                    v-model="form.program_studi_lanjutan"
-                                    type="text"
-                                    class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                    placeholder="Contoh: Magister Teknik Informatika"
-                                    required
-                                />
-                                <p
-                                    v-if="form.errors.program_studi_lanjutan"
-                                    class="mt-1 text-sm text-red-500"
-                                >
-                                    {{ form.errors.program_studi_lanjutan }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <!-- Jenjang Pendidikan -->
-                            <div>
-                                <label
-                                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                >
-                                    Jenjang Pendidikan
-                                    <span class="text-red-500">*</span>
-                                </label>
-                                <select
-                                    v-model="form.jenjang_pendidikan"
-                                    class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                    required
-                                >
-                                    <option value="">Pilih Jenjang</option>
-                                    <option value="S2">S2 (Magister)</option>
-                                    <option value="S3">S3 (Doktor)</option>
-                                    <option value="Profesi">Profesi</option>
-                                    <option value="Spesialis">Spesialis</option>
-                                </select>
-                                <p
-                                    v-if="form.errors.jenjang_pendidikan"
-                                    class="mt-1 text-sm text-red-500"
-                                >
-                                    {{ form.errors.jenjang_pendidikan }}
-                                </p>
-                            </div>
-
-                            <!-- Sumber Biaya -->
-                            <div>
-                                <label
-                                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                >
-                                    Sumber Biaya Studi
-                                </label>
-                                <select
-                                    v-model="form.sumber_biaya"
-                                    class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                >
-                                    <option value="">Pilih Sumber Biaya</option>
-                                    <option value="Biaya Sendiri">
-                                        Biaya Sendiri
-                                    </option>
-                                    <option value="Beasiswa Pemerintah">
-                                        Beasiswa Pemerintah
-                                    </option>
-                                    <option value="Beasiswa Swasta">
-                                        Beasiswa Swasta
-                                    </option>
-                                    <option value="Beasiswa Kampus">
-                                        Beasiswa Kampus
-                                    </option>
-                                    <option value="Lainnya">Lainnya</option>
-                                </select>
-                                <p
-                                    v-if="form.errors.sumber_biaya"
-                                    class="mt-1 text-sm text-red-500"
-                                >
-                                    {{ form.errors.sumber_biaya }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Location -->
-                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <!-- Provinsi -->
-                            <div>
-                                <label
-                                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                >
-                                    Provinsi Kampus
-                                </label>
-                                <select
-                                    v-model="form.provinsi_id"
-                                    class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                >
-                                    <option :value="null">
-                                        Pilih Provinsi
-                                    </option>
-                                    <option
-                                        v-for="prov in provinces"
-                                        :key="prov.id"
-                                        :value="prov.id"
-                                    >
-                                        {{ prov.name }}
-                                    </option>
-                                </select>
-                                <p
-                                    v-if="form.errors.provinsi_id"
-                                    class="mt-1 text-sm text-red-500"
-                                >
-                                    {{ form.errors.provinsi_id }}
-                                </p>
-                            </div>
-
-                            <!-- Kota -->
-                            <div>
-                                <label
-                                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                >
-                                    Kota/Kabupaten Kampus
-                                </label>
-                                <select
-                                    v-model="form.kota_id"
-                                    :disabled="!form.provinsi_id"
-                                    class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:bg-gray-100 disabled:cursor-not-allowed dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:disabled:bg-slate-900"
-                                >
-                                    <option :value="null">Pilih Kota</option>
-                                    <option
-                                        v-for="city in filteredCities"
-                                        :key="city.id"
-                                        :value="city.id"
-                                    >
-                                        {{ city.name }}
-                                    </option>
-                                </select>
-                                <p
-                                    v-if="form.errors.kota_id"
-                                    class="mt-1 text-sm text-red-500"
-                                >
-                                    {{ form.errors.kota_id }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Alamat Universitas -->
-                        <div>
-                            <label
-                                class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                            >
-                                Alamat Lengkap Kampus / Universitas
-                            </label>
-                            <textarea
-                                v-model="form.alamat_universitas"
-                                rows="3"
-                                class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                placeholder="Alamat lengkap kampus/universitas"
-                            />
-                            <p
-                                v-if="form.errors.alamat_universitas"
-                                class="mt-1 text-sm text-red-500"
-                            >
-                                {{ form.errors.alamat_universitas }}
-                            </p>
-                        </div>
-
-                        <!-- Map Picker -->
-                        <div>
-                            <label
-                                class="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-                            >
-                                <MapPin class="h-4 w-4 text-purple-500" />
-                                Lokasi Kampus pada Peta (Klik / Geser Pin)
-                            </label>
-                            <div
-                                ref="mapContainer"
-                                class="h-64 w-full rounded-lg border border-gray-200 shadow-sm dark:border-slate-800"
-                                style="z-index: 10"
-                            ></div>
-                            <div
-                                class="mt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400"
-                            >
-                                <span
-                                    >Pilih lokasi kampus untuk pemetaan sebaran
-                                    alumni (WebGIS).</span
-                                >
-                                <span class="font-mono"
-                                    >Lat:
-                                    {{
-                                        form.latitude
-                                            ? Number(form.latitude).toFixed(5)
-                                            : "-"
-                                    }}, Lng:
-                                    {{
-                                        form.longitude
-                                            ? Number(form.longitude).toFixed(5)
-                                            : "-"
-                                    }}</span
-                                >
-                            </div>
-                        </div>
+                        <EducationFields :form="form" />
                     </template>
+
+                    <!-- Location Picker (for bekerja/wirausaha/lanjut_studi) -->
+                    <LocationPicker
+                        v-if="needsLocation"
+                        v-model:province-id="form.provinsi_id"
+                        v-model:city-id="form.kota_id"
+                        v-model:latitude="form.latitude"
+                        v-model:longitude="form.longitude"
+                        :provinces="provinces"
+                        :cities="cities"
+                    />
 
                     <!-- Period -->
                     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">

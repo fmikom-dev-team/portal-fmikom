@@ -5,11 +5,13 @@ namespace App\Modules\Trace\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Tracer\ProfilAlumni;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class RespondenController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): InertiaResponse
     {
         $query = ProfilAlumni::with(['user.programStudi', 'careers.employment']);
 
@@ -40,7 +42,9 @@ class RespondenController extends Controller
             $query->where('angkatan', $request->angkatan);
         }
 
-        $totalAlumni = ProfilAlumni::count();
+        $totalAlumni = Cache::remember('trace_total_alumni', now()->addMinutes(10), function () {
+            return ProfilAlumni::count();
+        });
         $alumniList = $query->paginate(15)->withQueryString();
 
         return Inertia::render('Modules/Trace/Admin/Alumni', [
@@ -50,7 +54,7 @@ class RespondenController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($id): InertiaResponse
     {
         $alumni = ProfilAlumni::with([
             'user.programStudi',
@@ -64,7 +68,7 @@ class RespondenController extends Controller
         $currentEducation = $alumni->careers->where('status', 'lanjut_studi')->where('is_current', true)->first();
 
         return Inertia::render('Modules/Trace/Admin/AlumniDetail', [
-            'alumni' => $alumni,
+            'alumni' => $alumni->append(['nik_masked', 'npwp_masked']),
             'currentCareer' => $currentCareer,
             'currentEducation' => $currentEducation,
         ]);

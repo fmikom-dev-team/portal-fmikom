@@ -27,7 +27,29 @@ class JobListing extends Model
         'salary_max' => 'integer',
         'is_salary_visible' => 'boolean',
         'deadline' => 'date',
+        'rejected_at' => 'datetime',
     ];
+
+    /*
+    |-------------------------
+    | SCOPES
+    |-------------------------
+    */
+
+    public function scopePublished($query)
+    {
+        return $query->where('status', 'published');
+    }
+
+    public function scopePendingReview($query)
+    {
+        return $query->where('status', 'pending_review');
+    }
+
+    public function scopeDraft($query)
+    {
+        return $query->where('status', 'draft');
+    }
 
     public function creator()
     {

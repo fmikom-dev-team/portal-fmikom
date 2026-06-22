@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
 import TraceAlumniLayout from '@/layouts/TraceAlumniLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { TPageHeader } from '@/components/trace';
@@ -79,6 +80,7 @@ const register = () => {
     isProcessing.value = true;
     router.post(`/trace/events/${props.event.id}/register`, {}, {
         preserveScroll: true,
+        onError: () => { toast.error('Gagal mendaftar event.'); },
         onFinish: () => { isProcessing.value = false; },
     });
 };
@@ -88,6 +90,7 @@ const cancelRegistration = () => {
     isProcessing.value = true;
     router.post(`/trace/events/${props.event.id}/cancel`, {}, {
         preserveScroll: true,
+        onError: () => { toast.error('Gagal membatalkan pendaftaran.'); },
         onFinish: () => { isProcessing.value = false; },
     });
 };
@@ -97,7 +100,7 @@ const cancelRegistration = () => {
     <TraceAlumniLayout title="Detail Event" role-name="Alumni" :breadcrumbs="breadcrumbs">
         <div class="mx-auto max-w-4xl space-y-6">
             <!-- Header -->
-            <TPageHeader :title="event.title" description="Detail Event" :icon="CalendarDays">
+            <TPageHeader :title="event.title" description="Informasi lengkap event" :icon="CalendarDays">
                 <template #actions>
                     <Button as-child variant="ghost" size="icon-sm" class="rounded-xl text-slate-400 hover:text-[#0C447C] hover:bg-[#0C447C]/5 dark:hover:text-[#85B7EB] dark:hover:bg-[#85B7EB]/10">
                         <Link href="/trace/events">

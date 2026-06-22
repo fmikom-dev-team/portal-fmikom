@@ -12,10 +12,11 @@ import {
 import { show as alumniTracerShow } from "@/routes/module/trace/kuesioner";
 import TraceAlumniLayout from "@/layouts/TraceAlumniLayout.vue";
 import type { BreadcrumbItem } from "@/types";
+import type { Kuesioner } from "@/types/trace";
 import { TPageHeader, TStatusBadge, TEmptyState } from '@/components/trace';
 
 defineProps<{
-    kuesioners: any[];
+    kuesioners: Kuesioner[];
 }>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
@@ -48,7 +49,7 @@ const formatDateRange = (
             <!-- Header Section -->
             <TPageHeader
                 title="Kuesioner"
-                description="Pusat pengisian kuesioner pelacakan alumni FMIKOM."
+                description="Isi kuesioner untuk membantu kampus meningkatkan kualitas pendidikan."
                 :icon="ClipboardList"
             >
                 <template #actions>

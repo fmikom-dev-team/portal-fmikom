@@ -30,28 +30,28 @@ class SendWeeklyDigest extends Command
             return self::SUCCESS;
         }
 
-        $alumni = User::whereHas('alumniProfile')
-            ->whereNotNull('email')
-            ->get();
-
         $weekNumber = now()->weekOfYear;
         $sent = 0;
 
-        foreach ($alumni as $user) {
-            try {
-                Mail::to($user->email)->queue(
-                    new WeeklyJobDigest(
-                        $user->name ?? 'Alumni',
-                        $newJobs,
-                        $newEvents,
-                        $weekNumber
-                    )
-                );
-                $sent++;
-            } catch (\Exception $e) {
-                $this->error("Failed to send to {$user->email}: {$e->getMessage()}");
-            }
-        }
+        User::whereHas('alumniProfile')
+            ->whereNotNull('email')
+            ->chunkById(200, function ($alumni) use ($newJobs, $newEvents, $weekNumber, &$sent) {
+                foreach ($alumni as $user) {
+                    try {
+                        Mail::to($user->email)->queue(
+                            new WeeklyJobDigest(
+                                $user->name ?? 'Alumni',
+                                $newJobs,
+                                $newEvents,
+                                $weekNumber
+                            )
+                        );
+                        $sent++;
+                    } catch (\Exception $e) {
+                        $this->error("Failed to send to {$user->email}: {$e->getMessage()}");
+                    }
+                }
+            });
 
         $this->info("Weekly digest sent to {$sent} alumni.");
         return self::SUCCESS;

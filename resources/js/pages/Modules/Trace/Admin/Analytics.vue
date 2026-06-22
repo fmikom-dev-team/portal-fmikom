@@ -32,6 +32,7 @@ import {
 import { TPageHeader, TStatCard } from '@/components/trace';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import type { BreadcrumbItem } from '@/types';
+import type { CareerStatusItem, AngkatanItem, SektorItem, ProdiDistributionItem } from '@/types/trace';
 
 ChartJS.register(
     CategoryScale,
@@ -57,8 +58,6 @@ const props = defineProps({
     prodiDistribution: Array,
 });
 
-const selectedProdi = ref('all');
-
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Analitik',
@@ -66,30 +65,20 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const filteredProdiData = computed(() => {
-    if (selectedProdi.value === 'all' || !props.prodiDistribution) {
-        return props.prodiDistribution || [];
-    }
-
-    return props.prodiDistribution.filter(
-        (p: any) => p.program_studi === selectedProdi.value
-    );
-});
-
 const careerStatusChart = computed(() => ({
-    labels: props.careerStatus?.map((c: any) => c.label) || [],
+    labels: props.careerStatus?.map((c: CareerStatusItem) => c.label) || [],
     datasets: [
         {
             label: 'Jumlah Alumni',
             backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
-            data: props.careerStatus?.map((c: any) => c.value) || [],
+            data: props.careerStatus?.map((c: CareerStatusItem) => c.value) || [],
             borderRadius: 8,
         },
     ],
 }));
 
 const alumniPerAngkatanChart = computed(() => ({
-    labels: props.alumniPerAngkatan?.map((a: any) => a.angkatan) || [],
+    labels: props.alumniPerAngkatan?.map((a: AngkatanItem) => a.angkatan) || [],
     datasets: [
         {
             label: 'Jumlah Alumni',
@@ -97,13 +86,13 @@ const alumniPerAngkatanChart = computed(() => ({
             backgroundColor: 'rgba(59, 130, 246, 0.1)',
             fill: true,
             tension: 0.4,
-            data: props.alumniPerAngkatan?.map((a: any) => a.total) || [],
+            data: props.alumniPerAngkatan?.map((a: AngkatanItem) => a.total) || [],
         },
     ],
 }));
 
 const topSektorsChart = computed(() => ({
-    labels: props.topSektors?.map((s: any) => s.sektor_industri) || [],
+    labels: props.topSektors?.map((s: SektorItem) => s.sektor_industri) || [],
     datasets: [
         {
             label: 'Jumlah Alumni',
@@ -116,14 +105,14 @@ const topSektorsChart = computed(() => ({
                 '#ec4899',
                 '#06b6d4',
             ],
-            data: props.topSektors?.map((s: any) => s.total) || [],
+            data: props.topSektors?.map((s: SektorItem) => s.total) || [],
             borderRadius: 8,
         },
     ],
 }));
 
 const prodiDistributionChart = computed(() => ({
-    labels: props.prodiDistribution?.map((p: any) => p.program_studi) || [],
+    labels: props.prodiDistribution?.map((p: ProdiDistributionItem) => p.program_studi) || [],
     datasets: [
         {
             label: 'Jumlah Alumni',
@@ -134,7 +123,7 @@ const prodiDistributionChart = computed(() => ({
                 '#ef4444',
                 '#8b5cf6',
             ],
-            data: props.prodiDistribution?.map((p: any) => p.total) || [],
+            data: props.prodiDistribution?.map((p: ProdiDistributionItem) => p.total) || [],
         },
     ],
 }));
@@ -148,7 +137,7 @@ const chartOptions = {
             labels: {
                 usePointStyle: true,
                 padding: 15,
-                font: { size: 11, weight: 'bold' as any },
+                font: { size: 11, weight: 'bold' as const },
             },
         },
     },
@@ -178,7 +167,7 @@ const lineChartOptions = {
             <!-- Page Header -->
             <TPageHeader
                 title="Analitik"
-                description="Ikhtisar data alumni dan tren karir"
+                description="Lihat ringkasan data alumni, tren karir, dan sebaran domisili."
                 :icon="Activity"
             />
 

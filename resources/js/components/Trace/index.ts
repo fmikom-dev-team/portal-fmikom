@@ -8,3 +8,4 @@ export { default as TPagination } from './TPagination.vue';
 export { default as TConfirmDialog } from './TConfirmDialog.vue';
 export { default as TFormSection } from './TFormSection.vue';
 export { default as NotificationBell } from './NotificationBell.vue';
+export { default as TSkeleton } from './TSkeleton.vue';

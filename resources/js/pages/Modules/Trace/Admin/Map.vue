@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import axios from 'axios';
-import L from 'leaflet';
+import type { MapMarker } from '@/types/trace';
 import {
-    Layers, ChevronLeft, ChevronRight, RotateCcw, Filter,
-    Download, Search, Sun, Moon, Eye, X, Crosshair
+    ChevronLeft, ChevronRight, RotateCcw, Filter,
+    Search, Eye, X, Crosshair,
 } from 'lucide-vue-next';
 import { ref, computed, watch, onUnmounted, toRaw } from 'vue';
-import VueApexCharts from 'vue3-apexcharts';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import { useLeafletMap } from '@/composables/useLeafletMap';
 import 'leaflet.markercluster';
@@ -15,51 +13,44 @@ import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import 'leaflet.heat';
 
-// ─── TYPES ─────────────────────────────────────────────────
-interface AlumniData {
-    profil_alumni_id: number;
-    nama_lengkap: string;
-    nim: string;
-    angkatan: string;
-    program_studi: string;
-    instansi: string;
-    detail: string;
-    sektor_industri: string;
-    nama_kota: string;
-    latitude: string;
-    longitude: string;
-    tipe_lokasi: string;
-}
+// ─── COMPOSABLES ───────────────────────────────────────────
+import {
+    type ViewMode, type TematicField,
+    CATEGORY_CONFIG, TEMATIC_PALETTES,
+    getCategory, createMarkerIcon,
+} from '@/composables/trace/useMapData';
+import { useMapData } from '@/composables/trace/useMapData';
+import { useMapLayers } from '@/composables/trace/useMapLayers';
+import { useMapViewport } from '@/composables/trace/useMapViewport';
+import { useMapRadius } from '@/composables/trace/useMapRadius';
 
-interface MarkerEntry {
-    marker: L.Marker;
-    category: 'bekerja' | 'wirausaha' | 'studi' | 'belum';
-    data: AlumniData;
-    latlng: L.LatLng;
-}
+// ─── SUBCOMPONENTS ─────────────────────────────────────────
+import MapToolbar from './components/map/MapToolbar.vue';
+import MapRadiusPanel from './components/map/MapRadiusPanel.vue';
+import MapSidebar from './components/map/MapSidebar.vue';
+import MapLegend from './components/map/MapLegend.vue';
 
-type ViewMode = 'cluster' | 'heat' | 'choropleth' | 'tematic';
-type TematicField = 'status' | 'sektor' | 'angkatan' | 'prodi';
-
-// ─── COMPOSABLE ────────────────────────────────────────────
-const { mapContainer, map, isReady, isMapLoading, isDarkMap, currentZoom, toggleDarkMode } = useLeafletMap();
-// Always use rawMap() to access the Leaflet instance (avoids Vue proxy issues)
+// ─── LEAFLET MAP ───────────────────────────────────────────
+const { mapContainer, map, isReady, isMapLoading, isDarkMap, toggleDarkMode } = useLeafletMap();
 const rawMap = () => map.value ? toRaw(map.value) as L.Map : null;
 
-// ─── STATE ─────────────────────────────────────────────────
+// ─── COMPOSABLE INSTANCES ──────────────────────────────────
+const { allAlumni, allMarkers, filterOptions, completionMeta, isLoading, lastUpdated, fetchMapData } = useMapData();
+const { clearAllLayers, applyLayers } = useMapLayers();
+const { viewportStats, isViewportUpdating, updateViewportStats, setupViewportTracking, cleanup: cleanupViewport } = useMapViewport();
+const { radiusMode, radiusKm, radiusCenter, radiusAlumniCount, toggleRadiusMode, clearRadius, activateRadiusListener, updateRadiusSize } = useMapRadius();
+
+// ─── LOCAL STATE ───────────────────────────────────────────
 const breadcrumbs = [
     { title: 'WebGIS Alumni', href: '#' },
     { title: 'Peta Sebaran', href: '#' },
 ];
 
-// View
 const viewMode = ref<ViewMode>('cluster');
 const tematicField = ref<TematicField>('status');
 const showSidebar = ref(true);
 const showMarkers = ref(true);
-const isLoading = ref(false);
 
-// Layer visibility
 const layerVisibility = ref({
     bekerja: true,
     wirausaha: true,
@@ -67,72 +58,16 @@ const layerVisibility = ref({
     belum: true,
 });
 
-// Search
 const searchQuery = ref('');
 const searchFocused = ref(false);
 
-// Filters
 const filters = ref({
     angkatan: '',
     program_studi: '',
     sektor: '',
 });
 
-// Data
-const allAlumni = ref<AlumniData[]>([]);
-const allMarkers: MarkerEntry[] = [];
-const filterOptions = ref({ angkatan: [] as string[], prodi: [] as string[], sektor: [] as string[] });
-
-// Completion
-const completionMeta = ref({
-    total_alumni: 0, mapped_count: 0, completion_rate: 0,
-    is_filter_active: false,
-    filtered: { total: 0, mapped: 0, rate: 0 },
-});
-
-// Viewport-aware stats
-const viewportStats = ref({
-    total: 0, bekerja: 0, wirausaha: 0, studi: 0, belum: 0,
-    sektorData: [] as { name: string; count: number }[],
-    cityData: [] as { name: string; count: number }[],
-    instansiData: [] as { name: string; count: number }[],
-    angkatanData: [] as { angkatan: string; count: number }[],
-});
-
-const lastUpdated = ref('');
-const isViewportUpdating = ref(false);
-
-// Radius search
-const radiusMode = ref(false);
-const radiusKm = ref(10);
-const radiusCenter = ref<L.LatLng | null>(null);
-const radiusAlumniCount = ref(0);
-let radiusCircle: L.Circle | null = null;
-let radiusMarker: L.Marker | null = null;
-
-// Layers
-let markerCluster: any = null;
-let heatLayer: any = null;
-let choroplethLayer: any = null;
-let geoJsonCache: any = null;
-let moveEndTimer: ReturnType<typeof setTimeout> | null = null;
-
-// ─── MARKER COLORS ─────────────────────────────────────────
-const CATEGORY_CONFIG: Record<string, { color: string; bg: string; label: string; icon: string }> = {
-    bekerja:   { color: '#3b82f6', bg: 'bg-blue-500',   label: 'Bekerja',         icon: '💼' },
-    wirausaha: { color: '#10b981', bg: 'bg-emerald-500', label: 'Wirausaha',       icon: '🏢' },
-    studi:     { color: '#8b5cf6', bg: 'bg-violet-500',  label: 'Lanjut Studi',    icon: '🎓' },
-    belum:     { color: '#f59e0b', bg: 'bg-amber-500',   label: 'Belum Bekerja',   icon: '🔍' },
-};
-
-const TEMATIC_PALETTES: Record<string, string[]> = {
-    status:   ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4', '#f97316', '#ec4899'],
-    sektor:   ['#0C447C', '#1a6bb5', '#3a8fd4', '#85B7EB', '#EF9F27', '#10b981', '#ef4444', '#8b5cf6', '#f97316', '#06b6d4'],
-    angkatan: ['#0C447C', '#1a6bb5', '#3a8fd4', '#85B7EB', '#c5dcf5', '#EF9F27', '#f59e0b', '#f97316'],
-    prodi:    ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#84cc16'],
-};
-
-// ─── COMPUTED ───────────────────────────────────────────────
+// ─── COMPUTED ──────────────────────────────────────────────
 const hasActiveFilters = computed(() =>
     filters.value.angkatan !== '' || filters.value.program_studi !== '' || filters.value.sektor !== ''
 );
@@ -214,499 +149,56 @@ const tematicLegend = computed(() => {
         }));
 });
 
-// ─── HELPERS ────────────────────────────────────────────────
-const formatTime = (d: Date) =>
-    d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) +
-    ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+// ─── COORDINATION WRAPPERS ─────────────────────────────────
+const doApplyLayers = (heatPoints?: [number, number, number][]) =>
+    applyLayers(rawMap, allMarkers, layerVisibility, viewMode, showMarkers, tematicField, heatPoints);
 
-const getCategory = (tipe: string): 'bekerja' | 'wirausaha' | 'studi' | 'belum' => {
-    if (tipe === 'Bekerja') return 'bekerja';
-    if (tipe === 'Wirausaha') return 'wirausaha';
-    if (tipe === 'Lanjut Studi') return 'studi';
-    return 'belum';
-};
+const doClearAllLayers = () => clearAllLayers(rawMap);
 
-const createMarkerIcon = (color: string, size: number = 10) => {
-    return L.divIcon({
-        html: `<div style="width:${size}px;height:${size}px;background:${color};border:2px solid white;border-radius:50%;box-shadow:0 2px 6px ${color}66;"></div>`,
-        className: 'custom-marker-icon',
-        iconSize: [size, size],
-        iconAnchor: [size / 2, size / 2],
-    });
-};
+const doSetupViewportTracking = () =>
+    setupViewportTracking(rawMap, allMarkers, layerVisibility.value);
 
-const createPopupContent = (a: AlumniData) => {
-    const cat = getCategory(a.tipe_lokasi);
-    const cfg = CATEGORY_CONFIG[cat];
-    return `
-        <div style="min-width:240px;font-family:system-ui,-apple-system,sans-serif;">
-            <div style="display:inline-block;font-size:9px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;margin-bottom:8px;background:${cfg.color}22;color:${cfg.color};">
-                ${cfg.label}
-            </div>
-            <div style="font-size:14px;font-weight:900;color:#1e293b;margin-bottom:10px;line-height:1.3;">${a.nama_lengkap}</div>
-            <div style="border-top:1px solid #f1f5f9;margin:8px 0;"></div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#94a3b8;">PRODI</span>
-                <span style="font-size:11px;font-weight:700;color:#334155;text-align:right;">${a.program_studi || '-'}</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#94a3b8;">ANGKATAN</span>
-                <span style="font-size:11px;font-weight:700;color:#334155;">${a.angkatan || '-'}</span>
-            </div>
-            ${a.instansi ? `<div style="border-top:1px solid #f1f5f9;margin:8px 0;"></div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#94a3b8;">${cat === 'studi' ? 'UNIVERSITAS' : cat === 'belum' ? 'ALAMAT DOMISILI' : 'PERUSAHAAN'}</span>
-                <span style="font-size:11px;font-weight:700;color:#334155;text-align:right;max-width:60%;">${a.instansi}</span>
-            </div>` : ''}
-            ${a.detail ? `<div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#94a3b8;">STATUS</span>
-                <span style="font-size:11px;font-weight:700;color:#334155;text-align:right;max-width:60%;">${a.detail}</span>
-            </div>` : ''}
-            ${a.nama_kota ? `<div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#94a3b8;">KOTA</span>
-                <span style="font-size:11px;font-weight:700;color:#334155;">${a.nama_kota}</span>
-            </div>` : ''}
-            <div style="border-top:1px solid #f1f5f9;margin:8px 0;"></div>
-            <a href="/trace/admin/alumni/${a.profil_alumni_id}" target="_blank"
-               style="display:block;text-align:center;background:${cfg.color};color:white;padding:8px 16px;border-radius:12px;font-size:11px;font-weight:800;text-decoration:none;">
-                📋 Lihat Profil Lengkap
-            </a>
-        </div>`;
-};
+const doUpdateViewportStats = () =>
+    updateViewportStats(rawMap, allMarkers, layerVisibility.value);
 
-// ─── DATA FETCHING ──────────────────────────────────────────
-const fetchMapData = async () => {
-    const m = rawMap();
-    if (!m) {
-        console.warn('[Map] fetchMapData called but rawMap() is null');
-        return;
-    }
-    isLoading.value = true;
-
-    try {
-        const params: any = {};
-        if (filters.value.angkatan) params.angkatan = filters.value.angkatan;
-        if (filters.value.program_studi) params.program_studi = filters.value.program_studi;
-        if (filters.value.sektor) params.sektor = filters.value.sektor;
-
-        console.log('[Map] Fetching data...');
-        const { data: response } = await axios.get('/trace/admin/map/data', { params });
-        const alumniData: AlumniData[] = response.data || [];
-        console.log('[Map] Data received:', alumniData.length, 'alumni');
-
-        completionMeta.value = response.meta || completionMeta.value;
-        allAlumni.value = alumniData;
-
-        // Extract filter options
-        const angkatanSet = new Set<string>();
-        const prodiSet = new Set<string>();
-        const sektorSet = new Set<string>();
-        alumniData.forEach(a => {
-            if (a.angkatan) angkatanSet.add(a.angkatan);
-            if (a.program_studi) prodiSet.add(a.program_studi);
-            if (a.sektor_industri)
-                sektorSet.add(a.sektor_industri);
-        });
-        filterOptions.value = {
-            angkatan: Array.from(angkatanSet).sort(),
-            prodi: Array.from(prodiSet).sort(),
-            sektor: Array.from(sektorSet).sort(),
-        };
-
-        // Clear existing layers
-        clearAllLayers();
-
-        // Build markers
-        allMarkers.length = 0;
-        const heatPoints: [number, number, number][] = [];
-
-        markerCluster = (L as any).markerClusterGroup({
-            showCoverageOnHover: false,
-            zoomToBoundsOnClick: true,
-            maxClusterRadius: 50,
-            iconCreateFunction: (cluster: any) => {
-                const count = cluster.getChildCount();
-                const size = count > 100 ? 44 : count > 50 ? 40 : count > 10 ? 36 : 30;
-                return L.divIcon({
-                    html: `<div class="cluster-icon" style="width:${size}px;height:${size}px;">${count}</div>`,
-                    className: 'custom-cluster',
-                    iconSize: [size, size],
-                });
-            },
-        });
-
-        alumniData.forEach((a) => {
-            if (a.latitude == null || a.longitude == null || a.latitude === '' || a.longitude === '') return;
-            const lat = parseFloat(String(a.latitude));
-            const lng = parseFloat(String(a.longitude));
-            if (isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) return;
-
-            // Jitter ±0.01 (~1km)
-            const jLat = lat + (Math.random() - 0.5) * 0.02;
-            const jLng = lng + (Math.random() - 0.5) * 0.02;
-            const latlng = L.latLng(jLat, jLng);
-
-            const category = getCategory(a.tipe_lokasi);
-            const cfg = CATEGORY_CONFIG[category];
-
-            const marker = L.marker(latlng, {
-                icon: createMarkerIcon(cfg.color),
-            });
-            marker.bindPopup(createPopupContent(a), {
-                maxWidth: 300,
-                className: 'custom-popup',
-            });
-
-            allMarkers.push({ marker, category, data: a, latlng });
-            heatPoints.push([jLat, jLng, 1]);
-        });
-
-        console.log('[Map] Markers created:', allMarkers.length);
-
-        // Apply layers based on mode
-        await applyLayers(heatPoints);
-
-        // Fit bounds
-        if (allMarkers.length > 0 && rawMap()) {
-            const visibleMarkers = allMarkers.filter(m => layerVisibility.value[m.category]);
-            if (visibleMarkers.length > 0) {
-                const group = L.featureGroup(visibleMarkers.map(m => m.marker));
-                try { rawMap()!.fitBounds(group.getBounds().pad(0.2)); } catch (e) {}
-            }
-        }
-
-        // Setup viewport tracking
-        setupViewportTracking();
-        updateViewportStats();
-
-        lastUpdated.value = formatTime(new Date());
-        console.log('[Map] Data loaded successfully');
-
-    } catch (error) {
-        console.error('[Map] Error fetching map data:', error);
-    } finally {
-        isLoading.value = false;
-    }
-};
-
-// ─── LAYER MANAGEMENT ───────────────────────────────────────
-const clearAllLayers = () => {
-    if (!rawMap()) return;
-    if (markerCluster) { try { rawMap()!.removeLayer(markerCluster); } catch (e) {} }
-    if (heatLayer) { try { rawMap()!.removeLayer(heatLayer); } catch (e) {} heatLayer = null; }
-    if (choroplethLayer) { try { rawMap()!.removeLayer(choroplethLayer); } catch (e) {} choroplethLayer = null; }
-};
-
-const applyLayers = async (heatPoints?: [number, number, number][]) => {
-    if (!rawMap()) return;
-    clearAllLayers();
-
-    const visibleMarkers = allMarkers.filter(m => layerVisibility.value[m.category]);
-
-    if (viewMode.value === 'cluster') {
-        markerCluster.clearLayers();
-        markerCluster.addLayers(visibleMarkers.map(m => m.marker));
-        rawMap()!.addLayer(markerCluster);
-
-    } else if (viewMode.value === 'heat') {
-        const hp = heatPoints || visibleMarkers.map(m => [m.latlng.lat, m.latlng.lng, 1] as [number, number, number]);
-        try {
-            heatLayer = (L as any).heatLayer(hp, {
-                radius: 25, blur: 15, maxZoom: 12,
-                gradient: { 0.2: '#3b82f6', 0.4: '#22c55e', 0.6: '#eab308', 0.8: '#f97316', 1.0: '#ef4444' },
-            }).addTo(rawMap()!);
-        } catch (e) {
-            console.warn('Heatmap render error:', e);
-        }
-        // Optionally show markers on top of heatmap
-        if (showMarkers.value) {
-            markerCluster.clearLayers();
-            visibleMarkers.forEach(m => m.marker.setIcon(createMarkerIcon(CATEGORY_CONFIG[m.category].color, 6)));
-            markerCluster.addLayers(visibleMarkers.map(m => m.marker));
-            rawMap()!.addLayer(markerCluster);
-        }
-
-    } else if (viewMode.value === 'choropleth') {
-        await loadChoropleth(visibleMarkers);
-        // Optionally show markers (smaller) on top of choropleth
-        if (showMarkers.value) {
-            markerCluster.clearLayers();
-            visibleMarkers.forEach(m => m.marker.setIcon(createMarkerIcon(CATEGORY_CONFIG[m.category].color, 6)));
-            markerCluster.addLayers(visibleMarkers.map(m => m.marker));
-            rawMap()!.addLayer(markerCluster);
-        }
-
-    } else if (viewMode.value === 'tematic') {
-        // Color markers by tematic field
-        const palette = TEMATIC_PALETTES[tematicField.value];
-        const valueColorMap = new Map<string, string>();
-        let colorIdx = 0;
-
-        visibleMarkers.forEach(m => {
-            let key = '';
-            if (tematicField.value === 'status') key = m.data.tipe_lokasi || 'Lainnya';
-            else if (tematicField.value === 'sektor') key = m.data.sektor_industri || 'Tidak Diketahui';
-            else if (tematicField.value === 'angkatan') key = m.data.angkatan || '?';
-            else if (tematicField.value === 'prodi') key = m.data.program_studi || 'Tidak Diketahui';
-
-            if (!valueColorMap.has(key)) {
-                valueColorMap.set(key, palette[colorIdx % palette.length]);
-                colorIdx++;
-            }
-            m.marker.setIcon(createMarkerIcon(valueColorMap.get(key)!, 12));
-        });
-
-        markerCluster.clearLayers();
-        markerCluster.addLayers(visibleMarkers.map(m => m.marker));
-        rawMap()!.addLayer(markerCluster);
-    }
-};
-
-// ─── CHOROPLETH ─────────────────────────────────────────────
-const loadChoropleth = async (markers: MarkerEntry[]) => {
-    if (!rawMap()) return;
-
-    if (!geoJsonCache) {
-        try {
-            const resp = await axios.get('/geojson/indonesia-provinces.json');
-            geoJsonCache = resp.data;
-        } catch (e) {
-            console.error('Failed to load GeoJSON:', e);
-            return;
-        }
-    }
-
-    // Count per province + kabupaten breakdown
-    const provCountMap = new Map<string, number>();
-    const provKabMap = new Map<string, Map<string, number>>();
-
-    const getBBox = (coords: any): [number, number, number, number] => {
-        let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
-        const flatten = (c: any) => {
-            if (typeof c[0] === 'number') {
-                minLng = Math.min(minLng, c[0]); maxLng = Math.max(maxLng, c[0]);
-                minLat = Math.min(minLat, c[1]); maxLat = Math.max(maxLat, c[1]);
-            } else { c.forEach(flatten); }
-        };
-        flatten(coords);
-        return [minLat, maxLat, minLng, maxLng];
-    };
-
-    const features = geoJsonCache.features.map((f: any) => ({
-        name: f.properties.PROVINSI || f.properties.Propinsi || f.properties.name || 'Unknown',
-        bbox: getBBox(f.geometry.coordinates),
-    }));
-
-    markers.forEach(m => {
-        const lat = m.latlng.lat;
-        const lng = m.latlng.lng;
-        for (const fb of features) {
-            const [minLat, maxLat, minLng, maxLng] = fb.bbox;
-            if (lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng) {
-                provCountMap.set(fb.name, (provCountMap.get(fb.name) || 0) + 1);
-                // Track kabupaten
-                const kota = m.data.nama_kota || 'Tidak Diketahui';
-                if (!provKabMap.has(fb.name)) provKabMap.set(fb.name, new Map());
-                const kabMap = provKabMap.get(fb.name)!;
-                kabMap.set(kota, (kabMap.get(kota) || 0) + 1);
-                break;
-            }
-        }
+const doFetchMapData = () =>
+    fetchMapData(rawMap, filters, layerVisibility, {
+        clearAllLayers: doClearAllLayers,
+        applyLayers: doApplyLayers,
+        setupViewportTracking: doSetupViewportTracking,
+        updateViewportStats: doUpdateViewportStats,
     });
 
-    const maxCount = Math.max(...Array.from(provCountMap.values()), 1);
-    const getColor = (count: number) => {
-        if (count === 0) return 'rgba(12,68,124,0.03)';
-        const r = count / maxCount;
-        if (r > 0.7) return '#0C447C';
-        if (r > 0.5) return '#1a6bb5';
-        if (r > 0.3) return '#3a8fd4';
-        if (r > 0.1) return '#85B7EB';
-        return '#c5dcf5';
-    };
-
-    const buildTooltip = (provName: string, total: number) => {
-        const kabMap = provKabMap.get(provName);
-        let kabHtml = '';
-        if (kabMap && kabMap.size > 0) {
-            const sorted = Array.from(kabMap.entries()).sort((a, b) => b[1] - a[1]);
-            const top5 = sorted.slice(0, 5);
-            kabHtml = '<div style="border-top:1px solid #e2e8f0;margin:6px 0 4px;"></div>';
-            kabHtml += top5.map(([name, count]) =>
-                `<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:2px;">
-                    <span style="font-size:10px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;">${name}</span>
-                    <span style="font-size:10px;font-weight:900;color:#0C447C;">${count}</span>
-                </div>`
-            ).join('');
-            if (sorted.length > 5) {
-                kabHtml += `<div style="font-size:9px;color:#94a3b8;text-align:center;margin-top:2px;">+${sorted.length - 5} kota/kab lainnya</div>`;
-            }
-        }
-        return `<div style="min-width:180px;">
-            <div style="font-size:12px;font-weight:900;color:#0C447C;">${provName}</div>
-            <div style="font-size:11px;font-weight:700;color:#64748b;">${total} Alumni</div>
-            ${kabHtml}
-        </div>`;
-    };
-
-    choroplethLayer = L.geoJSON(geoJsonCache, {
-        style: (feature: any) => {
-            const name = feature?.properties?.PROVINSI || feature?.properties?.Propinsi || '';
-            const count = provCountMap.get(name) || 0;
-            return {
-                fillColor: getColor(count),
-                weight: 1.5, opacity: 0.8, color: '#0C447C',
-                fillOpacity: count > 0 ? 0.6 : 0.05,
-            };
-        },
-        onEachFeature: (feature: any, layer: any) => {
-            const name = feature?.properties?.PROVINSI || feature?.properties?.Propinsi || 'Unknown';
-            const count = provCountMap.get(name) || 0;
-            layer.bindTooltip(buildTooltip(name, count), {
-                sticky: true,
-                className: 'province-tooltip',
-            });
-            layer.on({
-                mouseover: (e: any) => { e.target.setStyle({ weight: 3, fillOpacity: 0.8, color: '#EF9F27' }); },
-                mouseout: (e: any) => { choroplethLayer?.resetStyle(e.target); },
-            });
-        },
-    }).addTo(rawMap()!);
-};
-
-// ─── VIEWPORT TRACKING ─────────────────────────────────────
-const setupViewportTracking = () => {
-    if (!rawMap()) return;
-    rawMap()!.off('moveend', debouncedViewportUpdate);
-    rawMap()!.on('moveend', debouncedViewportUpdate);
-};
-
-const debouncedViewportUpdate = () => {
-    if (moveEndTimer) clearTimeout(moveEndTimer);
-    isViewportUpdating.value = true;
-    moveEndTimer = setTimeout(() => {
-        updateViewportStats();
-        setTimeout(() => { isViewportUpdating.value = false; }, 600);
-    }, 400);
-};
-
-const updateViewportStats = () => {
-    if (!rawMap()) return;
-    const bounds = rawMap()!.getBounds();
-
-    const visible = allMarkers.filter(m =>
-        layerVisibility.value[m.category] && bounds.contains(m.latlng)
-    );
-
-    let bekerja = 0, wirausaha = 0, studi = 0, belum = 0;
-    const sektorMap = new Map<string, number>();
-    const cityMap = new Map<string, number>();
-    const instansiMap = new Map<string, number>();
-    const angkatanMap = new Map<string, number>();
-
-    visible.forEach(m => {
-        if (m.category === 'bekerja') bekerja++;
-        else if (m.category === 'wirausaha') wirausaha++;
-        else if (m.category === 'studi') studi++;
-        else belum++;
-
-        if (m.data.sektor_industri) sektorMap.set(m.data.sektor_industri, (sektorMap.get(m.data.sektor_industri) || 0) + 1);
-        if (m.data.nama_kota) cityMap.set(m.data.nama_kota, (cityMap.get(m.data.nama_kota) || 0) + 1);
-        if (m.data.instansi) instansiMap.set(m.data.instansi, (instansiMap.get(m.data.instansi) || 0) + 1);
-        if (m.data.angkatan) angkatanMap.set(m.data.angkatan, (angkatanMap.get(m.data.angkatan) || 0) + 1);
+// ─── ACTIONS ───────────────────────────────────────────────
+const setViewMode = (mode: ViewMode) => {
+    viewMode.value = mode;
+    showMarkers.value = mode !== 'heat';
+    if (radiusMode.value) { radiusMode.value = false; clearRadius(rawMap); }
+    allMarkers.forEach(m => {
+        m.marker.setIcon(createMarkerIcon(CATEGORY_CONFIG[m.category].color));
     });
-
-    const sortMap = (m: Map<string, number>) => Array.from(m.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
-
-    viewportStats.value = {
-        total: visible.length,
-        bekerja, wirausaha, studi, belum,
-        sektorData: sortMap(sektorMap),
-        cityData: sortMap(cityMap),
-        instansiData: sortMap(instansiMap),
-        angkatanData: Array.from(angkatanMap.entries()).map(([angkatan, count]) => ({ angkatan, count })).sort((a, b) => a.angkatan.localeCompare(b.angkatan)),
-    };
+    doApplyLayers();
 };
 
-// ─── RADIUS SEARCH ──────────────────────────────────────────
-const toggleRadiusMode = () => {
-    radiusMode.value = !radiusMode.value;
-    if (!radiusMode.value) clearRadius();
+const toggleMarkers = () => {
+    showMarkers.value = !showMarkers.value;
+    doApplyLayers();
 };
 
-const clearRadius = () => {
-    const m = rawMap();
-    if (!m) return;
-    if (radiusCircle) { m.removeLayer(radiusCircle); radiusCircle = null; }
-    if (radiusMarker) { m.removeLayer(radiusMarker); radiusMarker = null; }
-    radiusCenter.value = null;
-    radiusAlumniCount.value = 0;
-    m.off('click', onRadiusClick);
+const toggleLayer = (key: keyof typeof layerVisibility.value) => {
+    layerVisibility.value[key] = !layerVisibility.value[key];
+    doApplyLayers();
+    doUpdateViewportStats();
 };
 
-const activateRadiusListener = () => {
-    const m = rawMap();
-    if (!m) return;
-    m.off('click', onRadiusClick);
-    m.on('click', onRadiusClick);
+const resetFilters = () => {
+    filters.value = { angkatan: '', program_studi: '', sektor: '' };
+    doFetchMapData();
 };
 
-const onRadiusClick = (e: L.LeafletMouseEvent) => {
-    if (!radiusMode.value) return;
-    placeRadius(e.latlng);
-};
+const onFilterChange = () => doFetchMapData();
 
-const placeRadius = (center: L.LatLng) => {
-    const m = rawMap();
-    if (!m) return;
-
-    // Clear previous
-    if (radiusCircle) m.removeLayer(radiusCircle);
-    if (radiusMarker) m.removeLayer(radiusMarker);
-
-    radiusCenter.value = center;
-    const radiusMeters = radiusKm.value * 1000;
-
-    radiusCircle = L.circle(center, {
-        radius: radiusMeters,
-        color: '#0C447C',
-        weight: 2,
-        fillColor: '#0C447C',
-        fillOpacity: 0.08,
-        dashArray: '6 4',
-    }).addTo(m);
-
-    radiusMarker = L.marker(center, {
-        icon: L.divIcon({
-            html: '<div style="width:12px;height:12px;background:#0C447C;border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(12,68,124,0.5);"></div>',
-            className: 'radius-center-icon',
-            iconSize: [12, 12],
-            iconAnchor: [6, 6],
-        }),
-    }).addTo(m);
-
-    // Count alumni in radius
-    const count = allMarkers.filter(mk =>
-        layerVisibility.value[mk.category] && center.distanceTo(mk.latlng) <= radiusMeters
-    ).length;
-    radiusAlumniCount.value = count;
-
-    radiusMarker.bindPopup(
-        `<div style="text-align:center;font-family:system-ui;padding:4px;">
-            <div style="font-size:24px;font-weight:900;color:#0C447C;">${count}</div>
-            <div style="font-size:10px;font-weight:700;color:#64748b;">alumni dalam radius ${radiusKm.value} km</div>
-        </div>`,
-        { className: 'custom-popup' }
-    ).openPopup();
-};
-
-const updateRadiusSize = (km: number) => {
-    radiusKm.value = km;
-    if (radiusCenter.value) placeRadius(radiusCenter.value);
-};
-
-// ─── SEARCH ─────────────────────────────────────────────────
-const highlightAlumni = (alumni: AlumniData) => {
+const highlightAlumni = (alumni: MapMarker) => {
     searchQuery.value = '';
     searchFocused.value = false;
     const entry = allMarkers.find(m => m.data.profil_alumni_id === alumni.profil_alumni_id);
@@ -716,39 +208,26 @@ const highlightAlumni = (alumni: AlumniData) => {
     }
 };
 
-// ─── MODE/FILTER ACTIONS ────────────────────────────────────
-const setViewMode = (mode: ViewMode) => {
-    viewMode.value = mode;
-    // Default: markers OFF for heat, ON for rest
-    showMarkers.value = mode !== 'heat';
-    // Exit radius mode when switching
-    if (radiusMode.value) { radiusMode.value = false; clearRadius(); }
-    // Reset marker icons to default size
-    allMarkers.forEach(m => {
-        m.marker.setIcon(createMarkerIcon(CATEGORY_CONFIG[m.category].color));
-    });
-    applyLayers();
+const handleRadiusToggle = () => {
+    toggleRadiusMode(rawMap);
+    activateRadiusListener(rawMap, allMarkers, layerVisibility.value);
 };
 
-const toggleMarkers = () => {
-    showMarkers.value = !showMarkers.value;
-    applyLayers();
+const handleRadiusUpdateSize = (km: number) => {
+    updateRadiusSize(rawMap, km, allMarkers, layerVisibility.value);
 };
 
-const toggleLayer = (key: keyof typeof layerVisibility.value) => {
-    layerVisibility.value[key] = !layerVisibility.value[key];
-    applyLayers();
-    updateViewportStats();
+const handleRadiusClear = () => clearRadius(rawMap);
+
+// ─── EXPORT ────────────────────────────────────────────────
+const downloadFile = (content: string, filename: string, mime: string) => {
+    const blob = new Blob([content], { type: `${mime};charset=utf-8;` });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
 };
 
-const resetFilters = () => {
-    filters.value = { angkatan: '', program_studi: '', sektor: '' };
-    fetchMapData();
-};
-
-const onFilterChange = () => fetchMapData();
-
-// ─── EXPORT ─────────────────────────────────────────────────
 const exportCSV = () => {
     if (!rawMap()) return;
     const bounds = rawMap()!.getBounds();
@@ -784,21 +263,13 @@ const exportGeoJSON = () => {
     downloadFile(JSON.stringify(geojson, null, 2), `alumni-sebaran-${new Date().toISOString().slice(0, 10)}.geojson`, 'application/json');
 };
 
-const downloadFile = (content: string, filename: string, mime: string) => {
-    const blob = new Blob([content], { type: `${mime};charset=utf-8;` });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename; a.click();
-    URL.revokeObjectURL(url);
-};
-
-// ─── WATCHERS ───────────────────────────────────────────────
-watch(isReady, (ready) => { if (ready) fetchMapData(); });
-watch(tematicField, () => { if (viewMode.value === 'tematic') applyLayers(); });
+// ─── WATCHERS ──────────────────────────────────────────────
+watch(isReady, (ready) => { if (ready) doFetchMapData(); });
+watch(tematicField, () => { if (viewMode.value === 'tematic') doApplyLayers(); });
 
 onUnmounted(() => {
-    if (moveEndTimer) clearTimeout(moveEndTimer);
-    clearRadius();
+    cleanupViewport();
+    clearRadius(rawMap);
 });
 </script>
 
@@ -831,55 +302,17 @@ onUnmounted(() => {
             <!-- ==================== LEFT PANEL ==================== -->
             <div class="absolute left-4 top-4 z-[1000] w-72 flex flex-col gap-2 max-h-[calc(100vh-130px)] overflow-y-auto scrollbar-thin pb-4">
 
-                <!-- Header + Mode Toggle -->
-                <div class="rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl px-4 py-3">
-                    <div class="flex items-center gap-2 mb-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0C447C] shadow-md">
-                            <Layers class="h-4 w-4 text-white" />
-                        </div>
-                        <div class="flex-1">
-                            <p class="text-[10px] font-black tracking-widest text-slate-400 uppercase">WebGIS</p>
-                            <p class="text-sm font-black text-slate-800 dark:text-white leading-none">Peta Sebaran Alumni</p>
-                        </div>
-                        <button @click="toggleDarkMode" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Toggle light/dark map">
-                            <Moon v-if="!isDarkMap" class="h-4 w-4 text-slate-400" />
-                            <Sun v-else class="h-4 w-4 text-amber-400" />
-                        </button>
-                    </div>
-
-                    <!-- Mode Buttons -->
-                    <div class="flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 gap-0.5">
-                        <button v-for="mode in (['cluster', 'heat', 'choropleth', 'tematic'] as ViewMode[])" :key="mode"
-                            @click="setViewMode(mode)"
-                            :class="viewMode === mode ? 'bg-white dark:bg-slate-700 text-[#0C447C] shadow-sm' : 'text-slate-400 hover:text-slate-600'"
-                            class="flex-1 px-1.5 py-1.5 rounded-lg text-[8px] font-black transition-all uppercase tracking-wide"
-                        >{{ mode === 'cluster' ? 'TITIK' : mode === 'heat' ? 'HEAT' : mode === 'choropleth' ? 'WILAYAH' : 'TEMATIK' }}</button>
-                    </div>
-
-                    <!-- Tematic field selector -->
-                    <div v-if="viewMode === 'tematic'" class="mt-2">
-                        <select v-model="tematicField" class="w-full h-8 rounded-lg bg-slate-50 dark:bg-slate-800 px-2 text-[10px] font-bold text-slate-700 dark:text-slate-300 outline-none border border-slate-200 dark:border-slate-700">
-                            <option value="status">Warna berdasarkan Status</option>
-                            <option value="sektor">Warna berdasarkan Sektor</option>
-                            <option value="angkatan">Warna berdasarkan Angkatan</option>
-                            <option value="prodi">Warna berdasarkan Prodi</option>
-                        </select>
-                    </div>
-
-                    <!-- Show/Hide Markers toggle (only heat & choropleth) -->
-                    <label v-if="viewMode === 'heat' || viewMode === 'choropleth'" @click.prevent="toggleMarkers"
-                        class="flex items-center gap-2 mt-2 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                    >
-                        <div class="h-4 w-4 rounded border-2 flex items-center justify-center transition-all"
-                            :class="showMarkers ? 'bg-blue-600 border-blue-600' : 'border-slate-300 dark:border-slate-600'"
-                        >
-                            <svg v-if="showMarkers" class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                        </div>
-                        <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Tampilkan titik alumni</span>
-                    </label>
-                </div>
+                <!-- Toolbar (Header + Mode Toggle) -->
+                <MapToolbar
+                    :viewMode="viewMode"
+                    :isDarkMap="isDarkMap"
+                    :showMarkers="showMarkers"
+                    :tematicField="tematicField"
+                    @update:viewMode="setViewMode"
+                    @update:tematicField="(f) => tematicField = f as TematicField"
+                    @toggleDarkMode="toggleDarkMode"
+                    @toggleMarkers="toggleMarkers"
+                />
 
                 <!-- Search -->
                 <div class="rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl overflow-hidden">
@@ -890,9 +323,10 @@ onUnmounted(() => {
                             @focus="searchFocused = true"
                             @blur="setTimeout(() => searchFocused = false, 200)"
                             placeholder="Cari nama, NIM, perusahaan..."
+                            aria-label="Cari alumni di peta"
                             class="w-full bg-transparent text-[11px] font-medium text-slate-700 dark:text-slate-300 outline-none placeholder-slate-400"
                         />
-                        <button v-if="searchQuery" @click="searchQuery = ''" class="text-slate-400 hover:text-slate-600">
+                        <button v-if="searchQuery" @click="searchQuery = ''" class="text-slate-400 hover:text-slate-600" aria-label="Hapus pencarian">
                             <X class="h-3 w-3" />
                         </button>
                     </div>
@@ -916,33 +350,15 @@ onUnmounted(() => {
                 </div>
 
                 <!-- Radius Search -->
-                <div class="rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl px-4 py-3">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-1.5">
-                            <Crosshair class="h-3.5 w-3.5" :class="radiusMode ? 'text-[#0C447C]' : 'text-slate-400'" />
-                            <span class="text-[9px] font-black uppercase tracking-widest" :class="radiusMode ? 'text-[#0C447C]' : 'text-slate-400'">Radius Search</span>
-                        </div>
-                        <button @click="toggleRadiusMode(); activateRadiusListener()"
-                            class="px-2.5 py-1 rounded-lg text-[9px] font-black transition-all"
-                            :class="radiusMode ? 'bg-[#0C447C] text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-600'"
-                        >{{ radiusMode ? 'AKTIF ✕' : 'AKTIFKAN' }}</button>
-                    </div>
-
-                    <template v-if="radiusMode">
-                        <p class="text-[9px] text-slate-400 mb-2">📍 Klik di peta untuk menentukan titik pusat</p>
-                        <div class="flex gap-1">
-                            <button v-for="km in [5, 10, 25, 50]" :key="km"
-                                @click="updateRadiusSize(km)"
-                                class="flex-1 py-1 rounded-lg text-[9px] font-black transition-all"
-                                :class="radiusKm === km ? 'bg-[#0C447C] text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'"
-                            >{{ km }} km</button>
-                        </div>
-                        <div v-if="radiusCenter" class="mt-2 flex items-center justify-between px-2 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                            <span class="text-[10px] font-bold text-blue-700 dark:text-blue-300">{{ radiusAlumniCount }} alumni ditemukan</span>
-                            <button @click="clearRadius" class="text-[9px] font-bold text-red-500 hover:text-red-600">Hapus</button>
-                        </div>
-                    </template>
-                </div>
+                <MapRadiusPanel
+                    :radiusMode="radiusMode"
+                    :radiusKm="radiusKm"
+                    :radiusCenter="radiusCenter"
+                    :radiusAlumniCount="radiusAlumniCount"
+                    @toggle="handleRadiusToggle"
+                    @clear="handleRadiusClear"
+                    @updateSize="handleRadiusUpdateSize"
+                />
 
                 <!-- Layer Checkboxes -->
                 <div class="rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl px-4 py-3">
@@ -982,28 +398,28 @@ onUnmounted(() => {
                             <Filter class="h-3.5 w-3.5 text-slate-400" />
                             <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Filter</span>
                         </div>
-                        <button v-if="hasActiveFilters" @click="resetFilters" class="flex items-center gap-1 text-[9px] font-bold text-red-500 hover:text-red-600">
+                        <button v-if="hasActiveFilters" @click="resetFilters" class="flex items-center gap-1 text-[9px] font-bold text-red-500 hover:text-red-600" aria-label="Reset semua filter">
                             <RotateCcw class="h-2.5 w-2.5" /> Reset
                         </button>
                     </div>
                     <div class="p-3 pt-1 space-y-2">
                         <div>
                             <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5 block">Angkatan</label>
-                            <select v-model="filters.angkatan" @change="onFilterChange" class="w-full h-8 rounded-lg bg-slate-50 dark:bg-slate-800 px-2 text-[11px] font-bold text-slate-700 dark:text-slate-300 outline-none border border-slate-200 dark:border-slate-700 focus:border-blue-500">
+                            <select v-model="filters.angkatan" @change="onFilterChange" aria-label="Filter angkatan" class="w-full h-8 rounded-lg bg-slate-50 dark:bg-slate-800 px-2 text-[11px] font-bold text-slate-700 dark:text-slate-300 outline-none border border-slate-200 dark:border-slate-700 focus:border-blue-500">
                                 <option value="">Semua</option>
                                 <option v-for="opt in filterOptions.angkatan" :key="opt" :value="opt">{{ opt }}</option>
                             </select>
                         </div>
                         <div>
                             <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5 block">Program Studi</label>
-                            <select v-model="filters.program_studi" @change="onFilterChange" class="w-full h-8 rounded-lg bg-slate-50 dark:bg-slate-800 px-2 text-[11px] font-bold text-slate-700 dark:text-slate-300 outline-none border border-slate-200 dark:border-slate-700 focus:border-blue-500">
+                            <select v-model="filters.program_studi" @change="onFilterChange" aria-label="Filter program studi" class="w-full h-8 rounded-lg bg-slate-50 dark:bg-slate-800 px-2 text-[11px] font-bold text-slate-700 dark:text-slate-300 outline-none border border-slate-200 dark:border-slate-700 focus:border-blue-500">
                                 <option value="">Semua</option>
                                 <option v-for="opt in filterOptions.prodi" :key="opt" :value="opt">{{ opt }}</option>
                             </select>
                         </div>
                         <div>
                             <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5 block">Sektor Industri</label>
-                            <select v-model="filters.sektor" @change="onFilterChange" class="w-full h-8 rounded-lg bg-slate-50 dark:bg-slate-800 px-2 text-[11px] font-bold text-slate-700 dark:text-slate-300 outline-none border border-slate-200 dark:border-slate-700 focus:border-blue-500">
+                            <select v-model="filters.sektor" @change="onFilterChange" aria-label="Filter sektor industri" class="w-full h-8 rounded-lg bg-slate-50 dark:bg-slate-800 px-2 text-[11px] font-bold text-slate-700 dark:text-slate-300 outline-none border border-slate-200 dark:border-slate-700 focus:border-blue-500">
                                 <option value="">Semua Sektor</option>
                                 <option v-for="opt in filterOptions.sektor" :key="opt" :value="opt">{{ opt }}</option>
                             </select>
@@ -1015,108 +431,17 @@ onUnmounted(() => {
             <!-- ==================== RIGHT SIDEBAR ==================== -->
             <transition name="slide-right">
                 <div v-show="showSidebar" class="absolute right-4 top-4 bottom-20 z-[1000] w-80 flex flex-col gap-2 overflow-y-auto scrollbar-thin">
-
-                    <!-- Stat Cards Row -->
-                    <div class="flex gap-2">
-                        <div class="flex-1 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl px-4 py-3 text-center transition-all duration-300"
-                            :class="isViewportUpdating ? 'ring-2 ring-blue-400/50 scale-[1.02]' : ''"
-                        >
-                            <div class="flex items-center justify-center gap-1">
-                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Di Viewport</p>
-                                <div v-if="isViewportUpdating" class="h-1.5 w-1.5 rounded-full bg-blue-500 animate-ping"></div>
-                            </div>
-                            <p class="text-2xl font-black text-slate-800 dark:text-white leading-none mt-1">{{ viewportStats.total }}</p>
-                        </div>
-                        <div class="flex-1 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl px-4 py-3 text-center">
-                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Total Alumni</p>
-                            <p class="text-2xl font-black text-slate-800 dark:text-white leading-none mt-1">{{ completionMeta.total_alumni }}</p>
-                        </div>
-                    </div>
-
-                    <!-- Distribution Pills -->
-                    <div class="flex flex-wrap gap-1.5">
-                        <div v-for="(cfg, key) in CATEGORY_CONFIG" :key="key"
-                            class="flex items-center gap-1 rounded-lg px-2.5 py-1 shadow-sm"
-                            :style="{ background: cfg.color + 'dd', color: 'white' }"
-                        >
-                            <span class="text-[10px] font-black">{{ key === 'bekerja' ? viewportStats.bekerja : key === 'wirausaha' ? viewportStats.wirausaha : key === 'studi' ? viewportStats.studi : viewportStats.belum }}</span>
-                            <span class="text-[9px] font-bold opacity-90">{{ cfg.label }}</span>
-                        </div>
-                    </div>
-
-                    <!-- Completion Rate -->
-                    <div class="rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl px-4 py-3">
-                        <div class="flex items-center justify-between mb-1.5">
-                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Keterisian Peta</span>
-                            <span class="text-sm font-black" :class="completionMeta.completion_rate >= 80 ? 'text-emerald-500' : completionMeta.completion_rate >= 50 ? 'text-amber-500' : 'text-red-500'">
-                                {{ completionMeta.completion_rate }}%
-                            </span>
-                        </div>
-                        <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                            <div class="h-full rounded-full transition-all duration-700"
-                                :class="completionMeta.completion_rate >= 80 ? 'bg-emerald-500' : completionMeta.completion_rate >= 50 ? 'bg-amber-500' : 'bg-red-500'"
-                                :style="{ width: completionMeta.completion_rate + '%' }"></div>
-                        </div>
-                        <p class="text-[9px] text-slate-400 mt-1">{{ completionMeta.mapped_count }} dari {{ completionMeta.total_alumni }} alumni terpetakan</p>
-                    </div>
-
-                    <!-- Status Donut Chart -->
-                    <div class="rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl px-4 py-3" v-if="viewportStats.total > 0">
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">📊 Distribusi Status (Viewport)</p>
-                        <VueApexCharts type="donut" height="180" :options="statusChartOptions" :series="statusChartSeries" />
-                    </div>
-
-                    <!-- Sektor Bar Chart -->
-                    <div class="rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl px-4 py-3" v-if="viewportStats.sektorData.length > 0">
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">📊 Top Sektor Industri (Viewport)</p>
-                        <VueApexCharts type="bar" height="180" :options="sektorChartOptions" :series="sektorChartSeries" />
-                    </div>
-
-                    <!-- Top Rankings -->
-                    <div class="rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl px-4 py-3" v-if="viewportStats.cityData.length > 0">
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">📍 Top Wilayah (Viewport)</p>
-                        <div class="space-y-1">
-                            <div v-for="(item, i) in viewportStats.cityData.slice(0, 5)" :key="item.name" class="flex items-center gap-2">
-                                <span class="text-[9px] font-black text-slate-300 w-3">{{ i + 1 }}</span>
-                                <div class="flex-1 relative h-5 rounded bg-blue-50 dark:bg-blue-900/20 overflow-hidden">
-                                    <div class="h-full bg-blue-100 dark:bg-blue-900/40 rounded transition-all" :style="{ width: Math.max(10, (item.count / (viewportStats.cityData[0]?.count || 1)) * 100) + '%' }"></div>
-                                    <div class="absolute inset-0 flex items-center justify-between px-2">
-                                        <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate">{{ item.name }}</span>
-                                        <span class="text-[10px] font-black text-blue-600">{{ item.count }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Angkatan Breakdown -->
-                    <div class="rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl px-4 py-3" v-if="viewportStats.angkatanData.length > 0">
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">🎓 Sebaran Angkatan</p>
-                        <div class="flex flex-wrap gap-1.5">
-                            <div v-for="ab in viewportStats.angkatanData" :key="ab.angkatan"
-                                class="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                            >
-                                <span class="text-[10px] font-bold text-slate-500">{{ ab.angkatan }}</span>
-                                <span class="text-[10px] font-black text-[#0C447C] dark:text-[#85B7EB]">{{ ab.count }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Export -->
-                    <div class="rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl px-4 py-3">
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">📥 Ekspor Data (Viewport)</p>
-                        <div class="flex gap-2">
-                            <button @click="exportCSV" class="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3 py-2 text-white transition-colors">
-                                <Download class="h-3 w-3" />
-                                <span class="text-[10px] font-black">.CSV</span>
-                            </button>
-                            <button @click="exportGeoJSON" class="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-[#0C447C] hover:bg-[#0a3866] px-3 py-2 text-white transition-colors">
-                                <Download class="h-3 w-3" />
-                                <span class="text-[10px] font-black">.GeoJSON</span>
-                            </button>
-                        </div>
-                        <p class="text-[9px] text-slate-400 mt-1.5 text-center">Hanya mengekspor {{ viewportStats.total }} alumni di area viewport saat ini</p>
-                    </div>
+                    <MapSidebar
+                        :viewportStats="viewportStats"
+                        :isViewportUpdating="isViewportUpdating"
+                        :completionMeta="completionMeta"
+                        :statusChartOptions="statusChartOptions"
+                        :statusChartSeries="statusChartSeries"
+                        :sektorChartOptions="sektorChartOptions"
+                        :sektorChartSeries="sektorChartSeries"
+                        @exportCsv="exportCSV"
+                        @exportGeoJson="exportGeoJSON"
+                    />
                 </div>
             </transition>
 
@@ -1124,65 +449,19 @@ onUnmounted(() => {
             <button @click="showSidebar = !showSidebar"
                 class="absolute right-4 top-1/2 -translate-y-1/2 z-[1001] flex h-8 w-5 items-center justify-center rounded-l-lg bg-white/90 dark:bg-slate-900/90 shadow-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                 :class="showSidebar ? 'right-[340px]' : 'right-4'"
+                aria-label="Buka/tutup sidebar"
             >
                 <ChevronRight v-if="!showSidebar" class="h-3.5 w-3.5 text-slate-500" />
                 <ChevronLeft v-else class="h-3.5 w-3.5 text-slate-500" />
             </button>
 
             <!-- ==================== BOTTOM LEGEND BAR ==================== -->
-            <div class="absolute bottom-0 left-0 right-0 z-[1000]">
-                <div class="rounded-t-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl mx-4 mb-0">
-
-                    <!-- Legend Row -->
-                    <div class="flex items-center justify-between px-5 py-2.5 flex-wrap gap-2">
-                        <div class="flex items-center gap-4 flex-wrap">
-                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Legenda</span>
-
-                            <!-- Active filter indicator -->
-                            <div v-if="hasActiveFilters" class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800">
-                                <Filter class="h-2.5 w-2.5 text-amber-600" />
-                                <span class="text-[9px] font-black text-amber-600 uppercase tracking-wider">Filter Aktif</span>
-                            </div>
-
-                            <!-- Marker legend (cluster/tematic) -->
-                            <template v-if="viewMode === 'cluster'">
-                                <div v-for="(cfg, key) in CATEGORY_CONFIG" :key="key" class="flex items-center gap-1">
-                                    <div class="h-2.5 w-2.5 rounded-full" :style="{ background: cfg.color }"></div>
-                                    <span class="text-[9px] font-bold text-slate-500">{{ cfg.label }}</span>
-                                </div>
-                            </template>
-
-                            <!-- Tematic legend -->
-                            <template v-if="viewMode === 'tematic' && tematicLegend.length > 0">
-                                <div v-for="item in tematicLegend.slice(0, 8)" :key="item.name" class="flex items-center gap-1">
-                                    <div class="h-2.5 w-2.5 rounded-full" :style="{ background: item.color }"></div>
-                                    <span class="text-[9px] font-bold text-slate-500">{{ item.name }} ({{ item.count }})</span>
-                                </div>
-                            </template>
-
-                            <!-- Heat gradient -->
-                            <div v-if="viewMode === 'heat'" class="flex items-center gap-1.5">
-                                <span class="text-[9px] font-bold text-slate-400">Rendah</span>
-                                <div class="h-2.5 w-20 rounded-full" style="background: linear-gradient(to right, #3b82f6, #22c55e, #eab308, #f97316, #ef4444);"></div>
-                                <span class="text-[9px] font-bold text-slate-400">Tinggi</span>
-                            </div>
-
-                            <!-- Choropleth gradient -->
-                            <div v-if="viewMode === 'choropleth'" class="flex items-center gap-1.5">
-                                <span class="text-[9px] font-bold text-slate-400">Sedikit</span>
-                                <div class="h-2.5 w-20 rounded-full" style="background: linear-gradient(to right, #c5dcf5, #85B7EB, #3a8fd4, #1a6bb5, #0C447C);"></div>
-                                <span class="text-[9px] font-bold text-slate-400">Banyak</span>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center gap-3 text-[9px] text-slate-400">
-                            <span>⚠️ Titik di-jitter ±1km</span>
-                            <span>📋 Sumber: Profil & Karir Alumni</span>
-                            <span v-if="lastUpdated">● {{ lastUpdated }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <MapLegend
+                :viewMode="viewMode"
+                :hasActiveFilters="hasActiveFilters"
+                :tematicLegend="tematicLegend"
+                :lastUpdated="lastUpdated"
+            />
 
         </div>
         </template>

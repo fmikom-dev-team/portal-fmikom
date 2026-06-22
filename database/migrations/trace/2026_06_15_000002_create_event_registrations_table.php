@@ -22,6 +22,8 @@ return new class extends Migration
             $table->unique(['event_id', 'user_id']);
             $table->index('event_id');
             $table->index('user_id');
+            $table->index('status');
+            $table->index(['event_id', 'status']);
         });
     }
 

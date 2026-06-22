@@ -17,7 +17,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { KUESIONER_CATEGORIES, YEARS } from '@/utils/constants';
 
-const form = defineModel<any>('form', { required: true });
+const form = defineModel<Record<string, unknown>>('form', { required: true });
 </script>
 
 <template>

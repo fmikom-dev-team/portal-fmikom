@@ -5,15 +5,20 @@ namespace App\Modules\Trace\Controllers\Alumni;
 use App\Http\Controllers\Controller;
 use App\Models\Tracer\Event;
 use App\Models\Tracer\EventRegistration;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use App\Notifications\Trace\EventRegistrationConfirmed;
+use App\Notifications\Trace\NewEventRegistration;
 use App\Models\Tracer\ActivityLog;
+use App\Models\User;
+use Illuminate\Support\Facades\Notification;
 
 class EventController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): InertiaResponse
     {
         $query = Event::whereIn('status', ['published', 'closed'])
             ->withCount('registrations');
@@ -49,7 +54,7 @@ class EventController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($id): InertiaResponse
     {
         $event = Event::whereIn('status', ['published', 'closed'])
             ->withCount('registrations')
@@ -66,11 +71,11 @@ class EventController extends Controller
         ]);
     }
 
-    public function register($id)
+    public function register($id): RedirectResponse
     {
         $event = Event::where('status', 'published')->findOrFail($id);
 
-        return DB::transaction(function () use ($event) {
+        $result = DB::transaction(function () use ($event) {
             $alreadyRegistered = EventRegistration::where('event_id', $event->id)
                 ->where('user_id', auth()->id())
                 ->where('status', 'registered')
@@ -78,15 +83,15 @@ class EventController extends Controller
                 ->exists();
 
             if ($alreadyRegistered) {
-                return redirect()->back()->with('error', 'Anda sudah terdaftar pada event ini.');
+                return ['error' => 'Anda sudah terdaftar pada event ini.'];
             }
 
             if ($event->registration_deadline && now()->greaterThan($event->registration_deadline)) {
-                return redirect()->back()->with('error', 'Batas waktu pendaftaran sudah berakhir.');
+                return ['error' => 'Batas waktu pendaftaran sudah berakhir.'];
             }
 
             if ($event->event_date && now()->startOfDay()->greaterThan($event->event_date)) {
-                return back()->with('error', 'Event ini sudah berlalu.');
+                return ['error' => 'Event ini sudah berlalu.'];
             }
 
             if ($event->max_participants) {
@@ -96,7 +101,7 @@ class EventController extends Controller
                     ->count();
 
                 if ($currentCount >= $event->max_participants) {
-                    return redirect()->back()->with('error', 'Kuota peserta sudah penuh.');
+                    return ['error' => 'Kuota peserta sudah penuh.'];
                 }
             }
 
@@ -117,20 +122,37 @@ class EventController extends Controller
                 ]);
             }
 
-            // Notify alumni about successful registration
-            auth()->user()->notify(new EventRegistrationConfirmed(
-                $event->title,
-                $event->event_date->format('d M Y'),
-                $event->id,
-            ));
-
-            ActivityLog::record('event.registered', "Mendaftar event: {$event->title}", $event);
-
-            return redirect()->back()->with('success', 'Berhasil mendaftar pada event.');
+            return ['success' => true];
         });
+
+        if (isset($result['error'])) {
+            return redirect()->back()->with('error', $result['error']);
+        }
+
+        // Notify alumni about successful registration
+        auth()->user()->notify(new EventRegistrationConfirmed(
+            $event->title,
+            $event->event_date->format('d M Y'),
+            $event->id,
+        ));
+
+        // Notify admins about new registration
+        $currentCount = EventRegistration::where('event_id', $event->id)->where('status', 'registered')->count();
+        $admins = User::where('user_type', 'admin')->get();
+        Notification::send($admins, new NewEventRegistration(
+            auth()->user()->name,
+            $event->title,
+            $event->id,
+            $currentCount,
+            $event->max_participants,
+        ));
+
+        ActivityLog::record('event.registered', "Mendaftar event: {$event->title}", $event);
+
+        return redirect()->back()->with('success', 'Berhasil mendaftar pada event.');
     }
 
-    public function cancelRegistration($id)
+    public function cancelRegistration($id): RedirectResponse
     {
         $registration = EventRegistration::where('event_id', $id)
             ->where('user_id', auth()->id())
@@ -147,7 +169,7 @@ class EventController extends Controller
         return redirect()->back()->with('success', 'Pendaftaran berhasil dibatalkan.');
     }
 
-    public function myEvents()
+    public function myEvents(): InertiaResponse
     {
         $registrations = EventRegistration::where('user_id', auth()->id())
             ->with('event')

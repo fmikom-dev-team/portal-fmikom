@@ -28,34 +28,30 @@ class SendKuesionerReminders extends Command
             return self::SUCCESS;
         }
 
-        $alumni = User::whereHas('alumniProfile')
-            ->whereNotNull('email')
-            ->get();
-
         $sent = 0;
 
         foreach ($activeKuesioners as $kuesioner) {
             // Get IDs of users who have already responded to this kuesioner
             $respondedUserIds = $kuesioner->responses()->pluck('user_id')->toArray();
 
-            foreach ($alumni as $user) {
-                // Skip if this user has already responded
-                if (in_array($user->id, $respondedUserIds)) {
-                    continue;
-                }
-
-                try {
-                    Mail::to($user->email)->queue(
-                        new KuesionerReminder(
-                            $user->name ?? 'Alumni',
-                            $kuesioner
-                        )
-                    );
-                    $sent++;
-                } catch (\Exception $e) {
-                    $this->error("Failed to send reminder to {$user->email} for kuesioner '{$kuesioner->judul}': {$e->getMessage()}");
-                }
-            }
+            User::whereHas('alumniProfile')
+                ->whereNotNull('email')
+                ->whereNotIn('id', $respondedUserIds)
+                ->chunkById(200, function ($alumni) use ($kuesioner, &$sent) {
+                    foreach ($alumni as $user) {
+                        try {
+                            Mail::to($user->email)->queue(
+                                new KuesionerReminder(
+                                    $user->name ?? 'Alumni',
+                                    $kuesioner
+                                )
+                            );
+                            $sent++;
+                        } catch (\Exception $e) {
+                            $this->error("Failed to send reminder to {$user->email} for kuesioner '{$kuesioner->judul}': {$e->getMessage()}");
+                        }
+                    }
+                });
         }
 
         $this->info("Kuesioner reminders sent: {$sent} emails.");

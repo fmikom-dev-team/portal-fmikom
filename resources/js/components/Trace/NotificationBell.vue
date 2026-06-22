@@ -74,17 +74,19 @@ function getIconColor(type: string) {
 }
 
 function markRead(id: string) {
-    router.post(`/trace/notifications/${id}/mark-read`, {}, { preserveState: true, preserveScroll: true });
+    router.post(`/trace/notifications/${id}/mark-read`, {}, {
+        preserveState: true,
+        preserveScroll: true,
+        only: ['recent_notifications', 'unread_notifications_count'],
+    });
 }
 
 function markAllRead() {
-    router.post('/trace/notifications/mark-all-read', {}, { preserveState: true, preserveScroll: true });
-}
-
-function handleClick(notif: Notification) {
-    if (notif.unread) markRead(notif.id);
-    open.value = false;
-    router.visit(notif.href || '/trace');
+    router.post('/trace/notifications/mark-all-read', {}, {
+        preserveState: true,
+        preserveScroll: true,
+        only: ['recent_notifications', 'unread_notifications_count'],
+    });
 }
 
 function dismissToast() {
@@ -94,7 +96,7 @@ function dismissToast() {
 
 function handleToastClick() {
     if (toast.value) {
-        handleClick(toast.value);
+        if (toast.value.unread) markRead(toast.value.id);
         dismissToast();
     }
 }
@@ -133,6 +135,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
         <button
             @click.stop="toggle"
             class="relative flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+            aria-label="Notifikasi"
         >
             <Bell class="h-[18px] w-[18px]" />
             <span
@@ -154,6 +157,8 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
         >
             <div
                 v-if="open"
+                role="menu"
+                aria-label="Daftar notifikasi"
                 class="absolute right-0 top-full mt-2 w-[360px] rounded-2xl bg-white border border-slate-100 shadow-xl shadow-slate-200/60 dark:bg-zinc-900 dark:border-zinc-800 dark:shadow-zinc-950 z-50 overflow-hidden"
             >
                 <!-- Header -->
@@ -170,6 +175,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                     <button
                         v-if="unreadCount > 0"
                         @click="markAllRead"
+                        aria-label="Tandai semua notifikasi dibaca"
                         class="text-[11px] font-semibold text-[#0C447C] hover:text-[#0a3968] dark:text-[#85B7EB] dark:hover:text-white transition-colors"
                     >
                         Tandai semua dibaca
@@ -199,9 +205,12 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                     <div
                         v-for="notif in notifications"
                         :key="notif.id"
-                        @click="handleClick(notif)"
-                        class="flex items-start gap-3 px-4 py-3 transition-all cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800/40 group"
-                        :class="{ 'bg-[#0C447C]/[0.03] dark:bg-[#85B7EB]/[0.05]': notif.unread }"
+                        class="flex items-start gap-3 px-4 py-3 transition-all group"
+                        :class="[
+                            notif.unread
+                                ? 'bg-[#0C447C]/[0.03] dark:bg-[#85B7EB]/[0.05]'
+                                : ''
+                        ]"
                     >
                         <!-- Icon -->
                         <div class="shrink-0 mt-0.5">
@@ -232,8 +241,20 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                             </p>
                         </div>
 
-                        <!-- Unread dot -->
-                        <div v-if="notif.unread" class="mt-3 h-2 w-2 rounded-full bg-[#0C447C] dark:bg-[#85B7EB] shrink-0 animate-pulse" />
+                        <!-- Mark read CTA (hover) / Unread dot (default) -->
+                        <div v-if="notif.unread" class="shrink-0 mt-1.5 relative">
+                            <!-- Dot (visible by default, hidden on hover) -->
+                            <div class="h-2 w-2 rounded-full bg-[#0C447C] dark:bg-[#85B7EB] animate-pulse group-hover:opacity-0 transition-opacity" />
+                            <!-- Button (hidden by default, visible on hover) -->
+                            <button
+                                @click.stop.prevent="markRead(notif.id)"
+                                class="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-[10px] font-semibold text-[#0C447C] dark:text-[#85B7EB] hover:text-[#0a3968] dark:hover:text-white bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded-md px-1.5 py-0.5"
+                                title="Tandai sudah dibaca"
+                                aria-label="Tandai sudah dibaca"
+                            >
+                                Dibaca
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -295,6 +316,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                     <!-- Dismiss -->
                     <button
                         @click.stop="dismissToast"
+                        aria-label="Tutup"
                         class="shrink-0 mt-0.5 flex h-6 w-6 items-center justify-center rounded-lg text-slate-300 hover:text-slate-500 hover:bg-slate-100 dark:text-zinc-600 dark:hover:text-zinc-400 dark:hover:bg-zinc-800 transition-colors"
                     >
                         <XCircle class="h-4 w-4" />

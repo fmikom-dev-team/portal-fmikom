@@ -49,14 +49,20 @@ function toDateInput(val: string | null): string {
     return val.substring(0, 10);
 }
 
+// Format time to HH:mm for <input type="time"> (strip seconds if present)
+function toTimeInput(val: string | null): string {
+    if (!val) return '';
+    return val.substring(0, 5);
+}
+
 const form = useForm({
     _method: 'PUT',
     title: props.event.title,
     description: props.event.description,
     location: props.event.location ?? '',
     event_date: toDateInput(props.event.event_date),
-    event_time_start: props.event.event_time_start ?? '',
-    event_time_end: props.event.event_time_end ?? '',
+    event_time_start: toTimeInput(props.event.event_time_start),
+    event_time_end: toTimeInput(props.event.event_time_end),
     registration_deadline: toDateInput(props.event.registration_deadline),
     max_participants: props.event.max_participants ?? '',
     poster: null as File | null,
@@ -84,8 +90,7 @@ const removePoster = () => {
 const submit = () => {
     form.post(`/trace/admin/events/${props.event.id}`, {
         forceFormData: true,
-        onSuccess: () => toast.success('Event berhasil diperbarui!'),
-        onError: () => toast.error('Gagal menyimpan. Periksa kembali form Anda.'),
+        onError: () => toast.error('Gagal memperbarui event. Periksa kembali form Anda.'),
     });
 };
 </script>

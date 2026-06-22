@@ -3,9 +3,10 @@
 namespace App\Notifications\Trace;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class NewJobPosted extends Notification
+class NewJobPosted extends Notification implements ShouldQueue
 {
     use Queueable;
 

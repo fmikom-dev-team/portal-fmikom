@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, useForm, router } from '@inertiajs/vue3';
+import { Head, Link, useForm, router } from "@inertiajs/vue3";
 import {
     ChevronLeft,
     Plus,
@@ -14,11 +14,11 @@ import {
     Loader2,
     CheckCircle2,
     ExternalLink,
-} from 'lucide-vue-next';
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+} from "lucide-vue-next";
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogContent,
@@ -26,48 +26,53 @@ import {
     DialogTitle,
     DialogDescription,
     DialogFooter,
-} from '@/components/ui/dialog';
-import { Separator } from '@/components/ui/separator';
-import { TStatusBadge } from '@/components/trace';
-import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { TStatusBadge } from "@/components/trace";
+import TraceAdminLayout from "@/layouts/TraceAdminLayout.vue";
+import type { Kuesioner, KuesionerSection, Pertanyaan, OpsiJawaban } from '@/types/trace';
 
-import { KUESIONER_CATEGORIES } from '@/utils/constants';
-import { formatDateForInput } from '@/utils/date';
-import QuestionnaireSectionCard from './components/QuestionnaireSectionCard.vue';
-import QuestionnaireSettingsCard from './components/QuestionnaireSettingsCard.vue';
-import QuestionnairePreview from './components/QuestionnairePreview.vue';
+import { KUESIONER_CATEGORIES } from "@/utils/constants";
+import { formatDateForInput } from "@/utils/date";
+import QuestionnaireSectionCard from "./components/QuestionnaireSectionCard.vue";
+import QuestionnaireSettingsCard from "./components/QuestionnaireSettingsCard.vue";
+import QuestionnairePreview from "./components/QuestionnairePreview.vue";
 
 const props = defineProps<{
-    kuesioner: any;
+    kuesioner: Kuesioner;
 }>();
 
 const breadcrumbs = computed(() => [
-    { title: 'Manajemen Kuesioner', href: '/trace/admin/questionnaires' },
-    { title: form.judul || 'Kuesioner Baru', href: '#' },
+    { title: "Manajemen Kuesioner", href: "/trace/admin/questionnaires" },
+    { title: form.judul || "Kuesioner Baru", href: "#" },
 ]);
 
-const activeTab = ref('builder');
+const activeTab = ref("builder");
 const showPreview = ref(false);
+
+const openAnalytics = () => {
+    window.open(`/trace/admin/questionnaires/${props.kuesioner.id}/analytics-page`, '_blank');
+};
 
 // ═══════════════════════════════════════════════════════════════
 // FORM
 // ═══════════════════════════════════════════════════════════════
 
 const form = useForm<any>({
-    judul: props.kuesioner.judul || '',
-    subtitle: props.kuesioner.subtitle || '',
+    judul: props.kuesioner.judul || "",
+    subtitle: props.kuesioner.subtitle || "",
     kategori: props.kuesioner.kategori || KUESIONER_CATEGORIES[0],
     tahun:
         props.kuesioner.tahun?.toString() ||
         new Date().getFullYear().toString(),
     date_mulai: formatDateForInput(props.kuesioner.date_mulai),
     date_selesai: formatDateForInput(props.kuesioner.date_selesai),
-    deskripsi: props.kuesioner.deskripsi || '',
-    status: props.kuesioner.status || 'active',
-    sections: (props.kuesioner.sections || []).map((s: any) => ({
+    deskripsi: props.kuesioner.deskripsi || "",
+    status: props.kuesioner.status || "active",
+    sections: (props.kuesioner.sections || []).map((s: KuesionerSection) => ({
         id: s.id,
-        judul: s.title ?? s.judul ?? '',
-        deskripsi: s.description ?? s.deskripsi ?? '',
+        judul: s.title ?? s.judul ?? "",
+        deskripsi: s.description ?? s.deskripsi ?? "",
         conditions: s.conditions
             ? {
                   ...s.conditions,
@@ -79,12 +84,12 @@ const form = useForm<any>({
                             : Number(s.conditions.pertanyaan_id),
               }
             : null,
-        pertanyaans: (s.pertanyaans || []).map((q: any) => {
+        pertanyaans: (s.pertanyaans || []).map((q: Pertanyaan) => {
             const rawMeta = q.meta || {};
             const meta = {
-                target_table: 'detail_jawabans',
+                target_table: "detail_jawabans",
                 ...rawMeta,
-                kategori: rawMeta.kategori || q.kategori || 'Umum',
+                kategori: rawMeta.kategori || q.kategori || "Umum",
                 acuan: rawMeta.acuan || (Array.isArray(q.acuan) ? q.acuan : []),
             };
 
@@ -93,10 +98,10 @@ const form = useForm<any>({
                 id: q.id,
                 is_required: !!q.is_required,
                 meta,
-                tipe_data: q.tipe_data || 'categorical',
+                tipe_data: q.tipe_data || "categorical",
                 matrix_rows: rawMeta.rows || q.matrix_rows || [],
                 logic_condition: null,
-                opsi_jawabans: (q.opsi_jawabans || []).map((o: any) => ({
+                opsi_jawabans: (q.opsi_jawabans || []).map((o: OpsiJawaban) => ({
                     ...o,
                     id: o.id,
                     skor: o.nilai ?? o.skor ?? 0,
@@ -115,11 +120,12 @@ const computedStatus = computed(() => {
     const status = form.status;
     const now = new Date();
 
-    if (status !== 'active' && status !== 'published') {
+    if (status !== "active" && status !== "published") {
         return {
-            label: 'Draft',
-            badgeClass: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-            dotClass: 'bg-slate-400',
+            label: "Draft",
+            badgeClass:
+                "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
+            dotClass: "bg-slate-400",
         };
     }
 
@@ -127,9 +133,10 @@ const computedStatus = computed(() => {
         const start = new Date(form.date_mulai);
         if (start > now) {
             return {
-                label: 'Terjadwal',
-                badgeClass: 'bg-[#0C447C]/10 text-[#0C447C] dark:bg-[#0C447C]/20 dark:text-[#85B7EB]',
-                dotClass: 'bg-[#0C447C]',
+                label: "Terjadwal",
+                badgeClass:
+                    "bg-[#0C447C]/10 text-[#0C447C] dark:bg-[#0C447C]/20 dark:text-[#85B7EB]",
+                dotClass: "bg-[#0C447C]",
             };
         }
     }
@@ -139,17 +146,19 @@ const computedStatus = computed(() => {
         end.setHours(23, 59, 59, 999);
         if (end < now) {
             return {
-                label: 'Selesai',
-                badgeClass: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400',
-                dotClass: 'bg-amber-500',
+                label: "Selesai",
+                badgeClass:
+                    "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400",
+                dotClass: "bg-amber-500",
             };
         }
     }
 
     return {
-        label: 'Aktif',
-        badgeClass: 'bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-400',
-        dotClass: 'bg-green-500',
+        label: "Aktif",
+        badgeClass:
+            "bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-400",
+        dotClass: "bg-green-500",
     };
 });
 
@@ -157,26 +166,27 @@ const computedStatus = computed(() => {
 // AUTO-SAVE & DIRTY STATE
 // ═══════════════════════════════════════════════════════════════
 
-const saveState = ref<'idle' | 'saving' | 'saved'>('idle');
+const saveState = ref<"idle" | "saving" | "saved">("idle");
 const hasUnsavedChanges = ref(false);
 let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Deep watch form changes
 watch(
-    () => JSON.stringify({
-        judul: form.judul,
-        subtitle: form.subtitle,
-        kategori: form.kategori,
-        tahun: form.tahun,
-        date_mulai: form.date_mulai,
-        date_selesai: form.date_selesai,
-        deskripsi: form.deskripsi,
-        status: form.status,
-        sections: form.sections,
-    }),
+    () =>
+        JSON.stringify({
+            judul: form.judul,
+            subtitle: form.subtitle,
+            kategori: form.kategori,
+            tahun: form.tahun,
+            date_mulai: form.date_mulai,
+            date_selesai: form.date_selesai,
+            deskripsi: form.deskripsi,
+            status: form.status,
+            sections: form.sections,
+        }),
     () => {
         hasUnsavedChanges.value = true;
-        saveState.value = 'idle';
+        saveState.value = "idle";
 
         // Auto-save after 30s of inactivity (only for existing questionnaires)
         if (autoSaveTimer) clearTimeout(autoSaveTimer);
@@ -186,23 +196,23 @@ watch(
             }, 30000);
         }
     },
-    { deep: true }
+    { deep: true },
 );
 
 // Browser beforeunload
 const handleBeforeUnload = (e: BeforeUnloadEvent) => {
     if (hasUnsavedChanges.value) {
         e.preventDefault();
-        e.returnValue = '';
+        e.returnValue = "";
     }
 };
 
 onMounted(() => {
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
 });
 
 onBeforeUnmount(() => {
-    window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.removeEventListener("beforeunload", handleBeforeUnload);
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
 });
 
@@ -211,27 +221,27 @@ onBeforeUnmount(() => {
 // ═══════════════════════════════════════════════════════════════
 
 const showLeaveDialog = ref(false);
-const pendingLeaveUrl = ref('');
+const pendingLeaveUrl = ref("");
 
 // Intercept back button click
 const handleBack = () => {
     if (hasUnsavedChanges.value) {
-        pendingLeaveUrl.value = '/trace/admin/questionnaires';
+        pendingLeaveUrl.value = "/trace/admin/questionnaires";
         showLeaveDialog.value = true;
     } else {
-        router.get('/trace/admin/questionnaires');
+        router.get("/trace/admin/questionnaires");
     }
 };
 
 const confirmLeave = () => {
     hasUnsavedChanges.value = false;
     showLeaveDialog.value = false;
-    router.get(pendingLeaveUrl.value || '/trace/admin/questionnaires');
+    router.get(pendingLeaveUrl.value || "/trace/admin/questionnaires");
 };
 
 const cancelLeave = () => {
     showLeaveDialog.value = false;
-    pendingLeaveUrl.value = '';
+    pendingLeaveUrl.value = "";
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -240,8 +250,8 @@ const cancelLeave = () => {
 
 const addSection = () => {
     form.sections.push({
-        judul: 'Bagian Baru',
-        deskripsi: '',
+        judul: "Bagian Baru",
+        deskripsi: "",
         conditions: null,
         pertanyaans: [],
     });
@@ -250,7 +260,7 @@ const addSection = () => {
 const removeSection = (index: number) => {
     if (
         confirm(
-            'Apakah Anda yakin ingin menghapus bagian ini? Semua pertanyaan di dalamnya akan ikut terhapus.',
+            "Apakah Anda yakin ingin menghapus bagian ini? Semua pertanyaan di dalamnya akan ikut terhapus.",
         )
     ) {
         form.sections.splice(index, 1);
@@ -263,13 +273,13 @@ const removeSection = (index: number) => {
 
 const doSave = (isAutoSave = false) => {
     // Normalisasi
-    form.sections.forEach((section: any) => {
-        section.pertanyaans.forEach((question: any) => {
-            if (question.tipe === 'matrix' && !question.matrix_rows) {
+    form.sections.forEach((section: { pertanyaans: Array<{ tipe: string; matrix_rows?: string[]; opsi_jawabans?: unknown[]; is_required: boolean; logic_condition: null }> }) => {
+        section.pertanyaans.forEach((question: { tipe: string; matrix_rows?: string[]; opsi_jawabans?: unknown[]; is_required: boolean; logic_condition: null }) => {
+            if (question.tipe === "matrix" && !question.matrix_rows) {
                 question.matrix_rows = [];
             }
             if (
-                ['radio', 'checkbox', 'dropdown'].includes(question.tipe) &&
+                ["radio", "checkbox", "dropdown"].includes(question.tipe) &&
                 !question.opsi_jawabans
             ) {
                 question.opsi_jawabans = [];
@@ -279,18 +289,18 @@ const doSave = (isAutoSave = false) => {
         });
     });
 
-    saveState.value = 'saving';
+    saveState.value = "saving";
 
     const onSuccess = () => {
-        saveState.value = 'saved';
+        saveState.value = "saved";
         hasUnsavedChanges.value = false;
         setTimeout(() => {
-            if (saveState.value === 'saved') saveState.value = 'idle';
+            if (saveState.value === "saved") saveState.value = "idle";
         }, 3000);
     };
 
     const onError = () => {
-        saveState.value = 'idle';
+        saveState.value = "idle";
     };
 
     if (props.kuesioner.id) {
@@ -300,7 +310,7 @@ const doSave = (isAutoSave = false) => {
             onError,
         });
     } else {
-        form.post('/trace/admin/questionnaires', {
+        form.post("/trace/admin/questionnaires", {
             onSuccess,
             onError,
         });
@@ -335,29 +345,47 @@ const saveChanges = () => doSave(false);
                         <Separator orientation="vertical" class="h-4" />
                         <span
                             class="max-w-[200px] truncate text-sm font-bold"
-                            >{{ form.judul || 'Kuesioner Tanpa Judul' }}</span
+                            >{{ form.judul || "Kuesioner Tanpa Judul" }}</span
                         >
                         <!-- Status Badge — computed from dates -->
                         <TStatusBadge
-                            :status="computedStatus.label === 'Aktif' ? 'active' : computedStatus.label === 'Draft' ? 'draft' : computedStatus.label === 'Terjadwal' ? 'pending' : 'closed'"
+                            :status="
+                                computedStatus.label === 'Aktif'
+                                    ? 'active'
+                                    : computedStatus.label === 'Draft'
+                                      ? 'draft'
+                                      : computedStatus.label === 'Terjadwal'
+                                        ? 'pending'
+                                        : 'closed'
+                            "
                             :label="computedStatus.label"
                             size="sm"
                             class="ml-2"
                         />
 
                         <!-- Save State Indicator -->
-                        <div class="ml-2 flex items-center gap-1.5 text-[10px] font-bold">
+                        <div
+                            class="ml-2 flex items-center gap-1.5 text-[10px] font-bold"
+                        >
                             <template v-if="saveState === 'saving'">
-                                <Loader2 class="h-3 w-3 animate-spin text-[#0C447C]" />
+                                <Loader2
+                                    class="h-3 w-3 animate-spin text-[#0C447C]"
+                                />
                                 <span class="text-[#0C447C]">Menyimpan...</span>
                             </template>
                             <template v-else-if="saveState === 'saved'">
-                                <CheckCircle2 class="h-3 w-3 text-emerald-500" />
+                                <CheckCircle2
+                                    class="h-3 w-3 text-emerald-500"
+                                />
                                 <span class="text-emerald-500">Tersimpan</span>
                             </template>
                             <template v-else-if="hasUnsavedChanges">
-                                <Circle class="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-                                <span class="text-amber-500">Belum disimpan</span>
+                                <Circle
+                                    class="h-2.5 w-2.5 fill-amber-400 text-amber-400"
+                                />
+                                <span class="text-amber-500"
+                                    >Belum disimpan</span
+                                >
                             </template>
                         </div>
                     </div>
@@ -382,8 +410,8 @@ const saveChanges = () => doSave(false);
                             v-if="props.kuesioner.id"
                             variant="ghost"
                             size="sm"
-                            class="h-8 gap-2 rounded-lg transition-all text-muted-foreground"
-                            @click="window.open(`/trace/admin/questionnaires/${kuesioner.id}/analytics-page`, '_blank')"
+                            class="h-8 gap-2 rounded-lg transition-all text-muted-foreground hover:text-[#0C447C] dark:hover:text-[#85B7EB]"
+                            @click="openAnalytics"
                         >
                             <BarChart2 class="h-4 w-4" />
                             <span class="text-xs font-bold">Analisis</span>
@@ -408,9 +436,12 @@ const saveChanges = () => doSave(false);
                         :disabled="saveState === 'saving'"
                         @click="saveChanges"
                     >
-                        <Loader2 v-if="saveState === 'saving'" class="h-4 w-4 animate-spin" />
+                        <Loader2
+                            v-if="saveState === 'saving'"
+                            class="h-4 w-4 animate-spin"
+                        />
                         <Save v-else class="h-4 w-4" />
-                        {{ saveState === 'saving' ? 'Menyimpan...' : 'Simpan' }}
+                        {{ saveState === "saving" ? "Menyimpan..." : "Simpan" }}
                     </Button>
                 </div>
             </div>
@@ -476,51 +507,39 @@ const saveChanges = () => doSave(false);
                 </Button>
             </div>
 
-
-
             <!-- ═══ PREVIEW DIALOG ═══ -->
             <Dialog v-model:open="showPreview">
                 <DialogContent
                     class="max-w-4xl overflow-hidden rounded-3xl border-none p-0 shadow-2xl"
                 >
-                    <DialogHeader
-                        class="border-b bg-slate-50 p-6 dark:bg-slate-900"
-                    >
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <DialogTitle class="text-xl font-black"
-                                    >Pratinjau Kuesioner</DialogTitle
-                                >
-                                <p
-                                    class="mt-1 text-xs font-medium text-muted-foreground"
-                                >
-                                    Ini adalah tampilan yang akan dilihat oleh
-                                    responden.
-                                </p>
-                            </div>
-                        </div>
+                    <DialogHeader class="sr-only">
+                        <DialogTitle>Pratinjau Kuesioner</DialogTitle>
                     </DialogHeader>
-                    <div class="bg-white p-6 lg:p-10 dark:bg-slate-950">
-                        <QuestionnairePreview
-                            :judul="form.judul"
-                            :subtitle="form.subtitle"
-                            :sections="form.sections"
-                        />
-                    </div>
+                    <QuestionnairePreview
+                        :judul="form.judul"
+                        :subtitle="form.subtitle"
+                        :sections="form.sections"
+                    />
                 </DialogContent>
             </Dialog>
 
             <!-- ═══ LEAVE CONFIRMATION DIALOG ═══ -->
-            <Dialog :open="showLeaveDialog" @update:open="(v: boolean) => showLeaveDialog = v">
+            <Dialog
+                :open="showLeaveDialog"
+                @update:open="(v: boolean) => (showLeaveDialog = v)"
+            >
                 <DialogContent class="max-w-md rounded-2xl">
                     <DialogHeader>
                         <DialogTitle>Perubahan Belum Disimpan</DialogTitle>
                         <DialogDescription>
-                            Anda memiliki perubahan yang belum disimpan. Jika Anda keluar sekarang, semua perubahan akan hilang.
+                            Anda memiliki perubahan yang belum disimpan. Jika
+                            Anda keluar sekarang, semua perubahan akan hilang.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter class="gap-2 sm:gap-0">
-                        <Button variant="outline" @click="cancelLeave">Batal</Button>
+                        <Button variant="outline" @click="cancelLeave"
+                            >Batal</Button
+                        >
                         <Button
                             class="bg-red-600 hover:bg-red-700 text-white"
                             @click="confirmLeave"

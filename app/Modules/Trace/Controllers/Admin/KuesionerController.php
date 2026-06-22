@@ -3,16 +3,20 @@
 namespace App\Modules\Trace\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Trace\StoreKuesionerRequest;
 use Illuminate\Http\Request;
 use App\Models\Tracer\Kuesioner;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use Illuminate\Support\Facades\DB;
-use App\Actions\Trace\SaveKuesionerSectionsAction;
+use App\Modules\Trace\Actions\SaveKuesionerSectionsAction;
+use App\Modules\Trace\Actions\DuplicateKuesionerAction;
 use App\Models\Tracer\ActivityLog;
 
 class KuesionerController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): InertiaResponse
     {
         $query = Kuesioner::withCount('responses');
 
@@ -39,7 +43,7 @@ class KuesionerController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(): InertiaResponse
     {
         return Inertia::render('Modules/Trace/Admin/QuestionnaireDetail', [
             'kuesioner' => [
@@ -55,14 +59,14 @@ class KuesionerController extends Controller
         ]);
     }
 
-    public function edit($id)
+    public function edit($id): InertiaResponse
     {
         return $this->show($id);
     }
 
-    public function store(Request $request, SaveKuesionerSectionsAction $saveAction)
+    public function store(StoreKuesionerRequest $request, SaveKuesionerSectionsAction $saveAction): RedirectResponse
     {
-        $validated = $request->validate($this->kuesionerRules());
+        $validated = $request->validated();
 
         try {
             return DB::transaction(function () use ($request, $validated, $saveAction) {
@@ -90,11 +94,11 @@ class KuesionerController extends Controller
         }
     }
 
-    public function update(Request $request, $id, SaveKuesionerSectionsAction $saveAction)
+    public function update(StoreKuesionerRequest $request, $id, SaveKuesionerSectionsAction $saveAction): RedirectResponse
     {
         $kuesioner = Kuesioner::findOrFail($id);
 
-        $validated = $request->validate($this->kuesionerRules());
+        $validated = $request->validated();
 
         try {
             return DB::transaction(function () use ($kuesioner, $request, $validated, $saveAction) {
@@ -121,64 +125,29 @@ class KuesionerController extends Controller
         }
     }
 
-    public function duplicate($id)
+    public function duplicate($id, DuplicateKuesionerAction $action): RedirectResponse
     {
         $kuesioner = Kuesioner::with('sections.pertanyaans.opsiJawabans')->findOrFail($id);
 
         try {
-            return DB::transaction(function () use ($kuesioner) {
-                $newKuesioner = $kuesioner->replicate();
-                $newKuesioner->judul = $kuesioner->judul . ' (Salinan)';
-                $newKuesioner->save();
+            $action->execute($kuesioner);
 
-                foreach ($kuesioner->sections as $section) {
-                    $newSection = $section->replicate();
-                    $newSection->kuesioner_id = $newKuesioner->id;
-                    $newSection->save();
-
-                    foreach ($section->pertanyaans as $pertanyaan) {
-                        $newPertanyaan = $pertanyaan->replicate();
-                        $newPertanyaan->section_id = $newSection->id;
-                        $newPertanyaan->kuesioner_id = $newKuesioner->id;
-                        $newPertanyaan->save();
-
-                        foreach ($pertanyaan->opsiJawabans as $option) {
-                            $newOption = $option->replicate();
-                            $newOption->pertanyaan_id = $newPertanyaan->id;
-                            $newOption->save();
-                        }
-                    }
-                }
-
-                return redirect()->route('module.trace.admin.questionnaires.index')->with('success', 'Kuesioner berhasil diduplikasi');
-            });
+            return redirect()->route('module.trace.admin.questionnaires.index')
+                ->with('success', 'Kuesioner berhasil diduplikasi');
         } catch (\Exception $e) {
             \Log::error('Kuesioner Duplicate Error: ' . $e->getMessage());
             return redirect()->back()->withErrors(['error' => 'Gagal menduplikasi kuesioner: ' . $e->getMessage()]);
         }
     }
 
-    protected function kuesionerRules(): array
-    {
-        return [
-            'judul'        => 'required|string|max:255',
-            'subtitle'     => 'nullable|string',
-            'kategori'     => 'nullable|string|in:Alumni,Stakeholder',
-            'tahun'        => 'nullable|integer|min:2000|max:' . (date('Y') + 1),
-            'date_mulai'   => 'nullable|date',
-            'date_selesai' => 'nullable|date|after_or_equal:date_mulai',
-            'deskripsi'    => 'nullable|string|max:65535',
-            'status'       => 'required|string|in:draft,active,published,closed',
-            'sections'     => 'nullable|array',
-        ];
-    }
+
 
     protected function resolveTipeKuesioner(string $kategori): string
     {
         return strtolower($kategori) === 'stakeholder' ? 'stakeholder' : 'alumni';
     }
 
-    public function show($id)
+    public function show($id): InertiaResponse
     {
         $kuesioner = Kuesioner::with([
             'sections.pertanyaans.opsiJawabans',
@@ -189,7 +158,7 @@ class KuesionerController extends Controller
         ]);
     }
 
-    public function analyticsPage($id)
+    public function analyticsPage($id): InertiaResponse
     {
         $kuesioner = Kuesioner::with([
             'sections.pertanyaans.opsiJawabans',
@@ -201,7 +170,7 @@ class KuesionerController extends Controller
         ]);
     }
 
-    public function destroy($id)
+    public function destroy($id): RedirectResponse
     {
         $kuesioner = Kuesioner::findOrFail($id);
         ActivityLog::record('kuesioner.deleted', "Menghapus kuesioner: {$kuesioner->judul}", $kuesioner);

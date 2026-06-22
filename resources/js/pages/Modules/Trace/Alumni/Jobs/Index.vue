@@ -160,7 +160,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
     >
         <div class="mx-auto space-y-6">
             <!-- Page Header -->
-            <TPageHeader title="Lowongan Kerja" description="Temukan peluang karir yang sesuai dengan keahlian Anda" :icon="Briefcase">
+            <TPageHeader title="Lowongan Kerja" description="Jelajahi lowongan kerja yang cocok untuk Anda." :icon="Briefcase">
                 <template #actions>
                     <Link
                         href="/trace/jobs/companies"
@@ -196,6 +196,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                             v-model="search"
                             type="text"
                             placeholder="Cari lowongan, perusahaan, posisi..."
+                            aria-label="Cari lowongan"
                             :class="selectClass"
                             class="h-11 pl-10 pr-[4.5rem]"
                             @keyup.enter="applyFilters"
@@ -203,6 +204,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                         <button
                             class="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex h-8 items-center gap-1.5 rounded-lg bg-[#0C447C] px-3.5 text-xs font-semibold text-white transition-colors hover:bg-[#0C447C]/90 dark:bg-[#85B7EB] dark:text-slate-900"
                             @click="applyFilters"
+                            aria-label="Cari lowongan"
                         >
                             <Search class="h-3.5 w-3.5" />
                             Cari
@@ -220,6 +222,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                             v-if="hasActiveFilters()"
                             class="inline-flex h-9 items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 text-[11px] font-medium text-red-600 transition-colors hover:bg-red-100 dark:border-red-900 dark:bg-red-950/20 dark:text-red-400"
                             @click="clearFilters"
+                            aria-label="Reset filter"
                         >
                             <X class="h-3 w-3" />
                             Reset
@@ -228,6 +231,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                         <button
                             class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-slate-400"
                             @click="showAdvanced = !showAdvanced"
+                            aria-label="Buka/tutup filter lanjutan"
                         >
                             <Filter class="h-3.5 w-3.5" />
                             Filter Lanjutan
@@ -249,7 +253,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                         <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
                             <div>
                                 <label class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Bidang</label>
-                                <select v-model="category" :class="selectClass">
+                                <select v-model="category" :class="selectClass" aria-label="Filter bidang">
                                     <option value="">Semua Bidang</option>
                                     <option v-for="cat in categories" :key="cat.id" :value="String(cat.id)">
                                         {{ cat.nama }}
@@ -258,7 +262,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                             </div>
                             <div>
                                 <label class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Jenis</label>
-                                <select v-model="tipeKerja" :class="selectClass">
+                                <select v-model="tipeKerja" :class="selectClass" aria-label="Filter jenis pekerjaan">
                                     <option value="">Semua Jenis</option>
                                     <option value="full_time">Full-time</option>
                                     <option value="part_time">Part-time</option>
@@ -268,7 +272,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                             </div>
                             <div>
                                 <label class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Tempat Kerja</label>
-                                <select v-model="locationType" :class="selectClass">
+                                <select v-model="locationType" :class="selectClass" aria-label="Filter tempat kerja">
                                     <option value="">Semua Tempat Kerja</option>
                                     <option value="onsite">On-site</option>
                                     <option value="remote">Remote</option>
@@ -281,7 +285,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                         <div class="grid grid-cols-1 gap-3 lg:grid-cols-3">
                             <div>
                                 <label class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Perusahaan</label>
-                                <select v-model="mitraId" :class="selectClass">
+                                <select v-model="mitraId" :class="selectClass" aria-label="Filter perusahaan">
                                     <option value="">Semua Perusahaan</option>
                                     <option v-for="m in mitras" :key="m.id" :value="String(m.id)">
                                         {{ m.nama_perusahaan }}
@@ -293,12 +297,12 @@ const tipeKerjaLabelMap: Record<string, string> = {
                                 <div class="flex items-center gap-2">
                                     <div class="relative flex-1">
                                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">Rp</span>
-                                        <input v-model="salaryMin" type="number" placeholder="Minimum" :class="selectClass" class="pl-8" />
+                                        <input v-model="salaryMin" type="number" placeholder="Minimum" :class="selectClass" class="pl-8" aria-label="Gaji minimum" />
                                     </div>
                                     <span class="text-sm text-slate-300">–</span>
                                     <div class="relative flex-1">
                                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">Rp</span>
-                                        <input v-model="salaryMax" type="number" placeholder="Maksimum" :class="selectClass" class="pl-8" />
+                                        <input v-model="salaryMax" type="number" placeholder="Maksimum" :class="selectClass" class="pl-8" aria-label="Gaji maksimum" />
                                     </div>
                                 </div>
                             </div>
@@ -309,6 +313,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                             <button
                                 class="inline-flex h-10 items-center gap-1.5 rounded-xl bg-[#0C447C] px-6 text-sm font-semibold text-white shadow-sm shadow-[#0C447C]/20 transition-colors hover:bg-[#0C447C]/90 dark:bg-[#85B7EB] dark:text-slate-900 dark:hover:bg-[#85B7EB]/90"
                                 @click="applyFilters"
+                                aria-label="Terapkan filter"
                             >
                                 <Filter class="h-3.5 w-3.5" />
                                 Terapkan Filter
@@ -419,6 +424,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                     <button
                         class="inline-flex items-center gap-1.5 rounded-xl bg-[#0C447C]/5 px-4 py-2 text-sm font-semibold text-[#0C447C] transition-colors hover:bg-[#0C447C]/10 dark:bg-[#85B7EB]/10 dark:text-[#85B7EB]"
                         @click="clearFilters"
+                        aria-label="Hapus semua filter"
                     >
                         <X class="h-4 w-4" />
                         Hapus semua filter

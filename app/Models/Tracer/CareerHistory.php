@@ -45,6 +45,22 @@ class CareerHistory extends Model
         'type' => CareerType::class,
     ];
 
+    /*
+    |-------------------------
+    | SCOPES
+    |-------------------------
+    */
+
+    public function scopeCurrent($query)
+    {
+        return $query->where('is_current', true);
+    }
+
+    public function scopeWorking($query)
+    {
+        return $query->current()->whereIn('status', ['bekerja', 'wirausaha']);
+    }
+
     public function alumniProfile()
     {
         return $this->belongsTo(ProfilAlumni::class, 'profil_alumni_id');

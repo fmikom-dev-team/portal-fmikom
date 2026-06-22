@@ -19,6 +19,11 @@ return new class extends Migration
             $table->enum('status', ['applied', 'reviewed', 'accepted', 'rejected'])->default('applied');
             $table->string('applied_at')->nullable();
             $table->timestamps();
+
+            $table->index('job_id');
+            $table->index('alumni_id');
+            $table->index('status');
+            $table->unique(['job_id', 'alumni_id']);
         });
     }
 

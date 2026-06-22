@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { Label } from '@/components/ui/label';
@@ -30,8 +30,7 @@ const form = useForm({
 
 function submit() {
     form.post('/trace/open-job/profile-setup', {
-        onSuccess: () => toast.success('Profil berhasil dibuat!'),
-        onError: () => toast.error('Gagal menyimpan. Periksa kembali form Anda.'),
+        onError: () => toast.error('Gagal membuat profil mitra. Periksa kembali form Anda.'),
     });
 }
 </script>

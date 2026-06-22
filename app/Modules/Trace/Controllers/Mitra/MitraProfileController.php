@@ -61,8 +61,7 @@ class MitraProfileController extends Controller
 
     public function edit(Request $request)
     {
-        $user = $request->user();
-        $mitra = $user->mitraProfile;
+        $mitra = $request->user()->mitraProfile;
 
         if (!$mitra) {
             return redirect()->route('module.trace.open-job.mitra-profile-setup');
@@ -75,8 +74,7 @@ class MitraProfileController extends Controller
 
     public function update(Request $request)
     {
-        $user = $request->user();
-        $mitra = $user->mitraProfile;
+        $mitra = $request->user()->mitraProfile;
 
         if (!$mitra) {
             return redirect()->route('module.trace.open-job.mitra-profile-setup');

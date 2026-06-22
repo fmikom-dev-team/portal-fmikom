@@ -23,7 +23,7 @@ return new class extends Migration
             $table->unsignedInteger('max_participants')->nullable();
             $table->string('poster_path')->nullable();
             $table->enum('status', ['draft', 'published', 'closed'])->default('draft');
-            $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();
 

@@ -13,7 +13,8 @@ interface Props {
     trend?: string;
     trendLabel?: string;
     trendUp?: boolean;
-    color?: 'primary' | 'accent' | 'emerald' | 'rose' | 'slate';
+    subText?: string;
+    color?: 'primary' | 'accent' | 'emerald' | 'rose' | 'slate' | 'violet' | 'blue' | 'green' | 'purple';
     loading?: boolean;
     class?: HTMLAttributes['class'];
 }
@@ -23,13 +24,25 @@ const props = withDefaults(defineProps<Props>(), {
     loading: false,
 });
 
+// Auto-detect trend direction from trend string if trendUp is not explicitly set
+const isTrendUp = computed(() => {
+    if (props.trendUp !== undefined) return props.trendUp;
+    if (!props.trend) return false;
+    // Detect positive trend from string like "+5.2%", "+100%"
+    return props.trend.trim().startsWith('+');
+});
+
 const iconCircleClasses = computed(() => {
     const colorMap: Record<NonNullable<Props['color']>, string> = {
         primary: 'bg-[#0C447C]/10 text-[#0C447C] dark:bg-[#85B7EB]/15 dark:text-[#85B7EB]',
         accent: 'bg-[#EF9F27]/10 text-[#EF9F27] dark:bg-[#FAC775]/15 dark:text-[#FAC775]',
         emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400',
+        green: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400',
         rose: 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400',
         slate: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
+        violet: 'bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400',
+        purple: 'bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400',
+        blue: 'bg-[#0C447C]/10 text-[#0C447C] dark:bg-[#85B7EB]/15 dark:text-[#85B7EB]',
     };
     return colorMap[props.color ?? 'primary'];
 });
@@ -92,23 +105,23 @@ const iconCircleClasses = computed(() => {
                             <span
                                 v-if="trend"
                                 class="mb-0.5 inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-bold leading-none"
-                                :class="trendUp
+                                :class="isTrendUp
                                     ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
                                     : 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
                                 "
                             >
-                                <ArrowUp v-if="trendUp" class="h-3 w-3" />
+                                <ArrowUp v-if="isTrendUp" class="h-3 w-3" />
                                 <ArrowDown v-else class="h-3 w-3" />
                                 {{ trend }}
                             </span>
                         </div>
 
-                        <!-- Trend label -->
+                        <!-- Trend label / Sub text -->
                         <p
-                            v-if="trendLabel"
+                            v-if="trendLabel || subText"
                             class="mt-1 text-[11px] font-medium text-slate-400 dark:text-zinc-500"
                         >
-                            {{ trendLabel }}
+                            {{ trendLabel || subText }}
                         </p>
                     </div>
                 </div>

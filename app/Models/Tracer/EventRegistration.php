@@ -23,6 +23,17 @@ class EventRegistration extends Model
         'attended_at' => 'datetime',
     ];
 
+    /*
+    |-------------------------
+    | SCOPES
+    |-------------------------
+    */
+
+    public function scopeRegistered($query)
+    {
+        return $query->where('status', 'registered');
+    }
+
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);

@@ -4,11 +4,13 @@ namespace App\Modules\Trace\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Tracer\ActivityLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class ActivityLogController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): InertiaResponse
     {
         $query = ActivityLog::with('user')->latest();
 
@@ -34,10 +36,14 @@ class ActivityLogController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
+        $actionTypes = Cache::remember('trace_activity_action_types', now()->addMinutes(10), function () {
+            return ActivityLog::select('action')->distinct()->pluck('action');
+        });
+
         return Inertia::render('Modules/Trace/Admin/ActivityLog', [
             'logs' => $query->paginate(25)->withQueryString(),
             'filters' => $request->only(['action', 'user_id', 'search', 'date_from', 'date_to']),
-            'actionTypes' => ActivityLog::select('action')->distinct()->pluck('action'),
+            'actionTypes' => $actionTypes,
         ]);
     }
 }

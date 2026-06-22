@@ -74,7 +74,7 @@ const formatDateTime = (dateStr: string) => {
     <TraceAlumniLayout title="Event Saya" role-name="Alumni" :breadcrumbs="breadcrumbs">
         <div class="mx-auto space-y-6">
             <!-- Header -->
-            <TPageHeader title="Event Saya" description="Daftar event yang telah Anda daftarkan." :icon="Ticket">
+            <TPageHeader title="Event Saya" description="Event yang sudah Anda ikuti dan yang akan datang." :icon="Ticket">
                 <template #actions>
                     <Button as-child variant="ghost" size="icon-sm" class="rounded-xl text-slate-400 hover:text-[#0C447C] hover:bg-[#0C447C]/5 dark:hover:text-[#85B7EB] dark:hover:bg-[#85B7EB]/10">
                         <Link href="/trace/events">

@@ -2,15 +2,24 @@ import { createInertiaApp, router } from "@inertiajs/vue3";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import type { DefineComponent } from "vue";
 import { createApp, h } from "vue";
+import { Toaster } from 'vue-sonner';
+import 'vue-sonner/style.css';
 import "../css/app.css";
 import "../css/workos.css";
 import axios from "axios";
 import { initializeTheme } from "@/composables/useAppearance";
+import { initFlashToast } from "@/composables/useFlashToast";
 
 // @ts-expect-error
 window.axios = axios;
 // @ts-expect-error
 window.axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
+
+// CSRF token — standard Laravel setup
+const csrfToken = document.head.querySelector('meta[name="csrf-token"]');
+if (csrfToken) {
+    window.axios.defaults.headers.common["X-CSRF-TOKEN"] = (csrfToken as HTMLMetaElement).content;
+}
 
 // ── Laravel Echo (Reverb WebSocket) ─────────────────────────────────────────
 import Echo from "laravel-echo";
@@ -68,7 +77,7 @@ createInertiaApp({
             import.meta.glob<DefineComponent>("./pages/**/*.vue"),
         ),
     setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) })
+        createApp({ render: () => h('div', [h(App, props), h(Toaster, { position: 'top-right', duration: 4000, richColors: true, closeButton: true })]) })
             .use(plugin)
             .mount(el);
     },
@@ -129,3 +138,6 @@ router.on("invalid", (event) => {
 
 // This will set light / dark mode on page load...
 initializeTheme();
+
+// Global flash → toast handler (fires once per Inertia navigation)
+initFlashToast();

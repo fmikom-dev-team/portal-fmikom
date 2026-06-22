@@ -7,6 +7,8 @@ import Pagination from "@/components/ui/Pagination.vue";
 import TraceAdminLayout from "@/layouts/TraceAdminLayout.vue";
 import { index, create } from "@/routes/module/trace/admin/questionnaires";
 import type { BreadcrumbItem } from "@/types";
+import type { Kuesioner, TraceFilters } from '@/types/trace';
+import type { PaginationLinks } from '@/types/trace';
 import QuestionnaireCard from "./components/QuestionnaireCard.vue";
 import QuestionnaireFilters from "./components/QuestionnaireFilters.vue";
 
@@ -19,13 +21,13 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const props = defineProps<{
     kuesioners: {
-        data: any[];
-        links: any[];
+        data: Kuesioner[];
+        links: PaginationLinks;
         total: number;
         current_page: number;
         last_page: number;
     };
-    filters: any;
+    filters: TraceFilters;
     activeCount?: number;
 }>();
 
@@ -46,7 +48,7 @@ const cta = [
         <div class="flex flex-col gap-8 p-6 lg:p-10 max-w-7xl mx-auto w-full">
             <TPageHeader
                 title="Manajemen Kuesioner"
-                description="Kelola dan pantau studi pelacakan institusional di seluruh departemen akademik."
+                description="Buat dan kelola kuesioner untuk melacak karir alumni."
                 :icon="FileText"
             >
                 <template #actions>

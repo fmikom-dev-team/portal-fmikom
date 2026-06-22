@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -183,6 +184,7 @@ function handleConfirm() {
         : `/trace/admin/jobs/${id}/reject`;
     router.put(url, {}, {
         preserveScroll: true,
+        onError: () => toast.error(confirmDialog.value.action === 'approve' ? 'Gagal menyetujui lowongan.' : 'Gagal menolak lowongan.'),
         onFinish: () => {
             processing.value = null;
             confirmDialog.value.open = false;
