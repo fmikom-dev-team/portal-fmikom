@@ -69,6 +69,7 @@ export default defineConfig(async () => {
 		],
 		server: {
 			host: "localhost",
+			cors: true,
 		},
 		build: {
 			target: "es2022",
