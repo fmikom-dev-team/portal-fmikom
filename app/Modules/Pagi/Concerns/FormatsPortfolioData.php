@@ -3,6 +3,7 @@
 namespace App\Modules\Pagi\Concerns;
 
 use App\Models\User;
+use Illuminate\Support\Collection;
 
 /**
  * Shared formatting helpers for portfolio data.
@@ -30,11 +31,11 @@ trait FormatsPortfolioData
         foreach ($content as $key => $block) {
             if (is_array($block)) {
                 if (isset($block['file_path'])) {
-                    $content[$key]['preview'] = asset('storage/' . $block['file_path']);
+                    $content[$key]['preview'] = asset('storage/'.$block['file_path']);
                 }
                 if (isset($block['file_paths']) && is_array($block['file_paths'])) {
                     $content[$key]['previews'] = array_map(
-                        fn ($path) => asset('storage/' . $path),
+                        fn ($path) => asset('storage/'.$path),
                         $block['file_paths']
                     );
                 }
@@ -58,38 +59,38 @@ trait FormatsPortfolioData
         }
 
         // --- Eloquent Collection path (normalized DB table) ---
-        if ($comments instanceof \Illuminate\Support\Collection || (is_array($comments) && isset($comments[0]) && is_object($comments[0]))) {
-            $collection = $comments instanceof \Illuminate\Support\Collection ? $comments : collect($comments);
+        if ($comments instanceof Collection || (is_array($comments) && isset($comments[0]) && is_object($comments[0]))) {
+            $collection = $comments instanceof Collection ? $comments : collect($comments);
 
             return $collection->map(function ($c) {
                 $avatar = $this->resolveAssetPath($c->user->foto_path ?? null);
 
                 $replies = collect($c->replies ?? [])->map(function ($r) {
                     return [
-                        'id'         => $r->uuid,
-                        'user_id'    => $r->user_id,
-                        'name'       => $this->formatName($r->user->name ?? 'Anonymous'),
-                        'avatar'     => $this->resolveAssetPath($r->user->foto_path ?? null),
-                        'body'       => $r->body,
-                        'content'    => $r->body,
+                        'id' => $r->uuid,
+                        'user_id' => $r->user_id,
+                        'name' => $this->formatName($r->user->name ?? 'Anonymous'),
+                        'avatar' => $this->resolveAssetPath($r->user->foto_path ?? null),
+                        'body' => $r->body,
+                        'content' => $r->body,
                         'created_at' => $r->created_at->toISOString(),
-                        'time'       => $r->created_at->diffForHumans(),
-                        'likes'      => $r->likesRelation ? $r->likesRelation->pluck('id')->toArray() : [],
+                        'time' => $r->created_at->diffForHumans(),
+                        'likes' => $r->likesRelation ? $r->likesRelation->pluck('id')->toArray() : [],
                     ];
                 })->toArray();
 
                 return [
-                    'id'            => $c->uuid,
-                    'user_id'       => $c->user_id,
-                    'name'          => $this->formatName($c->user->name ?? 'Anonymous'),
+                    'id' => $c->uuid,
+                    'user_id' => $c->user_id,
+                    'name' => $this->formatName($c->user->name ?? 'Anonymous'),
                     'pagi_username' => $c->user?->pagi_username,
-                    'avatar'        => $avatar,
-                    'body'          => $c->body,
-                    'content'       => $c->body,
-                    'created_at'    => $c->created_at->toISOString(),
-                    'time'          => $c->created_at->diffForHumans(),
-                    'likes'         => $c->likesRelation ? $c->likesRelation->pluck('id')->toArray() : [],
-                    'replies'       => $replies,
+                    'avatar' => $avatar,
+                    'body' => $c->body,
+                    'content' => $c->body,
+                    'created_at' => $c->created_at->toISOString(),
+                    'time' => $c->created_at->diffForHumans(),
+                    'likes' => $c->likesRelation ? $c->likesRelation->pluck('id')->toArray() : [],
+                    'replies' => $replies,
                 ];
             })->values()->toArray();
         }
@@ -105,28 +106,28 @@ trait FormatsPortfolioData
             if (isset($c['replies']) && is_array($c['replies'])) {
                 $replies = array_map(function ($r) {
                     return [
-                        'id'         => $r['id'] ?? uniqid(),
-                        'user_id'    => $r['user_id'] ?? null,
-                        'name'       => $this->formatName($r['name'] ?? 'Anonymous'),
-                        'avatar'     => $r['avatar'] ?? null,
-                        'content'    => $r['content'] ?? $r['body'] ?? '',
-                        'body'       => $r['content'] ?? $r['body'] ?? '',
+                        'id' => $r['id'] ?? uniqid(),
+                        'user_id' => $r['user_id'] ?? null,
+                        'name' => $this->formatName($r['name'] ?? 'Anonymous'),
+                        'avatar' => $r['avatar'] ?? null,
+                        'content' => $r['content'] ?? $r['body'] ?? '',
+                        'body' => $r['content'] ?? $r['body'] ?? '',
                         'created_at' => $r['created_at'] ?? now()->toISOString(),
-                        'likes'      => $r['likes'] ?? [],
+                        'likes' => $r['likes'] ?? [],
                     ];
                 }, $c['replies']);
             }
 
             return [
-                'id'         => $c['id'] ?? uniqid(),
-                'user_id'    => $c['user_id'] ?? null,
-                'name'       => $this->formatName($c['name'] ?? 'Anonymous'),
-                'avatar'     => $c['avatar'] ?? null,
-                'content'    => $c['content'] ?? $c['body'] ?? '',
-                'body'       => $c['content'] ?? $c['body'] ?? '',
+                'id' => $c['id'] ?? uniqid(),
+                'user_id' => $c['user_id'] ?? null,
+                'name' => $this->formatName($c['name'] ?? 'Anonymous'),
+                'avatar' => $c['avatar'] ?? null,
+                'content' => $c['content'] ?? $c['body'] ?? '',
+                'body' => $c['content'] ?? $c['body'] ?? '',
                 'created_at' => $c['created_at'] ?? now()->toISOString(),
-                'likes'      => $c['likes'] ?? [],
-                'replies'    => $replies,
+                'likes' => $c['likes'] ?? [],
+                'replies' => $replies,
             ];
         }, $list);
     }
@@ -176,11 +177,11 @@ trait FormatsPortfolioData
             }
 
             return $users->map(fn ($u) => [
-                'id'            => $u->id,
-                'name'          => $this->formatName($u->name),
+                'id' => $u->id,
+                'name' => $this->formatName($u->name),
                 'pagi_username' => $u->pagi_username,
-                'avatar'        => $this->resolveAssetPath($u->foto_path),
-                'status'        => $statusMap[$u->name] ?? 'pending',
+                'avatar' => $this->resolveAssetPath($u->foto_path),
+                'status' => $statusMap[$u->name] ?? 'pending',
             ])->toArray();
         }
 
@@ -247,17 +248,17 @@ trait FormatsPortfolioData
         $extension = pathinfo($path, PATHINFO_EXTENSION);
         if (in_array(strtolower($extension), ['jpg', 'jpeg', 'png'])) {
             $webpPath = preg_replace('/\.(jpg|jpeg|png)$/i', '.webp', $path);
-            if (file_exists(public_path('storage/' . $webpPath))) {
+            if (file_exists(public_path('storage/'.$webpPath))) {
                 $path = $webpPath;
             }
         } elseif (strtolower($extension) === 'mp4') {
             $webmPath = preg_replace('/\.mp4$/i', '.webm', $path);
-            if (file_exists(public_path('storage/' . $webmPath))) {
+            if (file_exists(public_path('storage/'.$webmPath))) {
                 $path = $webmPath;
             }
         }
 
-        return asset('storage/' . $path);
+        return asset('storage/'.$path);
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -271,21 +272,21 @@ trait FormatsPortfolioData
      */
     private function parseCollaboratorList(mixed $collaborators): array
     {
-        $names     = [];
+        $names = [];
         $statusMap = [];
 
         if (is_array($collaborators)) {
             foreach ($collaborators as $c) {
                 if (is_array($c)) {
                     $rawName = $c['name'] ?? '';
-                    $cName   = is_scalar($rawName) ? trim((string) $rawName) : '';
+                    $cName = is_scalar($rawName) ? trim((string) $rawName) : '';
                     $cStatus = is_scalar($c['status'] ?? 'pending') ? ($c['status'] ?? 'pending') : 'pending';
                 } else {
-                    $cName   = is_scalar($c) ? trim((string) $c) : '';
+                    $cName = is_scalar($c) ? trim((string) $c) : '';
                     $cStatus = 'accepted';
                 }
                 if ($cName !== '') {
-                    $names[]           = $cName;
+                    $names[] = $cName;
                     $statusMap[$cName] = $cStatus;
                 }
             }
@@ -293,7 +294,7 @@ trait FormatsPortfolioData
             $split = array_map('trim', explode(',', (string) $collaborators));
             foreach ($split as $name) {
                 if ($name !== '') {
-                    $names[]          = $name;
+                    $names[] = $name;
                     $statusMap[$name] = 'accepted';
                 }
             }

@@ -2,13 +2,15 @@
 
 namespace App\Modules\WorkOs\Services\Sessions;
 
-use App\Models\Auth\AuthSession;
 use App\Models\Auth\AuthLoginAttempt;
+use App\Models\Auth\AuthSession;
 use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 use SessionHandlerInterface;
 
 class AuthSessionService
@@ -25,7 +27,7 @@ class AuthSessionService
 
         $paginator = $query->paginate(20);
 
-        $sessionHandler = \Illuminate\Support\Facades\Session::getHandler();
+        $sessionHandler = Session::getHandler();
         $isDriverCheckable = config('session.driver') !== 'array' && (! app()->runningUnitTests() || config('session.test_driver_checkable', false));
 
         if (! $request->boolean('revoked')) {
@@ -47,7 +49,7 @@ class AuthSessionService
         return ['sessions' => $sessions, 'stats' => $stats];
     }
 
-    private function applySessionFilters(\Illuminate\Database\Eloquent\Builder $query, Request $request): void
+    private function applySessionFilters(Builder $query, Request $request): void
     {
         if ($request->boolean('revoked')) {
             $query->where('is_revoked', '=', true);
@@ -65,7 +67,7 @@ class AuthSessionService
         }
     }
 
-    private function validateActiveSessions(\Illuminate\Contracts\Pagination\LengthAwarePaginator $paginator, SessionHandlerInterface $sessionHandler, bool $isDriverCheckable): void
+    private function validateActiveSessions(LengthAwarePaginator $paginator, SessionHandlerInterface $sessionHandler, bool $isDriverCheckable): void
     {
         foreach ($paginator as $s) {
             $isActive = false;
@@ -121,6 +123,7 @@ class AuthSessionService
     private function resolveUserOrganization(User $user): string
     {
         $modules = $user->moduleRoles()->with('module')->get()->pluck('module.code')->unique()->toArray();
+
         return ! empty($modules) ? implode(', ', $modules) : 'Portal';
     }
 
@@ -153,6 +156,7 @@ class AuthSessionService
         try {
             $sessionData = $sessionHandler->read($s->session_token);
             $activeModule = $this->extractActiveModule($sessionData);
+
             return $activeModule !== null ? strtoupper($activeModule) : 'Portal FMIKOM';
         } catch (\Throwable $e) {
             // Ignore session read errors
@@ -196,6 +200,7 @@ class AuthSessionService
         if ($riskScore > 20) {
             return 'medium';
         }
+
         return 'safe';
     }
 }

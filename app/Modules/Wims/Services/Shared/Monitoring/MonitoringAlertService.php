@@ -20,8 +20,7 @@ class MonitoringAlertService
 {
     public function __construct(
         private readonly AttendanceSyncService $attendanceSyncService,
-    ) {
-    }
+    ) {}
 
     public function getWarningsForLecturer(User $user, int $threshold = 3, ?CarbonInterface $referenceDate = null): Collection
     {

@@ -21,16 +21,16 @@ class CreateCommentAction
         if ($authUser->foto_path) {
             $avatar = str_starts_with($authUser->foto_path, 'http')
                 ? $authUser->foto_path
-                : asset('storage/' . $authUser->foto_path);
+                : asset('storage/'.$authUser->foto_path);
         }
 
         // Create comment in normalized table
         PagiWorkComment::create([
-            'uuid'      => (string) Str::uuid(),
-            'work_id'   => $portfolio->id,
-            'user_id'   => $authUser->id,
+            'uuid' => (string) Str::uuid(),
+            'work_id' => $portfolio->id,
+            'user_id' => $authUser->id,
             'parent_id' => null,
-            'body'      => strip_tags($body),
+            'body' => strip_tags($body),
         ]);
 
         // Send real-time notification to the owner if commented & is not own project
@@ -41,11 +41,11 @@ class CreateCommentAction
                     $owner->notify(new PagiNotification(
                         type: 'comment',
                         title: $authUser->pagi_username ?: $authUser->name,
-                        message: 'mengomentari postingan Anda: "' . Str::limit($body, 30) . '"',
+                        message: 'mengomentari postingan Anda: "'.Str::limit($body, 30).'"',
                         avatar: $avatar,
-                        href: '/pagi/profile/' . $portfolio->user_id . '?project=' . $portfolio->id,
+                        href: '/pagi/profile/'.$portfolio->user_id.'?project='.$portfolio->id,
                         extra: [
-                            'sender_id'    => $authUser->id,
+                            'sender_id' => $authUser->id,
                             'portfolio_id' => $portfolio->id,
                         ],
                     ));

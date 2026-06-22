@@ -14,8 +14,7 @@ class AdminCompanyActionService
 {
     public function __construct(
         private readonly WimsModuleRoleService $wimsModuleRoleService,
-    ) {
-    }
+    ) {}
 
     public function validateCompany(Request $request): array
     {

@@ -1,9 +1,9 @@
 <?php
 
-use Tests\TestCase;
 use App\Models\Magang\AssessmentSubmission;
 use App\Modules\Wims\Support\AssessmentSummary;
 use Illuminate\Support\Carbon;
+use Tests\TestCase;
 
 uses(TestCase::class);
 

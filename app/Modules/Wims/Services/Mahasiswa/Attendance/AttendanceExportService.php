@@ -14,8 +14,7 @@ class AttendanceExportService
 {
     public function __construct(
         private readonly AttendanceSyncService $attendanceSyncService,
-    ) {
-    }
+    ) {}
 
     public function download(User $user, string $scope): Response
     {
@@ -64,7 +63,7 @@ class AttendanceExportService
         }
 
         $attendanceHistory = $attendanceHistoryQuery->get();
-        $fileName = $fileNamePrefix . '-' . now()->format('Y-m-d') . '.pdf';
+        $fileName = $fileNamePrefix.'-'.now()->format('Y-m-d').'.pdf';
         $exportRows = $attendanceHistory->map(function (AbsensiMagang $attendance, int $index) {
             return [
                 'number' => $index + 1,
@@ -87,7 +86,7 @@ class AttendanceExportService
             'internship' => [
                 'company' => $headerRegistration?->perusahaan?->nama ?? '-',
                 'period' => $headerRegistration?->tanggal_mulai && $headerRegistration?->tanggal_selesai
-                    ? $headerRegistration->tanggal_mulai->locale('id')->translatedFormat('d M Y') . ' - ' . $headerRegistration->tanggal_selesai->locale('id')->translatedFormat('d M Y')
+                    ? $headerRegistration->tanggal_mulai->locale('id')->translatedFormat('d M Y').' - '.$headerRegistration->tanggal_selesai->locale('id')->translatedFormat('d M Y')
                     : '-',
                 'supervisor_lecturer' => $headerRegistration?->dosenPembimbing?->name ?? '-',
                 'mentor' => $headerRegistration?->perusahaan?->user?->name ?? '-',

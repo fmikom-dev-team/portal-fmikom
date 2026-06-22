@@ -10,8 +10,7 @@ class AdminCompanyPageService
 {
     public function __construct(
         private readonly WimsModuleRoleService $wimsModuleRoleService,
-    ) {
-    }
+    ) {}
 
     public function build(string $search): array
     {

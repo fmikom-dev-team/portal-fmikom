@@ -2,8 +2,8 @@
 
 namespace App\Modules\WorkOs\Services\AuthPlatform;
 
-use App\Models\User;
 use App\Models\Module;
+use App\Models\User;
 
 class JwtTemplateCompiler
 {
@@ -13,7 +13,7 @@ class JwtTemplateCompiler
     public function compile(string $template, User $user, ?Module $module): array
     {
         $context = $this->buildContext($user, $module);
-        
+
         $compiled = preg_replace_callback('/\{\{\s*([^\}]+)\s*\}\}/', function (array $matches) use ($context): string {
             return $this->resolveExpression(trim($matches[1]), $context);
         }, $template);

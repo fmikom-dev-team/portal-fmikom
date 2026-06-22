@@ -133,7 +133,7 @@ it('persists the main ketidakhadiran status values used by wims', function () {
             'tanggal_mulai' => now()->addDays($index)->toDateString(),
             'tanggal_selesai' => now()->addDays($index)->toDateString(),
             'jenis' => $status === 'approved' ? 'sakit' : 'izin',
-            'alasan' => 'Status ' . $status,
+            'alasan' => 'Status '.$status,
             'status' => $status,
         ]);
 

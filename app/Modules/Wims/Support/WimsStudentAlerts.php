@@ -13,8 +13,7 @@ class WimsStudentAlerts
 {
     public function __construct(
         private readonly AttendanceSyncService $attendanceSyncService,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<int, array{id: string, message: string}>

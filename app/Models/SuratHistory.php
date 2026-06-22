@@ -1,4 +1,5 @@
 <?php
+
 // app/Models/SuratHistory.php
 
 namespace App\Models;
@@ -23,16 +24,25 @@ class SuratHistory extends Model
     ];
 
     // ── Action constants ──────────────────────────────────────────
-    const ACTION_CREATED    = 'created';
-    const ACTION_SUBMITTED  = 'submitted';
-    const ACTION_VALIDATED  = 'validated';
-    const ACTION_APPROVED   = 'approved';
-    const ACTION_REJECTED   = 'rejected';
-    const ACTION_GENERATED  = 'generated';
-    const ACTION_PRINTED    = 'printed';
+    const ACTION_CREATED = 'created';
+
+    const ACTION_SUBMITTED = 'submitted';
+
+    const ACTION_VALIDATED = 'validated';
+
+    const ACTION_APPROVED = 'approved';
+
+    const ACTION_REJECTED = 'rejected';
+
+    const ACTION_GENERATED = 'generated';
+
+    const ACTION_PRINTED = 'printed';
+
     const ACTION_QR_SCANNED = 'qr_scanned';
+
     const ACTION_QR_REVOKED = 'qr_revoked';
-    const ACTION_REVISED    = 'revised';
+
+    const ACTION_REVISED = 'revised';
 
     // ── Relationships ─────────────────────────────────────────────
     public function surat(): BelongsTo

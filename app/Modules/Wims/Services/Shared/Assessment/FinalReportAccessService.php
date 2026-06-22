@@ -35,8 +35,8 @@ class FinalReportAccessService
     {
         $directory = 'laporan-akhir';
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'pdf');
-        $filename = Str::uuid() . '.' . $extension;
-        $path = $directory . '/' . $filename;
+        $filename = Str::uuid().'.'.$extension;
+        $path = $directory.'/'.$filename;
 
         $contents = file_get_contents($file->getRealPath());
 

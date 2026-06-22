@@ -12,8 +12,7 @@ class MonitoringDetailService
 {
     public function __construct(
         private readonly MonitoringHistoryService $monitoringHistoryService,
-    ) {
-    }
+    ) {}
 
     public function buildPayload(
         PendaftaranMagang $pendaftaran,

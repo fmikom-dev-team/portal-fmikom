@@ -5,11 +5,11 @@ namespace App\Modules\Wims\Controllers\Dosen;
 use App\Http\Controllers\Controller;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
+use App\Modules\Wims\Services\Dosen\LecturerAssessmentWorkflowService;
 use App\Modules\Wims\Services\Shared\Assessment\AssessmentIndexService;
 use App\Modules\Wims\Services\Shared\Assessment\AssessmentShowService;
 use App\Modules\Wims\Services\Shared\Assessment\AssessmentSubmissionService;
 use App\Modules\Wims\Services\Shared\Assessment\AssessmentTemplateResolverService;
-use App\Modules\Wims\Services\Dosen\LecturerAssessmentWorkflowService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -24,8 +24,7 @@ class PenilaianMahasiswaController extends Controller
         private readonly AssessmentSubmissionService $assessmentSubmissionService,
         private readonly AssessmentTemplateResolverService $assessmentTemplateResolverService,
         private readonly LecturerAssessmentWorkflowService $lecturerAssessmentWorkflowService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -122,7 +121,7 @@ class PenilaianMahasiswaController extends Controller
         abort_unless(is_file($absolutePath), 404);
 
         return response()->file($absolutePath, [
-            'Content-Disposition' => 'inline; filename="' . $pendaftaran->finalReportDownloadName() . '"',
+            'Content-Disposition' => 'inline; filename="'.$pendaftaran->finalReportDownloadName().'"',
         ]);
     }
 

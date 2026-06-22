@@ -8,8 +8,8 @@ use App\Models\Magang\HariLibur;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
-use App\Modules\Wims\Support\AssessmentSummary;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
+use App\Modules\Wims\Support\AssessmentSummary;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -19,8 +19,7 @@ class DosenMonitoringOverviewService
 {
     public function __construct(
         private readonly AttendanceSyncService $attendanceSyncService,
-    ) {
-    }
+    ) {}
 
     public function buildOverview(User $lecturer, ?string $today = null): array
     {

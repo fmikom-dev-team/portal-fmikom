@@ -5,12 +5,14 @@ namespace App\Modules\Pagi\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Pagi\PagiWork;
 use App\Models\User;
-use App\Modules\Pagi\Requests\StorePortfolioRequest;
-use App\Modules\Pagi\Requests\UpdatePortfolioRequest;
 use App\Modules\Pagi\Requests\QuickStorePortfolioRequest;
 use App\Modules\Pagi\Requests\QuickUpdatePortfolioRequest;
 use App\Modules\Pagi\Requests\StoreGalleryItemRequest;
+use App\Modules\Pagi\Requests\StorePortfolioRequest;
+use App\Modules\Pagi\Requests\UpdatePortfolioRequest;
 use App\Modules\Pagi\Services\PortfolioService;
+use App\Notifications\PagiNotification;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -22,8 +24,11 @@ class PagiEditorController extends Controller implements HasMiddleware
     protected PortfolioService $portfolioService;
 
     private const ERROR_ACCESS_DENIED = 'Akses ditolak: Fitur Editor Portofolio hanya tersedia untuk Mahasiswa.';
+
     private const ERROR_UNAUTHORIZED = 'Unauthorized action.';
+
     private const DATE_FORMAT_STANDARD = 'F jS Y';
+
     private const STORAGE_PREFIX = 'storage/';
 
     public function __construct(PortfolioService $portfolioService)
@@ -340,7 +345,7 @@ class PagiEditorController extends Controller implements HasMiddleware
             // Notify the owner (inviter) that the collaborator accepted
             $owner = $editor->user;
             if ($owner && $owner->id !== $user->id) {
-                $owner->notify(new \App\Notifications\PagiNotification(
+                $owner->notify(new PagiNotification(
                     'collaboration',
                     $user->pagi_username ?: $user->name,
                     'menerima ajakan kolaborasi pada proyek: "'.$editor->title.'"',
@@ -555,7 +560,7 @@ class PagiEditorController extends Controller implements HasMiddleware
     /**
      * Handle updating of gallery item.
      */
-    private function handleGalleryItemUpdate(QuickUpdatePortfolioRequest $request, PagiWork $editor): \Illuminate\Http\JsonResponse
+    private function handleGalleryItemUpdate(QuickUpdatePortfolioRequest $request, PagiWork $editor): JsonResponse
     {
         $content = $editor->content;
         if (is_array($content)) {
@@ -585,7 +590,7 @@ class PagiEditorController extends Controller implements HasMiddleware
     /**
      * Handle updating of standard portfolio item.
      */
-    private function handleStandardItemUpdate(QuickUpdatePortfolioRequest $request, PagiWork $editor): \Illuminate\Http\JsonResponse
+    private function handleStandardItemUpdate(QuickUpdatePortfolioRequest $request, PagiWork $editor): JsonResponse
     {
         $coverPath = $editor->cover_image;
         if ($request->hasFile('cover_image')) {

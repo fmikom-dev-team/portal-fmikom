@@ -4,7 +4,6 @@ namespace App\Modules\Wims\Services\Shared\Placement;
 
 use App\Models\Magang\PendaftaranMagang;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
-use App\Modules\Wims\Services\Shared\Placement\PlacementIndexService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
@@ -14,8 +13,7 @@ class PlacementWorkflowService
     public function __construct(
         private readonly PlacementIndexService $placementIndexService,
         private readonly WimsModuleRoleService $wimsModuleRoleService,
-    ) {
-    }
+    ) {}
 
     public function validatePlacementUpdate(Request $request): array
     {

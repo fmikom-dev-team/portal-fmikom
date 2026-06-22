@@ -2,8 +2,8 @@
 
 use App\Http\Middleware\EnsureFirstTimeLoginComplete;
 use App\Modules\Pagi\Controllers\AdminDashboardController;
-use App\Modules\Pagi\Controllers\AdminUserController;
 use App\Modules\Pagi\Controllers\AdminModerationController;
+use App\Modules\Pagi\Controllers\AdminUserController;
 use App\Modules\Pagi\Controllers\AdminWorkController;
 use App\Modules\Pagi\Controllers\PagiChatController;
 use App\Modules\Pagi\Controllers\PagiCvController;

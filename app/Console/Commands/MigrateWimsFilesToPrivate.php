@@ -55,6 +55,7 @@ class MigrateWimsFilesToPrivate extends Command
 
             if ($files === []) {
                 $this->line("  - Tidak ada file public di {$folder}");
+
                 continue;
             }
 
@@ -62,11 +63,13 @@ class MigrateWimsFilesToPrivate extends Command
                 if (Storage::disk('local')->exists($path)) {
                     $skipped++;
                     $this->line("  - Lewati (sudah ada di private): {$path}");
+
                     continue;
                 }
 
                 if ($dryRun) {
                     $this->line("  - Dry-run: {$path}");
+
                     continue;
                 }
 

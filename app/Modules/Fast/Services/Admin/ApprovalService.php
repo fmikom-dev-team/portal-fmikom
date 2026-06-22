@@ -17,8 +17,7 @@ class ApprovalService
 {
     public function __construct(
         protected TemplateAdminSupport $templateAdminSupport,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {

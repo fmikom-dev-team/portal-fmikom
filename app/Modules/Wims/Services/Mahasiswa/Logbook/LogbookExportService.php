@@ -66,7 +66,7 @@ class LogbookExportService
             'internship' => [
                 'company' => $registration->perusahaan?->nama ?? '-',
                 'period' => $registration->tanggal_mulai && $registration->tanggal_selesai
-                    ? $registration->tanggal_mulai->locale('id')->translatedFormat('d M Y') . ' - ' . $registration->tanggal_selesai->locale('id')->translatedFormat('d M Y')
+                    ? $registration->tanggal_mulai->locale('id')->translatedFormat('d M Y').' - '.$registration->tanggal_selesai->locale('id')->translatedFormat('d M Y')
                     : '-',
                 'supervisor_lecturer' => $registration->dosenPembimbing?->name ?? '-',
                 'mentor' => $registration->perusahaan?->user?->name ?? '-',
@@ -74,7 +74,7 @@ class LogbookExportService
             'rows' => $rows,
         ])
             ->setPaper('a4', 'landscape')
-            ->download('logbook-pkl-periode-terakhir-' . now()->format('Y-m-d') . '.pdf');
+            ->download('logbook-pkl-periode-terakhir-'.now()->format('Y-m-d').'.pdf');
     }
 
     private function formatLocalizedDate(mixed $value, string $format): ?string
@@ -177,7 +177,7 @@ class LogbookExportService
                 return [];
             }
 
-            $items[$currentIndex] = trim($items[$currentIndex] . ' ' . $trimmedLine);
+            $items[$currentIndex] = trim($items[$currentIndex].' '.$trimmedLine);
         }
 
         if (! $hasNumberedLine || count($items) < 2) {

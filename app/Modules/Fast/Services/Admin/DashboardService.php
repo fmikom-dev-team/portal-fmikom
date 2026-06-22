@@ -19,8 +19,7 @@ class DashboardService
         protected TemplateAdminSupport $templateAdminSupport,
         protected SuratTemplateRendererService $templateRenderer,
         protected ApprovalService $approvalService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -97,14 +96,14 @@ class DashboardService
             'summary' => (function (): array {
                 $counts = Surat::query()
                     ->where('type', 'pengajuan')
-                    ->selectRaw("
+                    ->selectRaw('
                         COUNT(*) as total,
                         SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as pending,
                         SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as validated,
                         SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as finished,
                         SUM(CASE WHEN status IN (?,?) THEN 1 ELSE 0 END) as rejected,
                         SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as cancelled
-                    ", [
+                    ', [
                         Surat::STATUS_PENDING,
                         Surat::STATUS_VALIDATED_ADMIN,
                         Surat::STATUS_FINISHED,
@@ -118,11 +117,11 @@ class DashboardService
                 $cancelled = (int) ($counts->cancelled ?? 0);
 
                 return [
-                    'total'     => $total - $cancelled,
-                    'pending'   => (int) ($counts->pending ?? 0),
+                    'total' => $total - $cancelled,
+                    'pending' => (int) ($counts->pending ?? 0),
                     'validated' => (int) ($counts->validated ?? 0),
-                    'finished'  => (int) ($counts->finished ?? 0),
-                    'rejected'  => (int) ($counts->rejected ?? 0),
+                    'finished' => (int) ($counts->finished ?? 0),
+                    'rejected' => (int) ($counts->rejected ?? 0),
                     'cancelled' => $cancelled,
                 ];
             })(),
@@ -141,7 +140,7 @@ class DashboardService
         ]);
     }
 
-    public function show(int $id): \Inertia\Response
+    public function show(int $id): Response
     {
         $surat = Surat::query()
             ->with(['pemohon', 'jenisSurat', 'lampirans', 'approvalFlows'])
@@ -149,7 +148,7 @@ class DashboardService
 
         $isiSurat = json_decode((string) $surat->isi_surat, true);
 
-        return \Inertia\Inertia::render('admin/dashboard/Show', [
+        return Inertia::render('admin/dashboard/Show', [
             'id' => $surat->id,
             'nomor_surat' => $surat->nomor_surat,
             'pemohon' => [
@@ -263,7 +262,7 @@ class DashboardService
         $rendered = $this->templateRenderer->renderForSurat($surat, true, 'pdf');
 
         return response(
-            $this->templateRenderer->wrapDocumentHtml('Preview ' . $surat->jenisSurat?->nama, $rendered['html'], $surat->jenisSurat?->template),
+            $this->templateRenderer->wrapDocumentHtml('Preview '.$surat->jenisSurat?->nama, $rendered['html'], $surat->jenisSurat?->template),
             200,
         )->header('Content-Type', 'text/html; charset=UTF-8');
     }
@@ -290,7 +289,7 @@ class DashboardService
                 $filename,
                 [
                     'Content-Type' => 'application/pdf',
-                    'Content-Disposition' => 'inline; filename="' . addslashes($filename) . '"',
+                    'Content-Disposition' => 'inline; filename="'.addslashes($filename).'"',
                     'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
                     'Pragma' => 'no-cache',
                     'Expires' => '0',
@@ -304,7 +303,7 @@ class DashboardService
 
         return response(
             $this->templateRenderer->wrapDocumentHtml(
-                ($surat->jenisSurat?->nama ?? 'Surat') . ' - ' . ($surat->nomor_surat ?? ''),
+                ($surat->jenisSurat?->nama ?? 'Surat').' - '.($surat->nomor_surat ?? ''),
                 $rendered['html'],
                 $surat->jenisSurat?->template,
             ),
@@ -319,7 +318,7 @@ class DashboardService
 
     public function downloadPdf(Request $request, int $id): SymfonyResponse
     {
-        $user  = $request->user();
+        $user = $request->user();
         $surat = Surat::query()
             ->with(['pemohon', 'jenisSurat.template.placeholders', 'dataEntries'])
             ->findOrFail($id);
@@ -330,11 +329,11 @@ class DashboardService
             $surat->id,
         );
         $headers = [
-            'Content-Type'        => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . addslashes($filename) . '"',
-            'Cache-Control'       => 'no-store, no-cache, must-revalidate, max-age=0',
-            'Pragma'              => 'no-cache',
-            'Expires'             => '0',
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.addslashes($filename).'"',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ];
 
         if (

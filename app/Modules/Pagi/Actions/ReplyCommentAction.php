@@ -20,11 +20,11 @@ class ReplyCommentAction
         $parentCommentRecord = PagiWorkComment::where('uuid', $commentId)->firstOrFail();
 
         PagiWorkComment::create([
-            'uuid'      => (string) Str::uuid(),
-            'work_id'   => $portfolio->id,
-            'user_id'   => $authUser->id,
+            'uuid' => (string) Str::uuid(),
+            'work_id' => $portfolio->id,
+            'user_id' => $authUser->id,
             'parent_id' => $parentCommentRecord->id,
-            'body'      => strip_tags($body),
+            'body' => strip_tags($body),
         ]);
 
         // Notify target user (replied-to user) or original commenter
@@ -38,7 +38,7 @@ class ReplyCommentAction
                 if ($authUser->foto_path) {
                     $avatar = str_starts_with($authUser->foto_path, 'http')
                         ? $authUser->foto_path
-                        : asset('storage/' . $authUser->foto_path);
+                        : asset('storage/'.$authUser->foto_path);
                 }
                 try {
                     $postOwnerName = 'owner';
@@ -48,11 +48,11 @@ class ReplyCommentAction
                     $targetUser->notify(new PagiNotification(
                         type: 'reply',
                         title: $authUser->pagi_username ?: $authUser->name,
-                        message: 'membalas komentar Anda di postingan ' . $postOwnerName . ': "' . Str::limit($body, 30) . '"',
+                        message: 'membalas komentar Anda di postingan '.$postOwnerName.': "'.Str::limit($body, 30).'"',
                         avatar: $avatar,
-                        href: '/pagi/profile/' . $portfolio->user_id . '?project=' . $portfolio->id,
+                        href: '/pagi/profile/'.$portfolio->user_id.'?project='.$portfolio->id,
                         extra: [
-                            'sender_id'    => $authUser->id,
+                            'sender_id' => $authUser->id,
                             'portfolio_id' => $portfolio->id,
                         ],
                     ));

@@ -5,9 +5,9 @@ namespace App\Modules\Wims\Services\Admin;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
+use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use App\Modules\Wims\Support\AssessmentSummary;
-use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -16,8 +16,7 @@ class AdminMonitoringPageService
     public function __construct(
         private readonly AttendanceSyncService $attendanceSyncService,
         private readonly WimsModuleRoleService $wimsModuleRoleService,
-    ) {
-    }
+    ) {}
 
     public function build(Request $request): array
     {
@@ -204,5 +203,4 @@ class AdminMonitoringPageService
 
         return Carbon::parse($date)->translatedFormat('d M Y');
     }
-
 }

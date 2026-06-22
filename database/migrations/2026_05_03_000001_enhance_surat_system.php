@@ -1,12 +1,13 @@
 <?php
+
 // FILE: database/migrations/2026_05_03_000001_enhance_surat_system.php
 // Jalankan: php artisan migrate
 // AMAN: Semua pakai hasColumn/hasTable, tidak akan error jika dijalankan ulang
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -18,11 +19,11 @@ return new class extends Migration
         // Belum ada: icon, warna
         // ══════════════════════════════════════════════════════════════
         Schema::table('surat_categories', function (Blueprint $table) {
-            if (!Schema::hasColumn('surat_categories', 'icon')) {
+            if (! Schema::hasColumn('surat_categories', 'icon')) {
                 $table->string('icon', 50)->nullable()->after('deskripsi')
                     ->comment('Lucide icon name, e.g. mail, file-text');
             }
-            if (!Schema::hasColumn('surat_categories', 'warna')) {
+            if (! Schema::hasColumn('surat_categories', 'warna')) {
                 $table->string('warna', 20)->nullable()->after('icon')
                     ->comment('Tailwind color key, e.g. indigo, emerald, amber');
             }
@@ -37,17 +38,17 @@ return new class extends Migration
         // Belum ada: qr_mode, allowed_roles (json), urutan
         // ══════════════════════════════════════════════════════════════
         Schema::table('jenis_surats', function (Blueprint $table) {
-            if (!Schema::hasColumn('jenis_surats', 'qr_mode')) {
+            if (! Schema::hasColumn('jenis_surats', 'qr_mode')) {
                 $table->enum('qr_mode', ['immediate', 'after_approval'])
                     ->default('after_approval')
                     ->after('perlu_approval')
                     ->comment('immediate=QR langsung aktif, after_approval=setelah disetujui');
             }
-            if (!Schema::hasColumn('jenis_surats', 'allowed_roles')) {
+            if (! Schema::hasColumn('jenis_surats', 'allowed_roles')) {
                 $table->json('allowed_roles')->nullable()->after('qr_mode')
                     ->comment('Array slug role yang boleh buat surat ini, null=semua');
             }
-            if (!Schema::hasColumn('jenis_surats', 'urutan')) {
+            if (! Schema::hasColumn('jenis_surats', 'urutan')) {
                 $table->unsignedSmallInteger('urutan')->default(0)->after('allowed_roles');
             }
         });
@@ -61,31 +62,31 @@ return new class extends Migration
         //            css_style, created_by, updated_by
         // ══════════════════════════════════════════════════════════════
         Schema::table('surat_templates', function (Blueprint $table) {
-            if (!Schema::hasColumn('surat_templates', 'deskripsi')) {
+            if (! Schema::hasColumn('surat_templates', 'deskripsi')) {
                 $table->text('deskripsi')->nullable()->after('name');
             }
-            if (!Schema::hasColumn('surat_templates', 'docx_path')) {
+            if (! Schema::hasColumn('surat_templates', 'docx_path')) {
                 $table->string('docx_path')->nullable()->after('source_reference')
                     ->comment('Path file .docx yang diupload admin');
             }
-            if (!Schema::hasColumn('surat_templates', 'kop_surat')) {
+            if (! Schema::hasColumn('surat_templates', 'kop_surat')) {
                 $table->text('kop_surat')->nullable()->after('docx_path')
                     ->comment('HTML kop override (null = pakai global settings)');
             }
-            if (!Schema::hasColumn('surat_templates', 'footer_surat')) {
+            if (! Schema::hasColumn('surat_templates', 'footer_surat')) {
                 $table->text('footer_surat')->nullable()->after('kop_surat')
                     ->comment('HTML footer override');
             }
-            if (!Schema::hasColumn('surat_templates', 'css_style')) {
+            if (! Schema::hasColumn('surat_templates', 'css_style')) {
                 $table->text('css_style')->nullable()->after('footer_surat')
                     ->comment('CSS kustom untuk template ini');
             }
-            if (!Schema::hasColumn('surat_templates', 'created_by')) {
+            if (! Schema::hasColumn('surat_templates', 'created_by')) {
                 $table->foreignId('created_by')->nullable()
                     ->after('is_active')
                     ->constrained('users')->nullOnDelete();
             }
-            if (!Schema::hasColumn('surat_templates', 'updated_by')) {
+            if (! Schema::hasColumn('surat_templates', 'updated_by')) {
                 $table->foreignId('updated_by')->nullable()
                     ->after('created_by')
                     ->constrained('users')->nullOnDelete();
@@ -99,26 +100,26 @@ return new class extends Migration
         //            catatan_revisi, print_count, last_printed_at
         // ══════════════════════════════════════════════════════════════
         Schema::table('surats', function (Blueprint $table) {
-            if (!Schema::hasColumn('surats', 'kepada_yth')) {
+            if (! Schema::hasColumn('surats', 'kepada_yth')) {
                 $table->json('kepada_yth')->nullable()->after('keperluan')
                     ->comment('Array penerima surat, bisa multiple');
             }
-            if (!Schema::hasColumn('surats', 'lampiran_keterangan')) {
+            if (! Schema::hasColumn('surats', 'lampiran_keterangan')) {
                 $table->string('lampiran_keterangan')->nullable()->after('kepada_yth')
                     ->comment('Contoh: 1 (satu) lembar');
             }
-            if (!Schema::hasColumn('surats', 'revisi_ke')) {
+            if (! Schema::hasColumn('surats', 'revisi_ke')) {
                 $table->unsignedTinyInteger('revisi_ke')->default(0)
                     ->after('template_version');
             }
-            if (!Schema::hasColumn('surats', 'catatan_revisi')) {
+            if (! Schema::hasColumn('surats', 'catatan_revisi')) {
                 $table->text('catatan_revisi')->nullable()->after('revisi_ke');
             }
-            if (!Schema::hasColumn('surats', 'print_count')) {
+            if (! Schema::hasColumn('surats', 'print_count')) {
                 $table->unsignedSmallInteger('print_count')->default(0)
                     ->after('catatan_revisi');
             }
-            if (!Schema::hasColumn('surats', 'last_printed_at')) {
+            if (! Schema::hasColumn('surats', 'last_printed_at')) {
                 $table->timestamp('last_printed_at')->nullable()
                     ->after('print_count');
             }
@@ -129,7 +130,7 @@ return new class extends Migration
         // Manajemen QR yang lebih detail: revoke, status, activated_at
         // qr_token di surats tetap dipakai untuk kompatibilitas
         // ══════════════════════════════════════════════════════════════
-        if (!Schema::hasTable('surat_qr_codes')) {
+        if (! Schema::hasTable('surat_qr_codes')) {
             Schema::create('surat_qr_codes', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('surat_id')->constrained('surats')->cascadeOnDelete();
@@ -150,7 +151,7 @@ return new class extends Migration
         // ══════════════════════════════════════════════════════════════
         // 6. surat_histories (TABEL BARU — audit trail)
         // ══════════════════════════════════════════════════════════════
-        if (!Schema::hasTable('surat_histories')) {
+        if (! Schema::hasTable('surat_histories')) {
             Schema::create('surat_histories', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('surat_id')->constrained('surats')->cascadeOnDelete();
@@ -174,7 +175,7 @@ return new class extends Migration
         // 7. template_global_settings (TABEL BARU)
         // Kop surat, footer, logo, warna, format nomor — bisa ubah dari UI
         // ══════════════════════════════════════════════════════════════
-        if (!Schema::hasTable('template_global_settings')) {
+        if (! Schema::hasTable('template_global_settings')) {
             Schema::create('template_global_settings', function (Blueprint $table) {
                 $table->id();
                 $table->string('key', 100)->unique();
@@ -208,7 +209,7 @@ return new class extends Migration
         // Nomor surat otomatis per kode per bulan/tahun
         // Contoh hasil: CUTI-MHS/0042/IV/2026
         // ══════════════════════════════════════════════════════════════
-        if (!Schema::hasTable('nomor_surat_sequences')) {
+        if (! Schema::hasTable('nomor_surat_sequences')) {
             Schema::create('nomor_surat_sequences', function (Blueprint $table) {
                 $table->id();
                 $table->string('kode_surat', 50)->comment('Kode jenis surat, e.g. CUTI-MHS');
@@ -232,25 +233,33 @@ return new class extends Migration
         Schema::table('surats', function (Blueprint $table) {
             $cols = ['kepada_yth', 'lampiran_keterangan', 'revisi_ke', 'catatan_revisi', 'print_count', 'last_printed_at'];
             foreach ($cols as $col) {
-                if (Schema::hasColumn('surats', $col)) $table->dropColumn($col);
+                if (Schema::hasColumn('surats', $col)) {
+                    $table->dropColumn($col);
+                }
             }
         });
         Schema::table('surat_templates', function (Blueprint $table) {
             $cols = ['deskripsi', 'docx_path', 'kop_surat', 'footer_surat', 'css_style', 'created_by', 'updated_by'];
             foreach ($cols as $col) {
-                if (Schema::hasColumn('surat_templates', $col)) $table->dropColumn($col);
+                if (Schema::hasColumn('surat_templates', $col)) {
+                    $table->dropColumn($col);
+                }
             }
         });
         Schema::table('jenis_surats', function (Blueprint $table) {
             $cols = ['qr_mode', 'allowed_roles', 'urutan'];
             foreach ($cols as $col) {
-                if (Schema::hasColumn('jenis_surats', $col)) $table->dropColumn($col);
+                if (Schema::hasColumn('jenis_surats', $col)) {
+                    $table->dropColumn($col);
+                }
             }
         });
         Schema::table('surat_categories', function (Blueprint $table) {
             $cols = ['icon', 'warna'];
             foreach ($cols as $col) {
-                if (Schema::hasColumn('surat_categories', $col)) $table->dropColumn($col);
+                if (Schema::hasColumn('surat_categories', $col)) {
+                    $table->dropColumn($col);
+                }
             }
         });
     }

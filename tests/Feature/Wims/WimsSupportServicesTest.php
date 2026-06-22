@@ -10,11 +10,13 @@ use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
+use App\Modules\Wims\Services\Admin\AdminAssessmentRecapExportService;
+use App\Modules\Wims\Services\Mahasiswa\Absence\StudentAbsenceActionService;
+use App\Modules\Wims\Services\Mahasiswa\Attendance\AttendanceActionService;
 use App\Modules\Wims\Services\Mahasiswa\Logbook\LogbookActionService;
 use App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportActionService;
 use App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportFileService;
 use App\Modules\Wims\Services\Shared\Absence\KetidakhadiranService;
-use App\Modules\Wims\Services\Shared\Assessment\FinalReportAccessService;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceService;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringAlertService;
@@ -198,8 +200,8 @@ it('stores attendance photos, absence proof, and logbook photos on the configure
 
     [$student, , , $registration] = makeActiveOperationalRegistration();
 
-    $attendanceAction = app(\App\Modules\Wims\Services\Mahasiswa\Attendance\AttendanceActionService::class);
-    $absenceAction = app(\App\Modules\Wims\Services\Mahasiswa\Absence\StudentAbsenceActionService::class);
+    $attendanceAction = app(AttendanceActionService::class);
+    $absenceAction = app(StudentAbsenceActionService::class);
     $logbookAction = app(LogbookActionService::class);
 
     $locationResult = ['distance' => 50.0, 'is_valid' => true];
@@ -348,7 +350,7 @@ it('exports assessment pdf from the new submission model flow', function () {
         'weighted_score' => 88,
     ]);
 
-    $assessmentResponse = app(\App\Modules\Wims\Services\Admin\AdminAssessmentRecapExportService::class)
+    $assessmentResponse = app(AdminAssessmentRecapExportService::class)
         ->download($registration->fresh(), 'dosen');
 
     expect($assessmentResponse->headers->get('content-type'))->toContain('application/pdf')

@@ -15,8 +15,7 @@ class PlacementIndexService
 {
     public function __construct(
         private readonly WimsModuleRoleService $wimsModuleRoleService,
-    ) {
-    }
+    ) {}
 
     public function buildIndexQuery(Request $request, bool $withRelations = false): Builder
     {

@@ -1,4 +1,5 @@
 <?php
+
 // app/Services/NomorSuratService.php
 
 namespace App\Modules\Fast\Services\Shared;
@@ -13,8 +14,7 @@ class NomorSuratService
      *
      * Contoh hasil: CUTI-MHS/0042/IV/2026
      *
-     * @param string $kodeSurat  Kode jenis surat, ambil dari jenis_surats.kode_surat
-     * @return string
+     * @param  string  $kodeSurat  Kode jenis surat, ambil dari jenis_surats.kode_surat
      */
     public static function generate(string $kodeSurat): string
     {
@@ -40,15 +40,15 @@ class NomorSuratService
     public static function preview(string $kodeSurat): string
     {
         $format = TemplateGlobalSetting::get('format_nomor', '{kode}/{urutan}/{bulan_romawi}/{tahun}');
-        $tahun  = now()->year;
-        $bulan  = now()->month;
-        $romawi = ['', 'I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+        $tahun = now()->year;
+        $bulan = now()->month;
+        $romawi = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
         // Ambil urutan saat ini (belum increment)
-        $seq    = \App\Models\NomorSuratSequence::where([
+        $seq = NomorSuratSequence::where([
             'kode_surat' => $kodeSurat,
-            'tahun'      => $tahun,
-            'bulan'      => $bulan,
+            'tahun' => $tahun,
+            'bulan' => $bulan,
         ])->first();
 
         $urutan = ($seq?->urutan ?? 0) + 1;

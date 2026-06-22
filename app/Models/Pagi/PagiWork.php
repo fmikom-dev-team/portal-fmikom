@@ -30,7 +30,7 @@ class PagiWork extends Model
     ];
 
     protected $casts = [
-        'content'      => 'array',
+        'content' => 'array',
         'is_published' => 'boolean',
     ];
 
@@ -151,45 +151,45 @@ class PagiWork extends Model
                 $avatar = $c->user && $c->user->foto_path
                     ? (str_starts_with($c->user->foto_path, 'http')
                         ? $c->user->foto_path
-                        : asset('storage/' . $c->user->foto_path))
+                        : asset('storage/'.$c->user->foto_path))
                     : null;
 
                 $replies = ($c->relationLoaded('replies') ? $c->replies : collect())->map(function ($r) {
                     $rAvatar = $r->user && $r->user->foto_path
                         ? (str_starts_with($r->user->foto_path, 'http')
                             ? $r->user->foto_path
-                            : asset('storage/' . $r->user->foto_path))
+                            : asset('storage/'.$r->user->foto_path))
                         : null;
 
                     return [
-                        'id'         => $r->uuid,
-                        'user_id'    => $r->user_id,
-                        'name'       => $r->user->name ?? 'Anonymous',
-                        'avatar'     => $rAvatar,
-                        'body'       => $r->body,
-                        'content'    => $r->body,
+                        'id' => $r->uuid,
+                        'user_id' => $r->user_id,
+                        'name' => $r->user->name ?? 'Anonymous',
+                        'avatar' => $rAvatar,
+                        'body' => $r->body,
+                        'content' => $r->body,
                         'created_at' => $r->created_at->toISOString(),
-                        'time'       => $r->created_at->diffForHumans(),
-                        'likes'      => $r->relationLoaded('likesRelation')
+                        'time' => $r->created_at->diffForHumans(),
+                        'likes' => $r->relationLoaded('likesRelation')
                             ? $r->likesRelation->pluck('id')->toArray()
                             : [],
                     ];
                 })->toArray();
 
                 return [
-                    'id'            => $c->uuid,
-                    'user_id'       => $c->user_id,
-                    'name'          => $c->user->name ?? 'Anonymous',
+                    'id' => $c->uuid,
+                    'user_id' => $c->user_id,
+                    'name' => $c->user->name ?? 'Anonymous',
                     'pagi_username' => $c->user?->pagi_username,
-                    'avatar'        => $avatar,
-                    'body'          => $c->body,
-                    'content'       => $c->body,
-                    'created_at'    => $c->created_at->toISOString(),
-                    'time'          => $c->created_at->diffForHumans(),
-                    'likes'         => $c->relationLoaded('likesRelation')
+                    'avatar' => $avatar,
+                    'body' => $c->body,
+                    'content' => $c->body,
+                    'created_at' => $c->created_at->toISOString(),
+                    'time' => $c->created_at->diffForHumans(),
+                    'likes' => $c->relationLoaded('likesRelation')
                         ? $c->likesRelation->pluck('id')->toArray()
                         : [],
-                    'replies'       => $replies,
+                    'replies' => $replies,
                 ];
             })->values()->toArray();
         }
@@ -209,41 +209,41 @@ class PagiWork extends Model
             $avatar = $c->user && $c->user->foto_path
                 ? (str_starts_with($c->user->foto_path, 'http')
                     ? $c->user->foto_path
-                    : asset('storage/' . $c->user->foto_path))
+                    : asset('storage/'.$c->user->foto_path))
                 : null;
 
             $replies = $c->replies->map(function ($r) {
                 $rAvatar = $r->user && $r->user->foto_path
                     ? (str_starts_with($r->user->foto_path, 'http')
                         ? $r->user->foto_path
-                        : asset('storage/' . $r->user->foto_path))
+                        : asset('storage/'.$r->user->foto_path))
                     : null;
 
                 return [
-                    'id'         => $r->uuid,
-                    'user_id'    => $r->user_id,
-                    'name'       => $r->user->name ?? 'Anonymous',
-                    'avatar'     => $rAvatar,
-                    'body'       => $r->body,
-                    'content'    => $r->body,
+                    'id' => $r->uuid,
+                    'user_id' => $r->user_id,
+                    'name' => $r->user->name ?? 'Anonymous',
+                    'avatar' => $rAvatar,
+                    'body' => $r->body,
+                    'content' => $r->body,
                     'created_at' => $r->created_at->toISOString(),
-                    'time'       => $r->created_at->diffForHumans(),
-                    'likes'      => $r->likesRelation->pluck('id')->toArray(),
+                    'time' => $r->created_at->diffForHumans(),
+                    'likes' => $r->likesRelation->pluck('id')->toArray(),
                 ];
             })->toArray();
 
             return [
-                'id'            => $c->uuid,
-                'user_id'       => $c->user_id,
-                'name'          => $c->user->name ?? 'Anonymous',
+                'id' => $c->uuid,
+                'user_id' => $c->user_id,
+                'name' => $c->user->name ?? 'Anonymous',
                 'pagi_username' => $c->user?->pagi_username,
-                'avatar'        => $avatar,
-                'body'          => $c->body,
-                'content'       => $c->body,
-                'created_at'    => $c->created_at->toISOString(),
-                'time'          => $c->created_at->diffForHumans(),
-                'likes'         => $c->likesRelation->pluck('id')->toArray(),
-                'replies'       => $replies,
+                'avatar' => $avatar,
+                'body' => $c->body,
+                'content' => $c->body,
+                'created_at' => $c->created_at->toISOString(),
+                'time' => $c->created_at->diffForHumans(),
+                'likes' => $c->likesRelation->pluck('id')->toArray(),
+                'replies' => $replies,
             ];
         })->toArray();
     }

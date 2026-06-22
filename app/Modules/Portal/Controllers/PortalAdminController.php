@@ -2,17 +2,15 @@
 
 namespace App\Modules\Portal\Controllers;
 
+use App\Concerns\HandlesImageCompression;
 use App\Http\Controllers\Controller;
 use App\Models\Portal\PortalCategory;
 use App\Models\Portal\PortalComment;
 use App\Models\Portal\PortalMedia;
 use App\Models\Portal\PortalPost;
 use App\Models\Portal\PortalSetting;
-use App\Concerns\HandlesImageCompression;
-use App\Services\VirusScannerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class PortalAdminController extends Controller

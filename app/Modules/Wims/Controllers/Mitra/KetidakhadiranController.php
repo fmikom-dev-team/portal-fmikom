@@ -14,8 +14,7 @@ class KetidakhadiranController extends Controller
     public function __construct(
         private readonly MitraAccessService $mitraAccessService,
         private readonly MitraKetidakhadiranReviewService $mitraKetidakhadiranReviewService,
-    ) {
-    }
+    ) {}
 
     public function approve(Request $request, KetidakhadiranMagang $ketidakhadiran): RedirectResponse
     {

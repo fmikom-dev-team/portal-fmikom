@@ -16,8 +16,7 @@ class LecturerAssessmentWorkflowService
     public function __construct(
         private readonly FinalReportAccessService $finalReportAccessService,
         private readonly WimsModuleRoleService $wimsModuleRoleService,
-    ) {
-    }
+    ) {}
 
     public function isAuthorized(User $user, PendaftaranMagang $pendaftaran): bool
     {

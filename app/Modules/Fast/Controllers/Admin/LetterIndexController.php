@@ -1,11 +1,12 @@
 <?php
+
 // app/Http/Controllers/Admin/LetterIndexController.php
 
 namespace App\Modules\Fast\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\SuratCategory;
 use App\Models\Surat;
+use App\Models\SuratCategory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,11 +15,11 @@ class LetterIndexController extends Controller
 {
     public function index(Request $request): Response
     {
-        $search       = $request->string('search')->trim()->toString();
+        $search = $request->string('search')->trim()->toString();
         $status = $request->has('status')
             ? $request->string('status')->toString()
             : Surat::STATUS_PENDING;
-        $categoryId   = $request->integer('category_id');
+        $categoryId = $request->integer('category_id');
         $baseStatuses = [
             Surat::STATUS_PENDING,
             Surat::STATUS_VALIDATED_ADMIN,
@@ -61,37 +62,37 @@ class LetterIndexController extends Controller
 
         $surats = $query->paginate(15)
             ->through(fn (Surat $surat) => [
-                'id'               => $surat->id,
-                'nomor_surat'      => $surat->nomor_surat,
-                'status'           => $surat->status,
-                'can_approve'      => $surat->canBeValidatedByAdmin(),
-                'revision_label'   => $surat->status === Surat::STATUS_REVISION_REQUESTED
+                'id' => $surat->id,
+                'nomor_surat' => $surat->nomor_surat,
+                'status' => $surat->status,
+                'can_approve' => $surat->canBeValidatedByAdmin(),
+                'revision_label' => $surat->status === Surat::STATUS_REVISION_REQUESTED
                     ? match ($surat->finalApprovalRoleSlug()) {
                         'kaprodi' => 'Dikembalikan Kaprodi',
                         'dekan' => 'Dikembalikan Dekan',
                         default => 'Dikembalikan untuk Revisi',
                     }
                     : null,
-                'can_edit'         => $surat->canBeEditedByAdmin(),
-                'keperluan'        => $surat->keperluan,
+                'can_edit' => $surat->canBeEditedByAdmin(),
+                'keperluan' => $surat->keperluan,
                 'tanggal_pengajuan' => $surat->tanggal_pengajuan?->toISOString(),
-                'tanggal_selesai'  => $surat->tanggal_selesai?->toISOString(),
-                'created_at'       => $surat->created_at?->toISOString(),
+                'tanggal_selesai' => $surat->tanggal_selesai?->toISOString(),
+                'created_at' => $surat->created_at?->toISOString(),
                 'pemohon' => [
                     'name' => $surat->pemohon?->name,
-                    'nim'  => $surat->pemohon?->nim_nip ?? $surat->pemohon?->nomor_induk,
+                    'nim' => $surat->pemohon?->nim_nip ?? $surat->pemohon?->nomor_induk,
                 ],
                 'jenisSurat' => [
-                    'id'       => $surat->jenisSurat?->id,
-                    'nama'     => $surat->jenisSurat?->nama,
+                    'id' => $surat->jenisSurat?->id,
+                    'nama' => $surat->jenisSurat?->nama,
                     'category' => ['nama' => $surat->jenisSurat?->category?->nama],
                 ],
             ])
             ->withQueryString();
 
         return Inertia::render('admin/letters/Index', [
-            'surats'     => $surats,
-            'filters'    => [
+            'surats' => $surats,
+            'filters' => [
                 'search' => $search,
                 'status' => $status,
                 'category_id' => $categoryId > 0 ? (string) $categoryId : '',
@@ -105,9 +106,9 @@ class LetterIndexController extends Controller
                     'nama' => $category->nama,
                 ])
                 ->values(),
-            'summary'    => [
-                'total'    => (clone $baseQuery)->count(),
-                'pending'  => (clone $baseQuery)->where('status', Surat::STATUS_PENDING)->count(),
+            'summary' => [
+                'total' => (clone $baseQuery)->count(),
+                'pending' => (clone $baseQuery)->where('status', Surat::STATUS_PENDING)->count(),
                 'rejected' => (clone $baseQuery)->where('status', Surat::STATUS_REJECTED_ADMIN)->count(),
             ],
         ]);

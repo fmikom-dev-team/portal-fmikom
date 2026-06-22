@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 test('ImageProxyController serve rejects path traversal attempts', function () {
     $admin = User::factory()->create(['user_type' => 'super_admin']);
@@ -30,7 +31,7 @@ test('ImageProxyController serve rejects path traversal attempts', function () {
     $safeSignature = str_replace(['+', '/', '='], ['-', '_', ''], Crypt::encryptString($safeRelativePath));
 
     // Request safe image
-    $urlSafe = \Illuminate\Support\Facades\URL::signedRoute('images.proxy', ['encrypted_path' => $safeSignature]);
+    $urlSafe = URL::signedRoute('images.proxy', ['encrypted_path' => $safeSignature]);
     $responseSafe = $this->get($urlSafe);
     $responseSafe->assertStatus(200);
 
@@ -39,7 +40,7 @@ test('ImageProxyController serve rejects path traversal attempts', function () {
     $traversalSignature = str_replace(['+', '/', '='], ['-', '_', ''], Crypt::encryptString($traversalPath));
 
     // Request traversal image
-    $urlTraversal = \Illuminate\Support\Facades\URL::signedRoute('images.proxy', ['encrypted_path' => $traversalSignature]);
+    $urlTraversal = URL::signedRoute('images.proxy', ['encrypted_path' => $traversalSignature]);
     $responseTraversal = $this->get($urlTraversal);
     expect($responseTraversal->getStatusCode())->toBeIn([403, 404]);
 });

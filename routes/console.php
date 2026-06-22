@@ -3,6 +3,7 @@
 use App\Jobs\CleanExpiredSessions;
 use App\Jobs\RefreshExpiredOAuthTokens;
 use Illuminate\Support\Facades\Schedule;
+use Laravel\Pulse\Facades\Pulse;
 
 /*
 |--------------------------------------------------------------------------
@@ -49,8 +50,7 @@ Schedule::command('telescope:prune --hours=24')
 
 // Pulse Database Trimmer — daily at 03:30
 // Trims Pulse storage based on PULSE_STORAGE_KEEP setting
-Schedule::call(fn () => \Laravel\Pulse\Facades\Pulse::trim())
+Schedule::call(fn () => Pulse::trim())
     ->dailyAt('03:30')
     ->name('pulse:trim')
     ->onOneServer();
-

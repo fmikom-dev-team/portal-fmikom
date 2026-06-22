@@ -4,9 +4,9 @@ namespace App\Modules\Fast\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\TemplateGlobalSetting;
+use App\Support\FastStorage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use App\Support\FastStorage;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -58,7 +58,7 @@ class GlobalSettingsController extends Controller
             }
 
             $extension = $file?->extension() ?: $file?->getClientOriginalExtension() ?: 'png';
-            $filename = 'fast-kop-logo-' . now()->format('YmdHis') . '.' . $extension;
+            $filename = 'fast-kop-logo-'.now()->format('YmdHis').'.'.$extension;
             $path = $file->storeAs('fast/template', $filename, 'local');
 
             if ($existingLogo !== '' && $existingLogo !== $path) {

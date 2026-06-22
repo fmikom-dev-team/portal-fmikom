@@ -44,7 +44,7 @@ class AbsensiMagang extends Model
             return null;
         }
 
-        return Carbon::parse($this->tanggal->toDateString() . ' ' . $this->waktu_masuk);
+        return Carbon::parse($this->tanggal->toDateString().' '.$this->waktu_masuk);
     }
 
     public function resolvedCheckOutAt(): ?CarbonInterface
@@ -57,7 +57,7 @@ class AbsensiMagang extends Model
             return null;
         }
 
-        return Carbon::parse($this->tanggal->toDateString() . ' ' . $this->waktu_keluar);
+        return Carbon::parse($this->tanggal->toDateString().' '.$this->waktu_keluar);
     }
 
     public function checkInPhotoUrl(): ?string

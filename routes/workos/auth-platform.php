@@ -1,7 +1,7 @@
 <?php
 
-use App\Modules\WorkOs\Controllers\AuthenticationController;
 use App\Modules\WorkOs\Controllers\AuthAnalyticsController;
+use App\Modules\WorkOs\Controllers\AuthenticationController;
 use App\Modules\WorkOs\Controllers\OAuthController;
 use App\Modules\WorkOs\Controllers\SecurityController;
 use Illuminate\Support\Facades\Route;

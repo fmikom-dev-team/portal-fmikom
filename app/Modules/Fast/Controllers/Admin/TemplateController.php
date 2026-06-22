@@ -15,8 +15,7 @@ class TemplateController extends Controller
 {
     public function __construct(
         protected TemplateService $templateService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {

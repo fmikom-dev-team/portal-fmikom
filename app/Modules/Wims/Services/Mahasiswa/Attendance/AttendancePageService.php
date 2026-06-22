@@ -16,8 +16,7 @@ class AttendancePageService
         private readonly AttendanceSyncService $attendanceSyncService,
         private readonly KetidakhadiranService $ketidakhadiranService,
         private readonly AttendanceAvailabilityService $attendanceAvailabilityService,
-    ) {
-    }
+    ) {}
 
     public function build(User $user): array
     {
@@ -61,7 +60,7 @@ class AttendancePageService
                 'tanggal_label' => $item->tanggal_mulai && $item->tanggal_selesai
                     ? ($item->tanggal_mulai->isSameDay($item->tanggal_selesai)
                         ? $item->tanggal_mulai->translatedFormat('d M Y')
-                        : $item->tanggal_mulai->translatedFormat('d M Y') . ' - ' . $item->tanggal_selesai->translatedFormat('d M Y'))
+                        : $item->tanggal_mulai->translatedFormat('d M Y').' - '.$item->tanggal_selesai->translatedFormat('d M Y'))
                     : '-',
                 'jenis' => $item->jenis,
                 'alasan' => $item->alasan,
@@ -102,7 +101,7 @@ class AttendancePageService
                 'tanggal_label' => $approvedAbsenceToday->tanggal_mulai && $approvedAbsenceToday->tanggal_selesai
                     ? ($approvedAbsenceToday->tanggal_mulai->isSameDay($approvedAbsenceToday->tanggal_selesai)
                         ? $approvedAbsenceToday->tanggal_mulai->translatedFormat('d M Y')
-                        : $approvedAbsenceToday->tanggal_mulai->translatedFormat('d M Y') . ' - ' . $approvedAbsenceToday->tanggal_selesai->translatedFormat('d M Y'))
+                        : $approvedAbsenceToday->tanggal_mulai->translatedFormat('d M Y').' - '.$approvedAbsenceToday->tanggal_selesai->translatedFormat('d M Y'))
                     : null,
             ] : null,
             'current_time' => now()->toIso8601String(),

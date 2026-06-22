@@ -15,8 +15,7 @@ class AttendanceActionService
     public function __construct(
         private readonly AttendanceService $attendanceService,
         private readonly AttendanceAvailabilityService $attendanceAvailabilityService,
-    ) {
-    }
+    ) {}
 
     public function validateCheckInAvailability(PendaftaranMagang $pendaftaran): array
     {
@@ -123,7 +122,7 @@ class AttendanceActionService
         }
 
         $extension = strtolower($photo->getClientOriginalExtension() ?: $photo->extension() ?: 'bin');
-        $path = $directory . '/' . Str::uuid() . '.' . $extension;
+        $path = $directory.'/'.Str::uuid().'.'.$extension;
 
         WimsStorage::storeUploadedFileAs($photo, $directory, basename($path));
 

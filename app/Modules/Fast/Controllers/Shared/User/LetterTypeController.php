@@ -5,8 +5,8 @@ namespace App\Modules\Fast\Controllers\Shared\User;
 use App\Http\Controllers\Controller;
 use App\Models\JenisSurat;
 use App\Modules\Fast\DTOs\SuratDataContract;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class LetterTypeController extends Controller
 {
@@ -41,7 +41,4 @@ class LetterTypeController extends Controller
             || $jenisSurat->allowedRole?->slug === $roleSlug
             || (string) $jenisSurat->allowedRole?->slug === $roleSlug;
     }
-
 }
-
-

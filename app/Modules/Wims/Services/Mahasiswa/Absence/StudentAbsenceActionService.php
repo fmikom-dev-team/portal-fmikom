@@ -13,8 +13,7 @@ class StudentAbsenceActionService
 {
     public function __construct(
         private readonly KetidakhadiranService $ketidakhadiranService,
-    ) {
-    }
+    ) {}
 
     public function resolveActiveRegistration(int $registrationId): PendaftaranMagang
     {
@@ -56,10 +55,10 @@ class StudentAbsenceActionService
 
         $directory = 'ketidakhadiran';
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'bin');
-        $filename = Str::uuid() . '.' . $extension;
+        $filename = Str::uuid().'.'.$extension;
 
         WimsStorage::storeUploadedFileAs($file, $directory, $filename);
 
-        return $directory . '/' . $filename;
+        return $directory.'/'.$filename;
     }
 }

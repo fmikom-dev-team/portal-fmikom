@@ -48,7 +48,7 @@ function makeAssessmentRegistration(): array
 }
 
 it('requires assessor role and rejects invalid role values in template request', function () {
-    $request = new UpsertAssessmentTemplateRequest();
+    $request = new UpsertAssessmentTemplateRequest;
 
     $sharedRolePayload = makeAssessmentTemplatePayload(['assessor_role' => 'both']);
     $validator = Validator::make($sharedRolePayload, $request->rules(), $request->messages());
@@ -76,7 +76,7 @@ it('requires assessor role and rejects invalid role values in template request',
 });
 
 it('rejects invalid component weights and invalid period ordering', function () {
-    $request = new UpsertAssessmentTemplateRequest();
+    $request = new UpsertAssessmentTemplateRequest;
     $payload = makeAssessmentTemplatePayload([
         'periode_mulai' => '2026-12-31',
         'periode_selesai' => '2026-01-01',

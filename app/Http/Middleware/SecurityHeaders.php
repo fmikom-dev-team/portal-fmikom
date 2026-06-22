@@ -23,9 +23,9 @@ class SecurityHeaders
     public function handle(Request $request, Closure $next): Response
     {
         $allowsDocumentEmbedding = $this->allowsDocumentEmbedding($request);
-        $telescopePath = config('telescope.path', 'telescope') . '*';
-        $pulsePath = config('pulse.path', 'pulse') . '*';
-        $horizonPath = config('horizon.path', 'horizon') . '*';
+        $telescopePath = config('telescope.path', 'telescope').'*';
+        $pulsePath = config('pulse.path', 'pulse').'*';
+        $horizonPath = config('horizon.path', 'horizon').'*';
 
         if ($request->is($telescopePath) || $request->is($pulsePath) || $request->is($horizonPath) || $request->is('livewire*')) {
             $response = $next($request);
@@ -240,6 +240,7 @@ class SecurityHeaders
 
         return $response;
     }
+
     private function allowsDocumentEmbedding(Request $request): bool
     {
         return $request->is(

@@ -16,8 +16,7 @@ class ApprovalController extends Controller
     public function __construct(
         protected ApprovalActionService $approvalActionService,
         protected ApprovalService $approvalService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {

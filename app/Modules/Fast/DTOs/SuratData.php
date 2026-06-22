@@ -514,5 +514,3 @@ class SuratDataContract
         ];
     }
 }
-
-

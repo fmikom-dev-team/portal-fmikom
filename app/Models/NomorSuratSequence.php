@@ -1,4 +1,5 @@
 <?php
+
 // app/Models/NomorSuratSequence.php
 
 namespace App\Models;
@@ -40,12 +41,12 @@ class NomorSuratSequence extends Model
      */
     public static function generate(string $kodeSurat, ?string $format = null): string
     {
-        $format  = $format ?? TemplateGlobalSetting::get('format_nomor', '{kode}/{urutan}/{bulan_romawi}/{tahun}');
-        $tahun   = now()->year;
-        $bulan   = now()->month;
-        $urutan  = static::nextUrutan($kodeSurat, $tahun, $bulan);
+        $format = $format ?? TemplateGlobalSetting::get('format_nomor', '{kode}/{urutan}/{bulan_romawi}/{tahun}');
+        $tahun = now()->year;
+        $bulan = now()->month;
+        $urutan = static::nextUrutan($kodeSurat, $tahun, $bulan);
 
-        $romawi  = ['', 'I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+        $romawi = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
         return str_replace(
             ['{kode}', '{urutan}', '{bulan_romawi}', '{tahun}', '{bulan}'],

@@ -238,6 +238,7 @@ class MigrateFastFilesToPrivate extends Command
 
         if ($dryRun) {
             $this->line("  - Dry-run: {$label} => {$path} -> {$relativePath}");
+
             return 1;
         }
 

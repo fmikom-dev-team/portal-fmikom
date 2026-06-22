@@ -5,9 +5,10 @@ namespace App\Modules\Fast\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\JenisSurat;
 use App\Models\Surat;
+use App\Models\SuratCategory;
+use App\Modules\Fast\DTOs\SuratDataContract;
 use App\Modules\Fast\Template\Renderers\SuratTemplateRendererService;
 use App\Modules\Fast\Workflow\Actions\SuratWorkflowService;
-use App\Modules\Fast\DTOs\SuratDataContract;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -20,8 +21,7 @@ class LetterController extends Controller
     public function __construct(
         protected SuratWorkflowService $workflow,
         protected SuratTemplateRendererService $templateService,
-    ) {
-    }
+    ) {}
 
     public function create(): Response
     {
@@ -34,21 +34,21 @@ class LetterController extends Controller
 
         return Inertia::render('admin/letters/Create', [
             'jenisSurats' => $jenisSurats->map(fn (JenisSurat $jenisSurat): array => [
-                'id'       => $jenisSurat->id,
-                'nama'     => $jenisSurat->nama,
-                'slug'     => $jenisSurat->slug,
-                'deskripsi'=> $jenisSurat->deskripsi,
+                'id' => $jenisSurat->id,
+                'nama' => $jenisSurat->nama,
+                'slug' => $jenisSurat->slug,
+                'deskripsi' => $jenisSurat->deskripsi,
                 'category' => [
-                    'id'   => $jenisSurat->category?->id,
+                    'id' => $jenisSurat->category?->id,
                     'nama' => $jenisSurat->category?->nama,
                 ],
                 'template' => [
-                    'id'   => $jenisSurat->template?->id,
+                    'id' => $jenisSurat->template?->id,
                     'name' => $jenisSurat->template?->name,
                 ],
             ])->values(),
-            'categories' => \App\Models\SuratCategory::orderBy('urutan')
-                                ->get(['id', 'nama']),
+            'categories' => SuratCategory::orderBy('urutan')
+                ->get(['id', 'nama']),
         ]);
     }
 
@@ -123,7 +123,7 @@ class LetterController extends Controller
             [
                 'approval_role_slug' => $this->approvalRoleSlug($jenisSurat),
                 'tanggal_surat' => now(),
-                'kota_surat' => \DB::table('template_global_settings')->where('key', 'kota_surat')->value('value') ?? 'Cilacap',    
+                'kota_surat' => \DB::table('template_global_settings')->where('key', 'kota_surat')->value('value') ?? 'Cilacap',
                 'pemohon_program_studi_id' => $user?->program_studi_id,
                 'surat' => [
                     'nomor_surat' => 'AUTO/GENERATED/AFTER/APPROVAL',
@@ -378,5 +378,3 @@ class LetterController extends Controller
         return $returnTo;
     }
 }
-
-

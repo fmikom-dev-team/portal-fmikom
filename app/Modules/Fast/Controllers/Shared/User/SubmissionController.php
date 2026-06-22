@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\JenisSurat;
 use App\Models\Surat;
 use App\Models\SuratCategory;
-use App\Modules\Fast\Workflow\Actions\SuratWorkflowService;
 use App\Modules\Fast\DTOs\SuratDataContract;
+use App\Modules\Fast\Workflow\Actions\SuratWorkflowService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,8 +20,7 @@ class SubmissionController extends Controller
 {
     public function __construct(
         protected SuratWorkflowService $workflow,
-    ) {
-    }
+    ) {}
 
     /**
      * Halaman "Ajukan Surat": pilih jenis surat, isi form, upload, lalu submit.
@@ -58,12 +57,12 @@ class SubmissionController extends Controller
             'summary' => (function () use ($user, $diprosesStatuses, $visibleJenisSuratCount): array {
                 $counts = Surat::query()
                     ->where('pemohon_id', $user->id)
-                    ->selectRaw("
-                        SUM(CASE WHEN status IN (" . implode(',', array_fill(0, count($diprosesStatuses), '?')) . ") THEN 1 ELSE 0 END) as diproses,
+                    ->selectRaw('
+                        SUM(CASE WHEN status IN ('.implode(',', array_fill(0, count($diprosesStatuses), '?')).') THEN 1 ELSE 0 END) as diproses,
                         SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as selesai,
                         SUM(CASE WHEN status IN (?, ?) THEN 1 ELSE 0 END) as ditolak,
                         SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as dibatalkan
-                    ", array_merge($diprosesStatuses, [Surat::STATUS_FINISHED, Surat::STATUS_REJECTED_ADMIN, Surat::STATUS_REJECTED_APPROVER, Surat::STATUS_CANCELLED]))
+                    ', array_merge($diprosesStatuses, [Surat::STATUS_FINISHED, Surat::STATUS_REJECTED_ADMIN, Surat::STATUS_REJECTED_APPROVER, Surat::STATUS_CANCELLED]))
                     ->first();
 
                 $dibatalkan = (int) ($counts->dibatalkan ?? 0);
@@ -78,26 +77,26 @@ class SubmissionController extends Controller
                 ];
             })(),
             'categories' => $categories->map(fn (SuratCategory $c): array => [
-                'id'        => $c->id,
-                'nama'      => $c->nama,
-                'slug'      => $c->slug,
+                'id' => $c->id,
+                'nama' => $c->nama,
+                'slug' => $c->slug,
                 'deskripsi' => $c->deskripsi,
             ])->values(),
             'jenisSurats' => $jenisSurats->map(fn (JenisSurat $j): array => [
-                'id'          => $j->id,
-                'categoryId'  => $j->category_id,
-                'nama'        => $j->nama,
-                'slug'        => $j->slug,
-                'deskripsi'   => $j->deskripsi,
+                'id' => $j->id,
+                'categoryId' => $j->category_id,
+                'nama' => $j->nama,
+                'slug' => $j->slug,
+                'deskripsi' => $j->deskripsi,
                 'fieldConfig' => collect($this->normalizeFieldConfig($j->field_config ?? []))
                     ->map(fn (array $f): array => [
-                        'name'        => $f['name'],
-                        'label'       => (string) $f['label'],
-                        'type'        => $f['type'],
-                        'required'    => (bool) $f['required'],
+                        'name' => $f['name'],
+                        'label' => (string) $f['label'],
+                        'type' => $f['type'],
+                        'required' => (bool) $f['required'],
                         'placeholder' => (string) ($f['placeholder'] ?? ''),
-                        'help'        => (string) ($f['help'] ?? ''),
-                        'options'     => collect($f['options'] ?? [])
+                        'help' => (string) ($f['help'] ?? ''),
+                        'options' => collect($f['options'] ?? [])
                             ->map(fn ($o) => is_array($o)
                                 ? ['label' => (string) ($o['label'] ?? $o['value'] ?? ''), 'value' => (string) ($o['value'] ?? '')]
                                 : ['label' => (string) $o, 'value' => (string) $o]
@@ -137,16 +136,16 @@ class SubmissionController extends Controller
             'lampiran' => ['nullable', 'array'],
             'lampiran.*' => ['file', 'max:4096', 'mimes:pdf,jpg,jpeg,png,doc,docx'],
         ], [
-            'jenis_surat_id.required'        => 'Jenis surat wajib dipilih.',
-            'keperluan.required'             => 'Keperluan wajib diisi.',
-            'keperluan.min'                  => 'Keperluan minimal 10 karakter.',
-            'keperluan.max'                  => 'Keperluan maksimal 1000 karakter.',
-            'tanggal_kebutuhan.required'     => 'Tanggal kebutuhan wajib diisi.',
-            'tanggal_kebutuhan.date'         => 'Format tanggal kebutuhan tidak valid.',
+            'jenis_surat_id.required' => 'Jenis surat wajib dipilih.',
+            'keperluan.required' => 'Keperluan wajib diisi.',
+            'keperluan.min' => 'Keperluan minimal 10 karakter.',
+            'keperluan.max' => 'Keperluan maksimal 1000 karakter.',
+            'tanggal_kebutuhan.required' => 'Tanggal kebutuhan wajib diisi.',
+            'tanggal_kebutuhan.date' => 'Format tanggal kebutuhan tidak valid.',
             'tanggal_kebutuhan.after_or_equal' => 'Tanggal kebutuhan tidak boleh di masa lalu.',
         ])->validate();
 
-    /** @var JenisSurat $jenisSurat */
+        /** @var JenisSurat $jenisSurat */
         $jenisSurat = $this->visibleSubmissionJenisSuratQuery($user)
             ->findOrFail($validated['jenis_surat_id']);
 
@@ -287,8 +286,4 @@ class SubmissionController extends Controller
             ->values()
             ->all();
     }
-
 }
-
-
-

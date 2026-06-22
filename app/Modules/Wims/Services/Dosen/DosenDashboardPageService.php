@@ -4,13 +4,13 @@ namespace App\Modules\Wims\Services\Dosen;
 
 use App\Models\User;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringAlertService;
+
 class DosenDashboardPageService
 {
     public function __construct(
         private readonly MonitoringAlertService $monitoringAlertService,
         private readonly DosenMonitoringOverviewService $monitoringOverviewService,
-    ) {
-    }
+    ) {}
 
     public function build(User $user): array
     {

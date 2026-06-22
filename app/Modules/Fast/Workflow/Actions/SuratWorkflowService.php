@@ -10,8 +10,8 @@ use App\Models\SuratLampiran;
 use App\Models\User;
 use App\Modules\Fast\DTOs\SuratDataContract;
 use App\Modules\Fast\Services\Shared\SuratDocumentGeneratorService;
-use App\Modules\Fast\Workflow\Approvals\FastApprovalWorkflowService as ApprovalWorkflowService;
 use App\Modules\Fast\Services\Shared\SuratHistoryService;
+use App\Modules\Fast\Workflow\Approvals\FastApprovalWorkflowService as ApprovalWorkflowService;
 use App\Support\FastStorage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
@@ -24,8 +24,7 @@ class SuratWorkflowService
     public function __construct(
         protected ApprovalWorkflowService $approvalWorkflow,
         protected SuratDocumentGeneratorService $documentGenerator,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  array<string, mixed>  $payload
@@ -575,9 +574,6 @@ class SuratWorkflowService
         };
     }
 
-    /**
-     * @return \App\Models\Surat
-     */
     protected function freshSubmittedSurat(Surat $surat): Surat
     {
         return $surat->fresh([
@@ -588,9 +584,6 @@ class SuratWorkflowService
         ]);
     }
 
-    /**
-     * @return \App\Models\Surat
-     */
     protected function freshGeneratedSurat(Surat $surat): Surat
     {
         return $surat->fresh([
@@ -601,9 +594,6 @@ class SuratWorkflowService
         ]);
     }
 
-    /**
-     * @return \App\Models\Surat
-     */
     protected function freshReviewedSurat(Surat $surat): Surat
     {
         return $surat->fresh([
@@ -615,5 +605,3 @@ class SuratWorkflowService
         ]);
     }
 }
-
-

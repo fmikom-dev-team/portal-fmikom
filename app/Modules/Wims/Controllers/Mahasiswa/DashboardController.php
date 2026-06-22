@@ -12,8 +12,7 @@ class DashboardController extends Controller
 {
     public function __construct(
         private readonly StudentDashboardPageService $studentDashboardPageService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {

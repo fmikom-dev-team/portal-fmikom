@@ -1,6 +1,6 @@
 <?php
 
-use App\Modules\Fast\Controllers\Shared\Approval\ApprovalController as ApprovalDashboardController;
+use App\Http\Controllers\Api\SuratController as ApiSuratController;
 use App\Modules\Fast\Controllers\Admin\ArchiveController;
 use App\Modules\Fast\Controllers\Admin\CategoryController;
 use App\Modules\Fast\Controllers\Admin\DashboardController;
@@ -10,18 +10,18 @@ use App\Modules\Fast\Controllers\Admin\LetterController;
 use App\Modules\Fast\Controllers\Admin\LetterIndexController;
 use App\Modules\Fast\Controllers\Admin\QrManageController;
 use App\Modules\Fast\Controllers\Admin\TemplateController;
-use App\Modules\Fast\Controllers\Shared\NotificationController;
-use App\Http\Controllers\Api\SuratController as ApiSuratController;
 use App\Modules\Fast\Controllers\Dekan\ApprovalController as DekanApprovalController;
-use App\Modules\Fast\Controllers\Mahasiswa\DashboardController as MahasiswaDashboardController;
-use App\Modules\Fast\Controllers\Mahasiswa\HistoryController as MahasiswaHistoryController;
-use App\Modules\Fast\Controllers\Mahasiswa\LetterTypeController as MahasiswaLetterTypeController;
-use App\Modules\Fast\Controllers\Mahasiswa\SubmissionController as MahasiswaSubmissionController;
-use App\Modules\Fast\Controllers\Kaprodi\ApprovalController as KaprodiApprovalController;
 use App\Modules\Fast\Controllers\Dosen\DashboardController as DosenDashboardController;
 use App\Modules\Fast\Controllers\Dosen\HistoryController as DosenHistoryController;
 use App\Modules\Fast\Controllers\Dosen\LetterTypeController as DosenLetterTypeController;
 use App\Modules\Fast\Controllers\Dosen\SubmissionController as DosenSubmissionController;
+use App\Modules\Fast\Controllers\Kaprodi\ApprovalController as KaprodiApprovalController;
+use App\Modules\Fast\Controllers\Mahasiswa\DashboardController as MahasiswaDashboardController;
+use App\Modules\Fast\Controllers\Mahasiswa\HistoryController as MahasiswaHistoryController;
+use App\Modules\Fast\Controllers\Mahasiswa\LetterTypeController as MahasiswaLetterTypeController;
+use App\Modules\Fast\Controllers\Mahasiswa\SubmissionController as MahasiswaSubmissionController;
+use App\Modules\Fast\Controllers\Shared\Approval\ApprovalController as ApprovalDashboardController;
+use App\Modules\Fast\Controllers\Shared\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -30,22 +30,22 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 $documentRoutes = function (): void {
-     Route::get('/surat/{id}/template-preview', [DashboardController::class, 'previewTemplate'])
-         ->whereNumber('id')
-         ->name('surat.template-preview');
-     Route::get('/surat/{id}/generated-document', [DashboardController::class, 'previewGeneratedDocument'])
-         ->whereNumber('id')
-         ->name('surat.generated-document');
-     Route::get('/surat/{id}/generate', [LetterController::class, 'generate'])
-         ->whereNumber('id')
-         ->name('surat.generate');
-     Route::get('/surat/{id}/pdf', [DashboardController::class, 'downloadPdf'])
-         ->whereNumber('id')
-         ->name('surat.pdf');
-     Route::get('/lampiran/{id}/preview', [DashboardController::class, 'previewAttachment'])
-         ->whereNumber('id')
-         ->name('lampiran.preview');
- };
+    Route::get('/surat/{id}/template-preview', [DashboardController::class, 'previewTemplate'])
+        ->whereNumber('id')
+        ->name('surat.template-preview');
+    Route::get('/surat/{id}/generated-document', [DashboardController::class, 'previewGeneratedDocument'])
+        ->whereNumber('id')
+        ->name('surat.generated-document');
+    Route::get('/surat/{id}/generate', [LetterController::class, 'generate'])
+        ->whereNumber('id')
+        ->name('surat.generate');
+    Route::get('/surat/{id}/pdf', [DashboardController::class, 'downloadPdf'])
+        ->whereNumber('id')
+        ->name('surat.pdf');
+    Route::get('/lampiran/{id}/preview', [DashboardController::class, 'previewAttachment'])
+        ->whereNumber('id')
+        ->name('lampiran.preview');
+};
 
 $publicDocumentRoutes = function (): void {
     Route::get('/surat/{id}/template-preview', [DashboardController::class, 'previewTemplate'])
@@ -260,7 +260,6 @@ Route::middleware(['auth', 'verified', 'admin.access'])
         Route::get('/settings/template/logo-preview', [GlobalSettingsController::class, 'previewLogo'])
             ->name('settings.template.logo-preview');
     });
-
 
 // Approval routes kept for backward compatibility.
 

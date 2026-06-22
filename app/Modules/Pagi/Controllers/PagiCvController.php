@@ -20,7 +20,9 @@ class PagiCvController extends Controller implements HasMiddleware
     protected PagiCvService $cvService;
 
     private const ERROR_ACCESS_DENIED = 'Akses ditolak: Fitur CV Builder hanya tersedia untuk Mahasiswa dan Alumni.';
+
     private const ERROR_UNAUTHORIZED = 'Unauthorized access.';
+
     private const ERROR_UNAUTHORIZED_ACTION = 'Unauthorized';
 
     public function __construct(PagiCvService $cvService)
@@ -91,6 +93,7 @@ class PagiCvController extends Controller implements HasMiddleware
 
         try {
             $cv = $this->cvService->createCv($user, $request->template_id, $request->title);
+
             return redirect()->route('module.pagi.cv.edit', ['cv' => $cv->id])
                 ->with('success', 'CV berhasil dibuat!');
         } catch (\RuntimeException $e) {
@@ -174,6 +177,7 @@ class PagiCvController extends Controller implements HasMiddleware
 
         try {
             $this->cvService->duplicateCv($cv, Auth::id());
+
             return redirect()->route('module.pagi.cv.index')
                 ->with('success', 'CV berhasil diduplikasi!');
         } catch (\RuntimeException $e) {
@@ -212,6 +216,7 @@ class PagiCvController extends Controller implements HasMiddleware
 
         try {
             $path = $this->cvService->uploadPhoto($cv, $request->file('photo'));
+
             return response()->json([
                 'success' => true,
                 'path' => $path,

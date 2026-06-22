@@ -121,10 +121,10 @@ class LogbookActionService
     {
         $directory = 'logbook';
         $extension = strtolower($photo->getClientOriginalExtension() ?: $photo->extension() ?: 'bin');
-        $filename = Str::uuid() . '.' . $extension;
+        $filename = Str::uuid().'.'.$extension;
 
         WimsStorage::storeUploadedFileAs($photo, $directory, $filename);
 
-        return $directory . '/' . $filename;
+        return $directory.'/'.$filename;
     }
 }

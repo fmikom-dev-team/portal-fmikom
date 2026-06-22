@@ -17,12 +17,14 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\UserModuleRole;
 use App\Notifications\UserApprovedNotification;
+use App\Notifications\WorkOsAlert;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class DashboardController extends Controller // NOSONAR
@@ -78,7 +80,7 @@ class DashboardController extends Controller // NOSONAR
             'smtpConfig' => fn () => $shouldLoad('smtpConfig', ['emails']) ? $this->getSmtpConfig() : [],
             'notifications' => fn () => $shouldLoad('notifications', ['notifications']) ? $this->getNotificationsForUser($request->user()) : [],
             'unreadNotificationsCount' => fn () => $request->user()
-                ? $request->user()->unreadNotifications()->where('type', \App\Notifications\WorkOsAlert::class)->count()
+                ? $request->user()->unreadNotifications()->where('type', WorkOsAlert::class)->count()
                 : 0,
         ]);
     }
@@ -86,12 +88,12 @@ class DashboardController extends Controller // NOSONAR
     public function updateSystemSettings(Request $request)
     {
         $request->validate([
-            'maintenance_mode'    => ['nullable', 'in:0,1'],
+            'maintenance_mode' => ['nullable', 'in:0,1'],
             'maintenance_message' => ['nullable', 'string', 'max:500'],
-            'brand_name'          => ['nullable', 'string', 'max:100'],
-            'brand_subtitle'      => ['nullable', 'string', 'max:150'],
-            'brand_description'   => ['nullable', 'string', 'max:500'],
-            'primary_color'       => ['nullable', 'string', 'max:20'],
+            'brand_name' => ['nullable', 'string', 'max:100'],
+            'brand_subtitle' => ['nullable', 'string', 'max:150'],
+            'brand_description' => ['nullable', 'string', 'max:500'],
+            'primary_color' => ['nullable', 'string', 'max:20'],
             'public_registration' => ['nullable', 'in:0,1'],
         ]);
 
@@ -107,7 +109,6 @@ class DashboardController extends Controller // NOSONAR
 
         return back()->with('success', 'Pengaturan sistem berhasil disimpan.');
     }
-
 
     public function storeUser(Request $request)
     {
@@ -1108,7 +1109,7 @@ class DashboardController extends Controller // NOSONAR
         }
         if ($password !== null && $password !== '********') {
             // Encrypt the password before writing to .env for security
-            $encrypted = 'base64:'.\Illuminate\Support\Facades\Crypt::encryptString($password);
+            $encrypted = 'base64:'.Crypt::encryptString($password);
             $envData['MAIL_PASSWORD'] = $encrypted;
         }
 
@@ -1183,7 +1184,7 @@ class DashboardController extends Controller // NOSONAR
     public function markAllNotificationsRead(Request $request)
     {
         $request->user()->unreadNotifications()
-            ->where('type', \App\Notifications\WorkOsAlert::class)
+            ->where('type', WorkOsAlert::class)
             ->update(['read_at' => now()]);
 
         return back()->with('success', 'Semua notifikasi berhasil ditandai sebagai dibaca.');
@@ -1192,7 +1193,7 @@ class DashboardController extends Controller // NOSONAR
     public function clearNotifications(Request $request)
     {
         $request->user()->notifications()
-            ->where('type', \App\Notifications\WorkOsAlert::class)
+            ->where('type', WorkOsAlert::class)
             ->delete();
 
         return back()->with('success', 'Log aktivitas berhasil dikosongkan.');
@@ -1214,15 +1215,15 @@ class DashboardController extends Controller // NOSONAR
     private function getNotificationsForUser(User $user): array
     {
         $hasAlerts = $user->notifications()
-            ->where('type', \App\Notifications\WorkOsAlert::class)
+            ->where('type', WorkOsAlert::class)
             ->exists();
-        
-        if (!$hasAlerts) {
+
+        if (! $hasAlerts) {
             $this->seedDefaultNotificationsForUser($user);
         }
 
         return $user->notifications()
-            ->where('type', \App\Notifications\WorkOsAlert::class)
+            ->where('type', WorkOsAlert::class)
             ->latest()
             ->get()
             ->map(function ($n) {
@@ -1232,7 +1233,7 @@ class DashboardController extends Controller // NOSONAR
                     'description' => $n->data['description'] ?? '',
                     'severity' => $n->data['severity'] ?? 'info',
                     'time' => $n->created_at->diffForHumans(),
-                    'read' => !is_null($n->read_at),
+                    'read' => ! is_null($n->read_at),
                 ];
             })
             ->toArray();
@@ -1274,8 +1275,8 @@ class DashboardController extends Controller // NOSONAR
 
         foreach ($defaultAlerts as $alert) {
             DB::table('notifications')->insert([
-                'id' => (string) \Illuminate\Support\Str::uuid(),
-                'type' => \App\Notifications\WorkOsAlert::class,
+                'id' => (string) Str::uuid(),
+                'type' => WorkOsAlert::class,
                 'notifiable_type' => get_class($user),
                 'notifiable_id' => $user->id,
                 'data' => json_encode([

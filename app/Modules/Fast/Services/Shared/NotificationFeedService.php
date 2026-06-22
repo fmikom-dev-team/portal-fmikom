@@ -3,8 +3,8 @@
 namespace App\Modules\Fast\Services\Shared;
 
 use App\Models\FastNotification;
-use App\Models\SuratApprovalFlow;
 use App\Models\Surat;
+use App\Models\SuratApprovalFlow;
 use App\Models\User;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -133,7 +133,7 @@ class NotificationFeedService
      */
     protected function approverItems(User $user, string $roleSlug): array
     {
-        $basePath = '/' . $roleSlug;
+        $basePath = '/'.$roleSlug;
 
         return Surat::query()
             ->with([
@@ -236,7 +236,7 @@ class NotificationFeedService
     }
 
     /**
-     * @param array<int, array<string, mixed>> $items
+     * @param  array<int, array<string, mixed>>  $items
      */
     protected function sync(User $user, array $items): void
     {

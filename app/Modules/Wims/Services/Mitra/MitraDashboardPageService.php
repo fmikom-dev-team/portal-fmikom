@@ -7,6 +7,7 @@ use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringAlertService;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
+
 class MitraDashboardPageService
 {
     public function __construct(
@@ -14,8 +15,7 @@ class MitraDashboardPageService
         private readonly MitraMonitoringOverviewService $monitoringOverviewService,
         private readonly MonitoringAlertService $monitoringAlertService,
         private readonly WimsModuleRoleService $wimsModuleRoleService,
-    ) {
-    }
+    ) {}
 
     public function build(User $user): array
     {
@@ -60,7 +60,7 @@ class MitraDashboardPageService
                 'tanggal_label' => $item->tanggal_mulai && $item->tanggal_selesai
                     ? ($item->tanggal_mulai->isSameDay($item->tanggal_selesai)
                         ? $item->tanggal_mulai->translatedFormat('d M Y')
-                        : $item->tanggal_mulai->translatedFormat('d M Y') . ' - ' . $item->tanggal_selesai->translatedFormat('d M Y'))
+                        : $item->tanggal_mulai->translatedFormat('d M Y').' - '.$item->tanggal_selesai->translatedFormat('d M Y'))
                     : '-',
             ])
             ->values()

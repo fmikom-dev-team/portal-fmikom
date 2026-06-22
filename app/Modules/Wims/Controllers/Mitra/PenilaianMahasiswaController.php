@@ -29,8 +29,7 @@ class PenilaianMahasiswaController extends Controller
         private readonly AssessmentTemplateResolverService $assessmentTemplateResolverService,
         private readonly FinalReportAccessService $finalReportAccessService,
         private readonly MitraAccessService $mitraAccessService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -155,7 +154,7 @@ class PenilaianMahasiswaController extends Controller
         abort_unless(is_file($absolutePath), 404);
 
         return response()->file($absolutePath, [
-            'Content-Disposition' => 'inline; filename="' . $authorizedPendaftaran->finalReportDownloadName() . '"',
+            'Content-Disposition' => 'inline; filename="'.$authorizedPendaftaran->finalReportDownloadName().'"',
         ]);
     }
 

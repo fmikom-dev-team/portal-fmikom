@@ -12,8 +12,7 @@ class MitraAccessService
 {
     public function __construct(
         private readonly WimsModuleRoleService $wimsModuleRoleService,
-    ) {
-    }
+    ) {}
 
     public function resolveCompany(?User $user): ?PerusahaanMitra
     {

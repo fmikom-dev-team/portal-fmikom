@@ -14,13 +14,14 @@ use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
-use Symfony\Component\Process\Process;
+use Illuminate\Support\Str;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
-use Mpdf\Mpdf;
+use Mpdf\HTMLParserMode;
 // use Barryvdh\DomPDF\Facade\Pdf;
 // use Throwable;
-use Illuminate\Support\Str;
+use Mpdf\Mpdf;
+use Symfony\Component\Process\Process;
 
 class SuratDocumentGeneratorService
 {
@@ -31,8 +32,7 @@ class SuratDocumentGeneratorService
 
     public function __construct(
         protected SuratTemplateRendererService $renderer,
-    ) {
-    }
+    ) {}
 
     public function generate(Surat $surat): Surat
     {
@@ -52,25 +52,25 @@ class SuratDocumentGeneratorService
             'tanggal_selesai' => $finalizedAt,
             'generated_at' => $finalizedAt,
         ]);
-        $rendered     = $this->renderer->renderForSurat($renderSurat, true, 'pdf');
+        $rendered = $this->renderer->renderForSurat($renderSurat, true, 'pdf');
         $qrCodeBase64 = $this->makeQrCodeBase64($renderSurat);
 
-        $renderedHtml   = is_array($rendered) ? ($rendered['full']   ?? $rendered['html'] ?? '') : (string) $rendered;
-        $renderedBody   = is_array($rendered) ? ($rendered['body']   ?? $renderedHtml) : $renderedHtml;
+        $renderedHtml = is_array($rendered) ? ($rendered['full'] ?? $rendered['html'] ?? '') : (string) $rendered;
+        $renderedBody = is_array($rendered) ? ($rendered['body'] ?? $renderedHtml) : $renderedHtml;
         $renderedHeader = is_array($rendered) ? ($rendered['header'] ?? '') : '';
         $renderedFooter = is_array($rendered) ? ($rendered['footer'] ?? '') : '';
 
         $viewPayload = [
-            'title'        => 'Surat '.$freshSurat->jenisSurat?->nama,
-            'html'         => $renderedHtml,
-            'bodyHtml'     => $renderedBody,
-            'headerHtml'   => $renderedHeader,
-            'footerHtml'   => $renderedFooter,
-            'styles'       => $this->renderer->documentStyles(),
+            'title' => 'Surat '.$freshSurat->jenisSurat?->nama,
+            'html' => $renderedHtml,
+            'bodyHtml' => $renderedBody,
+            'headerHtml' => $renderedHeader,
+            'footerHtml' => $renderedFooter,
+            'styles' => $this->renderer->documentStyles(),
             'qrCodeBase64' => $qrCodeBase64,
-            'qrToken'      => $freshSurat->qr_token,
-            'template'     => $freshSurat->jenisSurat?->template,
-            'customCss'    => $freshSurat->jenisSurat?->template?->css_style ?? '',
+            'qrToken' => $freshSurat->qr_token,
+            'template' => $freshSurat->jenisSurat?->template,
+            'customCss' => $freshSurat->jenisSurat?->template?->css_style ?? '',
         ];
         // $rendered = $this->renderer->renderForSurat($surat->fresh());
         // $outputPath = $this->makeOutputPath($surat);
@@ -182,12 +182,14 @@ class SuratDocumentGeneratorService
 
         if (preg_match('/^(\d+(?:\.\d+)?)\s*mm$/i', $value, $matches) === 1) {
             $adjusted = max(2, (float) $matches[1] - 10);
-            return rtrim(rtrim(number_format($adjusted, 1, '.', ''), '0'), '.') . 'mm';
+
+            return rtrim(rtrim(number_format($adjusted, 1, '.', ''), '0'), '.').'mm';
         }
 
         if (is_numeric($value)) {
             $adjusted = max(2, (float) $value - 10);
-            return rtrim(rtrim(number_format($adjusted, 1, '.', ''), '0'), '.') . 'mm';
+
+            return rtrim(rtrim(number_format($adjusted, 1, '.', ''), '0'), '.').'mm';
         }
 
         return $value;
@@ -206,16 +208,16 @@ class SuratDocumentGeneratorService
     {
         // Ganti payload QR menjadi URL endpoint verifikasi
         $baseUrl = config('app.url') ?? 'http://localhost';
-        $url = rtrim($baseUrl, '/') . '/verifikasi-qr/' . $surat->qr_token;
+        $url = rtrim($baseUrl, '/').'/verifikasi-qr/'.$surat->qr_token;
 
         $writer = new Writer(
             new ImageRenderer(
                 new RendererStyle(180),
-                new SvgImageBackEnd(),
+                new SvgImageBackEnd,
             ),
         );
 
-        return 'data:image/svg+xml;base64,' . base64_encode($writer->writeString($url));
+        return 'data:image/svg+xml;base64,'.base64_encode($writer->writeString($url));
     }
 
     protected function renderPdfOutput(array $viewPayload): string
@@ -225,14 +227,14 @@ class SuratDocumentGeneratorService
             return $browserPdf;
         }
 
-        $styles     = (string) ($viewPayload['styles'] ?? '');
-        $customCss  = (string) ($viewPayload['customCss'] ?? '');
-        $bodyHtml   = (string) ($viewPayload['bodyHtml'] ?? '');
+        $styles = (string) ($viewPayload['styles'] ?? '');
+        $customCss = (string) ($viewPayload['customCss'] ?? '');
+        $bodyHtml = (string) ($viewPayload['bodyHtml'] ?? '');
         $headerHtml = (string) ($viewPayload['headerHtml'] ?? '');
         $footerHtml = (string) ($viewPayload['footerHtml'] ?? '');
-        $tempDir    = $this->resolveMpdfTempDir();
-        $settings   = TemplateGlobalSetting::allAsArray();
-        $marginTop  = $this->normalizeTopMargin((string) ($settings['margin_top'] ?? '15mm'));
+        $tempDir = $this->resolveMpdfTempDir();
+        $settings = TemplateGlobalSetting::allAsArray();
+        $marginTop = $this->normalizeTopMargin((string) ($settings['margin_top'] ?? '15mm'));
 
         $fontFamilyKop = SuratKomponenRenderer::fontFamilyStack(
             SuratKomponenRenderer::resolveFontFamily($settings, 'font_family_kop'),
@@ -247,9 +249,9 @@ class SuratDocumentGeneratorService
             'pdf'
         );
         $mpdfFontConfig = SuratKomponenRenderer::mpdfFontConfig();
-        $configDefaults = (new ConfigVariables())->getDefaults();
-        $fontDefaults   = (new FontVariables())->getDefaults();
-        $fontDir        = array_values(array_unique(array_merge(
+        $configDefaults = (new ConfigVariables)->getDefaults();
+        $fontDefaults = (new FontVariables)->getDefaults();
+        $fontDir = array_values(array_unique(array_merge(
             $configDefaults['fontDir'] ?? [],
             $mpdfFontConfig['fontDir'] ?? [],
         )));
@@ -296,27 +298,27 @@ CSS;
         // berjalan (kop instansi + alamat + email) agar isi surat di SEMUA
         // halaman tidak menabrak footer.
         $mpdf = new Mpdf([
-            'mode'          => 'utf-8',
-            'format'        => 'A4',
-            'margin_top'    => $marginTop,
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'margin_top' => $marginTop,
             'margin_bottom' => 16,
-            'margin_left'   => 15,
-            'margin_right'  => 15,
+            'margin_left' => 15,
+            'margin_right' => 15,
             'margin_header' => 3,
             'margin_footer' => 6,
-            'default_font'   => $fontFamilyBody,
-            'fontDir'        => $fontDir,
-            'fontdata'       => $fontdata,
-            'tempDir'       => $tempDir,
+            'default_font' => $fontFamilyBody,
+            'fontDir' => $fontDir,
+            'fontdata' => $fontdata,
+            'tempDir' => $tempDir,
             'cacheCleanupInterval' => app()->runningUnitTests() ? false : 3600,
         ]);
 
-        $mpdf->SetHTMLHeader('<div style="width:100%; margin-top: -1mm;">' . $headerHtml . '</div>');
-        $mpdf->SetHTMLFooter('<div style="width:100%;">' . $footerHtml . '</div>');
+        $mpdf->SetHTMLHeader('<div style="width:100%; margin-top: -1mm;">'.$headerHtml.'</div>');
+        $mpdf->SetHTMLFooter('<div style="width:100%;">'.$footerHtml.'</div>');
 
         // Tulis style sekali, lalu body sekali (jangan duplikat).
-        $mpdf->WriteHTML("<style>{$fontCss} {$styles} {$customCss}</style>", \Mpdf\HTMLParserMode::HEADER_CSS);
-        $mpdf->WriteHTML($bodyHtml, \Mpdf\HTMLParserMode::HTML_BODY);
+        $mpdf->WriteHTML("<style>{$fontCss} {$styles} {$customCss}</style>", HTMLParserMode::HEADER_CSS);
+        $mpdf->WriteHTML($bodyHtml, HTMLParserMode::HTML_BODY);
 
         return $mpdf->Output('', 'S');
     }
@@ -330,11 +332,11 @@ CSS;
         }
 
         $tempDir = $this->resolveBrowserTempDir();
-        $profileDir = $tempDir . DIRECTORY_SEPARATOR . 'profile';
+        $profileDir = $tempDir.DIRECTORY_SEPARATOR.'profile';
         File::ensureDirectoryExists($profileDir);
 
-        $htmlPath = $tempDir . DIRECTORY_SEPARATOR . 'document.html';
-        $pdfPath = $tempDir . DIRECTORY_SEPARATOR . 'document.pdf';
+        $htmlPath = $tempDir.DIRECTORY_SEPARATOR.'document.html';
+        $pdfPath = $tempDir.DIRECTORY_SEPARATOR.'document.pdf';
         $html = $this->buildBrowserPdfHtml($viewPayload);
 
         File::put($htmlPath, $html);
@@ -349,12 +351,12 @@ CSS;
             '--hide-scrollbars',
             '--run-all-compositor-stages-before-draw',
             '--virtual-time-budget=4000',
-            '--user-data-dir=' . $profileDir,
+            '--user-data-dir='.$profileDir,
             '--allow-file-access-from-files',
-            '--print-to-pdf=' . $pdfPath,
+            '--print-to-pdf='.$pdfPath,
             '--print-to-pdf-no-header',
             '--no-pdf-header-footer',
-            'file:///' . str_replace('\\', '/', $htmlPath),
+            'file:///'.str_replace('\\', '/', $htmlPath),
         ]);
 
         $process->setTimeout(120);
@@ -398,14 +400,14 @@ CSS;
     protected function resolveBrowserTempDir(): string
     {
         $baseDir = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR)
-            . DIRECTORY_SEPARATOR . 'projek-fast-browser-pdf';
+            .DIRECTORY_SEPARATOR.'projek-fast-browser-pdf';
         $suffix = app()->runningUnitTests()
             ? 'tests'
             : 'run';
 
         $dir = $baseDir
-            . DIRECTORY_SEPARATOR . $suffix
-            . DIRECTORY_SEPARATOR . Str::uuid()->toString();
+            .DIRECTORY_SEPARATOR.$suffix
+            .DIRECTORY_SEPARATOR.Str::uuid()->toString();
 
         File::ensureDirectoryExists($dir);
 
@@ -415,20 +417,21 @@ CSS;
     protected function resolveMpdfTempDir(): string
     {
         $baseDir = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR)
-            . DIRECTORY_SEPARATOR . 'projek-fast-mpdf';
+            .DIRECTORY_SEPARATOR.'projek-fast-mpdf';
         $suffix = app()->runningUnitTests()
             ? 'tests'
             : 'run';
 
         return $baseDir
-            . DIRECTORY_SEPARATOR . $suffix
-            . DIRECTORY_SEPARATOR . Str::uuid()->toString();
+            .DIRECTORY_SEPARATOR.$suffix
+            .DIRECTORY_SEPARATOR.Str::uuid()->toString();
     }
 
     protected function buildStyles(array $viewPayload): string
     {
-        $styles    = (string) ($viewPayload['styles'] ?? '');
+        $styles = (string) ($viewPayload['styles'] ?? '');
         $customCss = (string) ($viewPayload['customCss'] ?? '');
+
         return "<style>{$styles} {$customCss}</style>";
     }
 
@@ -507,28 +510,28 @@ CSS;
     //     </html>
     //     HTML;
     // }
-//     /**
-//      * @param  array<string, mixed>  $viewPayload
-//      */
-//     protected function buildFallbackHtml(array $viewPayload): string
-//     {
-//         $qrMarkup = '';
+    //     /**
+    //      * @param  array<string, mixed>  $viewPayload
+    //      */
+    //     protected function buildFallbackHtml(array $viewPayload): string
+    //     {
+    //         $qrMarkup = '';
 
-//         if (filled($viewPayload['qrCodeBase64'] ?? null)) {
-//             $qrCodeBase64 = e((string) $viewPayload['qrCodeBase64']);
+    //         if (filled($viewPayload['qrCodeBase64'] ?? null)) {
+    //             $qrCodeBase64 = e((string) $viewPayload['qrCodeBase64']);
 
-//             $qrMarkup = <<<HTML
-// <div style="bottom: 0; position: fixed; right: 0; text-align: right; width: 18mm;">
-//     <p style="color: #475569; font-size: 6pt; letter-spacing: 0.04em; margin-bottom: 1px; text-transform: uppercase;">Validasi Dokumen</p>
-//     <img src="{$qrCodeBase64}" alt="QR Code Surat" style="height: 15mm; width: 15mm;">
-// </div>
-// HTML;
-//         }
+    //             $qrMarkup = <<<HTML
+    // <div style="bottom: 0; position: fixed; right: 0; text-align: right; width: 18mm;">
+    //     <p style="color: #475569; font-size: 6pt; letter-spacing: 0.04em; margin-bottom: 1px; text-transform: uppercase;">Validasi Dokumen</p>
+    //     <img src="{$qrCodeBase64}" alt="QR Code Surat" style="height: 15mm; width: 15mm;">
+    // </div>
+    // HTML;
+    //         }
 
-//         return $this->renderer->wrapDocumentHtml(
-//             (string) ($viewPayload['title'] ?? 'Surat'),
-//             (string) ($viewPayload['html'] ?? '').$qrMarkup,
-//             $viewPayload['template'] ?? null,
-//         );
-//     }
+    //         return $this->renderer->wrapDocumentHtml(
+    //             (string) ($viewPayload['title'] ?? 'Surat'),
+    //             (string) ($viewPayload['html'] ?? '').$qrMarkup,
+    //             $viewPayload['template'] ?? null,
+    //         );
+    //     }
 }

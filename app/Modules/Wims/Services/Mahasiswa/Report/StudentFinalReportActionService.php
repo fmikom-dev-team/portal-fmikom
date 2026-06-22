@@ -12,8 +12,7 @@ class StudentFinalReportActionService
 {
     public function __construct(
         private readonly FinalReportAccessService $finalReportAccessService,
-    ) {
-    }
+    ) {}
 
     public function resolveLatestRegistration(int $userId): ?PendaftaranMagang
     {

@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\UserModuleRole;
 use App\Modules\Wims\Services\Dosen\LecturerAssessmentWorkflowService;
 use App\Modules\Wims\Services\Mitra\MitraAccessService;
+use App\Modules\Wims\Services\Shared\Placement\PlacementIndexService;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -366,7 +367,7 @@ it('limits placement-related role queries to active WIMS assignments only', func
 
     $service = app(WimsModuleRoleService::class);
 
-    $dosenIds = app(\App\Modules\Wims\Services\Shared\Placement\PlacementIndexService::class)
+    $dosenIds = app(PlacementIndexService::class)
         ->buildOptions()['dosen'];
 
     expect(collect($dosenIds)->pluck('id')->all())->toBe([$activeWimsDosen->id]);

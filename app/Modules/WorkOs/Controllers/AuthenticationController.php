@@ -4,27 +4,26 @@ namespace App\Modules\WorkOs\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Auth\AuthAuditLog;
-use App\Models\Auth\AuthLoginAttempt;
 use App\Models\Auth\AuthMfa;
 use App\Models\Auth\AuthOAuthProvider;
-use App\Models\Auth\AuthPasskey;
 use App\Models\Auth\AuthSession;
 use App\Models\Auth\AuthSetting;
-use App\Models\User;
 use App\Models\Module;
+use App\Models\User;
+use App\Modules\WorkOs\Services\AuthPlatform\JwtTemplateCompiler;
+use App\Modules\WorkOs\Services\Sessions\AuthSessionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Auth;
 
 class AuthenticationController extends Controller
 {
-    protected \App\Modules\WorkOs\Services\Sessions\AuthSessionService $sessionService;
+    protected AuthSessionService $sessionService;
 
-    public function __construct(\App\Modules\WorkOs\Services\Sessions\AuthSessionService $sessionService)
+    public function __construct(AuthSessionService $sessionService)
     {
         $this->sessionService = $sessionService;
     }
@@ -374,7 +373,7 @@ class AuthenticationController extends Controller
         return response()->json(['message' => 'Settings saved successfully.']);
     }
 
-    public function previewJwt(Request $request, \App\Modules\WorkOs\Services\AuthPlatform\JwtTemplateCompiler $compiler)
+    public function previewJwt(Request $request, JwtTemplateCompiler $compiler)
     {
         $request->validate([
             'jwtCode' => 'required|string',
@@ -462,5 +461,4 @@ class AuthenticationController extends Controller
 
         return response()->json(['message' => 'Password policy updated.']);
     }
-
 }

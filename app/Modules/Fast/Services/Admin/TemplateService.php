@@ -3,8 +3,8 @@
 namespace App\Modules\Fast\Services\Admin;
 
 use App\Models\JenisSurat;
-use App\Modules\Fast\Template\Renderers\SuratTemplateRendererService;
 use App\Modules\Fast\Support\TemplateAdminSupport;
+use App\Modules\Fast\Template\Renderers\SuratTemplateRendererService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
@@ -16,8 +16,7 @@ class TemplateService
         protected SuratTemplateRendererService $templateRenderer,
         protected TemplateAdminSupport $templateAdminSupport,
         protected TemplateMutationService $templateMutationService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): array
     {
@@ -32,28 +31,28 @@ class TemplateService
 
         return [
             'jenisSurats' => $jenisSurats->map(fn (JenisSurat $jenisSurat): array => [
-                'id'        => $jenisSurat->id,
-                'nama'      => $jenisSurat->nama,
-                'slug'      => $jenisSurat->slug,
+                'id' => $jenisSurat->id,
+                'nama' => $jenisSurat->nama,
+                'slug' => $jenisSurat->slug,
                 'is_active' => $jenisSurat->is_active,
-                'category'  => [
-                    'id'   => $jenisSurat->category?->id,
+                'category' => [
+                    'id' => $jenisSurat->category?->id,
                     'nama' => $jenisSurat->category?->nama,
                 ],
                 'template' => $jenisSurat->template ? [
-                    'id'         => $jenisSurat->template->id,
-                    'name'       => $jenisSurat->template->name,
-                    'version'    => $jenisSurat->template->version,
+                    'id' => $jenisSurat->template->id,
+                    'name' => $jenisSurat->template->name,
+                    'version' => $jenisSurat->template->version,
                     'created_at' => optional($jenisSurat->template->created_at)?->toISOString(),
                     'updated_at' => optional($jenisSurat->template->updated_at)?->toISOString(),
                 ] : null,
             ])->values(),
-            'selectedJenisSurat'   => $selectedJenisSurat ? $this->templateAdminSupport->serializeJenisSurat($selectedJenisSurat) : null,
+            'selectedJenisSurat' => $selectedJenisSurat ? $this->templateAdminSupport->serializeJenisSurat($selectedJenisSurat) : null,
             'selectedJenisSuratId' => $selectedJenisSurat?->id,
-            'categories'           => $this->templateAdminSupport->listCategories(),
-            'approvalRoles'        => $this->templateAdminSupport->listApprovalRoles(),
-            'creatorRoles'         => $this->templateAdminSupport->listCreatorRoles(),
-            'globalSettings'       => $this->templateAdminSupport->listGlobalSettings(),
+            'categories' => $this->templateAdminSupport->listCategories(),
+            'approvalRoles' => $this->templateAdminSupport->listApprovalRoles(),
+            'creatorRoles' => $this->templateAdminSupport->listCreatorRoles(),
+            'globalSettings' => $this->templateAdminSupport->listGlobalSettings(),
         ];
     }
 
@@ -73,7 +72,7 @@ class TemplateService
         $rendered = $this->templateRenderer->renderTemplatePreview($template, 'pdf');
 
         return response(
-            $this->templateRenderer->wrapDocumentHtml('Preview Template ' . $jenisSurat->nama, $rendered['html'], $template),
+            $this->templateRenderer->wrapDocumentHtml('Preview Template '.$jenisSurat->nama, $rendered['html'], $template),
             200,
         )->header('Content-Type', 'text/html; charset=UTF-8');
     }
@@ -111,5 +110,4 @@ class TemplateService
     {
         return $this->templateMutationService->duplicate($jenisSurat);
     }
-
 }

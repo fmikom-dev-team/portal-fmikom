@@ -16,8 +16,7 @@ class AssessmentRecapController extends Controller
     public function __construct(
         private readonly AdminAssessmentRecapPageService $adminAssessmentRecapPageService,
         private readonly AdminAssessmentRecapExportService $adminAssessmentRecapExportService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {

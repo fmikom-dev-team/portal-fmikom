@@ -15,8 +15,7 @@ class StudentReportPageService
 {
     public function __construct(
         private readonly WimsModuleRoleService $wimsModuleRoleService,
-    ) {
-    }
+    ) {}
 
     public function build(int $userId): array
     {
@@ -99,8 +98,8 @@ class StudentReportPageService
                 ],
                 'period_label' => $registration->tanggal_mulai && $registration->tanggal_selesai
                     ? $this->formatLocalizedDate($registration->tanggal_mulai, 'd M Y')
-                        . ' - '
-                        . $this->formatLocalizedDate($registration->tanggal_selesai, 'd M Y')
+                        .' - '
+                        .$this->formatLocalizedDate($registration->tanggal_selesai, 'd M Y')
                     : null,
                 'submitted_at' => $this->formatLocalizedDate($registration->created_at, 'd M Y H:i'),
                 'laporan_akhir' => $registration->laporan_akhir_path ? [
@@ -227,5 +226,4 @@ class StudentReportPageService
             return null;
         }
     }
-
 }

@@ -10,8 +10,7 @@ class StudentFinalReportFileService
 {
     public function __construct(
         private readonly FinalReportAccessService $finalReportAccessService,
-    ) {
-    }
+    ) {}
 
     public function resolveLatestRegistrationWithReport(int $userId): PendaftaranMagang
     {
@@ -31,7 +30,7 @@ class StudentFinalReportFileService
         $absolutePath = $this->finalReportAccessService->resolveAbsolutePath($registration);
 
         return response()->file($absolutePath, [
-            'Content-Disposition' => 'inline; filename="' . $this->finalReportAccessService->resolveDownloadName($registration) . '"',
+            'Content-Disposition' => 'inline; filename="'.$this->finalReportAccessService->resolveDownloadName($registration).'"',
         ]);
     }
 

@@ -18,8 +18,7 @@ class LaporanController extends Controller
         private readonly StudentReportPageService $studentReportPageService,
         private readonly StudentFinalReportActionService $studentFinalReportActionService,
         private readonly StudentFinalReportFileService $studentFinalReportFileService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {

@@ -16,8 +16,7 @@ class SuratController extends Controller
 {
     public function __construct(
         protected SuratWorkflowService $workflow,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): JsonResponse
     {

@@ -2,15 +2,14 @@
 
 namespace App\Models;
 
+use App\Modules\Fast\DTOs\SuratDataContract;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Cache;
-use InvalidArgumentException;
 use Illuminate\Support\Str;
-use App\Models\SuratQrCode;
-use App\Models\SuratData;
-use App\Modules\Fast\DTOs\SuratDataContract;
+use InvalidArgumentException;
 
 class Surat extends Model
 {
@@ -105,7 +104,7 @@ class Surat extends Model
         });
     }
 
-    public function qrCode(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function qrCode(): HasOne
     {
         return $this->hasOne(SuratQrCode::class)->latestOfMany();
     }
@@ -426,5 +425,3 @@ class Surat extends Model
         );
     }
 }
-
-

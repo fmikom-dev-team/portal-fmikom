@@ -3,16 +3,16 @@
 namespace App\Modules\Wims\Controllers\Mahasiswa;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Wims\Requests\Mahasiswa\StoreLogbookRequest;
 use App\Models\Magang\LogbookMagang;
+use App\Modules\Wims\Requests\Mahasiswa\StoreLogbookRequest;
 use App\Modules\Wims\Services\Mahasiswa\Logbook\LogbookActionService;
 use App\Modules\Wims\Services\Mahasiswa\Logbook\LogbookExportService;
 use App\Modules\Wims\Services\Mahasiswa\Logbook\LogbookPageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Throwable;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class LogbookController extends Controller
 {
@@ -20,8 +20,7 @@ class LogbookController extends Controller
         protected LogbookPageService $logbookPageService,
         protected LogbookActionService $logbookActionService,
         protected LogbookExportService $logbookExportService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {

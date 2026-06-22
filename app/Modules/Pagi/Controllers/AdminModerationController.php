@@ -9,8 +9,8 @@ use App\Models\Pagi\PagiWarning;
 use App\Models\Pagi\PagiWork;
 use App\Models\User;
 use App\Models\UserModuleRole;
-use App\Notifications\PagiNotification;
 use App\Modules\Pagi\Controllers\Concerns\HasAdminDashboardHelpers;
+use App\Notifications\PagiNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -329,6 +329,7 @@ class AdminModerationController extends Controller
                 ];
             }
         }
+
         return $items;
     }
 
@@ -363,6 +364,7 @@ class AdminModerationController extends Controller
                 ];
             }
         }
+
         return $items;
     }
 }
