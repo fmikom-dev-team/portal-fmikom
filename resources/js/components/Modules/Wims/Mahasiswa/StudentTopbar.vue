@@ -18,6 +18,7 @@ const user = computed(() => page.props.auth?.user ?? null);
 const showNotifications = ref(false);
 const showProfileDropdown = ref(false);
 const isRefreshing = ref(false);
+const avatarLoadFailed = ref(false);
 
 const alerts = computed(() => {
     const raw = page.props.alerts;
@@ -90,6 +91,14 @@ const userAvatar = computed<string | null>(() => {
     const avatar = user.value?.avatar ?? user.value?.photo_url ?? user.value?.foto_url ?? null;
     if (avatar && typeof avatar === 'string' && avatar.trim().length > 0) return avatar;
     return null;
+});
+watch(userAvatar, () => {
+    avatarLoadFailed.value = false;
+});
+const userAvatarFallback = computed(() => {
+    const seed = encodeURIComponent(user.value?.name?.trim() || 'Mahasiswa');
+
+    return `https://api.dicebear.com/7.x/initials/svg?seed=${seed}&backgroundColor=3b82f6,6366f1,8b5cf6,ec4899&backgroundType=gradientLinear&bold=true`;
 });
 
 const refreshData = () => {
@@ -277,8 +286,14 @@ watch(currentPath, () => {
                         class="flex size-9 items-center justify-center overflow-hidden rounded-xl border border-blue-200/80 dark:border-blue-500/25 bg-gradient-to-br from-blue-500 to-blue-600 text-[11px] font-bold text-white shadow-[0_0_12px_rgba(59,130,246,0.25)] dark:shadow-[0_0_12px_rgba(59,130,246,0.15)] transition-all active:scale-95"
                         @click="toggleProfileDropdown"
                     >
-                        <img v-if="userAvatar" :src="userAvatar" alt="Avatar" class="h-full w-full object-cover" />
-                        <span v-else>{{ userInitial }}</span>
+                        <img
+                            v-if="userAvatar && !avatarLoadFailed"
+                            :src="userAvatar"
+                            alt="Avatar"
+                            class="h-full w-full object-cover"
+                            @error="avatarLoadFailed = true"
+                        />
+                        <img v-else :src="userAvatarFallback" alt="Avatar" class="h-full w-full object-cover" />
                     </button>
 
                     <!-- Profile dropdown mobile -->
@@ -477,8 +492,14 @@ watch(currentPath, () => {
                     class="flex items-center gap-2.5 rounded-xl border border-wims-border/80 bg-wims-card px-3 py-1.5 transition-all duration-200 hover:border-blue-300/60 dark:hover:border-blue-500/25 hover:bg-blue-50/60 dark:hover:bg-blue-500/[0.06]"
                 >
                     <div class="flex size-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-xs font-bold text-white shadow-[0_0_10px_rgba(59,130,246,0.2)] dark:shadow-[0_0_10px_rgba(59,130,246,0.15)]">
-                        <img v-if="userAvatar" :src="userAvatar" alt="Avatar" class="h-full w-full object-cover" />
-                        <span v-else>{{ userInitial }}</span>
+                        <img
+                            v-if="userAvatar && !avatarLoadFailed"
+                            :src="userAvatar"
+                            alt="Avatar"
+                            class="h-full w-full object-cover"
+                            @error="avatarLoadFailed = true"
+                        />
+                        <img v-else :src="userAvatarFallback" alt="Avatar" class="h-full w-full object-cover" />
                     </div>
                     <div class="min-w-0">
                         <p class="truncate text-[13px] font-semibold text-wims-text">{{ user?.name ?? 'Mahasiswa' }}</p>
@@ -499,4 +520,3 @@ watch(currentPath, () => {
         </div>
     </header>
 </template>
-

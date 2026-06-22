@@ -5,9 +5,9 @@ namespace App\Modules\Wims\Services\Mahasiswa\Attendance;
 use App\Models\Magang\AbsensiMagang;
 use App\Models\Magang\PendaftaranMagang;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceService;
+use App\Support\WimsStorage;
 use Carbon\CarbonInterface;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class AttendanceActionService
@@ -125,7 +125,7 @@ class AttendanceActionService
         $extension = strtolower($photo->getClientOriginalExtension() ?: $photo->extension() ?: 'bin');
         $path = $directory . '/' . Str::uuid() . '.' . $extension;
 
-        Storage::disk('public')->putFileAs($directory, $photo, basename($path));
+        WimsStorage::storeUploadedFileAs($photo, $directory, basename($path));
 
         return $path;
     }

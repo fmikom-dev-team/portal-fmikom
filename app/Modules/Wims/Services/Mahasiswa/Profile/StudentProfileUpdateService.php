@@ -3,8 +3,8 @@
 namespace App\Modules\Wims\Services\Mahasiswa\Profile;
 
 use App\Models\User;
+use App\Support\WimsStorage;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 class StudentProfileUpdateService
 {
@@ -21,17 +21,21 @@ class StudentProfileUpdateService
         ];
 
         if (($validated['remove_photo'] ?? false) && $user->foto_path) {
-            Storage::disk('public')->delete($user->foto_path);
+            WimsStorage::delete($user->foto_path);
             $updates['foto_path'] = null;
         }
 
         if ($photo) {
             if ($user->foto_path) {
-                Storage::disk('public')->delete($user->foto_path);
+                WimsStorage::delete($user->foto_path);
             }
 
             // File lama diganti agar storage tidak menumpuk foto profil yang sudah tidak dipakai.
-            $updates['foto_path'] = $photo->store('profile-photos', 'public');
+            $updates['foto_path'] = WimsStorage::storeUploadedFileAs(
+                $photo,
+                'profile-photos',
+                uniqid('img_', true).'.'.strtolower($photo->getClientOriginalExtension() ?: $photo->extension() ?: 'webp'),
+            );
         }
 
         $user->forceFill($updates)->save();

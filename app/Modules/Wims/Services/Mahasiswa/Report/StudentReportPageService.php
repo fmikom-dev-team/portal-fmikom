@@ -7,6 +7,7 @@ use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use App\Modules\Wims\Support\AssessmentSummary;
+use App\Support\PublicStorageUrl;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 
@@ -165,7 +166,7 @@ class StudentReportPageService
                         'photos' => $logbook->photos
                             ->map(fn ($photo) => [
                                 'id' => $photo->id,
-                                'url' => '/storage/' . ltrim((string) $photo->file_path, '/'),
+                                'url' => PublicStorageUrl::signed($photo->file_path),
                             ])
                             ->values()
                             ->all(),

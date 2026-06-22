@@ -4,9 +4,9 @@ namespace App\Modules\Wims\Services\Mahasiswa\Absence;
 
 use App\Models\Magang\KetidakhadiranMagang;
 use App\Models\Magang\PendaftaranMagang;
-use Illuminate\Http\UploadedFile;
 use App\Modules\Wims\Services\Shared\Absence\KetidakhadiranService;
-use Illuminate\Support\Facades\Storage;
+use App\Support\WimsStorage;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 
 class StudentAbsenceActionService
@@ -45,10 +45,7 @@ class StudentAbsenceActionService
     public function cancel(KetidakhadiranMagang $ketidakhadiran): void
     {
         $this->ketidakhadiranService->cancel($ketidakhadiran);
-
-        if ($ketidakhadiran->bukti_path && Storage::disk('public')->exists($ketidakhadiran->bukti_path)) {
-            Storage::disk('public')->delete($ketidakhadiran->bukti_path);
-        }
+        WimsStorage::delete($ketidakhadiran->bukti_path);
     }
 
     private function storeProof(?UploadedFile $file): ?string
@@ -61,7 +58,7 @@ class StudentAbsenceActionService
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'bin');
         $filename = Str::uuid() . '.' . $extension;
 
-        Storage::disk('public')->putFileAs($directory, $file, $filename);
+        WimsStorage::storeUploadedFileAs($file, $directory, $filename);
 
         return $directory . '/' . $filename;
     }

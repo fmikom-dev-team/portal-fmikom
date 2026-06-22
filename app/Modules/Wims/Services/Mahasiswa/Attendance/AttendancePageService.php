@@ -8,6 +8,7 @@ use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
 use App\Modules\Wims\Services\Shared\Absence\KetidakhadiranService;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
+use App\Support\PublicStorageUrl;
 
 class AttendancePageService
 {
@@ -67,7 +68,7 @@ class AttendancePageService
                 'status' => $item->status,
                 'catatan_mitra' => $item->catatan_mitra,
                 'can_cancel' => $item->status === 'pending',
-                'bukti_url' => $item->bukti_path ? '/storage/' . $item->bukti_path : null,
+                'bukti_url' => PublicStorageUrl::signed($item->bukti_path),
             ])
             ->values();
 

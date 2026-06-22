@@ -3,6 +3,7 @@
 namespace App\Concerns;
 
 use App\Models\Auth\AuthMfa;
+use App\Support\PublicStorageUrl;
 
 trait UserHelpers
 {
@@ -18,7 +19,7 @@ trait UserHelpers
             return $path;
         }
 
-        return asset('storage/'.$path);
+        return PublicStorageUrl::signed($path);
     }
 
     public function getGlobalRoleSlug(): ?string
