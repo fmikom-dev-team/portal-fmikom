@@ -49,9 +49,9 @@ class UserResource extends JsonResource
             'user_type' => $this->user_type,
             'deletion_requested_at' => $this->deletion_requested_at ? $this->deletion_requested_at->toISOString() : null,
             'foto_path' => $this->foto_path,
-            'avatar' => $this->foto_path
-                ? (str_starts_with($this->foto_path, 'http') ? $this->foto_path : '/storage/'.$this->foto_path)
-                : 'https://api.dicebear.com/7.x/initials/svg?seed='.urlencode($this->name).'&backgroundColor=3b82f6,6366f1,8b5cf6,ec4899,f43f5e&backgroundType=gradientLinear&bold=true',
+            'photo_url' => $this->photoUrl(),
+            'avatar' => $this->photoUrl()
+                ?? 'https://api.dicebear.com/7.x/initials/svg?seed='.urlencode($this->name).'&backgroundColor=3b82f6,6366f1,8b5cf6,ec4899,f43f5e&backgroundType=gradientLinear&bold=true',
             'unreadNotifications' => $this->when($request->routeIs('portal', '*portal*'), fn () => $this->unreadNotifications()->latest()->limit(10)->get()),
             'role' => $this->whenLoaded('role'), // just in case it's loaded
             'is_admin' => $this->isAdmin(),

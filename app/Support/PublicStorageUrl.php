@@ -24,7 +24,7 @@ class PublicStorageUrl
         }
 
         $normalizedPath = ltrim($path, '/');
-        $encryptedPath = base64_encode(Crypt::encryptString($normalizedPath));
+        $encryptedPath = Crypt::encryptString($normalizedPath);
         $encryptedPath = strtr(rtrim($encryptedPath, '='), '+/', '-_');
 
         return URL::signedRoute('images.proxy', [
