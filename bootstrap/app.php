@@ -141,14 +141,24 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
 
-        // SEC-007: Restrict trusted proxies to Cloudflare's published IP ranges only.
+        // SEC-007: Restrict trusted proxies to Cloudflare's published IP ranges + Docker internal.
         // Using '*' (wildcard) allows any X-Forwarded-For header, enabling IP spoofing.
         // These ranges are Cloudflare's official IPv4 + IPv6 ranges (last updated 2025).
         // Reference: https://www.cloudflare.com/ips/
+        //
+        // Docker/Traefik internal ranges are included so that Dokploy's Traefik reverse proxy
+        // can properly forward X-Forwarded-Proto: https to Laravel. Without these, Laravel
+        // treats all requests as HTTP even when accessed via HTTPS, breaking signed URL
+        // validation (403) and CSP nonce logic.
         $middleware->trustProxies(at: implode(',', [
             '127.0.0.1',
             '::1',
-            // IPv4
+            // Docker internal networks (Traefik / Dokploy reverse proxy)
+            // Default Docker bridge: 172.17.0.0/16
+            // Docker Compose default: 172.16.0.0/12 (covers 172.16–172.31)
+            '172.16.0.0/12',
+            '10.0.0.0/8',
+            // Cloudflare IPv4
             '173.245.48.0/20',
             '103.21.244.0/22',
             '103.22.200.0/22',
@@ -164,7 +174,7 @@ return Application::configure(basePath: dirname(__DIR__))
             '104.24.0.0/14',
             '172.64.0.0/13',
             '131.0.72.0/22',
-            // IPv6
+            // Cloudflare IPv6
             '2400:cb00::/32',
             '2606:4700::/32',
             '2803:f800::/32',

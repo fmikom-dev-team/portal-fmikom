@@ -105,9 +105,9 @@ class AttendanceExportService
     private function renderPdfWithIsolatedCompiledViews(string $view, array $data, string $fileName)
     {
         $compiledPath = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR)
-            . DIRECTORY_SEPARATOR
-            . 'wims-pdf-views-'
-            . Str::uuid();
+            .DIRECTORY_SEPARATOR
+            .'wims-pdf-views-'
+            .Str::uuid();
 
         File::ensureDirectoryExists($compiledPath);
 
