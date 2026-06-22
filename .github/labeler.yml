@@ -1,0 +1,44 @@
+# Konfigurasi Pemetaan Label berdasarkan Jalur File (labeler v5)
+# https://github.com/actions/labeler#readme
+
+backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'app/**/*'
+          - 'routes/**/*'
+
+frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'resources/**/*'
+          - 'public/**/*'
+
+database:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'database/**/*'
+
+config:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'config/**/*'
+          - '*.json'
+          - '*.neon'
+          - '*.yaml'
+          - '*.yml'
+          - '.env.example'
+          - '.env.testing'
+
+ci-cd:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/workflows/**/*'
+          - 'Dockerfile'
+          - 'compose.yaml'
+          - 'Caddyfile'
+          - 'docker/**/*'
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'tests/**/*'

@@ -2,10 +2,10 @@
 
 namespace App\Concerns;
 
+use App\Jobs\OptimizeVideoJob;
 use App\Services\VirusScannerService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 trait HandlesImageCompression
@@ -184,37 +184,16 @@ trait HandlesImageCompression
             mkdir($targetDir, 0755, true);
         }
 
-        // 2. Video processing — transcode and compress in background
+        // 2. Video processing — transcode and compress in background queue
         if ($isVideo) {
             $ext = in_array($realExt, $allowedVideoExts) ? $realExt : 'mp4';
             $filename = uniqid('vid_', true).'.'.$ext;
-            $destPath = $targetDir.'/'.$filename;
 
             // Move the uploaded file to the target location immediately
             $file->move($targetDir, $filename);
 
-            $ffmpegPath = '/opt/homebrew/bin/ffmpeg';
-            if (! file_exists($ffmpegPath)) {
-                $ffmpegPath = 'ffmpeg';
-            }
-
-            $tempDest = $targetDir.'/tmp_'.uniqid('vid_', true).'.'.$ext;
-            $escapedSource = escapeshellarg($destPath);
-            $escapedTempDest = escapeshellarg($tempDest);
-
-            if (strtolower($ext) === 'webm') {
-                $videoCodec = 'libvpx -crf 32 -b:v 1M -deadline realtime -cpu-used 4';
-                $audioCodec = 'libopus';
-            } else {
-                $videoCodec = 'libx264 -crf 28 -preset faster';
-                $audioCodec = 'aac';
-            }
-
-            $command = "{$ffmpegPath} -y -i {$escapedSource} -c:v {$videoCodec} -c:a {$audioCodec} {$escapedTempDest}";
-            $bgCommand = "({$command} && mv {$escapedTempDest} {$escapedSource} || rm -f {$escapedTempDest}) > /dev/null 2>&1 &";
-
-            Log::info('Triggering background video compression: '.$bgCommand);
-            exec($bgCommand);
+            // Dispatch OptimizeVideoJob to queue to compress in background sequentially (prevent CPU overload)
+            OptimizeVideoJob::dispatch($directory.'/'.$filename, $ext);
 
             return $directory.'/'.$filename;
         }

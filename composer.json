@@ -145,6 +145,11 @@
 		"allow-plugins": {
 			"pestphp/pest-plugin": true,
 			"php-http/discovery": true
+		},
+		"audit": {
+			"ignore": {
+				"GHSA-m557-wrgg-6rp4": "Reason: enlightn/security-checker v2.0.0 has a known advisory, but no patched v2 release is available and the package is a development tool (exin/enlightn dependency) not exposed to production traffic."
+			}
 		}
 	},
 	"minimum-stability": "stable",

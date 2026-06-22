@@ -1,0 +1,27 @@
+# Konfigurasi AI Code Reviewer (CodeRabbit)
+# Dokumentasi lengkap: https://docs.coderabbit.ai/getting-started/configure-coderabbit
+
+# Bahasa ulasan kode otomatis
+language: "id-ID"
+
+reviews:
+  # Profil ulasan: 'chill' (fokus pada esensi, tidak terlalu cerewet) atau 'assertive' (sangat mendalam)
+  profile: "chill"
+  
+  # Otomatis memberikan ulasan ketika PR baru dibuat
+  request_reviews_by_default: true
+  
+  # Tulis rangkuman perubahan tingkat tinggi di awal PR
+  high_level_summary: true
+  
+  # Rapatkan ulasan yang redundan agar tidak menumpuk komentar
+  collapse_redundant_comments: true
+
+  # Cek keamanan dan efisiensi menggunakan kakas bantu tambahan
+  tools:
+    ast-grepper:
+      enabled: true
+
+# Aktifkan fitur chat interaktif dengan CodeRabbit di komentar PR
+chat:
+  enabled: true

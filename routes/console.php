@@ -54,3 +54,17 @@ Schedule::call(fn () => Pulse::trim())
     ->dailyAt('03:30')
     ->name('pulse:trim')
     ->onOneServer();
+
+// Clean old temporary files (WebP/WebM) created by upload middleware/traits
+Schedule::call(function () {
+    $tempDir = sys_get_temp_dir();
+    $files = glob($tempDir.'/webp*');
+    $files = array_merge($files, glob($tempDir.'/webm*'));
+    $now = time();
+    $retention = 86400; // Keep for 24 hours
+    foreach ($files as $file) {
+        if (is_file($file) && ($now - filemtime($file)) > $retention) {
+            @unlink($file);
+        }
+    }
+})->dailyAt('04:00')->name('sys:cleanup-temp-uploads');

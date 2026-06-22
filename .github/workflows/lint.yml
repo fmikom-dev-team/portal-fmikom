@@ -28,22 +28,45 @@ jobs:
         with:
           php-version: '8.4'
 
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: |
+          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm' # <-- Enable npm caching to speed up CI
+
       - name: Install Dependencies
         run: |
           composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-          npm install
+          npm ci
 
-      - name: Run Pint
-        run: composer lint
+      - name: Copy Environment File
+        run: cp .env.example .env
 
-      - name: Check Frontend Formatting
-        run: npx biome format .
+      - name: Generate Application Key
+        run: php artisan key:generate
 
-      - name: Lint Frontend
+      - name: Run Pint (Check Code Style)
+        run: composer lint:check
+
+      - name: Run Larastan (Static Analysis)
+        run: ./vendor/bin/phpstan analyse --no-progress
+
+      - name: Check Frontend Formatting & Linting
         run: npm run lint
 
-      # - name: Commit Changes
-      #   uses: stefanzweifel/git-auto-commit-action@v7
-      #   with:
-      #     commit_message: fix code style
-      #     commit_options: '--no-verify'
+      - name: Security Audit (PHP)
+        run: composer audit
+

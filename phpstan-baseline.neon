@@ -19,6 +19,30 @@ parameters:
 			path: app/Actions/Fortify/ResetUserPassword.php
 
 		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 2
+			path: app/Console/Commands/MigrateFastFilesToPrivate.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string\|null and false will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Console/Commands/MigrateFastFilesToPrivate.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: app/Console/Commands/MigrateFastFilesToPrivate.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string\|null and false will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Console/Commands/MigrateWimsFilesToPrivate.php
+
+		-
 			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
 			identifier: larastan.noEnvCallsOutsideOfConfig
 			count: 1
@@ -67,22 +91,76 @@ parameters:
 			path: app/Events/Radar/ThreatDetected.php
 
 		-
-			message: '#^Left side of && is always true\.$#'
-			identifier: booleanAnd.leftAlwaysTrue
-			count: 1
-			path: app/Http/Middleware/Auth/SecureSession.php
+			message: '#^Call to an undefined method App\\Models\\User\:\:hasStaffAccess\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Http/Controllers/Api/SuratController.php
 
 		-
-			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
-			identifier: larastan.noEnvCallsOutsideOfConfig
+			message: '#^Call to an undefined method App\\Models\\User\:\:isApprover\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Http/Controllers/Api/SuratController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nim_nip" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
 			count: 1
-			path: app/Http/Middleware/AutoOptimizeUploads.php
+			path: app/Http/Controllers/Api/SuratController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/QrVerificationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/QrVerificationController.php
+
+		-
+			message: '#^Cannot call method getTimestamp\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Http/Controllers/QrVerificationController.php
+
+		-
+			message: '#^Cannot call method toISOString\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Http/Controllers/QrVerificationController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/QrVerificationController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nim_nip" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/QrVerificationController.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
 			identifier: property.notFound
 			count: 1
-			path: app/Http/Middleware/CheckActiveContext.php
+			path: app/Http/Middleware/AdminAccess.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Middleware/ApprovalAccess.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Http/Middleware/Auth/SecureSession.php
 
 		-
 			message: '#^Cannot call method addMinutes\(\) on string\.$#'
@@ -107,6 +185,12 @@ parameters:
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Http/Middleware/LogApiRequests.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 3
+			path: app/Http/Middleware/SecurityHeaders.php
 
 		-
 			message: '#^Method App\\Http\\Requests\\Settings\\PasswordUpdateRequest\:\:passwordRules\(\) should return array\<int, array\<mixed\>\|Illuminate\\Contracts\\Validation\\Rule\|string\> but returns list\<int, App\\Rules\\NotUsedPassword\|App\\Rules\\PasswordComplexityRule\|Illuminate\\Validation\\Rules\\Password\|string\>\.$#'
@@ -147,7 +231,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$foto_path\.$#'
 			identifier: property.notFound
-			count: 2
+			count: 1
 			path: app/Http/Resources/UserResource.php
 
 		-
@@ -159,7 +243,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 1
+			count: 2
 			path: app/Http/Resources/UserResource.php
 
 		-
@@ -235,12 +319,6 @@ parameters:
 			path: app/Http/Resources/UserResource.php
 
 		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$unreadNotifications\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
 			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$user_type\.$#'
 			identifier: property.notFound
 			count: 1
@@ -286,6 +364,18 @@ parameters:
 			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:pagiWorks\(\)\.$#'
 			identifier: method.notFound
 			count: 2
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:photoUrl\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Http/Resources/UserResource.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:unreadNotifications\(\)\.$#'
+			identifier: method.notFound
+			count: 1
 			path: app/Http/Resources/UserResource.php
 
 		-
@@ -373,10 +463,190 @@ parameters:
 			path: app/Models/Magang/AbsensiMagang.php
 
 		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 2
+			path: app/Models/Magang/AbsensiMagang.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 2
+			path: app/Models/Magang/AssessmentTemplate.php
+
+		-
+			message: '#^Result of \|\| is always false\.$#'
+			identifier: booleanOr.alwaysFalse
+			count: 1
+			path: app/Models/Magang/AssessmentTemplate.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Magang/PendaftaranMagang.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Magang/PendaftaranMagang.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Magang/PendaftaranMagang.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 2
+			path: app/Models/Magang/PendaftaranMagang.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 3
+			path: app/Models/Magang/PendaftaranMagang.php
+
+		-
+			message: '#^Result of \|\| is always false\.$#'
+			identifier: booleanOr.alwaysFalse
+			count: 1
+			path: app/Models/Magang/PendaftaranMagang.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Models/Magang/PendaftaranMagang.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/Magang/PendaftaranMagang.php
+
+		-
+			message: '#^Parameter \#1 \$string of function str_pad expects string, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Models/NomorSuratSequence.php
+
+		-
+			message: '#^Parameter \#2 \$replace of function str_replace expects array\<string\>\|string, array\<int, int\|string\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Models/NomorSuratSequence.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$body\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Models/Pagi/PagiWork.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Models/Pagi/PagiWork.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$likesRelation\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Models/Pagi/PagiWork.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$parent_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Pagi/PagiWork.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$replies\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Models/Pagi/PagiWork.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Models/Pagi/PagiWork.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Models/Pagi/PagiWork.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$uuid\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Models/Pagi/PagiWork.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 2
+			path: app/Models/Pagi/PagiWork.php
+
+		-
+			message: '#^Cannot call method getTimestamp\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 4
+			path: app/Models/Surat.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>field_config" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Models/Surat.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nama" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/Surat.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>perlu_approval" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/Surat.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>slug" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/Surat.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$approver\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Models/Surat/Surat.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>value" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/TemplateGlobalSetting.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>slug" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Models/User.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$code\.$#'
@@ -385,13 +655,7 @@ parameters:
 			path: app/Modules/Coreportal/Controllers/PortalController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Coreportal/Controllers/PortalController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Modules/Coreportal/Controllers/PortalController.php
@@ -403,16 +667,742 @@ parameters:
 			path: app/Modules/Coreportal/Controllers/PortalController.php
 
 		-
-			message: '#^Left side of && is always true\.$#'
-			identifier: booleanAnd.leftAlwaysTrue
-			count: 1
-			path: app/Modules/Coreportal/Controllers/PortalController.php
-
-		-
 			message: '#^Ternary operator condition is always true\.$#'
 			identifier: ternary.alwaysTrue
 			count: 2
 			path: app/Modules/Coreportal/Controllers/PortalController.php
+
+		-
+			message: '#^Cannot call method toISOString\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Modules/Fast/Controllers/Admin/ArchiveController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Pagination\\AbstractPaginator\<int,App\\Models\\Surat\>\:\:through\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Fast/Controllers/Admin/ArchiveController.php
+
+		-
+			message: '#^Cannot call method toISOString\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Modules/Fast/Controllers/Admin/HistoryController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Pagination\\AbstractPaginator\<int,App\\Models\\Surat\>\:\:through\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Fast/Controllers/Admin/HistoryController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Fast/Controllers/Admin/LetterController.php
+
+		-
+			message: '#^Cannot call method toISOString\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Modules/Fast/Controllers/Admin/LetterIndexController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Pagination\\AbstractPaginator\<int,App\\Models\\Surat\>\:\:through\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Fast/Controllers/Admin/LetterIndexController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nim_nip" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Controllers/Admin/LetterIndexController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$revoked_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Fast/Controllers/Admin/QrManageController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Fast/Controllers/Admin/QrManageController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Pagination\\AbstractPaginator\<int,App\\Models\\Surat\>\:\:through\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Fast/Controllers/Admin/QrManageController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>status" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Controllers/Admin/QrManageController.php
+
+		-
+			message: '#^Call to static method query\(\) on an unknown class App\\Models\\FastNotification\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Modules/Fast/Controllers/Shared/NotificationController.php
+
+		-
+			message: '#^Cannot call method toISOString\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Modules/Fast/Controllers/Shared/User/DashboardController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\SuratApprovalFlow\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Fast/Controllers/Shared/User/DashboardController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\{id\: int, categoryId\: int\<0, max\>\|null, nama\: string, slug\: string\|null, deskripsi\: string\|null, fieldConfig\: array\<int, non\-empty\-array\<string, mixed\>\>\}, Closure\(App\\Models\\JenisSurat\)\: array\{id\: int, categoryId\: int\<0, max\>\|null, nama\: string, slug\: string\|null, deskripsi\: string\|null, fieldConfig\: array\<int, non\-empty\-array\<string, mixed\>\>\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Fast/Controllers/Shared/User/DashboardController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>catatan" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Controllers/Shared/User/DashboardController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nama" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Controllers/Shared/User/DashboardController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>role" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Controllers/Shared/User/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Fast/Controllers/Shared/User/HistoryController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\SuratHistory\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Fast/Controllers/Shared/User/HistoryController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>catatan" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Fast/Controllers/Shared/User/HistoryController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nama" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Fast/Controllers/Shared/User/HistoryController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Fast/Controllers/Shared/User/HistoryController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nim_nip" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Controllers/Shared/User/HistoryController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>role" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Fast/Controllers/Shared/User/HistoryController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>tanggal_aksi" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Controllers/Shared/User/HistoryController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\{id\: int, categoryId\: int\<0, max\>\|null, nama\: string, slug\: string\|null, deskripsi\: string\|null, fieldConfig\: array\<int, array\{name\: mixed, label\: string, type\: mixed, required\: bool, placeholder\: string, help\: string, options\: array\<int, array\{label\: string, value\: string\}\>, sumber_data\: string, editable_role\: string, mode_form_pemohon\: string\}\>\}, Closure\(App\\Models\\JenisSurat\)\: array\{id\: int, categoryId\: int\<0, max\>\|null, nama\: string, slug\: string\|null, deskripsi\: string\|null, fieldConfig\: array\<int, array\{name\: mixed, label\: string, type\: mixed, required\: bool, placeholder\: string, help\: string, options\: array\<int, array\{label\: string, value\: string\}\>, sumber_data\: string, editable_role\: string, mode_form_pemohon\: string\}\>\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Fast/Controllers/Shared/User/SubmissionController.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$payload$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/Modules/Fast/DTOs/SuratData.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$payload$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/Modules/Fast/DTOs/SuratDataContract.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Admin/ApprovalService.php
+
+		-
+			message: '#^Access to undefined constant App\\Models\\Surat\:\:STATUS_NOTE\.$#'
+			identifier: classConstant.notFound
+			count: 2
+			path: app/Modules/Fast/Services/Admin/ApprovalService.php
+
+		-
+			message: '#^Method App\\Modules\\Fast\\Services\\Admin\\ApprovalService\:\:previewAttachment\(\) should return Symfony\\Component\\HttpFoundation\\StreamedResponse but returns Symfony\\Component\\HttpFoundation\\Response\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Modules/Fast/Services/Admin/ApprovalService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\SuratHistory\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Fast/Services/Admin/ApprovalService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nim_nip" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Modules/Fast/Services/Admin/ApprovalService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Admin/DashboardService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\SuratHistory\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Fast/Services/Admin/DashboardService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nama" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Services/Admin/DashboardService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nim_nip" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Fast/Services/Admin/DashboardService.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 1
+			path: app/Modules/Fast/Services/Admin/TemplateMutationService.php
+
+		-
+			message: '#^Property App\\Models\\JenisSurat\:\:\$field_config \(string\|null\) does not accept array\<int, array\<string, mixed\>\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Modules/Fast/Services/Admin/TemplateMutationService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Admin/TemplateService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\),Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\|string\)\: array\{id\: int, nama\: string, slug\: string\|null, is_active\: bool, category\: array\{id\: int\|null, nama\: string\|null\}, template\: array\{id\: int, name\: string, version\: int\<0, max\>, created_at\: mixed, updated_at\: mixed\}\|null\}, Closure\(App\\Models\\JenisSurat\)\: array\{id\: int, nama\: string, slug\: string\|null, is_active\: bool, category\: array\{id\: int\|null, nama\: string\|null\}, template\: array\{id\: int, name\: string, version\: int\<0, max\>, created_at\: mixed, updated_at\: mixed\}\|null\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Fast/Services/Admin/TemplateService.php
+
+		-
+			message: '#^Parameter \#1 \$jenisSurat of method App\\Modules\\Fast\\Support\\TemplateAdminSupport\:\:serializeJenisSurat\(\) expects App\\Models\\JenisSurat, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Fast/Services/Admin/TemplateService.php
+
+		-
+			message: '#^Parameter \#1 \$string of function str_pad expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NomorSuratService.php
+
+		-
+			message: '#^Parameter \#1 \$string of function str_pad expects string, int\<1, max\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NomorSuratService.php
+
+		-
+			message: '#^Parameter \#2 \$replace of function str_replace expects array\<string\>\|string, array\<int, int\|string\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NomorSuratService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>urutan" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NomorSuratService.php
+
+		-
+			message: '#^Access to property \$href on an unknown class App\\Models\\FastNotification\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
+
+		-
+			message: '#^Access to property \$id on an unknown class App\\Models\\FastNotification\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
+
+		-
+			message: '#^Access to property \$message on an unknown class App\\Models\\FastNotification\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
+
+		-
+			message: '#^Access to property \$notification_key on an unknown class App\\Models\\FastNotification\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
+
+		-
+			message: '#^Access to property \$read_at on an unknown class App\\Models\\FastNotification\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
+
+		-
+			message: '#^Access to property \$title on an unknown class App\\Models\\FastNotification\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
+
+		-
+			message: '#^Access to property \$tone on an unknown class App\\Models\\FastNotification\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
+
+		-
+			message: '#^Access to property \$updated_at on an unknown class App\\Models\\FastNotification\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
+
+		-
+			message: '#^Call to static method query\(\) on an unknown class App\\Models\\FastNotification\.$#'
+			identifier: class.notFound
+			count: 3
+			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<array\<string, mixed\>\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
+
+		-
+			message: '#^Parameter \$notification of anonymous function has invalid type App\\Models\\FastNotification\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>created_at" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nama" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>tanggal_aksi" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>timestamp" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
+
+		-
+			message: '#^Access to constant HEADER_CSS on an unknown class Mpdf\\HTMLParserMode\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Access to constant HTML_BODY on an unknown class Mpdf\\HTMLParserMode\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\{template\: App\\Models\\SuratTemplate, html\: string, placeholders\: array\<string, mixed\>\} will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 4
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Call to method Output\(\) on an unknown class Mpdf\\Mpdf\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Call to method SetHTMLFooter\(\) on an unknown class Mpdf\\Mpdf\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Call to method SetHTMLHeader\(\) on an unknown class Mpdf\\Mpdf\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Call to method WriteHTML\(\) on an unknown class Mpdf\\Mpdf\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Call to method getDefaults\(\) on an unknown class Mpdf\\Config\\ConfigVariables\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Call to method getDefaults\(\) on an unknown class Mpdf\\Config\\FontVariables\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Instantiated class Mpdf\\Config\\ConfigVariables not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Instantiated class Mpdf\\Config\\FontVariables not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Instantiated class Mpdf\\Mpdf not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Offset ''body'' on array\{template\: App\\Models\\SuratTemplate, html\: string, placeholders\: array\<string, mixed\>\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Offset ''fontDir'' on array\{fontDir\: array\<int, string\>, fontdata\: array\<string, array\<string, mixed\>\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Offset ''fontdata'' on array\{fontDir\: array\<int, string\>, fontdata\: array\<string, array\<string, mixed\>\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Offset ''footer'' on array\{template\: App\\Models\\SuratTemplate, html\: string, placeholders\: array\<string, mixed\>\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Offset ''full'' on array\{template\: App\\Models\\SuratTemplate, html\: string, placeholders\: array\<string, mixed\>\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Offset ''header'' on array\{template\: App\\Models\\SuratTemplate, html\: string, placeholders\: array\<string, mixed\>\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Offset ''html'' on array\{template\: App\\Models\\SuratTemplate, html\: string, placeholders\: array\<string, mixed\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-falsy\-string and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>css_style" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>kode_klasifikasi" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Http\\Request\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Services/Shared/SuratHistoryService.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Modules/Fast/Template/Parsers/TemplatePlaceholderReplacer.php
+
+		-
+			message: '#^Call to method getDefaults\(\) on an unknown class Mpdf\\Config\\ConfigVariables\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Template/Renderers/SuratKomponenRenderer.php
+
+		-
+			message: '#^Call to method getDefaults\(\) on an unknown class Mpdf\\Config\\FontVariables\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Template/Renderers/SuratKomponenRenderer.php
+
+		-
+			message: '#^Instantiated class Mpdf\\Config\\ConfigVariables not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Template/Renderers/SuratKomponenRenderer.php
+
+		-
+			message: '#^Instantiated class Mpdf\\Config\\FontVariables not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Template/Renderers/SuratKomponenRenderer.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<string, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: app/Modules/Fast/Template/Resolvers/TemplatePlaceholderSynchronizer.php
+
+		-
+			message: '#^Call to function is_string\(\) with non\-empty\-string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Modules/Fast/Template/Resolvers/TemplatePlaceholderSynchronizer.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Modules/Fast/Template/Resolvers/TemplatePlaceholderSynchronizer.php
+
+		-
+			message: '#^Offset 1 on array\{list\<string\>, list\<non\-empty\-string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/Fast/Template/Resolvers/TemplatePlaceholderSynchronizer.php
+
+		-
+			message: '#^Result of \|\| is always false\.$#'
+			identifier: booleanOr.alwaysFalse
+			count: 1
+			path: app/Modules/Fast/Template/Resolvers/TemplatePlaceholderSynchronizer.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between non\-empty\-string and '''' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Modules/Fast/Template/Resolvers/TemplatePlaceholderSynchronizer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Fast/Template/TemplateService.php
+
+		-
+			message: '#^Array has 2 duplicate keys with value ''nama_prodi'' \(''nama_prodi'', ''nama_prodi''\)\.$#'
+			identifier: array.duplicateKey
+			count: 1
+			path: app/Modules/Fast/Template/TemplateService.php
+
+		-
+			message: '#^Array has 2 duplicate keys with value ''prodi'' \(''prodi'', ''prodi''\)\.$#'
+			identifier: array.duplicateKey
+			count: 1
+			path: app/Modules/Fast/Template/TemplateService.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Modules/Fast/Template/TemplateService.php
+
+		-
+			message: '#^Call to static method headline\(\) on an unknown class App\\Modules\\Fast\\Template\\Str\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Modules/Fast/Template/TemplateService.php
+
+		-
+			message: '#^Offset ''email'' on array\{name\: string, email\: string, nomor_induk\: string, jabatan\: string, program_studi\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/Fast/Template/TemplateService.php
+
+		-
+			message: '#^Offset ''jabatan'' on array\{name\: string, email\: string, nomor_induk\: string, jabatan\: string, program_studi\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/Fast/Template/TemplateService.php
+
+		-
+			message: '#^Offset ''name'' on array\{name\: string, email\: string, nomor_induk\: string, jabatan\: string, program_studi\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 3
+			path: app/Modules/Fast/Template/TemplateService.php
+
+		-
+			message: '#^Offset ''nomor_induk'' on array\{name\: string, email\: string, nomor_induk\: string, jabatan\: string, program_studi\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 6
+			path: app/Modules/Fast/Template/TemplateService.php
+
+		-
+			message: '#^Offset ''program_studi'' on array\{name\: string, email\: string, nomor_induk\: string, jabatan\: string, program_studi\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 3
+			path: app/Modules/Fast/Template/TemplateService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Template/TemplateService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Template/TemplateService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nama" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Template/TemplateService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Template/TemplateService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nim_nip" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Template/TemplateService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nomor_induk" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Template/TemplateService.php
+
+		-
+			message: '#^Parameter &\$storedPaths by\-ref type of method App\\Modules\\Fast\\Workflow\\Actions\\SuratWorkflowService\:\:storeLampirans\(\) expects array\<int, string\>, array\<int, bool\|string\> given\.$#'
+			identifier: parameterByRef.type
+			count: 1
+			path: app/Modules/Fast/Workflow/Actions/SuratWorkflowService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>approved_at" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Workflow/Actions/SuratWorkflowService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>approver_id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Workflow/Actions/SuratWorkflowService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>field_config" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Workflow/Actions/SuratWorkflowService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>tanggal_aksi" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Workflow/Actions/SuratWorkflowService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>field_config" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Fast/Workflow/Approvals/FastApprovalWorkflowService.php
 
 		-
 			message: '#^Access to an undefined property App\\Models\\Pagi\\PagiWork\:\:\$user\.$#'
@@ -433,148 +1423,52 @@ parameters:
 			path: app/Modules/Pagi/Actions/ReplyCommentAction.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Pagi\\PagiWork\:\:\$user\.$#'
-			identifier: property.notFound
-			count: 4
-			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$cover_image\.$#'
-			identifier: property.notFound
-			count: 3
-			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 4
-			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$foto_path\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$title\.$#'
-			identifier: property.notFound
-			count: 3
-			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user_id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:notify\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
-
-		-
 			message: '#^Call to function is_string\(\) with array will always evaluate to false\.$#'
 			identifier: function.impossibleType
 			count: 1
 			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
 
 		-
-			message: '#^Comparison operation "\>\=" between 6 and 3 is always true\.$#'
-			identifier: greaterOrEqual.alwaysTrue
-			count: 1
-			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
-
-		-
 			message: '#^Relation ''user'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
 			identifier: larastan.relationExistence
-			count: 6
-			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$body\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Pagi/Controllers/PagiChatController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$deleted_for\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Pagi/Controllers/PagiChatController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$foto_path\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Pagi/Controllers/PagiChatController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 4
-			path: app/Modules/Pagi/Controllers/PagiChatController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_deleted\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Pagi/Controllers/PagiChatController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Pagi/Controllers/PagiChatController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$sender\.$#'
-			identifier: property.notFound
-			count: 4
-			path: app/Modules/Pagi/Controllers/PagiChatController.php
-
-		-
-			message: '#^Cannot call method toISOString\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 2
-			path: app/Modules/Pagi/Controllers/PagiChatController.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Pagi\\PagiMessage\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Modules/Pagi/Controllers/PagiChatController.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\User\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Modules/Pagi/Controllers/PagiChatController.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Pagi\\PagiWork\:\:\$tags\.$#'
-			identifier: property.notFound
 			count: 3
-			path: app/Modules/Pagi/Controllers/PagiDashboardController.php
+			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
 
 		-
 			message: '#^Access to an undefined property App\\Models\\Pagi\\PagiWork\:\:\$user\.$#'
 			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminModerationController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminModerationController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:notify\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminUserController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$cover_image\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminWorkController.php
+
+		-
+			message: '#^Comparison operation "\>\=" between 6 and 3 is always true\.$#'
+			identifier: greaterOrEqual.alwaysTrue
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminWorkController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
+			identifier: larastan.relationExistence
 			count: 2
-			path: app/Modules/Pagi/Controllers/PagiDashboardController.php
+			path: app/Modules/Pagi/Controllers/AdminWorkController.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$fakultas\.$#'
@@ -603,13 +1497,13 @@ parameters:
 		-
 			message: '#^Relation ''tags'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
 			identifier: larastan.relationExistence
-			count: 3
+			count: 4
 			path: app/Modules/Pagi/Controllers/PagiDashboardController.php
 
 		-
 			message: '#^Relation ''user'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
 			identifier: larastan.relationExistence
-			count: 3
+			count: 4
 			path: app/Modules/Pagi/Controllers/PagiDashboardController.php
 
 		-
@@ -635,6 +1529,42 @@ parameters:
 			identifier: larastan.relationExistence
 			count: 1
 			path: app/Modules/Pagi/Controllers/PagiEditorController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$body\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Services/PagiChatService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$foto_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Services/PagiChatService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Pagi/Services/PagiChatService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Services/PagiChatService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$sender\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Pagi/Services/PagiChatService.php
+
+		-
+			message: '#^Cannot call method toISOString\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Modules/Pagi/Services/PagiChatService.php
 
 		-
 			message: '#^Access to an undefined property App\\Models\\Pagi\\PagiWork\:\:\$tags\.$#'
@@ -663,24 +1593,6 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model&object\{pivot\: Illuminate\\Database\\Eloquent\\Relations\\Pivot\}\:\:\$pagi_username\.$#'
 			identifier: property.notFound
-			count: 1
-			path: app/Modules/Pagi/Services/PagiProfileService.php
-
-		-
-			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: app/Modules/Pagi/Services/PagiProfileService.php
-
-		-
-			message: '#^Relation ''tags'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Modules/Pagi/Services/PagiProfileService.php
-
-		-
-			message: '#^Relation ''user'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
-			identifier: larastan.relationExistence
 			count: 1
 			path: app/Modules/Pagi/Services/PagiProfileService.php
 
@@ -723,7 +1635,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 4
+			count: 6
 			path: app/Modules/Pagi/Services/PagiSocialService.php
 
 		-
@@ -747,6 +1659,18 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
 			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
+			message: '#^Call to function is_string\(\) with non\-empty\-string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
 			count: 1
 			path: app/Modules/Pagi/Services/PagiSocialService.php
 
@@ -781,6 +1705,12 @@ parameters:
 			path: app/Modules/Pagi/Services/PagiSocialService.php
 
 		-
+			message: '#^Strict comparison using \!\=\= between non\-empty\-string and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
 			message: '#^Relation ''children'' is not found in App\\Models\\Portal\\PortalMenu model\.$#'
 			identifier: larastan.relationExistence
 			count: 1
@@ -791,6 +1721,1746 @@ parameters:
 			identifier: larastan.relationExistence
 			count: 1
 			path: app/Modules/Portal/Controllers/PublicPostController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$latitude\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Controllers/Mahasiswa/AttendanceController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$longitude\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Controllers/Mahasiswa/AttendanceController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Modules/Wims/Controllers/Mitra/PenilaianMahasiswaController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Controllers/Mitra/PenilaianMahasiswaController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$assessor_role\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$components\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$description\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$periode_mulai\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$periode_selesai\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$programStudi\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$score\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$weighted_score\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nama" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$programStudi\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Pagination\\AbstractPaginator\<int,App\\Models\\Magang\\PendaftaranMagang\>\:\:through\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:resolveContextRoleData\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>status" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$description\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentTemplateActionService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentTemplateActionService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentTemplateActionService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$sort_order\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentTemplateActionService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$weight_percentage\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentTemplateActionService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentTemplateActionService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentTemplateActionService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$description\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentTemplatePageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentTemplatePageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentTemplatePageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$sort_order\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentTemplatePageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$weight_percentage\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentTemplatePageService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentTemplatePageService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 5
+			path: app/Modules/Wims/Services/Admin/AdminAssessmentTemplatePageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminCompanyActionService.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:ensureAssignment\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminCompanyActionService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminCompanyPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Admin/AdminCompanyPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_active\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminCompanyPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminCompanyPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$no_telepon\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminCompanyPageService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Magang\\PerusahaanMitra\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminCompanyPageService.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:resolveContextRoleData\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminCompanyPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminDashboardPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Admin/AdminDashboardPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminDashboardPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminDashboardPageService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Magang\\PendaftaranMagang\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminDashboardPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$tanggal\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\{id\: int, label\: string\}, Closure\(App\\Models\\User\)\: array\{id\: int, label\: string\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Pagination\\AbstractPaginator\<int,App\\Models\\Magang\\PendaftaranMagang\>\:\:through\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:resolveContextRoleData\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminRegistrationPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Admin/AdminRegistrationPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminRegistrationPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminRegistrationPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminRegistrationPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminRegistrationPageService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Pagination\\AbstractPaginator\<int,App\\Models\\Magang\\PendaftaranMagang\>\:\:through\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminRegistrationPageService.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:resolveContextRoleData\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Wims/Services/Admin/AdminRegistrationPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:worksOnDate\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\{id\: mixed, pendaftaran_id\: int, name\: mixed, nim\: mixed, company\: array\{id\: mixed, name\: mixed\}, period_start\: string\|null, period_end\: string\|null, status_pendaftaran\: string, dashboard_phase\: string, attendance_status\: string, check_in_time\: string\|null, check_out_time\: string\|null, logbook_status\: string, has_logbook\: bool, latest_logbook_date\: string\|null, latest_logbook_activity\: string\|null, objective_summary\: array\}, Closure\(App\\Models\\Magang\\PendaftaranMagang\)\: array\{id\: mixed, pendaftaran_id\: int, name\: mixed, nim\: mixed, company\: array\{id\: mixed, name\: mixed\}, period_start\: string\|null, period_end\: string\|null, status_pendaftaran\: string, dashboard_phase\: string, attendance_status\: string, check_in_time\: string\|null, check_out_time\: string\|null, logbook_status\: string, has_logbook\: bool, latest_logbook_date\: string\|null, latest_logbook_activity\: string\|null, objective_summary\: array\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,array\<string, mixed\>\>\:\:filter\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>status" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\Magang\\AbsensiMagang\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Modules/Wims/Services/Dosen/LecturerAssessmentWorkflowService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Dosen/LecturerAssessmentWorkflowService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$jam_masuk\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceActionService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$latitude\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceActionService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$longitude\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceActionService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$radius_valid_meter\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceActionService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$toleransi_terlambat_menit\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceActionService.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceAvailabilityService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceAvailabilityService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceExportService.php
+
+		-
+			message: '#^Call to function is_null\(\) with bool will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceExportService.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceExportService.php
+
+		-
+			message: '#^Instanceof between Illuminate\\View\\Compilers\\BladeCompiler and Illuminate\\View\\Compilers\\BladeCompiler will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceExportService.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceExportService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceExportService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nama" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceExportService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceExportService.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\Magang\\PendaftaranMagang\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendancePageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$latitude\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendancePageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$longitude\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendancePageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendancePageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$radius_valid_meter\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendancePageService.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendancePageService.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendancePageService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendancePageService.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\Magang\\AbsensiMagang\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendancePageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Dashboard/StudentDashboardPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Dashboard/StudentDashboardPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Dashboard/StudentDashboardPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Modules/Wims/Services/Mahasiswa/Dashboard/StudentDashboardPageService.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:resolveContextRoleData\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Dashboard/StudentDashboardPageService.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Dashboard/StudentDashboardPageService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>catatan_mitra" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Dashboard/StudentDashboardPageService.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\Magang\\AbsensiMagang\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Dashboard/StudentDashboardPageService.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\Magang\\PendaftaranMagang\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Dashboard/StudentDashboardPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$programStudi\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
+
+		-
+			message: '#^Instanceof between Illuminate\\View\\Compilers\\BladeCompiler and Illuminate\\View\\Compilers\\BladeCompiler will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nama" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookPageService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\{id\: int, file_path\: string, url\: string\|null\}, Closure\(App\\Models\\Magang\\LogbookPhoto\)\: array\{id\: int, file_path\: string, url\: string\|null\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookPageService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 4
+			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$fakultas\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Profile/StudentProfilePageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Profile/StudentProfilePageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$kode\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Profile/StudentProfilePageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Profile/StudentProfilePageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Profile/StudentProfilePageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Modules/Wims/Services/Mahasiswa/Profile/StudentProfilePageService.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Profile/StudentProfilePageService.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:resolveContextRoleData\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Profile/StudentProfilePageService.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Profile/StudentProfilePageService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Profile/StudentProfilePageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Registration/StudentRegistrationPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Registration/StudentRegistrationPageService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Registration/StudentRegistrationPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$file_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
+
+		-
+			message: '#^Call to function is_null\(\) with bool will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:resolveContextRoleData\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\Magang\\PendaftaranMagang\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$perusahaan_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraAccessService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraDashboardPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraDashboardPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraDashboardPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraDashboardPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraDashboardPageService.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraDashboardPageService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Magang\\KetidakhadiranMagang\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraDashboardPageService.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraDashboardPageService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$no_telepon\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:photoUrl\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:worksOnDate\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\{registration_id\: int, student_id\: mixed, photo_url\: mixed, name\: mixed, email\: mixed, nim\: mixed, phone\: mixed, company\: array\{id\: mixed, name\: mixed\}, mentor\: array\{id\: mixed, name\: mixed, role_context\: array\|null\}, lecturer\: array\{id\: mixed, name\: mixed, role_context\: array\|null\}, period_start\: string\|null, period_end\: string\|null, submitted_at\: string\|null, status_pendaftaran\: string, dashboard_phase\: string, attendance_status\: string, check_in_time\: non\-falsy\-string\|null, check_out_time\: non\-falsy\-string\|null, latest_logbook_id\: int\|null, logbook_status\: string, latest_logbook_date\: string\|null, latest_logbook_sort_date\: string\|null, latest_logbook_activity\: string, latest_logbook_competency\: string\|null, latest_logbook_note\: string\|null, objective_summary\: array\}, Closure\(App\\Models\\Magang\\PendaftaranMagang\)\: array\{registration_id\: int, student_id\: mixed, photo_url\: mixed, name\: mixed, email\: mixed, nim\: mixed, phone\: mixed, company\: array\{id\: mixed, name\: mixed\}, mentor\: array\{id\: mixed, name\: mixed, role_context\: array\|null\}, lecturer\: array\{id\: mixed, name\: mixed, role_context\: array\|null\}, period_start\: string\|null, period_end\: string\|null, submitted_at\: string\|null, status_pendaftaran\: string, dashboard_phase\: string, attendance_status\: string, check_in_time\: non\-falsy\-string\|null, check_out_time\: non\-falsy\-string\|null, latest_logbook_id\: int\|null, logbook_status\: string, latest_logbook_date\: string\|null, latest_logbook_sort_date\: string\|null, latest_logbook_activity\: string, latest_logbook_competency\: string\|null, latest_logbook_note\: string\|null, objective_summary\: array\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,array\<string, mixed\>\>\:\:filter\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 4
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,array\<string, mixed\>\>\:\:sortByDesc\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:resolveContextRoleData\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>aktivitas_harian" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>catatan_mitra" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>status" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\Magang\\AbsensiMagang\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Absence/KetidakhadiranService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:worksOnDate\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Absence/KetidakhadiranService.php
+
+		-
+			message: '#^Parameter \#1 \$pendaftaran of method App\\Modules\\Wims\\Services\\Shared\\Absence\\KetidakhadiranService\:\:resolveApplicableWorkDates\(\) expects App\\Models\\Magang\\PendaftaranMagang, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Absence/KetidakhadiranService.php
+
+		-
+			message: '#^Parameter \#1 \$registration of method App\\Modules\\Wims\\Services\\Shared\\Attendance\\AttendanceSyncService\:\:syncForRegistration\(\) expects App\\Models\\Magang\\PendaftaranMagang, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Absence/KetidakhadiranService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentIndexService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentIndexService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentIndexService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentIndexService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentIndexService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentIndexService.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentIndexService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Magang\\PendaftaranMagang\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentIndexService.php
+
+		-
+			message: '#^Result of \|\| is always false\.$#'
+			identifier: booleanOr.alwaysFalse
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentIndexService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 4
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentIndexService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>status" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentIndexService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$description\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 6
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$weight_percentage\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
+
+		-
+			message: '#^Result of \|\| is always false\.$#'
+			identifier: booleanOr.alwaysFalse
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentSubmissionService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$weight_percentage\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentSubmissionService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:appliesToAssessorRole\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentTemplateResolverService.php
+
+		-
+			message: '#^Method App\\Modules\\Wims\\Services\\Shared\\Assessment\\AssessmentTemplateResolverService\:\:resolveForRoleAndDate\(\) should return App\\Models\\Magang\\AssessmentTemplate\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentTemplateResolverService.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentTemplateResolverService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:worksOnDate\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Attendance/AttendanceSyncService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Attendance/AttendanceSyncService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Database\\Eloquent\\Model\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Attendance/AttendanceSyncService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringAlertService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringAlertService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringAlertService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringAlertService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringAlertService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:worksOnDate\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringAlertService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringAlertService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type mixed\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 4
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringAlertService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$file_path\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringDetailService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringDetailService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringDetailService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringDetailService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringDetailService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringDetailService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringDetailService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>catatan_mitra" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringDetailService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringHistoryService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:worksOnDate\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringHistoryService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 4
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringHistoryService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringHistoryService.php
+
+		-
+			message: '#^Method App\\Modules\\Wims\\Services\\Shared\\Monitoring\\MonitoringRegistrationResolverService\:\:resolveByDate\(\) should return App\\Models\\Magang\\PendaftaranMagang\|null but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringRegistrationResolverService.php
+
+		-
+			message: '#^Method App\\Modules\\Wims\\Services\\Shared\\Monitoring\\MonitoringRegistrationResolverService\:\:resolveByDate\(\) should return App\\Models\\Magang\\PendaftaranMagang\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringRegistrationResolverService.php
+
+		-
+			message: '#^Method App\\Modules\\Wims\\Services\\Shared\\Monitoring\\MonitoringRegistrationResolverService\:\:resolveForLecturer\(\) should return App\\Models\\Magang\\PendaftaranMagang\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringRegistrationResolverService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Magang\\AbsensiMagang\:\:\$total\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Magang\\AbsensiMagang\:\:\$total_alfa\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Magang\\AbsensiMagang\:\:\$total_izin\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Magang\\AbsensiMagang\:\:\$total_sakit\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Magang\\AbsensiMagang\:\:\$total_tepat_waktu\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Magang\\AbsensiMagang\:\:\$total_terlambat\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Magang\\LogbookMagang\:\:\$total\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Magang\\LogbookMagang\:\:\$total_disetujui\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Magang\\LogbookMagang\:\:\$total_pending\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Magang\\LogbookMagang\:\:\$total_revisi\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>status" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>total" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>total_alfa" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>total_disetujui" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>total_izin" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>total_pending" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>total_revisi" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>total_sakit" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>total_tepat_waktu" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>total_terlambat" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Placement/PlacementIndexService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Placement/PlacementIndexService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Placement/PlacementIndexService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Placement/PlacementIndexService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Placement/PlacementIndexService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Placement/PlacementIndexService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Pagination\\AbstractPaginator\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:through\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array, Closure\(App\\Models\\Magang\\PendaftaranMagang\)\: array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Placement/PlacementIndexService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:filter\(\) expects \(callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: bool\)\|null, Closure\(App\\Models\\Magang\\PendaftaranMagang\)\: bool given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Placement/PlacementIndexService.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:resolveContextRoleData\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Placement/PlacementIndexService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Wims/Services/Shared/Placement/PlacementIndexService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:filter\(\) expects \(callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: bool\)\|null, Closure\(App\\Models\\Magang\\PendaftaranMagang\)\: bool given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Placement/PlacementWorkflowService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Placement/SuratPenetapanService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Placement/SuratPenetapanService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Placement/SuratPenetapanService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Placement/SuratPenetapanService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Placement/SuratPenetapanService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Placement/SuratPenetapanService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Wims/Services/Shared/Portal/WimsModuleRoleService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>status" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Wims/Support/AssessmentSummary.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>timestamp" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Wims/Support/AssessmentSummary.php
 
 		-
 			message: '#^Relation ''device'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
@@ -841,93 +3511,51 @@ parameters:
 			path: app/Modules/WorkOs/Controllers/Auth/SessionController.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Auth\\AuthSession\:\:\$device\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Auth\\AuthSession\:\:\$user\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
-
-		-
-			message: '#^Call to static method first\(\) on an unknown class App\\Modules\\WorkOs\\Controllers\\Module\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
-
-		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'
 			identifier: nullCoalesce.expr
 			count: 1
-			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
-
-		-
-			message: '#^Left side of && is always true\.$#'
-			identifier: booleanAnd.leftAlwaysTrue
-			count: 2
-			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
-
-		-
-			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Pagination\\AbstractPaginator\<int,App\\Models\\Auth\\AuthSession\>\:\:through\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
 
 		-
 			message: '#^Relation ''device'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
 			identifier: larastan.relationExistence
-			count: 2
-			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
-
-		-
-			message: '#^Relation ''user'' is not found in App\\Models\\Auth\\AuthAuditLog model\.$#'
-			identifier: larastan.relationExistence
 			count: 1
-			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
 
 		-
 			message: '#^Relation ''user'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
 			identifier: larastan.relationExistence
-			count: 2
-			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+			count: 1
+			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
 
 		-
 			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
-			count: 3
-			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+			count: 1
+			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
 
 		-
 			message: '#^Using nullsafe property access "\?\-\>browser" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
-			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>code" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
 
 		-
 			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
-			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
+			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
 
 		-
 			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
-			count: 2
+			count: 1
+			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Auth\\AuthAuditLog model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
 			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
 
 		-
@@ -937,8 +3565,80 @@ parameters:
 			path: app/Modules/WorkOs/Controllers/DashboardController.php
 
 		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$browser\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$city\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$country\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$group\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$os\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Anonymous function should return array\{id\: int, nama\: string, slug\: string, deskripsi\: string\|null, permissions_count\: int\<0, max\>, permissions\: Illuminate\\Support\\Collection\<int, array\{id\: mixed, name\: mixed, slug\: mixed, group\: mixed\}\>\} but returns array\{id\: int, nama\: string, slug\: string, deskripsi\: string\|null, permissions_count\: int\<0, max\>, permissions\: Illuminate\\Support\\Collection\<int, array\{id\: int, name\: mixed, slug\: string, group\: mixed\}\>\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Radar\\RadarDetection\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
 			message: '#^Relation ''roles'' is not found in App\\Models\\Module model\.$#'
 			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Modules/WorkOs/Controllers/DashboardController.php
 
@@ -985,18 +3685,6 @@ parameters:
 			path: app/Modules/WorkOs/Controllers/PipesController.php
 
 		-
-			message: '#^Call to an undefined method App\\Modules\\WorkOs\\Controllers\\UsersController\:\:extractHeaderMapping\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Modules/WorkOs/Controllers/UsersController.php
-
-		-
-			message: '#^Call to an undefined method App\\Modules\\WorkOs\\Controllers\\UsersController\:\:getRequiredFields\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Modules/WorkOs/Controllers/UsersController.php
-
-		-
 			message: '#^Left side of && is always true\.$#'
 			identifier: booleanAnd.leftAlwaysTrue
 			count: 2
@@ -1025,6 +3713,24 @@ parameters:
 			identifier: ternary.alwaysTrue
 			count: 5
 			path: app/Modules/WorkOs/Services/AuditLogger.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/WorkOs/Services/AuthPlatform/JwtTemplateCompiler.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>code" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/WorkOs/Services/AuthPlatform/JwtTemplateCompiler.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/WorkOs/Services/AuthPlatform/JwtTemplateCompiler.php
 
 		-
 			message: '#^Call to an undefined method Laravel\\Socialite\\Contracts\\Provider\:\:scopes\(\)\.$#'
@@ -1105,6 +3811,42 @@ parameters:
 			path: app/Modules/WorkOs/Services/Pipes/SyncEngine.php
 
 		-
+			message: '#^Access to an undefined property App\\Models\\Auth\\AuthSession\:\:\$device\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Services/Sessions/AuthSessionService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Auth\\AuthSession\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Services/Sessions/AuthSessionService.php
+
+		-
+			message: '#^Argument of an invalid type Illuminate\\Contracts\\Pagination\\LengthAwarePaginator supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 1
+			path: app/Modules/WorkOs/Services/Sessions/AuthSessionService.php
+
+		-
+			message: '#^Relation ''device'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/WorkOs/Services/Sessions/AuthSessionService.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/WorkOs/Services/Sessions/AuthSessionService.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/WorkOs/Services/Sessions/AuthSessionService.php
+
+		-
 			message: '#^Cannot call method isAdmin\(\) on class\-string\|object\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -1117,7 +3859,31 @@ parameters:
 			path: app/Providers/HorizonServiceProvider.php
 
 		-
+			message: '#^Cannot call method getMimeType\(\) on class\-string\|object\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Rules/VideoDurationRule.php
+
+		-
+			message: '#^Cannot call method getRealPath\(\) on class\-string\|object\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Rules/VideoDurationRule.php
+
+		-
+			message: '#^Cannot call method getSize\(\) on class\-string\|object\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Rules/VideoDurationRule.php
+
+		-
 			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
 			identifier: larastan.noEnvCallsOutsideOfConfig
 			count: 3
 			path: app/Services/VirusScannerService.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Support/WimsStorage.php

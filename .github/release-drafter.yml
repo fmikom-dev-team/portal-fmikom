@@ -1,0 +1,55 @@
+# Konfigurasi Pemetaan Changelog Rilis Otomatis (Release Drafter)
+# https://github.com/release-drafter/release-drafter#configuration
+
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+
+# Penentu kenaikan versi otomatis berdasarkan label PR
+version-resolver:
+  major:
+    labels:
+      - 'major'
+      - 'breaking-change'
+  minor:
+    labels:
+      - 'minor'
+      - 'feature'
+      - 'enhancement'
+  patch:
+    labels:
+      - 'patch'
+      - 'bug'
+      - 'fix'
+      - 'ci-cd'
+      - 'dependencies'
+  default: patch
+
+# Kategori rilis berdasarkan label PR
+categories:
+  - title: '🚀 Fitur Baru (Features)'
+    labels:
+      - 'feature'
+      - 'enhancement'
+  - title: '🐛 Perbaikan (Bug Fixes)'
+    labels:
+      - 'bug'
+      - 'fix'
+  - title: '🛡️ Keamanan & Kualitas (Security & Quality)'
+    labels:
+      - 'security'
+      - 'ci-cd'
+  - title: '📦 Pembaruan Pustaka (Dependencies)'
+    labels:
+      - 'dependencies'
+
+# Format tampilan baris perubahan
+change-template: '- $TITLE (#$NUMBER) oleh @$AUTHOR'
+
+# Templat utama untuk rancangan catatan rilis (Release Notes)
+template: |
+  ## Apa saja yang baru di versi ini?
+  
+  $CHANGES
+  
+  ---
+  *Rancangan rilis ini dibuat secara otomatis oleh Release Drafter.*

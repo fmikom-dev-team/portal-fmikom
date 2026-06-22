@@ -197,6 +197,11 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(30)->by($request->user()->id);
         });
 
+        // ── File Upload Rate Limiting (Flood & DoS Prevention) ─────────────────
+        RateLimiter::for('uploads', function ($request) {
+            return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
+        });
+
         // Load migrations from subdirectories
         $mainPath = database_path('migrations');
         if (is_dir($mainPath)) {

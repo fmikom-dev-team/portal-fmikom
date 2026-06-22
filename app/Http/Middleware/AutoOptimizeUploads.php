@@ -76,11 +76,6 @@ class AutoOptimizeUploads
             return $this->convertToWebp($file);
         }
 
-        // 3. Video Optimization (converts non-webm videos to WebM)
-        if (str_starts_with($mime, 'video/')) {
-            return $this->convertToWebm($file);
-        }
-
         return null;
     }
 
@@ -232,55 +227,6 @@ class AutoOptimizeUploads
             imagedestroy($image);
         } catch (\Throwable $e) {
             Log::error('[AutoOptimizeUploads] WebP conversion failed: '.$e->getMessage());
-        }
-
-        return null;
-    }
-
-    /**
-     * Convert video files to WebM format using FFmpeg.
-     */
-    private function convertToWebm(UploadedFile $file): ?UploadedFile
-    {
-        $mime = $file->getMimeType();
-        $extension = strtolower($file->getClientOriginalExtension());
-
-        // Already WebM
-        if ($extension === 'webm' || $mime === 'video/webm') {
-            return null;
-        }
-
-        try {
-            $ffmpegBin = env('FFMPEG_BINARIES', 'ffmpeg');
-            $realPath = $file->getRealPath();
-
-            $tempDir = sys_get_temp_dir();
-            $tempPath = tempnam($tempDir, 'webm').'.webm';
-
-            // VP8/Opus encoding optimized for fast processing in local and production environments
-            $cmd = escapeshellcmd($ffmpegBin).' -i '.escapeshellarg($realPath).' -c:v libvpx -crf 32 -b:v 1M -c:a libopus -quality good -cpu-used 4 -y '.escapeshellarg($tempPath).' 2>&1';
-
-            exec($cmd, $output, $resultCode);
-
-            if ($resultCode === 0 && file_exists($tempPath) && filesize($tempPath) > 0) {
-                self::$tempFiles[] = $tempPath;
-                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME).'.webm';
-
-                return new UploadedFile(
-                    $tempPath,
-                    $originalName,
-                    'video/webm',
-                    UPLOAD_ERR_OK,
-                    true
-                );
-            } else {
-                Log::warning('[AutoOptimizeUploads] FFmpeg video conversion failed. Output: '.implode("\n", $output));
-                if (file_exists($tempPath)) {
-                    @unlink($tempPath);
-                }
-            }
-        } catch (\Throwable $e) {
-            Log::error('[AutoOptimizeUploads] WebM conversion failed: '.$e->getMessage());
         }
 
         return null;

@@ -1,0 +1,46 @@
+# Workflow untuk menutup issue dan PR yang tidak aktif secara otomatis
+# https://github.com/actions/stale
+
+name: "Close Stale Issues and PRs"
+
+on:
+  schedule:
+    # Berjalan otomatis setiap hari pada pukul 01:30 UTC (08:30 WIB)
+    - cron: '30 1 * * *'
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          
+          # Pengaturan hari tidak aktif sebelum ditandai stale
+          days-before-stale: 30
+          # Pengaturan hari sebelum ditutup setelah ditandai stale
+          days-before-close: 7
+          
+          # Pesan otomatis pada Issue yang stale
+          stale-issue-message: >
+            Halo! Issue ini telah ditandai sebagai *stale* (usang) karena tidak ada aktivitas 
+            selama 30 hari terakhir. Jika tidak ada tanggapan atau aktivitas lebih lanjut dalam 
+            7 hari ke depan, issue ini akan ditutup secara otomatis. Terima kasih!
+          
+          # Pesan otomatis pada Pull Request yang stale
+          stale-pr-message: >
+            Halo! Pull Request ini telah ditandai sebagai *stale* (usang) karena tidak ada aktivitas 
+            selama 30 hari terakhir. Jika tidak ada pembaruan atau aktivitas lebih lanjut dalam 
+            7 hari ke depan, PR ini akan ditutup secara otomatis demi kebersihan repositori. Terima kasih!
+
+          # Label yang akan disematkan saat stale
+          stale-issue-label: 'stale'
+          stale-pr-label: 'stale'
+          
+          # Abaikan issue/PR yang disematkan label khusus agar tidak ditutup paksa
+          exempt-issue-labels: 'pinned,security,keep-alive'
+          exempt-pr-labels: 'keep-alive,dependencies'
