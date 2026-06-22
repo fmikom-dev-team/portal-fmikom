@@ -9,7 +9,7 @@ class SuratPenetapanService
 {
     public function requestGeneration(PendaftaranMagang $pendaftaran, ?int $requestedBy): void
     {
-        // Snapshot disimpan agar data surat tetap merekam kondisi penempatan saat permintaan dibuat,
+        // Snapshot disimpan agar data dokumen tetap merekam kondisi penempatan saat permintaan dibuat,
         // meskipun data mahasiswa atau perusahaan berubah setelahnya.
         $payloadSnapshot = [
             'pendaftaran_id' => $pendaftaran->id,
@@ -30,7 +30,7 @@ class SuratPenetapanService
         ];
 
         SuratPenetapan::updateOrCreate(
-            // Satu pendaftaran hanya memiliki satu dokumen surat penetapan yang terus diperbarui statusnya.
+            // Satu pendaftaran hanya memiliki satu dokumen penetapan yang terus diperbarui statusnya.
             ['pendaftaran_id' => $pendaftaran->id],
             [
                 'requested_by' => $requestedBy,

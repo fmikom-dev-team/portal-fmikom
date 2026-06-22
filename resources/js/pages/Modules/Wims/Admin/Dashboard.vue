@@ -6,7 +6,6 @@ import {
     CalendarClock,
     CheckCircle2,
     ClipboardList,
-    FileText,
     Inbox,
     Mail,
     Users,
@@ -26,9 +25,9 @@ type SummaryProps = {
     companies?: number;
     pending_registrations?: number;
     approved_registrations?: number;
-    surat_requested?: number;
-    surat_generated?: number;
-    surat_failed?: number;
+    dokumen_requested?: number;
+    dokumen_generated?: number;
+    dokumen_failed?: number;
 };
 
 type PendingRegistrationItem = {
@@ -84,24 +83,6 @@ const statCards = computed(() => [
     },
 ]);
 
-const suratStats = computed(() => [
-    {
-        label: 'Menunggu Surat',
-        value: props.summary.surat_requested ?? 0,
-        className: 'border-blue-200 bg-blue-50 text-blue-700',
-    },
-    {
-        label: 'Berhasil',
-        value: props.summary.surat_generated ?? 0,
-        className: 'border-zinc-200 bg-zinc-50 text-zinc-900',
-    },
-    {
-        label: 'Gagal',
-        value: props.summary.surat_failed ?? 0,
-        className: 'border-rose-200 bg-rose-50 text-rose-700',
-    },
-]);
-
 const registrationStatusLabel = (value?: string | null) => {
     if (value === 'approved') return 'Disetujui';
     if (value === 'revisi') return 'Revisi';
@@ -110,13 +91,6 @@ const registrationStatusLabel = (value?: string | null) => {
     if (value === 'selesai') return 'Selesai';
     return 'Menunggu';
 };
-
-const suratTotal = computed(
-    () =>
-        (props.summary.surat_requested ?? 0) +
-        (props.summary.surat_generated ?? 0) +
-        (props.summary.surat_failed ?? 0),
-);
 
 const hasPendingRegistrations = computed(
     () => props.pendingRegistrations.length > 0,
@@ -183,7 +157,7 @@ const initials = (name?: string | null) => {
             </Card>
         </section>
 
-        <div class="grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_320px]">
+        <div class="grid gap-5">
             <Card
                 class="rounded-xl border border-zinc-200 bg-white py-0 shadow-none"
             >
@@ -277,7 +251,7 @@ const initials = (name?: string | null) => {
                                 >
                                     <Button
                                         as-child
-                                        class="h-9 rounded-lg bg-zinc-900 px-4 text-sm font-bold text-white hover:bg-zinc-800"
+                                        class="h-9 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] dark:from-[#214FAF] dark:to-[#0F6FBE] dark:shadow-[0_14px_34px_-18px_rgba(8,15,30,0.84)] dark:hover:shadow-[0_18px_38px_-18px_rgba(8,15,30,0.92)]"
                                     >
                                         <Link
                                             :href="
@@ -356,76 +330,6 @@ const initials = (name?: string | null) => {
                     </div>
                 </CardContent>
             </Card>
-
-            <div class="space-y-5">
-                <Card
-                    class="rounded-xl border border-zinc-200 bg-white py-0 shadow-none"
-                >
-                    <CardHeader
-                        class="border-b border-zinc-200 px-5 py-4"
-                    >
-                        <div class="flex items-center gap-2.5">
-                            <FileText class="size-4 text-blue-600" />
-                            <div>
-                                <CardTitle
-                                    class="text-[15px] font-bold text-slate-950"
-                                >
-                                    Status Surat
-                                </CardTitle>
-                                <p class="mt-1 text-sm leading-6 text-slate-600">
-                                    Ringkasan proses surat pengantar dan dokumen
-                                    terkait.
-                                </p>
-                            </div>
-                        </div>
-                    </CardHeader>
-
-                    <CardContent class="space-y-5 px-5 py-5">
-                        <div
-                            v-for="item in suratStats"
-                            :key="item.label"
-                            class="flex items-center justify-between rounded-lg border px-3.5 py-2.5"
-                            :class="item.className"
-                        >
-                            <span class="text-sm font-bold">{{
-                                item.label
-                            }}</span>
-                            <span class="text-sm font-bold">{{
-                                item.value
-                            }}</span>
-                        </div>
-
-                        <div class="border-t border-zinc-200 pt-5">
-                            <div
-                                class="flex items-center justify-between text-sm font-bold text-slate-700"
-                            >
-                                <span>Total Surat</span>
-                                <span
-                                    >{{ props.summary.surat_generated ?? 0 }}/{{
-                                        suratTotal
-                                    }}</span
-                                >
-                            </div>
-
-                            <div class="mt-3 h-2 rounded-full bg-zinc-100">
-                                <div
-                                    class="h-2 rounded-full bg-blue-600"
-                                    :style="{
-                                        width:
-                                            suratTotal > 0
-                                                ? `${Math.round(((props.summary.surat_generated ?? 0) / suratTotal) * 100)}%`
-                                                : '0%',
-                                    }"
-                                />
-                            </div>
-
-                            <p class="mt-3 text-sm text-zinc-500">
-                                Status surat penetapan yang sedang diproses sistem.
-                            </p>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
         </div>
     </div>
 </template>

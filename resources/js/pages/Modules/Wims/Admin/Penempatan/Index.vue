@@ -3,7 +3,6 @@ import { computed, reactive, ref, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import {
     CircleCheckBig,
-    FileText,
     Save,
     Search,
     Zap,
@@ -66,19 +65,9 @@ type PlacementItem = {
     tanggal_selesai?: string | null;
     status?: string | null;
     can_assign?: boolean;
-    can_generate_surat?: boolean;
     can_activate?: boolean;
     can_complete?: boolean;
     can_complete_now?: boolean;
-    surat?: {
-        status?: string | null;
-        provider?: string | null;
-        nomor_surat?: string | null;
-        requested_at?: string | null;
-        generated_at?: string | null;
-        file_url?: string | null;
-        error_message?: string | null;
-    };
 };
 
 type PaginationLink = {
@@ -327,44 +316,6 @@ const rowStatusClass = (item: PlacementItem) => {
         : 'bg-white text-slate-500 ring-1 ring-slate-200';
 };
 
-const activationHint = (item: PlacementItem) => {
-    if (item.status === 'aktif') {
-        return '';
-    }
-
-    if (item.status === 'selesai') {
-        return '';
-    }
-
-    if (!item.can_assign) {
-        return 'Pendaftaran harus lolos persetujuan kampus sebelum penempatan dapat diaktifkan.';
-    }
-
-    if (
-        !item.company_id ||
-        !item.dosen_pembimbing_id ||
-        !item.tanggal_mulai ||
-        !item.tanggal_selesai
-    ) {
-        return 'Lengkapi perusahaan, dosen pembimbing, dan periode magang sebelum aktivasi.';
-    }
-
-    if (
-        !item.surat ||
-        item.surat.status === 'belum_dibuat' ||
-        item.surat.status === 'failed' ||
-        item.surat.status === 'draft'
-    ) {
-        return 'Lanjutkan dengan membuat surat penetapan.';
-    }
-
-    if (item.surat.status === 'requested') {
-        return 'Permintaan surat penetapan sudah tercatat. Penempatan sudah siap diaktifkan.';
-    }
-
-    return 'Penempatan sudah siap diaktifkan.';
-};
-
 const startEdit = (item: PlacementItem) => {
     if (!item.can_assign) {
         return;
@@ -399,111 +350,6 @@ const savePlacement = (item: PlacementItem) => {
                 savedAssignments[item.id] = { ...assignmentForms[item.id] };
                 editingRows[item.id] = false;
             },
-            onFinish: () => {
-                processingId.value = null;
-            },
-        },
-    );
-};
-
-const suratStatusLabel = (value?: string | null) => {
-    if (value === 'requested') return 'Menunggu Surat';
-    if (value === 'generated') return 'Surat selesai';
-    if (value === 'failed') return 'Gagal diproses';
-    if (value === 'draft') return 'Draft';
-    return 'Belum dibuat';
-};
-
-const suratStatusClass = (value?: string | null) => {
-    if (value === 'requested')
-        return 'border-amber-200 bg-amber-50 text-amber-700';
-    if (value === 'generated')
-        return 'border-emerald-200 bg-emerald-50 text-emerald-700';
-    if (value === 'failed') return 'border-rose-200 bg-rose-50 text-rose-700';
-    if (value === 'draft')
-        return 'border-slate-200 bg-slate-100 text-slate-700';
-    return 'border-slate-200 bg-white text-slate-600';
-};
-
-const suratActionLabel = (item: PlacementItem) => {
-    if (item.surat?.status === 'requested') {
-        return 'Sedang Diproses';
-    }
-
-    if (item.surat?.status && item.surat.status !== 'belum_dibuat') {
-        return 'Buat Ulang Surat';
-    }
-
-    return 'Buat Surat';
-};
-
-const suratHint = (item: PlacementItem) => {
-    if (!item.can_generate_surat) {
-        if (item.surat?.status === 'requested') {
-            return 'Surat penetapan sedang menunggu proses sistem.';
-        }
-
-        if (item.surat?.status === 'generated') {
-            return 'Surat penetapan sudah selesai diproses.';
-        }
-
-        if (item.surat?.status === 'failed') {
-            return 'Surat gagal diproses. Admin dapat mencoba buat ulang.';
-        }
-
-        return 'Lengkapi perusahaan, dosen pembimbing, dan periode sebelum membuat surat.';
-    }
-
-    if (item.surat?.status === 'generated') {
-        return 'Surat penetapan sudah selesai diproses.';
-    }
-
-    if (item.surat?.status === 'failed') {
-        return 'Surat gagal diproses. Admin dapat mencoba buat ulang.';
-    }
-
-    return 'Surat penetapan siap diproses sistem.';
-};
-
-const normalizeSuratNote = (value?: string | null) => {
-    const note = (value || '').trim();
-
-    if (!note) {
-        return 'Surat penetapan masih menunggu proses sistem.';
-    }
-
-    const normalized = note.toLowerCase();
-
-    if (normalized.includes('fast') || normalized.includes('fast.')) {
-        return 'Surat penetapan masih menunggu proses sistem.';
-    }
-
-    return note;
-};
-
-const shouldShowFullSurat = (item: PlacementItem) => {
-    const saved = savedAssignments[item.id];
-    const suratStatus = item.surat?.status;
-
-    return Boolean(
-        saved?.perusahaan_id &&
-            saved?.dosen_pembimbing_id &&
-            item.company_id &&
-            item.dosen_pembimbing_id &&
-            suratStatus &&
-            suratStatus !== 'belum_dibuat',
-    );
-};
-
-const generateSurat = (item: PlacementItem) => {
-    processingId.value = item.id;
-
-    router.post(
-        wimsRoutes.admin.placements.generateSurat(item.id).url,
-        {},
-        {
-            preserveScroll: true,
-            preserveState: true,
             onFinish: () => {
                 processingId.value = null;
             },
@@ -702,7 +548,7 @@ const studentInitial = (name?: string | null) => {
                             </p>
                         </div>
                         <p class="max-w-xl text-right text-xs leading-5 text-slate-500">
-                            Data PKL yang sudah selesai tetap disimpan agar riwayat penempatan, surat, logbook, absensi, dan penilaian dosen/mitra tetap bisa ditelusuri.
+                            Data PKL yang sudah selesai tetap disimpan agar riwayat penempatan, logbook, absensi, dan penilaian dosen/mitra tetap bisa ditelusuri.
                         </p>
                     </div>
                 </div>
@@ -718,7 +564,7 @@ const studentInitial = (name?: string | null) => {
                         >
                         <CardDescription class="mt-1 text-sm leading-6 text-slate-600">
                             Kelola perusahaan, dosen pembimbing, status
-                            penempatan, dan surat penetapan mahasiswa.
+                            penempatan, dan aktivasi mahasiswa.
                         </CardDescription>
                     </div>
                 </div>
@@ -767,14 +613,14 @@ const studentInitial = (name?: string | null) => {
 
                     <Button
                         type="submit"
-                        class="h-10 rounded-lg bg-blue-600 px-4 text-white hover:bg-blue-700"
+                        class="h-10 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] dark:from-[#214FAF] dark:to-[#0F6FBE] dark:shadow-[0_14px_34px_-18px_rgba(8,15,30,0.84)] dark:hover:shadow-[0_18px_38px_-18px_rgba(8,15,30,0.92)]"
                     >
                         Terapkan
                     </Button>
                     <Button
                         type="button"
                         variant="outline"
-                        class="h-10 rounded-lg border-zinc-200 px-4 text-zinc-700"
+                        class="h-10 rounded-xl border border-wims-border/60 bg-wims-card px-4 text-sm font-semibold text-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-700/30"
                         @click="resetFilters"
                     >
                         Reset
@@ -949,19 +795,6 @@ const studentInitial = (name?: string | null) => {
                                         </div>
                                     </div>
 
-                                    <div
-                                        v-if="!isSavedReadonlyPlacement(item)"
-                                        class="border-t border-zinc-200 pt-5 text-xs xl:w-[220px] xl:flex-none xl:border-l xl:border-t-0 xl:pt-0 xl:pl-6"
-                                    >
-                                        <div class="min-w-0">
-                                            <p class="text-xs uppercase tracking-[0.14em] text-slate-500">
-                                                Periode
-                                            </p>
-                                            <p class="mt-1 text-xs leading-5 text-zinc-900">
-                                                {{ item.tanggal_mulai || '-' }} - {{ item.tanggal_selesai || '-' }}
-                                            </p>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
@@ -972,56 +805,32 @@ const studentInitial = (name?: string | null) => {
                                 <div :class="isSavedReadonlyPlacement(item) ? '' : 'xl:col-span-2'">
                                     <div class="rounded-xl bg-zinc-50/80 px-4 py-4">
                                         <template v-if="isSavedReadonlyPlacement(item)">
-                                            <div class="flex flex-col gap-5">
-                                                <div>
+                                            <div class="flex flex-col gap-5 md:grid md:grid-cols-[minmax(0,1fr)_minmax(18rem,28rem)] md:items-start md:gap-6">
+                                                <div class="space-y-2 md:pt-0.5">
                                                     <div>
-                                                        <p class="text-sm font-bold text-zinc-950">
+                                                        <p class="text-sm font-bold leading-tight text-zinc-950">
                                                             Penempatan Tersimpan
                                                         </p>
-                                                        <p class="mt-1 text-sm text-zinc-500">
-                                                            Perusahaan dan dosen pembimbing sudah dipilih.
+                                                        <p class="mt-1 text-sm leading-tight text-slate-500">
+                                                            Data penempatan sudah tersimpan.
                                                         </p>
                                                     </div>
                                                 </div>
 
-                                                <div class="grid gap-x-6 gap-y-4 md:grid-cols-3">
-                                                    <div>
-                                                        <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Perusahaan</p>
-                                                        <p class="mt-1 text-sm font-bold text-zinc-900">
-                                                            {{
-                                                                resolveCompanyLabel(
-                                                                    savedAssignments[item.id]?.perusahaan_id,
-                                                                )
-                                                            }}
+                                                <div class="flex flex-col gap-3 md:justify-self-end md:w-full">
+                                                    <div class="ml-auto flex items-center gap-2 text-right">
+                                                        <p class="text-sm font-bold leading-tight text-zinc-950">
+                                                            Periode
                                                         </p>
-                                                    </div>
-                                                    <div>
-                                                        <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Dosen Pembimbing</p>
-                                                        <p class="mt-1 text-sm font-bold text-zinc-900">
-                                                            {{
-                                                                resolveDosenLabel(
-                                                                    savedAssignments[item.id]?.dosen_pembimbing_id,
-                                                                )
-                                                            }}
-                                                        </p>
-                                                    </div>
-                                                    <div>
-                                                        <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Periode</p>
-                                                        <p class="mt-1 text-sm font-bold text-zinc-900">
+                                                        <p class="text-sm font-bold leading-tight text-zinc-950">
                                                             {{ item.tanggal_mulai || '-' }} - {{ item.tanggal_selesai || '-' }}
                                                         </p>
                                                     </div>
-                                                </div>
-
-                                                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                                    <p class="text-xs leading-5 text-slate-500">
-                                                        Data penempatan siap ditinjau kembali sebelum surat dibuat.
-                                                    </p>
-                                                    <div class="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
+                                                    <div class="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
                                                         <Button
                                                             type="button"
                                                             variant="outline"
-                                                            class="h-9 rounded-lg border-zinc-200 px-4 text-sm font-bold text-slate-700"
+                                                            class="h-9 rounded-xl border border-wims-border/60 bg-wims-card px-4 text-sm font-semibold text-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-700/30"
                                                             :disabled="processingId === item.id"
                                                             @click="startEdit(item)"
                                                         >
@@ -1030,7 +839,7 @@ const studentInitial = (name?: string | null) => {
                                                         <Button
                                                             v-if="item.can_activate"
                                                             type="button"
-                                                            class="h-9 rounded-lg bg-emerald-600 px-4 text-sm font-bold text-white hover:bg-emerald-700"
+                                                            class="h-9 rounded-xl bg-emerald-600 px-4 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-700 hover:shadow-emerald-500/30 active:scale-[0.98]"
                                                             :disabled="processingId === item.id"
                                                             @click="activatePlacement(item)"
                                                         >
@@ -1047,7 +856,7 @@ const studentInitial = (name?: string | null) => {
                                                     Lengkapi Penempatan
                                                 </p>
                                                 <p class="mt-1 text-sm text-zinc-500">
-                                                    Pilih perusahaan mitra dan dosen pembimbing sebelum membuat surat penetapan.
+                            Pilih perusahaan mitra dan dosen pembimbing sebelum mengaktifkan mahasiswa.
                                                 </p>
                                             </div>
 
@@ -1118,7 +927,7 @@ const studentInitial = (name?: string | null) => {
                                                     <Button
                                                         type="button"
                                                         variant="outline"
-                                                        class="h-9 rounded-lg border-zinc-200 px-4 text-sm font-bold text-slate-700"
+                                                        class="h-9 rounded-xl border border-wims-border/60 bg-wims-card px-4 text-sm font-semibold text-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-700/30"
                                                         :disabled="processingId === item.id"
                                                         @click="cancelEdit(item)"
                                                     >
@@ -1126,14 +935,14 @@ const studentInitial = (name?: string | null) => {
                                                     </Button>
                                                     <Button
                                                         type="button"
-                                                        class="h-9 rounded-lg px-4 text-sm font-bold"
+                                                        class="h-9 rounded-xl px-4 text-sm font-bold"
                                                         :class="
                                                             !item.can_assign ||
                                                             processingId === item.id ||
                                                             !isDirty(item) ||
                                                             !hasCompleteAssignment(item)
                                                                 ? 'cursor-not-allowed bg-zinc-100 text-zinc-400 hover:bg-zinc-100'
-                                                                : 'bg-blue-600 text-white hover:bg-blue-700'
+                                                                : 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] dark:from-[#214FAF] dark:to-[#0F6FBE] dark:shadow-[0_14px_34px_-18px_rgba(8,15,30,0.84)] dark:hover:shadow-[0_18px_38px_-18px_rgba(8,15,30,0.92)]'
                                                         "
                                                         :disabled="
                                                             !item.can_assign ||
@@ -1183,7 +992,7 @@ const studentInitial = (name?: string | null) => {
                                         !editingRows[item.id]
                                     "
                                     type="button"
-                                    class="h-9 rounded-lg bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700"
+                                    class="h-9 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] dark:from-[#214FAF] dark:to-[#0F6FBE] dark:shadow-[0_14px_34px_-18px_rgba(8,15,30,0.84)] dark:hover:shadow-[0_18px_38px_-18px_rgba(8,15,30,0.92)]"
                                     @click="startEdit(item)"
                                 >
                                     Edit Penempatan
@@ -1195,7 +1004,7 @@ const studentInitial = (name?: string | null) => {
                                         !editingRows[item.id]
                                     "
                                     type="button"
-                                    class="h-9 w-full rounded-lg bg-emerald-600 px-4 text-sm font-bold text-white hover:bg-emerald-700"
+                                    class="h-9 w-full rounded-xl bg-emerald-600 px-4 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-700 hover:shadow-emerald-500/30 active:scale-[0.98]"
                                     :disabled="processingId === item.id"
                                     @click="activatePlacement(item)"
                                 >
@@ -1212,20 +1021,6 @@ const studentInitial = (name?: string | null) => {
                                 >
                                     Selesaikan PKL
                                 </Button>
-                                <p
-                                    v-if="
-                                        !isSavedReadonlyPlacement(item) &&
-                                        !(
-                                            item.can_assign &&
-                                            item.status !== 'aktif' &&
-                                            item.status !== 'selesai' &&
-                                            editingRows[item.id]
-                                        )
-                                    "
-                                    class="text-xs leading-5 text-slate-500 xl:text-right"
-                                >
-                                    {{ activationHint(item) }}
-                                </p>
                             </div>
                         </div>
 
@@ -1258,175 +1053,6 @@ const studentInitial = (name?: string | null) => {
                                             : 'Tombol aktif setelah tanggal akhir PKL terlewati.'
                                     }}
                                 </p>
-                            </div>
-                        </div>
-
-                        <div
-                            class="mt-5 rounded-xl bg-zinc-50/80 px-4 py-4"
-                        >
-                            <div
-                                class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between"
-                            >
-                                <template v-if="shouldShowFullSurat(item)">
-                                    <div class="min-w-0 flex-1">
-                                        <div class="flex items-start gap-3">
-                                            <div
-                                                class="flex size-8 items-center justify-center rounded-lg bg-white text-zinc-700"
-                                            >
-                                                <FileText class="size-3.5" />
-                                            </div>
-                                            <div>
-                                                <div class="flex flex-wrap items-center gap-2">
-                                                    <p class="text-[15px] font-bold text-zinc-950">
-                                                        Surat Penetapan
-                                                    </p>
-                                                    <Badge
-                                                        variant="outline"
-                                                        class="rounded-full px-2.5 py-0.5 text-[10px] font-bold shadow-none"
-                                                        :class="
-                                                            suratStatusClass(
-                                                                item.surat?.status,
-                                                            )
-                                                        "
-                                                    >
-                                                        {{
-                                                            suratStatusLabel(
-                                                                item.surat?.status,
-                                                            )
-                                                        }}
-                                                    </Badge>
-                                                </div>
-                                                <p class="text-[11px] text-slate-500">
-                                                    Ringkasan surat penetapan mahasiswa.
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div
-                                            class="mt-4 grid gap-x-5 gap-y-4 rounded-xl border border-white/70 bg-white/80 px-4 py-4 text-xs text-zinc-600 md:grid-cols-2 xl:grid-cols-4"
-                                        >
-                                            <div>
-                                                <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Nomor surat</p>
-                                                <p class="mt-1 text-sm text-zinc-900">
-                                                    {{
-                                                        item.surat?.nomor_surat ||
-                                                        '-'
-                                                    }}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Diminta pada</p>
-                                                <p class="mt-1 text-sm text-zinc-900">
-                                                    {{
-                                                        item.surat?.requested_at ||
-                                                        '-'
-                                                    }}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Selesai pada</p>
-                                                <p class="mt-1 text-sm text-zinc-900">
-                                                    {{
-                                                        item.surat?.generated_at ||
-                                                        '-'
-                                                    }}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Catatan</p>
-                                                <p class="mt-1 line-clamp-2 text-sm text-zinc-900">
-                                                    {{
-                                                        normalizeSuratNote(
-                                                            item.surat?.error_message,
-                                                        )
-                                                    }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="w-full rounded-xl border border-white/70 bg-white/80 p-4 lg:w-[240px] lg:self-center">
-                                        <div class="flex flex-col gap-2">
-                                            <Button
-                                                type="button"
-                                                class="h-8 rounded-lg px-3 text-xs font-bold"
-                                                :class="
-                                                    item.can_generate_surat
-                                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                                        : 'border border-zinc-200 bg-zinc-100 text-zinc-400 hover:bg-zinc-100'
-                                                "
-                                                :disabled="
-                                                    processingId === item.id ||
-                                                    !item.can_generate_surat
-                                                "
-                                                @click="generateSurat(item)"
-                                            >
-                                                <FileText class="size-4" />
-                                                {{ suratActionLabel(item) }}
-                                            </Button>
-                                            <a
-                                                v-if="item.surat?.file_url"
-                                                :href="item.surat.file_url"
-                                                class="inline-flex h-8 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-zinc-300 hover:text-zinc-950"
-                                            >
-                                                Buka Dokumen
-                                            </a>
-                                        </div>
-                                        <p class="mt-3 text-[11px] leading-5 text-slate-500">
-                                            {{ suratHint(item) }}
-                                        </p>
-                                    </div>
-                                </template>
-                                <template v-else>
-                                    <div class="flex min-w-0 flex-1 items-start gap-3">
-                                        <div
-                                            class="flex size-8 items-center justify-center rounded-lg bg-white text-zinc-700"
-                                        >
-                                            <FileText class="size-3.5" />
-                                        </div>
-                                        <div class="min-w-0">
-                                            <p class="text-[15px] font-bold text-zinc-950">
-                                                Surat Penetapan
-                                            </p>
-                                            <p class="text-[11px] text-slate-500">
-                                                {{
-                                                    hasSavedAssignment(item)
-                                                        ? 'Surat belum dibuat untuk penempatan ini.'
-                                                        : 'Surat dapat dibuat setelah penempatan disimpan.'
-                                                }}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div class="w-full rounded-xl border border-white/70 bg-white/80 p-4 lg:w-[240px] lg:self-center">
-                                        <div class="flex flex-col gap-2">
-                                            <Button
-                                                type="button"
-                                                class="h-8 rounded-lg px-3 text-xs font-bold"
-                                                :class="
-                                                    item.can_generate_surat && processingId !== item.id
-                                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                                        : 'cursor-not-allowed border border-zinc-200 bg-zinc-100 text-zinc-400 hover:bg-zinc-100'
-                                                "
-                                                :disabled="
-                                                    processingId === item.id ||
-                                                    !item.can_generate_surat
-                                                "
-                                                @click="generateSurat(item)"
-                                            >
-                                                <FileText class="size-4" />
-                                                Buat Surat
-                                            </Button>
-                                        </div>
-                                        <p class="mt-3 text-[10px] leading-5 text-slate-500">
-                                            {{
-                                                hasSavedAssignment(item)
-                                                    ? 'Pastikan perusahaan, dosen pembimbing, dan periode sudah benar.'
-                                                    : 'Lengkapi dan simpan penempatan terlebih dahulu.'
-                                            }}
-                                        </p>
-                                    </div>
-                                </template>
                             </div>
                         </div>
                     </div>

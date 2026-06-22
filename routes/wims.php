@@ -114,8 +114,6 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('placements.complete-filtered');
         Route::put('/penempatan/{pendaftaran}', [AdminPlacementController::class, 'update'])
             ->name('placements.update');
-        Route::post('/penempatan/{pendaftaran}/generate-surat', [AdminPlacementController::class, 'generateSurat'])
-            ->name('placements.generate-surat');
         Route::post('/penempatan/{pendaftaran}/activate', [AdminPlacementController::class, 'activate'])
             ->name('placements.activate');
         Route::post('/penempatan/{pendaftaran}/complete', [AdminPlacementController::class, 'complete'])

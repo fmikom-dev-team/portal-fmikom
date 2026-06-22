@@ -427,7 +427,7 @@ const destroyCompany = () => {
 
                     <Button
                         type="button"
-                        class="h-9 rounded-lg bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700"
+                        class="h-9 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] dark:from-[#214FAF] dark:to-[#0F6FBE] dark:shadow-[0_14px_34px_-18px_rgba(8,15,30,0.84)] dark:hover:shadow-[0_18px_38px_-18px_rgba(8,15,30,0.92)]"
                         @click="startCreate"
                     >
                         <Plus class="size-4" />
@@ -968,7 +968,7 @@ const destroyCompany = () => {
                                 <div class="flex justify-end md:col-span-2">
                                     <Button
                                         type="submit"
-                                        class="h-9 rounded-lg bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700"
+                                        class="h-9 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] dark:from-[#214FAF] dark:to-[#0F6FBE] dark:shadow-[0_14px_34px_-18px_rgba(8,15,30,0.84)] dark:hover:shadow-[0_18px_38px_-18px_rgba(8,15,30,0.92)]"
                                         :disabled="accountProcessing"
                                     >
                                         <Plus class="size-4" />
@@ -985,14 +985,14 @@ const destroyCompany = () => {
                         <Button
                             type="button"
                             variant="outline"
-                            class="h-9 rounded-lg border-zinc-200 px-4 text-sm font-bold text-zinc-700"
+                            class="h-9 rounded-xl border border-wims-border/60 bg-wims-card px-4 text-sm font-semibold text-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-700/30"
                             @click="closeEditor"
                         >
                             Batal
                         </Button>
                         <Button
                             type="button"
-                            class="h-9 rounded-lg bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700"
+                            class="h-9 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] dark:from-[#214FAF] dark:to-[#0F6FBE] dark:shadow-[0_14px_34px_-18px_rgba(8,15,30,0.84)] dark:hover:shadow-[0_18px_38px_-18px_rgba(8,15,30,0.92)]"
                             :disabled="processing"
                             @click="submit"
                         >
@@ -1007,7 +1007,7 @@ const destroyCompany = () => {
                             v-if="isEditMode"
                             type="button"
                             variant="outline"
-                            class="h-9 rounded-lg border-rose-200 px-4 text-sm font-bold text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                            class="h-9 rounded-xl border border-rose-200 bg-white px-4 text-sm font-bold text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                             @click="deleteDialogOpen = true"
                         >
                             <Trash2 class="size-4" />

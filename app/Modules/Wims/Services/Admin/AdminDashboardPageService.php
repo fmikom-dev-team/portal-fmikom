@@ -40,9 +40,9 @@ class AdminDashboardPageService
                 'companies' => PerusahaanMitra::count(),
                 'pending_registrations' => PendaftaranMagang::where('status', 'pending')->count(),
                 'approved_registrations' => PendaftaranMagang::where('status', 'approved')->count(),
-                'surat_requested' => SuratPenetapan::where('status', 'requested')->count(),
-                'surat_generated' => SuratPenetapan::where('status', 'generated')->count(),
-                'surat_failed' => SuratPenetapan::where('status', 'failed')->count(),
+                'dokumen_requested' => SuratPenetapan::where('status', 'requested')->count(),
+                'dokumen_generated' => SuratPenetapan::where('status', 'generated')->count(),
+                'dokumen_failed' => SuratPenetapan::where('status', 'failed')->count(),
             ],
             'pendingRegistrations' => $pendingRegistrations->all(),
         ];

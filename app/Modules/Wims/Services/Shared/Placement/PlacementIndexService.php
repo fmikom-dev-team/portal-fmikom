@@ -26,7 +26,7 @@ class PlacementIndexService
         $allowedStatuses = ['approved', 'aktif', 'selesai'];
 
         $query = PendaftaranMagang::query()
-            ->when($withRelations, fn (Builder $builder) => $builder->with(['mahasiswa', 'perusahaan', 'suratPenetapan']))
+            ->when($withRelations, fn (Builder $builder) => $builder->with(['mahasiswa', 'perusahaan']))
             ->whereIn('status', $allowedStatuses);
 
         if ($status !== '' && $status !== 'all' && in_array($status, $allowedStatuses, true)) {
@@ -191,14 +191,11 @@ class PlacementIndexService
 
     private function transformPlacement(PendaftaranMagang $pendaftaran): array
     {
-        $surat = $pendaftaran->suratPenetapan;
         $canAssign = $pendaftaran->status === 'approved';
         $hasPlacementData = filled($pendaftaran->perusahaan_id)
             && filled($pendaftaran->dosen_pembimbing_id)
             && filled($pendaftaran->tanggal_mulai)
             && filled($pendaftaran->tanggal_selesai);
-        $hasGeneratedRequest = $surat !== null
-            && in_array($surat->status, ['requested', 'generated'], true);
         $canCompleteNow = $pendaftaran->canBeMarkedComplete();
 
         return [
@@ -222,19 +219,9 @@ class PlacementIndexService
             'tanggal_selesai' => $this->formatDate($pendaftaran->tanggal_selesai),
             'status' => $pendaftaran->status,
             'can_assign' => $canAssign,
-            'can_generate_surat' => $pendaftaran->status === 'approved' && $hasPlacementData,
-            'can_activate' => $pendaftaran->status === 'approved' && $hasPlacementData && $hasGeneratedRequest,
+            'can_activate' => $pendaftaran->status === 'approved' && $hasPlacementData,
             'can_complete' => $pendaftaran->status === 'aktif',
             'can_complete_now' => $canCompleteNow,
-            'surat' => [
-                'status' => $surat?->status ?? 'belum_dibuat',
-                'provider' => $surat?->provider,
-                'nomor_surat' => $surat?->nomor_surat,
-                'requested_at' => $this->formatDateTime($surat?->requested_at),
-                'generated_at' => $this->formatDateTime($surat?->generated_at),
-                'file_url' => $surat?->file_url,
-                'error_message' => $surat?->error_message,
-            ],
         ];
     }
 
@@ -249,18 +236,5 @@ class PlacementIndexService
         }
 
         return Carbon::parse($date)->translatedFormat('d M Y');
-    }
-
-    private function formatDateTime(mixed $date): ?string
-    {
-        if (blank($date)) {
-            return null;
-        }
-
-        if ($date instanceof Carbon) {
-            return $date->translatedFormat('d M Y H:i');
-        }
-
-        return Carbon::parse($date)->translatedFormat('d M Y H:i');
     }
 }

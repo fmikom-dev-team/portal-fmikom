@@ -394,7 +394,7 @@ const placementLink = (item: RegistrationItem) =>
 
                     <Button
                         type="submit"
-                        class="h-10 rounded-lg bg-blue-600 px-4 text-white hover:bg-blue-700"
+                        class="h-10 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] dark:from-[#214FAF] dark:to-[#0F6FBE] dark:shadow-[0_14px_34px_-18px_rgba(8,15,30,0.84)] dark:hover:shadow-[0_18px_38px_-18px_rgba(8,15,30,0.92)]"
                     >
                         <SlidersHorizontal class="size-4" />
                         Terapkan
@@ -403,7 +403,7 @@ const placementLink = (item: RegistrationItem) =>
                     <Button
                         type="button"
                         variant="outline"
-                        class="h-10 rounded-lg border-zinc-200 px-4 text-zinc-700"
+                        class="h-10 rounded-xl border border-wims-border/60 bg-wims-card px-4 text-sm font-semibold text-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-700/30"
                         @click="resetFilters"
                     >
                         Reset
@@ -550,7 +550,7 @@ const placementLink = (item: RegistrationItem) =>
                                             </span>
                                             <Link
                                                 :href="placementLink(item)"
-                                                class="inline-flex h-9 items-center gap-2 rounded-lg bg-blue-600 px-3 text-sm font-bold text-white transition hover:bg-blue-700"
+                                                class="inline-flex h-9 items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] dark:from-[#214FAF] dark:to-[#0F6FBE] dark:shadow-[0_14px_34px_-18px_rgba(8,15,30,0.84)] dark:hover:shadow-[0_18px_38px_-18px_rgba(8,15,30,0.92)]"
                                             >
                                                 <BriefcaseBusiness class="size-4" />
                                                 Lanjut ke Penempatan
@@ -612,7 +612,7 @@ const placementLink = (item: RegistrationItem) =>
                                             </span>
                                             <Link
                                                 :href="placementLink(item)"
-                                                class="font-bold text-blue-600 hover:text-blue-700"
+                                                class="inline-flex h-9 items-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] dark:from-[#214FAF] dark:to-[#0F6FBE] dark:shadow-[0_14px_34px_-18px_rgba(8,15,30,0.84)] dark:hover:shadow-[0_18px_38px_-18px_rgba(8,15,30,0.92)]"
                                             >
                                                 Kelola di Penempatan
                                             </Link>
