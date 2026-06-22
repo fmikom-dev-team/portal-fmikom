@@ -4,6 +4,7 @@ import StudentBottomNav from '@/components/Modules/Wims/Mahasiswa/StudentBottomN
 import StudentSidebar from '@/components/Modules/Wims/Mahasiswa/StudentSidebar.vue';
 import StudentTopbar from '@/components/Modules/Wims/Mahasiswa/StudentTopbar.vue';
 import { useWimsStudentAppearance } from '@/composables/useWimsStudentAppearance';
+import AppToast from '@/pages/WorkOs/components/ui/AppToast.vue';
 
 const { resolvedAppearance } = useWimsStudentAppearance();
 const studentThemeClass = computed(() =>
@@ -83,5 +84,6 @@ onBeforeUnmount(() => {
         </div>
 
         <StudentBottomNav />
+        <AppToast />
     </div>
 </template>
