@@ -20,7 +20,7 @@ class ArchiveController extends Controller
         $dateTo       = $request->string('date_to')->toString();
 
         $query = Surat::query()
-            ->with(['pemohon:id,name,nim_nip', 'jenisSurat:id,nama,category_id'])
+            ->with(['pemohon:id,name,nomor_induk', 'jenisSurat:id,nama,category_id'])
             ->whereIn('type', ['pengajuan', 'surat_keluar'])
             ->where('status', 'finished')
             ->whereNotNull('generated_file_path')

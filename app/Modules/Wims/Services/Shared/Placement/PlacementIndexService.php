@@ -40,7 +40,6 @@ class PlacementIndexService
                     $mahasiswaQuery
                         ->where('name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('nim_nip', 'like', "%{$search}%")
                         ->orWhere('nomor_induk', 'like', "%{$search}%");
                 })->orWhereHas('perusahaan', function (Builder $perusahaanQuery) use ($search): void {
                     $perusahaanQuery->where('nama', 'like', "%{$search}%");

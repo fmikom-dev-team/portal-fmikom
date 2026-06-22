@@ -22,12 +22,12 @@ class QrManageController extends Controller
         // Ambil dari tabel surat_qr_codes jika ada, fallback ke surats.qr_token
         $query = Surat::query()
             ->select(['id', 'jenis_surat_id', 'pemohon_id', 'nomor_surat', 'status', 'qr_token', 'created_at'])
-            ->with(['pemohon:id,name,nim_nip', 'jenisSurat:id,nama', 'qrCode'])
+            ->with(['pemohon:id,name,nomor_induk', 'jenisSurat:id,nama', 'qrCode'])
             ->whereNotNull('qr_token')
             ->latest();
         // $query = Surat::query()
         //         ->select(['id', 'jenis_surat_id', 'pemohon_id', 'nomor_surat', 'status', 'qr_token', 'created_at'])
-        //         ->with(['pemohon:id,name,nim_nip', 'jenisSurat:id,nama', 'qrCode:id,surat_id,status,revoked_at'])
+        //         ->with(['pemohon:id,name,nomor_induk', 'jenisSurat:id,nama', 'qrCode:id,surat_id,status,revoked_at'])
         //         ->whereNotNull('qr_token')
         //         ->latest();
 

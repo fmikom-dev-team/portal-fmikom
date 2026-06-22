@@ -139,7 +139,7 @@ class NotificationFeedService
             ->with([
                 'jenisSurat:id,nama,approval_role_id',
                 'jenisSurat.approvalRole:id,nama,slug',
-                'pemohon:id,name,nim_nip,nomor_induk',
+                'pemohon:id,name,nomor_induk',
             ])
             ->where('status', Surat::STATUS_VALIDATED_ADMIN)
             ->whereHas('jenisSurat.approvalRole', function ($q) use ($roleSlug): void {

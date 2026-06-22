@@ -44,7 +44,7 @@ class DashboardService
             $query->whereHas('pemohon', function ($pemohonQuery) use ($search): void {
                 $pemohonQuery
                     ->where('name', 'like', "%{$search}%")
-                    ->orWhere('nim_nip', 'like', "%{$search}%")
+                    ->orWhere('nomor_induk', 'like', "%{$search}%")
                     ->orWhere('nomor_induk', 'like', "%{$search}%");
             });
         }

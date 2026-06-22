@@ -54,7 +54,7 @@ class LetterIndexController extends Controller
             $query->where(function ($q) use ($search): void {
                 $q->whereHas('pemohon', function ($pemohon) use ($search): void {
                     $pemohon->where('name', 'like', "%{$search}%")
-                        ->orWhere('nim_nip', 'like', "%{$search}%");
+                        ->orWhere('nomor_induk', 'like', "%{$search}%");
                 });
             });
         }

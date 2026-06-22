@@ -51,7 +51,6 @@ class AdminAssessmentRecapPageService
                 $builder->whereHas('mahasiswa', function (Builder $studentQuery) use ($search): void {
                     $studentQuery
                         ->where('name', 'like', "%{$search}%")
-                        ->orWhere('nim_nip', 'like', "%{$search}%")
                         ->orWhere('nomor_induk', 'like', "%{$search}%");
                 })->orWhereHas('perusahaan', function (Builder $companyQuery) use ($search): void {
                     $companyQuery->where('nama', 'like', "%{$search}%");
@@ -80,7 +79,7 @@ class AdminAssessmentRecapPageService
                 'id' => $pendaftaran->id,
                 'student' => [
                     'name' => $pendaftaran->mahasiswa?->name,
-                    'nim' => $pendaftaran->mahasiswa?->nim_nip ?: $pendaftaran->mahasiswa?->nomor_induk,
+                    'nim' => $pendaftaran->mahasiswa?->nomor_induk ?: $pendaftaran->mahasiswa?->nim_nip,
                     'email' => $pendaftaran->mahasiswa?->email,
                     'program_studi' => $pendaftaran->mahasiswa?->programStudi?->nama,
                 ],
