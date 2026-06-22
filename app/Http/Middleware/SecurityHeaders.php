@@ -155,7 +155,6 @@ class SecurityHeaders
             'style-src '.implode(' ', array_filter([
                 "'self'",
                 "'unsafe-inline'",
-                "'nonce-{$nonce}'",
                 'https://fonts.googleapis.com',
                 'https://fonts.bunny.net',
                 $isLocalEnvironment ? 'http://0.0.0.0:5173 http://127.0.0.1:5173 http://localhost:5173' : null,
