@@ -78,7 +78,7 @@ class PagiProfileService
         $names = $this->extractCollaboratorNames($projectsCollection);
         $preloadedUsers = [];
         if (! empty($names)) {
-            $preloadedUsers = User::whereIn('name', $names)
+            $preloadedUsers = User::query()->whereIn('name', $names)
                 ->select(['id', 'name', 'pagi_username', 'foto_path'])
                 ->get()
                 ->keyBy('name')
@@ -286,7 +286,7 @@ class PagiProfileService
      */
     public function checkUsername(string $username, int $currentUserId): array
     {
-        $exists = User::where('pagi_username', $username)
+        $exists = User::query()->where('pagi_username', $username)
             ->where('id', '!=', $currentUserId)
             ->exists();
 
@@ -303,7 +303,7 @@ class PagiProfileService
         ];
 
         // One query to check which candidates are already taken
-        $taken = User::whereIn('pagi_username', $candidates)
+        $taken = User::query()->whereIn('pagi_username', $candidates)
             ->pluck('pagi_username')
             ->flip()
             ->all();
