@@ -27,7 +27,19 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          cache: composer # <-- Enable composer caching to speed up CI
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: |
+          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
 
       - name: Setup Node
         uses: actions/setup-node@v4
