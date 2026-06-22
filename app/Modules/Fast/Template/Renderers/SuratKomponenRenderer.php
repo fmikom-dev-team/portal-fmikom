@@ -212,6 +212,7 @@ HTML;
     protected static function filePathToDataUri(string $path): ?string
     {
         $path = trim($path);
+        $resolvedPath = null;
 
         if ($path === '') {
             return null;
@@ -221,12 +222,10 @@ HTML;
             return $path;
         }
 
-        $resolvedPath = null;
-
-        if (str_starts_with($path, '/storage/')) {
-            $resolvedPath = storage_path('app/public/' . ltrim(substr($path, strlen('/storage/')), '/'));
-        } elseif (str_starts_with($path, 'storage/')) {
-            $resolvedPath = storage_path('app/public/' . ltrim(substr($path, strlen('storage/')), '/'));
+        if (str_starts_with($path, '/private/')) {
+            $resolvedPath = storage_path('app/private/' . ltrim(substr($path, strlen('/private/')), '/'));
+        } elseif (str_starts_with($path, 'private/')) {
+            $resolvedPath = storage_path('app/private/' . ltrim(substr($path, strlen('private/')), '/'));
         } elseif (str_starts_with($path, '/asset/')) {
             $resolvedPath = public_path(ltrim($path, '/'));
         } elseif (str_starts_with($path, 'asset/')) {
@@ -242,7 +241,20 @@ HTML;
         } elseif (preg_match('/^https?:\\/\\//i', $path)) {
             return null;
         } else {
-            $resolvedPath = public_path(ltrim($path, '/'));
+            $candidates = [
+                storage_path('app/private/' . ltrim($path, '/')),
+                storage_path('app/public/' . ltrim($path, '/')),
+                public_path(ltrim($path, '/')),
+            ];
+
+            foreach ($candidates as $candidatePath) {
+                if (file_exists($candidatePath)) {
+                    $resolvedPath = $candidatePath;
+                    break;
+                }
+            }
+
+            $resolvedPath = $resolvedPath ?? null;
         }
 
         if (! $resolvedPath || ! file_exists($resolvedPath)) {

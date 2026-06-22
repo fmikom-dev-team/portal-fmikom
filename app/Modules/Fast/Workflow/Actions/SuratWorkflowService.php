@@ -12,10 +12,10 @@ use App\Modules\Fast\DTOs\SuratDataContract;
 use App\Modules\Fast\Services\Shared\SuratDocumentGeneratorService;
 use App\Modules\Fast\Workflow\Approvals\FastApprovalWorkflowService as ApprovalWorkflowService;
 use App\Modules\Fast\Services\Shared\SuratHistoryService;
+use App\Support\FastStorage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -74,9 +74,7 @@ class SuratWorkflowService
                 return $this->freshSubmittedSurat($surat);
             });
         } catch (\Throwable $throwable) {
-            foreach ($storedPaths as $path) {
-                Storage::disk('public')->delete($path);
-            }
+            FastStorage::delete($storedPaths);
 
             throw $throwable;
         }
@@ -460,10 +458,10 @@ class SuratWorkflowService
      */
     protected function storeLampirans(Surat $surat, array $lampirans, array &$storedPaths): void
     {
-        Storage::disk('public')->makeDirectory('surat-lampirans');
+        FastStorage::makeDirectory('surat-lampirans', 'local');
 
         foreach ($lampirans as $lampiran) {
-            $path = $lampiran->store('surat-lampirans', 'public');
+            $path = $lampiran->store('surat-lampirans', 'local');
             $storedPaths[] = $path;
 
             SuratLampiran::query()->create([
@@ -617,7 +615,5 @@ class SuratWorkflowService
         ]);
     }
 }
-
-
 
 

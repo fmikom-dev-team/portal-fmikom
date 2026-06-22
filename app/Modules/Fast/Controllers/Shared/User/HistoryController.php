@@ -92,7 +92,7 @@ class HistoryController extends Controller
                 'lampiran' => $surat->lampirans->map(fn ($lampiran): array => [
                     'id' => $lampiran->id,
                     'name' => $lampiran->nama_asli ?? $lampiran->nama_file ?? $lampiran->name ?? 'Lampiran',
-                    'url' => $lampiran->url ?? $lampiran->path_url ?? null,
+                    'url' => route('documents.lampiran.preview', $lampiran->id, absolute: false),
                     'type' => $lampiran->mime_type ?? $lampiran->type ?? null,
                 ])->values(),
                 'tanggal_pengajuan' => optional($surat->tanggal_pengajuan)?->toISOString(),

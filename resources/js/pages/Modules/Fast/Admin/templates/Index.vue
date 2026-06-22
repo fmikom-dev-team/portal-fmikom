@@ -920,6 +920,7 @@ const logoFile = ref<File | null>(null);
 const logoInputRef = ref<HTMLInputElement | null>(null);
 const logoBlobUrl = ref<string | null>(null);
 const logoPreviewUrl = ref(resolveLogoPreviewUrl(settingsData.value['logo_path']));
+const logoPreviewRoute = '/admin/settings/template/logo-preview';
 
 function resolveLogoPreviewUrl(path?: string | null): string {
     const value = (path ?? '').trim();
@@ -932,7 +933,6 @@ function resolveLogoPreviewUrl(path?: string | null): string {
         value.startsWith('http://')
         || value.startsWith('https://')
         || value.startsWith('data:')
-        || value.startsWith('/')
     ) {
         if (value.startsWith('/public/')) {
             return `/${value.slice('/public/'.length)}`;
@@ -941,15 +941,23 @@ function resolveLogoPreviewUrl(path?: string | null): string {
         return value;
     }
 
+    if (value.startsWith('/public/')) {
+        return `/${value.slice('/public/'.length)}`;
+    }
+
     if (value.startsWith('public/')) {
         return `/${value.slice('public/'.length)}`;
     }
 
-    if (value.startsWith('storage/')) {
-        return `/${value}`;
+    if (value.startsWith('/private/') || value.startsWith('private/') || value.startsWith('fast/')) {
+        return logoPreviewRoute;
     }
 
-    return `/${value.replace(/^\/+/, '')}`;
+    if (value.startsWith('/images/') || value.startsWith('images/') || value.startsWith('/asset/') || value.startsWith('asset/')) {
+        return `/${value.replace(/^\/+/, '')}`;
+    }
+
+    return logoPreviewRoute;
 }
 
 function syncLogoPreview(path?: string | null) {

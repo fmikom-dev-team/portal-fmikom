@@ -7,6 +7,7 @@ use App\Models\Surat;
 use App\Models\TemplateGlobalSetting;
 use App\Modules\Fast\Template\Renderers\SuratKomponenRenderer;
 use App\Modules\Fast\Template\Renderers\SuratTemplateRendererService;
+use App\Support\FastStorage;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
@@ -19,7 +20,6 @@ use Mpdf\Config\FontVariables;
 use Mpdf\Mpdf;
 // use Barryvdh\DomPDF\Facade\Pdf;
 // use Throwable;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class SuratDocumentGeneratorService
@@ -88,11 +88,12 @@ class SuratDocumentGeneratorService
         //     'template'     => $freshSurat->jenisSurat?->template,
         //     'customCss'    => $freshSurat->jenisSurat?->template?->css_style ?? '',
         // ];
-        Storage::disk('public')->makeDirectory(dirname($outputPath));
+        FastStorage::makeDirectory(dirname($outputPath), 'local');
 
-        Storage::disk('public')->put(
+        FastStorage::put(
             $outputPath,
             $this->renderPdfOutput($viewPayload),
+            'local',
         );
 
         $updates = [

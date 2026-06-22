@@ -6,8 +6,8 @@ use App\Models\Surat;
 use App\Models\SuratApprovalFlow;
 use App\Modules\Fast\Support\TemplateAdminSupport;
 use App\Modules\Fast\Template\Renderers\SuratTemplateRendererService;
+use App\Support\FastStorage;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -283,9 +283,9 @@ class DashboardService
         if (
             $surat->status === Surat::STATUS_FINISHED &&
             filled($surat->generated_file_path) &&
-            Storage::disk('public')->exists($surat->generated_file_path)
+            FastStorage::exists($surat->generated_file_path)
         ) {
-            return Storage::disk('public')->response(
+            return FastStorage::response(
                 $surat->generated_file_path,
                 $filename,
                 [
@@ -340,9 +340,9 @@ class DashboardService
         if (
             $surat->status === Surat::STATUS_FINISHED &&
             filled($surat->generated_file_path) &&
-            Storage::disk('public')->exists($surat->generated_file_path)
+            FastStorage::exists($surat->generated_file_path)
         ) {
-            return Storage::disk('public')->response(
+            return FastStorage::response(
                 $surat->generated_file_path,
                 $filename,
                 $headers,

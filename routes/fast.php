@@ -257,6 +257,8 @@ Route::middleware(['auth', 'verified', 'admin.access'])
 
         Route::post('/settings/template', [GlobalSettingsController::class, 'save'])
             ->name('settings.template');
+        Route::get('/settings/template/logo-preview', [GlobalSettingsController::class, 'previewLogo'])
+            ->name('settings.template.logo-preview');
     });
 
 
