@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
-import { ShieldCheck, ArrowRight } from 'lucide-vue-next';
+import { Head } from "@inertiajs/vue3";
+import { ArrowRight, ShieldCheck } from "lucide-vue-next";
+import { ref } from "vue";
 
-const token = ref('');
+const token = ref("");
 
 function submit(): void {
-    const trimmedToken = token.value.trim();
-    if (!trimmedToken) return;
-    window.location.href = `/verifikasi-qr/${encodeURIComponent(trimmedToken)}`;
+	const trimmedToken = token.value.trim();
+	if (!trimmedToken) return;
+	window.location.href = `/verifikasi-qr/${encodeURIComponent(trimmedToken)}`;
 }
 </script>
 

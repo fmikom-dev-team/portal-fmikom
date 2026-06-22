@@ -23,6 +23,10 @@ class ImageProxyController extends Controller
 
             $relativePath = ltrim(Crypt::decryptString($base64), '/');
 
+            if (str_contains($relativePath, '..') || str_contains($relativePath, '\\')) {
+                abort(403, 'Unauthorized access.');
+            }
+
             $location = WimsStorage::locate($relativePath);
 
             if (! $location) {

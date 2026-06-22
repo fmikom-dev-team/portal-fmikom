@@ -32,7 +32,10 @@ const filteredRelations = computed(() => {
 });
 
 const isFollowingBack = (senderId: any) => {
-	const following = (page.props.auth?.user as any)?.following ?? (page.props.auth?.user as any)?.metadata?.following ?? [];
+	const following =
+		(page.props.auth?.user as any)?.following ??
+		(page.props.auth?.user as any)?.metadata?.following ??
+		[];
 	const sId = Number(senderId);
 	return following.some((id: any) => Number(id) === sId);
 };

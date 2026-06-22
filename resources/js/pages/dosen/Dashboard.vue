@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Page from '@/pages/Modules/Fast/Dosen/Dashboard.vue';
+import Page from "@/pages/Modules/Fast/Dosen/Dashboard.vue";
 
 defineOptions({ inheritAttrs: false });
 </script>

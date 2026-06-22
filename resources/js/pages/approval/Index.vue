@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Page from '@/pages/Modules/Fast/Shared/approval/Index.vue';
+import Page from "@/pages/Modules/Fast/Shared/approval/Index.vue";
 
 defineOptions({ inheritAttrs: false });
 </script>

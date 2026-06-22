@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Page from '@/pages/Modules/Fast/Admin/letters/Edit.vue';
+import Page from "@/pages/Modules/Fast/Admin/letters/Edit.vue";
 
 defineOptions({ inheritAttrs: false });
 </script>

@@ -1,56 +1,110 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-import { computed } from 'vue';
-import { ShieldCheck, XCircle, Clock3, HelpCircle, FileText, Hash, Calendar, Award, ArrowLeft } from 'lucide-vue-next';
+import { Head } from "@inertiajs/vue3";
+import {
+	ArrowLeft,
+	Award,
+	Calendar,
+	Clock3,
+	FileText,
+	Hash,
+	HelpCircle,
+	ShieldCheck,
+	XCircle,
+} from "lucide-vue-next";
+import { computed } from "vue";
 
 const props = defineProps<{
-    found: boolean;
-    valid: boolean;
-    revoked: boolean;
-    message: string;
-    surat: {
-        nomor_surat?: string | null;
-        jenis_surat?: string | null;
-        kategori?: string | null;
-        status?: string | null;
-        nama_pemohon?: string | null;
-        nim?: string | null;
-        program_studi?: string | null;
-        keperluan?: string | null;
-        tanggal_terbit?: string | null;
-        disahkan_oleh?: string | null;
-        nama_approver?: string | null;
-        tanggal_persetujuan_final?: string | null;
-    } | null;
+	found: boolean;
+	valid: boolean;
+	revoked: boolean;
+	message: string;
+	surat: {
+		nomor_surat?: string | null;
+		jenis_surat?: string | null;
+		kategori?: string | null;
+		status?: string | null;
+		nama_pemohon?: string | null;
+		nim?: string | null;
+		program_studi?: string | null;
+		keperluan?: string | null;
+		tanggal_terbit?: string | null;
+		disahkan_oleh?: string | null;
+		nama_approver?: string | null;
+		tanggal_persetujuan_final?: string | null;
+	} | null;
 }>();
 
 const state = computed(() => {
-    if (!props.found) return 'not_found';
-    if (props.revoked) return 'revoked';
-    if (props.valid) return 'valid';
-    return 'pending';
+	if (!props.found) return "not_found";
+	if (props.revoked) return "revoked";
+	if (props.valid) return "valid";
+	return "pending";
 });
 
-const cfg = computed(() => ({
-    valid:     { icon: ShieldCheck,  label: 'DOKUMEN VALID',           color: 'blue',   bg: 'bg-blue-600',   ring: 'ring-blue-200',   light: 'bg-blue-50',   text: 'text-blue-800',   border: 'border-blue-200' },
-    revoked:   { icon: XCircle,      label: 'DOKUMEN DICABUT',         color: 'red',    bg: 'bg-red-600',    ring: 'ring-red-200',    light: 'bg-red-50',    text: 'text-red-800',    border: 'border-red-200' },
-    pending:   { icon: Clock3,       label: 'MENUNGGU PERSETUJUAN',    color: 'amber',  bg: 'bg-amber-500',  ring: 'ring-amber-200',  light: 'bg-amber-50',  text: 'text-amber-800',  border: 'border-amber-200' },
-    not_found: { icon: HelpCircle,   label: 'TIDAK DITEMUKAN',         color: 'slate',  bg: 'bg-slate-500',  ring: 'ring-slate-200',  light: 'bg-slate-50',  text: 'text-slate-700',  border: 'border-slate-200' },
-}[state.value]));
+const cfg = computed(
+	() =>
+		({
+			valid: {
+				icon: ShieldCheck,
+				label: "DOKUMEN VALID",
+				color: "blue",
+				bg: "bg-blue-600",
+				ring: "ring-blue-200",
+				light: "bg-blue-50",
+				text: "text-blue-800",
+				border: "border-blue-200",
+			},
+			revoked: {
+				icon: XCircle,
+				label: "DOKUMEN DICABUT",
+				color: "red",
+				bg: "bg-red-600",
+				ring: "ring-red-200",
+				light: "bg-red-50",
+				text: "text-red-800",
+				border: "border-red-200",
+			},
+			pending: {
+				icon: Clock3,
+				label: "MENUNGGU PERSETUJUAN",
+				color: "amber",
+				bg: "bg-amber-500",
+				ring: "ring-amber-200",
+				light: "bg-amber-50",
+				text: "text-amber-800",
+				border: "border-amber-200",
+			},
+			not_found: {
+				icon: HelpCircle,
+				label: "TIDAK DITEMUKAN",
+				color: "slate",
+				bg: "bg-slate-500",
+				ring: "ring-slate-200",
+				light: "bg-slate-50",
+				text: "text-slate-700",
+				border: "border-slate-200",
+			},
+		})[state.value],
+);
 
 function fmt(d?: string | null) {
-    if (!d) return '-';
-    return new Intl.DateTimeFormat('id-ID', {
-        day: '2-digit', month: 'short', year: 'numeric',
-    }).format(new Date(d));
+	if (!d) return "-";
+	return new Intl.DateTimeFormat("id-ID", {
+		day: "2-digit",
+		month: "short",
+		year: "numeric",
+	}).format(new Date(d));
 }
 
 function fmtFull(d?: string | null) {
-    if (!d) return '-';
-    return new Intl.DateTimeFormat('id-ID', {
-        day: '2-digit', month: 'short', year: 'numeric',
-        hour: '2-digit', minute: '2-digit',
-    }).format(new Date(d));
+	if (!d) return "-";
+	return new Intl.DateTimeFormat("id-ID", {
+		day: "2-digit",
+		month: "short",
+		year: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
+	}).format(new Date(d));
 }
 </script>
 

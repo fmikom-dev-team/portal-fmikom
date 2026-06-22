@@ -30,7 +30,8 @@ test('ImageProxyController serve rejects path traversal attempts', function () {
     $safeSignature = str_replace(['+', '/', '='], ['-', '_', ''], Crypt::encryptString($safeRelativePath));
 
     // Request safe image
-    $responseSafe = $this->get("/images/v1/{$safeSignature}");
+    $urlSafe = \Illuminate\Support\Facades\URL::signedRoute('images.proxy', ['encrypted_path' => $safeSignature]);
+    $responseSafe = $this->get($urlSafe);
     $responseSafe->assertStatus(200);
 
     // Traversal path targeting secret.txt (via ../secret.txt)
@@ -38,8 +39,9 @@ test('ImageProxyController serve rejects path traversal attempts', function () {
     $traversalSignature = str_replace(['+', '/', '='], ['-', '_', ''], Crypt::encryptString($traversalPath));
 
     // Request traversal image
-    $responseTraversal = $this->get("/images/v1/{$traversalSignature}");
-    expect($responseTraversal->status())->toBeIn([403, 404]);
+    $urlTraversal = \Illuminate\Support\Facades\URL::signedRoute('images.proxy', ['encrypted_path' => $traversalSignature]);
+    $responseTraversal = $this->get($urlTraversal);
+    expect($responseTraversal->getStatusCode())->toBeIn([403, 404]);
 });
 
 test('PortalPostController uploadImage mode by_url downloads external image and respects limits', function () {

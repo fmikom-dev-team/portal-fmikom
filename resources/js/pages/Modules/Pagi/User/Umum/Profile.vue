@@ -374,7 +374,10 @@ const toggleFollow = async () => {
 			if (!page.props.auth.user.metadata) {
 				page.props.auth.user.metadata = {};
 			}
-			let list = page.props.auth.user.following ?? page.props.auth.user.metadata?.following ?? [];
+			let list =
+				page.props.auth.user.following ??
+				page.props.auth.user.metadata?.following ??
+				[];
 			list = [...list];
 			const targetId = Number(user.value.id);
 			if (data.following) {

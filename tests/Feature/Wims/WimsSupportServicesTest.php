@@ -149,7 +149,9 @@ it('builds monitoring alerts from derived status without mutating presentation s
 });
 
 it('stores and replaces final report files safely, and rejects missing downloads', function () {
+    Storage::fake('local');
     Storage::fake('public');
+    File::cleanDirectory(storage_path('framework/testing/disks/local'));
     File::cleanDirectory(storage_path('framework/testing/disks/public'));
 
     [$student, , , $registration] = makeActiveOperationalRegistration();
@@ -166,20 +168,22 @@ it('stores and replaces final report files safely, and rejects missing downloads
     expect($firstPath)->not->toBeNull()
         ->and($firstUpload->laporan_akhir_original_name)->toBe('laporan-awal.pdf')
         ->and($firstUpload->laporan_akhir_uploaded_at)->not->toBeNull()
-        ->and(Storage::disk('public')->get($firstPath))->toBe('first-final-report-content');
+        ->and(Storage::disk('local')->get($firstPath))->toBe('first-final-report-content');
 
     unset($firstFile);
     gc_collect_cycles();
+    Storage::forgetDisk('local');
     Storage::forgetDisk('public');
+    Storage::persistentFake('local');
     Storage::persistentFake('public');
 
     $secondFile = UploadedFile::fake()->createWithContent('laporan-revisi.pdf', 'second-final-report-content');
     $actionService->upload($registration->fresh(), $secondFile);
     $updatedRegistration = $registration->fresh();
     expect($updatedRegistration->laporan_akhir_path)->not->toBe($firstPath)
-        ->and(Storage::disk('public')->exists($updatedRegistration->laporan_akhir_path))->toBeTrue()
-        ->and(Storage::disk('public')->get($updatedRegistration->laporan_akhir_path))->toBe('second-final-report-content')
-        ->and(Storage::disk('public')->exists($firstPath))->toBeFalse();
+        ->and(Storage::disk('local')->exists($updatedRegistration->laporan_akhir_path))->toBeTrue()
+        ->and(Storage::disk('local')->get($updatedRegistration->laporan_akhir_path))->toBe('second-final-report-content')
+        ->and(Storage::disk('local')->exists($firstPath))->toBeFalse();
 
     $updatedRegistration->update(['laporan_akhir_path' => 'laporan-akhir/hilang.pdf']);
 
@@ -187,7 +191,9 @@ it('stores and replaces final report files safely, and rejects missing downloads
 });
 
 it('stores attendance photos, absence proof, and logbook photos on the configured disk', function () {
+    Storage::fake('local');
     Storage::fake('public');
+    File::cleanDirectory(storage_path('framework/testing/disks/local'));
     File::cleanDirectory(storage_path('framework/testing/disks/public'));
 
     [$student, , , $registration] = makeActiveOperationalRegistration();
@@ -230,7 +236,7 @@ it('stores attendance photos, absence proof, and logbook photos on the configure
         'kompetensi_dicapai' => 'Dokumentasi',
     ], [UploadedFile::fake()->image('logbook.jpg')]);
 
-    expect(Storage::disk('public')->allFiles())->not->toBeEmpty();
+    expect(Storage::disk('local')->allFiles())->not->toBeEmpty();
 });
 
 it('renders attendance and logbook PDFs from blade views', function () {

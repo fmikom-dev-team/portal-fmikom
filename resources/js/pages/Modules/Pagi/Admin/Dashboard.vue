@@ -255,7 +255,6 @@ const filteredModerationItems = computed(() => {
 });
 
 // === Moderation modal ===
-// biome-ignore lint/suspicious/noExplicitAny: dynamic moderation item shape from Inertia
 const activeItem = ref<any>(null);
 const showModal = ref(false);
 const brokenImages = ref<Record<number | string, boolean>>({});
