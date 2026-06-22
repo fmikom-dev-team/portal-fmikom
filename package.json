@@ -54,7 +54,7 @@
 		"@sotaproject/strikethrough": "^1.0.1",
 		"@tailwindcss/typography": "^0.5.19",
 		"@tiptap/extension-blockquote": "^3.22.5",
-		"@tiptap/extension-bubble-menu": "^3.22.5",
+		"@tiptap/extension-bubble-menu": "^3.27.1",
 		"@tiptap/extension-character-count": "^3.22.5",
 		"@tiptap/extension-code-block-lowlight": "^3.22.5",
 		"@tiptap/extension-color": "^3.22.5",
