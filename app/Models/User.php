@@ -13,6 +13,7 @@ use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PenilaianMagang;
 use App\Models\Surat\Surat;
 use App\Models\Surat\SuratApprovalFlow;
+use App\Models\Traits\HasPagiRelations;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -45,7 +46,7 @@ use Laravel\Sanctum\HasApiTokens;
  */
 class User extends Authenticatable
 {
-    use \App\Models\Traits\HasPagiRelations, HasApiTokens, HasFactory, Notifiable, UserHelpers;
+    use HasApiTokens, HasFactory, HasPagiRelations, Notifiable, UserHelpers;
 
     protected $fillable = [
         'name', 'email', 'password', 'program_studi_id',
