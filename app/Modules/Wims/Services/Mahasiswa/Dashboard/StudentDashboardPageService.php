@@ -6,9 +6,9 @@ use App\Models\Magang\AbsensiMagang;
 use App\Models\Magang\KetidakhadiranMagang;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
+use App\Models\User;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
-use App\Models\User;
 use Illuminate\Support\Carbon;
 
 class StudentDashboardPageService
@@ -16,8 +16,7 @@ class StudentDashboardPageService
     public function __construct(
         private readonly AttendanceSyncService $attendanceSyncService,
         private readonly WimsModuleRoleService $wimsModuleRoleService,
-    ) {
-    }
+    ) {}
 
     public function build(User $user): array
     {
@@ -93,7 +92,7 @@ class StudentDashboardPageService
                 'status' => $attendanceToday?->timestamp_keluar
                     ? 'checked_out'
                     : ($attendanceToday?->timestamp_masuk ? 'checked_in' : ($approvedAbsenceToday ? 'excused_absence' : 'not_checked_in')),
-                'current_time' => now()->format('H:i') . ' WIB',
+                'current_time' => now()->format('H:i').' WIB',
                 'location_status' => ! $activeRegistration
                     ? 'Pendaftaran aktif belum tersedia'
                     : (! $canDoDailyActivity
@@ -142,8 +141,8 @@ class StudentDashboardPageService
                 'submitted_at' => $latestRegistration?->created_at?->translatedFormat('d M Y H:i'),
                 'period_label' => $latestRegistration?->tanggal_mulai && $latestRegistration?->tanggal_selesai
                     ? Carbon::parse($latestRegistration->tanggal_mulai)->translatedFormat('d M Y')
-                        . ' - '
-                        . Carbon::parse($latestRegistration->tanggal_selesai)->translatedFormat('d M Y')
+                        .' - '
+                        .Carbon::parse($latestRegistration->tanggal_selesai)->translatedFormat('d M Y')
                     : null,
             ],
             'latest_logbook' => [

@@ -9,9 +9,9 @@ use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
+use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use App\Modules\Wims\Support\AssessmentSummary;
-use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -22,8 +22,7 @@ class MitraMonitoringOverviewService
     public function __construct(
         private readonly AttendanceSyncService $attendanceSyncService,
         private readonly WimsModuleRoleService $wimsModuleRoleService,
-    ) {
-    }
+    ) {}
 
     public function buildOverview(User $mentor, ?PerusahaanMitra $company, ?string $today = null): array
     {

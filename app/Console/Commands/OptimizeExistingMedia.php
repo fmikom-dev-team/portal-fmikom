@@ -214,6 +214,7 @@ class OptimizeExistingMedia extends Command
             if (Storage::disk('public')->exists($newRelativePath)) {
                 return $newRelativePath;
             }
+
             return null;
         }
 
@@ -273,6 +274,7 @@ class OptimizeExistingMedia extends Command
             if (Storage::disk('public')->exists($newRelativePath)) {
                 return $newRelativePath;
             }
+
             return null;
         }
 
@@ -348,6 +350,7 @@ class OptimizeExistingMedia extends Command
             if (Storage::disk('public')->exists($newRelativePath)) {
                 return $newRelativePath;
             }
+
             return null;
         }
 

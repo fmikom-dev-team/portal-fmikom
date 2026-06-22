@@ -15,7 +15,7 @@ class HistoryController extends Controller
 {
     public function index(Request $request): Response
     {
-        $user   = $request->user();
+        $user = $request->user();
         abort_if($user === null, 403);
 
         $search = $request->string('search')->trim()->toString();
@@ -38,7 +38,7 @@ class HistoryController extends Controller
             ->withQueryString();
 
         return Inertia::render($this->pageName(), [
-            'surats'  => $surats,
+            'surats' => $surats,
             'filters' => ['search' => $search, 'status' => $status],
             'userType' => [
                 'value' => $user->userTypeSlug(),
@@ -92,7 +92,7 @@ class HistoryController extends Controller
                 'lampiran' => $surat->lampirans->map(fn ($lampiran): array => [
                     'id' => $lampiran->id,
                     'name' => $lampiran->nama_asli ?? $lampiran->nama_file ?? $lampiran->name ?? 'Lampiran',
-                    'url' => $lampiran->url ?? $lampiran->path_url ?? null,
+                    'url' => route('documents.lampiran.preview', $lampiran->id, absolute: false),
                     'type' => $lampiran->mime_type ?? $lampiran->type ?? null,
                 ])->values(),
                 'tanggal_pengajuan' => optional($surat->tanggal_pengajuan)?->toISOString(),
@@ -177,7 +177,7 @@ class HistoryController extends Controller
 
     public function cancel(Request $request, int $id): RedirectResponse
     {
-        $user  = $request->user();
+        $user = $request->user();
         abort_if($user === null, 403);
 
         $surat = Surat::where('pemohon_id', $user->id)->findOrFail($id);

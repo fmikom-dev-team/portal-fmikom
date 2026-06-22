@@ -12,8 +12,7 @@ class AttendanceAvailabilityService
 {
     public function __construct(
         private readonly KetidakhadiranService $ketidakhadiranService,
-    ) {
-    }
+    ) {}
 
     public function resolveAvailability(PendaftaranMagang $pendaftaran): array
     {
@@ -55,7 +54,7 @@ class AttendanceAvailabilityService
         // Status hadir atau terlambat ditentukan dari jam masuk perusahaan
         // yang ditambah toleransi keterlambatan per mitra.
         $tolerance = (int) ($toleransiMenit ?? 0);
-        $latestOnTime = Carbon::parse($checkedAt->toDateString() . ' ' . $jamMasuk)->addMinutes($tolerance);
+        $latestOnTime = Carbon::parse($checkedAt->toDateString().' '.$jamMasuk)->addMinutes($tolerance);
 
         return $checkedAt->greaterThan($latestOnTime) ? 'terlambat' : 'hadir';
     }

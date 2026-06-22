@@ -1,16 +1,16 @@
 <?php
 
+use App\Http\Middleware\AdminAccess;
+use App\Http\Middleware\ApprovalAccess;
 use App\Http\Middleware\Auth\DeviceFingerprint;
 use App\Http\Middleware\Auth\OAuthStateValidation;
 use App\Http\Middleware\Auth\RiskScore;
 use App\Http\Middleware\Auth\SecureSession;
-use App\Http\Middleware\AdminAccess;
 use App\Http\Middleware\AutoOptimizeUploads;
 use App\Http\Middleware\CheckActiveContext;
 use App\Http\Middleware\CheckMaintenanceMode;
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\CustomCsrfMiddleware;
-use App\Http\Middleware\ApprovalAccess;
 use App\Http\Middleware\EnsureModuleAccess;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;

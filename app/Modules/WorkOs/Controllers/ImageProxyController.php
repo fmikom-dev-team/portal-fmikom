@@ -3,8 +3,8 @@
 namespace App\Modules\WorkOs\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Support\WimsStorage;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Storage;
 
 class ImageProxyController extends Controller
 {
@@ -21,29 +21,24 @@ class ImageProxyController extends Controller
                 $base64 .= substr('====', $mod4);
             }
 
-            $relativePath = Crypt::decryptString($base64);
+            $relativePath = ltrim(Crypt::decryptString($base64), '/');
 
-            // First check if the file exists using Storage
-            if (! Storage::disk('public')->exists($relativePath)) {
-                abort(404, 'File not found.');
-            }
-
-            // Ensure the path is strictly within the public storage of profile photos
-            // Resolve real path and base path to prevent URL-encoded path traversal bypasses
-            $absolutePath = Storage::disk('public')->path($relativePath);
-            $realPath = realpath($absolutePath);
-            $basePath = realpath(Storage::disk('public')->path('profile_photos'));
-
-            if ($basePath) {
-                $basePath = rtrim($basePath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
-            }
-
-            if (! $realPath || ! $basePath || ! str_starts_with($realPath, $basePath)) {
+            if (str_contains($relativePath, '..') || str_contains($relativePath, '\\')) {
                 abort(403, 'Unauthorized access.');
             }
 
-            $absolutePath = Storage::disk('public')->path($relativePath);
-            $mimeType = Storage::disk('public')->mimeType($relativePath) ?: 'image/webp';
+            $location = WimsStorage::locate($relativePath);
+
+            if (! $location) {
+                abort(404, 'File not found.');
+            }
+
+            $absolutePath = $location['absolute_path'];
+            $mimeType = $location['mime_type'] ?: 'image/webp';
+
+            if (! is_file($absolutePath)) {
+                abort(403, 'Unauthorized access.');
+            }
 
             return response()->file($absolutePath, [
                 'Content-Type' => $mimeType,

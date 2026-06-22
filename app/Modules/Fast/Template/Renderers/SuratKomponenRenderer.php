@@ -1,9 +1,9 @@
 <?php
+
 // app/Services/SuratKomponenRenderer.php
 
 namespace App\Modules\Fast\Template\Renderers;
 
-use App\Models\TemplateGlobalSetting;
 use App\Modules\Fast\Template\Parsers\TemplatePlaceholderReplacer;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
@@ -11,6 +11,7 @@ use Mpdf\Config\FontVariables;
 class SuratKomponenRenderer
 {
     const WARNA_DEFAULT = '#00b050';
+
     const FONT_FAMILY_DEFAULT = 'Times New Roman';
 
     public static function render(array $komponen, array $data = []): string
@@ -19,6 +20,7 @@ class SuratKomponenRenderer
         foreach ($komponen as $komp) {
             $html .= static::renderKomponen($komp, $data);
         }
+
         return $html;
     }
 
@@ -26,17 +28,22 @@ class SuratKomponenRenderer
     {
         if (static::isKomponenJson($body)) {
             $komponen = json_decode($body, true) ?? [];
+
             return static::render($komponen, $data);
         }
+
         return static::fill($body, $data);
     }
 
     public static function isKomponenJson(string $body): bool
     {
         $trimmed = trim($body);
-        if (!str_starts_with($trimmed, '[')) return false;
+        if (! str_starts_with($trimmed, '[')) {
+            return false;
+        }
         try {
             $decoded = json_decode($trimmed, true, 512, JSON_THROW_ON_ERROR);
+
             return is_array($decoded) && isset($decoded[0]['type']);
         } catch (\Throwable) {
             return false;
@@ -75,7 +82,7 @@ class SuratKomponenRenderer
             'tahoma' => 'Tahoma, Arial, sans-serif',
             'verdana' => 'Verdana, Geneva, sans-serif',
             'courier new' => '"Courier New", Courier, monospace',
-            default => '"' . str_replace('"', '', $family) . '", serif',
+            default => '"'.str_replace('"', '', $family).'", serif',
         };
     }
 
@@ -84,8 +91,8 @@ class SuratKomponenRenderer
      */
     public static function mpdfFontConfig(): array
     {
-        $configDefaults = (new ConfigVariables())->getDefaults();
-        $fontDefaults   = (new FontVariables())->getDefaults();
+        $configDefaults = (new ConfigVariables)->getDefaults();
+        $fontDefaults = (new FontVariables)->getDefaults();
 
         $fontDirs = array_values(array_unique(array_filter(array_merge(
             $configDefaults['fontDir'] ?? [],
@@ -95,9 +102,9 @@ class SuratKomponenRenderer
 
         $fontdata = $fontDefaults['fontdata'] ?? [];
         $fontdata['timesnewroman'] = [
-            'R'  => 'times.ttf',
-            'B'  => 'timesbd.ttf',
-            'I'  => 'timesi.ttf',
+            'R' => 'times.ttf',
+            'B' => 'timesbd.ttf',
+            'I' => 'timesi.ttf',
             'BI' => 'timesbi.ttf',
         ];
 
@@ -106,29 +113,30 @@ class SuratKomponenRenderer
             'fontdata' => $fontdata,
         ];
     }
+
     // Hanya tampilkan: nama_instansi (dari field nama_instansi)
     // + nama_fakultas + singkatan jika ada
     // Struktur: Logo di atas, lalu Nama Instansi | Nama Fakultas | (Singkatan) | Keputusan | Garis
     public static function renderKop(array $settings = [], array $data = []): string
     {
         $kopHtml = $settings['kop_html'] ?? '';
-        if (!empty(trim($kopHtml))) {
+        if (! empty(trim($kopHtml))) {
             return static::fill($kopHtml, $data);
         }
 
-        $warna        = $settings['warna_primer'] ?? self::WARNA_DEFAULT;
+        $warna = $settings['warna_primer'] ?? self::WARNA_DEFAULT;
         $namaInstansi = strtoupper(trim($settings['nama_instansi'] ?? 'UNUGHA CILACAP'));
         $namaFakultas = strtoupper(trim($settings['nama_fakultas'] ?? 'FAKULTAS MATEMATIKA DAN ILMU KOMPUTER'));
-        $singkatan    = strtoupper(trim($settings['singkatan'] ?? ''));
-        $keputusan    = trim($settings['keputusan'] ?? 'Keputusan Kemendikbud RI Nomor : 264/E/O/2014 Tanggal 23 Juli 2014');
+        $singkatan = strtoupper(trim($settings['singkatan'] ?? ''));
+        $keputusan = trim($settings['keputusan'] ?? 'Keputusan Kemendikbud RI Nomor : 264/E/O/2014 Tanggal 23 Juli 2014');
         $logoPosition = strtolower(trim((string) ($settings['logo_kop_position'] ?? 'top')));
-        $fontSizeH1   = trim((string) ($settings['font_size_kop_instansi'] ?? '17pt')) ?: '17pt';
-        $fontSizeFak  = trim((string) ($settings['font_size_kop_fakultas'] ?? '13pt')) ?: '13pt';
-        $kopBorder    = trim((string) ($settings['kop_border_thickness'] ?? '2px')) ?: '2px';
-        $renderMode   = (string) ($data['__render_mode'] ?? 'preview');
+        $fontSizeH1 = trim((string) ($settings['font_size_kop_instansi'] ?? '17pt')) ?: '17pt';
+        $fontSizeFak = trim((string) ($settings['font_size_kop_fakultas'] ?? '13pt')) ?: '13pt';
+        $kopBorder = trim((string) ($settings['kop_border_thickness'] ?? '2px')) ?: '2px';
+        $renderMode = (string) ($data['__render_mode'] ?? 'preview');
         $kopBottomMargin = $renderMode === 'pdf' ? '0px' : '1px';
-        $kopGapMargin    = $renderMode === 'pdf' ? '0px' : '2px';
-        $kopFont      = static::fontFamilyStack(
+        $kopGapMargin = $renderMode === 'pdf' ? '0px' : '2px';
+        $kopFont = static::fontFamilyStack(
             static::resolveFontFamily($settings, 'font_family_kop'),
             $renderMode === 'pdf' ? 'pdf' : 'browser'
         );
@@ -136,9 +144,9 @@ class SuratKomponenRenderer
         $logoHtml = static::logoHtml($settings);
 
         // Singkatan: hanya tampil jika ada
-        $singkatanHtml = !empty($singkatan) ? " ({$singkatan})" : '';
+        $singkatanHtml = ! empty($singkatan) ? " ({$singkatan})" : '';
 
-        $keputusanHtml = !empty($keputusan)
+        $keputusanHtml = ! empty($keputusan)
             ? "<p style=\"color: {$warna}; font-size: 9pt; line-height: 1.2; margin: {$kopGapMargin} 0 0 0;\">{$keputusan}</p>"
             : '';
 
@@ -212,6 +220,7 @@ HTML;
     protected static function filePathToDataUri(string $path): ?string
     {
         $path = trim($path);
+        $resolvedPath = null;
 
         if ($path === '') {
             return null;
@@ -221,12 +230,10 @@ HTML;
             return $path;
         }
 
-        $resolvedPath = null;
-
-        if (str_starts_with($path, '/storage/')) {
-            $resolvedPath = storage_path('app/public/' . ltrim(substr($path, strlen('/storage/')), '/'));
-        } elseif (str_starts_with($path, 'storage/')) {
-            $resolvedPath = storage_path('app/public/' . ltrim(substr($path, strlen('storage/')), '/'));
+        if (str_starts_with($path, '/private/')) {
+            $resolvedPath = storage_path('app/private/'.ltrim(substr($path, strlen('/private/')), '/'));
+        } elseif (str_starts_with($path, 'private/')) {
+            $resolvedPath = storage_path('app/private/'.ltrim(substr($path, strlen('private/')), '/'));
         } elseif (str_starts_with($path, '/asset/')) {
             $resolvedPath = public_path(ltrim($path, '/'));
         } elseif (str_starts_with($path, 'asset/')) {
@@ -242,7 +249,20 @@ HTML;
         } elseif (preg_match('/^https?:\\/\\//i', $path)) {
             return null;
         } else {
-            $resolvedPath = public_path(ltrim($path, '/'));
+            $candidates = [
+                storage_path('app/private/'.ltrim($path, '/')),
+                storage_path('app/public/'.ltrim($path, '/')),
+                public_path(ltrim($path, '/')),
+            ];
+
+            foreach ($candidates as $candidatePath) {
+                if (file_exists($candidatePath)) {
+                    $resolvedPath = $candidatePath;
+                    break;
+                }
+            }
+
+            $resolvedPath = $resolvedPath ?? null;
         }
 
         if (! $resolvedPath || ! file_exists($resolvedPath)) {
@@ -254,28 +274,29 @@ HTML;
 
         return "data:{$mimeType};base64,{$encoded}";
     }
+
     // Persis seperti gambar: Nama Instansi bold | Baris alamat | Baris email+telp+fax
     public static function renderFooter(array $settings = [], array $data = []): string
     {
         $footerHtml = $settings['footer_html'] ?? '';
-        if (!empty(trim($footerHtml))) {
+        if (! empty(trim($footerHtml))) {
             return $footerHtml;
         }
 
-        $warna        = $settings['warna_primer'] ?? self::WARNA_DEFAULT;
+        $warna = $settings['warna_primer'] ?? self::WARNA_DEFAULT;
         $namaInstansi = strtoupper(trim(
             (string) ($settings['nama_instansi_footer'] ?? $settings['nama_instansi'] ?? '')
         ));
-        $alamat  = trim((string) ($settings['alamat_footer'] ?? $settings['alamat'] ?? ''));
+        $alamat = trim((string) ($settings['alamat_footer'] ?? $settings['alamat'] ?? ''));
         $website = trim((string) ($settings['website'] ?? ''));
-        $email   = trim((string) ($settings['email'] ?? ''));
+        $email = trim((string) ($settings['email'] ?? ''));
         $telepon = trim((string) ($settings['telepon'] ?? ''));
-        $fax     = trim((string) ($settings['fax'] ?? ''));
+        $fax = trim((string) ($settings['fax'] ?? ''));
         $fontSizeInstansi = trim((string) ($settings['font_size_footer_instansi'] ?? '8.4pt')) ?: '8.4pt';
-        $fontSizeDetail   = trim((string) ($settings['font_size_footer_detail'] ?? '6.6pt')) ?: '6.6pt';
-        $footerBorder     = trim((string) ($settings['footer_border_thickness'] ?? '2px')) ?: '2px';
-        $renderMode       = (string) ($data['__render_mode'] ?? 'preview');
-        $footerFont       = static::fontFamilyStack(
+        $fontSizeDetail = trim((string) ($settings['font_size_footer_detail'] ?? '6.6pt')) ?: '6.6pt';
+        $footerBorder = trim((string) ($settings['footer_border_thickness'] ?? '2px')) ?: '2px';
+        $renderMode = (string) ($data['__render_mode'] ?? 'preview');
+        $footerFont = static::fontFamilyStack(
             static::resolveFontFamily($settings, 'font_family_footer'),
             $renderMode === 'pdf' ? 'pdf' : 'browser'
         );
@@ -284,7 +305,7 @@ HTML;
             return '';
         }
 
-        $baris1 = trim($alamat . ($website !== '' ? ', ' . $website : ''));
+        $baris1 = trim($alamat.($website !== '' ? ', '.$website : ''));
         $baris2Parts = array_filter([
             $email !== '' ? "Email : {$email}" : '',
             $telepon !== '' ? "Telp. : {$telepon}" : '',
@@ -292,26 +313,26 @@ HTML;
         ]);
         $baris2 = implode(' ', $baris2Parts);
 
-        $content = '<div style="width: 100%; max-width: 100%; font-family: ' . $footerFont . '; text-align: center;">';
-        $content .= '<div style="border-top: ' . $footerBorder . ' solid ' . $warna . '; margin-bottom: 0.5mm;"></div>';
-        $content .= '<div style="border-top: 0.8px solid ' . $warna . '; margin-bottom: 0.5mm;"></div>';
+        $content = '<div style="width: 100%; max-width: 100%; font-family: '.$footerFont.'; text-align: center;">';
+        $content .= '<div style="border-top: '.$footerBorder.' solid '.$warna.'; margin-bottom: 0.5mm;"></div>';
+        $content .= '<div style="border-top: 0.8px solid '.$warna.'; margin-bottom: 0.5mm;"></div>';
 
         if ($namaInstansi !== '') {
-            $content .= '<p style="color: ' . $warna . '; font-size: ' . $fontSizeInstansi . '; font-weight: 700; text-align: center; margin: 0; line-height: 1.06; letter-spacing: 0.03em;">'
-                . $namaInstansi
-                . '</p>';
+            $content .= '<p style="color: '.$warna.'; font-size: '.$fontSizeInstansi.'; font-weight: 700; text-align: center; margin: 0; line-height: 1.06; letter-spacing: 0.03em;">'
+                .$namaInstansi
+                .'</p>';
         }
 
         if ($baris1 !== '') {
-            $content .= '<p style="font-size: ' . $fontSizeDetail . '; text-align: center; margin: 0; line-height: 1.02; color: ' . $warna . ';">'
-                . $baris1
-                . '</p>';
+            $content .= '<p style="font-size: '.$fontSizeDetail.'; text-align: center; margin: 0; line-height: 1.02; color: '.$warna.';">'
+                .$baris1
+                .'</p>';
         }
 
         if ($baris2 !== '') {
-            $content .= '<p style="font-size: ' . $fontSizeDetail . '; text-align: center; margin: 0; line-height: 1.02; color: ' . $warna . ';">'
-                . $baris2
-                . '</p>';
+            $content .= '<p style="font-size: '.$fontSizeDetail.'; text-align: center; margin: 0; line-height: 1.02; color: '.$warna.';">'
+                .$baris2
+                .'</p>';
         }
 
         $content .= '</div>';
@@ -322,22 +343,22 @@ HTML;
     protected static function renderKomponen(array $komp, array $data): string
     {
         $html = match ($komp['type'] ?? '') {
-            'judul'           => static::renderJudul($komp, $data),
-            'subjudul'        => static::renderSubjudul($komp, $data),
-            'paragraf'        => static::renderParagraf($komp, $data),
+            'judul' => static::renderJudul($komp, $data),
+            'subjudul' => static::renderSubjudul($komp, $data),
+            'paragraf' => static::renderParagraf($komp, $data),
             'paragraf_indent' => static::renderParagrafIndent($komp, $data),
             'daftar_bernomor',
             'paragraf_bernomor' => static::renderParagrafBernomor($komp, $data),
-            'header_surat'    => static::renderHeaderSurat($komp, $data),
-            'kepada_yth'      => static::renderKepadaYth($komp, $data),
-            'tabel_data'      => static::renderTabelData($komp, $data),
-            'tabel_biasa'     => static::renderTabelBiasa($komp, $data),
-            'tabel_indent'    => static::renderTabelIndent($komp, $data),
-            'tanda_tangan'    => static::renderTandaTangan($komp, $data),
-            'tembusan'        => static::renderTembusan($komp, $data),
-            'spasi'           => static::renderSpasi($komp),
-            'garis'           => static::renderGaris(),
-            default           => '',
+            'header_surat' => static::renderHeaderSurat($komp, $data),
+            'kepada_yth' => static::renderKepadaYth($komp, $data),
+            'tabel_data' => static::renderTabelData($komp, $data),
+            'tabel_biasa' => static::renderTabelBiasa($komp, $data),
+            'tabel_indent' => static::renderTabelIndent($komp, $data),
+            'tanda_tangan' => static::renderTandaTangan($komp, $data),
+            'tembusan' => static::renderTembusan($komp, $data),
+            'spasi' => static::renderSpasi($komp),
+            'garis' => static::renderGaris(),
+            default => '',
         };
 
         // Wrap dengan margin_left jika ada
@@ -348,45 +369,50 @@ HTML;
 
         return $html;
     }
+
     protected static function renderJudul(array $komp, array $data): string
-{
-    $teks      = static::fill($komp['teks'] ?? '', $data);
-    $align     = $komp['align'] ?? 'center';
-        $size      = $komp['font_size'] ?? '12pt';
-    $bold      = ($komp['bold'] ?? true) ? 'font-weight: bold;' : 'font-weight: normal;';
-    $underline = ($komp['underline'] ?? false) ? 'text-decoration: underline; text-decoration-thickness: 2px;' : '';
-    
-    return "<h2 style=\"margin: 0 0 2px 0; text-align: {$align}; font-size: {$size}; {$bold} {$underline} text-transform: uppercase;\">{$teks}</h2>\n";
-}
+    {
+        $teks = static::fill($komp['teks'] ?? '', $data);
+        $align = $komp['align'] ?? 'center';
+        $size = $komp['font_size'] ?? '12pt';
+        $bold = ($komp['bold'] ?? true) ? 'font-weight: bold;' : 'font-weight: normal;';
+        $underline = ($komp['underline'] ?? false) ? 'text-decoration: underline; text-decoration-thickness: 2px;' : '';
+
+        return "<h2 style=\"margin: 0 0 2px 0; text-align: {$align}; font-size: {$size}; {$bold} {$underline} text-transform: uppercase;\">{$teks}</h2>\n";
+    }
+
     protected static function renderSubjudul(array $komp, array $data): string
     {
         $teks = static::fill($komp['teks'] ?? '', $data);
+
         return "<p style=\"margin: 0 0 10px 0; text-align: center; font-size: 12pt;\">{$teks}</p>\n";
     }
+
     // Mendukung text_indent untuk baris pertama menjorok
     protected static function renderParagraf(array $komp, array $data): string
     {
-        $teks        = static::fill($komp['teks'] ?? '', $data);
-        $align       = $komp['align'] ?? 'justify';
-        $italic      = ($komp['italic'] ?? false) ? 'font-style: italic;' : '';
-        $bold        = ($komp['bold'] ?? false) ? 'font-weight: bold;' : '';
-        $size        = $komp['font_size'] ?? '12pt';
-        $lineHeight  = trim((string) ($data['line_height_paragraf'] ?? '1.45')) ?: '1.45';
-        $teks        = nl2br($teks);
+        $teks = static::fill($komp['teks'] ?? '', $data);
+        $align = $komp['align'] ?? 'justify';
+        $italic = ($komp['italic'] ?? false) ? 'font-style: italic;' : '';
+        $bold = ($komp['bold'] ?? false) ? 'font-weight: bold;' : '';
+        $size = $komp['font_size'] ?? '12pt';
+        $lineHeight = trim((string) ($data['line_height_paragraf'] ?? '1.45')) ?: '1.45';
+        $teks = nl2br($teks);
         $indentStyle = static::paragraphIndentStyle((string) ($komp['teks'] ?? ''), $komp['text_indent'] ?? null);
 
         return "<p style=\"margin: 0 0 6px 0; text-align: {$align}; font-size: {$size}; line-height: {$lineHeight}; white-space: pre-wrap; overflow-wrap: anywhere; {$italic} {$bold} {$indentStyle}\">{$teks}</p>\n";
     }
+
     protected static function renderParagrafIndent(array $komp, array $data): string
     {
-        $teks        = static::fill($komp['teks'] ?? '', $data);
-        $align       = $komp['align'] ?? 'justify';
-        $indent      = $komp['indent'] ?? 40;
-        $italic      = ($komp['italic'] ?? false) ? 'font-style: italic;' : '';
-        $bold        = ($komp['bold'] ?? false) ? 'font-weight: bold;' : '';
-        $size        = $komp['font_size'] ?? '12pt';
-        $lineHeight  = trim((string) ($data['line_height_paragraf'] ?? '1.45')) ?: '1.45';
-        $teks        = nl2br($teks);
+        $teks = static::fill($komp['teks'] ?? '', $data);
+        $align = $komp['align'] ?? 'justify';
+        $indent = $komp['indent'] ?? 40;
+        $italic = ($komp['italic'] ?? false) ? 'font-style: italic;' : '';
+        $bold = ($komp['bold'] ?? false) ? 'font-weight: bold;' : '';
+        $size = $komp['font_size'] ?? '12pt';
+        $lineHeight = trim((string) ($data['line_height_paragraf'] ?? '1.45')) ?: '1.45';
+        $teks = nl2br($teks);
         $indentStyle = static::paragraphIndentStyle((string) ($komp['teks'] ?? ''), $komp['text_indent'] ?? null);
 
         return "<p style=\"margin: 0 0 6px {$indent}px; text-align: {$align}; font-size: {$size}; line-height: {$lineHeight}; white-space: pre-wrap; overflow-wrap: anywhere; {$italic} {$bold} {$indentStyle}\">{$teks}</p>\n";
@@ -399,13 +425,13 @@ HTML;
             return '';
         }
 
-        $align      = $komp['align'] ?? 'justify';
-        $italic     = ($komp['italic'] ?? false) ? 'font-style: italic;' : '';
-        $bold       = ($komp['bold'] ?? false) ? 'font-weight: bold;' : '';
-        $size       = $komp['font_size'] ?? '12pt';
+        $align = $komp['align'] ?? 'justify';
+        $italic = ($komp['italic'] ?? false) ? 'font-style: italic;' : '';
+        $bold = ($komp['bold'] ?? false) ? 'font-weight: bold;' : '';
+        $size = $komp['font_size'] ?? '12pt';
         $lineHeight = trim((string) ($data['line_height_paragraf'] ?? '1.45')) ?: '1.45';
         $marginLeft = (int) ($komp['margin_left'] ?? 0);
-        $numWidth   = (int) ($komp['text_indent'] ?? 24);
+        $numWidth = (int) ($komp['text_indent'] ?? 24);
         if ($numWidth < 18) {
             $numWidth = 18;
         }
@@ -470,9 +496,10 @@ HTML;
 
         return [$raw];
     }
+
     protected static function renderHeaderSurat(array $komp, array $data): string
     {
-        $nomor    = static::fill($komp['nomor'] ?? '{{nomor_surat}}', $data);
+        $nomor = static::fill($komp['nomor'] ?? '{{nomor_surat}}', $data);
         $lampiranTemplate = filled($data['lampiran_keterangan'] ?? null)
             ? '{{lampiran_keterangan}}'
             : ($komp['lampiran'] ?? '-');
@@ -480,14 +507,14 @@ HTML;
             ? '{{perihal}}'
             : ($komp['perihal'] ?? '');
         $lampiran = static::fill($lampiranTemplate, $data);
-        $perihal  = static::fill($perihalTemplate, $data);
+        $perihal = static::fill($perihalTemplate, $data);
         $kotaTemplate = (string) ($komp['kota'] ?? '{{kota_surat}}');
         $tanggalTemplate = (string) ($komp['tanggal'] ?? '{{tanggal_surat_panjang}}');
-        $kota     = static::fill($kotaTemplate, $data);
-        $tanggal  = static::fill($tanggalTemplate, $data);
+        $kota = static::fill($kotaTemplate, $data);
+        $tanggal = static::fill($tanggalTemplate, $data);
         $kotaMewakiliTanggal = preg_match('/{{\s*tanggal_surat(?:_panjang)?\s*}}/i', $kotaTemplate) === 1;
         $tanggalKosong = trim(strip_tags((string) $tanggal)) === '';
-        $size     = $komp['font_size'] ?? '12pt';
+        $size = $komp['font_size'] ?? '12pt';
         $lineHeight = trim((string) ($data['line_height_header'] ?? '1.65')) ?: '1.65';
         $renderMode = (string) ($data['__render_mode'] ?? 'preview');
         $tableTopMargin = $renderMode === 'pdf' ? '-2px' : '0px';
@@ -527,14 +554,15 @@ HTML;
 </table>
 HTML;
     }
+
     protected static function renderKepadaYth(array $komp, array $data): string
     {
         $penerima = is_array($data['__kepada_yth_items'] ?? null) && $data['__kepada_yth_items'] !== []
             ? $data['__kepada_yth_items']
             : ($komp['penerima'] ?? []);
-        $lokasi   = static::fill($komp['lokasi'] ?? 'di-', $data);
-        $tempat   = static::fill($komp['tempat'] ?? 'Tempat', $data);
-        $size     = $komp['font_size'] ?? '12pt';
+        $lokasi = static::fill($komp['lokasi'] ?? 'di-', $data);
+        $tempat = static::fill($komp['tempat'] ?? 'Tempat', $data);
+        $size = $komp['font_size'] ?? '12pt';
         $lokasiIndent = (int) ($komp['lokasi_indent'] ?? 0);
         $tempatIndent = (int) ($komp['tempat_indent'] ?? 16);
         $lineHeight = trim((string) ($data['line_height_yth'] ?? '1.05')) ?: '1.05';
@@ -543,7 +571,7 @@ HTML;
         foreach ($penerima as $i => $p) {
             $no = $i + 1;
             $prefix = count($penerima) === 1 ? '' : "{$no}. ";
-            $penerimaHtml .= "<p style=\"margin: 0; font-size: {$size}; line-height: {$lineHeight}; font-weight: 700;\">" . $prefix . static::fill($p, $data) . "</p>\n";
+            $penerimaHtml .= "<p style=\"margin: 0; font-size: {$size}; line-height: {$lineHeight}; font-weight: 700;\">".$prefix.static::fill($p, $data)."</p>\n";
         }
 
         return <<<HTML
@@ -554,10 +582,13 @@ HTML;
 </div>
 HTML;
     }
+
     protected static function renderTabelData(array $komp, array $data): string
     {
         $rows = $komp['rows'] ?? [];
-        if (empty($rows)) return '';
+        if (empty($rows)) {
+            return '';
+        }
         $size = $komp['font_size'] ?? '12pt';
         $lineHeight = trim((string) ($data['line_height_tabel'] ?? '1.65')) ?: '1.65';
 
@@ -572,8 +603,10 @@ HTML;
             </tr>\n";
         }
         $html .= "</tbody>\n</table>\n";
+
         return $html;
     }
+
     protected static function renderTabelBiasa(array $komp, array $data): string
     {
         $headers = array_values(array_filter($komp['headers'] ?? [], static fn ($header): bool => trim((string) $header) !== ''));
@@ -620,13 +653,17 @@ HTML;
         }
 
         $html .= "</tbody>\n</table>\n";
+
         return $html;
     }
+
     protected static function renderTabelIndent(array $komp, array $data): string
     {
-        $rows   = $komp['rows'] ?? [];
+        $rows = $komp['rows'] ?? [];
         $indent = $komp['indent'] ?? 40;
-        if (empty($rows)) return '';
+        if (empty($rows)) {
+            return '';
+        }
         $size = $komp['font_size'] ?? '12pt';
         $lineHeight = trim((string) ($data['line_height_tabel'] ?? '1.65')) ?: '1.65';
 
@@ -641,23 +678,27 @@ HTML;
             </tr>\n";
         }
         $html .= "</tbody>\n</table>\n";
+
         return $html;
     }
+
     // Layout: kolom TTD (1/2/3 kolom), QR di dalam kolom terakhir
     // $data['__qr_svg']    = SVG string QR
     // $data['__qr_active'] = bool
     protected static function renderTandaTangan(array $komp, array $data): string
     {
-        $kolom  = $komp['kolom'] ?? [];
-        if (empty($kolom)) return '';
-        $size   = $komp['font_size'] ?? '12pt';
+        $kolom = $komp['kolom'] ?? [];
+        if (empty($kolom)) {
+            return '';
+        }
+        $size = $komp['font_size'] ?? '12pt';
         $jumlah = count($kolom);
         $renderMode = $data['__render_mode'] ?? 'preview';
         $signatureGap = $renderMode === 'pdf' ? '8mm' : '32mm';
         $tableMarginTop = $renderMode === 'pdf' ? '2px' : '16px';
         $qrBoxSize = $renderMode === 'pdf' ? '17mm' : '68px';
         $qrLabelSize = $renderMode === 'pdf' ? '0' : '7pt';
-        $qrSvg    = $data['__qr_svg'] ?? '';
+        $qrSvg = $data['__qr_svg'] ?? '';
         $qrActive = $data['__qr_active'] ?? false;
         $qrHidden = $data['__qr_hidden'] ?? false;
 
@@ -668,16 +709,17 @@ HTML;
                 '/<svg\b([^>]*)>/i',
                 function (array $matches) use ($qrBoxSize): string {
                     $attrs = preg_replace('/\s(width|height)="[^"]+"/i', '', $matches[1]) ?? $matches[1];
-                    return '<svg' . $attrs . ' width="' . $qrBoxSize . '" height="' . $qrBoxSize . '" style="width:100%;height:100%;display:block;">';
+
+                    return '<svg'.$attrs.' width="'.$qrBoxSize.'" height="'.$qrBoxSize.'" style="width:100%;height:100%;display:block;">';
                 },
                 $qrSvg,
                 1
             ) ?? $qrSvg;
         }
 
-if ($qrHidden) {
+        if ($qrHidden) {
             $qrHtml = '';
-} elseif ($qrActive && !empty($qrSvg)) {
+        } elseif ($qrActive && ! empty($qrSvg)) {
             // QR dibuat sedikit lebih kecil di mode PDF agar blok tanda tangan
             // tetap muat dalam satu halaman.
             $qrHtml = <<<HTML
@@ -703,14 +745,14 @@ HTML;
             default => array_fill(0, $jumlah, 'center'),
         };
         $colWidth = $jumlah > 0 ? round(100 / $jumlah, 2) : 100;
-        $showTanggal = ($komp['show_tanggal'] ?? false) && !empty($komp['tanggal'] ?? '');
+        $showTanggal = ($komp['show_tanggal'] ?? false) && ! empty($komp['tanggal'] ?? '');
         $tanggalHtml = $showTanggal ? static::fill($komp['tanggal'], $data) : '';
         $ttdCols = '';
         $lastIdx = count($kolom) - 1;
         foreach ($kolom as $i => $kol) {
-            $jabatan   = static::fill($kol['jabatan'] ?? '', $data);
-            $nama      = static::fill($kol['nama'] ?? '', $data);
-            $nik       = static::fill($kol['nik'] ?? '', $data);
+            $jabatan = static::fill($kol['jabatan'] ?? '', $data);
+            $nama = static::fill($kol['nama'] ?? '', $data);
+            $nik = static::fill($kol['nik'] ?? '', $data);
             $textAlign = $alignMap[$i] ?? 'center';
             $tanggalRow = $showTanggal ? "<tr><td style=\"padding: 0 0 2mm 0; text-align: {$textAlign};\">{$tanggalHtml}</td></tr>" : '';
             // QR hanya di kolom terakhir, di dalam area spasi tanda tangan
@@ -718,7 +760,7 @@ HTML;
                 ? $qrHtml
                 : '';
             $gapContent = $qrInGap ?: '&nbsp;';
-            $ttdCols  .= <<<HTML
+            $ttdCols .= <<<HTML
 <td style="width: {$colWidth}%; vertical-align: top; text-align: {$textAlign}; padding: 0 4px; font-size: {$size};">
     <table style="display: inline-table; border-collapse: collapse; text-align: {$textAlign};">
         <tbody>
@@ -743,7 +785,7 @@ HTML;
 HTML;
         }
 
-return <<<HTML
+        return <<<HTML
 <table style="width: 100%; border-collapse: collapse; margin-top: {$tableMarginTop}; font-size: {$size};">
     <tbody>
         <tr>
@@ -753,22 +795,27 @@ return <<<HTML
 </table>
 HTML;
     }
+
     protected static function renderTembusan(array $komp, array $data): string
     {
         $items = $komp['items'] ?? [];
-        if (empty($items)) return '';
+        if (empty($items)) {
+            return '';
+        }
         $size = $komp['font_size'] ?? '12pt';
 
         $html = "<div style=\"font-size: {$size}; line-height: 1.35; margin-top: 6px;\">\n";
         $html .= "<p style=\"margin: 0 0 2px 0;\">Tembusan:</p>\n";
         foreach ($items as $i => $item) {
-            $no    = $i + 1;
+            $no = $i + 1;
             $label = static::fill($item, $data);
             $html .= "<p style=\"margin: 0;\">{$no}. {$label}</p>\n";
         }
         $html .= "</div>\n";
+
         return $html;
     }
+
     protected static function paragraphIndentStyle(string $rawText, mixed $configuredIndent = null, bool $forceHanging = false): string
     {
         $text = trim($rawText);
@@ -793,12 +840,15 @@ HTML;
     protected static function renderSpasi(array $komp): string
     {
         $tinggi = intval($komp['tinggi'] ?? 20);
+
         return "<div style=\"height: {$tinggi}px;\"></div>\n";
     }
+
     protected static function renderGaris(): string
     {
         return "<hr style=\"border: none; border-top: 1px solid #CBD5E1; margin: 8px 0;\" />\n";
     }
+
     protected static function fill(string $teks, array $data): string
     {
         return TemplatePlaceholderReplacer::replace($teks, $data, false);

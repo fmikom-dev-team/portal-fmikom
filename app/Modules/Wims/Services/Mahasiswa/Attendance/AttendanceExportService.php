@@ -8,14 +8,16 @@ use App\Models\User;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
+use Illuminate\View\Compilers\BladeCompiler;
 use Symfony\Component\HttpFoundation\Response;
 
 class AttendanceExportService
 {
     public function __construct(
         private readonly AttendanceSyncService $attendanceSyncService,
-    ) {
-    }
+    ) {}
 
     public function download(User $user, string $scope): Response
     {
@@ -64,7 +66,7 @@ class AttendanceExportService
         }
 
         $attendanceHistory = $attendanceHistoryQuery->get();
-        $fileName = $fileNamePrefix . '-' . now()->format('Y-m-d') . '.pdf';
+        $fileName = $fileNamePrefix.'-'.now()->format('Y-m-d').'.pdf';
         $exportRows = $attendanceHistory->map(function (AbsensiMagang $attendance, int $index) {
             return [
                 'number' => $index + 1,
@@ -78,7 +80,7 @@ class AttendanceExportService
             ];
         });
 
-        return Pdf::loadView('pdf.attendance-history', [
+        return $this->renderPdfWithIsolatedCompiledViews('pdf.attendance-history', [
             'student' => [
                 'name' => $student->name ?? '-',
                 'nim' => $student->nim_nip ?: $student->nomor_induk ?: '-',
@@ -87,15 +89,79 @@ class AttendanceExportService
             'internship' => [
                 'company' => $headerRegistration?->perusahaan?->nama ?? '-',
                 'period' => $headerRegistration?->tanggal_mulai && $headerRegistration?->tanggal_selesai
-                    ? $headerRegistration->tanggal_mulai->locale('id')->translatedFormat('d M Y') . ' - ' . $headerRegistration->tanggal_selesai->locale('id')->translatedFormat('d M Y')
+                    ? $headerRegistration->tanggal_mulai->locale('id')->translatedFormat('d M Y').' - '.$headerRegistration->tanggal_selesai->locale('id')->translatedFormat('d M Y')
                     : '-',
                 'supervisor_lecturer' => $headerRegistration?->dosenPembimbing?->name ?? '-',
                 'mentor' => $headerRegistration?->perusahaan?->user?->name ?? '-',
             ],
             'rows' => $exportRows,
-        ])
-            ->setPaper('a4', 'landscape')
-            ->download($fileName);
+        ], $fileName);
+    }
+
+    /**
+     * Render PDF using a request-scoped compiled view directory to avoid
+     * Windows file-lock collisions in storage/framework/views.
+     */
+    private function renderPdfWithIsolatedCompiledViews(string $view, array $data, string $fileName)
+    {
+        $compiledPath = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR)
+            . DIRECTORY_SEPARATOR
+            . 'wims-pdf-views-'
+            . Str::uuid();
+
+        File::ensureDirectoryExists($compiledPath);
+
+        $blade = app('blade.compiler');
+        $originalPath = $this->getBladeCompiledPath($blade);
+
+        try {
+            $this->setBladeCompiledPath($compiledPath);
+
+            return Pdf::loadView($view, $data)
+                ->setPaper('a4', 'landscape')
+                ->download($fileName);
+        } finally {
+            if (is_string($originalPath) && $originalPath !== '') {
+                $this->setBladeCompiledPath($originalPath);
+            }
+        }
+    }
+
+    private function setBladeCompiledPath(string $path): void
+    {
+        $blade = app('blade.compiler');
+
+        if (! $blade instanceof BladeCompiler) {
+            return;
+        }
+
+        $reflection = new \ReflectionObject($blade);
+
+        if ($reflection->hasProperty('cachePath')) {
+            $property = $reflection->getProperty('cachePath');
+            $property->setAccessible(true);
+            $property->setValue($blade, $path);
+        }
+    }
+
+    private function getBladeCompiledPath(object $blade): ?string
+    {
+        if (! $blade instanceof BladeCompiler) {
+            return null;
+        }
+
+        $reflection = new \ReflectionObject($blade);
+
+        if (! $reflection->hasProperty('cachePath')) {
+            return null;
+        }
+
+        $property = $reflection->getProperty('cachePath');
+        $property->setAccessible(true);
+
+        $value = $property->getValue($blade);
+
+        return is_string($value) ? $value : null;
     }
 
     private function formatAttendanceStatusLabel(?string $status): string

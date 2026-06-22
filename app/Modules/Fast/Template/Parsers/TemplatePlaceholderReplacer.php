@@ -36,7 +36,7 @@ class TemplatePlaceholderReplacer
             }
 
             $content = str_replace(
-                ['{{' . $key . '}}', '{{ ' . $key . ' }}'],
+                ['{{'.$key.'}}', '{{ '.$key.' }}'],
                 $escapedValue,
                 $content
             );
@@ -89,14 +89,14 @@ class TemplatePlaceholderReplacer
         $isYthList = Str::contains(Str::lower($key), 'yth');
 
         if ($isYthList && $normalizedItems->count() === 1) {
-            return "Yth.<br>" . $normalizedItems->first();
+            return 'Yth.<br>'.$normalizedItems->first();
         }
 
         if ($isYthList) {
-            return "Yth.<br>" . $normalizedItems
+            return 'Yth.<br>'.$normalizedItems
                 ->values()
-                ->map(fn (string $item, int $index): string => ($index + 1) . '. ' . $item)
-                ->implode("<br>");
+                ->map(fn (string $item, int $index): string => ($index + 1).'. '.$item)
+                ->implode('<br>');
         }
 
         if ($normalizedItems->count() === 1) {
@@ -105,7 +105,7 @@ class TemplatePlaceholderReplacer
 
         return $normalizedItems
             ->values()
-            ->map(fn (string $item, int $index): string => ($index + 1) . '. ' . $item)
+            ->map(fn (string $item, int $index): string => ($index + 1).'. '.$item)
             ->implode("\n");
     }
 
@@ -114,4 +114,3 @@ class TemplatePlaceholderReplacer
         return preg_replace('/<p\b[^>]*>\s*(?:<br\s*\/?>|\&nbsp;|\s)*<\/p>/i', '', $content) ?? $content;
     }
 }
-

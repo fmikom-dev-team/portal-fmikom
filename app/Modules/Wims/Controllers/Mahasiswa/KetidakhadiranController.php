@@ -13,8 +13,7 @@ class KetidakhadiranController extends Controller
 {
     public function __construct(
         private readonly StudentAbsenceActionService $studentAbsenceActionService,
-    ) {
-    }
+    ) {}
 
     public function store(Request $request): RedirectResponse
     {

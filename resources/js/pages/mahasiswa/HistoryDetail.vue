@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Page from '@/pages/Modules/Fast/Mahasiswa/HistoryDetail.vue';
+import Page from "@/pages/Modules/Fast/Mahasiswa/HistoryDetail.vue";
 
 defineOptions({ inheritAttrs: false });
 </script>

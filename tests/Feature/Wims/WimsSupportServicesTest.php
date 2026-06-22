@@ -10,11 +10,13 @@ use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
+use App\Modules\Wims\Services\Admin\AdminAssessmentRecapExportService;
+use App\Modules\Wims\Services\Mahasiswa\Absence\StudentAbsenceActionService;
+use App\Modules\Wims\Services\Mahasiswa\Attendance\AttendanceActionService;
 use App\Modules\Wims\Services\Mahasiswa\Logbook\LogbookActionService;
 use App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportActionService;
 use App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportFileService;
 use App\Modules\Wims\Services\Shared\Absence\KetidakhadiranService;
-use App\Modules\Wims\Services\Shared\Assessment\FinalReportAccessService;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceService;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringAlertService;
@@ -149,7 +151,9 @@ it('builds monitoring alerts from derived status without mutating presentation s
 });
 
 it('stores and replaces final report files safely, and rejects missing downloads', function () {
+    Storage::fake('local');
     Storage::fake('public');
+    File::cleanDirectory(storage_path('framework/testing/disks/local'));
     File::cleanDirectory(storage_path('framework/testing/disks/public'));
 
     [$student, , , $registration] = makeActiveOperationalRegistration();
@@ -166,20 +170,22 @@ it('stores and replaces final report files safely, and rejects missing downloads
     expect($firstPath)->not->toBeNull()
         ->and($firstUpload->laporan_akhir_original_name)->toBe('laporan-awal.pdf')
         ->and($firstUpload->laporan_akhir_uploaded_at)->not->toBeNull()
-        ->and(Storage::disk('public')->get($firstPath))->toBe('first-final-report-content');
+        ->and(Storage::disk('local')->get($firstPath))->toBe('first-final-report-content');
 
     unset($firstFile);
     gc_collect_cycles();
+    Storage::forgetDisk('local');
     Storage::forgetDisk('public');
+    Storage::persistentFake('local');
     Storage::persistentFake('public');
 
     $secondFile = UploadedFile::fake()->createWithContent('laporan-revisi.pdf', 'second-final-report-content');
     $actionService->upload($registration->fresh(), $secondFile);
     $updatedRegistration = $registration->fresh();
     expect($updatedRegistration->laporan_akhir_path)->not->toBe($firstPath)
-        ->and(Storage::disk('public')->exists($updatedRegistration->laporan_akhir_path))->toBeTrue()
-        ->and(Storage::disk('public')->get($updatedRegistration->laporan_akhir_path))->toBe('second-final-report-content')
-        ->and(Storage::disk('public')->exists($firstPath))->toBeFalse();
+        ->and(Storage::disk('local')->exists($updatedRegistration->laporan_akhir_path))->toBeTrue()
+        ->and(Storage::disk('local')->get($updatedRegistration->laporan_akhir_path))->toBe('second-final-report-content')
+        ->and(Storage::disk('local')->exists($firstPath))->toBeFalse();
 
     $updatedRegistration->update(['laporan_akhir_path' => 'laporan-akhir/hilang.pdf']);
 
@@ -187,13 +193,15 @@ it('stores and replaces final report files safely, and rejects missing downloads
 });
 
 it('stores attendance photos, absence proof, and logbook photos on the configured disk', function () {
+    Storage::fake('local');
     Storage::fake('public');
+    File::cleanDirectory(storage_path('framework/testing/disks/local'));
     File::cleanDirectory(storage_path('framework/testing/disks/public'));
 
     [$student, , , $registration] = makeActiveOperationalRegistration();
 
-    $attendanceAction = app(\App\Modules\Wims\Services\Mahasiswa\Attendance\AttendanceActionService::class);
-    $absenceAction = app(\App\Modules\Wims\Services\Mahasiswa\Absence\StudentAbsenceActionService::class);
+    $attendanceAction = app(AttendanceActionService::class);
+    $absenceAction = app(StudentAbsenceActionService::class);
     $logbookAction = app(LogbookActionService::class);
 
     $locationResult = ['distance' => 50.0, 'is_valid' => true];
@@ -230,7 +238,7 @@ it('stores attendance photos, absence proof, and logbook photos on the configure
         'kompetensi_dicapai' => 'Dokumentasi',
     ], [UploadedFile::fake()->image('logbook.jpg')]);
 
-    expect(Storage::disk('public')->allFiles())->not->toBeEmpty();
+    expect(Storage::disk('local')->allFiles())->not->toBeEmpty();
 });
 
 it('renders attendance and logbook PDFs from blade views', function () {
@@ -342,7 +350,7 @@ it('exports assessment pdf from the new submission model flow', function () {
         'weighted_score' => 88,
     ]);
 
-    $assessmentResponse = app(\App\Modules\Wims\Services\Admin\AdminAssessmentRecapExportService::class)
+    $assessmentResponse = app(AdminAssessmentRecapExportService::class)
         ->download($registration->fresh(), 'dosen');
 
     expect($assessmentResponse->headers->get('content-type'))->toContain('application/pdf')

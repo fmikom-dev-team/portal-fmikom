@@ -9,6 +9,7 @@ use App\Models\Radar\RadarDevice;
 use App\Models\Radar\RadarProtection;
 use App\Models\Radar\RadarSecurityEvent;
 use App\Models\User;
+use App\Notifications\WorkOsAlert;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -323,7 +324,7 @@ class DetectionEngine
         try {
             $superAdmins = User::where('user_type', 'super-admin')->where('is_active', true)->get();
             foreach ($superAdmins as $admin) {
-                $admin->notify(new \App\Notifications\WorkOsAlert(
+                $admin->notify(new WorkOsAlert(
                     title: "Radar threat payload blocked: {$type}",
                     description: "Threat detected on IP {$ip} ({$device->os} {$device->browser}). Severity: {$severity}. Action taken: {$action}.",
                     severity: strtolower($severity) === 'critical' ? 'error' : (strtolower($severity) === 'high' ? 'error' : (strtolower($severity) === 'medium' ? 'warning' : 'info'))

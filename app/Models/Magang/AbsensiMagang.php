@@ -2,11 +2,12 @@
 
 namespace App\Models\Magang;
 
+use App\Support\PublicStorageUrl;
+use App\Support\WimsStorage;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
 
 class AbsensiMagang extends Model
 {
@@ -43,7 +44,7 @@ class AbsensiMagang extends Model
             return null;
         }
 
-        return Carbon::parse($this->tanggal->toDateString() . ' ' . $this->waktu_masuk);
+        return Carbon::parse($this->tanggal->toDateString().' '.$this->waktu_masuk);
     }
 
     public function resolvedCheckOutAt(): ?CarbonInterface
@@ -56,18 +57,16 @@ class AbsensiMagang extends Model
             return null;
         }
 
-        return Carbon::parse($this->tanggal->toDateString() . ' ' . $this->waktu_keluar);
+        return Carbon::parse($this->tanggal->toDateString().' '.$this->waktu_keluar);
     }
 
     public function checkInPhotoUrl(): ?string
     {
-        if (! $this->foto_bukti_path) {
-            return null;
-        }
-
-        return Storage::disk('public')->exists($this->foto_bukti_path)
-            ? '/storage/' . ltrim($this->foto_bukti_path, '/')
-            : null;
+        return PublicStorageUrl::signed(
+            WimsStorage::exists($this->foto_bukti_path)
+                ? $this->foto_bukti_path
+                : null,
+        );
     }
 
     public function validateGpsLocation(): bool
@@ -105,12 +104,10 @@ class AbsensiMagang extends Model
 
     public function checkOutPhotoUrl(): ?string
     {
-        if (! $this->foto_bukti_checkout_path) {
-            return null;
-        }
-
-        return Storage::disk('public')->exists($this->foto_bukti_checkout_path)
-            ? '/storage/' . ltrim($this->foto_bukti_checkout_path, '/')
-            : null;
+        return PublicStorageUrl::signed(
+            WimsStorage::exists($this->foto_bukti_checkout_path)
+                ? $this->foto_bukti_checkout_path
+                : null,
+        );
     }
 }

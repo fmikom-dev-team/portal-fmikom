@@ -6,8 +6,8 @@ use App\Models\Magang\AbsensiMagang;
 use App\Models\Magang\AssessmentSubmission;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
-use App\Modules\Wims\Support\AssessmentSummary;
 use App\Models\User;
+use App\Modules\Wims\Support\AssessmentSummary;
 
 class MonitoringSummaryService
 {

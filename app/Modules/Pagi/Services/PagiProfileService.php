@@ -13,8 +13,8 @@ use Illuminate\Support\Facades\DB;
 
 class PagiProfileService
 {
-    use HandlesImageCompression;
     use FormatsPortfolioData;
+    use HandlesImageCompression;
 
     /**
      * Get profile data formatted for frontend.
@@ -92,40 +92,40 @@ class PagiProfileService
             if ($p->cover_image) {
                 $image = str_starts_with($p->cover_image, 'http')
                     ? $p->cover_image
-                    : asset('storage/' . $p->cover_image);
+                    : asset('storage/'.$p->cover_image);
             }
 
             $avatar = null;
             if ($creator->foto_path) {
                 $avatar = str_starts_with($creator->foto_path, 'http')
                     ? $creator->foto_path
-                    : asset('storage/' . $creator->foto_path);
+                    : asset('storage/'.$creator->foto_path);
             }
 
             // $p->likes and $p->comments use the cached relations (no extra queries)
             return [
-                'id'                     => $p->id,
-                'user_id'                => $p->user_id,
-                'title'                  => $p->title ?? 'Untitled Project',
-                'image'                  => $image,
-                'content'                => $this->formatPortfolioContent($p->content),
-                'created_at'             => $p->created_at->format('F jS Y'),
-                'likes'                  => count($p->likes),
-                'liked'                  => Auth::check() ? in_array(Auth::id(), $p->likes) : false,
-                'comments'               => $this->formatComments($p->comments),
-                'views'                  => $p->views_count ?? 0,
-                'is_published'           => (bool) $p->is_published,
-                'tools_used'             => $p->tools_used,
-                'description'            => $p->description,
-                'category'               => $p->category,
-                'tags'                   => $p->tags->map(fn ($t) => $t->name)->toArray(),
+                'id' => $p->id,
+                'user_id' => $p->user_id,
+                'title' => $p->title ?? 'Untitled Project',
+                'image' => $image,
+                'content' => $this->formatPortfolioContent($p->content),
+                'created_at' => $p->created_at->format('F jS Y'),
+                'likes' => count($p->likes),
+                'liked' => Auth::check() ? in_array(Auth::id(), $p->likes) : false,
+                'comments' => $this->formatComments($p->comments),
+                'views' => $p->views_count ?? 0,
+                'is_published' => (bool) $p->is_published,
+                'tools_used' => $p->tools_used,
+                'description' => $p->description,
+                'category' => $p->category,
+                'tags' => $p->tags->map(fn ($t) => $t->name)->toArray(),
                 'resolved_collaborators' => $this->resolveCollaborators($p, $preloadedUsers),
-                'user'                   => [
-                    'id'            => $creator->id,
-                    'name'          => $this->formatName($creator->name),
+                'user' => [
+                    'id' => $creator->id,
+                    'name' => $this->formatName($creator->name),
                     'pagi_username' => $creator->pagi_username,
-                    'avatar'        => $avatar,
-                    'location'      => $creator->location ?? 'Banyumas, Indonesia',
+                    'avatar' => $avatar,
+                    'location' => $creator->location ?? 'Banyumas, Indonesia',
                 ],
             ];
         })->toArray();
@@ -141,42 +141,42 @@ class PagiProfileService
         $pagiRoleLabel = null;
         if ($pagiRoles->isNotEmpty()) {
             $nonAdmin = $pagiRoles->first(fn ($r) => ! in_array($r->slug, ['super-admin', 'admin']));
-            $chosen   = $nonAdmin ?? $pagiRoles->first();
+            $chosen = $nonAdmin ?? $pagiRoles->first();
             $pagiRoleLabel = $chosen?->nama;
         }
 
         $profileUser = [
-            'id'                => $user->id,
-            'name'              => $this->formatName($user->name),
-            'email'             => $user->email,
-            'pagi_username'     => $user->pagi_username,
-            'role_title'        => $user->role_title,
-            'pagi_role'         => $pagiRoleLabel,
-            'user_type'         => $user->user_type,
-            'bio'               => $user->bio,
-            'location'          => $user->location,
-            'website'           => $user->website,
-            'twitter'           => $user->twitter,
-            'linkedin'          => $user->linkedin,
-            'github'            => $user->github,
-            'instagram'         => $user->instagram,
-            'foto_path'         => $user->foto_path,
-            'banner_path'       => $user->banner_path,
-            'tanggal_lahir'     => $user->tanggal_lahir ? $user->tanggal_lahir->format('Y-m-d') : null,
-            'skills'            => $user->metadata['skills'] ?? ['Figma', 'UI/UX Design', 'Vue.js'],
-            'timezone'          => $user->metadata['timezone'] ?? null,
+            'id' => $user->id,
+            'name' => $this->formatName($user->name),
+            'email' => $user->email,
+            'pagi_username' => $user->pagi_username,
+            'role_title' => $user->role_title,
+            'pagi_role' => $pagiRoleLabel,
+            'user_type' => $user->user_type,
+            'bio' => $user->bio,
+            'location' => $user->location,
+            'website' => $user->website,
+            'twitter' => $user->twitter,
+            'linkedin' => $user->linkedin,
+            'github' => $user->github,
+            'instagram' => $user->instagram,
+            'foto_path' => $user->foto_path,
+            'banner_path' => $user->banner_path,
+            'tanggal_lahir' => $user->tanggal_lahir ? $user->tanggal_lahir->format('Y-m-d') : null,
+            'skills' => $user->metadata['skills'] ?? ['Figma', 'UI/UX Design', 'Vue.js'],
+            'timezone' => $user->metadata['timezone'] ?? null,
             'timezone_extended' => $user->metadata['timezone_extended'] ?? null,
-            'languages'         => $user->metadata['languages'] ?? [],
+            'languages' => $user->metadata['languages'] ?? [],
             // ── FIX #3: Use single COUNT query from DB instead of reading JSON metadata
-            'followers_count'   => $user->pagiFollowers()->count(),
-            'following_count'   => $user->pagiFollowing()->count(),
-            'followed_by_user'  => ($firstFollower = $user->pagiFollowers()->first()) ? [
-                'id'            => $firstFollower->id,
-                'name'          => $this->formatName($firstFollower->name),
+            'followers_count' => $user->pagiFollowers()->count(),
+            'following_count' => $user->pagiFollowing()->count(),
+            'followed_by_user' => ($firstFollower = $user->pagiFollowers()->first()) ? [
+                'id' => $firstFollower->id,
+                'name' => $this->formatName($firstFollower->name),
                 'pagi_username' => $firstFollower->pagi_username,
-                'foto_path'     => $this->resolveAssetPath($firstFollower->foto_path),
+                'foto_path' => $this->resolveAssetPath($firstFollower->foto_path),
             ] : null,
-            'certificates'      => $this->resolveCertificateLogos(
+            'certificates' => $this->resolveCertificateLogos(
                 array_key_exists('certificates', $user->metadata ?? [])
                     ? $user->metadata['certificates']
                     : [
@@ -188,7 +188,7 @@ class PagiProfileService
 
         return [
             'profileUser' => $profileUser,
-            'projects'    => $projects,
+            'projects' => $projects,
         ];
     }
 
@@ -213,7 +213,7 @@ class PagiProfileService
             }
         }
 
-        $textFields  = ['role_title', 'bio', 'location', 'website', 'twitter', 'linkedin', 'github', 'instagram', 'tanggal_lahir', 'pagi_username'];
+        $textFields = ['role_title', 'bio', 'location', 'website', 'twitter', 'linkedin', 'github', 'instagram', 'tanggal_lahir', 'pagi_username'];
         $dataToUpdate = [];
         foreach ($textFields as $field) {
             if ($request->has($field)) {
@@ -230,8 +230,8 @@ class PagiProfileService
             $user->fill($dataToUpdate);
         }
 
-        $metaFields      = ['is_message_enabled', 'skills', 'timezone', 'timezone_extended', 'languages'];
-        $metadata        = $user->metadata ?? [];
+        $metaFields = ['is_message_enabled', 'skills', 'timezone', 'timezone_extended', 'languages'];
+        $metadata = $user->metadata ?? [];
         $metadataChanged = false;
         foreach ($metaFields as $field) {
             if ($request->has($field)) {
@@ -250,8 +250,8 @@ class PagiProfileService
         if ($request->hasFile('banner')) {
             $path = $this->compressAndSaveBannerOrVideo($request->file('banner'), 'pagi/banners');
             if ($path) {
-                if ($user->banner_path && file_exists(storage_path('app/public/' . $user->banner_path))) {
-                    @unlink(storage_path('app/public/' . $user->banner_path));
+                if ($user->banner_path && file_exists(storage_path('app/public/'.$user->banner_path))) {
+                    @unlink(storage_path('app/public/'.$user->banner_path));
                 }
                 $user->banner_path = $path;
             }
@@ -260,19 +260,19 @@ class PagiProfileService
         if ($request->hasFile('foto')) {
             $path = $this->compressAndSaveImage($request->file('foto'), 'profile_photos', 400, 400, 80);
             if ($path) {
-                if ($user->foto_path && ! str_starts_with($user->foto_path, 'http') && file_exists(storage_path('app/public/' . $user->foto_path))) {
-                    @unlink(storage_path('app/public/' . $user->foto_path));
+                if ($user->foto_path && ! str_starts_with($user->foto_path, 'http') && file_exists(storage_path('app/public/'.$user->foto_path))) {
+                    @unlink(storage_path('app/public/'.$user->foto_path));
                 }
                 $user->foto_path = $path;
             }
         } elseif ($request->has('avatar_url') && ! empty($validatedData['avatar_url'])) {
-            if ($user->foto_path && ! str_starts_with($user->foto_path, 'http') && file_exists(storage_path('app/public/' . $user->foto_path))) {
-                @unlink(storage_path('app/public/' . $user->foto_path));
+            if ($user->foto_path && ! str_starts_with($user->foto_path, 'http') && file_exists(storage_path('app/public/'.$user->foto_path))) {
+                @unlink(storage_path('app/public/'.$user->foto_path));
             }
             $user->foto_path = $validatedData['avatar_url'];
         } elseif ($request->boolean('remove_foto')) {
-            if ($user->foto_path && ! str_starts_with($user->foto_path, 'http') && file_exists(storage_path('app/public/' . $user->foto_path))) {
-                @unlink(storage_path('app/public/' . $user->foto_path));
+            if ($user->foto_path && ! str_starts_with($user->foto_path, 'http') && file_exists(storage_path('app/public/'.$user->foto_path))) {
+                @unlink(storage_path('app/public/'.$user->foto_path));
             }
             $user->foto_path = null;
         }
@@ -296,10 +296,10 @@ class PagiProfileService
 
         // Generate 3 candidate suggestions
         $candidates = [
-            $username . rand(10, 99),
-            $username . '_' . rand(1, 9),
-            str_replace(['.', '_'], '', $username) . rand(100, 999),
-            $username . rand(100, 999),
+            $username.rand(10, 99),
+            $username.'_'.rand(1, 9),
+            str_replace(['.', '_'], '', $username).rand(100, 999),
+            $username.rand(100, 999),
         ];
 
         // One query to check which candidates are already taken
@@ -311,8 +311,8 @@ class PagiProfileService
         $suggestions = array_values(array_filter($candidates, fn ($c) => ! isset($taken[$c])));
 
         return [
-            'available'   => false,
-            'error'       => 'Username ini sudah digunakan.',
+            'available' => false,
+            'error' => 'Username ini sudah digunakan.',
             'suggestions' => array_values(array_unique(array_slice($suggestions, 0, 3))),
         ];
     }

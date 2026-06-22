@@ -9,15 +9,14 @@ use App\Modules\Fast\DTOs\SuratDataContract;
 use App\Modules\Fast\Services\Shared\SuratDocumentGeneratorService;
 use App\Modules\Fast\Services\Shared\SuratHistoryService;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
 use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 
 class FastApprovalWorkflowService
 {
     public function __construct(
         protected SuratDocumentGeneratorService $documentGenerator,
-    ) {
-    }
+    ) {}
 
     public const ROLE_ADMIN = 'admin';
 
@@ -293,5 +292,3 @@ class FastApprovalWorkflowService
         return $role === self::ROLE_ADMIN && $surat->requiresFinalApproval();
     }
 }
-
-

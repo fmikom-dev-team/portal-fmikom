@@ -23,9 +23,9 @@ class SecurityHeaders
     public function handle(Request $request, Closure $next): Response
     {
         $allowsDocumentEmbedding = $this->allowsDocumentEmbedding($request);
-        $telescopePath = config('telescope.path', 'telescope') . '*';
-        $pulsePath = config('pulse.path', 'pulse') . '*';
-        $horizonPath = config('horizon.path', 'horizon') . '*';
+        $telescopePath = config('telescope.path', 'telescope').'*';
+        $pulsePath = config('pulse.path', 'pulse').'*';
+        $horizonPath = config('horizon.path', 'horizon').'*';
 
         if ($request->is($telescopePath) || $request->is($pulsePath) || $request->is($horizonPath) || $request->is('livewire*')) {
             $response = $next($request);
@@ -155,11 +155,18 @@ class SecurityHeaders
             'style-src '.implode(' ', array_filter([
                 "'self'",
                 "'unsafe-inline'",
-                "'nonce-{$nonce}'",
                 'https://fonts.googleapis.com',
                 'https://fonts.bunny.net',
                 $isLocalEnvironment ? 'http://0.0.0.0:5173 http://127.0.0.1:5173 http://localhost:5173' : null,
             ])),
+            'style-src-elem '.implode(' ', array_filter([
+                "'self'",
+                $isLocalEnvironment ? "'unsafe-inline'" : "'nonce-{$nonce}'",
+                'https://fonts.googleapis.com',
+                'https://fonts.bunny.net',
+                $isLocalEnvironment ? 'http://0.0.0.0:5173 http://127.0.0.1:5173 http://localhost:5173' : null,
+            ])),
+            "style-src-attr 'unsafe-inline'",
             "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net data:",
             "img-src 'self' data: blob: https://ui-avatars.com https://api.dicebear.com https://avatars.dicebear.com https://lh3.googleusercontent.com https://lh4.googleusercontent.com https://lh5.googleusercontent.com https://lh6.googleusercontent.com https://images.unsplash.com https://upload.wikimedia.org https://cdn.jsdelivr.net https://tile.openstreetmap.org https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org",
             $connectSrc,
@@ -216,9 +223,11 @@ class SecurityHeaders
         $response->headers->set('Permissions-Policy', $this->buildPermissionsPolicy($request));
 
         // ── Cross-Origin Security Headers ────────────────────────────────────
-        $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
-        $response->headers->set('Cross-Origin-Embedder-Policy', 'unsafe-none');
-        $response->headers->set('Cross-Origin-Resource-Policy', 'same-origin');
+        if ($isSecure) {
+            $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
+            $response->headers->set('Cross-Origin-Embedder-Policy', 'unsafe-none');
+            $response->headers->set('Cross-Origin-Resource-Policy', 'same-origin');
+        }
         $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');
 
         // ── Hapus header yang mengidentifikasi teknologi server ───────────────
@@ -231,6 +240,7 @@ class SecurityHeaders
 
         return $response;
     }
+
     private function allowsDocumentEmbedding(Request $request): bool
     {
         return $request->is(

@@ -7,8 +7,8 @@ use App\Models\SuratApprovalFlow;
 use App\Models\SuratLampiran;
 use App\Modules\Fast\Support\TemplateAdminSupport;
 use App\Modules\Fast\Workflow\Approvals\FastApprovalWorkflowService;
+use App\Support\FastStorage;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -17,8 +17,7 @@ class ApprovalService
 {
     public function __construct(
         protected TemplateAdminSupport $templateAdminSupport,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -48,7 +47,7 @@ class ApprovalService
             $query->whereHas('pemohon', function ($pemohonQuery) use ($search): void {
                 $pemohonQuery
                     ->where('name', 'like', "%{$search}%")
-                    ->orWhere('nim_nip', 'like', "%{$search}%")
+                    ->orWhere('nomor_induk', 'like', "%{$search}%")
                     ->orWhere('nomor_induk', 'like', "%{$search}%");
             });
         }
@@ -112,7 +111,7 @@ class ApprovalService
         if ($search !== '') {
             $query->whereHas('pemohon', function ($pemohonQuery) use ($search): void {
                 $pemohonQuery->where('name', 'like', "%{$search}%")
-                    ->orWhere('nim_nip', 'like', "%{$search}%")
+                    ->orWhere('nomor_induk', 'like', "%{$search}%")
                     ->orWhere('nomor_induk', 'like', "%{$search}%");
             });
         }
@@ -174,7 +173,7 @@ class ApprovalService
         if ($search !== '') {
             $query->whereHas('pemohon', function ($pemohonQuery) use ($search): void {
                 $pemohonQuery->where('name', 'like', "%{$search}%")
-                    ->orWhere('nim_nip', 'like', "%{$search}%")
+                    ->orWhere('nomor_induk', 'like', "%{$search}%")
                     ->orWhere('nomor_induk', 'like', "%{$search}%");
             });
         }
@@ -219,7 +218,7 @@ class ApprovalService
         if ($search !== '') {
             $query->whereHas('pemohon', function ($pemohonQuery) use ($search): void {
                 $pemohonQuery->where('name', 'like', "%{$search}%")
-                    ->orWhere('nim_nip', 'like', "%{$search}%")
+                    ->orWhere('nomor_induk', 'like', "%{$search}%")
                     ->orWhere('nomor_induk', 'like', "%{$search}%");
             });
         }
@@ -314,9 +313,7 @@ class ApprovalService
     {
         $lampiran = SuratLampiran::query()->findOrFail($id);
 
-        abort_unless(Storage::disk('public')->exists($lampiran->file_path), 404);
-
-        return Storage::disk('public')->response(
+        return FastStorage::response(
             $lampiran->file_path,
             $lampiran->nama_file,
             [
@@ -367,7 +364,9 @@ class ApprovalService
     {
         return array_merge($this->serializeArchiveItem($surat), [
             'tanggal_selesai' => optional($surat->tanggal_selesai)?->toISOString(),
-            'download_url' => $surat->generated_file_path ? Storage::disk('public')->url($surat->generated_file_path) : null,
+            'download_url' => $surat->generated_file_path
+                ? route('documents.surat.pdf', $surat->id, absolute: false)
+                : null,
         ]);
     }
 
@@ -389,7 +388,7 @@ class ApprovalService
             'lampiran' => $surat->lampirans->map(fn ($lampiran): array => [
                 'id' => $lampiran->id,
                 'name' => $lampiran->nama_file,
-                'url' => null,
+                'url' => route('documents.lampiran.preview', $lampiran->id, absolute: false),
                 'type' => $lampiran->tipe,
             ])->values(),
             'tanggal_pengajuan' => optional($surat->tanggal_pengajuan ?? $surat->created_at)?->toISOString(),

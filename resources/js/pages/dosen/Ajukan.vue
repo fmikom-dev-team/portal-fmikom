@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Page from '@/pages/Modules/Fast/Dosen/Ajukan.vue';
+import Page from "@/pages/Modules/Fast/Dosen/Ajukan.vue";
 
 defineOptions({ inheritAttrs: false });
 </script>

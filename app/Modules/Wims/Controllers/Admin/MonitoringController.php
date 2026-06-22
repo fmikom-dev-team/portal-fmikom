@@ -12,8 +12,7 @@ class MonitoringController extends Controller
 {
     public function __construct(
         private readonly AdminMonitoringPageService $adminMonitoringPageService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {

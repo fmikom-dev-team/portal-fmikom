@@ -5,14 +5,14 @@ namespace App\Modules\Wims\Services\Shared\Monitoring;
 use App\Models\Magang\AbsensiMagang;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
+use App\Support\PublicStorageUrl;
 use Illuminate\Support\Carbon;
 
 class MonitoringDetailService
 {
     public function __construct(
         private readonly MonitoringHistoryService $monitoringHistoryService,
-    ) {
-    }
+    ) {}
 
     public function buildPayload(
         PendaftaranMagang $pendaftaran,
@@ -84,7 +84,7 @@ class MonitoringDetailService
                 'images' => $todayLogbook?->photos
                     ?->map(fn ($photo) => [
                         'id' => $photo->id,
-                        'url' => '/storage/' . $photo->file_path,
+                        'url' => PublicStorageUrl::signed($photo->file_path),
                     ])
                     ->values()
                     ->all() ?? [],
@@ -103,7 +103,7 @@ class MonitoringDetailService
                 'images' => $selectedLogbook?->photos
                     ?->map(fn ($photo) => [
                         'id' => $photo->id,
-                        'url' => '/storage/' . $photo->file_path,
+                        'url' => PublicStorageUrl::signed($photo->file_path),
                     ])
                     ->values()
                     ->all() ?? [],

@@ -29,7 +29,7 @@ class UpdateProfileRequest extends FormRequest
                 'file',
                 'mimes:jpeg,png,jpg,gif,webp,mp4,webm,ogg',
                 'max:102400',
-                new VideoDurationRule(),
+                new VideoDurationRule,
             ],
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'bio' => 'nullable|string|max:1000',

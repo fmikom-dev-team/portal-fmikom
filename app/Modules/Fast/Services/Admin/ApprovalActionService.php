@@ -13,8 +13,7 @@ class ApprovalActionService
 {
     public function __construct(
         protected FastApprovalWorkflowService $workflow,
-    ) {
-    }
+    ) {}
 
     public function approve(Request $request, int $id): RedirectResponse
     {
@@ -54,12 +53,12 @@ class ApprovalActionService
         $surat = Surat::query()->findOrFail($id);
 
         $surat->approvalFlows()->create([
-            'approver_id'  => $user->id,
-            'urutan'       => 0,
-            'role'         => $this->normalizeRole($user->userTypeSlug(), $user->roleDisplayName()),
-            'status'       => SuratApprovalFlow::STATUS_NOTE,
-            'keterangan'   => 'Catatan',
-            'catatan'      => $request->string('catatan')->toString(),
+            'approver_id' => $user->id,
+            'urutan' => 0,
+            'role' => $this->normalizeRole($user->userTypeSlug(), $user->roleDisplayName()),
+            'status' => SuratApprovalFlow::STATUS_NOTE,
+            'keterangan' => 'Catatan',
+            'catatan' => $request->string('catatan')->toString(),
             'tanggal_aksi' => now(),
         ]);
 

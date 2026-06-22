@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\UserHelpers;
 use App\Exceptions\SuperAdminProtectionException;
 use App\Models\Alumni\ProfilAlumni;
 use App\Models\Auth\AuthOAuthCredential;
@@ -10,18 +11,11 @@ use App\Models\Magang\LowonganInfo;
 use App\Models\Magang\PembimbingLapangan;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PenilaianMagang;
-use App\Models\Pagi\PagiActiveChat;
-use App\Models\Pagi\PagiArchivedChat;
-use App\Models\Pagi\PagiClearedChat;
-use App\Models\Pagi\PagiPinnedChat;
-use App\Models\Pagi\PagiUnreadChat;
-use App\Models\Pagi\PagiWork;
 use App\Models\Surat\Surat;
 use App\Models\Surat\SuratApprovalFlow;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -51,7 +45,7 @@ use Laravel\Sanctum\HasApiTokens;
  */
 class User extends Authenticatable
 {
-    use \App\Concerns\UserHelpers, HasApiTokens, HasFactory, Notifiable, \App\Models\Traits\HasPagiRelations;
+    use \App\Models\Traits\HasPagiRelations, HasApiTokens, HasFactory, Notifiable, UserHelpers;
 
     protected $fillable = [
         'name', 'email', 'password', 'program_studi_id',

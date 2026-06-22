@@ -5,9 +5,9 @@ namespace App\Modules\Wims\Services\Mahasiswa\Logbook;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\LogbookPhoto;
 use App\Models\Magang\PendaftaranMagang;
+use App\Support\WimsStorage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -53,7 +53,7 @@ class LogbookActionService
             });
         } catch (Throwable $exception) {
             if ($storedPaths !== []) {
-                Storage::disk('public')->delete($storedPaths);
+                WimsStorage::delete($storedPaths);
             }
 
             throw $exception;
@@ -106,14 +106,14 @@ class LogbookActionService
             });
         } catch (Throwable $exception) {
             if ($storedPaths !== []) {
-                Storage::disk('public')->delete($storedPaths);
+                WimsStorage::delete($storedPaths);
             }
 
             throw $exception;
         }
 
         if ($deletedPaths !== []) {
-            Storage::disk('public')->delete($deletedPaths);
+            WimsStorage::delete($deletedPaths);
         }
     }
 
@@ -121,10 +121,10 @@ class LogbookActionService
     {
         $directory = 'logbook';
         $extension = strtolower($photo->getClientOriginalExtension() ?: $photo->extension() ?: 'bin');
-        $filename = Str::uuid() . '.' . $extension;
+        $filename = Str::uuid().'.'.$extension;
 
-        Storage::disk('public')->putFileAs($directory, $photo, $filename);
+        WimsStorage::storeUploadedFileAs($photo, $directory, $filename);
 
-        return $directory . '/' . $filename;
+        return $directory.'/'.$filename;
     }
 }

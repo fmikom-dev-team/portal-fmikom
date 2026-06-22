@@ -9,14 +9,14 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-sm shadow-blue-200/40 hover:-translate-y-0.5 hover:bg-primary/95 hover:shadow-md hover:shadow-blue-200/50 active:translate-y-0",
+          "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/20 hover:-translate-y-0.5 hover:shadow-blue-500/30 active:scale-[0.98] dark:from-[#214FAF] dark:to-[#0F6FBE] dark:shadow-[0_14px_34px_-18px_rgba(8,15,30,0.84)] dark:hover:shadow-[0_18px_38px_-18px_rgba(8,15,30,0.92)]",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm shadow-red-200/50 hover:-translate-y-0.5 hover:bg-destructive/90 hover:shadow-md hover:shadow-red-200/60 active:translate-y-0 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+          "bg-rose-600 text-white shadow-lg shadow-rose-500/20 hover:-translate-y-0.5 hover:bg-rose-700 hover:shadow-rose-500/30 active:scale-[0.98] focus-visible:ring-rose-500/20 dark:focus-visible:ring-rose-400/30",
         outline:
-          "border border-slate-200 bg-white text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+          "border border-wims-border/60 bg-wims-card text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 dark:bg-slate-800/40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700/30 dark:hover:text-slate-100",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-accent/50",
+          "bg-slate-100 text-slate-700 shadow-sm hover:bg-slate-200 hover:text-slate-900 dark:bg-slate-800/60 dark:text-slate-200 dark:hover:bg-slate-700/80",
+        ghost: "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-700/50",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

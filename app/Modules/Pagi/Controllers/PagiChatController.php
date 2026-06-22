@@ -126,7 +126,7 @@ class PagiChatController extends Controller
     public function update(Request $request, PagiMessage $message)
     {
         $request->validate([
-            'body' => 'required|string|max:5000'
+            'body' => 'required|string|max:5000',
         ]);
 
         $user = Auth::user();

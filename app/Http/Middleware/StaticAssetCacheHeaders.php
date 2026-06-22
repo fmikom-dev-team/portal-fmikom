@@ -37,6 +37,7 @@ class StaticAssetCacheHeaders
                 'public, max-age=31536000, immutable'
             );
             $response->headers->set('Vary', 'Accept-Encoding');
+
             return $response;
         }
 
@@ -47,6 +48,7 @@ class StaticAssetCacheHeaders
                 'public, max-age=31536000, immutable'
             );
             $response->headers->set('Vary', 'Accept-Encoding');
+
             return $response;
         }
 
@@ -57,6 +59,7 @@ class StaticAssetCacheHeaders
                 'public, max-age=604800, stale-while-revalidate=86400'
             );
             $response->headers->set('Vary', 'Accept-Encoding');
+
             return $response;
         }
 
@@ -66,6 +69,7 @@ class StaticAssetCacheHeaders
                 'Cache-Control',
                 'public, max-age=3600, stale-while-revalidate=86400'
             );
+
             return $response;
         }
 

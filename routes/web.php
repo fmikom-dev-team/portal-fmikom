@@ -225,6 +225,7 @@ Route::get('/invitations/accept/{token}', [InvitationAcceptController::class, 's
 
 // ─── Image Proxy Obfuscated Streaming ──────────────────────────────────────────
 Route::get('/images/v1/{encrypted_path}', [ImageProxyController::class, 'serve'])
+    ->middleware('signed')
     ->name('images.proxy');
 
 require __DIR__.'/settings.php';

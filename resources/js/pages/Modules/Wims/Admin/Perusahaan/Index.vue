@@ -12,6 +12,7 @@ import {
 } from 'lucide-vue-next';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import InputError from '@/components/InputError.vue';
 import { Input } from '@/components/ui/input';
 import {
     Card,
@@ -122,9 +123,6 @@ const emptyForm = () => ({
         'friday',
     ] as string[],
     bidang_industri: '',
-    kontak_person: '',
-    telepon: '',
-    email: '',
     is_active: true,
 });
 
@@ -143,6 +141,27 @@ const isEditMode = computed(() => selectedCompany.value !== null);
 const selectedCompanyAccount = computed(
     () => selectedCompany.value?.account ?? null,
 );
+
+const companyValidationError = computed(() => {
+    const errors = page.props.errors ?? {};
+    const keys = [
+        'nama',
+        'alamat',
+        'kota',
+        'radius_valid_meter',
+        'jam_masuk',
+        'jam_pulang',
+        'toleransi_terlambat_menit',
+        'hari_kerja',
+        'bidang_industri',
+        'location',
+        'schedule',
+    ];
+
+    return keys.map((key) => errors[key]).find(Boolean) ?? null;
+});
+
+const companyFieldError = (field: string) => page.props.errors?.[field] ?? '';
 
 const hydrateForm = (company: CompanyItem | null) => {
     const next = company
@@ -168,9 +187,6 @@ const hydrateForm = (company: CompanyItem | null) => {
                   ]),
               ],
               bidang_industri: company.bidang_industri ?? '',
-              kontak_person: company.kontak_person ?? '',
-              telepon: company.telepon ?? '',
-              email: company.email ?? '',
               is_active: company.is_active ?? true,
           }
         : emptyForm();
@@ -182,6 +198,7 @@ watch(
     selectedCompany,
     (company) => {
         hydrateForm(company);
+        resetPortalAccountForm(company);
     },
     { immediate: true },
 );
@@ -218,16 +235,21 @@ const filteredCompanies = computed(() => {
     );
 });
 
+function resetPortalAccountForm(company: CompanyItem | null = selectedCompany.value) {
+    accountForm.email = company?.email ?? '';
+    accountForm.jabatan = '';
+}
+
 const startCreate = () => {
     activeCompanyId.value = null;
     hydrateForm(null);
-    resetPortalAccountForm();
+    resetPortalAccountForm(null);
     editorOpen.value = true;
 };
 
 const selectCompany = (companyId: number) => {
     activeCompanyId.value = companyId;
-    resetPortalAccountForm();
+    resetPortalAccountForm(props.companies.find((company) => company.id === companyId) ?? null);
     editorOpen.value = true;
 };
 
@@ -236,12 +258,7 @@ const closeEditor = () => {
     deleteDialogOpen.value = false;
     activeCompanyId.value = null;
     hydrateForm(null);
-    resetPortalAccountForm();
-};
-
-const resetPortalAccountForm = () => {
-    accountForm.email = '';
-    accountForm.jabatan = '';
+    resetPortalAccountForm(null);
 };
 
 const submit = () => {
@@ -259,9 +276,6 @@ const submit = () => {
         toleransi_terlambat_menit: form.toleransi_terlambat_menit || 0,
         hari_kerja: form.hari_kerja,
         bidang_industri: form.bidang_industri || null,
-        kontak_person: form.kontak_person || null,
-        telepon: form.telepon || null,
-        email: form.email || null,
         is_active: form.is_active,
     };
 
@@ -300,7 +314,7 @@ const submitMitraAccount = () => {
     router.post(
         `/wims/admin/perusahaan/${selectedCompany.value.id}/account`,
         {
-            email: accountForm.email,
+            email: selectedCompany.value.email || accountForm.email,
             jabatan: accountForm.jabatan || null,
         },
         {
@@ -413,7 +427,7 @@ const destroyCompany = () => {
 
                     <Button
                         type="button"
-                        class="h-9 rounded-lg bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700"
+                        class="h-9 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] dark:from-[#214FAF] dark:to-[#0F6FBE] dark:shadow-[0_14px_34px_-18px_rgba(8,15,30,0.84)] dark:hover:shadow-[0_18px_38px_-18px_rgba(8,15,30,0.92)]"
                         @click="startCreate"
                     >
                         <Plus class="size-4" />
@@ -547,18 +561,16 @@ const destroyCompany = () => {
                 <div class="max-h-[calc(100vh-11rem)] space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
                     <Alert
                         v-if="
-                            page.props.errors?.location ||
-                            page.props.errors?.schedule ||
+                            companyValidationError ||
                             page.props.flash?.error
                         "
                         variant="destructive"
                         class="border-rose-200 bg-rose-50 text-rose-700"
-                        >
-                            <AlertTitle>Data perusahaan belum valid</AlertTitle>
-                            <AlertDescription>
-                                {{
-                                page.props.errors?.location ||
-                                page.props.errors?.schedule ||
+                    >
+                        <AlertTitle>Data perusahaan belum valid</AlertTitle>
+                        <AlertDescription>
+                            {{
+                                companyValidationError ||
                                 page.props.flash?.error
                             }}
                         </AlertDescription>
@@ -583,9 +595,10 @@ const destroyCompany = () => {
                                 <Input
                                     v-model="form.nama"
                                     type="text"
-                                    required
+                                    :required="!isEditMode"
                                     class="h-10 rounded-lg border-zinc-200 bg-white"
                                 />
+                                <InputError :message="companyFieldError('nama')" />
                             </label>
 
                             <label class="block space-y-2">
@@ -596,8 +609,10 @@ const destroyCompany = () => {
                                 <Input
                                     v-model="form.kota"
                                     type="text"
+                                    :required="!isEditMode"
                                     class="h-10 rounded-lg border-zinc-200 bg-white"
                                 />
+                                <InputError :message="companyFieldError('kota')" />
                             </label>
 
                             <label class="block space-y-2">
@@ -608,7 +623,11 @@ const destroyCompany = () => {
                                 <Input
                                     v-model="form.bidang_industri"
                                     type="text"
+                                    :required="!isEditMode"
                                     class="h-10 rounded-lg border-zinc-200 bg-white"
+                                />
+                                <InputError
+                                    :message="companyFieldError('bidang_industri')"
                                 />
                             </label>
 
@@ -620,8 +639,10 @@ const destroyCompany = () => {
                                 <textarea
                                     v-model="form.alamat"
                                     rows="3"
+                                    :required="!isEditMode"
                                     class="min-h-24 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm leading-6 text-zinc-900 transition outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
                                 />
+                                <InputError :message="companyFieldError('alamat')" />
                             </label>
                         </div>
                     </section>
@@ -650,6 +671,7 @@ const destroyCompany = () => {
                                 v-model:address="form.alamat"
                             />
                         </div>
+                        <InputError :message="companyFieldError('location')" />
 
                         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                             <label class="flex flex-col gap-2">
@@ -661,7 +683,11 @@ const destroyCompany = () => {
                                     v-model="form.radius_valid_meter"
                                     type="number"
                                     min="10"
+                                    :required="!isEditMode"
                                     class="h-10 rounded-lg border-zinc-200 bg-white"
+                                />
+                                <InputError
+                                    :message="companyFieldError('radius_valid_meter')"
                                 />
                             </label>
                         </div>
@@ -686,7 +712,11 @@ const destroyCompany = () => {
                                 <Input
                                     v-model="form.jam_masuk"
                                     type="time"
+                                    :required="!isEditMode"
                                     class="h-10 rounded-lg border-zinc-200 bg-white"
+                                />
+                                <InputError
+                                    :message="companyFieldError('jam_masuk')"
                                 />
                             </label>
                             <label class="flex flex-col gap-2">
@@ -697,7 +727,11 @@ const destroyCompany = () => {
                                 <Input
                                     v-model="form.jam_pulang"
                                     type="time"
+                                    :required="!isEditMode"
                                     class="h-10 rounded-lg border-zinc-200 bg-white"
+                                />
+                                <InputError
+                                    :message="companyFieldError('jam_pulang')"
                                 />
                             </label>
                             <label class="flex flex-col gap-2">
@@ -709,7 +743,13 @@ const destroyCompany = () => {
                                     v-model="form.toleransi_terlambat_menit"
                                     type="number"
                                     min="0"
+                                    :required="!isEditMode"
                                     class="h-10 rounded-lg border-zinc-200 bg-white"
+                                />
+                                <InputError
+                                    :message="
+                                        companyFieldError('toleransi_terlambat_menit')
+                                    "
                                 />
                             </label>
                         </div>
@@ -737,6 +777,7 @@ const destroyCompany = () => {
                                     <span>{{ day.label }}</span>
                                 </label>
                             </div>
+                            <InputError :message="companyFieldError('hari_kerja')" />
                         </div>
 
                         <p class="text-xs leading-5 text-slate-500">
@@ -747,47 +788,21 @@ const destroyCompany = () => {
                     <section class="space-y-5 rounded-xl border border-zinc-200 bg-white p-4 sm:p-5">
                         <div class="space-y-1">
                             <h3 class="text-[15px] font-bold text-slate-950">
-                                Kontak dan Status
+                                Kontak, Status, dan Akun Portal
                             </h3>
                             <p class="text-xs text-slate-500">
-                                Informasi kontak perusahaan dan status operasional mitra.
+                                Kelola kontak perusahaan, status operasional, dan relasi akun Portal dari satu tempat.
                             </p>
                         </div>
 
+                        <div
+                            v-if="!isEditMode"
+                            class="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-4 text-sm text-slate-600"
+                        >
+                            Data kontak perusahaan akan mengikuti data registrasi Portal atau dapat dihubungkan saat edit bila diperlukan.
+                        </div>
+
                         <div class="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
-                            <label class="flex flex-col gap-2">
-                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
-                                    Kontak Person
-                                    <span class="text-rose-500">*</span>
-                                </span>
-                                <Input
-                                    v-model="form.kontak_person"
-                                    type="text"
-                                    class="h-10 rounded-lg border-zinc-200 bg-white"
-                                />
-                            </label>
-                            <label class="flex flex-col gap-2">
-                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
-                                    Telepon
-                                    <span class="text-rose-500">*</span>
-                                </span>
-                                <Input
-                                    v-model="form.telepon"
-                                    type="text"
-                                    class="h-10 rounded-lg border-zinc-200 bg-white"
-                                />
-                            </label>
-                            <label class="flex flex-col gap-2">
-                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
-                                    Email
-                                    <span class="text-rose-500">*</span>
-                                </span>
-                                <Input
-                                    v-model="form.email"
-                                    type="email"
-                                    class="h-10 rounded-lg border-zinc-200 bg-white"
-                                />
-                            </label>
                             <label class="flex flex-col gap-2">
                                 <span class="inline-flex min-h-5 items-end gap-1 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
                                     Status
@@ -801,63 +816,47 @@ const destroyCompany = () => {
                                     <option :value="true">Aktif</option>
                                     <option :value="false">Nonaktif</option>
                                 </select>
+                                <InputError :message="companyFieldError('is_active')" />
                             </label>
                         </div>
-                    </section>
 
-                    <section
-                        v-if="isEditMode"
-                        class="space-y-5 rounded-xl border border-zinc-200 bg-white p-4 sm:p-5"
-                    >
-                        <div class="flex items-start gap-3">
-                            <div
-                                class="flex size-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600"
-                            >
-                                <UserRound class="size-4" />
-                            </div>
-                            <div>
-                                <p class="text-[15px] font-bold text-slate-950">
-                                    Hubungkan Akun Portal
-                                </p>
-                                <p class="text-xs text-slate-500">
-                                    WIMS tidak membuat akun mitra sendiri.
-                                    Hubungkan perusahaan ini ke akun Portal
-                                    yang sudah ada.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div
-                            v-if="selectedCompanyAccount"
-                            class="space-y-3"
-                        >
-                            <div
-                                class="rounded-xl border border-zinc-200 bg-white px-4 py-4"
-                            >
+                        <div class="border-t border-zinc-200 pt-5">
+                            <div class="flex items-start gap-3">
                                 <div
-                                    class="flex items-start justify-between gap-3"
+                                    class="flex size-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600"
                                 >
+                                    <UserRound class="size-4" />
+                                </div>
+                                <div>
+                                    <p class="text-[15px] font-bold text-slate-950">
+                                        Hubungkan Akun Portal
+                                    </p>
+                                    <p class="text-xs text-slate-500">
+                                        WIMS tidak membuat akun mitra sendiri. Hubungkan perusahaan ini ke akun Portal yang sudah ada.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div
+                                v-if="selectedCompanyAccount"
+                                class="mt-4 rounded-xl border border-zinc-200 bg-white px-4 py-4"
+                            >
+                                <div class="flex items-start justify-between gap-3">
                                     <div class="min-w-0">
-                                        <p
-                                            class="truncate text-sm font-bold text-zinc-950"
-                                        >
+                                        <p class="truncate text-sm font-bold text-zinc-950">
                                             {{ selectedCompanyAccount?.name || '-' }}
                                         </p>
                                         <p class="mt-1 text-xs text-slate-500">
                                             {{ selectedCompanyAccount?.email || '-' }}
                                         </p>
                                         <div class="mt-3 flex flex-wrap gap-2">
-                                            <span
-                                                class="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-bold text-slate-600"
-                                            >
+                                            <span class="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-bold text-slate-600">
                                                 {{
                                                     selectedCompanyAccount?.jabatan ||
                                                     'Jabatan belum diisi'
                                                 }}
                                             </span>
-                                            <span
-                                                class="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-bold text-slate-600"
-                                            >
+                                            <span class="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-bold text-slate-600">
                                                 {{
                                                     selectedCompanyAccount?.phone ||
                                                     'Telepon belum diisi'
@@ -881,107 +880,102 @@ const destroyCompany = () => {
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div
-                            v-else-if="isEditMode"
-                            class="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-4 text-center text-sm text-slate-500"
-                        >
-                            Belum ada akun Portal mitra yang terhubung ke
-                            perusahaan ini.
-                        </div>
-
-                        <div
-                            v-if="isEditMode && selectedCompanyAccount"
-                            class="rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-4 text-sm text-blue-700"
-                        >
-                            Perusahaan ini sudah terhubung ke satu akun Portal
-                            mitra. Jika perlu mengganti akun, putuskan relasi
-                            lama melalui alur admin yang disiapkan khusus agar
-                            riwayat assignment tetap aman.
-                        </div>
-
-                        <form
-                            v-else-if="isEditMode"
-                            class="grid gap-4 border-t border-zinc-200 pt-5 md:grid-cols-2"
-                            autocomplete="off"
-                            @submit.prevent="submitMitraAccount"
-                        >
-                            <Alert
-                                v-if="
-                                    page.props.errors?.email ||
-                                    page.props.errors?.jabatan
-                                "
-                                variant="destructive"
-                                class="border-rose-200 bg-rose-50 text-rose-700 md:col-span-2"
+                            <div
+                                v-else-if="isEditMode"
+                                class="mt-4 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-4 text-sm text-slate-600"
                             >
-                                <AlertTitle
-                                    >Data akun Portal belum valid</AlertTitle
-                                >
-                                <AlertDescription>
-                                    {{
+                                Akun Portal akan dihubungkan menggunakan email perusahaan: 
+                                <span class="font-semibold text-zinc-950">
+                                    {{ selectedCompany?.email || 'belum diisi' }}
+                                </span>
+                            </div>
+
+                            <div
+                                v-else
+                                class="mt-4 rounded-xl border border-dashed border-zinc-200 bg-white px-4 py-4 text-center text-sm text-slate-500"
+                            >
+                                Simpan data perusahaan terlebih dahulu untuk menghubungkan akun Portal mitra.
+                            </div>
+
+                            <form
+                                v-if="isEditMode && !selectedCompanyAccount"
+                                class="mt-4 grid gap-4 border-t border-zinc-200 pt-5 md:grid-cols-2"
+                                autocomplete="off"
+                                @submit.prevent="submitMitraAccount"
+                            >
+                                <Alert
+                                    v-if="
                                         page.props.errors?.email ||
                                         page.props.errors?.jabatan
-                                    }}
-                                </AlertDescription>
-                            </Alert>
+                                    "
+                                    variant="destructive"
+                                    class="border-rose-200 bg-rose-50 text-rose-700 md:col-span-2"
+                                >
+                                    <AlertTitle>Data akun Portal belum valid</AlertTitle>
+                                    <AlertDescription>
+                                        {{
+                                            page.props.errors?.email ||
+                                            page.props.errors?.jabatan
+                                        }}
+                                    </AlertDescription>
+                                </Alert>
 
-                            <label class="block space-y-2">
-                                <span
-                                    class="inline-flex items-center gap-1 text-[11px] font-bold tracking-[0.16em] text-slate-500 uppercase"
-                                >
-                                    Email Akun Portal
-                                    <span class="text-rose-500">*</span>
-                                </span>
-                                <Input
-                                    v-model="accountForm.email"
-                                    name="account_email"
-                                    autocomplete="username"
-                                    type="email"
-                                    required
-                                    class="h-10 rounded-lg border-zinc-200 bg-white"
-                                />
-                                <p class="text-xs text-slate-500">
-                                    Akun harus sudah terdaftar di Portal
-                                    sebelum dapat dihubungkan ke perusahaan
-                                    ini.
-                                </p>
-                            </label>
-                            <label class="block space-y-2">
-                                <span
-                                    class="text-[11px] font-bold tracking-[0.16em] text-slate-500 uppercase"
-                                    >Jabatan di Perusahaan</span
-                                >
-                                <Input
-                                    v-model="accountForm.jabatan"
-                                    name="account_position"
-                                    autocomplete="organization-title"
-                                    type="text"
-                                    class="h-10 rounded-lg border-zinc-200 bg-white"
-                                />
-                                <p class="text-xs text-slate-500">
-                                    Contoh: Supervisor, HRD, Kepala Divisi, atau
-                                    PIC Mitra.
-                                </p>
-                            </label>
-                            <div class="flex justify-end md:col-span-2">
-                                <Button
-                                    type="submit"
-                                    class="h-9 rounded-lg bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700"
-                                    :disabled="accountProcessing"
-                                >
-                                    <Plus class="size-4" />
-                                    Hubungkan Akun Portal
-                                </Button>
-                            </div>
-                        </form>
-
-                        <div
-                            v-else
-                            class="rounded-xl border border-dashed border-zinc-200 bg-white px-4 py-4 text-center text-sm text-slate-500"
-                        >
-                            Simpan data perusahaan terlebih dahulu untuk
-                            menghubungkan akun Portal mitra.
+                                <label class="block space-y-2">
+                                    <span
+                                        class="text-[11px] font-bold tracking-[0.16em] text-slate-500 uppercase"
+                                    >
+                                        Email Akun Portal
+                                    </span>
+                                    <template v-if="selectedCompany?.email">
+                                        <div class="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm font-medium text-zinc-900">
+                                            {{ selectedCompany.email }}
+                                        </div>
+                                        <p class="text-xs text-slate-500">
+                                            Akun Portal akan dicocokkan otomatis dari email perusahaan yang sudah tersimpan.
+                                        </p>
+                                    </template>
+                                    <template v-else>
+                                        <Input
+                                            v-model="accountForm.email"
+                                            name="account_email"
+                                            autocomplete="email"
+                                            type="email"
+                                            placeholder="Masukkan email akun Portal"
+                                            class="h-10 rounded-lg border-zinc-200 bg-white"
+                                        />
+                                        <p class="text-xs text-slate-500">
+                                            Email ini dipakai untuk menghubungkan perusahaan ke akun Portal yang sudah ada.
+                                        </p>
+                                    </template>
+                                </label>
+                                <label class="block space-y-2">
+                                    <span
+                                        class="text-[11px] font-bold tracking-[0.16em] text-slate-500 uppercase"
+                                        >Jabatan di Perusahaan</span
+                                    >
+                                    <Input
+                                        v-model="accountForm.jabatan"
+                                        name="account_position"
+                                        autocomplete="organization-title"
+                                        type="text"
+                                        class="h-10 rounded-lg border-zinc-200 bg-white"
+                                    />
+                                    <p class="text-xs text-slate-500">
+                                        Contoh: Supervisor, HRD, Kepala Divisi, atau PIC Mitra.
+                                    </p>
+                                </label>
+                                <div class="flex justify-end md:col-span-2">
+                                    <Button
+                                        type="submit"
+                                        class="h-9 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] dark:from-[#214FAF] dark:to-[#0F6FBE] dark:shadow-[0_14px_34px_-18px_rgba(8,15,30,0.84)] dark:hover:shadow-[0_18px_38px_-18px_rgba(8,15,30,0.92)]"
+                                        :disabled="accountProcessing"
+                                    >
+                                        <Plus class="size-4" />
+                                        Hubungkan Akun Portal
+                                    </Button>
+                                </div>
+                            </form>
                         </div>
                     </section>
 
@@ -991,14 +985,14 @@ const destroyCompany = () => {
                         <Button
                             type="button"
                             variant="outline"
-                            class="h-9 rounded-lg border-zinc-200 px-4 text-sm font-bold text-zinc-700"
+                            class="h-9 rounded-xl border border-wims-border/60 bg-wims-card px-4 text-sm font-semibold text-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-700/30"
                             @click="closeEditor"
                         >
                             Batal
                         </Button>
                         <Button
                             type="button"
-                            class="h-9 rounded-lg bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700"
+                            class="h-9 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] dark:from-[#214FAF] dark:to-[#0F6FBE] dark:shadow-[0_14px_34px_-18px_rgba(8,15,30,0.84)] dark:hover:shadow-[0_18px_38px_-18px_rgba(8,15,30,0.92)]"
                             :disabled="processing"
                             @click="submit"
                         >
@@ -1013,7 +1007,7 @@ const destroyCompany = () => {
                             v-if="isEditMode"
                             type="button"
                             variant="outline"
-                            class="h-9 rounded-lg border-rose-200 px-4 text-sm font-bold text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                            class="h-9 rounded-xl border border-rose-200 bg-white px-4 text-sm font-bold text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                             @click="deleteDialogOpen = true"
                         >
                             <Trash2 class="size-4" />

@@ -15,8 +15,7 @@ class LogbookController extends Controller
     public function __construct(
         private readonly MitraAccessService $mitraAccessService,
         private readonly MitraLogbookReviewService $mitraLogbookReviewService,
-    ) {
-    }
+    ) {}
 
     public function review(Request $request, LogbookMagang $logbook): RedirectResponse
     {

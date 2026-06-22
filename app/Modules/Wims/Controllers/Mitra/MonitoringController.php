@@ -3,13 +3,13 @@
 namespace App\Modules\Wims\Controllers\Mitra;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Wims\Services\Mitra\MitraAccessService;
+use App\Modules\Wims\Services\Mitra\MitraMonitoringOverviewService;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringDetailService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringHistoryService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringRegistrationResolverService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringSummaryService;
-use App\Modules\Wims\Services\Mitra\MitraAccessService;
-use App\Modules\Wims\Services\Mitra\MitraMonitoringOverviewService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,8 +24,7 @@ class MonitoringController extends Controller
         private readonly MonitoringSummaryService $monitoringSummaryService,
         private readonly MonitoringDetailService $monitoringDetailService,
         private readonly MitraAccessService $mitraAccessService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {

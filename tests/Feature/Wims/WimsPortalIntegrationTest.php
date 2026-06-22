@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\UserModuleRole;
 use App\Modules\Wims\Services\Dosen\LecturerAssessmentWorkflowService;
 use App\Modules\Wims\Services\Mitra\MitraAccessService;
+use App\Modules\Wims\Services\Shared\Placement\PlacementIndexService;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -366,7 +367,7 @@ it('limits placement-related role queries to active WIMS assignments only', func
 
     $service = app(WimsModuleRoleService::class);
 
-    $dosenIds = app(\App\Modules\Wims\Services\Shared\Placement\PlacementIndexService::class)
+    $dosenIds = app(PlacementIndexService::class)
         ->buildOptions()['dosen'];
 
     expect(collect($dosenIds)->pluck('id')->all())->toBe([$activeWimsDosen->id]);
@@ -409,6 +410,41 @@ it('limits placement-related role queries to active WIMS assignments only', func
         ->assertSessionHasNoErrors();
 
     expect($registration->fresh()->dosen_pembimbing_id)->toBe($activeWimsDosen->id);
+});
+
+it('activates approved placements without requiring a document request', function () {
+    $company = PerusahaanMitra::query()->create([
+        'nama' => 'PT Aktivasi Tanpa Surat',
+        'is_active' => true,
+    ]);
+
+    $student = portalReadyUser(['name' => 'Mahasiswa Aktivasi']);
+    $lecturer = portalReadyUser(['name' => 'Dosen Aktivasi']);
+    $admin = portalReadyUser(['name' => 'Admin Aktivasi']);
+
+    assignModuleRole($student, $this->wimsModule, 'mahasiswa');
+    assignModuleRole($lecturer, $this->wimsModule, 'dosen');
+    assignModuleRole($admin, $this->wimsModule, 'admin');
+
+    $registration = PendaftaranMagang::query()->create([
+        'mahasiswa_id' => $student->id,
+        'perusahaan_id' => $company->id,
+        'dosen_pembimbing_id' => $lecturer->id,
+        'status' => 'approved',
+        'tanggal_mulai' => '2026-06-01',
+        'tanggal_selesai' => '2026-06-30',
+    ]);
+
+    $this->actingAs($admin)
+        ->withSession(['active_module' => 'WIMS', 'active_role' => 'admin'])
+        ->from('/wims/admin/penempatan')
+        ->post(route('wims.admin.placements.activate', $registration))
+        ->assertRedirect('/wims/admin/penempatan');
+
+    expect($registration->fresh()->status)->toBe('aktif');
+    $this->assertDatabaseMissing('surat_penetapans', [
+        'pendaftaran_id' => $registration->id,
+    ]);
 });
 
 it('requires active WIMS mitra assignment before resolving company access', function () {

@@ -133,7 +133,7 @@ it('persists the main ketidakhadiran status values used by wims', function () {
             'tanggal_mulai' => now()->addDays($index)->toDateString(),
             'tanggal_selesai' => now()->addDays($index)->toDateString(),
             'jenis' => $status === 'approved' ? 'sakit' : 'izin',
-            'alasan' => 'Status ' . $status,
+            'alasan' => 'Status '.$status,
             'status' => $status,
         ]);
 
@@ -173,7 +173,7 @@ it('connects logbook photos to logbook and cascades deletion in testing', functi
     expect(LogbookPhoto::query()->whereKey($photo->id)->exists())->toBeFalse();
 });
 
-it('connects surat penetapan one to one and casts payload snapshot as array', function () {
+it('connects placement documents one to one and casts payload snapshot as array', function () {
     $admin = User::factory()->create();
     $mahasiswa = User::factory()->create();
     $company = PerusahaanMitra::create(['nama' => 'PT Surat']);

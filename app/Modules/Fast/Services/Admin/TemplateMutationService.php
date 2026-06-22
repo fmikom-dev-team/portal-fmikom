@@ -5,8 +5,8 @@ namespace App\Modules\Fast\Services\Admin;
 use App\Models\JenisSurat;
 use App\Models\SuratTemplate;
 use App\Modules\Fast\DTOs\SuratDataContract;
-use App\Modules\Fast\Template\Resolvers\TemplatePlaceholderSynchronizer;
 use App\Modules\Fast\Support\TemplateAdminSupport;
+use App\Modules\Fast\Template\Resolvers\TemplatePlaceholderSynchronizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,36 +18,35 @@ class TemplateMutationService
 {
     public function __construct(
         protected TemplateAdminSupport $templateAdminSupport,
-    ) {
-    }
+    ) {}
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'nama'             => ['required', 'string', 'max:255'],
-            'kode_surat'       => ['nullable', 'string', 'max:50'],
+            'nama' => ['required', 'string', 'max:255'],
+            'kode_surat' => ['nullable', 'string', 'max:50'],
             'kode_klasifikasi' => ['nullable', 'string', 'max:50'],
-            'category_id'      => ['nullable', 'exists:surat_categories,id'],
-            'deskripsi'        => ['nullable', 'string'],
-            'allowed_role_id'  => ['nullable', 'integer', Rule::in($this->templateAdminSupport->templateAllowedCreatorRoleIds())],
+            'category_id' => ['nullable', 'exists:surat_categories,id'],
+            'deskripsi' => ['nullable', 'string'],
+            'allowed_role_id' => ['nullable', 'integer', Rule::in($this->templateAdminSupport->templateAllowedCreatorRoleIds())],
             'approval_role_id' => ['nullable', 'integer', Rule::in($this->templateAdminSupport->templateApprovalRoleIds())],
-            'perlu_approval'   => ['nullable', 'boolean'],
-            'is_active'        => ['nullable', 'boolean'],
+            'perlu_approval' => ['nullable', 'boolean'],
+            'is_active' => ['nullable', 'boolean'],
         ]);
 
         $jenisSurat = JenisSurat::create([
-            'nama'             => $validated['nama'],
-            'slug'             => Str::slug($validated['nama']) . '-' . time(),
-            'kode_surat'       => $validated['kode_surat'] ?? null,
+            'nama' => $validated['nama'],
+            'slug' => Str::slug($validated['nama']).'-'.time(),
+            'kode_surat' => $validated['kode_surat'] ?? null,
             'kode_klasifikasi' => $validated['kode_klasifikasi'] ?? null,
-            'category_id'      => $validated['category_id'] ?? null,
-            'deskripsi'        => $validated['deskripsi'] ?? null,
-            'allowed_role_id'  => $validated['allowed_role_id'] ?? null,
+            'category_id' => $validated['category_id'] ?? null,
+            'deskripsi' => $validated['deskripsi'] ?? null,
+            'allowed_role_id' => $validated['allowed_role_id'] ?? null,
             'approval_role_id' => $validated['approval_role_id'] ?? null,
-            'alur_pengajuan'   => 'submission',
-            'field_config'     => [],
-            'perlu_approval'   => $request->boolean('perlu_approval', false),
-            'is_active'        => $request->boolean('is_active', true),
+            'alur_pengajuan' => 'submission',
+            'field_config' => [],
+            'perlu_approval' => $request->boolean('perlu_approval', false),
+            'is_active' => $request->boolean('is_active', true),
         ]);
 
         return to_route('admin.templates.index', [
@@ -58,26 +57,26 @@ class TemplateMutationService
     public function update(Request $request, JenisSurat $jenisSurat): RedirectResponse
     {
         $request->validate([
-            'template_body'              => ['required', 'string'],
-            'name'                       => ['nullable', 'string', 'max:255'],
-            'jenis_surat_nama'           => ['nullable', 'string', 'max:255'],
-            'field_config'               => ['nullable', 'array'],
-            'field_config.*.name'        => ['nullable', 'string'],
-            'field_config.*.label'       => ['nullable', 'string'],
-            'field_config.*.type'        => ['nullable', 'string'],
-            'field_config.*.required'    => ['nullable', 'boolean'],
-            'field_config.*.repeatable'  => ['nullable', 'boolean'],
-            'field_config.*.add_label'   => ['nullable', 'string'],
-            'field_config.*.item_label'  => ['nullable', 'string'],
+            'template_body' => ['required', 'string'],
+            'name' => ['nullable', 'string', 'max:255'],
+            'jenis_surat_nama' => ['nullable', 'string', 'max:255'],
+            'field_config' => ['nullable', 'array'],
+            'field_config.*.name' => ['nullable', 'string'],
+            'field_config.*.label' => ['nullable', 'string'],
+            'field_config.*.type' => ['nullable', 'string'],
+            'field_config.*.required' => ['nullable', 'boolean'],
+            'field_config.*.repeatable' => ['nullable', 'boolean'],
+            'field_config.*.add_label' => ['nullable', 'string'],
+            'field_config.*.item_label' => ['nullable', 'string'],
             'field_config.*.placeholder' => ['nullable', 'string'],
-            'field_config.*.help'        => ['nullable', 'string'],
-            'field_config.*.options'     => ['nullable', 'array'],
+            'field_config.*.help' => ['nullable', 'string'],
+            'field_config.*.options' => ['nullable', 'array'],
             'field_config.*.sumber_data' => ['nullable', 'in:data_pemohon,data_kampus,data_sistem'],
             'field_config.*.editable_role' => ['nullable', 'in:mahasiswa,admin,sistem'],
             'field_config.*.mode_form_pemohon' => ['nullable', 'in:editable,readonly,hidden'],
-            'allowed_role_id'            => ['nullable', 'integer', Rule::in($this->templateAdminSupport->templateAllowedCreatorRoleIds())],
-            'approval_role_id'           => ['nullable', 'integer', Rule::in($this->templateAdminSupport->templateApprovalRoleIds())],
-            'layout'                     => ['nullable', 'array'],
+            'allowed_role_id' => ['nullable', 'integer', Rule::in($this->templateAdminSupport->templateAllowedCreatorRoleIds())],
+            'approval_role_id' => ['nullable', 'integer', Rule::in($this->templateAdminSupport->templateApprovalRoleIds())],
+            'layout' => ['nullable', 'array'],
         ]);
 
         if ($request->filled('field_config')) {
@@ -97,7 +96,7 @@ class TemplateMutationService
 
             if ($duplicatedNames !== []) {
                 throw ValidationException::withMessages([
-                    'field_config' => 'Key field dinamis harus unik. Duplikat: ' . implode(', ', $duplicatedNames),
+                    'field_config' => 'Key field dinamis harus unik. Duplikat: '.implode(', ', $duplicatedNames),
                 ]);
             }
 
@@ -105,8 +104,8 @@ class TemplateMutationService
         }
 
         $jenisSurat->fill([
-            'nama'             => $request->input('name') ?: $request->input('jenis_surat_nama') ?: $jenisSurat->nama,
-            'allowed_role_id'  => $request->input('allowed_role_id', $jenisSurat->allowed_role_id),
+            'nama' => $request->input('name') ?: $request->input('jenis_surat_nama') ?: $jenisSurat->nama,
+            'allowed_role_id' => $request->input('allowed_role_id', $jenisSurat->allowed_role_id),
             'approval_role_id' => $request->input('approval_role_id', $jenisSurat->approval_role_id),
         ]);
         $jenisSurat->save();
@@ -123,26 +122,26 @@ class TemplateMutationService
                 ->max('version') + 1;
 
             $template = SuratTemplate::create([
-                'jenis_surat_id'   => $jenisSurat->id,
-                'name'             => $templateName,
-                'slug'             => sprintf('template-%s-v%d', $jenisSurat->slug ?: Str::slug($jenisSurat->nama), $nextVersion),
-                'format'           => 'html',
-                'template_header'  => $templateHeader,
-                'template_body'    => $templateBody,
-                'template_footer'  => $templateFooter,
-                'subject'          => $templateName,
-                'version'          => max(1, $nextVersion),
-                'is_active'        => true,
+                'jenis_surat_id' => $jenisSurat->id,
+                'name' => $templateName,
+                'slug' => sprintf('template-%s-v%d', $jenisSurat->slug ?: Str::slug($jenisSurat->nama), $nextVersion),
+                'format' => 'html',
+                'template_header' => $templateHeader,
+                'template_body' => $templateBody,
+                'template_footer' => $templateFooter,
+                'subject' => $templateName,
+                'version' => max(1, $nextVersion),
+                'is_active' => true,
                 'source_reference' => null,
-                'css_style'        => '',
+                'css_style' => '',
             ]);
         } else {
             $template->fill([
-                'name'            => $templateName,
-                'template_header'  => $templateHeader,
-                'template_body'    => $templateBody,
-                'template_footer'  => $templateFooter,
-                'subject'          => $templateName,
+                'name' => $templateName,
+                'template_header' => $templateHeader,
+                'template_body' => $templateBody,
+                'template_footer' => $templateFooter,
+                'subject' => $templateName,
             ]);
 
             if ($template->isDirty(['template_body', 'template_header', 'template_footer'])) {
@@ -172,15 +171,15 @@ class TemplateMutationService
     public function duplicate(JenisSurat $jenisSurat): RedirectResponse
     {
         return DB::transaction(function () use ($jenisSurat): RedirectResponse {
-            $newName = $jenisSurat->nama . ' (Salinan)';
+            $newName = $jenisSurat->nama.' (Salinan)';
 
             $copy = $jenisSurat->replicate();
             $copy->fill([
-                'nama'             => $newName,
-                'slug'             => Str::slug($newName) . '-' . time(),
-                'kode_surat'       => $jenisSurat->kode_surat ? $jenisSurat->kode_surat . '-COPY' : null,
+                'nama' => $newName,
+                'slug' => Str::slug($newName).'-'.time(),
+                'kode_surat' => $jenisSurat->kode_surat ? $jenisSurat->kode_surat.'-COPY' : null,
                 'kode_klasifikasi' => $jenisSurat->kode_klasifikasi,
-                'is_active'        => false,
+                'is_active' => false,
             ])->save();
 
             $template = $jenisSurat->template()->first();
@@ -189,11 +188,11 @@ class TemplateMutationService
                 $copiedTemplate = $template->replicate();
                 $copiedTemplate->fill([
                     'jenis_surat_id' => $copy->id,
-                    'name'           => $newName,
-                    'subject'        => $newName,
-                    'slug'           => Str::slug($newName) . '-tmpl-' . time(),
-                    'is_active'      => false,
-                    'version'        => 1,
+                    'name' => $newName,
+                    'subject' => $newName,
+                    'slug' => Str::slug($newName).'-tmpl-'.time(),
+                    'is_active' => false,
+                    'version' => 1,
                 ])->save();
 
                 if ($copiedTemplate) {

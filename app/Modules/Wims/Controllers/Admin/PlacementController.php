@@ -7,7 +7,6 @@ use App\Models\Magang\PendaftaranMagang;
 use App\Modules\Wims\Services\Shared\Placement\PlacementActionService;
 use App\Modules\Wims\Services\Shared\Placement\PlacementIndexService;
 use App\Modules\Wims\Services\Shared\Placement\PlacementWorkflowService;
-use App\Modules\Wims\Services\Shared\Placement\SuratPenetapanService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -19,7 +18,6 @@ class PlacementController extends Controller
         private readonly PlacementIndexService $placementIndexService,
         private readonly PlacementActionService $placementActionService,
         private readonly PlacementWorkflowService $placementWorkflowService,
-        private readonly SuratPenetapanService $suratPenetapanService,
     ) {
     }
 
@@ -49,21 +47,6 @@ class PlacementController extends Controller
         return back()->with('success', 'Penempatan perusahaan dan dosen pembimbing berhasil disimpan.');
     }
 
-    public function generateSurat(Request $request, PendaftaranMagang $pendaftaran): RedirectResponse
-    {
-        if (! $this->placementWorkflowService->canUpdatePlacement($pendaftaran)) {
-            return back()->with('error', 'Surat penetapan hanya dapat dibuat sebelum mahasiswa diaktifkan.');
-        }
-
-        if (! $this->placementWorkflowService->hasCompletePlacementData($pendaftaran)) {
-            return back()->with('error', 'Lengkapi perusahaan, dosen pembimbing, dan periode magang sebelum generate surat penetapan.');
-        }
-
-        $this->suratPenetapanService->requestGeneration($pendaftaran, $request->user()?->id);
-
-        return back()->with('success', 'Permintaan generate surat penetapan berhasil dibuat dan menunggu integrasi FASt.');
-    }
-
     public function activate(PendaftaranMagang $pendaftaran): RedirectResponse
     {
         if (! $this->placementWorkflowService->canUpdatePlacement($pendaftaran)) {
@@ -72,10 +55,6 @@ class PlacementController extends Controller
 
         if (! $this->placementWorkflowService->hasCompletePlacementData($pendaftaran)) {
             return back()->with('error', 'Lengkapi perusahaan, dosen pembimbing, dan periode magang sebelum mengaktifkan mahasiswa.');
-        }
-
-        if (! $this->placementWorkflowService->hasGeneratedSuratRequest($pendaftaran)) {
-            return back()->with('error', 'Generate surat penetapan terlebih dahulu sebelum mengaktifkan mahasiswa magang.');
         }
 
         $this->placementActionService->activate($pendaftaran);

@@ -63,7 +63,7 @@ class AuthAnalyticsController extends Controller
             DB::raw("DATE_FORMAT(created_at, '{$groupFormat}') as period"),
             DB::raw('COUNT(*) as total'),
             DB::raw('SUM(CASE WHEN is_successful = 1 THEN 1 ELSE 0 END) as successful'),
-            DB::raw('SUM(CASE WHEN is_successful = 0 THEN 1 ELSE 0 END) as failed')
+            DB::raw('SUM(CASE WHEN is_successful = 0 THEN 1 ELSE 0 END) as failed'),
         ])
             ->where('created_at', '>=', $startDate)
             ->groupBy('period')

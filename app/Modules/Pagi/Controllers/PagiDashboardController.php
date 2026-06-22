@@ -15,26 +15,25 @@ use App\Modules\Pagi\Actions\LikeCommentAction;
 use App\Modules\Pagi\Actions\LikeReplyAction;
 use App\Modules\Pagi\Actions\LikeWorkAction;
 use App\Modules\Pagi\Actions\ReplyCommentAction;
+use App\Modules\Pagi\Requests\StoreCertificateRequest;
+use App\Modules\Pagi\Requests\UpdateCertificateRequest;
+use App\Modules\Pagi\Requests\UpdateProfileRequest;
+use App\Modules\Pagi\Requests\UpdateSettingsRequest;
 use App\Modules\Pagi\Services\PagiCertificateService;
 use App\Modules\Pagi\Services\PagiNotificationService;
 use App\Modules\Pagi\Services\PagiProfileService;
 use App\Modules\Pagi\Services\PagiSocialService;
-use App\Modules\Pagi\Requests\UpdateProfileRequest;
-use App\Modules\Pagi\Requests\UpdateSettingsRequest;
-use App\Modules\Pagi\Requests\StoreCertificateRequest;
-use App\Modules\Pagi\Requests\UpdateCertificateRequest;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
-use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg;
 
 class PagiDashboardController extends Controller implements HasMiddleware
 {
@@ -47,7 +46,9 @@ class PagiDashboardController extends Controller implements HasMiddleware
     ];
 
     private const DEFAULT_PROJECT_TITLE = 'Untitled Project';
+
     private const DEFAULT_COVER_IMAGE = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop';
+
     private const DEFAULT_LOCATION = 'Banyumas, Indonesia';
 
     public static function middleware(): array
@@ -126,7 +127,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
         ];
     }
 
-    private function loadPeopleRecommendation(): \Illuminate\Support\Collection
+    private function loadPeopleRecommendation(): Collection
     {
         $module = Module::query()->where('code', 'PAGI')->first();
 
@@ -135,7 +136,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
             : collect();
     }
 
-    private function getPreloadedFeedData(\Illuminate\Support\Collection $works): array
+    private function getPreloadedFeedData(Collection $works): array
     {
         $reportedWorkIds = Auth::check()
             ? PagiReport::query()->where('reporter_id', Auth::id())
@@ -158,7 +159,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
         return [$reportedWorkIds, $preloadedUsers];
     }
 
-    private function loadFeed(): \Illuminate\Support\Collection
+    private function loadFeed(): Collection
     {
         $feedProjects = Cache::remember('pagi_feed_projects_raw', 60, function () {
             return PagiWork::query()->with([
@@ -181,7 +182,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
         return $this->formatFeedProjects($feedProjects, $reportedWorkIds, $preloadedUsers);
     }
 
-    private function loadFollowingFeed(): \Illuminate\Support\Collection
+    private function loadFollowingFeed(): Collection
     {
         if (! Auth::check()) {
             return collect();
@@ -348,7 +349,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
         ])->withViewData($this->getProfileViewData($user, $request));
     }
 
-    private function redirectProfileToUsername(User $user, Request $request): \Illuminate\Http\RedirectResponse
+    private function redirectProfileToUsername(User $user, Request $request): RedirectResponse
     {
         return redirect()->route('module.pagi.profile.username', array_merge(['user' => $user->pagi_username], $request->query()));
     }
@@ -421,7 +422,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
             : 'Modules/Pagi/User/Profile/Index';
     }
 
-    private function checkProfileRedirects(Request $request, User $user, ?string $tab): ?\Illuminate\Http\RedirectResponse
+    private function checkProfileRedirects(Request $request, User $user, ?string $tab): ?RedirectResponse
     {
         $tabRedirect = $this->resolveTabRedirect($request, $user, $tab);
         if ($tabRedirect) {
@@ -435,7 +436,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
         return null;
     }
 
-    private function resolveTabRedirect(Request $request, User $user, ?string $tab): ?\Illuminate\Http\RedirectResponse
+    private function resolveTabRedirect(Request $request, User $user, ?string $tab): ?RedirectResponse
     {
         if ($request->has('tab')) {
             $tabVal = strtolower($request->query('tab'));
@@ -444,23 +445,27 @@ class PagiDashboardController extends Controller implements HasMiddleware
             }
             if (in_array($tabVal, ['work', 'gallery', 'certificates', 'about'])) {
                 $queryString = $request->except('tab') ? '?'.http_build_query($request->except('tab')) : '';
-                return redirect()->to("/pagi/{$user->pagi_username}/{$tabVal}" . $queryString);
+
+                return redirect()->to("/pagi/{$user->pagi_username}/{$tabVal}".$queryString);
             }
         }
 
         if ($tab && strtolower($tab) === 'sertifikat') {
             $queryString = $request->query() ? '?'.http_build_query($request->query()) : '';
-            return redirect()->to("/pagi/{$user->pagi_username}/certificates" . $queryString);
+
+            return redirect()->to("/pagi/{$user->pagi_username}/certificates".$queryString);
         }
 
         if ($tab && preg_match('/[A-Z]/', $tab)) {
             $queryString = $request->query() ? '?'.http_build_query($request->query()) : '';
-            return redirect()->to("/pagi/{$user->pagi_username}/".strtolower($tab) . $queryString);
+
+            return redirect()->to("/pagi/{$user->pagi_username}/".strtolower($tab).$queryString);
         }
 
         if ($tab && ! in_array(strtolower($tab), ['work', 'gallery', 'certificates', 'about'])) {
             $queryString = $request->query() ? '?'.http_build_query($request->query()) : '';
-            return redirect()->to("/pagi/{$user->pagi_username}" . $queryString);
+
+            return redirect()->to("/pagi/{$user->pagi_username}".$queryString);
         }
 
         return null;
@@ -487,7 +492,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
         return response()->json(['works' => $projects]);
     }
 
-    private function preloadCollaboratorsForCollection(\Illuminate\Support\Collection $works): array
+    private function preloadCollaboratorsForCollection(Collection $works): array
     {
         $names = $this->profileService->extractCollaboratorNames($works);
         if (empty($names)) {
@@ -501,7 +506,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
             ->all();
     }
 
-    private function formatUserWorksList(\Illuminate\Support\Collection $projectsCollection, User $user, array $preloadedUsers): \Illuminate\Support\Collection
+    private function formatUserWorksList(Collection $projectsCollection, User $user, array $preloadedUsers): Collection
     {
         return $projectsCollection->map(fn ($p) => [
             'id' => $p->id,
@@ -675,7 +680,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
         ];
     }
 
-    private function getProgramStudisList(): \Illuminate\Support\Collection
+    private function getProgramStudisList(): Collection
     {
         return ProgramStudi::query()->with('fakultas')->get()->map(function ($ps) {
             return [
@@ -825,8 +830,8 @@ class PagiDashboardController extends Controller implements HasMiddleware
     {
         // Rate-limit: max 3 view increments per visitor per work per 10 minutes
         // Uses the visitor's IP as the throttle key to prevent spam inflation
-        $throttleKey = 'pagi_view:' . $previewId . ':' . $request->ip();
-        if (\Illuminate\Support\Facades\Cache::has($throttleKey)) {
+        $throttleKey = 'pagi_view:'.$previewId.':'.$request->ip();
+        if (Cache::has($throttleKey)) {
             // Already counted recently — return current count without incrementing
             $portfolio = PagiWork::query()->select('id', 'views_count')->findOrFail($previewId);
 
@@ -837,7 +842,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
         $portfolio->increment('views_count', 1);
 
         // Prevent re-counting from same IP for the next 10 minutes
-        \Illuminate\Support\Facades\Cache::put($throttleKey, 1, now()->addMinutes(10));
+        Cache::put($throttleKey, 1, now()->addMinutes(10));
 
         return response()->json(['views' => $portfolio->views_count]);
     }
@@ -863,7 +868,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
         }
 
         return response()->json([
-            'content'  => $this->profileService->formatPortfolioContent($portfolio->content),
+            'content' => $this->profileService->formatPortfolioContent($portfolio->content),
             'comments' => $this->profileService->formatComments($portfolio->comments ?? []),
         ]);
     }
@@ -1004,17 +1009,17 @@ class PagiDashboardController extends Controller implements HasMiddleware
         $extension = pathinfo($path, PATHINFO_EXTENSION);
         if (in_array(strtolower($extension), ['jpg', 'jpeg', 'png'])) {
             $webpPath = preg_replace('/\.(jpg|jpeg|png)$/i', '.webp', $path);
-            if (file_exists(public_path('storage/' . $webpPath))) {
+            if (file_exists(public_path('storage/'.$webpPath))) {
                 $path = $webpPath;
             }
         } elseif (strtolower($extension) === 'mp4') {
             $webmPath = preg_replace('/\.mp4$/i', '.webm', $path);
-            if (file_exists(public_path('storage/' . $webmPath))) {
+            if (file_exists(public_path('storage/'.$webmPath))) {
                 $path = $webmPath;
             }
         }
 
-        return asset('storage/' . $path);
+        return asset('storage/'.$path);
     }
 
     /**
@@ -1114,36 +1119,36 @@ class PagiDashboardController extends Controller implements HasMiddleware
         return 'https://ui-avatars.com/api/?name='.urlencode($name).'&background=random';
     }
 
-    private function formatFeedProjects(\Illuminate\Support\Collection $projectsCollection, $reportedWorkIds, $preloadedUsers): \Illuminate\Support\Collection
+    private function formatFeedProjects(Collection $projectsCollection, $reportedWorkIds, $preloadedUsers): Collection
     {
         return $projectsCollection->map(function ($portfolio) use ($reportedWorkIds, $preloadedUsers) {
             $authorName = $this->getAuthorName($portfolio->user);
 
             return [
-                'id'                  => $portfolio->id,
-                'title'               => $portfolio->title ?? self::DEFAULT_PROJECT_TITLE,
-                'image'               => $this->getStorageUrl($portfolio->cover_image) ?? self::DEFAULT_COVER_IMAGE,
-                'author'              => $authorName,
-                'avatar'              => $this->getAvatarUrl($portfolio->user),
+                'id' => $portfolio->id,
+                'title' => $portfolio->title ?? self::DEFAULT_PROJECT_TITLE,
+                'image' => $this->getStorageUrl($portfolio->cover_image) ?? self::DEFAULT_COVER_IMAGE,
+                'author' => $authorName,
+                'avatar' => $this->getAvatarUrl($portfolio->user),
                 // 'content' and 'comments' are intentionally omitted here.
                 // They are heavy and only needed when the user opens the modal.
                 // They are fetched on-demand via GET /pagi/preview/{id}/data.
-                'likes'               => count($portfolio->likes ?? []),
-                'liked'               => Auth::check() ? in_array(Auth::id(), $portfolio->likes ?? []) : false,
-                'views'               => $portfolio->views_count ?? 0,
-                'tools_used'          => $portfolio->tools_used,
-                'description'         => $portfolio->description,
-                'category'            => $portfolio->category,
-                'tags'                => $portfolio->tags->map(fn ($t) => $t->name)->toArray(),
-                'created_at'          => $portfolio->created_at->toISOString(),
+                'likes' => count($portfolio->likes ?? []),
+                'liked' => Auth::check() ? in_array(Auth::id(), $portfolio->likes ?? []) : false,
+                'views' => $portfolio->views_count ?? 0,
+                'tools_used' => $portfolio->tools_used,
+                'description' => $portfolio->description,
+                'category' => $portfolio->category,
+                'tags' => $portfolio->tags->map(fn ($t) => $t->name)->toArray(),
+                'created_at' => $portfolio->created_at->toISOString(),
                 'resolved_collaborators' => $this->profileService->resolveCollaborators($portfolio, $preloadedUsers),
-                'reported_by_me'      => $reportedWorkIds->has($portfolio->id),
-                'user'                => $portfolio->user ? [
-                    'id'            => $portfolio->user->id,
-                    'name'          => $authorName,
+                'reported_by_me' => $reportedWorkIds->has($portfolio->id),
+                'user' => $portfolio->user ? [
+                    'id' => $portfolio->user->id,
+                    'name' => $authorName,
                     'pagi_username' => $portfolio->user->pagi_username,
-                    'avatar'        => $this->getStorageUrl($portfolio->user->foto_path),
-                    'location'      => $portfolio->user->location ?? self::DEFAULT_LOCATION,
+                    'avatar' => $this->getStorageUrl($portfolio->user->foto_path),
+                    'location' => $portfolio->user->location ?? self::DEFAULT_LOCATION,
                 ] : null,
             ];
         });

@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import {
     Building2,
@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatIndonesianDateTime } from '@/lib/date';
 import registrationRoutes from '@/routes/wims/registration';
+import { toast } from '@/pages/WorkOs/composables/useWorkOs';
 
 defineOptions({ layout: StudentLayout });
 
@@ -86,9 +87,11 @@ const isLocked     = computed(() => Boolean(props.pageState.is_locked));
 const isRevision   = computed(() => Boolean(props.pageState.is_revision));
 const canSubmit    = computed(() => Boolean(props.pageState.can_submit));
 const completedOnce = computed(() => Boolean(props.pageState.completed_once));
+const localSuccess = ref<string | null>(flash.value.success ?? null);
+const localError = ref<string | null>(flash.value.error ?? null);
 const globalError  = computed(() =>
     pageErrors.value.registration
-    || flash.value.error
+    || localError.value
     || (completedOnce.value ? 'PKL sudah pernah diselesaikan pada akun ini. Pendaftaran baru tidak tersedia lagi.' : null),
 );
 
@@ -279,8 +282,57 @@ const submitDisabled = computed(
 );
 const submit = () => {
     if (submitDisabled.value) return;
-    form.post(registrationRoutes.store.url(), { preserveScroll: true });
+    localError.value = null;
+    form.post(registrationRoutes.store.url(), {
+        preserveScroll: true,
+        onSuccess: (pageResponse) => {
+            const message = pageResponse.props.flash?.success
+                ?? (isRevision.value
+                    ? 'Perbaikan pendaftaran berhasil dikirim ulang dan menunggu review kampus.'
+                    : 'Pendaftaran PKL/magang berhasil dikirim dan menunggu review kampus.');
+
+            localSuccess.value = message;
+        },
+        onError: (errors) => {
+            const message = page.props.flash?.error
+                ?? page.props.errors?.registration
+                ?? errors.tanggal_mulai
+                ?? errors.tanggal_selesai
+                ?? errors.perusahaan_diminati_nama
+                ?? errors.perusahaan_diminati_alamat
+                ?? errors.catatan_pengajuan
+                ?? 'Pendaftaran gagal dikirim. Periksa kembali data yang diisi.';
+
+            localSuccess.value = null;
+            localError.value = message;
+            toast(message, 'error');
+        },
+    });
 };
+
+watch(
+    () => flash.value.success,
+    (message) => {
+        localSuccess.value = message ?? null;
+        if (message) {
+            localError.value = null;
+            toast(message, 'success');
+        }
+    },
+    { immediate: true },
+);
+
+watch(
+    () => flash.value.error,
+    (message) => {
+        localError.value = message ?? null;
+        if (message) {
+            localSuccess.value = null;
+            toast(message, 'error');
+        }
+    },
+    { immediate: true },
+);
 </script>
 
 <template>
@@ -411,11 +463,11 @@ const submit = () => {
             </div>
 
             <!-- Flash Alerts -->
-            <div v-if="flash.success" class="flex items-start gap-3 rounded-xl border border-emerald-200/60 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10 px-4 py-3">
+            <div v-if="localSuccess" class="flex items-start gap-3 rounded-xl border border-emerald-200/60 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10 px-4 py-3">
                 <CheckCircle2 class="mt-0.5 size-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
                 <div>
                     <p class="text-sm font-bold text-emerald-800 dark:text-emerald-300">Berhasil</p>
-                    <p class="mt-0.5 text-xs leading-relaxed text-emerald-700 dark:text-emerald-400">{{ flash.success }}</p>
+                    <p class="mt-0.5 text-xs leading-relaxed text-emerald-700 dark:text-emerald-400">{{ localSuccess }}</p>
                 </div>
             </div>
             <div v-if="globalError" class="flex items-start gap-3 rounded-xl border border-rose-200/60 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/10 px-4 py-3">
@@ -631,7 +683,7 @@ const submit = () => {
                             </div>
                         </div>
 
-                        <div class="space-y-5 px-5 py-5 sm:px-6">
+                        <form class="space-y-5 px-5 py-5 sm:px-6" @submit.prevent="submit">
                             <!-- Notice: Locked -->
                             <div v-if="isLocked" class="flex items-start gap-3 rounded-xl border border-blue-200/60 bg-blue-50 dark:border-blue-500/30 dark:bg-blue-500/10 px-4 py-3">
                                 <Clock3 class="mt-0.5 size-4 shrink-0 text-blue-500 dark:text-blue-400" />
@@ -724,9 +776,9 @@ const submit = () => {
 
                             <!-- Submit -->
                             <div class="pt-1">
-                                <Button type="button"
+                                <Button type="submit"
                                     class="h-11 w-full rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:from-slate-300 disabled:to-slate-300 disabled:text-slate-500 dark:disabled:from-slate-700 dark:disabled:to-slate-700 dark:disabled:text-slate-400"
-                                    :disabled="submitDisabled" @click="submit">
+                                    :disabled="submitDisabled">
                                     <LoaderCircle v-if="form.processing" class="mr-2 size-4 animate-spin" />
                                     <span>{{ actionLabel }}</span>
                                 </Button>
@@ -734,7 +786,7 @@ const submit = () => {
                                     Lengkapi tanggal mulai dan selesai untuk mengajukan
                                 </p>
                             </div>
-                        </div>
+                        </form>
                     </div>
 
                     <!-- Activity Log -->

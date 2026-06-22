@@ -16,8 +16,7 @@ class CompanyController extends Controller
     public function __construct(
         private readonly AdminCompanyPageService $adminCompanyPageService,
         private readonly AdminCompanyActionService $adminCompanyActionService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {

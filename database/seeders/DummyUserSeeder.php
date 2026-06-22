@@ -23,6 +23,14 @@ class DummyUserSeeder extends Seeder
                 'is_active' => true,
             ]
         );
+        $wimsModule = Module::firstOrCreate(
+            ['code' => 'WIMS'],
+            [
+                'name' => 'Web-based Internship Management System',
+                'description' => 'Pengelolaan PKL dan magang FMIKOM',
+                'is_active' => true,
+            ]
+        );
 
         // Akun Admin Muchlisin
         $admin = User::updateOrCreate(
@@ -61,6 +69,14 @@ class DummyUserSeeder extends Seeder
         $fastDekanRole = Role::firstOrCreate(
             ['slug' => 'dekan'],
             ['nama' => 'Dekan']
+        );
+        $wimsAdminRole = Role::firstOrCreate(
+            ['slug' => 'admin'],
+            ['nama' => 'Admin']
+        );
+        $wimsDosenRole = Role::firstOrCreate(
+            ['slug' => 'dosen'],
+            ['nama' => 'Dosen']
         );
 
         // Akun admin FAST untuk pengelolaan portal/approval
@@ -130,6 +146,40 @@ class DummyUserSeeder extends Seeder
             ]
         );
         $this->assignFastRole($dosen, $fastModule, $fastDosenRole);
+
+        // Akun admin WIMS
+        $wimsAdmin = User::updateOrCreate(
+            ['email' => 'wims.admin@fmikom.test'],
+            [
+                'name' => 'WIMS Admin',
+                'password' => Hash::make('admin123'),
+                'user_type' => 'admin',
+                'status_approval' => 'approved',
+                'is_active' => true,
+                'email_verified_at' => now(),
+                'password_changed_at' => now(),
+                'role_title' => 'Admin WIMS',
+                'location' => 'FMIKOM UNUGHA',
+            ]
+        );
+        $this->assignFastRole($wimsAdmin, $wimsModule, $wimsAdminRole);
+
+        // Akun dosen WIMS
+        $wimsDosen = User::updateOrCreate(
+            ['email' => 'wims.dosen@fmikom.test'],
+            [
+                'name' => 'WIMS Dosen',
+                'password' => Hash::make('dosen123'),
+                'user_type' => 'dosen',
+                'status_approval' => 'approved',
+                'is_active' => true,
+                'email_verified_at' => now(),
+                'password_changed_at' => now(),
+                'role_title' => 'Dosen WIMS',
+                'location' => 'FMIKOM UNUGHA',
+            ]
+        );
+        $this->assignFastRole($wimsDosen, $wimsModule, $wimsDosenRole);
 
         // Akun Pelajar Dummy
         $student = User::updateOrCreate(

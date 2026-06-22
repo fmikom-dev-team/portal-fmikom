@@ -1,12 +1,13 @@
 <?php
+
 namespace App\Modules\Fast\Controllers\Shared\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\JenisSurat;
 use App\Models\Surat;
 use App\Models\SuratApprovalFlow;
-use App\Models\SuratHistory;
 use App\Models\SuratCategory;
+use App\Models\SuratHistory;
 use App\Modules\Fast\DTOs\SuratDataContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -58,23 +59,23 @@ class DashboardController extends Controller
             'summary' => (function () use ($user, $diprosesStatuses): array {
                 $counts = Surat::query()
                     ->where('pemohon_id', $user->id)
-                    ->selectRaw("
+                    ->selectRaw('
                         COUNT(*) as total,
-                        SUM(CASE WHEN status IN (" . implode(',', array_fill(0, count($diprosesStatuses), '?')) . ") THEN 1 ELSE 0 END) as diproses,
+                        SUM(CASE WHEN status IN ('.implode(',', array_fill(0, count($diprosesStatuses), '?')).') THEN 1 ELSE 0 END) as diproses,
                         SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as selesai,
                         SUM(CASE WHEN status IN (?, ?) THEN 1 ELSE 0 END) as ditolak,
                         SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as dibatalkan
-                    ", array_merge($diprosesStatuses, [Surat::STATUS_FINISHED, Surat::STATUS_REJECTED_ADMIN, Surat::STATUS_REJECTED_APPROVER, Surat::STATUS_CANCELLED]))
+                    ', array_merge($diprosesStatuses, [Surat::STATUS_FINISHED, Surat::STATUS_REJECTED_ADMIN, Surat::STATUS_REJECTED_APPROVER, Surat::STATUS_CANCELLED]))
                     ->first();
 
                 $total = (int) ($counts->total ?? 0);
                 $dibatalkan = (int) ($counts->dibatalkan ?? 0);
 
                 return [
-                    'total'      => $total - $dibatalkan,
-                    'diproses'   => (int) ($counts->diproses ?? 0),
-                    'selesai'    => (int) ($counts->selesai ?? 0),
-                    'ditolak'    => (int) ($counts->ditolak ?? 0),
+                    'total' => $total - $dibatalkan,
+                    'diproses' => (int) ($counts->diproses ?? 0),
+                    'selesai' => (int) ($counts->selesai ?? 0),
+                    'ditolak' => (int) ($counts->ditolak ?? 0),
                     'dibatalkan' => $dibatalkan,
                 ];
             })(),
@@ -86,17 +87,17 @@ class DashboardController extends Controller
                 ->map(fn (Surat $s): array => $this->transformSubmission($s))
                 ->values(),
             'categories' => $categories->map(fn (SuratCategory $c): array => [
-                'id'       => $c->id,
-                'nama'     => $c->nama,
-                'slug'     => $c->slug,
-                'deskripsi'=> $c->deskripsi,
+                'id' => $c->id,
+                'nama' => $c->nama,
+                'slug' => $c->slug,
+                'deskripsi' => $c->deskripsi,
             ])->values(),
             'jenisSurats' => $jenisSurats->map(fn (JenisSurat $j): array => [
-                'id'          => $j->id,
-                'categoryId'  => $j->category_id,
-                'nama'        => $j->nama,
-                'slug'        => $j->slug,
-                'deskripsi'   => $j->deskripsi,
+                'id' => $j->id,
+                'categoryId' => $j->category_id,
+                'nama' => $j->nama,
+                'slug' => $j->slug,
+                'deskripsi' => $j->deskripsi,
                 'fieldConfig' => collect(SuratDataContract::filterDynamicFieldConfig($j->field_config ?? []))
                     ->map(fn (array $f): array => array_merge(
                         SuratDataContract::normalizeDynamicFieldConfigItem($f),
@@ -114,14 +115,14 @@ class DashboardController extends Controller
                 'label' => $user->roleDisplayName(),
             ],
             'userProfile' => [
-                'name'            => $user->name,
+                'name' => $user->name,
                 'identifierLabel' => $isLecturer ? 'NIP' : 'NIM',
                 'identifierValue' => $user->nim_nip ?: $user->nomor_induk,
             ],
             'endpoints' => [
-                'submission'    => route($this->submissionRouteName(), absolute: false),
-                'jenisSuratBase'=> '/jenis-surat',
-                'basePath'      => $this->basePath(),
+                'submission' => route($this->submissionRouteName(), absolute: false),
+                'jenisSuratBase' => '/jenis-surat',
+                'basePath' => $this->basePath(),
             ],
         ]);
     }
@@ -204,5 +205,3 @@ class DashboardController extends Controller
         ];
     }
 }
-
-

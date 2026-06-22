@@ -15,8 +15,7 @@ class ProfileController extends Controller
     public function __construct(
         protected StudentProfilePageService $studentProfilePageService,
         protected StudentProfileUpdateService $studentProfileUpdateService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {

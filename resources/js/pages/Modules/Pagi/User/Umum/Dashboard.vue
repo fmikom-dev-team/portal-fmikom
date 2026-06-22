@@ -25,7 +25,14 @@ import {
 	Users,
 	X,
 } from "lucide-vue-next";
-import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from "vue";
+import {
+	computed,
+	defineAsyncComponent,
+	onMounted,
+	onUnmounted,
+	ref,
+	watch,
+} from "vue";
 import { Skeleton } from "@/components/ui/skeleton";
 import OptimizedImage from "../ui/OptimizedImage.vue";
 

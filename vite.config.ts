@@ -69,12 +69,13 @@ export default defineConfig(async () => {
 		],
 		server: {
 			host: "localhost",
+			cors: true,
 		},
 		build: {
 			target: "es2022",
 			modulePreload: {
 				polyfill: true,
-				resolveDependencies(filename, deps) {
+				resolveDependencies(_filename, deps) {
 					return deps.filter(
 						(dep) =>
 							!dep.includes("chart-vendor") &&
@@ -114,7 +115,10 @@ export default defineConfig(async () => {
 						) {
 							return "editor-media";
 						}
-						if (id.includes("@editorjs/code") || id.includes("@editorjs/table")) {
+						if (
+							id.includes("@editorjs/code") ||
+							id.includes("@editorjs/table")
+						) {
 							return "editor-code";
 						}
 						if (

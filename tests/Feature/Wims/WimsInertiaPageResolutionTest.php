@@ -13,7 +13,7 @@ it('maps every WIMS inertia render path to an existing vue page', function () {
         ->filter(fn (string $path) => File::exists($path))
         ->flatMap(function (string $path) use ($root) {
             return collect(File::allFiles($path))
-                ->map(function (\SplFileInfo $file) use ($root) {
+                ->map(function (SplFileInfo $file) use ($root) {
                     $contents = File::get($file->getPathname());
                     preg_match_all("/Inertia::render\\(\\s*['\"]([^'\"]+)['\"]/", $contents, $matches);
 

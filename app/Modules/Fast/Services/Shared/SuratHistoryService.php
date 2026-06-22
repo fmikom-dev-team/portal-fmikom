@@ -1,4 +1,5 @@
 <?php
+
 // app/Services/SuratHistoryService.php
 
 namespace App\Modules\Fast\Services\Shared;
@@ -18,13 +19,13 @@ class SuratHistoryService
         array $extra = []
     ): SuratHistory {
         return SuratHistory::create([
-            'surat_id'     => $suratId,
-            'user_id'      => Auth::id(),
-            'action'       => $action,
+            'surat_id' => $suratId,
+            'user_id' => Auth::id(),
+            'action' => $action,
             'action_label' => $label,
-            'keterangan'   => $extra['keterangan'] ?? null,
-            'meta'         => $extra['meta'] ?? null,
-            'ip_address'   => request()?->ip(),
+            'keterangan' => $extra['keterangan'] ?? null,
+            'meta' => $extra['meta'] ?? null,
+            'ip_address' => request()?->ip(),
         ]);
     }
 

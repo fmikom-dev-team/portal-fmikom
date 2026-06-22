@@ -7,6 +7,9 @@ use App\Models\Magang\PendaftaranMagang;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
+use Illuminate\View\Compilers\BladeCompiler;
 use Throwable;
 
 class LogbookExportService
@@ -57,7 +60,7 @@ class LogbookExportService
             ];
         });
 
-        return Pdf::loadView('pdf.logbook-history', [
+        return $this->renderPdfWithIsolatedCompiledViews('pdf.logbook-history', [
             'student' => [
                 'name' => $student?->name ?? '-',
                 'nim' => $student?->nim_nip ?: $student?->nomor_induk ?: '-',
@@ -66,15 +69,79 @@ class LogbookExportService
             'internship' => [
                 'company' => $registration->perusahaan?->nama ?? '-',
                 'period' => $registration->tanggal_mulai && $registration->tanggal_selesai
-                    ? $registration->tanggal_mulai->locale('id')->translatedFormat('d M Y') . ' - ' . $registration->tanggal_selesai->locale('id')->translatedFormat('d M Y')
+                    ? $registration->tanggal_mulai->locale('id')->translatedFormat('d M Y').' - '.$registration->tanggal_selesai->locale('id')->translatedFormat('d M Y')
                     : '-',
                 'supervisor_lecturer' => $registration->dosenPembimbing?->name ?? '-',
                 'mentor' => $registration->perusahaan?->user?->name ?? '-',
             ],
             'rows' => $rows,
-        ])
-            ->setPaper('a4', 'landscape')
-            ->download('logbook-pkl-periode-terakhir-' . now()->format('Y-m-d') . '.pdf');
+        ], 'logbook-pkl-periode-terakhir-' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    /**
+     * Render PDF using a request-scoped compiled view directory to avoid
+     * Windows file-lock collisions in storage/framework/views.
+     */
+    private function renderPdfWithIsolatedCompiledViews(string $view, array $data, string $fileName)
+    {
+        $compiledPath = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR)
+            . DIRECTORY_SEPARATOR
+            . 'wims-pdf-views-'
+            . Str::uuid();
+
+        File::ensureDirectoryExists($compiledPath);
+
+        $blade = app('blade.compiler');
+        $originalPath = $this->getBladeCompiledPath($blade);
+
+        try {
+            $this->setBladeCompiledPath($compiledPath);
+
+            return Pdf::loadView($view, $data)
+                ->setPaper('a4', 'landscape')
+                ->download($fileName);
+        } finally {
+            if (is_string($originalPath) && $originalPath !== '') {
+                $this->setBladeCompiledPath($originalPath);
+            }
+        }
+    }
+
+    private function setBladeCompiledPath(string $path): void
+    {
+        $blade = app('blade.compiler');
+
+        if (! $blade instanceof BladeCompiler) {
+            return;
+        }
+
+        $reflection = new \ReflectionObject($blade);
+
+        if ($reflection->hasProperty('cachePath')) {
+            $property = $reflection->getProperty('cachePath');
+            $property->setAccessible(true);
+            $property->setValue($blade, $path);
+        }
+    }
+
+    private function getBladeCompiledPath(object $blade): ?string
+    {
+        if (! $blade instanceof BladeCompiler) {
+            return null;
+        }
+
+        $reflection = new \ReflectionObject($blade);
+
+        if (! $reflection->hasProperty('cachePath')) {
+            return null;
+        }
+
+        $property = $reflection->getProperty('cachePath');
+        $property->setAccessible(true);
+
+        $value = $property->getValue($blade);
+
+        return is_string($value) ? $value : null;
     }
 
     private function formatLocalizedDate(mixed $value, string $format): ?string
@@ -177,7 +244,7 @@ class LogbookExportService
                 return [];
             }
 
-            $items[$currentIndex] = trim($items[$currentIndex] . ' ' . $trimmedLine);
+            $items[$currentIndex] = trim($items[$currentIndex].' '.$trimmedLine);
         }
 
         if (! $hasNumberedLine || count($items) < 2) {

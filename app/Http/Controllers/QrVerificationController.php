@@ -91,12 +91,12 @@ class QrVerificationController extends Controller
     public function image(string $token): SymfonyResponse
     {
         $baseUrl = config('app.url') ?? 'http://localhost';
-        $url = rtrim($baseUrl, '/') . '/verifikasi-qr/' . $token;
+        $url = rtrim($baseUrl, '/').'/verifikasi-qr/'.$token;
 
         $writer = new Writer(
             new ImageRenderer(
                 new RendererStyle(400, 2),
-                new SvgImageBackEnd()
+                new SvgImageBackEnd
             )
         );
 

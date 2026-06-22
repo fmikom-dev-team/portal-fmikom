@@ -4,12 +4,38 @@ namespace App\Modules\Fast\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\TemplateGlobalSetting;
+use App\Support\FastStorage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class GlobalSettingsController extends Controller
 {
+    public function previewLogo(): SymfonyResponse|StreamedResponse
+    {
+        $logoPath = (string) TemplateGlobalSetting::get('logo_path', '');
+
+        if (trim($logoPath) !== '' && FastStorage::exists($logoPath)) {
+            return FastStorage::response(
+                $logoPath,
+                'fast-kop-logo.png',
+                [
+                    'Content-Type' => 'image/png',
+                    'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+                    'Pragma' => 'no-cache',
+                    'Expires' => '0',
+                ],
+            );
+        }
+
+        return response()->file(public_path('images/kop-logo-temp.png'), [
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
+    }
+
     public function save(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -23,23 +49,23 @@ class GlobalSettingsController extends Controller
             $file = $request->file('logo_file');
             $existingLogo = (string) TemplateGlobalSetting::get('logo_path', '');
 
-            if (str_starts_with($existingLogo, '/storage/')) {
-                $existingLogo = substr($existingLogo, strlen('/storage/'));
-            } elseif (str_starts_with($existingLogo, 'storage/')) {
-                $existingLogo = substr($existingLogo, strlen('storage/'));
+            if (str_starts_with($existingLogo, '/private/')) {
+                $existingLogo = substr($existingLogo, strlen('/private/'));
+            } elseif (str_starts_with($existingLogo, 'private/')) {
+                $existingLogo = substr($existingLogo, strlen('private/'));
             } else {
                 $existingLogo = '';
             }
 
             $extension = $file?->extension() ?: $file?->getClientOriginalExtension() ?: 'png';
-            $filename = 'fast-kop-logo-' . now()->format('YmdHis') . '.' . $extension;
-            $path = $file->storeAs('fast/template', $filename, 'public');
+            $filename = 'fast-kop-logo-'.now()->format('YmdHis').'.'.$extension;
+            $path = $file->storeAs('fast/template', $filename, 'local');
 
-            if ($existingLogo !== '' && $existingLogo !== $path && Storage::disk('public')->exists($existingLogo)) {
-                Storage::disk('public')->delete($existingLogo);
+            if ($existingLogo !== '' && $existingLogo !== $path) {
+                FastStorage::delete($existingLogo);
             }
 
-            $settings['logo_path'] = '/storage/' . $path;
+            $settings['logo_path'] = $path;
         }
 
         foreach ($settings as $key => $value) {

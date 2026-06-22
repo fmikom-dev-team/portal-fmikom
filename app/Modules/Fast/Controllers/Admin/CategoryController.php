@@ -1,4 +1,5 @@
 <?php
+
 // app/Http/Controllers/Admin/CategoryController.php
 
 namespace App\Modules\Fast\Controllers\Admin;
@@ -22,11 +23,11 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'nama'      => 'required|string|max:255',
+            'nama' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
-            'icon'      => 'nullable|string|max:50',
-            'warna'     => 'nullable|string|max:20',
-            'urutan'    => 'nullable|integer',
+            'icon' => 'nullable|string|max:50',
+            'warna' => 'nullable|string|max:20',
+            'urutan' => 'nullable|integer',
         ]);
 
         $data['slug'] = Str::slug($data['nama']);
@@ -39,11 +40,11 @@ class CategoryController extends Controller
     public function update(Request $request, SuratCategory $category)
     {
         $data = $request->validate([
-            'nama'      => 'required|string|max:255',
+            'nama' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
-            'icon'      => 'nullable|string|max:50',
-            'warna'     => 'nullable|string|max:20',
-            'urutan'    => 'nullable|integer',
+            'icon' => 'nullable|string|max:50',
+            'warna' => 'nullable|string|max:20',
+            'urutan' => 'nullable|integer',
             'is_active' => 'boolean',
         ]);
 

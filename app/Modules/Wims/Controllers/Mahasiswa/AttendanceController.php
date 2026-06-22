@@ -18,8 +18,7 @@ class AttendanceController extends Controller
         protected AttendancePageService $attendancePageService,
         protected AttendanceExportService $attendanceExportService,
         protected AttendanceActionService $attendanceActionService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {

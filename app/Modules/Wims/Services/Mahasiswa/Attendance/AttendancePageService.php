@@ -8,6 +8,7 @@ use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
 use App\Modules\Wims\Services\Shared\Absence\KetidakhadiranService;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
+use App\Support\PublicStorageUrl;
 
 class AttendancePageService
 {
@@ -15,8 +16,7 @@ class AttendancePageService
         private readonly AttendanceSyncService $attendanceSyncService,
         private readonly KetidakhadiranService $ketidakhadiranService,
         private readonly AttendanceAvailabilityService $attendanceAvailabilityService,
-    ) {
-    }
+    ) {}
 
     public function build(User $user): array
     {
@@ -60,14 +60,14 @@ class AttendancePageService
                 'tanggal_label' => $item->tanggal_mulai && $item->tanggal_selesai
                     ? ($item->tanggal_mulai->isSameDay($item->tanggal_selesai)
                         ? $item->tanggal_mulai->translatedFormat('d M Y')
-                        : $item->tanggal_mulai->translatedFormat('d M Y') . ' - ' . $item->tanggal_selesai->translatedFormat('d M Y'))
+                        : $item->tanggal_mulai->translatedFormat('d M Y').' - '.$item->tanggal_selesai->translatedFormat('d M Y'))
                     : '-',
                 'jenis' => $item->jenis,
                 'alasan' => $item->alasan,
                 'status' => $item->status,
                 'catatan_mitra' => $item->catatan_mitra,
                 'can_cancel' => $item->status === 'pending',
-                'bukti_url' => $item->bukti_path ? '/storage/' . $item->bukti_path : null,
+                'bukti_url' => PublicStorageUrl::signed($item->bukti_path),
             ])
             ->values();
 
@@ -101,7 +101,7 @@ class AttendancePageService
                 'tanggal_label' => $approvedAbsenceToday->tanggal_mulai && $approvedAbsenceToday->tanggal_selesai
                     ? ($approvedAbsenceToday->tanggal_mulai->isSameDay($approvedAbsenceToday->tanggal_selesai)
                         ? $approvedAbsenceToday->tanggal_mulai->translatedFormat('d M Y')
-                        : $approvedAbsenceToday->tanggal_mulai->translatedFormat('d M Y') . ' - ' . $approvedAbsenceToday->tanggal_selesai->translatedFormat('d M Y'))
+                        : $approvedAbsenceToday->tanggal_mulai->translatedFormat('d M Y').' - '.$approvedAbsenceToday->tanggal_selesai->translatedFormat('d M Y'))
                     : null,
             ] : null,
             'current_time' => now()->toIso8601String(),

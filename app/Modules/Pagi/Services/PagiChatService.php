@@ -12,6 +12,7 @@ use App\Models\Module;
 use App\Models\Pagi\PagiMessage;
 use App\Models\User;
 use App\Models\UserModuleRole;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class PagiChatService
@@ -522,6 +523,7 @@ class PagiChatService
                 ->where('user_id', $user->id)
                 ->where('partner_id', $partnerId)
                 ->delete();
+
             return false;
         }
 
@@ -531,6 +533,7 @@ class PagiChatService
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
         return true;
     }
 
@@ -549,6 +552,7 @@ class PagiChatService
                 ->where('user_id', $user->id)
                 ->where('partner_id', $partnerId)
                 ->delete();
+
             return false;
         }
 
@@ -558,6 +562,7 @@ class PagiChatService
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
         return true;
     }
 
@@ -727,7 +732,7 @@ class PagiChatService
         array $archivedChatsIds,
         array $unreadChatsIds,
         array $activeChatsList
-    ): \Illuminate\Support\Collection {
+    ): Collection {
         return $conversations->map(function (User $partner) use (
             $user,
             $unreadCounts,
@@ -787,7 +792,7 @@ class PagiChatService
         })->filter()->values();
     }
 
-    private function formatMessages($messages, User $user): \Illuminate\Support\Collection
+    private function formatMessages($messages, User $user): Collection
     {
         return $messages->map(function ($msg) use ($user) {
             $isDeletedForMe = false;

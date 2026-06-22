@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Portal\PortalAcademicCalendar;
 use App\Models\Portal\PortalEvent;
 use App\Models\Portal\PortalPage;
+use App\Models\Portal\PortalPost;
 use Inertia\Inertia;
 
 class PublicPageController extends Controller
@@ -39,17 +40,17 @@ class PublicPageController extends Controller
 
         // 1. Static URLs
         $urls[] = ['loc' => $baseUrl, 'lastmod' => now()->toDateString(), 'changefreq' => 'daily', 'priority' => '1.0'];
-        $urls[] = ['loc' => $baseUrl . '/berita', 'lastmod' => now()->toDateString(), 'changefreq' => 'daily', 'priority' => '0.8'];
-        $urls[] = ['loc' => $baseUrl . '/dokumen', 'lastmod' => now()->toDateString(), 'changefreq' => 'weekly', 'priority' => '0.7'];
-        $urls[] = ['loc' => $baseUrl . '/privacy-policy', 'lastmod' => now()->toDateString(), 'changefreq' => 'monthly', 'priority' => '0.5'];
-        $urls[] = ['loc' => $baseUrl . '/terms-of-service', 'lastmod' => now()->toDateString(), 'changefreq' => 'monthly', 'priority' => '0.5'];
-        $urls[] = ['loc' => $baseUrl . '/cookie-policy', 'lastmod' => now()->toDateString(), 'changefreq' => 'monthly', 'priority' => '0.5'];
+        $urls[] = ['loc' => $baseUrl.'/berita', 'lastmod' => now()->toDateString(), 'changefreq' => 'daily', 'priority' => '0.8'];
+        $urls[] = ['loc' => $baseUrl.'/dokumen', 'lastmod' => now()->toDateString(), 'changefreq' => 'weekly', 'priority' => '0.7'];
+        $urls[] = ['loc' => $baseUrl.'/privacy-policy', 'lastmod' => now()->toDateString(), 'changefreq' => 'monthly', 'priority' => '0.5'];
+        $urls[] = ['loc' => $baseUrl.'/terms-of-service', 'lastmod' => now()->toDateString(), 'changefreq' => 'monthly', 'priority' => '0.5'];
+        $urls[] = ['loc' => $baseUrl.'/cookie-policy', 'lastmod' => now()->toDateString(), 'changefreq' => 'monthly', 'priority' => '0.5'];
 
         // 2. Dynamic Pages (PortalPage)
         $pages = PortalPage::where('is_published', true)->get();
         foreach ($pages as $page) {
             $urls[] = [
-                'loc' => $baseUrl . '/halaman/' . $page->slug,
+                'loc' => $baseUrl.'/halaman/'.$page->slug,
                 'lastmod' => ($page->updated_at ?? now())->toDateString(),
                 'changefreq' => 'weekly',
                 'priority' => '0.8',
@@ -57,10 +58,10 @@ class PublicPageController extends Controller
         }
 
         // 3. Dynamic Posts (PortalPost)
-        $posts = \App\Models\Portal\PortalPost::where('status', 'published')->get();
+        $posts = PortalPost::where('status', 'published')->get();
         foreach ($posts as $post) {
             $urls[] = [
-                'loc' => $baseUrl . '/berita/' . $post->slug,
+                'loc' => $baseUrl.'/berita/'.$post->slug,
                 'lastmod' => ($post->published_at ?? $post->updated_at ?? now())->toDateString(),
                 'changefreq' => 'weekly',
                 'priority' => '0.7',
@@ -71,10 +72,10 @@ class PublicPageController extends Controller
         $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
         foreach ($urls as $url) {
             $xml .= '<url>';
-            $xml .= '<loc>' . htmlspecialchars($url['loc']) . '</loc>';
-            $xml .= '<lastmod>' . $url['lastmod'] . '</lastmod>';
-            $xml .= '<changefreq>' . $url['changefreq'] . '</changefreq>';
-            $xml .= '<priority>' . $url['priority'] . '</priority>';
+            $xml .= '<loc>'.htmlspecialchars($url['loc']).'</loc>';
+            $xml .= '<lastmod>'.$url['lastmod'].'</lastmod>';
+            $xml .= '<changefreq>'.$url['changefreq'].'</changefreq>';
+            $xml .= '<priority>'.$url['priority'].'</priority>';
             $xml .= '</url>';
         }
         $xml .= '</urlset>';
@@ -89,7 +90,7 @@ class PublicPageController extends Controller
             ->get()
             ->groupBy('category');
 
-        $latestPosts = \App\Models\Portal\PortalPost::where('status', 'published')
+        $latestPosts = PortalPost::where('status', 'published')
             ->select('id', 'title', 'slug', 'created_at')
             ->latest()
             ->limit(10)

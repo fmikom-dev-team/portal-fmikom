@@ -27,19 +27,19 @@ class PagiSocialService
         }
 
         return User::where(function ($q) use ($query) {
-            $q->where('name', 'like', '%' . $query . '%')
-                ->orWhere('email', 'like', '%' . $query . '%');
+            $q->where('name', 'like', '%'.$query.'%')
+                ->orWhere('email', 'like', '%'.$query.'%');
         })
             ->where('id', '!=', $authId)
             ->limit(10)
             ->get()
             ->map(function ($u) {
                 return [
-                    'id'            => $u->id,
-                    'name'          => $u->name,
+                    'id' => $u->id,
+                    'name' => $u->name,
                     'pagi_username' => $u->pagi_username,
-                    'foto_path'     => $this->resolveAssetPath($u->foto_path),
-                    'role_title'    => $u->role_title ?: 'PAGI Creator',
+                    'foto_path' => $this->resolveAssetPath($u->foto_path),
+                    'role_title' => $u->role_title ?: 'PAGI Creator',
                 ];
             })->toArray();
     }
@@ -134,20 +134,20 @@ class PagiSocialService
                     ->toArray();
 
                 return [
-                    'id'              => $u->id,
-                    'name'            => $u->name,
-                    'email'           => $u->email,
-                    'pagi_username'   => $u->pagi_username,
-                    'role'            => optional($umr->role)->nama ?? 'User',
-                    'foto_path'       => $this->resolveAssetPath($u->foto_path),
-                    'banner_path'     => $this->resolveAssetPath($u->banner_path),
-                    'prodi'           => optional($u->programStudi)->nama ?? null,
-                    'covers'          => $covers,
-                    'total_likes'     => $likesCounts[$u->id] ?? 0,
-                    'total_projects'  => $workCounts[$u->id] ?? 0,
+                    'id' => $u->id,
+                    'name' => $u->name,
+                    'email' => $u->email,
+                    'pagi_username' => $u->pagi_username,
+                    'role' => optional($umr->role)->nama ?? 'User',
+                    'foto_path' => $this->resolveAssetPath($u->foto_path),
+                    'banner_path' => $this->resolveAssetPath($u->banner_path),
+                    'prodi' => optional($u->programStudi)->nama ?? null,
+                    'covers' => $covers,
+                    'total_likes' => $likesCounts[$u->id] ?? 0,
+                    'total_projects' => $workCounts[$u->id] ?? 0,
                     'followers_count' => $followersCounts[$u->id] ?? 0,
-                    'skills'          => $u->metadata['skills'] ?? [],
-                    'location'        => $u->location ?? $u->metadata['location'] ?? null,
+                    'skills' => $u->metadata['skills'] ?? [],
+                    'location' => $u->location ?? $u->metadata['location'] ?? null,
                 ];
             })
                 ->filter()
@@ -162,8 +162,8 @@ class PagiSocialService
     public function exploreGallery(Request $request): array
     {
         $search = $request->input('search');
-        $sort   = $request->input('sort', 'Recommended');
-        $page   = $request->input('page', 1);
+        $sort = $request->input('sort', 'Recommended');
+        $page = $request->input('page', 1);
 
         if (empty($search) && $sort === 'Recommended') {
             return Cache::remember("pagi_gallery_recommended_page_{$page}", 60, function () use ($search, $sort) {
@@ -176,7 +176,7 @@ class PagiSocialService
 
     private function fetchGalleryData(?string $search, string $sort): array
     {
-        $query     = $this->buildGalleryQuery($search, $sort);
+        $query = $this->buildGalleryQuery($search, $sort);
         $paginator = $query->paginate(16)->withQueryString();
 
         $works = $paginator->items();
@@ -197,12 +197,12 @@ class PagiSocialService
             if (! $p->user) {
                 continue;
             }
-            $authorData    = $this->buildAuthorData($p->user);
+            $authorData = $this->buildAuthorData($p->user);
             $portfolioData = $this->buildPortfolioData($p, $p->user, $authorData, $preloadedUsers);
-            $content       = is_array($p->content) ? $p->content : (json_decode($p->content, true) ?: []);
+            $content = is_array($p->content) ? $p->content : (json_decode($p->content, true) ?: []);
 
             $isManual = $this->isManualGallery($content);
-            $items    = $isManual
+            $items = $isManual
                 ? $this->extractManualItems($p, $authorData, $portfolioData)
                 : $this->extractAutoItems($p, $content, $authorData, $portfolioData);
 
@@ -211,11 +211,11 @@ class PagiSocialService
 
         return [
             'galleryItems' => $galleryItems,
-            'nextPageUrl'  => $paginator->nextPageUrl(),
-            'currentPage'  => $paginator->currentPage(),
-            'lastPage'     => $paginator->lastPage(),
-            'total'        => $paginator->total(),
-            'filters'      => ['search' => $search, 'sort' => $sort],
+            'nextPageUrl' => $paginator->nextPageUrl(),
+            'currentPage' => $paginator->currentPage(),
+            'lastPage' => $paginator->lastPage(),
+            'total' => $paginator->total(),
+            'filters' => ['search' => $search, 'sort' => $sort],
         ];
     }
 
@@ -237,18 +237,18 @@ class PagiSocialService
 
         if (! empty($search)) {
             $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', '%' . $search . '%')
+                $q->where('title', 'like', '%'.$search.'%')
                     ->orWhereHas('user', function ($qu) use ($search) {
-                        $qu->where('name', 'like', '%' . $search . '%')
-                            ->orWhere('pagi_username', 'like', '%' . $search . '%');
+                        $qu->where('name', 'like', '%'.$search.'%')
+                            ->orWhere('pagi_username', 'like', '%'.$search.'%');
                     });
             });
         }
 
         match ($sort) {
-            'Most Viewed'  => $query->orderBy('views_count', 'desc'),
+            'Most Viewed' => $query->orderBy('views_count', 'desc'),
             'Most Popular' => $query->orderBy('views_count', 'desc')->orderBy('id', 'desc'),
-            default        => $query->latest(),
+            default => $query->latest(),
         };
 
         return $query;
@@ -257,11 +257,11 @@ class PagiSocialService
     private function buildAuthorData(User $user): array
     {
         return [
-            'id'            => $user->id,
-            'name'          => $this->formatName($user->name),
-            'avatar'        => $this->resolveAssetPath($user->foto_path),
+            'id' => $user->id,
+            'name' => $this->formatName($user->name),
+            'avatar' => $this->resolveAssetPath($user->foto_path),
             'pagi_username' => $user->pagi_username,
-            'prodi'         => optional($user->programStudi)->nama,
+            'prodi' => optional($user->programStudi)->nama,
         ];
     }
 
@@ -273,29 +273,29 @@ class PagiSocialService
         $likes = $p->likes;
 
         return [
-            'id'                     => $p->id,
-            'title'                  => $p->title ?? 'Untitled Project',
-            'image'                  => $this->resolveAssetPath($p->cover_image) ?? $defaultPlaceholder,
-            'author'                 => $this->formatName($u->name),
-            'avatar'                 => $this->resolveAssetPath($u->foto_path) ?? 'https://ui-avatars.com/api/?name=' . urlencode($this->formatName($u->name)) . '&background=random',
-            'likes'                  => count($likes),
-            'liked'                  => Auth::check() ? in_array(Auth::id(), $likes) : false,
+            'id' => $p->id,
+            'title' => $p->title ?? 'Untitled Project',
+            'image' => $this->resolveAssetPath($p->cover_image) ?? $defaultPlaceholder,
+            'author' => $this->formatName($u->name),
+            'avatar' => $this->resolveAssetPath($u->foto_path) ?? 'https://ui-avatars.com/api/?name='.urlencode($this->formatName($u->name)).'&background=random',
+            'likes' => count($likes),
+            'liked' => Auth::check() ? in_array(Auth::id(), $likes) : false,
             // Note: comments are intentionally omitted from gallery cards (lazy-loaded on demand)
-            'views'                  => $p->views_count ?? 0,
-            'views_count'            => $p->views_count ?? 0,
-            'content'                => null,
-            'tools_used'             => $p->tools_used,
-            'description'            => $p->description,
-            'category'               => $p->category,
-            'tags'                   => $p->tags->map(fn ($t) => $t->name)->toArray(),
-            'created_at'             => $p->created_at->toISOString(),
+            'views' => $p->views_count ?? 0,
+            'views_count' => $p->views_count ?? 0,
+            'content' => null,
+            'tools_used' => $p->tools_used,
+            'description' => $p->description,
+            'category' => $p->category,
+            'tags' => $p->tags->map(fn ($t) => $t->name)->toArray(),
+            'created_at' => $p->created_at->toISOString(),
             'resolved_collaborators' => $this->resolveCollaborators($p, $preloadedUsers),
-            'user'                   => [
-                'id'            => $u->id,
-                'name'          => $this->formatName($u->name),
+            'user' => [
+                'id' => $u->id,
+                'name' => $this->formatName($u->name),
                 'pagi_username' => $u->pagi_username,
-                'avatar'        => $this->resolveAssetPath($u->foto_path),
-                'location'      => $u->location ?? 'Banyumas, Indonesia',
+                'avatar' => $this->resolveAssetPath($u->foto_path),
+                'location' => $u->location ?? 'Banyumas, Indonesia',
             ],
         ];
     }
@@ -303,17 +303,17 @@ class PagiSocialService
     private function buildGalleryEntry(string $id, PagiWork $p, string $url, string $type, bool $isManual, array $authorData, array $portfolioData): array
     {
         return [
-            'id'             => $id,
-            'portfolio_id'   => $p->id,
-            'url'            => $url,
-            'type'           => $type,
-            'title'          => $p->title,
-            'is_manual'      => $isManual,
-            'likes'          => is_array($p->likes) ? count($p->likes) : 0,
-            'views'          => $p->views_count ?? 0,
+            'id' => $id,
+            'portfolio_id' => $p->id,
+            'url' => $url,
+            'type' => $type,
+            'title' => $p->title,
+            'is_manual' => $isManual,
+            'likes' => is_array($p->likes) ? count($p->likes) : 0,
+            'views' => $p->views_count ?? 0,
             'comments_count' => $p->comments_relation_count ?? $p->commentsRelation()->count(),
-            'author'         => $authorData,
-            'portfolio'      => $portfolioData,
+            'author' => $authorData,
+            'portfolio' => $portfolioData,
         ];
     }
 
@@ -334,23 +334,23 @@ class PagiSocialService
             return [];
         }
         $imgUrl = $this->resolveAssetPath($p->cover_image);
-        $type   = $this->isVideoUrlLocal($p->cover_image) ? 'video' : 'image';
+        $type = $this->isVideoUrlLocal($p->cover_image) ? 'video' : 'image';
 
-        return [$this->buildGalleryEntry('manual-' . $p->id, $p, $imgUrl, $type, true, $authorData, $portfolioData)];
+        return [$this->buildGalleryEntry('manual-'.$p->id, $p, $imgUrl, $type, true, $authorData, $portfolioData)];
     }
 
     private function extractAutoItems(PagiWork $p, array $content, array $authorData, array $portfolioData): array
     {
         $defaultPlaceholder = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop';
-        $items    = [];
+        $items = [];
         $seenUrls = [];
         $maxItems = 2;
-        $count    = 0;
+        $count = 0;
 
         if ($p->cover_image && $p->cover_image !== $defaultPlaceholder) {
-            $imgUrl     = str_starts_with($p->cover_image, 'http') ? $p->cover_image : asset('storage/' . $p->cover_image);
+            $imgUrl = str_starts_with($p->cover_image, 'http') ? $p->cover_image : asset('storage/'.$p->cover_image);
             $seenUrls[] = $imgUrl;
-            $items[]    = $this->buildGalleryEntry('cover-' . $p->id, $p, $imgUrl, $this->isVideoUrlLocal($p->cover_image) ? 'video' : 'image', false, $authorData, $portfolioData);
+            $items[] = $this->buildGalleryEntry('cover-'.$p->id, $p, $imgUrl, $this->isVideoUrlLocal($p->cover_image) ? 'video' : 'image', false, $authorData, $portfolioData);
             $count++;
         }
 
@@ -367,7 +367,7 @@ class PagiSocialService
                     break;
                 }
                 $seenUrls[] = $item['url'];
-                $items[]    = $item;
+                $items[] = $item;
                 $count++;
             }
         }
@@ -378,10 +378,10 @@ class PagiSocialService
     private function processContentBlock(array $block, int|string $bIdx, PagiWork $p, array $seenUrls, array $authorData, array $portfolioData): array
     {
         return match ($block['type']) {
-            'image'       => $this->processImageBlock($block, $bIdx, $p, $seenUrls, $authorData, $portfolioData),
+            'image' => $this->processImageBlock($block, $bIdx, $p, $seenUrls, $authorData, $portfolioData),
             'video_audio' => $this->processVideoBlock($block, $bIdx, $p, $seenUrls, $authorData, $portfolioData),
-            'photo_grid'  => $this->processGridBlock($block, $bIdx, $p, $seenUrls, $authorData, $portfolioData),
-            default       => [],
+            'photo_grid' => $this->processGridBlock($block, $bIdx, $p, $seenUrls, $authorData, $portfolioData),
+            default => [],
         };
     }
 
@@ -390,7 +390,7 @@ class PagiSocialService
         if (empty($block['file_path'])) {
             return [];
         }
-        $url = asset('storage/' . $block['file_path']);
+        $url = asset('storage/'.$block['file_path']);
         if (in_array($url, $seenUrls)) {
             return [];
         }
@@ -403,7 +403,7 @@ class PagiSocialService
         if (empty($block['file_path']) || ! $this->isVideoPathLocal($block['file_path'])) {
             return [];
         }
-        $url = asset('storage/' . $block['file_path']);
+        $url = asset('storage/'.$block['file_path']);
         if (in_array($url, $seenUrls)) {
             return [];
         }
@@ -421,9 +421,9 @@ class PagiSocialService
             if (empty($filePath)) {
                 continue;
             }
-            $url = asset('storage/' . $filePath);
+            $url = asset('storage/'.$filePath);
             if (! in_array($url, $seenUrls)) {
-                $items[]    = $this->buildGalleryEntry("block-grid-{$p->id}-{$bIdx}-{$gIdx}", $p, $url, 'image', false, $authorData, $portfolioData);
+                $items[] = $this->buildGalleryEntry("block-grid-{$p->id}-{$bIdx}-{$gIdx}", $p, $url, 'image', false, $authorData, $portfolioData);
                 $seenUrls[] = $url;
             }
         }
@@ -452,7 +452,7 @@ class PagiSocialService
 
             // Deterministic-random offset based on current user ID + current hour
             // (changes every hour, feels random to users, but avoids ORDER BY RAND())
-            $seed   = ($currentUserId * 31 + (int) now()->format('GH')) % max(1, $total);
+            $seed = ($currentUserId * 31 + (int) now()->format('GH')) % max(1, $total);
             $offset = max(0, $seed - 5);
 
             return UserModuleRole::with(['user.programStudi', 'role'])
@@ -463,13 +463,13 @@ class PagiSocialService
                 ->limit(5)
                 ->get()
                 ->map(fn ($umr) => $umr->user ? [
-                    'id'            => $umr->user->id,
-                    'name'          => $this->formatName($umr->user->name),
-                    'email'         => $umr->user->email,
+                    'id' => $umr->user->id,
+                    'name' => $this->formatName($umr->user->name),
+                    'email' => $umr->user->email,
                     'pagi_username' => $umr->user->pagi_username,
-                    'role'          => optional($umr->role)->nama ?? 'User',
-                    'foto_path'     => $this->resolveAssetPath($umr->user->foto_path),
-                    'prodi'         => optional($umr->user->programStudi)->nama ?? null,
+                    'role' => optional($umr->role)->nama ?? 'User',
+                    'foto_path' => $this->resolveAssetPath($umr->user->foto_path),
+                    'prodi' => optional($umr->user->programStudi)->nama ?? null,
                 ] : null)
                 ->filter()
                 ->values();
@@ -486,7 +486,7 @@ class PagiSocialService
         $followingIds = $user->pagiFollowing()->pluck('following_id')->toArray();
 
         // Fetch all needed users in one query
-        $allIds   = array_unique(array_merge($followersIds, $followingIds));
+        $allIds = array_unique(array_merge($followersIds, $followingIds));
         $allUsers = User::whereIn('id', $allIds)
             ->select(['id', 'name', 'pagi_username', 'foto_path', 'role_title', 'user_type'])
             ->get()
@@ -494,11 +494,11 @@ class PagiSocialService
 
         $mapIds = function (array $ids) use ($allUsers) {
             return collect($ids)->map(fn ($id) => isset($allUsers[$id]) ? [
-                'id'            => $allUsers[$id]->id,
-                'name'          => $this->formatName($allUsers[$id]->name),
+                'id' => $allUsers[$id]->id,
+                'name' => $this->formatName($allUsers[$id]->name),
                 'pagi_username' => $allUsers[$id]->pagi_username,
-                'foto_path'     => $this->resolveAssetPath($allUsers[$id]->foto_path),
-                'role_title'    => $allUsers[$id]->role_title ?? $allUsers[$id]->user_type ?? 'Member',
+                'foto_path' => $this->resolveAssetPath($allUsers[$id]->foto_path),
+                'role_title' => $allUsers[$id]->role_title ?? $allUsers[$id]->user_type ?? 'Member',
             ] : null)->filter()->values()->toArray();
         };
 
@@ -516,7 +516,7 @@ class PagiSocialService
             return false;
         }
         $cleanUrl = explode('?', (string) $url)[0];
-        $ext      = strtolower(pathinfo($cleanUrl, PATHINFO_EXTENSION));
+        $ext = strtolower(pathinfo($cleanUrl, PATHINFO_EXTENSION));
 
         return in_array($ext, ['mp4', 'webm', 'mov', 'avi', 'mkv', '3gp']);
     }

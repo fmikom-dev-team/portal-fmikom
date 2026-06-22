@@ -6,8 +6,8 @@ use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
 use App\Modules\Wims\Support\AssessmentSummary;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class AssessmentIndexService
 {

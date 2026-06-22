@@ -3,6 +3,7 @@
 namespace App\Modules\Wims\Services\Shared\Assessment;
 
 use App\Models\Magang\PendaftaranMagang;
+use App\Support\WimsStorage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -10,20 +11,19 @@ use RuntimeException;
 
 class FinalReportAccessService
 {
-    private const DISK = 'public';
+    private const DISK = 'local';
 
     public function resolveAbsolutePath(PendaftaranMagang $pendaftaran): string
     {
-        $absolutePath = filled($pendaftaran->laporan_akhir_path)
-            ? $this->normalizeLocalPath(Storage::disk(self::DISK)->path($pendaftaran->laporan_akhir_path))
-            : null;
+        $location = WimsStorage::locate($pendaftaran->laporan_akhir_path);
+        $absolutePath = $location['absolute_path'] ?? null;
 
         if ($absolutePath) {
             clearstatcache(true, $absolutePath);
         }
 
         abort_unless(
-            filled($pendaftaran->laporan_akhir_path) && Storage::disk(self::DISK)->exists($pendaftaran->laporan_akhir_path),
+            filled($pendaftaran->laporan_akhir_path) && $location !== null,
             404,
             'File laporan akhir tidak ditemukan.',
         );
@@ -35,8 +35,8 @@ class FinalReportAccessService
     {
         $directory = 'laporan-akhir';
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'pdf');
-        $filename = Str::uuid() . '.' . $extension;
-        $path = $directory . '/' . $filename;
+        $filename = Str::uuid().'.'.$extension;
+        $path = $directory.'/'.$filename;
 
         $contents = file_get_contents($file->getRealPath());
 
@@ -59,22 +59,22 @@ class FinalReportAccessService
             return;
         }
 
-        $disk = Storage::disk(self::DISK);
-        $absolutePath = $this->normalizeLocalPath(Storage::disk(self::DISK)->path($path));
+        $location = WimsStorage::locate($path);
+        $absolutePath = $location['absolute_path'] ?? $this->normalizeLocalPath(Storage::disk(self::DISK)->path($path));
 
         for ($attempt = 0; $attempt < 3; $attempt++) {
             clearstatcache(true, $absolutePath);
 
-            if (! is_file($absolutePath) && ! $disk->exists($path)) {
+            if (! is_file($absolutePath) && ! WimsStorage::exists($path)) {
                 return;
             }
 
-            if ($disk->delete($path)) {
-                clearstatcache(true, $absolutePath);
+            WimsStorage::delete($path);
 
-                if (! $disk->exists($path) && ! is_file($absolutePath)) {
-                    return;
-                }
+            clearstatcache(true, $absolutePath);
+
+            if (! WimsStorage::exists($path) && ! is_file($absolutePath)) {
+                return;
             }
 
             usleep(100000);

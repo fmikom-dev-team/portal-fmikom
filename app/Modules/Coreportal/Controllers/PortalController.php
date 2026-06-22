@@ -101,12 +101,12 @@ class PortalController extends Controller
 
         // Write audit log for module access
         AuditLog::create([
-            'event_type'      => 'module.accessed',
-            'severity'        => 'info',
-            'actor_id'        => $user->id,
+            'event_type' => 'module.accessed',
+            'severity' => 'info',
+            'actor_id' => $user->id,
             'organization_id' => $access->module->id,
-            'ip_address'      => request()->ip(),
-            'metadata'        => ['module' => $finalModuleCode, 'role' => $finalRoleSlug],
+            'ip_address' => request()->ip(),
+            'metadata' => ['module' => $finalModuleCode, 'role' => $finalRoleSlug],
         ]);
 
         $routeName = $this->resolveModuleDashboardRoute($finalModuleCode, $finalRoleSlug);
@@ -171,12 +171,12 @@ class PortalController extends Controller
         // Write audit log for role switch
         $module = Module::query()->where('code', $moduleCode)->first();
         AuditLog::create([
-            'event_type'      => 'role.switched',
-            'severity'        => 'info',
-            'actor_id'        => $user->id,
+            'event_type' => 'role.switched',
+            'severity' => 'info',
+            'actor_id' => $user->id,
             'organization_id' => $module?->id,
-            'ip_address'      => request()->ip(),
-            'metadata'        => ['module' => $moduleCode, 'from_role' => $oldRole, 'to_role' => $newRole],
+            'ip_address' => request()->ip(),
+            'metadata' => ['module' => $moduleCode, 'from_role' => $oldRole, 'to_role' => $newRole],
         ]);
 
         return response()->json([

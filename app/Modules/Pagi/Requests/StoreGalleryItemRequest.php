@@ -22,7 +22,7 @@ class StoreGalleryItemRequest extends FormRequest
     {
         return [
             'title' => 'nullable|string|max:255',
-            'cover_image' => ['required', 'file', 'extensions:jpeg,jpg,png,gif,webp,mp4,mov,avi,webm,mkv,3gp', 'max:102400', new VideoDurationRule()],
+            'cover_image' => ['required', 'file', 'extensions:jpeg,jpg,png,gif,webp,mp4,mov,avi,webm,mkv,3gp', 'max:102400', new VideoDurationRule],
             'description' => 'nullable|string|max:2000',
         ];
     }

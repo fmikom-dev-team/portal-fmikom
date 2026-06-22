@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Wims\Services\Dosen\DosenMonitoringOverviewService;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
+use App\Modules\Wims\Services\Shared\Monitoring\MonitoringAlertService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringDetailService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringHistoryService;
-use App\Modules\Wims\Services\Shared\Monitoring\MonitoringAlertService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringRegistrationResolverService;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringSummaryService;
 use Illuminate\Http\Request;
@@ -25,8 +25,7 @@ class MonitoringController extends Controller
         private readonly MonitoringHistoryService $monitoringHistoryService,
         private readonly MonitoringSummaryService $monitoringSummaryService,
         private readonly MonitoringDetailService $monitoringDetailService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {

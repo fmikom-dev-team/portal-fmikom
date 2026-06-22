@@ -16,15 +16,14 @@ class DashboardController extends Controller
     public function __construct(
         protected DashboardService $dashboardService,
         protected ApprovalActionService $approvalActionService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {
         return $this->dashboardService->index($request);
     }
 
-    public function show(int $id): \Inertia\Response
+    public function show(int $id): Response
     {
         return $this->dashboardService->show($id);
     }

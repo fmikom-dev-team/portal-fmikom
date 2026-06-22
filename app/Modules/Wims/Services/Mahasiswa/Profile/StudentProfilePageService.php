@@ -10,8 +10,7 @@ class StudentProfilePageService
 {
     public function __construct(
         private readonly WimsModuleRoleService $wimsModuleRoleService,
-    ) {
-    }
+    ) {}
 
     public function build(User $user): array
     {
@@ -71,8 +70,8 @@ class StudentProfilePageService
                 ],
                 'period_label' => $latestRegistration->tanggal_mulai && $latestRegistration->tanggal_selesai
                     ? $latestRegistration->tanggal_mulai->translatedFormat('d M Y')
-                        . ' - '
-                        . $latestRegistration->tanggal_selesai->translatedFormat('d M Y')
+                        .' - '
+                        .$latestRegistration->tanggal_selesai->translatedFormat('d M Y')
                     : null,
                 'submitted_at' => $latestRegistration->created_at?->translatedFormat('d M Y H:i'),
             ] : null,

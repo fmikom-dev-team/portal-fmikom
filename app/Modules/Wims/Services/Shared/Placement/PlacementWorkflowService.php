@@ -4,7 +4,6 @@ namespace App\Modules\Wims\Services\Shared\Placement;
 
 use App\Models\Magang\PendaftaranMagang;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
-use App\Modules\Wims\Services\Shared\Placement\PlacementIndexService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
@@ -14,8 +13,7 @@ class PlacementWorkflowService
     public function __construct(
         private readonly PlacementIndexService $placementIndexService,
         private readonly WimsModuleRoleService $wimsModuleRoleService,
-    ) {
-    }
+    ) {}
 
     public function validatePlacementUpdate(Request $request): array
     {
@@ -55,19 +53,10 @@ class PlacementWorkflowService
 
     public function hasCompletePlacementData(PendaftaranMagang $pendaftaran): bool
     {
-        // Aktivasi/generate surat ditahan sampai data penempatan inti lengkap
-        // agar workflow PKL tidak berjalan dengan relasi atau periode yang kosong.
         return filled($pendaftaran->perusahaan_id)
             && filled($pendaftaran->dosen_pembimbing_id)
             && filled($pendaftaran->tanggal_mulai)
             && filled($pendaftaran->tanggal_selesai);
-    }
-
-    public function hasGeneratedSuratRequest(PendaftaranMagang $pendaftaran): bool
-    {
-        $surat = $pendaftaran->suratPenetapan;
-
-        return $surat !== null && in_array($surat->status, ['requested', 'generated'], true);
     }
 
     public function canComplete(PendaftaranMagang $pendaftaran): bool

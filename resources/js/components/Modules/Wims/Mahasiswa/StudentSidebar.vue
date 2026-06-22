@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import {
     BookOpenText,
@@ -15,6 +15,12 @@ import {
 import wimsRoutes from '@/routes/wims';
 
 const page = usePage();
+const siteSettings = computed(() => (page.props as any).siteSettings || {});
+const brandLogo = computed<string | null>(() => {
+    const logo = siteSettings.value?.brand_logo;
+
+    return typeof logo === 'string' && logo.trim().length > 0 ? logo : null;
+});
 
 const currentPath = computed(() => {
     const [path] = page.url.split('?');
@@ -22,12 +28,21 @@ const currentPath = computed(() => {
 });
 
 const user = computed(() => page.props.auth?.user ?? null);
-const userInitial = computed(() =>
-    String(user.value?.name ?? 'M')
-        .trim()
-        .charAt(0)
-        .toUpperCase(),
-);
+const avatarLoadFailed = ref(false);
+const userAvatar = computed<string | null>(() => {
+    const avatar = user.value?.avatar ?? user.value?.photo_url ?? user.value?.foto_url ?? null;
+
+    return typeof avatar === 'string' && avatar.trim().length > 0 ? avatar : null;
+});
+const userAvatarFallback = computed(() => {
+    const seed = encodeURIComponent(user.value?.name?.trim() || 'Mahasiswa');
+
+    return `https://api.dicebear.com/7.x/initials/svg?seed=${seed}&backgroundColor=3b82f6,6366f1,8b5cf6,ec4899&backgroundType=gradientLinear&bold=true`;
+});
+
+watch(userAvatar, () => {
+    avatarLoadFailed.value = false;
+});
 
 const items = [
     {
@@ -87,9 +102,19 @@ const logout = () => {
             <div class="relative flex h-full flex-col px-4 py-6">
                 <!-- Logo -->
                 <div class="flex items-center gap-3 px-2 pb-8">
-                    <div class="relative flex size-10 items-center justify-center rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-indigo-50 text-blue-700 shadow-[0_1px_6px_-2px_rgba(0,0,0,0.06)] dark:border-blue-500/30 dark:from-blue-500/15 dark:via-slate-800 dark:to-indigo-500/10 dark:text-blue-300 dark:shadow-none">
-                        <Landmark class="size-5" />
-                        <GraduationCap class="absolute -right-1 -bottom-1 size-3.5 rounded-full bg-wims-card text-blue-500 dark:bg-slate-800 dark:text-blue-300" />
+                    <div class="relative flex size-10 items-center justify-center overflow-hidden rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-indigo-50 text-blue-700 shadow-[0_1px_6px_-2px_rgba(0,0,0,0.06)] dark:border-blue-500/30 dark:from-blue-500/15 dark:via-slate-800 dark:to-indigo-500/10 dark:text-blue-300 dark:shadow-none">
+                        <img
+                            v-if="brandLogo"
+                            :src="brandLogo"
+                            alt="Brand Logo"
+                            class="h-full w-full object-contain"
+                            loading="eager"
+                            decoding="async"
+                        />
+                        <template v-else>
+                            <Landmark class="size-5" />
+                            <GraduationCap class="absolute -right-1 -bottom-1 size-3.5 rounded-full bg-wims-card text-blue-500 dark:bg-slate-800 dark:text-blue-300" />
+                        </template>
                     </div>
                     <div>
                         <h1 class="text-[15px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">WIMS</h1>
@@ -159,8 +184,15 @@ const logout = () => {
                 <!-- User card -->
                 <div class="rounded-xl border border-wims-border/80 bg-slate-50/80 dark:bg-slate-800/40 p-3 transition-colors duration-300">
                     <div class="flex items-center gap-3">
-                        <div class="relative flex size-9 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-sm font-bold text-white shadow-[0_2px_8px_-4px_rgba(59,130,246,0.25)] dark:shadow-[0_2px_10px_-4px_rgba(59,130,246,0.3)]">
-                            {{ userInitial }}
+                        <div class="relative flex size-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-sm font-bold text-white shadow-[0_2px_8px_-4px_rgba(59,130,246,0.25)] dark:shadow-[0_2px_10px_-4px_rgba(59,130,246,0.3)]">
+                            <img
+                                v-if="userAvatar && !avatarLoadFailed"
+                                :src="userAvatar"
+                                :alt="user?.name ?? 'Mahasiswa'"
+                                class="h-full w-full object-cover"
+                                @error="avatarLoadFailed = true"
+                            />
+                            <img v-else :src="userAvatarFallback" :alt="user?.name ?? 'Mahasiswa'" class="h-full w-full object-cover" />
                             <span class="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-wims-card bg-emerald-500" />
                         </div>
                         <div class="min-w-0 flex-1">
@@ -184,4 +216,3 @@ const logout = () => {
         </div>
     </aside>
 </template>
-

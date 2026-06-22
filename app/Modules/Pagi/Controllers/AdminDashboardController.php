@@ -239,7 +239,7 @@ class AdminDashboardController extends Controller
 
             $calcChange = function (int $cur, int $prev): array {
                 if ($prev === 0) {
-                    return ['value' => $cur > 0 ? '+' . $cur : '0', 'trend' => $cur > 0 ? 'up' : 'neutral'];
+                    return ['value' => $cur > 0 ? '+'.$cur : '0', 'trend' => $cur > 0 ? 'up' : 'neutral'];
                 }
                 $pct = round((($cur - $prev) / $prev) * 100, 1);
                 $trend = 'neutral';
@@ -248,8 +248,9 @@ class AdminDashboardController extends Controller
                 } elseif ($pct < 0) {
                     $trend = 'down';
                 }
+
                 return [
-                    'value' => ($pct >= 0 ? '+' : '') . $pct . '%',
+                    'value' => ($pct >= 0 ? '+' : '').$pct.'%',
                     'trend' => $trend,
                 ];
             };
@@ -265,7 +266,7 @@ class AdminDashboardController extends Controller
                     'karyaPublish' => $calcChange($karyaThisMonth, $karyaPrevMonth),
                     'laporanMasuk' => $calcChange($laporanThisMonth, $laporanPrevMonth),
                     'warningAktif' => $calcChange($warningThisMonth, $warningPrevMonth),
-                    'karyaDitinjau' => ['value' => $karyaDitinjau . ' menunggu', 'trend' => 'neutral'],
+                    'karyaDitinjau' => ['value' => $karyaDitinjau.' menunggu', 'trend' => 'neutral'],
                 ],
             ];
         });
@@ -279,12 +280,12 @@ class AdminDashboardController extends Controller
     {
         return Cache::remember('pagi_admin_moderation', 60, function () {
             return [
-                'total'    => PagiReport::query()->count('*'),
-                'pending'  => PagiReport::query()->where('status', '=', 'pending', 'and')->count('*'),
-                'warning'  => PagiWarning::query()->where('is_active', '=', true, 'and')->count('*'),
+                'total' => PagiReport::query()->count('*'),
+                'pending' => PagiReport::query()->where('status', '=', 'pending', 'and')->count('*'),
+                'warning' => PagiWarning::query()->where('is_active', '=', true, 'and')->count('*'),
                 'takedown' => PagiWork::query()->where('status', '=', 'hidden', 'and')->count('*'),
                 'rejected' => PagiReport::query()->where('status', '=', 'dismissed', 'and')->count('*'),
-                'safe'     => PagiReport::query()->whereIn('status', ['reviewed', 'actioned'], 'and', false)->count('*'),
+                'safe' => PagiReport::query()->whereIn('status', ['reviewed', 'actioned'], 'and', false)->count('*'),
             ];
         });
     }
@@ -296,53 +297,53 @@ class AdminDashboardController extends Controller
     private function buildChartData(string $range = '7d'): array
     {
         return Cache::remember("pagi_admin_chart_{$range}", 300, function () use ($range) {
-        $days = match ($range) {
-            '30d' => 30,
-            '90d' => 90,
-            default => 7,
-        };
+            $days = match ($range) {
+                '30d' => 30,
+                '90d' => 90,
+                default => 7,
+            };
 
-        $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
+            $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
 
-        $karyaCounts = PagiWork::query()->where('created_at', '>=', $startDate)
-            ->selectRaw('DATE(created_at) as date, count(*) as count')
-            ->groupBy('date')
-            ->pluck('count', 'date')
-            ->toArray();
+            $karyaCounts = PagiWork::query()->where('created_at', '>=', $startDate)
+                ->selectRaw('DATE(created_at) as date, count(*) as count')
+                ->groupBy('date')
+                ->pluck('count', 'date')
+                ->toArray();
 
-        $laporanCounts = PagiReport::query()->where('created_at', '>=', $startDate)
-            ->selectRaw('DATE(created_at) as date, count(*) as count')
-            ->groupBy('date')
-            ->pluck('count', 'date')
-            ->toArray();
+            $laporanCounts = PagiReport::query()->where('created_at', '>=', $startDate)
+                ->selectRaw('DATE(created_at) as date, count(*) as count')
+                ->groupBy('date')
+                ->pluck('count', 'date')
+                ->toArray();
 
-        $warningCounts = PagiWarning::query()->where('created_at', '>=', $startDate)
-            ->selectRaw('DATE(created_at) as date, count(*) as count')
-            ->groupBy('date')
-            ->pluck('count', 'date')
-            ->toArray();
+            $warningCounts = PagiWarning::query()->where('created_at', '>=', $startDate)
+                ->selectRaw('DATE(created_at) as date, count(*) as count')
+                ->groupBy('date')
+                ->pluck('count', 'date')
+                ->toArray();
 
-        $labels = [];
-        $karya = [];
-        $laporan = [];
-        $warnings = [];
+            $labels = [];
+            $karya = [];
+            $laporan = [];
+            $warnings = [];
 
-        for ($i = $days - 1; $i >= 0; $i--) {
-            $carbonDate = Carbon::now()->subDays($i);
-            $dateStr = $carbonDate->toDateString();
+            for ($i = $days - 1; $i >= 0; $i--) {
+                $carbonDate = Carbon::now()->subDays($i);
+                $dateStr = $carbonDate->toDateString();
 
-            $labels[] = $this->formatChartLabel($carbonDate, $i, $days);
-            $karya[] = $karyaCounts[$dateStr] ?? 0;
-            $laporan[] = $laporanCounts[$dateStr] ?? 0;
-            $warnings[] = $warningCounts[$dateStr] ?? 0;
-        }
+                $labels[] = $this->formatChartLabel($carbonDate, $i, $days);
+                $karya[] = $karyaCounts[$dateStr] ?? 0;
+                $laporan[] = $laporanCounts[$dateStr] ?? 0;
+                $warnings[] = $warningCounts[$dateStr] ?? 0;
+            }
 
-        return [
-            'categories' => $labels,
-            'karya' => $karya,
-            'laporan' => $laporan,
-            'warnings' => $warnings,
-        ];
+            return [
+                'categories' => $labels,
+                'karya' => $karya,
+                'laporan' => $laporan,
+                'warnings' => $warnings,
+            ];
         }); // end Cache::remember
     }
 
@@ -438,6 +439,7 @@ class AdminDashboardController extends Controller
                 ];
             }
         }
+
         return $items;
     }
 
@@ -463,6 +465,7 @@ class AdminDashboardController extends Controller
                 'reporterHandle' => '@'.strstr($p->user->email ?? self::DEFAULT_STUDENT_EMAIL, '@', true),
             ];
         }
+
         return $items;
     }
 
@@ -482,6 +485,7 @@ class AdminDashboardController extends Controller
                 ];
             }
         }
+
         return $popularWorks;
     }
 }

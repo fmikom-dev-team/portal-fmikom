@@ -19,8 +19,7 @@ class KetidakhadiranService
 {
     public function __construct(
         private readonly AttendanceSyncService $attendanceSyncService,
-    ) {
-    }
+    ) {}
 
     public function validateSubmission(PendaftaranMagang $pendaftaran, array $attributes): array
     {

@@ -16,6 +16,10 @@ class SuratLampiran extends Model
 
     public function getUrlAttribute(): string
     {
-        return asset('storage/'.$this->file_path);
+        if ($this->exists && $this->getKey()) {
+            return route('documents.lampiran.preview', $this->getKey(), absolute: false);
+        }
+
+        return '';
     }
 }

@@ -174,6 +174,7 @@ const displayedPhotoUrl = computed(() => photoPreviewUrl.value || props.profile.
 const handlePhotoChange = (event: Event) => {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
+    profileForm.remove_photo = false;
     profileForm.foto_profil = file;
     selectedFileName.value = file?.name ?? null;
 };

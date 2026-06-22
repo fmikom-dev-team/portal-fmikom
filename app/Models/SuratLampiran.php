@@ -14,6 +14,15 @@ class SuratLampiran extends Model
         'tipe',
     ];
 
+    public function getUrlAttribute(): string
+    {
+        if ($this->exists && $this->getKey()) {
+            return route('documents.lampiran.preview', $this->getKey(), absolute: false);
+        }
+
+        return '';
+    }
+
     /**
      * @return BelongsTo<Surat, $this>
      */

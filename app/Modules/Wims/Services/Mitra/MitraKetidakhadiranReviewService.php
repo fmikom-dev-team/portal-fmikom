@@ -10,8 +10,7 @@ class MitraKetidakhadiranReviewService
 {
     public function __construct(
         private readonly KetidakhadiranService $ketidakhadiranService,
-    ) {
-    }
+    ) {}
 
     public function approve(KetidakhadiranMagang $ketidakhadiran, User $reviewer, ?string $note): void
     {

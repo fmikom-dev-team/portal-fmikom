@@ -5,6 +5,7 @@ namespace App\Modules\Wims\Services\Mahasiswa\Logbook;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\LogbookPhoto;
 use App\Models\Magang\PendaftaranMagang;
+use App\Support\PublicStorageUrl;
 use Illuminate\Support\Carbon;
 use Throwable;
 
@@ -90,7 +91,7 @@ class LogbookPageService
                 ->map(fn (LogbookPhoto $photo) => [
                     'id' => $photo->id,
                     'file_path' => $photo->file_path,
-                    'url' => '/storage/' . ltrim($photo->file_path, '/'),
+                    'url' => PublicStorageUrl::signed($photo->file_path),
                 ])
                 ->values()
                 ->all(),

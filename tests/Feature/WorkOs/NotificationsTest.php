@@ -3,8 +3,8 @@
 use App\Models\Radar\RadarDevice;
 use App\Models\Radar\RadarProtection;
 use App\Models\User;
-use App\Notifications\WorkOsAlert;
 use App\Modules\WorkOs\Services\Radar\DetectionEngine;
+use App\Notifications\WorkOsAlert;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -91,7 +91,7 @@ test('it records radar detection and sends notification to active super admins',
         'last_seen_at' => now(),
     ]);
 
-    $engine = new DetectionEngine();
+    $engine = new DetectionEngine;
     $engine->recordDetection(
         $protection,
         $device,

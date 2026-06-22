@@ -16,6 +16,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 trait HasUserImport
 {
     private const LITERAL_PROGRAM_STUDI = 'Program Studi';
+
     private const LITERAL_NOMOR_TELEPON = 'Nomor Telepon';
 
     public function template(Request $request)
@@ -175,6 +176,7 @@ trait HasUserImport
     {
         try {
             $spreadsheet = IOFactory::load($file->getRealPath());
+
             return $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
         } catch (\Exception $e) {
             return null;
@@ -222,6 +224,7 @@ trait HasUserImport
         } elseif ($userType === 'mitra') {
             $requiredFields[] = 'nomor_induk';
         }
+
         return $requiredFields;
     }
 
@@ -233,6 +236,7 @@ trait HasUserImport
                 $missingHeaders[] = str_replace('_', ' ', $field);
             }
         }
+
         return $missingHeaders ?: null;
     }
 

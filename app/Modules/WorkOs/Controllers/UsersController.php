@@ -3,38 +3,29 @@
 namespace App\Modules\WorkOs\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\Auth\AuthEmailLog;
-use App\Models\Auth\AuthLoginAttempt;
 use App\Models\Auth\AuthOAuthCredential;
-use App\Modules\WorkOs\Services\AuditLogger;
-use App\Notifications\UserApprovedNotification;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Module;
+use App\Models\User;
+use App\Models\UserModuleRole;
 /**
  * Dedicated UsersController — extracted from DashboardController
  */
-use App\Models\Auth\AuthSession;
-use App\Models\Module;
-use App\Models\ProgramStudi;
-use App\Models\User;
-use App\Models\UserModuleRole;
+use App\Modules\WorkOs\Controllers\Concerns\HasUserDiagnostics;
+use App\Modules\WorkOs\Controllers\Concerns\HasUserImport;
+use App\Modules\WorkOs\Services\AuditLogger;
+use App\Notifications\UserApprovedNotification;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Session;
-use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Csv;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 /**
  * Dedicated UsersController — extracted from DashboardController
  */
 class UsersController extends Controller
 {
-    use \App\Modules\WorkOs\Controllers\Concerns\HasUserDiagnostics;
-    use \App\Modules\WorkOs\Controllers\Concerns\HasUserImport;
+    use HasUserDiagnostics;
+    use HasUserImport;
 
     public function store(Request $request)
     {

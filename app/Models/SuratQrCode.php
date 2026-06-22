@@ -1,4 +1,5 @@
 <?php
+
 // app/Models/SuratQrCode.php
 
 namespace App\Models;
@@ -19,12 +20,14 @@ class SuratQrCode extends Model
     ];
 
     protected $casts = [
-        'revoked_at'   => 'datetime',
+        'revoked_at' => 'datetime',
         'activated_at' => 'datetime',
     ];
 
-    const STATUS_ACTIVE  = 'active';
+    const STATUS_ACTIVE = 'active';
+
     const STATUS_REVOKED = 'revoked';
+
     const STATUS_EXPIRED = 'expired';
 
     // ── Relationships ─────────────────────────────────────────────
@@ -47,9 +50,9 @@ class SuratQrCode extends Model
     public function revoke(int $userId, string $reason = ''): void
     {
         $this->update([
-            'status'         => self::STATUS_REVOKED,
-            'revoked_by'     => $userId,
-            'revoked_at'     => now(),
+            'status' => self::STATUS_REVOKED,
+            'revoked_by' => $userId,
+            'revoked_at' => now(),
             'revoked_reason' => $reason,
         ]);
     }

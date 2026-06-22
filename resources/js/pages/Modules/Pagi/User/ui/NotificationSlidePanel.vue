@@ -123,7 +123,10 @@ const handleNotifClick = (notif: any) => {
 const FollbackInProgress = ref<Record<number, boolean>>({});
 
 const isFollowingBack = (senderId: any) => {
-	const following = page.props.auth?.user?.following ?? page.props.auth?.user?.metadata?.following ?? [];
+	const following =
+		page.props.auth?.user?.following ??
+		page.props.auth?.user?.metadata?.following ??
+		[];
 	const sId = Number(senderId);
 	return following.some((id: any) => Number(id) === sId);
 };
@@ -148,7 +151,10 @@ const toggleFollback = async (notif: any) => {
 			},
 		});
 		const data = await res.json();
-		let following = page.props.auth?.user?.following ?? page.props.auth?.user?.metadata?.following ?? [];
+		let following =
+			page.props.auth?.user?.following ??
+			page.props.auth?.user?.metadata?.following ??
+			[];
 		following = [...following];
 		const sId = Number(senderId);
 

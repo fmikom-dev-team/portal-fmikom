@@ -17,8 +17,7 @@ class RegistrationController extends Controller
     public function __construct(
         private readonly AdminRegistrationPageService $adminRegistrationPageService,
         private readonly AdminRegistrationActionService $adminRegistrationActionService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {
