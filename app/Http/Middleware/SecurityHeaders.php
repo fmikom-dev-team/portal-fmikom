@@ -161,7 +161,7 @@ class SecurityHeaders
             ])),
             'style-src-elem '.implode(' ', array_filter([
                 "'self'",
-                $isLocalEnvironment ? "'unsafe-inline'" : "'nonce-{$nonce}'",
+                "'unsafe-inline'",
                 'https://fonts.googleapis.com',
                 'https://fonts.bunny.net',
                 $isLocalEnvironment ? 'http://0.0.0.0:5173 http://127.0.0.1:5173 http://localhost:5173' : null,
