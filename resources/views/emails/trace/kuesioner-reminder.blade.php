@@ -1,20 +1,25 @@
 <x-mail::message>
-# Hai {{ $userName }}! 📝
+# Yth. {{ $userName }},
 
-Kami mengingatkan bahwa kuesioner berikut belum kamu isi:
+Dalam rangka peningkatan mutu akademik dan akreditasi program studi di Fakultas Ilmu Komputer (FMIKOM), partisipasi alumni dalam pengisian data penelusuran lulusan sangatlah krusial.
+
+Kami mendapati bahwa Anda belum melengkapi instrumen kuesioner berikut:
 
 **{{ $kuesioner->judul }}**
 
 @if($kuesioner->date_selesai)
-⏰ Batas waktu: **{{ \Carbon\Carbon::parse($kuesioner->date_selesai)->format('d M Y') }}**
+⏰ **Batas Waktu Pengisian**: {{ \Carbon\Carbon::parse($kuesioner->date_selesai)->format('d M Y') }}
 @endif
 
-Partisipasimu sangat berarti untuk peningkatan kualitas pendidikan.
+Setiap jawaban dan data yang Anda berikan akan diperlakukan secara rahasia dan hanya digunakan untuk kepentingan evaluasi kurikulum serta pelaporan resmi institusi. Mohon luangkan waktu 5–10 menit untuk melengkapinya melalui tombol di bawah ini:
 
 <x-mail::button :url="config('app.url') . '/trace/kuesioner/' . $kuesioner->id">
 Isi Kuesioner Sekarang
 </x-mail::button>
 
-Salam,<br>
+Terima kasih banyak atas waktu, dedikasi, dan kontribusi nyata Anda untuk almamater tercinta.
+
+Salam hormat,<br>
+**Tim Tracer Study FMIKOM**<br>
 {{ config('app.name') }}
 </x-mail::message>
