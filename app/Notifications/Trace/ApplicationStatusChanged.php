@@ -26,10 +26,10 @@ class ApplicationStatusChanged extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         $subject = match ($this->status) {
-            'accepted' => "[Portal FMIKOM] Kabar Baik: Hasil Seleksi Lamaran Kerja Anda",
-            'rejected' => "[Portal FMIKOM] Pengumuman Hasil Seleksi Lamaran Kerja",
-            'reviewed' => "[Portal FMIKOM] Status Lamaran Kerja Anda Sedang Ditinjau",
-            default => "[Portal FMIKOM] Pembaruan Status Lamaran Kerja",
+            'accepted' => '[Portal FMIKOM] Kabar Baik: Hasil Seleksi Lamaran Kerja Anda',
+            'rejected' => '[Portal FMIKOM] Pengumuman Hasil Seleksi Lamaran Kerja',
+            'reviewed' => '[Portal FMIKOM] Status Lamaran Kerja Anda Sedang Ditinjau',
+            default => '[Portal FMIKOM] Pembaruan Status Lamaran Kerja',
         };
 
         return (new MailMessage)
@@ -39,7 +39,7 @@ class ApplicationStatusChanged extends Notification implements ShouldQueue
                 'jobTitle' => $this->jobTitle,
                 'companyName' => $this->companyName,
                 'status' => $this->status,
-                'url' => config('app.url') . "/trace/jobs/{$this->jobId}",
+                'url' => config('app.url')."/trace/jobs/{$this->jobId}",
             ]);
     }
 
