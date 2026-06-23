@@ -35,7 +35,9 @@ return new class extends Migration
         }
 
         // 3. Change applied_at from string to timestamp
-        DB::statement('ALTER TABLE job_applycants MODIFY applied_at TIMESTAMP NULL');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE job_applycants MODIFY applied_at TIMESTAMP NULL');
+        }
 
         // 4. Add rejection_reason and rejected_at to jobs_listings
         Schema::table('jobs_listings', function (Blueprint $table) {
@@ -59,7 +61,9 @@ return new class extends Migration
         });
 
         // Reverse 3: Revert applied_at back to string
-        DB::statement('ALTER TABLE job_applycants MODIFY applied_at VARCHAR(255) NULL');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE job_applycants MODIFY applied_at VARCHAR(255) NULL');
+        }
 
         // Reverse 2: Drop indexes from job_applycants
         Schema::table('job_applycants', function (Blueprint $table) {

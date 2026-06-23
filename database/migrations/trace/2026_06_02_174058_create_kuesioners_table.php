@@ -32,7 +32,9 @@ return new class extends Migration
             $table->index('is_active');
             $table->index('tipe_kuesioner');
             $table->index('tahun');
-            $table->fullText(['judul', 'subtitle', 'deskripsi']);
+            if (\Illuminate\Support\Facades\DB::getDriverName() !== 'sqlite') {
+                $table->fullText(['judul', 'subtitle', 'deskripsi']);
+            }
         });
     }
 

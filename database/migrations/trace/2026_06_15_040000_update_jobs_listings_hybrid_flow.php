@@ -15,12 +15,16 @@ return new class extends Migration
         });
 
         // 2. Update status enum: add pending_review and rejected
-        DB::statement("ALTER TABLE jobs_listings MODIFY COLUMN status ENUM('draft', 'pending_review', 'published', 'rejected', 'closed') DEFAULT 'draft'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE jobs_listings MODIFY COLUMN status ENUM('draft', 'pending_review', 'published', 'rejected', 'closed') DEFAULT 'draft'");
+        }
     }
 
     public function down(): void
     {
-        DB::statement("ALTER TABLE jobs_listings MODIFY COLUMN status ENUM('draft', 'published', 'closed') DEFAULT 'draft'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE jobs_listings MODIFY COLUMN status ENUM('draft', 'published', 'closed') DEFAULT 'draft'");
+        }
 
         Schema::table('jobs_listings', function (Blueprint $table) {
             $table->foreignId('mitra_id')->nullable(false)->change();
