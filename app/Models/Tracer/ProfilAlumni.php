@@ -6,10 +6,26 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 
 class ProfilAlumni extends Model
 {
     use HasFactory, SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::saved(function ($alumni) {
+            Cache::forget('portal_total_alumni');
+            Cache::forget('portal_welcome_alumni_data');
+            Cache::forget('portal_welcome_alumni_stats');
+        });
+
+        static::deleted(function ($alumni) {
+            Cache::forget('portal_total_alumni');
+            Cache::forget('portal_welcome_alumni_data');
+            Cache::forget('portal_welcome_alumni_stats');
+        });
+    }
 
     protected $fillable = [
         'user_id',
