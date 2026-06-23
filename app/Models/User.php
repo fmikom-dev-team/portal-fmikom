@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Concerns\UserHelpers;
 use App\Exceptions\SuperAdminProtectionException;
-use App\Models\Alumni\ProfilAlumni;
+use App\Models\Tracer\ProfilAlumni;
 use App\Models\Auth\AuthOAuthCredential;
 use App\Models\Magang\LowonganInfo;
 use App\Models\Magang\PembimbingLapangan;
@@ -13,7 +13,6 @@ use App\Models\Magang\PenilaianMagang;
 use App\Models\Pagi\PagiCv;
 use App\Models\Pagi\PagiWork;
 use App\Models\Surat\Surat;
-use App\Models\Tracer\ProfilAlumni;
 use App\Models\Tracer\Kuesioner;
 use App\Models\Tracer\MitraProfile;
 use App\Models\Surat\SuratApprovalFlow;
