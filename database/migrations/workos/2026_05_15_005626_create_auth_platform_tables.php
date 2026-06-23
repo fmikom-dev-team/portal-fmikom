@@ -51,7 +51,7 @@ return new class extends Migration
             $table->boolean('is_revoked')->default(false);
             $table->integer('risk_score')->default(0);
             $table->timestamp('expires_at');
-            $table->timestamp('last_activity_at');
+            $table->timestamp('last_activity_at')->useCurrent()->useCurrentOnupdate();
             $table->timestamps();
         });
 

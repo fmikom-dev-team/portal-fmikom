@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
             ModuleSeeder::class,
             RadarSeeder::class,
             FakultasProdiSeeder::class,
-            DummyUserSeeder::class,
+            // DummyUserSeeder::class, // removed: seeder deleted in feature-trace
             SuratCategorySeeder::class,
             JenisSuratSeeder::class,
             SuratTemplateSeeder::class,

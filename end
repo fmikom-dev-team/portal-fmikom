@@ -1,0 +1,30 @@
+warning: in the working copy of 'resources/js/actions/App/Modules/Settings/Controllers/SecurityController.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/js/actions/Illuminate/Routing/RedirectController.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/js/routes/appearance/index.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/js/routes/index.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/js/routes/login/index.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/js/routes/password/confirm/index.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/js/routes/password/index.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/js/routes/profile/index.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/js/routes/register/index.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/js/routes/security/index.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/js/routes/storage/index.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/js/routes/storage/local/index.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/js/routes/two-factor/index.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/js/routes/two-factor/login/index.ts', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/js/routes/user-password/index.ts', CRLF will be replaced by LF the next time Git touches it
+app/Http/Middleware/CheckRole.php
+app/Http/Middleware/SecurityHeaders.php
+app/Models/User.php
+app/Providers/AppServiceProvider.php
+database/seeders/DummyUserSeeder.php
+database/seeders/ModuleSeeder.php
+database/seeders/PortalDummySeeder.php
+package-lock.json
+package.json
+resources/js/app.ts
+resources/js/components/AppSidebarHeader.vue
+resources/js/pages/Dashboard.vue
+resources/js/pages/Modules/Pagi/User/Profile/Index.vue
+routes/console.php
+vite.config.ts

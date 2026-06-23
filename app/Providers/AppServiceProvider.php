@@ -28,6 +28,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Laravel\Telescope\TelescopeApplicationServiceProvider;
 use Livewire\Livewire;
+use App\Models\Tracer\ActivityLog;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -187,10 +188,15 @@ class AppServiceProvider extends ServiceProvider
             return method_exists($user, 'isSuperAdmin') && ($user->isSuperAdmin() || $user->isAdmin());
         });
 
+
+
         // Force Livewire asset injection only on Pulse routes
         if (class_exists(Livewire::class) && ! app()->runningInConsole() && request()->is(config('pulse.path', 'pulse').'*')) {
             Livewire::forceAssetInjection();
         }
+
+        // Register Tracer Policies explicitly due to sub-namespace auto-discovery limitation
+        Gate::policy(\App\Models\Tracer\CareerHistory::class, \App\Policies\CareerHistoryPolicy::class);
 
         // ── Pagi Chat Rate Limiting (Flood Prevention) ─────────────────────────
         RateLimiter::for('pagi-chat-send', function ($request) {
@@ -220,6 +226,27 @@ class AppServiceProvider extends ServiceProvider
                 \Log::error('SMTP password decryption failed: '.$e->getMessage());
             }
         }
+
+        // ── Activity Log: Auth Events ─────────────────────────────────────────
+        Event::listen(Login::class, function (Login $event) {
+            ActivityLog::create([
+                'user_id' => $event->user->id,
+                'action' => 'auth.login',
+                'description' => 'Login ke sistem',
+                'ip_address' => request()->ip(),
+            ]);
+        });
+
+        Event::listen(Logout::class, function (Logout $event) {
+            if ($event->user) {
+                ActivityLog::create([
+                    'user_id' => $event->user->id,
+                    'action' => 'auth.logout',
+                    'description' => 'Logout dari sistem',
+                    'ip_address' => request()->ip(),
+                ]);
+            }
+        });
     }
 
     /**
@@ -254,7 +281,7 @@ class AppServiceProvider extends ServiceProvider
                 $rule->symbols();
             }
 
-            if ((bool) AuthSetting::get('password.reject_breached', true)) {
+            if ((bool) AuthSetting::get('password.reject_breached', false)) {
                 $rule->uncompromised();
             }
 

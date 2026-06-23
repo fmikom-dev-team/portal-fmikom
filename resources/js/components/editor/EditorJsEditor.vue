@@ -17,6 +17,7 @@ const props = defineProps({
 	uploadFileUrl: { type: String, default: "/portal-admin/posts/upload-file" },
 	readOnly: { type: Boolean, default: false },
 	minHeight: { type: Number, default: 400 },
+	mode: { type: String, default: 'full' }, // 'full' | 'simple'
 });
 
 const emit = defineEmits([
@@ -82,13 +83,18 @@ onMounted(async () => {
 		import("editorjs-drag-drop").then((m) => m.default || m).catch(() => null),
 	]);
 
+	// Tools to exclude in simple mode (Jobs, etc.)
+	const simpleExclude = ['image', 'attaches', 'embed', 'linkTool', 'code', 'raw', 'table', 'quote', 'delimiter', 'checklist'];
+
 	const tools = Object.fromEntries(
 		Object.entries({
 			...basicTools,
 			...inlineTools,
-			...mediaTools,
-			...advancedTools,
-		}).filter(([, config]) => typeof config?.class === "function"),
+			...(props.mode === 'simple' ? {} : mediaTools),
+			...(props.mode === 'simple' ? {} : advancedTools),
+		})
+			.filter(([, config]) => typeof config?.class === "function")
+			.filter(([name]) => props.mode === 'simple' ? !simpleExclude.includes(name) : true),
 	);
 
 	const inlineToolbar = [

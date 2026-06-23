@@ -68,3 +68,37 @@ Schedule::call(function () {
         }
     }
 })->dailyAt('04:00')->name('sys:cleanup-temp-uploads');
+
+/*
+|--------------------------------------------------------------------------
+| Trace Module — Email Digest & Reminders
+|--------------------------------------------------------------------------
+|
+| Scheduled emails for the Alumni Tracer module.
+| Weekly digest, event reminders, and kuesioner reminders.
+|
+*/
+
+// Weekly Digest — every Monday at 08:00
+// Sends a summary of new job listings & events from the past week
+Schedule::command('trace:weekly-digest')
+    ->weeklyOn(1, '08:00')
+    ->onOneServer()
+    ->withoutOverlapping()
+    ->name('trace:weekly-digest');
+
+// Event Reminder — daily at 08:00
+// Notifies registered users about events happening tomorrow
+Schedule::command('trace:event-reminder')
+    ->dailyAt('08:00')
+    ->onOneServer()
+    ->withoutOverlapping()
+    ->name('trace:event-reminder');
+
+// Kuesioner Reminder — every Wednesday at 09:00
+// Reminds alumni who haven't filled out active kuesioners
+Schedule::command('trace:kuesioner-reminder')
+    ->weeklyOn(3, '09:00')
+    ->onOneServer()
+    ->withoutOverlapping()
+    ->name('trace:kuesioner-reminder');
