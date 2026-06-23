@@ -168,7 +168,30 @@ class SecurityHeaders
             ])),
             "style-src-attr 'unsafe-inline'",
             "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net data:",
-            "img-src 'self' data: blob: https://ui-avatars.com https://api.dicebear.com https://avatars.dicebear.com https://lh3.googleusercontent.com https://lh4.googleusercontent.com https://lh5.googleusercontent.com https://lh6.googleusercontent.com https://images.unsplash.com https://upload.wikimedia.org https://cdn.jsdelivr.net https://tile.openstreetmap.org https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org",
+            'img-src '.implode(' ', array_filter([
+                "'self'",
+                'data:',
+                'blob:',
+                'https://ui-avatars.com',
+                'https://api.dicebear.com',
+                'https://avatars.dicebear.com',
+                'https://lh3.googleusercontent.com',
+                'https://lh4.googleusercontent.com',
+                'https://lh5.googleusercontent.com',
+                'https://lh6.googleusercontent.com',
+                'https://images.unsplash.com',
+                'https://upload.wikimedia.org',
+                'https://cdn.jsdelivr.net',
+                'https://tile.openstreetmap.org',
+                'https://a.tile.openstreetmap.org',
+                'https://b.tile.openstreetmap.org',
+                'https://c.tile.openstreetmap.org',
+                'https://a.basemaps.cartocdn.com',
+                'https://b.basemaps.cartocdn.com',
+                'https://c.basemaps.cartocdn.com',
+                'https://d.basemaps.cartocdn.com',
+                $isLocalEnvironment ? 'http://0.0.0.0:5173 http://127.0.0.1:5173 http://localhost:5173' : null,
+            ])),
             $connectSrc,
             "media-src 'self' blob:",
             // worker-src: FFmpeg WASM creates a Web Worker from a bundled asset URL.
@@ -258,10 +281,15 @@ class SecurityHeaders
             'wims.absensi.checkout',
         );
 
+        $allowsGeolocation = $allowsWimsAttendanceSensors || $request->routeIs(
+            'module.trace.profile-alumni',
+            'module.trace.profile-alumni.*',
+        );
+
         return implode(', ', [
             $allowsWimsAttendanceSensors ? 'camera=(self)' : 'camera=()',
             'microphone=()',
-            $allowsWimsAttendanceSensors ? 'geolocation=(self)' : 'geolocation=()',
+            $allowsGeolocation ? 'geolocation=(self)' : 'geolocation=()',
             'payment=()',
             'usb=()',
             'magnetometer=()',

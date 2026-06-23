@@ -65,6 +65,6 @@
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
-        @inertia(['nonce' => $csp_nonce ?? ''])
+        @inertia
     </body>
 </html>

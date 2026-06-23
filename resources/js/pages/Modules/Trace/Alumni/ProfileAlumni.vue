@@ -79,8 +79,8 @@ const form = useForm({
     angkatan: props.alumni.angkatan || "",
     nik: props.alumni.nik || "",
     npwp: props.alumni.npwp || "",
-    provinsi_id: props.alumni.provinsi_id || "",
-    kota_id: props.alumni.kota_id || "",
+    provinsi_id: props.alumni.provinsi_id || null,
+    kota_id: props.alumni.kota_id || null,
     alamat_rumah: props.alumni.alamat_rumah || "",
     latitude_rumah: props.alumni.latitude_rumah,
     longitude_rumah: props.alumni.longitude_rumah,
@@ -106,8 +106,8 @@ watch(
         form.angkatan = newVal.angkatan || "";
         form.nik = newVal.nik || "";
         form.npwp = newVal.npwp || "";
-        form.provinsi_id = newVal.provinsi_id || "";
-        form.kota_id = newVal.kota_id || "";
+        form.provinsi_id = newVal.provinsi_id || null;
+        form.kota_id = newVal.kota_id || null;
         form.alamat_rumah = newVal.alamat_rumah || "";
         form.latitude_rumah = newVal.latitude_rumah;
         form.longitude_rumah = newVal.longitude_rumah;
