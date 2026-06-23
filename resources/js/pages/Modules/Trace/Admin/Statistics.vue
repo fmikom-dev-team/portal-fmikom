@@ -4,7 +4,7 @@ import {
     BarChart3, Users, Briefcase, GraduationCap, Clock, TrendingUp,
     CheckCircle2, Target, BookOpen, FileText, Search,
 } from 'lucide-vue-next';
-import { TPageHeader, TStatCard } from '@/components/trace';
+import { TPageHeader, TStatCard } from '@/components/Trace';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 
 interface ProdiStat {

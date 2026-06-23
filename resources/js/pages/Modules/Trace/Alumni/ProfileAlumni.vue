@@ -8,7 +8,7 @@ import type { CareerHistory, EducationHistory } from "@/types/trace";
 import ProfileView from "./components/ProfileView.vue";
 import ProfileEditModal from "./components/ProfileEditModal.vue";
 import { CheckCircle2, UserCircle } from "lucide-vue-next";
-import { TPageHeader } from "@/components/trace";
+import { TPageHeader } from "@/components/Trace";
 import { update } from "@/routes/module/trace/profile-alumni/index";
 
 const props = defineProps<{

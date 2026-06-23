@@ -27,7 +27,7 @@ import {
     ExternalLink,
     MapPinned,
 } from 'lucide-vue-next';
-import { TPageHeader, TStatCard } from '@/components/trace';
+import { TPageHeader, TStatCard } from '@/components/Trace';
 import { Skeleton } from '@/components/ui/skeleton';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import type { BreadcrumbItem } from '@/types';

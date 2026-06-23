@@ -13,10 +13,10 @@ import {
 } from 'lucide-vue-next';
 import TraceMitraLayout from '@/layouts/TraceMitraLayout.vue';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TPageHeader, TStatCard, TStatusBadge, TEmptyState } from '@/components/trace';
+import { TPageHeader, TStatCard, TStatusBadge, TEmptyState } from '@/components/Trace';
 import Button from '@/components/ui/button/Button.vue';
 import { ref, onMounted, nextTick } from 'vue';
-import { TSkeleton } from '@/components/trace';
+import { TSkeleton } from '@/components/Trace';
 
 const props = defineProps({
     mitra: Object,

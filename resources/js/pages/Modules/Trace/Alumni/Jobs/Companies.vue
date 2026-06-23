@@ -2,7 +2,7 @@
 import { Link, router } from "@inertiajs/vue3";
 import TraceAlumniLayout from "@/layouts/TraceAlumniLayout.vue";
 import type { BreadcrumbItem } from "@/types";
-import { TPageHeader, TEmptyState, TPagination } from '@/components/trace';
+import { TPageHeader, TEmptyState, TPagination } from '@/components/Trace';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {

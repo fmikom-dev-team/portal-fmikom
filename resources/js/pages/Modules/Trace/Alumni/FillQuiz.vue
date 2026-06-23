@@ -12,7 +12,7 @@ import type { Kuesioner, KuesionerSection, Pertanyaan } from "@/types/trace";
 import { kuesioner } from "@/routes/module/trace/index";
 import { store as alumniTracerStore } from "@/routes/module/trace/kuesioner/index";
 import TraceAlumniLayout from "@/layouts/TraceAlumniLayout.vue";
-import { TPageHeader } from "@/components/trace";
+import { TPageHeader } from "@/components/Trace";
 import QuestionRenderer from "./components/QuestionRenderer.vue";
 import QuizProgressBar from "./components/QuizProgressBar.vue";
 import QuizNavigation from "./components/QuizNavigation.vue";

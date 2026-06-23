@@ -4,7 +4,7 @@ import { toast } from 'vue-sonner';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { TPageHeader, TDataTable, TFilterBar, TStatusBadge, TPagination, TEmptyState, TConfirmDialog } from '@/components/trace';
+import { TPageHeader, TDataTable, TFilterBar, TStatusBadge, TPagination, TEmptyState, TConfirmDialog } from '@/components/Trace';
 import {
     CalendarDays,
     MapPin,

@@ -40,7 +40,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useInitials } from "@/composables/useInitials";
 import type { BreadcrumbItem } from "@/types";
 import Breadcrumbs from "@/components/Breadcrumbs.vue";
-import NotificationBell from '@/components/trace/NotificationBell.vue';
+import NotificationBell from '@/components/Trace/NotificationBell.vue';
 
 interface TracePageProps extends PageProps {
     auth: { user: any };

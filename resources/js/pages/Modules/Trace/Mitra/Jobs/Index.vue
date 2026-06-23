@@ -2,7 +2,7 @@
 import { Link } from '@inertiajs/vue3';
 import { Briefcase, Plus, Users, Calendar, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import TraceMitraLayout from '@/layouts/TraceMitraLayout.vue';
-import { TPageHeader, TStatusBadge, TEmptyState } from '@/components/trace';
+import { TPageHeader, TStatusBadge, TEmptyState } from '@/components/Trace';
 import { Button } from '@/components/ui/button';
 
 interface Job {

@@ -12,7 +12,7 @@ import {
     TPagination,
     TEmptyState,
     TConfirmDialog,
-} from '@/components/trace';
+} from '@/components/Trace';
 import {
     Briefcase,
     Plus,

@@ -28,7 +28,7 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { TStatusBadge } from "@/components/trace";
+import { TStatusBadge } from "@/components/Trace";
 import TraceAdminLayout from "@/layouts/TraceAdminLayout.vue";
 import type { Kuesioner, KuesionerSection, Pertanyaan, OpsiJawaban } from '@/types/trace';
 

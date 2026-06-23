@@ -3,7 +3,7 @@ import { Link, useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { ArrowLeft, Briefcase } from 'lucide-vue-next';
 import TraceMitraLayout from '@/layouts/TraceMitraLayout.vue';
-import { TPageHeader, TFormSection } from '@/components/trace';
+import { TPageHeader, TFormSection } from '@/components/Trace';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

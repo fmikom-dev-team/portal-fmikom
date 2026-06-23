@@ -24,7 +24,7 @@ import {
     CalendarDays,
 } from "lucide-vue-next";
 import { computed, ref, onMounted, nextTick } from "vue";
-import { TPageHeader, TStatCard, TSkeleton } from '@/components/trace';
+import { TPageHeader, TStatCard, TSkeleton } from '@/components/Trace';
 
 interface CompletenessItem {
     label: string;

@@ -23,7 +23,7 @@ import type { Lokasi } from "@/types/trace";
 import CareerFormModal from "./components/CareerFormModal.vue";
 import CareerStatsCard from "./components/CareerStatsCard.vue";
 import CareerTimelineCard from "./components/CareerTimelineCard.vue";
-import { TPageHeader, TStatusBadge } from '@/components/trace';
+import { TPageHeader, TStatusBadge } from '@/components/Trace';
 
 interface Career {
     id: number;

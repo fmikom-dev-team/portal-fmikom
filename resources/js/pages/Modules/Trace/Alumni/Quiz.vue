@@ -13,7 +13,7 @@ import { show as alumniTracerShow } from "@/routes/module/trace/kuesioner/index"
 import TraceAlumniLayout from "@/layouts/TraceAlumniLayout.vue";
 import type { BreadcrumbItem } from "@/types";
 import type { Kuesioner } from "@/types/trace";
-import { TPageHeader, TStatusBadge, TEmptyState } from '@/components/trace';
+import { TPageHeader, TStatusBadge, TEmptyState } from '@/components/Trace';
 
 defineProps<{
     kuesioners: Kuesioner[];
