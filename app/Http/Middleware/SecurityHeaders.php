@@ -22,13 +22,24 @@ class SecurityHeaders
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->is('telescope*') || $request->is('pulse*') || $request->is('livewire*')) {
+        $allowsDocumentEmbedding = $this->allowsDocumentEmbedding($request);
+        $telescopePath = config('telescope.path', 'telescope').'*';
+        $pulsePath = config('pulse.path', 'pulse').'*';
+        $horizonPath = config('horizon.path', 'horizon').'*';
+
+        if ($request->is($telescopePath) || $request->is($pulsePath) || $request->is($horizonPath) || $request->is('livewire*')) {
             $response = $next($request);
             $response->headers->set('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * 'unsafe-inline' ws: wss:; img-src * data: blob:; style-src * 'unsafe-inline';");
             $response->headers->set('X-Frame-Options', 'DENY');
             $response->headers->set('X-Content-Type-Options', 'nosniff');
             $response->headers->set('X-XSS-Protection', '0');
             $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+            // Add modern security headers to dev/livewire tools for consistency
+            $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
+            $response->headers->set('Cross-Origin-Embedder-Policy', 'unsafe-none');
+            $response->headers->set('Cross-Origin-Resource-Policy', 'same-origin');
+            $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');
 
             return $response;
         }
@@ -45,10 +56,29 @@ class SecurityHeaders
 
         $response = $next($request);
 
+        $isLocalEnvironment = config('app.debug') || app()->environment('local', 'testing');
+        $localDevScriptOrigins = [
+            'http://0.0.0.0:5173',
+            'http://127.0.0.1:5173',
+            'http://localhost:5173',
+            'ws://0.0.0.0:5173',
+            'ws://127.0.0.1:5173',
+            'ws://localhost:5173',
+        ];
+
         // blob: is required for FFmpeg WASM: the bundled Worker does import(blob://...) for ffmpeg-core.js
         // script-src-elem only covers <script> tags; dynamic import() in Workers uses script-src
-        $scriptSrc ="script-src 'self' 'nonce-{$nonce}' 'strict-dynamic' blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com";
-        if (config('app.debug') || app()->environment('local', 'testing')) {
+        $scriptSrcParts = [
+            "script-src 'self' 'nonce-{$nonce}' blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com",
+        ];
+
+        if ($isLocalEnvironment) {
+            $scriptSrcParts[] = implode(' ', $localDevScriptOrigins);
+        }
+
+        $scriptSrc = implode(' ', $scriptSrcParts);
+
+        if ($isLocalEnvironment) {
             $scriptSrc .= " 'unsafe-eval'";
         }
 
@@ -63,6 +93,7 @@ class SecurityHeaders
             'https://generativelanguage.googleapis.com',
             'https://cloudflareinsights.com',
             'https://static.cloudflareinsights.com',
+            'https://nominatim.openstreetmap.org',
             "ws://{$host}",
             "wss://{$host}",
         ];
@@ -107,31 +138,61 @@ class SecurityHeaders
             $connectSrcUrls[] = 'wss://127.0.0.1:*';
         }
 
+        if ($isLocalEnvironment) {
+            $connectSrcUrls = array_merge($connectSrcUrls, $localDevScriptOrigins, [
+                'http://0.0.0.0:5173',
+                'http://127.0.0.1:5173',
+                'http://localhost:5173',
+            ]);
+        }
+
         $connectSrc = 'connect-src '.implode(' ', array_unique($connectSrcUrls));
 
         $cspDirectives = [
             "default-src 'self'",
             $scriptSrc,
             // fonts.bunny.net digunakan oleh project (Instrument Sans), fonts.googleapis.com sebagai fallback
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net",
+            'style-src '.implode(' ', array_filter([
+                "'self'",
+                "'unsafe-inline'",
+                'https://fonts.googleapis.com',
+                'https://fonts.bunny.net',
+                $isLocalEnvironment ? 'http://0.0.0.0:5173 http://127.0.0.1:5173 http://localhost:5173' : null,
+            ])),
+            'style-src-elem '.implode(' ', array_filter([
+                "'self'",
+                "'unsafe-inline'",
+                'https://fonts.googleapis.com',
+                'https://fonts.bunny.net',
+                $isLocalEnvironment ? 'http://0.0.0.0:5173 http://127.0.0.1:5173 http://localhost:5173' : null,
+            ])),
+            "style-src-attr 'unsafe-inline'",
             "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net data:",
-            "img-src 'self' data: blob: https://ui-avatars.com https://api.dicebear.com https://avatars.dicebear.com https://lh3.googleusercontent.com https://lh4.googleusercontent.com https://lh5.googleusercontent.com https://lh6.googleusercontent.com https://images.unsplash.com https://upload.wikimedia.org https://cdn.jsdelivr.net https://server.arcgisonline.com https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com",
+            "img-src 'self' data: blob: https://ui-avatars.com https://api.dicebear.com https://avatars.dicebear.com https://lh3.googleusercontent.com https://lh4.googleusercontent.com https://lh5.googleusercontent.com https://lh6.googleusercontent.com https://images.unsplash.com https://upload.wikimedia.org https://cdn.jsdelivr.net https://tile.openstreetmap.org https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org",
             $connectSrc,
             "media-src 'self' blob:",
             // worker-src: FFmpeg WASM creates a Web Worker from a bundled asset URL.
             // blob: is needed because the Worker internally does import(blob://...) to load ffmpeg-core.js
             "worker-src 'self' blob:",
             // script-src blob: is needed for the Worker's internal dynamic import(blob://...) of ffmpeg-core.js
-            // "script-src-elem 'self' 'unsafe-inline' blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com",
-            // "script-src-elem 'self' 'nonce-{$nonce}'" . ($isLocalHost ? " http://localhost:5173 http://127.0.0.1:5173" : "") . " 'unsafe-inline' blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com",
-            "script-src-elem 'self' 'nonce-{$nonce}' 'strict-dynamic'" . ($isLocalHost ? " http://localhost:5173 http://127.0.0.1:5173" : "") . " blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com",
+            'script-src-elem '.implode(' ', array_filter([
+                "'self'",
+                $isLocalEnvironment ? "'unsafe-inline'" : "'nonce-{$nonce}'",
+                'blob:',
+                'https://static.cloudflareinsights.com',
+                'https://cdnjs.cloudflare.com',
+                $isLocalEnvironment ? 'http://0.0.0.0:5173 http://127.0.0.1:5173 http://localhost:5173' : null,
+            ])),
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",
-            "frame-ancestors 'none'",
+            $allowsDocumentEmbedding ? "frame-ancestors 'self'" : "frame-ancestors 'none'",
         ];
 
-        if ($request->isSecure() && ! $isLocalHost) {
+        // Support proxy / Cloudflare SSL termination
+        $isSecure = $request->isSecure() || strtolower($request->header('X-Forwarded-Proto', '')) === 'https';
+
+        if ($isSecure && ! $isLocalHost) {
             $cspDirectives[] = 'upgrade-insecure-requests';
         }
 
@@ -141,7 +202,7 @@ class SecurityHeaders
         // ── Anti-Clickjacking ────────────────────────────────────────────────
         // Ditetapkan ke DENY karena CSP frame-ancestors 'none' sudah menangani ini.
         // X-Frame-Options sebagai fallback untuk browser lama yang tidak support CSP.
-        $response->headers->set('X-Frame-Options', 'DENY');
+        $response->headers->set('X-Frame-Options', $allowsDocumentEmbedding ? 'SAMEORIGIN' : 'DENY');
 
         // ── Anti MIME Sniffing ───────────────────────────────────────────────
         $response->headers->set('X-Content-Type-Options', 'nosniff');
@@ -151,7 +212,7 @@ class SecurityHeaders
         $response->headers->set('X-XSS-Protection', '0');
 
         // ── Paksa HTTPS (1 tahun) ────────────────────────────────────────────
-        if ($request->isSecure() && ! $isLocalHost) {
+        if ($isSecure && ! $isLocalHost) {
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
         }
 
@@ -159,7 +220,15 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
         // ── Batasi akses fitur browser berbahaya ──────────────────────────────
-        $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=(), usb=(), magnetometer=(), gyroscope=()');
+        $response->headers->set('Permissions-Policy', $this->buildPermissionsPolicy($request));
+
+        // ── Cross-Origin Security Headers ────────────────────────────────────
+        if ($isSecure) {
+            $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
+            $response->headers->set('Cross-Origin-Embedder-Policy', 'unsafe-none');
+            $response->headers->set('Cross-Origin-Resource-Policy', 'same-origin');
+        }
+        $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');
 
         // ── Hapus header yang mengidentifikasi teknologi server ───────────────
         $response->headers->remove('X-Powered-By');
@@ -170,5 +239,33 @@ class SecurityHeaders
         }
 
         return $response;
+    }
+
+    private function allowsDocumentEmbedding(Request $request): bool
+    {
+        return $request->is(
+            'documents/surat/*',
+            'documents/public/surat/*',
+            'admin/surat/*',
+        );
+    }
+
+    private function buildPermissionsPolicy(Request $request): string
+    {
+        $allowsWimsAttendanceSensors = $request->routeIs(
+            'wims.attendance',
+            'wims.absensi.store',
+            'wims.absensi.checkout',
+        );
+
+        return implode(', ', [
+            $allowsWimsAttendanceSensors ? 'camera=(self)' : 'camera=()',
+            'microphone=()',
+            $allowsWimsAttendanceSensors ? 'geolocation=(self)' : 'geolocation=()',
+            'payment=()',
+            'usb=()',
+            'magnetometer=()',
+            'gyroscope=()',
+        ]);
     }
 }

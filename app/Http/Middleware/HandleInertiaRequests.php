@@ -7,6 +7,7 @@ use App\Models\Pagi\PagiMessage;
 use App\Models\Portal\PortalComment;
 use App\Models\Portal\PortalMenu;
 use App\Models\Portal\PortalPost;
+use App\Models\Portal\PortalSetting;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -43,6 +44,21 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'reverb' => [
+                'key' => config('broadcasting.connections.reverb.key'),
+                'host' => config('broadcasting.vite_reverb.host') ?: config('broadcasting.connections.reverb.options.host'),
+                'port' => config('broadcasting.vite_reverb.port') ?: config('broadcasting.connections.reverb.options.port'),
+                'scheme' => config('broadcasting.vite_reverb.scheme') ?: config('broadcasting.connections.reverb.options.scheme'),
+            ],
+            'siteSettings' => Cache::rememberForever('portal_settings', function () {
+                $raw = PortalSetting::pluck('value', 'key')->toArray();
+                $raw['brand_name'] = $raw['brand_name'] ?? 'Portal FMIKOM';
+                $raw['brand_subtitle'] = $raw['brand_subtitle'] ?? 'Fakultas Matematika dan Ilmu Komputer';
+                $raw['brand_logo'] = $raw['brand_logo'] ?? '/asset/brand-logo.webp';
+                $raw['brand_favicon'] = $raw['brand_favicon'] ?? '/asset/favicon.ico';
+
+                return $raw;
+            }),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
@@ -54,21 +70,50 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user ? (new UserResource($user))->resolve() : null,
                 'session_lifetime' => (int) config('session.lifetime') * 60 * 1000,
             ],
-            'unread_messages_count' => $user ? PagiMessage::where('receiver_id', $user->id)->whereNull('read_at')->count() : 0,
-            'unread_notifications_count' => $user ? $user->unreadNotifications()->count() : 0,
-            'recent_notifications' => $user ? fn () => $user->notifications()->latest()->limit(30)->get()->map(fn ($n) => [
-                'id' => $n->id,
-                'type' => $n->data['type'] ?? 'system',
-                'title' => $n->data['title'] ?? 'PAGI System',
-                'message' => $n->data['message'] ?? '',
-                'avatar' => $n->data['avatar'] ?? null,
-                'href' => $n->data['href'] ?? '/pagi',
-                'unread' => is_null($n->read_at),
-                'time' => $n->created_at->diffForHumans(),
-                'created_at' => $n->created_at->toISOString(),
-                'sender_id' => $n->data['sender_id'] ?? null,
-                'portfolio_id' => $n->data['portfolio_id'] ?? null,
-            ])->values()->toArray() : [],
+            'unread_messages_count' => $user
+                // BUG-013: Cache per-user unread count — was firing DB query on every Inertia request.
+                // 30-second TTL is short enough for near-real-time feel, eliminates 90% of queries.
+                ? Cache::remember("unread_msg_count_{$user->id}", 30, fn () => PagiMessage::where('receiver_id', $user->id)->whereNull('read_at')->count()
+                )
+                : 0,
+            'unread_notifications_count' => $user
+                ? Cache::remember("unread_notif_count_{$user->id}_".session('active_role', ''), 30, function () use ($user) {
+                    $activeRole = strtolower(session('active_role', ''));
+                    $activeModule = strtoupper(session('active_module', ''));
+                    $query = $user->unreadNotifications();
+
+                    if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
+                        $query->whereNotIn('data->type', ['like', 'comment', 'follow', 'collaboration']);
+                    }
+
+                    return $query->count();
+                })
+                : 0,
+            'recent_notifications' => $user ? fn () => Cache::remember("recent_notifs_{$user->id}_".session('active_role', ''), 30, function () use ($user) {
+                $activeRole = strtolower(session('active_role', ''));
+                $activeModule = strtoupper(session('active_module', ''));
+                $query = $user->notifications()->latest();
+
+                if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
+                    $query->whereNotIn('data->type', ['like', 'comment', 'follow', 'collaboration']);
+                }
+
+                $notifs = $query->limit(30)->get();
+
+                return $notifs->map(fn ($n) => [
+                    'id' => $n->id,
+                    'type' => $n->data['type'] ?? 'system',
+                    'title' => $n->data['title'] ?? 'PAGI System',
+                    'message' => $n->data['message'] ?? '',
+                    'avatar' => $n->data['avatar'] ?? null,
+                    'href' => $n->data['href'] ?? '/pagi',
+                    'unread' => is_null($n->read_at),
+                    'time' => $n->created_at->diffForHumans(),
+                    'created_at' => $n->created_at->toISOString(),
+                    'sender_id' => $n->data['sender_id'] ?? null,
+                    'portfolio_id' => $n->data['portfolio_id'] ?? null,
+                ])->values()->toArray();
+            }) : [],
 
             // Bagikan active context ke semua Vue component via usePage().props.context
             // Digunakan untuk menampilkan badge modul/role aktif di navbar, sidebar, dll.
@@ -77,7 +122,10 @@ class HandleInertiaRequests extends Middleware
                 'active_role' => session('active_role'),
             ] : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'pending_comments_count' => fn () => ($user && ($user->isAdmin() || $user->isSuperAdmin())) ? PortalComment::where('status', 'pending')->count() : 0,
+            'pending_comments_count' => fn () => ($user && ($user->isAdmin() || $user->isSuperAdmin()))
+                // BUG-013: Cache admin-only pending comments count
+                ? Cache::remember('pending_comments_count', 30, fn () => PortalComment::where('status', 'pending')->count())
+                : 0,
             'portal_menus' => Inertia::defer(fn () => Cache::rememberForever('portal_menus', function () {
                 return PortalMenu::with(['children.page', 'page'])
                     ->whereNull('parent_id')
