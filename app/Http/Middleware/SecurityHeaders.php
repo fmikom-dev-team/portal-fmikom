@@ -119,9 +119,9 @@ class SecurityHeaders
         }
 
         // Add Vite Reverb Host if defined (for separated frontend connection via tunnels)
-        $viteReverbHost = env('VITE_REVERB_HOST');
-        $viteReverbPort = env('VITE_REVERB_PORT');
-        $viteReverbScheme = env('VITE_REVERB_SCHEME') === 'https' ? 'wss' : 'ws';
+        $viteReverbHost = config('broadcasting.vite_reverb.host');
+        $viteReverbPort = config('broadcasting.vite_reverb.port');
+        $viteReverbScheme = config('broadcasting.vite_reverb.scheme') === 'https' ? 'wss' : 'ws';
         if ($viteReverbHost) {
             $viteReverbUrl = "{$viteReverbScheme}://{$viteReverbHost}";
             if ($viteReverbPort && $viteReverbPort != 443 && $viteReverbPort != 80) {
