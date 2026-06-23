@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-         Schema::create('kuesioner', function (Blueprint $table) {
+        Schema::create('kuesioner', function (Blueprint $table) {
             $table->id();
             $table->softDeletes();
             $table->string('judul');
@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('status')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
-            
+
             $table->index('created_by');
             $table->index('status');
             $table->index('is_active');

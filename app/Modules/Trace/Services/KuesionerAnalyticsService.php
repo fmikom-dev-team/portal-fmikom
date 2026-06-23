@@ -5,7 +5,6 @@ namespace App\Modules\Trace\Services;
 use App\Models\Tracer\Kuesioner;
 use App\Models\Tracer\Pertanyaan;
 use App\Models\Tracer\Response;
-use App\Modules\Trace\Services\CareerService;
 use Illuminate\Support\Facades\DB;
 
 class KuesionerAnalyticsService
@@ -127,7 +126,7 @@ class KuesionerAnalyticsService
                         $decoded = is_string($raw) ? json_decode($raw, true) : $raw;
                         if (is_array($decoded)) {
                             foreach ($decoded as $rowLabel => $val) {
-                                $rowSums[$rowLabel]  = ($rowSums[$rowLabel] ?? 0) + (float)$val;
+                                $rowSums[$rowLabel] = ($rowSums[$rowLabel] ?? 0) + (float) $val;
                                 $rowCounts[$rowLabel] = ($rowCounts[$rowLabel] ?? 0) + 1;
                             }
                         }
@@ -138,14 +137,14 @@ class KuesionerAnalyticsService
                         $radarLabels[] = $label;
                         $radarValues[] = $rowCounts[$label] > 0 ? round($sum / $rowCounts[$label], 2) : 0;
                     }
-                    if (!empty($radarLabels)) {
+                    if (! empty($radarLabels)) {
                         $analysis['radar_data'] = [
-                            'labels'   => $radarLabels,
+                            'labels' => $radarLabels,
                             'datasets' => [[
-                                'label'           => 'Rata-rata Skor',
-                                'data'            => $radarValues,
+                                'label' => 'Rata-rata Skor',
+                                'data' => $radarValues,
                                 'backgroundColor' => 'rgba(59, 130, 246, 0.2)',
-                                'borderColor'     => '#3b82f6',
+                                'borderColor' => '#3b82f6',
                                 'pointBackgroundColor' => '#3b82f6',
                             ]],
                         ];
@@ -160,9 +159,9 @@ class KuesionerAnalyticsService
                         foreach ($rowSums as $label => $sum) {
                             $avg = $rowCounts[$label] > 0 ? round($sum / $rowCounts[$label], 2) : 0;
                             $rowAverages[] = [
-                                'label'   => $label,
+                                'label' => $label,
                                 'average' => $avg,
-                                'count'   => $rowCounts[$label] ?? 0,
+                                'count' => $rowCounts[$label] ?? 0,
                                 'percent' => $scaleMax > 0 ? round(($avg / $scaleMax) * 100, 1) : 0,
                             ];
                         }
@@ -170,8 +169,8 @@ class KuesionerAnalyticsService
                     }
                 } elseif ($q->tipe === 'scale' || ($q->tipe === 'number' && ($q->meta['jenis_data'] ?? '') === 'scale')) {
                     $analysis['average'] = round($allAverages->get($q->id)?->average ?? 0, 2);
-                    $scaleMin = (int)($q->meta['scale_min'] ?? 1);
-                    $scaleMax = (int)($q->meta['scale_max'] ?? 5);
+                    $scaleMin = (int) ($q->meta['scale_min'] ?? 1);
+                    $scaleMax = (int) ($q->meta['scale_max'] ?? 5);
                     $analysis['scale_min'] = $scaleMin;
                     $analysis['scale_max'] = $scaleMax;
                     $analysis['scale_label_min'] = $q->meta['scale_label_min'] ?? '';
@@ -181,17 +180,17 @@ class KuesionerAnalyticsService
                     $scaleAnswers = $allAnswersRaw->get($q->id, collect())->pluck('jawaban_text');
                     $dist = [];
                     for ($v = $scaleMin; $v <= $scaleMax; $v++) {
-                        $count = $scaleAnswers->filter(fn($a) => (int)$a === $v)->count();
+                        $count = $scaleAnswers->filter(fn ($a) => (int) $a === $v)->count();
                         $dist[] = [
-                            'label' => (string)$v,
+                            'label' => (string) $v,
                             'count' => $count,
                         ];
                     }
                     $analysis['distribution'] = $dist;
-                    $analysis['total_responses'] = $scaleAnswers->filter(fn($a) => $a !== null && $a !== '')->count();
+                    $analysis['total_responses'] = $scaleAnswers->filter(fn ($a) => $a !== null && $a !== '')->count();
                 } else {
                     $qAnswers = $allAnswersRaw->get($q->id, collect())
-                        ->filter(fn($ans) => !empty($ans->jawaban_text))
+                        ->filter(fn ($ans) => ! empty($ans->jawaban_text))
                         ->sortByDesc('dj_id')
                         ->take(10)
                         ->pluck('jawaban_text')
@@ -199,7 +198,7 @@ class KuesionerAnalyticsService
                         ->toArray();
 
                     $analysis['recent_responses'] = $qAnswers;
-                    $analysis['total_responses']  = $allAnswersRaw->get($q->id, collect())->count();
+                    $analysis['total_responses'] = $allAnswersRaw->get($q->id, collect())->count();
                 }
 
                 // Parse acuan – stored as JSON in DB
@@ -210,24 +209,24 @@ class KuesionerAnalyticsService
 
                 $catStats[] = [
                     'question_id' => $q->id,
-                    'section_id'  => $q->section_id,
-                    'teks'        => $q->teks,
-                    'tipe'        => $q->tipe,
-                    'kategori'    => $q->kategori,
-                    'acuan'       => $acuan,
-                    'analysis'    => $analysis,
+                    'section_id' => $q->section_id,
+                    'teks' => $q->teks,
+                    'tipe' => $q->tipe,
+                    'kategori' => $q->kategori,
+                    'acuan' => $acuan,
+                    'analysis' => $analysis,
                 ];
             }
 
             $categoriesData[] = [
-                'name'       => $catName,
+                'name' => $catName,
                 'statistics' => $catStats,
             ];
         }
 
         // Radar Data for Competency
-        $competencyData     = null;
-        $competencyQuestions = $questions->filter(fn($q) => $q->kategori === 'Kompetensi Lulusan');
+        $competencyData = null;
+        $competencyQuestions = $questions->filter(fn ($q) => $q->kategori === 'Kompetensi Lulusan');
         if ($competencyQuestions->count() > 2) {
             $labels = [];
             $values = [];
@@ -236,26 +235,26 @@ class KuesionerAnalyticsService
                 $values[] = round($allAverages->get($cq->id)?->average ?? 0, 2);
             }
             $competencyData = [
-                'labels'   => $labels,
+                'labels' => $labels,
                 'datasets' => [[
-                    'label'           => 'Rata-rata Skor Kompetensi',
-                    'data'            => $values,
+                    'label' => 'Rata-rata Skor Kompetensi',
+                    'data' => $values,
                     'backgroundColor' => 'rgba(59, 130, 246, 0.2)',
-                    'borderColor'     => '#3b82f6',
+                    'borderColor' => '#3b82f6',
                     'pointBackgroundColor' => '#3b82f6',
                 ]],
             ];
         }
 
         return [
-            'kuesioner_title'  => $kuesioner->judul,
-            'categories'       => $categoriesData,
-            'radar_data'       => $competencyData,
-            'sections'         => $kuesioner->sections->map(fn($s) => [
-                'id'    => $s->id,
+            'kuesioner_title' => $kuesioner->judul,
+            'categories' => $categoriesData,
+            'radar_data' => $competencyData,
+            'sections' => $kuesioner->sections->map(fn ($s) => [
+                'id' => $s->id,
                 'title' => $s->title,
             ]),
-            'has_responses'    => $hasResponses,
+            'has_responses' => $hasResponses,
         ];
     }
 
@@ -271,7 +270,7 @@ class KuesionerAnalyticsService
     ): array {
         $responsesQuery = Response::where('kuesioner_id', $kuesioner->id)
             ->with([
-                'user.alumniProfile' => fn($q) => $q->with(['careers' => fn($cq) => $cq->with(['employment', 'education'])]),
+                'user.alumniProfile' => fn ($q) => $q->with(['careers' => fn ($cq) => $cq->with(['employment', 'education'])]),
                 'detailJawabans.pertanyaan.opsiJawabans',
             ]);
 
@@ -302,19 +301,19 @@ class KuesionerAnalyticsService
 
         foreach ($kuesioner->sections as $section) {
             foreach ($section->pertanyaans as $q) {
-                $metaRows    = $q->meta['rows'] ?? [];
+                $metaRows = $q->meta['rows'] ?? [];
                 $metaColumns = $q->meta['columns'] ?? [];
 
-                if ($q->tipe === 'matrix' && !empty($metaRows)) {
+                if ($q->tipe === 'matrix' && ! empty($metaRows)) {
                     foreach ($metaRows as $row) {
-                        $columns[] = $q->teks . ' [' . $row . ']';
+                        $columns[] = $q->teks.' ['.$row.']';
                         $questionMap[$q->id]['matrix_cols'][$row] = count($columns) - 1;
                     }
-                    $questionMap[$q->id]['type']    = 'matrix';
+                    $questionMap[$q->id]['type'] = 'matrix';
                     $questionMap[$q->id]['columns'] = $metaColumns;
                 } else {
                     $columns[] = $q->teks;
-                    $questionMap[$q->id]['type']  = $q->tipe;
+                    $questionMap[$q->id]['type'] = $q->tipe;
                     $questionMap[$q->id]['index'] = count($columns) - 1;
                 }
             }
@@ -325,26 +324,26 @@ class KuesionerAnalyticsService
         $rowNum = 1;
 
         foreach ($responses as $response) {
-            $row     = array_fill(0, count($columns), '-');
+            $row = array_fill(0, count($columns), '-');
             $profile = $response->user?->alumniProfile;
 
             $currentCareer = null;
             if ($profile && $profile->careers) {
-                $flatCareers   = collect($this->careerService->flattenCareers($profile->careers));
+                $flatCareers = collect($this->careerService->flattenCareers($profile->careers));
                 $currentCareer = $flatCareers->where('is_current', true)->first();
             }
 
-            $row[0]  = $rowNum++;
+            $row[0] = $rowNum++;
             $user = $response->user;
-            $row[1]  = $user?->name ?? '-';
-            $row[2]  = $user?->nomor_induk ?? '-';
-            $row[3]  = $profile?->nik ? substr($profile->nik, 0, 4) . str_repeat('*', max(0, strlen($profile->nik) - 4)) : '-';
-            $row[4]  = $profile?->npwp ? substr($profile->npwp, 0, 4) . str_repeat('*', max(0, strlen($profile->npwp) - 4)) : '-';
-            $row[5]  = $user?->programStudi?->nama ?? '-';
-            $row[6]  = $profile?->angkatan ?? '-';
-            $row[7]  = $user?->tahun_lulus ?? '-';
-            $row[8]  = $profile?->jenis_kelamin === 'L' ? 'Laki-laki' : ($profile?->jenis_kelamin === 'P' ? 'Perempuan' : '-');
-            $row[9]  = $user?->email ?? '-';
+            $row[1] = $user?->name ?? '-';
+            $row[2] = $user?->nomor_induk ?? '-';
+            $row[3] = $profile?->nik ? substr($profile->nik, 0, 4).str_repeat('*', max(0, strlen($profile->nik) - 4)) : '-';
+            $row[4] = $profile?->npwp ? substr($profile->npwp, 0, 4).str_repeat('*', max(0, strlen($profile->npwp) - 4)) : '-';
+            $row[5] = $user?->programStudi?->nama ?? '-';
+            $row[6] = $profile?->angkatan ?? '-';
+            $row[7] = $user?->tahun_lulus ?? '-';
+            $row[8] = $profile?->jenis_kelamin === 'L' ? 'Laki-laki' : ($profile?->jenis_kelamin === 'P' ? 'Perempuan' : '-');
+            $row[9] = $user?->email ?? '-';
             $row[10] = $user?->no_telepon ?? '-';
             $row[11] = $user?->linkedin ?? '-';
             $row[12] = $currentCareer['status'] ?? '-';
@@ -359,7 +358,9 @@ class KuesionerAnalyticsService
 
             foreach ($questionMap as $qId => $meta) {
                 $answer = $details->get($qId);
-                if (!$answer) continue;
+                if (! $answer) {
+                    continue;
+                }
 
                 if ($meta['type'] === 'matrix') {
                     $matrixData = is_string($answer->jawaban_text) ? json_decode($answer->jawaban_text, true) : $answer->jawaban_text;
@@ -381,7 +382,7 @@ class KuesionerAnalyticsService
                     if (is_array($checkData)) {
                         $labels = [];
                         foreach ($checkData as $optId) {
-                            $opt      = $answer->pertanyaan->opsiJawabans->find($optId);
+                            $opt = $answer->pertanyaan->opsiJawabans->find($optId);
                             $labels[] = $opt ? $opt->label : $optId;
                         }
                         $row[$meta['index']] = implode(', ', $labels);
@@ -389,7 +390,7 @@ class KuesionerAnalyticsService
                         $row[$meta['index']] = $answer->jawaban_text;
                     }
                 } elseif (in_array($meta['type'], ['radio', 'dropdown'])) {
-                    if (!empty($answer->jawaban_text)) {
+                    if (! empty($answer->jawaban_text)) {
                         $row[$meta['index']] = $answer->jawaban_text;
                     } elseif ($answer->opsi_jawaban_id) {
                         $opt = $answer->pertanyaan->opsiJawabans->find($answer->opsi_jawaban_id);
@@ -404,9 +405,9 @@ class KuesionerAnalyticsService
         }
 
         return [
-            'columns'     => $columns,
+            'columns' => $columns,
             'questionMap' => $questionMap,
-            'dataRows'    => $dataRows,
+            'dataRows' => $dataRows,
         ];
     }
 }

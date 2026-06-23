@@ -12,7 +12,7 @@ return new class extends Migration
             Schema::table('profil_alumnis', function (Blueprint $table) {
                 $table->index('angkatan');
             });
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Index already exists
         }
 

@@ -3,8 +3,8 @@
 namespace App\Modules\Trace\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Tracer\ProfilAlumni;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -19,8 +19,8 @@ class RespondenController extends Controller
             $search = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->search);
             $query->whereHas('user', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('nomor_induk', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('nomor_induk', 'like', "%{$search}%");
             });
         }
 
@@ -60,8 +60,8 @@ class RespondenController extends Controller
             'user.programStudi',
             'provinsi',
             'kota',
-            'careers' => fn($q) => $q->orderByDesc('is_current')->orderByDesc('tanggal_mulai')->with(['provinsi', 'kota', 'employment', 'education']),
-            'educationHistories'
+            'careers' => fn ($q) => $q->orderByDesc('is_current')->orderByDesc('tanggal_mulai')->with(['provinsi', 'kota', 'employment', 'education']),
+            'educationHistories',
         ])->findOrFail($id);
 
         $currentCareer = $alumni->careers->where('is_current', true)->first();

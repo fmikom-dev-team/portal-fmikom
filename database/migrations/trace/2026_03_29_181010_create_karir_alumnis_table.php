@@ -11,13 +11,13 @@ return new class extends Migration
         Schema::create('career_history', function (Blueprint $table) {
             $table->id();
             $table->foreignId('profil_alumni_id')->constrained('profil_alumnis')->cascadeOnDelete();
-            $table->string('type'); 
+            $table->string('type');
             $table->string('status');
 
             $table->date('tanggal_mulai')->nullable();
             $table->date('tanggal_selesai')->nullable();
-            $table->integer('tahun_mulai')->nullable(); 
-            $table->integer('tahun_selesai')->nullable(); 
+            $table->integer('tahun_mulai')->nullable();
+            $table->integer('tahun_selesai')->nullable();
             $table->boolean('is_current')->default(false);
 
             $table->foreignId('provinsi_id')->nullable()->constrained('provinsi')->nullOnDelete();

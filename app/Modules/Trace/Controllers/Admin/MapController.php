@@ -21,7 +21,7 @@ class MapController extends Controller
     public function getData(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'angkatan' => 'nullable|integer|min:2000|max:' . (date('Y') + 1),
+            'angkatan' => 'nullable|integer|min:2000|max:'.(date('Y') + 1),
             'program_studi' => 'nullable|string|max:100',
             'sektor' => 'nullable|string|max:100',
             'status_filter' => 'nullable|string|in:semua,bekerja,wirausaha,lanjut_studi',

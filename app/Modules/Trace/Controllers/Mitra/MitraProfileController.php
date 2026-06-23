@@ -4,9 +4,9 @@ namespace App\Modules\Trace\Controllers\Mitra;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tracer\MitraProfile;
+use App\Modules\Trace\Services\ImageService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Modules\Trace\Services\ImageService;
 
 class MitraProfileController extends Controller
 {
@@ -63,7 +63,7 @@ class MitraProfileController extends Controller
     {
         $mitra = $request->user()->mitraProfile;
 
-        if (!$mitra) {
+        if (! $mitra) {
             return redirect()->route('module.trace.open-job.mitra-profile-setup');
         }
 
@@ -76,7 +76,7 @@ class MitraProfileController extends Controller
     {
         $mitra = $request->user()->mitraProfile;
 
-        if (!$mitra) {
+        if (! $mitra) {
             return redirect()->route('module.trace.open-job.mitra-profile-setup');
         }
 

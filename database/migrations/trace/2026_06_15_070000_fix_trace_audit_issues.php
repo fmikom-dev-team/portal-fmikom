@@ -14,10 +14,10 @@ return new class extends Migration
     {
         // 1. Add reviewer_note and reviewed_at to job_applycants (if not already present)
         Schema::table('job_applycants', function (Blueprint $table) {
-            if (!Schema::hasColumn('job_applycants', 'reviewer_note')) {
+            if (! Schema::hasColumn('job_applycants', 'reviewer_note')) {
                 $table->text('reviewer_note')->nullable()->after('status');
             }
-            if (!Schema::hasColumn('job_applycants', 'reviewed_at')) {
+            if (! Schema::hasColumn('job_applycants', 'reviewed_at')) {
                 $table->timestamp('reviewed_at')->nullable()->after('reviewer_note');
             }
         });
@@ -30,7 +30,7 @@ return new class extends Migration
                 $table->index('status');
                 $table->unique(['job_id', 'alumni_id']);
             });
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Indexes may already exist, safe to ignore
         }
 
@@ -39,10 +39,10 @@ return new class extends Migration
 
         // 4. Add rejection_reason and rejected_at to jobs_listings
         Schema::table('jobs_listings', function (Blueprint $table) {
-            if (!Schema::hasColumn('jobs_listings', 'rejection_reason')) {
+            if (! Schema::hasColumn('jobs_listings', 'rejection_reason')) {
                 $table->text('rejection_reason')->nullable()->after('status');
             }
-            if (!Schema::hasColumn('jobs_listings', 'rejected_at')) {
+            if (! Schema::hasColumn('jobs_listings', 'rejected_at')) {
                 $table->timestamp('rejected_at')->nullable()->after('rejection_reason');
             }
         });

@@ -3,20 +3,17 @@
 namespace App\Modules\Trace\Controllers\Alumni;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use Inertia\Inertia;
-use Inertia\Response as InertiaResponse;
-use App\Models\Tracer\ProfilAlumni;
-use App\Models\Tracer\CareerHistory;
 use App\Models\Pagi\PagiCv;
-use App\Models\Tracer\JobApplicant;
 use App\Models\Tracer\Event;
 use App\Models\Tracer\EventRegistration;
+use App\Models\Tracer\JobApplicant;
 use App\Models\Tracer\Kuesioner;
 use App\Models\Tracer\Response;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class TraceAlumniDashboardController extends Controller
 {
@@ -51,10 +48,10 @@ class TraceAlumniDashboardController extends Controller
             $hasCv = PagiCv::where('user_id', $userId)->exists();
 
             $completenessItems = [
-                ['label' => 'Foto Profil', 'done' => !empty($user->foto_path)],
-                ['label' => 'Data Pribadi', 'done' => !empty($profile?->jenis_kelamin)],
-                ['label' => 'Alamat', 'done' => !empty($profile?->alamat_rumah)],
-                ['label' => 'No. Telepon', 'done' => !empty($user->no_telepon)],
+                ['label' => 'Foto Profil', 'done' => ! empty($user->foto_path)],
+                ['label' => 'Data Pribadi', 'done' => ! empty($profile?->jenis_kelamin)],
+                ['label' => 'Alamat', 'done' => ! empty($profile?->alamat_rumah)],
+                ['label' => 'No. Telepon', 'done' => ! empty($user->no_telepon)],
                 ['label' => 'Riwayat Karir', 'done' => $hasCareer],
                 ['label' => 'CV/Portfolio', 'done' => $hasCv],
             ];
@@ -85,7 +82,7 @@ class TraceAlumniDashboardController extends Controller
                 : [];
 
             $upcomingEventsCount = EventRegistration::where('user_id', $userId)
-                ->whereHas('event', fn($q) => $q->where('event_date', '>=', Carbon::today()))
+                ->whereHas('event', fn ($q) => $q->where('event_date', '>=', Carbon::today()))
                 ->count();
 
             // Upcoming events (user registered + public upcoming)

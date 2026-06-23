@@ -3,9 +3,8 @@
 namespace App\Modules\Trace\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Modules\Trace\Controllers\Alumni\TraceAlumniDashboardController;
-use Inertia\Inertia;
+use Illuminate\Http\Request;
 
 class TraceDashboardController extends Controller
 {

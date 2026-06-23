@@ -1,9 +1,9 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::index
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
- * @route '/admin/categories'
- */
+* @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
+* @route '/admin/categories'
+*/
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index.url(options),
     method: 'get',
@@ -16,27 +16,28 @@ index.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::index
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
- * @route '/admin/categories'
- */
+* @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
+* @route '/admin/categories'
+*/
 index.url = (options?: RouteQueryOptions) => {
     return index.definition.url + queryParams(options)
 }
 
 /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::index
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
- * @route '/admin/categories'
- */
+* @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
+* @route '/admin/categories'
+*/
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index.url(options),
     method: 'get',
 })
+
 /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::index
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
- * @route '/admin/categories'
- */
+* @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
+* @route '/admin/categories'
+*/
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: index.url(options),
     method: 'head',
@@ -44,9 +45,9 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::store
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:23
- * @route '/admin/categories'
- */
+* @see app/Modules/Fast/Controllers/Admin/CategoryController.php:23
+* @route '/admin/categories'
+*/
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: store.url(options),
     method: 'post',
@@ -59,18 +60,18 @@ store.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::store
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:23
- * @route '/admin/categories'
- */
+* @see app/Modules/Fast/Controllers/Admin/CategoryController.php:23
+* @route '/admin/categories'
+*/
 store.url = (options?: RouteQueryOptions) => {
     return store.definition.url + queryParams(options)
 }
 
 /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::store
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:23
- * @route '/admin/categories'
- */
+* @see app/Modules/Fast/Controllers/Admin/CategoryController.php:23
+* @route '/admin/categories'
+*/
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: store.url(options),
     method: 'post',
@@ -78,10 +79,10 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::update
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:40
- * @route '/admin/categories/{category}'
- */
-export const update = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+* @see app/Modules/Fast/Controllers/Admin/CategoryController.php:40
+* @route '/admin/categories/{category}'
+*/
+export const update = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update.url(args, options),
     method: 'put',
 })
@@ -93,31 +94,31 @@ update.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::update
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:40
- * @route '/admin/categories/{category}'
- */
-update.url = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+* @see app/Modules/Fast/Controllers/Admin/CategoryController.php:40
+* @route '/admin/categories/{category}'
+*/
+update.url = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { category: args }
     }
 
-            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
-            args = { category: args.id }
-        }
-    
+    if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+        args = { category: args.id }
+    }
+
     if (Array.isArray(args)) {
         args = {
-                    category: args[0],
-                }
+            category: args[0],
+        }
     }
 
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-                        category: typeof args.category === 'object'
-                ? args.category.id
-                : args.category,
-                }
+        category: typeof args.category === 'object'
+        ? args.category.id
+        : args.category,
+    }
 
     return update.definition.url
             .replace('{category}', parsedArgs.category.toString())
@@ -126,20 +127,20 @@ update.url = (args: { category: number | { id: number } } | [category: number | 
 
 /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::update
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:40
- * @route '/admin/categories/{category}'
- */
-update.put = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+* @see app/Modules/Fast/Controllers/Admin/CategoryController.php:40
+* @route '/admin/categories/{category}'
+*/
+update.put = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update.url(args, options),
     method: 'put',
 })
 
 /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::destroy
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:56
- * @route '/admin/categories/{category}'
- */
-export const destroy = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+* @see app/Modules/Fast/Controllers/Admin/CategoryController.php:56
+* @route '/admin/categories/{category}'
+*/
+export const destroy = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
     method: 'delete',
 })
@@ -151,31 +152,31 @@ destroy.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::destroy
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:56
- * @route '/admin/categories/{category}'
- */
-destroy.url = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+* @see app/Modules/Fast/Controllers/Admin/CategoryController.php:56
+* @route '/admin/categories/{category}'
+*/
+destroy.url = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { category: args }
     }
 
-            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
-            args = { category: args.id }
-        }
-    
+    if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+        args = { category: args.id }
+    }
+
     if (Array.isArray(args)) {
         args = {
-                    category: args[0],
-                }
+            category: args[0],
+        }
     }
 
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-                        category: typeof args.category === 'object'
-                ? args.category.id
-                : args.category,
-                }
+        category: typeof args.category === 'object'
+        ? args.category.id
+        : args.category,
+    }
 
     return destroy.definition.url
             .replace('{category}', parsedArgs.category.toString())
@@ -184,13 +185,14 @@ destroy.url = (args: { category: number | { id: number } } | [category: number |
 
 /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::destroy
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:56
- * @route '/admin/categories/{category}'
- */
-destroy.delete = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+* @see app/Modules/Fast/Controllers/Admin/CategoryController.php:56
+* @route '/admin/categories/{category}'
+*/
+destroy.delete = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
     method: 'delete',
 })
+
 const CategoryController = { index, store, update, destroy }
 
 export default CategoryController

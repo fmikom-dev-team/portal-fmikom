@@ -58,6 +58,9 @@ jobs:
       - name: Generate Application Key
         run: php artisan key:generate
 
+      - name: Generate Wayfinder Routes
+        run: php artisan wayfinder:generate
+
       - name: Run Pint (Check Code Style)
         run: composer lint:check
 

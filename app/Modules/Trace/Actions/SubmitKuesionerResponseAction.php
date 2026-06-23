@@ -60,10 +60,10 @@ class SubmitKuesionerResponseAction
 
             $responseId = DB::table('responses')->insertGetId([
                 'kuesioner_id' => $kuesioner->id,
-                'user_id'      => $userId,
+                'user_id' => $userId,
                 'submitted_at' => now(),
-                'created_at'   => now(),
-                'updated_at'   => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
             // Pre-load semua pertanyaan + opsi sekaligus (hindari N+1)
@@ -76,8 +76,8 @@ class SubmitKuesionerResponseAction
             $detailRows = [];
 
             foreach ($answers as $pertanyaanId => $jawaban) {
-                $pertanyaan  = $pertanyaans->get($pertanyaanId);
-                $opsiId      = null;
+                $pertanyaan = $pertanyaans->get($pertanyaanId);
+                $opsiId = null;
                 $jawabanText = is_array($jawaban) ? json_encode($jawaban) : $jawaban;
 
                 if ($pertanyaan && in_array($pertanyaan->tipe, ['radio', 'dropdown', 'checkbox'])) {
@@ -86,7 +86,7 @@ class SubmitKuesionerResponseAction
                     } elseif (is_numeric($jawaban)) {
                         $opsi = $pertanyaan->opsiJawabans->find($jawaban);
                         if ($opsi) {
-                            $opsiId      = $opsi->id;
+                            $opsiId = $opsi->id;
                             $jawabanText = $opsi->label;
                         }
                     } else {
@@ -98,12 +98,12 @@ class SubmitKuesionerResponseAction
                 }
 
                 $detailRows[] = [
-                    'response_id'     => $responseId,
-                    'pertanyaan_id'   => $pertanyaanId,
+                    'response_id' => $responseId,
+                    'pertanyaan_id' => $pertanyaanId,
                     'opsi_jawaban_id' => $opsiId,
-                    'jawaban_text'    => $jawabanText,
-                    'created_at'      => now(),
-                    'updated_at'      => now(),
+                    'jawaban_text' => $jawabanText,
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ];
             }
 

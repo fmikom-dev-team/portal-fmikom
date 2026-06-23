@@ -1,26 +1,27 @@
 <?php
 
 use App\Http\Middleware\EnsureFirstTimeLoginComplete;
-use App\Modules\Trace\Controllers\TraceDashboardController;
-use App\Modules\Trace\Controllers\NotificationController;
-use App\Modules\Trace\Controllers\Alumni\TraceAlumniProfileController;
-use App\Modules\Trace\Controllers\Alumni\CareerController;
-use App\Modules\Trace\Controllers\Alumni\AlumniKuesionerController;
-use App\Modules\Trace\Controllers\Alumni\JobBrowseController;
-use App\Modules\Trace\Controllers\Alumni\EventController as AlumniEventController;
-use App\Modules\Trace\Controllers\Admin\DashboardAdminController;
-use App\Modules\Trace\Controllers\Admin\KuesionerController;
-use App\Modules\Trace\Controllers\Admin\KuesionerAnalyticsController;
-use App\Modules\Trace\Controllers\Admin\MapController;
-use App\Modules\Trace\Controllers\Admin\AnalyticsController;
-use App\Modules\Trace\Controllers\Admin\StatisticsController;
-use App\Modules\Trace\Controllers\Admin\RespondenController;
-use App\Modules\Trace\Controllers\Admin\JobManagementController;
-use App\Modules\Trace\Controllers\Admin\EventController as AdminEventController;
+use App\Http\Middleware\EnsureMitraProfileExists;
 use App\Modules\Trace\Controllers\Admin\ActivityLogController;
+use App\Modules\Trace\Controllers\Admin\AnalyticsController;
+use App\Modules\Trace\Controllers\Admin\DashboardAdminController;
+use App\Modules\Trace\Controllers\Admin\EventController as AdminEventController;
+use App\Modules\Trace\Controllers\Admin\JobManagementController;
+use App\Modules\Trace\Controllers\Admin\KuesionerAnalyticsController;
+use App\Modules\Trace\Controllers\Admin\KuesionerController;
+use App\Modules\Trace\Controllers\Admin\MapController;
+use App\Modules\Trace\Controllers\Admin\RespondenController;
+use App\Modules\Trace\Controllers\Admin\StatisticsController;
+use App\Modules\Trace\Controllers\Alumni\AlumniKuesionerController;
+use App\Modules\Trace\Controllers\Alumni\CareerController;
+use App\Modules\Trace\Controllers\Alumni\EventController as AlumniEventController;
+use App\Modules\Trace\Controllers\Alumni\JobBrowseController;
+use App\Modules\Trace\Controllers\Alumni\TraceAlumniProfileController;
 use App\Modules\Trace\Controllers\Mitra\DashboardMitraController;
-use App\Modules\Trace\Controllers\Mitra\MitraProfileController;
 use App\Modules\Trace\Controllers\Mitra\JobListingController;
+use App\Modules\Trace\Controllers\Mitra\MitraProfileController;
+use App\Modules\Trace\Controllers\NotificationController;
+use App\Modules\Trace\Controllers\TraceDashboardController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -201,7 +202,7 @@ Route::middleware([...$baseMiddleware, 'role:admin,super-admin,mitra', 'throttle
         Route::post('/profile-setup', [MitraProfileController::class, 'store'])->name('mitra-profile-setup.store');
 
         // All other routes — require existing mitra profile
-        Route::middleware(\App\Http\Middleware\EnsureMitraProfileExists::class)->group(function () {
+        Route::middleware(EnsureMitraProfileExists::class)->group(function () {
             // Dashboard
             Route::get('/dashboard', [DashboardMitraController::class, 'index'])->name('mitra-dashboard');
 

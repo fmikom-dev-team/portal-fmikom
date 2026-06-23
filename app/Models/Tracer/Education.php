@@ -4,7 +4,6 @@ namespace App\Models\Tracer;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Tracer\CareerHistory;
 
 class Education extends Model
 {

@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\Tracer\CareerHistory;
+use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class CareerHistoryPolicy
@@ -22,7 +22,7 @@ class CareerHistoryPolicy
 
     public function view(User $user, CareerHistory $career): bool
     {
-        return $this->getRole() === 'admin' || 
+        return $this->getRole() === 'admin' ||
                ($user->alumniProfile && $user->alumniProfile->id === $career->profil_alumni_id);
     }
 
@@ -33,13 +33,13 @@ class CareerHistoryPolicy
 
     public function update(User $user, CareerHistory $career): bool
     {
-        return $user->alumniProfile && 
+        return $user->alumniProfile &&
                $user->alumniProfile->id === $career->profil_alumni_id;
     }
 
     public function delete(User $user, CareerHistory $career): bool
     {
-        return $user->alumniProfile && 
+        return $user->alumniProfile &&
                $user->alumniProfile->id === $career->profil_alumni_id;
     }
 }

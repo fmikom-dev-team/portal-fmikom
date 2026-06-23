@@ -19,7 +19,7 @@ return new class extends Migration
             $table->integer('order')->default(0);
             $table->json('conditions')->nullable();
             $table->timestamps();
-            
+
             $table->index('kuesioner_id');
             $table->index('order');
         });

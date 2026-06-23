@@ -16,13 +16,12 @@ return new class extends Migration
             $table->text('deskripsi')->nullable();
             $table->string('website')->nullable();
             $table->string('logo_path')->nullable();
-            
+
             $table->string('email_perusahaan')->nullable();
             $table->string('no_telp')->nullable();
             $table->text('alamat_lengkap')->nullable();
             $table->foreignId('provinsi_id')->nullable()->constrained('provinsi')->nullOnDelete();
             $table->foreignId('kota_id')->nullable()->constrained('kota')->nullOnDelete();
-
 
             $table->timestamps();
 

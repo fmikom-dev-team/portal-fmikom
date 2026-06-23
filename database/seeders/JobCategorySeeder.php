@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class JobCategorySeeder extends Seeder
 {
@@ -92,7 +92,7 @@ class JobCategorySeeder extends Seeder
             'Lainnya',
         ];
 
-        $data = array_map(fn(string $name) => [
+        $data = array_map(fn (string $name) => [
             'nama' => $name,
             'slug' => Str::slug($name),
             'created_at' => $now,

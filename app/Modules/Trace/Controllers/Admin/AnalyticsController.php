@@ -3,11 +3,11 @@
 namespace App\Modules\Trace\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tracer\ProfilAlumni;
 use App\Models\Tracer\CareerHistory;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\DB;
+use App\Models\Tracer\ProfilAlumni;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class AnalyticsController extends Controller
 {
@@ -24,10 +24,10 @@ class AnalyticsController extends Controller
                 ->toArray();
 
             $careerStatusLabels = [
-                'bekerja'      => 'Bekerja',
-                'wirausaha'    => 'Wirausaha',
+                'bekerja' => 'Bekerja',
+                'wirausaha' => 'Wirausaha',
                 'lanjut_studi' => 'Lanjut Studi',
-                'mencari_kerja'=> 'Tidak Bekerja',
+                'mencari_kerja' => 'Tidak Bekerja',
             ];
 
             $careerStatus = [];
@@ -66,25 +66,25 @@ class AnalyticsController extends Controller
 
             // --- KPI summary ---
             $workingCount = ($statusDistribution['bekerja'] ?? 0) + ($statusDistribution['wirausaha'] ?? 0);
-            $studyCount   = $statusDistribution['lanjut_studi'] ?? 0;
+            $studyCount = $statusDistribution['lanjut_studi'] ?? 0;
             $employmentRate = $totalAlumni > 0 ? round(($workingCount / $totalAlumni) * 100, 1) : 0;
-            $studyRate      = $totalAlumni > 0 ? round(($studyCount / $totalAlumni) * 100, 1) : 0;
+            $studyRate = $totalAlumni > 0 ? round(($studyCount / $totalAlumni) * 100, 1) : 0;
 
             // --- Response rate ---
             $totalKuesioners = DB::table('kuesioner')->whereIn('status', ['active', 'published'])->count();
-            $totalResponses  = DB::table('responses')->count();
-            $responseRate    = $totalAlumni > 0 && $totalKuesioners > 0
+            $totalResponses = DB::table('responses')->count();
+            $responseRate = $totalAlumni > 0 && $totalKuesioners > 0
                 ? round(($totalResponses / ($totalAlumni * $totalKuesioners)) * 100, 1)
                 : 0;
 
             return [
-                'totalAlumni'       => $totalAlumni,
-                'employmentRate'    => $employmentRate,
-                'studyRate'         => $studyRate,
-                'responseRate'      => $responseRate,
-                'careerStatus'      => $careerStatus,
+                'totalAlumni' => $totalAlumni,
+                'employmentRate' => $employmentRate,
+                'studyRate' => $studyRate,
+                'responseRate' => $responseRate,
+                'careerStatus' => $careerStatus,
                 'alumniPerAngkatan' => $alumniPerAngkatan,
-                'topSektors'        => $topSektors,
+                'topSektors' => $topSektors,
                 'prodiDistribution' => $prodiDistribution,
             ];
         });

@@ -6,9 +6,12 @@ use App\Models\Auth\AuthEmailLog;
 use App\Models\Auth\AuthLoginAttempt;
 use App\Models\Auth\AuthSession;
 use App\Models\Auth\AuthSetting;
+use App\Models\Tracer\ActivityLog;
+use App\Models\Tracer\CareerHistory;
 use App\Models\User;
 use App\Modules\WorkOs\Services\AuditLogger;
 use App\Modules\WorkOs\Services\AuthPlatform\SessionEngine;
+use App\Policies\CareerHistoryPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
@@ -28,7 +31,6 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Laravel\Telescope\TelescopeApplicationServiceProvider;
 use Livewire\Livewire;
-use App\Models\Tracer\ActivityLog;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -188,15 +190,13 @@ class AppServiceProvider extends ServiceProvider
             return method_exists($user, 'isSuperAdmin') && ($user->isSuperAdmin() || $user->isAdmin());
         });
 
-
-
         // Force Livewire asset injection only on Pulse routes
         if (class_exists(Livewire::class) && ! app()->runningInConsole() && request()->is(config('pulse.path', 'pulse').'*')) {
             Livewire::forceAssetInjection();
         }
 
         // Register Tracer Policies explicitly due to sub-namespace auto-discovery limitation
-        Gate::policy(\App\Models\Tracer\CareerHistory::class, \App\Policies\CareerHistoryPolicy::class);
+        Gate::policy(CareerHistory::class, CareerHistoryPolicy::class);
 
         // ── Pagi Chat Rate Limiting (Flood Prevention) ─────────────────────────
         RateLimiter::for('pagi-chat-send', function ($request) {

@@ -2,11 +2,11 @@
 
 namespace App\Modules\Trace\Services;
 
-use App\Models\Tracer\ProfilAlumni;
-use App\Models\Tracer\CareerHistory;
 use App\Models\Tracer\ActivityLog;
+use App\Models\Tracer\CareerHistory;
 use App\Models\Tracer\Event;
 use App\Models\Tracer\JobListing;
+use App\Models\Tracer\ProfilAlumni;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -29,17 +29,17 @@ class DashboardStatsService
                 ->whereIn('status', ['bekerja', 'wirausaha'])
                 ->distinct('profil_alumni_id')
                 ->count();
-            
+
             $currentER = $totalAlumni > 0 ? ($workingNow / $totalAlumni) * 100 : 0;
-            
+
             $workingLastMonth = CareerHistory::where('created_at', '<', $startOfThisMonth)
                 ->whereIn('status', ['bekerja', 'wirausaha'])
                 ->distinct('profil_alumni_id')
                 ->count();
-            
+
             $lastMonthER = $totalAlumniLastMonth > 0 ? ($workingLastMonth / $totalAlumniLastMonth) * 100 : 0;
             $erDiff = round($currentER - $lastMonthER, 1);
-            $erTrend = ($erDiff >= 0 ? "+" : "") . $erDiff . "%";
+            $erTrend = ($erDiff >= 0 ? '+' : '').$erDiff.'%';
 
             $studyingAlumni = CareerHistory::where('is_current', true)
                 ->where('status', 'lanjut_studi')
@@ -113,24 +113,24 @@ class DashboardStatsService
                 'totalAlumni' => [
                     'label' => 'Total Alumni',
                     'value' => number_format($totalAlumni),
-                    'trend' => $alumniTrend . '%', 
+                    'trend' => $alumniTrend.'%',
                     'color' => 'blue',
                     'subValue' => $now->translatedFormat('F Y'),
-                    'subLabel' => 'Update Terakhir'
+                    'subLabel' => 'Update Terakhir',
                 ],
                 'employmentRate' => [
                     'label' => 'Employment Rate',
-                    'value' => round($currentER, 1) . '%',
-                    'trend' => $erTrend, 
+                    'value' => round($currentER, 1).'%',
+                    'trend' => $erTrend,
                     'color' => 'green',
                 ],
                 'studiLanjut' => [
                     'label' => 'Lanjut Studi',
                     'value' => number_format($studyingAlumni),
-                    'trend' => null, 
+                    'trend' => null,
                     'color' => 'purple',
-                    'subValue' => round(($totalAlumni > 0 ? ($studyingAlumni / $totalAlumni) * 100 : 0), 1) . '%',
-                    'subLabel' => 'Dari Total Alumni'
+                    'subValue' => round(($totalAlumni > 0 ? ($studyingAlumni / $totalAlumni) * 100 : 0), 1).'%',
+                    'subLabel' => 'Dari Total Alumni',
                 ],
                 'kuesionerStats' => [
                     'total_kuesioners' => $totalKuesioners,
@@ -143,9 +143,9 @@ class DashboardStatsService
                 'dataCompleteness' => $dataCompleteness,
                 'prodiDistribution' => [
                     'labels' => $prodiData->pluck('program_studi')->toArray(),
-                    'counts' => $prodiData->pluck('count')->toArray()
+                    'counts' => $prodiData->pluck('count')->toArray(),
                 ],
-                'total_alumni_raw' => $totalAlumni
+                'total_alumni_raw' => $totalAlumni,
             ];
         });
 
@@ -240,9 +240,12 @@ class DashboardStatsService
 
     private function calculateTrend($current, $previous)
     {
-        if ($previous <= 0) return $current > 0 ? '+100' : '+0';
+        if ($previous <= 0) {
+            return $current > 0 ? '+100' : '+0';
+        }
         $diff = (($current - $previous) / $previous) * 100;
         $formatted = round($diff, 1);
-        return ($formatted >= 0 ? "+" : "") . $formatted;
+
+        return ($formatted >= 0 ? '+' : '').$formatted;
     }
 }

@@ -12,7 +12,7 @@ class DashboardAdminController extends Controller
     {
         return Inertia::render('Modules/Trace/Admin/Dashboard', [
             'stats' => Inertia::defer(fn () => $statsService->getAdminStats()),
-            'alumniGrowthData' => Inertia::defer(fn () => $statsService->getAlumniGrowthData())
+            'alumniGrowthData' => Inertia::defer(fn () => $statsService->getAlumniGrowthData()),
         ]);
     }
 }

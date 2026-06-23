@@ -138,26 +138,26 @@ class AlumniMapService
                         ->whereNotNull('career_history.longitude');
                 })
                 // Or alumni seeking work with home location mapped
-                ->orWhere(function ($sub) {
-                    $sub->whereExists(function ($inner) {
-                        $inner->select(DB::raw(1))
-                            ->from('career_history')
-                            ->whereColumn('career_history.profil_alumni_id', 'profil_alumnis.id')
-                            ->where('career_history.is_current', true)
-                            ->where('career_history.status', 'mencari_kerja');
-                    })
-                    ->whereNotNull('profil_alumnis.latitude_rumah')
-                    ->whereNotNull('profil_alumnis.longitude_rumah');
-                });
+                    ->orWhere(function ($sub) {
+                        $sub->whereExists(function ($inner) {
+                            $inner->select(DB::raw(1))
+                                ->from('career_history')
+                                ->whereColumn('career_history.profil_alumni_id', 'profil_alumnis.id')
+                                ->where('career_history.is_current', true)
+                                ->where('career_history.status', 'mencari_kerja');
+                        })
+                            ->whereNotNull('profil_alumnis.latitude_rumah')
+                            ->whereNotNull('profil_alumnis.longitude_rumah');
+                    });
             })
             ->count()
         );
         $globalCompletionRate = $totalAlumni > 0 ? round(($totalMappedOverall / $totalAlumni) * 100, 1) : 0;
 
         // Calculate filtered stats
-        $isFilterActive = !empty($filters['angkatan'])
-            || !empty($filters['program_studi'])
-            || !empty($filters['sektor'])
+        $isFilterActive = ! empty($filters['angkatan'])
+            || ! empty($filters['program_studi'])
+            || ! empty($filters['sektor'])
             || ($statusFilter !== 'semua');
 
         $filteredTotal = 0;
@@ -185,14 +185,14 @@ class AlumniMapService
                         ->where('employment.sektor_industri', $filters['sektor']);
                 }
             } elseif ($statusFilter === 'lainnya') {
-                $filteredQuery->where(function($q) {
-                    $q->whereExists(function($sub) {
+                $filteredQuery->where(function ($q) {
+                    $q->whereExists(function ($sub) {
                         $sub->select(DB::raw(1))
                             ->from('career_history')
                             ->whereColumn('career_history.profil_alumni_id', 'profil_alumnis.id')
                             ->where('career_history.is_current', true)
                             ->where('career_history.status', 'lanjut_studi');
-                    })->orWhereExists(function($sub) {
+                    })->orWhereExists(function ($sub) {
                         $sub->select(DB::raw(1))
                             ->from('career_history')
                             ->whereColumn('career_history.profil_alumni_id', 'profil_alumnis.id')
@@ -227,8 +227,8 @@ class AlumniMapService
                     'total' => $filteredTotal,
                     'mapped' => $filteredMapped,
                     'rate' => $filteredRate,
-                ]
-            ]
+                ],
+            ],
         ];
     }
 }

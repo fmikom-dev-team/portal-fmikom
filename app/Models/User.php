@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Concerns\UserHelpers;
 use App\Exceptions\SuperAdminProtectionException;
-use App\Models\Tracer\ProfilAlumni;
 use App\Models\Auth\AuthOAuthCredential;
 use App\Models\Magang\LowonganInfo;
 use App\Models\Magang\PembimbingLapangan;
@@ -13,9 +12,13 @@ use App\Models\Magang\PenilaianMagang;
 use App\Models\Pagi\PagiCv;
 use App\Models\Pagi\PagiWork;
 use App\Models\Surat\Surat;
+use App\Models\Surat\SuratApprovalFlow;
+use App\Models\Tracer\Bookmark;
+use App\Models\Tracer\EventRegistration;
 use App\Models\Tracer\Kuesioner;
 use App\Models\Tracer\MitraProfile;
-use App\Models\Surat\SuratApprovalFlow;
+use App\Models\Tracer\ProfilAlumni;
+use App\Models\Tracer\Response;
 use App\Models\Traits\HasPagiRelations;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -163,8 +166,6 @@ class User extends Authenticatable
         return $this->belongsTo(ProgramStudi::class);
     }
 
-
-
     public function surats(): HasMany
     {
         return $this->hasMany(Surat::class, 'pemohon_id');
@@ -185,7 +186,6 @@ class User extends Authenticatable
         return $this->hasMany(PenilaianMagang::class, 'dosen_id');
     }
 
-  
     public function lowonganInfos(): HasMany
     {
         return $this->hasMany(LowonganInfo::class, 'pembuat_id');
@@ -205,24 +205,25 @@ class User extends Authenticatable
     {
         return $this->hasOne(ProfilAlumni::class, 'user_id');
     }
-      public function mitraProfile()
+
+    public function mitraProfile()
     {
         return $this->hasOne(MitraProfile::class, 'user_id');
     }
 
     public function eventRegistrations(): HasMany
     {
-        return $this->hasMany(\App\Models\Tracer\EventRegistration::class);
+        return $this->hasMany(EventRegistration::class);
     }
 
     public function kuesionerResponses(): HasMany
     {
-        return $this->hasMany(\App\Models\Tracer\Response::class);
+        return $this->hasMany(Response::class);
     }
 
     public function bookmarks(): HasMany
     {
-        return $this->hasMany(\App\Models\Tracer\Bookmark::class);
+        return $this->hasMany(Bookmark::class);
     }
 
     // -----------------------------------------------------------------------

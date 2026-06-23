@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Mail;
 class SendWeeklyDigest extends Command
 {
     protected $signature = 'trace:weekly-digest';
+
     protected $description = 'Send weekly job & event digest email to all alumni';
 
     public function handle(): int
@@ -27,6 +28,7 @@ class SendWeeklyDigest extends Command
 
         if ($newJobs->isEmpty() && $newEvents->isEmpty()) {
             $this->info('No new jobs or events this week. Skipping digest.');
+
             return self::SUCCESS;
         }
 
@@ -54,6 +56,7 @@ class SendWeeklyDigest extends Command
             });
 
         $this->info("Weekly digest sent to {$sent} alumni.");
+
         return self::SUCCESS;
     }
 }

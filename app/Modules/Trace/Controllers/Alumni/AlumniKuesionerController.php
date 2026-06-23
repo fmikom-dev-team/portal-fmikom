@@ -3,38 +3,34 @@
 namespace App\Modules\Trace\Controllers\Alumni;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response as InertiaResponse;
-use Illuminate\Http\RedirectResponse;
+use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\Kuesioner;
 use App\Models\Tracer\Response;
-use App\Models\Tracer\Pertanyaan;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-use App\Modules\Trace\Services\AuditLogService;
-use App\Modules\Trace\Actions\SubmitKuesionerResponseAction;
-use App\Models\Tracer\ActivityLog;
 use App\Models\User;
+use App\Modules\Trace\Actions\SubmitKuesionerResponseAction;
+use App\Modules\Trace\Services\AuditLogService;
 use App\Notifications\Trace\KuesionerResponseSubmitted;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 /**
  * AlumniKuesionerController
  *
  * Handles questionnaire interactions for alumni users including browsing
  * available questionnaires and submitting responses.
- *
- * @package App\Modules\Trace\Controllers\Alumni
  */
 class AlumniKuesionerController extends Controller
 {
     /**
      * Display list of available questionnaires for the alumni.
-     *
-     * @return InertiaResponse
      */
     public function index(): InertiaResponse
     {
@@ -62,7 +58,7 @@ class AlumniKuesionerController extends Controller
 
         Log::info('Alumni questionnaire list viewed', [
             'user_id' => auth()->id(),
-            'count'   => $kuesioners->count(),
+            'count' => $kuesioners->count(),
         ]);
 
         return Inertia::render('Modules/Trace/Alumni/Quiz', [
@@ -72,9 +68,6 @@ class AlumniKuesionerController extends Controller
 
     /**
      * Display a specific questionnaire for filling out.
-     *
-     * @param  int  $id
-     * @return InertiaResponse|RedirectResponse
      */
     public function show(int $id): InertiaResponse|RedirectResponse
     {
@@ -111,20 +104,20 @@ class AlumniKuesionerController extends Controller
             }
 
             Log::info('Questionnaire detail viewed', [
-                'user_id'              => auth()->id(),
-                'kuesioner_id'         => $id,
+                'user_id' => auth()->id(),
+                'kuesioner_id' => $id,
                 'has_previous_response' => (bool) $response,
             ]);
 
             return Inertia::render('Modules/Trace/Alumni/FillQuiz', [
-                'kuesioner'      => $kuesioner,
-                'hasResponded'   => (bool) $response,
+                'kuesioner' => $kuesioner,
+                'hasResponded' => (bool) $response,
                 'existingAnswers' => $existingAnswers,
             ]);
 
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             Log::warning('Questionnaire not found', [
-                'user_id'      => auth()->id(),
+                'user_id' => auth()->id(),
                 'kuesioner_id' => $id,
             ]);
 
@@ -134,14 +127,10 @@ class AlumniKuesionerController extends Controller
 
     /**
      * Store the questionnaire response.
-     *
-     * @param  Request  $request
-     * @param  int      $id
-     * @return RedirectResponse
      */
     public function store(Request $request, int $id): RedirectResponse
     {
-        $action = new SubmitKuesionerResponseAction();
+        $action = new SubmitKuesionerResponseAction;
 
         try {
             $kuesioner = Kuesioner::with('sections.pertanyaans.opsiJawabans')->findOrFail($id);
@@ -153,16 +142,16 @@ class AlumniKuesionerController extends Controller
                 return $redirect;
             }
 
-            $rules     = $action->buildValidationRules($kuesioner);
+            $rules = $action->buildValidationRules($kuesioner);
             $validated = Validator::make($request->all(), $rules)->validate();
-            $answers   = $validated['answers'];
+            $answers = $validated['answers'];
 
             try {
                 $action->execute($kuesioner, $answers, auth()->id());
             } catch (\RuntimeException $e) {
                 if ($e->getMessage() === 'already_responded') {
                     Log::warning('Duplicate questionnaire submission attempt', [
-                        'user_id'      => auth()->id(),
+                        'user_id' => auth()->id(),
                         'kuesioner_id' => $id,
                     ]);
 
@@ -178,9 +167,9 @@ class AlumniKuesionerController extends Controller
             Cache::forget("kuesioner_analytics_{$kuesioner->id}");
 
             AuditLogService::log('kuesioner_submitted', 'Response', null, [
-                'kuesioner_id'    => $kuesioner->id,
+                'kuesioner_id' => $kuesioner->id,
                 'kuesioner_judul' => $kuesioner->judul,
-                'total_answers'   => count($answers),
+                'total_answers' => count($answers),
             ]);
 
             ActivityLog::record('kuesioner.submitted', "Mengisi kuesioner: {$kuesioner->judul}", $kuesioner);
@@ -196,7 +185,7 @@ class AlumniKuesionerController extends Controller
             ));
 
             Log::info('Questionnaire response submitted', [
-                'user_id'      => auth()->id(),
+                'user_id' => auth()->id(),
                 'kuesioner_id' => $id,
                 'answer_count' => count($answers),
             ]);
@@ -204,21 +193,21 @@ class AlumniKuesionerController extends Controller
             return redirect()->route('tracer')
                 ->with('success', 'Kuesioner berhasil dikirim. Terima kasih atas partisipasi Anda!');
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             Log::warning('Questionnaire validation failed', [
-                'user_id'      => auth()->id(),
+                'user_id' => auth()->id(),
                 'kuesioner_id' => $id,
-                'errors'       => $e->errors(),
+                'errors' => $e->errors(),
             ]);
 
             return redirect()->back()->withErrors($e->errors())->withInput();
 
         } catch (\Exception $e) {
             Log::error('Questionnaire store error', [
-                'user_id'      => auth()->id(),
+                'user_id' => auth()->id(),
                 'kuesioner_id' => $id,
-                'error'        => $e->getMessage(),
-                'trace'        => $e->getTraceAsString(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return redirect()->back()->with('error', 'Terjadi kesalahan saat memproses kuesioner.');
@@ -232,9 +221,6 @@ class AlumniKuesionerController extends Controller
     /**
      * Periksa apakah kuesioner tersedia (status aktif & dalam rentang tanggal).
      * Mengembalikan RedirectResponse jika tidak tersedia, null jika aman.
-     *
-     * @param  Kuesioner  $kuesioner
-     * @return RedirectResponse|null
      */
     private function checkKuesionerAvailability(Kuesioner $kuesioner): ?RedirectResponse
     {
@@ -242,7 +228,7 @@ class AlumniKuesionerController extends Controller
 
         if ($kuesioner->date_mulai && $kuesioner->date_mulai > $now) {
             Log::warning('Questionnaire not yet open', [
-                'user_id'      => auth()->id(),
+                'user_id' => auth()->id(),
                 'kuesioner_id' => $kuesioner->id,
             ]);
 
@@ -251,7 +237,7 @@ class AlumniKuesionerController extends Controller
 
         if ($kuesioner->date_selesai && $kuesioner->date_selesai < $now) {
             Log::warning('Questionnaire closed', [
-                'user_id'      => auth()->id(),
+                'user_id' => auth()->id(),
                 'kuesioner_id' => $kuesioner->id,
             ]);
 

@@ -3,18 +3,18 @@
 namespace App\Modules\Trace\Controllers\Alumni;
 
 use App\Http\Controllers\Controller;
+use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\Event;
 use App\Models\Tracer\EventRegistration;
+use App\Models\User;
+use App\Notifications\Trace\EventRegistrationConfirmed;
+use App\Notifications\Trace\NewEventRegistration;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use App\Notifications\Trace\EventRegistrationConfirmed;
-use App\Notifications\Trace\NewEventRegistration;
-use App\Models\Tracer\ActivityLog;
-use App\Models\User;
-use Illuminate\Support\Facades\Notification;
 
 class EventController extends Controller
 {
@@ -28,8 +28,8 @@ class EventController extends Controller
             $search = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('location', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('location', 'like', "%{$search}%");
             });
         }
 
@@ -164,7 +164,7 @@ class EventController extends Controller
         ]);
 
         $event = Event::find($registration->event_id);
-        ActivityLog::record('event.unregistered', "Membatalkan pendaftaran event: " . ($event->title ?? ''), $event);
+        ActivityLog::record('event.unregistered', 'Membatalkan pendaftaran event: '.($event->title ?? ''), $event);
 
         return redirect()->back()->with('success', 'Pendaftaran berhasil dibatalkan.');
     }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models\Tracer;
 
 use App\Models\User;

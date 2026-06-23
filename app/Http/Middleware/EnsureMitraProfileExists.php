@@ -16,7 +16,7 @@ class EnsureMitraProfileExists
     {
         $user = $request->user();
 
-        if (!$user || !$user->mitraProfile) {
+        if (! $user || ! $user->mitraProfile) {
             return redirect()->route('module.trace.open-job.mitra-profile-setup');
         }
 

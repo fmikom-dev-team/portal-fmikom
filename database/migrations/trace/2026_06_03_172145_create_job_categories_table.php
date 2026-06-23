@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('job_categories', function (Blueprint $table) {
             $table->id();
-            $table->string('nama')->unique(); 
-            $table->string('slug')->unique(); 
+            $table->string('nama')->unique();
+            $table->string('slug')->unique();
             $table->timestamps();
-});
+        });
     }
 
     /**

@@ -4,7 +4,7 @@ namespace App\Enums;
 
 /**
  * Enum for career employment status
- * 
+ *
  * Defines the possible employment status values for alumni career records
  * including employment, entrepreneurship, further study, and job seeking.
  */
@@ -35,7 +35,7 @@ enum CareerStatus: string
      */
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::BEKERJA => 'Bekerja',
             self::WIRAUSAHA => 'Wirausaha',
             self::LANJUT_STUDI => 'Lanjut Studi',
@@ -48,7 +48,7 @@ enum CareerStatus: string
      */
     public function description(): string
     {
-        return match($this) {
+        return match ($this) {
             self::BEKERJA => 'Bekerja sebagai karyawan di sebuah perusahaan',
             self::WIRAUSAHA => 'Menjalankan usaha atau bisnis sendiri',
             self::LANJUT_STUDI => 'Melanjutkan pendidikan ke jenjang lebih tinggi',
@@ -61,7 +61,7 @@ enum CareerStatus: string
      */
     public function badgeColor(): string
     {
-        return match($this) {
+        return match ($this) {
             self::BEKERJA => 'success',
             self::WIRAUSAHA => 'info',
             self::LANJUT_STUDI => 'primary',
@@ -74,7 +74,7 @@ enum CareerStatus: string
      */
     public static function options(): array
     {
-        return array_map(fn($status) => [
+        return array_map(fn ($status) => [
             'value' => $status->value,
             'label' => $status->label(),
             'description' => $status->description(),

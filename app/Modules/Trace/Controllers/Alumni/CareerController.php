@@ -3,23 +3,25 @@
 namespace App\Modules\Trace\Controllers\Alumni;
 
 use App\Http\Controllers\Controller;
+use App\Models\Tracer\ActivityLog;
+use App\Models\Tracer\CareerHistory;
+use App\Models\Tracer\Kota;
+use App\Models\Tracer\Provinsi;
+use App\Modules\Trace\Services\CareerService;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Http\RedirectResponse;
-use App\Models\Tracer\CareerHistory;
-use App\Models\Tracer\Provinsi;
-use App\Models\Tracer\Kota;
-use App\Modules\Trace\Services\CareerService;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use App\Models\Tracer\ActivityLog;
 
 class CareerController extends Controller
 {
     use AuthorizesRequests;
-    
+
     protected CareerService $careerService;
 
     public function __construct(CareerService $careerService)
@@ -35,7 +37,7 @@ class CareerController extends Controller
         $user = auth()->user();
         $profile = $user->alumniProfile;
 
-        if (!$profile) {
+        if (! $profile) {
             return redirect()->route('profile-alumni')
                 ->with('error', 'Silakan lengkapi profil Anda terlebih dahulu.');
         }
@@ -79,7 +81,7 @@ class CareerController extends Controller
             'stats' => $stats,
             'provinces' => Cache::remember('trace_provinsi_all', 3600, fn () => Provinsi::select('id', 'name')->orderBy('name')->get()),
             'cities' => Cache::remember('trace_kota_all', 3600, fn () => Kota::select('id', 'name', 'provinsi_id')->orderBy('name')->get()),
-            'roleName' => $role
+            'roleName' => $role,
         ]);
     }
 
@@ -90,7 +92,7 @@ class CareerController extends Controller
         $user = auth()->user();
         $profile = $user->alumniProfile;
 
-        if (!$profile) {
+        if (! $profile) {
             return back()->with('error', 'Profil tidak ditemukan.');
         }
 
@@ -105,15 +107,16 @@ class CareerController extends Controller
                 'status' => $validated['status'],
             ]);
 
-            ActivityLog::record('career.created', "Menambah riwayat karir: " . ($validated['jabatan'] ?? $validated['status']) . " di " . ($validated['nama_perusahaan'] ?? '-'));
+            ActivityLog::record('career.created', 'Menambah riwayat karir: '.($validated['jabatan'] ?? $validated['status']).' di '.($validated['nama_perusahaan'] ?? '-'));
 
             return back()->with('success', 'Riwayat karir berhasil ditambahkan.');
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             Log::warning('Career store validation failed', [
                 'user_id' => $user->id,
                 'errors' => $e->errors(),
             ]);
+
             return back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             Log::error('Career store error', [
@@ -121,6 +124,7 @@ class CareerController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
             return back()->with('error', 'Terjadi kesalahan saat menyimpan data karir.');
         }
     }
@@ -130,7 +134,7 @@ class CareerController extends Controller
         $user = auth()->user();
         $profile = $user->alumniProfile;
 
-        if (!$profile) {
+        if (! $profile) {
             return back()->with('error', 'Profil tidak ditemukan.');
         }
 
@@ -153,18 +157,20 @@ class CareerController extends Controller
 
             return back()->with('success', 'Riwayat karir berhasil diperbarui.');
 
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+        } catch (AuthorizationException $e) {
             Log::warning('Unauthorized career update attempt', [
                 'user_id' => $user->id,
                 'career_id' => $id,
             ]);
+
             return back()->with('error', 'Anda tidak memiliki izin untuk mengubah riwayat karir ini.');
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             Log::warning('Career update validation failed', [
                 'user_id' => $user->id,
                 'career_id' => $id,
                 'errors' => $e->errors(),
             ]);
+
             return back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             Log::error('Career update error', [
@@ -173,6 +179,7 @@ class CareerController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
             return back()->with('error', 'Terjadi kesalahan saat memperbarui data karir.');
         }
     }
@@ -182,7 +189,7 @@ class CareerController extends Controller
         $user = auth()->user();
         $profile = $user->alumniProfile;
 
-        if (!$profile) {
+        if (! $profile) {
             return back()->with('error', 'Profil tidak ditemukan.');
         }
 
@@ -196,6 +203,7 @@ class CareerController extends Controller
                     'user_id' => $user->id,
                     'career_id' => $id,
                 ]);
+
                 return back()->with('error', 'Tidak dapat menghapus riwayat karir terakhir.');
             }
 
@@ -220,11 +228,12 @@ class CareerController extends Controller
 
             return back()->with('success', 'Riwayat karir berhasil dihapus.');
 
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+        } catch (AuthorizationException $e) {
             Log::warning('Unauthorized career delete attempt', [
                 'user_id' => $user->id,
                 'career_id' => $id,
             ]);
+
             return back()->with('error', 'Anda tidak memiliki izin untuk menghapus riwayat karir ini.');
         } catch (\Exception $e) {
             Log::error('Career delete error', [
@@ -233,6 +242,7 @@ class CareerController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
             return back()->with('error', 'Terjadi kesalahan saat menghapus data karir.');
         }
     }
@@ -242,7 +252,7 @@ class CareerController extends Controller
         $user = auth()->user();
         $profile = $user->alumniProfile;
 
-        if (!$profile) {
+        if (! $profile) {
             return back()->with('error', 'Profil tidak ditemukan.');
         }
 
@@ -260,11 +270,12 @@ class CareerController extends Controller
 
             return back()->with('success', 'Status karir saat ini berhasil diperbarui.');
 
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+        } catch (AuthorizationException $e) {
             Log::warning('Unauthorized career setCurrent attempt', [
                 'user_id' => $user->id,
                 'career_id' => $id,
             ]);
+
             return back()->with('error', 'Anda tidak memiliki izin untuk mengubah status karir ini.');
         } catch (\Exception $e) {
             Log::error('Career setCurrent error', [
@@ -273,6 +284,7 @@ class CareerController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
             return back()->with('error', 'Terjadi kesalahan saat memperbarui status karir.');
         }
     }

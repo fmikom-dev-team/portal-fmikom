@@ -17,7 +17,7 @@ class Section extends Model
         'description',
         'order',
         'conditions',
-        
+
     ];
 
     /*

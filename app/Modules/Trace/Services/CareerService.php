@@ -2,10 +2,10 @@
 
 namespace App\Modules\Trace\Services;
 
-use App\Models\Tracer\ProfilAlumni;
 use App\Models\Tracer\CareerHistory;
-use Illuminate\Support\Facades\DB;
+use App\Models\Tracer\ProfilAlumni;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class CareerService
 {
@@ -63,8 +63,12 @@ class CareerService
             ]);
 
             // Hapus relasi lama jika type berubah
-            if ($type !== 'employment') $career->employment()->delete();
-            if ($type !== 'education') $career->education()->delete();
+            if ($type !== 'employment') {
+                $career->employment()->delete();
+            }
+            if ($type !== 'education') {
+                $career->education()->delete();
+            }
 
             $this->saveDetail($career, $type, $data, isUpdate: true);
 
@@ -99,45 +103,53 @@ class CareerService
             }
         }
 
-        if ($totalMonths <= 0) return 'Belum ada';
+        if ($totalMonths <= 0) {
+            return 'Belum ada';
+        }
 
         $years = floor($totalMonths / 12);
         $months = $totalMonths % 12;
 
-        if ($years > 0 && $months > 0) return "{$years} tahun {$months} bulan";
-        if ($years > 0) return "{$years} tahun";
-        if ($months > 0) return "{$months} bulan";
+        if ($years > 0 && $months > 0) {
+            return "{$years} tahun {$months} bulan";
+        }
+        if ($years > 0) {
+            return "{$years} tahun";
+        }
+        if ($months > 0) {
+            return "{$months} bulan";
+        }
 
         return 'Baru mulai';
     }
 
     public function flattenCareer(CareerHistory $career): array
-{
-    $flat = $career->toArray();
-    $flat['status'] = is_object($career->status)
-        ? $career->status->value
-        : $career->status;
-    $flat['type'] = is_object($career->type)
-        ? $career->type->value
-        : $career->type;
+    {
+        $flat = $career->toArray();
+        $flat['status'] = is_object($career->status)
+            ? $career->status->value
+            : $career->status;
+        $flat['type'] = is_object($career->type)
+            ? $career->type->value
+            : $career->type;
 
-    if (in_array($flat['status'], ['bekerja', 'wirausaha']) && $career->employment) {
-        $employmentData = $career->employment->toArray();
-        unset($employmentData['id']); // ← hapus id sebelum merge
-        $flat = array_merge($flat, $employmentData);
-    } elseif ($flat['status'] === 'lanjut_studi' && $career->education) {
-        $educationData = $career->education->toArray();
-        unset($educationData['id']); // ← hapus id sebelum merge
-        $flat = array_merge($flat, $educationData);
+        if (in_array($flat['status'], ['bekerja', 'wirausaha']) && $career->employment) {
+            $employmentData = $career->employment->toArray();
+            unset($employmentData['id']); // ← hapus id sebelum merge
+            $flat = array_merge($flat, $employmentData);
+        } elseif ($flat['status'] === 'lanjut_studi' && $career->education) {
+            $educationData = $career->education->toArray();
+            unset($educationData['id']); // ← hapus id sebelum merge
+            $flat = array_merge($flat, $educationData);
+        }
+
+        return $flat;
     }
-
-    return $flat;
-}
 
     public function flattenCareers($careers): array
     {
         return collect($careers)
-            ->map(fn($c) => $this->flattenCareer($c))
+            ->map(fn ($c) => $this->flattenCareer($c))
             ->toArray();
     }
 
