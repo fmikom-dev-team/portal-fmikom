@@ -106,6 +106,34 @@ class ModuleSeeder extends Seeder
         // --- Role Mitra (Akses PAGI) ---
         UserModuleRole::firstOrCreate(['user_id' => $user1->id, 'module_id' => Module::where('code', 'PAGI')->first()->id, 'role_id' => Role::where('slug', 'mitra')->first()->id]);
 
+        // Contoh 1.2: Akun Super Admin Dev (dasbastard193@gmail.com)
+        $userDev = User::firstOrCreate(
+            ['email' => 'dasbastard193@gmail.com'],
+            [
+                'name' => 'Super Admin Dev',
+                'password' => Hash::make('password123'),
+                'is_active' => true,
+                'user_type' => 'super-admin',
+            ]
+        );
+
+        if ($userDev->user_type !== 'super-admin') {
+            $userDev->update(['user_type' => 'super-admin']);
+        }
+
+        foreach (['FAST', 'WIMS', 'PAGI', 'TRACE'] as $modCode) {
+            UserModuleRole::firstOrCreate([
+                'user_id' => $userDev->id,
+                'module_id' => Module::where('code', $modCode)->first()->id,
+                'role_id' => $superAdminRole,
+            ]);
+        }
+
+        UserModuleRole::firstOrCreate(['user_id' => $userDev->id, 'module_id' => Module::where('code', 'FAST')->first()->id, 'role_id' => $adminRole]);
+        UserModuleRole::firstOrCreate(['user_id' => $userDev->id, 'module_id' => Module::where('code', 'WIMS')->first()->id, 'role_id' => $adminRole]);
+        UserModuleRole::firstOrCreate(['user_id' => $userDev->id, 'module_id' => Module::where('code', 'TRACE')->first()->id, 'role_id' => Role::where('slug', 'alumni')->first()->id]);
+        UserModuleRole::firstOrCreate(['user_id' => $userDev->id, 'module_id' => Module::where('code', 'PAGI')->first()->id, 'role_id' => Role::where('slug', 'mitra')->first()->id]);
+
         // ========================================================
 
         // Contoh 2: Andi (Mahasiswa di FAST & PAGI)

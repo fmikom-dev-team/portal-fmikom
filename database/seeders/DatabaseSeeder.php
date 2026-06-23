@@ -21,9 +21,14 @@ class DatabaseSeeder extends Seeder
         // ]);
 
         $this->call([
+            PermissionSeeder::class,
             ModuleSeeder::class,
             RadarSeeder::class,
             FakultasProdiSeeder::class,
+            ProvinsiSeeder::class,
+            KotaSeeder::class,
+            JobCategorySeeder::class,
+            PipeProviderSeeder::class,
             // DummyUserSeeder::class, // removed: seeder deleted in feature-trace
             SuratCategorySeeder::class,
             JenisSuratSeeder::class,
