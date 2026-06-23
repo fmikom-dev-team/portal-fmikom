@@ -2,10 +2,13 @@ import { createInertiaApp, router } from "@inertiajs/vue3";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import type { DefineComponent } from "vue";
 import { createApp, h } from "vue";
+import { Toaster } from 'vue-sonner';
+import 'vue-sonner/style.css';
 import "../css/app.css";
 import axios from "axios";
 import { initializeTheme } from "@/composables/useAppearance";
 import { useLoadingState } from "@/composables/useLoadingState";
+import { initFlashToast } from "@/composables/useFlashToast";
 
 (globalThis as any).axios = axios;
 (globalThis as any).axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
@@ -109,7 +112,7 @@ createInertiaApp({
 			import.meta.glob<DefineComponent>("./pages/**/*.vue"),
 		),
 	setup({ el, App, props, plugin }) {
-		createApp({ render: () => h(App, props) })
+		createApp({ render: () => h('div', [h(App, props), h(Toaster, { position: 'top-right', duration: 4000, richColors: true, closeButton: true })]) })
 			.use(plugin)
 			.mount(el);
 
@@ -224,3 +227,6 @@ if ("serviceWorker" in navigator) {
 			});
 	});
 }
+
+// Global flash → toast handler (fires once per Inertia navigation)
+initFlashToast();

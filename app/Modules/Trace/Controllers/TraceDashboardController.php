@@ -4,35 +4,32 @@ namespace App\Modules\Trace\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use App\Modules\Trace\Controllers\Alumni\TraceAlumniDashboardController;
 use Inertia\Inertia;
 
 class TraceDashboardController extends Controller
 {
     private const ADMIN_ROLES = ['super-admin', 'admin', 'admin-universitas', 'admin-akademik', 'prodi'];
 
+    public function __construct(
+        private readonly TraceAlumniDashboardController $alumniDashboard
+    ) {}
+
     public function index(Request $request)
     {
         $role = $request->attributes->get('resolved_role', session('active_role'));
         $isAdmin = in_array($role, self::ADMIN_ROLES);
 
-        $componentName = $isAdmin
-            ? 'Modules/Trace/Admin/Dashboard'
-            : 'Modules/Trace/User/'.Str::studly($role).'Dashboard';
-
-        $path = resource_path("js/pages/{$componentName}.vue");
-        if (! file_exists($path)) {
-            $fallbackName = 'Modules/Trace/User/MahasiswaDashboard';
-            if (file_exists(resource_path("js/pages/{$fallbackName}.vue"))) {
-                $componentName = $fallbackName;
-            } else {
-                abort(404, "Dashboard Template untuk Role '{$role}' belum dibuat di {$componentName}.vue");
-            }
+        if ($isAdmin) {
+            return redirect()->route('module.trace.admin.dashboard');
         }
 
-        return Inertia::render($componentName, [
-            'moduleName' => 'TRACE',
-            'roleName' => $role,
-        ]);
+        // Mitra → redirect to mitra dashboard
+        if ($role === 'mitra') {
+            return redirect()->route('module.trace.open-job.mitra-dashboard');
+        }
+
+        // Alumni (default) — delegated via constructor injection
+        return $this->alumniDashboard->index($request);
     }
 }

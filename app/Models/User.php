@@ -6,12 +6,16 @@ use App\Concerns\UserHelpers;
 use App\Exceptions\SuperAdminProtectionException;
 use App\Models\Alumni\ProfilAlumni;
 use App\Models\Auth\AuthOAuthCredential;
-use App\Models\Kuesioner\Kuesioner;
 use App\Models\Magang\LowonganInfo;
 use App\Models\Magang\PembimbingLapangan;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PenilaianMagang;
+use App\Models\Pagi\PagiCv;
+use App\Models\Pagi\PagiWork;
 use App\Models\Surat\Surat;
+use App\Models\Tracer\ProfilAlumni;
+use App\Models\Tracer\Kuesioner;
+use App\Models\Tracer\MitraProfile;
 use App\Models\Surat\SuratApprovalFlow;
 use App\Models\Traits\HasPagiRelations;
 use Illuminate\Database\Eloquent\Collection;
@@ -160,10 +164,7 @@ class User extends Authenticatable
         return $this->belongsTo(ProgramStudi::class);
     }
 
-    public function profilAlumni(): HasOne
-    {
-        return $this->hasOne(ProfilAlumni::class);
-    }
+
 
     public function surats(): HasMany
     {
@@ -185,11 +186,7 @@ class User extends Authenticatable
         return $this->hasMany(PenilaianMagang::class, 'dosen_id');
     }
 
-    public function kuesioners(): HasMany
-    {
-        return $this->hasMany(Kuesioner::class, 'pembuat_id');
-    }
-
+  
     public function lowonganInfos(): HasMany
     {
         return $this->hasMany(LowonganInfo::class, 'pembuat_id');
@@ -198,6 +195,35 @@ class User extends Authenticatable
     public function pembimbingLapangan(): HasOne
     {
         return $this->hasOne(PembimbingLapangan::class);
+    }
+
+    public function kuesioners()
+    {
+        return $this->hasMany(Kuesioner::class, 'created_by');
+    }
+
+    public function alumniProfile()
+    {
+        return $this->hasOne(ProfilAlumni::class, 'user_id');
+    }
+      public function mitraProfile()
+    {
+        return $this->hasOne(MitraProfile::class, 'user_id');
+    }
+
+    public function eventRegistrations(): HasMany
+    {
+        return $this->hasMany(\App\Models\Tracer\EventRegistration::class);
+    }
+
+    public function kuesionerResponses(): HasMany
+    {
+        return $this->hasMany(\App\Models\Tracer\Response::class);
+    }
+
+    public function bookmarks(): HasMany
+    {
+        return $this->hasMany(\App\Models\Tracer\Bookmark::class);
     }
 
     // -----------------------------------------------------------------------
@@ -212,6 +238,16 @@ class User extends Authenticatable
      * Gunakan konstanta ini untuk konsistensi dan menghindari typo.
      */
     const USER_TYPE_SUPER_ADMIN = 'super-admin';
+
+    public function pagiCvs(): HasMany
+    {
+        return $this->hasMany(PagiCv::class, 'user_id');
+    }
+
+    public function pagiWorks(): HasMany
+    {
+        return $this->hasMany(PagiWork::class, 'user_id');
+    }
 
     // -----------------------------------------------------------------------
 

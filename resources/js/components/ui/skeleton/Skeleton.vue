@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 
 interface SkeletonProps {
 	class?: HTMLAttributes["class"];
+	width?: string;
+	height?: string;
 }
 
 const props = defineProps<SkeletonProps>();
@@ -12,6 +14,7 @@ const props = defineProps<SkeletonProps>();
 <template>
   <div
     data-slot="skeleton"
-    :class="cn('animate-pulse rounded-md bg-primary/10', props.class)"
+    :class="cn('animate-pulse rounded-md bg-slate-200/70 dark:bg-zinc-800', props.class)"
+    :style="{ width: props.width, height: props.height }"
   />
 </template>

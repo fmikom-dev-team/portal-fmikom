@@ -65,6 +65,7 @@
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
-        @inertia
+        <div id="app" data-page="{{ json_encode($page ?? []) }}"></div>
+        @inertia(['nonce' => $csp_nonce ?? ''])
     </body>
 </html>
