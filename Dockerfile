@@ -12,7 +12,7 @@ RUN php artisan wayfinder:generate || true
 FROM node:22-alpine AS frontend-builder
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 COPY . .
 # Copy wayfinder-generated files from composer stage so vite plugin skips re-generating
 COPY --from=composer-builder /app/resources/js/wayfinder ./resources/js/wayfinder
