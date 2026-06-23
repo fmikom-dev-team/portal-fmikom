@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -32,7 +33,7 @@ return new class extends Migration
             $table->index('is_active');
             $table->index('tipe_kuesioner');
             $table->index('tahun');
-            if (\Illuminate\Support\Facades\DB::getDriverName() !== 'sqlite') {
+            if (DB::getDriverName() !== 'sqlite') {
                 $table->fullText(['judul', 'subtitle', 'deskripsi']);
             }
         });
