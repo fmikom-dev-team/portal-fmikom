@@ -49,6 +49,24 @@ parameters:
 			path: app/Console/Commands/OptimizeExistingMedia.php
 
 		-
+			message: '#^Relation ''alumniProfile'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Console/Commands/SendKuesionerReminders.php
+
+		-
+			message: '#^Relation ''alumniProfile'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Console/Commands/SendWeeklyDigest.php
+
+		-
+			message: '#^Relation ''mitra'' is not found in App\\Models\\Tracer\\JobListing model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Console/Commands/SendWeeklyDigest.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$body\.$#'
 			identifier: property.notFound
 			count: 1
@@ -167,6 +185,12 @@ parameters:
 			identifier: method.nonObject
 			count: 1
 			path: app/Http/Middleware/EnsureFirstTimeLoginComplete.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$mitraProfile\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Middleware/EnsureMitraProfileExists.php
 
 		-
 			message: '#^Access to an undefined property App\\Models\\UserModuleRole\:\:\$expires_at\.$#'
@@ -403,7 +427,25 @@ parameters:
 			path: app/Mail/SendOtpEmail.php
 
 		-
+			message: '#^Access to an undefined property App\\Models\\Alumni\\KarirAlumni\:\:\$latitude\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Alumni/KarirAlumni.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Alumni\\KarirAlumni\:\:\$longitude\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Alumni/KarirAlumni.php
+
+		-
 			message: '#^Class App\\Models\\Alumni\\ProgramStudi not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Models/Alumni/ProfilAlumni.php
+
+		-
+			message: '#^Class App\\Models\\Kuesioner\\ResponsKuesioner not found\.$#'
 			identifier: class.notFound
 			count: 1
 			path: app/Models/Alumni/ProfilAlumni.php
@@ -416,6 +458,12 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$related of method Illuminate\\Database\\Eloquent\\Model\:\:belongsTo\(\) expects class\-string\<Illuminate\\Database\\Eloquent\\Model\>, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Models/Alumni/ProfilAlumni.php
+
+		-
+			message: '#^Parameter \#1 \$related of method Illuminate\\Database\\Eloquent\\Model\:\:hasMany\(\) expects class\-string\<Illuminate\\Database\\Eloquent\\Model\>, string given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Models/Alumni/ProfilAlumni.php
@@ -443,12 +491,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: app/Models/Auth/AuthInvitation.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:pertanyaans\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Models/Kuesioner/ResponsKuesioner.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$perusahaan\.$#'
@@ -635,6 +677,36 @@ parameters:
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Models/TemplateGlobalSetting.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/Tracer/ActivityLog.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\ProfilAlumni\:\:\$careers\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Tracer/ProfilAlumni.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\ProfilAlumni\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 6
+			path: app/Models/Tracer/ProfilAlumni.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" in empty\(\) is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/Tracer/ProfilAlumni.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>no_telepon" in empty\(\) is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/Tracer/ProfilAlumni.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
@@ -1721,6 +1793,522 @@ parameters:
 			identifier: larastan.relationExistence
 			count: 1
 			path: app/Modules/Portal/Controllers/PublicPostController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\Kuesioner\:\:\$sections\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Trace/Actions/DuplicateKuesionerAction.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\Kuesioner\:\:\$sections\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Trace/Actions/SubmitKuesionerResponseAction.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\Pertanyaan\:\:\$opsiJawabans\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Trace/Actions/SubmitKuesionerResponseAction.php
+
+		-
+			message: '#^Relation ''opsiJawabans'' is not found in App\\Models\\Tracer\\Pertanyaan model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Trace/Actions/SubmitKuesionerResponseAction.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Tracer\\ActivityLog model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Trace/Controllers/Admin/ActivityLogController.php
+
+		-
+			message: '#^Relation ''alumniProfile'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Trace/Controllers/Admin/EventController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\JobApplicant\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Tracer\\JobApplicant\>\:\:\$alumni\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Trace/Controllers/Admin/JobManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\JobListing\:\:\$mitra\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Trace/Controllers/Admin/JobManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\JobListing\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Tracer\\JobListing\>\:\:\$mitra\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Trace/Controllers/Admin/JobManagementController.php
+
+		-
+			message: '#^Relation ''alumni'' is not found in App\\Models\\Tracer\\JobApplicant model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Trace/Controllers/Admin/JobManagementController.php
+
+		-
+			message: '#^Relation ''alumniProfile'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Modules/Trace/Controllers/Admin/JobManagementController.php
+
+		-
+			message: '#^Relation ''category'' is not found in App\\Models\\Tracer\\JobListing model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Modules/Trace/Controllers/Admin/JobManagementController.php
+
+		-
+			message: '#^Relation ''creator'' is not found in App\\Models\\Tracer\\JobListing model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Trace/Controllers/Admin/JobManagementController.php
+
+		-
+			message: '#^Relation ''mitra'' is not found in App\\Models\\Tracer\\JobListing model\.$#'
+			identifier: larastan.relationExistence
+			count: 8
+			path: app/Modules/Trace/Controllers/Admin/JobManagementController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nama_perusahaan" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 4
+			path: app/Modules/Trace/Controllers/Admin/JobManagementController.php
+
+		-
+			message: '#^Relation ''sections'' is not found in App\\Models\\Tracer\\Kuesioner model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Modules/Trace/Controllers/Admin/KuesionerAnalyticsController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Tracer\\Response model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Modules/Trace/Controllers/Admin/KuesionerAnalyticsController.php
+
+		-
+			message: '#^Relation ''sections'' is not found in App\\Models\\Tracer\\Kuesioner model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Modules/Trace/Controllers/Admin/KuesionerController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\ProfilAlumni\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Tracer\\ProfilAlumni\>\:\:\$careers\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Trace/Controllers/Admin/RespondenController.php
+
+		-
+			message: '#^Relation ''careers'' is not found in App\\Models\\Tracer\\ProfilAlumni model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Trace/Controllers/Admin/RespondenController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Tracer\\ProfilAlumni model\.$#'
+			identifier: larastan.relationExistence
+			count: 4
+			path: app/Modules/Trace/Controllers/Admin/RespondenController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\Response\:\:\$detailJawabans\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/AlumniKuesionerController.php
+
+		-
+			message: '#^Relation ''detailJawabans'' is not found in App\\Models\\Tracer\\Response model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/AlumniKuesionerController.php
+
+		-
+			message: '#^Relation ''sections'' is not found in App\\Models\\Tracer\\Kuesioner model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Modules/Trace/Controllers/Alumni/AlumniKuesionerController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\CareerHistory\:\:\$jabatan\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Trace/Controllers/Alumni/CareerController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$alumniProfile\.$#'
+			identifier: property.notFound
+			count: 5
+			path: app/Modules/Trace/Controllers/Alumni/CareerController.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/EventController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\JobListing\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Tracer\\JobListing\>\:\:\$mitra\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/JobBrowseController.php
+
+		-
+			message: '#^Relation ''category'' is not found in App\\Models\\Tracer\\JobListing model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Modules/Trace/Controllers/Alumni/JobBrowseController.php
+
+		-
+			message: '#^Relation ''jobListing'' is not found in App\\Models\\Tracer\\Bookmark model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/JobBrowseController.php
+
+		-
+			message: '#^Relation ''jobListing'' is not found in App\\Models\\Tracer\\JobApplicant model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Modules/Trace/Controllers/Alumni/JobBrowseController.php
+
+		-
+			message: '#^Relation ''jobListings'' is not found in App\\Models\\Tracer\\MitraProfile model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/JobBrowseController.php
+
+		-
+			message: '#^Relation ''mitra'' is not found in App\\Models\\Tracer\\JobListing model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Modules/Trace/Controllers/Alumni/JobBrowseController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\JobApplicant\:\:\$jobListing\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Trace/Controllers/Alumni/TraceAlumniDashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/TraceAlumniDashboardController.php
+
+		-
+			message: '#^Comparison operation "\>" between 6 and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/TraceAlumniDashboardController.php
+
+		-
+			message: '#^Parameter \#3 \$callback of static method Illuminate\\Cache\\Repository\:\:remember\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/TraceAlumniDashboardController.php
+
+		-
+			message: '#^Relation ''jobListing'' is not found in App\\Models\\Tracer\\JobApplicant model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/TraceAlumniDashboardController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/TraceAlumniDashboardController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>alamat_rumah" in empty\(\) is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/TraceAlumniDashboardController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>jenis_kelamin" in empty\(\) is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/TraceAlumniDashboardController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>status" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/TraceAlumniDashboardController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>title" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/TraceAlumniDashboardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\ProfilAlumni\:\:\$careers\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/TraceAlumniProfileController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\ProfilAlumni\:\:\$educationHistories\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/TraceAlumniProfileController.php
+
+		-
+			message: '#^Relation ''careers'' is not found in App\\Models\\Tracer\\ProfilAlumni model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/TraceAlumniProfileController.php
+
+		-
+			message: '#^Relation ''educationHistories'' is not found in App\\Models\\Tracer\\ProfilAlumni model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Trace/Controllers/Alumni/TraceAlumniProfileController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\JobApplicant\:\:\$pending\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Trace/Controllers/Mitra/DashboardMitraController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\JobApplicant\:\:\$total\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Trace/Controllers/Mitra/DashboardMitraController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\JobListing\:\:\$active\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Trace/Controllers/Mitra/DashboardMitraController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\JobListing\:\:\$pending\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Trace/Controllers/Mitra/DashboardMitraController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\JobListing\:\:\$total\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Trace/Controllers/Mitra/DashboardMitraController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$mitraProfile\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Trace/Controllers/Mitra/DashboardMitraController.php
+
+		-
+			message: '#^Relation ''alumni'' is not found in App\\Models\\Tracer\\JobApplicant model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Trace/Controllers/Mitra/DashboardMitraController.php
+
+		-
+			message: '#^Relation ''jobListing'' is not found in App\\Models\\Tracer\\JobApplicant model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Modules/Trace/Controllers/Mitra/DashboardMitraController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\JobApplicant\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Tracer\\JobApplicant\>\:\:\$alumni\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Trace/Controllers/Mitra/JobListingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$mitraProfile\.$#'
+			identifier: property.notFound
+			count: 7
+			path: app/Modules/Trace/Controllers/Mitra/JobListingController.php
+
+		-
+			message: '#^Relation ''alumni'' is not found in App\\Models\\Tracer\\JobApplicant model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Trace/Controllers/Mitra/JobListingController.php
+
+		-
+			message: '#^Relation ''category'' is not found in App\\Models\\Tracer\\JobListing model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Modules/Trace/Controllers/Mitra/JobListingController.php
+
+		-
+			message: '#^Relation ''mitra'' is not found in App\\Models\\Tracer\\JobListing model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Trace/Controllers/Mitra/JobListingController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$mitraProfile\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Modules/Trace/Controllers/Mitra/MitraProfileController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\CareerHistory\:\:\$alumniProfile\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Trace/Services/CareerService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\CareerHistory\:\:\$education\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Trace/Services/CareerService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\CareerHistory\:\:\$employment\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Trace/Services/CareerService.php
+
+		-
+			message: '#^Call to function is_object\(\) with App\\Enums\\CareerStatus will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Modules/Trace/Services/CareerService.php
+
+		-
+			message: '#^Call to function is_object\(\) with App\\Enums\\CareerType will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Modules/Trace/Services/CareerService.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Tracer\\ActivityLog model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Trace/Services/DashboardStatsService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Trace/Services/DashboardStatsService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\Kuesioner\:\:\$sections\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\Pertanyaan\:\:\$opsiJawabans\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\Response\:\:\$detailJawabans\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Tracer\\Response\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
+
+		-
+			message: '#^Call to function is_string\(\) with array\|null will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 3
+			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
+
+		-
+			message: '#^Offset \(int\|string\) on array\<int\<1, max\>\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
+
+		-
+			message: '#^Relation ''opsiJawabans'' is not found in App\\Models\\Tracer\\Pertanyaan model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Tracer\\Response model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>angkatan" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>average" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>linkedin" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nama" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>no_telepon" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>nomor_induk" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>tahun_lulus" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$latitude\.$#'
@@ -3847,8 +4435,26 @@ parameters:
 			path: app/Modules/WorkOs/Services/Sessions/AuthSessionService.php
 
 		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$alumniProfile\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Policies/CareerHistoryPolicy.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Providers/AppServiceProvider.php
+
+		-
 			message: '#^Cannot call method isAdmin\(\) on class\-string\|object\.$#'
 			identifier: method.nonObject
+			count: 1
+			path: app/Providers/AppServiceProvider.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
 			count: 1
 			path: app/Providers/AppServiceProvider.php
 

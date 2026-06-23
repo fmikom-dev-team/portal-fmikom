@@ -216,7 +216,7 @@ selectType.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:68
 * @route '/admin/surat/form/{jenisSurat}'
 */
-export const form = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+export const form = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: form.url(args, options),
     method: 'get',
 })
@@ -231,7 +231,7 @@ form.definition = {
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:68
 * @route '/admin/surat/form/{jenisSurat}'
 */
-form.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+form.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -264,7 +264,7 @@ form.url = (args: { jenisSurat: string | number | { id: string | number } } | [j
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:68
 * @route '/admin/surat/form/{jenisSurat}'
 */
-form.get = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+form.get = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: form.url(args, options),
     method: 'get',
 })
@@ -274,7 +274,7 @@ form.get = (args: { jenisSurat: string | number | { id: string | number } } | [j
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:68
 * @route '/admin/surat/form/{jenisSurat}'
 */
-form.head = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+form.head = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: form.url(args, options),
     method: 'head',
 })

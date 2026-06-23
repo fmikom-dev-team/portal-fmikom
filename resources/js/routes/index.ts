@@ -123,7 +123,7 @@ register.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see vendor/laravel/pulse/src/PulseServiceProvider.php:116
-* @route '/pulse'
+* @route '/secure-pulse-9a2c'
 */
 export const pulse = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: pulse.url(options),
@@ -132,12 +132,12 @@ export const pulse = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 pulse.definition = {
     methods: ["get","head"],
-    url: '/pulse',
+    url: '/secure-pulse-9a2c',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see vendor/laravel/pulse/src/PulseServiceProvider.php:116
-* @route '/pulse'
+* @route '/secure-pulse-9a2c'
 */
 pulse.url = (options?: RouteQueryOptions) => {
     return pulse.definition.url + queryParams(options)
@@ -145,7 +145,7 @@ pulse.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see vendor/laravel/pulse/src/PulseServiceProvider.php:116
-* @route '/pulse'
+* @route '/secure-pulse-9a2c'
 */
 pulse.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: pulse.url(options),
@@ -154,7 +154,7 @@ pulse.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see vendor/laravel/pulse/src/PulseServiceProvider.php:116
-* @route '/pulse'
+* @route '/secure-pulse-9a2c'
 */
 pulse.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: pulse.url(options),
@@ -164,7 +164,7 @@ pulse.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 /**
 * @see \Laravel\Telescope\Http\Controllers\HomeController::telescope
 * @see vendor/laravel/telescope/src/Http/Controllers/HomeController.php:15
-* @route '/telescope/{view?}'
+* @route '/secure-telescope-8f3b/{view?}'
 */
 export const telescope = (args?: { view?: string | number } | [view: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: telescope.url(args, options),
@@ -173,13 +173,13 @@ export const telescope = (args?: { view?: string | number } | [view: string | nu
 
 telescope.definition = {
     methods: ["get","head"],
-    url: '/telescope/{view?}',
+    url: '/secure-telescope-8f3b/{view?}',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \Laravel\Telescope\Http\Controllers\HomeController::telescope
 * @see vendor/laravel/telescope/src/Http/Controllers/HomeController.php:15
-* @route '/telescope/{view?}'
+* @route '/secure-telescope-8f3b/{view?}'
 */
 telescope.url = (args?: { view?: string | number } | [view: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
@@ -210,7 +210,7 @@ telescope.url = (args?: { view?: string | number } | [view: string | number ] | 
 /**
 * @see \Laravel\Telescope\Http\Controllers\HomeController::telescope
 * @see vendor/laravel/telescope/src/Http/Controllers/HomeController.php:15
-* @route '/telescope/{view?}'
+* @route '/secure-telescope-8f3b/{view?}'
 */
 telescope.get = (args?: { view?: string | number } | [view: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: telescope.url(args, options),
@@ -220,7 +220,7 @@ telescope.get = (args?: { view?: string | number } | [view: string | number ] | 
 /**
 * @see \Laravel\Telescope\Http\Controllers\HomeController::telescope
 * @see vendor/laravel/telescope/src/Http/Controllers/HomeController.php:15
-* @route '/telescope/{view?}'
+* @route '/secure-telescope-8f3b/{view?}'
 */
 telescope.head = (args?: { view?: string | number } | [view: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: telescope.url(args, options),

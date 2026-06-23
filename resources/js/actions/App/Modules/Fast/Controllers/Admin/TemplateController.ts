@@ -82,7 +82,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:35
 * @route '/admin/templates/{jenisSurat}/preview'
 */
-export const preview = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+export const preview = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: preview.url(args, options),
     method: 'get',
 })
@@ -97,7 +97,7 @@ preview.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:35
 * @route '/admin/templates/{jenisSurat}/preview'
 */
-preview.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+preview.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -130,7 +130,7 @@ preview.url = (args: { jenisSurat: string | number | { id: string | number } } |
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:35
 * @route '/admin/templates/{jenisSurat}/preview'
 */
-preview.get = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+preview.get = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: preview.url(args, options),
     method: 'get',
 })
@@ -140,7 +140,7 @@ preview.get = (args: { jenisSurat: string | number | { id: string | number } } |
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:35
 * @route '/admin/templates/{jenisSurat}/preview'
 */
-preview.head = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+preview.head = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: preview.url(args, options),
     method: 'head',
 })
@@ -150,7 +150,7 @@ preview.head = (args: { jenisSurat: string | number | { id: string | number } } 
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:50
 * @route '/admin/templates/{jenisSurat}/duplicate'
 */
-export const duplicate = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+export const duplicate = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: duplicate.url(args, options),
     method: 'post',
 })
@@ -165,7 +165,7 @@ duplicate.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:50
 * @route '/admin/templates/{jenisSurat}/duplicate'
 */
-duplicate.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+duplicate.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -198,7 +198,7 @@ duplicate.url = (args: { jenisSurat: string | number | { id: string | number } }
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:50
 * @route '/admin/templates/{jenisSurat}/duplicate'
 */
-duplicate.post = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+duplicate.post = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: duplicate.url(args, options),
     method: 'post',
 })
@@ -208,7 +208,7 @@ duplicate.post = (args: { jenisSurat: string | number | { id: string | number } 
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:45
 * @route '/admin/templates/{jenisSurat}/toggle-active'
 */
-export const toggleActive = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+export const toggleActive = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
     url: toggleActive.url(args, options),
     method: 'patch',
 })
@@ -223,7 +223,7 @@ toggleActive.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:45
 * @route '/admin/templates/{jenisSurat}/toggle-active'
 */
-toggleActive.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+toggleActive.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -256,7 +256,7 @@ toggleActive.url = (args: { jenisSurat: string | number | { id: string | number 
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:45
 * @route '/admin/templates/{jenisSurat}/toggle-active'
 */
-toggleActive.patch = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+toggleActive.patch = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
     url: toggleActive.url(args, options),
     method: 'patch',
 })
@@ -266,7 +266,7 @@ toggleActive.patch = (args: { jenisSurat: string | number | { id: string | numbe
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:30
 * @route '/admin/templates/{jenisSurat}'
 */
-export const update = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+export const update = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update.url(args, options),
     method: 'put',
 })
@@ -281,7 +281,7 @@ update.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:30
 * @route '/admin/templates/{jenisSurat}'
 */
-update.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+update.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -314,7 +314,7 @@ update.url = (args: { jenisSurat: string | number | { id: string | number } } | 
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:30
 * @route '/admin/templates/{jenisSurat}'
 */
-update.put = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+update.put = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update.url(args, options),
     method: 'put',
 })
@@ -324,7 +324,7 @@ update.put = (args: { jenisSurat: string | number | { id: string | number } } | 
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:40
 * @route '/admin/templates/{jenisSurat}'
 */
-export const destroy = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+export const destroy = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
     method: 'delete',
 })
@@ -339,7 +339,7 @@ destroy.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:40
 * @route '/admin/templates/{jenisSurat}'
 */
-destroy.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+destroy.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -372,7 +372,7 @@ destroy.url = (args: { jenisSurat: string | number | { id: string | number } } |
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:40
 * @route '/admin/templates/{jenisSurat}'
 */
-destroy.delete = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+destroy.delete = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy.url(args, options),
     method: 'delete',
 })

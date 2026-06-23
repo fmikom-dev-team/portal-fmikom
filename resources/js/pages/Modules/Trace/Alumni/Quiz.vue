@@ -9,7 +9,7 @@ import {
     Lock,
     Eye,
 } from "lucide-vue-next";
-import { show as alumniTracerShow } from "@/routes/module/trace/kuesioner";
+import { show as alumniTracerShow } from "@/routes/module/trace/kuesioner/index";
 import TraceAlumniLayout from "@/layouts/TraceAlumniLayout.vue";
 import type { BreadcrumbItem } from "@/types";
 import type { Kuesioner } from "@/types/trace";

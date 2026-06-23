@@ -10,6 +10,8 @@ parameters:
     # Level 5 is a good starting level balance between safety and strictness
     level: 5
 
+    reportUnmatchedIgnoredErrors: false
+
     # Optional: exclude specific paths or ignore specific errors if needed
     # excludePaths:
     #     - app/Http/Middleware/SomeMiddleware.php
