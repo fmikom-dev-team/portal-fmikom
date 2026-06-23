@@ -17,7 +17,7 @@ class DashboardMitraController extends Controller
     {
         $mitra = $request->user()->mitraProfile;
 
-        if (!$mitra) {
+        if (! $mitra) {
             return redirect()->route('module.trace.open-job.mitra-profile-setup');
         }
 
@@ -26,13 +26,13 @@ class DashboardMitraController extends Controller
         // Cache per-mitra stats for 5 minutes
         $stats = Cache::remember("trace_mitra_dashboard_{$mitraId}", now()->addMinutes(5), function () use ($mitraId) {
             $jobStats = JobListing::where('mitra_id', $mitraId)
-                ->selectRaw("COUNT(*) as total")
+                ->selectRaw('COUNT(*) as total')
                 ->selectRaw("SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END) as active")
                 ->selectRaw("SUM(CASE WHEN status = 'pending_review' THEN 1 ELSE 0 END) as pending")
                 ->first();
 
-            $applicantStats = JobApplicant::whereHas('jobListing', fn($q) => $q->where('mitra_id', $mitraId))
-                ->selectRaw("COUNT(*) as total")
+            $applicantStats = JobApplicant::whereHas('jobListing', fn ($q) => $q->where('mitra_id', $mitraId))
+                ->selectRaw('COUNT(*) as total')
                 ->selectRaw("SUM(CASE WHEN status = 'applied' THEN 1 ELSE 0 END) as pending")
                 ->first();
 
@@ -46,7 +46,7 @@ class DashboardMitraController extends Controller
         });
 
         // Recent applicants are always fresh (not cached)
-        $recentApplicants = JobApplicant::whereHas('jobListing', fn($q) => $q->where('mitra_id', $mitraId))
+        $recentApplicants = JobApplicant::whereHas('jobListing', fn ($q) => $q->where('mitra_id', $mitraId))
             ->with(['alumni.user:id,name,email,foto_path', 'jobListing:id,title'])
             ->latest()
             ->take(5)

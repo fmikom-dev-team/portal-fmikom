@@ -28,23 +28,23 @@ class ExportKuesionerAction
     ): BinaryFileResponse {
         $exportData = $this->analyticsService->buildExportData($kuesioner, $tahunLulus, $prodi);
 
-        $columns  = $exportData['columns'];
+        $columns = $exportData['columns'];
         $dataRows = $exportData['dataRows'];
 
         // --- Generate XLSX with PhpSpreadsheet ---
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Data Responden');
 
         // Write header row
         foreach ($columns as $colIdx => $colName) {
-            $cellCoord = Coordinate::stringFromColumnIndex($colIdx + 1) . '1';
+            $cellCoord = Coordinate::stringFromColumnIndex($colIdx + 1).'1';
             $sheet->setCellValue($cellCoord, $colName);
         }
 
         // Style header row
         $lastColLetter = Coordinate::stringFromColumnIndex(count($columns));
-        $headerRange = 'A1:' . $lastColLetter . '1';
+        $headerRange = 'A1:'.$lastColLetter.'1';
 
         $sheet->getStyle($headerRange)->applyFromArray([
             'font' => [
@@ -58,8 +58,8 @@ class ExportKuesionerAction
             ],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical'   => Alignment::VERTICAL_CENTER,
-                'wrapText'   => true,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
             ],
             'borders' => [
                 'allBorders' => [
@@ -74,13 +74,13 @@ class ExportKuesionerAction
         foreach ($dataRows as $rowIdx => $rowData) {
             $excelRow = $rowIdx + 2;
             foreach ($rowData as $colIdx => $value) {
-                $cellCoord = Coordinate::stringFromColumnIndex($colIdx + 1) . $excelRow;
+                $cellCoord = Coordinate::stringFromColumnIndex($colIdx + 1).$excelRow;
                 $sheet->setCellValue($cellCoord, $value);
             }
 
             // Zebra striping
             if ($rowIdx % 2 === 1) {
-                $rowRange = 'A' . $excelRow . ':' . $lastColLetter . $excelRow;
+                $rowRange = 'A'.$excelRow.':'.$lastColLetter.$excelRow;
                 $sheet->getStyle($rowRange)->getFill()
                     ->setFillType(Fill::FILL_SOLID)
                     ->getStartColor()->setRGB('F8FAFC');
@@ -90,7 +90,7 @@ class ExportKuesionerAction
         // Style data area
         $lastDataRow = count($dataRows) + 1;
         if ($lastDataRow > 1) {
-            $dataRange = 'A2:' . $lastColLetter . $lastDataRow;
+            $dataRange = 'A2:'.$lastColLetter.$lastDataRow;
             $sheet->getStyle($dataRange)->applyFromArray([
                 'font' => ['size' => 10],
                 'alignment' => [
@@ -105,7 +105,7 @@ class ExportKuesionerAction
             ]);
 
             // Center the "No" column
-            $sheet->getStyle('A2:A' . $lastDataRow)->getAlignment()
+            $sheet->getStyle('A2:A'.$lastDataRow)->getAlignment()
                 ->setHorizontal(Alignment::HORIZONTAL_CENTER);
         }
 
@@ -114,8 +114,10 @@ class ExportKuesionerAction
             $colLetter = Coordinate::stringFromColumnIndex($colIdx + 1);
             $maxLen = mb_strlen($columns[$colIdx]);
             foreach ($dataRows as $rowData) {
-                $cellLen = mb_strlen((string)($rowData[$colIdx] ?? ''));
-                if ($cellLen > $maxLen) $maxLen = $cellLen;
+                $cellLen = mb_strlen((string) ($rowData[$colIdx] ?? ''));
+                if ($cellLen > $maxLen) {
+                    $maxLen = $cellLen;
+                }
             }
             $width = min(max($maxLen + 3, 8), 40);
             $sheet->getColumnDimension($colLetter)->setWidth($width);
@@ -126,7 +128,7 @@ class ExportKuesionerAction
         $sheet->setAutoFilter($headerRange);
 
         // --- Output as download ---
-        $filename = 'Export_' . str_replace(' ', '_', $kuesioner->judul) . '_' . date('Ymd_His') . '.xlsx';
+        $filename = 'Export_'.str_replace(' ', '_', $kuesioner->judul).'_'.date('Ymd_His').'.xlsx';
 
         $tempFile = tempnam(sys_get_temp_dir(), 'export_');
         $writer = new Xlsx($spreadsheet);

@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TPageHeader } from '@/components/trace';
+import { TPageHeader } from '@/components/Trace';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import type { KuesionerSection } from '@/types/trace';
 import RespondentList from './components/RespondentList.vue';

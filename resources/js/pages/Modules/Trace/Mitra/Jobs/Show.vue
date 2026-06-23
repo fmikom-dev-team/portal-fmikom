@@ -24,7 +24,7 @@ import {
 } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import TraceMitraLayout from '@/layouts/TraceMitraLayout.vue';
-import { TPageHeader, TStatusBadge, TEmptyState } from '@/components/trace';
+import { TPageHeader, TStatusBadge, TEmptyState } from '@/components/Trace';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {

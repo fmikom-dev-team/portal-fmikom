@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Pertanyaan extends Model
 {
     use HasFactory, SoftDeletes;
+
     protected $table = 'pertanyaan';
 
     protected $fillable = [
@@ -32,11 +33,11 @@ class Pertanyaan extends Model
     |-------------------------
     */
     protected $casts = [
-        'is_required'    => 'boolean',
-        'meta'           => 'array',
-        'acuan'          => 'array',
+        'is_required' => 'boolean',
+        'meta' => 'array',
+        'acuan' => 'array',
         'logic_condition' => 'array',
-        'skoring'        => 'array',
+        'skoring' => 'array',
     ];
 
     /*
@@ -45,7 +46,6 @@ class Pertanyaan extends Model
     |-------------------------
     */
 
-    
     // Pertanyaan milik 1 kuesioner
     public function kuesioner()
     {

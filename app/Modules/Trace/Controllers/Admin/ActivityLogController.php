@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Modules\Trace\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -16,7 +17,7 @@ class ActivityLogController extends Controller
 
         if ($request->filled('action')) {
             $escaped = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->action);
-            $query->where('action', 'like', $escaped . '%');
+            $query->where('action', 'like', $escaped.'%');
         }
 
         if ($request->filled('user_id')) {
@@ -25,7 +26,7 @@ class ActivityLogController extends Controller
 
         if ($request->filled('search')) {
             $escaped = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->search);
-            $query->where('description', 'like', '%' . $escaped . '%');
+            $query->where('description', 'like', '%'.$escaped.'%');
         }
 
         if ($request->filled('date_from')) {

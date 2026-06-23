@@ -2,9 +2,9 @@
 
 namespace App\Models\Tracer;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\User;
 
 class Response extends Model
 {

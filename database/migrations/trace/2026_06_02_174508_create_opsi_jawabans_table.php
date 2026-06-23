@@ -18,7 +18,7 @@ return new class extends Migration
             $table->integer('nilai')->nullable();
             $table->integer('urutan')->default(0);
             $table->timestamps();
-            
+
             $table->index('pertanyaan_id');
             $table->index('urutan');
         });

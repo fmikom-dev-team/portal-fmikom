@@ -27,6 +27,7 @@ class JobRejectedForMitra extends Notification implements ShouldQueue
         if ($this->reason) {
             $message .= " Alasan: {$this->reason}";
         }
+
         return [
             'type' => 'job_rejected',
             'title' => 'Lowongan Ditolak',

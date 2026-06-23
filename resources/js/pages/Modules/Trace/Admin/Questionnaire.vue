@@ -2,10 +2,10 @@
 import { Head, Link } from "@inertiajs/vue3";
 import { Plus, FileText } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
-import { TPageHeader, TEmptyState } from "@/components/trace";
+import { TPageHeader, TEmptyState } from "@/components/Trace";
 import Pagination from "@/components/ui/Pagination.vue";
 import TraceAdminLayout from "@/layouts/TraceAdminLayout.vue";
-import { index, create } from "@/routes/module/trace/admin/questionnaires";
+import { index, create } from "@/routes/module/trace/admin/questionnaires/index";
 import type { BreadcrumbItem } from "@/types";
 import type { Kuesioner, TraceFilters } from '@/types/trace';
 import type { PaginationLinks } from '@/types/trace';

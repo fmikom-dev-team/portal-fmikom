@@ -12,7 +12,7 @@ import {
     BookmarkX,
 } from 'lucide-vue-next';
 import TraceAlumniLayout from '@/layouts/TraceAlumniLayout.vue';
-import { TPageHeader, TEmptyState, TPagination } from '@/components/trace';
+import { TPageHeader, TEmptyState, TPagination } from '@/components/Trace';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {

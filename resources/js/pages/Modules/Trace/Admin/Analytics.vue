@@ -29,7 +29,7 @@ import {
     CardTitle,
     CardDescription,
 } from '@/components/ui/card';
-import { TPageHeader, TStatCard } from '@/components/trace';
+import { TPageHeader, TStatCard } from '@/components/Trace';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import type { CareerStatusItem, AngkatanItem, SektorItem, ProdiDistributionItem } from '@/types/trace';

@@ -2,7 +2,7 @@
 import { Link, router } from '@inertiajs/vue3';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import { TPageHeader, TDataTable, TFilterBar, TPagination, TEmptyState } from '@/components/trace';
+import { TPageHeader, TDataTable, TFilterBar, TPagination, TEmptyState } from '@/components/Trace';
 import {
     History,
     User as UserIcon,

@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import EditorJsEditor from '@/components/editor/EditorJsEditor.vue';
-import { TFormSection } from '@/components/trace';
+import { TFormSection } from '@/components/Trace';
 
 interface Category {
     id: number;

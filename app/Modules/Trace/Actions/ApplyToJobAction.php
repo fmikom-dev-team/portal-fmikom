@@ -2,11 +2,11 @@
 
 namespace App\Modules\Trace\Actions;
 
+use App\Models\Pagi\PagiCv;
+use App\Models\Pagi\PagiWork;
 use App\Models\Tracer\JobApplicant;
 use App\Models\Tracer\JobListing;
 use App\Models\Tracer\ProfilAlumni;
-use App\Models\Pagi\PagiCv;
-use App\Models\Pagi\PagiWork;
 use Illuminate\Support\Facades\DB;
 
 class ApplyToJobAction
@@ -23,7 +23,7 @@ class ApplyToJobAction
 
         // 2. Validate CV ownership
         $cvIds = $data['attached_cv_ids'] ?? [];
-        if (!empty($cvIds)) {
+        if (! empty($cvIds)) {
             $validCvCount = PagiCv::where('user_id', $userId)
                 ->whereIn('id', $cvIds)
                 ->count();
@@ -34,7 +34,7 @@ class ApplyToJobAction
 
         // 3. Validate portfolio ownership
         $portfolioIds = $data['attached_portfolio_ids'] ?? [];
-        if (!empty($portfolioIds)) {
+        if (! empty($portfolioIds)) {
             $validWorkCount = PagiWork::where('user_id', $userId)
                 ->whereIn('id', $portfolioIds)
                 ->count();
@@ -58,8 +58,8 @@ class ApplyToJobAction
                 'job_id' => $job->id,
                 'alumni_id' => $alumni->id,
                 'cover_letter' => $data['cover_letter'] ?? null,
-                'attached_cv_ids' => !empty($cvIds) ? $cvIds : null,
-                'attached_portfolio_ids' => !empty($portfolioIds) ? $portfolioIds : null,
+                'attached_cv_ids' => ! empty($cvIds) ? $cvIds : null,
+                'attached_portfolio_ids' => ! empty($portfolioIds) ? $portfolioIds : null,
                 'status' => 'applied',
                 'applied_at' => now(),
             ]);

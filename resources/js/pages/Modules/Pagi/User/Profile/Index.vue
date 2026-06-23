@@ -61,48 +61,48 @@ import { useProfileProjects } from "./composables/useProfileProjects";
 import { useProfileTabs } from "./composables/useProfileTabs";
 
 const props = defineProps<{
-    moduleName: string;
-    roleName: string;
-    profileUser?: any;
-    isFollowing?: boolean;
-    projects?: Array<{
-        id: number;
-        title: string;
-        image: string;
-        likes: number;
-        views: number;
-        content: any;
-        created_at: string;
-        is_verified?: boolean;
-        is_published?: boolean;
-    }>;
+	moduleName: string;
+	roleName: string;
+	profileUser?: any;
+	isFollowing?: boolean;
+	projects?: Array<{
+		id: number;
+		title: string;
+		image: string;
+		likes: number;
+		views: number;
+		content: any;
+		created_at: string;
+		is_verified?: boolean;
+		is_published?: boolean;
+	}>;
 }>();
 
 const tabs = ["Work", "Gallery", "Certificates", "About"];
 const page = usePage();
 const user = computed(
-    () =>
-        props.profileUser ||
-        page.props.auth?.user || {
-            name: "User",
-            email: "",
-            role_title: "",
-            bio: "",
-            location: "",
-            foto_path: "",
-            banner_path: "",
-            website: "",
-            linkedin: "",
-            github: "",
-            twitter: "",
-            instagram: "",
-            tanggal_lahir: "",
-        },
+	() =>
+		props.profileUser ||
+		page.props.auth?.user || {
+			name: "User",
+			email: "",
+			role_title: "",
+			bio: "",
+			location: "",
+			foto_path: "",
+			banner_path: "",
+			website: "",
+			linkedin: "",
+			github: "",
+			twitter: "",
+			instagram: "",
+			tanggal_lahir: "",
+		},
 );
 
 const isOwnProfile = computed(() => {
-    if (!page.props.auth?.user) return false;
-    return page.props.auth.user.id === user.value.id;
+	if (!page.props.auth?.user) return false;
+	return page.props.auth.user.id === user.value.id;
 });
 
 const isMahasiswa = computed(() => {
@@ -112,19 +112,19 @@ const isMahasiswa = computed(() => {
 });
 
 const displayRoleName = computed(() => {
-    const role =
-        props.roleName ||
-        (page.props as any).context?.active_role ||
-        (page.props.roleName as string) ||
-        "Mahasiswa";
-    const r = role.toLowerCase();
-    if (r === "mahasiswa") return "Mahasiswa";
-    if (r === "super-admin" || r === "super_admin") return "Super Admin";
-    if (r === "dosen") return "Dosen";
-    if (r === "alumni") return "Alumni";
-    if (r === "mitra") return "Mitra Perusahaan";
-    if (r === "guest") return "Tamu";
-    return role.charAt(0).toUpperCase() + role.slice(1);
+	const role =
+		props.roleName ||
+		(page.props as any).context?.active_role ||
+		(page.props.roleName as string) ||
+		"Mahasiswa";
+	const r = role.toLowerCase();
+	if (r === "mahasiswa") return "Mahasiswa";
+	if (r === "super-admin" || r === "super_admin") return "Super Admin";
+	if (r === "dosen") return "Dosen";
+	if (r === "alumni") return "Alumni";
+	if (r === "mitra") return "Mitra Perusahaan";
+	if (r === "guest") return "Tamu";
+	return role.charAt(0).toUpperCase() + role.slice(1);
 });
 
 // Toast Notification System
@@ -136,127 +136,127 @@ const warningTitle = ref("");
 const warningMessage = ref("");
 
 const triggerWarning = (title: string, message: string) => {
-    warningTitle.value = title;
-    warningMessage.value = message;
-    showWarningModal.value = true;
+	warningTitle.value = title;
+	warningMessage.value = message;
+	showWarningModal.value = true;
 };
 
 // Instantiate Form Composable
 const {
-    form,
-    showLocationModal,
-    showLocationOnlyModal,
-    showSocialLinksModal,
-    showBioModal,
-    showAvatarModal,
-    showBannerModal,
-    showUsernameModal,
-    isCropperOpen,
-    cropperImageSrc,
-    cropperAspectRatio,
-    originalFileName,
-    originalFileType,
-    initFormValues,
-    submitLocation,
-    submitLocationOnly,
-    submitSocialLinks,
-    submitBio,
-    submitAvatar,
-    submitBanner,
-    submitUsername,
-    updateSkills,
-    updateBio,
-    updateLocation,
-    updateTimezone,
-    updateLanguages,
-    updateSocials,
-    handleCropSave,
-    handleTriggerCrop,
-    closeCropper,
+	form,
+	showLocationModal,
+	showLocationOnlyModal,
+	showSocialLinksModal,
+	showBioModal,
+	showAvatarModal,
+	showBannerModal,
+	showUsernameModal,
+	isCropperOpen,
+	cropperImageSrc,
+	cropperAspectRatio,
+	originalFileName,
+	originalFileType,
+	initFormValues,
+	submitLocation,
+	submitLocationOnly,
+	submitSocialLinks,
+	submitBio,
+	submitAvatar,
+	submitBanner,
+	submitUsername,
+	updateSkills,
+	updateBio,
+	updateLocation,
+	updateTimezone,
+	updateLanguages,
+	updateSocials,
+	handleCropSave,
+	handleTriggerCrop,
+	closeCropper,
 } = useProfileForm(user, props, addToast, triggerWarning);
 
 // Instantiate Projects Composable
 const {
-    localProjects,
-    projects: composableProjects,
-    showAddWorkModal,
-    showShareModal,
-    newCreatedProject,
-    activeProjectMenu,
-    toggleProjectMenu,
-    cloneProject,
-    shareProject,
-    getProjectShareUrl,
-    deleteProject,
-    viewingProject,
-    activeProjectSettings,
-    openProjectModal,
-    closeProjectModal,
-    editingQuickWorkId,
-    isEditingQuickWork,
-    editingProject,
-    openAddWorkModal,
-    openEditQuickWorkModal,
-    handleQuickStoreSuccess,
-    handleLikeUpdated,
-    handleGalleryItemUpdated,
-    totalViews,
-    totalLikes,
-    projectCount,
+	localProjects,
+	projects: composableProjects,
+	showAddWorkModal,
+	showShareModal,
+	newCreatedProject,
+	activeProjectMenu,
+	toggleProjectMenu,
+	cloneProject,
+	shareProject,
+	getProjectShareUrl,
+	deleteProject,
+	viewingProject,
+	activeProjectSettings,
+	openProjectModal,
+	closeProjectModal,
+	editingQuickWorkId,
+	isEditingQuickWork,
+	editingProject,
+	openAddWorkModal,
+	openEditQuickWorkModal,
+	handleQuickStoreSuccess,
+	handleLikeUpdated,
+	handleGalleryItemUpdated,
+	totalViews,
+	totalLikes,
+	projectCount,
 } = useProfileProjects(props, page, addToast, triggerWarning);
 
 // Tab Navigation logic
 const { activeTab } = useProfileTabs();
 
 const selectWorkTab = () => {
-    activeTab.value = "Work";
-    const el = document.getElementById("profile_tabs_navigation");
-    if (el) {
-        el.scrollIntoView({ behavior: "smooth" });
-    }
+	activeTab.value = "Work";
+	const el = document.getElementById("profile_tabs_navigation");
+	if (el) {
+		el.scrollIntoView({ behavior: "smooth" });
+	}
 };
 
 const certificates = ref<any[]>([...(props.profileUser?.certificates || [])]);
 watch(
-    () => props.profileUser?.certificates,
-    (newVal) => {
-        certificates.value = [...(newVal || [])];
-    },
-    { deep: true },
+	() => props.profileUser?.certificates,
+	(newVal) => {
+		certificates.value = [...(newVal || [])];
+	},
+	{ deep: true },
 );
 
 // Form opening handlers
 const openLocationModal = () => {
-    initFormValues();
-    showLocationModal.value = true;
+	initFormValues();
+	showLocationModal.value = true;
 };
 
 const openLocationOnlyModal = () => {
-    initFormValues();
-    showLocationOnlyModal.value = true;
+	initFormValues();
+	showLocationOnlyModal.value = true;
 };
 
 const openSocialLinksModal = () => {
-    initFormValues();
-    showSocialLinksModal.value = true;
+	initFormValues();
+	showSocialLinksModal.value = true;
 };
 
 const openBioModal = () => {
-    initFormValues();
-    showBioModal.value = true;
+	initFormValues();
+	showBioModal.value = true;
 };
 
 const openUsernameModal = () => {
-    initFormValues();
-    showUsernameModal.value = true;
+	initFormValues();
+	showUsernameModal.value = true;
 };
 
 const openAvatarModal = () => {
-    showAvatarModal.value = true;
+	showAvatarModal.value = true;
 };
 
 const openBannerModal = () => {
-    showBannerModal.value = true;
+	showBannerModal.value = true;
 };
 
 const isLoading = ref(false);
@@ -307,302 +307,297 @@ onMounted(() => {
 
 // Message Switch toggle
 const toggleMessageSwitch = (e: Event) => {
-    e.stopPropagation();
-    isMessageEnabled.value = !isMessageEnabled.value;
-    router.post(
-        "/pagi/profile/update",
-        {
-            is_message_enabled: isMessageEnabled.value,
-        },
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                if (isMessageEnabled.value) {
-                    addToast("Direct messaging has been enabled.", "success");
-                } else {
-                    addToast("Direct messaging has been disabled.", "info");
-                }
-            },
-        },
-    );
+	e.stopPropagation();
+	isMessageEnabled.value = !isMessageEnabled.value;
+	router.post(
+		"/pagi/profile/update",
+		{
+			is_message_enabled: isMessageEnabled.value,
+		},
+		{
+			preserveScroll: true,
+			onSuccess: () => {
+				if (isMessageEnabled.value) {
+					addToast("Direct messaging has been enabled.", "success");
+				} else {
+					addToast("Direct messaging has been disabled.", "info");
+				}
+			},
+		},
+	);
 };
 
 const openChat = () => {
-    if (!page.props.auth?.user) {
-        addToast("Silakan login terlebih dahulu untuk mengirim pesan.", "info");
-        return;
-    }
-    if (isOwnProfile.value) {
-        router.visit("/pagi/messages");
-    } else {
-        router.visit(`/pagi/messages?chat=${user.value.id}`);
-    }
+	if (!page.props.auth?.user) {
+		addToast("Silakan login terlebih dahulu untuk mengirim pesan.", "info");
+		return;
+	}
+	if (isOwnProfile.value) {
+		router.visit("/pagi/messages");
+	} else {
+		router.visit(`/pagi/messages?chat=${user.value.id}`);
+	}
 };
 
 const showProfileShareModal = ref(false);
 const activeShareUrl = ref("");
 
 const generateShareToken = () => {
-    const chars =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let result = "";
-    for (let i = 0; i < 12; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return btoa(result).replaceAll("=", "").substring(0, 14);
+	const chars =
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+	let result = "";
+	for (let i = 0; i < 12; i++) {
+		result += chars.charAt(Math.floor(Math.random() * chars.length));
+	}
+	return btoa(result).replaceAll("=", "").substring(0, 14);
 };
 
 const shareProfile = () => {
-    const username = user.value.pagi_username;
-    const baseUrl = username
-        ? `${globalThis.window.location.origin}/pagi/${username}`
-        : `${globalThis.window.location.origin}/pagi/profile/${user.value.id}`;
-    const token = generateShareToken();
-    activeShareUrl.value = `${baseUrl}?pagi_share=${token}`;
-    showProfileShareModal.value = true;
+	const username = user.value.pagi_username;
+	const baseUrl = username
+		? `${globalThis.window.location.origin}/pagi/${username}`
+		: `${globalThis.window.location.origin}/pagi/profile/${user.value.id}`;
+	const token = generateShareToken();
+	activeShareUrl.value = `${baseUrl}?pagi_share=${token}`;
+	showProfileShareModal.value = true;
 };
 
 const showRelationsModal = ref(false);
 const relationsModalType = ref<"followers" | "following">("followers");
 
 const openRelationsModal = (type: "followers" | "following") => {
-    relationsModalType.value = type;
-    showRelationsModal.value = true;
+	relationsModalType.value = type;
+	showRelationsModal.value = true;
 };
 
 const updateFollowingCount = (following: boolean) => {
-    if (props.profileUser) {
-        if (following) {
-            props.profileUser.following_count =
-                (props.profileUser.following_count ?? 0) + 1;
-        } else {
-            props.profileUser.following_count = Math.max(
-                0,
-                (props.profileUser.following_count ?? 1) - 1,
-            );
-        }
-    }
+	if (props.profileUser) {
+		if (following) {
+			props.profileUser.following_count =
+				(props.profileUser.following_count ?? 0) + 1;
+		} else {
+			props.profileUser.following_count = Math.max(
+				0,
+				(props.profileUser.following_count ?? 1) - 1,
+			);
+		}
+	}
 };
 
 // Followers & Following Count
 const dynamicFollowingCount = computed(() => {
-    return (
-        props.profileUser?.following_count ??
-        user.value.metadata?.following?.length ??
-        0
-    );
+	return (
+		props.profileUser?.following_count ??
+		user.value.metadata?.following?.length ??
+		0
+	);
 });
 
 const displayOwnerRoleName = computed(() => {
-    if (user.value.pagi_role) return user.value.pagi_role;
-    if (user.value.role_title) return user.value.role_title;
-    if (user.value.user_type) {
-        const type = user.value.user_type.toLowerCase();
-        if (type === "mahasiswa") return "Mahasiswa";
-        if (type === "super_admin" || type === "super-admin")
-            return "Super Admin";
-        if (type === "dosen") return "Dosen";
-        if (type === "alumni") return "Alumni";
-        if (type === "mitra") return "Mitra Perusahaan";
-        return (
-            user.value.user_type.charAt(0).toUpperCase() +
-            user.value.user_type.slice(1)
-        );
-    }
-    return "Anggota PAGI";
+	if (user.value.pagi_role) return user.value.pagi_role;
+	if (user.value.role_title) return user.value.role_title;
+	if (user.value.user_type) {
+		const type = user.value.user_type.toLowerCase();
+		if (type === "mahasiswa") return "Mahasiswa";
+		if (type === "super_admin" || type === "super-admin") return "Super Admin";
+		if (type === "dosen") return "Dosen";
+		if (type === "alumni") return "Alumni";
+		if (type === "mitra") return "Mitra Perusahaan";
+		return (
+			user.value.user_type.charAt(0).toUpperCase() +
+			user.value.user_type.slice(1)
+		);
+	}
+	return "Anggota PAGI";
 });
 
 const socialLinks = computed(() => {
-    const links = [];
-    if (user.value.website)
-        links.push({
-            type: "website",
-            url: user.value.website,
-            label: "Website",
-        });
-    if (user.value.linkedin)
-        links.push({
-            type: "linkedin",
-            url: user.value.linkedin.startsWith("http")
-                ? user.value.linkedin
-                : `https://linkedin.com/in/${user.value.linkedin}`,
-            label: "LinkedIn",
-        });
-    if (user.value.github)
-        links.push({
-            type: "github",
-            url: user.value.github.startsWith("http")
-                ? user.value.github
-                : `https://github.com/${user.value.github}`,
-            label: "GitHub",
-        });
-    if (user.value.twitter)
-        links.push({
-            type: "twitter",
-            url: user.value.twitter.startsWith("http")
-                ? user.value.twitter
-                : `https://twitter.com/${user.value.twitter}`,
-            label: "Twitter",
-        });
-    if (user.value.instagram)
-        links.push({
-            type: "instagram",
-            url: user.value.instagram.startsWith("http")
-                ? user.value.instagram
-                : `https://instagram.com/${user.value.instagram}`,
-            label: "Instagram",
-        });
-    return links;
+	const links = [];
+	if (user.value.website)
+		links.push({
+			type: "website",
+			url: user.value.website,
+			label: "Website",
+		});
+	if (user.value.linkedin)
+		links.push({
+			type: "linkedin",
+			url: user.value.linkedin.startsWith("http")
+				? user.value.linkedin
+				: `https://linkedin.com/in/${user.value.linkedin}`,
+			label: "LinkedIn",
+		});
+	if (user.value.github)
+		links.push({
+			type: "github",
+			url: user.value.github.startsWith("http")
+				? user.value.github
+				: `https://github.com/${user.value.github}`,
+			label: "GitHub",
+		});
+	if (user.value.twitter)
+		links.push({
+			type: "twitter",
+			url: user.value.twitter.startsWith("http")
+				? user.value.twitter
+				: `https://twitter.com/${user.value.twitter}`,
+			label: "Twitter",
+		});
+	if (user.value.instagram)
+		links.push({
+			type: "instagram",
+			url: user.value.instagram.startsWith("http")
+				? user.value.instagram
+				: `https://instagram.com/${user.value.instagram}`,
+			label: "Instagram",
+		});
+	return links;
 });
 
 // About Tab Details
 const parseSkills = (
-    skillsArray: any[],
+	skillsArray: any[],
 ): Array<{ name: string; percentage: number }> => {
-    if (!Array.isArray(skillsArray)) return [];
-    return skillsArray.map((item) => {
-        if (typeof item === "string") {
-            const parts = item.split(":");
-            if (parts.length === 2 && !Number.isNaN(Number(parts[1]))) {
-                return { name: parts[0], percentage: Number(parts[1]) };
-            }
-            return { name: item, percentage: 80 };
-        }
-        if (item && typeof item === "object" && item.name) {
-            return {
-                name: item.name,
-                percentage: Number(item.percentage) || 80,
-            };
-        }
-        return { name: String(item), percentage: 80 };
-    });
+	if (!Array.isArray(skillsArray)) return [];
+	return skillsArray.map((item) => {
+		if (typeof item === "string") {
+			const parts = item.split(":");
+			if (parts.length === 2 && !Number.isNaN(Number(parts[1]))) {
+				return { name: parts[0], percentage: Number(parts[1]) };
+			}
+			return { name: item, percentage: 80 };
+		}
+		if (item && typeof item === "object" && item.name) {
+			return {
+				name: item.name,
+				percentage: Number(item.percentage) || 80,
+			};
+		}
+		return { name: String(item), percentage: 80 };
+	});
 };
 
 const skills = computed(() => {
-    const val =
-        user.value.skills ||
-        user.value.metadata?.skills ||
-        props.profileUser?.skills;
-    return Array.isArray(val)
-        ? parseSkills(val)
-        : parseSkills(["Figma", "UI/UX Design", "Vue.js"]);
+	const val =
+		user.value.skills ||
+		user.value.metadata?.skills ||
+		props.profileUser?.skills;
+	return Array.isArray(val)
+		? parseSkills(val)
+		: parseSkills(["Figma", "UI/UX Design", "Vue.js"]);
 });
 
 const timezone = computed(() => {
-    return (
-        user.value.timezone ||
-        user.value.metadata?.timezone ||
-        props.profileUser?.timezone ||
-        ""
-    );
+	return (
+		user.value.timezone ||
+		user.value.metadata?.timezone ||
+		props.profileUser?.timezone ||
+		""
+	);
 });
 
 const timezoneExtended = computed(() => {
-    return (
-        user.value.timezone_extended ||
-        user.value.timezoneExtended ||
-        user.value.metadata?.timezone_extended ||
-        user.value.metadata?.timezoneExtended ||
-        props.profileUser?.timezone_extended ||
-        props.profileUser?.timezoneExtended ||
-        "No extended hours"
-    );
+	return (
+		user.value.timezone_extended ||
+		user.value.timezoneExtended ||
+		user.value.metadata?.timezone_extended ||
+		user.value.metadata?.timezoneExtended ||
+		props.profileUser?.timezone_extended ||
+		props.profileUser?.timezoneExtended ||
+		"No extended hours"
+	);
 });
 
 const languages = computed(() => {
-    const langs =
-        user.value.languages ||
-        user.value.metadata?.languages ||
-        props.profileUser?.languages;
-    return Array.isArray(langs) ? langs : [];
+	const langs =
+		user.value.languages ||
+		user.value.metadata?.languages ||
+		props.profileUser?.languages;
+	return Array.isArray(langs) ? langs : [];
 });
 
 const computedProfileImage = computed(() => {
-    if (!user.value.foto_path) return "";
-    if (user.value.foto_path.startsWith("http")) return user.value.foto_path;
-    const origin =
-        typeof globalThis.window === "undefined"
-            ? ""
-            : globalThis.window.location.origin;
-    return `${origin}/storage/${user.value.foto_path}`;
+	if (!user.value.foto_path) return "";
+	if (user.value.foto_path.startsWith("http")) return user.value.foto_path;
+	const origin =
+		typeof globalThis.window === "undefined"
+			? ""
+			: globalThis.window.location.origin;
+	return `${origin}/storage/${user.value.foto_path}`;
 });
 
 // JSON-LD Structured Data
 const jsonLdString = computed(() => {
-    const sameAs = [
-        user.value.website,
-        user.value.linkedin
-            ? `https://linkedin.com/in/${user.value.linkedin}`
-            : "",
-        user.value.github ? `https://github.com/${user.value.github}` : "",
-        user.value.twitter ? `https://twitter.com/${user.value.twitter}` : "",
-        user.value.instagram
-            ? `https://instagram.com/${user.value.instagram}`
-            : "",
-    ].filter(Boolean);
+	const sameAs = [
+		user.value.website,
+		user.value.linkedin ? `https://linkedin.com/in/${user.value.linkedin}` : "",
+		user.value.github ? `https://github.com/${user.value.github}` : "",
+		user.value.twitter ? `https://twitter.com/${user.value.twitter}` : "",
+		user.value.instagram ? `https://instagram.com/${user.value.instagram}` : "",
+	].filter(Boolean);
 
-    return JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "Person",
-        name: user.value.name,
-        jobTitle: user.value.role_title || displayRoleName.value,
-        description: user.value.bio || "",
-        image: computedProfileImage.value,
-        url: user.value.pagi_username
-            ? `${typeof globalThis.window !== "undefined" ? globalThis.window.location.origin : ""}/pagi/${user.value.pagi_username}`
-            : `${typeof globalThis.window !== "undefined" ? globalThis.window.location.origin : ""}/pagi/profile/${user.value.id}`,
-        sameAs: sameAs,
-    });
+	return JSON.stringify({
+		"@context": "https://schema.org",
+		"@type": "Person",
+		name: user.value.name,
+		jobTitle: user.value.role_title || displayRoleName.value,
+		description: user.value.bio || "",
+		image: computedProfileImage.value,
+		url: user.value.pagi_username
+			? `${typeof globalThis.window !== "undefined" ? globalThis.window.location.origin : ""}/pagi/${user.value.pagi_username}`
+			: `${typeof globalThis.window !== "undefined" ? globalThis.window.location.origin : ""}/pagi/profile/${user.value.id}`,
+		sameAs: sameAs,
+	});
 });
 
 const headTitle = computed(() => {
-    if (viewingProject.value) {
-        return `${viewingProject.value.title} by ${user.value.name} — PAGI Portfolio`;
-    }
-    return `${user.value.name} — ${props.moduleName || "PAGI"} Profile`;
+	if (viewingProject.value) {
+		return `${viewingProject.value.title} by ${user.value.name} — PAGI Portfolio`;
+	}
+	return `${user.value.name} — ${props.moduleName || "PAGI"} Profile`;
 });
 
 const headDescription = computed(() => {
-    if (viewingProject.value) {
-        if (viewingProject.value.description) {
-            const cleanDesc = viewingProject.value.description.replace(
-                /<[^>]*>/g,
-                "",
-            );
-            return cleanDesc.length > 160
-                ? `${cleanDesc.slice(0, 157)}...`
-                : cleanDesc;
-        }
-        return `Lihat karya "${viewingProject.value.title}" oleh ${user.value.name} di FMIKOM Portal.`;
-    }
-    return (
-        user.value.bio ||
-        "FMIKOM Portal profile page. Hubungkan, kolaborasi, dan eksplorasi karya kreatif mahasiswa."
-    );
+	if (viewingProject.value) {
+		if (viewingProject.value.description) {
+			const cleanDesc = viewingProject.value.description.replace(
+				/<[^>]*>/g,
+				"",
+			);
+			return cleanDesc.length > 160
+				? `${cleanDesc.slice(0, 157)}...`
+				: cleanDesc;
+		}
+		return `Lihat karya "${viewingProject.value.title}" oleh ${user.value.name} di FMIKOM Portal.`;
+	}
+	return (
+		user.value.bio ||
+		"FMIKOM Portal profile page. Hubungkan, kolaborasi, dan eksplorasi karya kreatif mahasiswa."
+	);
 });
 
 const headImage = computed(() => {
-    if (viewingProject.value?.image) {
-        return viewingProject.value.image;
-    }
-    if (!user.value.foto_path) return "/og-image.png";
-    return user.value.foto_path.startsWith("http")
-        ? user.value.foto_path
-        : `/storage/${user.value.foto_path}`;
+	if (viewingProject.value?.image) {
+		return viewingProject.value.image;
+	}
+	if (!user.value.foto_path) return "/og-image.png";
+	return user.value.foto_path.startsWith("http")
+		? user.value.foto_path
+		: `/storage/${user.value.foto_path}`;
 });
 
 const headType = computed(() => {
-    return viewingProject.value ? "article" : "profile";
+	return viewingProject.value ? "article" : "profile";
 });
 
 const headUrl = computed(() => {
-    const base = user.value.pagi_username
-        ? `/pagi/${user.value.pagi_username}`
-        : `/pagi/profile/${user.value.id}`;
-    if (viewingProject.value) {
-        return `${globalThis.window.location.origin}${base}?project=${viewingProject.value.id}`;
-    }
-    return `${globalThis.window.location.origin}${base}`;
+	const base = user.value.pagi_username
+		? `/pagi/${user.value.pagi_username}`
+		: `/pagi/profile/${user.value.id}`;
+	if (viewingProject.value) {
+		return `${globalThis.window.location.origin}${base}?project=${viewingProject.value.id}`;
+	}
+	return `${globalThis.window.location.origin}${base}`;
 });
 </script>
 

@@ -2,24 +2,25 @@
 
 namespace App\Modules\Trace\Controllers\Alumni;
 
-use App\Modules\Trace\Actions\ApplyToJobAction;
 use App\Http\Controllers\Controller;
+use App\Models\Pagi\PagiCv;
+use App\Models\Pagi\PagiWork;
+use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\Bookmark;
 use App\Models\Tracer\JobApplicant;
 use App\Models\Tracer\JobCategory;
 use App\Models\Tracer\JobListing;
+use App\Models\Tracer\MitraProfile;
 use App\Models\Tracer\ProfilAlumni;
-use App\Models\Pagi\PagiCv;
-use App\Models\Pagi\PagiWork;
+use App\Models\User;
+use App\Modules\Trace\Actions\ApplyToJobAction;
+use App\Notifications\Trace\JobApplicationSubmitted;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use App\Notifications\Trace\JobApplicationSubmitted;
-use App\Models\Tracer\ActivityLog;
-use App\Models\User;
-use Illuminate\Support\Facades\Notification;
 
 class JobBrowseController extends Controller
 {
@@ -48,14 +49,14 @@ class JobBrowseController extends Controller
         if ($request->filled('salary_min')) {
             $query->where(function ($q) use ($request) {
                 $q->where('salary_max', '>=', $request->salary_min)
-                  ->orWhere('salary_min', '>=', $request->salary_min);
+                    ->orWhere('salary_min', '>=', $request->salary_min);
             });
         }
 
         if ($request->filled('salary_max')) {
             $query->where(function ($q) use ($request) {
                 $q->where('salary_min', '<=', $request->salary_max)
-                  ->orWhereNull('salary_min');
+                    ->orWhereNull('salary_min');
             });
         }
 
@@ -77,7 +78,7 @@ class JobBrowseController extends Controller
         });
 
         // Get only mitras that have published jobs
-        $mitras = \App\Models\Tracer\MitraProfile::whereHas('jobListings', function ($q) {
+        $mitras = MitraProfile::whereHas('jobListings', function ($q) {
             $q->where('status', 'published');
         })->select('id', 'nama_perusahaan')->orderBy('nama_perusahaan')->get();
 
@@ -135,7 +136,7 @@ class JobBrowseController extends Controller
 
         $alumniProfile = ProfilAlumni::where('user_id', auth()->id())->first();
 
-        if (!$alumniProfile) {
+        if (! $alumniProfile) {
             return redirect()->back()->with('error', 'Profil alumni belum lengkap. Silakan lengkapi profil terlebih dahulu.');
         }
 
@@ -200,7 +201,7 @@ class JobBrowseController extends Controller
     {
         $alumniProfile = ProfilAlumni::where('user_id', auth()->id())->first();
 
-        if (!$alumniProfile) {
+        if (! $alumniProfile) {
             return redirect()->back()->with('error', 'Profil alumni belum lengkap. Silakan lengkapi profil terlebih dahulu.');
         }
 
@@ -231,7 +232,7 @@ class JobBrowseController extends Controller
 
     public function companies(Request $request): InertiaResponse
     {
-        $query = \App\Models\Tracer\MitraProfile::withCount(['jobListings' => function ($q) {
+        $query = MitraProfile::withCount(['jobListings' => function ($q) {
             $q->where('status', 'published');
         }]);
 

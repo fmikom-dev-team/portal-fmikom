@@ -11,19 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-      Schema::create('education', function (Blueprint $table) {
+        Schema::create('education', function (Blueprint $table) {
             $table->id();
             $table->foreignId('career_history_id')->unique()->constrained('career_history')->cascadeOnDelete();
-            
+
             // Education Info
             $table->string('nama_universitas');
             $table->string('program_studi_lanjutan');
-            $table->string('jenjang_pendidikan')->nullable(); 
-            $table->string('sumber_biaya')->nullable(); 
+            $table->string('jenjang_pendidikan')->nullable();
+            $table->string('sumber_biaya')->nullable();
             $table->text('alamat_universitas')->nullable();
-            
+
             $table->timestamps();
-            
+
             $table->index('career_history_id');
             $table->index('jenjang_pendidikan');
         });

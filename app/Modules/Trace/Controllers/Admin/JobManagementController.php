@@ -5,23 +5,23 @@ namespace App\Modules\Trace\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Trace\StoreJobRequest;
 use App\Http\Requests\Trace\UpdateJobRequest;
+use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\JobApplicant;
 use App\Models\Tracer\JobCategory;
 use App\Models\Tracer\JobListing;
 use App\Models\Tracer\MitraProfile;
 use App\Models\User;
+use App\Notifications\Trace\ApplicationStatusChanged;
+use App\Notifications\Trace\JobApprovedForMitra;
+use App\Notifications\Trace\JobRejectedForMitra;
+use App\Notifications\Trace\NewJobPosted;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use App\Notifications\Trace\ApplicationStatusChanged;
-use App\Notifications\Trace\NewJobPosted;
-use App\Notifications\Trace\JobApprovedForMitra;
-use App\Notifications\Trace\JobRejectedForMitra;
-use App\Models\Tracer\ActivityLog;
-use Illuminate\Support\Facades\Notification;
 
 class JobManagementController extends Controller
 {
@@ -213,7 +213,7 @@ class JobManagementController extends Controller
 
         Cache::forget('trace_job_stats');
 
-        return back()->with('success', 'Lowongan berhasil ditolak.' . ($reason ? " Alasan: {$reason}" : ''));
+        return back()->with('success', 'Lowongan berhasil ditolak.'.($reason ? " Alasan: {$reason}" : ''));
     }
 
     public function bulkApprove(Request $request): RedirectResponse
@@ -256,7 +256,7 @@ class JobManagementController extends Controller
 
         Cache::forget('trace_job_stats');
 
-        return back()->with('success', count($jobs) . ' lowongan berhasil disetujui.');
+        return back()->with('success', count($jobs).' lowongan berhasil disetujui.');
     }
 
     public function bulkReject(Request $request): RedirectResponse
@@ -294,7 +294,7 @@ class JobManagementController extends Controller
 
         Cache::forget('trace_job_stats');
 
-        return back()->with('success', count($jobs) . ' lowongan berhasil ditolak.');
+        return back()->with('success', count($jobs).' lowongan berhasil ditolak.');
     }
 
     public function destroy($id): RedirectResponse
@@ -353,6 +353,4 @@ class JobManagementController extends Controller
 
         return back()->with('success', 'Status pelamar berhasil diperbarui.');
     }
-
-
 }

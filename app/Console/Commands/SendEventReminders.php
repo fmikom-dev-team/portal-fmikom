@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Mail;
 class SendEventReminders extends Command
 {
     protected $signature = 'trace:event-reminder';
+
     protected $description = 'Send reminder emails for events happening tomorrow';
 
     public function handle(): int
@@ -23,6 +24,7 @@ class SendEventReminders extends Command
 
         if ($events->isEmpty()) {
             $this->info('No events happening tomorrow. Skipping reminders.');
+
             return self::SUCCESS;
         }
 
@@ -49,6 +51,7 @@ class SendEventReminders extends Command
         }
 
         $this->info("Event reminders sent: {$sent} emails for {$events->count()} event(s).");
+
         return self::SUCCESS;
     }
 }

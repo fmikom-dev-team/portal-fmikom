@@ -3,7 +3,6 @@
 namespace App\Models\Tracer;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Tracer\ProfilAlumni;
 
 class JobApplicant extends Model
 {

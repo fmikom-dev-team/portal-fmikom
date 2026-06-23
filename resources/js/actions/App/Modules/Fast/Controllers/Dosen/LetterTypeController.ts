@@ -1,9 +1,9 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\LetterTypeController::show
- * @see app/Modules/Fast/Controllers/Dosen/LetterTypeController.php:13
- * @route '/dosen/jenis-surat/{jenisSurat}'
- */
+* @see app/Modules/Fast/Controllers/Dosen/LetterTypeController.php:13
+* @route '/dosen/jenis-surat/{jenisSurat}'
+*/
 export const show = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show.url(args, options),
     method: 'get',
@@ -16,31 +16,31 @@ show.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\LetterTypeController::show
- * @see app/Modules/Fast/Controllers/Dosen/LetterTypeController.php:13
- * @route '/dosen/jenis-surat/{jenisSurat}'
- */
+* @see app/Modules/Fast/Controllers/Dosen/LetterTypeController.php:13
+* @route '/dosen/jenis-surat/{jenisSurat}'
+*/
 show.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
 
-            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
-            args = { jenisSurat: args.id }
-        }
-    
+    if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+        args = { jenisSurat: args.id }
+    }
+
     if (Array.isArray(args)) {
         args = {
-                    jenisSurat: args[0],
-                }
+            jenisSurat: args[0],
+        }
     }
 
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-                        jenisSurat: typeof args.jenisSurat === 'object'
-                ? args.jenisSurat.id
-                : args.jenisSurat,
-                }
+        jenisSurat: typeof args.jenisSurat === 'object'
+        ? args.jenisSurat.id
+        : args.jenisSurat,
+    }
 
     return show.definition.url
             .replace('{jenisSurat}', parsedArgs.jenisSurat.toString())
@@ -49,22 +49,24 @@ show.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number 
 
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\LetterTypeController::show
- * @see app/Modules/Fast/Controllers/Dosen/LetterTypeController.php:13
- * @route '/dosen/jenis-surat/{jenisSurat}'
- */
+* @see app/Modules/Fast/Controllers/Dosen/LetterTypeController.php:13
+* @route '/dosen/jenis-surat/{jenisSurat}'
+*/
 show.get = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show.url(args, options),
     method: 'get',
 })
+
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\LetterTypeController::show
- * @see app/Modules/Fast/Controllers/Dosen/LetterTypeController.php:13
- * @route '/dosen/jenis-surat/{jenisSurat}'
- */
+* @see app/Modules/Fast/Controllers/Dosen/LetterTypeController.php:13
+* @route '/dosen/jenis-surat/{jenisSurat}'
+*/
 show.head = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: show.url(args, options),
     method: 'head',
 })
+
 const LetterTypeController = { show }
 
 export default LetterTypeController

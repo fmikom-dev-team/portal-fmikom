@@ -6,7 +6,7 @@ import type { AlumniPagination } from '@/types/alumni';
 import AlumniBannerHeader from './components/AlumniBannerHeader.vue';
 import AlumniTable from './components/AlumniTable.vue';
 import { GraduationCap } from 'lucide-vue-next';
-import { TPageHeader } from '@/components/trace';
+import { TPageHeader } from '@/components/Trace';
 
 
 interface Props {

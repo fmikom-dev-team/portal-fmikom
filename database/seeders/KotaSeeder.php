@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Tracer\Kota;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 
 class KotaSeeder extends Seeder
@@ -16,7 +15,7 @@ class KotaSeeder extends Seeder
     {
         $regenciesJson = File::get(database_path('seeders/data/regencies.json'));
         $regencies = json_decode($regenciesJson, true);
-        
+
         foreach ($regencies as $regency) {
             Kota::updateOrCreate(
                 ['id' => $regency['id']],

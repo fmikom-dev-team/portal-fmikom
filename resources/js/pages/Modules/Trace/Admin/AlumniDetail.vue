@@ -3,7 +3,7 @@ import { Head, Link } from "@inertiajs/vue3";
 import type { ProfilAlumni, CareerHistory, Education } from "@/types/trace";
 import { ArrowLeft, GraduationCap } from "lucide-vue-next";
 import TraceAdminLayout from "@/layouts/TraceAdminLayout.vue";
-import { TPageHeader } from "@/components/trace";
+import { TPageHeader } from "@/components/Trace";
 import AlumniHeroCard from "./components/alumni/AlumniHeroCard.vue";
 import AlumniPersonalCard from "./components/alumni/AlumniPersonalCard.vue";
 import AlumniAddressCard from "./components/alumni/AlumniAddressCard.vue";

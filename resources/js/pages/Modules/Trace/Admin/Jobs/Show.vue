@@ -33,7 +33,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { TPageHeader, TStatusBadge, TEmptyState, TConfirmDialog } from '@/components/trace';
+import { TPageHeader, TStatusBadge, TEmptyState, TConfirmDialog } from '@/components/Trace';
 
 interface Alumni {
     id: number;

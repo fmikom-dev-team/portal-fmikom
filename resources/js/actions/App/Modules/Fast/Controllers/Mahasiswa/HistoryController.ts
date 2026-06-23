@@ -1,9 +1,9 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::index
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:16
- * @route '/fast/user/history'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:16
+* @route '/fast/user/history'
+*/
 const index87b8947623c11a8e049797a3d2d0f9be = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index87b8947623c11a8e049797a3d2d0f9be.url(options),
     method: 'get',
@@ -16,37 +16,38 @@ index87b8947623c11a8e049797a3d2d0f9be.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::index
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:16
- * @route '/fast/user/history'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:16
+* @route '/fast/user/history'
+*/
 index87b8947623c11a8e049797a3d2d0f9be.url = (options?: RouteQueryOptions) => {
     return index87b8947623c11a8e049797a3d2d0f9be.definition.url + queryParams(options)
 }
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::index
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:16
- * @route '/fast/user/history'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:16
+* @route '/fast/user/history'
+*/
 index87b8947623c11a8e049797a3d2d0f9be.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index87b8947623c11a8e049797a3d2d0f9be.url(options),
     method: 'get',
 })
+
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::index
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:16
- * @route '/fast/user/history'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:16
+* @route '/fast/user/history'
+*/
 index87b8947623c11a8e049797a3d2d0f9be.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: index87b8947623c11a8e049797a3d2d0f9be.url(options),
     method: 'head',
 })
 
-    /**
+/**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::index
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:16
- * @route '/mahasiswa/history'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:16
+* @route '/mahasiswa/history'
+*/
 const index5a4c493418e0df1b409be4699ee669dc = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index5a4c493418e0df1b409be4699ee669dc.url(options),
     method: 'get',
@@ -59,27 +60,28 @@ index5a4c493418e0df1b409be4699ee669dc.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::index
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:16
- * @route '/mahasiswa/history'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:16
+* @route '/mahasiswa/history'
+*/
 index5a4c493418e0df1b409be4699ee669dc.url = (options?: RouteQueryOptions) => {
     return index5a4c493418e0df1b409be4699ee669dc.definition.url + queryParams(options)
 }
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::index
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:16
- * @route '/mahasiswa/history'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:16
+* @route '/mahasiswa/history'
+*/
 index5a4c493418e0df1b409be4699ee669dc.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index5a4c493418e0df1b409be4699ee669dc.url(options),
     method: 'get',
 })
+
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::index
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:16
- * @route '/mahasiswa/history'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:16
+* @route '/mahasiswa/history'
+*/
 index5a4c493418e0df1b409be4699ee669dc.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: index5a4c493418e0df1b409be4699ee669dc.url(options),
     method: 'head',
@@ -97,9 +99,9 @@ export const index = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::show
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:53
- * @route '/fast/user/history/{id}'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:53
+* @route '/fast/user/history/{id}'
+*/
 const show9da74bc9fc8d8ed90070357bf01c09d8 = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show9da74bc9fc8d8ed90070357bf01c09d8.url(args, options),
     method: 'get',
@@ -112,26 +114,25 @@ show9da74bc9fc8d8ed90070357bf01c09d8.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::show
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:53
- * @route '/fast/user/history/{id}'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:53
+* @route '/fast/user/history/{id}'
+*/
 show9da74bc9fc8d8ed90070357bf01c09d8.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { id: args }
     }
 
-    
     if (Array.isArray(args)) {
         args = {
-                    id: args[0],
-                }
+            id: args[0],
+        }
     }
 
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-                        id: args.id,
-                }
+        id: args.id,
+    }
 
     return show9da74bc9fc8d8ed90070357bf01c09d8.definition.url
             .replace('{id}', parsedArgs.id.toString())
@@ -140,28 +141,29 @@ show9da74bc9fc8d8ed90070357bf01c09d8.url = (args: { id: string | number } | [id:
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::show
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:53
- * @route '/fast/user/history/{id}'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:53
+* @route '/fast/user/history/{id}'
+*/
 show9da74bc9fc8d8ed90070357bf01c09d8.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show9da74bc9fc8d8ed90070357bf01c09d8.url(args, options),
     method: 'get',
 })
+
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::show
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:53
- * @route '/fast/user/history/{id}'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:53
+* @route '/fast/user/history/{id}'
+*/
 show9da74bc9fc8d8ed90070357bf01c09d8.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: show9da74bc9fc8d8ed90070357bf01c09d8.url(args, options),
     method: 'head',
 })
 
-    /**
+/**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::show
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:53
- * @route '/mahasiswa/history/{id}'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:53
+* @route '/mahasiswa/history/{id}'
+*/
 const show26c38b6c2e007262af1ec1ea4b164d97 = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show26c38b6c2e007262af1ec1ea4b164d97.url(args, options),
     method: 'get',
@@ -174,26 +176,25 @@ show26c38b6c2e007262af1ec1ea4b164d97.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::show
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:53
- * @route '/mahasiswa/history/{id}'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:53
+* @route '/mahasiswa/history/{id}'
+*/
 show26c38b6c2e007262af1ec1ea4b164d97.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { id: args }
     }
 
-    
     if (Array.isArray(args)) {
         args = {
-                    id: args[0],
-                }
+            id: args[0],
+        }
     }
 
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-                        id: args.id,
-                }
+        id: args.id,
+    }
 
     return show26c38b6c2e007262af1ec1ea4b164d97.definition.url
             .replace('{id}', parsedArgs.id.toString())
@@ -202,18 +203,19 @@ show26c38b6c2e007262af1ec1ea4b164d97.url = (args: { id: string | number } | [id:
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::show
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:53
- * @route '/mahasiswa/history/{id}'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:53
+* @route '/mahasiswa/history/{id}'
+*/
 show26c38b6c2e007262af1ec1ea4b164d97.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show26c38b6c2e007262af1ec1ea4b164d97.url(args, options),
     method: 'get',
 })
+
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::show
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:53
- * @route '/mahasiswa/history/{id}'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:53
+* @route '/mahasiswa/history/{id}'
+*/
 show26c38b6c2e007262af1ec1ea4b164d97.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: show26c38b6c2e007262af1ec1ea4b164d97.url(args, options),
     method: 'head',
@@ -231,9 +233,9 @@ export const show = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::cancel
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:178
- * @route '/fast/user/surat/{id}/cancel'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:178
+* @route '/fast/user/surat/{id}/cancel'
+*/
 const cancel74bd7e97928c58b44e953de9068b8404 = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: cancel74bd7e97928c58b44e953de9068b8404.url(args, options),
     method: 'post',
@@ -246,26 +248,25 @@ cancel74bd7e97928c58b44e953de9068b8404.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::cancel
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:178
- * @route '/fast/user/surat/{id}/cancel'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:178
+* @route '/fast/user/surat/{id}/cancel'
+*/
 cancel74bd7e97928c58b44e953de9068b8404.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { id: args }
     }
 
-    
     if (Array.isArray(args)) {
         args = {
-                    id: args[0],
-                }
+            id: args[0],
+        }
     }
 
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-                        id: args.id,
-                }
+        id: args.id,
+    }
 
     return cancel74bd7e97928c58b44e953de9068b8404.definition.url
             .replace('{id}', parsedArgs.id.toString())
@@ -274,19 +275,19 @@ cancel74bd7e97928c58b44e953de9068b8404.url = (args: { id: string | number } | [i
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::cancel
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:178
- * @route '/fast/user/surat/{id}/cancel'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:178
+* @route '/fast/user/surat/{id}/cancel'
+*/
 cancel74bd7e97928c58b44e953de9068b8404.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: cancel74bd7e97928c58b44e953de9068b8404.url(args, options),
     method: 'post',
 })
 
-    /**
+/**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::cancel
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:178
- * @route '/mahasiswa/surat/{id}/cancel'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:178
+* @route '/mahasiswa/surat/{id}/cancel'
+*/
 const canceldf32884bde61aadf9b6523269bf53f90 = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: canceldf32884bde61aadf9b6523269bf53f90.url(args, options),
     method: 'post',
@@ -299,26 +300,25 @@ canceldf32884bde61aadf9b6523269bf53f90.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::cancel
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:178
- * @route '/mahasiswa/surat/{id}/cancel'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:178
+* @route '/mahasiswa/surat/{id}/cancel'
+*/
 canceldf32884bde61aadf9b6523269bf53f90.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { id: args }
     }
 
-    
     if (Array.isArray(args)) {
         args = {
-                    id: args[0],
-                }
+            id: args[0],
+        }
     }
 
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-                        id: args.id,
-                }
+        id: args.id,
+    }
 
     return canceldf32884bde61aadf9b6523269bf53f90.definition.url
             .replace('{id}', parsedArgs.id.toString())
@@ -327,9 +327,9 @@ canceldf32884bde61aadf9b6523269bf53f90.url = (args: { id: string | number } | [i
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::cancel
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:178
- * @route '/mahasiswa/surat/{id}/cancel'
- */
+* @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:178
+* @route '/mahasiswa/surat/{id}/cancel'
+*/
 canceldf32884bde61aadf9b6523269bf53f90.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: canceldf32884bde61aadf9b6523269bf53f90.url(args, options),
     method: 'post',

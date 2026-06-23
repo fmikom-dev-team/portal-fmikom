@@ -4,7 +4,7 @@ import { toast } from 'vue-sonner';
 import EditorJsRenderer from '@/components/editor/EditorJsRenderer.vue';
 import TraceAlumniLayout from "@/layouts/TraceAlumniLayout.vue";
 import type { BreadcrumbItem } from "@/types";
-import { TPageHeader, TStatusBadge } from '@/components/trace';
+import { TPageHeader, TStatusBadge } from '@/components/Trace';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";

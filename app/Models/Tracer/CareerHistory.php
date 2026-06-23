@@ -2,15 +2,10 @@
 
 namespace App\Models\Tracer;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use App\Models\Tracer\ProfilAlumni;
-use App\Models\Tracer\Provinsi;
-use App\Models\Tracer\Kota;
-use App\Models\Tracer\Employment;
-use App\Models\Tracer\Education;
 use App\Enums\CareerStatus;
 use App\Enums\CareerType;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class CareerHistory extends Model
 {

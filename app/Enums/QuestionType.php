@@ -4,7 +4,7 @@ namespace App\Enums;
 
 /**
  * Enum for question types in questionnaires
- * 
+ *
  * Defines all possible question types that can be used in a questionnaire
  * including single-choice, multiple-choice, text inputs, and matrices.
  */
@@ -50,7 +50,7 @@ enum QuestionType: string
      */
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::RADIO => 'Pilihan Tunggal',
             self::CHECKBOX => 'Pilihan Ganda',
             self::DROPDOWN => 'Dropdown',

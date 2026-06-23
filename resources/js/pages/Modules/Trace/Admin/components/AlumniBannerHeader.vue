@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
-import { TFilterBar } from '@/components/trace';
+import { TFilterBar } from '@/components/Trace';
 
 
 interface Props {

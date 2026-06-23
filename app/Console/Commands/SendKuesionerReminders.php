@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Mail;
 class SendKuesionerReminders extends Command
 {
     protected $signature = 'trace:kuesioner-reminder';
+
     protected $description = 'Send reminder emails to alumni who have not completed active kuesioners';
 
     public function handle(): int
@@ -25,6 +26,7 @@ class SendKuesionerReminders extends Command
 
         if ($activeKuesioners->isEmpty()) {
             $this->info('No active kuesioners found. Skipping reminders.');
+
             return self::SUCCESS;
         }
 
@@ -55,6 +57,7 @@ class SendKuesionerReminders extends Command
         }
 
         $this->info("Kuesioner reminders sent: {$sent} emails.");
+
         return self::SUCCESS;
     }
 }

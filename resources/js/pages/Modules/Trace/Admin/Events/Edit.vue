@@ -4,7 +4,7 @@ import { toast } from 'vue-sonner';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { TPageHeader, TFormSection } from '@/components/trace';
+import { TPageHeader, TFormSection } from '@/components/Trace';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';

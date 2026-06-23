@@ -4,15 +4,15 @@ namespace App\Modules\Trace\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Trace\StoreKuesionerRequest;
-use Illuminate\Http\Request;
+use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\Kuesioner;
+use App\Modules\Trace\Actions\DuplicateKuesionerAction;
+use App\Modules\Trace\Actions\SaveKuesionerSectionsAction;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use Illuminate\Support\Facades\DB;
-use App\Modules\Trace\Actions\SaveKuesionerSectionsAction;
-use App\Modules\Trace\Actions\DuplicateKuesionerAction;
-use App\Models\Tracer\ActivityLog;
 
 class KuesionerController extends Controller
 {
@@ -23,8 +23,8 @@ class KuesionerController extends Controller
         if ($request->filled('search')) {
             $search = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->input('search'));
             $query->where(function ($q) use ($search) {
-                $q->where('judul', 'like', '%' . $search . '%')
-                  ->orWhere('subtitle', 'like', '%' . $search . '%');
+                $q->where('judul', 'like', '%'.$search.'%')
+                    ->orWhere('subtitle', 'like', '%'.$search.'%');
             });
         }
 
@@ -39,7 +39,7 @@ class KuesionerController extends Controller
         return Inertia::render('Modules/Trace/Admin/Questionnaire', [
             'kuesioners' => $query->latest()->paginate(15)->withQueryString(),
             'filters' => $request->only(['search', 'status', 'year']),
-            'activeCount' => Inertia::defer(fn () => Kuesioner::where('status', 'active')->count())
+            'activeCount' => Inertia::defer(fn () => Kuesioner::where('status', 'active')->count()),
         ]);
     }
 
@@ -54,7 +54,7 @@ class KuesionerController extends Controller
                 'tahun' => date('Y'),
                 'deskripsi' => '',
                 'status' => 'active',
-                'sections' => []
+                'sections' => [],
             ],
         ]);
     }
@@ -71,16 +71,16 @@ class KuesionerController extends Controller
         try {
             return DB::transaction(function () use ($request, $validated, $saveAction) {
                 $kuesioner = Kuesioner::create([
-                    'judul'          => $validated['judul'],
-                    'subtitle'       => $validated['subtitle'],
-                    'kategori'       => $validated['kategori'],
-                    'tahun'          => !empty($validated['tahun']) ? (int)$validated['tahun'] : null,
-                    'date_mulai'     => $validated['date_mulai'],
-                    'date_selesai'   => $validated['date_selesai'],
-                    'deskripsi'      => $validated['deskripsi'],
-                    'status'         => $validated['status'],
+                    'judul' => $validated['judul'],
+                    'subtitle' => $validated['subtitle'],
+                    'kategori' => $validated['kategori'],
+                    'tahun' => ! empty($validated['tahun']) ? (int) $validated['tahun'] : null,
+                    'date_mulai' => $validated['date_mulai'],
+                    'date_selesai' => $validated['date_selesai'],
+                    'deskripsi' => $validated['deskripsi'],
+                    'status' => $validated['status'],
                     'tipe_kuesioner' => $this->resolveTipeKuesioner($validated['kategori'] ?? ''),
-                    'created_by'     => $request->user()->id,
+                    'created_by' => $request->user()->id,
                 ]);
 
                 $saveAction->execute($kuesioner, $request->input('sections', []));
@@ -89,8 +89,9 @@ class KuesionerController extends Controller
                 return redirect()->route('module.trace.admin.questionnaires.index')->with('success', 'Kuesioner berhasil dibuat');
             });
         } catch (\Exception $e) {
-            \Log::error('Kuesioner Save Error: ' . $e->getMessage());
-            return redirect()->back()->withErrors(['error' => 'Gagal menyimpan kuesioner: ' . $e->getMessage()])->withInput();
+            \Log::error('Kuesioner Save Error: '.$e->getMessage());
+
+            return redirect()->back()->withErrors(['error' => 'Gagal menyimpan kuesioner: '.$e->getMessage()])->withInput();
         }
     }
 
@@ -103,14 +104,14 @@ class KuesionerController extends Controller
         try {
             return DB::transaction(function () use ($kuesioner, $request, $validated, $saveAction) {
                 $kuesioner->update([
-                    'judul'          => $validated['judul'],
-                    'subtitle'       => $validated['subtitle'],
-                    'kategori'       => $validated['kategori'],
-                    'tahun'          => !empty($validated['tahun']) ? (int)$validated['tahun'] : null,
-                    'date_mulai'     => $validated['date_mulai'],
-                    'date_selesai'   => $validated['date_selesai'],
-                    'deskripsi'      => $validated['deskripsi'],
-                    'status'         => $validated['status'],
+                    'judul' => $validated['judul'],
+                    'subtitle' => $validated['subtitle'],
+                    'kategori' => $validated['kategori'],
+                    'tahun' => ! empty($validated['tahun']) ? (int) $validated['tahun'] : null,
+                    'date_mulai' => $validated['date_mulai'],
+                    'date_selesai' => $validated['date_selesai'],
+                    'deskripsi' => $validated['deskripsi'],
+                    'status' => $validated['status'],
                     'tipe_kuesioner' => $this->resolveTipeKuesioner($validated['kategori'] ?? ''),
                 ]);
 
@@ -120,8 +121,9 @@ class KuesionerController extends Controller
                 return redirect()->route('module.trace.admin.questionnaires.index')->with('success', 'Kuesioner berhasil diperbarui');
             });
         } catch (\Exception $e) {
-            \Log::error('Kuesioner Update Error: ' . $e->getMessage());
-            return redirect()->back()->withErrors(['error' => 'Gagal memperbarui kuesioner: ' . $e->getMessage()])->withInput();
+            \Log::error('Kuesioner Update Error: '.$e->getMessage());
+
+            return redirect()->back()->withErrors(['error' => 'Gagal memperbarui kuesioner: '.$e->getMessage()])->withInput();
         }
     }
 
@@ -135,12 +137,11 @@ class KuesionerController extends Controller
             return redirect()->route('module.trace.admin.questionnaires.index')
                 ->with('success', 'Kuesioner berhasil diduplikasi');
         } catch (\Exception $e) {
-            \Log::error('Kuesioner Duplicate Error: ' . $e->getMessage());
-            return redirect()->back()->withErrors(['error' => 'Gagal menduplikasi kuesioner: ' . $e->getMessage()]);
+            \Log::error('Kuesioner Duplicate Error: '.$e->getMessage());
+
+            return redirect()->back()->withErrors(['error' => 'Gagal menduplikasi kuesioner: '.$e->getMessage()]);
         }
     }
-
-
 
     protected function resolveTipeKuesioner(string $kategori): string
     {
@@ -165,7 +166,7 @@ class KuesionerController extends Controller
         ])->findOrFail($id);
 
         return Inertia::render('Modules/Trace/Admin/QuestionnaireAnalytics', [
-            'kuesioner'   => $kuesioner,
+            'kuesioner' => $kuesioner,
             'kuesionerId' => $id,
         ]);
     }

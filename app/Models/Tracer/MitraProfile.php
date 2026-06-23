@@ -2,9 +2,9 @@
 
 namespace App\Models\Tracer;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\User;
 
 class MitraProfile extends Model
 {
@@ -22,7 +22,7 @@ class MitraProfile extends Model
         'no_telp',
         'alamat_lengkap',
         'provinsi_id',
-        'kota_id'
+        'kota_id',
     ];
 
     protected $casts = [
@@ -35,7 +35,9 @@ class MitraProfile extends Model
 
     public function getLogoUrlAttribute(): ?string
     {
-        if (!$this->logo_path) return null;
+        if (! $this->logo_path) {
+            return null;
+        }
         // Handle both formats: with /storage/ prefix (legacy) and without (current)
         if (str_starts_with($this->logo_path, '/storage/')) {
             return $this->logo_path;
@@ -43,7 +45,8 @@ class MitraProfile extends Model
         if (str_starts_with($this->logo_path, 'http')) {
             return $this->logo_path;
         }
-        return '/storage/' . $this->logo_path;
+
+        return '/storage/'.$this->logo_path;
     }
 
     public function user()

@@ -7,7 +7,7 @@ import TraceMitraLayout from '@/layouts/TraceMitraLayout.vue';
 import {
     TPageHeader,
     TPagination,
-} from '@/components/trace';
+} from '@/components/Trace';
 import {
     Bell,
     BellOff,

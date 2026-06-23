@@ -2,10 +2,9 @@
 
 namespace App\Models\Tracer;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes; 
 use App\Models\User;
-
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class JobListing extends Model
 {
@@ -15,11 +14,11 @@ class JobListing extends Model
 
     protected $fillable = [
         'user_id',
-        'mitra_id', 'job_category_id', 'title', 'description', 
-        'experience_level', 'location_type', 'location_city', 
-        'tipe_kerja', 'salary_min', 'salary_max', 'status', 
+        'mitra_id', 'job_category_id', 'title', 'description',
+        'experience_level', 'location_type', 'location_city',
+        'tipe_kerja', 'salary_min', 'salary_max', 'status',
         'deadline', 'is_salary_visible',
-        'rejection_reason', 'rejected_at'
+        'rejection_reason', 'rejected_at',
     ];
 
     protected $casts = [

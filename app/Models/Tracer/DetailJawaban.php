@@ -5,7 +5,6 @@ namespace App\Models\Tracer;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-
 class DetailJawaban extends Model
 {
     use HasFactory;

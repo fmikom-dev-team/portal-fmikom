@@ -11,21 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-          Schema::create('responses', function (Blueprint $table) {
+        Schema::create('responses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('kuesioner_id')->constrained('kuesioner')->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            
+
             $table->string('stakeholder_name')->nullable();
             $table->string('stakeholder_email')->nullable();
-            
+
             $table->year('angkatan')->nullable();
-            
+
             $table->timestamp('submitted_at')->nullable();
             $table->timestamps();
-            
+
             $table->unique(['kuesioner_id', 'user_id'], 'unique_response_per_user_kuesioner');
-            
+
             $table->index('kuesioner_id');
             $table->index('user_id');
             $table->index('submitted_at');

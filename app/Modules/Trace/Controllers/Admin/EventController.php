@@ -5,19 +5,19 @@ namespace App\Modules\Trace\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Trace\StoreEventRequest;
 use App\Http\Requests\Trace\UpdateEventRequest;
+use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\Event;
 use App\Models\Tracer\EventRegistration;
 use App\Models\User;
+use App\Modules\Trace\Services\ImageService;
 use App\Notifications\Trace\NewEventCreated;
-use Illuminate\Support\Facades\Notification;
-
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use App\Models\Tracer\ActivityLog;
-use App\Modules\Trace\Services\ImageService;
 
 class EventController extends Controller
 {
@@ -28,7 +28,7 @@ class EventController extends Controller
         // Search by title
         if ($request->filled('search')) {
             $escaped = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->search);
-            $query->where('title', 'like', '%' . $escaped . '%');
+            $query->where('title', 'like', '%'.$escaped.'%');
         }
 
         // Filter by status
@@ -62,10 +62,10 @@ class EventController extends Controller
         $validated = $request->validated();
 
         // Normalize time to H:i format
-        if (!empty($validated['event_time_start'])) {
+        if (! empty($validated['event_time_start'])) {
             $validated['event_time_start'] = substr($validated['event_time_start'], 0, 5);
         }
-        if (!empty($validated['event_time_end'])) {
+        if (! empty($validated['event_time_end'])) {
             $validated['event_time_end'] = substr($validated['event_time_end'], 0, 5);
         }
 
@@ -88,7 +88,7 @@ class EventController extends Controller
                 ->chunkById(200, function ($alumni) use ($event) {
                     Notification::send($alumni, new NewEventCreated(
                         $event->title,
-                        \Carbon\Carbon::parse($event->event_date)->format('d M Y'),
+                        Carbon::parse($event->event_date)->format('d M Y'),
                         $event->id
                     ));
                 });
@@ -130,10 +130,10 @@ class EventController extends Controller
         $validated = $request->validated();
 
         // Normalize time to H:i format for consistent storage
-        if (!empty($validated['event_time_start'])) {
+        if (! empty($validated['event_time_start'])) {
             $validated['event_time_start'] = substr($validated['event_time_start'], 0, 5);
         }
-        if (!empty($validated['event_time_end'])) {
+        if (! empty($validated['event_time_end'])) {
             $validated['event_time_end'] = substr($validated['event_time_end'], 0, 5);
         }
 
@@ -165,7 +165,7 @@ class EventController extends Controller
         ];
 
         if (isset($invalidTransitions[$event->status]) && in_array($validated['status'], $invalidTransitions[$event->status])) {
-            return back()->with('error', 'Tidak dapat mengubah status dari "' . $event->status . '" ke "' . $validated['status'] . '".');
+            return back()->with('error', 'Tidak dapat mengubah status dari "'.$event->status.'" ke "'.$validated['status'].'".');
         }
 
         $event->update($validated);
@@ -179,7 +179,7 @@ class EventController extends Controller
         $registration = EventRegistration::where('event_id', $eventId)->findOrFail($registrationId);
 
         // Determine new state before update to avoid stale model issues
-        $wasAttended = !is_null($registration->attended_at);
+        $wasAttended = ! is_null($registration->attended_at);
         $newAttendedAt = $wasAttended ? null : now();
 
         $registration->update(['attended_at' => $newAttendedAt]);
@@ -188,6 +188,7 @@ class EventController extends Controller
         ActivityLog::record('event.attendance', $action, $registration);
 
         $message = $wasAttended ? 'Kehadiran dibatalkan.' : 'Kehadiran dicatat.';
+
         return back()->with('success', $message);
     }
 

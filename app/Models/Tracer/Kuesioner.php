@@ -2,10 +2,11 @@
 
 namespace App\Models\Tracer;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
+
 class Kuesioner extends Model
 {
     use HasFactory;
@@ -33,10 +34,10 @@ class Kuesioner extends Model
     |-------------------------
     */
     protected $casts = [
-        'date_mulai'   => 'date',
+        'date_mulai' => 'date',
         'date_selesai' => 'date',
-        'tahun'        => 'integer',
-        'is_active'    => 'boolean',
+        'tahun' => 'integer',
+        'is_active' => 'boolean',
     ];
 
     /*

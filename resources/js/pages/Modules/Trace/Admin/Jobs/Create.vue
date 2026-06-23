@@ -5,7 +5,7 @@ import { Briefcase } from 'lucide-vue-next';
 import TraceAdminLayout from '@/layouts/TraceAdminLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { TPageHeader } from '@/components/trace';
+import { TPageHeader } from '@/components/Trace';
 import JobFormFields from './components/JobFormFields.vue';
 
 interface Category {

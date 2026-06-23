@@ -2,7 +2,7 @@
 import { Link } from '@inertiajs/vue3';
 import TraceAlumniLayout from '@/layouts/TraceAlumniLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import { TPageHeader, TStatusBadge, TEmptyState, TPagination } from '@/components/trace';
+import { TPageHeader, TStatusBadge, TEmptyState, TPagination } from '@/components/Trace';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {

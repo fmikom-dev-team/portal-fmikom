@@ -20,7 +20,7 @@ return new class extends Migration
             $table->text('alamat_rumah')->nullable();
             $table->double('latitude_rumah')->nullable();
             $table->double('longitude_rumah')->nullable();
-            
+
             $table->timestamps();
 
             $table->index('user_id');

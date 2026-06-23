@@ -4,7 +4,7 @@ namespace App\Enums;
 
 /**
  * Enum for questionnaire status
- * 
+ *
  * Defines the lifecycle states of a questionnaire from creation to closure
  */
 enum KuesionerStatus: string
@@ -39,7 +39,7 @@ enum KuesionerStatus: string
      */
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::DRAFT => 'Draft',
             self::ACTIVE => 'Aktif',
             self::PUBLISHED => 'Dipublikasikan',

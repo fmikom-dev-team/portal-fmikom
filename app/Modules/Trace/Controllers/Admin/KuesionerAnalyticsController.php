@@ -2,10 +2,10 @@
 
 namespace App\Modules\Trace\Controllers\Admin;
 
-use App\Modules\Trace\Actions\ExportKuesionerAction;
 use App\Http\Controllers\Controller;
 use App\Models\Tracer\Kuesioner;
 use App\Models\Tracer\Response;
+use App\Modules\Trace\Actions\ExportKuesionerAction;
 use App\Modules\Trace\Services\KuesionerAnalyticsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -65,7 +65,7 @@ class KuesionerAnalyticsController extends Controller
     public function getRespondents(Request $request, $id)
     {
         $tahunLulus = $request->query('tahun_lulus');
-        $prodi      = $request->query('prodi');
+        $prodi = $request->query('prodi');
 
         $query = Response::where('kuesioner_id', $id)
             ->with(['user.alumniProfile'])
@@ -93,7 +93,7 @@ class KuesionerAnalyticsController extends Controller
             $kuesioner = Kuesioner::with('sections.pertanyaans.opsiJawabans')->findOrFail($id);
 
             $tahunLulus = $request->query('tahun_lulus');
-            $prodi      = $request->query('prodi');
+            $prodi = $request->query('prodi');
 
             return $this->exportAction->execute($kuesioner, $tahunLulus, $prodi);
         } catch (\Exception $e) {

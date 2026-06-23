@@ -14,7 +14,7 @@ class DuplicateKuesionerAction
     {
         return DB::transaction(function () use ($kuesioner) {
             $newKuesioner = $kuesioner->replicate();
-            $newKuesioner->judul = $kuesioner->judul . ' (Salinan)';
+            $newKuesioner->judul = $kuesioner->judul.' (Salinan)';
             $newKuesioner->save();
 
             foreach ($kuesioner->sections as $section) {

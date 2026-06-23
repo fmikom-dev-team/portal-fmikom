@@ -4,7 +4,7 @@ namespace App\Enums;
 
 /**
  * Enum for career history types
- * 
+ *
  * Defines whether a career record is employment, education, or unemployment
  */
 enum CareerType: string
@@ -29,7 +29,7 @@ enum CareerType: string
      */
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::EMPLOYMENT => 'Pekerjaan',
             self::EDUCATION => 'Pendidikan',
             self::UNEMPLOYMENT => 'Tidak Bekerja',
@@ -41,7 +41,7 @@ enum CareerType: string
      */
     public function icon(): string
     {
-        return match($this) {
+        return match ($this) {
             self::EMPLOYMENT => 'briefcase',
             self::EDUCATION => 'graduation-cap',
             self::UNEMPLOYMENT => 'ban',
@@ -53,7 +53,7 @@ enum CareerType: string
      */
     public static function options(): array
     {
-        return array_map(fn($type) => [
+        return array_map(fn ($type) => [
             'value' => $type->value,
             'label' => $type->label(),
             'icon' => $type->icon(),
