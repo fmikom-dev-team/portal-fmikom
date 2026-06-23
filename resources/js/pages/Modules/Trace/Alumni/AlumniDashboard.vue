@@ -25,6 +25,8 @@ import {
 } from "lucide-vue-next";
 import { computed, ref, onMounted, nextTick } from "vue";
 import { TPageHeader, TStatCard, TSkeleton } from '@/components/Trace';
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import type { CarouselApi } from "@/components/ui/carousel";
 
 interface CompletenessItem {
     label: string;
@@ -72,11 +74,15 @@ const props = withDefaults(defineProps<{
     upcomingEventsCount: number;
     upcomingEvents?: UpcomingEvent[];
     pendingKuesionersCount: number;
+    pendingKuesioners?: Array<{ id: number; title: string; deskripsi: string | null }>;
+    totalKuesionersCount?: number;
     angkatan?: number | null;
     programStudi?: string | null;
 }>(), {
     recentApplications: () => [],
     upcomingEvents: () => [],
+    pendingKuesioners: () => [],
+    totalKuesionersCount: 0,
     angkatan: null,
     programStudi: null,
 });
@@ -135,11 +141,18 @@ onMounted(() => {
     nextTick(() => { isReady.value = true; });
 });
 
-const carouselRef = ref<HTMLElement | null>(null);
-const scrollCarousel = (dir: 'left' | 'right') => {
-    if (!carouselRef.value) return;
-    const amount = 280;
-    carouselRef.value.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' });
+const carouselApi = ref<CarouselApi | null>(null);
+const canScrollPrev = ref(false);
+const canScrollNext = ref(false);
+
+const onInitApi = (api: CarouselApi) => {
+    carouselApi.value = api;
+    canScrollPrev.value = api.canScrollPrev();
+    canScrollNext.value = api.canScrollNext();
+    api.on("select", () => {
+        canScrollPrev.value = api.canScrollPrev();
+        canScrollNext.value = api.canScrollNext();
+    });
 };
 
 const formatEventDate = (dateStr: string) => {
@@ -289,35 +302,66 @@ const formatTimeAgo = (dateStr: string) => {
                 />
                 <TStatCard
                     label="Kuesioner"
-                    :value="pendingKuesionersCount > 0 ? `${pendingKuesionersCount} pending` : '✓ Selesai'"
+                    :value="pendingKuesionersCount > 0 ? `${pendingKuesionersCount} pending` : props.totalKuesionersCount === 0 ? 'Tidak Ada' : '✓ Selesai'"
                     :icon="FileText"
-                    :color="pendingKuesionersCount > 0 ? 'accent' : 'emerald'"
-                    :trend-label="pendingKuesionersCount > 0 ? 'menunggu diisi' : 'semua telah diisi'"
+                    :color="pendingKuesionersCount > 0 ? 'accent' : props.totalKuesionersCount === 0 ? 'primary' : 'emerald'"
+                    :trend-label="pendingKuesionersCount > 0 ? 'menunggu diisi' : props.totalKuesionersCount === 0 ? 'belum ada kuesioner' : 'semua telah diisi'"
                 />
             </div>
 
-            <!-- ============ KUESIONER ALERT (only if pending) ============ -->
-            <div
-                v-if="pendingKuesionersCount > 0"
-                class="flex items-center gap-3 rounded-xl border border-amber-200/60 bg-amber-50/50 p-3.5 dark:border-amber-800/30 dark:bg-amber-950/20"
-            >
-                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/40">
-                    <ClipboardListIcon class="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+            <!-- ============ KUESIONER LIST SECTION ============ -->
+            <div class="rounded-2xl border border-slate-100 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+                            <ClipboardListIcon class="h-4 w-4" />
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Daftar Kuesioner</h3>
+                            <p class="text-[10px] text-slate-400">
+                                <span v-if="props.totalKuesionersCount === 0">Belum ada kuesioner</span>
+                                <span v-else-if="pendingKuesionersCount === 0">Semua kuesioner telah selesai diisi</span>
+                                <span v-else>{{ pendingKuesionersCount }} kuesioner menunggu respons Anda</span>
+                            </p>
+                        </div>
+                    </div>
                 </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-xs font-bold text-amber-800 dark:text-amber-300">
-                        Ada {{ pendingKuesionersCount }} kuesioner yang menunggu respons Anda
-                    </p>
-                    <p class="text-[10px] text-amber-600/60 dark:text-amber-400/50">
-                        Respons Anda membantu meningkatkan kualitas pendidikan
-                    </p>
+
+                <!-- Case 1: No questionnaires in system at all -->
+                <div v-if="props.totalKuesionersCount === 0" class="flex flex-col items-center justify-center py-6 text-center">
+                    <div class="mb-2 text-2xl">📝</div>
+                    <p class="text-xs font-bold text-slate-500 dark:text-zinc-400">Belum ada kuesioner</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Saat ini belum ada kuesioner aktif yang diterbitkan.</p>
                 </div>
-                <Link
-                    href="/trace/kuesioner"
-                    class="shrink-0 inline-flex items-center gap-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold px-3 py-1.5 transition-colors"
-                >
-                    Isi <ArrowRight class="h-3 w-3" />
-                </Link>
+
+                <!-- Case 2: All filled (completed) -->
+                <div v-else-if="pendingKuesionersCount === 0" class="flex flex-col items-center justify-center py-6 text-center">
+                    <div class="mb-2 text-2xl text-emerald-500">✓</div>
+                    <p class="text-xs font-bold text-emerald-600 dark:text-emerald-400">Selesai</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Semua kuesioner telah Anda isi. Terima kasih atas partisipasi Anda!</p>
+                </div>
+
+                <!-- Case 3: List of pending questionnaires -->
+                <div v-else class="space-y-3">
+                    <div
+                        v-for="kuesioner in pendingKuesioners"
+                        :key="kuesioner.id"
+                        class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-amber-200/50 bg-amber-50/20 dark:border-amber-900/30 dark:bg-amber-950/10 hover:border-amber-300 dark:hover:border-amber-800 transition-all"
+                    >
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold text-slate-900 dark:text-white mb-0.5">{{ kuesioner.title }}</p>
+                            <p class="text-[10px] text-slate-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+                                {{ kuesioner.deskripsi || 'Tidak ada deskripsi kuesioner.' }}
+                            </p>
+                        </div>
+                        <Link
+                            :href="`/trace/kuesioner/${kuesioner.id}`"
+                            class="shrink-0 self-start sm:self-center inline-flex items-center gap-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold px-3.5 py-2 transition-colors shadow-sm shadow-amber-600/10"
+                        >
+                            Isi Kuesioner <ArrowRight class="h-3 w-3" />
+                        </Link>
+                    </div>
+                </div>
             </div>
 
             <!-- ============ RECENT APPLICATIONS (full width) ============ -->
@@ -425,14 +469,18 @@ const formatTimeAgo = (dateStr: string) => {
                     </div>
                     <div class="flex items-center gap-1.5">
                         <button
-                            @click="scrollCarousel('left')"
-                            class="h-7 w-7 flex items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+                            @click="carouselApi?.scrollPrev()"
+                            :disabled="!canScrollPrev"
+                            class="h-7 w-7 flex items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            aria-label="Previous event slide"
                         >
                             <ChevronLeft class="h-3.5 w-3.5 text-slate-500 dark:text-zinc-400" />
                         </button>
                         <button
-                            @click="scrollCarousel('right')"
-                            class="h-7 w-7 flex items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+                            @click="carouselApi?.scrollNext()"
+                            :disabled="!canScrollNext"
+                            class="h-7 w-7 flex items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            aria-label="Next event slide"
                         >
                             <ChevronRight class="h-3.5 w-3.5 text-slate-500 dark:text-zinc-400" />
                         </button>
@@ -440,57 +488,63 @@ const formatTimeAgo = (dateStr: string) => {
                 </div>
 
                 <!-- Carousel Track -->
-                <div
-                    ref="carouselRef"
-                    class="flex gap-3 overflow-x-auto px-5 pb-5 snap-x snap-mandatory scrollbar-none"
-                    style="-webkit-overflow-scrolling: touch;"
+                <Carousel
+                    @init-api="onInitApi"
+                    :opts="{ align: 'start', loop: false }"
+                    class="w-full"
                 >
-                    <Link
-                        v-for="event in upcomingEvents"
-                        :key="event.id"
-                        :href="`/trace/events/${event.id}`"
-                        class="group relative flex-shrink-0 w-[260px] snap-start rounded-2xl border border-slate-100 dark:border-zinc-800 overflow-hidden transition-all hover:shadow-md hover:border-sky-200 dark:hover:border-sky-800"
-                    >
-                        <!-- Poster / Gradient BG -->
-                        <div class="h-28 w-full bg-gradient-to-br from-sky-500 to-indigo-600 relative overflow-hidden">
-                            <img
-                                v-if="event.poster_path"
-                                :src="`/storage/${event.poster_path}`"
-                                :alt="event.title"
-                                class="h-full w-full object-cover"
-                            />
-                            <!-- Registered badge -->
-                            <span
-                                v-if="event.is_registered"
-                                class="absolute top-2 right-2 text-[9px] font-bold bg-emerald-500 text-white px-2 py-0.5 rounded-full"
+                    <CarouselContent class="-ml-3 px-5 pb-5 pt-1">
+                        <CarouselItem
+                            v-for="event in upcomingEvents"
+                            :key="event.id"
+                            class="basis-[260px] pl-3"
+                        >
+                            <Link
+                                :href="`/trace/events/${event.id}`"
+                                class="group relative block w-full rounded-2xl border border-slate-100 dark:border-zinc-800 overflow-hidden transition-all hover:shadow-md hover:border-sky-200 dark:hover:border-sky-800 bg-white dark:bg-zinc-900"
                             >
-                                ✓ Terdaftar
-                            </span>
-                        </div>
-                        <!-- Info -->
-                        <div class="p-3.5">
-                            <p class="text-xs font-bold text-slate-800 dark:text-white truncate group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
-                                {{ event.title }}
-                            </p>
-                            <div class="flex items-center gap-3 mt-1.5">
-                                <span class="text-[10px] text-slate-400 dark:text-zinc-500 flex items-center gap-0.5">
-                                    <CalendarCheck class="h-3 w-3" />
-                                    {{ formatEventDate(event.event_date) }}, {{ formatEventDay(event.event_date) }}
-                                </span>
-                            </div>
-                            <div class="flex items-center gap-3 mt-1">
-                                <span v-if="event.event_time_start" class="text-[10px] text-slate-400 dark:text-zinc-500 flex items-center gap-0.5">
-                                    <Clock class="h-3 w-3" />
-                                    {{ event.event_time_start?.substring(0, 5) }} WIB
-                                </span>
-                                <span v-if="event.location" class="text-[10px] text-slate-400 dark:text-zinc-500 flex items-center gap-0.5 truncate">
-                                    <MapPin class="h-3 w-3 shrink-0" />
-                                    {{ event.location }}
-                                </span>
-                            </div>
-                        </div>
-                    </Link>
-                </div>
+                                <!-- Poster / Gradient BG -->
+                                <div class="h-28 w-full bg-gradient-to-br from-sky-500 to-indigo-600 relative overflow-hidden">
+                                    <img
+                                        v-if="event.poster_path"
+                                        :src="`/storage/${event.poster_path}`"
+                                        :alt="event.title"
+                                        class="h-full w-full object-cover"
+                                    />
+                                    <!-- Registered badge -->
+                                    <span
+                                        v-if="event.is_registered"
+                                        class="absolute top-2 right-2 text-[9px] font-bold bg-emerald-500 text-white px-2 py-0.5 rounded-full"
+                                    >
+                                        ✓ Terdaftar
+                                    </span>
+                                </div>
+                                <!-- Info -->
+                                <div class="p-3.5">
+                                    <p class="text-xs font-bold text-slate-800 dark:text-white truncate group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+                                        {{ event.title }}
+                                    </p>
+                                    <div class="flex items-center gap-3 mt-1.5">
+                                        <span class="text-[10px] text-slate-400 dark:text-zinc-500 flex items-center gap-0.5">
+                                            <CalendarCheck class="h-3 w-3" />
+                                            {{ formatEventDate(event.event_date) }}, {{ formatEventDay(event.event_date) }}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-3 mt-1">
+                                        <span v-if="event.event_time_start" class="text-[10px] text-slate-400 dark:text-zinc-500 flex items-center gap-0.5">
+                                            <Clock class="h-3 w-3" />
+                                            {{ event.event_time_start?.substring(0, 5) }} WIB
+                                        </span>
+                                        <span v-if="event.location" class="text-[10px] text-slate-400 dark:text-zinc-500 flex items-center gap-0.5 truncate">
+                                            <MapPin class="h-3 w-3 shrink-0" />
+                                            {{ event.location }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </Link>
+                        </CarouselItem>
+                    </CarouselContent>
+                </Carousel>
             </div>
 
             <!-- ============ QUICK ACTIONS (Conditional) ============ -->

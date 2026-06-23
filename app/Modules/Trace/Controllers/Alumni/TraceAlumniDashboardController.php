@@ -106,9 +106,20 @@ class TraceAlumniDashboardController extends Controller
             $answeredKuesionerIds = Response::where('user_id', $userId)
                 ->pluck('kuesioner_id');
 
-            $pendingKuesionersCount = Kuesioner::whereIn('status', ['active', 'published'])
-                ->whereNotIn('id', $answeredKuesionerIds)
-                ->count();
+            $pendingQuery = Kuesioner::whereIn('status', ['active', 'published'])
+                ->whereNotIn('id', $answeredKuesionerIds);
+
+            $pendingKuesionersCount = $pendingQuery->count();
+
+            $pendingKuesioners = $pendingQuery->get(['id', 'judul', 'deskripsi'])
+                ->map(fn ($k) => [
+                    'id' => $k->id,
+                    'title' => $k->judul,
+                    'deskripsi' => $k->deskripsi,
+                ])
+                ->toArray();
+
+            $totalKuesionersCount = Kuesioner::whereIn('status', ['active', 'published'])->count();
 
             // Use pending count to determine if there are pending kuesioners
             $hasFilledKuesioner = $pendingKuesionersCount === 0 && $answeredKuesionerIds->isNotEmpty();
@@ -125,6 +136,8 @@ class TraceAlumniDashboardController extends Controller
                 'upcomingEventsCount' => $upcomingEventsCount,
                 'upcomingEvents' => $upcomingEvents,
                 'pendingKuesionersCount' => $pendingKuesionersCount,
+                'pendingKuesioners' => $pendingKuesioners,
+                'totalKuesionersCount' => $totalKuesionersCount,
                 'angkatan' => $profile?->angkatan,
                 'programStudi' => $user->programStudi?->nama,
             ];

@@ -64,12 +64,18 @@ const props = withDefaults(
 		// biome-ignore lint/suspicious/noExplicitAny: library config
 		latest_posts?: Array<any>;
 		pinned_announcement?: any;
+		alumni_data?: Array<any>;
+		total_alumni?: number;
+		alumni_stats?: any;
 	}>(),
 	{
 		canRegister: true,
 		settings: () => ({}),
 		latest_posts: () => [],
 		pinned_announcement: null,
+		alumni_data: () => [],
+		total_alumni: 0,
+		alumni_stats: () => ({}),
 	},
 );
 
@@ -766,7 +772,7 @@ const currentYear = new Date().getFullYear();
 
         <!-- ALUMNI MAP TRACKING SECTION -->
         <LazyWrapper>
-            <AlumniMap />
+            <AlumniMap :alumni-data="alumni_data" :total-alumni="total_alumni" :alumni-stats="alumni_stats" />
         </LazyWrapper>
         </main>
 

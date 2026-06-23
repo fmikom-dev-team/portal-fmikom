@@ -6,6 +6,8 @@ use App\Models\Portal\PortalDocument;
 use App\Models\Portal\PortalPost;
 use App\Models\Portal\PortalSetting;
 use App\Models\Role;
+use App\Models\Tracer\Employment;
+use App\Models\Tracer\ProfilAlumni;
 use App\Models\User;
 use App\Modules\Coreportal\Controllers\PortalController;
 use App\Modules\Portal\Controllers\PortalAcademicCalendarController;
@@ -82,11 +84,104 @@ Route::get('/', function () {
             ->first();
     });
 
+    $total_alumni = Cache::remember('portal_total_alumni', 600, function () {
+        try {
+            return ProfilAlumni::count();
+        } catch (Throwable $e) {
+            return 0;
+        }
+    });
+
+    $alumni_data = Cache::remember('portal_welcome_alumni_data', 600, function () {
+        try {
+            return ProfilAlumni::with([
+                'user:id,name,tahun_lulus,foto_path',
+                'provinsi:id,name',
+                'kota:id,name',
+                'careers' => function ($query) {
+                    $query->where('is_current', true)
+                        ->whereIn('status', ['bekerja', 'wirausaha', 'lanjut_studi'])
+                        ->with([
+                            'employment:career_history_id,nama_perusahaan,jabatan',
+                            'education:career_history_id,nama_universitas,program_studi_lanjutan',
+                        ]);
+                },
+            ])
+                ->whereHas('user')
+                ->whereHas('careers', function ($query) {
+                    $query->where('is_current', true)
+                        ->whereIn('status', ['bekerja', 'wirausaha', 'lanjut_studi']);
+                })
+                ->get()
+                ->map(function ($alumni) {
+                    $currentCareer = $alumni->careers->first();
+                    $careerInfo = '';
+                    if ($currentCareer) {
+                        if ($currentCareer->status->value === 'bekerja') {
+                            $emp = $currentCareer->employment;
+                            $careerInfo = $emp ? ($emp->jabatan.' di '.$emp->nama_perusahaan) : 'Bekerja';
+                        } elseif ($currentCareer->status->value === 'wirausaha') {
+                            $emp = $currentCareer->employment;
+                            $careerInfo = $emp ? ('Wirausaha ('.$emp->nama_perusahaan.')') : 'Wirausaha';
+                        } elseif ($currentCareer->status->value === 'lanjut_studi') {
+                            $edu = $currentCareer->education;
+                            $careerInfo = $edu ? ('Lanjut Studi di '.$edu->nama_universitas) : 'Lanjut Studi';
+                        }
+                    }
+
+                    $lat = (! empty($currentCareer?->latitude) && $currentCareer->latitude != 0) ? $currentCareer->latitude : $alumni->latitude_rumah;
+                    $lng = (! empty($currentCareer?->longitude) && $currentCareer->longitude != 0) ? $currentCareer->longitude : $alumni->longitude_rumah;
+
+                    return [
+                        'id' => $alumni->id,
+                        'name' => $alumni->user->name,
+                        'tahun_lulus' => $alumni->user->tahun_lulus ?? $alumni->angkatan,
+                        'foto_path' => $alumni->user->foto_path,
+                        'provinsi' => $alumni->provinsi?->name,
+                        'kota' => $alumni->kota?->name,
+                        'status' => $currentCareer?->status?->value,
+                        'detail_karir' => $careerInfo,
+                        'latitude' => $lat,
+                        'longitude' => $lng,
+                    ];
+                })
+                ->toArray();
+        } catch (Throwable $e) {
+            return [];
+        }
+    });
+
+    $alumni_stats = Cache::remember('portal_welcome_alumni_stats', 600, function () {
+        try {
+            $alumni = ProfilAlumni::count();
+            $provinsi = ProfilAlumni::distinct('provinsi_id')->whereNotNull('provinsi_id')->count();
+            $perusahaan = Employment::distinct('nama_perusahaan')->whereNotNull('nama_perusahaan')->count();
+            $luarNegeri = ProfilAlumni::whereNull('provinsi_id')->whereNotNull('alamat_rumah')->count();
+
+            return [
+                'alumni' => $alumni,
+                'provinsi' => $provinsi,
+                'perusahaan' => $perusahaan,
+                'luarNegeri' => $luarNegeri,
+            ];
+        } catch (Throwable $e) {
+            return [
+                'alumni' => 0,
+                'provinsi' => 0,
+                'perusahaan' => 0,
+                'luarNegeri' => 0,
+            ];
+        }
+    });
+
     return Inertia::render('Welcome', [
         'canRegister' => Features::enabled(Features::registration()),
         'settings' => $settings,
         'latest_posts' => $latest_posts,
         'pinned_announcement' => $pinned_announcement,
+        'total_alumni' => $total_alumni,
+        'alumni_data' => $alumni_data,
+        'alumni_stats' => $alumni_stats,
     ]);
 })->name('home');
 
