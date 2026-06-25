@@ -104,8 +104,7 @@
 		"lint:check": ["pint --parallel --test"],
 		"ci:check": [
 			"Composer\\Config::disableProcessTimeout",
-			"npm run lint:check",
-			"npm run format:check",
+			"npm run lint",
 			"npm run types:check",
 			"@test"
 		],

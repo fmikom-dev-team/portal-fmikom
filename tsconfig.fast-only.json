@@ -1,0 +1,7 @@
+﻿{
+  "extends": "./tsconfig.json",
+  "include": [
+    "resources/js/pages/Modules/Fast/**/*",
+    "resources/js/pages/fast/user/**/*"
+  ]
+}

@@ -708,7 +708,7 @@ const submitLabel = computed(() =>
                     class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4"
                 >
                     <a
-                        :href="returnTo"
+                        :href="returnTo ?? undefined"
                         class="fast-btn fast-btn-outline items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-700"
                     >
                         <ChevronLeft class="size-4" /> Kembali
