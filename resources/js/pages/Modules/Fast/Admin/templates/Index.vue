@@ -139,7 +139,7 @@ type SuratKomponen =
           margin_left?: number;
       }
     | { type: 'spasi'; tinggi: number }
-    | { type: 'garis' };
+    | { type: 'garis'; font_size?: string; margin_left?: number };
 type FieldOption = { label: string; value: string };
 type FieldConfig = {
     name: string;
@@ -171,6 +171,7 @@ type Template = {
 type JenisSuratItem = {
     id: number;
     nama: string;
+    slug?: string | null;
     is_active: boolean;
     category?: { id?: number | null; nama?: string | null } | null;
     template?: { id: number; name: string; version: number } | null;
@@ -236,7 +237,7 @@ const showGlobalSettings = ref(false);
 const activeTab = ref<'template' | 'fields' | 'meta'>('template');
 const toastMessage = ref('');
 const toastVariant = ref<'success' | 'error'>('success');
-let toastTimer: ReturnType<typeof window.setTimeout> | null = null;
+let toastTimer: number | null = null;
 
 function showToast(message: string, variant: 'success' | 'error' = 'success') {
     if (toastTimer !== null) {
@@ -387,7 +388,7 @@ function prepareKomponenForUi(items?: SuratKomponen[]) {
 function normalizeKomponenFontSize(items: SuratKomponen[]): SuratKomponen[] {
     return items.map((item) => {
         if (!item || typeof item !== 'object') return item;
-        if (['spasi', 'garis'].includes(item.type)) return item;
+        if (item.type === 'spasi' || item.type === 'garis') return item;
         if (typeof item.font_size === 'string' && item.font_size.trim() !== '') return item;
         return { ...item, font_size: '12pt' };
     });

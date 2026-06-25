@@ -11,6 +11,7 @@ use App\Modules\Fast\Template\Renderers\SuratTemplateRendererService;
 use App\Modules\Fast\Workflow\Actions\SuratWorkflowService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -65,20 +66,52 @@ class LetterController extends Controller
         return redirect()->route('admin.surat.form', $validated['jenis_surat_id']);
     }
 
-    public function form(JenisSurat $jenisSurat): Response
+    public function form(Request $request, JenisSurat $jenisSurat): Response
     {
         $jenisSurat->loadMissing(['category', 'template.placeholders', 'approvalRole']);
 
         abort_if(! $jenisSurat->is_active || $jenisSurat->template === null, 404);
 
+        $formData = [
+            'jenis_surat_id' => $jenisSurat->id,
+            'keperluan' => '',
+            ...SuratDataContract::adminManualFieldDefaults(),
+            'kepada_yth' => [],
+            'data' => $this->initialDynamicData($jenisSurat),
+        ];
+
+        $previewState = $request->session()->get('admin_surat_preview');
+        if (
+            $request->boolean('resume_preview')
+            && is_array($previewState)
+            && (int) ($previewState['jenisSuratId'] ?? 0) === $jenisSurat->id
+        ) {
+            $payload = $previewState['payload'] ?? [];
+
+            if (is_array($payload)) {
+                $manualData = SuratDataContract::extractManualDataFromValidatedPayload($payload);
+                $dynamicData = is_array($payload['data'] ?? null) ? $payload['data'] : [];
+
+                $formData = array_replace(
+                    $formData,
+                    [
+                        'keperluan' => (string) ($payload['keperluan'] ?? ''),
+                        ...array_replace(
+                            SuratDataContract::adminManualFieldDefaults(),
+                            Arr::only($manualData, SuratDataContract::adminManualScalarFields()),
+                        ),
+                        'kepada_yth' => is_array($manualData['kepada_yth'] ?? null)
+                            ? $manualData['kepada_yth']
+                            : [],
+                        'data' => array_replace($formData['data'], $dynamicData),
+                    ]
+                );
+            }
+        }
+
         return Inertia::render('admin/letters/Form', [
             'jenisSurat' => $this->serializeJenisSurat($jenisSurat),
-            'formData' => [
-                'jenis_surat_id' => $jenisSurat->id,
-                'keperluan' => '',
-                ...SuratDataContract::adminManualFieldDefaults(),
-                'data' => $this->initialDynamicData($jenisSurat),
-            ],
+            'formData' => $formData,
         ]);
     }
 
@@ -96,65 +129,24 @@ class LetterController extends Controller
 
     public function previewPage(Request $request): Response
     {
-        $previewState = $request->session()->get('admin_surat_preview');
-
-        abort_if(! is_array($previewState), 404, 'Data preview surat tidak ditemukan.');
-
-        $jenisSurat = JenisSurat::query()
-            ->with(['category', 'template.placeholders', 'approvalRole'])
-            ->where('is_active', true)
-            ->findOrFail((int) ($previewState['jenisSuratId'] ?? 0));
-
-        $payload = $previewState['payload'] ?? [];
-        abort_if(! is_array($payload), 404, 'Payload preview surat tidak valid.');
-
-        $user = $request->user()?->loadMissing('programStudi');
-
-        $previewData = $payload['data'];
-
-        $previewData = array_replace(
-            $previewData,
-            SuratDataContract::extractManualDataFromValidatedPayload($payload),
-        );
-
-        $rendered = $this->templateService->renderJenisSuratPreview(
-            $jenisSurat,
-            $previewData,
-            [
-                'approval_role_slug' => $this->approvalRoleSlug($jenisSurat),
-                'tanggal_surat' => now(),
-                'kota_surat' => \DB::table('template_global_settings')->where('key', 'kota_surat')->value('value') ?? 'Cilacap',
-                'pemohon_program_studi_id' => $user?->program_studi_id,
-                'surat' => [
-                    'nomor_surat' => 'AUTO/GENERATED/AFTER/APPROVAL',
-                    'keperluan' => $payload['keperluan'],
-                    'tanggal_pengajuan' => now(),
-                    'tanggal_kebutuhan' => $payload['tanggal_kebutuhan'] ?? null,
-                    'type' => 'surat_keluar',
-                ],
-                'user' => [
-                    'name' => $user?->name,
-                    'email' => $user?->email,
-                    'nim_nip' => $user?->nim_nip,
-                    'nomor_induk' => $user?->nomor_induk,
-                    'no_telepon' => $user?->no_telepon,
-                    'programStudi' => [
-                        'nama' => $user?->programStudi?->nama,
-                    ],
-                ],
-            ],
-            'pdf',
-        );
+        [$jenisSurat, $payload, $previewDocumentHtml] = $this->buildPreviewDocument($request);
 
         return Inertia::render('admin/letters/Preview', [
             'jenisSurat' => $this->serializeJenisSurat($jenisSurat),
             'formData' => $payload,
-            'renderedHtml' => $rendered['html'],
-            'previewDocumentHtml' => $this->templateService->wrapDocumentHtml(
-                'Preview '.$jenisSurat->nama,
-                $rendered['html'],
-                $jenisSurat->template,
-            ),
+            'renderedHtml' => $previewDocumentHtml,
+            'previewDocumentUrl' => route('admin.surat.preview-html', absolute: false),
+        ]);
+    }
+
+    public function previewHtml(Request $request): HttpResponse
+    {
+        [, , $previewDocumentHtml] = $this->buildPreviewDocument($request);
+
+        return response($previewDocumentHtml, 200, [
+            'Content-Type' => 'text/html; charset=utf-8',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
         ]);
     }
 
@@ -331,6 +323,72 @@ class LetterController extends Controller
     protected function approvalRoleSlug(JenisSurat $jenisSurat): ?string
     {
         return $jenisSurat->approvalRole?->slug;
+    }
+
+    /**
+     * @return array{0: JenisSurat, 1: array<string, mixed>, 2: string}
+     */
+    protected function buildPreviewDocument(Request $request): array
+    {
+        $previewState = $request->session()->get('admin_surat_preview');
+
+        abort_if(! is_array($previewState), 404, 'Data preview surat tidak ditemukan.');
+
+        $jenisSurat = JenisSurat::query()
+            ->with(['category', 'template.placeholders', 'approvalRole'])
+            ->where('is_active', true)
+            ->findOrFail((int) ($previewState['jenisSuratId'] ?? 0));
+
+        $payload = $previewState['payload'] ?? [];
+        abort_if(! is_array($payload), 404, 'Payload preview surat tidak valid.');
+
+        $user = $request->user()?->loadMissing('programStudi');
+
+        $previewData = $payload['data'];
+
+        $previewData = array_replace(
+            $previewData,
+            SuratDataContract::extractManualDataFromValidatedPayload($payload),
+        );
+
+        $rendered = $this->templateService->renderJenisSuratPreview(
+            $jenisSurat,
+            $previewData,
+            [
+                'approval_role_slug' => $this->approvalRoleSlug($jenisSurat),
+                'tanggal_surat' => now(),
+                'kota_surat' => \DB::table('template_global_settings')->where('key', 'kota_surat')->value('value') ?? 'Cilacap',
+                'pemohon_program_studi_id' => $user?->program_studi_id,
+                'surat' => [
+                    'nomor_surat' => 'AUTO/GENERATED/AFTER/APPROVAL',
+                    'keperluan' => $payload['keperluan'],
+                    'tanggal_pengajuan' => now(),
+                    'tanggal_kebutuhan' => $payload['tanggal_kebutuhan'] ?? null,
+                    'type' => 'surat_keluar',
+                ],
+                'user' => [
+                    'name' => $user?->name,
+                    'email' => $user?->email,
+                    'nim_nip' => $user?->nim_nip,
+                    'nomor_induk' => $user?->nomor_induk,
+                    'no_telepon' => $user?->no_telepon,
+                    'programStudi' => [
+                        'nama' => $user?->programStudi?->nama,
+                    ],
+                ],
+            ],
+            'pdf',
+        );
+
+        return [
+            $jenisSurat,
+            $payload,
+            $this->templateService->wrapDocumentHtml(
+                'Preview '.$jenisSurat->nama,
+                $rendered['html'],
+                $jenisSurat->template,
+            ),
+        ];
     }
 
     /**
