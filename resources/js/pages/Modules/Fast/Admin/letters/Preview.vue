@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // resources/js/pages/Modules/Fast/Admin/letters/Preview.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import LetterStepIndicator from '@/components/Modules/Fast/Admin/LetterStepIndicator.vue';
 import {
@@ -68,7 +68,7 @@ function submit() {
     form.post('/admin/surat/store');
 }
 function goBack() {
-    window.history.back();
+    router.visit(`/admin/surat/form/${props.jenisSurat.id}?resume_preview=1`);
 }
 const needsApproval = !!props.jenisSurat.approval_role?.id;
 const steps = needsApproval
