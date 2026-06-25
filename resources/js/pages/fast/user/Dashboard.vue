@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
-import Page from '@/pages/Modules/Fast/Mahasiswa/Dashboard.vue';
-import { useAttrs } from 'vue';
+import { useAttrs } from "vue";
+import Page from "@/pages/Modules/Fast/Mahasiswa/Dashboard.vue";
 
 defineOptions({ inheritAttrs: false });
 const passThroughProps = useAttrs() as any;

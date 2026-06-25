@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
-import Page from '@/pages/Modules/Fast/Mahasiswa/History.vue';
-import { useAttrs } from 'vue';
+import { useAttrs } from "vue";
+import Page from "@/pages/Modules/Fast/Mahasiswa/History.vue";
 
 defineOptions({ inheritAttrs: false });
 const passThroughProps = useAttrs() as any;
