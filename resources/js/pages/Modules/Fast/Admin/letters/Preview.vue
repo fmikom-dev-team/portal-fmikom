@@ -2,7 +2,7 @@
 // resources/js/pages/Modules/Fast/Admin/letters/Preview.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import LetterStepIndicator from '@/components/Modules/Fast/Admin/LetterStepIndicator.vue';
 import {
     ChevronLeft,
@@ -11,17 +11,6 @@ import {
     Maximize2,
     Minimize2,
 } from 'lucide-vue-next';
-import { computed, onMounted, onUnmounted } from 'vue';
-// Buat blob URL dari HTML agar tidak perlu sandbox
-const blobUrl = ref('');
-onMounted(() => {
-    const blob = new Blob([props.previewDocumentHtml], { type: 'text/html' });
-    blobUrl.value = URL.createObjectURL(blob);
-});
-onUnmounted(() => {
-    if (blobUrl.value) URL.revokeObjectURL(blobUrl.value);
-});
-const previewBlobUrl = computed(() => blobUrl.value);
 type JenisSurat = {
     id: number;
     nama: string;
@@ -53,7 +42,7 @@ const props = defineProps<{
     jenisSurat: JenisSurat;
     formData: FormData;
     renderedHtml: string;
-    previewDocumentHtml: string;
+    previewDocumentUrl: string;
 }>();
 const form = useForm({
     jenis_surat_id: props.formData.jenis_surat_id,
@@ -64,6 +53,17 @@ const form = useForm({
     form_data: props.formData.data,
 });
 const fullPreview = ref(false);
+const previewDocumentUrl = computed(() => props.previewDocumentUrl);
+const workflowStatusLabel = computed(() =>
+    needsApproval
+        ? `Perlu approval${props.jenisSurat.approval_role?.nama ? ` ${props.jenisSurat.approval_role.nama}` : ''}`
+        : 'Langsung selesai',
+);
+const workflowStatusDescription = computed(() =>
+    needsApproval
+        ? 'Surat akan masuk ke alur validasi sebelum generate PDF.'
+        : 'Surat langsung dibuat dan PDF digenerate setelah submit.',
+);
 function submit() {
     form.post('/admin/surat/store');
 }
@@ -146,7 +146,7 @@ const steps = needsApproval
                     >
                         <iframe
                             class="h-full w-full border-0"
-                            :src="previewBlobUrl"
+                            :src="previewDocumentUrl"
                             title="Preview surat"
                         />
                     </div>
@@ -218,6 +218,7 @@ const steps = needsApproval
                                     :key="k"
                                     class="text-slate-700"
                                 >
+                                    {{ k }}
                                 </p>
                             </div>
                         </div>
@@ -258,9 +259,12 @@ const steps = needsApproval
                                 : 'bg-blue-50 text-blue-700'
                         "
                     >
-                        {{
-                            needsApproval
-                        }}
+                        <p class="font-semibold">
+                            {{ workflowStatusLabel }}
+                        </p>
+                        <p class="mt-1 leading-5">
+                            {{ workflowStatusDescription }}
+                        </p>
                     </div>
                 </div>
             </div>

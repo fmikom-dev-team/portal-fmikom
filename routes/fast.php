@@ -215,6 +215,8 @@ Route::middleware(['auth', 'verified', 'admin.access'])
             ->name('surat.select-type');
         Route::get('/surat/form/{jenisSurat}', [LetterController::class, 'form'])
             ->name('surat.form');
+        Route::get('/surat/preview/html', [LetterController::class, 'previewHtml'])
+            ->name('surat.preview-html');
         Route::get('/surat/preview', [LetterController::class, 'previewPage'])
             ->name('surat.preview-page');
         Route::post('/surat/preview', [LetterController::class, 'preview'])
