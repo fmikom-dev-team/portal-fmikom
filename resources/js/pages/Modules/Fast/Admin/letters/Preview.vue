@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // resources/js/pages/Modules/Fast/Admin/letters/Preview.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import LetterStepIndicator from '@/components/Modules/Fast/Admin/LetterStepIndicator.vue';
 import {
