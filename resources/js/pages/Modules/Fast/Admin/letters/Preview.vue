@@ -68,7 +68,7 @@ function submit() {
     form.post('/admin/surat/store');
 }
 function goBack() {
-    window.history.back();
+    router.visit(`/admin/surat/form/${props.jenisSurat.id}?resume_preview=1`);
 }
 const needsApproval = !!props.jenisSurat.approval_role?.id;
 const steps = needsApproval

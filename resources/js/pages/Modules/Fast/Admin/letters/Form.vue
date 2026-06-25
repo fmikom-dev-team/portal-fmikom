@@ -49,6 +49,8 @@ type FormData = {
     jenis_surat_id: number;
     keperluan: string;
     perihal?: string;
+    kepada_yth?: string[];
+    lampiran_keterangan?: string;
     data: Record<string, string | boolean | string[]>;
 };
 const props = defineProps<{ jenisSurat: JenisSurat; formData: FormData }>();
@@ -61,9 +63,18 @@ const defaultPresets = [
 const form = useForm({
     jenis_surat_id: props.formData.jenis_surat_id,
     keperluan: props.formData.keperluan ?? '',
-    perihal: props.formData.perihal ?? '',
-    kepada_yth: [] as string[],
-    lampiran_keterangan: '',
+    perihal:
+        props.formData.perihal ??
+        (props.formData.data.perihal as string | undefined) ??
+        '',
+    kepada_yth:
+        props.formData.kepada_yth ??
+        (props.formData.data.kepada_yth as string[] | undefined) ??
+        ([] as string[]),
+    lampiran_keterangan:
+        props.formData.lampiran_keterangan ??
+        (props.formData.data.lampiran_keterangan as string | undefined) ??
+        '',
     form_data: { ...props.formData.data } as Record<
         string,
         string | boolean | string[]

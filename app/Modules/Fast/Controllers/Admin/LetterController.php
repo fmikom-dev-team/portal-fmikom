@@ -66,20 +66,52 @@ class LetterController extends Controller
         return redirect()->route('admin.surat.form', $validated['jenis_surat_id']);
     }
 
-    public function form(JenisSurat $jenisSurat): Response
+    public function form(Request $request, JenisSurat $jenisSurat): Response
     {
         $jenisSurat->loadMissing(['category', 'template.placeholders', 'approvalRole']);
 
         abort_if(! $jenisSurat->is_active || $jenisSurat->template === null, 404);
 
+        $formData = [
+            'jenis_surat_id' => $jenisSurat->id,
+            'keperluan' => '',
+            ...SuratDataContract::adminManualFieldDefaults(),
+            'kepada_yth' => [],
+            'data' => $this->initialDynamicData($jenisSurat),
+        ];
+
+        $previewState = $request->session()->get('admin_surat_preview');
+        if (
+            $request->boolean('resume_preview')
+            && is_array($previewState)
+            && (int) ($previewState['jenisSuratId'] ?? 0) === $jenisSurat->id
+        ) {
+            $payload = $previewState['payload'] ?? [];
+
+            if (is_array($payload)) {
+                $manualData = SuratDataContract::extractManualDataFromValidatedPayload($payload);
+                $dynamicData = is_array($payload['data'] ?? null) ? $payload['data'] : [];
+
+                $formData = array_replace(
+                    $formData,
+                    [
+                        'keperluan' => (string) ($payload['keperluan'] ?? ''),
+                        ...array_replace(
+                            SuratDataContract::adminManualFieldDefaults(),
+                            Arr::only($manualData, SuratDataContract::adminManualScalarFields()),
+                        ),
+                        'kepada_yth' => is_array($manualData['kepada_yth'] ?? null)
+                            ? $manualData['kepada_yth']
+                            : [],
+                        'data' => array_replace($formData['data'], $dynamicData),
+                    ]
+                );
+            }
+        }
+
         return Inertia::render('admin/letters/Form', [
             'jenisSurat' => $this->serializeJenisSurat($jenisSurat),
-            'formData' => [
-                'jenis_surat_id' => $jenisSurat->id,
-                'keperluan' => '',
-                ...SuratDataContract::adminManualFieldDefaults(),
-                'data' => $this->initialDynamicData($jenisSurat),
-            ],
+            'formData' => $formData,
         ]);
     }
 
