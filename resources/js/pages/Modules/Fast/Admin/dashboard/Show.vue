@@ -207,6 +207,12 @@ function openDownloadPdf() {
     viewerOpen.value = true;
 }
 
+function openInNewTab() {
+    if (viewerUrl.value) {
+        window.open(viewerUrl.value, '_blank', 'noopener,noreferrer');
+    }
+}
+
 function goBack() {
     if (window.history.length > 1) {
         window.history.back();
