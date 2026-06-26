@@ -44,12 +44,7 @@ class ApprovalService
         }
 
         if ($search !== '') {
-            $query->whereHas('pemohon', function ($pemohonQuery) use ($search): void {
-                $pemohonQuery
-                    ->where('name', 'like', "%{$search}%")
-                    ->orWhere('nomor_induk', 'like', "%{$search}%")
-                    ->orWhere('nomor_induk', 'like', "%{$search}%");
-            });
+            $this->applySubjectSearch($query, $search);
         }
 
         $surats = $query
@@ -109,11 +104,7 @@ class ApprovalService
             ->whereIn('status', $effectiveStatuses);
 
         if ($search !== '') {
-            $query->whereHas('pemohon', function ($pemohonQuery) use ($search): void {
-                $pemohonQuery->where('name', 'like', "%{$search}%")
-                    ->orWhere('nomor_induk', 'like', "%{$search}%")
-                    ->orWhere('nomor_induk', 'like', "%{$search}%");
-            });
+            $this->applySubjectSearch($query, $search);
         }
 
         if ($categoryId > 0) {
@@ -171,11 +162,7 @@ class ApprovalService
         }
 
         if ($search !== '') {
-            $query->whereHas('pemohon', function ($pemohonQuery) use ($search): void {
-                $pemohonQuery->where('name', 'like', "%{$search}%")
-                    ->orWhere('nomor_induk', 'like', "%{$search}%")
-                    ->orWhere('nomor_induk', 'like', "%{$search}%");
-            });
+            $this->applySubjectSearch($query, $search);
         }
 
         $surats = $query
@@ -216,11 +203,7 @@ class ApprovalService
             ->whereNotNull('generated_file_path');
 
         if ($search !== '') {
-            $query->whereHas('pemohon', function ($pemohonQuery) use ($search): void {
-                $pemohonQuery->where('name', 'like', "%{$search}%")
-                    ->orWhere('nomor_induk', 'like', "%{$search}%")
-                    ->orWhere('nomor_induk', 'like', "%{$search}%");
-            });
+            $this->applySubjectSearch($query, $search);
         }
 
         if ($categoryId > 0) {
@@ -266,7 +249,7 @@ class ApprovalService
 
         $surat = Surat::query()
             ->with([
-                'pemohon',
+                'subjectUser',
                 'jenisSurat.approvalRole',
                 'lampirans',
                 'approvalFlows.approver',
@@ -303,7 +286,7 @@ class ApprovalService
     public function show(int $id): array
     {
         $surat = Surat::query()
-            ->with(['pemohon', 'jenisSurat', 'lampirans', 'approvalFlows.approver'])
+            ->with(['subjectUser', 'jenisSurat', 'lampirans', 'approvalFlows.approver'])
             ->findOrFail($id);
 
         return $this->serializeShowItem($surat);
@@ -339,13 +322,11 @@ class ApprovalService
     {
         return [
             'id' => $surat->id,
+            'type' => $surat->type,
             'status' => $surat->status,
             'tanggal_pengajuan' => optional($surat->tanggal_pengajuan ?? $surat->created_at)?->toISOString(),
             'created_at' => optional($surat->created_at)?->toISOString(),
-            'pemohon' => [
-                'name' => $surat->pemohon?->name,
-                'nim' => $surat->pemohon?->nim_nip ?? $surat->pemohon?->nomor_induk,
-            ],
+            'subject' => $surat->serializeSubjectIdentity(),
             'jenisSurat' => [
                 'id' => $surat->jenisSurat?->id,
                 'nama' => $surat->jenisSurat?->nama,
@@ -377,11 +358,9 @@ class ApprovalService
 
         return [
             'id' => $surat->id,
+            'type' => $surat->type,
             'nomor_surat' => $surat->nomor_surat,
-            'pemohon' => [
-                'name' => $surat->pemohon?->name,
-                'nim' => $surat->pemohon?->nim_nip ?? $surat->pemohon?->nomor_induk,
-            ],
+            'subject' => $surat->serializeSubjectIdentity(),
             'jenis_surat' => $surat->jenisSurat?->nama,
             'keperluan' => $surat->keperluan,
             'isi_surat' => is_array($isiSurat) ? $isiSurat : [],
@@ -499,11 +478,9 @@ class ApprovalService
 
         return [
             'id' => $surat->id,
+            'type' => $surat->type,
             'nomor_surat' => $surat->nomor_surat,
-            'pemohon' => [
-                'name' => $surat->pemohon?->name,
-                'nim' => $surat->pemohon?->nim_nip ?? $surat->pemohon?->nomor_induk,
-            ],
+            'subject' => $surat->serializeSubjectIdentity(),
             'jenis_surat' => $surat->jenisSurat?->nama,
             'keperluan' => $surat->keperluan,
             'isi_surat' => is_array($isiSurat) ? $isiSurat : [],
@@ -593,12 +570,37 @@ class ApprovalService
     protected function baseQueryForRole(string $normalizedRole)
     {
         return Surat::query()
-            ->with(['pemohon', 'jenisSurat.approvalRole'])
+            ->with(['pemohon', 'subjectUser', 'jenisSurat.approvalRole'])
             ->whereHas('jenisSurat.approvalRole', function ($roleQuery) use ($normalizedRole): void {
                 $roleQuery
                     ->where('slug', 'like', "%{$normalizedRole}%")
                     ->orWhere('nama', 'like', "%{$normalizedRole}%");
             });
+    }
+
+    protected function applySubjectSearch($query, string $search): void
+    {
+        $query->where(function ($builder) use ($search): void {
+            $builder
+                ->where(function ($typeQuery) use ($search): void {
+                    $typeQuery
+                        ->where('type', 'pengajuan')
+                        ->whereHas('pemohon', function ($pemohonQuery) use ($search): void {
+                            $pemohonQuery
+                                ->where('name', 'like', "%{$search}%")
+                                ->orWhere('nomor_induk', 'like', "%{$search}%");
+                        });
+                })
+                ->orWhere(function ($typeQuery) use ($search): void {
+                    $typeQuery
+                        ->where('type', 'surat_keluar')
+                        ->whereHas('subjectUser', function ($subjectQuery) use ($search): void {
+                            $subjectQuery
+                                ->where('name', 'like', "%{$search}%")
+                                ->orWhere('nomor_induk', 'like', "%{$search}%");
+                        });
+                });
+        });
     }
 
     /**

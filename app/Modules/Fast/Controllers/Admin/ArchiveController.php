@@ -21,16 +21,37 @@ class ArchiveController extends Controller
         $dateTo = $request->string('date_to')->toString();
 
         $query = Surat::query()
-            ->with(['pemohon:id,name,nomor_induk', 'jenisSurat:id,nama,category_id'])
+            ->with([
+                'pemohon:id,name,nomor_induk',
+                'subjectUser:id,name,nomor_induk',
+                'jenisSurat:id,nama,category_id',
+            ])
             ->whereIn('type', ['pengajuan', 'surat_keluar'])
             ->where('status', 'finished')
             ->whereNotNull('generated_file_path')
             ->latest('tanggal_selesai');
 
         if ($search !== '') {
-            $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search): void {
                 $q->where('nomor_surat', 'like', "%{$search}%")
-                    ->orWhereHas('pemohon', fn ($u) => $u->where('name', 'like', "%{$search}%"));
+                    ->orWhere(function ($typeQuery) use ($search): void {
+                        $typeQuery
+                            ->where('type', 'pengajuan')
+                            ->whereHas('pemohon', function ($userQuery) use ($search): void {
+                                $userQuery
+                                    ->where('name', 'like', "%{$search}%")
+                                    ->orWhere('nomor_induk', 'like', "%{$search}%");
+                            });
+                    })
+                    ->orWhere(function ($typeQuery) use ($search): void {
+                        $typeQuery
+                            ->where('type', 'surat_keluar')
+                            ->whereHas('subjectUser', function ($userQuery) use ($search): void {
+                                $userQuery
+                                    ->where('name', 'like', "%{$search}%")
+                                    ->orWhere('nomor_induk', 'like', "%{$search}%");
+                            });
+                    });
             });
         }
 
@@ -54,7 +75,7 @@ class ArchiveController extends Controller
                 'keperluan' => $s->keperluan,
                 'tanggal_selesai' => $s->tanggal_selesai?->toISOString(),
                 'generated_file_path' => $s->generated_file_path,
-                'pemohon' => ['name' => $s->pemohon?->name, 'nim' => $s->pemohon?->nim_nip],
+                'subject' => $s->serializeSubjectIdentity(),
                 'jenisSurat' => ['nama' => $s->jenisSurat?->nama],
                 'download_url' => $s->generated_file_path
                     ? route('documents.surat.pdf', $s->id, absolute: false)
