@@ -30,10 +30,11 @@ type DetailLampiran = {
 };
 type SuratItem = {
     id: number;
+    type?: string | null;
     status: string;
     tanggal_pengajuan?: string | null;
     created_at?: string | null;
-    pemohon?: { name?: string | null; nim?: string | null } | null;
+    subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { id?: number | null; nama?: string | null } | null;
     nomor_surat?: string | null;
 };
@@ -169,6 +170,9 @@ function statusColor(s: string) {
         line: 'bg-slate-300',
     };
 }
+function subjectName(item: { subject?: { name?: string | null } | null }) {
+    return item.subject?.name ?? '-';
+}
 async function openDetail(id: number) {
     router.visit(`${basePath.value}/surat/${id}/detail?from=arsip`);
 }
@@ -193,7 +197,7 @@ async function openDetail(id: number) {
                     <input
                         v-model="search"
                         type="text"
-                        placeholder="Cari nama atau NIM pemohon..."
+                        placeholder="Cari nama atau nomor induk subjek surat..."
                         class="h-11 w-full rounded-xl border border-slate-200 bg-white pr-4 pl-10 text-sm outline-none transition-colors focus:border-blue-400"
                         @keyup.enter="applyFilters"
                     />
@@ -367,11 +371,11 @@ async function openDetail(id: number) {
                                     }}
                                 </span>
                                 <span
-                                    v-if="item.pemohon?.name"
+                                    v-if="subjectName(item) !== '-'"
                                     class="flex items-center gap-1"
                                 >
                                     <FileText class="size-3" />
-                                    {{ item.pemohon.name }}
+                                    {{ subjectName(item) }}
                                 </span>
                             </div>
                         </div>

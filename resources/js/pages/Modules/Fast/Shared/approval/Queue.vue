@@ -32,20 +32,22 @@ type DetailLampiran = {
 };
 type SuratItem = {
     id: number;
+    type?: string | null;
     status: string;
     tanggal_pengajuan?: string | null;
     created_at?: string | null;
-    pemohon?: { name?: string | null; nim?: string | null } | null;
+    subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { id?: number | null; nama?: string | null } | null;
 };
 type SuratDetail = {
     id: number;
+    type?: string | null;
     status: string;
     jenis_surat?: string | null;
     nomor_surat?: string | null;
     keperluan?: string | null;
     tanggal_pengajuan?: string | null;
-    pemohon?: { name?: string | null; nim?: string | null } | null;
+    subject?: { name?: string | null; nim?: string | null } | null;
     isi_surat?: Record<string, unknown>;
     lampiran?: DetailLampiran[];
     approval_notes?: {
@@ -168,6 +170,12 @@ function initials(name?: string | null) {
         .map((part) => part[0]?.toUpperCase() ?? '')
         .join('');
 }
+function subjectName(item: { subject?: { name?: string | null } | null }) {
+    return item.subject?.name ?? '';
+}
+function subjectNim(item: { subject?: { nim?: string | null } | null }) {
+    return item.subject?.nim ?? '';
+}
 function statusLabel(status: string) {
     const labels: Record<string, string> = {
         pending: 'Pending',
@@ -270,7 +278,7 @@ function submitFinalReject() {
                     <input
                         v-model="search"
                         type="text"
-                        placeholder="Cari nama atau NIM pemohon..."
+                        placeholder="Cari nama atau nomor induk subjek surat..."
                         class="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 pr-4 pl-10 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
                         @keyup.enter="applyFilter"
                     />
@@ -343,14 +351,14 @@ function submitFinalReject() {
                             <div
                                 class="grid size-10 shrink-0 place-items-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-500"
                             >
-                                {{ initials(item.pemohon?.name) }}
+                                {{ initials(subjectName(item)) }}
                             </div>
                             <div class="min-w-0">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <p
                                         class="truncate text-sm font-semibold text-slate-900"
                                     >
-                                        {{ item.pemohon?.name || '' }}
+                                        {{ subjectName(item) }}
                                     </p>
                                     <span
                                         class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold"
@@ -364,7 +372,7 @@ function submitFinalReject() {
                                         {{ item.jenisSurat?.nama || '' }}
                                     </p>
                                     <p class="font-mono text-[10px] text-slate-400">
-                                        {{ item.pemohon?.nim || '' }}
+                                        {{ subjectNim(item) }}
                                     </p>
                                 </div>
                             </div>
@@ -518,7 +526,7 @@ function submitFinalReject() {
                         <DialogDescription class="text-sm text-slate-400"
                             >Isi catatan revisi untuk admin terkait surat
                             {{
-                                selectedSurat?.pemohon?.name || 'pemohon'
+                                subjectName(selectedSurat ?? {})
                             }}.</DialogDescription
                         >
                     </DialogHeader>
@@ -578,7 +586,7 @@ function submitFinalReject() {
                         <DialogDescription class="text-sm text-slate-400"
                             >Keputusan akhir. Pengajuan tidak kembali ke admin
                             dan alasan akan terlihat oleh
-                            pemohon.</DialogDescription
+                            admin pengelola surat.</DialogDescription
                         >
                     </DialogHeader>
                     <form @submit.prevent="submitFinalReject" class="space-y-4">

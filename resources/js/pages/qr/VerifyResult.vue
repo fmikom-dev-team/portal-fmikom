@@ -21,13 +21,10 @@ const props = defineProps<{
 	surat: {
 		nomor_surat?: string | null;
 		jenis_surat?: string | null;
-		kategori?: string | null;
 		status?: string | null;
 		nama_pemohon?: string | null;
 		nim?: string | null;
 		program_studi?: string | null;
-		keperluan?: string | null;
-		tanggal_terbit?: string | null;
 		disahkan_oleh?: string | null;
 		nama_approver?: string | null;
 		tanggal_persetujuan_final?: string | null;
@@ -142,7 +139,6 @@ function fmtFull(d?: string | null) {
                             <FileText class="size-4 text-slate-400" />
                             <div>
                                 <p class="text-xs font-semibold text-slate-700">{{ surat.jenis_surat ?? '-' }}</p>
-                                <p v-if="surat.kategori" class="text-[10px] text-slate-400">{{ surat.kategori }}</p>
                             </div>
                         </div>
                     </div>
@@ -157,12 +153,6 @@ function fmtFull(d?: string | null) {
                                     <Hash class="size-3.5 text-slate-400" /> Nomor Surat
                                 </div>
                                 <p class="text-xs font-bold text-slate-800 font-mono">{{ surat.nomor_surat ?? '-' }}</p>
-                            </div>
-                            <div class="flex items-center justify-between px-4 py-3">
-                                <div class="flex items-center gap-2 text-xs text-slate-500">
-                                    <Calendar class="size-3.5 text-slate-400" /> Tanggal Terbit
-                                </div>
-                                <p class="text-xs font-bold text-slate-800">{{ fmt(surat.tanggal_terbit) }}</p>
                             </div>
                             <div v-if="surat.program_studi" class="flex items-center justify-between px-4 py-3">
                                 <div class="flex items-center gap-2 text-xs text-slate-500">

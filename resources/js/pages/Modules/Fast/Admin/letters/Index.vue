@@ -402,7 +402,7 @@ function initials(name?: string | null) {
                             <Link
                                 v-if="item.can_edit"
                                 :href="`/admin/surat/${item.id}/edit?return_to=/admin/surat`"
-                                class="fast-btn fast-btn-danger flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium"
+                                class="fast-btn flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium bg-orange-500 text-white hover:bg-orange-600 border border-orange-500"
                                 :title="
                                     item.status === 'pending'
                                         ? 'Lengkapi Data & Validasi'

@@ -22,7 +22,10 @@ class HistoryController extends Controller
         $dateTo = $request->string('date_to')->toString();
 
         $query = Surat::query()
-            ->with(['pemohon:id,name,nomor_induk', 'jenisSurat:id,nama,category_id'])
+            ->with([
+                'subjectUser:id,name,nomor_induk',
+                'jenisSurat:id,nama,category_id',
+            ])
             ->where('type', 'surat_keluar')
             ->where('status', '!=', Surat::STATUS_FINISHED)
             ->latest();
@@ -31,8 +34,8 @@ class HistoryController extends Controller
             $query->where(function ($q) use ($search): void {
                 $q->where('nomor_surat', 'like', "%{$search}%")
                     ->orWhere('keperluan', 'like', "%{$search}%")
-                    ->orWhereHas('pemohon', function ($pemohon) use ($search): void {
-                        $pemohon->where('name', 'like', "%{$search}%")
+                    ->orWhereHas('subjectUser', function ($subjectUser) use ($search): void {
+                        $subjectUser->where('name', 'like', "%{$search}%")
                             ->orWhere('nomor_induk', 'like', "%{$search}%");
                     });
             });
@@ -68,12 +71,13 @@ class HistoryController extends Controller
         $surats = $query->paginate(20)
             ->through(fn (Surat $surat): array => [
                 'id' => $surat->id,
+                'type' => $surat->type,
                 'nomor_surat' => $surat->nomor_surat,
                 'status' => $surat->status,
                 'keperluan' => $surat->keperluan,
                 'tanggal_pengajuan' => $surat->tanggal_pengajuan?->toISOString(),
                 'tanggal_selesai' => $surat->tanggal_selesai?->toISOString(),
-                'pemohon' => ['name' => $surat->pemohon?->name],
+                'subject' => $surat->serializeSubjectIdentity(),
                 'jenisSurat' => ['nama' => $surat->jenisSurat?->nama],
             ])
             ->withQueryString();

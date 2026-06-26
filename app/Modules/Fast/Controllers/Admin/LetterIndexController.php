@@ -28,7 +28,7 @@ class LetterIndexController extends Controller
         ];
 
         $baseQuery = Surat::query()
-            ->with(['pemohon', 'jenisSurat.category', 'dataEntries'])
+            ->with(['pemohon', 'subjectUser', 'jenisSurat.category', 'dataEntries'])
             ->where('type', 'pengajuan')
             ->whereIn('status', $baseStatuses)
             ->latest();
@@ -63,6 +63,7 @@ class LetterIndexController extends Controller
         $surats = $query->paginate(15)
             ->through(fn (Surat $surat) => [
                 'id' => $surat->id,
+                'type' => $surat->type,
                 'nomor_surat' => $surat->nomor_surat,
                 'status' => $surat->status,
                 'can_approve' => $surat->canBeValidatedByAdmin(),
@@ -78,10 +79,8 @@ class LetterIndexController extends Controller
                 'tanggal_pengajuan' => $surat->tanggal_pengajuan?->toISOString(),
                 'tanggal_selesai' => $surat->tanggal_selesai?->toISOString(),
                 'created_at' => $surat->created_at?->toISOString(),
-                'pemohon' => [
-                    'name' => $surat->pemohon?->name,
-                    'nim' => $surat->pemohon?->nim_nip ?? $surat->pemohon?->nomor_induk,
-                ],
+                'subject' => $surat->serializeSubjectIdentity(),
+                'pemohon' => $surat->serializePemohonIdentity(),
                 'jenisSurat' => [
                     'id' => $surat->jenisSurat?->id,
                     'nama' => $surat->jenisSurat?->nama,
