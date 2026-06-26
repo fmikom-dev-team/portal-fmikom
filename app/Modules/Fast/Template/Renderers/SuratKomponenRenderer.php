@@ -857,17 +857,6 @@ HTML;
     </tbody>
 </table>
 HTML;
-
-        if (($data['__qr_component_present'] ?? false) === false) {
-            $html .= static::buildQrValidationHtml([
-                'align' => 'right',
-                'title' => 'Validasi Surat',
-                'caption' => 'Scan QR code untuk verifikasi dokumen.',
-                'font_size' => '11pt',
-            ], $data);
-        }
-
-        return $html;
     }
 
     protected static function renderTembusan(array $komp, array $data): string

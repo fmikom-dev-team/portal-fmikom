@@ -176,7 +176,7 @@ class LetterController extends Controller
                 'name' => $subjectUser->name,
                 'email' => $subjectUser->email,
                 'nomor_induk' => $subjectUser->nomor_induk,
-                'program_studi' => $subjectUser->programStudi?->nama,
+                'program_studi' => data_get($subjectUser, 'programStudi.nama'),
             ] : null,
             'renderedHtml' => $previewDocumentHtml,
             'previewDocumentUrl' => route('admin.surat.preview-html', absolute: false),
@@ -418,7 +418,7 @@ class LetterController extends Controller
             'name' => $user->name,
             'email' => $user->email,
             'nomor_induk' => $user->nomor_induk,
-            'program_studi' => $user->programStudi?->nama,
+            'program_studi' => data_get($user, 'programStudi.nama'),
         ];
     }
 
@@ -489,7 +489,7 @@ class LetterController extends Controller
                     'nomor_induk' => $contextUser?->nomor_induk,
                     'no_telepon' => $contextUser?->no_telepon,
                     'programStudi' => [
-                        'nama' => $contextUser?->programStudi?->nama,
+                        'nama' => data_get($contextUser, 'programStudi.nama'),
                     ],
                 ],
             ],

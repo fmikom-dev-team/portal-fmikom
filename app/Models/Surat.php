@@ -160,7 +160,7 @@ class Surat extends Model
         return [
             'id' => $user?->id,
             'name' => $user?->name,
-            'nim' => $user?->nim_nip ?? $user?->nomor_induk,
+            'nim' => $user ? ($user->nim_nip ?? $user->nomor_induk) : null,
             'nomor_induk' => $user?->nomor_induk,
             'email' => $user?->email,
         ];
@@ -176,7 +176,7 @@ class Surat extends Model
         return [
             'id' => $user?->id,
             'name' => $user?->name,
-            'nim' => $user?->nim_nip ?? $user?->nomor_induk,
+            'nim' => $user ? ($user->nim_nip ?? $user->nomor_induk) : null,
             'nomor_induk' => $user?->nomor_induk,
             'email' => $user?->email,
         ];
