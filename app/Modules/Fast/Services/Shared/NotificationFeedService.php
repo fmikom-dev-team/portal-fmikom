@@ -5,6 +5,7 @@ namespace App\Modules\Fast\Services\Shared;
 use App\Models\Surat;
 use App\Models\SuratApprovalFlow;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -78,9 +79,9 @@ class NotificationFeedService
                     'title' => $data['title'] ?? 'Notifikasi FAST',
                     'message' => $data['message'] ?? '',
                     'href' => $data['href'] ?? '#',
-                    'time' => isset($notification->updated_at) ? \Illuminate\Support\Carbon::parse($notification->updated_at)->toISOString() : null,
+                    'time' => isset($notification->updated_at) ? Carbon::parse($notification->updated_at)->toISOString() : null,
                     'tone' => $data['tone'] ?? 'slate',
-                    'readAt' => isset($notification->read_at) ? \Illuminate\Support\Carbon::parse($notification->read_at)->toISOString() : null,
+                    'readAt' => isset($notification->read_at) ? Carbon::parse($notification->read_at)->toISOString() : null,
                 ];
             })->values()->all()),
         ];
@@ -280,6 +281,7 @@ class NotificationFeedService
                         'data' => json_encode($data, JSON_THROW_ON_ERROR),
                         'updated_at' => now(),
                     ]);
+
                 continue;
             }
 
