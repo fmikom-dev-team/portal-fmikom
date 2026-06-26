@@ -53,6 +53,8 @@ class Surat extends Model
     protected $fillable = [
         'jenis_surat_id',
         'pemohon_id',
+        'created_by',
+        'subject_user_id',
         'type',
         'nomor_surat',
         'nomor_surat_status',
@@ -100,6 +102,8 @@ class Surat extends Model
             if ($surat->wasRecentlyCreated || $surat->wasChanged('status')) {
                 Cache::forget('notif_count_pending_admin');
                 Cache::forget('notif_count_revision_admin');
+                Cache::forget('notif_count_approval_queue_kaprodi');
+                Cache::forget('notif_count_approval_queue_dekan');
             }
         });
     }
@@ -123,6 +127,59 @@ class Surat extends Model
     public function pemohon(): BelongsTo
     {
         return $this->belongsTo(User::class, 'pemohon_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function subjectUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'subject_user_id');
+    }
+
+    public function resolvedSubjectUser(): ?User
+    {
+        return $this->subjectUser ?? $this->pemohon;
+    }
+
+    /**
+     * @return array{id: int|null, name: string|null, nim: string|null, nomor_induk: string|null, email: string|null}
+     */
+    public function serializeSubjectIdentity(): array
+    {
+        $user = $this->resolvedSubjectUser();
+
+        return [
+            'id' => $user?->id,
+            'name' => $user?->name,
+            'nim' => $user ? ($user->nim_nip ?? $user->nomor_induk) : null,
+            'nomor_induk' => $user?->nomor_induk,
+            'email' => $user?->email,
+        ];
+    }
+
+    /**
+     * @return array{id: int|null, name: string|null, nim: string|null, nomor_induk: string|null, email: string|null}
+     */
+    public function serializePemohonIdentity(): array
+    {
+        $user = $this->pemohon;
+
+        return [
+            'id' => $user?->id,
+            'name' => $user?->name,
+            'nim' => $user ? ($user->nim_nip ?? $user->nomor_induk) : null,
+            'nomor_induk' => $user?->nomor_induk,
+            'email' => $user?->email,
+        ];
     }
 
     /**

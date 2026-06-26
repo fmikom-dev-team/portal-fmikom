@@ -11,10 +11,11 @@ import {
 } from 'lucide-vue-next';
 type SuratItem = {
     id: number;
+    type?: string | null;
     status: string;
     tanggal_selesai?: string | null;
     created_at?: string | null;
-    pemohon?: { name?: string | null; nim?: string | null } | null;
+    subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { id?: number | null; nama?: string | null } | null;
     nomor_surat?: string | null;
     download_url?: string | null;
@@ -77,6 +78,12 @@ function formatDate(date?: string | null) {
         year: 'numeric',
     }).format(new Date(date));
 }
+function subjectName(item: { subject?: { name?: string | null } | null }) {
+    return item.subject?.name ?? '-';
+}
+function subjectNim(item: { subject?: { nim?: string | null } | null }) {
+    return item.subject?.nim ?? '-';
+}
 </script>
 <template>
     <AdminLayout
@@ -115,7 +122,7 @@ function formatDate(date?: string | null) {
                 <input
                     v-model="search"
                     type="text"
-                    placeholder="Cari nama atau NIM..."
+                    placeholder="Cari nama atau nomor induk subjek surat..."
                     class="h-9 w-52 rounded-xl border border-slate-200 bg-slate-50 pr-3 pl-9 text-xs text-slate-700 placeholder-slate-400 outline-none focus:border-blue-400"
                     @keyup.enter="applySearch"
                 />
@@ -173,7 +180,7 @@ function formatDate(date?: string | null) {
                         >
                             <th class="px-5 py-3">No</th>
                             <th class="px-5 py-3">Nomor Surat</th>
-                            <th class="px-5 py-3">Pemohon</th>
+                            <th class="px-5 py-3">Subjek Surat</th>
                             <th class="px-5 py-3">Jenis Surat</th>
                             <th class="px-5 py-3">Tanggal Selesai</th>
                             <th class="px-5 py-3 text-right">Aksi</th>
@@ -206,10 +213,10 @@ function formatDate(date?: string | null) {
                             </td>
                             <td class="px-5 py-3.5">
                                 <p class="text-xs font-semibold text-slate-900">
-                                    {{ item.pemohon?.name || '-' }}
+                                    {{ subjectName(item) }}
                                 </p>
                                 <p class="font-mono text-[10px] text-slate-400">
-                                    {{ item.pemohon?.nim || '-' }}
+                                    {{ subjectNim(item) }}
                                 </p>
                             </td>
                             <td

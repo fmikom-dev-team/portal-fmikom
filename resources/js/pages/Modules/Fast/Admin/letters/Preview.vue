@@ -32,20 +32,30 @@ type JenisSurat = {
 };
 type FormData = {
     jenis_surat_id: number;
+    subject_user_id?: number | null;
     keperluan: string;
     perihal?: string;
     kepada_yth?: string[];
     lampiran_keterangan?: string;
     data: Record<string, string | boolean | string[]>;
 };
+type SubjectSummary = {
+    id: number;
+    name: string;
+    email?: string | null;
+    nomor_induk?: string | null;
+    program_studi?: string | null;
+};
 const props = defineProps<{
     jenisSurat: JenisSurat;
     formData: FormData;
+    subjectSummary?: SubjectSummary | null;
     renderedHtml: string;
     previewDocumentUrl: string;
 }>();
 const form = useForm({
     jenis_surat_id: props.formData.jenis_surat_id,
+    subject_user_id: props.formData.subject_user_id ?? '',
     keperluan: props.formData.keperluan,
     perihal: props.formData.perihal ?? '',
     kepada_yth: props.formData.kepada_yth ?? [],
@@ -56,13 +66,13 @@ const fullPreview = ref(false);
 const previewDocumentUrl = computed(() => props.previewDocumentUrl);
 const workflowStatusLabel = computed(() =>
     needsApproval
-        ? `Perlu approval${props.jenisSurat.approval_role?.nama ? ` ${props.jenisSurat.approval_role.nama}` : ''}`
-        : 'Langsung selesai',
+        ? `Menunggu approval${props.jenisSurat.approval_role?.nama ? ` ${props.jenisSurat.approval_role.nama}` : ''}`
+        : 'Siap digenerate langsung',
 );
 const workflowStatusDescription = computed(() =>
     needsApproval
-        ? 'Surat akan masuk ke alur validasi sebelum generate PDF.'
-        : 'Surat langsung dibuat dan PDF digenerate setelah submit.',
+        ? 'Surat akan disimpan lalu diteruskan ke alur approval sebelum PDF final dan QR validasi dibuat.'
+        : 'Surat langsung dibuat, PDF final digenerate, dan QR validasi disiapkan setelah submit.',
 );
 function submit() {
     form.post('/admin/surat/store');
@@ -73,8 +83,8 @@ function goBack() {
 const needsApproval = !!props.jenisSurat.approval_role?.id;
 const steps = needsApproval
     ? [
-          'Surat diajukan',
-          'Validasi Admin',
+          'Surat disimpan admin',
+          'Pemeriksaan admin',
           `Approval ${props.jenisSurat.approval_role?.nama ?? ''}`,
           'Generate PDF & QR',
       ]
@@ -87,23 +97,23 @@ const steps = needsApproval
         active-menu="letters.create"
         :breadcrumbs="[
             { label: 'Buat Surat Keluar', href: '/admin/surat/create' },
-            { label: 'Isi Form', href: `/admin/surat/form/${jenisSurat.id}` },
+            { label: 'Isi Data Surat', href: `/admin/surat/form/${jenisSurat.id}` },
             { label: 'Preview' },
         ]"
     >
         <Head :title="`Preview - ${jenisSurat.nama}`" />
-        <!-- Hero header -->
         <div
             class="mb-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-6"
         >
             <div class="flex items-start justify-between gap-4">
                 <div class="flex-1">
                     <h2 class="mt-1 text-xl font-bold text-slate-900">
-                        Preview & Submit
+                        Preview Surat Admin
                     </h2>
                     <p class="mt-1 max-w-lg text-sm text-slate-500">
-                        Review dokumen surat sebelum mengajukan. Pastikan semua
-                        data sudah benar.
+                        Tinjau dokumen yang akan dibuat admin atas nama subjek.
+                        Pastikan identitas subjek, isi surat, dan alur approval
+                        sudah sesuai sebelum disimpan.
                     </p>
                 </div>
                 <div class="hidden sm:block">
@@ -173,7 +183,7 @@ const steps = needsApproval
                             form.processing
                                 ? 'Menyimpan...'
                                 : needsApproval
-                                  ? 'Ajukan Surat'
+                                  ? 'Simpan & Kirim ke Approval'
                                   : 'Buat & Generate Surat'
                         }}
                     </button>
@@ -187,6 +197,31 @@ const steps = needsApproval
                         Ringkasan
                     </h3>
                     <div class="space-y-3 text-xs">
+                        <div v-if="subjectSummary">
+                            <p class="text-slate-400">Atas Nama</p>
+                            <p class="mt-0.5 font-semibold text-slate-800">
+                                {{ subjectSummary.name }}
+                            </p>
+                            <p
+                                v-if="
+                                    subjectSummary.program_studi ||
+                                    subjectSummary.nomor_induk
+                                "
+                                class="mt-0.5 text-slate-500"
+                            >
+                                {{
+                                    [subjectSummary.program_studi, subjectSummary.nomor_induk]
+                                        .filter(Boolean)
+                                        .join(' / ')
+                                }}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-slate-400">Peran Admin</p>
+                            <p class="mt-0.5 text-slate-700">
+                                Admin pembuat surat
+                            </p>
+                        </div>
                         <div>
                             <p class="text-slate-400">Jenis Surat</p>
                             <p class="mt-0.5 font-semibold text-slate-800">
@@ -194,7 +229,9 @@ const steps = needsApproval
                             </p>
                         </div>
                         <div>
-                            <p class="text-slate-400">Keperluan</p>
+                            <p class="text-slate-400">
+                                Tujuan / Keperluan Surat
+                            </p>
                             <p class="mt-0.5 text-slate-700">
                                 {{ formData.keperluan }}
                             </p>

@@ -46,8 +46,9 @@ type ApprovalNote = {
 
 type Surat = {
     id: number;
+    type?: string | null;
     nomor_surat?: string | null;
-    pemohon: { name: string; nim?: string | null };
+    subject?: { name: string; nim?: string | null };
     jenis_surat: string;
     keperluan: string;
     isi_surat: Record<string, any>;
@@ -164,6 +165,14 @@ const subjectValue = computed(() => {
     const payload = props.isi_surat ?? {};
     return formatDisplayValue(payload.perihal ?? props.keperluan ?? '-');
 });
+const identityLabel = computed(() =>
+    props.type === 'surat_keluar' ? 'Atas Nama' : 'Pemohon',
+);
+const identityNumberLabel = computed(() =>
+    props.type === 'surat_keluar' ? 'Nomor Induk' : 'NIM / NIP',
+);
+const subjectName = computed(() => props.subject?.name || '-');
+const subjectNim = computed(() => props.subject?.nim || '-');
 
 const processTimeline = computed(() => {
     const approval = props.approval_timeline ?? [];
@@ -425,16 +434,16 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
 
                     <div class="mt-2 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
                         <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
-                            <p class="text-slate-500">Nama</p>
+                            <p class="text-slate-500">{{ identityLabel }}</p>
                             <p class="min-w-0 break-words font-medium leading-6 text-slate-900">
-                                {{ pemohon?.name || '-' }}
+                                {{ subjectName }}
                             </p>
                         </div>
 
                         <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
-                            <p class="text-slate-500">NIM / NIP</p>
+                            <p class="text-slate-500">{{ identityNumberLabel }}</p>
                             <p class="min-w-0 break-words font-mono font-medium leading-6 text-slate-900">
-                                {{ pemohon?.nim || '-' }}
+                                {{ subjectNim }}
                             </p>
                         </div>
 
@@ -751,7 +760,7 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                                 Kembalikan untuk Revisi
                             </h3>
                             <p class="text-xs text-slate-400">
-                                Berikan catatan agar pemohon tahu apa yang perlu diperbaiki.
+                                Berikan catatan agar admin tahu apa yang perlu diperbaiki pada surat ini.
                             </p>
                         </div>
                         <button

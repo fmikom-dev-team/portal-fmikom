@@ -19,7 +19,7 @@ type SuratItem = {
     tanggal_selesai?: string | null;
     generated_file_path?: string | null;
     download_url?: string | null;
-    pemohon?: { name?: string | null; nim?: string | null } | null;
+    subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { nama?: string | null } | null;
 };
 type Paginated = {
@@ -80,11 +80,17 @@ function formatDate(d?: string | null) {
 function sourceLabel(type: string) {
     return type === 'surat_keluar' ? 'Surat Keluar Admin' : 'Pengajuan User';
 }
+function subjectLabel(type: string) {
+    return type === 'surat_keluar' ? 'Atas Nama' : 'Pemohon';
+}
+function subjectIdentityLabel(type: string) {
+    return type === 'surat_keluar' ? 'No. Induk' : 'NIM';
+}
 </script>
 <template>
     <AdminLayout
         title="Arsip Surat"
-        subtitle="Semua dokumen final dari pengajuan user dan surat keluar admin"
+        subtitle="Semua dokumen final dari pengajuan user dan surat yang dibuat admin"
         active-menu="archive"
         :breadcrumbs="[{ label: 'Arsip Surat' }]"
     >
@@ -98,7 +104,7 @@ function sourceLabel(type: string) {
                     </h2>
                     <p class="mt-1 text-sm text-slate-500">
                         Kumpulan dokumen final dari pengajuan user dan surat
-                        keluar admin.
+                        yang dibuat admin atas nama subjek terkait.
                     </p>
                 </div>
             </div>
@@ -188,8 +194,8 @@ function sourceLabel(type: string) {
                 Belum ada dokumen final di arsip.
             </p>
             <p class="text-xs text-slate-300">
-                Surat pengajuan user maupun surat keluar admin yang sudah
-                selesai akan muncul di sini.
+                Surat pengajuan user maupun surat admin yang sudah selesai akan
+                muncul di sini.
             </p>
         </div>
         <!-- Document card grid -->
@@ -254,22 +260,22 @@ function sourceLabel(type: string) {
                         </div>
                     </div>
                     <!-- Details -->
-                    <div class="mb-4 space-y-1.5">
-                        <div class="flex items-center gap-2">
+                        <div class="mb-4 space-y-1.5">
+                            <div class="flex items-center gap-2">
                             <span class="w-14 text-[10px] text-slate-400"
-                                >Pemohon</span
+                                >{{ subjectLabel(item.type) }}</span
                             >
                             <span class="text-xs font-medium text-slate-700">{{
-                                item.pemohon?.name ?? '-'
+                                item.subject?.name ?? '-'
                             }}</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="w-14 text-[10px] text-slate-400"
-                                >NIM</span
+                                >{{ subjectIdentityLabel(item.type) }}</span
                             >
                             <span
                                 class="font-mono text-[10px] text-slate-500"
-                                >{{ item.pemohon?.nim ?? '-' }}</span
+                                >{{ item.subject?.nim ?? '-' }}</span
                             >
                         </div>
                         <div class="flex items-start gap-2">
@@ -334,4 +340,3 @@ function sourceLabel(type: string) {
         </div>
     </AdminLayout>
 </template>
-

@@ -17,12 +17,13 @@ import {
 } from 'lucide-vue-next';
 type SuratItem = {
     id: number;
+    type: string;
     nomor_surat?: string | null;
     status: string;
     keperluan: string;
     tanggal_pengajuan?: string | null;
     tanggal_selesai?: string | null;
-    pemohon?: { name?: string | null } | null;
+    subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { nama?: string | null } | null;
 };
 type Paginated = {
@@ -195,7 +196,7 @@ function statusClass(s: string) {
                     <input
                         v-model="search"
                         type="text"
-                        placeholder="Cari nomor surat, pemohon, atau keperluan..."
+                        placeholder="Cari nomor surat, subjek surat, atau keperluan..."
                         class="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 pr-4 pl-10 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
                         @keyup.enter="applyFilter"
                     />
@@ -332,11 +333,11 @@ function statusClass(s: string) {
                                     {{ formatDate(item.tanggal_pengajuan) }}
                                 </span>
                                 <span
-                                    v-if="item.pemohon?.name"
+                                    v-if="item.subject?.name"
                                     class="flex items-center gap-1"
                                 >
                                     <FileText class="size-3" />
-                                    {{ item.pemohon.name }}
+                                    {{ item.subject.name }}
                                 </span>
                             </div>
                         </div>
