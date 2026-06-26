@@ -3,12 +3,12 @@
 namespace App\Http\Middleware;
 
 use App\Http\Resources\UserResource;
-use App\Models\Surat;
 use App\Models\Pagi\PagiMessage;
 use App\Models\Portal\PortalComment;
 use App\Models\Portal\PortalMenu;
 use App\Models\Portal\PortalPost;
 use App\Models\Portal\PortalSetting;
+use App\Models\Surat;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
