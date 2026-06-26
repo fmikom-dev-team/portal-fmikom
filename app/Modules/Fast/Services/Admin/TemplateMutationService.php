@@ -79,11 +79,31 @@ class TemplateMutationService
             'layout' => ['nullable', 'array'],
         ]);
 
-        if ($request->filled('field_config')) {
-            $fieldConfig = collect(SuratDataContract::filterDynamicFieldConfig($request->input('field_config', [])))
+        $rawFieldConfig = $request->input('field_config');
+
+        if (is_array($rawFieldConfig)) {
+            $missingNames = collect($rawFieldConfig)
+                ->filter(fn ($field): bool => is_array($field))
+                ->filter(fn (array $field): bool => trim((string) ($field['name'] ?? '')) === '')
+                ->values()
+                ->count();
+
+            if ($missingNames > 0) {
+                throw ValidationException::withMessages([
+                    'field_config' => 'Key field dinamis wajib diisi.',
+                ]);
+            }
+
+            $fieldConfig = collect(SuratDataContract::filterDynamicFieldConfig($rawFieldConfig))
                 ->map(fn (array $config): array => SuratDataContract::normalizeDynamicFieldConfigItem($config))
                 ->values()
                 ->all();
+
+            if ($rawFieldConfig !== [] && $fieldConfig === []) {
+                throw ValidationException::withMessages([
+                    'field_config' => 'Field dinamis tidak valid.',
+                ]);
+            }
 
             $duplicatedNames = collect($fieldConfig)
                 ->pluck('name')
@@ -96,17 +116,23 @@ class TemplateMutationService
 
             if ($duplicatedNames !== []) {
                 throw ValidationException::withMessages([
-                    'field_config' => 'Key field dinamis harus unik. Duplikat: '.implode(', ', $duplicatedNames),
+                    'field_config' => 'Key field duplikat.',
                 ]);
             }
 
-            $jenisSurat->field_config = $fieldConfig;
+            if ($fieldConfig !== []) {
+                $jenisSurat->field_config = $fieldConfig;
+            } elseif (($jenisSurat->field_config ?? []) === []) {
+                $jenisSurat->field_config = [];
+            }
         }
 
         $jenisSurat->fill([
             'nama' => $request->input('name') ?: $request->input('jenis_surat_nama') ?: $jenisSurat->nama,
             'allowed_role_id' => $request->input('allowed_role_id', $jenisSurat->allowed_role_id),
             'approval_role_id' => $request->input('approval_role_id', $jenisSurat->approval_role_id),
+            'perlu_approval' => $request->boolean('perlu_approval', $jenisSurat->perlu_approval),
+            'is_active' => $request->boolean('is_active', $jenisSurat->is_active),
         ]);
         $jenisSurat->save();
 

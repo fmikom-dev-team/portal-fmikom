@@ -9,6 +9,7 @@ use App\Models\Portal\PortalMenu;
 use App\Models\Portal\PortalPost;
 use App\Models\Portal\PortalSetting;
 use App\Models\Surat;
+use App\Modules\Fast\Services\Shared\NotificationFeedService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -115,6 +116,7 @@ class HandleInertiaRequests extends Middleware
                     'portfolio_id' => $n->data['portfolio_id'] ?? null,
                 ])->values()->toArray();
             }) : [],
+            'notifications' => $user ? fn () => $this->fastNotifications($user) : null,
 
             // Bagikan active context ke semua Vue component via usePage().props.context
             // Digunakan untuk menampilkan badge modul/role aktif di navbar, sidebar, dll.
@@ -177,6 +179,22 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
+     * @return array{count: int, items: array<int, array<string, mixed>>}|null
+     */
+    protected function fastNotifications($user): ?array
+    {
+        $activeModule = strtoupper((string) session('active_module', ''));
+
+        if ($activeModule !== 'FAST') {
+            return null;
+        }
+
+        $activeRole = strtolower((string) session('active_role', $user->userTypeSlug() ?? ''));
+
+        return Cache::remember("fast_notifications_{$user->id}_{$activeRole}", 30, fn () => app(NotificationFeedService::class)->build($user));
+    }
+
+    /**
      * @return array{admin_queue: int, approval_queue: int}
      */
     protected function fastNavCounts(): array
@@ -193,7 +211,7 @@ class HandleInertiaRequests extends Middleware
 
         $approvalQueueCount = in_array($activeRole, ['kaprodi', 'dekan'], true)
             ? Cache::remember("notif_count_approval_queue_{$activeRole}", 30, fn () => Surat::query()
-                ->where('type', 'pengajuan')
+                ->where('type', 'surat_keluar')
                 ->where('status', Surat::STATUS_VALIDATED_ADMIN)
                 ->whereHas('jenisSurat.approvalRole', fn ($roleQuery) => $roleQuery->where('slug', $activeRole))
                 ->count())

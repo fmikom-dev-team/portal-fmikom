@@ -311,8 +311,16 @@ class ApprovalService
         $user = $request->user();
         abort_if($user === null, 403);
 
-        $roleName = $user->roleDisplayName() ?: 'Approval';
-        $roleSlug = $user->userTypeSlug() ?: 'approval';
+        $resolvedRole = $request->attributes->get('resolved_role');
+
+        if (is_string($resolvedRole) && filled($resolvedRole)) {
+            $roleSlug = $resolvedRole;
+            $roleName = Str::headline(str_replace('-', ' ', $roleSlug));
+        } else {
+            $roleName = $user->roleDisplayName() ?: 'Approval';
+            $roleSlug = $user->userTypeSlug() ?: 'approval';
+        }
+
         $normalizedRole = $this->normalizeRole($roleSlug, $roleName);
 
         return [$user, $roleName, $roleSlug, $normalizedRole];

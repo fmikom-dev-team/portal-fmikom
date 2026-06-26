@@ -24,7 +24,7 @@ class ApprovalActionService
 
         $this->workflow->approve(
             $surat,
-            $this->normalizeRole($user->userTypeSlug(), $user->roleDisplayName()),
+            $this->resolveActorRole($request, $user),
             $user,
         );
 
@@ -55,7 +55,7 @@ class ApprovalActionService
         $surat->approvalFlows()->create([
             'approver_id' => $user->id,
             'urutan' => 0,
-            'role' => $this->normalizeRole($user->userTypeSlug(), $user->roleDisplayName()),
+            'role' => $this->resolveActorRole($request, $user),
             'status' => SuratApprovalFlow::STATUS_NOTE,
             'keterangan' => 'Catatan',
             'catatan' => $request->string('catatan')->toString(),
@@ -78,7 +78,7 @@ class ApprovalActionService
 
         $this->workflow->requestRevision(
             $surat,
-            $this->normalizeRole($user->userTypeSlug(), $user->roleDisplayName()),
+            $this->resolveActorRole($request, $user),
             $user,
             $request->string('reason')->toString(),
         );
@@ -116,7 +116,7 @@ class ApprovalActionService
         abort_if($user === null, 403);
 
         $surat = Surat::query()->findOrFail($id);
-        $normalizedRole = $this->normalizeRole($user->userTypeSlug(), $user->roleDisplayName());
+        $normalizedRole = $this->resolveActorRole($request, $user);
 
         $this->workflow->finalReject(
             $surat,
@@ -138,5 +138,16 @@ class ApprovalActionService
         }
 
         return FastApprovalWorkflowService::ROLE_DEKAN;
+    }
+
+    protected function resolveActorRole(Request $request, $user): string
+    {
+        $resolvedRole = $request->attributes->get('resolved_role');
+
+        if (is_string($resolvedRole) && filled($resolvedRole)) {
+            return $this->normalizeRole($resolvedRole, $resolvedRole);
+        }
+
+        return $this->normalizeRole($user->userTypeSlug(), $user->roleDisplayName());
     }
 }

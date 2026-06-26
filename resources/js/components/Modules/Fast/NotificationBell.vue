@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import {
     Bell,
     ChevronRight,
@@ -36,9 +36,26 @@ const props = withDefaults(
 
 const open = ref(false);
 const root = ref<HTMLElement | null>(null);
+const localItems = ref<NotificationItem[]>([]);
+const localCount = ref(0);
+
+function syncFromProps() {
+    localItems.value = props.items.map((item) => ({ ...item }));
+    localCount.value = props.count ?? 0;
+}
+
+syncFromProps();
+
+watch(
+    () => [props.items, props.count],
+    () => {
+        syncFromProps();
+    },
+    { deep: true },
+);
 
 const visibleItems = computed(() =>
-    [...props.items]
+    [...localItems.value]
         .sort((left, right) => {
             const leftTime = left.time ? new Date(left.time).getTime() : 0;
             const rightTime = right.time ? new Date(right.time).getTime() : 0;
@@ -63,6 +80,13 @@ function close() {
     open.value = false;
 }
 
+function getCsrfToken(): string {
+    return (
+        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)
+            ?.content ?? ''
+    );
+}
+
 function openItem(item: NotificationItem) {
     if (item.readAt) {
         close();
@@ -76,26 +100,46 @@ function openItem(item: NotificationItem) {
         {
             preserveScroll: true,
             preserveState: true,
-            onSuccess: () => close(),
+            onSuccess: () => {
+                localItems.value = localItems.value.filter((entry) => entry.id !== item.id);
+                localCount.value = Math.max(0, localCount.value - 1);
+                close();
+            },
         },
     );
 }
 
-function markAllAsRead() {
-    if (props.count <= 0) {
+async function markAllAsRead() {
+    if (localCount.value <= 0) {
         close();
         return;
     }
 
-    router.post(
-        '/notifications/read-all',
-        {},
-        {
-            preserveScroll: true,
-            preserveState: true,
-            onSuccess: () => close(),
-        },
-    );
+    const previousItems = [...localItems.value];
+    const previousCount = localCount.value;
+
+    localItems.value = [];
+    localCount.value = 0;
+    close();
+
+    try {
+        const response = await fetch('/notifications/read-all', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': getCsrfToken(),
+                'X-Requested-With': 'XMLHttpRequest',
+                Accept: 'application/json',
+            },
+            credentials: 'same-origin',
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to mark notifications as read');
+        }
+    } catch (_error) {
+        localItems.value = previousItems;
+        localCount.value = previousCount;
+    }
 }
 
 function handleDocumentClick(event: MouseEvent) {
@@ -167,10 +211,10 @@ function formatTime(value?: string | null) {
         >
             <Bell class="size-4" />
             <span
-                v-if="count > 0"
+                v-if="localCount > 0"
                 class="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white"
             >
-                {{ count > 9 ? '9+' : count }}
+                {{ localCount > 9 ? '9+' : localCount }}
             </span>
         </button>
 
@@ -184,18 +228,18 @@ function formatTime(value?: string | null) {
         >
             <div
                 v-if="open"
-                class="absolute right-0 z-50 mt-2 w-[22rem] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+                class="absolute right-0 z-50 mt-2 w-[calc(100vw-1rem)] max-w-[22rem] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
             >
                 <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                     <div>
                         <p class="text-sm font-semibold text-slate-900">{{ ariaLabel }}</p>
                         <p class="text-xs text-slate-400">
-                            {{ count > 0 ? `${count} pembaruan terbaru` : 'Tidak ada pembaruan baru' }}
+                            {{ localCount > 0 ? `${localCount} pembaruan terbaru` : 'Tidak ada pembaruan baru' }}
                         </p>
                     </div>
                     <div class="flex items-center gap-2">
                         <button
-                            v-if="count > 0"
+                            v-if="localCount > 0"
                             type="button"
                             class="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[11px] font-semibold text-blue-700 transition hover:bg-blue-100"
                             @click.stop="markAllAsRead"

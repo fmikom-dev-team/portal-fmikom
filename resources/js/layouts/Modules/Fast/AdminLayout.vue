@@ -42,11 +42,21 @@ type PageProps = {
     } | null;
     flash?: { success?: string; error?: string; warning?: string };
     notif_count?: number;
+    unread_notifications_count?: number;
     notif_count_revision_admin?: number;
     nav_counts?: {
         admin_queue?: number;
         approval_queue?: number;
     };
+    recent_notifications?: Array<{
+        id: number | string;
+        title?: string;
+        message?: string;
+        href?: string;
+        time?: string | null;
+        created_at?: string | null;
+        unread?: boolean;
+    }>;
     notifications?: {
         count?: number;
         items?: Array<{
@@ -104,9 +114,26 @@ const brandName = computed(
     () => siteSettings.value.brand_name || 'FMIKOM',
 );
 const notifCount = computed(
-    () => page.props.notifications?.count ?? page.props.notif_count ?? 0,
+    () =>
+        page.props.notifications?.count ??
+        page.props.notif_count ??
+        page.props.unread_notifications_count ??
+        0,
 );
-const notifItems = computed(() => page.props.notifications?.items ?? []);
+const notifItems = computed(() => {
+    if (page.props.notifications?.items?.length) {
+        return page.props.notifications.items;
+    }
+
+    return (page.props.recent_notifications ?? []).map((item) => ({
+        id: item.id,
+        title: item.title ?? 'Notifikasi FAST',
+        message: item.message ?? '',
+        href: item.href ?? '#',
+        time: item.created_at ?? item.time ?? null,
+        readAt: item.unread === false ? item.created_at ?? item.time ?? null : null,
+    }));
+});
 const navAdminQueueCount = computed(() => page.props.nav_counts?.admin_queue ?? 0);
 const navApprovalQueueCount = computed(() => page.props.nav_counts?.approval_queue ?? 0);
 const notifCountRevisionAdmin = computed(
@@ -624,7 +651,7 @@ function batteryIcon() {
                     </div>
 
                     <NotificationBell
-                        class="hidden md:block"
+                        class="shrink-0"
                         :count="notifCount"
                         :items="notifItems"
                         aria-label="Notifikasi Approval"

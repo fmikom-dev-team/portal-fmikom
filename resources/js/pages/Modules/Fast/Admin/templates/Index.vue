@@ -835,8 +835,15 @@ function saveTemplate() {
             form.clearErrors();
             showToast('Template berhasil disimpan.', 'success');
         },
-        onError: () => {
-            showToast('Gagal menyimpan template. Periksa kembali data.', 'error');
+        onError: (errors) => {
+            const firstMessage = Object.values(errors).find(
+                (value) => typeof value === 'string' && value.trim(),
+            );
+
+            showToast(
+                firstMessage || 'Gagal menyimpan template. Periksa kembali data.',
+                'error',
+            );
         },
     });
 }
@@ -2775,6 +2782,12 @@ function settingLabel(key: string): string {
                         <Save class="size-3.5" /> Simpan Field Dinamis
                     </button>
                 </div>
+                <p
+                    v-if="form.errors.field_config"
+                    class="mt-2 text-xs text-red-500"
+                >
+                    {{ form.errors.field_config }}
+                </p>
             </div>
             <div
                 v-if="activeTab === 'meta'"
@@ -2890,6 +2903,12 @@ function settingLabel(key: string): string {
                         <Save class="size-3.5" /> Simpan Info Jenis Surat
                     </button>
                 </div>
+                <p
+                    v-if="form.errors.field_config"
+                    class="mt-2 text-xs text-red-500"
+                >
+                    {{ form.errors.field_config }}
+                </p>
             </div>
         </div>
         <Dialog
