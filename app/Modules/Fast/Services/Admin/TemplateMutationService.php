@@ -121,9 +121,9 @@ class TemplateMutationService
             }
 
             if ($fieldConfig !== []) {
-                $jenisSurat->field_config = $fieldConfig;
+                $jenisSurat->forceFill(['field_config' => $fieldConfig]);
             } elseif (($jenisSurat->field_config ?? []) === []) {
-                $jenisSurat->field_config = [];
+                $jenisSurat->forceFill(['field_config' => []]);
             }
         }
 
