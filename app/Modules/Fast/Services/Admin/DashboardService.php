@@ -24,7 +24,7 @@ class DashboardService
     public function index(Request $request): Response
     {
         $query = Surat::query()
-            ->with(['pemohon', 'jenisSurat', 'dataEntries'])
+            ->with(['pemohon', 'subjectUser', 'jenisSurat', 'dataEntries'])
             ->where('type', 'pengajuan')
             ->whereIn('status', [
                 Surat::STATUS_PENDING,
@@ -54,15 +54,14 @@ class DashboardService
             ->paginate(6)
             ->through(fn (Surat $surat): array => [
                 'id' => $surat->id,
+                'type' => $surat->type,
                 'status' => $surat->status,
                 'can_approve' => $surat->canBeValidatedByAdmin(),
                 'can_edit' => $surat->canBeEditedByAdmin(),
                 'tanggal_pengajuan' => optional($surat->tanggal_pengajuan ?? $surat->created_at)?->toISOString(),
                 'created_at' => optional($surat->created_at)?->toISOString(),
-                'pemohon' => [
-                    'name' => $surat->pemohon?->name,
-                    'nim' => $surat->pemohon?->nim_nip ?? $surat->pemohon?->nomor_induk,
-                ],
+                'subject' => $surat->serializeSubjectIdentity(),
+                'pemohon' => $surat->serializePemohonIdentity(),
                 'jenisSurat' => [
                     'id' => $surat->jenisSurat?->id,
                     'nama' => $surat->jenisSurat?->nama,
@@ -71,7 +70,7 @@ class DashboardService
             ->withQueryString();
 
         $adminActivityHistory = Surat::query()
-            ->with(['pemohon', 'jenisSurat'])
+            ->with(['subjectUser', 'jenisSurat'])
             ->where('type', 'surat_keluar')
             ->where('status', Surat::STATUS_FINISHED)
             ->orderByDesc('tanggal_selesai')
@@ -80,12 +79,11 @@ class DashboardService
             ->get()
             ->map(fn (Surat $surat): array => [
                 'id' => $surat->id,
+                'type' => $surat->type,
                 'nomor_surat' => $surat->nomor_surat,
                 'keperluan' => $surat->keperluan,
                 'tanggal_selesai' => optional($surat->tanggal_selesai ?? $surat->created_at)?->toISOString(),
-                'pemohon' => [
-                    'name' => $surat->pemohon?->name,
-                ],
+                'subject' => $surat->serializeSubjectIdentity(),
                 'jenisSurat' => [
                     'nama' => $surat->jenisSurat?->nama,
                 ],
@@ -143,18 +141,16 @@ class DashboardService
     public function show(int $id): Response
     {
         $surat = Surat::query()
-            ->with(['pemohon', 'jenisSurat', 'lampirans', 'approvalFlows'])
+            ->with(['pemohon', 'subjectUser', 'jenisSurat', 'lampirans', 'approvalFlows'])
             ->findOrFail($id);
 
         $isiSurat = json_decode((string) $surat->isi_surat, true);
 
         return Inertia::render('admin/dashboard/Show', [
             'id' => $surat->id,
+            'type' => $surat->type,
             'nomor_surat' => $surat->nomor_surat,
-            'pemohon' => [
-                'name' => $surat->pemohon?->name,
-                'nim' => $surat->pemohon?->nim_nip ?? $surat->pemohon?->nomor_induk,
-            ],
+            'subject' => $surat->serializeSubjectIdentity(),
             'jenis_surat' => $surat->jenisSurat?->nama,
             'keperluan' => $surat->keperluan,
             'isi_surat' => is_array($isiSurat) ? $isiSurat : [],

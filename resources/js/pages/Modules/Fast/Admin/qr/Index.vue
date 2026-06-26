@@ -14,13 +14,14 @@ import {
 } from 'lucide-vue-next';
 type SuratItem = {
     id: number;
+    type: string;
     status: string;
     nomor_surat?: string | null;
     qr_token?: string | null;
     qr_status?: string;
     qr_revoked_at?: string | null;
     created_at?: string | null;
-    pemohon?: { name?: string | null } | null;
+    subject?: { name?: string | null } | null;
     jenisSurat?: { nama?: string | null } | null;
 };
 type Paginated = {
@@ -107,6 +108,9 @@ function qrStatusLabel(s?: string) {
     if (s === 'expired') return 'Kedaluwarsa';
     return 'Aktif';
 }
+function subjectLabel(type: string) {
+    return type === 'surat_keluar' ? 'Atas Nama' : 'Pemohon';
+}
 </script>
 <template>
     <AdminLayout
@@ -146,7 +150,7 @@ function qrStatusLabel(s?: string) {
                     <input
                         v-model="search"
                         type="text"
-                        placeholder="Cari nomor surat, pemohon, atau jenis surat..."
+                        placeholder="Cari nomor surat, subjek surat, atau jenis surat..."
                         class="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 pr-4 pl-10 text-sm text-slate-800 placeholder-slate-400 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
                         @keyup.enter="applyFilter"
                     />
@@ -248,8 +252,10 @@ function qrStatusLabel(s?: string) {
                     class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400"
                 >
                     <span class="flex items-center gap-1.5">
-                        <span class="font-medium text-slate-500">Pemohon:</span>
-                        {{ item.pemohon?.name ?? '-' }}
+                        <span class="font-medium text-slate-500"
+                            >{{ subjectLabel(item.type) }}:</span
+                        >
+                        {{ item.subject?.name ?? '-' }}
                     </span>
                     <span class="flex items-center gap-1.5">
                         <span class="font-medium text-slate-500">Dibuat:</span>

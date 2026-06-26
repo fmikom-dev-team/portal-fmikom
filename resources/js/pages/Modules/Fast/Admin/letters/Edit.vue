@@ -3,6 +3,7 @@
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
+import SubjectAutocomplete from '@/components/Modules/Fast/Admin/SubjectAutocomplete.vue';
 import { ChevronLeft, Save, Search, Plus, X, FileEdit } from 'lucide-vue-next';
 type FieldOption = { label: string; value: string };
 type FieldConfig = {
@@ -40,17 +41,26 @@ type JenisSurat = {
 };
 type FormData = {
     jenis_surat_id: number;
+    subject_user_id?: number | null;
     keperluan: string;
     perihal?: string;
     kepada_yth?: string[];
     lampiran_keterangan?: string;
     data: Record<string, string | boolean | string[]>;
 };
+type SubjectOption = {
+    id: number;
+    name: string;
+    email?: string | null;
+    nomor_induk?: string | null;
+    program_studi?: string | null;
+};
 const props = defineProps<{
     surat: { id: number; keperluan: string; status: string };
     returnTo?: string | null;
     jenisSurat: JenisSurat;
     formData: FormData;
+    subjectOptions: SubjectOption[];
 }>();
 // â”€â”€ Preset Kepada Yth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const defaultPresets = [
@@ -63,6 +73,7 @@ const consumedFormKeys = ['kepada_yth', 'lampiran_keterangan', 'perihal'] as con
 // â”€â”€ Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const form = useForm({
     jenis_surat_id: props.formData.jenis_surat_id,
+    subject_user_id: props.formData.subject_user_id ?? '',
     keperluan: props.formData.keperluan ?? '',
     perihal:
         props.formData.perihal ??
@@ -145,6 +156,7 @@ function submit() {
 function buildPayload() {
     return {
         jenis_surat_id: form.jenis_surat_id,
+        subject_user_id: form.subject_user_id,
         keperluan: form.keperluan,
         perihal: form.perihal,
         form_data: {
@@ -173,16 +185,17 @@ const visibleFields = computed(() =>
             !!f && (f.mode_form_pemohon ?? 'editable') !== 'hidden',
     ),
 );
+const selectedSubject = ref<SubjectOption | null>(props.subjectOptions[0] ?? null);
 const isPendingEdit = computed(() => props.surat.status === 'pending');
 const alertTitle = computed(() =>
     isPendingEdit.value
-        ? 'Surat baru menunggu validasi admin'
+        ? 'Surat admin siap dilengkapi'
         : 'Surat perlu diperbarui',
 );
 const alertDescription = computed(() =>
     isPendingEdit.value
-        ? 'Admin dapat melengkapi data yang dibutuhkan sebelum validasi diteruskan.'
-        : `Surat ini sebelumnya ditolak. Setelah diperbarui, akan diteruskan kembali ke ${props.jenisSurat.approval_role?.nama ?? 'approval'} untuk persetujuan.`,
+        ? 'Lengkapi atau koreksi data surat atas nama subjek sebelum proses validasi dilanjutkan.'
+        : `Surat ini sebelumnya diminta revisi. Setelah diperbarui, surat akan diteruskan kembali ke ${props.jenisSurat.approval_role?.nama ?? 'approval'} untuk persetujuan.`,
 );
 const submitLabel = computed(() =>
     isPendingEdit.value ? 'Simpan & Validasi' : 'Simpan & Teruskan',
@@ -195,7 +208,7 @@ const submitLabel = computed(() =>
         active-menu="letters"
         :breadcrumbs="[
             { label: 'Dashboard', href: '/admin/dashboard' },
-            { label: 'Edit Surat' },
+            { label: 'Perbarui Surat' },
         ]"
     >
         <Head :title="`Edit - ${jenisSurat.nama}`" />
@@ -254,6 +267,59 @@ const submitLabel = computed(() =>
                         </div>
                     </div>
                 </div>
+                <div
+                    class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5"
+                >
+                    <h3 class="text-sm font-semibold text-slate-800">
+                        Subjek Surat
+                    </h3>
+                    <label class="block space-y-1.5">
+                        <span class="text-xs font-medium text-slate-700"
+                            >Atas Nama
+                            <span class="text-red-500">*</span></span
+                        >
+                        <SubjectAutocomplete
+                            v-model="form.subject_user_id"
+                            :initial-options="subjectOptions"
+                            search-url="/admin/surat/subjects/search"
+                            :error="form.errors.subject_user_id"
+                            @select="selectedSubject = $event"
+                        />
+                        <p
+                            v-if="form.errors.subject_user_id"
+                            class="text-xs text-red-500"
+                        >
+                            {{ form.errors.subject_user_id }}
+                        </p>
+                        <p class="text-xs text-slate-400">
+                            Identitas ini menjadi subjek utama surat yang
+                            diterbitkan oleh admin.
+                        </p>
+                    </label>
+                    <div
+                        v-if="selectedSubject"
+                        class="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs text-slate-700"
+                    >
+                        <p class="font-semibold text-slate-900">
+                            {{ selectedSubject.name }}
+                        </p>
+                        <p v-if="selectedSubject.program_studi" class="mt-0.5">
+                            {{ selectedSubject.program_studi }}
+                        </p>
+                        <p
+                            v-if="
+                                selectedSubject.nomor_induk ||
+                                selectedSubject.email
+                            "
+                            class="mt-0.5 text-slate-500"
+                        >
+                            {{
+                                selectedSubject.nomor_induk ||
+                                selectedSubject.email
+                            }}
+                        </p>
+                    </div>
+                </div>
                 <!-- Informasi Umum -->
                 <div
                     class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5"
@@ -263,7 +329,7 @@ const submitLabel = computed(() =>
                     </h3>
                     <label class="block space-y-1.5">
                         <span class="text-xs font-medium text-slate-700"
-                            >Keperluan Surat
+                            >Tujuan / Keperluan Surat
                             <span class="text-red-500">*</span></span
                         >
                         <input
@@ -274,7 +340,7 @@ const submitLabel = computed(() =>
                             :class="
                                 form.errors.keperluan ? 'border-red-300' : ''
                             "
-                            placeholder="Contoh: Untuk keperluan akademik"
+                            placeholder="Contoh: Pengajuan cuti akademik"
                         />
                         <p
                             v-if="form.errors.keperluan"
@@ -312,8 +378,8 @@ const submitLabel = computed(() =>
                         Kepada Yth.
                     </h3>
                     <p class="mb-3 text-xs text-slate-400">
-                        Pilih dari daftar atau ketik manual. Bisa lebih dari
-                        satu.
+                        Tentukan penerima surat. Bisa pilih dari preset atau
+                        isi manual lebih dari satu tujuan.
                     </p>
                     <div
                         v-if="form.kepada_yth.length > 0"
@@ -402,6 +468,10 @@ const submitLabel = computed(() =>
                     <h3 class="mb-4 text-sm font-semibold text-slate-800">
                         Data Surat
                     </h3>
+                    <p class="text-xs text-slate-400">
+                        Perbarui field template yang membentuk isi dokumen surat
+                        untuk subjek terpilih.
+                    </p>
                     <div class="space-y-4">
                         <div v-for="field in visibleFields" :key="field.name">
                             <!-- Textarea -->
@@ -734,6 +804,15 @@ const submitLabel = computed(() =>
                         Info Surat
                     </h3>
                     <div class="space-y-2 text-xs">
+                        <div class="flex justify-between gap-3">
+                            <span class="text-slate-400">Atas Nama</span>
+                            <span
+                                class="max-w-[140px] text-right font-medium text-slate-700"
+                                >{{
+                                    selectedSubject?.name ?? 'Belum dipilih'
+                                }}</span
+                            >
+                        </div>
                         <div class="flex justify-between">
                             <span class="text-slate-400">Jenis</span>
                             <span
@@ -756,6 +835,14 @@ const submitLabel = computed(() =>
                                         ? jenisSurat.approval_role.nama
                                         : 'Langsung Selesai'
                                 }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between gap-3">
+                            <span class="text-slate-400">Peran Anda</span>
+                            <span
+                                class="max-w-[140px] text-right font-medium text-slate-700"
+                            >
+                                Admin pembuat surat
                             </span>
                         </div>
                     </div>

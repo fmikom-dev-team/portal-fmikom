@@ -16,6 +16,9 @@ class SuratKomponenRenderer
 
     public static function render(array $komponen, array $data = []): string
     {
+        $data['__qr_component_present'] = collect($komponen)
+            ->contains(static fn ($komp): bool => ($komp['type'] ?? null) === 'qr_validasi');
+
         $html = '';
         foreach ($komponen as $komp) {
             $html .= static::renderKomponen($komp, $data);
@@ -354,6 +357,7 @@ HTML;
             'tabel_data' => static::renderTabelData($komp, $data),
             'tabel_biasa' => static::renderTabelBiasa($komp, $data),
             'tabel_indent' => static::renderTabelIndent($komp, $data),
+            'qr_validasi' => static::renderQrValidasi($komp, $data),
             'tanda_tangan' => static::renderTandaTangan($komp, $data),
             'tembusan' => static::renderTembusan($komp, $data),
             'spasi' => static::renderSpasi($komp),
@@ -384,8 +388,12 @@ HTML;
     protected static function renderSubjudul(array $komp, array $data): string
     {
         $teks = static::fill($komp['teks'] ?? '', $data);
+        $align = $komp['align'] ?? 'center';
+        $size = $komp['font_size'] ?? '12pt';
+        $bold = ($komp['bold'] ?? false) ? 'font-weight: bold;' : 'font-weight: normal;';
+        $underline = ($komp['underline'] ?? false) ? 'text-decoration: underline; text-decoration-thickness: 2px;' : '';
 
-        return "<p style=\"margin: 0 0 10px 0; text-align: center; font-size: 12pt;\">{$teks}</p>\n";
+        return "<p style=\"margin: 0 0 10px 0; text-align: {$align}; font-size: {$size}; {$bold} {$underline}\">{$teks}</p>\n";
     }
 
     // Mendukung text_indent untuk baris pertama menjorok
@@ -682,29 +690,17 @@ HTML;
         return $html;
     }
 
-    // Layout: kolom TTD (1/2/3 kolom), QR di dalam kolom terakhir
-    // $data['__qr_svg']    = SVG string QR
-    // $data['__qr_active'] = bool
-    protected static function renderTandaTangan(array $komp, array $data): string
+    protected static function buildQrValidationHtml(array $komp, array $data): string
     {
-        $kolom = $komp['kolom'] ?? [];
-        if (empty($kolom)) {
-            return '';
-        }
-        $size = $komp['font_size'] ?? '12pt';
-        $jumlah = count($kolom);
         $renderMode = $data['__render_mode'] ?? 'preview';
-        $signatureGap = $renderMode === 'pdf' ? '8mm' : '32mm';
-        $tableMarginTop = $renderMode === 'pdf' ? '2px' : '16px';
         $qrBoxSize = $renderMode === 'pdf' ? '17mm' : '68px';
         $qrLabelSize = $renderMode === 'pdf' ? '0' : '7pt';
+        $qrPlaceholderSize = $renderMode === 'pdf' ? '5.5pt' : '7pt';
         $qrSvg = $data['__qr_svg'] ?? '';
         $qrActive = $data['__qr_active'] ?? false;
         $qrHidden = $data['__qr_hidden'] ?? false;
 
         if ($renderMode === 'pdf' && $qrSvg !== '') {
-            // Buang ukuran bawaan hanya pada tag <svg> pembuka, lalu pasang
-            // ukuran fisik PDF yang tunggal.
             $qrSvg = preg_replace_callback(
                 '/<svg\b([^>]*)>/i',
                 function (array $matches) use ($qrBoxSize): string {
@@ -718,11 +714,25 @@ HTML;
         }
 
         if ($qrHidden) {
-            $qrHtml = '';
-        } elseif ($qrActive && ! empty($qrSvg)) {
-            // QR dibuat sedikit lebih kecil di mode PDF agar blok tanda tangan
-            // tetap muat dalam satu halaman.
-            $qrHtml = <<<HTML
+            return '';
+        }
+
+        $title = e((string) ($komp['title'] ?? 'Validasi Surat'));
+        $caption = e((string) ($komp['caption'] ?? 'Scan QR code untuk verifikasi dokumen.'));
+        $align = match ((string) ($komp['align'] ?? 'right')) {
+            'left' => 'left',
+            'center' => 'center',
+            default => 'right',
+        };
+        $wrapperMargin = match ($align) {
+            'left' => 'margin-right: auto;',
+            'center' => 'margin-left: auto; margin-right: auto;',
+            default => 'margin-left: auto;',
+        };
+        $size = $komp['font_size'] ?? '11pt';
+
+        if ($qrActive && ! empty($qrSvg)) {
+            $qrBlock = <<<HTML
 <div data-qr-embedded="true" style="display: inline-block; text-align: center; width: {$qrBoxSize};">
     <div style="width: {$qrBoxSize}; height: {$qrBoxSize};">
         {$qrSvg}
@@ -731,35 +741,80 @@ HTML;
 </div>
 HTML;
         } else {
-            $qrHtml = <<<HTML
+            $qrBlock = <<<HTML
 <div data-qr-embedded="true" style="display: inline-block; text-align: center; width: {$qrBoxSize};">
     <div style="width: {$qrBoxSize}; height: {$qrBoxSize}; border: 1.5px dashed #CBD5E1; background: #F8FAFC; display: flex; align-items: center; justify-content: center;">
-        <p style="font-size: {$qrLabelSize}; color: #94A3B8; text-align: center; margin: 0; line-height: 1.5; padding: 8px;">QR Code akan muncul setelah disetujui</p>
+        <p style="font-size: {$qrPlaceholderSize}; color: #94A3B8; text-align: center; margin: 0; line-height: 1.35; padding: 4px;">QR Code akan muncul setelah disetujui</p>
     </div>
-    <p style="margin: 2px 0 0 0; font-size: {$qrLabelSize}; text-align: center; color: #94A3B8;">Menunggu Persetujuan</p>
+    <p style="margin: 2px 0 0 0; font-size: {$qrPlaceholderSize}; text-align: center; color: #94A3B8;">Menunggu Persetujuan</p>
 </div>
 HTML;
         }
-        $alignMap = match ($jumlah) {
-            1 => ['right'],
-            default => array_fill(0, $jumlah, 'center'),
-        };
+
+        return <<<HTML
+<div style="width: 100%; margin-top: 8px; text-align: {$align}; font-size: {$size};">
+    <div style="display: inline-block; {$wrapperMargin} text-align: center;">
+        <p style="margin: 0 0 4px 0; font-weight: bold;">{$title}</p>
+        {$qrBlock}
+        <p style="margin: 4px 0 0 0; font-size: 9pt; color: #475569; line-height: 1.35;">{$caption}</p>
+    </div>
+</div>
+HTML;
+    }
+
+    protected static function renderQrValidasi(array $komp, array $data): string
+    {
+        return static::buildQrValidationHtml($komp, $data);
+    }
+
+    protected static function renderTandaTangan(array $komp, array $data): string
+    {
+        $kolom = $komp['kolom'] ?? [];
+        if (empty($kolom)) {
+            return '';
+        }
+
+        $size = $komp['font_size'] ?? '12pt';
+        $jumlah = count($kolom);
+        $renderMode = $data['__render_mode'] ?? 'preview';
+        $signatureGap = $renderMode === 'pdf' ? '8mm' : '32mm';
+        $tableMarginTop = $renderMode === 'pdf' ? '2px' : '16px';
+        $singleColumnPosisi = (string) (($kolom[0]['posisi'] ?? null) ?: ($komp['posisi'] ?? 'kanan'));
+        $wrapperAlign = $jumlah > 1
+            ? 'center'
+            : match ($singleColumnPosisi) {
+                'kiri' => 'left',
+                'tengah' => 'center',
+                default => 'right',
+            };
+        $wrapperWidth = $jumlah > 1
+            ? '100%'
+            : match ($singleColumnPosisi) {
+                'tengah' => '60%',
+                default => '50%',
+            };
+        $wrapperMargin = $jumlah > 1
+            ? 'margin-left: auto; margin-right: auto;'
+            : match ($singleColumnPosisi) {
+                'kiri' => 'margin-right: auto;',
+                'tengah' => 'margin-left: auto; margin-right: auto;',
+                default => 'margin-left: auto;',
+            };
         $colWidth = $jumlah > 0 ? round(100 / $jumlah, 2) : 100;
         $showTanggal = ($komp['show_tanggal'] ?? false) && ! empty($komp['tanggal'] ?? '');
         $tanggalHtml = $showTanggal ? static::fill($komp['tanggal'], $data) : '';
         $ttdCols = '';
-        $lastIdx = count($kolom) - 1;
         foreach ($kolom as $i => $kol) {
             $jabatan = static::fill($kol['jabatan'] ?? '', $data);
             $nama = static::fill($kol['nama'] ?? '', $data);
             $nik = static::fill($kol['nik'] ?? '', $data);
-            $textAlign = $alignMap[$i] ?? 'center';
+            $columnPosisi = (string) (($kol['posisi'] ?? null) ?: ($komp['posisi'] ?? 'kanan'));
+            $textAlign = match ($columnPosisi) {
+                'kiri' => 'left',
+                'kanan' => 'right',
+                default => 'center',
+            };
             $tanggalRow = $showTanggal ? "<tr><td style=\"padding: 0 0 2mm 0; text-align: {$textAlign};\">{$tanggalHtml}</td></tr>" : '';
-            // QR hanya di kolom terakhir, di dalam area spasi tanda tangan
-            $qrInGap = ($i === $lastIdx && ! $qrHidden)
-                ? $qrHtml
-                : '';
-            $gapContent = $qrInGap ?: '&nbsp;';
             $ttdCols .= <<<HTML
 <td style="width: {$colWidth}%; vertical-align: top; text-align: {$textAlign}; padding: 0 4px; font-size: {$size};">
     <table style="display: inline-table; border-collapse: collapse; text-align: {$textAlign};">
@@ -770,7 +825,7 @@ HTML;
             </tr>
             <tr>
                 <td style="height: {$signatureGap}; padding: 0; text-align: {$textAlign}; vertical-align: middle;">
-                    {$gapContent}
+                    &nbsp;
                 </td>
             </tr>
             <tr>
@@ -789,11 +844,30 @@ HTML;
 <table style="width: 100%; border-collapse: collapse; margin-top: {$tableMarginTop}; font-size: {$size};">
     <tbody>
         <tr>
-            {$ttdCols}
+            <td style="padding: 0; text-align: {$wrapperAlign};">
+                <table style="width: {$wrapperWidth}; {$wrapperMargin} border-collapse: collapse; font-size: {$size};">
+                    <tbody>
+                        <tr>
+                            {$ttdCols}
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
         </tr>
     </tbody>
 </table>
 HTML;
+
+        if (($data['__qr_component_present'] ?? false) === false) {
+            $html .= static::buildQrValidationHtml([
+                'align' => 'right',
+                'title' => 'Validasi Surat',
+                'caption' => 'Scan QR code untuk verifikasi dokumen.',
+                'font_size' => '11pt',
+            ], $data);
+        }
+
+        return $html;
     }
 
     protected static function renderTembusan(array $komp, array $data): string

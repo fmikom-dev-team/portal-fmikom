@@ -60,12 +60,9 @@ class QrVerificationController extends Controller
             'surat' => [
                 'nomor_surat' => $surat->nomor_surat,
                 'jenis_surat' => $surat->jenisSurat?->nama,
-                'kategori' => $surat->jenisSurat?->category?->nama,
                 'nama_pemohon' => $surat->pemohon?->name,
                 'nim' => $surat->pemohon?->nim_nip ?? $surat->pemohon?->nomor_induk,
                 'program_studi' => $surat->pemohon?->programStudi?->nama,
-                'keperluan' => $surat->keperluan,
-                'tanggal_terbit' => $surat->generated_at?->toISOString(),
                 'disahkan_oleh' => $surat->finalApprovalRoleSlug() === 'dekan'
                     ? 'Dekan'
                     : ($surat->finalApprovalRoleSlug() === 'kaprodi' ? 'Kaprodi' : 'Admin'),

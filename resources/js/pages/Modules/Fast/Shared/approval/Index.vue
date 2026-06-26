@@ -35,20 +35,22 @@ type DetailLampiran = {
 };
 type SuratItem = {
     id: number;
+    type?: string | null;
     status: string;
     tanggal_pengajuan?: string | null;
     created_at?: string | null;
-    pemohon?: { name?: string | null; nim?: string | null } | null;
+    subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { id?: number | null; nama?: string | null } | null;
 };
 type SuratDetail = {
     id: number;
+    type?: string | null;
     status: string;
     jenis_surat?: string | null;
     nomor_surat?: string | null;
     keperluan?: string | null;
     tanggal_pengajuan?: string | null;
-    pemohon?: { name?: string | null; nim?: string | null } | null;
+    subject?: { name?: string | null; nim?: string | null } | null;
     isi_surat?: Record<string, unknown>;
     lampiran?: DetailLampiran[];
     approval_notes?: {
@@ -166,6 +168,15 @@ const ns = (s?: string | null) =>
     String(s ?? '')
         .trim()
         .toLowerCase();
+function subjectLabel(type?: string | null) {
+    return type === 'surat_keluar' ? 'Atas Nama' : 'Pemohon';
+}
+function subjectName(item: { type?: string | null; subject?: { name?: string | null } | null }) {
+    return item.subject?.name ?? '-';
+}
+function subjectNim(item: { subject?: { nim?: string | null } | null }) {
+    return item.subject?.nim ?? '-';
+}
 function rowCanBeProcessed(item: SuratItem) {
     return ns(item.status) === 'validated_admin';
 }
@@ -338,7 +349,7 @@ function isPdfAttachment(f?: DetailLampiran | null) {
                             <tr
                                 class="text-[10px] font-semibold tracking-widest text-slate-400 uppercase"
                             >
-                                <th class="px-5 py-3">Pemohon</th>
+                                <th class="px-5 py-3">Subjek Surat</th>
                                 <th class="px-5 py-3">Jenis Surat</th>
                                 <th class="px-5 py-3">Tanggal</th>
                                 <th class="px-5 py-3">Status</th>
@@ -366,12 +377,12 @@ function isPdfAttachment(f?: DetailLampiran | null) {
                                     <p
                                         class="text-xs font-semibold text-slate-900"
                                     >
-                                        {{ item.pemohon?.name || '-' }}
+                                        {{ subjectName(item) }}
                                     </p>
                                     <p
                                         class="font-mono text-[10px] text-slate-400"
                                     >
-                                        {{ item.pemohon?.nim || '-' }}
+                                        {{ subjectNim(item) }}
                                     </p>
                                 </td>
                                 <td
@@ -507,7 +518,7 @@ function isPdfAttachment(f?: DetailLampiran | null) {
                                         <p
                                             class="truncate text-xs font-medium text-slate-700"
                                         >
-                                            {{ item.pemohon?.name ?? '-' }}
+                                            {{ subjectName(item) }}
                                         </p>
                                         <p class="text-[10px] text-slate-400">
                                             {{ item.jenisSurat?.nama ?? '-' }}
@@ -616,7 +627,7 @@ function isPdfAttachment(f?: DetailLampiran | null) {
                         <DialogDescription class="text-sm text-slate-400"
                             >Isi catatan revisi untuk admin terkait surat
                             {{
-                                selectedSurat?.pemohon?.name || 'pemohon'
+                                subjectName(selectedSurat ?? {})
                             }}.</DialogDescription
                         >
                     </DialogHeader>
@@ -674,7 +685,7 @@ function isPdfAttachment(f?: DetailLampiran | null) {
                         <DialogDescription class="text-sm text-slate-400"
                             >Keputusan akhir. Pengajuan tidak kembali ke admin
                             dan alasan akan terlihat oleh
-                            pemohon.</DialogDescription
+                            subjek surat ini.</DialogDescription
                         >
                     </DialogHeader>
                     <form @submit.prevent="submitFinalReject" class="space-y-4">

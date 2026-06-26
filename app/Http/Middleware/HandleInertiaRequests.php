@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Http\Resources\UserResource;
+use App\Models\Surat;
 use App\Models\Pagi\PagiMessage;
 use App\Models\Portal\PortalComment;
 use App\Models\Portal\PortalMenu;
@@ -126,6 +127,12 @@ class HandleInertiaRequests extends Middleware
                 // BUG-013: Cache admin-only pending comments count
                 ? Cache::remember('pending_comments_count', 30, fn () => PortalComment::where('status', 'pending')->count())
                 : 0,
+            'notif_count_pending_admin' => $user ? $this->fastPendingAdminCount() : 0,
+            'notif_count_revision_admin' => $user ? $this->fastRevisionAdminCount() : 0,
+            'nav_counts' => $user ? $this->fastNavCounts() : [
+                'admin_queue' => 0,
+                'approval_queue' => 0,
+            ],
             'portal_menus' => Inertia::defer(fn () => Cache::rememberForever('portal_menus', function () {
                 return PortalMenu::with(['children.page', 'page'])
                     ->whereNull('parent_id')
@@ -150,6 +157,51 @@ class HandleInertiaRequests extends Middleware
                     ])
                     ->toArray();
             }))->once(),
+        ];
+    }
+
+    protected function fastPendingAdminCount(): int
+    {
+        return Cache::remember('notif_count_pending_admin', 30, fn () => Surat::query()
+            ->where('type', 'pengajuan')
+            ->where('status', Surat::STATUS_PENDING)
+            ->count());
+    }
+
+    protected function fastRevisionAdminCount(): int
+    {
+        return Cache::remember('notif_count_revision_admin', 30, fn () => Surat::query()
+            ->where('type', 'surat_keluar')
+            ->where('status', Surat::STATUS_REVISION_REQUESTED)
+            ->count());
+    }
+
+    /**
+     * @return array{admin_queue: int, approval_queue: int}
+     */
+    protected function fastNavCounts(): array
+    {
+        $activeModule = strtoupper((string) session('active_module', ''));
+        $activeRole = strtolower((string) session('active_role', ''));
+
+        if ($activeModule !== 'FAST') {
+            return [
+                'admin_queue' => 0,
+                'approval_queue' => 0,
+            ];
+        }
+
+        $approvalQueueCount = in_array($activeRole, ['kaprodi', 'dekan'], true)
+            ? Cache::remember("notif_count_approval_queue_{$activeRole}", 30, fn () => Surat::query()
+                ->where('type', 'pengajuan')
+                ->where('status', Surat::STATUS_VALIDATED_ADMIN)
+                ->whereHas('jenisSurat.approvalRole', fn ($roleQuery) => $roleQuery->where('slug', $activeRole))
+                ->count())
+            : 0;
+
+        return [
+            'admin_queue' => $this->fastPendingAdminCount(),
+            'approval_queue' => $approvalQueueCount,
         ];
     }
 }

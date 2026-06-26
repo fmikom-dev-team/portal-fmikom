@@ -81,6 +81,7 @@ CSS;
     {
         $surat->loadMissing([
             'pemohon.programStudi',
+            'subjectUser.programStudi',
             'approvedBy.programStudi',
             'jenisSurat.template.placeholders',
             'dataEntries',
@@ -422,6 +423,8 @@ HTML,
     public function resolvePlaceholderValues(Surat $surat, SuratTemplate $template): array
     {
         $suratData = $this->extractSuratData($surat);
+        $subjectUser = $surat->subjectUser ?? $surat->pemohon;
+        $subjectProgramStudiId = $subjectUser?->program_studi_id;
         $payload = $this->buildImplicitPlaceholderPayload(
             $suratData,
             [
@@ -436,18 +439,18 @@ HTML,
                     'generated_at' => $surat->generated_at,
                 ],
                 'user' => [
-                    'name' => $surat->pemohon?->name,
-                    'email' => $surat->pemohon?->email,
-                    'nim_nip' => $surat->pemohon?->nim_nip,
-                    'nomor_induk' => $surat->pemohon?->nomor_induk,
-                    'no_telepon' => $surat->pemohon?->no_telepon,
+                    'name' => $subjectUser?->name,
+                    'email' => $subjectUser?->email,
+                    'nim_nip' => $subjectUser?->nim_nip,
+                    'nomor_induk' => $subjectUser?->nomor_induk,
+                    'no_telepon' => $subjectUser?->no_telepon,
                     'programStudi' => [
-                        'nama' => $surat->pemohon?->programStudi?->nama,
+                        'nama' => $subjectUser?->programStudi?->nama,
                     ],
                 ],
                 'signer' => $this->resolveSignerContext(
                     $surat->finalApprovalRoleSlug(),
-                    $surat->pemohon?->program_studi_id,
+                    $subjectProgramStudiId,
                     $surat->approvedBy,
                 ),
             ]
@@ -459,7 +462,7 @@ HTML,
 
             $value = match ($placeholder->source_type) {
                 'surat' => data_get($surat, $sourceKey),
-                'user' => data_get($surat->pemohon, $sourceKey),
+                'user' => data_get($subjectUser, $sourceKey),
                 'surat_data' => Arr::get($suratData, $sourceKey),
                 'computed' => $this->resolveComputedValue($surat, $suratData, $sourceKey),
                 'system' => $this->resolveSystemValue($sourceKey, $placeholder->default_value),
@@ -754,34 +757,37 @@ HTML,
 
     protected function resolveComputedValue(Surat $surat, array $suratData, string $sourceKey): mixed
     {
+        $subjectUser = $surat->subjectUser ?? $surat->pemohon;
+        $subjectProgramStudiId = $subjectUser?->program_studi_id;
+
         return match ($sourceKey) {
-            'email_pemohon' => Arr::get($surat->pemohon, 'email'),
-            'nama_mahasiswa' => Arr::get($surat->pemohon, 'name'),
-            'nama_dosen' => Arr::get($surat->pemohon, 'name'),
-            'nim_mahasiswa' => Arr::get($surat->pemohon, 'nim_nip') ?? Arr::get($surat->pemohon, 'nomor_induk'),
-            'nip_dosen' => Arr::get($surat->pemohon, 'nim_nip') ?? Arr::get($surat->pemohon, 'nomor_induk'),
-            'nomor_induk_mahasiswa' => Arr::get($surat->pemohon, 'nomor_induk') ?? Arr::get($surat->pemohon, 'nim_nip'),
-            'nomor_induk_dosen' => Arr::get($surat->pemohon, 'nomor_induk') ?? Arr::get($surat->pemohon, 'nim_nip'),
-            'program_studi_mahasiswa' => Arr::get($surat->pemohon, 'programStudi.nama'),
-            'program_studi_dosen' => Arr::get($surat->pemohon, 'programStudi.nama'),
-            'nim_pemohon' => Arr::get($surat->pemohon, 'nim_nip') ?? Arr::get($surat->pemohon, 'nomor_induk'),
-            'nomor_induk_pemohon' => Arr::get($surat->pemohon, 'nomor_induk') ?? Arr::get($surat->pemohon, 'nim_nip'),
-            'program_studi_pemohon' => Arr::get($surat->pemohon, 'programStudi.nama'),
-            'telepon_pemohon' => Arr::get($surat->pemohon, 'no_telepon'),
-            'nama_kaprodi' => $this->resolveSignerContext('kaprodi', $surat->pemohon?->program_studi_id)['name'] ?? null,
-            'nip_kaprodi' => $this->resolveSignerContext('kaprodi', $surat->pemohon?->program_studi_id)['nomor_induk'] ?? null,
-            'nomor_induk_kaprodi' => $this->resolveSignerContext('kaprodi', $surat->pemohon?->program_studi_id)['nomor_induk'] ?? null,
-            'program_studi_kaprodi' => $this->resolveSignerContext('kaprodi', $surat->pemohon?->program_studi_id)['program_studi'] ?? null,
-            'nama_dekan' => $this->resolveSignerContext('dekan', $surat->pemohon?->program_studi_id)['name'] ?? null,
-            'nip_dekan' => $this->resolveSignerContext('dekan', $surat->pemohon?->program_studi_id)['nomor_induk'] ?? null,
-            'nomor_induk_dekan' => $this->resolveSignerContext('dekan', $surat->pemohon?->program_studi_id)['nomor_induk'] ?? null,
-            'program_studi_dekan' => $this->resolveSignerContext('dekan', $surat->pemohon?->program_studi_id)['program_studi'] ?? null,
-            'nama_penanda_tangan' => $this->resolveSignerContext($surat->finalApprovalRoleSlug(), $surat->pemohon?->program_studi_id, $surat->approvedBy)['name'] ?? null,
-            'email_penanda_tangan' => $this->resolveSignerContext($surat->finalApprovalRoleSlug(), $surat->pemohon?->program_studi_id, $surat->approvedBy)['email'] ?? null,
-            'nik_penanda_tangan' => $this->resolveSignerContext($surat->finalApprovalRoleSlug(), $surat->pemohon?->program_studi_id, $surat->approvedBy)['nomor_induk'] ?? null,
-            'nomor_induk_penanda_tangan' => $this->resolveSignerContext($surat->finalApprovalRoleSlug(), $surat->pemohon?->program_studi_id, $surat->approvedBy)['nomor_induk'] ?? null,
-            'jabatan_penanda_tangan' => $this->resolveSignerContext($surat->finalApprovalRoleSlug(), $surat->pemohon?->program_studi_id, $surat->approvedBy)['jabatan'] ?? null,
-            'program_studi_penanda_tangan' => $this->resolveSignerContext($surat->finalApprovalRoleSlug(), $surat->pemohon?->program_studi_id, $surat->approvedBy)['program_studi'] ?? null,
+            'email_pemohon' => Arr::get($subjectUser, 'email'),
+            'nama_mahasiswa' => Arr::get($subjectUser, 'name'),
+            'nama_dosen' => Arr::get($subjectUser, 'name'),
+            'nim_mahasiswa' => Arr::get($subjectUser, 'nim_nip') ?? Arr::get($subjectUser, 'nomor_induk'),
+            'nip_dosen' => Arr::get($subjectUser, 'nim_nip') ?? Arr::get($subjectUser, 'nomor_induk'),
+            'nomor_induk_mahasiswa' => Arr::get($subjectUser, 'nomor_induk') ?? Arr::get($subjectUser, 'nim_nip'),
+            'nomor_induk_dosen' => Arr::get($subjectUser, 'nomor_induk') ?? Arr::get($subjectUser, 'nim_nip'),
+            'program_studi_mahasiswa' => Arr::get($subjectUser, 'programStudi.nama'),
+            'program_studi_dosen' => Arr::get($subjectUser, 'programStudi.nama'),
+            'nim_pemohon' => Arr::get($subjectUser, 'nim_nip') ?? Arr::get($subjectUser, 'nomor_induk'),
+            'nomor_induk_pemohon' => Arr::get($subjectUser, 'nomor_induk') ?? Arr::get($subjectUser, 'nim_nip'),
+            'program_studi_pemohon' => Arr::get($subjectUser, 'programStudi.nama'),
+            'telepon_pemohon' => Arr::get($subjectUser, 'no_telepon'),
+            'nama_kaprodi' => $this->resolveSignerContext('kaprodi', $subjectProgramStudiId)['name'] ?? null,
+            'nip_kaprodi' => $this->resolveSignerContext('kaprodi', $subjectProgramStudiId)['nomor_induk'] ?? null,
+            'nomor_induk_kaprodi' => $this->resolveSignerContext('kaprodi', $subjectProgramStudiId)['nomor_induk'] ?? null,
+            'program_studi_kaprodi' => $this->resolveSignerContext('kaprodi', $subjectProgramStudiId)['program_studi'] ?? null,
+            'nama_dekan' => $this->resolveSignerContext('dekan', $subjectProgramStudiId)['name'] ?? null,
+            'nip_dekan' => $this->resolveSignerContext('dekan', $subjectProgramStudiId)['nomor_induk'] ?? null,
+            'nomor_induk_dekan' => $this->resolveSignerContext('dekan', $subjectProgramStudiId)['nomor_induk'] ?? null,
+            'program_studi_dekan' => $this->resolveSignerContext('dekan', $subjectProgramStudiId)['program_studi'] ?? null,
+            'nama_penanda_tangan' => $this->resolveSignerContext($surat->finalApprovalRoleSlug(), $subjectProgramStudiId, $surat->approvedBy)['name'] ?? null,
+            'email_penanda_tangan' => $this->resolveSignerContext($surat->finalApprovalRoleSlug(), $subjectProgramStudiId, $surat->approvedBy)['email'] ?? null,
+            'nik_penanda_tangan' => $this->resolveSignerContext($surat->finalApprovalRoleSlug(), $subjectProgramStudiId, $surat->approvedBy)['nomor_induk'] ?? null,
+            'nomor_induk_penanda_tangan' => $this->resolveSignerContext($surat->finalApprovalRoleSlug(), $subjectProgramStudiId, $surat->approvedBy)['nomor_induk'] ?? null,
+            'jabatan_penanda_tangan' => $this->resolveSignerContext($surat->finalApprovalRoleSlug(), $subjectProgramStudiId, $surat->approvedBy)['jabatan'] ?? null,
+            'program_studi_penanda_tangan' => $this->resolveSignerContext($surat->finalApprovalRoleSlug(), $subjectProgramStudiId, $surat->approvedBy)['program_studi'] ?? null,
             'semester_terbilang' => $this->numberToWords(Arr::get($suratData, 'semester')),
             'tanggal_surat_panjang' => $this->formatDateLong($surat->tanggal_selesai ?? $surat->created_at ?? now()),
             'tanggal_yudisium_panjang' => $this->formatDateLong(Arr::get($suratData, 'tanggal_yudisium')),

@@ -35,8 +35,9 @@ type TimelineItem = {
 
 type Surat = {
     id: number;
+    type: string;
     nomor_surat?: string | null;
-    pemohon: { name: string; nim?: string | null };
+    subject?: { name: string; nim?: string | null };
     jenis_surat: string;
     keperluan: string;
     isi_surat: Record<string, any>;
@@ -59,6 +60,12 @@ type Surat = {
 };
 
 const props = defineProps<{ id: number } & Surat>();
+const subjectLabel = computed(() =>
+    props.type === 'surat_keluar' ? 'Atas Nama' : 'Pemohon',
+);
+const subjectIdentityLabel = computed(() =>
+    props.type === 'surat_keluar' ? 'Nomor Induk' : 'NIM / NIP',
+);
 
 const viewerOpen = ref(false);
 const viewerUrl = ref<string | null>(null);
@@ -329,16 +336,16 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
 
                     <div class="mt-2 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
                         <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
-                            <p class="text-slate-500">Nama</p>
+                            <p class="text-slate-500">{{ subjectLabel }}</p>
                             <p class="min-w-0 break-words font-medium leading-6 text-slate-900">
-                                {{ pemohon?.name || '-' }}
+                                {{ subject?.name || '-' }}
                             </p>
                         </div>
 
                         <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
-                            <p class="text-slate-500">NIM / NIP</p>
+                            <p class="text-slate-500">{{ subjectIdentityLabel }}</p>
                             <p class="min-w-0 break-words font-mono font-medium leading-6 text-slate-900">
-                                {{ pemohon?.nim || '-' }}
+                                {{ subject?.nim || '-' }}
                             </p>
                         </div>
 
