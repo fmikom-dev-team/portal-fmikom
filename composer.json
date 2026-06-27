@@ -102,9 +102,7 @@
 		],
 		"lint": ["pint --parallel"],
 		"lint:check": ["pint --parallel --test"],
-		"fast:audit": [
-			"@php artisan fast:audit-private-storage"
-		],
+		"fast:audit": ["@php artisan fast:audit-private-storage"],
 		"ci:check": [
 			"Composer\\Config::disableProcessTimeout",
 			"npm run lint",
