@@ -201,11 +201,17 @@ class User extends Authenticatable
         return $this->hasMany(Kuesioner::class, 'created_by');
     }
 
+    /**
+     * @return HasOne<ProfilAlumni, $this>
+     */
     public function alumniProfile(): HasOne
     {
         return $this->hasOne(ProfilAlumni::class, 'user_id');
     }
 
+    /**
+     * @return HasOne<MitraProfile, $this>
+     */
     public function mitraProfile(): HasOne
     {
         return $this->hasOne(MitraProfile::class, 'user_id');

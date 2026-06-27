@@ -5,6 +5,8 @@ namespace App\Models\Tracer;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 
@@ -53,27 +55,42 @@ class ProfilAlumni extends Model
 
     protected $appends = ['completeness_percentage'];
 
-    public function user()
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function careers()
+    /**
+     * @return HasMany<CareerHistory, $this>
+     */
+    public function careers(): HasMany
     {
         return $this->hasMany(CareerHistory::class, 'profil_alumni_id');
     }
 
-    public function educationHistories()
+    /**
+     * @return HasMany<EducationHistory, $this>
+     */
+    public function educationHistories(): HasMany
     {
         return $this->hasMany(EducationHistory::class, 'profil_alumni_id');
     }
 
-    public function provinsi()
+    /**
+     * @return BelongsTo<Provinsi, $this>
+     */
+    public function provinsi(): BelongsTo
     {
         return $this->belongsTo(Provinsi::class);
     }
 
-    public function kota()
+    /**
+     * @return BelongsTo<Kota, $this>
+     */
+    public function kota(): BelongsTo
     {
         return $this->belongsTo(Kota::class);
     }

@@ -6,6 +6,8 @@ use App\Enums\CareerStatus;
 use App\Enums\CareerType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Cache;
 
 class CareerHistory extends Model
@@ -72,27 +74,42 @@ class CareerHistory extends Model
         return $query->current()->whereIn('status', ['bekerja', 'wirausaha']);
     }
 
-    public function alumniProfile()
+    /**
+     * @return BelongsTo<ProfilAlumni, $this>
+     */
+    public function alumniProfile(): BelongsTo
     {
         return $this->belongsTo(ProfilAlumni::class, 'profil_alumni_id');
     }
 
-    public function provinsi()
+    /**
+     * @return BelongsTo<Provinsi, $this>
+     */
+    public function provinsi(): BelongsTo
     {
         return $this->belongsTo(Provinsi::class);
     }
 
-    public function kota()
+    /**
+     * @return BelongsTo<Kota, $this>
+     */
+    public function kota(): BelongsTo
     {
         return $this->belongsTo(Kota::class);
     }
 
-    public function employment()
+    /**
+     * @return HasOne<Employment, $this>
+     */
+    public function employment(): HasOne
     {
         return $this->hasOne(Employment::class, 'career_history_id');
     }
 
-    public function education()
+    /**
+     * @return HasOne<Education, $this>
+     */
+    public function education(): HasOne
     {
         return $this->hasOne(Education::class, 'career_history_id');
     }
