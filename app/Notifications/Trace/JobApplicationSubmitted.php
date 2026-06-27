@@ -26,7 +26,7 @@ class JobApplicationSubmitted extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $companyName = $notifiable->mitraProfile?->nama_perusahaan ?? 'Mitra';
+        $companyName = $notifiable->mitraProfile->nama_perusahaan ?? 'Mitra';
 
         return (new MailMessage)
             ->subject('[Portal FMIKOM] Ada Pelamar Baru untuk Lowongan Anda')

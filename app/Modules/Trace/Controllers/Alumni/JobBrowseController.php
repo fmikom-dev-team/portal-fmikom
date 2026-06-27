@@ -172,7 +172,7 @@ class JobBrowseController extends Controller
         ));
 
         // Notify applicant (alumni)
-        $companyName = $job->mitra?->nama_perusahaan ?? 'Mitra FMIKOM';
+        $companyName = $job->mitra->nama_perusahaan ?? 'Mitra FMIKOM';
         auth()->user()->notify(new JobApplicationConfirmation(
             $job->title,
             $companyName,
