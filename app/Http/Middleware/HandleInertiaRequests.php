@@ -77,13 +77,13 @@ class HandleInertiaRequests extends Middleware
                 'import_errors' => fn () => $request->session()->get('import_errors'),
             ],
             'auth' => [
-                // ⚠️ KEAMANAN: HANYA field yang dibutuhkan UI yang dibagikan ke frontend.
+                // SECURITY: Only UI-safe fields are shared to the frontend.
                 // Field sensitif (password, two_factor_secret, otp_code, dll) DILARANG di sini.
                 'user' => $user ? (new UserResource($user))->resolve() : null,
                 'session_lifetime' => (int) config('session.lifetime') * 60 * 1000,
             ],
             'unread_messages_count' => $user
-                // BUG-013: Cache per-user unread count — was firing DB query on every Inertia request.
+                // BUG-013: Cache per-user unread count to avoid a query on every Inertia request.
                 // 30-second TTL is short enough for near-real-time feel, eliminates 90% of queries.
                 ? Cache::remember("unread_msg_count_{$user->id}", 30, fn () => PagiMessage::where('receiver_id', $user->id)->whereNull('read_at')->count()
                 )

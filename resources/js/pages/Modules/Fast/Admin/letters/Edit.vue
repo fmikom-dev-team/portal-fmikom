@@ -74,7 +74,7 @@ const props = defineProps<{
     formData: FormData;
     subjectOptions: SubjectOption[];
 }>();
-// â”€â”€ Preset Kepada Yth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Preset Kepada Yth
 const defaultPresets = [
     'Dekan FMIKOM',
     'Ketua Program Studi Informatika',
@@ -82,7 +82,7 @@ const defaultPresets = [
     'Wakil Dekan Bidang Akademik',
 ];
 const consumedFormKeys = ['kepada_yth', 'lampiran_keterangan', 'perihal'] as const;
-// â”€â”€ Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Form
 const form = useForm({
     jenis_surat_id: props.formData.jenis_surat_id,
     subject_user_id: props.formData.subject_user_id ?? '',
@@ -111,7 +111,7 @@ function stripConsumedFormKeys() {
     });
 }
 stripConsumedFormKeys();
-// â”€â”€ Kepada Yth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Kepada Yth
 const kepadaSearch = ref('');
 const kepadaManual = ref('');
 const showDropdown = ref(false);
@@ -147,7 +147,7 @@ function addKepada(value: string) {
 function removeKepada(i: number) {
     form.kepada_yth.splice(i, 1);
 }
-// â”€â”€ Repeatable â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Repeatable
 function addRepeat(name: string) {
     const cur = form.form_data[name];
     if (Array.isArray(cur)) cur.push('');
@@ -157,7 +157,7 @@ function removeRepeat(name: string, i: number) {
     const cur = form.form_data[name];
     if (Array.isArray(cur)) cur.splice(i, 1);
 }
-// â”€â”€ Submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Submit
 function submit() {
     // Merge special fields back into form_data before sending
     const payload = buildPayload();

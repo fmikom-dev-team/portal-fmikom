@@ -912,7 +912,7 @@ HTML;
         }
 
         $isNumbered = preg_match('/^\s*\d+[.)-]?\s+/', $text) === 1;
-        $isBulleted = preg_match('/^\s*[-*•]\s+/', $text) === 1;
+        $isBulleted = preg_match('/^\s*(?:[-*]|\x{2022})\s+/u', $text) === 1;
 
         if (! $forceHanging && ! $isNumbered && ! $isBulleted) {
             return $configuredIndent > 0 ? "text-indent: {$configuredIndent}px;" : '';
