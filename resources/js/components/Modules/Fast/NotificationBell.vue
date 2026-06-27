@@ -40,7 +40,9 @@ const localItems = ref<NotificationItem[]>([]);
 const localCount = ref(0);
 
 function syncFromProps() {
-    localItems.value = props.items.map((item) => ({ ...item }));
+    localItems.value = props.items
+        .filter((item) => !item.readAt)
+        .map((item) => ({ ...item }));
     localCount.value = props.count ?? 0;
 }
 
@@ -80,13 +82,6 @@ function close() {
     open.value = false;
 }
 
-function getCsrfToken(): string {
-    return (
-        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)
-            ?.content ?? ''
-    );
-}
-
 function openItem(item: NotificationItem) {
     if (item.readAt) {
         close();
@@ -109,7 +104,7 @@ function openItem(item: NotificationItem) {
     );
 }
 
-async function markAllAsRead() {
+function markAllAsRead() {
     if (localCount.value <= 0) {
         close();
         return;
@@ -122,24 +117,19 @@ async function markAllAsRead() {
     localCount.value = 0;
     close();
 
-    try {
-        const response = await fetch('/notifications/read-all', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': getCsrfToken(),
-                'X-Requested-With': 'XMLHttpRequest',
-                Accept: 'application/json',
+    router.post(
+        '/notifications/read-all',
+        {},
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: ['notifications', 'unread_notifications_count', 'recent_notifications'],
+            onError: () => {
+                localItems.value = previousItems;
+                localCount.value = previousCount;
             },
-            credentials: 'same-origin',
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to mark notifications as read');
-        }
-    } catch (_error) {
-        localItems.value = previousItems;
-        localCount.value = previousCount;
-    }
+        },
+    );
 }
 
 function handleDocumentClick(event: MouseEvent) {

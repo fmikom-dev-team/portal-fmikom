@@ -34,6 +34,9 @@ type SuratItem = {
     status: string;
     tanggal_pengajuan?: string | null;
     created_at?: string | null;
+    letter_mode?: string | null;
+    letter_mode_label?: string | null;
+    is_institution?: boolean;
     subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { id?: number | null; nama?: string | null } | null;
     nomor_surat?: string | null;
@@ -157,6 +160,13 @@ function statusColor(s: string) {
             line: 'bg-sky-300',
         };
     if (lowered === 'revision_requested')
+        return {
+            bg: 'bg-amber-50',
+            border: 'border-amber-200',
+            text: 'text-amber-600',
+            line: 'bg-amber-300',
+        };
+    if (lowered === 'pending' || lowered === 'validated_admin')
         return {
             bg: 'bg-amber-50',
             border: 'border-amber-200',
@@ -343,7 +353,11 @@ async function openDetail(id: number) {
                         <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center gap-2">
                                 <p class="text-sm font-bold text-slate-900">
-                                    {{ item.jenisSurat?.nama ?? '-' }}
+                                    {{
+                                        item.is_institution || item.letter_mode === 'institution'
+                                            ? 'Surat Institusi'
+                                            : (item.jenisSurat?.nama ?? '-')
+                                    }}
                                 </p>
                                 <span
                                     class="rounded-full px-2 py-0.5 text-[10px] font-semibold"
@@ -358,6 +372,12 @@ async function openDetail(id: number) {
                             >
                                 {{ item.nomor_surat }}
                             </p>
+                            <p
+                                v-if="item.is_institution || item.letter_mode === 'institution'"
+                                class="mt-1 text-xs text-slate-500"
+                            >
+                                {{ item.jenisSurat?.nama ?? '-' }}
+                            </p>
                             <div
                                 class="mt-3 flex items-center gap-3 text-[10px] text-slate-400"
                             >
@@ -371,7 +391,7 @@ async function openDetail(id: number) {
                                     }}
                                 </span>
                                 <span
-                                    v-if="subjectName(item) !== '-'"
+                                    v-if="subjectName(item) !== '-' && !(item.is_institution || item.letter_mode === 'institution')"
                                     class="flex items-center gap-1"
                                 >
                                     <FileText class="size-3" />

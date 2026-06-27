@@ -107,8 +107,8 @@ const notifCount = computed(
         0,
 );
 const notifItems = computed(() => {
-    if (page.props.notifications?.items?.length) {
-        return page.props.notifications.items;
+    if (page.props.notifications) {
+        return page.props.notifications.items ?? [];
     }
 
     return (page.props.recent_notifications ?? []).map((item) => ({

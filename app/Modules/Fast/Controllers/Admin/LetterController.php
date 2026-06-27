@@ -8,6 +8,8 @@ use App\Models\Surat;
 use App\Models\SuratCategory;
 use App\Models\User;
 use App\Modules\Fast\DTOs\SuratDataContract;
+use App\Modules\Fast\Support\FastUserIdentitySearch;
+use App\Modules\Fast\Support\TemplateAdminSupport;
 use App\Modules\Fast\Template\Renderers\SuratTemplateRendererService;
 use App\Modules\Fast\Workflow\Actions\SuratWorkflowService;
 use Illuminate\Http\JsonResponse;
@@ -16,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -24,6 +27,7 @@ class LetterController extends Controller
     public function __construct(
         protected SuratWorkflowService $workflow,
         protected SuratTemplateRendererService $templateService,
+        protected TemplateAdminSupport $templateAdminSupport,
     ) {}
 
     public function create(): Response
@@ -41,6 +45,11 @@ class LetterController extends Controller
                 'nama' => $jenisSurat->nama,
                 'slug' => $jenisSurat->slug,
                 'deskripsi' => $jenisSurat->deskripsi,
+                'letter_mode' => $this->templateAdminSupport->resolveLetterMode($jenisSurat),
+                'letter_mode_label' => $this->templateAdminSupport->letterModeLabel(
+                    $this->templateAdminSupport->resolveLetterMode($jenisSurat),
+                ),
+                'requires_subject_user' => $this->templateAdminSupport->resolveLetterMode($jenisSurat) === TemplateAdminSupport::LETTER_MODE_PERSONAL,
                 'category' => [
                     'id' => $jenisSurat->category?->id,
                     'nama' => $jenisSurat->category?->nama,
@@ -130,15 +139,13 @@ class LetterController extends Controller
             ->with('programStudi:id,nama')
             ->when($search !== '', function ($query) use ($search): void {
                 $query->where(function ($searchQuery) use ($search): void {
-                    $searchQuery
-                        ->where('name', 'like', "%{$search}%")
-                        ->orWhere('nomor_induk', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
+                    FastUserIdentitySearch::apply($searchQuery, $search);
+                    $searchQuery->orWhere('email', 'like', "%{$search}%");
                 });
             })
             ->orderBy('name')
             ->limit($search === '' ? 10 : 20)
-            ->get(['id', 'name', 'email', 'nomor_induk', 'program_studi_id']);
+            ->get(FastUserIdentitySearch::selectColumns(['id', 'name', 'email', 'nomor_induk', 'program_studi_id']));
 
         return response()->json([
             'data' => $subjects
@@ -252,14 +259,21 @@ class LetterController extends Controller
         return Inertia::render('admin/letters/Edit', [
             'surat' => [
                 'id' => $surat->id,
+                'type' => $surat->type,
                 'keperluan' => $surat->keperluan,
                 'status' => $surat->status,
+                'pemohon' => $surat->pemohon ? [
+                    'id' => $surat->pemohon->id,
+                    'name' => $surat->pemohon->name,
+                    'email' => $surat->pemohon->email,
+                    'nomor_induk' => $surat->pemohon->nomor_induk,
+                ] : null,
             ],
             'returnTo' => $returnTo,
             'jenisSurat' => $this->serializeJenisSurat($jenisSurat),
             'formData' => [
                 'jenis_surat_id' => $jenisSurat->id,
-                'subject_user_id' => $surat->subject_user_id ?? $surat->pemohon_id,
+                'subject_user_id' => $surat->subject_user_id,
                 'keperluan' => $surat->keperluan,
                 ...array_replace(
                     SuratDataContract::adminManualFieldDefaults(),
@@ -268,7 +282,7 @@ class LetterController extends Controller
                 'kepada_yth' => is_array($manualData['kepada_yth'] ?? null) ? $manualData['kepada_yth'] : [],
                 'data' => Arr::except($existingData, SuratDataContract::adminManualDataKeys()),
             ],
-            'subjectOptions' => $this->subjectOptions($surat->subject_user_id ?? $surat->pemohon_id),
+            'subjectOptions' => $this->subjectOptions($surat->subject_user_id),
         ]);
     }
 
@@ -279,7 +293,7 @@ class LetterController extends Controller
 
         abort_if($user === null, 403);
 
-        [, $payload] = $this->validatedPayload($request);
+        [, $payload] = $this->validatedPayload($request, $surat);
 
         $updatedSurat = $surat->status === Surat::STATUS_PENDING
             ? $this->workflow->editPending($surat, $user, $payload)
@@ -297,7 +311,7 @@ class LetterController extends Controller
     /**
      * @return array{0: JenisSurat, 1: array{jenis_surat_id: int, keperluan: string, data: array<string, mixed>}}
      */
-    protected function validatedPayload(Request $request): array
+    protected function validatedPayload(Request $request, ?Surat $existingSurat = null): array
     {
         $validated = $request->validate([
             'jenis_surat_id' => [
@@ -306,7 +320,7 @@ class LetterController extends Controller
                 Rule::exists('jenis_surats', 'id')->where(fn ($query) => $query->where('is_active', true)),
             ],
             'subject_user_id' => [
-                'required',
+                'nullable',
                 'integer',
                 Rule::exists('users', 'id')->where(function ($query): void {
                     $query
@@ -339,10 +353,21 @@ class LetterController extends Controller
 
         abort_if($jenisSurat->template === null, 404, 'Template surat belum tersedia.');
 
+        $requiresSubjectUser = $existingSurat?->type === 'pengajuan'
+            ? false
+            : $this->jenisSuratRequiresSubjectUser($jenisSurat);
+        $subjectUserId = isset($validated['subject_user_id']) ? (int) $validated['subject_user_id'] : 0;
+
+        if ($requiresSubjectUser && $subjectUserId <= 0) {
+            throw ValidationException::withMessages([
+                'subject_user_id' => 'Subjek surat wajib dipilih untuk jenis surat ini.',
+            ]);
+        }
+
         $rawDynamicData = $validated['form_data'] ?? $validated['data'] ?? [];
         $payload = [
             'jenis_surat_id' => (int) $validated['jenis_surat_id'],
-            'subject_user_id' => (int) $validated['subject_user_id'],
+            'subject_user_id' => $subjectUserId > 0 ? $subjectUserId : null,
             'keperluan' => (string) $validated['keperluan'],
             'data' => $this->workflow->validateDynamicData($jenisSurat, $rawDynamicData),
         ];
@@ -381,6 +406,7 @@ class LetterController extends Controller
                 'name' => $jenisSurat->template?->name,
                 'subject' => $jenisSurat->template?->subject,
             ],
+            'requires_subject_user' => $this->jenisSuratRequiresSubjectUser($jenisSurat),
             'field_config' => collect(SuratDataContract::filterDynamicFieldConfig($jenisSurat->field_config ?? []))
                 ->map(fn (array $field): array => SuratDataContract::normalizeDynamicFieldConfigItem($field))
                 ->values()
@@ -405,7 +431,7 @@ class LetterController extends Controller
             ->when($selectedUserId > 0, fn ($query) => $query->whereKey($selectedUserId))
             ->orderBy('name')
             ->limit($selectedUserId > 0 ? 1 : 10)
-            ->get(['id', 'name', 'email', 'nomor_induk', 'program_studi_id'])
+            ->get(FastUserIdentitySearch::selectColumns(['id', 'name', 'email', 'nomor_induk', 'program_studi_id']))
             ->map(fn (User $user): array => $this->serializeSubjectOption($user))
             ->values()
             ->all();
@@ -417,7 +443,7 @@ class LetterController extends Controller
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'nomor_induk' => $user->nomor_induk,
+            'nomor_induk' => FastUserIdentitySearch::resolveIdentifier($user),
             'program_studi' => data_get($user, 'programStudi.nama'),
         ];
     }
@@ -453,12 +479,10 @@ class LetterController extends Controller
         $payload = $previewState['payload'] ?? [];
         abort_if(! is_array($payload), 404, 'Payload preview surat tidak valid.');
 
-        $operator = $request->user()?->loadMissing('programStudi');
         $subjectUserId = isset($payload['subject_user_id']) ? (int) $payload['subject_user_id'] : 0;
         $subjectUser = $subjectUserId > 0
             ? User::query()->with('programStudi')->find($subjectUserId)
             : null;
-        $contextUser = $subjectUser ?? $operator;
 
         $previewData = $payload['data'];
 
@@ -474,7 +498,7 @@ class LetterController extends Controller
                 'approval_role_slug' => $this->approvalRoleSlug($jenisSurat),
                 'tanggal_surat' => now(),
                 'kota_surat' => \DB::table('template_global_settings')->where('key', 'kota_surat')->value('value') ?? 'Cilacap',
-                'pemohon_program_studi_id' => $contextUser?->program_studi_id,
+                'pemohon_program_studi_id' => $subjectUser?->program_studi_id,
                 'surat' => [
                     'nomor_surat' => 'AUTO/GENERATED/AFTER/APPROVAL',
                     'keperluan' => $payload['keperluan'],
@@ -483,13 +507,13 @@ class LetterController extends Controller
                     'type' => 'surat_keluar',
                 ],
                 'user' => [
-                    'name' => $contextUser?->name,
-                    'email' => $contextUser?->email,
-                    'nim_nip' => $contextUser?->nim_nip,
-                    'nomor_induk' => $contextUser?->nomor_induk,
-                    'no_telepon' => $contextUser?->no_telepon,
+                    'name' => $subjectUser?->name,
+                    'email' => $subjectUser?->email,
+                    'nim_nip' => $subjectUser?->nim_nip,
+                    'nomor_induk' => $subjectUser?->nomor_induk,
+                    'no_telepon' => $subjectUser?->no_telepon,
                     'programStudi' => [
-                        'nama' => data_get($contextUser, 'programStudi.nama'),
+                        'nama' => data_get($subjectUser, 'programStudi.nama'),
                     ],
                 ],
             ],
@@ -531,6 +555,11 @@ class LetterController extends Controller
                 return [(string) $field['name'] => ''];
             })
             ->all();
+    }
+
+    protected function jenisSuratRequiresSubjectUser(JenisSurat $jenisSurat): bool
+    {
+        return $this->templateAdminSupport->resolveLetterMode($jenisSurat) === TemplateAdminSupport::LETTER_MODE_PERSONAL;
     }
 
     protected function safeReturnTo(string $returnTo, string $fallback): string

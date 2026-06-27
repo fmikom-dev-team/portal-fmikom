@@ -7,6 +7,7 @@ namespace App\Modules\Fast\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Surat;
 use App\Models\SuratQrCode;
+use App\Modules\Fast\Support\FastUserIdentitySearch;
 use App\Modules\Fast\Services\Shared\SuratHistoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -44,18 +45,14 @@ class QrManageController extends Controller
                         $typeQuery
                             ->where('type', 'pengajuan')
                             ->whereHas('pemohon', function ($userQuery) use ($search): void {
-                                $userQuery
-                                    ->where('name', 'like', "%{$search}%")
-                                    ->orWhere('nomor_induk', 'like', "%{$search}%");
+                                FastUserIdentitySearch::apply($userQuery, $search);
                             });
                     })
                     ->orWhere(function ($typeQuery) use ($search): void {
                         $typeQuery
                             ->where('type', 'surat_keluar')
                             ->whereHas('subjectUser', function ($userQuery) use ($search): void {
-                                $userQuery
-                                    ->where('name', 'like', "%{$search}%")
-                                    ->orWhere('nomor_induk', 'like', "%{$search}%");
+                                FastUserIdentitySearch::apply($userQuery, $search);
                             });
                     });
             });
@@ -83,6 +80,9 @@ class QrManageController extends Controller
                 'qr_token' => $s->qr_token,
                 'created_at' => $s->created_at?->toISOString(),
                 'subject' => $s->serializeSubjectIdentity(),
+                'letter_mode' => $s->resolvedLetterMode(),
+                'letter_mode_label' => $s->letterModeLabel(),
+                'is_institution' => $s->resolvedLetterMode() === 'institution',
                 'jenisSurat' => ['nama' => $s->jenisSurat?->nama],
                 // Cek dari tabel surat_qr_codes
                 'qr_status' => $s->qrCode?->status ?? 'active',

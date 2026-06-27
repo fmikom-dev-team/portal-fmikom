@@ -36,6 +36,9 @@ type SuratItem = {
     status: string;
     tanggal_pengajuan?: string | null;
     created_at?: string | null;
+    letter_mode?: string | null;
+    letter_mode_label?: string | null;
+    is_institution?: boolean;
     subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { id?: number | null; nama?: string | null } | null;
 };
@@ -47,6 +50,9 @@ type SuratDetail = {
     nomor_surat?: string | null;
     keperluan?: string | null;
     tanggal_pengajuan?: string | null;
+    letter_mode?: string | null;
+    letter_mode_label?: string | null;
+    is_institution?: boolean;
     subject?: { name?: string | null; nim?: string | null } | null;
     isi_surat?: Record<string, unknown>;
     lampiran?: DetailLampiran[];
@@ -170,11 +176,16 @@ function initials(name?: string | null) {
         .map((part) => part[0]?.toUpperCase() ?? '')
         .join('');
 }
+function isInstitutionLetter(item: { is_institution?: boolean | null; letter_mode?: string | null }) {
+    return Boolean(item.is_institution) || item.letter_mode === 'institution';
+}
 function subjectName(item: { subject?: { name?: string | null } | null }) {
     return item.subject?.name ?? '';
 }
 function subjectNim(item: { subject?: { nim?: string | null } | null }) {
-    return item.subject?.nim ?? '';
+    return isInstitutionLetter(item)
+        ? 'Surat Institusi'
+        : item.subject?.nim ?? '';
 }
 function statusLabel(status: string) {
     const labels: Record<string, string> = {
@@ -195,7 +206,7 @@ function statusClass(status: string) {
     if (status === 'rejected_admin' || status === 'rejected_approver')
         return 'bg-red-50 text-red-700';
     if (status.startsWith('approved')) return 'bg-emerald-50 text-emerald-700';
-    return 'bg-slate-100 text-slate-600';
+    return 'bg-amber-50 text-amber-700';
 }
 function cardBorderClass(status: string) {
     if (status === 'pending') return 'hover:border-amber-300';
@@ -351,14 +362,18 @@ function submitFinalReject() {
                             <div
                                 class="grid size-10 shrink-0 place-items-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-500"
                             >
-                                {{ initials(subjectName(item)) }}
+                                {{ isInstitutionLetter(item) ? 'INST' : initials(subjectName(item)) }}
                             </div>
                             <div class="min-w-0">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <p
                                         class="truncate text-sm font-semibold text-slate-900"
                                     >
-                                        {{ subjectName(item) }}
+                                        {{
+                                            isInstitutionLetter(item)
+                                                ? 'Surat Institusi'
+                                                : subjectName(item)
+                                        }}
                                     </p>
                                     <span
                                         class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold"
@@ -367,14 +382,15 @@ function submitFinalReject() {
                                         {{ statusLabel(item.status) }}
                                     </span>
                                 </div>
-                                <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                                    <p class="text-xs text-slate-500">
-                                        {{ item.jenisSurat?.nama || '' }}
-                                    </p>
-                                    <p class="font-mono text-[10px] text-slate-400">
-                                        {{ subjectNim(item) }}
-                                    </p>
-                                </div>
+                                <p
+                                    v-if="!isInstitutionLetter(item)"
+                                    class="mt-0.5 font-mono text-[10px] text-slate-400"
+                                >
+                                    {{ subjectNim(item) }}
+                                </p>
+                                <p class="mt-1 text-xs text-slate-500">
+                                    {{ item.jenisSurat?.nama || '' }}
+                                </p>
                             </div>
                         </div>
                         <div class="shrink-0 text-right sm:pt-0.5">
@@ -408,7 +424,7 @@ function submitFinalReject() {
                             </button>
                             <button
                                 type="button"
-                                class="fast-btn fast-btn-danger flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium"
+                                class="fast-btn flex items-center gap-1 border border-amber-500 bg-amber-500 px-2.5 py-1.5 text-[10px] font-medium text-white hover:bg-amber-600"
                                 title="Kembalikan untuk revisi"
                                 @click="openRejectModal(item)"
                             >
@@ -559,7 +575,7 @@ function submitFinalReject() {
                             >
                             <Button
                                 type="submit"
-                                class="rounded-xl bg-red-600 text-white hover:bg-red-700"
+                                class="rounded-xl bg-amber-500 text-white hover:bg-amber-600"
                                 :disabled="rejectForm.processing"
                                 >Kembalikan ke Admin</Button
                             >
@@ -618,7 +634,7 @@ function submitFinalReject() {
                             >
                             <Button
                                 type="submit"
-                                class="rounded-xl bg-slate-800 text-white hover:bg-slate-900"
+                                class="rounded-xl bg-red-600 text-white hover:bg-red-700"
                                 :disabled="finalRejectForm.processing"
                                 >Tolak Final</Button
                             >

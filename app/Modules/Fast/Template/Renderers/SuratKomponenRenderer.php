@@ -808,6 +808,18 @@ HTML;
             $jabatan = static::fill($kol['jabatan'] ?? '', $data);
             $nama = static::fill($kol['nama'] ?? '', $data);
             $nik = static::fill($kol['nik'] ?? '', $data);
+            $jabatanStyle = static::signatureTextStyle(
+                (bool) ($kol['jabatan_bold'] ?? false),
+                (bool) ($kol['jabatan_underline'] ?? false),
+            );
+            $namaStyle = static::signatureTextStyle(
+                (bool) ($kol['nama_bold'] ?? true),
+                (bool) ($kol['nama_underline'] ?? false),
+            );
+            $nikStyle = static::signatureTextStyle(
+                (bool) ($kol['nik_bold'] ?? false),
+                (bool) ($kol['nik_underline'] ?? false),
+            );
             $columnPosisi = (string) (($kol['posisi'] ?? null) ?: ($komp['posisi'] ?? 'kanan'));
             $textAlign = match ($columnPosisi) {
                 'kiri' => 'left',
@@ -821,7 +833,7 @@ HTML;
         <tbody>
             {$tanggalRow}
             <tr>
-                <td style="padding: 0; text-align: {$textAlign};">{$jabatan}</td>
+                <td style="padding: 0; text-align: {$textAlign}; {$jabatanStyle}">{$jabatan}</td>
             </tr>
             <tr>
                 <td style="height: {$signatureGap}; padding: 0; text-align: {$textAlign}; vertical-align: middle;">
@@ -829,10 +841,10 @@ HTML;
                 </td>
             </tr>
             <tr>
-                <td style="padding: 0; font-weight: bold; text-align: {$textAlign};">{$nama}</td>
+                <td style="padding: 0; text-align: {$textAlign}; {$namaStyle}">{$nama}</td>
             </tr>
             <tr>
-                <td style="padding: 1.5mm 0 0 0; text-align: {$textAlign};">{$nik}</td>
+                <td style="padding: 1.5mm 0 0 0; text-align: {$textAlign}; {$nikStyle}">{$nik}</td>
             </tr>
         </tbody>
     </table>
@@ -857,6 +869,17 @@ HTML;
     </tbody>
 </table>
 HTML;
+    }
+
+    protected static function signatureTextStyle(bool $bold, bool $underline): string
+    {
+        $style = $bold ? 'font-weight: bold;' : 'font-weight: normal;';
+
+        if ($underline) {
+            $style .= ' text-decoration: underline; text-decoration-thickness: 1px;';
+        }
+
+        return $style;
     }
 
     protected static function renderTembusan(array $komp, array $data): string

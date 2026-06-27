@@ -19,6 +19,9 @@ type SuratItem = {
     tanggal_selesai?: string | null;
     generated_file_path?: string | null;
     download_url?: string | null;
+    letter_mode?: string | null;
+    letter_mode_label?: string | null;
+    is_institution?: boolean;
     subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { nama?: string | null } | null;
 };
@@ -85,6 +88,9 @@ function subjectLabel(type: string) {
 }
 function subjectIdentityLabel(type: string) {
     return type === 'surat_keluar' ? 'No. Induk' : 'NIM';
+}
+function isInstitutionLetter(item: SuratItem) {
+    return !!item.is_institution || item.letter_mode === 'institution';
 }
 </script>
 <template>
@@ -255,10 +261,20 @@ function subjectIdentityLabel(type: string) {
                                 {{ item.nomor_surat ?? '-' }}
                             </p>
                             <p class="mt-0.5 truncate text-xs text-slate-500">
-                                {{ item.jenisSurat?.nama ?? '-' }}
+                                {{
+                                    isInstitutionLetter(item)
+                                        ? 'Surat Institusi'
+                                        : (item.jenisSurat?.nama ?? '-')
+                                }}
                             </p>
                         </div>
                     </div>
+                    <p
+                        v-if="isInstitutionLetter(item)"
+                        class="mb-4 text-xs text-slate-500"
+                    >
+                        {{ item.jenisSurat?.nama ?? '-' }}
+                    </p>
                     <!-- Details -->
                         <div class="mb-4 space-y-1.5">
                             <div class="flex items-center gap-2">
@@ -266,10 +282,13 @@ function subjectIdentityLabel(type: string) {
                                 >{{ subjectLabel(item.type) }}</span
                             >
                             <span class="text-xs font-medium text-slate-700">{{
-                                item.subject?.name ?? '-'
+                                isInstitutionLetter(item) ? 'Surat Institusi' : (item.subject?.name ?? '-')
                             }}</span>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div
+                            v-if="!isInstitutionLetter(item)"
+                            class="flex items-center gap-2"
+                        >
                             <span class="w-14 text-[10px] text-slate-400"
                                 >{{ subjectIdentityLabel(item.type) }}</span
                             >

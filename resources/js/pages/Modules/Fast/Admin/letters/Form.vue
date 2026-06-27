@@ -44,6 +44,7 @@ type JenisSurat = {
         name?: string | null;
         subject?: string | null;
     } | null;
+    requires_subject_user?: boolean;
     field_config: FieldConfig[];
 };
 type FormData = {
@@ -160,7 +161,12 @@ const visibleFields = computed(() =>
             !!f && (f.mode_form_pemohon ?? 'editable') !== 'hidden',
     ),
 );
-const selectedSubject = ref<SubjectOption | null>(props.subjectOptions[0] ?? null);
+const selectedSubject = ref<SubjectOption | null>(
+    props.subjectOptions.find(
+        (subject) => subject.id === Number(props.formData.subject_user_id ?? 0),
+    ) ?? null,
+);
+const requiresSubjectUser = computed(() => !!props.jenisSurat.requires_subject_user);
 </script>
 <template>
     <AdminLayout
@@ -179,12 +185,18 @@ const selectedSubject = ref<SubjectOption | null>(props.subjectOptions[0] ?? nul
             <div class="flex items-start justify-between gap-4">
                 <div class="flex-1">
                     <h2 class="mt-1 text-xl font-bold text-slate-900">
-                        Buat Surat Atas Nama Subjek
+                        {{
+                            requiresSubjectUser
+                                ? 'Buat Surat Atas Nama Subjek'
+                                : 'Buat Surat Institusi'
+                        }}
                     </h2>
                     <p class="mt-1 max-w-lg text-sm text-slate-500">
-                        Admin mengisi data surat untuk subjek yang dipilih.
-                        Pastikan identitas subjek, isi surat, dan field wajib
-                        sudah lengkap sebelum lanjut ke preview.
+                        {{
+                            requiresSubjectUser
+                                ? 'Admin mengisi data surat untuk subjek yang dipilih. Pastikan identitas subjek, isi surat, dan field wajib sudah lengkap sebelum lanjut ke preview.'
+                                : 'Admin mengisi data surat institusi atas nama fakultas atau kampus. Subjek pengguna tidak wajib dipilih kecuali memang surat perlu mewakili individu tertentu.'
+                        }}
                     </p>
                 </div>
                 <div class="hidden sm:block">
@@ -229,7 +241,7 @@ const selectedSubject = ref<SubjectOption | null>(props.subjectOptions[0] ?? nul
                     <label class="block space-y-1.5">
                         <span class="text-xs font-medium text-slate-700"
                             >Atas Nama
-                            <span class="text-red-500">*</span></span
+                            <span v-if="requiresSubjectUser" class="text-red-500">*</span></span
                         >
                         <SubjectAutocomplete
                             v-model="form.subject_user_id"
@@ -245,8 +257,11 @@ const selectedSubject = ref<SubjectOption | null>(props.subjectOptions[0] ?? nul
                             {{ form.errors.subject_user_id }}
                         </p>
                         <p class="text-xs text-slate-400">
-                            Surat ini akan dibuat atas nama pengguna yang
-                            dipilih, bukan atas nama admin yang sedang login.
+                            {{
+                                requiresSubjectUser
+                                    ? 'Surat ini akan dibuat atas nama pengguna yang dipilih, bukan atas nama admin yang sedang login.'
+                                    : 'Kosongkan jika surat diterbitkan sebagai surat institusi. Isi bila surat perlu mewakili mahasiswa atau dosen tertentu.'
+                            }}
                         </p>
                     </label>
                     <div

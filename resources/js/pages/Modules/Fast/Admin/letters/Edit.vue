@@ -37,6 +37,7 @@ type JenisSurat = {
         name?: string | null;
         subject?: string | null;
     } | null;
+    requires_subject_user?: boolean;
     field_config: FieldConfig[];
 };
 type FormData = {
@@ -56,7 +57,18 @@ type SubjectOption = {
     program_studi?: string | null;
 };
 const props = defineProps<{
-    surat: { id: number; keperluan: string; status: string };
+    surat: {
+        id: number;
+        type: string;
+        keperluan: string;
+        status: string;
+        pemohon?: {
+            id?: number | null;
+            name?: string | null;
+            email?: string | null;
+            nomor_induk?: string | null;
+        } | null;
+    };
     returnTo?: string | null;
     jenisSurat: JenisSurat;
     formData: FormData;
@@ -185,7 +197,14 @@ const visibleFields = computed(() =>
             !!f && (f.mode_form_pemohon ?? 'editable') !== 'hidden',
     ),
 );
-const selectedSubject = ref<SubjectOption | null>(props.subjectOptions[0] ?? null);
+const selectedSubject = ref<SubjectOption | null>(
+    props.subjectOptions.find(
+        (subject) => subject.id === Number(props.formData.subject_user_id ?? 0),
+    ) ?? null,
+);
+const requiresSubjectUser = computed(() => !!props.jenisSurat.requires_subject_user);
+const isRequesterSubmission = computed(() => props.surat.type === 'pengajuan');
+const showSubjectSection = computed(() => !isRequesterSubmission.value);
 const isPendingEdit = computed(() => props.surat.status === 'pending');
 const alertTitle = computed(() =>
     isPendingEdit.value
@@ -199,6 +218,14 @@ const alertDescription = computed(() =>
 );
 const submitLabel = computed(() =>
     isPendingEdit.value ? 'Simpan & Validasi' : 'Simpan & Teruskan',
+);
+const infoSubjectLabel = computed(() =>
+    isRequesterSubmission.value ? 'Pemohon' : 'Atas Nama',
+);
+const infoSubjectName = computed(() =>
+    isRequesterSubmission.value
+        ? (props.surat.pemohon?.name ?? 'Belum tersedia')
+        : (selectedSubject.value?.name ?? 'Belum dipilih'),
 );
 </script>
 <template>
@@ -268,6 +295,7 @@ const submitLabel = computed(() =>
                     </div>
                 </div>
                 <div
+                    v-if="showSubjectSection"
                     class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5"
                 >
                     <h3 class="text-sm font-semibold text-slate-800">
@@ -276,7 +304,7 @@ const submitLabel = computed(() =>
                     <label class="block space-y-1.5">
                         <span class="text-xs font-medium text-slate-700"
                             >Atas Nama
-                            <span class="text-red-500">*</span></span
+                            <span v-if="requiresSubjectUser" class="text-red-500">*</span></span
                         >
                         <SubjectAutocomplete
                             v-model="form.subject_user_id"
@@ -292,8 +320,11 @@ const submitLabel = computed(() =>
                             {{ form.errors.subject_user_id }}
                         </p>
                         <p class="text-xs text-slate-400">
-                            Identitas ini menjadi subjek utama surat yang
-                            diterbitkan oleh admin.
+                            {{
+                                requiresSubjectUser
+                                    ? 'Identitas ini menjadi subjek utama surat yang diterbitkan oleh admin.'
+                                    : 'Kosongkan jika surat ini merupakan surat institusi. Isi hanya bila surat perlu mewakili pengguna tertentu.'
+                            }}
                         </p>
                     </label>
                     <div
@@ -805,11 +836,11 @@ const submitLabel = computed(() =>
                     </h3>
                     <div class="space-y-2 text-xs">
                         <div class="flex justify-between gap-3">
-                            <span class="text-slate-400">Atas Nama</span>
+                            <span class="text-slate-400">{{ infoSubjectLabel }}</span>
                             <span
                                 class="max-w-[140px] text-right font-medium text-slate-700"
                                 >{{
-                                    selectedSubject?.name ?? 'Belum dipilih'
+                                    infoSubjectName
                                 }}</span
                             >
                         </div>

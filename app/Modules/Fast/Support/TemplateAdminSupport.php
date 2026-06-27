@@ -11,6 +11,10 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class TemplateAdminSupport
 {
+    public const LETTER_MODE_PERSONAL = 'personal';
+
+    public const LETTER_MODE_INSTITUTION = 'institution';
+
     protected const APPROVAL_ROLE_SLUGS = ['admin', 'dekan', 'kaprodi'];
 
     protected const CREATOR_ROLE_SLUGS = ['mahasiswa', 'dosen', 'admin'];
@@ -313,6 +317,8 @@ class TemplateAdminSupport
     {
         $jenisSurat->loadMissing(['category', 'template.placeholders', 'approvalRole', 'allowedRole']);
 
+        $letterMode = $this->resolveLetterMode($jenisSurat);
+
         return [
             'id' => $jenisSurat->id,
             'nama' => $jenisSurat->nama,
@@ -334,6 +340,9 @@ class TemplateAdminSupport
                 'nama' => $jenisSurat->approvalRole?->nama,
                 'slug' => $jenisSurat->approvalRole?->slug,
             ],
+            'letter_mode' => $letterMode,
+            'letter_mode_label' => $this->letterModeLabel($letterMode),
+            'requires_subject_user' => $letterMode === self::LETTER_MODE_PERSONAL,
             'allowed_role' => [
                 'id' => $jenisSurat->allowedRole?->id,
                 'nama' => $jenisSurat->allowedRole?->nama,
@@ -366,5 +375,42 @@ class TemplateAdminSupport
                 ])->values(),
             ] : null,
         ];
+    }
+
+    public function resolveLetterMode(JenisSurat $jenisSurat): string
+    {
+        $jenisSurat->loadMissing('template.placeholders');
+
+        $storedMode = strtolower(trim((string) ($jenisSurat->letter_mode ?? '')));
+        if (in_array($storedMode, [self::LETTER_MODE_PERSONAL, self::LETTER_MODE_INSTITUTION], true)) {
+            return $storedMode;
+        }
+
+        $templateSubject = strtolower(trim((string) ($jenisSurat->template?->subject ?? '')));
+        if (in_array($templateSubject, [self::LETTER_MODE_PERSONAL, self::LETTER_MODE_INSTITUTION], true)) {
+            return $templateSubject;
+        }
+
+        $placeholders = $jenisSurat->template?->placeholders
+            ? $jenisSurat->template->placeholders->map(fn ($placeholder): array => [
+                'placeholder_key' => $placeholder->placeholder_key,
+                'source_type' => $placeholder->source_type,
+                'source_key' => $placeholder->source_key,
+            ])->values()->all()
+            : [];
+
+        return SuratDataContract::requiresSubjectUser(
+            is_array($jenisSurat->field_config) ? $jenisSurat->field_config : [],
+            $placeholders,
+        )
+            ? self::LETTER_MODE_PERSONAL
+            : self::LETTER_MODE_INSTITUTION;
+    }
+
+    public function letterModeLabel(string $mode): string
+    {
+        return $mode === self::LETTER_MODE_INSTITUTION
+            ? 'Surat Institusi'
+            : 'Surat Personal';
     }
 }

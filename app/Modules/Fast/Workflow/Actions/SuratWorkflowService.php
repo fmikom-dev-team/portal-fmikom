@@ -90,8 +90,18 @@ class SuratWorkflowService
             ->with(['template.placeholders', 'approvalRole'])
             ->findOrFail((int) $payload['jenis_surat_id']);
         $subjectUserId = (int) ($payload['subject_user_id'] ?? 0);
+        $requiresSubjectUser = SuratDataContract::requiresSubjectUser(
+            is_array($jenisSurat->field_config) ? $jenisSurat->field_config : [],
+            $jenisSurat->template?->placeholders
+                ? $jenisSurat->template->placeholders->map(fn ($placeholder): array => [
+                    'placeholder_key' => $placeholder->placeholder_key,
+                    'source_type' => $placeholder->source_type,
+                    'source_key' => $placeholder->source_key,
+                ])->values()->all()
+                : [],
+        );
 
-        abort_if($subjectUserId <= 0, 422, 'Subjek surat wajib dipilih.');
+        abort_if($requiresSubjectUser && $subjectUserId <= 0, 422, 'Subjek surat wajib dipilih.');
 
         $dynamicData = $this->validateDynamicData($jenisSurat, Arr::wrap($payload['data'] ?? []));
 
@@ -99,10 +109,11 @@ class SuratWorkflowService
             $surat = Surat::query()->create([
                 'jenis_surat_id' => $jenisSurat->id,
                 // Kompatibilitas sementara: modul lama masih membaca pemohon_id
-                // sebagai subjek surat untuk surat keluar admin.
-                'pemohon_id' => $subjectUserId,
+                // sebagai subjek surat untuk surat keluar admin. Untuk surat
+                // institusi, pemohon diarahkan ke admin pembuat agar relasi DB aman.
+                'pemohon_id' => $subjectUserId > 0 ? $subjectUserId : $admin->id,
                 'created_by' => $admin->id,
-                'subject_user_id' => $subjectUserId,
+                'subject_user_id' => $subjectUserId > 0 ? $subjectUserId : null,
                 'type' => 'surat_keluar',
                 'keperluan' => (string) $payload['keperluan'],
                 'status' => Surat::STATUS_PENDING,

@@ -23,6 +23,9 @@ type SuratItem = {
     keperluan: string;
     tanggal_pengajuan?: string | null;
     tanggal_selesai?: string | null;
+    letter_mode?: string | null;
+    letter_mode_label?: string | null;
+    is_institution?: boolean;
     subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { nama?: string | null } | null;
 };
@@ -82,7 +85,7 @@ function formatDate(d?: string | null) {
 function statusLabel(s: string) {
     const map: Record<string, string> = {
         pending: 'Pending',
-        validated_admin: 'Diteruskan ke Approver',
+        validated_admin: 'Diteruskan untuk disetujui',
         approved_kaprodi: 'Disetujui Kaprodi',
         approved_dekan: 'Disetujui Dekan',
         revision_requested: 'Revisi',
@@ -133,10 +136,10 @@ function statusColor(s: string) {
         };
     if (s === 'validated_admin')
         return {
-            bg: 'bg-slate-100',
-            border: 'border-slate-200',
-            text: 'text-slate-600',
-            line: 'bg-slate-300',
+            bg: 'bg-amber-50',
+            border: 'border-amber-200',
+            text: 'text-amber-600',
+            line: 'bg-amber-300',
         };
     return {
         bg: 'bg-amber-50',
@@ -154,8 +157,11 @@ function statusClass(s: string) {
     )
         return 'bg-red-50 text-red-700';
     if (s.startsWith('approved')) return 'bg-emerald-50 text-emerald-700';
-    if (s === 'validated_admin') return 'bg-slate-100 text-slate-700';
+    if (s === 'validated_admin') return 'bg-amber-50 text-amber-700';
     return 'bg-amber-50 text-amber-700';
+}
+function isInstitutionLetter(item: SuratItem) {
+    return !!item.is_institution || item.letter_mode === 'institution';
 }
 </script>
 <template>
@@ -243,7 +249,7 @@ function statusClass(s: string) {
                         status === filter.key
                             ? filter.color === 'red'
                                 ? 'border-red-500 bg-red-500 text-white shadow-sm'
-                                : filter.color === 'amber'
+                              : filter.color === 'amber'
                                   ? 'border-amber-500 bg-amber-500 text-white shadow-sm'
                                   : 'border-blue-500 bg-blue-500 text-white shadow-sm'
                             : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
@@ -305,7 +311,11 @@ function statusClass(s: string) {
                         <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center gap-2">
                                 <p class="text-sm font-bold text-slate-900">
-                                    {{ item.jenisSurat?.nama ?? '-' }}
+                                    {{
+                                        isInstitutionLetter(item)
+                                            ? 'Surat Institusi'
+                                            : (item.jenisSurat?.nama ?? '-')
+                                    }}
                                 </p>
                                 <span
                                     class="rounded-full px-2 py-0.5 text-[10px] font-semibold"
@@ -321,6 +331,12 @@ function statusClass(s: string) {
                                 {{ item.nomor_surat }}
                             </p>
                             <p
+                                v-if="isInstitutionLetter(item)"
+                                class="mt-1 text-xs text-slate-500"
+                            >
+                                {{ item.jenisSurat?.nama ?? '-' }}
+                            </p>
+                            <p
                                 class="mt-2 text-xs leading-relaxed text-slate-600"
                             >
                                 {{ item.keperluan }}
@@ -333,7 +349,7 @@ function statusClass(s: string) {
                                     {{ formatDate(item.tanggal_pengajuan) }}
                                 </span>
                                 <span
-                                    v-if="item.subject?.name"
+                                    v-if="item.subject?.name && !isInstitutionLetter(item)"
                                     class="flex items-center gap-1"
                                 >
                                     <FileText class="size-3" />

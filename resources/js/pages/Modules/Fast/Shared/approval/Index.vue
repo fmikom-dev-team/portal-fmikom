@@ -39,6 +39,9 @@ type SuratItem = {
     status: string;
     tanggal_pengajuan?: string | null;
     created_at?: string | null;
+    letter_mode?: string | null;
+    letter_mode_label?: string | null;
+    is_institution?: boolean;
     subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { id?: number | null; nama?: string | null } | null;
 };
@@ -137,9 +140,9 @@ const summaryCards = computed(() => [
         value: props.summary.revision_requested,
         status: 'revision_requested',
         icon: XCircle,
-        border: 'border-red-200',
-        iconColor: 'text-red-500',
-        textColor: 'text-red-700',
+        border: 'border-amber-200',
+        iconColor: 'text-amber-500',
+        textColor: 'text-amber-700',
     },
     {
         label: 'Ditolak Final',
@@ -171,11 +174,16 @@ const ns = (s?: string | null) =>
 function subjectLabel(type?: string | null) {
     return type === 'surat_keluar' ? 'Atas Nama' : 'Pemohon';
 }
+function isInstitutionLetter(item: { is_institution?: boolean | null; letter_mode?: string | null }) {
+    return Boolean(item.is_institution) || item.letter_mode === 'institution';
+}
 function subjectName(item: { type?: string | null; subject?: { name?: string | null } | null }) {
     return item.subject?.name ?? '-';
 }
 function subjectNim(item: { subject?: { nim?: string | null } | null }) {
-    return item.subject?.nim ?? '-';
+    return isInstitutionLetter(item)
+        ? 'Surat Institusi'
+        : item.subject?.nim ?? '-';
 }
 function rowCanBeProcessed(item: SuratItem) {
     return ns(item.status) === 'validated_admin';
@@ -197,12 +205,12 @@ function statusLabel(status: string) {
 }
 function statusBadgeClass(status: string) {
     const s = ns(status);
-    if (s === 'validated_admin') return 'bg-slate-100 text-slate-700';
+    if (s === 'validated_admin') return 'bg-amber-50 text-amber-700';
     if (s === 'approved_kaprodi' || s === 'approved_dekan')
         return 'bg-emerald-50 text-emerald-700';
     if (s === 'revision_requested') return 'bg-amber-50 text-amber-700';
     if (s === 'rejected_approver') return 'bg-red-50 text-red-700';
-    return 'bg-slate-100 text-slate-600';
+    return 'bg-amber-50 text-amber-700';
 }
 function formatDate(date?: string | null) {
     if (!date) return '-';
@@ -377,18 +385,27 @@ function isPdfAttachment(f?: DetailLampiran | null) {
                                     <p
                                         class="text-xs font-semibold text-slate-900"
                                     >
-                                        {{ subjectName(item) }}
+                                        {{
+                                            isInstitutionLetter(item)
+                                                ? 'Surat Institusi'
+                                                : subjectName(item)
+                                        }}
                                     </p>
                                     <p
-                                        class="font-mono text-[10px] text-slate-400"
+                                        class="text-[10px] text-slate-400"
+                                        :class="isInstitutionLetter(item) ? '' : 'font-mono'"
                                     >
-                                        {{ subjectNim(item) }}
+                                        {{
+                                            isInstitutionLetter(item)
+                                                ? (item.jenisSurat?.nama || '-')
+                                                : subjectNim(item)
+                                        }}
                                     </p>
                                 </td>
                                 <td
                                     class="max-w-[180px] truncate px-5 py-3.5 text-xs text-slate-600"
                                 >
-                                    {{ item.jenisSurat?.nama || '-' }}
+                                    {{ isInstitutionLetter(item) ? '-' : (item.jenisSurat?.nama || '-') }}
                                 </td>
                                 <td class="px-5 py-3.5 text-xs text-slate-400">
                                     {{
@@ -518,10 +535,18 @@ function isPdfAttachment(f?: DetailLampiran | null) {
                                         <p
                                             class="truncate text-xs font-medium text-slate-700"
                                         >
-                                            {{ subjectName(item) }}
+                                            {{
+                                                isInstitutionLetter(item)
+                                                    ? 'Surat Institusi'
+                                                    : subjectName(item)
+                                            }}
                                         </p>
                                         <p class="text-[10px] text-slate-400">
-                                            {{ item.jenisSurat?.nama ?? '-' }}
+                                            {{
+                                                isInstitutionLetter(item)
+                                                    ? (item.jenisSurat?.nama ?? '-')
+                                                    : (item.jenisSurat?.nama ?? '-')
+                                            }}
                                         </p>
                                         <div class="mt-1 flex items-center gap-2">
                                             <span
@@ -659,7 +684,7 @@ function isPdfAttachment(f?: DetailLampiran | null) {
                             >
                             <Button
                                 type="submit"
-                                variant="destructive"
+                                class="rounded-xl bg-amber-500 text-white hover:bg-amber-600"
                                 :disabled="rejectForm.processing"
                                 >Kembalikan ke Admin</Button
                             >
@@ -716,7 +741,7 @@ function isPdfAttachment(f?: DetailLampiran | null) {
                             >
                             <Button
                                 type="submit"
-                                variant="destructive"
+                                class="rounded-xl bg-red-600 text-white hover:bg-red-700"
                                 :disabled="finalRejectForm.processing"
                                 >Tolak Final</Button
                             >

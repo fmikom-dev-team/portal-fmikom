@@ -7,6 +7,7 @@ namespace App\Modules\Fast\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Surat;
 use App\Models\SuratCategory;
+use App\Modules\Fast\Support\FastUserIdentitySearch;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -38,18 +39,14 @@ class ArchiveController extends Controller
                         $typeQuery
                             ->where('type', 'pengajuan')
                             ->whereHas('pemohon', function ($userQuery) use ($search): void {
-                                $userQuery
-                                    ->where('name', 'like', "%{$search}%")
-                                    ->orWhere('nomor_induk', 'like', "%{$search}%");
+                                FastUserIdentitySearch::apply($userQuery, $search);
                             });
                     })
                     ->orWhere(function ($typeQuery) use ($search): void {
                         $typeQuery
                             ->where('type', 'surat_keluar')
                             ->whereHas('subjectUser', function ($userQuery) use ($search): void {
-                                $userQuery
-                                    ->where('name', 'like', "%{$search}%")
-                                    ->orWhere('nomor_induk', 'like', "%{$search}%");
+                                FastUserIdentitySearch::apply($userQuery, $search);
                             });
                     });
             });
@@ -76,6 +73,9 @@ class ArchiveController extends Controller
                 'tanggal_selesai' => $s->tanggal_selesai?->toISOString(),
                 'generated_file_path' => $s->generated_file_path,
                 'subject' => $s->serializeSubjectIdentity(),
+                'letter_mode' => $s->resolvedLetterMode(),
+                'letter_mode_label' => $s->letterModeLabel(),
+                'is_institution' => $s->resolvedLetterMode() === 'institution',
                 'jenisSurat' => ['nama' => $s->jenisSurat?->nama],
                 'download_url' => $s->generated_file_path
                     ? route('documents.surat.pdf', $s->id, absolute: false)

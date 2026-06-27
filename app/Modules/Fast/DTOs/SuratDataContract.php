@@ -251,6 +251,58 @@ class SuratDataContract
     }
 
     /**
+     * @param  array<int, mixed>  $fieldConfig
+     * @param  array<int, mixed>  $templatePlaceholders
+     */
+    public static function requiresSubjectUser(array $fieldConfig = [], array $templatePlaceholders = []): bool
+    {
+        $accountBoundKeys = collect([
+            ...static::accountBoundFieldKeys(),
+            'nama_pemohon',
+            'nama_mahasiswa',
+            'nama_dosen',
+            'nim_pemohon',
+            'nomor_induk_pemohon',
+            'program_studi_pemohon',
+            'email_pemohon',
+            'telepon_pemohon',
+        ])->map(fn (string $key): string => strtolower(trim($key)))
+            ->unique()
+            ->values();
+
+        $normalizedFieldConfig = static::normalizeDynamicFieldConfig($fieldConfig);
+
+        $fieldConfigUsesSubjectIdentity = collect($normalizedFieldConfig)->contains(function (array $field) use ($accountBoundKeys): bool {
+            $fieldName = strtolower(trim((string) ($field['name'] ?? '')));
+
+            return $fieldName !== '' && $accountBoundKeys->contains($fieldName);
+        });
+
+        if ($fieldConfigUsesSubjectIdentity) {
+            return true;
+        }
+
+        return collect($templatePlaceholders)->contains(function ($placeholder) use ($accountBoundKeys): bool {
+            if (! is_array($placeholder)) {
+                return false;
+            }
+
+            $sourceType = strtolower(trim((string) ($placeholder['source_type'] ?? '')));
+            $sourceKey = strtolower(trim((string) ($placeholder['source_key'] ?? $placeholder['placeholder_key'] ?? '')));
+
+            if ($sourceType === 'user') {
+                return true;
+            }
+
+            if (! in_array($sourceType, ['computed', 'surat_data'], true)) {
+                return false;
+            }
+
+            return $sourceKey !== '' && $accountBoundKeys->contains($sourceKey);
+        });
+    }
+
+    /**
      * @return array<string, string>
      */
     public static function adminManualFieldDefaults(): array

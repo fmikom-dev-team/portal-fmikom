@@ -28,9 +28,29 @@ class HistoryController extends Controller
                 'histories' => fn ($q) => $q->latest('created_at')->latest('id')->limit(8),
             ])
             ->where('pemohon_id', $user->id)
-            ->when($search, fn ($q) => $q->whereHas('jenisSurat', fn ($j) => $j->where('nama', 'like', "%{$search}%"))
-                ->orWhere('keperluan', 'like', "%{$search}%"))
-            ->when($status, fn ($q) => $q->where('status', $status))
+            ->when($search, function ($q) use ($search): void {
+                $q->where(function ($searchQuery) use ($search): void {
+                    $searchQuery
+                        ->whereHas('jenisSurat', fn ($j) => $j->where('nama', 'like', "%{$search}%"))
+                        ->orWhere('keperluan', 'like', "%{$search}%");
+                });
+            })
+            ->when($status, function ($q) use ($status): void {
+                match ($status) {
+                    'pending' => $q->whereIn('status', [
+                        Surat::STATUS_PENDING,
+                        Surat::STATUS_VALIDATED_ADMIN,
+                        Surat::STATUS_APPROVED_KAPRODI,
+                        Surat::STATUS_APPROVED_DEKAN,
+                        Surat::STATUS_REVISION_REQUESTED,
+                    ]),
+                    'finished' => $q->where('status', Surat::STATUS_FINISHED),
+                    'rejected_admin' => $q->where('status', Surat::STATUS_REJECTED_ADMIN),
+                    'rejected_approver' => $q->where('status', Surat::STATUS_REJECTED_APPROVER),
+                    'cancelled' => $q->where('status', Surat::STATUS_CANCELLED),
+                    default => $q->where('status', $status),
+                };
+            })
             ->latest('tanggal_pengajuan')
             ->latest('id')
             ->paginate(10)
@@ -76,6 +96,9 @@ class HistoryController extends Controller
             'back_label' => 'Riwayat Surat',
             'surat' => [
                 'id' => $surat->id,
+                'letter_mode' => $surat->resolvedLetterMode(),
+                'letter_mode_label' => $surat->letterModeLabel(),
+                'is_institution' => $surat->resolvedLetterMode() === 'institution',
                 'pemohon' => [
                     'name' => $surat->pemohon?->name,
                     'nim_nip' => $surat->pemohon?->nim_nip ?? $surat->pemohon?->nomor_induk,
@@ -208,6 +231,9 @@ class HistoryController extends Controller
             'reference' => $surat->nomor_surat ?: sprintf('REQ-%05d', $surat->id),
             'jenisSurat' => $surat->jenisSurat?->nama ?? 'Surat Akademik',
             'jenisSuratId' => $surat->jenis_surat_id,
+            'letter_mode' => $surat->resolvedLetterMode(),
+            'letter_mode_label' => $surat->letterModeLabel(),
+            'is_institution' => $surat->resolvedLetterMode() === 'institution',
             'approvalRole' => [
                 'id' => $surat->jenisSurat?->approvalRole?->id,
                 'nama' => $surat->jenisSurat?->approvalRole?->nama,

@@ -423,7 +423,7 @@ HTML,
     public function resolvePlaceholderValues(Surat $surat, SuratTemplate $template): array
     {
         $suratData = $this->extractSuratData($surat);
-        $subjectUser = $surat->subjectUser ?? $surat->pemohon;
+        $subjectUser = $surat->resolvedSubjectUser();
         $subjectProgramStudiId = $subjectUser?->program_studi_id;
         $payload = $this->buildImplicitPlaceholderPayload(
             $suratData,
@@ -757,7 +757,7 @@ HTML,
 
     protected function resolveComputedValue(Surat $surat, array $suratData, string $sourceKey): mixed
     {
-        $subjectUser = $surat->subjectUser ?? $surat->pemohon;
+        $subjectUser = $surat->resolvedSubjectUser();
         $subjectProgramStudiId = $subjectUser?->program_studi_id;
 
         return match ($sourceKey) {

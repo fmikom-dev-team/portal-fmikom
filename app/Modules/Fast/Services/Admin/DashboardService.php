@@ -4,6 +4,7 @@ namespace App\Modules\Fast\Services\Admin;
 
 use App\Models\Surat;
 use App\Models\SuratApprovalFlow;
+use App\Modules\Fast\Support\FastUserIdentitySearch;
 use App\Modules\Fast\Support\TemplateAdminSupport;
 use App\Modules\Fast\Template\Renderers\SuratTemplateRendererService;
 use App\Support\FastStorage;
@@ -41,10 +42,8 @@ class DashboardService
 
         if ($search !== '') {
             $query->whereHas('pemohon', function ($pemohonQuery) use ($search): void {
-                $pemohonQuery
-                    ->where('name', 'like', "%{$search}%")
-                    ->orWhere('nomor_induk', 'like', "%{$search}%")
-                    ->orWhere('nomor_induk', 'like', "%{$search}%");
+                FastUserIdentitySearch::apply($pemohonQuery, $search);
+                $pemohonQuery->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -150,6 +149,9 @@ class DashboardService
             'id' => $surat->id,
             'type' => $surat->type,
             'nomor_surat' => $surat->nomor_surat,
+            'letter_mode' => $surat->resolvedLetterMode(),
+            'letter_mode_label' => $surat->letterModeLabel(),
+            'is_institution' => $surat->resolvedLetterMode() === 'institution',
             'subject' => $surat->serializeSubjectIdentity(),
             'jenis_surat' => $surat->jenisSurat?->nama,
             'keperluan' => $surat->keperluan,
@@ -192,9 +194,10 @@ class DashboardService
                     ['tanggal_aksi', 'asc'],
                     ['id', 'asc'],
                 ])
-                ->map(function ($flow): array {
+                ->map(function ($flow) use ($surat): array {
+                    $isInstitutionLetter = $surat->resolvedLetterMode() === 'institution';
                     $label = match (true) {
-                        $flow->status === 'approved' && $flow->role === 'admin' => 'Divalidasi Admin',
+                        $flow->status === 'approved' && $flow->role === 'admin' => $isInstitutionLetter ? 'Diajukan Admin' : 'Divalidasi Admin',
                         $flow->status === 'approved' && $flow->role === 'kaprodi' => 'Disetujui Kaprodi',
                         $flow->status === 'approved' && $flow->role === 'dekan' => 'Disetujui Dekan',
                         $flow->status === 'rejected_final' && $flow->role === 'admin' => 'Ditolak Admin',
@@ -255,6 +258,17 @@ class DashboardService
             ->with(['pemohon', 'jenisSurat.template.placeholders', 'dataEntries'])
             ->findOrFail($id);
 
+        if ($surat->jenisSurat?->template === null && filled($surat->rendered_snapshot)) {
+            return response(
+                $this->templateRenderer->wrapDocumentHtml(
+                    'Preview '.$surat->jenisSurat?->nama,
+                    (string) $surat->rendered_snapshot,
+                    null,
+                ),
+                200,
+            )->header('Content-Type', 'text/html; charset=UTF-8');
+        }
+
         $rendered = $this->templateRenderer->renderForSurat($surat, true, 'pdf');
 
         return response(
@@ -294,6 +308,17 @@ class DashboardService
         }
 
         abort_if($surat->status === Surat::STATUS_FINISHED, 404, 'File PDF final tidak ditemukan.');
+
+        if (filled($surat->rendered_snapshot)) {
+            return response(
+                $this->templateRenderer->wrapDocumentHtml(
+                    ($surat->jenisSurat?->nama ?? 'Surat').' - '.($surat->nomor_surat ?? ''),
+                    (string) $surat->rendered_snapshot,
+                    $surat->jenisSurat?->template,
+                ),
+                200,
+            )->header('Content-Type', 'text/html; charset=UTF-8');
+        }
 
         $rendered = $this->templateRenderer->renderForSurat($surat, true, 'pdf');
 

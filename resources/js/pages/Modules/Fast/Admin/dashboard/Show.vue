@@ -37,6 +37,9 @@ type Surat = {
     id: number;
     type: string;
     nomor_surat?: string | null;
+    letter_mode?: string | null;
+    letter_mode_label?: string | null;
+    is_institution?: boolean;
     subject?: { name: string; nim?: string | null };
     jenis_surat: string;
     keperluan: string;
@@ -60,6 +63,9 @@ type Surat = {
 };
 
 const props = defineProps<{ id: number } & Surat>();
+const isInstitutionLetter = computed(
+    () => !!props.is_institution || props.letter_mode === 'institution',
+);
 const subjectLabel = computed(() =>
     props.type === 'surat_keluar' ? 'Atas Nama' : 'Pemohon',
 );
@@ -95,7 +101,7 @@ const completedAt = computed(() => {
 const statusLabel: Record<string, string> = {
     pending: 'Menunggu Validasi',
     revision_requested: 'Menunggu Revisi Admin',
-    validated_admin: 'Sudah Divalidasi Admin',
+    validated_admin: 'Diteruskan untuk disetujui',
     approved_kaprodi: 'Disetujui Kaprodi',
     approved_dekan: 'Disetujui Dekan',
     finished: 'Selesai',
@@ -106,7 +112,7 @@ const statusLabel: Record<string, string> = {
 const statusColor: Record<string, string> = {
     pending: 'bg-amber-50 text-amber-700 border-amber-200',
     revision_requested: 'bg-amber-50 text-amber-700 border-amber-200',
-    validated_admin: 'bg-slate-100 text-slate-700 border-slate-200',
+    validated_admin: 'bg-amber-50 text-amber-700 border-amber-200',
     approved_kaprodi: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     approved_dekan: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     finished: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -193,7 +199,7 @@ function timelineBadgeClass(status?: string | null, action?: string | null): str
         return 'border-slate-200 bg-slate-50 text-slate-700';
     }
 
-    return 'border-slate-200 bg-slate-50 text-slate-700';
+    return 'border-amber-200 bg-amber-50 text-amber-700';
 }
 
 function openPreviewDocument() {
@@ -335,14 +341,20 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                     </div>
 
                     <div class="mt-2 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
-                        <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
+                        <div
+                            v-if="!isInstitutionLetter"
+                            class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4"
+                        >
                             <p class="text-slate-500">{{ subjectLabel }}</p>
                             <p class="min-w-0 break-words font-medium leading-6 text-slate-900">
                                 {{ subject?.name || '-' }}
                             </p>
                         </div>
 
-                        <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
+                        <div
+                            v-if="!isInstitutionLetter"
+                            class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4"
+                        >
                             <p class="text-slate-500">{{ subjectIdentityLabel }}</p>
                             <p class="min-w-0 break-words font-mono font-medium leading-6 text-slate-900">
                                 {{ subject?.nim || '-' }}

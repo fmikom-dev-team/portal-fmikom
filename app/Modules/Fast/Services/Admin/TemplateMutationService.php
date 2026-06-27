@@ -28,6 +28,7 @@ class TemplateMutationService
             'kode_klasifikasi' => ['nullable', 'string', 'max:50'],
             'category_id' => ['nullable', 'exists:surat_categories,id'],
             'deskripsi' => ['nullable', 'string'],
+            'letter_mode' => ['nullable', 'in:personal,institution'],
             'allowed_role_id' => ['nullable', 'integer', Rule::in($this->templateAdminSupport->templateAllowedCreatorRoleIds())],
             'approval_role_id' => ['nullable', 'integer', Rule::in($this->templateAdminSupport->templateApprovalRoleIds())],
             'perlu_approval' => ['nullable', 'boolean'],
@@ -44,6 +45,7 @@ class TemplateMutationService
             'allowed_role_id' => $validated['allowed_role_id'] ?? null,
             'approval_role_id' => $validated['approval_role_id'] ?? null,
             'alur_pengajuan' => 'submission',
+            'letter_mode' => $validated['letter_mode'] ?? TemplateAdminSupport::LETTER_MODE_PERSONAL,
             'field_config' => [],
             'perlu_approval' => $request->boolean('perlu_approval', false),
             'is_active' => $request->boolean('is_active', true),
@@ -58,8 +60,9 @@ class TemplateMutationService
     {
         $request->validate([
             'template_body' => ['required', 'string'],
-            'name' => ['nullable', 'string', 'max:255'],
             'jenis_surat_nama' => ['nullable', 'string', 'max:255'],
+            'kode_klasifikasi' => ['nullable', 'string', 'max:50'],
+            'category_id' => ['nullable', 'exists:surat_categories,id'],
             'field_config' => ['nullable', 'array'],
             'field_config.*.name' => ['nullable', 'string'],
             'field_config.*.label' => ['nullable', 'string'],
@@ -77,7 +80,20 @@ class TemplateMutationService
             'allowed_role_id' => ['nullable', 'integer', Rule::in($this->templateAdminSupport->templateAllowedCreatorRoleIds())],
             'approval_role_id' => ['nullable', 'integer', Rule::in($this->templateAdminSupport->templateApprovalRoleIds())],
             'layout' => ['nullable', 'array'],
+            'letter_mode' => ['nullable', 'in:personal,institution'],
         ]);
+
+        $jenisSuratName = trim((string) $request->input('jenis_surat_nama', ''));
+        $existingTemplate = $jenisSurat->template()->first();
+
+        if ($jenisSuratName === '') {
+            $jenisSuratName = $jenisSurat->nama;
+        }
+
+        // FAST currently uses one active template per letter type.
+        // Keep template.name synchronized with jenis surat name for simpler admin UX
+        // while preserving the existing database shape for compatibility.
+        $templateName = $jenisSuratName;
 
         $rawFieldConfig = $request->input('field_config');
 
@@ -128,9 +144,12 @@ class TemplateMutationService
         }
 
         $jenisSurat->fill([
-            'nama' => $request->input('name') ?: $request->input('jenis_surat_nama') ?: $jenisSurat->nama,
-            'allowed_role_id' => $request->input('allowed_role_id', $jenisSurat->allowed_role_id),
-            'approval_role_id' => $request->input('approval_role_id', $jenisSurat->approval_role_id),
+            'nama' => $jenisSuratName,
+            'kode_klasifikasi' => $request->input('kode_klasifikasi'),
+            'category_id' => $request->input('category_id') ?: null,
+            'letter_mode' => $request->input('letter_mode', $jenisSurat->letter_mode ?: TemplateAdminSupport::LETTER_MODE_PERSONAL),
+            'allowed_role_id' => $request->input('allowed_role_id') ?: null,
+            'approval_role_id' => $request->input('approval_role_id') ?: null,
             'perlu_approval' => $request->boolean('perlu_approval', $jenisSurat->perlu_approval),
             'is_active' => $request->boolean('is_active', $jenisSurat->is_active),
         ]);
@@ -139,8 +158,8 @@ class TemplateMutationService
         $templateBody = (string) $request->input('template_body');
         $templateHeader = (string) $request->input('template_header', '');
         $templateFooter = (string) $request->input('template_footer', '');
-        $template = $jenisSurat->template()->first();
-        $templateName = $request->input('name') ?: $request->input('jenis_surat_nama') ?: $jenisSurat->nama;
+        $letterMode = (string) $request->input('letter_mode', TemplateAdminSupport::LETTER_MODE_PERSONAL);
+        $template = $existingTemplate;
 
         if (! $template) {
             $nextVersion = (int) SuratTemplate::query()
@@ -155,7 +174,7 @@ class TemplateMutationService
                 'template_header' => $templateHeader,
                 'template_body' => $templateBody,
                 'template_footer' => $templateFooter,
-                'subject' => $templateName,
+                'subject' => $letterMode,
                 'version' => max(1, $nextVersion),
                 'is_active' => true,
                 'source_reference' => null,
@@ -167,7 +186,7 @@ class TemplateMutationService
                 'template_header' => $templateHeader,
                 'template_body' => $templateBody,
                 'template_footer' => $templateFooter,
-                'subject' => $templateName,
+                'subject' => $letterMode,
             ]);
 
             if ($template->isDirty(['template_body', 'template_header', 'template_footer'])) {
@@ -215,7 +234,9 @@ class TemplateMutationService
                 $copiedTemplate->fill([
                     'jenis_surat_id' => $copy->id,
                     'name' => $newName,
-                    'subject' => $newName,
+                    'subject' => in_array((string) $template->subject, [TemplateAdminSupport::LETTER_MODE_PERSONAL, TemplateAdminSupport::LETTER_MODE_INSTITUTION], true)
+                        ? $template->subject
+                        : TemplateAdminSupport::LETTER_MODE_PERSONAL,
                     'slug' => Str::slug($newName).'-tmpl-'.time(),
                     'is_active' => false,
                     'version' => 1,

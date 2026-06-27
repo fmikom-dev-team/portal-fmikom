@@ -121,8 +121,8 @@ const notifCount = computed(
         0,
 );
 const notifItems = computed(() => {
-    if (page.props.notifications?.items?.length) {
-        return page.props.notifications.items;
+    if (page.props.notifications) {
+        return page.props.notifications.items ?? [];
     }
 
     return (page.props.recent_notifications ?? []).map((item) => ({
@@ -135,7 +135,9 @@ const notifItems = computed(() => {
     }));
 });
 const navAdminQueueCount = computed(() => page.props.nav_counts?.admin_queue ?? 0);
-const navApprovalQueueCount = computed(() => page.props.nav_counts?.approval_queue ?? 0);
+const navApprovalQueueCount = computed(
+    () => page.props.nav_counts?.approval_queue ?? 0,
+);
 const notifCountRevisionAdmin = computed(
     () => page.props.notif_count_revision_admin ?? 0,
 );
@@ -507,13 +509,21 @@ function batteryIcon() {
                     ]"
                     :title="!sidebarExpanded ? item.label : undefined"
                 >
-                    <component
-                        :is="item.icon"
-                        class="size-5 shrink-0"
-                        :class="
-                            isActive(item.key) ? 'text-white' : 'text-slate-400'
-                        "
-                    />
+                    <span class="relative shrink-0">
+                        <component
+                            :is="item.icon"
+                            class="size-5"
+                            :class="
+                                isActive(item.key) ? 'text-white' : 'text-slate-400'
+                            "
+                        />
+                        <span
+                            v-if="!sidebarExpanded && Number(item.badge ?? 0) > 0"
+                            class="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[8px] font-bold leading-none text-white"
+                        >
+                            {{ item.badge }}
+                        </span>
+                    </span>
                     <span v-if="sidebarExpanded" class="flex-1 truncate">{{
                         item.label
                     }}</span>
@@ -698,7 +708,7 @@ function batteryIcon() {
                     :key="item.key + 'mb'"
                     :href="item.href"
                     :prefetch="false"
-                    class="flex flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[10px] font-medium transition-colors"
+                    class="relative flex flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[10px] font-medium transition-colors"
                     :class="
                         isActive(item.key) ? 'text-blue-600' : 'text-slate-400'
                     "
@@ -706,8 +716,8 @@ function batteryIcon() {
                     <component :is="item.icon" class="size-5" />
                     <span>{{ item.label }}</span>
                     <span
-                        v-if="item.badge"
-                        class="absolute top-1 right-1/4 flex h-3.5 min-w-[14px] translate-x-2 -translate-y-0.5 items-center justify-center rounded-full bg-red-500 px-1 text-[8px] font-bold text-white"
+                        v-if="Number(item.badge ?? 0) > 0"
+                        class="absolute top-0.5 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[8px] font-bold leading-none text-white"
                     >
                         {{ item.badge }}
                     </span>

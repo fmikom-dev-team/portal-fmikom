@@ -5,6 +5,7 @@ namespace App\Modules\Fast\Services\Admin;
 use App\Models\Surat;
 use App\Models\SuratApprovalFlow;
 use App\Models\SuratLampiran;
+use App\Modules\Fast\Support\FastUserIdentitySearch;
 use App\Modules\Fast\Support\TemplateAdminSupport;
 use App\Modules\Fast\Workflow\Approvals\FastApprovalWorkflowService;
 use App\Support\FastStorage;
@@ -269,7 +270,7 @@ class ApprovalService
             default => 'Riwayat Approval',
         };
 
-        return inertia('approval/Show', array_merge([
+        return inertia('approval/Show', array_merge($this->serializeDetailItem($surat, $request), [
             'context' => [
                 'active_module' => 'FAST',
                 'active_role' => $normalizedRole,
@@ -280,7 +281,7 @@ class ApprovalService
             ],
             'back_href' => $backHref,
             'back_label' => $backLabel,
-        ], $this->serializeDetailItem($surat, $request)));
+        ]));
     }
 
     public function show(int $id): array
@@ -328,6 +329,8 @@ class ApprovalService
 
     protected function serializeSuratListItem(Surat $surat): array
     {
+        $letterMode = $surat->serializeLetterMode();
+
         return [
             'id' => $surat->id,
             'type' => $surat->type,
@@ -335,6 +338,9 @@ class ApprovalService
             'tanggal_pengajuan' => optional($surat->tanggal_pengajuan ?? $surat->created_at)?->toISOString(),
             'created_at' => optional($surat->created_at)?->toISOString(),
             'subject' => $surat->serializeSubjectIdentity(),
+            'letter_mode' => $letterMode['mode'],
+            'letter_mode_label' => $letterMode['label'],
+            'is_institution' => $letterMode['is_institution'],
             'jenisSurat' => [
                 'id' => $surat->jenisSurat?->id,
                 'nama' => $surat->jenisSurat?->nama,
@@ -363,12 +369,16 @@ class ApprovalService
     {
         $isiSurat = json_decode((string) $surat->isi_surat, true);
         $latestRejectedFlow = $surat->latestRejectedFlow();
+        $letterMode = $surat->serializeLetterMode();
 
         return [
             'id' => $surat->id,
             'type' => $surat->type,
             'nomor_surat' => $surat->nomor_surat,
             'subject' => $surat->serializeSubjectIdentity(),
+            'letter_mode' => $letterMode['mode'],
+            'letter_mode_label' => $letterMode['label'],
+            'is_institution' => $letterMode['is_institution'],
             'jenis_surat' => $surat->jenisSurat?->nama,
             'keperluan' => $surat->keperluan,
             'isi_surat' => is_array($isiSurat) ? $isiSurat : [],
@@ -397,9 +407,16 @@ class ApprovalService
                     ['tanggal_aksi', 'asc'],
                     ['id', 'asc'],
                 ])
-                ->map(function ($flow): array {
+                ->map(function ($flow) use ($surat): array {
+                    $isAdminInitiatedInstitutionLetter =
+                        $surat->type === 'surat_keluar'
+                        && $surat->created_by !== null
+                        && $surat->resolvedLetterMode() === 'institution';
+
                     $label = match (true) {
-                        $flow->status === 'approved' && $flow->role === 'admin' => 'Divalidasi Admin',
+                        $flow->status === 'approved' && $flow->role === 'admin' => $isAdminInitiatedInstitutionLetter
+                            ? 'Diajukan Admin'
+                            : 'Divalidasi Admin',
                         $flow->status === 'approved' && $flow->role === 'kaprodi' => 'Disetujui Kaprodi',
                         $flow->status === 'approved' && $flow->role === 'dekan' => 'Disetujui Dekan',
                         $flow->status === 'rejected_final' && $flow->role === 'admin' => 'Ditolak Admin',
@@ -483,12 +500,16 @@ class ApprovalService
     protected function serializeShowItem(Surat $surat): array
     {
         $isiSurat = json_decode((string) $surat->isi_surat, true);
+        $letterMode = $surat->serializeLetterMode();
 
         return [
             'id' => $surat->id,
             'type' => $surat->type,
             'nomor_surat' => $surat->nomor_surat,
             'subject' => $surat->serializeSubjectIdentity(),
+            'letter_mode' => $letterMode['mode'],
+            'letter_mode_label' => $letterMode['label'],
+            'is_institution' => $letterMode['is_institution'],
             'jenis_surat' => $surat->jenisSurat?->nama,
             'keperluan' => $surat->keperluan,
             'isi_surat' => is_array($isiSurat) ? $isiSurat : [],
@@ -594,18 +615,14 @@ class ApprovalService
                     $typeQuery
                         ->where('type', 'pengajuan')
                         ->whereHas('pemohon', function ($pemohonQuery) use ($search): void {
-                            $pemohonQuery
-                                ->where('name', 'like', "%{$search}%")
-                                ->orWhere('nomor_induk', 'like', "%{$search}%");
+                            FastUserIdentitySearch::apply($pemohonQuery, $search);
                         });
                 })
                 ->orWhere(function ($typeQuery) use ($search): void {
                     $typeQuery
                         ->where('type', 'surat_keluar')
                         ->whereHas('subjectUser', function ($subjectQuery) use ($search): void {
-                            $subjectQuery
-                                ->where('name', 'like', "%{$search}%")
-                                ->orWhere('nomor_induk', 'like', "%{$search}%");
+                            FastUserIdentitySearch::apply($subjectQuery, $search);
                         });
                 });
         });

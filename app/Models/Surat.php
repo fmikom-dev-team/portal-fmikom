@@ -147,6 +147,14 @@ class Surat extends Model
 
     public function resolvedSubjectUser(): ?User
     {
+        if (
+            $this->type === 'surat_keluar' &&
+            $this->created_by !== null &&
+            $this->subject_user_id === null
+        ) {
+            return null;
+        }
+
         return $this->subjectUser ?? $this->pemohon;
     }
 
@@ -179,6 +187,45 @@ class Surat extends Model
             'nim' => $user ? ($user->nim_nip ?? $user->nomor_induk) : null,
             'nomor_induk' => $user?->nomor_induk,
             'email' => $user?->email,
+        ];
+    }
+
+    public function resolvedLetterMode(): string
+    {
+        $storedMode = strtolower(trim((string) ($this->jenisSurat?->letter_mode ?? '')));
+
+        if (in_array($storedMode, ['personal', 'institution'], true)) {
+            return $storedMode;
+        }
+
+        if (
+            $this->type === 'surat_keluar' &&
+            $this->resolvedSubjectUser() === null
+        ) {
+            return 'institution';
+        }
+
+        return 'personal';
+    }
+
+    public function letterModeLabel(): string
+    {
+        return $this->resolvedLetterMode() === 'institution'
+            ? 'Surat Institusi'
+            : 'Surat Personal';
+    }
+
+    /**
+     * @return array{mode: string, label: string, is_institution: bool}
+     */
+    public function serializeLetterMode(): array
+    {
+        $mode = $this->resolvedLetterMode();
+
+        return [
+            'mode' => $mode,
+            'label' => $this->letterModeLabel(),
+            'is_institution' => $mode === 'institution',
         ];
     }
 

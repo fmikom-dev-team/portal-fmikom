@@ -7,6 +7,7 @@ namespace App\Modules\Fast\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Surat;
 use App\Models\SuratCategory;
+use App\Modules\Fast\Support\FastUserIdentitySearch;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -54,8 +55,7 @@ class LetterIndexController extends Controller
         if ($search !== '') {
             $query->where(function ($q) use ($search): void {
                 $q->whereHas('pemohon', function ($pemohon) use ($search): void {
-                    $pemohon->where('name', 'like', "%{$search}%")
-                        ->orWhere('nomor_induk', 'like', "%{$search}%");
+                    FastUserIdentitySearch::apply($pemohon, $search);
                 });
             });
         }

@@ -17,15 +17,11 @@ class NotificationFeedService
     /**
      * @return array{count: int, items: array<int, array<string, mixed>>}
      */
-    public function build(User $user): array
+    public function build(User $user, ?string $activeRole = null): array
     {
         $notifiableType = $user->getMorphClass();
-        $roleSlug = Str::slug((string) $user->userTypeSlug());
-        $items = match (true) {
-            $roleSlug === 'admin' => $this->adminItems($user),
-            in_array($roleSlug, ['kaprodi', 'dekan'], true) => $this->approverItems($user, $roleSlug),
-            default => $this->requesterItems($user, $roleSlug),
-        };
+        $roleSlug = Str::slug((string) ($activeRole ?: $user->userTypeSlug()));
+        $items = $this->itemsForRole($user, $roleSlug);
 
         if (! Schema::hasTable('notifications')) {
             $fallbackItems = array_map(function (array $item): array {
@@ -85,6 +81,32 @@ class NotificationFeedService
                 ];
             })->values()->all()),
         ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function notificationTypesForRole(User $user, ?string $activeRole = null): array
+    {
+        $roleSlug = Str::slug((string) ($activeRole ?: $user->userTypeSlug()));
+        $items = $this->itemsForRole($user, $roleSlug);
+
+        return array_values(array_map(
+            fn (array $item): string => $this->notificationType($item['notification_key']),
+            $items,
+        ));
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    protected function itemsForRole(User $user, string $roleSlug): array
+    {
+        return match (true) {
+            $roleSlug === 'admin' => $this->adminItems($user),
+            in_array($roleSlug, ['kaprodi', 'dekan'], true) => $this->approverItems($user, $roleSlug),
+            default => $this->requesterItems($user, $roleSlug),
+        };
     }
 
     /**

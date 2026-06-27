@@ -31,6 +31,10 @@ class TemplateService
 
         return [
             'jenisSurats' => $jenisSurats->map(fn (JenisSurat $jenisSurat): array => [
+                'letter_mode' => $this->templateAdminSupport->resolveLetterMode($jenisSurat),
+                'letter_mode_label' => $this->templateAdminSupport->letterModeLabel(
+                    $this->templateAdminSupport->resolveLetterMode($jenisSurat),
+                ),
                 'id' => $jenisSurat->id,
                 'nama' => $jenisSurat->nama,
                 'slug' => $jenisSurat->slug,

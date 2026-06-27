@@ -37,6 +37,16 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+        $activeModule = strtoupper((string) $request->attributes->get('resolved_module', session('active_module', '')));
+        $routeRole = strtolower((string) ($request->segment(1) ?? ''));
+        $activeRole = strtolower((string) $request->attributes->get(
+            'resolved_role',
+            session('active_role', $routeRole ?: ($user?->userTypeSlug() ?? '')),
+        ));
+
+        if ($activeModule !== 'FAST' && in_array($routeRole, ['admin', 'kaprodi', 'dekan', 'mahasiswa', 'dosen'], true)) {
+            $activeModule = 'FAST';
+        }
 
         // Auto-prune notifications older than 3 months (run ~1% of requests to keep performance)
         if ($user && rand(1, 100) === 1) {
@@ -79,9 +89,7 @@ class HandleInertiaRequests extends Middleware
                 )
                 : 0,
             'unread_notifications_count' => $user
-                ? Cache::remember("unread_notif_count_{$user->id}_".session('active_role', ''), 30, function () use ($user) {
-                    $activeRole = strtolower(session('active_role', ''));
-                    $activeModule = strtoupper(session('active_module', ''));
+                ? Cache::remember("unread_notif_count_{$user->id}_{$activeRole}", 30, function () use ($user, $activeModule, $activeRole) {
                     $query = $user->unreadNotifications();
 
                     if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
@@ -91,9 +99,7 @@ class HandleInertiaRequests extends Middleware
                     return $query->count();
                 })
                 : 0,
-            'recent_notifications' => $user ? fn () => Cache::remember("recent_notifs_{$user->id}_".session('active_role', ''), 30, function () use ($user) {
-                $activeRole = strtolower(session('active_role', ''));
-                $activeModule = strtoupper(session('active_module', ''));
+            'recent_notifications' => $user ? fn () => Cache::remember("recent_notifs_{$user->id}_{$activeRole}", 30, function () use ($user, $activeModule, $activeRole) {
                 $query = $user->notifications()->latest();
 
                 if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
@@ -116,13 +122,13 @@ class HandleInertiaRequests extends Middleware
                     'portfolio_id' => $n->data['portfolio_id'] ?? null,
                 ])->values()->toArray();
             }) : [],
-            'notifications' => $user ? fn () => $this->fastNotifications($user) : null,
+            'notifications' => $user ? fn () => $this->fastNotifications($request, $user) : null,
 
             // Bagikan active context ke semua Vue component via usePage().props.context
             // Digunakan untuk menampilkan badge modul/role aktif di navbar, sidebar, dll.
             'context' => $user ? [
-                'active_module' => session('active_module'),
-                'active_role' => session('active_role'),
+                'active_module' => $activeModule,
+                'active_role' => $activeRole,
             ] : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'pending_comments_count' => fn () => ($user && ($user->isAdmin() || $user->isSuperAdmin()))
@@ -131,7 +137,7 @@ class HandleInertiaRequests extends Middleware
                 : 0,
             'notif_count_pending_admin' => $user ? $this->fastPendingAdminCount() : 0,
             'notif_count_revision_admin' => $user ? $this->fastRevisionAdminCount() : 0,
-            'nav_counts' => $user ? $this->fastNavCounts() : [
+            'nav_counts' => $user ? $this->fastNavCounts($request) : [
                 'admin_queue' => 0,
                 'approval_queue' => 0,
             ],
@@ -181,26 +187,40 @@ class HandleInertiaRequests extends Middleware
     /**
      * @return array{count: int, items: array<int, array<string, mixed>>}|null
      */
-    protected function fastNotifications($user): ?array
+    protected function fastNotifications(Request $request, $user): ?array
     {
-        $activeModule = strtoupper((string) session('active_module', ''));
+        $activeModule = strtoupper((string) $request->attributes->get('resolved_module', session('active_module', '')));
+        $routeRole = strtolower((string) ($request->segment(1) ?? ''));
+
+        if ($activeModule !== 'FAST' && in_array($routeRole, ['admin', 'kaprodi', 'dekan', 'mahasiswa', 'dosen'], true)) {
+            $activeModule = 'FAST';
+        }
 
         if ($activeModule !== 'FAST') {
             return null;
         }
 
-        $activeRole = strtolower((string) session('active_role', $user->userTypeSlug() ?? ''));
+        $activeRole = strtolower((string) $request->attributes->get('resolved_role', session('active_role', $routeRole ?: ($user->userTypeSlug() ?? ''))));
 
-        return Cache::remember("fast_notifications_{$user->id}_{$activeRole}", 30, fn () => app(NotificationFeedService::class)->build($user));
+        return Cache::remember(
+            "fast_notifications_{$user->id}_{$activeRole}",
+            30,
+            fn () => app(NotificationFeedService::class)->build($user, $activeRole),
+        );
     }
 
     /**
      * @return array{admin_queue: int, approval_queue: int}
      */
-    protected function fastNavCounts(): array
+    protected function fastNavCounts(Request $request): array
     {
         $activeModule = strtoupper((string) session('active_module', ''));
-        $activeRole = strtolower((string) session('active_role', ''));
+        $routeRole = strtolower((string) ($request->segment(1) ?? ''));
+        $activeRole = strtolower((string) $request->attributes->get('resolved_role', session('active_role', $routeRole)));
+
+        if ($activeModule !== 'FAST' && in_array($routeRole, ['dekan', 'kaprodi'], true)) {
+            $activeModule = 'FAST';
+        }
 
         if ($activeModule !== 'FAST') {
             return [
@@ -210,11 +230,14 @@ class HandleInertiaRequests extends Middleware
         }
 
         $approvalQueueCount = in_array($activeRole, ['kaprodi', 'dekan'], true)
-            ? Cache::remember("notif_count_approval_queue_{$activeRole}", 30, fn () => Surat::query()
-                ->where('type', 'surat_keluar')
+            ? Surat::query()
                 ->where('status', Surat::STATUS_VALIDATED_ADMIN)
-                ->whereHas('jenisSurat.approvalRole', fn ($roleQuery) => $roleQuery->where('slug', $activeRole))
-                ->count())
+                ->whereHas('jenisSurat.approvalRole', function ($roleQuery) use ($activeRole): void {
+                    $roleQuery
+                        ->where('slug', 'like', "%{$activeRole}%")
+                        ->orWhere('nama', 'like', "%{$activeRole}%");
+                })
+                ->count()
             : 0;
 
         return [

@@ -21,6 +21,9 @@ type SuratItem = {
     qr_status?: string;
     qr_revoked_at?: string | null;
     created_at?: string | null;
+    letter_mode?: string | null;
+    letter_mode_label?: string | null;
+    is_institution?: boolean;
     subject?: { name?: string | null } | null;
     jenisSurat?: { nama?: string | null } | null;
 };
@@ -110,6 +113,9 @@ function qrStatusLabel(s?: string) {
 }
 function subjectLabel(type: string) {
     return type === 'surat_keluar' ? 'Atas Nama' : 'Pemohon';
+}
+function isInstitutionLetter(item: SuratItem) {
+    return !!item.is_institution || item.letter_mode === 'institution';
 }
 </script>
 <template>
@@ -234,10 +240,18 @@ function subjectLabel(type: string) {
                         </div>
                         <div>
                             <p class="text-sm font-bold text-slate-900">
-                                {{ item.jenisSurat?.nama ?? '-' }}
+                                {{
+                                    isInstitutionLetter(item)
+                                        ? 'Surat Institusi'
+                                        : (item.jenisSurat?.nama ?? '-')
+                                }}
                             </p>
-                            <p class="mt-0.5 font-mono text-xs text-slate-400">
-                                {{ item.nomor_surat ?? '-' }}
+                            <p class="mt-0.5 text-xs text-slate-400" :class="isInstitutionLetter(item) ? '' : 'font-mono'">
+                                {{
+                                    isInstitutionLetter(item)
+                                        ? (item.jenisSurat?.nama ?? '-')
+                                        : (item.nomor_surat ?? '-')
+                                }}
                             </p>
                         </div>
                     </div>
@@ -255,7 +269,7 @@ function subjectLabel(type: string) {
                         <span class="font-medium text-slate-500"
                             >{{ subjectLabel(item.type) }}:</span
                         >
-                        {{ item.subject?.name ?? '-' }}
+                        {{ isInstitutionLetter(item) ? 'Surat Institusi' : (item.subject?.name ?? '-') }}
                     </span>
                     <span class="flex items-center gap-1.5">
                         <span class="font-medium text-slate-500">Dibuat:</span>

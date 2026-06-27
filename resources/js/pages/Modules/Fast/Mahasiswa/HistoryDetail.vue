@@ -5,6 +5,15 @@ defineOptions({
 
 import FastLayout from '@/layouts/Modules/Fast/FastLayout.vue';
 import DocumentPreviewModal from '@/components/DocumentPreviewModal.vue';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from '@/components/ui/dialog';
 import { Head, Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import {
@@ -92,6 +101,8 @@ const viewerTitle = ref('');
 const viewerType = ref<'html' | 'pdf'>('html');
 const copiedNumber = ref(false);
 const expandedTimelineNoteId = ref<number | null>(null);
+const attachmentPreviewOpen = ref(false);
+const activeAttachment = ref<Lampiran | null>(null);
 
 const backHref = computed(() => props.back_href || '/mahasiswa/history');
 const backLabel = computed(() => props.back_label || 'Riwayat Surat');
@@ -243,7 +254,7 @@ function isTimelineNoteVisible(status?: string | null, action?: string | null): 
 
 const statusMap: Record<string, string> = {
     pending: 'Menunggu Validasi',
-    validated_admin: 'Diteruskan ke Approver',
+    validated_admin: 'Diteruskan untuk disetujui',
     revision_requested: 'Perlu Revisi',
     approved_kaprodi: 'Disetujui Kaprodi',
     approved_dekan: 'Disetujui Dekan',
@@ -255,7 +266,7 @@ const statusMap: Record<string, string> = {
 
 const statusClassMap: Record<string, string> = {
     pending: 'bg-amber-50 text-amber-700 border-amber-200',
-    validated_admin: 'bg-slate-100 text-slate-700 border-slate-200',
+    validated_admin: 'bg-amber-50 text-amber-700 border-amber-200',
     revision_requested: 'bg-amber-50 text-amber-700 border-amber-200',
     approved_kaprodi: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     approved_dekan: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -418,6 +429,34 @@ function closeViewer() {
     window.setTimeout(() => {
         viewerUrl.value = null;
     }, 200);
+}
+
+function openAttachmentPreview(file: Lampiran) {
+    activeAttachment.value = file;
+    attachmentPreviewOpen.value = true;
+}
+
+function closeAttachmentPreview() {
+    attachmentPreviewOpen.value = false;
+    activeAttachment.value = null;
+}
+
+function isImageAttachment(file?: Lampiran | null) {
+    if (!file) return false;
+    return (
+        (file.type ?? '').toLowerCase().startsWith('image/') ||
+        ['.jpg', '.jpeg', '.png', '.gif', '.webp'].some((ext) =>
+            file.name.toLowerCase().endsWith(ext),
+        )
+    );
+}
+
+function isPdfAttachment(file?: Lampiran | null) {
+    if (!file) return false;
+    return (
+        (file.type ?? '').toLowerCase().includes('pdf') ||
+        file.name.toLowerCase().endsWith('.pdf')
+    );
 }
 
 async function copyNomor() {
@@ -695,16 +734,14 @@ async function copyNomor() {
                                     <p class="mt-1 text-xs text-slate-500">
                                         {{ attachment.type || 'Lampiran' }}
                                     </p>
-                                    <a
+                                    <button
                                         v-if="attachment.url"
-                                        :href="attachment.url"
-                                        target="_blank"
-                                        rel="noopener"
-                                        class="mt-3 inline-flex items-center gap-2 text-sm font-medium text-blue-600 transition hover:text-blue-700"
+                                        type="button"
+                                        class="mt-3 inline-flex items-center text-sm font-medium text-blue-600 transition hover:text-blue-700"
+                                        @click="openAttachmentPreview(attachment)"
                                     >
                                         Lihat lampiran
-                                        <ArrowLeft class="size-4 rotate-180" />
-                                    </a>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -832,6 +869,68 @@ async function copyNomor() {
             :initial-zoom="100"
             @close="closeViewer"
         />
+
+        <Dialog
+            :open="attachmentPreviewOpen"
+            @update:open="(v) => (v ? null : closeAttachmentPreview())"
+        >
+            <DialogContent
+                class="flex max-h-[90vh] w-[min(860px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border-0 bg-white p-0"
+                :show-close-button="false"
+            >
+                <div class="border-b border-slate-100 px-6 py-4">
+                    <DialogHeader class="text-left">
+                        <DialogTitle class="text-lg font-semibold text-slate-900">
+                            Preview Lampiran
+                        </DialogTitle>
+                        <DialogDescription class="text-sm text-slate-400">
+                            {{ activeAttachment?.name }}
+                        </DialogDescription>
+                    </DialogHeader>
+                </div>
+                <div class="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-4">
+                    <div
+                        v-if="activeAttachment && isImageAttachment(activeAttachment)"
+                        class="flex justify-center"
+                    >
+                        <img
+                            :src="activeAttachment.url"
+                            :alt="activeAttachment.name"
+                            class="max-h-[65vh] rounded-xl border border-slate-200 object-contain shadow-sm"
+                        />
+                    </div>
+                    <div
+                        v-else-if="activeAttachment && isPdfAttachment(activeAttachment)"
+                        class="overflow-hidden rounded-xl border border-slate-200 shadow-sm"
+                    >
+                        <iframe
+                            :src="activeAttachment.url"
+                            class="h-[65vh] w-full"
+                            title="Preview PDF"
+                        />
+                    </div>
+                    <div
+                        v-else-if="activeAttachment?.url"
+                        class="overflow-hidden rounded-xl border border-slate-200 shadow-sm"
+                    >
+                        <iframe
+                            :src="activeAttachment.url"
+                            class="h-[65vh] w-full"
+                            title="Preview Lampiran"
+                        />
+                    </div>
+                    <div
+                        v-else
+                        class="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500"
+                    >
+                        Preview lampiran tidak tersedia.
+                    </div>
+                </div>
+                <div class="flex justify-end border-t border-slate-100 px-6 py-4">
+                    <Button variant="ghost" @click="closeAttachmentPreview">Tutup</Button>
+                </div>
+            </DialogContent>
+        </Dialog>
     </FastLayout>
 </template>
 

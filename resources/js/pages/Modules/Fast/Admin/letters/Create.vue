@@ -18,6 +18,9 @@ type JenisSurat = {
     kode_surat?: string | null;
     deskripsi?: string | null;
     perlu_approval?: boolean;
+    letter_mode?: 'personal' | 'institution';
+    letter_mode_label?: string;
+    requires_subject_user?: boolean;
     qr_mode?: string;
     category?: {
         id?: number | null;
@@ -61,6 +64,7 @@ const filtered = computed(() => {
     }
     return list;
 });
+const jenisSuratOptions = computed(() => filtered.value);
 const selected = computed(
     () =>
         (props.jenisSurats ?? []).find((j) => String(j.id) === form.jenis_surat_id) ??
@@ -114,24 +118,67 @@ function submit() {
         <div class="space-y-5">
             <!-- Search & Category tabs -->
             <div class="space-y-3">
-                <div class="relative">
-                    <Search
-                        class="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-slate-400"
-                    />
-                    <input
-                        v-model="searchQuery"
-                        type="text"
-                        placeholder="Cari nama surat, kode, atau kategori..."
-                        class="h-11 w-full rounded-xl border border-slate-200 bg-white py-0 pr-10 pl-10 text-sm text-slate-700 transition outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                    />
-                    <button
-                        v-if="searchQuery"
-                        type="button"
-                        class="fast-btn fast-btn-ghost fast-btn-icon absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                        @click="searchQuery = ''"
-                    >
-                        <X class="size-4" />
-                    </button>
+                <div class="grid gap-3 xl:grid-cols-[minmax(0,1.4fr)_220px_260px] xl:items-end">
+                    <label class="block">
+                        <span class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                            Pencarian
+                        </span>
+                        <div class="relative">
+                            <Search
+                                class="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-slate-400"
+                            />
+                            <input
+                                v-model="searchQuery"
+                                type="text"
+                                placeholder="Cari nama surat, kode, atau kategori..."
+                                class="h-11 w-full rounded-xl border border-slate-200 bg-white py-0 pr-10 pl-10 text-sm text-slate-700 transition outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                            />
+                            <button
+                                v-if="searchQuery"
+                                type="button"
+                                class="fast-btn fast-btn-ghost fast-btn-icon absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                @click="searchQuery = ''"
+                            >
+                                <X class="size-4" />
+                            </button>
+                        </div>
+                    </label>
+                    <label class="block">
+                        <span class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                            Kategori
+                        </span>
+                        <select
+                            v-model="activeCategory"
+                            class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                        >
+                            <option :value="null">Semua kategori</option>
+                            <option
+                                v-for="cat in categories"
+                                :key="cat.id"
+                                :value="cat.id"
+                            >
+                                {{ cat.nama }}
+                            </option>
+                        </select>
+                    </label>
+                    <label class="block">
+                        <span class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                            Jenis Surat
+                        </span>
+                        <select
+                            v-model="form.jenis_surat_id"
+                            class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                        >
+                            <option value="">Pilih jenis surat</option>
+                            <option
+                                v-for="jenis in jenisSuratOptions"
+                                :key="jenis.id"
+                                :value="String(jenis.id)"
+                            >
+                                {{ jenis.nama }}
+                            </option>
+                        </select>
+                    </label>
                 </div>
                 <!-- Category tabs infinite marquee -->
                 <div
@@ -250,6 +297,24 @@ function submit() {
                                         : 'Langsung Selesai'
                                 }}
                             </span>
+                            <span
+                                class="inline-flex items-center gap-1 rounded-full border bg-white px-2 py-0.5 text-[10px] font-medium"
+                                :class="
+                                    selected.letter_mode === 'institution'
+                                        ? 'border-blue-100 text-blue-700'
+                                        : 'border-amber-100 text-amber-700'
+                                "
+                            >
+                                <span
+                                    class="size-1.5 rounded-full"
+                                    :class="
+                                        selected.letter_mode === 'institution'
+                                            ? 'bg-blue-400'
+                                            : 'bg-amber-400'
+                                    "
+                                />
+                                {{ selected.letter_mode_label ?? (selected.letter_mode === 'institution' ? 'Surat Institusi' : 'Surat Personal') }}
+                            </span>
                             <span class="text-[10px] text-slate-400"
                                 >QR:
                                 {{
@@ -367,6 +432,16 @@ function submit() {
                                             ? 'Perlu Approval'
                                             : 'Langsung Selesai'
                                     }}
+                                </span>
+                                <span
+                                    class="rounded-full border px-2 py-0.5 text-[10px] font-medium"
+                                    :class="
+                                        jenis.letter_mode === 'institution'
+                                            ? 'border-blue-100 bg-blue-50 text-blue-700'
+                                            : 'border-amber-100 bg-amber-50 text-amber-700'
+                                    "
+                                >
+                                    {{ jenis.letter_mode_label ?? (jenis.letter_mode === 'institution' ? 'Surat Institusi' : 'Surat Personal') }}
                                 </span>
                             </div>
                         </div>

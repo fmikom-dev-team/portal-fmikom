@@ -176,7 +176,7 @@ const statCards = computed(() => [
 function statusLabel(s: string) {
     const map: Record<string, string> = {
         pending: 'Pending',
-        validated_admin: 'Diteruskan ke Approver',
+        validated_admin: 'Diteruskan untuk disetujui',
         approved_kaprodi: 'Disetujui Kaprodi',
         approved_dekan: 'Disetujui Dekan',
         revision_requested: 'Revisi',
@@ -194,7 +194,8 @@ function statusClass(s: string) {
         return 'bg-red-50 text-red-700';
     if (s === 'revision_requested') return 'bg-amber-50 text-amber-700';
     if (s.startsWith('approved')) return 'bg-emerald-50 text-emerald-700';
-    if (s === 'validated_admin') return 'bg-slate-100 text-slate-700';
+    if (s === 'pending') return 'bg-amber-50 text-amber-700';
+    if (s === 'validated_admin') return 'bg-amber-50 text-amber-700';
     if (s === 'cancelled') return 'bg-slate-100 text-slate-600';
     return 'bg-amber-50 text-amber-700';
 }
@@ -235,7 +236,7 @@ function activityBadgeClass(action?: string | null) {
     if (value.includes('rejected')) {
         return 'bg-red-50 text-red-700';
     }
-    return 'bg-slate-100 text-slate-600';
+    return 'bg-amber-50 text-amber-700';
 }
 
 </script>

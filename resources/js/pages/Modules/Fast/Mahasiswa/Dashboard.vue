@@ -510,7 +510,7 @@ function statusLabel(status: string) {
     const map: Record<string, string> = {
         pending: 'Menunggu Validasi',
         revision_requested: 'Sedang Direvisi Admin',
-        validated_admin: 'Diteruskan ke Approver',
+        validated_admin: 'Diteruskan untuk disetujui',
         approved_kaprodi: 'Disetujui',
         approved_dekan: 'Disetujui',
         finished: 'Selesai',
@@ -548,7 +548,7 @@ function statusBadgeClass(status: string) {
     if (status === 'rejected_admin' || status === 'rejected_approver')
         return 'bg-red-50 text-red-700';
     if (status === 'pending') return 'bg-amber-50 text-amber-700';
-    if (status === 'validated_admin') return 'bg-slate-100 text-slate-700';
+    if (status === 'validated_admin') return 'bg-amber-50 text-amber-700';
     if (status === 'cancelled') return 'bg-slate-100 text-slate-600';
     return 'bg-emerald-50 text-emerald-700';
 }
@@ -583,11 +583,11 @@ function statusTone(status: string) {
     }
     if (status === 'validated_admin') {
         return {
-            card: 'border-slate-200',
-            iconWrap: 'bg-slate-100 text-slate-600',
-            accent: 'bg-slate-400',
-            text: 'text-slate-600',
-            progress: 'bg-slate-400',
+            card: 'border-amber-200',
+            iconWrap: 'bg-amber-50 text-amber-600',
+            accent: 'bg-amber-400',
+            text: 'text-amber-600',
+            progress: 'bg-amber-400',
         };
     }
     if (status.startsWith('approved')) {

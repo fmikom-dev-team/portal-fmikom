@@ -99,7 +99,7 @@ function closeViewer() {
 function statusLabel(status: string) {
     const map: Record<string, string> = {
         pending: 'Menunggu Validasi',
-        validated_admin: 'Diteruskan ke Approver',
+        validated_admin: 'Diteruskan untuk disetujui',
         revision_requested: 'Sedang Direvisi Admin',
         approved_kaprodi: 'Disetujui Kaprodi',
         approved_dekan: 'Disetujui Dekan',
@@ -119,7 +119,7 @@ function submissionStatusLabel(item: Surat) {
 function statusBadgeClass(status: string) {
     const map: Record<string, string> = {
         pending: 'bg-amber-50 text-amber-700',
-        validated_admin: 'bg-slate-100 text-slate-700',
+        validated_admin: 'bg-amber-50 text-amber-700',
         revision_requested: 'bg-amber-50 text-amber-700',
         approved_kaprodi: 'bg-emerald-50 text-emerald-700',
         approved_dekan: 'bg-emerald-50 text-emerald-700',
@@ -170,10 +170,10 @@ function statusColor(s: string) {
         };
     if (s === 'validated_admin')
         return {
-            bg: 'bg-slate-100',
-            border: 'border-slate-200',
-            text: 'text-slate-600',
-            line: 'bg-slate-300',
+            bg: 'bg-amber-50',
+            border: 'border-amber-200',
+            text: 'text-amber-600',
+            line: 'bg-amber-300',
         };
     return {
         bg: 'bg-amber-50',
@@ -191,7 +191,7 @@ function statusClass(s: string) {
     )
         return 'bg-red-50 text-red-700';
     if (s.startsWith('approved')) return 'bg-emerald-50 text-emerald-700';
-    if (s === 'validated_admin') return 'bg-slate-100 text-slate-700';
+    if (s === 'validated_admin') return 'bg-amber-50 text-amber-700';
     return 'bg-amber-50 text-amber-700';
 }
 function formatDate(date?: string | null) {

@@ -23,6 +23,9 @@ type JenisSurat = {
     } | null;
     category?: { id?: number | null; nama?: string | null } | null;
     template?: { id?: number | null; name?: string | null } | null;
+    requires_subject_user?: boolean;
+    letter_mode?: 'personal' | 'institution';
+    letter_mode_label?: string | null;
     field_config: Array<{
         name: string;
         label: string;
@@ -64,6 +67,10 @@ const form = useForm({
 });
 const fullPreview = ref(false);
 const previewDocumentUrl = computed(() => props.previewDocumentUrl);
+const requiresSubjectUser = computed(() => !!props.jenisSurat.requires_subject_user);
+const isInstitutionLetter = computed(
+    () => !requiresSubjectUser.value || props.jenisSurat.letter_mode === 'institution',
+);
 const workflowStatusLabel = computed(() =>
     needsApproval
         ? `Menunggu approval${props.jenisSurat.approval_role?.nama ? ` ${props.jenisSurat.approval_role.nama}` : ''}`
@@ -107,13 +114,21 @@ const steps = needsApproval
         >
             <div class="flex items-start justify-between gap-4">
                 <div class="flex-1">
+                    <div
+                        v-if="isInstitutionLetter"
+                        class="mb-3 inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700"
+                    >
+                        {{ props.jenisSurat.letter_mode_label || 'Surat Institusi' }}
+                    </div>
                     <h2 class="mt-1 text-xl font-bold text-slate-900">
                         Preview Surat Admin
                     </h2>
                     <p class="mt-1 max-w-lg text-sm text-slate-500">
-                        Tinjau dokumen yang akan dibuat admin atas nama subjek.
-                        Pastikan identitas subjek, isi surat, dan alur approval
-                        sudah sesuai sebelum disimpan.
+                        {{
+                            requiresSubjectUser
+                                ? 'Tinjau dokumen yang akan dibuat admin atas nama subjek. Pastikan identitas subjek, isi surat, dan alur approval sudah sesuai sebelum disimpan.'
+                                : 'Tinjau dokumen surat institusi sebelum disimpan. Pastikan tujuan surat, isi, dan alur approval sudah sesuai.'
+                        }}
                     </p>
                 </div>
                 <div class="hidden sm:block">
@@ -198,7 +213,9 @@ const steps = needsApproval
                     </h3>
                     <div class="space-y-3 text-xs">
                         <div v-if="subjectSummary">
-                            <p class="text-slate-400">Atas Nama</p>
+                            <p class="text-slate-400">
+                                {{ requiresSubjectUser ? 'Atas Nama' : 'Subjek Opsional' }}
+                            </p>
                             <p class="mt-0.5 font-semibold text-slate-800">
                                 {{ subjectSummary.name }}
                             </p>
@@ -214,6 +231,15 @@ const steps = needsApproval
                                         .filter(Boolean)
                                         .join(' / ')
                                 }}
+                            </p>
+                        </div>
+                        <div v-else-if="!requiresSubjectUser">
+                            <p class="text-slate-400">Mode Surat</p>
+                            <p class="mt-0.5 font-semibold text-slate-800">
+                                Surat institusi
+                            </p>
+                            <p class="mt-0.5 text-slate-500">
+                                Dokumen diterbitkan atas nama fakultas atau kampus, bukan individu tertentu.
                             </p>
                         </div>
                         <div>

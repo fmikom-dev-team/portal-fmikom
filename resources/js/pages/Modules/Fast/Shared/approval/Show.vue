@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
 import DocumentPreviewModal from '@/components/DocumentPreviewModal.vue';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from '@/components/ui/dialog';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import {
@@ -48,6 +57,9 @@ type Surat = {
     id: number;
     type?: string | null;
     nomor_surat?: string | null;
+    letter_mode?: string | null;
+    letter_mode_label?: string | null;
+    is_institution?: boolean;
     subject?: { name: string; nim?: string | null };
     jenis_surat: string;
     keperluan: string;
@@ -87,6 +99,8 @@ const viewerTitle = ref('');
 const viewerType = ref<'html' | 'pdf'>('html');
 const copiedNumber = ref(false);
 const toastMessage = ref('');
+const attachmentPreviewOpen = ref(false);
+const activeAttachment = ref<Lampiran | null>(null);
 
 const revisionModalOpen = ref(false);
 const finalRejectModalOpen = ref(false);
@@ -165,14 +179,42 @@ const subjectValue = computed(() => {
     const payload = props.isi_surat ?? {};
     return formatDisplayValue(payload.perihal ?? props.keperluan ?? '-');
 });
+const isInstitutionLetter = computed(
+    () => !!props.is_institution || props.letter_mode === 'institution',
+);
+const subjectPayloadIdentifier = computed(() => {
+    const payload = props.isi_surat ?? {};
+
+    return formatDisplayValue(
+        payload.nomor_induk_pemohon ??
+            payload.nim_pemohon ??
+            payload.nomor_induk_mahasiswa ??
+            payload.nim_mahasiswa ??
+            payload.nomor_induk ??
+            payload.nim ??
+            '-',
+    );
+});
 const identityLabel = computed(() =>
-    props.type === 'surat_keluar' ? 'Atas Nama' : 'Pemohon',
+    isInstitutionLetter.value
+        ? 'Mode Surat'
+        : 'Pemohon',
 );
 const identityNumberLabel = computed(() =>
-    props.type === 'surat_keluar' ? 'Nomor Induk' : 'NIM / NIP',
+    isInstitutionLetter.value
+        ? 'Keterangan'
+        : 'NIM / NIP',
 );
-const subjectName = computed(() => props.subject?.name || '-');
-const subjectNim = computed(() => props.subject?.nim || '-');
+const subjectName = computed(() =>
+    isInstitutionLetter.value
+        ? (props.letter_mode_label || 'Surat Institusi')
+        : props.subject?.name || '-',
+);
+const subjectNim = computed(() =>
+    isInstitutionLetter.value
+        ? 'Diterbitkan atas nama kampus, fakultas, atau unit'
+        : props.subject?.nim || subjectPayloadIdentifier.value || '-',
+);
 
 const processTimeline = computed(() => {
     const approval = props.approval_timeline ?? [];
@@ -324,6 +366,37 @@ function attachmentUrl(id: number) {
     return `${basePath.value}/lampiran/${id}/preview`;
 }
 
+function openAttachmentPreview(file: Lampiran) {
+    activeAttachment.value = {
+        ...file,
+        url: file.url ?? attachmentUrl(file.id),
+    };
+    attachmentPreviewOpen.value = true;
+}
+
+function closeAttachmentPreview() {
+    attachmentPreviewOpen.value = false;
+    activeAttachment.value = null;
+}
+
+function isImageAttachment(file?: Lampiran | null) {
+    if (!file) return false;
+    return (
+        (file.type ?? '').toLowerCase().startsWith('image/') ||
+        ['.jpg', '.jpeg', '.png', '.gif', '.webp'].some((ext) =>
+            file.name.toLowerCase().endsWith(ext),
+        )
+    );
+}
+
+function isPdfAttachment(file?: Lampiran | null) {
+    if (!file) return false;
+    return (
+        (file.type ?? '').toLowerCase().includes('pdf') ||
+        file.name.toLowerCase().endsWith('.pdf')
+    );
+}
+
 async function copyNomorSurat() {
     if (!props.nomor_surat) return;
 
@@ -433,14 +506,20 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                     </div>
 
                     <div class="mt-2 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
-                        <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
+                        <div
+                            v-if="!isInstitutionLetter"
+                            class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4"
+                        >
                             <p class="text-slate-500">{{ identityLabel }}</p>
                             <p class="min-w-0 break-words font-medium leading-6 text-slate-900">
                                 {{ subjectName }}
                             </p>
                         </div>
 
-                        <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
+                        <div
+                            v-if="!isInstitutionLetter"
+                            class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4"
+                        >
                             <p class="text-slate-500">{{ identityNumberLabel }}</p>
                             <p class="min-w-0 break-words font-mono font-medium leading-6 text-slate-900">
                                 {{ subjectNim }}
@@ -566,7 +645,11 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                                             : status === 'revision_requested'
                                                 ? 'Surat dikembalikan untuk diperbaiki sebelum diproses lagi.'
                                                 : status === 'validated_admin' || status === 'pending'
-                                                    ? 'Surat sudah divalidasi admin dan menunggu persetujuan approver.'
+                                                    ? (
+                                                        isInstitutionLetter
+                                                            ? 'Surat sudah diajukan admin dan menunggu persetujuan approver.'
+                                                            : 'Surat sudah divalidasi admin dan menunggu persetujuan approver.'
+                                                    )
                                                 : 'Surat masih menunggu tindakan dari role terkait.'
                                     }}
                                 </p>
@@ -621,12 +704,12 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                             Lampiran
                         </h3>
                         <div class="space-y-2">
-                            <a
+                            <button
                                 v-for="file in lampiran"
                                 :key="file.id"
-                                :href="attachmentUrl(file.id)"
-                                target="_blank"
+                                type="button"
                                 class="fast-btn fast-btn-soft flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+                                @click="openAttachmentPreview(file)"
                             >
                                 <div class="min-w-0">
                                     <p class="truncate text-sm font-medium text-slate-800">
@@ -637,9 +720,9 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                                     </p>
                                 </div>
                                 <span class="text-xs font-semibold text-blue-600">
-                                    Preview
+                                    Lihat lampiran
                                 </span>
-                            </a>
+                            </button>
                         </div>
                     </div>
 
@@ -793,7 +876,7 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                         </button>
                         <button
                             type="button"
-                            class="fast-btn fast-btn-danger rounded-xl px-4 py-2 text-sm"
+                            class="fast-btn rounded-xl border border-amber-500 bg-amber-500 px-4 py-2 text-sm text-white hover:bg-amber-600"
                             :disabled="revisionForm.processing || !revisionForm.reason.trim()"
                             @click="submitRevision"
                         >
@@ -882,6 +965,68 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
             :initial-zoom="100"
             @close="closeViewer"
         />
+
+        <Dialog
+            :open="attachmentPreviewOpen"
+            @update:open="(v) => (v ? null : closeAttachmentPreview())"
+        >
+            <DialogContent
+                class="flex max-h-[90vh] w-[min(860px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border-0 bg-white p-0"
+                :show-close-button="false"
+            >
+                <div class="border-b border-slate-100 px-6 py-4">
+                    <DialogHeader class="text-left">
+                        <DialogTitle class="text-lg font-semibold text-slate-900">
+                            Preview Lampiran
+                        </DialogTitle>
+                        <DialogDescription class="text-sm text-slate-400">
+                            {{ activeAttachment?.name }}
+                        </DialogDescription>
+                    </DialogHeader>
+                </div>
+                <div class="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-4">
+                    <div
+                        v-if="activeAttachment && isImageAttachment(activeAttachment)"
+                        class="flex justify-center"
+                    >
+                        <img
+                            :src="activeAttachment.url"
+                            :alt="activeAttachment.name"
+                            class="max-h-[65vh] rounded-xl border border-slate-200 object-contain shadow-sm"
+                        />
+                    </div>
+                    <div
+                        v-else-if="activeAttachment && isPdfAttachment(activeAttachment)"
+                        class="overflow-hidden rounded-xl border border-slate-200 shadow-sm"
+                    >
+                        <iframe
+                            :src="activeAttachment.url"
+                            class="h-[65vh] w-full"
+                            title="Preview PDF"
+                        />
+                    </div>
+                    <div
+                        v-else-if="activeAttachment?.url"
+                        class="overflow-hidden rounded-xl border border-slate-200 shadow-sm"
+                    >
+                        <iframe
+                            :src="activeAttachment.url"
+                            class="h-[65vh] w-full"
+                            title="Preview Lampiran"
+                        />
+                    </div>
+                    <div
+                        v-else
+                        class="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500"
+                    >
+                        Preview lampiran tidak tersedia.
+                    </div>
+                </div>
+                <div class="flex justify-end border-t border-slate-100 px-6 py-4">
+                    <Button variant="ghost" @click="closeAttachmentPreview">Tutup</Button>
+                </div>
+            </DialogContent>
+        </Dialog>
 
         <Transition
             enter-active-class="transition duration-300 ease-out"

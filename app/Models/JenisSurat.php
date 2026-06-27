@@ -27,6 +27,7 @@ class JenisSurat extends Model
         'approval_role_id',
         'perlu_approval',
         'alur_pengajuan',
+        'letter_mode',
         'is_active',
     ];
 

@@ -5,6 +5,7 @@ namespace App\Modules\Fast\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Surat;
 use App\Models\SuratCategory;
+use App\Modules\Fast\Support\FastUserIdentitySearch;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -35,8 +36,7 @@ class HistoryController extends Controller
                 $q->where('nomor_surat', 'like', "%{$search}%")
                     ->orWhere('keperluan', 'like', "%{$search}%")
                     ->orWhereHas('subjectUser', function ($subjectUser) use ($search): void {
-                        $subjectUser->where('name', 'like', "%{$search}%")
-                            ->orWhere('nomor_induk', 'like', "%{$search}%");
+                        FastUserIdentitySearch::apply($subjectUser, $search);
                     });
             });
         }
@@ -78,6 +78,9 @@ class HistoryController extends Controller
                 'tanggal_pengajuan' => $surat->tanggal_pengajuan?->toISOString(),
                 'tanggal_selesai' => $surat->tanggal_selesai?->toISOString(),
                 'subject' => $surat->serializeSubjectIdentity(),
+                'letter_mode' => $surat->resolvedLetterMode(),
+                'letter_mode_label' => $surat->letterModeLabel(),
+                'is_institution' => $surat->resolvedLetterMode() === 'institution',
                 'jenisSurat' => ['nama' => $surat->jenisSurat?->nama],
             ])
             ->withQueryString();
