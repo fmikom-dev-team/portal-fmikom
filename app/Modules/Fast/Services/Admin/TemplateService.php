@@ -30,27 +30,29 @@ class TemplateService
             : null;
 
         return [
-            'jenisSurats' => $jenisSurats->map(fn (JenisSurat $jenisSurat): array => [
-                'letter_mode' => $this->templateAdminSupport->resolveLetterMode($jenisSurat),
-                'letter_mode_label' => $this->templateAdminSupport->letterModeLabel(
-                    $this->templateAdminSupport->resolveLetterMode($jenisSurat),
-                ),
-                'id' => $jenisSurat->id,
-                'nama' => $jenisSurat->nama,
-                'slug' => $jenisSurat->slug,
-                'is_active' => $jenisSurat->is_active,
-                'category' => [
-                    'id' => $jenisSurat->category?->id,
-                    'nama' => $jenisSurat->category?->nama,
-                ],
-                'template' => $jenisSurat->template ? [
-                    'id' => $jenisSurat->template->id,
-                    'name' => $jenisSurat->template->name,
-                    'version' => $jenisSurat->template->version,
-                    'created_at' => optional($jenisSurat->template->created_at)?->toISOString(),
-                    'updated_at' => optional($jenisSurat->template->updated_at)?->toISOString(),
-                ] : null,
-            ])->values(),
+            'jenisSurats' => $jenisSurats->map(function (JenisSurat $jenisSurat): array {
+                $letterMode = $this->templateAdminSupport->resolveLetterMode($jenisSurat);
+
+                return [
+                    'letter_mode' => $letterMode,
+                    'letter_mode_label' => $this->templateAdminSupport->letterModeLabel($letterMode),
+                    'id' => $jenisSurat->id,
+                    'nama' => $jenisSurat->nama,
+                    'slug' => $jenisSurat->slug,
+                    'is_active' => $jenisSurat->is_active,
+                    'category' => [
+                        'id' => $jenisSurat->category?->id,
+                        'nama' => $jenisSurat->category?->nama,
+                    ],
+                    'template' => $jenisSurat->template ? [
+                        'id' => $jenisSurat->template->id,
+                        'name' => $jenisSurat->template->name,
+                        'version' => $jenisSurat->template->version,
+                        'created_at' => optional($jenisSurat->template->created_at)?->toISOString(),
+                        'updated_at' => optional($jenisSurat->template->updated_at)?->toISOString(),
+                    ] : null,
+                ];
+            })->values(),
             'selectedJenisSurat' => $selectedJenisSurat ? $this->templateAdminSupport->serializeJenisSurat($selectedJenisSurat) : null,
             'selectedJenisSuratId' => $selectedJenisSurat?->id,
             'categories' => $this->templateAdminSupport->listCategories(),

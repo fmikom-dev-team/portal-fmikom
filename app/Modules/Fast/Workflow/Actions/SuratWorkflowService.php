@@ -89,11 +89,12 @@ class SuratWorkflowService
         $jenisSurat = JenisSurat::query()
             ->with(['template.placeholders', 'approvalRole'])
             ->findOrFail((int) $payload['jenis_surat_id']);
+        $template = $jenisSurat->template;
         $subjectUserId = (int) ($payload['subject_user_id'] ?? 0);
         $requiresSubjectUser = SuratDataContract::requiresSubjectUser(
-            is_array($jenisSurat->field_config) ? $jenisSurat->field_config : [],
-            $jenisSurat->template?->placeholders
-                ? $jenisSurat->template->placeholders->map(fn ($placeholder): array => [
+            $jenisSurat->field_config ?? [],
+            $template?->placeholders
+                ? $template->placeholders->map(fn ($placeholder): array => [
                     'placeholder_key' => $placeholder->placeholder_key,
                     'source_type' => $placeholder->source_type,
                     'source_key' => $placeholder->source_key,

@@ -181,6 +181,9 @@ class TemplateAdminSupport
         }
     }
 
+    /**
+     * @return EloquentCollection<int, JenisSurat>
+     */
     public function listJenisSurats(): EloquentCollection
     {
         return JenisSurat::query()
@@ -386,13 +389,14 @@ class TemplateAdminSupport
             return $storedMode;
         }
 
-        $templateSubject = strtolower(trim((string) ($jenisSurat->template?->subject ?? '')));
+        $template = $jenisSurat->template;
+        $templateSubject = strtolower(trim((string) ($template ? $template->subject : '')));
         if (in_array($templateSubject, [self::LETTER_MODE_PERSONAL, self::LETTER_MODE_INSTITUTION], true)) {
             return $templateSubject;
         }
 
-        $placeholders = $jenisSurat->template?->placeholders
-            ? $jenisSurat->template->placeholders->map(fn ($placeholder): array => [
+        $placeholders = $template?->placeholders
+            ? $template->placeholders->map(fn ($placeholder): array => [
                 'placeholder_key' => $placeholder->placeholder_key,
                 'source_type' => $placeholder->source_type,
                 'source_key' => $placeholder->source_key,
@@ -400,7 +404,7 @@ class TemplateAdminSupport
             : [];
 
         return SuratDataContract::requiresSubjectUser(
-            is_array($jenisSurat->field_config) ? $jenisSurat->field_config : [],
+            $jenisSurat->field_config ?? [],
             $placeholders,
         )
             ? self::LETTER_MODE_PERSONAL

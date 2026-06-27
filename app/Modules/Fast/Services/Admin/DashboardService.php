@@ -257,11 +257,14 @@ class DashboardService
         $surat = Surat::query()
             ->with(['pemohon', 'jenisSurat.template.placeholders', 'dataEntries'])
             ->findOrFail($id);
+        $jenisSurat = $surat->jenisSurat;
+        $jenisSuratName = $jenisSurat ? $jenisSurat->nama : 'Surat';
+        $template = $jenisSurat?->template;
 
-        if ($surat->jenisSurat?->template === null && filled($surat->rendered_snapshot)) {
+        if ($template === null && filled($surat->rendered_snapshot)) {
             return response(
                 $this->templateRenderer->wrapDocumentHtml(
-                    'Preview '.$surat->jenisSurat?->nama,
+                    'Preview '.$jenisSuratName,
                     (string) $surat->rendered_snapshot,
                     null,
                 ),
@@ -272,7 +275,7 @@ class DashboardService
         $rendered = $this->templateRenderer->renderForSurat($surat, true, 'pdf');
 
         return response(
-            $this->templateRenderer->wrapDocumentHtml('Preview '.$surat->jenisSurat?->nama, $rendered['html'], $surat->jenisSurat?->template),
+            $this->templateRenderer->wrapDocumentHtml('Preview '.$jenisSuratName, $rendered['html'], $template),
             200,
         )->header('Content-Type', 'text/html; charset=UTF-8');
     }
@@ -282,10 +285,13 @@ class DashboardService
         $surat = Surat::query()
             ->with(['pemohon', 'jenisSurat.template.placeholders', 'dataEntries'])
             ->findOrFail($id);
+        $jenisSurat = $surat->jenisSurat;
+        $jenisSuratName = $jenisSurat ? $jenisSurat->nama : 'surat';
+        $template = $jenisSurat?->template;
 
         $filename = sprintf(
             '%s-%d.pdf',
-            str_replace(' ', '-', strtolower((string) ($surat->jenisSurat?->nama ?: 'surat'))),
+            str_replace(' ', '-', strtolower($jenisSuratName)),
             $surat->id,
         );
 
@@ -312,9 +318,9 @@ class DashboardService
         if (filled($surat->rendered_snapshot)) {
             return response(
                 $this->templateRenderer->wrapDocumentHtml(
-                    ($surat->jenisSurat?->nama ?? 'Surat').' - '.($surat->nomor_surat ?? ''),
+                    ucfirst($jenisSuratName).' - '.($surat->nomor_surat ?? ''),
                     (string) $surat->rendered_snapshot,
-                    $surat->jenisSurat?->template,
+                    $template,
                 ),
                 200,
             )->header('Content-Type', 'text/html; charset=UTF-8');
@@ -324,9 +330,9 @@ class DashboardService
 
         return response(
             $this->templateRenderer->wrapDocumentHtml(
-                ($surat->jenisSurat?->nama ?? 'Surat').' - '.($surat->nomor_surat ?? ''),
+                ucfirst($jenisSuratName).' - '.($surat->nomor_surat ?? ''),
                 $rendered['html'],
-                $surat->jenisSurat?->template,
+                $template,
             ),
             200,
         )->header('Content-Type', 'text/html; charset=UTF-8');

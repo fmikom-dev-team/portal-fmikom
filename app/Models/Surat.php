@@ -192,7 +192,8 @@ class Surat extends Model
 
     public function resolvedLetterMode(): string
     {
-        $storedMode = strtolower(trim((string) ($this->jenisSurat?->letter_mode ?? '')));
+        $jenisSurat = $this->jenisSurat;
+        $storedMode = strtolower(trim((string) ($jenisSurat ? $jenisSurat->letter_mode : '')));
 
         if (in_array($storedMode, ['personal', 'institution'], true)) {
             return $storedMode;

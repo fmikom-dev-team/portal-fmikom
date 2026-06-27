@@ -108,8 +108,8 @@ class AuditFastPrivateStorage extends Command
             return 1;
         }
 
-        $publicExists = Storage::disk('public')->exists($relativePath);
-        $localExists = Storage::disk('local')->exists($relativePath);
+        $publicExists = (bool) Storage::disk('public')->exists($relativePath);
+        $localExists = (bool) Storage::disk('local')->exists($relativePath);
 
         if (! $publicExists && ! $localExists) {
             $this->warn("  - {$label}: file tidak ditemukan di local/private maupun public legacy ({$path}).");
@@ -125,12 +125,6 @@ class AuditFastPrivateStorage extends Command
 
         if ($publicExists) {
             $this->warn("  - {$label}: file masih ada di public legacy ({$relativePath}).");
-
-            return 1;
-        }
-
-        if (! $localExists) {
-            $this->warn("  - {$label}: path private terdaftar tapi file tidak ada di disk local ({$relativePath}).");
 
             return 1;
         }
