@@ -11,8 +11,7 @@ class CareerUpdateReminderNotification extends Notification implements ShouldQue
 {
     use Queueable;
 
-    public function __construct()
-    {}
+    public function __construct() {}
 
     public function via(object $notifiable): array
     {

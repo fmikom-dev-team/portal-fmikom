@@ -19,12 +19,12 @@ class SendCareerUpdateReminders extends Command
         $query = User::whereHas('alumniProfile', function ($query) use ($threshold) {
             $query->where(function ($q) use ($threshold) {
                 $q->whereDoesntHave('careers')
-                  ->where('updated_at', '<=', $threshold);
+                    ->where('updated_at', '<=', $threshold);
             })->orWhere(function ($q) use ($threshold) {
                 $q->whereHas('careers')
-                  ->whereDoesntHave('careers', function ($sub) use ($threshold) {
-                      $sub->where('updated_at', '>', $threshold);
-                  });
+                    ->whereDoesntHave('careers', function ($sub) use ($threshold) {
+                        $sub->where('updated_at', '>', $threshold);
+                    });
             });
         });
 
@@ -32,6 +32,7 @@ class SendCareerUpdateReminders extends Command
 
         if ($count === 0) {
             $this->info('No alumni found with outdated career profiles. Skipping reminders.');
+
             return self::SUCCESS;
         }
 
@@ -44,7 +45,7 @@ class SendCareerUpdateReminders extends Command
                 }
 
                 try {
-                    $user->notify(new CareerUpdateReminderNotification());
+                    $user->notify(new CareerUpdateReminderNotification);
                     $sent++;
                 } catch (\Exception $e) {
                     $this->error("Failed to send career reminder to {$user->email}: {$e->getMessage()}");

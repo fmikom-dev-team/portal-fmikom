@@ -20,6 +20,7 @@ class JobApplicationSubmitted extends Notification implements ShouldQueue
     public function via(object $notifiable): array
     {
         $isAdmin = in_array($notifiable->user_type, ['admin', 'staff', 'super-admin']);
+
         return $isAdmin ? ['database'] : ['database', 'mail'];
     }
 
