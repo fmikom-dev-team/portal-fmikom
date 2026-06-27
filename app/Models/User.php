@@ -161,6 +161,9 @@ class User extends Authenticatable
         })->get();
     }
 
+    /**
+     * @return BelongsTo<ProgramStudi, $this>
+     */
     public function programStudi(): BelongsTo
     {
         return $this->belongsTo(ProgramStudi::class);
