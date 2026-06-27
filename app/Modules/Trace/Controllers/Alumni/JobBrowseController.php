@@ -15,6 +15,7 @@ use App\Models\Tracer\ProfilAlumni;
 use App\Models\User;
 use App\Modules\Trace\Actions\ApplyToJobAction;
 use App\Notifications\Trace\JobApplicationSubmitted;
+use App\Notifications\Trace\JobApplicationConfirmation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -168,6 +169,14 @@ class JobBrowseController extends Controller
             auth()->user()->name,
             $job->title,
             $job->id,
+        ));
+
+        // Notify applicant (alumni)
+        $companyName = $job->mitra?->nama_perusahaan ?? 'Mitra FMIKOM';
+        auth()->user()->notify(new JobApplicationConfirmation(
+            $job->title,
+            $companyName,
+            $job->id
         ));
 
         ActivityLog::record('job.applied', "Melamar lowongan: {$job->title}", $job);

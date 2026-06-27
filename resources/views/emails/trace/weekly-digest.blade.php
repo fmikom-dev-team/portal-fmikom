@@ -4,7 +4,7 @@
 Berikut adalah rangkuman info mingguan mengenai peluang karir (lowongan pekerjaan) dan agenda event terbaru di lingkungan FMIKOM yang dapat Anda ikuti:
 
 @if($newJobs->count() > 0)
-## 💼 Lowongan Pekerjaan Baru (Minggu Ini)
+##  Lowongan Pekerjaan Baru (Minggu Ini)
 
 <x-mail::table>
 | Posisi / Jabatan | Mitra Perusahaan | Batas Akhir Lamaran |

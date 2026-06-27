@@ -2,10 +2,7 @@
 import { ref, onMounted, onUnmounted, nextTick, watch } from "vue";
 import {
     AlertCircle,
-    BookOpen,
-    Calendar,
     Edit3,
-    FileText,
     Github,
     Globe,
     GraduationCap,
@@ -33,7 +30,6 @@ const props = defineProps<{
         tanggal_lahir: string | null;
         program_studi_id: number | null;
         bio: string | null;
-        location: string | null;
         website: string | null;
         linkedin: string | null;
         github: string | null;
@@ -44,7 +40,7 @@ const props = defineProps<{
         alamat_rumah: string | null;
         latitude_rumah: number | null;
         longitude_rumah: number | null;
-        jenis_kelamin: 'L' | 'P' | null;
+        jenis_kelamin: "L" | "P" | null;
         nik: string | null;
         npwp: string | null;
         provinsi_id: number | null;
@@ -169,13 +165,8 @@ const getGenderLabel = (g: string | null) => {
         <div
             class="relative bg-white dark:bg-slate-900 rounded-[24px] border border-slate-200/80 dark:border-slate-800 shadow-xs p-6 sm:p-8 overflow-hidden"
         >
-            <!-- Background Accent Blobs -->
             <div
-                class="absolute top-0 right-0 w-64 h-64 bg-green-500/5 dark:bg-green-500/10 rounded-full blur-3xl pointer-events-none"
-            ></div>
-
-            <div
-                class="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
+                class="relative flex flex-col md:flex-row sm:items-center md:items-center justify-between gap-6"
             >
                 <!-- User Info -->
                 <div
@@ -183,7 +174,7 @@ const getGenderLabel = (g: string | null) => {
                 >
                     <!-- Avatar -->
                     <div
-                        class="h-20 w-20 sm:h-24 sm:w-24 rounded-full border-4 border-white dark:border-slate-800 shadow-md overflow-hidden shrink-0 bg-green-50 dark:bg-green-950 flex items-center justify-center"
+                        class="h-20 w-20 sm:h-24 sm:w-24 rounded-full border-2 border-white dark:border-slate-800 shadow-md overflow-hidden shrink-0 bg-green-50 dark:bg-slate-900 flex items-center justify-center"
                     >
                         <img
                             v-if="alumni.foto_path"
@@ -197,7 +188,7 @@ const getGenderLabel = (g: string | null) => {
                         />
                         <div
                             v-else
-                            class="text-3xl font-black text-green-700 dark:text-green-400"
+                            class="text-3xl font-black text-slate-700 dark:text-white"
                         >
                             {{
                                 alumni.name
@@ -212,70 +203,74 @@ const getGenderLabel = (g: string | null) => {
                         </div>
                     </div>
                     <!-- Details -->
-                    <div class="space-y-2.5">
+                    <div class="space-y-3 w-full sm:w-auto">
                         <h1
                             class="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase"
                         >
                             {{ alumni.name }}
                         </h1>
                         <div
-                            class="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1.5 text-xs"
+                            class="flex flex-col items-center sm:items-start gap-2.5"
                         >
                             <span
-                                class="inline-flex items-center gap-1.5 font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/40 px-2.5 py-1 rounded-lg"
+                                class="inline-flex items-center gap-1.5 font-bold text-slate-600 dark:text-white bg-slate-900 px-2.5 py-1 rounded-lg text-xs"
                             >
                                 <GraduationCap class="w-3.5 h-3.5" />
                                 {{ getProdiName(alumni.program_studi_id) }}
                             </span>
-                            <span
-                                class="text-slate-300 dark:text-slate-700 hidden sm:inline"
-                                >•</span
+
+                            <div
+                                class="grid grid-cols-3 gap-2 text-center sm:flex sm:flex-wrap sm:text-left sm:items-center sm:gap-x-3 sm:gap-y-1.5 text-xs text-slate-500 dark:text-slate-400 w-full sm:w-auto"
                             >
-                            <span
-                                class="font-semibold text-slate-500 dark:text-slate-400"
-                            >
-                                NIM:
-                                <span
-                                    class="font-extrabold text-slate-800 dark:text-slate-200"
-                                    >{{ alumni.nomor_induk || "-" }}</span
+                                <div
+                                    class="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-2 sm:p-0 sm:bg-transparent sm:dark:bg-transparent flex flex-col sm:flex-row sm:gap-1"
                                 >
-                            </span>
-                            <span
-                                class="text-slate-300 dark:text-slate-700 hidden sm:inline"
-                                >•</span
-                            >
-                            <span
-                                class="font-semibold text-slate-500 dark:text-slate-400"
-                            >
-                                Angkatan:
-                                <span
-                                    class="font-extrabold text-slate-800 dark:text-slate-200"
-                                    >{{ alumni.angkatan || "-" }}</span
+                                    <span
+                                        class="text-[9px] sm:text-xs font-bold text-slate-400 sm:text-slate-500 uppercase sm:normal-case"
+                                        >NIM</span
+                                    >
+                                    <span
+                                        class="font-extrabold text-slate-800 dark:text-slate-200 text-xs mt-0.5 sm:mt-0"
+                                        >{{ alumni.nomor_induk || "-" }}</span
+                                    >
+                                </div>
+                                <div
+                                    class="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-2 sm:p-0 sm:bg-transparent sm:dark:bg-transparent flex flex-col sm:flex-row sm:gap-1"
                                 >
-                            </span>
-                            <span
-                                class="text-slate-300 dark:text-slate-700 hidden sm:inline"
-                                >•</span
-                            >
-                            <span
-                                class="font-semibold text-slate-500 dark:text-slate-400"
-                            >
-                                Lulus:
-                                <span
-                                    class="font-extrabold text-slate-800 dark:text-slate-200"
-                                    >{{ alumni.tahun_lulus || "-" }}</span
+                                    <span
+                                        class="text-[9px] sm:text-xs font-bold text-slate-400 sm:text-slate-500 uppercase sm:normal-case"
+                                        >Angkatan</span
+                                    >
+                                    <span
+                                        class="font-extrabold text-slate-800 dark:text-slate-200 text-xs mt-0.5 sm:mt-0"
+                                        >{{ alumni.angkatan || "-" }}</span
+                                    >
+                                </div>
+                                <div
+                                    class="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-2 sm:p-0 sm:bg-transparent sm:dark:bg-transparent flex flex-col sm:flex-row sm:gap-1"
                                 >
-                            </span>
+                                    <span
+                                        class="text-[9px] sm:text-xs font-bold text-slate-400 sm:text-slate-500 uppercase sm:normal-case"
+                                        >Lulus</span
+                                    >
+                                    <span
+                                        class="font-extrabold text-slate-800 dark:text-slate-200 text-xs mt-0.5 sm:mt-0"
+                                        >{{ alumni.tahun_lulus || "-" }}</span
+                                    >
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Action -->
-                <div class="w-full md:w-auto shrink-0 flex justify-end">
+                <div
+                    class="w-full md:w-auto shrink-0 flex justify-center md:justify-end"
+                >
                     <!-- Edit Profile Button -->
                     <button
                         @click="emit('edit')"
-                        class="flex items-center justify-center gap-2 h-11 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 text-sm font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                        class="flex items-center justify-center gap-2 h-11 px-6 w-full sm:w-auto rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 text-sm font-bold transition-all shadow-xs cursor-pointer active:scale-95"
                     >
                         <Edit3 class="w-4 h-4" />
                         Edit Profil

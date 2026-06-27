@@ -166,7 +166,7 @@ class DashboardStatsService
         $cachedStats['recentActivities'] = $recentActivities;
 
         // Active jobs & events — not cached (real-time)
-        $cachedStats['activeJobs'] = JobListing::where('status', 'approved')
+        $cachedStats['activeJobs'] = JobListing::where('status', 'published')
             ->where(function ($q) {
                 $q->whereNull('deadline')->orWhere('deadline', '>=', now());
             })->count();

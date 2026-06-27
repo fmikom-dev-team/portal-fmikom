@@ -67,11 +67,11 @@ const toggleAcuan = (tag: string) => {
 
 <template>
     <div
-        class="group/question rounded-2xl border border-slate-200 bg-slate-50/50 p-6 shadow-xs transition-all hover:border-[#85B7EB] dark:border-slate-800 dark:bg-slate-900/30 dark:hover:border-[#0C447C]"
+        class="group/question rounded-2xl border border-slate-200 bg-slate-50/50 p-3 shadow-xs transition-all hover:border-[#85B7EB] sm:p-6 dark:border-slate-800 dark:bg-slate-900/30 dark:hover:border-[#0C447C]"
     >
-        <div class="flex items-start gap-4">
+        <div class="flex items-start gap-2 sm:gap-4">
             <div
-                class="cursor-grab pt-2 text-muted-foreground active:cursor-grabbing"
+                class="hidden cursor-grab pt-2 text-muted-foreground active:cursor-grabbing sm:block"
             >
                 <GripVertical class="h-4 w-4" />
             </div>
@@ -125,7 +125,7 @@ const toggleAcuan = (tag: string) => {
 
                 <!-- Advanced Settings -->
                 <div
-                    class="mt-4 rounded-2xl border border-[#85B7EB]/50 bg-[#0C447C]/5 p-5 dark:border-[#0C447C]/30 dark:bg-[#0C447C]/10"
+                    class="mt-4 rounded-2xl border border-[#85B7EB]/50 bg-[#0C447C]/5 p-3 sm:p-5 dark:border-[#0C447C]/30 dark:bg-[#0C447C]/10"
                 >
                     <div class="mb-4 flex items-center gap-2">
                         <TrendingUp class="h-4 w-4 text-[#0C447C]" />
@@ -137,7 +137,7 @@ const toggleAcuan = (tag: string) => {
                     </div>
 
                     <div
-                        class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+                        class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3"
                     >
                         <!-- Grup Kategori -->
                         <div class="space-y-2">
@@ -307,7 +307,7 @@ const toggleAcuan = (tag: string) => {
 
                 <!-- Footer Actions -->
                 <div
-                    class="mt-4 flex items-center justify-between border-t border-slate-100 pt-5 dark:border-slate-800"
+                    class="mt-4 flex flex-col items-start gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between sm:pt-5 dark:border-slate-800"
                 >
                     <div class="flex items-center gap-5">
                         <div class="flex items-center gap-3">
@@ -325,7 +325,7 @@ const toggleAcuan = (tag: string) => {
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-1">
+                    <div class="flex items-center gap-1 self-end sm:self-auto">
                         <Button
                             variant="ghost"
                             size="sm"
