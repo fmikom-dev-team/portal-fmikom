@@ -112,7 +112,7 @@
 		"leaflet.markercluster": "^1.5.3",
 		"lowlight": "^3.0.0",
 		"lucide-vue-next": "^0.468.0",
-		"motion": "^12.40.0",
+		"motion": "^12.42.0",
 		"pusher-js": "^8.5.0",
 		"qrcode": "^1.5.4",
 		"reka-ui": "^2.10.0",
