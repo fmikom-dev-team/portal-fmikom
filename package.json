@@ -47,7 +47,7 @@
 		"@editorjs/raw": "^2.5.1",
 		"@editorjs/table": "^2.4.5",
 		"@editorjs/underline": "^1.2.1",
-		"@ffmpeg/core": "^0.12.6",
+		"@ffmpeg/core": "^0.12.10",
 		"@ffmpeg/ffmpeg": "^0.12.15",
 		"@ffmpeg/util": "^0.12.2",
 		"@inertiajs/core": "^3.4.0",
