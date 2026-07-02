@@ -5,12 +5,12 @@ namespace App\Modules\Trace\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Trace\StoreJobRequest;
 use App\Http\Requests\Trace\UpdateJobRequest;
-use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\JobApplicant;
 use App\Models\Tracer\JobCategory;
 use App\Models\Tracer\JobListing;
 use App\Models\Tracer\MitraProfile;
 use App\Models\User;
+use App\Modules\Trace\Services\ImageService;
 use App\Notifications\Trace\ApplicationStatusChanged;
 use App\Notifications\Trace\JobApprovedForMitra;
 use App\Notifications\Trace\JobRejectedForMitra;
@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -114,12 +115,16 @@ class JobManagementController extends Controller
     {
         $validated = $request->validated();
 
+        if ($request->hasFile('poster')) {
+            $validated['poster_path'] = ImageService::compressToWebp(
+                $request->file('poster'), 'job-posters', quality: 80, maxWidth: 1200
+            );
+        }
+
         $validated['user_id'] = auth()->id();
         $validated['status'] = $validated['status'] ?? 'published';
 
         $job = JobListing::create($validated);
-        ActivityLog::record('job.created', "Membuat lowongan: {$job->title}", $job);
-
         if ($job->status === 'published') {
             $companyName = $job->mitra?->nama_perusahaan ?? 'Admin FMIKOM';
             User::whereHas('alumniProfile')->select('id', 'name', 'email')->chunkById(200, function ($alumni) use ($job, $companyName) {
@@ -151,9 +156,13 @@ class JobManagementController extends Controller
         $job = JobListing::findOrFail($id);
         $validated = $request->validated();
 
-        $job->update($validated);
-        ActivityLog::record('job.updated', "Memperbarui lowongan: {$job->title}", $job);
+        if ($request->hasFile('poster')) {
+            $validated['poster_path'] = ImageService::replaceWithWebp(
+                $request->file('poster'), $job->poster_path, 'job-posters', quality: 80, maxWidth: 1200
+            );
+        }
 
+        $job->update($validated);
         Cache::forget('trace_job_stats');
 
         return redirect()->route('module.trace.admin.jobs.show', $job->id)
@@ -167,8 +176,6 @@ class JobManagementController extends Controller
         $job = JobListing::with('mitra.user')->where('status', 'pending_review')->findOrFail($id);
 
         $job->update(['status' => 'published']);
-        ActivityLog::record('job.approved', "Menyetujui lowongan: {$job->title}", $job);
-
         // Notify mitra that their job was approved
         $mitraUser = $job->mitra?->user;
         if ($mitraUser) {
@@ -203,8 +210,6 @@ class JobManagementController extends Controller
             'rejection_reason' => $reason ?: null,
             'rejected_at' => now(),
         ]);
-        ActivityLog::record('job.rejected', "Menolak lowongan: {$job->title}", $job, ['reason' => $reason]);
-
         // Notify mitra that their job was rejected
         $mitraUser = $job->mitra?->user;
         if ($mitraUser) {
@@ -232,7 +237,6 @@ class JobManagementController extends Controller
         DB::transaction(function () use ($jobs) {
             foreach ($jobs as $job) {
                 $job->update(['status' => 'published']);
-                ActivityLog::record('job.approved', "Menyetujui lowongan: {$job->title}", $job);
             }
         });
 
@@ -280,7 +284,6 @@ class JobManagementController extends Controller
                     'rejection_reason' => $reason ?: null,
                     'rejected_at' => now(),
                 ]);
-                ActivityLog::record('job.rejected', "Menolak lowongan: {$job->title}", $job, ['reason' => $reason]);
             }
         });
 
@@ -300,9 +303,13 @@ class JobManagementController extends Controller
     public function destroy($id): RedirectResponse
     {
         $job = JobListing::findOrFail($id);
+        $posterPath = $job->poster_path;
 
-        ActivityLog::record('job.deleted', "Menghapus lowongan: {$job->title}", $job);
         $job->delete();
+
+        if ($posterPath) {
+            Storage::disk('public')->delete($posterPath);
+        }
 
         Cache::forget('trace_job_stats');
 

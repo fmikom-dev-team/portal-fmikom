@@ -4,7 +4,9 @@ namespace App\Modules\Trace\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tracer\Kuesioner;
+use App\Models\Tracer\ProfilAlumni;
 use App\Models\Tracer\Response;
+use App\Models\User;
 use App\Modules\Trace\Actions\ExportKuesionerAction;
 use App\Modules\Trace\Services\KuesionerAnalyticsService;
 use Illuminate\Http\Request;
@@ -68,7 +70,7 @@ class KuesionerAnalyticsController extends Controller
         $prodi = $request->query('prodi');
 
         $query = Response::where('kuesioner_id', $id)
-            ->with(['user.alumniProfile'])
+            ->with(['user.programStudi', 'user.alumniProfile'])
             ->latest();
 
         if ($tahunLulus || $prodi) {
@@ -84,7 +86,32 @@ class KuesionerAnalyticsController extends Controller
             });
         }
 
-        return response()->json($query->paginate(20));
+        $respondents = $query->paginate(20);
+
+        $respondents->getCollection()->transform(function (Response $response) {
+            /** @var User|null $user */
+            $user = $response->user;
+            /** @var ProfilAlumni|null $profile */
+            $profile = $user?->alumniProfile;
+
+            return [
+                'id' => $response->id,
+                'submitted_at' => $response->submitted_at?->toISOString(),
+                'created_at' => $response->created_at?->toISOString(),
+                'angkatan' => $response->angkatan,
+                'respondent' => [
+                    'name' => $user?->name ?? '-',
+                    'email' => $user?->email ?? '-',
+                    'nim' => $user?->nomor_induk ?? $profile?->nim,
+                    'program_studi' => $user?->programStudi?->nama ?? 'Alumni',
+                    'tahun_lulus' => $user?->tahun_lulus,
+                    'angkatan' => $profile?->angkatan ?? $response->angkatan,
+                    'alumni_profile_id' => $profile?->id,
+                ],
+            ];
+        });
+
+        return response()->json($respondents);
     }
 
     public function export(Request $request, $id)

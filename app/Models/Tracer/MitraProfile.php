@@ -3,12 +3,24 @@
 namespace App\Models\Tracer;
 
 use App\Models\User;
+use App\Modules\Trace\Services\TraceCacheService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MitraProfile extends Model
 {
     use SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::saved(function ($mitra) {
+            TraceCacheService::forgetDashboardCaches(mitraId: $mitra->id);
+        });
+
+        static::deleted(function ($mitra) {
+            TraceCacheService::forgetDashboardCaches(mitraId: $mitra->id);
+        });
+    }
 
     protected $table = 'mitra_profiles';
 

@@ -6,7 +6,6 @@ interface CareerFormData {
     program_studi_lanjutan: string;
     jenjang_pendidikan: string;
     sumber_biaya: string;
-    alamat_universitas: string;
     [key: string]: unknown;
 }
 
@@ -127,24 +126,4 @@ defineProps<{
         </div>
     </div>
 
-    <!-- Alamat Universitas -->
-    <div>
-        <label
-            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
-            Alamat Lengkap Kampus / Universitas
-        </label>
-        <textarea
-            v-model="form.alamat_universitas"
-            rows="3"
-            class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-            placeholder="Alamat lengkap kampus/universitas"
-        />
-        <p
-            v-if="form.errors.alamat_universitas"
-            class="mt-1 text-sm text-red-500"
-        >
-            {{ form.errors.alamat_universitas }}
-        </p>
-    </div>
 </template>

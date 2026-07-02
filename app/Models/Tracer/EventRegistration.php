@@ -3,11 +3,23 @@
 namespace App\Models\Tracer;
 
 use App\Models\User;
+use App\Modules\Trace\Services\TraceCacheService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EventRegistration extends Model
 {
+    protected static function booted(): void
+    {
+        static::saved(function ($registration) {
+            TraceCacheService::forgetDashboardCaches(userId: $registration->user_id);
+        });
+
+        static::deleted(function ($registration) {
+            TraceCacheService::forgetDashboardCaches(userId: $registration->user_id);
+        });
+    }
+
     protected $table = 'event_registrations';
 
     protected $fillable = [

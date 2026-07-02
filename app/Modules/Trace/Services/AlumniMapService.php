@@ -10,6 +10,9 @@ class AlumniMapService
     public function getMapData(array $filters): array
     {
         $statusFilter = $filters['status_filter'] ?? 'semua';
+        if ($statusFilter === 'belum_bekerja') {
+            $statusFilter = 'mencari_kerja';
+        }
 
         $totalAlumni = Cache::remember('map_total_alumni', 3600, fn () => DB::table('profil_alumnis')->count());
 
@@ -31,7 +34,7 @@ class AlumniMapService
                 'kota.name as nama_kota',
                 'career_history.latitude',
                 'career_history.longitude',
-                DB::raw("'Bekerja' as tipe_lokasi")
+                DB::raw("CASE WHEN career_history.status = 'wirausaha' THEN 'Wirausaha' ELSE 'Bekerja' END as tipe_lokasi")
             )
             ->where('career_history.is_current', true)
             ->whereIn('career_history.status', ['bekerja', 'wirausaha'])
@@ -85,7 +88,10 @@ class AlumniMapService
         $homeQuery = DB::table('profil_alumnis')
             ->join('users', 'profil_alumnis.user_id', '=', 'users.id')
             ->leftJoin('program_studis', 'users.program_studi_id', '=', 'program_studis.id')
-            ->join('career_history', 'profil_alumnis.id', '=', 'career_history.profil_alumni_id')
+            ->leftJoin('career_history', function ($join) {
+                $join->on('profil_alumnis.id', '=', 'career_history.profil_alumni_id')
+                    ->where('career_history.is_current', true);
+            })
             ->leftJoin('kota', 'profil_alumnis.kota_id', '=', 'kota.id')
             ->select(
                 'users.name as nama_lengkap',
@@ -101,8 +107,10 @@ class AlumniMapService
                 'profil_alumnis.longitude_rumah as longitude',
                 DB::raw("'Belum Bekerja' as tipe_lokasi")
             )
-            ->where('career_history.is_current', true)
-            ->where('career_history.status', 'mencari_kerja')
+            ->where(function ($query) {
+                $query->where('career_history.status', 'mencari_kerja')
+                    ->orWhereNull('career_history.id');
+            })
             ->whereNotNull('profil_alumnis.latitude_rumah')
             ->whereNotNull('profil_alumnis.longitude_rumah');
 
@@ -116,11 +124,18 @@ class AlumniMapService
         $results = collect();
 
         if ($statusFilter === 'bekerja') {
-            $results = $workQuery->get();
+            $results = $workQuery->where('career_history.status', 'bekerja')->get();
+        } elseif ($statusFilter === 'wirausaha') {
+            $results = $workQuery->where('career_history.status', 'wirausaha')->get();
+        } elseif ($statusFilter === 'lanjut_studi') {
+            $results = $studyQuery->get();
+        } elseif ($statusFilter === 'mencari_kerja') {
+            $results = $homeQuery->get();
         } elseif ($statusFilter === 'lainnya') {
             $results = $studyQuery->get()->concat($homeQuery->get());
         } else {
-            $results = $workQuery->get()->concat($studyQuery->get())->concat($homeQuery->get());
+            $results = $workQuery->get();
+            $results = $results->concat($studyQuery->get())->concat($homeQuery->get());
         }
 
         $mappedCount = $results->count();
@@ -134,17 +149,25 @@ class AlumniMapService
                         ->from('career_history')
                         ->whereColumn('career_history.profil_alumni_id', 'profil_alumnis.id')
                         ->where('career_history.is_current', true)
+                        ->whereIn('career_history.status', ['bekerja', 'wirausaha', 'lanjut_studi'])
                         ->whereNotNull('career_history.latitude')
                         ->whereNotNull('career_history.longitude');
                 })
                 // Or alumni seeking work with home location mapped
                     ->orWhere(function ($sub) {
-                        $sub->whereExists(function ($inner) {
-                            $inner->select(DB::raw(1))
-                                ->from('career_history')
-                                ->whereColumn('career_history.profil_alumni_id', 'profil_alumnis.id')
-                                ->where('career_history.is_current', true)
-                                ->where('career_history.status', 'mencari_kerja');
+                        $sub->where(function ($careerStatus) {
+                            $careerStatus->whereExists(function ($inner) {
+                                $inner->select(DB::raw(1))
+                                    ->from('career_history')
+                                    ->whereColumn('career_history.profil_alumni_id', 'profil_alumnis.id')
+                                    ->where('career_history.is_current', true)
+                                    ->where('career_history.status', 'mencari_kerja');
+                            })->orWhereNotExists(function ($inner) {
+                                $inner->select(DB::raw(1))
+                                    ->from('career_history')
+                                    ->whereColumn('career_history.profil_alumni_id', 'profil_alumnis.id')
+                                    ->where('career_history.is_current', true);
+                            });
                         })
                             ->whereNotNull('profil_alumnis.latitude_rumah')
                             ->whereNotNull('profil_alumnis.longitude_rumah');
@@ -176,14 +199,37 @@ class AlumniMapService
                 $filteredQuery->where('program_studis.nama', $filters['program_studi']);
             }
 
-            if ($statusFilter === 'bekerja') {
+            if (in_array($statusFilter, ['bekerja', 'wirausaha'], true)) {
                 $filteredQuery->join('career_history', 'profil_alumnis.id', '=', 'career_history.profil_alumni_id')
                     ->where('career_history.is_current', true)
-                    ->whereIn('career_history.status', ['bekerja', 'wirausaha']);
+                    ->where('career_history.status', $statusFilter);
                 if ($filters['sektor'] ?? null) {
                     $filteredQuery->join('employment', 'career_history.id', '=', 'employment.career_history_id')
                         ->where('employment.sektor_industri', $filters['sektor']);
                 }
+            } elseif ($statusFilter === 'lanjut_studi') {
+                $filteredQuery->whereExists(function ($sub) {
+                    $sub->select(DB::raw(1))
+                        ->from('career_history')
+                        ->whereColumn('career_history.profil_alumni_id', 'profil_alumnis.id')
+                        ->where('career_history.is_current', true)
+                        ->where('career_history.status', 'lanjut_studi');
+                });
+            } elseif ($statusFilter === 'mencari_kerja') {
+                $filteredQuery->where(function ($q) {
+                    $q->whereExists(function ($sub) {
+                        $sub->select(DB::raw(1))
+                            ->from('career_history')
+                            ->whereColumn('career_history.profil_alumni_id', 'profil_alumnis.id')
+                            ->where('career_history.is_current', true)
+                            ->where('career_history.status', 'mencari_kerja');
+                    })->orWhereNotExists(function ($sub) {
+                        $sub->select(DB::raw(1))
+                            ->from('career_history')
+                            ->whereColumn('career_history.profil_alumni_id', 'profil_alumnis.id')
+                            ->where('career_history.is_current', true);
+                    });
+                });
             } elseif ($statusFilter === 'lainnya') {
                 $filteredQuery->where(function ($q) {
                     $q->whereExists(function ($sub) {
@@ -198,6 +244,11 @@ class AlumniMapService
                             ->whereColumn('career_history.profil_alumni_id', 'profil_alumnis.id')
                             ->where('career_history.is_current', true)
                             ->where('career_history.status', 'mencari_kerja');
+                    })->orWhereNotExists(function ($sub) {
+                        $sub->select(DB::raw(1))
+                            ->from('career_history')
+                            ->whereColumn('career_history.profil_alumni_id', 'profil_alumnis.id')
+                            ->where('career_history.is_current', true);
                     });
                 });
             } else {

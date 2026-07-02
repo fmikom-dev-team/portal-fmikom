@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { router, usePage, Link } from '@inertiajs/vue3';
+import axios from 'axios';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import {
     Bell,
@@ -13,6 +14,8 @@ import {
     Eye,
     Clock,
     ExternalLink,
+    ClipboardList,
+    Send,
 } from 'lucide-vue-next';
 
 interface Notification {
@@ -49,12 +52,15 @@ function getIcon(type: string) {
     switch (type) {
         case 'job_application': return Briefcase;
         case 'application_status': return CheckCircle2;
+        case 'application_submitted': return Send;
         case 'event_registration': return CalendarCheck;
         case 'new_job': return Briefcase;
         case 'new_event': return CalendarPlus;
         case 'job_approved': return CheckCircle2;
         case 'job_rejected': return XCircle;
         case 'job_review': return Eye;
+        case 'career_reminder': return CalendarDays;
+        case 'kuesioner_response': return ClipboardList;
         default: return Bell;
     }
 }
@@ -63,30 +69,71 @@ function getIconColor(type: string) {
     switch (type) {
         case 'job_application': return 'text-[#0C447C] bg-[#0C447C]/10 dark:bg-[#85B7EB]/15 dark:text-[#85B7EB]';
         case 'application_status': return 'text-[#0C447C] bg-[#85B7EB]/20 dark:bg-[#85B7EB]/15 dark:text-[#85B7EB]';
+        case 'application_submitted': return 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-400';
         case 'event_registration': return 'text-[#0C447C] bg-[#85B7EB]/20 dark:bg-[#85B7EB]/15 dark:text-[#85B7EB]';
         case 'new_job': return 'text-[#0C447C] bg-[#0C447C]/10 dark:bg-[#85B7EB]/15 dark:text-[#85B7EB]';
         case 'new_event': return 'text-[#0C447C] bg-[#85B7EB]/20 dark:bg-[#85B7EB]/15 dark:text-[#85B7EB]';
         case 'job_approved': return 'text-[#0C447C] bg-[#85B7EB]/20 dark:bg-[#85B7EB]/15 dark:text-[#85B7EB]';
         case 'job_rejected': return 'text-red-500 bg-red-50 dark:bg-red-950/30 dark:text-red-400';
         case 'job_review': return 'text-[#EF9F27] bg-amber-50 dark:bg-amber-950/30 dark:text-[#FAC775]';
+        case 'career_reminder': return 'text-[#EF9F27] bg-amber-50 dark:bg-amber-950/30 dark:text-[#FAC775]';
+        case 'kuesioner_response': return 'text-violet-600 bg-violet-50 dark:bg-violet-950/30 dark:text-violet-300';
         default: return 'text-slate-500 bg-slate-100 dark:bg-zinc-800';
     }
 }
 
-function markRead(id: string) {
-    router.post(`/trace/notifications/${id}/mark-read`, {}, {
-        preserveState: true,
-        preserveScroll: true,
+function getTypeLabel(type: string) {
+    switch (type) {
+        case 'new_job': return 'Lowongan';
+        case 'job_application': return 'Lamaran';
+        case 'application_status': return 'Status';
+        case 'application_submitted': return 'Terkirim';
+        case 'new_event':
+        case 'event_registration': return 'Event';
+        case 'job_approved': return 'Disetujui';
+        case 'job_rejected': return 'Ditolak';
+        case 'job_review': return 'Review';
+        case 'career_reminder': return 'Karier';
+        case 'kuesioner_response': return 'Kuesioner';
+        default: return 'Trace';
+    }
+}
+
+function notificationHref(notif: Notification) {
+    return notif.href?.startsWith('/trace') ? notif.href : '/trace/notifications';
+}
+
+async function refreshNotifications() {
+    router.reload({
         only: ['recent_notifications', 'unread_notifications_count'],
+        preserveScroll: true,
     });
 }
 
-function markAllRead() {
-    router.post('/trace/notifications/mark-all-read', {}, {
-        preserveState: true,
-        preserveScroll: true,
-        only: ['recent_notifications', 'unread_notifications_count'],
-    });
+async function markRead(id: string) {
+    await axios.post(`/trace/notifications/${id}/mark-read`, {});
+    refreshNotifications();
+}
+
+async function openNotification(notif: Notification) {
+    const href = notificationHref(notif);
+    open.value = false;
+
+    if (!notif.unread) {
+        router.visit(href);
+        return;
+    }
+
+    try {
+        await axios.post(`/trace/notifications/${notif.id}/mark-read`, {});
+    } finally {
+        router.visit(href);
+    }
+}
+
+async function markAllRead() {
+    await axios.post('/trace/notifications/mark-all-read', {});
+    refreshNotifications();
 }
 
 function dismissToast() {
@@ -96,8 +143,9 @@ function dismissToast() {
 
 function handleToastClick() {
     if (toast.value) {
-        if (toast.value.unread) markRead(toast.value.id);
+        const currentToast = toast.value;
         dismissToast();
+        openNotification(currentToast);
     }
 }
 
@@ -159,12 +207,12 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                 v-if="open"
                 role="menu"
                 aria-label="Daftar notifikasi"
-                class="absolute right-0 top-full mt-2 w-[360px] rounded-2xl bg-white border border-slate-100 shadow-xl shadow-slate-200/60 dark:bg-zinc-900 dark:border-zinc-800 dark:shadow-zinc-950 z-50 overflow-hidden"
+                class="absolute right-0 top-full mt-2 w-[380px] max-w-[calc(100vw-2rem)] rounded-2xl bg-white border border-slate-100 shadow-xl shadow-slate-200/60 dark:bg-zinc-900 dark:border-zinc-800 dark:shadow-zinc-950 z-50 overflow-hidden"
             >
                 <!-- Header -->
                 <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-zinc-800">
                     <div class="flex items-center gap-2">
-                        <h4 class="text-[13px] font-bold text-slate-800 dark:text-white">Notifikasi</h4>
+                        <h4 class="text-[13px] font-bold text-slate-800 dark:text-white">Notifikasi Trace</h4>
                         <span
                             v-if="unreadCount > 0"
                             class="flex h-5 items-center justify-center rounded-full bg-[#0C447C] px-1.5 text-[9px] font-black text-white"
@@ -205,12 +253,17 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                     <div
                         v-for="notif in notifications"
                         :key="notif.id"
-                        class="flex items-start gap-3 px-4 py-3 transition-all group"
+                        role="button"
+                        tabindex="0"
+                        class="flex cursor-pointer items-start gap-3 px-4 py-3 transition-all group hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0C447C]/30 dark:hover:bg-zinc-800/60"
                         :class="[
                             notif.unread
                                 ? 'bg-[#0C447C]/[0.03] dark:bg-[#85B7EB]/[0.05]'
                                 : ''
                         ]"
+                        @click="openNotification(notif)"
+                        @keydown.enter.prevent="openNotification(notif)"
+                        @keydown.space.prevent="openNotification(notif)"
                     >
                         <!-- Icon -->
                         <div class="shrink-0 mt-0.5">
@@ -235,10 +288,15 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                             <p class="text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5 line-clamp-2">
                                 {{ notif.message }}
                             </p>
-                            <p class="text-[10px] text-slate-300 dark:text-zinc-600 mt-1 flex items-center gap-1">
-                                <Clock class="h-2.5 w-2.5" />
-                                {{ notif.time }}
-                            </p>
+                            <div class="mt-1.5 flex flex-wrap items-center gap-2">
+                                <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-500 dark:bg-zinc-800 dark:text-zinc-400">
+                                    {{ getTypeLabel(notif.type) }}
+                                </span>
+                                <span class="flex items-center gap-1 text-[10px] text-slate-300 dark:text-zinc-600">
+                                    <Clock class="h-2.5 w-2.5" />
+                                    {{ notif.time }}
+                                </span>
+                            </div>
                         </div>
 
                         <!-- Mark read CTA (hover) / Unread dot (default) -->

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Link, router, useForm } from "@inertiajs/vue3";
+import { Link, useForm } from "@inertiajs/vue3";
+import axios from "axios";
 import { toast } from 'vue-sonner';
 import EditorJsRenderer from '@/components/editor/EditorJsRenderer.vue';
 import TraceAlumniLayout from "@/layouts/TraceAlumniLayout.vue";
@@ -29,10 +30,8 @@ import {
     Users,
     GraduationCap,
     FileText,
-    FolderOpen,
     ExternalLink,
     Check,
-    Image,
 } from "lucide-vue-next";
 import { ref, computed } from "vue";
 
@@ -53,6 +52,7 @@ interface Job {
     deadline: string;
     experience_level: string;
     location_type: string;
+    location_city: string | null;
     tipe_kerja: string;
     salary_min: number | null;
     salary_max: number | null;
@@ -60,6 +60,7 @@ interface Job {
     applicants_count: number;
     category: { nama: string } | null;
     mitra: Mitra;
+    poster_url: string | null;
 }
 
 interface MyApplication {
@@ -134,23 +135,22 @@ function submitApplication() {
 }
 
 function toggleBookmark() {
+    if (bookmarkLoading.value) return;
+
     bookmarkLoading.value = true;
-    router.post(
-        `/trace/jobs/${props.job.id}/bookmark`,
-        {},
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                bookmarked.value = !bookmarked.value;
-            },
-            onError: () => {
-                toast.error('Gagal memperbarui bookmark.');
-            },
-            onFinish: () => {
-                bookmarkLoading.value = false;
-            },
-        },
-    );
+
+    axios.post(`/trace/jobs/${props.job.id}/bookmark`, {}, {
+        headers: { Accept: 'application/json' },
+    })
+        .then((response) => {
+            bookmarked.value = Boolean(response.data.bookmarked);
+        })
+        .catch(() => {
+            toast.error('Gagal memperbarui bookmark.');
+        })
+        .finally(() => {
+            bookmarkLoading.value = false;
+        });
 }
 
 function formatSalary(value: number): string {
@@ -225,6 +225,32 @@ const tipeKerjaLabelMap: Record<string, string> = {
                 <div class="space-y-6 lg:col-span-2">
                     <!-- Job Header Card -->
                     <Card class="rounded-2xl border border-slate-200/60 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                        <div v-if="job.poster_url" class="relative h-56 overflow-hidden rounded-t-2xl bg-slate-100 dark:bg-zinc-800 sm:h-72">
+                            <img
+                                :src="job.poster_url"
+                                :alt="`Poster ${job.title}`"
+                                class="h-full w-full object-cover"
+                            />
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-950/10 to-transparent"></div>
+                            <div class="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-4">
+                                <div>
+                                    <p class="text-xs font-bold uppercase tracking-wider text-white/70">
+                                        {{ job.mitra?.nama_perusahaan }}
+                                    </p>
+                                    <h1 class="mt-1 line-clamp-2 text-2xl font-black text-white">
+                                        {{ job.title }}
+                                    </h1>
+                                </div>
+                                <button
+                                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/15 text-white backdrop-blur transition-all hover:bg-white/25"
+                                    :disabled="bookmarkLoading"
+                                    @click="toggleBookmark"
+                                >
+                                    <BookmarkCheck v-if="bookmarked" class="h-5 w-5" />
+                                    <Bookmark v-else class="h-5 w-5" />
+                                </button>
+                            </div>
+                        </div>
                         <CardContent class="p-6">
                             <div class="flex items-start gap-4">
                                 <!-- Company Logo -->
@@ -239,7 +265,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                                 </div>
 
                                 <div class="min-w-0 flex-1">
-                                    <h1 class="text-xl font-bold text-slate-900 dark:text-white">
+                                    <h1 v-if="!job.poster_url" class="text-xl font-bold text-slate-900 dark:text-white">
                                         {{ job.title }}
                                     </h1>
                                     <p class="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">
@@ -263,6 +289,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                                         >
                                             <MapPin class="mr-1 inline h-3 w-3" />
                                             {{ locationLabelMap[job.location_type] ?? job.location_type }}
+                                            <span v-if="job.location_city" class="ml-0.5 opacity-80">· {{ job.location_city }}</span>
                                         </Badge>
                                         <Badge
                                             v-if="job.tipe_kerja"
@@ -284,6 +311,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
 
                                 <!-- Bookmark Button -->
                                 <button
+                                    v-if="!job.poster_url"
                                     class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-all duration-200"
                                     :class="bookmarked
                                         ? 'border-[#0C447C]/30 bg-[#0C447C]/5 text-[#0C447C] dark:border-[#85B7EB]/40 dark:bg-[#85B7EB]/10 dark:text-[#85B7EB]'
@@ -316,6 +344,10 @@ const tipeKerjaLabelMap: Record<string, string> = {
                                 <span class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                                     <Users class="h-4 w-4" />
                                     {{ job.applicants_count }} pelamar
+                                </span>
+                                <span v-if="job.location_city" class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                                    <MapPin class="h-4 w-4" />
+                                    {{ job.location_city }}
                                 </span>
                             </div>
                         </CardContent>
@@ -497,6 +529,27 @@ const tipeKerjaLabelMap: Record<string, string> = {
 
                 <!-- Sidebar (1 col) -->
                 <div class="space-y-4">
+                    <!-- Job Location -->
+                    <Card class="rounded-2xl border border-slate-200/60 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                        <CardHeader class="pb-3">
+                            <CardTitle class="text-sm font-bold text-slate-900 dark:text-white">
+                                Lokasi Pekerjaan
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent class="space-y-2 text-sm">
+                            <div class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                                <MapPin class="h-4 w-4 text-[#0C447C] dark:text-[#85B7EB]" />
+                                <span class="font-semibold">{{ locationLabelMap[job.location_type] ?? job.location_type }}</span>
+                            </div>
+                            <p v-if="job.location_city" class="pl-6 text-slate-500 dark:text-slate-400">
+                                {{ job.location_city }}
+                            </p>
+                            <p v-else class="pl-6 text-slate-500 dark:text-slate-400">
+                                Lokasi detail belum diisi.
+                            </p>
+                        </CardContent>
+                    </Card>
+
                     <!-- Company Info -->
                     <Card class="rounded-2xl border border-slate-200/60 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                         <CardHeader class="pb-3">

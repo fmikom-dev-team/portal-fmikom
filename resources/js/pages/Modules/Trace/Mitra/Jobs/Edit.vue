@@ -4,11 +4,10 @@ import { Link, useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { ArrowLeft, Briefcase, ImageUp, X } from 'lucide-vue-next';
 import TraceMitraLayout from '@/layouts/TraceMitraLayout.vue';
-import { TPageHeader, TFormSection } from '@/components/Trace';
+import { TPageHeader, TFormSection, TStatusBadge } from '@/components/Trace';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import EditorJsEditor from '@/components/editor/EditorJsEditor.vue';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -18,27 +17,55 @@ interface Category {
     slug: string;
 }
 
+interface Job {
+    id: number;
+    title: string;
+    description: string | object | null;
+    job_category_id: number | null;
+    experience_level: string;
+    location_type: string;
+    location_city: string | null;
+    tipe_kerja: string;
+    salary_min: number | null;
+    salary_max: number | null;
+    is_salary_visible: boolean;
+    deadline: string | null;
+    status: string;
+    poster_url: string | null;
+}
+
 const props = defineProps<{
+    job: Job;
     categories: Category[];
 }>();
 
+function parseDescription(desc: string | object | null): object | null {
+    if (!desc) return null;
+    if (typeof desc === 'object') return desc;
+    try {
+        return JSON.parse(desc as string);
+    } catch {
+        return null;
+    }
+}
+
 const form = useForm({
-    title: '',
-    description: null,
-    job_category_id: '',
-    experience_level: 'fresh_graduate',
-    location_type: 'onsite',
-    location_city: '',
-    tipe_kerja: 'full_time',
-    salary_min: '',
-    salary_max: '',
-    is_salary_visible: true,
-    deadline: '',
-    status: 'draft',
+    title: props.job.title ?? '',
+    description: parseDescription(props.job.description),
+    job_category_id: props.job.job_category_id ?? '',
+    experience_level: props.job.experience_level ?? 'fresh_graduate',
+    location_type: props.job.location_type ?? 'onsite',
+    location_city: props.job.location_city ?? '',
+    tipe_kerja: props.job.tipe_kerja ?? 'full_time',
+    salary_min: props.job.salary_min ?? '',
+    salary_max: props.job.salary_max ?? '',
+    is_salary_visible: props.job.is_salary_visible ?? true,
+    deadline: props.job.deadline ? props.job.deadline.split('T')[0] : '',
+    status: props.job.status ?? 'draft',
     poster: null as File | null,
 });
 
-const posterPreview = ref<string | null>(null);
+const posterPreview = ref<string | null>(props.job.poster_url);
 
 function onPosterChange(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -77,15 +104,24 @@ const tipeKerjaOptions = [
 const statusOptions = [
     { value: 'draft', label: 'Simpan sebagai Draft' },
     { value: 'pending_review', label: 'Ajukan Review ke Admin' },
+    { value: 'closed', label: 'Tutup Lowongan' },
 ];
 
 function submit() {
-    form.transform((data) => ({
-        ...data,
-        description: data.description ? JSON.stringify(data.description) : '',
-    })).post('/trace/open-job/jobs-listings', {
+    form.transform((data) => {
+        const payload = {
+            ...data,
+            description: data.description ? JSON.stringify(data.description) : '',
+            _method: 'PUT',
+        };
+        // Do not update status if already published, pending_review, or closed
+        if (['published', 'pending_review', 'closed'].includes(props.job.status)) {
+            delete payload.status;
+        }
+        return payload;
+    }).post(`/trace/open-job/jobs-listings/${props.job.id}`, {
         forceFormData: true,
-        onError: () => toast.error('Gagal menyimpan lowongan. Periksa kembali form Anda.'),
+        onError: () => toast.error('Gagal memperbarui lowongan. Periksa kembali form Anda.'),
     });
 }
 
@@ -93,11 +129,11 @@ const selectClass = 'flex h-10 w-full rounded-md border border-input bg-backgrou
 </script>
 
 <template>
-    <TraceMitraLayout title="Buat Lowongan">
-        <TPageHeader title="Buat Lowongan" description="Buat lowongan kerja baru untuk alumni" :icon="Briefcase" class="mb-6">
+    <TraceMitraLayout title="Edit Lowongan">
+        <TPageHeader title="Edit Lowongan" description="Perbarui lowongan kerja perusahaan Anda" :icon="Briefcase" class="mb-6">
             <template #actions>
                 <Link
-                    href="/trace/open-job/jobs-listings"
+                    :href="`/trace/open-job/jobs-listings/${job.id}`"
                     class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-[#0C447C] dark:text-slate-400 dark:hover:text-[#85B7EB] transition-colors"
                 >
                     <ArrowLeft class="h-4 w-4" />
@@ -320,7 +356,16 @@ const selectClass = 'flex h-10 w-full rounded-md border border-input bg-backgrou
             <!-- Status & Submit -->
             <TFormSection title="Publikasi">
                 <div class="space-y-5">
-                    <div class="space-y-2">
+                    <div v-if="['published', 'pending_review', 'closed'].includes(job.status)" class="space-y-2">
+                        <Label>Status Lowongan</Label>
+                        <div class="flex items-center gap-2">
+                            <TStatusBadge :status="job.status" size="md" />
+                            <span class="text-xs text-slate-500 dark:text-slate-400">
+                                Status lowongan ini sudah aktif/diproses dan tidak perlu diubah.
+                            </span>
+                        </div>
+                    </div>
+                    <div v-else class="space-y-2">
                         <Label for="status">Status</Label>
                         <select
                             id="status"
@@ -336,7 +381,7 @@ const selectClass = 'flex h-10 w-full rounded-md border border-input bg-backgrou
                             </option>
                         </select>
                         <p class="text-xs text-slate-500 dark:text-slate-400">
-                            Pilih "Ajukan Review ke Admin" untuk mengirim lowongan ke admin untuk ditinjau.
+                            Pilih "Ajukan Review ke Admin" jika Anda ingin mempublikasikan kembali setelah melakukan perubahan.
                         </p>
                         <p v-if="form.errors.status" class="text-sm text-red-500">{{ form.errors.status }}</p>
                     </div>
@@ -347,9 +392,9 @@ const selectClass = 'flex h-10 w-full rounded-md border border-input bg-backgrou
                             :disabled="form.processing"
                             class="rounded-xl bg-[#0C447C] hover:bg-[#0C447C]/90 text-white shadow-md shadow-[#0C447C]/20 px-6"
                         >
-                            {{ form.processing ? 'Menyimpan...' : 'Simpan Lowongan' }}
+                            {{ form.processing ? 'Menyimpan...' : 'Simpan Perubahan' }}
                         </Button>
-                        <Link href="/trace/open-job/jobs-listings">
+                        <Link :href="`/trace/open-job/jobs-listings/${job.id}`">
                             <Button type="button" variant="outline" class="rounded-xl">
                                 Batal
                             </Button>

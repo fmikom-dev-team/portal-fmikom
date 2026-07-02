@@ -4,7 +4,6 @@ namespace App\Modules\Trace\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Trace\StoreKuesionerRequest;
-use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\Kuesioner;
 use App\Modules\Trace\Actions\DuplicateKuesionerAction;
 use App\Modules\Trace\Actions\SaveKuesionerSectionsAction;
@@ -84,7 +83,6 @@ class KuesionerController extends Controller
                 ]);
 
                 $saveAction->execute($kuesioner, $request->input('sections', []));
-                ActivityLog::record('kuesioner.created', "Membuat kuesioner: {$kuesioner->judul}", $kuesioner);
 
                 return redirect()->route('module.trace.admin.questionnaires.index')->with('success', 'Kuesioner berhasil dibuat');
             });
@@ -116,7 +114,6 @@ class KuesionerController extends Controller
                 ]);
 
                 $saveAction->execute($kuesioner, $request->input('sections', []));
-                ActivityLog::record('kuesioner.updated', "Memperbarui kuesioner: {$kuesioner->judul}", $kuesioner);
 
                 return redirect()->route('module.trace.admin.questionnaires.index')->with('success', 'Kuesioner berhasil diperbarui');
             });
@@ -174,7 +171,6 @@ class KuesionerController extends Controller
     public function destroy($id): RedirectResponse
     {
         $kuesioner = Kuesioner::findOrFail($id);
-        ActivityLog::record('kuesioner.deleted', "Menghapus kuesioner: {$kuesioner->judul}", $kuesioner);
         $kuesioner->delete();
 
         return redirect()->back()->with('success', 'Kuesioner berhasil dihapus');

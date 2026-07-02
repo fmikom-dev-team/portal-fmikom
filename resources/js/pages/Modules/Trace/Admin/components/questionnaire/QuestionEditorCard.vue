@@ -18,6 +18,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import type { Pertanyaan } from '@/types/trace';
+import { computed, ref } from 'vue';
 
 const question = defineModel<Pertanyaan>('question', { required: true });
 
@@ -41,27 +42,135 @@ const TIPE_TO_TIPE_DATA: Record<string, string> = {
     matrix: 'scale',
 };
 
+const CATEGORY_OPTIONS = [
+    'Umum',
+    'Status Pekerjaan',
+    'Masa Tunggu & Gaji',
+    'Kesesuaian Bidang',
+    'Kompetensi Lulusan',
+    'Kepuasan Pengguna',
+    'Lanjut Studi',
+    'Wirausaha',
+    'Identitas Responden',
+];
+
+const ACUAN_OPTIONS = ['LAM', 'IKU', 'Kurikulum', 'Prodi'];
+
+const INDICATOR_OPTIONS = [
+    { value: 'status_karier', label: 'Status Karier' },
+    { value: 'masa_tunggu', label: 'Masa Tunggu' },
+    { value: 'pendapatan', label: 'Pendapatan / Gaji' },
+    { value: 'kesesuaian_bidang', label: 'Kesesuaian Bidang' },
+    { value: 'tingkat_tempat_kerja', label: 'Tingkat Tempat Kerja' },
+    { value: 'kompetensi_lulusan', label: 'Kompetensi Lulusan' },
+    { value: 'kepuasan_pengguna', label: 'Kepuasan Pengguna' },
+    { value: 'lanjut_studi', label: 'Lanjut Studi' },
+    { value: 'wirausaha', label: 'Wirausaha' },
+];
+
+const customCategory = ref('');
+const customAcuan = ref('');
+const customIndicator = ref('');
+
+const ensureMeta = () => {
+    if (!question.value.meta) {
+        question.value.meta = {};
+    }
+
+    return question.value.meta as Record<string, any>;
+};
+
+const ensureMetaArray = (key: string) => {
+    const meta = ensureMeta();
+    if (!Array.isArray(meta[key])) {
+        meta[key] = [];
+    }
+
+    return meta[key] as string[];
+};
+
+const currentCategoryOptions = computed(() => {
+    const category = (question.value.meta as Record<string, any> | null)?.kategori;
+    if (category && !CATEGORY_OPTIONS.includes(category)) {
+        return [...CATEGORY_OPTIONS, category];
+    }
+
+    return CATEGORY_OPTIONS;
+});
+
+const currentAcuanOptions = computed(() => {
+    const selected = ((question.value.meta as Record<string, any> | null)?.acuan || []) as string[];
+
+    return [...new Set([...ACUAN_OPTIONS, ...selected])];
+});
+
+const currentIndicatorOptions = computed(() => {
+    const selected = ((question.value.meta as Record<string, any> | null)?.indikator || []) as string[];
+    const customSelected = selected
+        .filter((value) => !INDICATOR_OPTIONS.some((option) => option.value === value))
+        .map((value) => ({ value, label: value }));
+
+    return [...INDICATOR_OPTIONS, ...customSelected];
+});
+
 const onTipeChange = (newTipe: string) => {
     question.value.tipe = newTipe;
     question.value.tipe_data = TIPE_TO_TIPE_DATA[newTipe] || 'text';
 };
 
 const toggleAcuan = (tag: string) => {
-    if (!question.value.meta) {
-        question.value.meta = { acuan: [] };
-    }
-
-    if (!Array.isArray(question.value.meta.acuan)) {
-        question.value.meta.acuan = [];
-    }
-
-    const idx = question.value.meta.acuan.indexOf(tag);
+    const acuan = ensureMetaArray('acuan');
+    const idx = acuan.indexOf(tag);
 
     if (idx > -1) {
-        question.value.meta.acuan.splice(idx, 1);
+        acuan.splice(idx, 1);
     } else {
-        question.value.meta.acuan.push(tag);
+        acuan.push(tag);
     }
+};
+
+const toggleIndicator = (indicator: string) => {
+    const indicators = ensureMetaArray('indikator');
+    const idx = indicators.indexOf(indicator);
+
+    if (idx > -1) {
+        indicators.splice(idx, 1);
+    } else {
+        indicators.push(indicator);
+    }
+};
+
+const addCustomCategory = () => {
+    const value = customCategory.value.trim();
+    if (!value) return;
+
+    ensureMeta().kategori = value;
+    customCategory.value = '';
+};
+
+const addCustomAcuan = () => {
+    const value = customAcuan.value.trim();
+    if (!value) return;
+
+    const acuan = ensureMetaArray('acuan');
+    if (!acuan.includes(value)) {
+        acuan.push(value);
+    }
+
+    customAcuan.value = '';
+};
+
+const addCustomIndicator = () => {
+    const value = customIndicator.value.trim();
+    if (!value) return;
+
+    const normalized = value.toLowerCase().replace(/\s+/g, '_');
+    const indicators = ensureMetaArray('indikator');
+    if (!indicators.includes(normalized)) {
+        indicators.push(normalized);
+    }
+
+    customIndicator.value = '';
 };
 </script>
 
@@ -172,36 +281,32 @@ const toggleAcuan = (tag: string) => {
                                     />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="Umum"
-                                        >Umum</SelectItem
-                                    >
                                     <SelectItem
-                                        value="Status Pekerjaan"
-                                        >Status
-                                        Pekerjaan</SelectItem
+                                        v-for="category in currentCategoryOptions"
+                                        :key="category"
+                                        :value="category"
                                     >
-                                    <SelectItem
-                                        value="Masa Tunggu & Gaji"
-                                        >Masa Tunggu &
-                                        Gaji</SelectItem
-                                    >
-                                    <SelectItem
-                                        value="Kesesuaian Bidang"
-                                        >Kesesuaian
-                                        Bidang</SelectItem
-                                    >
-                                    <SelectItem
-                                        value="Kompetensi Lulusan"
-                                        >Kompetensi
-                                        Lulusan</SelectItem
-                                    >
-                                    <SelectItem
-                                        value="Kepuasan Pengguna"
-                                        >Kepuasan
-                                        Pengguna</SelectItem
-                                    >
+                                        {{ category }}
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
+                            <div class="flex gap-2">
+                                <Input
+                                    v-model="customCategory"
+                                    placeholder="Kategori custom"
+                                    class="h-8 rounded-lg bg-white text-[11px] dark:bg-slate-900"
+                                    @keydown.enter.prevent="addCustomCategory"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    class="h-8 shrink-0 rounded-lg px-2 text-[10px] font-bold"
+                                    @click="addCustomCategory"
+                                >
+                                    Tambah
+                                </Button>
+                            </div>
                         </div>
 
                         <!-- Acuan Laporan -->
@@ -228,12 +333,7 @@ const toggleAcuan = (tag: string) => {
                             </div>
                             <div class="flex flex-wrap gap-2 pt-1">
                                 <button
-                                    v-for="tag in [
-                                        'LAM',
-                                        'IKU',
-                                        'Kurikulum',
-                                        'Prodi',
-                                    ]"
+                                    v-for="tag in currentAcuanOptions"
                                     :key="tag"
                                     type="button"
                                     @click="
@@ -250,6 +350,82 @@ const toggleAcuan = (tag: string) => {
                                 >
                                     {{ tag }}
                                 </button>
+                            </div>
+                            <div class="flex gap-2">
+                                <Input
+                                    v-model="customAcuan"
+                                    placeholder="Acuan custom"
+                                    class="h-8 rounded-lg bg-white text-[11px] dark:bg-slate-900"
+                                    @keydown.enter.prevent="addCustomAcuan"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    class="h-8 shrink-0 rounded-lg px-2 text-[10px] font-bold"
+                                    @click="addCustomAcuan"
+                                >
+                                    Tambah
+                                </Button>
+                            </div>
+                        </div>
+
+                        <!-- Indikator Laporan -->
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-1.5">
+                                <Label
+                                    class="text-[10px] font-black tracking-tight text-slate-600 uppercase"
+                                    >Indikator Laporan</Label
+                                >
+                                <div class="group relative">
+                                    <div
+                                        class="flex h-3 w-3 cursor-help items-center justify-center rounded-full border border-slate-400 text-[8px] text-slate-500"
+                                    >
+                                        ?
+                                    </div>
+                                    <div
+                                        class="absolute bottom-full left-0 z-50 mb-2 hidden w-56 rounded-lg bg-slate-800 p-2 text-[9px] text-white shadow-xl group-hover:block"
+                                    >
+                                        Penanda spesifik untuk report
+                                        otomatis, misal masa tunggu,
+                                        pendapatan, atau kesesuaian bidang.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex max-h-24 flex-wrap gap-2 overflow-y-auto pt-1">
+                                <button
+                                    v-for="indicator in currentIndicatorOptions"
+                                    :key="indicator.value"
+                                    type="button"
+                                    @click="toggleIndicator(indicator.value)"
+                                    :class="[
+                                        'rounded-md border px-2 py-1 text-[9px] font-black transition-all',
+                                        question.meta?.indikator?.includes(
+                                            indicator.value,
+                                        )
+                                            ? 'border-emerald-600 bg-emerald-600 text-white shadow-md'
+                                            : 'border-slate-200 bg-white text-slate-500 hover:border-emerald-300',
+                                    ]"
+                                >
+                                    {{ indicator.label }}
+                                </button>
+                            </div>
+                            <div class="flex gap-2">
+                                <Input
+                                    v-model="customIndicator"
+                                    placeholder="Indikator custom"
+                                    class="h-8 rounded-lg bg-white text-[11px] dark:bg-slate-900"
+                                    @keydown.enter.prevent="addCustomIndicator"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    class="h-8 shrink-0 rounded-lg px-2 text-[10px] font-bold"
+                                    @click="addCustomIndicator"
+                                >
+                                    Tambah
+                                </Button>
                             </div>
                         </div>
 

@@ -13,6 +13,7 @@ import { update } from "@/routes/module/trace/profile-alumni/index";
 
 const props = defineProps<{
     roleName: string;
+    readOnly?: boolean;
     alumni: {
         user_id: number;
         name: string;
@@ -33,7 +34,7 @@ const props = defineProps<{
         instagram: string | null;
         twitter: string | null;
 
-        profil_id: number;
+        profil_id: number | null;
         angkatan: number | null;
         alamat_rumah: string | null;
         latitude_rumah: number | null;
@@ -77,8 +78,8 @@ const form = useForm({
 
     jenis_kelamin: props.alumni.jenis_kelamin || "",
     angkatan: props.alumni.angkatan || "",
-    nik: props.alumni.nik || "",
-    npwp: props.alumni.npwp || "",
+    nik: "",
+    npwp: "",
     provinsi_id: props.alumni.provinsi_id || null,
     kota_id: props.alumni.kota_id || null,
     alamat_rumah: props.alumni.alamat_rumah || "",
@@ -104,8 +105,8 @@ watch(
 
         form.jenis_kelamin = newVal.jenis_kelamin || "";
         form.angkatan = newVal.angkatan || "";
-        form.nik = newVal.nik || "";
-        form.npwp = newVal.npwp || "";
+        form.nik = "";
+        form.npwp = "";
         form.provinsi_id = newVal.provinsi_id || null;
         form.kota_id = newVal.kota_id || null;
         form.alamat_rumah = newVal.alamat_rumah || "";
@@ -116,6 +117,8 @@ watch(
 );
 
 const submit = () => {
+    if (props.readOnly) return;
+
     form.post(update.url(), {
         preserveScroll: true,
         onSuccess: () => {
@@ -176,11 +179,13 @@ const submit = () => {
                 :programStudis="programStudis"
                 :provinsis="provinsis"
                 :kotas="kotas"
+                :read-only="readOnly"
                 @edit="isEditOpen = true"
             />
 
             <!-- Profile Edit Modal -->
             <ProfileEditModal
+                v-if="!readOnly"
                 :isOpen="isEditOpen"
                 :form="form"
                 :provinsis="provinsis"

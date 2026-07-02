@@ -91,6 +91,7 @@ const form = useForm<any>({
                 ...rawMeta,
                 kategori: rawMeta.kategori || q.kategori || "Umum",
                 acuan: rawMeta.acuan || (Array.isArray(q.acuan) ? q.acuan : []),
+                indikator: rawMeta.indikator || [],
             };
 
             return {

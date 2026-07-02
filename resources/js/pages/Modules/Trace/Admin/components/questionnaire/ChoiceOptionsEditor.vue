@@ -23,7 +23,7 @@ const emit = defineEmits<{
         <div
             v-for="(option, oIndex) in options"
             :key="oIndex"
-            class="flex items-center gap-3"
+            class="grid grid-cols-[auto_minmax(0,1fr)_5rem_auto] items-center gap-3"
         >
             <div
                 class="h-4 w-4 rounded-full border border-slate-300 dark:border-slate-700"
@@ -36,6 +36,13 @@ const emit = defineEmits<{
             <Input
                 v-model="option.label"
                 class="h-9 border-none bg-transparent px-0 font-medium focus-visible:ring-0"
+            />
+            <Input
+                v-model.number="option.nilai"
+                type="number"
+                placeholder="Skor"
+                class="h-8 rounded-lg border-slate-200 bg-white px-2 text-xs font-bold dark:bg-slate-900"
+                title="Nilai numerik untuk analitik dan export"
             />
             <Button
                 variant="ghost"

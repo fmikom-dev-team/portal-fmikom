@@ -24,7 +24,7 @@ class MapController extends Controller
             'angkatan' => 'nullable|integer|min:2000|max:'.(date('Y') + 1),
             'program_studi' => 'nullable|string|max:100',
             'sektor' => 'nullable|string|max:100',
-            'status_filter' => 'nullable|string|in:semua,bekerja,wirausaha,lanjut_studi',
+            'status_filter' => 'nullable|string|in:semua,bekerja,wirausaha,lanjut_studi,mencari_kerja,belum_bekerja,lainnya',
         ]);
 
         return response()->json($this->mapService->getMapData($validated));
