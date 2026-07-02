@@ -55,7 +55,7 @@ type Summary = {
 const props = defineProps<{
     surats: Paginated;
     summary: Summary;
-    filters: { status?: string; search?: string; jenis_surat_id?: string };
+    filters: { status?: string; search?: string; category_id?: string };
     categories: Array<{ id: number; nama: string }>;
 }>();
 const page = usePage<PageProps>();
@@ -63,12 +63,12 @@ const summary = props.summary;
 const defaultStatus = 'pending';
 const search = ref(props.filters.search ?? '');
 const status = ref(props.filters.status ?? defaultStatus);
-const jenisSuratId = ref(props.filters.jenis_surat_id ?? '');
+const categoryId = ref(props.filters.category_id ?? '');
 const isFilterActive = computed(
     () =>
         search.value !== '' ||
         status.value !== defaultStatus ||
-        jenisSuratId.value !== '',
+        categoryId.value !== '',
 );
 const toastMessage = ref('');
 const toastVariant = ref<'success' | 'error'>('success');
@@ -116,7 +116,7 @@ function applyFilter() {
         {
             search: search.value || undefined,
             status: status.value || undefined,
-            jenis_surat_id: jenisSuratId.value || undefined,
+            category_id: categoryId.value || undefined,
         },
         { preserveState: true, replace: true },
     );
@@ -124,7 +124,7 @@ function applyFilter() {
 function resetFilter() {
     search.value = '';
     status.value = defaultStatus;
-    jenisSuratId.value = '';
+    categoryId.value = '';
     applyFilter();
 }
 const rejectModalOpen = ref(false);
@@ -232,7 +232,7 @@ function initials(name?: string | null) {
                 </div>
                 <div class="relative w-full lg:w-56">
                     <select
-                        v-model="jenisSuratId"
+                        v-model="categoryId"
                         class="h-11 w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50 pr-8 pl-4 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
                         @change="applyFilter"
                     >
@@ -357,6 +357,12 @@ function initials(name?: string | null) {
                                         {{ statusLabel(item) }}
                                     </span>
                                 </div>
+                                <p
+                                    v-if="item.pemohon?.nim"
+                                    class="mt-0.5 font-mono text-[10px] text-slate-400"
+                                >
+                                    {{ item.pemohon?.nim }}
+                                </p>
                                 <div class="mt-0.5 flex items-center gap-2">
                                     <p class="text-xs text-slate-500">
                                         {{ item.jenisSurat?.nama ?? '' }}
@@ -385,9 +391,9 @@ function initials(name?: string | null) {
                             <Link
                                 :href="`/admin/surat/${item.id}`"
                                 class="fast-btn fast-btn-outline flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium text-slate-600"
-                                title="Lihat Detail"
+                                title="Lihat"
                             >
-                                <Eye class="size-3" /> Detail
+                                <Eye class="size-3" /> Lihat
                             </Link>
                             <button
                                 v-if="item.can_approve"

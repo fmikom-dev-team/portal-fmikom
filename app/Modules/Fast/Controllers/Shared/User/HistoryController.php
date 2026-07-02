@@ -115,7 +115,7 @@ class HistoryController extends Controller
                 'lampiran' => $surat->lampirans->map(fn ($lampiran): array => [
                     'id' => $lampiran->id,
                     'name' => $lampiran->nama_asli ?? $lampiran->nama_file ?? $lampiran->name ?? 'Lampiran',
-                    'url' => route('documents.lampiran.preview', $lampiran->id, absolute: false),
+                    'url' => $this->signedDocumentRoute('lampiran.preview', $lampiran->id),
                     'type' => $lampiran->mime_type ?? $lampiran->type ?? null,
                 ])->values(),
                 'tanggal_pengajuan' => optional($surat->tanggal_pengajuan)?->toISOString(),
@@ -142,12 +142,16 @@ class HistoryController extends Controller
                     'action' => $history->action,
                     'actor' => $history->user?->name ?? null,
                 ])->values(),
-                'previewTemplateUrl' => $this->signedDocumentRoute('surat.template-preview', $surat->id),
-                'generatedDocumentUrl' => $surat->status === Surat::STATUS_FINISHED
+                'previewTemplateUrl' => $surat->canViewFinalDocumentPreview()
+                    ? $this->signedDocumentRoute('surat.template-preview', $surat->id)
+                    : null,
+                'generatedDocumentUrl' => $surat->canViewFinalDocumentPreview()
                     ? $this->signedDocumentRoute('surat.pdf', $surat->id)
-                    : $this->signedDocumentRoute('surat.generated-document', $surat->id),
-                'pdfUrl' => $this->signedDocumentRoute('surat.pdf', $surat->id),
-                'canDownloadPdf' => $surat->status === Surat::STATUS_FINISHED,
+                    : null,
+                'pdfUrl' => $surat->canViewFinalDocumentPreview()
+                    ? $this->signedDocumentRoute('surat.pdf', $surat->id)
+                    : null,
+                'canDownloadPdf' => $surat->canViewFinalDocumentPreview(),
             ],
         ]);
     }

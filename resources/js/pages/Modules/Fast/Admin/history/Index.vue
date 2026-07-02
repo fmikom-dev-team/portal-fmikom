@@ -362,9 +362,9 @@ function isInstitutionLetter(item: SuratItem) {
                             <Link
                                 :href="`/admin/surat/${item.id}`"
                                 class="fast-btn fast-btn-outline flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-medium text-slate-600"
-                                title="Lihat detail"
+                                title="Lihat"
                             >
-                                <Eye class="size-3" /> Detail
+                                <Eye class="size-3" /> Lihat
                             </Link>
                             <a
                                 v-if="item.status === 'finished'"

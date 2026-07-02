@@ -57,6 +57,9 @@ $publicDocumentRoutes = function (): void {
     Route::get('/surat/{id}/pdf', [DashboardController::class, 'downloadPdf'])
         ->whereNumber('id')
         ->name('surat.pdf');
+    Route::get('/lampiran/{id}/preview', [DashboardController::class, 'previewAttachment'])
+        ->whereNumber('id')
+        ->name('lampiran.preview');
 };
 
 Route::middleware(['signed'])
@@ -74,6 +77,9 @@ $publicDocumentRoutes = function (): void {
     Route::get('/surat/{id}/pdf', [DashboardController::class, 'downloadPdf'])
         ->whereNumber('id')
         ->name('surat.pdf');
+    Route::get('/lampiran/{id}/preview', [DashboardController::class, 'previewAttachment'])
+        ->whereNumber('id')
+        ->name('lampiran.preview');
 };
 
 Route::middleware(['signed'])

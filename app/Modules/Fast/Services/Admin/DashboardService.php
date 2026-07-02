@@ -9,6 +9,7 @@ use App\Modules\Fast\Support\TemplateAdminSupport;
 use App\Modules\Fast\Template\Renderers\SuratTemplateRendererService;
 use App\Support\FastStorage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -159,7 +160,11 @@ class DashboardService
             'lampiran' => $surat->lampirans->map(fn ($lampiran): array => [
                 'id' => $lampiran->id,
                 'name' => $lampiran->nama_file,
-                'url' => route('documents.lampiran.preview', $lampiran->id, absolute: false),
+                'url' => URL::temporarySignedRoute(
+                    'documents.public.lampiran.preview',
+                    now()->addMinutes(15),
+                    ['id' => $lampiran->id],
+                ),
                 'type' => $lampiran->tipe,
             ])->values(),
             'tanggal_pengajuan' => optional($surat->tanggal_pengajuan ?? $surat->created_at)?->toISOString(),
@@ -241,13 +246,11 @@ class DashboardService
                 ->values(),
             'can_approve' => $surat->canBeValidatedByAdmin(),
             'can_edit' => $surat->canBeEditedByAdmin(),
-            'previewTemplateUrl' => route('documents.surat.template-preview', $surat->id, absolute: false),
-            'generatedDocumentUrl' => filled($surat->nomor_surat) || filled($surat->rendered_snapshot)
-                ? (
-                    $surat->status === Surat::STATUS_FINISHED
-                        ? route('documents.surat.pdf', $surat->id, absolute: false)
-                        : route('documents.surat.generated-document', $surat->id, absolute: false)
-                )
+            'previewTemplateUrl' => $surat->canViewFinalDocumentPreview()
+                ? route('documents.surat.template-preview', $surat->id, absolute: false)
+                : null,
+            'generatedDocumentUrl' => $surat->canViewFinalDocumentPreview()
+                ? route('documents.surat.pdf', $surat->id, absolute: false)
                 : null,
         ]);
     }
@@ -257,6 +260,7 @@ class DashboardService
         $surat = Surat::query()
             ->with(['pemohon', 'jenisSurat.template.placeholders', 'dataEntries'])
             ->findOrFail($id);
+        abort_unless($surat->canViewFinalDocumentPreview(), 404, 'Pratinjau surat hanya tersedia setelah surat final.');
         $jenisSurat = $surat->jenisSurat;
         $jenisSuratName = $jenisSurat ? $jenisSurat->nama : 'Surat';
         $template = $jenisSurat?->template;
@@ -285,6 +289,7 @@ class DashboardService
         $surat = Surat::query()
             ->with(['pemohon', 'jenisSurat.template.placeholders', 'dataEntries'])
             ->findOrFail($id);
+        abort_unless($surat->canViewFinalDocumentPreview(), 404, 'Pratinjau surat hanya tersedia setelah surat final.');
         $jenisSurat = $surat->jenisSurat;
         $jenisSuratName = $jenisSurat ? $jenisSurat->nama : 'surat';
         $template = $jenisSurat?->template;
@@ -338,7 +343,7 @@ class DashboardService
         )->header('Content-Type', 'text/html; charset=UTF-8');
     }
 
-    public function previewAttachment(int $id): StreamedResponse
+    public function previewAttachment(int $id): SymfonyResponse|StreamedResponse
     {
         return $this->approvalService->previewAttachment($id);
     }

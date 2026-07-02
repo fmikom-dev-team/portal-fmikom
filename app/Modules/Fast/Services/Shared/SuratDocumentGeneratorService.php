@@ -4,6 +4,7 @@ namespace App\Modules\Fast\Services\Shared;
 
 use App\Models\NomorSuratSequence;
 use App\Models\Surat;
+use App\Models\SuratQrCode;
 use App\Models\TemplateGlobalSetting;
 use App\Modules\Fast\Template\Renderers\SuratKomponenRenderer;
 use App\Modules\Fast\Template\Renderers\SuratTemplateRendererService;
@@ -113,6 +114,8 @@ class SuratDocumentGeneratorService
 
         $freshSurat->forceFill($updates)->save();
 
+        $this->ensureActiveQrCodeRecord($freshSurat, $finalizedAt);
+
         return $freshSurat->fresh();
     }
 
@@ -202,6 +205,36 @@ class SuratDocumentGeneratorService
         $slug = Str::slug((string) ($surat->jenisSurat?->slug ?: $surat->jenisSurat?->nama ?: 'surat'));
 
         return sprintf('fast/generated/surat-%d-%s.pdf', $surat->id, $slug);
+    }
+
+    protected function ensureActiveQrCodeRecord(Surat $surat, mixed $activatedAt = null): void
+    {
+        if (blank($surat->qr_token)) {
+            return;
+        }
+
+        $timestamp = $activatedAt instanceof \DateTimeInterface ? $activatedAt : now();
+        $existingQr = SuratQrCode::where('token', $surat->qr_token)->first();
+
+        if ($existingQr !== null) {
+            $existingQr->forceFill([
+                'surat_id' => $surat->id,
+                'status' => SuratQrCode::STATUS_ACTIVE,
+                'activated_at' => $timestamp,
+                'revoked_reason' => null,
+                'revoked_by' => null,
+                'revoked_at' => null,
+            ])->save();
+
+            return;
+        }
+
+        SuratQrCode::create([
+            'surat_id' => $surat->id,
+            'token' => $surat->qr_token,
+            'status' => SuratQrCode::STATUS_ACTIVE,
+            'activated_at' => $timestamp,
+        ]);
     }
 
     protected function makeQrCodeBase64(Surat $surat): string

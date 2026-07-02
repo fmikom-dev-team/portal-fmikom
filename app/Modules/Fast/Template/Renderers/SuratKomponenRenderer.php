@@ -16,8 +16,12 @@ class SuratKomponenRenderer
 
     public static function render(array $komponen, array $data = []): string
     {
-        $data['__qr_component_present'] = collect($komponen)
+        $components = collect($komponen);
+        $data['__qr_component_present'] = $components
             ->contains(static fn ($komp): bool => ($komp['type'] ?? null) === 'qr_validasi');
+        $data['__tanda_tangan_component_count'] = $components
+            ->where('type', 'tanda_tangan')
+            ->count();
 
         $html = '';
         foreach ($komponen as $komp) {
@@ -693,9 +697,9 @@ HTML;
     protected static function buildQrValidationHtml(array $komp, array $data): string
     {
         $renderMode = $data['__render_mode'] ?? 'preview';
-        $qrBoxSize = $renderMode === 'pdf' ? '17mm' : '68px';
-        $qrLabelSize = $renderMode === 'pdf' ? '0' : '7pt';
-        $qrPlaceholderSize = $renderMode === 'pdf' ? '5.5pt' : '7pt';
+        $qrBoxSize = $renderMode === 'pdf' ? '25mm' : '94px';
+        $qrLabelSize = $renderMode === 'pdf' ? '0' : '6pt';
+        $qrPlaceholderSize = $renderMode === 'pdf' ? '5pt' : '6pt';
         $qrSvg = $data['__qr_svg'] ?? '';
         $qrActive = $data['__qr_active'] ?? false;
         $qrHidden = $data['__qr_hidden'] ?? false;
@@ -734,7 +738,7 @@ HTML;
         if ($qrActive && ! empty($qrSvg)) {
             $qrBlock = <<<HTML
 <div data-qr-embedded="true" style="display: inline-block; text-align: center; width: {$qrBoxSize};">
-    <div style="width: {$qrBoxSize}; height: {$qrBoxSize};">
+    <div style="width: {$qrBoxSize}; height: {$qrBoxSize}; margin: 0 auto;">
         {$qrSvg}
     </div>
     <p style="margin: 2px 0 0 0; font-size: {$qrLabelSize}; text-align: center; font-weight: bold; letter-spacing: 0.02em;">Dokumen Terverifikasi</p>
@@ -743,8 +747,8 @@ HTML;
         } else {
             $qrBlock = <<<HTML
 <div data-qr-embedded="true" style="display: inline-block; text-align: center; width: {$qrBoxSize};">
-    <div style="width: {$qrBoxSize}; height: {$qrBoxSize}; border: 1.5px dashed #CBD5E1; background: #F8FAFC; display: flex; align-items: center; justify-content: center;">
-        <p style="font-size: {$qrPlaceholderSize}; color: #94A3B8; text-align: center; margin: 0; line-height: 1.35; padding: 4px;">QR Code akan muncul setelah disetujui</p>
+    <div style="width: {$qrBoxSize}; height: {$qrBoxSize}; border: 1.5px dashed #CBD5E1; background: #F8FAFC; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+        <p style="font-size: {$qrPlaceholderSize}; color: #94A3B8; text-align: center; margin: 0; line-height: 1.25; padding: 4px;">QR Code akan muncul setelah disetujui</p>
     </div>
     <p style="margin: 2px 0 0 0; font-size: {$qrPlaceholderSize}; text-align: center; color: #94A3B8;">Menunggu Persetujuan</p>
 </div>
@@ -752,11 +756,11 @@ HTML;
         }
 
         return <<<HTML
-<div style="width: 100%; margin-top: 8px; text-align: {$align}; font-size: {$size};">
+<div style="width: 100%; margin-top: 2px; text-align: {$align}; font-size: {$size};">
     <div style="display: inline-block; {$wrapperMargin} text-align: center;">
-        <p style="margin: 0 0 4px 0; font-weight: bold;">{$title}</p>
+        <p style="margin: 0 0 1px 0; font-weight: bold;">{$title}</p>
         {$qrBlock}
-        <p style="margin: 4px 0 0 0; font-size: 9pt; color: #475569; line-height: 1.35;">{$caption}</p>
+        <p style="margin: 2px 0 0 0; font-size: 8pt; color: #475569; line-height: 1.2;">{$caption}</p>
     </div>
 </div>
 HTML;
@@ -764,6 +768,12 @@ HTML;
 
     protected static function renderQrValidasi(array $komp, array $data): string
     {
+        // Komponen legacy dipertahankan untuk kompatibilitas data lama,
+        // tetapi tidak lagi dipakai sebagai pemicu utama layout.
+        if (($data['__qr_hidden'] ?? false) === true) {
+            return '';
+        }
+
         return static::buildQrValidationHtml($komp, $data);
     }
 
@@ -777,7 +787,11 @@ HTML;
         $size = $komp['font_size'] ?? '12pt';
         $jumlah = count($kolom);
         $renderMode = $data['__render_mode'] ?? 'preview';
-        $signatureGap = $renderMode === 'pdf' ? '8mm' : '32mm';
+        $singleSignatureBlock = (int) ($data['__tanda_tangan_component_count'] ?? 0) === 1;
+        $qrInline = $singleSignatureBlock && ! ($data['__qr_hidden'] ?? false);
+        $signatureGap = $qrInline
+            ? ($renderMode === 'pdf' ? '25mm' : '94px')
+            : ($renderMode === 'pdf' ? '8mm' : '32mm');
         $tableMarginTop = $renderMode === 'pdf' ? '2px' : '16px';
         $singleColumnPosisi = (string) (($kolom[0]['posisi'] ?? null) ?: ($komp['posisi'] ?? 'kanan'));
         $wrapperAlign = $jumlah > 1
@@ -827,6 +841,7 @@ HTML;
                 default => 'center',
             };
             $tanggalRow = $showTanggal ? "<tr><td style=\"padding: 0 0 2mm 0; text-align: {$textAlign};\">{$tanggalHtml}</td></tr>" : '';
+            $qrRow = $qrInline ? "<tr><td style=\"height: {$signatureGap}; padding: 0; text-align: {$textAlign}; vertical-align: middle;\">".static::buildInlineQrStampHtml($komp, $data)."</td></tr>" : "<tr><td style=\"height: {$signatureGap}; padding: 0; text-align: {$textAlign}; vertical-align: middle;\">&nbsp;</td></tr>";
             $ttdCols .= <<<HTML
 <td style="width: {$colWidth}%; vertical-align: top; text-align: {$textAlign}; padding: 0 4px; font-size: {$size};">
     <table style="display: inline-table; border-collapse: collapse; text-align: {$textAlign};">
@@ -835,11 +850,7 @@ HTML;
             <tr>
                 <td style="padding: 0; text-align: {$textAlign}; {$jabatanStyle}">{$jabatan}</td>
             </tr>
-            <tr>
-                <td style="height: {$signatureGap}; padding: 0; text-align: {$textAlign}; vertical-align: middle;">
-                    &nbsp;
-                </td>
-            </tr>
+            {$qrRow}
             <tr>
                 <td style="padding: 0; text-align: {$textAlign}; {$namaStyle}">{$nama}</td>
             </tr>
@@ -868,6 +879,51 @@ HTML;
         </tr>
     </tbody>
 </table>
+HTML;
+    }
+
+    protected static function buildInlineQrStampHtml(array $komp, array $data): string
+    {
+        $renderMode = (string) ($data['__render_mode'] ?? 'preview');
+        $qrSvg = (string) ($data['__qr_svg'] ?? '');
+        $qrActive = (bool) ($data['__qr_active'] ?? false);
+
+        $qrBoxSize = $renderMode === 'pdf' ? '25mm' : '94px';
+        $qrLabelSize = $renderMode === 'pdf' ? '5pt' : '6pt';
+
+        if ($qrSvg !== '' && $renderMode === 'pdf') {
+            $qrSvg = preg_replace_callback(
+                '/<svg\b([^>]*)>/i',
+                function (array $matches) use ($qrBoxSize): string {
+                    $attrs = preg_replace('/\s(width|height)="[^"]+"/i', '', $matches[1]) ?? $matches[1];
+
+                    return '<svg'.$attrs.' width="'.$qrBoxSize.'" height="'.$qrBoxSize.'" style="width:100%;height:100%;display:block;">';
+                },
+                $qrSvg,
+                1
+            ) ?? $qrSvg;
+        }
+
+        if ($qrSvg === '') {
+            $statusLabel = $qrActive ? 'QR Code' : 'Menunggu Persetujuan';
+
+            return <<<HTML
+<div data-qr-inline="true" style="display: inline-block; text-align: center; width: {$qrBoxSize};">
+    <div style="width: {$qrBoxSize}; height: {$qrBoxSize}; border: 1.5px dashed #CBD5E1; background: #F8FAFC; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+        <p style="font-size: {$qrLabelSize}; color: #94A3B8; text-align: center; margin: 0; line-height: 1.2; padding: 4px;">QR Code</p>
+    </div>
+    <p style="margin: 2px 0 0 0; font-size: {$qrLabelSize}; text-align: center; color: #94A3B8;">{$statusLabel}</p>
+</div>
+HTML;
+        }
+
+        return <<<HTML
+<div data-qr-inline="true" style="display: inline-block; text-align: center; width: {$qrBoxSize};">
+    <div style="width: {$qrBoxSize}; height: {$qrBoxSize}; margin: 0 auto;">
+        {$qrSvg}
+    </div>
+    <p style="margin: 1mm 0 0 0; font-size: {$qrLabelSize}; text-align: center; font-weight: bold; letter-spacing: 0.02em;">Dokumen Terverifikasi</p>
+</div>
 HTML;
     }
 

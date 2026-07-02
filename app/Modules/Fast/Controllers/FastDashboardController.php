@@ -4,7 +4,6 @@ namespace App\Modules\Fast\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 
 class FastDashboardController extends Controller
 {
@@ -15,10 +14,12 @@ class FastDashboardController extends Controller
         $role = $request->attributes->get('resolved_role', session('active_role'));
         $normalizedRole = strtolower((string) $role);
 
+        if ($normalizedRole === 'kaprodi' || $normalizedRole === 'dekan') {
+            return redirect()->route($normalizedRole === 'kaprodi' ? 'kaprodi.dashboard' : 'dekan.dashboard');
+        }
+
         $componentName = match (true) {
             in_array($normalizedRole, self::ADMIN_ROLES, true) => 'Modules/Fast/Admin/Dashboard',
-            $normalizedRole === 'kaprodi' => 'Modules/Fast/Kaprodi/approval/Index',
-            $normalizedRole === 'dekan' => 'Modules/Fast/Dekan/approval/Index',
             $normalizedRole === 'dosen' => 'Modules/Fast/Dosen/Dashboard',
             $normalizedRole === 'mahasiswa' => 'Modules/Fast/Mahasiswa/Dashboard',
             default => 'Modules/Fast/Mahasiswa/Dashboard',

@@ -126,6 +126,8 @@ const props = defineProps<{
         name?: string | null;
         identifierLabel?: string | null;
         identifierValue?: string | null;
+        programStudi?: string | null;
+        fakultas?: string | null;
     };
     endpoints: { submission: string; jenisSuratBase: string; basePath: string };
 }>();
@@ -165,6 +167,20 @@ const hasMoreJenis = computed(
 const latestVisible = computed(() => safeLatest.value.slice(0, 5));
 
 type FieldValue = string | boolean | string[] | number | null;
+type ApplicantProfile = {
+    name: string;
+    identifierLabel: string;
+    identifierValue: string;
+    programStudi: string;
+    fakultas: string;
+};
+const applicantProfile = computed<ApplicantProfile>(() => ({
+    name: props.userProfile?.name ?? '',
+    identifierLabel: props.userProfile?.identifierLabel ?? 'NIM',
+    identifierValue: props.userProfile?.identifierValue ?? '',
+    programStudi: props.userProfile?.programStudi ?? '',
+    fakultas: props.userProfile?.fakultas ?? '',
+}));
 
 const submitForm = useForm<{
     jenis_surat_id: string;
@@ -187,18 +203,85 @@ function initFormData(jenis: JenisSuratOption) {
     submitForm.lampiran = [];
     const fieldValues: Record<string, FieldValue> = {};
     for (const f of jenis.fieldConfig ?? []) {
-        if (f.type === 'checkbox') fieldValues[f.name] = false;
+        if (isApplicantIdentityField(f)) {
+            fieldValues[f.name] = applicantFieldDefault(f);
+        } else if (f.type === 'checkbox') fieldValues[f.name] = false;
         else if (['checkbox-group', 'multiselect'].includes(f.type))
             fieldValues[f.name] = [];
         else fieldValues[f.name] = '';
     }
     submitForm.field_data = fieldValues;
 }
+
+function normalizeFieldName(name: string): string {
+    return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
+}
+
+function isApplicantIdentityField(field: FieldConfig): boolean {
+    if ((field.sumber_data ?? 'data_pemohon') !== 'data_pemohon') {
+        return false;
+    }
+
+    return [
+        'nama',
+        'name',
+        'nama_pemohon',
+        'nama_mahasiswa',
+        'nim',
+        'nim_nip',
+        'nomor_induk',
+        'nomor_induk_pemohon',
+        'nomor_induk_mahasiswa',
+        'program_studi',
+        'program_studi_pemohon',
+        'program_studi_mahasiswa',
+        'fakultas',
+        'prodi',
+    ].includes(normalizeFieldName(field.name));
+}
+
+function applicantFieldDefault(field: FieldConfig): FieldValue {
+    const normalized = normalizeFieldName(field.name);
+
+    if (['nama', 'name', 'nama_pemohon', 'nama_mahasiswa'].includes(normalized)) {
+        return applicantProfile.value.name;
+    }
+
+    if (
+        [
+            'nim',
+            'nim_nip',
+            'nomor_induk',
+            'nomor_induk_pemohon',
+            'nomor_induk_mahasiswa',
+        ].includes(normalized)
+    ) {
+        return applicantProfile.value.identifierValue;
+    }
+
+    if (
+        [
+            'program_studi',
+            'program_studi_pemohon',
+            'program_studi_mahasiswa',
+            'prodi',
+        ].includes(normalized)
+    ) {
+        return applicantProfile.value.programStudi;
+    }
+
+    if (['fakultas'].includes(normalized)) {
+        return applicantProfile.value.fakultas;
+    }
+
+    return '';
+}
+
 function isApplicantFieldVisible(field: FieldConfig) {
     return (field.mode_form_pemohon ?? 'editable') !== 'hidden';
 }
 function isApplicantFieldReadonly(field: FieldConfig) {
-    return (field.mode_form_pemohon ?? 'editable') === 'readonly';
+    return (field.mode_form_pemohon ?? 'editable') === 'readonly' || isApplicantIdentityField(field);
 }
 
 function setApplicantFieldRef(name: string, el: any) {
@@ -704,7 +787,7 @@ function fieldError(name: string): string | undefined {
 
 <template>
     <FastLayout
-        title="Dashboard"
+        title=""
         active-menu="dashboard"
         :breadcrumbs="[{ label: 'Dashboard' }]"
     >
@@ -1057,10 +1140,10 @@ function fieldError(name: string): string | undefined {
                                 <div class="flex flex-wrap items-center gap-2">
                                     <Link
                                         :href="`${safeEndpoints.basePath}/history/${item.id}`"
-                                        title="Detail Surat"
+                                        title="Lihat"
                                         class="fast-btn fast-btn-outline px-3 py-1.5 text-[11px] font-medium text-slate-600"
                                     >
-                                        <FileText class="size-3.5" /> Detail Surat
+                                        <Eye class="size-3.5" /> Lihat
                                     </Link>
                                     <button
                                         v-if="item.hasPdf"
@@ -1201,6 +1284,51 @@ function fieldError(name: string): string | undefined {
                         v-if="formStep === 'form'"
                         class="max-h-[70vh] space-y-4 overflow-y-auto p-5"
                     >
+                        <div class="space-y-4">
+                            <div>
+                                <label class="mb-1 block text-xs font-medium text-slate-700">
+                                    Nama
+                                </label>
+                                <p class="mb-1 text-[10px] font-medium text-emerald-600">
+                                    otomatis dari akun pemohon
+                                </p>
+                                <input
+                                    :value="applicantProfile.name || '-'"
+                                    type="text"
+                                    readonly
+                                    class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-xs font-medium text-slate-700">
+                                    {{ applicantProfile.identifierLabel }}
+                                </label>
+                                <p class="mb-1 text-[10px] font-medium text-emerald-600">
+                                    otomatis dari akun pemohon
+                                </p>
+                                <input
+                                    :value="applicantProfile.identifierValue || '-'"
+                                    type="text"
+                                    readonly
+                                    class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-xs font-medium text-slate-700">
+                                    Program Studi
+                                </label>
+                                <p class="mb-1 text-[10px] font-medium text-emerald-600">
+                                    otomatis dari akun pemohon
+                                </p>
+                                <input
+                                    :value="applicantProfile.programStudi || '-'"
+                                    type="text"
+                                    readonly
+                                    class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none"
+                                />
+                            </div>
+                        </div>
+
                         <!-- Keperluan -->
                         <div data-field-key="keperluan">
                             <label

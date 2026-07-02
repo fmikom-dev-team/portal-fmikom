@@ -23,7 +23,6 @@ import {
     Eye,
     FileText,
     Paperclip,
-    QrCode,
     RefreshCcw,
     ShieldCheck,
     X,
@@ -82,15 +81,28 @@ type Surat = {
     can_final_reject: boolean;
     previewTemplateUrl: string | null;
     generatedDocumentUrl: string | null;
+    pdfUrl?: string | null;
+    canDownloadPdf?: boolean;
 };
 
 type PageProps = {
     flash?: { success?: string };
 };
 
-const props = defineProps<
-    { role: { name?: string | null; slug?: string | null }; back_href?: string; back_label?: string } & Surat
->();
+const props = withDefaults(
+    defineProps<
+        {
+            role?: { name?: string | null; slug?: string | null };
+            back_href?: string;
+            back_label?: string;
+        } & Partial<Surat>
+    >(),
+    {
+        role: () => ({ name: 'Approval', slug: 'dekan' }),
+        back_href: '',
+        back_label: 'Riwayat Approval',
+    },
+);
 
 const page = usePage<PageProps>();
 const viewerOpen = ref(false);
@@ -125,9 +137,7 @@ const activeMenu = computed(() => {
     return 'approval.arsip';
 });
 const isFinished = computed(() => props.status === 'finished');
-const isApproved = computed(() =>
-    ['approved_kaprodi', 'approved_dekan', 'finished'].includes(props.status),
-);
+const canDownloadPdf = computed(() => props.canDownloadPdf ?? isFinished.value);
 const documentTitle = computed(() =>
     props.nomor_surat
         ? `${props.jenis_surat} - ${props.nomor_surat}`
@@ -146,17 +156,6 @@ watch(
     },
     { immediate: true },
 );
-
-const completedAt = computed(() => {
-    if (!isApproved.value) return null;
-
-    const historyLatest = props.history_timeline?.[0]?.created_at ?? null;
-    const approvalLatest =
-        props.approval_timeline?.[props.approval_timeline.length - 1]
-            ?.acted_at ?? null;
-
-    return approvalLatest ?? historyLatest ?? props.tanggal_pengajuan;
-});
 
 const hiddenFields = new Set(['created_by', 'jenis_surat_id', 'jenis_surat', 'keperluan']);
 
@@ -237,7 +236,7 @@ const processTimeline = computed(() => {
 
 const statusLabel: Record<string, string> = {
     pending: 'Menunggu Validasi',
-    validated_admin: 'Pending',
+    validated_admin: 'Divalidasi Admin',
     revision_requested: 'Menunggu Revisi Admin',
     approved_kaprodi: 'Disetujui Kaprodi',
     approved_dekan: 'Disetujui Dekan',
@@ -311,10 +310,14 @@ function openPreviewDocument() {
 }
 
 function openDownloadPdf() {
-    viewerUrl.value = `/documents/surat/${props.id}/pdf?refresh=1`;
-    viewerTitle.value = documentTitle.value;
-    viewerType.value = 'pdf';
-    viewerOpen.value = true;
+    const url = props.pdfUrl || `/documents/surat/${props.id}/pdf?refresh=1`;
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${documentTitle.value}.pdf`;
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
 }
 
 function goBack() {
@@ -366,10 +369,32 @@ function attachmentUrl(id: number) {
     return `${basePath.value}/lampiran/${id}/preview`;
 }
 
+function downloadFile(url: string, filename: string) {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+}
+
 function openAttachmentPreview(file: Lampiran) {
+    const url = file.url ?? attachmentUrl(file.id);
+
+    if (isPdfAttachment(file) && url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+        return;
+    }
+
+    if (isWordAttachment(file) && url) {
+        downloadFile(url, file.name || 'lampiran.docx');
+        return;
+    }
+
     activeAttachment.value = {
         ...file,
-        url: file.url ?? attachmentUrl(file.id),
+        url,
     };
     attachmentPreviewOpen.value = true;
 }
@@ -394,6 +419,20 @@ function isPdfAttachment(file?: Lampiran | null) {
     return (
         (file.type ?? '').toLowerCase().includes('pdf') ||
         file.name.toLowerCase().endsWith('.pdf')
+    );
+}
+
+function isWordAttachment(file?: Lampiran | null) {
+    if (!file) return false;
+
+    const type = (file.type ?? '').toLowerCase();
+    const name = file.name.toLowerCase();
+
+    return (
+        type.includes('msword') ||
+        type.includes('wordprocessingml.document') ||
+        name.endsWith('.doc') ||
+        name.endsWith('.docx')
     );
 }
 
@@ -457,15 +496,16 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
 
 <template>
     <AdminLayout
-        title="Detail Surat"
-        :subtitle="jenis_surat"
+        :title="jenis_surat"
+        subtitle=""
+        title-class="text-lg font-bold tracking-tight text-slate-900 md:text-xl"
         :active-menu="activeMenu"
         :breadcrumbs="[
             { label: backLabel, href: backHref },
-            { label: 'Detail Surat' },
+            { label: jenis_surat },
         ]"
     >
-        <Head :title="`Detail Surat - ${jenis_surat}`" />
+        <Head :title="jenis_surat" />
 
         <div class="mx-auto max-w-6xl space-y-5">
             <div class="flex flex-wrap items-center justify-between gap-3">
@@ -579,108 +619,58 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                         </div>
                         <div>
                             <h2 class="text-base font-bold text-slate-900">
-                                Preview Surat
+                                Dokumen
                             </h2>
                             <p class="text-sm text-slate-500">
-                                Field surat tampil di area ini agar ringkasan tetap bersih.
+                                Akses preview dan unduhan dokumen surat.
                             </p>
                         </div>
                     </div>
 
-                    <div
-                        class="rounded-2xl border px-4 py-4"
-                        :class="
-                            isApproved
-                                ? 'border-emerald-200 bg-emerald-50'
-                                : status === 'revision_requested' || status === 'validated_admin' || status === 'pending'
-                                    ? 'border-amber-200 bg-amber-50'
-                                    : 'border-slate-200 bg-slate-50'
-                        "
-                    >
-                        <div class="flex items-start gap-3">
-                            <QrCode
-                                class="mt-0.5 size-5 shrink-0"
-                                :class="
-                                    isApproved
-                                        ? 'text-blue-600'
-                                        : status === 'revision_requested' || status === 'validated_admin' || status === 'pending'
-                                            ? 'text-amber-600'
-                                            : 'text-slate-500'
-                                "
-                            />
+                    <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                        <div
+                            class="flex items-start gap-3"
+                        >
+                            <ShieldCheck class="mt-0.5 size-5 shrink-0 text-emerald-600" />
                             <div class="min-w-0">
-                                <p
-                                class="text-sm font-semibold"
-                                :class="
-                                    isApproved
-                                        ? 'text-blue-800'
-                                        : status === 'revision_requested' || status === 'validated_admin' || status === 'pending'
-                                            ? 'text-amber-800'
-                                            : 'text-slate-700'
-                                "
-                            >
+                                <p class="text-sm font-semibold text-emerald-800">
                                     {{
-                                        isApproved
-                                            ? 'Status Disetujui'
-                                            : status === 'revision_requested'
-                                                ? 'Status Revisi'
-                                                : status === 'validated_admin' || status === 'pending'
-                                                    ? 'Pending'
-                                                : 'Status Surat'
+                                        isFinished
+                                            ? 'Dokumen Siap'
+                                            : 'Dokumen Belum Siap'
                                     }}
                                 </p>
-                                <p
-                                    class="mt-1 text-xs leading-5"
-                                    :class="
-                                        isApproved
-                                            ? 'text-blue-700'
-                                            : status === 'revision_requested' || status === 'validated_admin' || status === 'pending'
-                                                ? 'text-amber-700'
-                                                : 'text-slate-600'
-                                    "
-                                >
+                                <p class="mt-1 text-xs leading-5 text-emerald-700">
                                     {{
-                                        isApproved
-                                            ? 'Surat sudah diproses sesuai alur persetujuan.'
-                                            : status === 'revision_requested'
-                                                ? 'Surat dikembalikan untuk diperbaiki sebelum diproses lagi.'
-                                                : status === 'validated_admin' || status === 'pending'
-                                                    ? (
-                                                        isInstitutionLetter
-                                                            ? 'Surat sudah diajukan admin dan menunggu persetujuan approver.'
-                                                            : 'Surat sudah divalidasi admin dan menunggu persetujuan approver.'
-                                                    )
-                                                : 'Surat masih menunggu tindakan dari role terkait.'
+                                        isFinished
+                                            ? 'Surat sudah divalidasi. Dokumen PDF dapat dibuka dan diunduh.'
+                                            : 'Surat masih diproses. Dokumen PDF belum dapat dibuka dan diunduh.'
                                     }}
                                 </p>
                             </div>
-                        </div>
-
-                        <div class="mt-4 flex flex-wrap gap-2">
-                            <span
-                                v-if="completedAt"
-                                class="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600"
-                            >
-                                {{ formatDate(completedAt) }}
-                            </span>
                         </div>
                     </div>
 
                     <div class="mt-4 space-y-3">
                         <button
-                            v-if="previewTemplateUrl || generatedDocumentUrl"
                             type="button"
-                            class="fast-btn fast-btn-outline w-full px-4 py-2.5 text-sm"
+                            :disabled="!isFinished"
+                            class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                            :class="
+                                !isFinished
+                                    ? 'cursor-not-allowed border-dashed bg-slate-50 text-slate-400 opacity-50 hover:bg-slate-50'
+                                    : ''
+                            "
                             @click="openPreviewDocument"
                         >
-                            <Eye class="size-4" />
+                            <Eye class="size-4 text-slate-500" />
                             Preview Dokumen
                         </button>
 
                         <button
-                            v-if="isFinished"
+                            v-if="canDownloadPdf"
                             type="button"
-                            class="fast-btn fast-btn-primary w-full px-4 py-2.5 text-sm"
+                            class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700"
                             @click="openDownloadPdf"
                         >
                             <Download class="size-4" />

@@ -14,6 +14,7 @@ import {
 import {
     Search,
     FileText,
+    Download,
     XCircle,
     RefreshCcw,
     CheckCircle2,
@@ -40,6 +41,7 @@ type SuratItem = {
     subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { id?: number | null; nama?: string | null } | null;
     nomor_surat?: string | null;
+    download_url?: string | null;
 };
 type PaginationLink = { url: string | null; label: string; active: boolean };
 type PaginatedSurats = {
@@ -51,13 +53,22 @@ type PaginatedSurats = {
 };
 type StatusOption = { value: string; label: string };
 type CategoryOption = { id: number; nama: string };
-const props = defineProps<{
-    role: { name?: string | null; slug?: string | null };
-    surats: PaginatedSurats;
-    filters: { status?: string; search?: string; category_id?: string };
-    statusOptions: StatusOption[];
-    categories: CategoryOption[];
-}>();
+const props = withDefaults(
+    defineProps<{
+        role?: { name?: string | null; slug?: string | null };
+        surats?: PaginatedSurats;
+        filters?: { status?: string; search?: string; category_id?: string };
+        statusOptions?: StatusOption[];
+        categories?: CategoryOption[];
+    }>(),
+    {
+        role: () => ({ name: 'Approval', slug: 'dekan' }),
+        surats: () => ({ data: [], links: [], total: 0 }),
+        filters: () => ({ status: '', search: '', category_id: '' }),
+        statusOptions: () => [],
+        categories: () => [],
+    },
+);
 const search = ref(props.filters.search ?? '');
 const status = ref(props.filters.status ?? '');
 const categoryId = ref(props.filters.category_id ?? '');
@@ -404,11 +415,27 @@ async function openDetail(id: number) {
                             <button
                                 type="button"
                                 class="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[10px] font-medium text-slate-600 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
-                                title="Lihat detail"
+                                title="Lihat"
                                 @click="openDetail(item.id)"
                             >
-                                <Eye class="size-3" /> Detail
+                                <Eye class="size-3" /> Lihat
                             </button>
+                            <a
+                                v-if="item.download_url"
+                                :href="item.download_url"
+                                target="_blank"
+                                class="flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1.5 text-[10px] font-medium text-blue-600 transition-colors hover:bg-blue-100"
+                                title="Download PDF"
+                            >
+                                <Download class="size-3" /> Unduh PDF
+                            </a>
+                            <div
+                                v-else
+                                class="flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-[10px] font-medium text-slate-400"
+                                title="PDF belum tersedia"
+                            >
+                                <FileText class="size-3" /> PDF Belum Tersedia
+                            </div>
                         </div>
                     </div>
                 </div>

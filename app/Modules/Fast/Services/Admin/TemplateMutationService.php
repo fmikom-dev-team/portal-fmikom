@@ -98,28 +98,28 @@ class TemplateMutationService
         $rawFieldConfig = $request->input('field_config');
 
         if (is_array($rawFieldConfig)) {
-            $missingNames = collect($rawFieldConfig)
+            $fieldConfig = collect($rawFieldConfig)
                 ->filter(fn ($field): bool => is_array($field))
-                ->filter(fn (array $field): bool => trim((string) ($field['name'] ?? '')) === '')
                 ->values()
-                ->count();
+                ->map(function (array $field, int $index): array {
+                    $normalized = SuratDataContract::normalizeDynamicFieldConfigItem($field);
+                    $isEmptyRow = $this->isEmptyDynamicFieldConfigRow($normalized);
 
-            if ($missingNames > 0) {
-                throw ValidationException::withMessages([
-                    'field_config' => 'Key field dinamis wajib diisi.',
-                ]);
-            }
+                    if ($isEmptyRow) {
+                        return [];
+                    }
 
-            $fieldConfig = collect(SuratDataContract::filterDynamicFieldConfig($rawFieldConfig))
-                ->map(fn (array $config): array => SuratDataContract::normalizeDynamicFieldConfigItem($config))
+                    if (trim((string) ($normalized['name'] ?? '')) === '') {
+                        $normalized['name'] = 'field_'.($index + 1);
+                    }
+
+                    return $normalized;
+                })
+                ->filter(fn (array $field): bool => $field !== [])
+                ->map(fn (array $field): array => SuratDataContract::normalizeDynamicFieldConfigItem($field))
+                ->filter(fn (array $field): bool => filled($field['name'] ?? null))
                 ->values()
                 ->all();
-
-            if ($rawFieldConfig !== [] && $fieldConfig === []) {
-                throw ValidationException::withMessages([
-                    'field_config' => 'Field dinamis tidak valid.',
-                ]);
-            }
 
             $duplicatedNames = collect($fieldConfig)
                 ->pluck('name')
@@ -136,11 +136,7 @@ class TemplateMutationService
                 ]);
             }
 
-            if ($fieldConfig !== []) {
-                $jenisSurat->forceFill(['field_config' => $fieldConfig]);
-            } elseif (($jenisSurat->field_config ?? []) === []) {
-                $jenisSurat->forceFill(['field_config' => []]);
-            }
+            $jenisSurat->forceFill(['field_config' => $fieldConfig]);
         }
 
         $jenisSurat->fill([
@@ -254,5 +250,22 @@ class TemplateMutationService
                 'jenis_surat_id' => $copy->id,
             ])->with('success', 'Template surat berhasil diduplikasi.');
         });
+    }
+
+    /**
+     * @param  array<string, mixed>  $field
+     */
+    protected function isEmptyDynamicFieldConfigRow(array $field): bool
+    {
+        return trim((string) ($field['name'] ?? '')) === ''
+            && trim((string) ($field['label'] ?? '')) === ''
+            && trim((string) ($field['placeholder'] ?? '')) === ''
+            && trim((string) ($field['help'] ?? '')) === ''
+            && empty($field['options'] ?? [])
+            && (bool) ($field['required'] ?? false) === false
+            && (string) ($field['type'] ?? 'text') === 'text'
+            && (string) ($field['sumber_data'] ?? 'data_pemohon') === 'data_pemohon'
+            && (string) ($field['editable_role'] ?? 'mahasiswa') === 'mahasiswa'
+            && in_array((string) ($field['mode_form_pemohon'] ?? 'readonly'), ['editable', 'readonly'], true);
     }
 }

@@ -15,6 +15,7 @@ import {
     BadgeCheck,
     Check,
     Clock3,
+    Download,
     Search,
     X,
     XCircle,
@@ -41,6 +42,7 @@ type SuratItem = {
     is_institution?: boolean;
     subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { id?: number | null; nama?: string | null } | null;
+    download_url?: string | null;
 };
 type SuratDetail = {
     id: number;
@@ -77,17 +79,28 @@ type PaginatedSurats = {
 type PageProps = {
     flash?: { success?: string };
 };
-const props = defineProps<{
-    role: { name?: string | null; slug?: string | null };
-    surats: PaginatedSurats;
-    filters: { search?: string; category_id?: string };
-    categories: Array<{ id: number; nama: string }>;
-}>();
+const props = withDefaults(
+    defineProps<{
+        role?: { name?: string | null; slug?: string | null };
+        surats?: PaginatedSurats;
+        filters?: { status?: string; search?: string; category_id?: string };
+        categories?: Array<{ id: number; nama: string }>;
+    }>(),
+    {
+        role: () => ({ name: 'Approval', slug: 'dekan' }),
+        surats: () => ({ data: [], links: [], total: 0 }),
+        filters: () => ({ status: 'pending', search: '', category_id: '' }),
+        categories: () => [],
+    },
+);
 const page = usePage<PageProps>();
 const search = ref(props.filters.search ?? '');
 const categoryId = ref(props.filters.category_id ?? '');
+const status = ref(props.filters.status ?? 'pending');
 const toastMessage = ref('');
 const selectedSurat = ref<SuratItem | null>(null);
+const actionConfirmOpen = ref(false);
+const pendingAction = ref<'approve' | 'revision' | 'final_reject' | null>(null);
 const rejectModalOpen = ref(false);
 const finalRejectModalOpen = ref(false);
 const rejectForm = useForm({ reason: '' });
@@ -121,6 +134,7 @@ function applyFilter() {
     router.get(
         `${basePath.value}/antrian`,
         {
+            status: status.value || undefined,
             search: search.value || undefined,
             category_id: categoryId.value || undefined,
         },
@@ -130,12 +144,29 @@ function applyFilter() {
 function resetFilter() {
     search.value = '';
     categoryId.value = '';
+    status.value = 'pending';
     applyFilter();
 }
 async function openDetail(id: number) {
     router.visit(`${basePath.value}/surat/${id}/detail?from=antrian`);
 }
 function openAttachmentPreview(f: DetailLampiran) {
+    if (isPdfAttachment(f) && f.url) {
+        window.open(f.url, '_blank', 'noopener,noreferrer');
+        return;
+    }
+
+    if (isWordAttachment(f) && f.url) {
+        const link = document.createElement('a');
+        link.href = f.url;
+        link.download = f.name || 'lampiran.docx';
+        link.rel = 'noopener';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        return;
+    }
+
     activeAttachment.value = f;
     attachmentPreviewOpen.value = true;
 }
@@ -157,6 +188,20 @@ function isPdfAttachment(f?: DetailLampiran | null) {
     return (
         (f.type ?? '').toLowerCase().includes('pdf') ||
         f.name.toLowerCase().endsWith('.pdf')
+    );
+}
+
+function isWordAttachment(f?: DetailLampiran | null) {
+    if (!f) return false;
+
+    const type = (f.type ?? '').toLowerCase();
+    const name = f.name.toLowerCase();
+
+    return (
+        type.includes('msword') ||
+        type.includes('wordprocessingml.document') ||
+        name.endsWith('.doc') ||
+        name.endsWith('.docx')
     );
 }
 function formatDate(date?: string | null) {
@@ -189,13 +234,14 @@ function subjectNim(item: { subject?: { nim?: string | null } | null }) {
 }
 function statusLabel(status: string) {
     const labels: Record<string, string> = {
-        pending: 'Pending',
-        validated_admin: 'Pending',
+        pending: 'Antrian',
+        validated_admin: 'Divalidasi Admin',
         revision_requested: 'Revisi',
         rejected_admin: 'Ditolak Admin',
         rejected_approver: 'Ditolak Pimpinan',
         approved_kaprodi: 'Disetujui Kaprodi',
         approved_dekan: 'Disetujui Dekan',
+        finished: 'Selesai',
     };
     return labels[status] ?? status;
 }
@@ -205,7 +251,8 @@ function statusClass(status: string) {
     if (status === 'revision_requested') return 'bg-amber-50 text-amber-700';
     if (status === 'rejected_admin' || status === 'rejected_approver')
         return 'bg-red-50 text-red-700';
-    if (status.startsWith('approved')) return 'bg-emerald-50 text-emerald-700';
+    if (status.startsWith('approved') || status === 'finished')
+        return 'bg-emerald-50 text-emerald-700';
     return 'bg-amber-50 text-amber-700';
 }
 function cardBorderClass(status: string) {
@@ -214,7 +261,8 @@ function cardBorderClass(status: string) {
     if (status === 'revision_requested') return 'hover:border-amber-300';
     if (status === 'rejected_admin' || status === 'rejected_approver')
         return 'hover:border-red-300';
-    if (status.startsWith('approved')) return 'hover:border-emerald-300';
+    if (status.startsWith('approved') || status === 'finished')
+        return 'hover:border-emerald-300';
     return 'hover:border-slate-300';
 }
 function stripeClass(status: string) {
@@ -223,8 +271,53 @@ function stripeClass(status: string) {
     if (status === 'revision_requested') return 'bg-amber-400';
     if (status === 'rejected_admin' || status === 'rejected_approver')
         return 'bg-red-400';
-    if (status.startsWith('approved')) return 'bg-emerald-400';
+    if (status.startsWith('approved') || status === 'finished')
+        return 'bg-emerald-400';
     return 'bg-slate-300';
+}
+function canDownload(item: SuratItem) {
+    return Boolean(item.download_url);
+}
+function rowCanBeProcessed(item: SuratItem) {
+    return String(item.status ?? '').trim().toLowerCase() === 'validated_admin';
+}
+function openApproveConfirm(item: SuratItem) {
+    selectedSurat.value = item;
+    pendingAction.value = 'approve';
+    actionConfirmOpen.value = true;
+}
+function openRevisionConfirm(item: SuratItem) {
+    selectedSurat.value = item;
+    pendingAction.value = 'revision';
+    actionConfirmOpen.value = true;
+}
+function openFinalRejectConfirm(item: SuratItem) {
+    selectedSurat.value = item;
+    pendingAction.value = 'final_reject';
+    actionConfirmOpen.value = true;
+}
+function closeActionConfirm() {
+    actionConfirmOpen.value = false;
+    pendingAction.value = null;
+}
+function confirmAction() {
+    const item = selectedSurat.value;
+    if (!item || !pendingAction.value) return;
+
+    const action = pendingAction.value;
+    closeActionConfirm();
+
+    if (action === 'approve') {
+        submitApprove(item);
+        return;
+    }
+
+    if (action === 'revision') {
+        openRejectModal(item);
+        return;
+    }
+
+    openFinalRejectModal(item);
 }
 function submitApprove(item: SuratItem) {
     router.post(
@@ -236,6 +329,7 @@ function submitApprove(item: SuratItem) {
 function openRejectModal(item: SuratItem) {
     selectedSurat.value = item;
     rejectForm.reset();
+    rejectForm.clearErrors();
     rejectModalOpen.value = true;
 }
 function closeRejectModal() {
@@ -253,6 +347,7 @@ function submitReject() {
 function openFinalRejectModal(item: SuratItem) {
     selectedSurat.value = item;
     finalRejectForm.reset();
+    finalRejectForm.clearErrors();
     finalRejectModalOpen.value = true;
 }
 function closeFinalRejectModal() {
@@ -326,6 +421,83 @@ function submitFinalReject() {
                         Reset
                     </button>
                 </div>
+            </div>
+            <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
+                <button
+                    type="button"
+                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                    :class="
+                        status === 'pending'
+                            ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                    "
+                    @click="
+                        status = 'pending';
+                        applyFilter();
+                    "
+                >
+                    Antrian
+                </button>
+                <button
+                    type="button"
+                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                    :class="
+                        status === 'all'
+                            ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                    "
+                    @click="
+                        status = 'all';
+                        applyFilter();
+                    "
+                >
+                    Semua
+                </button>
+                <button
+                    type="button"
+                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                    :class="
+                        status === 'finished'
+                            ? 'border-emerald-500 bg-emerald-500 text-white shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                    "
+                    @click="
+                        status = 'finished';
+                        applyFilter();
+                    "
+                >
+                    Final
+                </button>
+                <button
+                    type="button"
+                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                    :class="
+                        status === 'revision_requested'
+                            ? 'border-amber-500 bg-amber-500 text-white shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                    "
+                    @click="
+                        status = 'revision_requested';
+                        applyFilter();
+                    "
+                >
+                    Revisi
+                </button>
+                <button
+                    type="button"
+                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                    :class="
+                        status === 'rejected'
+                            ? 'border-red-500 bg-red-500 text-white shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                    "
+                    @click="
+                        status = 'rejected';
+                        applyFilter();
+                    "
+                >
+                    Ditolak
+                </button>
             </div>
         </div>
         <!-- Card list -->
@@ -409,35 +581,46 @@ function submitFinalReject() {
                             <button
                                 type="button"
                                 class="flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[10px] font-medium text-slate-600 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
-                                title="Lihat Detail"
+                                title="Lihat"
                                 @click="openDetail(item.id)"
                             >
-                                <Eye class="size-3" /> Detail
+                                <Eye class="size-3" /> Lihat
                             </button>
-                            <button
-                                type="button"
+                            <a
+                                v-if="canDownload(item)"
+                                :href="item.download_url || ''"
+                                target="_blank"
                                 class="fast-btn fast-btn-primary flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium"
-                                title="Setujui"
-                                @click="submitApprove(item)"
+                                title="Unduh PDF"
                             >
-                                <Check class="size-3" /> Proses
-                            </button>
-                            <button
-                                type="button"
-                                class="fast-btn flex items-center gap-1 border border-amber-500 bg-amber-500 px-2.5 py-1.5 text-[10px] font-medium text-white hover:bg-amber-600"
-                                title="Kembalikan untuk revisi"
-                                @click="openRejectModal(item)"
-                            >
-                                <X class="size-3" /> Revisi
-                            </button>
-                            <button
-                                type="button"
-                                class="fast-btn fast-btn-danger flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium"
-                                title="Tolak final"
-                                @click="openFinalRejectModal(item)"
-                            >
-                                <XCircle class="size-3" /> Tolak
-                            </button>
+                                <Download class="size-3" /> Unduh PDF
+                            </a>
+                            <template v-if="rowCanBeProcessed(item)">
+                                <button
+                                    type="button"
+                                    class="fast-btn fast-btn-primary flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium"
+                                    title="Setujui"
+                                    @click="openApproveConfirm(item)"
+                                >
+                                    <Check class="size-3" /> Proses
+                                </button>
+                                <button
+                                    type="button"
+                                    class="fast-btn flex items-center gap-1 border border-amber-500 bg-amber-500 px-2.5 py-1.5 text-[10px] font-medium text-white hover:bg-amber-600"
+                                    title="Kembalikan untuk revisi"
+                                    @click="openRevisionConfirm(item)"
+                                >
+                                    <X class="size-3" /> Revisi
+                                </button>
+                                <button
+                                    type="button"
+                                    class="fast-btn fast-btn-danger flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium"
+                                    title="Tolak final"
+                                    @click="openFinalRejectConfirm(item)"
+                                >
+                                    <XCircle class="size-3" /> Tolak
+                                </button>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -521,6 +704,80 @@ function submitFinalReject() {
                     <Button variant="ghost" @click="closeAttachmentPreview"
                         >Tutup</Button
                     >
+                </div>
+            </DialogContent>
+        </Dialog>
+        <!-- Modal Konfirmasi Aksi -->
+        <Dialog
+            :open="actionConfirmOpen"
+            @update:open="(v) => (v ? null : closeActionConfirm())"
+        >
+            <DialogContent
+                class="max-w-md rounded-2xl border-0 bg-white p-0"
+                :show-close-button="false"
+            >
+                <div class="p-6">
+                    <DialogHeader class="mb-4 text-left">
+                        <DialogTitle class="text-lg font-semibold text-slate-900">
+                            {{
+                                pendingAction === 'approve'
+                                    ? 'Konfirmasi Proses'
+                                    : pendingAction === 'revision'
+                                        ? 'Konfirmasi Revisi'
+                                        : 'Konfirmasi Tolak Final'
+                            }}
+                        </DialogTitle>
+                        <DialogDescription class="text-sm text-slate-400">
+                            {{
+                                pendingAction === 'approve'
+                                    ? 'Surat akan diproses ke tahap berikutnya. Pastikan keputusan sudah benar.'
+                                    : pendingAction === 'revision'
+                                        ? 'Anda akan melanjutkan ke form catatan revisi. Pastikan surat memang perlu dikembalikan.'
+                                        : 'Penolakan final bersifat permanen. Pastikan keputusan sudah tepat.'
+                            }}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                        {{
+                            selectedSurat
+                                ? (isInstitutionLetter(selectedSurat)
+                                    ? 'Surat Institusi'
+                                    : subjectName(selectedSurat))
+                                : '-'
+                        }}
+                    </div>
+
+                    <DialogFooter class="mt-5 gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            class="rounded-xl"
+                            @click="closeActionConfirm"
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            class="rounded-xl"
+                            :class="
+                                pendingAction === 'approve'
+                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                    : pendingAction === 'revision'
+                                        ? 'bg-amber-500 text-white hover:bg-amber-600'
+                                        : 'bg-red-600 text-white hover:bg-red-700'
+                            "
+                            @click="confirmAction"
+                        >
+                            {{
+                                pendingAction === 'approve'
+                                    ? 'Lanjutkan Proses'
+                                    : pendingAction === 'revision'
+                                        ? 'Lanjutkan Revisi'
+                                        : 'Lanjutkan Tolak'
+                            }}
+                        </Button>
+                    </DialogFooter>
                 </div>
             </DialogContent>
         </Dialog>

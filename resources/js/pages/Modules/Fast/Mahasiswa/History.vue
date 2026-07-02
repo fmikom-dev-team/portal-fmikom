@@ -81,9 +81,15 @@ function openViewer(item: Surat, mode: 'preview' | 'download') {
         viewerTitle.value = `Preview - ${item.jenisSurat}`;
         viewerType.value = 'html';
     } else {
-        viewerUrl.value = `/documents/surat/${item.id}/pdf`;
-        viewerTitle.value = `${item.jenisSurat} - ${item.reference}`;
-        viewerType.value = 'pdf';
+        const url = `/documents/surat/${item.id}/pdf`;
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${item.jenisSurat} - ${item.reference}.pdf`;
+        link.rel = 'noopener';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        return;
     }
     viewerStatus.value = item.status;
     viewerNomor.value = item.nomor_surat ?? item.reference;
@@ -510,10 +516,10 @@ function goToPage(page: number) {
                         <div class="flex shrink-0 flex-wrap items-start gap-2 lg:justify-end">
                             <Link
                                 :href="detailHref(item)"
-                                title="Detail Surat"
+                                title="Lihat"
                                 class="fast-btn fast-btn-outline px-3 py-1.5 text-[10px] font-medium text-slate-600"
                             >
-                                <FileText class="size-3" /> Detail Surat
+                                <Eye class="size-3" /> Lihat
                             </Link>
                             <button
                                 v-if="item.status === 'finished'"

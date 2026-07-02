@@ -418,10 +418,13 @@ function openPreview() {
 function openPdf() {
     if (!surat.value.pdfUrl) return;
 
-    viewerOpen.value = true;
-    viewerType.value = 'pdf';
-    viewerUrl.value = surat.value.pdfUrl;
-    viewerTitle.value = documentTitle.value;
+    const link = document.createElement('a');
+    link.href = surat.value.pdfUrl;
+    link.download = `${documentTitle.value}.pdf`;
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
 }
 
 function closeViewer() {
@@ -432,6 +435,22 @@ function closeViewer() {
 }
 
 function openAttachmentPreview(file: Lampiran) {
+    if (isPdfAttachment(file) && file.url) {
+        window.open(file.url, '_blank', 'noopener,noreferrer');
+        return;
+    }
+
+    if (isWordAttachment(file) && file.url) {
+        const link = document.createElement('a');
+        link.href = file.url;
+        link.download = file.name || 'lampiran.docx';
+        link.rel = 'noopener';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        return;
+    }
+
     activeAttachment.value = file;
     attachmentPreviewOpen.value = true;
 }
@@ -459,6 +478,29 @@ function isPdfAttachment(file?: Lampiran | null) {
     );
 }
 
+function isWordAttachment(file?: Lampiran | null) {
+    if (!file) return false;
+
+    const type = (file.type ?? '').toLowerCase();
+    const name = file.name.toLowerCase();
+
+    return (
+        type.includes('msword') ||
+        type.includes('wordprocessingml.document') ||
+        name.endsWith('.doc') ||
+        name.endsWith('.docx')
+    );
+}
+
+const attachmentPreviewSrc = computed(() => {
+    const file = activeAttachment.value;
+    const url = file?.url;
+
+    if (!url) return null;
+
+    return url;
+});
+
 async function copyNomor() {
     if (!surat.value.nomor_surat) return;
 
@@ -476,16 +518,17 @@ async function copyNomor() {
 
 <template>
     <FastLayout
-        title="Detail Surat"
-        :subtitle="surat.jenis_surat"
+        :title="surat.jenis_surat"
+        subtitle=""
+        title-class="text-lg font-bold tracking-tight text-slate-900 md:text-xl"
         active-menu="history"
         :breadcrumbs="[
             { label: 'Dashboard', href: backHref.replace('/history', '/dashboard') },
             { label: backLabel, href: backHref },
-            { label: 'Detail Surat' },
+            { label: surat.jenis_surat },
         ]"
     >
-        <Head :title="`Detail Surat - ${surat.jenis_surat}`" />
+        <Head :title="surat.jenis_surat" />
 
         <div class="mx-auto max-w-6xl space-y-6">
             <div class="flex flex-wrap items-center justify-between gap-3">
@@ -690,23 +733,29 @@ async function copyNomor() {
                         </div>
 
                         <div class="mt-4 space-y-3">
-                        <button
-                            type="button"
-                            class="fast-btn fast-btn-outline w-full px-4 py-2.5 text-sm"
-                            @click="openPreview"
-                        >
-                            <Eye class="size-4" />
-                            Preview Dokumen
+                            <button
+                                type="button"
+                                :disabled="surat.status !== 'finished'"
+                                class="fast-btn fast-btn-outline w-full px-4 py-2.5 text-sm transition"
+                                :class="
+                                    surat.status === 'finished'
+                                        ? ''
+                                        : 'cursor-not-allowed border-dashed border-slate-200 bg-slate-50 text-slate-400 opacity-50 hover:bg-slate-50'
+                                "
+                                @click="openPreview"
+                            >
+                                <Eye class="size-4" />
+                                Preview Dokumen
                             </button>
 
-                        <button
-                            v-if="surat.canDownloadPdf"
-                            type="button"
-                            class="fast-btn fast-btn-primary w-full px-4 py-2.5 text-sm"
-                            @click="openPdf"
-                        >
-                            <Download class="size-4" />
-                            Download PDF
+                            <button
+                                v-if="surat.canDownloadPdf"
+                                type="button"
+                                class="fast-btn fast-btn-primary w-full px-4 py-2.5 text-sm"
+                                @click="openPdf"
+                            >
+                                <Download class="size-4" />
+                                Download PDF
                             </button>
 
                             <div
@@ -910,11 +959,11 @@ async function copyNomor() {
                         />
                     </div>
                     <div
-                        v-else-if="activeAttachment?.url"
+                        v-else-if="attachmentPreviewSrc"
                         class="overflow-hidden rounded-xl border border-slate-200 shadow-sm"
                     >
                         <iframe
-                            :src="activeAttachment.url"
+                            :src="attachmentPreviewSrc"
                             class="h-[65vh] w-full"
                             title="Preview Lampiran"
                         />

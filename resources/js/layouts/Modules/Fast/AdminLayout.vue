@@ -76,11 +76,13 @@ const props = withDefaults(
         subtitle?: string;
         activeMenu?: string;
         breadcrumbs?: BreadcrumbItem[];
+        titleClass?: string;
     }>(),
     {
         subtitle: '',
         activeMenu: 'dashboard',
         breadcrumbs: () => [],
+        titleClass: 'text-lg font-semibold tracking-tight text-slate-900 md:text-xl',
     },
 );
 
@@ -443,12 +445,12 @@ function batteryIcon() {
                     <p
                         class="truncate text-[13px] font-bold tracking-tight text-slate-900 leading-tight"
                     >
-                        FAST Academic
+                        FASt
                     </p>
                     <p
-                        class="mt-0.5 text-[10px] tracking-widest text-slate-400 uppercase leading-none"
+                        class="mt-0.5 text-[10px] tracking-widest text-slate-400 leading-none"
                     >
-                        FMIKOM
+                        FMIKOM Administration System
                     </p>
                 </div>
             </div>
@@ -671,14 +673,14 @@ function batteryIcon() {
 
             <!-- Page header -->
             <div
-                v-if="subtitle || $slots.actions"
+                v-if="title || subtitle || $slots.actions"
                 class="flex shrink-0 items-center justify-between gap-4 border-b border-slate-100 bg-white px-5 py-3.5"
             >
                 <div>
                     <p v-if="subtitle" class="text-xs text-slate-400">
                         {{ subtitle }}
                     </p>
-                    <h1 class="text-lg font-semibold text-slate-900">
+                    <h1 :class="titleClass">
                         {{ title }}
                     </h1>
                 </div>

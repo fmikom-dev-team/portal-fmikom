@@ -111,6 +111,7 @@ class SubmissionController extends Controller
                 'value' => $user->userTypeSlug(),
                 'label' => $user->roleDisplayName(),
             ],
+            'userProfile' => $this->applicantProfilePayload($user),
             'endpoints' => [
                 'basePath' => $this->basePath(),
             ],
@@ -209,7 +210,10 @@ class SubmissionController extends Controller
                 'jenis_surat_id' => (int) $validated['jenis_surat_id'],
                 'keperluan' => (string) $validated['keperluan'],
                 'tanggal_kebutuhan' => $validated['tanggal_kebutuhan'],
-                'data' => $request->input('field_data', []),
+                'data' => array_merge(
+                    (array) $request->input('field_data', []),
+                    $this->applicantFieldDefaults($user),
+                ),
             ],
             $request->file('lampiran', []),
         );
@@ -273,6 +277,52 @@ class SubmissionController extends Controller
                             ->where('roles.slug', $roleSlug);
                     });
             }));
+    }
+
+    /**
+     * @return array<string, string|null>
+     */
+    protected function applicantProfilePayload($user): array
+    {
+        $programStudi = $user->programStudi?->nama;
+        $fakultas = $user->programStudi?->fakultas?->nama;
+        $identifierValue = $user->nim_nip ?: $user->nomor_induk;
+
+        return [
+            'name' => $user->name,
+            'identifierLabel' => str($user->userTypeSlug())->contains('dosen') ? 'NIP' : 'NIM',
+            'identifierValue' => $identifierValue,
+            'programStudi' => $programStudi,
+            'fakultas' => $fakultas,
+        ];
+    }
+
+    /**
+     * @return array<string, string|null>
+     */
+    protected function applicantFieldDefaults($user): array
+    {
+        $programStudi = $user->programStudi?->nama;
+        $fakultas = $user->programStudi?->fakultas?->nama;
+        $identifierValue = $user->nim_nip ?: $user->nomor_induk;
+        $name = $user->name;
+
+        return [
+            'name' => $name,
+            'nama' => $name,
+            'nama_pemohon' => $name,
+            'nama_mahasiswa' => $name,
+            'nim' => $identifierValue,
+            'nim_nip' => $identifierValue,
+            'nomor_induk' => $identifierValue,
+            'nomor_induk_pemohon' => $identifierValue,
+            'nomor_induk_mahasiswa' => $identifierValue,
+            'program_studi' => $programStudi,
+            'prodi' => $programStudi,
+            'program_studi_pemohon' => $programStudi,
+            'program_studi_mahasiswa' => $programStudi,
+            'fakultas' => $fakultas,
+        ];
     }
 
     /**

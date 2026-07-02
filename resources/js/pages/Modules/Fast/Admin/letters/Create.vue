@@ -21,7 +21,6 @@ type JenisSurat = {
     letter_mode?: 'personal' | 'institution';
     letter_mode_label?: string;
     requires_subject_user?: boolean;
-    qr_mode?: string;
     category?: {
         id?: number | null;
         nama?: string | null;
@@ -315,14 +314,6 @@ function submit() {
                                 />
                                 {{ selected.letter_mode_label ?? (selected.letter_mode === 'institution' ? 'Surat Institusi' : 'Surat Personal') }}
                             </span>
-                            <span class="text-[10px] text-slate-400"
-                                >QR:
-                                {{
-                                    selected.qr_mode === 'immediate'
-                                        ? 'Langsung'
-                                        : 'Setelah Approve'
-                                }}</span
-                            >
                         </div>
                     </div>
                     <button

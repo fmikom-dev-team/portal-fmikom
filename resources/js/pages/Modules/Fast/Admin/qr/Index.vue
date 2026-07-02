@@ -287,9 +287,9 @@ function isInstitutionLetter(item: SuratItem) {
                     <Link
                         :href="`/admin/surat/${item.id}`"
                         class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50"
-                        title="Lihat Surat"
+                        title="Lihat"
                     >
-                        <Eye class="size-3.5 text-slate-500" /> Lihat Surat
+                        <Eye class="size-3.5 text-slate-500" /> Lihat
                     </Link>
                     <button
                         v-if="item.qr_token"

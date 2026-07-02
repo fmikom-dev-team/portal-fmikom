@@ -314,9 +314,9 @@ function isInstitutionLetter(item: SuratItem) {
                         <Link
                             :href="`/admin/surat/${item.id}`"
                             class="fast-btn fast-btn-outline flex flex-1 items-center justify-center gap-1.5 py-2 text-[10px] font-medium text-slate-600"
-                            title="Lihat Detail"
+                            title="Lihat"
                         >
-                            <Eye class="size-3" /> Detail
+                            <Eye class="size-3" /> Lihat
                         </Link>
                         <a
                             v-if="item.download_url"

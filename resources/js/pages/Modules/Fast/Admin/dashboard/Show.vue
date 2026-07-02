@@ -214,10 +214,14 @@ function openPreviewDocument() {
 }
 
 function openDownloadPdf() {
-    viewerUrl.value = `/admin/surat/${props.id}/pdf`;
-    viewerTitle.value = documentTitle.value;
-    viewerType.value = 'pdf';
-    viewerOpen.value = true;
+    const url = `/admin/surat/${props.id}/pdf`;
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${documentTitle.value}.pdf`;
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
 }
 
 function openInNewTab() {
@@ -302,15 +306,15 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
 
 <template>
     <AdminLayout
-        title="Detail Surat"
-        :subtitle="jenis_surat"
+        :title="jenis_surat"
+        subtitle=""
         active-menu="letters"
         :breadcrumbs="[
             { label: 'Arsip', href: '/admin/archive' },
-            { label: 'Detail Surat' },
+            { label: jenis_surat },
         ]"
     >
-        <Head :title="`Detail Surat - ${jenis_surat}`" />
+        <Head :title="jenis_surat" />
 
         <div class="mx-auto max-w-6xl space-y-5">
             <div class="flex flex-wrap items-center justify-between gap-3">
@@ -484,9 +488,14 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
 
                     <div class="mt-4 space-y-3">
                         <button
-                            v-if="previewTemplateUrl || generatedDocumentUrl"
                             type="button"
-                            class="fast-btn fast-btn-outline w-full px-4 py-2.5 text-sm font-semibold"
+                            :disabled="!isFinished"
+                            class="fast-btn fast-btn-outline w-full px-4 py-2.5 text-sm font-semibold transition"
+                            :class="
+                                isFinished
+                                    ? ''
+                                    : 'cursor-not-allowed border-dashed border-slate-200 bg-slate-50 text-slate-400 opacity-50 hover:bg-slate-50'
+                            "
                             @click="openPreviewDocument"
                         >
                             <Eye class="size-4" />

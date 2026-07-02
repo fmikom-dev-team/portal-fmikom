@@ -1,19 +1,14 @@
 <script setup lang="ts">
 // File: resources/js/pages/admin/dashboard/Index.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import {
-    Eye,
     CheckCircle2,
     AlertCircle,
     XCircle,
     Clock3,
     FileText,
-    AlertTriangle,
-    X,
-    RefreshCw,
-    ArrowRight,
 } from 'lucide-vue-next';
 
 type SuratItem = {
@@ -76,8 +71,6 @@ const page = usePage<PageProps>();
 const toastMessage = ref('');
 const toastVariant = ref<'success' | 'error'>('success');
 
-// -- Aksi validasi admin (centang / silang / komen) --------------------------
-const approvingId = ref<number | null>(null);
 function showToast(message: string, variant: 'success' | 'error' = 'success') {
     toastMessage.value = message;
     toastVariant.value = variant;
@@ -100,47 +93,6 @@ watch(
     },
     { immediate: true },
 );
-function approveSurat(id: number) {
-    if (approvingId.value) return;
-    approvingId.value = id;
-    router.post(
-        `/admin/surat/${id}/approve`,
-        {},
-        {
-            preserveScroll: true,
-            onError: () => {
-                showToast('Gagal memvalidasi pengajuan.', 'error');
-            },
-            onFinish: () => {
-                approvingId.value = null;
-            },
-        },
-    );
-}
-
-const rejectModalOpen = ref(false);
-const rejectTargetId = ref<number | null>(null);
-const rejectForm = useForm({ reason: '' });
-function openRejectModal(id: number) {
-    rejectTargetId.value = id;
-    rejectForm.reset();
-    rejectModalOpen.value = true;
-}
-function closeRejectModal() {
-    rejectModalOpen.value = false;
-    rejectTargetId.value = null;
-}
-function submitReject() {
-    if (rejectTargetId.value === null) return;
-    rejectForm.post(`/admin/surat/${rejectTargetId.value}/reject`, {
-        preserveScroll: true,
-        onError: () => {
-            showToast('Gagal menolak pengajuan.', 'error');
-        },
-        onSuccess: () => closeRejectModal(),
-    });
-}
-
 const quickSubmissions = computed(() => props.surats.data.slice(0, 4));
 const statCards = computed(() => [
     {
@@ -304,13 +256,12 @@ function activityBadgeClass(action?: string | null) {
                                 <th class="px-5 py-3">Jenis Surat</th>
                                 <th class="px-5 py-3">Tanggal</th>
                                 <th class="px-5 py-3">Status</th>
-                                <th class="px-5 py-3 text-right">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-if="surats?.data?.length === 0">
                                 <td
-                                    colspan="5"
+                                    colspan="4"
                                     class="px-5 py-12 text-center text-sm text-slate-400"
                                 >
                                     Belum ada pengajuan user yang menunggu
@@ -354,46 +305,6 @@ function activityBadgeClass(action?: string | null) {
                                     >
                                         {{ statusLabel(item.status) }}
                                     </span>
-                                </td>
-                                <td class="px-5 py-3.5">
-                                    <div
-                                        class="flex items-center justify-end gap-1.5"
-                                    >
-                                        <Link
-                                            :href="`/admin/surat/${item.id}`"
-                                            title="Lihat detail"
-                                            class="grid size-7 place-items-center rounded-lg bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200"
-                                        >
-                                            <Eye class="size-3.5" />
-                                        </Link>
-                                        <button
-                                            v-if="item.can_approve"
-                                            type="button"
-                                            title="Validasi & teruskan"
-                                            :disabled="approvingId === item.id"
-                                            class="grid size-7 place-items-center rounded-lg bg-blue-50 text-blue-600 transition-colors hover:bg-blue-100 disabled:opacity-50"
-                                            @click="approveSurat(item.id)"
-                                        >
-                                            <CheckCircle2 class="size-3.5" />
-                                        </button>
-                                        <Link
-                                            v-else-if="item.can_edit"
-                                            :href="`/admin/surat/${item.id}/edit?return_to=/admin/dashboard`"
-                                            title="Lengkapi data"
-                                            class="grid size-7 place-items-center rounded-lg bg-amber-50 text-amber-600 transition-colors hover:bg-amber-100"
-                                        >
-                                            <FileEdit class="size-3.5" />
-                                        </Link>
-                                        <button
-                                            v-if="item.status === 'pending'"
-                                            type="button"
-                                            title="Tolak (beri komentar)"
-                                            class="grid size-7 place-items-center rounded-lg bg-red-50 text-red-600 transition-colors hover:bg-red-100"
-                                            @click="openRejectModal(item.id)"
-                                        >
-                                            <XCircle class="size-3.5" />
-                                        </button>
-                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -460,89 +371,15 @@ function activityBadgeClass(action?: string | null) {
                     <div class="mt-3 border-t border-slate-100 pt-3">
                         <Link
                             :href="props.links.submissionsIndex"
-                            class="inline-flex items-center gap-1 text-xs font-medium text-blue-600 transition-colors hover:text-blue-700"
+                            class="inline-flex items-center text-xs font-medium text-blue-600 transition-colors hover:text-blue-700"
                         >
                             Lihat Selengkapnya
-                            <ArrowRight class="size-3.5" />
                         </Link>
                     </div>
                 </div>
 
             </div>
         </div>
-
-        <!-- Modal Tolak Pengajuan (komentar) -->
-        <Transition name="fade">
-            <div
-                v-if="rejectModalOpen"
-                class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-                @click.self="closeRejectModal"
-            >
-                <div
-                    class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl"
-                >
-                    <div class="mb-4 flex items-center gap-3">
-                        <div
-                            class="grid size-10 shrink-0 place-items-center rounded-xl bg-red-50"
-                        >
-                            <AlertTriangle class="size-5 text-red-500" />
-                        </div>
-                        <div>
-                            <h3 class="text-sm font-semibold text-slate-900">
-                                Tolak Pengajuan
-                            </h3>
-                            <p class="text-xs text-slate-400">
-                                Berikan komentar/alasan penolakan untuk pemohon.
-                            </p>
-                        </div>
-                        <button
-                            type="button"
-                            class="ml-auto rounded-lg p-1 text-slate-400 hover:bg-slate-100"
-                            @click="closeRejectModal"
-                        >
-                            <X class="size-4" />
-                        </button>
-                    </div>
-                    <textarea
-                        v-model="rejectForm.reason"
-                        rows="4"
-                        placeholder="Jelaskan alasan penolakan..."
-                        class="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
-                    />
-                    <p
-                        v-if="rejectForm.errors.reason"
-                        class="mt-1 text-xs text-red-500"
-                    >
-                        {{ rejectForm.errors.reason }}
-                    </p>
-                    <div class="mt-4 flex justify-end gap-2">
-                        <button
-                            type="button"
-                            class="fast-btn fast-btn-outline rounded-xl px-4 py-2 text-sm font-medium text-slate-600"
-                            @click="closeRejectModal"
-                        >
-                            Batal
-                        </button>
-                        <button
-                            type="button"
-                            class="fast-btn fast-btn-danger rounded-xl px-4 py-2 text-sm"
-                            :disabled="
-                                rejectForm.processing ||
-                                !rejectForm.reason.trim()
-                            "
-                            @click="submitReject"
-                        >
-                            {{
-                                rejectForm.processing
-                                    ? 'Memproses...'
-                                    : 'Tolak Pengajuan'
-                            }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </Transition>
-
         <Transition
             enter-active-class="transition duration-300 ease-out"
             enter-from-class="translate-y-3 opacity-0"

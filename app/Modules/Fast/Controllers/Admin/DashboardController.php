@@ -43,7 +43,7 @@ class DashboardController extends Controller
         return $this->dashboardService->downloadPdf($request, $id);
     }
 
-    public function previewAttachment(int $id): StreamedResponse
+    public function previewAttachment(int $id): SymfonyResponse|StreamedResponse
     {
         return $this->dashboardService->previewAttachment($id);
     }

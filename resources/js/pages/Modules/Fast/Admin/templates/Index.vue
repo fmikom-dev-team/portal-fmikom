@@ -607,6 +607,10 @@ const placeholderUmum = [
     { key: 'tanggal_surat_panjang', label: 'Tanggal Panjang' },
     { key: 'kota_surat', label: 'Kota' },
     { key: 'perihal', label: 'Perihal' },
+    { key: 'nama', label: 'Nama' },
+    { key: 'nim', label: 'NIM' },
+    { key: 'program_studi', label: 'Program Studi' },
+    { key: 'fakultas', label: 'Fakultas' },
     { key: 'nama_pemohon', label: 'Nama Pemohon' },
     { key: 'nim_pemohon', label: 'NIM Pemohon' },
     { key: 'nama_prodi', label: 'Nama Prodi' },
@@ -654,6 +658,12 @@ function fieldModeLabel(value?: string) {
     return 'Bisa diisi pemohon';
 }
 function applyFieldSourcePreset(field: FieldConfig) {
+    if (field.sumber_data === 'data_pemohon') {
+        field.editable_role = 'mahasiswa';
+        field.mode_form_pemohon = 'readonly';
+        return;
+    }
+
     if (field.sumber_data === 'data_kampus') {
         field.editable_role = 'admin';
         field.mode_form_pemohon = 'readonly';
@@ -745,8 +755,8 @@ function createKomponenDefaults(type: SuratKomponen['type']): SuratKomponen {
             return {
                 type,
                 align: 'right',
-                title: 'Validasi Surat',
-                caption: 'Scan QR code untuk verifikasi dokumen.',
+                title: 'Komponen warisan',
+                caption: 'Disimpan untuk kompatibilitas template lama.',
                 margin_left: 0,
                 font_size: '11pt',
             };
@@ -905,12 +915,113 @@ function addField() {
         options: [],
         sumber_data: 'data_pemohon',
         editable_role: 'mahasiswa',
-        mode_form_pemohon: 'editable',
+        mode_form_pemohon: 'readonly',
         __auto_name: true,
+    });
+}
+function createApplicantPresetFields(): FieldConfig[] {
+    return [
+        {
+            name: 'nama',
+            label: 'Nama',
+            type: 'text',
+            required: true,
+            placeholder: '',
+            help: 'Diisi otomatis dari akun pemohon.',
+            options: [],
+            sumber_data: 'data_pemohon',
+            editable_role: 'mahasiswa',
+            mode_form_pemohon: 'readonly',
+            __auto_name: false,
+        },
+        {
+            name: 'nim',
+            label: 'NIM',
+            type: 'text',
+            required: true,
+            placeholder: '',
+            help: 'Diisi otomatis dari akun pemohon.',
+            options: [],
+            sumber_data: 'data_pemohon',
+            editable_role: 'mahasiswa',
+            mode_form_pemohon: 'readonly',
+            __auto_name: false,
+        },
+        {
+            name: 'program_studi',
+            label: 'Program Studi',
+            type: 'text',
+            required: true,
+            placeholder: '',
+            help: 'Diisi otomatis dari akun pemohon.',
+            options: [],
+            sumber_data: 'data_pemohon',
+            editable_role: 'mahasiswa',
+            mode_form_pemohon: 'readonly',
+            __auto_name: false,
+        },
+        {
+            name: 'fakultas',
+            label: 'Fakultas',
+            type: 'text',
+            required: true,
+            placeholder: '',
+            help: 'Diisi otomatis dari akun pemohon.',
+            options: [],
+            sumber_data: 'data_pemohon',
+            editable_role: 'mahasiswa',
+            mode_form_pemohon: 'readonly',
+            __auto_name: false,
+        },
+    ];
+}
+function addApplicantPresetFields() {
+    const presetFields = createApplicantPresetFields();
+
+    presetFields.forEach((preset) => {
+        const normalizedName = slugifyLabel(preset.name);
+        const existingIndex = form.field_config.findIndex(
+            (field) => slugifyLabel(field.name || '') === normalizedName,
+        );
+
+        if (existingIndex >= 0) {
+            form.field_config[existingIndex] = {
+                ...form.field_config[existingIndex],
+                ...preset,
+                name: preset.name,
+                label: preset.label,
+                type: preset.type,
+                required: preset.required,
+                help: preset.help,
+                options: [],
+                sumber_data: preset.sumber_data,
+                editable_role: preset.editable_role,
+                mode_form_pemohon: preset.mode_form_pemohon,
+                __auto_name: false,
+            };
+            return;
+        }
+
+        form.field_config.push({ ...preset });
     });
 }
 function removeField(index: number) {
     form.field_config.splice(index, 1);
+}
+function moveField(index: number, direction: 'up' | 'down') {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
+    if (targetIndex < 0 || targetIndex >= form.field_config.length) {
+        return;
+    }
+
+    const nextFields = [...form.field_config];
+    const currentField = nextFields[index];
+
+    nextFields[index] = nextFields[targetIndex];
+    nextFields[targetIndex] = currentField;
+
+    form.field_config = nextFields;
 }
 function slugifyLabel(label: string): string {
     return (label || '')
@@ -980,6 +1091,7 @@ function stripUiMetaFromKomponen(items: SuratKomponen[]): SuratKomponen[] {
 }
 function saveTemplate() {
     if (!props.selectedJenisSurat) return;
+    form.field_config.forEach((field) => syncName(field));
     form.transform((data) => ({
         ...data,
         name: data.jenis_surat_nama,
@@ -1045,7 +1157,7 @@ const tipeLabel: Record<string, string> = {
     tabel_biasa: 'Tabel Biasa',
     tabel_indent: 'Tabel Indent',
     tanda_tangan: 'Tanda Tangan',
-    qr_validasi: 'QR Validasi',
+    qr_validasi: 'Warisan Nonaktif',
     tembusan: 'Tembusan',
     spasi: 'Spasi',
     garis: 'Garis',
@@ -1061,7 +1173,7 @@ const tipeBorder: Record<string, string> = {
     tabel_biasa: 'border-blue-300 bg-white',
     tabel_indent: 'border-blue-100 bg-blue-50/50',
     tanda_tangan: 'border-amber-200 bg-amber-50',
-    qr_validasi: 'border-emerald-200 bg-emerald-50',
+    qr_validasi: 'border-slate-200 bg-slate-50',
     tembusan: 'border-slate-200 bg-slate-50',
     spasi: 'border-dashed border-slate-300 bg-slate-50',
     garis: 'border-slate-200 bg-slate-50',
@@ -1070,7 +1182,7 @@ const tipeGroups = [
     { label: 'Struktur Surat', items: ['header_surat', 'kepada_yth'] },
     { label: 'Teks', items: ['judul', 'subjudul', 'paragraf'] },
     { label: 'Tabel', items: ['tabel_data', 'tabel_biasa'] },
-    { label: 'Lainnya', items: ['tanda_tangan', 'qr_validasi', 'tembusan', 'spasi', 'garis'] },
+    { label: 'Lainnya', items: ['tanda_tangan', 'tembusan', 'spasi', 'garis'] },
 ];
 // layout: form.layout,         layout: layout,     }, { preserveScroll: true }); }
 function deleteTemplate() {
@@ -1672,12 +1784,12 @@ function settingLabel(key: string): string {
                     </div>
                 </div>
                 <div class="mt-4 border-t border-slate-100 pt-4">
-                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    <div class="flex flex-wrap items-center gap-1.5 justify-start">
                         <button
                             v-for="tab in ['template', 'fields', 'meta'] as const"
                             :key="tab"
                             type="button"
-                            class="fast-btn w-full px-3 py-2 text-xs font-medium transition"
+                            class="fast-btn inline-flex w-auto min-w-[112px] justify-center rounded-lg px-2.5 py-[5px] text-[10px] font-medium transition sm:min-w-[126px] sm:px-3 sm:py-1.5 sm:text-[11px]"
                             :aria-pressed="activeTab === tab"
                             :class="
                                 activeTab === tab
@@ -1729,7 +1841,7 @@ function settingLabel(key: string): string {
         </Transition>
             <div v-if="activeTab === 'template'" class="space-y-4">
                 <div
-                    class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-800"
+                    class="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-[11px] text-blue-800"
                 >
                     <p class="font-semibold">
                         Kop & footer otomatis dari Pengaturan Global
@@ -1756,7 +1868,7 @@ function settingLabel(key: string): string {
                                     v-for="tipe in group.items"
                                     :key="tipe"
                                     type="button"
-                                    class="fast-btn fast-btn-primary rounded-lg px-2.5 py-1.5 text-[11px] font-medium"
+                                    class="fast-btn fast-btn-primary rounded-lg px-2 py-1.5 text-[10px] font-medium sm:text-[11px]"
                                     @click="addKomponen(tipe as any)"
                                 >
                                     {{ tipeLabel[tipe] }}
@@ -2419,43 +2531,24 @@ function settingLabel(key: string): string {
                             <span class="text-[10px] text-slate-400">px</span>
                         </div>
                     </div>
-                    <!-- QR VALIDASI -->
+                    <!-- KOMPONEN WARISAN -->
                     <div v-else-if="komp.type === 'qr_validasi'" class="space-y-2">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs text-slate-600">Posisi:</span>
-                            <div class="flex gap-1">
-                                <button
-                                    v-for="a in [
-                                        ['left', 'Kiri'],
-                                        ['center', 'Tengah'],
-                                        ['right', 'Kanan'],
-                                    ]"
-                                    :key="a[0]"
-                                    type="button"
-                                    class="fast-btn rounded-lg px-2.5 py-1 text-xs"
-                                    :class="
-                                        (komp as any).align === a[0]
-                                            ? 'fast-btn-primary'
-                                            : 'fast-btn-outline'
-                                    "
-                                    @click="(komp as any).align = a[0]"
-                                >
-                                    {{ a[1] }}
-                                </button>
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                            <p class="text-xs font-semibold text-slate-700">
+                                Komponen warisan dinonaktifkan
+                            </p>
+                            <p class="mt-1 text-[11px] leading-4 text-slate-500">
+                                Komponen ini dipertahankan hanya untuk kompatibilitas template lama.
+                            </p>
+                            <div class="mt-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] text-slate-600">
+                                <p class="font-medium text-slate-700">
+                                    Label lama: {{ (komp as any).title || 'Komponen warisan' }}
+                                </p>
+                                <p class="mt-1">
+                                    Keterangan lama: {{ (komp as any).caption || 'Disimpan untuk data template lama.' }}
+                                </p>
                             </div>
                         </div>
-                        <input
-                            v-model="(komp as any).title"
-                            type="text"
-                            class="h-8 w-full rounded-lg border border-slate-300 bg-white px-2 text-xs font-semibold text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
-                            placeholder="Validasi Surat"
-                        />
-                        <input
-                            v-model="(komp as any).caption"
-                            type="text"
-                            class="h-8 w-full rounded-lg border border-slate-300 bg-white px-2 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
-                            placeholder="Scan QR code untuk verifikasi dokumen."
-                        />
                     </div>
                     <!-- TANDA TANGAN -->
                     <div
@@ -2564,9 +2657,17 @@ function settingLabel(key: string): string {
                                     @click="kol.jabatan_underline = !kol.jabatan_underline"
                                     title="Underline jabatan"
                                     aria-label="Underline jabatan"
-                                >
-                                    <span class="leading-none underline decoration-2">U</span>
-                                </button>
+                                    >
+                                        <span class="leading-none underline decoration-2">U</span>
+                                    </button>
+                            </div>
+                            <div class="rounded-xl border border-dashed border-amber-300 bg-amber-50/70 px-3 py-2 text-center">
+                                <p class="text-[11px] font-semibold text-amber-800">
+                                    Slot QR otomatis
+                                </p>
+                                <p class="mt-0.5 text-[10px] leading-4 text-amber-700">
+                                    QR akan muncul di antara jabatan dan nama pada output akhir.
+                                </p>
                             </div>
                             <input
                                 v-model="kol.nama"
@@ -2889,7 +2990,7 @@ function settingLabel(key: string): string {
                     <button
                         type="button"
                         data-template-save
-                        class="fast-btn fast-btn-primary inline-flex w-full items-center justify-center gap-1.5 px-5 py-2 text-xs font-semibold sm:w-auto"
+                        class="fast-btn fast-btn-primary inline-flex w-full items-center justify-center gap-1.5 px-4 py-1.5 text-[11px] font-semibold sm:w-auto sm:text-xs"
                         @click="saveTemplate"
                     >
                             <Save class="size-3.5" /> Simpan Isi Surat
@@ -2899,29 +3000,38 @@ function settingLabel(key: string): string {
             </div>
             <div
                 v-if="activeTab === 'fields'"
-                class="rounded-2xl border border-slate-200 bg-white p-5"
+                class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5"
             >
                 <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h3 class="text-sm font-semibold text-slate-800">
+                        <h3 class="text-[13px] font-semibold text-slate-800 sm:text-sm">
                             Field yang Muncul Saat Buat Surat
                         </h3>
-                        <p class="mt-0.5 text-xs text-slate-500">
+                        <p class="mt-0.5 text-[11px] text-slate-500">
                             {{ form.field_config.length }} field
                         </p>
                     </div>
-                    <button
-                        type="button"
-                        class="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-blue-100 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-200 sm:w-auto"
-                        @click="addField"
-                    >
-                        <Plus class="size-3.5" /> Tambah Field
-                    </button>
+                    <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                        <button
+                            type="button"
+                            class="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-100 sm:w-auto sm:text-xs"
+                            @click="addApplicantPresetFields"
+                        >
+                            <Plus class="size-3" /> Preset Data Pemohon
+                        </button>
+                        <button
+                            type="button"
+                            class="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-blue-100 px-3 py-1.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-200 sm:w-auto sm:text-xs"
+                            @click="addField"
+                        >
+                            <Plus class="size-3" /> Tambah Field
+                        </button>
+                    </div>
                 </div>
                 <div class="space-y-3">
                     <div
                         v-if="form.field_config.length === 0"
-                        class="rounded-xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-400"
+                        class="rounded-xl border border-dashed border-slate-200 py-8 text-center text-[13px] text-slate-400"
                     >
                         Belum ada field.
                     </div>
@@ -2929,19 +3039,19 @@ function settingLabel(key: string): string {
                         v-for="(field, idx) in form.field_config"
                         :key="idx"
                         :data-field-index="idx"
-                        class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                        class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4"
                     >
-                        <div class="mb-4 flex items-start justify-between gap-3">
+                        <div class="mb-3 flex items-start justify-between gap-3 sm:mb-4">
                             <div class="min-w-0 flex-1 space-y-2">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <code
-                                        class="rounded-lg bg-blue-100 px-2.5 py-1 font-mono text-[10px] font-semibold text-blue-800"
+                                        class="rounded-lg bg-blue-100 px-2 py-0.5 font-mono text-[9px] font-semibold text-blue-800 sm:text-[10px]"
                                         >&#123;&#123;{{
                                             field.name || 'nama_field'
                                         }}&#125;&#125;</code
                                     >
                                     <span
-                                        class="rounded-full px-2.5 py-1 text-[10px] font-semibold"
+                                        class="rounded-full px-2 py-0.5 text-[9px] font-semibold sm:text-[10px]"
                                         :class="
                                             field.sumber_data === 'data_kampus'
                                                 ? 'bg-amber-50 text-amber-700'
@@ -2954,7 +3064,7 @@ function settingLabel(key: string): string {
                                         {{ fieldSourceLabel(field.sumber_data) }}
                                     </span>
                                     <span
-                                        class="rounded-full px-2.5 py-1 text-[10px] font-semibold"
+                                        class="rounded-full px-2 py-0.5 text-[9px] font-semibold sm:text-[10px]"
                                         :class="
                                             field.mode_form_pemohon === 'readonly'
                                                 ? 'bg-blue-50 text-blue-700'
@@ -2966,53 +3076,74 @@ function settingLabel(key: string): string {
                                     >
                                         {{ fieldModeLabel(field.mode_form_pemohon) }}
                                     </span>
-                                    <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-600">
+                                    <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 sm:text-[10px]">
                                         {{ fieldEditableRoleLabel(field.editable_role) }}
                                     </span>
                                 </div>
-                                <p class="text-[11px] text-slate-400">
+                                <p class="text-[10px] text-slate-400 sm:text-[11px]">
                                     Atur label, placeholder, dan kontrol akses
                                     field dari panel ini.
                                 </p>
                             </div>
-                            <button
-                                type="button"
-                                class="grid size-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-500"
-                                @click="removeField(idx)"
-                            >
-                                <Trash2 class="size-4" />
-                            </button>
+                            <div class="flex shrink-0 items-center gap-1">
+                                <button
+                                    type="button"
+                                    class="grid size-7 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30 sm:size-8"
+                                    :disabled="idx === 0"
+                                    title="Pindah ke atas"
+                                    @click="moveField(idx, 'up')"
+                                >
+                                    <ChevronUp class="size-3.5 sm:size-4" />
+                                </button>
+                                <button
+                                    type="button"
+                                    class="grid size-7 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30 sm:size-8"
+                                    :disabled="idx === form.field_config.length - 1"
+                                    title="Pindah ke bawah"
+                                    @click="moveField(idx, 'down')"
+                                >
+                                    <ChevronDown class="size-3.5 sm:size-4" />
+                                </button>
+                                <button
+                                    type="button"
+                                    class="grid size-7 place-items-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-500 sm:size-8"
+                                    title="Hapus field"
+                                    @click="removeField(idx)"
+                                >
+                                    <Trash2 class="size-3.5 sm:size-4" />
+                                </button>
+                            </div>
                         </div>
-                        <div class="space-y-4">
+                        <div class="space-y-3 sm:space-y-4">
                             <div class="grid gap-3 lg:grid-cols-2">
                                 <label class="space-y-1.5">
-                                    <span class="text-[10px] font-medium text-slate-600">Label</span>
+                                    <span class="text-[9px] font-medium text-slate-600 sm:text-[10px]">Label</span>
                                     <input
                                         v-model="field.label"
                                         data-field-prop="label"
                                         type="text"
                                         placeholder="Contoh: NIM Mahasiswa"
-                                        class="h-10 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm text-slate-800 placeholder-slate-400 outline-none transition focus:border-blue-400 focus:bg-white"
+                                        class="h-9 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-[13px] text-slate-800 placeholder-slate-400 outline-none transition focus:border-blue-400 focus:bg-white sm:h-10 sm:text-sm"
                                         @input="syncName(field)"
                                         @keydown.enter.prevent="syncName(field, true)"
                                     />
                                 </label>
                                 <label class="space-y-1.5">
-                                    <span class="text-[10px] font-medium text-slate-600">Key (placeholder)</span>
+                                    <span class="text-[9px] font-medium text-slate-600 sm:text-[10px]">Key (placeholder)</span>
                                     <input
                                         v-model="field.name"
                                         data-field-prop="name"
                                         type="text"
                                         :placeholder="suggestPlaceholderKey(field.label) || 'nim_mahasiswa'"
-                                        class="h-10 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 font-mono text-sm text-slate-800 placeholder-slate-400 outline-none transition focus:border-blue-400 focus:bg-white"
+                                        class="h-9 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 font-mono text-[13px] text-slate-800 placeholder-slate-400 outline-none transition focus:border-blue-400 focus:bg-white sm:h-10 sm:text-sm"
                                         @input="markFieldNameManual(field)"
                                     />
                                 </label>
                                 <label class="space-y-1.5">
-                                    <span class="text-[10px] font-medium text-slate-600">Tipe Input</span>
+                                    <span class="text-[9px] font-medium text-slate-600 sm:text-[10px]">Tipe Input</span>
                                     <select
                                         v-model="field.type"
-                                        class="h-10 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white"
+                                        class="h-9 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white sm:h-10 sm:text-sm"
                                     >
                                         <option
                                             v-for="opt in fieldTypeOptions"
@@ -3024,10 +3155,10 @@ function settingLabel(key: string): string {
                                     </select>
                                 </label>
                                 <label class="space-y-1.5">
-                                    <span class="text-[10px] font-medium text-slate-600">Sumber Data</span>
+                                    <span class="text-[9px] font-medium text-slate-600 sm:text-[10px]">Sumber Data</span>
                                     <select
                                         v-model="field.sumber_data"
-                                        class="h-10 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white"
+                                        class="h-9 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white sm:h-10 sm:text-sm"
                                         @change="applyFieldSourcePreset(field)"
                                     >
                                         <option
@@ -3043,10 +3174,10 @@ function settingLabel(key: string): string {
 
                             <div class="grid gap-3 lg:grid-cols-2">
                                 <label class="space-y-1.5">
-                                    <span class="text-[10px] font-medium text-slate-600">Dapat diedit oleh</span>
+                                    <span class="text-[9px] font-medium text-slate-600 sm:text-[10px]">Dapat diedit oleh</span>
                                     <select
                                         v-model="field.editable_role"
-                                        class="h-10 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white"
+                                        class="h-9 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white sm:h-10 sm:text-sm"
                                     >
                                         <option
                                             v-for="opt in fieldEditableRoleOptions"
@@ -3058,10 +3189,10 @@ function settingLabel(key: string): string {
                                     </select>
                                 </label>
                                 <label class="space-y-1.5">
-                                    <span class="text-[10px] font-medium text-slate-600">Tampil di form pemohon</span>
+                                    <span class="text-[9px] font-medium text-slate-600 sm:text-[10px]">Tampil di form pemohon</span>
                                     <select
                                         v-model="field.mode_form_pemohon"
-                                        class="h-10 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white"
+                                        class="h-9 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white sm:h-10 sm:text-sm"
                                     >
                                         <option
                                             v-for="opt in fieldModeOptions"
@@ -3074,16 +3205,16 @@ function settingLabel(key: string): string {
                                 </label>
                             </div>
 
-                            <div class="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                            <div class="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
                                 <label class="flex cursor-pointer items-center gap-2">
                                     <input
                                         v-model="field.required"
                                         type="checkbox"
                                         class="rounded border-slate-300 text-blue-600"
                                     />
-                                    <span class="text-xs font-medium text-slate-700">Wajib diisi</span>
+                                    <span class="text-[11px] font-medium text-slate-700">Wajib diisi</span>
                                 </label>
-                                <span class="text-[11px] text-slate-400">
+                                <span class="text-[10px] text-slate-400">
                                     Field akan muncul sesuai mode yang dipilih.
                                 </span>
                             </div>
@@ -3096,10 +3227,10 @@ function settingLabel(key: string): string {
                 >
                     <button
                         type="button"
-                        class="fast-btn fast-btn-primary inline-flex w-full items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold sm:w-auto"
+                        class="fast-btn fast-btn-primary inline-flex w-full items-center justify-center gap-1.5 px-4 py-1.5 text-[11px] font-semibold sm:w-auto sm:text-xs"
                         @click="saveTemplate"
                     >
-                        <Save class="size-3.5" /> Simpan Field Dinamis
+                        <Save class="size-3" /> Simpan Field Dinamis
                     </button>
                 </div>
                 <p
@@ -3111,60 +3242,60 @@ function settingLabel(key: string): string {
             </div>
             <div
                 v-if="activeTab === 'meta'"
-                class="rounded-2xl border border-slate-200 bg-white p-5"
+                class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5"
             >
-                <h3 class="mb-4 text-sm font-semibold text-slate-800">
+                <h3 class="mb-3 text-[13px] font-semibold text-slate-800 sm:mb-4 sm:text-sm">
                     Informasi Jenis Surat
                 </h3>
-                <div class="grid gap-4 sm:grid-cols-2">
+                <div class="grid gap-3 sm:grid-cols-2 sm:gap-4">
                     <div class="space-y-2 sm:col-span-2">
-                        <span class="text-xs font-medium text-slate-700">Mode Surat</span>
+                        <span class="text-[11px] font-medium text-slate-700">Mode Surat</span>
                         <div class="grid gap-3 sm:grid-cols-2">
-                            <label data-meta-field="letter_mode" class="flex items-start gap-3 rounded-xl border border-slate-300 bg-slate-50 px-3 py-3">
+                            <label data-meta-field="letter_mode" class="flex items-start gap-2.5 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5">
                                 <input v-model="form.letter_mode" type="radio" value="personal" class="mt-1" />
                                 <div>
-                                    <p class="text-sm font-semibold text-slate-900">Surat Personal</p>
-                                    <p class="mt-1 text-xs text-slate-500">Wajib pilih subjek karena surat mewakili individu tertentu.</p>
+                                    <p class="text-[13px] font-semibold text-slate-900">Surat Personal</p>
+                                    <p class="mt-0.5 text-[11px] text-slate-500">Wajib pilih subjek karena surat mewakili individu tertentu.</p>
                                 </div>
                             </label>
-                            <label class="flex items-start gap-3 rounded-xl border border-slate-300 bg-slate-50 px-3 py-3">
+                            <label class="flex items-start gap-2.5 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5">
                                 <input v-model="form.letter_mode" type="radio" value="institution" class="mt-1" />
                                 <div>
-                                    <p class="text-sm font-semibold text-slate-900">Surat Institusi</p>
-                                    <p class="mt-1 text-xs text-slate-500">Subjek opsional karena surat diterbitkan atas nama kampus atau fakultas.</p>
+                                    <p class="text-[13px] font-semibold text-slate-900">Surat Institusi</p>
+                                    <p class="mt-0.5 text-[11px] text-slate-500">Subjek opsional karena surat diterbitkan atas nama kampus atau fakultas.</p>
                                 </div>
                             </label>
                         </div>
                     </div>
                     <label class="space-y-1.5 sm:col-span-2"
-                        ><span class="text-xs font-medium text-slate-700"
+                        ><span class="text-[11px] font-medium text-slate-700"
                             >Nama Jenis Surat</span
                         >
                                 <input
                                     v-model="form.jenis_surat_nama"
                                     data-meta-field="jenis_surat_nama"
                                     type="text"
-                                    class="h-10 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
+                                    class="h-9 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-[13px] text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400 sm:h-10 sm:text-sm"
                                     placeholder="Contoh: Surat Keterangan Lulus"
                     /></label>
                     <label class="space-y-1.5"
-                        ><span class="text-xs font-medium text-slate-700"
+                        ><span class="text-[11px] font-medium text-slate-700"
                             >Kode Klasifikasi</span
                         >
                         <input
                             v-model="form.kode_klasifikasi"
                             type="text"
-                            class="h-10 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 font-mono text-sm text-slate-800 uppercase placeholder-slate-400 outline-none focus:border-blue-400"
+                            class="h-9 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 font-mono text-[13px] text-slate-800 uppercase placeholder-slate-400 outline-none focus:border-blue-400 sm:h-10 sm:text-sm"
                             placeholder="KU"
                     /></label>
                     <label class="space-y-1.5"
-                        ><span class="text-xs font-medium text-slate-700"
+                        ><span class="text-[11px] font-medium text-slate-700"
                             >Kategori</span
                         >
                         <select
                             v-model="form.category_id"
                             data-meta-field="category_id"
-                            class="h-10 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm text-slate-800 outline-none focus:border-blue-400"
+                            class="h-9 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none focus:border-blue-400 sm:h-10 sm:text-sm"
                         >
                             <option value="">Tanpa kategori</option>
                             <option
@@ -3177,13 +3308,13 @@ function settingLabel(key: string): string {
                         </select></label
                     >
                     <label class="space-y-1.5"
-                        ><span class="text-xs font-medium text-slate-700"
+                        ><span class="text-[11px] font-medium text-slate-700"
                             >Role Approver</span
                         >
                         <select
                             v-model="form.approval_role_id"
                             data-meta-field="approval_role_id"
-                            class="h-10 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm text-slate-800 outline-none focus:border-blue-400"
+                            class="h-9 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none focus:border-blue-400 sm:h-10 sm:text-sm"
                         >
                             <option value="">
                                 Tidak ada (langsung selesai)
@@ -3198,13 +3329,13 @@ function settingLabel(key: string): string {
                         </select></label
                     >
                     <label class="space-y-1.5"
-                        ><span class="text-xs font-medium text-slate-700"
+                        ><span class="text-[11px] font-medium text-slate-700"
                             >Role yang Boleh Buat</span
                         >
                         <select
                             v-model="form.allowed_role_id"
                             data-meta-field="allowed_role_id"
-                            class="h-10 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm text-slate-800 outline-none focus:border-blue-400"
+                            class="h-9 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-[13px] text-slate-800 outline-none focus:border-blue-400 sm:h-10 sm:text-sm"
                         >
                             <option value="">Semua role</option>
                             <option
@@ -3216,13 +3347,13 @@ function settingLabel(key: string): string {
                             </option>
                         </select></label
                     >
-                    <div class="col-span-2 flex items-center gap-6">
+                    <div class="col-span-2 flex flex-wrap items-center gap-4">
                         <label class="flex cursor-pointer items-center gap-2"
                             ><input
                                 v-model="form.perlu_approval"
                                 type="checkbox"
                                 class="rounded border-slate-300 text-blue-600"
-                            /><span class="text-sm text-slate-700"
+                            /><span class="text-[13px] text-slate-700"
                                 >Perlu Approval</span
                             ></label
                         >
@@ -3231,7 +3362,7 @@ function settingLabel(key: string): string {
                                 v-model="form.is_active"
                                 type="checkbox"
                                 class="rounded border-slate-300 text-blue-600"
-                            /><span class="text-sm text-slate-700"
+                            /><span class="text-[13px] text-slate-700"
                                 >Aktif</span
                             ></label
                         >
@@ -3240,10 +3371,10 @@ function settingLabel(key: string): string {
                 <div class="mt-4 flex justify-end">
                     <button
                         type="button"
-                        class="fast-btn fast-btn-primary flex items-center gap-1.5 px-4 py-2 text-xs font-semibold"
+                        class="fast-btn fast-btn-primary flex items-center gap-1.5 px-4 py-1.5 text-[11px] font-semibold sm:text-xs"
                         @click="saveTemplate"
                     >
-                        <Save class="size-3.5" /> Simpan Info Jenis Surat
+                        <Save class="size-3" /> Simpan Info Jenis Surat
                     </button>
                 </div>
                 <p

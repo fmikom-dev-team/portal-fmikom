@@ -495,6 +495,30 @@ class Surat extends Model
             || $this->approvalFlows()->where('role', 'admin')->where('status', 'approved')->exists();
     }
 
+    public function canViewFinalDocumentPreview(): bool
+    {
+        $this->loadMissing('qrCode');
+
+        if ($this->status !== self::STATUS_FINISHED) {
+            return false;
+        }
+
+        $hasValidation = $this->validated_by_admin_id !== null
+            && $this->validated_by_admin_at !== null;
+        $hasFinalApproval = ($this->approved_by_id !== null && $this->approved_at !== null)
+            || $this->approvalFlows()->where('status', 'approved')->exists();
+
+        if (! $hasValidation || ! $hasFinalApproval || blank($this->qr_token)) {
+            return false;
+        }
+
+        if ($this->qrCode !== null && $this->qrCode->status !== SuratQrCode::STATUS_ACTIVE) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function hasIncompleteCampusData(): bool
     {
         $this->loadMissing('jenisSurat', 'dataEntries');

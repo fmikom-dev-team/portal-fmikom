@@ -8,10 +8,13 @@ use App\Models\SuratLampiran;
 use App\Modules\Fast\Support\FastUserIdentitySearch;
 use App\Modules\Fast\Support\TemplateAdminSupport;
 use App\Modules\Fast\Workflow\Approvals\FastApprovalWorkflowService;
+use App\Support\DocxPreview;
 use App\Support\FastStorage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ApprovalService
@@ -91,11 +94,15 @@ class ApprovalService
             Surat::STATUS_REVISION_REQUESTED,
             Surat::STATUS_REJECTED_ADMIN,
             Surat::STATUS_REJECTED_APPROVER,
+            Surat::STATUS_APPROVED_KAPRODI,
+            Surat::STATUS_APPROVED_DEKAN,
+            Surat::STATUS_FINISHED,
         ];
 
         $effectiveStatuses = match ($status) {
             '', 'pending' => [Surat::STATUS_VALIDATED_ADMIN],
             'all' => $queueStatuses,
+            'finished' => [Surat::STATUS_FINISHED],
             'revision_requested' => [Surat::STATUS_REVISION_REQUESTED],
             'rejected' => [Surat::STATUS_REJECTED_ADMIN, Surat::STATUS_REJECTED_APPROVER],
             default => [Surat::STATUS_VALIDATED_ADMIN],
@@ -293,9 +300,21 @@ class ApprovalService
         return $this->serializeShowItem($surat);
     }
 
-    public function previewAttachment(int $id): StreamedResponse
+    public function previewAttachment(int $id): SymfonyResponse|StreamedResponse
     {
         $lampiran = SuratLampiran::query()->findOrFail($id);
+        $located = FastStorage::locate($lampiran->file_path);
+
+        if ($located !== null && DocxPreview::isDocx($located['relative_path'], $located['mime_type'])) {
+            try {
+                return response(
+                    DocxPreview::renderHtml($located['absolute_path'], $lampiran->nama_file),
+                    200,
+                )->header('Content-Type', 'text/html; charset=UTF-8');
+            } catch (\Throwable) {
+                // Fall through to the file response below when DOCX parsing fails.
+            }
+        }
 
         return FastStorage::response(
             $lampiran->file_path,
@@ -345,6 +364,9 @@ class ApprovalService
                 'id' => $surat->jenisSurat?->id,
                 'nama' => $surat->jenisSurat?->nama,
             ],
+            'download_url' => $surat->canViewFinalDocumentPreview()
+                ? route('documents.surat.pdf', $surat->id, absolute: false)
+                : null,
         ];
     }
 
@@ -352,6 +374,9 @@ class ApprovalService
     {
         return array_merge($this->serializeSuratListItem($surat), [
             'nomor_surat' => $surat->nomor_surat,
+            'download_url' => $surat->canViewFinalDocumentPreview()
+                ? route('documents.surat.pdf', $surat->id, absolute: false)
+                : null,
         ]);
     }
 
@@ -385,11 +410,19 @@ class ApprovalService
             'lampiran' => $surat->lampirans->map(fn ($lampiran): array => [
                 'id' => $lampiran->id,
                 'name' => $lampiran->nama_file,
-                'url' => route('documents.lampiran.preview', $lampiran->id, absolute: false),
+                'url' => URL::temporarySignedRoute(
+                    'documents.public.lampiran.preview',
+                    now()->addMinutes(15),
+                    ['id' => $lampiran->id],
+                ),
                 'type' => $lampiran->tipe,
             ])->values(),
             'tanggal_pengajuan' => optional($surat->tanggal_pengajuan ?? $surat->created_at)?->toISOString(),
             'status' => $surat->status,
+            'pdfUrl' => $surat->canViewFinalDocumentPreview()
+                ? route('documents.surat.pdf', $surat->id, absolute: false)
+                : null,
+            'canDownloadPdf' => $surat->canViewFinalDocumentPreview(),
             'latest_rejection' => $latestRejectedFlow === null ? null : [
                 'role' => $latestRejectedFlow->role,
                 'label' => match ($latestRejectedFlow->role) {
@@ -473,7 +506,7 @@ class ApprovalService
                         $flow->status === Surat::STATUS_REVISION_REQUESTED && $flow->role === 'dekan' => 'Catatan Revisi Dekan',
                         $flow->status === SuratApprovalFlow::STATUS_REJECTED_FINAL && $flow->role === 'kaprodi' => 'Catatan Penolakan Kaprodi',
                         $flow->status === SuratApprovalFlow::STATUS_REJECTED_FINAL && $flow->role === 'dekan' => 'Catatan Penolakan Dekan',
-                        $flow->status === Surat::STATUS_NOTE => 'Catatan Approval',
+                        $flow->status === SuratApprovalFlow::STATUS_NOTE => 'Catatan Approval',
                         default => 'Catatan Approval',
                     },
                     'note' => $flow->catatan,
@@ -484,13 +517,11 @@ class ApprovalService
             'can_approve' => $surat->canBeApprovedByRole($this->normalizeRole($request->user()?->userTypeSlug(), $request->user()?->roleDisplayName())),
             'can_request_revision' => $surat->canRequestRevisionByRole($this->normalizeRole($request->user()?->userTypeSlug(), $request->user()?->roleDisplayName())),
             'can_final_reject' => $surat->canBeFinalRejectedByRole($this->normalizeRole($request->user()?->userTypeSlug(), $request->user()?->roleDisplayName())),
-            'previewTemplateUrl' => route('documents.surat.template-preview', $surat->id, absolute: false),
-            'generatedDocumentUrl' => filled($surat->nomor_surat) || filled($surat->rendered_snapshot)
-                ? (
-                    $surat->status === Surat::STATUS_FINISHED
-                        ? route('documents.surat.pdf', $surat->id, absolute: false)
-                        : route('documents.surat.generated-document', $surat->id, absolute: false)
-                )
+            'previewTemplateUrl' => $surat->canViewFinalDocumentPreview()
+                ? route('documents.surat.template-preview', $surat->id, absolute: false)
+                : null,
+            'generatedDocumentUrl' => $surat->canViewFinalDocumentPreview()
+                ? route('documents.surat.pdf', $surat->id, absolute: false)
                 : null,
             'back_href' => null,
             'back_label' => null,
@@ -516,7 +547,11 @@ class ApprovalService
             'lampiran' => $surat->lampirans->map(fn ($lampiran): array => [
                 'id' => $lampiran->id,
                 'name' => $lampiran->nama_file,
-                'url' => route('approval.lampiran.preview', $lampiran->id, absolute: false),
+                'url' => URL::temporarySignedRoute(
+                    'documents.public.lampiran.preview',
+                    now()->addMinutes(15),
+                    ['id' => $lampiran->id],
+                ),
                 'type' => $lampiran->tipe,
             ])->values(),
             'approval_notes' => $surat->approvalFlows
@@ -533,7 +568,7 @@ class ApprovalService
                         $flow->status === Surat::STATUS_REVISION_REQUESTED && $flow->role === 'dekan' => 'Catatan Revisi Dekan',
                         $flow->status === SuratApprovalFlow::STATUS_REJECTED_FINAL && $flow->role === 'kaprodi' => 'Catatan Penolakan Kaprodi',
                         $flow->status === SuratApprovalFlow::STATUS_REJECTED_FINAL && $flow->role === 'dekan' => 'Catatan Penolakan Dekan',
-                        $flow->status === Surat::STATUS_NOTE => 'Catatan Approval',
+                        $flow->status === SuratApprovalFlow::STATUS_NOTE => 'Catatan Approval',
                         default => 'Catatan Approval',
                     },
                     'note' => $flow->catatan,
@@ -543,7 +578,7 @@ class ApprovalService
                 ->values(),
             'tanggal_pengajuan' => optional($surat->tanggal_pengajuan ?? $surat->created_at)?->toISOString(),
             'status' => $surat->status,
-            'draft_preview_url' => filled($surat->nomor_surat) || filled($surat->rendered_snapshot)
+            'draft_preview_url' => $surat->canViewFinalDocumentPreview()
                 ? route('documents.surat.generated-document', $surat->id, absolute: false)
                 : null,
         ];

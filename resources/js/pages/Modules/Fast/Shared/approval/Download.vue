@@ -31,17 +31,30 @@ type PaginatedSurats = {
     to?: number | null;
     total: number;
 };
-const props = defineProps<{
-    role: { name?: string | null; slug?: string | null };
-    surats: PaginatedSurats;
-    filters: {
-        search?: string;
-        jenis_surat_id?: string;
-        tanggal_mulai?: string;
-        tanggal_akhir?: string;
-    };
-    jenisSuratOptions: Record<string, string>;
-}>();
+const props = withDefaults(
+    defineProps<{
+        role?: { name?: string | null; slug?: string | null };
+        surats?: PaginatedSurats;
+        filters?: {
+            search?: string;
+            jenis_surat_id?: string;
+            tanggal_mulai?: string;
+            tanggal_akhir?: string;
+        };
+        jenisSuratOptions?: Record<string, string>;
+    }>(),
+    {
+        role: () => ({ name: 'Approval', slug: 'dekan' }),
+        surats: () => ({ data: [], links: [], total: 0 }),
+        filters: () => ({
+            search: '',
+            jenis_surat_id: '',
+            tanggal_mulai: '',
+            tanggal_akhir: '',
+        }),
+        jenisSuratOptions: () => ({}),
+    },
+);
 const search = ref(props.filters.search ?? '');
 const jenisSuratId = ref(props.filters.jenis_surat_id ?? '');
 const tanggalMulai = ref(props.filters.tanggal_mulai ?? '');

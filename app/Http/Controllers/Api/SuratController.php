@@ -11,6 +11,7 @@ use App\Models\Surat;
 use App\Modules\Fast\Workflow\Actions\SuratWorkflowService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 
 class SuratController extends Controller
 {
@@ -193,7 +194,11 @@ class SuratController extends Controller
                     'id' => $lampiran->id,
                     'nama_file' => $lampiran->nama_file,
                     'tipe' => $lampiran->tipe,
-                    'preview_url' => route('documents.lampiran.preview', $lampiran->id, absolute: false),
+                    'preview_url' => URL::temporarySignedRoute(
+                        'documents.public.lampiran.preview',
+                        now()->addMinutes(15),
+                        ['id' => $lampiran->id],
+                    ),
                 ])
                 ->values()
                 ->all(),

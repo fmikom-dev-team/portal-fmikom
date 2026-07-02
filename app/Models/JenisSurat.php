@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -21,8 +20,6 @@ class JenisSurat extends Model
         'kode_klasifikasi',
         'deskripsi',
         'field_config',
-        'template_file_path',
-        'template_surat',
         'allowed_role_id',
         'approval_role_id',
         'perlu_approval',
@@ -78,13 +75,5 @@ class JenisSurat extends Model
     public function approvalRole(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'approval_role_id');
-    }
-
-    /**
-     * @return BelongsToMany<Role, $this>
-     */
-    public function roles(): BelongsToMany
-    {
-        return $this->belongsToMany(Role::class, 'jenis_surat_roles');
     }
 }
