@@ -4,7 +4,9 @@ namespace App\Modules\Trace\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tracer\Kuesioner;
+use App\Models\Tracer\ProfilAlumni;
 use App\Models\Tracer\Response;
+use App\Models\User;
 use App\Modules\Trace\Actions\ExportKuesionerAction;
 use App\Modules\Trace\Services\KuesionerAnalyticsService;
 use Illuminate\Http\Request;
@@ -87,7 +89,9 @@ class KuesionerAnalyticsController extends Controller
         $respondents = $query->paginate(20);
 
         $respondents->getCollection()->transform(function (Response $response) {
+            /** @var User|null $user */
             $user = $response->user;
+            /** @var ProfilAlumni|null $profile */
             $profile = $user?->alumniProfile;
 
             return [

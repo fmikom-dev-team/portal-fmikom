@@ -25,6 +25,7 @@ class TraceAlumniProfileController extends Controller
         $readOnly = (bool) $request->attributes->get('trace_alumni_read_only', false);
 
         $profilQuery = ProfilAlumni::with(['careers', 'educationHistories'])->where('user_id', $user->id);
+        /** @var ProfilAlumni|null $profil */
         $profil = $readOnly
             ? $profilQuery->first()
             : ProfilAlumni::with(['careers', 'educationHistories'])->firstOrCreate(

@@ -3,7 +3,9 @@
 namespace App\Modules\Trace\Services;
 
 use App\Models\Tracer\Kuesioner;
+use App\Models\Tracer\OpsiJawaban;
 use App\Models\Tracer\Pertanyaan;
+use App\Models\Tracer\ProfilAlumni;
 use App\Models\Tracer\Response;
 use Illuminate\Support\Facades\DB;
 
@@ -359,6 +361,7 @@ class KuesionerAnalyticsService
 
         foreach ($responses as $response) {
             $row = array_fill(0, count($columns), '-');
+            /** @var ProfilAlumni|null $profile */
             $profile = $response->user?->alumniProfile;
 
             $currentCareer = null;
@@ -433,11 +436,13 @@ class KuesionerAnalyticsService
                     } else {
                         $row[$meta['index']] = $answer->jawaban_text;
                         if (isset($meta['score_index'])) {
+                            /** @var OpsiJawaban|null $opt */
                             $opt = $answer->pertanyaan->opsiJawabans->firstWhere('label', $answer->jawaban_text);
                             $row[$meta['score_index']] = $opt?->nilai ?? '-';
                         }
                     }
                 } elseif (in_array($meta['type'], ['radio', 'dropdown'])) {
+                    /** @var OpsiJawaban|null $opt */
                     $opt = null;
                     if (! empty($answer->jawaban_text)) {
                         $row[$meta['index']] = $answer->jawaban_text;

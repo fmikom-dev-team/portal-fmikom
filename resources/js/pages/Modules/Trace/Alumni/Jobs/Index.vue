@@ -69,7 +69,7 @@ const props = defineProps<{
         salary_max: string | null;
     };
 }>();
-console.log(props.jobs.data);
+
 const breadcrumbItems: BreadcrumbItem[] = [
     { title: "Dashboard", href: "/trace" },
     { title: "Lowongan Kerja", href: "/trace/jobs" },
@@ -456,172 +456,152 @@ const tipeKerjaLabelMap: Record<string, string> = {
             <!-- Job Cards Grid -->
             <div
                 v-if="jobs.data.length > 0"
-                class="grid grid-cols-1 gap-4 lg:grid-cols-2"
+                class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
             >
-                <div
+                <Link
                     v-for="job in jobs.data"
                     :key="job.id"
-                    class="group overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-sm transition-all duration-200 hover:border-[#85B7EB]/40 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-[#85B7EB]/30"
+                    :href="`/trace/jobs/${job.id}`"
+                    class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-sm transition-all duration-200 hover:border-[#85B7EB]/40 hover:shadow-lg hover:-translate-y-0.5 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-[#85B7EB]/30"
                 >
-                    <div v-if="job.poster_url" class="relative h-32 overflow-hidden bg-slate-100 dark:bg-zinc-800 sm:hidden">
+                    <!-- Poster / Header Area -->
+                    <div class="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50 dark:from-zinc-800 dark:to-zinc-850">
                         <img
+                            v-if="job.poster_url"
                             :src="job.poster_url"
                             :alt="`Poster ${job.title}`"
-                            class="h-full w-full object-cover"
+                            class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                         />
-                    </div>
-
-                    <div class="p-5">
-                    <div class="flex gap-4">
-                        <!-- Company Logo -->
-                        <div
-                            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800"
-                        >
-                            <img
-                                v-if="job.mitra?.logo_url"
-                                :src="job.mitra?.logo_url"
-                                :alt="job.mitra.nama_perusahaan"
-                                class="h-10 w-10 rounded-lg object-contain"
-                            />
-                            <Building2
-                                v-else
-                                class="h-5 w-5 text-slate-400 dark:text-zinc-500"
-                            />
+                        <div v-else class="flex h-full w-full items-center justify-center">
+                            <Briefcase class="h-10 w-10 text-slate-200 dark:text-zinc-700" />
                         </div>
 
-                        <!-- Job Info -->
-                        <div class="min-w-0 flex-1">
-                            <h3
-                                class="truncate text-[15px] font-bold text-slate-900 group-hover:text-[#0C447C] dark:text-white dark:group-hover:text-[#85B7EB]"
-                            >
-                                {{ job.title }}
-                            </h3>
-                            <p
-                                class="mt-0.5 truncate text-sm text-slate-500 dark:text-slate-400"
-                            >
-                                {{ job.mitra?.nama_perusahaan }}
-                            </p>
-                        </div>
-
-                        <!-- Poster Thumbnail -->
-                        <div
-                            v-if="job.poster_url"
-                            class="hidden sm:block shrink-0"
-                        >
-                            <img
-                                :src="job.poster_url"
-                                :alt="`Poster ${job.title}`"
-                                class="h-20 w-28 rounded-xl border border-slate-100 object-cover shadow-sm dark:border-zinc-700"
-                            />
-                        </div>
-
+                        <!-- Bookmark Button (floating) -->
                         <button
                             type="button"
-                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-all duration-200"
+                            class="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg backdrop-blur-sm transition-all duration-200"
                             :class="isBookmarked(job)
-                                ? 'border-[#0C447C]/30 bg-[#0C447C]/5 text-[#0C447C] dark:border-[#85B7EB]/40 dark:bg-[#85B7EB]/10 dark:text-[#85B7EB]'
-                                : 'border-slate-200 bg-white text-slate-400 hover:border-[#0C447C]/30 hover:text-[#0C447C] dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-[#85B7EB]/40 dark:hover:text-[#85B7EB]'"
+                                ? 'bg-[#0C447C]/80 text-white shadow-md dark:bg-[#85B7EB]/80 dark:text-slate-900'
+                                : 'bg-white/70 text-slate-500 hover:bg-white hover:text-[#0C447C] dark:bg-zinc-900/70 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-[#85B7EB]'"
                             :disabled="bookmarkLoading[job.id]"
                             :aria-label="isBookmarked(job) ? 'Hapus bookmark' : 'Simpan bookmark'"
-                            @click="toggleBookmark(job)"
+                            @click.prevent="toggleBookmark(job)"
                         >
-                            <BookmarkCheck v-if="isBookmarked(job)" class="h-5 w-5" />
-                            <Bookmark v-else class="h-5 w-5" />
+                            <BookmarkCheck v-if="isBookmarked(job)" class="h-4 w-4" />
+                            <Bookmark v-else class="h-4 w-4" />
                         </button>
-                    </div>
 
-                    <!-- Tags -->
-                    <div class="mt-3 flex flex-wrap gap-1.5">
+                        <!-- Experience Level Badge (floating) -->
                         <Badge
                             v-if="job.experience_level"
                             variant="secondary"
-                            class="rounded-lg bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-zinc-800 dark:text-zinc-400"
+                            class="absolute left-3 top-3 rounded-lg bg-white/80 px-2 py-0.5 text-[11px] font-semibold text-slate-700 backdrop-blur-sm dark:bg-zinc-900/80 dark:text-zinc-300"
                         >
-                            {{
-                                experienceLabelMap[job.experience_level] ??
-                                job.experience_level
-                            }}
-                        </Badge>
-                        <Badge
-                            v-if="job.location_type"
-                            variant="secondary"
-                            class="rounded-lg bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-600 dark:bg-blue-950/30 dark:text-blue-400"
-                        >
-                            <MapPin class="mr-1 inline h-3 w-3" />
-                            {{
-                                locationLabelMap[job.location_type] ??
-                                job.location_type
-                            }}
-                            <span
-                                v-if="
-                                    job.location_city &&
-                                    (job.location_type === 'onsite' ||
-                                        job.location_type === 'hybrid')
-                                "
-                                class="ml-0.5 opacity-80"
-                                >· {{ job.location_city }}</span
-                            >
-                        </Badge>
-                        <Badge
-                            v-if="job.location_city"
-                            variant="secondary"
-                            class="rounded-lg bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
-                        >
-                            <MapPin class="mr-1 inline h-3 w-3" />
-                            {{ job.location_city }}
-                        </Badge>
-                        <Badge
-                            v-if="job.tipe_kerja"
-                            variant="secondary"
-                            class="rounded-lg bg-[#0C447C]/5 px-2 py-0.5 text-[11px] font-medium text-[#0C447C] dark:bg-[#85B7EB]/10 dark:text-[#85B7EB]"
-                        >
-                            <Briefcase class="mr-1 inline h-3 w-3" />
-                            {{
-                                tipeKerjaLabelMap[job.tipe_kerja] ??
-                                job.tipe_kerja
-                            }}
-                        </Badge>
-                        <Badge
-                            v-if="job.category?.nama"
-                            variant="secondary"
-                            class="rounded-lg bg-[#0C447C]/10 px-2 py-0.5 text-[11px] font-medium text-[#0C447C] dark:bg-[#0C447C]/20 dark:text-[#85B7EB]"
-                        >
-                            {{ job.category.nama }}
+                            {{ experienceLabelMap[job.experience_level] ?? job.experience_level }}
                         </Badge>
                     </div>
 
-                    <!-- Bottom Row: Salary, Deadline, CTA -->
-                    <div
-                        class="mt-4 flex items-center justify-between border-t border-slate-50 pt-3 dark:border-zinc-800"
-                    >
-                        <div
-                            class="flex items-center gap-3 text-xs text-slate-400 dark:text-zinc-500"
-                        >
-                            <span
-                                v-if="salaryDisplay(job)"
-                                class="flex items-center gap-1 font-semibold text-[#0C447C] dark:text-[#85B7EB]"
+                    <!-- Card Body -->
+                    <div class="flex flex-1 flex-col p-4">
+                        <!-- Company -->
+                        <div class="flex items-center gap-2.5">
+                            <div
+                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-zinc-800"
                             >
-                                <DollarSign class="h-3.5 w-3.5" />
-                                {{ salaryDisplay(job) }}
-                            </span>
-                            <span
-                                v-if="job.deadline"
-                                class="flex items-center gap-1"
-                            >
-                                <Clock class="h-3.5 w-3.5" />
-                                {{ formatDeadline(job.deadline) }}
+                                <img
+                                    v-if="job.mitra?.logo_url"
+                                    :src="job.mitra?.logo_url"
+                                    :alt="job.mitra.nama_perusahaan"
+                                    class="h-6 w-6 rounded object-contain"
+                                />
+                                <Building2
+                                    v-else
+                                    class="h-4 w-4 text-slate-400 dark:text-zinc-500"
+                                />
+                            </div>
+                            <span class="truncate text-xs font-medium text-slate-500 dark:text-slate-400">
+                                {{ job.mitra?.nama_perusahaan }}
                             </span>
                         </div>
 
-                        <Link
-                            :href="`/trace/jobs/${job.id}`"
-                            class="inline-flex items-center gap-1 rounded-lg bg-[#0C447C]/5 px-3 py-1.5 text-xs font-semibold text-[#0C447C] transition-colors hover:bg-[#0C447C]/10 dark:bg-[#85B7EB]/10 dark:text-[#85B7EB] dark:hover:bg-[#85B7EB]/20"
+                        <!-- Title -->
+                        <h3
+                            class="mt-2 line-clamp-2 text-[15px] font-bold leading-snug text-slate-900 group-hover:text-[#0C447C] dark:text-white dark:group-hover:text-[#85B7EB]"
                         >
-                            Lihat Detail
-                        </Link>
+                            {{ job.title }}
+                        </h3>
+
+                        <!-- Tags -->
+                        <div class="mt-2.5 flex flex-wrap gap-1.5">
+                            <Badge
+                                v-if="job.location_type"
+                                variant="secondary"
+                                class="rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:bg-blue-950/30 dark:text-blue-400"
+                            >
+                                <MapPin class="mr-0.5 inline h-2.5 w-2.5" />
+                                {{ locationLabelMap[job.location_type] ?? job.location_type }}
+                                <span
+                                    v-if="job.location_city && (job.location_type === 'onsite' || job.location_type === 'hybrid')"
+                                    class="ml-0.5 opacity-80"
+                                >· {{ job.location_city }}</span>
+                            </Badge>
+                            <Badge
+                                v-if="job.location_city"
+                                variant="secondary"
+                                class="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
+                            >
+                                <MapPin class="mr-0.5 inline h-2.5 w-2.5" />
+                                {{ job.location_city }}
+                            </Badge>
+                            <Badge
+                                v-if="job.tipe_kerja"
+                                variant="secondary"
+                                class="rounded-md bg-[#0C447C]/5 px-1.5 py-0.5 text-[10px] font-medium text-[#0C447C] dark:bg-[#85B7EB]/10 dark:text-[#85B7EB]"
+                            >
+                                <Briefcase class="mr-0.5 inline h-2.5 w-2.5" />
+                                {{ tipeKerjaLabelMap[job.tipe_kerja] ?? job.tipe_kerja }}
+                            </Badge>
+                            <Badge
+                                v-if="job.category?.nama"
+                                variant="secondary"
+                                class="rounded-md bg-[#0C447C]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#0C447C] dark:bg-[#0C447C]/20 dark:text-[#85B7EB]"
+                            >
+                                {{ job.category.nama }}
+                            </Badge>
+                        </div>
+
+                        <!-- Spacer to push footer down -->
+                        <div class="flex-1"></div>
+
+                        <!-- Footer: Salary & Deadline -->
+                        <div
+                            class="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-zinc-800"
+                        >
+                            <div class="flex flex-col gap-0.5">
+                                <span
+                                    v-if="salaryDisplay(job)"
+                                    class="flex items-center gap-1 text-xs font-semibold text-[#0C447C] dark:text-[#85B7EB]"
+                                >
+                                    <DollarSign class="h-3 w-3" />
+                                    {{ salaryDisplay(job) }}
+                                </span>
+                                <span
+                                    v-if="job.deadline"
+                                    class="flex items-center gap-1 text-[11px] text-slate-400 dark:text-zinc-500"
+                                >
+                                    <Clock class="h-3 w-3" />
+                                    {{ formatDeadline(job.deadline) }}
+                                </span>
+                            </div>
+
+                            <span
+                                class="inline-flex items-center rounded-lg bg-[#0C447C]/5 px-2.5 py-1 text-[11px] font-semibold text-[#0C447C] transition-colors group-hover:bg-[#0C447C]/10 dark:bg-[#85B7EB]/10 dark:text-[#85B7EB] dark:group-hover:bg-[#85B7EB]/20"
+                            >
+                                Lihat Detail
+                            </span>
+                        </div>
                     </div>
-                    </div>
-                </div>
+                </Link>
             </div>
 
             <!-- Empty State -->

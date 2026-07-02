@@ -6,6 +6,8 @@ use App\Models\User;
 use App\Modules\Trace\Services\TraceCacheService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Response extends Model
 {
@@ -53,20 +55,32 @@ class Response extends Model
     |-------------------------
     */
 
-    // Response dimiliki user (alumni)
-    public function user()
+    /**
+     * Response dimiliki user (alumni)
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    // Response untuk 1 kuesioner
-    public function kuesioner()
+    /**
+     * Response untuk 1 kuesioner
+     *
+     * @return BelongsTo<Kuesioner, $this>
+     */
+    public function kuesioner(): BelongsTo
     {
         return $this->belongsTo(Kuesioner::class);
     }
 
-    // Response punya banyak detail jawaban
-    public function detailJawabans()
+    /**
+     * Response punya banyak detail jawaban
+     *
+     * @return HasMany<DetailJawaban, $this>
+     */
+    public function detailJawabans(): HasMany
     {
         return $this->hasMany(DetailJawaban::class);
     }
