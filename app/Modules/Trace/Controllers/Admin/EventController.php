@@ -5,7 +5,6 @@ namespace App\Modules\Trace\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Trace\StoreEventRequest;
 use App\Http\Requests\Trace\UpdateEventRequest;
-use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\Event;
 use App\Models\Tracer\EventRegistration;
 use App\Models\User;
@@ -79,8 +78,6 @@ class EventController extends Controller
         $validated['created_by'] = auth()->id();
 
         $event = Event::create($validated);
-        ActivityLog::record('event.created', "Membuat event: {$event->title}", $event);
-
         if ($event->status === 'published') {
             // Use cursor to avoid loading all alumni into memory
             User::whereHas('alumniProfile')
@@ -129,7 +126,6 @@ class EventController extends Controller
 
         $validated = $request->validated();
 
-        // Normalize time to H:i format for consistent storage
         if (! empty($validated['event_time_start'])) {
             $validated['event_time_start'] = substr($validated['event_time_start'], 0, 5);
         }
@@ -145,8 +141,6 @@ class EventController extends Controller
         unset($validated['poster']);
 
         $event->update($validated);
-        ActivityLog::record('event.updated', "Memperbarui event: {$event->title}", $event);
-
         return redirect()->route('module.trace.admin.events.show', $id)
             ->with('success', 'Event berhasil diperbarui.');
     }
@@ -159,7 +153,6 @@ class EventController extends Controller
             'status' => 'required|in:draft,published,closed',
         ]);
 
-        // Prevent invalid status transitions
         $invalidTransitions = [
             'closed' => ['draft'],
         ];
@@ -169,8 +162,6 @@ class EventController extends Controller
         }
 
         $event->update($validated);
-        ActivityLog::record('event.status_changed', "Mengubah status event: {$event->title} → {$request->status}", $event, ['status' => $request->status]);
-
         return back()->with('success', 'Status event berhasil diperbarui.');
     }
 
@@ -184,9 +175,6 @@ class EventController extends Controller
 
         $registration->update(['attended_at' => $newAttendedAt]);
 
-        $action = $wasAttended ? 'Membatalkan kehadiran' : 'Mencatat kehadiran';
-        ActivityLog::record('event.attendance', $action, $registration);
-
         $message = $wasAttended ? 'Kehadiran dibatalkan.' : 'Kehadiran dicatat.';
 
         return back()->with('success', $message);
@@ -198,7 +186,6 @@ class EventController extends Controller
 
         $posterPath = $event->poster_path;
 
-        ActivityLog::record('event.deleted', "Menghapus event: {$event->title}", $event);
         $event->delete();
 
         if ($posterPath) {

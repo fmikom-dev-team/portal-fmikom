@@ -4,11 +4,11 @@ namespace App\Models\Tracer;
 
 use App\Enums\CareerStatus;
 use App\Enums\CareerType;
+use App\Modules\Trace\Services\TraceCacheService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Facades\Cache;
 
 class CareerHistory extends Model
 {
@@ -17,15 +17,11 @@ class CareerHistory extends Model
     protected static function booted(): void
     {
         static::saved(function ($career) {
-            Cache::forget('portal_total_alumni');
-            Cache::forget('portal_welcome_alumni_data');
-            Cache::forget('portal_welcome_alumni_stats');
+            TraceCacheService::forgetDashboardCaches(userId: $career->alumniProfile?->user_id);
         });
 
         static::deleted(function ($career) {
-            Cache::forget('portal_total_alumni');
-            Cache::forget('portal_welcome_alumni_data');
-            Cache::forget('portal_welcome_alumni_stats');
+            TraceCacheService::forgetDashboardCaches(userId: $career->alumniProfile?->user_id);
         });
     }
 

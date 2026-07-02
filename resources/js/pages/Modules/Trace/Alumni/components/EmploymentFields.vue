@@ -6,7 +6,6 @@ interface EmploymentFormData {
     nama_perusahaan: string;
     jabatan: string;
     sektor_industri: string;
-    alamat_perusahaan: string;
     gaji_min: number | null;
     gaji_max: number | null;
     [key: string]: unknown;
@@ -102,27 +101,6 @@ const salaryError = computed(() => {
             class="mt-1 text-sm text-red-500"
         >
             {{ form.errors.sektor_industri }}
-        </p>
-    </div>
-
-    <!-- Alamat -->
-    <div>
-        <label
-            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
-            Alamat Lengkap Perusahaan/Usaha
-        </label>
-        <textarea
-            v-model="form.alamat_perusahaan"
-            rows="3"
-            class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-            placeholder="Alamat lengkap perusahaan/usaha"
-        />
-        <p
-            v-if="form.errors.alamat_perusahaan"
-            class="mt-1 text-sm text-red-500"
-        >
-            {{ form.errors.alamat_perusahaan }}
         </p>
     </div>
 

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Link, router } from "@inertiajs/vue3";
+import axios from "axios";
 import TraceAlumniLayout from "@/layouts/TraceAlumniLayout.vue";
 import type { BreadcrumbItem } from "@/types";
-import { TPageHeader, TEmptyState, TPagination } from '@/components/Trace';
+import { TPageHeader, TEmptyState, TPagination } from "@/components/Trace";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +12,7 @@ import {
     Clock,
     Briefcase,
     Bookmark,
+    BookmarkCheck,
     Building2,
     DollarSign,
     ChevronDown,
@@ -20,6 +22,7 @@ import {
     X,
 } from "lucide-vue-next";
 import { ref } from "vue";
+import { toast } from "vue-sonner";
 
 interface Job {
     id: number;
@@ -35,7 +38,14 @@ interface Job {
     is_salary_visible: boolean;
     applicants_count: number;
     category: { nama: string } | null;
-    mitra: { nama_perusahaan: string; logo_path: string | null; logo_url: string | null };
+    mitra: {
+        nama_perusahaan: string;
+        logo_path: string | null;
+        logo_url: string | null;
+    };
+    poster_url: string | null;
+    location_city: string | null;
+    is_bookmarked: boolean;
 }
 
 interface PaginatedJobs {
@@ -59,13 +69,14 @@ const props = defineProps<{
         salary_max: string | null;
     };
 }>();
-
+console.log(props.jobs.data);
 const breadcrumbItems: BreadcrumbItem[] = [
     { title: "Dashboard", href: "/trace" },
     { title: "Lowongan Kerja", href: "/trace/jobs" },
 ];
 
-const selectClass = 'flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition-all focus:outline-none focus:ring-2 focus:ring-[#0C447C]/50 focus:border-[#0C447C] dark:border-zinc-700 dark:bg-zinc-900 dark:text-slate-300 appearance-none';
+const selectClass =
+    "flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition-all focus:outline-none focus:ring-2 focus:ring-[#0C447C]/50 focus:border-[#0C447C] dark:border-zinc-700 dark:bg-zinc-900 dark:text-slate-300 appearance-none";
 
 const search = ref(props.filters.search ?? "");
 const category = ref(props.filters.category ?? "");
@@ -74,9 +85,20 @@ const locationType = ref(props.filters.location_type ?? "");
 const mitraId = ref(props.filters.mitra_id ?? "");
 const salaryMin = ref(props.filters.salary_min ?? "");
 const salaryMax = ref(props.filters.salary_max ?? "");
-const showAdvanced = ref(Boolean(props.filters.category || props.filters.tipe_kerja || props.filters.location_type || props.filters.mitra_id || props.filters.salary_min || props.filters.salary_max));
-
-
+const showAdvanced = ref(
+    Boolean(
+        props.filters.category ||
+        props.filters.tipe_kerja ||
+        props.filters.location_type ||
+        props.filters.mitra_id ||
+        props.filters.salary_min ||
+        props.filters.salary_max,
+    ),
+);
+const bookmarkLoading = ref<Record<number, boolean>>({});
+const localBookmarks = ref<Record<number, boolean>>(
+    Object.fromEntries(props.jobs.data.map((job) => [job.id, Boolean(job.is_bookmarked)])),
+);
 
 function applyFilters() {
     const params: Record<string, string> = {};
@@ -105,20 +127,26 @@ function clearFilters() {
     router.get("/trace/jobs", {}, { preserveState: true });
 }
 
-
-
 const hasActiveFilters = () =>
-    search.value || category.value || tipeKerja.value || locationType.value || mitraId.value || salaryMin.value || salaryMax.value;
+    search.value ||
+    category.value ||
+    tipeKerja.value ||
+    locationType.value ||
+    mitraId.value ||
+    salaryMin.value ||
+    salaryMax.value;
 
 function formatSalary(value: number): string {
-    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value % 1_000_000 === 0 ? 0 : 1)} jt`;
+    if (value >= 1_000_000)
+        return `${(value / 1_000_000).toFixed(value % 1_000_000 === 0 ? 0 : 1)} jt`;
     if (value >= 1_000) return `${(value / 1_000).toFixed(0)} rb`;
     return value.toLocaleString("id-ID");
 }
 
 function salaryDisplay(job: Job): string | null {
     if (!job.is_salary_visible) return null;
-    if (job.salary_min && job.salary_max) return `Rp ${formatSalary(job.salary_min)} – ${formatSalary(job.salary_max)}`;
+    if (job.salary_min && job.salary_max)
+        return `Rp ${formatSalary(job.salary_min)} – ${formatSalary(job.salary_max)}`;
     if (job.salary_min) return `Dari Rp ${formatSalary(job.salary_min)}`;
     if (job.salary_max) return `Hingga Rp ${formatSalary(job.salary_max)}`;
     return null;
@@ -126,7 +154,34 @@ function salaryDisplay(job: Job): string | null {
 
 function formatDeadline(dateStr: string): string {
     const d = new Date(dateStr);
-    return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+    return d.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+    });
+}
+
+function isBookmarked(job: Job): boolean {
+    return localBookmarks.value[job.id] ?? Boolean(job.is_bookmarked);
+}
+
+async function toggleBookmark(job: Job) {
+    if (bookmarkLoading.value[job.id]) return;
+
+    bookmarkLoading.value[job.id] = true;
+
+    try {
+        const response = await axios.post(
+            `/trace/jobs/${job.id}/bookmark`,
+            {},
+            { headers: { Accept: "application/json" } },
+        );
+        localBookmarks.value[job.id] = Boolean(response.data.bookmarked);
+    } catch {
+        toast.error("Gagal memperbarui bookmark.");
+    } finally {
+        bookmarkLoading.value[job.id] = false;
+    }
 }
 
 const experienceLabelMap: Record<string, string> = {
@@ -160,7 +215,11 @@ const tipeKerjaLabelMap: Record<string, string> = {
     >
         <div class="mx-auto space-y-6">
             <!-- Page Header -->
-            <TPageHeader title="Lowongan Kerja" description="Jelajahi lowongan kerja yang cocok untuk Anda." :icon="Briefcase">
+            <TPageHeader
+                title="Lowongan Kerja"
+                description="Jelajahi lowongan kerja yang cocok untuk Anda."
+                :icon="Briefcase"
+            >
                 <template #actions>
                     <Link
                         href="/trace/jobs/companies"
@@ -187,11 +246,15 @@ const tipeKerjaLabelMap: Record<string, string> = {
             </TPageHeader>
 
             <!-- Search & Filters -->
-            <div class="rounded-2xl border border-slate-200/60 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div
+                class="rounded-2xl border border-slate-200/60 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+            >
                 <!-- Row 1: Search -->
                 <div class="p-4 pb-3">
                     <div class="relative">
-                        <Search class="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <Search
+                            class="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                        />
                         <input
                             v-model="search"
                             type="text"
@@ -213,9 +276,15 @@ const tipeKerjaLabelMap: Record<string, string> = {
                 </div>
 
                 <!-- Row 2: Filter bar -->
-                <div class="flex flex-wrap items-center gap-2 border-t border-slate-50 px-4 py-3 dark:border-zinc-800/50">
-                    <SlidersHorizontal class="h-4 w-4 shrink-0 text-slate-400" />
-                    <span class="text-xs text-slate-500 dark:text-slate-400">Filter lowongan berdasarkan kriteria</span>
+                <div
+                    class="flex flex-wrap items-center gap-2 border-t border-slate-50 px-4 py-3 dark:border-zinc-800/50"
+                >
+                    <SlidersHorizontal
+                        class="h-4 w-4 shrink-0 text-slate-400"
+                    />
+                    <span class="text-xs text-slate-500 dark:text-slate-400"
+                        >Filter lowongan berdasarkan kriteria</span
+                    >
 
                     <div class="ml-auto flex items-center gap-2">
                         <button
@@ -252,17 +321,35 @@ const tipeKerjaLabelMap: Record<string, string> = {
                         <!-- Row: Bidang, Jenis, Tempat Kerja -->
                         <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
                             <div>
-                                <label class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Bidang</label>
-                                <select v-model="category" :class="selectClass" aria-label="Filter bidang">
+                                <label
+                                    class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400"
+                                    >Bidang</label
+                                >
+                                <select
+                                    v-model="category"
+                                    :class="selectClass"
+                                    aria-label="Filter bidang"
+                                >
                                     <option value="">Semua Bidang</option>
-                                    <option v-for="cat in categories" :key="cat.id" :value="String(cat.id)">
+                                    <option
+                                        v-for="cat in categories"
+                                        :key="cat.id"
+                                        :value="String(cat.id)"
+                                    >
                                         {{ cat.nama }}
                                     </option>
                                 </select>
                             </div>
                             <div>
-                                <label class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Jenis</label>
-                                <select v-model="tipeKerja" :class="selectClass" aria-label="Filter jenis pekerjaan">
+                                <label
+                                    class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400"
+                                    >Jenis</label
+                                >
+                                <select
+                                    v-model="tipeKerja"
+                                    :class="selectClass"
+                                    aria-label="Filter jenis pekerjaan"
+                                >
                                     <option value="">Semua Jenis</option>
                                     <option value="full_time">Full-time</option>
                                     <option value="part_time">Part-time</option>
@@ -271,8 +358,15 @@ const tipeKerjaLabelMap: Record<string, string> = {
                                 </select>
                             </div>
                             <div>
-                                <label class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Tempat Kerja</label>
-                                <select v-model="locationType" :class="selectClass" aria-label="Filter tempat kerja">
+                                <label
+                                    class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400"
+                                    >Tempat Kerja</label
+                                >
+                                <select
+                                    v-model="locationType"
+                                    :class="selectClass"
+                                    aria-label="Filter tempat kerja"
+                                >
                                     <option value="">Semua Tempat Kerja</option>
                                     <option value="onsite">On-site</option>
                                     <option value="remote">Remote</option>
@@ -284,25 +378,61 @@ const tipeKerjaLabelMap: Record<string, string> = {
                         <!-- Row: Perusahaan + Gaji -->
                         <div class="grid grid-cols-1 gap-3 lg:grid-cols-3">
                             <div>
-                                <label class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Perusahaan</label>
-                                <select v-model="mitraId" :class="selectClass" aria-label="Filter perusahaan">
+                                <label
+                                    class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400"
+                                    >Perusahaan</label
+                                >
+                                <select
+                                    v-model="mitraId"
+                                    :class="selectClass"
+                                    aria-label="Filter perusahaan"
+                                >
                                     <option value="">Semua Perusahaan</option>
-                                    <option v-for="m in mitras" :key="m.id" :value="String(m.id)">
+                                    <option
+                                        v-for="m in mitras"
+                                        :key="m.id"
+                                        :value="String(m.id)"
+                                    >
                                         {{ m.nama_perusahaan }}
                                     </option>
                                 </select>
                             </div>
                             <div class="lg:col-span-2">
-                                <label class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Rentang Gaji</label>
+                                <label
+                                    class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400"
+                                    >Rentang Gaji</label
+                                >
                                 <div class="flex items-center gap-2">
                                     <div class="relative flex-1">
-                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">Rp</span>
-                                        <input v-model="salaryMin" type="number" placeholder="Minimum" :class="selectClass" class="pl-8" aria-label="Gaji minimum" />
+                                        <span
+                                            class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400"
+                                            >Rp</span
+                                        >
+                                        <input
+                                            v-model="salaryMin"
+                                            type="number"
+                                            placeholder="Minimum"
+                                            :class="selectClass"
+                                            class="pl-8"
+                                            aria-label="Gaji minimum"
+                                        />
                                     </div>
-                                    <span class="text-sm text-slate-300">–</span>
+                                    <span class="text-sm text-slate-300"
+                                        >–</span
+                                    >
                                     <div class="relative flex-1">
-                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">Rp</span>
-                                        <input v-model="salaryMax" type="number" placeholder="Maksimum" :class="selectClass" class="pl-8" aria-label="Gaji maksimum" />
+                                        <span
+                                            class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400"
+                                            >Rp</span
+                                        >
+                                        <input
+                                            v-model="salaryMax"
+                                            type="number"
+                                            placeholder="Maksimum"
+                                            :class="selectClass"
+                                            class="pl-8"
+                                            aria-label="Gaji maksimum"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -331,29 +461,73 @@ const tipeKerjaLabelMap: Record<string, string> = {
                 <div
                     v-for="job in jobs.data"
                     :key="job.id"
-                    class="group rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm transition-all duration-200 hover:border-[#85B7EB]/40 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-[#85B7EB]/30"
+                    class="group overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-sm transition-all duration-200 hover:border-[#85B7EB]/40 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-[#85B7EB]/30"
                 >
+                    <div v-if="job.poster_url" class="relative h-32 overflow-hidden bg-slate-100 dark:bg-zinc-800 sm:hidden">
+                        <img
+                            :src="job.poster_url"
+                            :alt="`Poster ${job.title}`"
+                            class="h-full w-full object-cover"
+                        />
+                    </div>
+
+                    <div class="p-5">
                     <div class="flex gap-4">
                         <!-- Company Logo -->
-                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800">
+                        <div
+                            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800"
+                        >
                             <img
                                 v-if="job.mitra?.logo_url"
                                 :src="job.mitra?.logo_url"
                                 :alt="job.mitra.nama_perusahaan"
                                 class="h-10 w-10 rounded-lg object-contain"
                             />
-                            <Building2 v-else class="h-5 w-5 text-slate-400 dark:text-zinc-500" />
+                            <Building2
+                                v-else
+                                class="h-5 w-5 text-slate-400 dark:text-zinc-500"
+                            />
                         </div>
 
                         <!-- Job Info -->
                         <div class="min-w-0 flex-1">
-                            <h3 class="truncate text-[15px] font-bold text-slate-900 group-hover:text-[#0C447C] dark:text-white dark:group-hover:text-[#85B7EB]">
+                            <h3
+                                class="truncate text-[15px] font-bold text-slate-900 group-hover:text-[#0C447C] dark:text-white dark:group-hover:text-[#85B7EB]"
+                            >
                                 {{ job.title }}
                             </h3>
-                            <p class="mt-0.5 truncate text-sm text-slate-500 dark:text-slate-400">
+                            <p
+                                class="mt-0.5 truncate text-sm text-slate-500 dark:text-slate-400"
+                            >
                                 {{ job.mitra?.nama_perusahaan }}
                             </p>
                         </div>
+
+                        <!-- Poster Thumbnail -->
+                        <div
+                            v-if="job.poster_url"
+                            class="hidden sm:block shrink-0"
+                        >
+                            <img
+                                :src="job.poster_url"
+                                :alt="`Poster ${job.title}`"
+                                class="h-20 w-28 rounded-xl border border-slate-100 object-cover shadow-sm dark:border-zinc-700"
+                            />
+                        </div>
+
+                        <button
+                            type="button"
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-all duration-200"
+                            :class="isBookmarked(job)
+                                ? 'border-[#0C447C]/30 bg-[#0C447C]/5 text-[#0C447C] dark:border-[#85B7EB]/40 dark:bg-[#85B7EB]/10 dark:text-[#85B7EB]'
+                                : 'border-slate-200 bg-white text-slate-400 hover:border-[#0C447C]/30 hover:text-[#0C447C] dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-[#85B7EB]/40 dark:hover:text-[#85B7EB]'"
+                            :disabled="bookmarkLoading[job.id]"
+                            :aria-label="isBookmarked(job) ? 'Hapus bookmark' : 'Simpan bookmark'"
+                            @click="toggleBookmark(job)"
+                        >
+                            <BookmarkCheck v-if="isBookmarked(job)" class="h-5 w-5" />
+                            <Bookmark v-else class="h-5 w-5" />
+                        </button>
                     </div>
 
                     <!-- Tags -->
@@ -363,7 +537,10 @@ const tipeKerjaLabelMap: Record<string, string> = {
                             variant="secondary"
                             class="rounded-lg bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-zinc-800 dark:text-zinc-400"
                         >
-                            {{ experienceLabelMap[job.experience_level] ?? job.experience_level }}
+                            {{
+                                experienceLabelMap[job.experience_level] ??
+                                job.experience_level
+                            }}
                         </Badge>
                         <Badge
                             v-if="job.location_type"
@@ -371,7 +548,27 @@ const tipeKerjaLabelMap: Record<string, string> = {
                             class="rounded-lg bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-600 dark:bg-blue-950/30 dark:text-blue-400"
                         >
                             <MapPin class="mr-1 inline h-3 w-3" />
-                            {{ locationLabelMap[job.location_type] ?? job.location_type }}
+                            {{
+                                locationLabelMap[job.location_type] ??
+                                job.location_type
+                            }}
+                            <span
+                                v-if="
+                                    job.location_city &&
+                                    (job.location_type === 'onsite' ||
+                                        job.location_type === 'hybrid')
+                                "
+                                class="ml-0.5 opacity-80"
+                                >· {{ job.location_city }}</span
+                            >
+                        </Badge>
+                        <Badge
+                            v-if="job.location_city"
+                            variant="secondary"
+                            class="rounded-lg bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
+                        >
+                            <MapPin class="mr-1 inline h-3 w-3" />
+                            {{ job.location_city }}
                         </Badge>
                         <Badge
                             v-if="job.tipe_kerja"
@@ -379,7 +576,10 @@ const tipeKerjaLabelMap: Record<string, string> = {
                             class="rounded-lg bg-[#0C447C]/5 px-2 py-0.5 text-[11px] font-medium text-[#0C447C] dark:bg-[#85B7EB]/10 dark:text-[#85B7EB]"
                         >
                             <Briefcase class="mr-1 inline h-3 w-3" />
-                            {{ tipeKerjaLabelMap[job.tipe_kerja] ?? job.tipe_kerja }}
+                            {{
+                                tipeKerjaLabelMap[job.tipe_kerja] ??
+                                job.tipe_kerja
+                            }}
                         </Badge>
                         <Badge
                             v-if="job.category?.nama"
@@ -391,13 +591,23 @@ const tipeKerjaLabelMap: Record<string, string> = {
                     </div>
 
                     <!-- Bottom Row: Salary, Deadline, CTA -->
-                    <div class="mt-4 flex items-center justify-between border-t border-slate-50 pt-3 dark:border-zinc-800">
-                        <div class="flex items-center gap-3 text-xs text-slate-400 dark:text-zinc-500">
-                            <span v-if="salaryDisplay(job)" class="flex items-center gap-1 font-semibold text-[#0C447C] dark:text-[#85B7EB]">
+                    <div
+                        class="mt-4 flex items-center justify-between border-t border-slate-50 pt-3 dark:border-zinc-800"
+                    >
+                        <div
+                            class="flex items-center gap-3 text-xs text-slate-400 dark:text-zinc-500"
+                        >
+                            <span
+                                v-if="salaryDisplay(job)"
+                                class="flex items-center gap-1 font-semibold text-[#0C447C] dark:text-[#85B7EB]"
+                            >
                                 <DollarSign class="h-3.5 w-3.5" />
                                 {{ salaryDisplay(job) }}
                             </span>
-                            <span v-if="job.deadline" class="flex items-center gap-1">
+                            <span
+                                v-if="job.deadline"
+                                class="flex items-center gap-1"
+                            >
                                 <Clock class="h-3.5 w-3.5" />
                                 {{ formatDeadline(job.deadline) }}
                             </span>
@@ -409,6 +619,7 @@ const tipeKerjaLabelMap: Record<string, string> = {
                         >
                             Lihat Detail
                         </Link>
+                    </div>
                     </div>
                 </div>
             </div>

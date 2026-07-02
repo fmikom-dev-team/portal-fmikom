@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { Head, router, usePage } from "@inertiajs/vue3";
+import { Head, router, useForm, usePage } from "@inertiajs/vue3";
+import axios from "axios";
 import { computed, nextTick, onMounted, ref } from "vue";
 import AppLayout from "@/layouts/AppLayout.vue";
+import LocationPicker from "@/components/Trace/LocationPicker.vue";
 import { dashboard } from "@/routes";
 import type { BreadcrumbItem } from "@/types";
 
@@ -104,6 +106,34 @@ onMounted(async () => {
 // State untuk Flip Card
 const flippedModuleCode = ref<string | null>(null);
 const selectedRoleSlug = ref<Record<string, string>>({}); // { 'FAST': 'dosen', 'WIMS': 'super-admin' }
+const showAlumniRequestModal = ref(false);
+const isLoadingAlumniRequestOptions = ref(false);
+const alumniRoleChangeRequest = ref<any | null>(null);
+const programStudis = ref<Array<{ id: number; nama: string; kode: string }>>([]);
+const provinsis = ref<Array<{ id: number; name: string }>>([]);
+const kotas = ref<Array<{ id: number; name: string; provinsi_id: number }>>([]);
+
+const hasTraceAccess = computed(() => {
+    return Boolean(userRolesByModule.value.TRACE?.length);
+});
+
+const canRequestAlumniRole = computed(() => {
+    return user.value?.user_type === "mahasiswa" && !hasTraceAccess.value;
+});
+
+const alumniRequestForm = useForm({
+    tahun_lulus: null as number | null,
+    angkatan: null as number | null,
+    program_studi_id: null as number | null,
+    no_telepon: "",
+    jenis_kelamin: "",
+    provinsi_id: null as number | null,
+    kota_id: null as number | null,
+    alamat_rumah: "",
+    latitude_rumah: null as number | null,
+    longitude_rumah: null as number | null,
+    bukti_kelulusan: null as File | null,
+});
 
 const setInitialRole = (moduleCode: string) => {
     const roles = userRolesByModule.value[moduleCode];
@@ -139,6 +169,45 @@ const enterSystem = (moduleCode: string) => {
         module_code: moduleCode,
         role_slug: roleSlug,
     });
+};
+
+const openAlumniRequestModal = async () => {
+    showAlumniRequestModal.value = true;
+
+    if (programStudis.value.length > 0) return;
+
+    isLoadingAlumniRequestOptions.value = true;
+
+    try {
+        const response = await axios.get("/trace/alumni-role-change/options");
+        programStudis.value = response.data.programStudis || [];
+        provinsis.value = response.data.provinsis || [];
+        kotas.value = response.data.kotas || [];
+        alumniRoleChangeRequest.value = response.data.request || null;
+
+        const defaults = response.data.defaults || {};
+        alumniRequestForm.program_studi_id = defaults.program_studi_id || null;
+        alumniRequestForm.no_telepon = defaults.no_telepon || "";
+        alumniRequestForm.tahun_lulus = defaults.tahun_lulus || null;
+    } finally {
+        isLoadingAlumniRequestOptions.value = false;
+    }
+};
+
+const submitAlumniRoleChange = () => {
+    alumniRequestForm.post("/trace/alumni-role-change", {
+        preserveScroll: true,
+        onSuccess: () => {
+            showAlumniRequestModal.value = false;
+            alumniRoleChangeRequest.value = { status: "pending" };
+            alumniRequestForm.reset("bukti_kelulusan");
+        },
+    });
+};
+
+const onAlumniProofChange = (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    alumniRequestForm.bukti_kelulusan = input.files?.[0] || null;
 };
 </script>
 
@@ -339,6 +408,14 @@ const enterSystem = (moduleCode: string) => {
                                             />
                                         </svg>
                                     </button>
+                                    <button
+                                        v-if="mod.code === 'TRACE' && canRequestAlumniRole"
+                                        type="button"
+                                        class="mt-2 w-full rounded-xl border border-[#2563EB]/20 bg-white py-2.5 text-xs font-extrabold text-[#2563EB] transition hover:bg-[#2563EB]/5 dark:border-[#85B7EB]/30 dark:bg-zinc-900 dark:text-[#85B7EB]"
+                                        @click.stop="openAlumniRequestModal"
+                                    >
+                                        Ajukan Perubahan ke Alumni
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -499,6 +576,183 @@ const enterSystem = (moduleCode: string) => {
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div
+            v-if="showAlumniRequestModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm"
+            @click.self="showAlumniRequestModal = false"
+        >
+            <div class="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl dark:bg-zinc-950">
+                <div class="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-950">
+                    <div>
+                        <h2 class="text-lg font-black text-slate-900 dark:text-white">
+                            Pengajuan Perubahan Role Alumni
+                        </h2>
+                        <p class="text-xs font-medium text-slate-500">
+                            Lengkapi data minimum agar admin dapat meninjau pengajuan Anda.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        class="rounded-xl px-3 py-2 text-sm font-bold text-slate-500 transition hover:bg-slate-100 dark:hover:bg-zinc-900"
+                        @click="showAlumniRequestModal = false"
+                    >
+                        Tutup
+                    </button>
+                </div>
+
+                <div v-if="isLoadingAlumniRequestOptions" class="p-6 text-sm font-semibold text-slate-500">
+                    Memuat data form...
+                </div>
+
+                <div
+                    v-else-if="alumniRoleChangeRequest?.status === 'pending'"
+                    class="p-6"
+                >
+                    <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm font-semibold text-amber-900">
+                        Pengajuan Anda sedang menunggu persetujuan admin.
+                    </div>
+                </div>
+
+                <form v-else class="space-y-5 p-6" @submit.prevent="submitAlumniRoleChange">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wider text-slate-500">
+                                Tahun Lulus
+                            </label>
+                            <input
+                                v-model.number="alumniRequestForm.tahun_lulus"
+                                type="number"
+                                required
+                                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
+                            />
+                            <p v-if="alumniRequestForm.errors.tahun_lulus" class="mt-1 text-xs text-rose-500">
+                                {{ alumniRequestForm.errors.tahun_lulus }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wider text-slate-500">
+                                Angkatan
+                            </label>
+                            <input
+                                v-model.number="alumniRequestForm.angkatan"
+                                type="number"
+                                required
+                                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
+                            />
+                            <p v-if="alumniRequestForm.errors.angkatan" class="mt-1 text-xs text-rose-500">
+                                {{ alumniRequestForm.errors.angkatan }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wider text-slate-500">
+                                Program Studi
+                            </label>
+                            <select
+                                v-model.number="alumniRequestForm.program_studi_id"
+                                required
+                                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
+                            >
+                                <option :value="null">Pilih program studi</option>
+                                <option v-for="prodi in programStudis" :key="prodi.id" :value="prodi.id">
+                                    {{ prodi.nama }}
+                                </option>
+                            </select>
+                            <p v-if="alumniRequestForm.errors.program_studi_id" class="mt-1 text-xs text-rose-500">
+                                {{ alumniRequestForm.errors.program_studi_id }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wider text-slate-500">
+                                No. HP / WhatsApp
+                            </label>
+                            <input
+                                v-model="alumniRequestForm.no_telepon"
+                                type="text"
+                                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
+                            />
+                        </div>
+
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wider text-slate-500">
+                                Jenis Kelamin
+                            </label>
+                            <select
+                                v-model="alumniRequestForm.jenis_kelamin"
+                                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
+                            >
+                                <option value="">Pilih jenis kelamin</option>
+                                <option value="L">Laki-laki</option>
+                                <option value="P">Perempuan</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 dark:border-blue-900/50 dark:bg-blue-950/20">
+                        <label class="mb-1 block text-xs font-black uppercase tracking-wider text-slate-500">
+                            Bukti Kelulusan
+                        </label>
+                        <input
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            required
+                            class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold file:mr-4 file:rounded-lg file:border-0 file:bg-[#2563EB] file:px-3 file:py-2 file:text-xs file:font-bold file:text-white dark:border-zinc-800 dark:bg-zinc-950 dark:text-white"
+                            @change="onAlumniProofChange"
+                        />
+                        <p class="mt-2 text-xs font-medium text-slate-500">
+                            Upload SKL, ijazah, atau dokumen resmi lain dalam format PDF/JPG/PNG maksimal 5MB.
+                        </p>
+                        <p v-if="alumniRequestForm.errors.bukti_kelulusan" class="mt-1 text-xs text-rose-500">
+                            {{ alumniRequestForm.errors.bukti_kelulusan }}
+                        </p>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+                        <LocationPicker
+                            v-model:province-id="alumniRequestForm.provinsi_id"
+                            v-model:city-id="alumniRequestForm.kota_id"
+                            v-model:latitude="alumniRequestForm.latitude_rumah"
+                            v-model:longitude="alumniRequestForm.longitude_rumah"
+                            v-model:address="alumniRequestForm.alamat_rumah"
+                            map-label="Tandai Domisili di Peta"
+                            :provinces="provinsis"
+                            :cities="kotas"
+                        />
+
+                        <div class="mt-4">
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wider text-slate-500">
+                                Alamat Lengkap Rumah / Domisili
+                            </label>
+                            <textarea
+                                v-model="alumniRequestForm.alamat_rumah"
+                                rows="3"
+                                class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold dark:border-zinc-800 dark:bg-zinc-950 dark:text-white"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 border-t border-slate-100 pt-5 dark:border-zinc-800">
+                        <button
+                            type="button"
+                            class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                            @click="showAlumniRequestModal = false"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="submit"
+                            :disabled="alumniRequestForm.processing"
+                            class="rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:opacity-50"
+                        >
+                            {{ alumniRequestForm.processing ? 'Mengirim...' : 'Kirim Pengajuan' }}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </AppLayout>

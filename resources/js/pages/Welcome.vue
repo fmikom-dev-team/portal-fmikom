@@ -259,26 +259,6 @@ onMounted(() => {
         }
     }
 
-    // Config untuk Intersection Observer (Animasi saat scroll)
-    const observerOptions = {
-        root: null,
-        rootMargin: "0px 0px -50px 0px", // Memunculkan animasi sedikit sebelum elemen benar-benar masuk viewport
-        threshold: 0.15,
-    };
-
-    const observer = new IntersectionObserver((entries, observer) => {
-        for (const entry of entries) {
-            if (entry.isIntersecting) {
-                entry.target.classList.add("show-animate");
-                observer.unobserve(entry.target); // Lepas observer setelah animasi jalan (supaya tidak berulang saat scroll naik turun)
-            }
-        }
-    }, observerOptions);
-
-    for (const el of document.querySelectorAll(".hide-animate")) {
-        observer.observe(el);
-    }
-
     setTimeout(() => {
         updateNewsScrollState();
     }, 300);
@@ -1141,36 +1121,17 @@ html {
     animation-play-state: paused;
 }
 
-/* Base starting styles for elements waiting to be revealed (combining translate & scale-up) */
-.hide-animate {
-    opacity: 0;
-    will-change: transform, opacity;
-    transform: scale(0.98);
-}
-
-/* Slide Up */
-.hide-animate.slide-up {
-    transform: translateY(20px) scale(0.98);
-}
-/* Slide Left (moving leftwards from right) */
-.hide-animate.slide-left {
-    transform: translateX(20px) scale(0.98);
-}
-/* Slide Right (moving rightwards from left) */
-.hide-animate.slide-right {
-    transform: translateX(-20px) scale(0.98);
-}
-.hide-animate.scale-in {
-    transform: scale(0.98);
-}
-
-/* Once class 'show-animate' is added by JS intersection observer */
+/* Scroll animations disabled for stability; content renders immediately */
+.hide-animate,
+.hide-animate.slide-up,
+.hide-animate.slide-left,
+.hide-animate.slide-right,
+.hide-animate.scale-in,
 .show-animate {
     opacity: 1 !important;
-    transform: translate(0, 0) scale(1) !important;
-    transition:
-        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-        opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    transform: none !important;
+    transition: none !important;
+    will-change: auto;
 }
 
 /* Progressive Blur Layers with Bottom-to-Top Masking */

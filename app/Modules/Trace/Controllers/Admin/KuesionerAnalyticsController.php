@@ -68,7 +68,7 @@ class KuesionerAnalyticsController extends Controller
         $prodi = $request->query('prodi');
 
         $query = Response::where('kuesioner_id', $id)
-            ->with(['user.alumniProfile'])
+            ->with(['user.programStudi', 'user.alumniProfile'])
             ->latest();
 
         if ($tahunLulus || $prodi) {
@@ -84,7 +84,30 @@ class KuesionerAnalyticsController extends Controller
             });
         }
 
-        return response()->json($query->paginate(20));
+        $respondents = $query->paginate(20);
+
+        $respondents->getCollection()->transform(function (Response $response) {
+            $user = $response->user;
+            $profile = $user?->alumniProfile;
+
+            return [
+                'id' => $response->id,
+                'submitted_at' => $response->submitted_at?->toISOString(),
+                'created_at' => $response->created_at?->toISOString(),
+                'angkatan' => $response->angkatan,
+                'respondent' => [
+                    'name' => $user?->name ?? '-',
+                    'email' => $user?->email ?? '-',
+                    'nim' => $user?->nomor_induk ?? $profile?->nim,
+                    'program_studi' => $user?->programStudi?->nama ?? 'Alumni',
+                    'tahun_lulus' => $user?->tahun_lulus,
+                    'angkatan' => $profile?->angkatan ?? $response->angkatan,
+                    'alumni_profile_id' => $profile?->id,
+                ],
+            ];
+        });
+
+        return response()->json($respondents);
     }
 
     public function export(Request $request, $id)

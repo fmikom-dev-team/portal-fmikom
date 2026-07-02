@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from "@inertiajs/vue3";
-import type { ProfilAlumni, CareerHistory, Education } from "@/types/trace";
+import type { ProfilAlumni, CareerHistory } from "@/types/trace";
 import { ArrowLeft, GraduationCap } from "lucide-vue-next";
 import TraceAdminLayout from "@/layouts/TraceAdminLayout.vue";
 import { TPageHeader } from "@/components/Trace";
@@ -14,7 +14,9 @@ import AlumniEducationHistory from "./components/alumni/AlumniEducationHistory.v
 const props = defineProps<{
     alumni: ProfilAlumni;
     currentCareer: CareerHistory | null;
-    currentEducation: Education | null;
+    currentEducation: CareerHistory | null;
+    careerHistory: CareerHistory[];
+    educationHistory: CareerHistory[];
 }>();
 
 const breadcrumbs = [
@@ -22,9 +24,7 @@ const breadcrumbs = [
     { title: props.alumni?.nama_lengkap || "Detail Alumni", href: "#" },
 ];
 
-const currentStatus =
-    props.currentCareer?.status ||
-    (props.currentEducation ? "lanjut_studi" : "mencari_kerja");
+const currentStatus = props.currentCareer?.status || "mencari_kerja";
 </script>
 
 <template>
@@ -72,8 +72,8 @@ const currentStatus =
 
                 <!-- ===== ROW 2: HISTORY SECTIONS GRID (2 COLUMNS) ===== -->
                 <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    <AlumniCareerHistory :alumni="alumni" />
-                    <AlumniEducationHistory :alumni="alumni" />
+                    <AlumniCareerHistory :careers="careerHistory" />
+                    <AlumniEducationHistory :education-history="educationHistory" />
                 </div>
             </div>
         </div>

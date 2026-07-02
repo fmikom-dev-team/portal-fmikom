@@ -3,12 +3,26 @@
 namespace App\Models\Tracer;
 
 use App\Models\User;
+use App\Modules\Trace\Services\TraceCacheService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Response extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::saved(function ($response) {
+            TraceCacheService::forgetQuestionnaireCaches($response->kuesioner_id);
+            TraceCacheService::forgetDashboardCaches(userId: $response->user_id);
+        });
+
+        static::deleted(function ($response) {
+            TraceCacheService::forgetQuestionnaireCaches($response->kuesioner_id);
+            TraceCacheService::forgetDashboardCaches(userId: $response->user_id);
+        });
+    }
 
     protected $table = 'responses';
 

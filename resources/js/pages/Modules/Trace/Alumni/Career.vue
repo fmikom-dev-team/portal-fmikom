@@ -62,7 +62,8 @@ const props = defineProps<{
     educationHistory: Career[];
     stats: Stats;
     provinces: Lokasi[];
-    cities: Lokasi[];
+    cities: Array<Lokasi & { provinsi_id: number }>;
+    readOnly?: boolean;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -76,11 +77,15 @@ const showDeleteConfirm = ref(false);
 const deletingCareer = ref<Career | null>(null);
 
 const openAddModal = () => {
+    if (props.readOnly) return;
+
     editingCareer.value = null;
     showModal.value = true;
 };
 
 const openEditModal = (career: Career) => {
+    if (props.readOnly) return;
+
     editingCareer.value = career;
     showModal.value = true;
 };
@@ -91,11 +96,14 @@ const closeModal = () => {
 };
 
 const confirmDelete = (career: Career) => {
+    if (props.readOnly) return;
+
     deletingCareer.value = career;
     showDeleteConfirm.value = true;
 };
 
 const deleteCareer = () => {
+    if (props.readOnly) return;
     if (!deletingCareer.value) return;
     router.delete(`/trace/career/${deletingCareer.value.id}`, {
         preserveScroll: true,
@@ -110,6 +118,8 @@ const deleteCareer = () => {
 };
 
 const setAsCurrent = (career: Career) => {
+    if (props.readOnly) return;
+
     router.post(
         `/trace/career/${career.id}/set-current`,
         {},
@@ -136,6 +146,7 @@ const setAsCurrent = (career: Career) => {
             >
                 <template #actions>
                     <button
+                        v-if="!readOnly"
                         @click="openAddModal"
                         class="flex items-center gap-2 rounded-lg bg-[#0C447C] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#0C447C]/90 dark:bg-[#85B7EB] dark:text-slate-900 dark:hover:bg-[#85B7EB]/90 shadow-sm shadow-[#0C447C]/20"
                     >
@@ -167,6 +178,7 @@ const setAsCurrent = (career: Career) => {
                         />
                     </div>
                     <button
+                        v-if="!readOnly"
                         @click="openEditModal(currentCareer)"
                         class="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-zinc-700 dark:text-slate-300 dark:hover:bg-zinc-800"
                     >
@@ -583,6 +595,7 @@ const setAsCurrent = (career: Career) => {
                     Tambahkan status karir Anda saat ini untuk melengkapi profil
                 </p>
                 <button
+                    v-if="!readOnly"
                     @click="openAddModal"
                     class="inline-flex items-center gap-2 rounded-lg bg-[#0C447C] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#0C447C]/90 dark:bg-[#85B7EB] dark:text-slate-900 dark:hover:bg-[#85B7EB]/90 shadow-sm shadow-[#0C447C]/20"
                 >
@@ -599,6 +612,7 @@ const setAsCurrent = (career: Career) => {
                     @edit="openEditModal"
                     @delete="confirmDelete"
                     @set-current="setAsCurrent"
+                    :read-only="readOnly"
                 />
                 <CareerTimelineCard
                     title="Riwayat Pendidikan Lanjut"
@@ -606,12 +620,14 @@ const setAsCurrent = (career: Career) => {
                     @edit="openEditModal"
                     @delete="confirmDelete"
                     @set-current="setAsCurrent"
+                    :read-only="readOnly"
                 />
             </div>
         </div>
 
         <!-- Career Form Modal -->
         <CareerFormModal
+            v-if="!readOnly"
             v-model:show="showModal"
             :career="editingCareer"
             :provinces="provinces"
@@ -622,7 +638,7 @@ const setAsCurrent = (career: Career) => {
         <!-- Delete Confirmation Modal -->
         <Teleport to="body">
             <div
-                v-if="showDeleteConfirm"
+                v-if="showDeleteConfirm && !readOnly"
                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
                 @click.self="showDeleteConfirm = false"
             >

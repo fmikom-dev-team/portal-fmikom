@@ -78,7 +78,7 @@ class HandleInertiaRequests extends Middleware
                 )
                 : 0,
             'unread_notifications_count' => $user
-                ? Cache::remember("unread_notif_count_{$user->id}_".session('active_role', ''), 30, function () use ($user) {
+                ? Cache::remember("unread_notif_count_{$user->id}_".session('active_module', '').'_'.session('active_role', ''), 30, function () use ($user) {
                     $activeRole = strtolower(session('active_role', ''));
                     $activeModule = strtoupper(session('active_module', ''));
                     $query = $user->unreadNotifications();
@@ -87,16 +87,24 @@ class HandleInertiaRequests extends Middleware
                         $query->whereNotIn('data->type', ['like', 'comment', 'follow', 'collaboration']);
                     }
 
+                    if ($activeModule === 'TRACE') {
+                        $query->where('data->href', 'like', '/trace%');
+                    }
+
                     return $query->count();
                 })
                 : 0,
-            'recent_notifications' => $user ? fn () => Cache::remember("recent_notifs_{$user->id}_".session('active_role', ''), 30, function () use ($user) {
+            'recent_notifications' => $user ? fn () => Cache::remember("recent_notifs_{$user->id}_".session('active_module', '').'_'.session('active_role', ''), 30, function () use ($user) {
                 $activeRole = strtolower(session('active_role', ''));
                 $activeModule = strtoupper(session('active_module', ''));
                 $query = $user->notifications()->latest();
 
                 if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
                     $query->whereNotIn('data->type', ['like', 'comment', 'follow', 'collaboration']);
+                }
+
+                if ($activeModule === 'TRACE') {
+                    $query->where('data->href', 'like', '/trace%');
                 }
 
                 $notifs = $query->limit(30)->get();

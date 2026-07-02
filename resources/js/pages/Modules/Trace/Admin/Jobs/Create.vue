@@ -43,6 +43,7 @@ const form = useForm({
     is_salary_visible: true,
     deadline: '',
     status: 'published',
+    poster: null as File | null,
 });
 
 const statusOptions = [
@@ -55,6 +56,7 @@ function submit() {
         ...data,
         description: data.description ? JSON.stringify(data.description) : '',
     })).post('/trace/admin/jobs', {
+        forceFormData: true,
         onError: () => toast.error('Gagal menyimpan lowongan. Periksa kembali form Anda.'),
     });
 }

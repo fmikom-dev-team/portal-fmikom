@@ -33,6 +33,7 @@ interface Job {
     is_salary_visible: boolean;
     deadline: string | null;
     status: string;
+    poster_url: string | null;
 }
 
 const props = defineProps<{
@@ -71,6 +72,7 @@ const form = useForm({
     is_salary_visible: props.job.is_salary_visible ?? true,
     deadline: props.job.deadline ? props.job.deadline.split('T')[0] : '',
     status: props.job.status ?? 'published',
+    poster: null as File | null,
 });
 
 const statusOptions = [
@@ -83,7 +85,9 @@ function submit() {
     form.transform((data) => ({
         ...data,
         description: data.description ? JSON.stringify(data.description) : '',
-    })).put(`/trace/admin/jobs/${props.job.id}`, {
+        _method: 'PUT',
+    })).post(`/trace/admin/jobs/${props.job.id}`, {
+        forceFormData: true,
         onError: () => toast.error('Gagal memperbarui lowongan. Periksa kembali form Anda.'),
     });
 }
@@ -104,6 +108,7 @@ function submit() {
                     :categories="categories"
                     :mitras="mitras"
                     :status-options="statusOptions"
+                    :existing-poster-url="job.poster_url"
                 >
                     <template #status-hint>
                         <p class="text-xs text-slate-500 dark:text-slate-400">

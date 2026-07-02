@@ -6,7 +6,6 @@ use App\Models\Auth\AuthEmailLog;
 use App\Models\Auth\AuthLoginAttempt;
 use App\Models\Auth\AuthSession;
 use App\Models\Auth\AuthSetting;
-use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\CareerHistory;
 use App\Models\User;
 use App\Modules\WorkOs\Services\AuditLogger;
@@ -227,26 +226,6 @@ class AppServiceProvider extends ServiceProvider
             }
         }
 
-        // ── Activity Log: Auth Events ─────────────────────────────────────────
-        Event::listen(Login::class, function (Login $event) {
-            ActivityLog::create([
-                'user_id' => $event->user->id,
-                'action' => 'auth.login',
-                'description' => 'Login ke sistem',
-                'ip_address' => request()->ip(),
-            ]);
-        });
-
-        Event::listen(Logout::class, function (Logout $event) {
-            if ($event->user) {
-                ActivityLog::create([
-                    'user_id' => $event->user->id,
-                    'action' => 'auth.logout',
-                    'description' => 'Logout dari sistem',
-                    'ip_address' => request()->ip(),
-                ]);
-            }
-        });
     }
 
     /**

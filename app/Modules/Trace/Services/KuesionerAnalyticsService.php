@@ -96,19 +96,34 @@ class KuesionerAnalyticsService
                         $analysis['distribution'][] = [
                             'label' => $opt->label,
                             'count' => $counts[$opt->id] ?? 0,
+                            'score' => $opt->nilai,
                         ];
                     }
+                    $analysis['average'] = round($allAverages->get($q->id)?->average ?? 0, 2);
+                    $analysis['total_responses'] = array_sum(array_column($analysis['distribution'] ?? [], 'count'));
                 } elseif ($q->tipe === 'checkbox') {
                     $rawAnswers = $allAnswersRaw->get($q->id, collect())->pluck('jawaban_text');
                     $optionCounts = [];
+                    $scoreSum = 0;
+                    $scoreCount = 0;
                     foreach ($rawAnswers as $raw) {
                         $decoded = is_string($raw) ? json_decode($raw, true) : $raw;
                         if (is_array($decoded)) {
                             foreach ($decoded as $val) {
                                 $optionCounts[$val] = ($optionCounts[$val] ?? 0) + 1;
+                                $score = $q->opsiJawabans->firstWhere('id', (int) $val)?->nilai;
+                                if ($score !== null) {
+                                    $scoreSum += (float) $score;
+                                    $scoreCount++;
+                                }
                             }
                         } elseif ($raw) {
                             $optionCounts[$raw] = ($optionCounts[$raw] ?? 0) + 1;
+                            $score = $q->opsiJawabans->firstWhere('label', $raw)?->nilai;
+                            if ($score !== null) {
+                                $scoreSum += (float) $score;
+                                $scoreCount++;
+                            }
                         }
                     }
                     foreach ($q->opsiJawabans as $opt) {
@@ -116,8 +131,11 @@ class KuesionerAnalyticsService
                         $analysis['distribution'][] = [
                             'label' => $opt->label,
                             'count' => $count,
+                            'score' => $opt->nilai,
                         ];
                     }
+                    $analysis['average'] = $scoreCount > 0 ? round($scoreSum / $scoreCount, 2) : 0;
+                    $analysis['total_responses'] = $rawAnswers->filter(fn ($a) => $a !== null && $a !== '' && $a !== '[]')->count();
                 } elseif ($q->tipe === 'matrix') {
                     $rawAnswers = $allAnswersRaw->get($q->id, collect())->pluck('jawaban_text');
                     $rowSums = [];
@@ -168,7 +186,6 @@ class KuesionerAnalyticsService
                         $analysis['row_averages'] = $rowAverages;
                     }
                 } elseif ($q->tipe === 'scale' || ($q->tipe === 'number' && ($q->meta['jenis_data'] ?? '') === 'scale')) {
-                    $analysis['average'] = round($allAverages->get($q->id)?->average ?? 0, 2);
                     $scaleMin = (int) ($q->meta['scale_min'] ?? 1);
                     $scaleMax = (int) ($q->meta['scale_max'] ?? 5);
                     $analysis['scale_min'] = $scaleMin;
@@ -178,6 +195,14 @@ class KuesionerAnalyticsService
 
                     // Distribution: count per scale value
                     $scaleAnswers = $allAnswersRaw->get($q->id, collect())->pluck('jawaban_text');
+                    $validScaleAnswers = $scaleAnswers
+                        ->filter(fn ($a) => $a !== null && $a !== '' && is_numeric($a))
+                        ->map(fn ($a) => (float) $a);
+
+                    $analysis['average'] = $validScaleAnswers->count() > 0
+                        ? round($validScaleAnswers->avg(), 2)
+                        : 0;
+
                     $dist = [];
                     for ($v = $scaleMin; $v <= $scaleMax; $v++) {
                         $count = $scaleAnswers->filter(fn ($a) => (int) $a === $v)->count();
@@ -187,7 +212,7 @@ class KuesionerAnalyticsService
                         ];
                     }
                     $analysis['distribution'] = $dist;
-                    $analysis['total_responses'] = $scaleAnswers->filter(fn ($a) => $a !== null && $a !== '')->count();
+                    $analysis['total_responses'] = $validScaleAnswers->count();
                 } else {
                     $qAnswers = $allAnswersRaw->get($q->id, collect())
                         ->filter(fn ($ans) => ! empty($ans->jawaban_text))
@@ -214,6 +239,7 @@ class KuesionerAnalyticsService
                     'tipe' => $q->tipe,
                     'kategori' => $q->kategori,
                     'acuan' => $acuan,
+                    'indikator' => $q->meta['indikator'] ?? [],
                     'analysis' => $analysis,
                 ];
             }
@@ -270,6 +296,7 @@ class KuesionerAnalyticsService
     ): array {
         $responsesQuery = Response::where('kuesioner_id', $kuesioner->id)
             ->with([
+                'user.programStudi',
                 'user.alumniProfile' => fn ($q) => $q->with(['careers' => fn ($cq) => $cq->with(['employment', 'education'])]),
                 'detailJawabans.pertanyaan.opsiJawabans',
             ]);
@@ -308,6 +335,8 @@ class KuesionerAnalyticsService
                     foreach ($metaRows as $row) {
                         $columns[] = $q->teks.' ['.$row.']';
                         $questionMap[$q->id]['matrix_cols'][$row] = count($columns) - 1;
+                        $columns[] = $q->teks.' ['.$row.'] [Skor]';
+                        $questionMap[$q->id]['matrix_score_cols'][$row] = count($columns) - 1;
                     }
                     $questionMap[$q->id]['type'] = 'matrix';
                     $questionMap[$q->id]['columns'] = $metaColumns;
@@ -315,6 +344,11 @@ class KuesionerAnalyticsService
                     $columns[] = $q->teks;
                     $questionMap[$q->id]['type'] = $q->tipe;
                     $questionMap[$q->id]['index'] = count($columns) - 1;
+
+                    if (in_array($q->tipe, ['radio', 'dropdown', 'checkbox', 'scale'])) {
+                        $columns[] = $q->teks.' [Skor]';
+                        $questionMap[$q->id]['score_index'] = count($columns) - 1;
+                    }
                 }
             }
         }
@@ -337,8 +371,8 @@ class KuesionerAnalyticsService
             $user = $response->user;
             $row[1] = $user?->name ?? '-';
             $row[2] = $user?->nomor_induk ?? '-';
-            $row[3] = $profile?->nik ? substr($profile->nik, 0, 4).str_repeat('*', max(0, strlen($profile->nik) - 4)) : '-';
-            $row[4] = $profile?->npwp ? substr($profile->npwp, 0, 4).str_repeat('*', max(0, strlen($profile->npwp) - 4)) : '-';
+            $row[3] = $profile?->nik_masked ?? '-';
+            $row[4] = $profile?->npwp_masked ?? '-';
             $row[5] = $user?->programStudi?->nama ?? '-';
             $row[6] = $profile?->angkatan ?? '-';
             $row[7] = $user?->tahun_lulus ?? '-';
@@ -374,6 +408,9 @@ class KuesionerAnalyticsService
                                 } else {
                                     $row[$meta['matrix_cols'][$rowLabel]] = $val;
                                 }
+                                if (isset($meta['matrix_score_cols'][$rowLabel])) {
+                                    $row[$meta['matrix_score_cols'][$rowLabel]] = is_numeric($val) ? (float) $val : '-';
+                                }
                             }
                         }
                     }
@@ -381,20 +418,41 @@ class KuesionerAnalyticsService
                     $checkData = is_string($answer->jawaban_text) ? json_decode($answer->jawaban_text, true) : $answer->jawaban_text;
                     if (is_array($checkData)) {
                         $labels = [];
+                        $scores = [];
                         foreach ($checkData as $optId) {
                             $opt = $answer->pertanyaan->opsiJawabans->find($optId);
                             $labels[] = $opt ? $opt->label : $optId;
+                            if ($opt && $opt->nilai !== null) {
+                                $scores[] = (float) $opt->nilai;
+                            }
                         }
                         $row[$meta['index']] = implode(', ', $labels);
+                        if (isset($meta['score_index'])) {
+                            $row[$meta['score_index']] = ! empty($scores) ? array_sum($scores) : '-';
+                        }
                     } else {
                         $row[$meta['index']] = $answer->jawaban_text;
+                        if (isset($meta['score_index'])) {
+                            $opt = $answer->pertanyaan->opsiJawabans->firstWhere('label', $answer->jawaban_text);
+                            $row[$meta['score_index']] = $opt?->nilai ?? '-';
+                        }
                     }
                 } elseif (in_array($meta['type'], ['radio', 'dropdown'])) {
+                    $opt = null;
                     if (! empty($answer->jawaban_text)) {
                         $row[$meta['index']] = $answer->jawaban_text;
+                        $opt = $answer->pertanyaan->opsiJawabans->firstWhere('label', $answer->jawaban_text);
                     } elseif ($answer->opsi_jawaban_id) {
                         $opt = $answer->pertanyaan->opsiJawabans->find($answer->opsi_jawaban_id);
                         $row[$meta['index']] = $opt ? $opt->label : $answer->opsi_jawaban_id;
+                    }
+                    if (isset($meta['score_index'])) {
+                        $row[$meta['score_index']] = $opt?->nilai ?? '-';
+                    }
+                } elseif ($meta['type'] === 'scale') {
+                    $row[$meta['index']] = $answer->jawaban_text ?: '-';
+                    if (isset($meta['score_index'])) {
+                        $row[$meta['score_index']] = is_numeric($answer->jawaban_text) ? (float) $answer->jawaban_text : '-';
                     }
                 } else {
                     $row[$meta['index']] = $answer->jawaban_text ?: '-';

@@ -2,29 +2,48 @@
 import {
     Briefcase,
     Building2,
-    GraduationCap,
     DollarSign,
-    MapPin,
+    GraduationCap,
     Info,
+    MapPin,
 } from 'lucide-vue-next';
-import type { ProfilAlumni, CareerHistory, Education } from '@/types/trace';
+import type { CareerHistory, ProfilAlumni } from '@/types/trace';
 
 defineProps<{
     alumni: ProfilAlumni;
     currentCareer: CareerHistory | null;
-    currentEducation: Education | null;
+    currentEducation: CareerHistory | null;
 }>();
 
-const formatCurrency = (val: number) => {
+const formatCurrency = (val?: number | null) => {
     if (!val) {
-return '-';
-}
+        return '-';
+    }
 
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
         maximumFractionDigits: 0,
     }).format(val);
+};
+
+const employmentValue = (
+    career: CareerHistory | null,
+    field: 'nama_perusahaan' | 'jabatan' | 'alamat_perusahaan' | 'sektor_industri',
+) => {
+    return career?.[field] || career?.employment?.[field] || '-';
+};
+
+const educationValue = (
+    career: CareerHistory | null,
+    field:
+        | 'nama_universitas'
+        | 'program_studi_lanjutan'
+        | 'jenjang_pendidikan'
+        | 'sumber_biaya'
+        | 'alamat_universitas',
+) => {
+    return career?.[field] || career?.education?.[field] || '';
 };
 </script>
 
@@ -36,22 +55,16 @@ return '-';
             class="flex items-center gap-2 border-b border-slate-100 bg-slate-50/50 px-5 py-4 dark:border-slate-800 dark:bg-slate-900/50"
         >
             <Briefcase class="h-4 w-4 text-violet-500" />
-            <h2
-                class="text-sm font-black text-slate-800 dark:text-white"
-            >
+            <h2 class="text-sm font-black text-slate-800 dark:text-white">
                 Status & Karir Saat Ini
             </h2>
         </div>
 
-        <!-- Content -->
         <div class="flex flex-1 flex-col justify-between p-5">
-            <!-- Bekerja / Wirausaha -->
             <div
                 v-if="
                     currentCareer &&
-                    ['bekerja', 'wirausaha'].includes(
-                        currentCareer.status,
-                    )
+                    ['bekerja', 'wirausaha'].includes(currentCareer.status)
                 "
                 class="space-y-4"
             >
@@ -64,12 +77,12 @@ return '-';
                     <div class="flex flex-col">
                         <span
                             class="text-[10px] font-bold tracking-wider text-slate-400 uppercase"
-                            >Perusahaan</span
                         >
-                        <span
-                            class="text-sm font-bold text-slate-800 dark:text-white"
-                            >{{ currentCareer.employment?.nama_perusahaan || '-' }}</span
-                        >
+                            Perusahaan
+                        </span>
+                        <span class="text-sm font-bold text-slate-800 dark:text-white">
+                            {{ employmentValue(currentCareer, 'nama_perusahaan') }}
+                        </span>
                     </div>
                 </div>
 
@@ -82,12 +95,12 @@ return '-';
                     <div class="flex flex-col">
                         <span
                             class="text-[10px] font-bold tracking-wider text-slate-400 uppercase"
-                            >Jabatan</span
                         >
-                        <span
-                            class="text-sm font-semibold text-slate-700 dark:text-slate-300"
-                            >{{ currentCareer.employment?.jabatan || '-' }}</span
-                        >
+                            Jabatan
+                        </span>
+                        <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                            {{ employmentValue(currentCareer, 'jabatan') }}
+                        </span>
                     </div>
                 </div>
 
@@ -100,14 +113,13 @@ return '-';
                     <div class="flex flex-col">
                         <span
                             class="text-[10px] font-bold tracking-wider text-slate-400 uppercase"
-                            >Rentang Gaji</span
                         >
-                        <span
-                            class="text-sm font-bold text-slate-700 dark:text-slate-300"
-                        >
+                            Rentang Gaji
+                        </span>
+                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300">
                             {{
-                                currentCareer.employment?.gaji_min
-                                    ? `${formatCurrency(currentCareer.employment.gaji_min)} – ${formatCurrency(currentCareer.employment.gaji_max)}`
+                                currentCareer.gaji_min || currentCareer.employment?.gaji_min
+                                    ? `${formatCurrency(currentCareer.gaji_min || currentCareer.employment?.gaji_min)} - ${formatCurrency(currentCareer.gaji_max || currentCareer.employment?.gaji_max)}`
                                     : '-'
                             }}
                         </span>
@@ -123,22 +135,21 @@ return '-';
                     <div class="flex flex-col">
                         <span
                             class="text-[10px] font-bold tracking-wider text-slate-400 uppercase"
-                            >Lokasi</span
                         >
+                            Lokasi
+                        </span>
                         <span
                             class="text-sm leading-relaxed font-semibold text-slate-700 dark:text-slate-300"
-                            >{{ currentCareer.employment?.alamat_perusahaan || '-' }}</span
                         >
+                            {{ employmentValue(currentCareer, 'alamat_perusahaan') }}
+                        </span>
                     </div>
                 </div>
             </div>
 
-            <!-- Lanjut Studi -->
             <div
                 v-else-if="
-                    (currentCareer &&
-                        currentCareer.status ===
-                            'lanjut_studi') ||
+                    (currentCareer && currentCareer.status === 'lanjut_studi') ||
                     currentEducation
                 "
                 class="space-y-4"
@@ -152,15 +163,14 @@ return '-';
                     <div class="flex flex-col">
                         <span
                             class="text-[10px] font-bold tracking-wider text-slate-400 uppercase"
-                            >Perguruan Tinggi</span
                         >
-                        <span
-                            class="text-sm font-bold text-slate-800 dark:text-white"
-                        >
+                            Perguruan Tinggi
+                        </span>
+                        <span class="text-sm font-bold text-slate-800 dark:text-white">
                             {{
-                                currentCareer?.status === 'lanjut_studi'
-                                    ? currentCareer.education?.nama_universitas
-                                    : currentEducation?.education?.nama_universitas || '-'
+                                educationValue(currentCareer, 'nama_universitas') ||
+                                educationValue(currentEducation, 'nama_universitas') ||
+                                '-'
                             }}
                         </span>
                     </div>
@@ -175,15 +185,12 @@ return '-';
                     <div class="flex flex-col">
                         <span
                             class="text-[10px] font-bold tracking-wider text-slate-400 uppercase"
-                            >Program Studi & Jenjang</span
                         >
-                        <span
-                            class="text-sm font-semibold text-slate-700 dark:text-slate-300"
-                        >
+                            Program Studi & Jenjang
+                        </span>
+                        <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">
                             {{
-                                currentCareer?.status === 'lanjut_studi'
-                                    ? `${currentCareer.education?.jenjang_pendidikan || ''} - ${currentCareer.education?.program_studi_lanjutan || ''}`
-                                    : `${currentEducation?.education?.jenjang_pendidikan || ''} - ${currentEducation?.education?.program_studi_lanjutan || ''}`
+                                `${educationValue(currentCareer, 'jenjang_pendidikan') || educationValue(currentEducation, 'jenjang_pendidikan') || '-'} - ${educationValue(currentCareer, 'program_studi_lanjutan') || educationValue(currentEducation, 'program_studi_lanjutan') || '-'}`
                             }}
                         </span>
                     </div>
@@ -198,15 +205,14 @@ return '-';
                     <div class="flex flex-col">
                         <span
                             class="text-[10px] font-bold tracking-wider text-slate-400 uppercase"
-                            >Sumber Biaya</span
                         >
-                        <span
-                            class="text-sm font-semibold text-slate-700 dark:text-slate-300"
-                        >
+                            Sumber Biaya
+                        </span>
+                        <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">
                             {{
-                                currentCareer?.status === 'lanjut_studi'
-                                    ? currentCareer.education?.sumber_biaya
-                                    : currentEducation?.education?.sumber_biaya || '-'
+                                educationValue(currentCareer, 'sumber_biaya') ||
+                                educationValue(currentEducation, 'sumber_biaya') ||
+                                '-'
                             }}
                         </span>
                     </div>
@@ -221,22 +227,22 @@ return '-';
                     <div class="flex flex-col">
                         <span
                             class="text-[10px] font-bold tracking-wider text-slate-400 uppercase"
-                            >Alamat Kampus</span
                         >
+                            Alamat Kampus
+                        </span>
                         <span
                             class="text-sm leading-relaxed font-semibold text-slate-700 dark:text-slate-300"
                         >
                             {{
-                                currentCareer?.status === 'lanjut_studi'
-                                    ? currentCareer.education?.alamat_universitas
-                                    : currentEducation?.education?.alamat_universitas || '-'
+                                educationValue(currentCareer, 'alamat_universitas') ||
+                                educationValue(currentEducation, 'alamat_universitas') ||
+                                '-'
                             }}
                         </span>
                     </div>
                 </div>
             </div>
 
-            <!-- Belum Bekerja -->
             <div
                 v-else
                 class="flex flex-1 flex-col items-center justify-center py-6 text-center"
@@ -246,16 +252,11 @@ return '-';
                 >
                     <Info class="h-6 w-6" />
                 </div>
-                <h3
-                    class="text-sm font-bold text-slate-700 dark:text-slate-300"
-                >
+                <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300">
                     Sedang Mencari Kerja
                 </h3>
-                <p
-                    class="mt-1 max-w-[200px] text-xs text-slate-400 dark:text-slate-500"
-                >
-                    Alumni ini belum memiliki karir atau
-                    pendidikan lanjut aktif saat ini.
+                <p class="mt-1 max-w-[200px] text-xs text-slate-400 dark:text-slate-500">
+                    Alumni ini belum memiliki karir atau pendidikan lanjut aktif saat ini.
                 </p>
             </div>
         </div>

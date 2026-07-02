@@ -35,7 +35,7 @@ const props = defineProps<{
         github: string | null;
         instagram: string | null;
         twitter: string | null;
-        profil_id: number;
+        profil_id: number | null;
         angkatan: number | null;
         alamat_rumah: string | null;
         latitude_rumah: number | null;
@@ -50,6 +50,7 @@ const props = defineProps<{
     programStudis: { id: number; nama: string; kode: string }[];
     provinsis: { id: number; name: string }[];
     kotas: { id: number; name: string; provinsi_id: number }[];
+    readOnly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -269,6 +270,7 @@ const getGenderLabel = (g: string | null) => {
                 >
                     <!-- Edit Profile Button -->
                     <button
+                        v-if="!readOnly"
                         @click="emit('edit')"
                         class="flex items-center justify-center gap-2 h-11 px-6 w-full sm:w-auto rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 text-sm font-bold transition-all shadow-xs cursor-pointer active:scale-95"
                     >
@@ -662,6 +664,7 @@ const getGenderLabel = (g: string | null) => {
                             Titik lokasi pada peta belum diatur.
                         </p>
                         <button
+                            v-if="!readOnly"
                             @click="emit('edit')"
                             class="text-[11px] text-green-600 dark:text-green-400 font-extrabold mt-1.5 hover:underline uppercase tracking-wider"
                         >

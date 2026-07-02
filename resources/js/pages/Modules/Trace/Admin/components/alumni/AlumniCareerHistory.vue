@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Building2 } from 'lucide-vue-next';
 import { Badge } from '@/components/ui/badge';
-import type { ProfilAlumni, CareerHistory } from '@/types/trace';
+import type { CareerHistory } from '@/types/trace';
 
 defineProps<{
-    alumni: ProfilAlumni;
+    careers: CareerHistory[];
 }>();
 </script>
 
@@ -25,35 +25,15 @@ defineProps<{
                 variant="secondary"
                 class="ml-auto border-none bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
             >
-                {{
-                    alumni.careers?.filter((c: CareerHistory) =>
-                        ['bekerja', 'wirausaha'].includes(
-                            c.status,
-                        ),
-                    ).length || 0
-                }}
+                {{ careers.length }}
                 entri
             </Badge>
         </div>
 
         <div class="flex-1 p-6">
-            <div
-                v-if="
-                    alumni.careers?.some((c: CareerHistory) =>
-                        ['bekerja', 'wirausaha'].includes(
-                            c.status,
-                        ),
-                    )
-                "
-                class="grid grid-cols-1 gap-4 sm:grid-cols-2"
-            >
+            <div v-if="careers.length > 0" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div
-                    v-for="career in alumni.careers.filter(
-                        (c: CareerHistory) =>
-                            ['bekerja', 'wirausaha'].includes(
-                                c.status,
-                            ),
-                    )"
+                    v-for="career in careers"
                     :key="career.id"
                     class="relative flex flex-col justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/40 p-4 transition-all duration-200 hover:border-blue-200 hover:bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900/30 dark:hover:border-blue-900/50 dark:hover:bg-slate-900/60"
                     :class="{
@@ -69,9 +49,9 @@ defineProps<{
                                 class="text-xs leading-tight font-bold text-slate-800 dark:text-white"
                             >
                                 {{
-                                    career.employment?.nama_perusahaan &&
-                                    career.employment.nama_perusahaan !== '-'
-                                        ? career.employment.nama_perusahaan
+                                    (career.nama_perusahaan || career.employment?.nama_perusahaan) &&
+                                    (career.nama_perusahaan || career.employment?.nama_perusahaan) !== '-'
+                                        ? career.nama_perusahaan || career.employment?.nama_perusahaan
                                         : 'Instansi Tidak Disebutkan'
                                 }}
                             </span>
@@ -88,21 +68,21 @@ defineProps<{
                         <div
                             class="text-[11px] font-medium text-slate-500 dark:text-slate-400"
                         >
-                            {{
-                                career.employment?.jabatan &&
-                                career.employment.jabatan !== '-'
-                                    ? career.employment.jabatan
+                                {{
+                                    (career.jabatan || career.employment?.jabatan) &&
+                                    (career.jabatan || career.employment?.jabatan) !== '-'
+                                    ? career.jabatan || career.employment?.jabatan
                                     : 'Staf / Pegawai'
                             }}
                         </div>
                         <div
                             v-if="
-                                career.employment?.sektor_industri &&
-                                career.employment.sektor_industri !== '-'
+                                (career.sektor_industri || career.employment?.sektor_industri) &&
+                                (career.sektor_industri || career.employment?.sektor_industri) !== '-'
                             "
                             class="text-[10px] text-slate-400"
                         >
-                            Sektor: {{ career.employment.sektor_industri }}
+                            Sektor: {{ career.sektor_industri || career.employment?.sektor_industri }}
                         </div>
                     </div>
                     <div

@@ -21,13 +21,14 @@ const props = defineProps<{
     kuesioner: Kuesioner;
     hasResponded: boolean;
     existingAnswers: Record<string, unknown>;
+    readOnly?: boolean;
 }>();
 
 const form = useForm({
     answers: {} as Record<string, unknown>,
 });
 
-const isReadonly = computed(() => props.hasResponded);
+const isReadonly = computed(() => props.hasResponded || props.readOnly);
 
 // ═══════════════════════════════════════════════════════════════
 // NAVIGATION — wizard multi-section
@@ -131,7 +132,7 @@ if (props.kuesioner?.sections) {
 // ═══════════════════════════════════════════════════════════════
 
 const submit = () => {
-    if (props.hasResponded) {
+    if (isReadonly.value) {
         return;
     }
 
@@ -225,7 +226,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
             <!-- Already Responded Warning -->
             <div
-                v-if="hasResponded"
+                v-if="hasResponded || readOnly"
                 class="mb-8 rounded-2xl border border-amber-100 bg-amber-50 p-6 dark:border-amber-900/30 dark:bg-amber-900/20"
             >
                 <div class="flex gap-4">
@@ -238,11 +239,14 @@ const breadcrumbItems: BreadcrumbItem[] = [
                         <h3
                             class="text-lg font-bold text-amber-800 dark:text-amber-300"
                         >
-                            Anda Sudah Mengisi
+                            {{ readOnly ? "Mode Baca Saja" : "Anda Sudah Mengisi" }}
                         </h3>
                         <p class="text-sm text-amber-700 dark:text-amber-400">
-                            Anda sudah pernah mengisi kuesioner ini sebelumnya.
-                            Data tidak dapat diubah lagi dari halaman ini.
+                            {{
+                                readOnly
+                                    ? "Admin dapat melihat kuesioner dalam mode alumni, tetapi tidak dapat mengirim jawaban."
+                                    : "Anda sudah pernah mengisi kuesioner ini sebelumnya. Data tidak dapat diubah lagi dari halaman ini."
+                            }}
                         </p>
                     </div>
                 </div>
@@ -321,7 +325,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
                     :is-first="currentVisibleIndex === 0"
                     :is-last="isLastVisibleSection"
                     :processing="form.processing"
-                    :has-responded="props.hasResponded"
+                    :has-responded="isReadonly"
                     @prev="prevSection"
                     @next="nextSection"
                 />
