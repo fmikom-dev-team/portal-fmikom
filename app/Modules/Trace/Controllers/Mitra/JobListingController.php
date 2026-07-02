@@ -97,6 +97,7 @@ class JobListingController extends Controller
         }
 
         $job = JobListing::create($validated);
+
         return redirect()->route('module.trace.open-job.jobs-listings')
             ->with('success', 'Lowongan berhasil dibuat.');
     }
@@ -154,6 +155,7 @@ class JobListingController extends Controller
         }
 
         $job->update($validated);
+
         return back()->with('success', 'Lowongan berhasil diperbarui.');
     }
 

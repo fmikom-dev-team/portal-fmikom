@@ -3,8 +3,8 @@
 namespace App\Modules\Trace\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\Tracer\ProfilAlumni;
+use App\Models\User;
 use App\Modules\Trace\Services\AlumniRoleChangeService;
 use App\Modules\Trace\Services\CareerService;
 use Illuminate\Http\RedirectResponse;

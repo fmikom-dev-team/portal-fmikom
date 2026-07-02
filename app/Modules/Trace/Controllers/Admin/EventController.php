@@ -141,6 +141,7 @@ class EventController extends Controller
         unset($validated['poster']);
 
         $event->update($validated);
+
         return redirect()->route('module.trace.admin.events.show', $id)
             ->with('success', 'Event berhasil diperbarui.');
     }
@@ -162,6 +163,7 @@ class EventController extends Controller
         }
 
         $event->update($validated);
+
         return back()->with('success', 'Status event berhasil diperbarui.');
     }
 

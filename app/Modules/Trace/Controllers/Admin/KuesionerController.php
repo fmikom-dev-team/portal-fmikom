@@ -83,6 +83,7 @@ class KuesionerController extends Controller
                 ]);
 
                 $saveAction->execute($kuesioner, $request->input('sections', []));
+
                 return redirect()->route('module.trace.admin.questionnaires.index')->with('success', 'Kuesioner berhasil dibuat');
             });
         } catch (\Exception $e) {
@@ -113,6 +114,7 @@ class KuesionerController extends Controller
                 ]);
 
                 $saveAction->execute($kuesioner, $request->input('sections', []));
+
                 return redirect()->route('module.trace.admin.questionnaires.index')->with('success', 'Kuesioner berhasil diperbarui');
             });
         } catch (\Exception $e) {

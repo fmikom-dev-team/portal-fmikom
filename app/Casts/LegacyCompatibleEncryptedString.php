@@ -3,9 +3,9 @@
 namespace App\Casts;
 
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Contracts\Encryption\DecryptException;
 
 class LegacyCompatibleEncryptedString implements CastsAttributes
 {
