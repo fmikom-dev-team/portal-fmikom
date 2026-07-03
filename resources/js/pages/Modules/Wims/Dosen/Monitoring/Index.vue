@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { ArrowLeft, Search } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
@@ -81,31 +81,26 @@ const filteredStudents = computed(() =>
     props.students.filter((student) => matchesSearch(student) && matchesFilter(student)),
 );
 
+const totalStudents = computed(() => props.students.length);
+const activeStudentsCount = computed(
+    () => props.students.filter((student) => student.dashboard_phase === 'active').length,
+);
+const completedStudentsCount = computed(
+    () => props.students.filter((student) => student.dashboard_phase === 'completed').length,
+);
+
 const pageSubtitle = computed(() => {
     if (selectedFilter.value === 'aktif') {
-        return 'Daftar mahasiswa bimbingan yang sedang menjalani PKL pada periode aktif.';
+        return 'Mahasiswa aktif.';
     }
 
     if (selectedFilter.value === 'selesai') {
-        return 'Daftar mahasiswa bimbingan yang sudah menyelesaikan periode PKL.';
+        return 'Mahasiswa selesai.';
     }
 
-    return 'Kelola dan pantau seluruh mahasiswa bimbingan dosen.';
+    return 'Semua mahasiswa bimbingan.';
 });
 
-const resultLabel = computed(() => {
-    const count = filteredStudents.value.length;
-
-    if (selectedFilter.value === 'aktif') {
-        return `Menampilkan ${count} mahasiswa aktif.`;
-    }
-
-    if (selectedFilter.value === 'selesai') {
-        return `Menampilkan ${count} mahasiswa selesai.`;
-    }
-
-    return `Menampilkan ${count} mahasiswa.`;
-});
 
 const periodLabel = (student: StudentItem) => {
     if (student.period_start && student.period_end) {
@@ -161,7 +156,7 @@ const studentInitial = (student: StudentItem) => {
 
     <div class="min-h-screen bg-wims-bg">
         <div class="mx-auto w-full max-w-[1320px] space-y-4 px-4 py-3 lg:space-y-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10">
-            <header class="relative overflow-hidden rounded-2xl border border-wims-border/50 bg-wims-card/95 px-5 py-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] sm:px-6 sm:py-6">
+            <header class="relative overflow-hidden rounded-2xl border border-wims-border/50 bg-wims-card/95 px-4 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)] sm:px-6 sm:py-6">
                 <button
                     type="button"
                     title="Kembali ke Dashboard"
@@ -173,10 +168,10 @@ const studentInitial = (student: StudentItem) => {
                 </button>
                 <div class="flex flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div class="max-w-3xl pr-10 sm:pr-12">
-                        <h1 class="text-[20px] font-bold tracking-tight text-wims-text sm:text-[24px] lg:text-[30px]">
-                            Daftar Mahasiswa Bimbingan
+                        <h1 class="text-[18px] font-bold tracking-tight text-wims-text sm:text-[22px] lg:text-[28px]">
+                            Mahasiswa Bimbingan
                         </h1>
-                        <p class="mt-1.5 text-[13px] leading-relaxed text-slate-600 sm:text-sm">
+                        <p class="mt-1.5 text-[12px] leading-5 text-slate-600 sm:text-[13px]">
                             {{ pageSubtitle }}
                         </p>
                     </div>
@@ -184,38 +179,53 @@ const studentInitial = (student: StudentItem) => {
             </header>
 
             <Card class="rounded-2xl border border-wims-border bg-wims-card py-0 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)]">
-                <CardContent class="px-5 py-5 sm:px-6">
-                    <div class="flex flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-center lg:justify-between">
-                        <div class="relative w-full lg:max-w-md">
-                            <Search class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
-                            <Input
-                                v-model="search"
-                                type="text"
-                                placeholder="Cari nama, NIM, atau perusahaan"
-                                class="pl-9"
-                            />
+                <CardContent class="px-4 py-4 sm:px-5 sm:py-5">
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="rounded-xl border border-slate-200/80 bg-slate-50/80 px-3 py-2.5">
+                                <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Total</p>
+                                <p class="mt-1 text-[15px] font-bold text-wims-text">{{ totalStudents }}</p>
+                            </div>
+                            <div class="rounded-xl border border-blue-200/80 bg-blue-50/80 px-3 py-2.5">
+                                <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-blue-500">Aktif</p>
+                                <p class="mt-1 text-[15px] font-bold text-blue-700">{{ activeStudentsCount }}</p>
+                            </div>
+                            <div class="rounded-xl border border-violet-200/80 bg-violet-50/80 px-3 py-2.5">
+                                <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-violet-500">Selesai</p>
+                                <p class="mt-1 text-[15px] font-bold text-violet-700">{{ completedStudentsCount }}</p>
+                            </div>
                         </div>
-                        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:text-sm lg:justify-end">
-                            <Select v-model="selectedFilter">
-                                <SelectTrigger class="h-10 w-full min-w-[180px] bg-white sm:w-[200px]">
-                                    <SelectValue placeholder="Pilih kategori" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="semua">Semua Kategori</SelectItem>
-                                    <SelectItem value="aktif">Mahasiswa Aktif</SelectItem>
-                                    <SelectItem value="selesai">Mahasiswa Selesai</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <div class="flex flex-col gap-1.5 text-[13px] text-slate-600 sm:items-end sm:text-sm">
-                                <p>{{ resultLabel }}</p>
-                                <button
-                                    v-if="search"
-                                    type="button"
-                                    class="text-left text-[13px] font-bold text-[#0F62FE] hover:text-[#0050E6] sm:text-right sm:text-sm"
-                                    @click="resetSearch"
-                                >
-                                    Reset search
-                                </button>
+
+                        <div class="flex items-start gap-2 sm:gap-3 lg:flex-row lg:items-center lg:justify-between">
+                            <div class="relative min-w-0 flex-1 lg:max-w-md">
+                                <Search class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+                                <Input
+                                    v-model="search"
+                                    type="text"
+                                    placeholder="Cari mahasiswa, NIM, atau perusahaan"
+                                    class="pl-9"
+                                />
+                            </div>
+                            <div class="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center sm:justify-between sm:text-sm lg:justify-end">
+                                <Select v-model="selectedFilter">
+                                    <SelectTrigger class="h-9 w-[132px] bg-white sm:w-[200px] dark:bg-slate-800">
+                                        <SelectValue placeholder="Kategori" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="semua">Semua Kategori</SelectItem>
+                                        <SelectItem value="aktif">Mahasiswa Aktif</SelectItem>
+                                        <SelectItem value="selesai">Mahasiswa Selesai</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <div v-if="search" class="flex items-center justify-end text-[13px] text-slate-600 sm:text-sm">
+                                    <button
+                                        type="button"
+                                        class="text-[13px] font-bold text-[#0F62FE] hover:text-[#0050E6] sm:text-sm"
+                                        @click="resetSearch"
+                                    >
+                                        Reset
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -223,28 +233,74 @@ const studentInitial = (student: StudentItem) => {
             </Card>
 
             <section class="space-y-4">
-                <div v-if="filteredStudents.length" class="space-y-6">
+                <div v-if="filteredStudents.length" class="space-y-4">
                     <Card
                         v-for="student in filteredStudents"
                         :key="student.pendaftaran_id ?? student.id"
                         class="rounded-2xl border border-wims-border bg-wims-card py-0 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)]"
                     >
-                        <CardContent class="px-5 py-5 sm:px-6">
-                            <div class="relative flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                                <Badge
-                                    variant="outline"
-                                    class="absolute top-0 right-0 rounded-full px-3 py-1 text-[11px] font-bold sm:hidden"
-                                    :class="phaseClass(student)"
-                                >
-                                    {{ phaseLabel(student) }}
-                                </Badge>
+                        <CardContent class="px-4 py-4 sm:px-5 sm:py-5">
+                            <div class="md:hidden">
+                                <div class="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3.5">
+                                    <div class="flex items-start gap-3">
+                                        <div class="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-wims-border bg-white text-sm font-bold text-slate-500 shadow-sm">
+                                            {{ studentInitial(student) }}
+                                        </div>
+
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <p class="min-w-0 text-[13px] font-bold text-wims-text">
+                                                    {{ student.name || 'Mahasiswa' }}
+                                                </p>
+                                                <Badge
+                                                    variant="outline"
+                                                    class="w-fit rounded-full px-2.5 py-1 text-[10px] font-bold"
+                                                    :class="phaseClass(student)"
+                                                >
+                                                    {{ phaseLabel(student) }}
+                                                </Badge>
+                                            </div>
+                                            <p class="mt-1 text-[11px] text-slate-500">
+                                                {{ student.nim || '-' }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3 space-y-2.5 border-t border-slate-200 pt-3">
+                                        <div>
+                                            <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Perusahaan</p>
+                                            <p class="mt-1 text-[12px] font-bold leading-5 text-wims-text">
+                                                {{ student.company?.name || 'Perusahaan belum tersedia' }}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Periode Magang</p>
+                                            <p class="mt-1 text-[12px] font-bold leading-5 text-wims-text">
+                                                {{ periodLabel(student) }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <Button
+                                            type="button"
+                                            class="h-9 w-full rounded-xl bg-[#0F62FE] px-3 text-[12px] font-bold text-white hover:bg-[#0050E6]"
+                                            @click="openMonitoring(student)"
+                                        >
+                                            Monitoring
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="relative hidden md:flex md:flex-col md:gap-3 lg:flex-row lg:items-center lg:justify-between">
                                 <div class="flex min-w-0 flex-1 items-start gap-3">
-                                    <div class="flex size-12 shrink-0 items-center justify-center rounded-xl border border-wims-border bg-slate-100 text-sm font-bold text-slate-500">
+                                    <div class="flex size-10 shrink-0 items-center justify-center rounded-xl border border-wims-border bg-slate-100 text-xs font-bold text-slate-500 sm:size-12 sm:text-sm">
                                         {{ studentInitial(student) }}
                                     </div>
 
-                                    <div class="min-w-0 flex-1 pr-20 sm:pr-0">
-                                        <p class="text-[13px] font-bold text-wims-text">
+                                    <div class="min-w-0 flex-1">
+                                        <p class="text-[12px] font-bold text-wims-text">
                                             {{ student.name || 'Mahasiswa' }}
                                         </p>
                                         <div class="mt-1 flex flex-col gap-1 text-[11px] text-slate-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1">
@@ -268,7 +324,7 @@ const studentInitial = (student: StudentItem) => {
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        class="h-10 rounded-lg border-wims-border bg-wims-card px-3.5 text-[13px] font-bold text-slate-700 hover:bg-slate-50"
+                                        class="h-9 rounded-lg border-wims-border bg-wims-card px-3.5 text-[12px] font-bold text-slate-700 hover:bg-slate-50"
                                         @click="openMonitoring(student)"
                                     >
                                         Lihat Monitoring
@@ -283,8 +339,8 @@ const studentInitial = (student: StudentItem) => {
                     v-else
                     class="rounded-xl border border-dashed border-wims-border bg-wims-card py-0 shadow-none"
                 >
-                    <CardContent class="px-5 py-8 text-center">
-                        <p class="text-[13px] font-bold text-wims-text">
+                    <CardContent class="px-4 py-6 text-center">
+                        <p class="text-[12px] font-bold text-wims-text">
                             Tidak ada mahasiswa yang sesuai dengan pencarian.
                         </p>
                         <p class="mt-1 text-[11px] leading-5 text-slate-500">
@@ -296,3 +352,6 @@ const studentInitial = (student: StudentItem) => {
         </div>
     </div>
 </template>
+
+
+
