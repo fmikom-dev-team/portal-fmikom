@@ -51,6 +51,9 @@ class AdminCompanyPageService
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'no_telepon', 'is_active']);
 
+        /** @var \Illuminate\Database\Eloquent\Collection<int, User> $portalMitraUsers */
+        $portalMitraUsers = $portalMitraUsers;
+
         $companies = $companies
             ->map(fn (PerusahaanMitra $company) => [
                 'id' => $company->id,

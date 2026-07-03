@@ -77,6 +77,9 @@ class StudentDashboardPageService
 
         [$progressPercentage, $totalDays, $completedDays, $remainingDays] = $this->buildProgress($progressSource);
 
+        $mentor = $latestRegistration?->finalMentor();
+        $mentorRoleContext = $mentor ? $this->wimsModuleRoleService->resolveContextRoleData($mentor, 'mitra') : null;
+
         $latestLogbook = LogbookMagang::query()
             ->where('pendaftaran_id', $historySource?->id)
             ->latest('tanggal')
@@ -132,11 +135,9 @@ class StudentDashboardPageService
                         : null,
                 ],
                 'mentor' => [
-                    'id' => $latestRegistration?->finalMentor()?->id,
-                    'name' => $latestRegistration?->finalMentor()?->name,
-                    'role_context' => $latestRegistration?->finalMentor()
-                        ? $this->wimsModuleRoleService->resolveContextRoleData($latestRegistration?->finalMentor(), 'mitra')
-                        : null,
+                    'id' => $mentor?->id,
+                    'name' => $mentor?->name,
+                    'role_context' => $mentorRoleContext,
                 ],
                 'submitted_at' => $latestRegistration?->created_at?->translatedFormat('d M Y H:i'),
                 'period_label' => $latestRegistration?->tanggal_mulai && $latestRegistration?->tanggal_selesai

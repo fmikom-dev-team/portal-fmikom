@@ -45,7 +45,9 @@ class StudentFinalReportTemplateService
     {
         $template = $this->resolveActiveTemplate();
 
-        abort_unless($template, 404, 'Template laporan akhir belum tersedia.');
+        if (! $template) {
+            abort(404, 'Template laporan akhir belum tersedia.');
+        }
 
         $absolutePath = $this->templateAccessService->resolveAbsolutePath($template);
 

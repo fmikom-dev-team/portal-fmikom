@@ -12,6 +12,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
+/**
+ * @property-read User|null $mahasiswa
+ * @property-read User|null $dosenPembimbing
+ * @property-read PerusahaanMitra|null $perusahaan
+ */
 class PendaftaranMagang extends Model
 {
     protected $fillable = [

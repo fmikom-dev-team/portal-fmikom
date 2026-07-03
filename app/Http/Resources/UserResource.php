@@ -6,6 +6,9 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin \App\Models\User
+ */
 class UserResource extends JsonResource
 {
     /**
@@ -32,7 +35,7 @@ class UserResource extends JsonResource
             'github' => $this->when($isProfileOrSettings, $this->github),
             'instagram' => $this->when($isProfileOrSettings, $this->instagram),
             'metadata' => $this->when($isProfileOrSettings, $this->metadata),
-            'following' => $this->when($isProfileOrSettings || ($request->user() && $this->id === $request->user()->id), fn () => $this->pagiFollowing()->pluck('following_id')->toArray()),
+            'following' => $this->when($isProfileOrSettings, fn () => $this->pagiFollowing()->pluck('following_id')->toArray()),
             'works_count' => $this->when($isProfileOrSettings, fn () => $this->pagiWorks()->count()),
             'certificates_count' => $this->when($isProfileOrSettings, fn () => count($this->metadata['certificates'] ?? []) ?: 2),
             'followers_count' => $this->when($isProfileOrSettings, fn () => $this->pagiFollowers()->count()),
@@ -41,18 +44,20 @@ class UserResource extends JsonResource
             'timezone_extended' => $this->when($isProfileOrSettings, $this->metadata['timezone_extended'] ?? null),
             'languages' => $this->when($isProfileOrSettings, $this->metadata['languages'] ?? []),
             'banner_path' => $this->banner_path,
-            'tanggal_lahir' => $this->when($isProfileOrSettings, $this->tanggal_lahir ? ($this->tanggal_lahir instanceof Carbon ? $this->tanggal_lahir->format('Y-m-d') : \Illuminate\Support\Carbon::parse($this->tanggal_lahir)->format('Y-m-d')) : null),
+            'tanggal_lahir' => $this->when($isProfileOrSettings, $this->tanggal_lahir?->format('Y-m-d')),
             'no_telepon' => $this->when($isProfileOrSettings, $this->no_telepon),
             'nomor_induk' => $this->when($isProfileOrSettings, $this->nomor_induk),
             'program_studi_id' => $this->when($isProfileOrSettings, $this->program_studi_id),
             'tahun_lulus' => $this->when($isProfileOrSettings, $this->tahun_lulus),
             'user_type' => $this->user_type,
-            'deletion_requested_at' => $this->deletion_requested_at ? $this->deletion_requested_at->toISOString() : null,
+            'deletion_requested_at' => blank($this->deletion_requested_at)
+                ? null
+                : Carbon::parse($this->deletion_requested_at)->toISOString(),
             'foto_path' => $this->foto_path,
-            'photo_url' => $this->photoUrl(),
-            'avatar' => $this->photoUrl()
-                ?? 'https://api.dicebear.com/7.x/initials/svg?seed='.urlencode($this->name).'&backgroundColor=3b82f6,6366f1,8b5cf6,ec4899,f43f5e&backgroundType=gradientLinear&bold=true',
-            'unreadNotifications' => $this->when($request->routeIs('portal', '*portal*'), fn () => $this->unreadNotifications()->latest()->limit(10)->get()),
+            'avatar' => $this->foto_path
+                ? (str_starts_with($this->foto_path, 'http') ? $this->foto_path : '/storage/'.$this->foto_path)
+                : 'https://api.dicebear.com/7.x/initials/svg?seed='.urlencode($this->name).'&backgroundColor=3b82f6,6366f1,8b5cf6,ec4899,f43f5e&backgroundType=gradientLinear&bold=true',
+            'unreadNotifications' => $this->when($request->routeIs('portal', '*portal*'), fn () => clone $this->unreadNotifications),
             'role' => $this->whenLoaded('role'), // just in case it's loaded
             'is_admin' => $this->isAdmin(),
             'is_super_admin' => $this->isSuperAdmin(),
