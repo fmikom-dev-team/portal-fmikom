@@ -68,4 +68,3 @@ class StudentFinalReportTemplateService
         return Carbon::parse($value)->translatedFormat('d M Y H:i');
     }
 }
-

@@ -65,4 +65,3 @@ class LaporanController extends Controller
         return $this->studentFinalReportTemplateService->downloadActiveTemplate();
     }
 }
-

@@ -2,10 +2,10 @@
 
 use App\Http\Middleware\EnsureFirstTimeLoginComplete;
 use App\Modules\Wims\Controllers\Admin\AssessmentRecapController as AdminAssessmentRecapController;
-use App\Modules\Wims\Controllers\Admin\FinalReportTemplateController as AdminFinalReportTemplateController;
 use App\Modules\Wims\Controllers\Admin\AssessmentTemplateController as AdminAssessmentTemplateController;
 use App\Modules\Wims\Controllers\Admin\CompanyController as AdminCompanyController;
 use App\Modules\Wims\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Modules\Wims\Controllers\Admin\FinalReportTemplateController as AdminFinalReportTemplateController;
 use App\Modules\Wims\Controllers\Admin\MonitoringController as AdminMonitoringController;
 use App\Modules\Wims\Controllers\Admin\PlacementController as AdminPlacementController;
 use App\Modules\Wims\Controllers\Admin\RegistrationController as AdminRegistrationController;
@@ -101,7 +101,8 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('companies.update');
         Route::delete('/perusahaan/{company}', [AdminCompanyController::class, 'destroy'])
             ->name('companies.destroy');
-
+        Route::post('/perusahaan/{company}/account', [AdminCompanyController::class, 'storeAccount'])
+            ->name('companies.account.store');
 
         Route::get('/pendaftaran', [AdminRegistrationController::class, 'index'])
             ->name('registrations.index');
@@ -206,8 +207,3 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
         Route::post('/logbook/{logbook}/review', [MitraLogbookController::class, 'review'])
             ->name('logbook.review');
     });
-
-
-
-
-

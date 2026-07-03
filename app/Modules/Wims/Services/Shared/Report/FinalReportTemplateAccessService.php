@@ -104,4 +104,3 @@ class FinalReportTemplateAccessService
         return str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
     }
 }
-

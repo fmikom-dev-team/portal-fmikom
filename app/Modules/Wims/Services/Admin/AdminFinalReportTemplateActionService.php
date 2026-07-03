@@ -114,4 +114,3 @@ class AdminFinalReportTemplateActionService
             ->update(['is_active' => false]);
     }
 }
-

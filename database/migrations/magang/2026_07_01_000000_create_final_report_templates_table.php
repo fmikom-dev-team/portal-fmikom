@@ -29,4 +29,3 @@ return new class extends Migration
         Schema::dropIfExists('final_report_templates');
     }
 };
-

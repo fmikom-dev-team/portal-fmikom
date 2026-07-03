@@ -254,5 +254,3 @@ class ModuleSeeder extends Seeder
 
     }
 }
-
-

@@ -29,4 +29,3 @@ class UpsertFinalReportTemplateRequest extends FormRequest
         ];
     }
 }
-

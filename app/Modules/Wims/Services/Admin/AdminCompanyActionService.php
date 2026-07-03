@@ -122,6 +122,52 @@ class AdminCompanyActionService
         });
     }
 
+    public function validateAccountLink(Request $request): array
+    {
+        return $request->validate([
+            'email' => ['required', 'email', 'max:255'],
+            'jabatan' => ['nullable', 'string', 'max:255'],
+        ]);
+    }
+
+    public function linkCompanyPortalAccount(PerusahaanMitra $company, array $validated): bool
+    {
+        if (! $this->wimsModuleRoleService->resolveModule() || ! $this->wimsModuleRoleService->resolveRole('mitra')) {
+            return false;
+        }
+
+        $user = User::query()
+            ->where('email', $validated['email'])
+            ->first();
+
+        if (! $user) {
+            throw ValidationException::withMessages([
+                'email' => 'Akun Portal dengan email tersebut belum ditemukan.',
+            ]);
+        }
+
+        $alreadyLinkedCompany = PerusahaanMitra::query()
+            ->where('user_id', $user->id)
+            ->whereKeyNot($company->id)
+            ->first();
+
+        if ($alreadyLinkedCompany) {
+            throw ValidationException::withMessages([
+                'email' => 'Akun Portal ini sudah terhubung ke perusahaan mitra lain.',
+            ]);
+        }
+
+        DB::transaction(function () use ($company, $validated, $user): void {
+            $this->wimsModuleRoleService->ensureAssignment($user, 'mitra', true);
+
+            $company->update([
+                'user_id' => $user->id,
+                'mitra_jabatan' => $validated['jabatan'] ?? null,
+            ]);
+        });
+
+        return true;
+    }
 
     private function syncPortalAccount(PerusahaanMitra $company, array $validated): void
     {
@@ -166,6 +212,3 @@ class AdminCompanyActionService
         });
     }
 }
-
-
-
