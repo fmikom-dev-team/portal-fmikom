@@ -39,6 +39,11 @@ class PendaftaranMagang extends Model
         return $this->belongsTo(PerusahaanMitra::class, 'perusahaan_id');
     }
 
+    public function finalMentor(): ?User
+    {
+        return $this->perusahaan?->user;
+    }
+
     public function dosenPembimbing(): BelongsTo
     {
         return $this->belongsTo(User::class, 'dosen_pembimbing_id');

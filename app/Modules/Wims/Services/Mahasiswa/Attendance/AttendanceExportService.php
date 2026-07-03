@@ -92,7 +92,7 @@ class AttendanceExportService
                     ? $headerRegistration->tanggal_mulai->locale('id')->translatedFormat('d M Y').' - '.$headerRegistration->tanggal_selesai->locale('id')->translatedFormat('d M Y')
                     : '-',
                 'supervisor_lecturer' => $headerRegistration?->dosenPembimbing?->name ?? '-',
-                'mentor' => $headerRegistration?->perusahaan?->user?->name ?? '-',
+                'mentor' => $headerRegistration?->finalMentor()?->name ?? '-',
             ],
             'rows' => $exportRows,
         ], $fileName);

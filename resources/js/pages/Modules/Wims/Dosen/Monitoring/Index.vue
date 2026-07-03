@@ -353,5 +353,3 @@ const studentInitial = (student: StudentItem) => {
     </div>
 </template>
 
-
-

@@ -15,6 +15,7 @@ class StudentReportPageService
 {
     public function __construct(
         private readonly WimsModuleRoleService $wimsModuleRoleService,
+        private readonly StudentFinalReportTemplateService $studentFinalReportTemplateService,
     ) {}
 
     public function build(int $userId): array
@@ -90,10 +91,10 @@ class StudentReportPageService
                         : null,
                 ],
                 'mentor' => [
-                    'id' => $registration->perusahaan?->user?->id,
-                    'name' => $registration->perusahaan?->user?->name ?? '-',
-                    'role_context' => $registration->perusahaan?->user
-                        ? $this->wimsModuleRoleService->resolveContextRoleData($registration->perusahaan->user, 'mitra')
+                    'id' => $registration->finalMentor()?->id,
+                    'name' => $registration->finalMentor()?->name ?? '-',
+                    'role_context' => $registration->finalMentor()
+                        ? $this->wimsModuleRoleService->resolveContextRoleData($registration->finalMentor(), 'mitra')
                         : null,
                 ],
                 'period_label' => $registration->tanggal_mulai && $registration->tanggal_selesai
@@ -109,7 +110,9 @@ class StudentReportPageService
                     'uploaded_at' => $this->formatLocalizedDate($registration->laporan_akhir_uploaded_at, 'd M Y H:i'),
                 ] : null,
             ] : null,
+            'final_report_template' => $this->studentFinalReportTemplateService->buildTemplateCard(),
             'internship' => [
+
                 'progress_percentage' => $progressPercentage,
                 'completed_days' => $completedDays,
                 'total_days' => $totalDays,
@@ -227,3 +230,8 @@ class StudentReportPageService
         }
     }
 }
+
+
+
+
+

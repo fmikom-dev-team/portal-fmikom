@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureFirstTimeLoginComplete;
 use App\Modules\Wims\Controllers\Admin\AssessmentRecapController as AdminAssessmentRecapController;
+use App\Modules\Wims\Controllers\Admin\FinalReportTemplateController as AdminFinalReportTemplateController;
 use App\Modules\Wims\Controllers\Admin\AssessmentTemplateController as AdminAssessmentTemplateController;
 use App\Modules\Wims\Controllers\Admin\CompanyController as AdminCompanyController;
 use App\Modules\Wims\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -79,6 +80,8 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('laporan.store');
         Route::get('/laporan/final-report/view', [LaporanController::class, 'viewFinalReport'])
             ->name('laporan.final-report.view');
+        Route::get('/laporan/template/download', [LaporanController::class, 'downloadTemplate'])
+            ->name('laporan.template.download');
         Route::get('/laporan/final-report/download', [LaporanController::class, 'downloadFinalReport'])
             ->name('laporan.final-report.download');
     });
@@ -98,8 +101,7 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('companies.update');
         Route::delete('/perusahaan/{company}', [AdminCompanyController::class, 'destroy'])
             ->name('companies.destroy');
-        Route::post('/perusahaan/{company}/account', [AdminCompanyController::class, 'storeAccount'])
-            ->name('companies.account.store');
+
 
         Route::get('/pendaftaran', [AdminRegistrationController::class, 'index'])
             ->name('registrations.index');
@@ -127,6 +129,17 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
         Route::get('/rekap-nilai/{pendaftaran}/download/{role}', [AdminAssessmentRecapController::class, 'download'])
             ->whereIn('role', ['dosen', 'mitra'])
             ->name('assessment-recap.download');
+
+        Route::get('/template-laporan-akhir', [AdminFinalReportTemplateController::class, 'index'])
+            ->name('final-report-templates.index');
+        Route::post('/template-laporan-akhir', [AdminFinalReportTemplateController::class, 'store'])
+            ->name('final-report-templates.store');
+        Route::get('/template-laporan-akhir/{finalReportTemplate}/download', [AdminFinalReportTemplateController::class, 'download'])
+            ->name('final-report-templates.download');
+        Route::put('/template-laporan-akhir/{finalReportTemplate}', [AdminFinalReportTemplateController::class, 'update'])
+            ->name('final-report-templates.update');
+        Route::delete('/template-laporan-akhir/{finalReportTemplate}', [AdminFinalReportTemplateController::class, 'destroy'])
+            ->name('final-report-templates.destroy');
 
         Route::get('/penilaian-template', [AdminAssessmentTemplateController::class, 'index'])
             ->name('assessment-templates.index');
@@ -193,3 +206,8 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
         Route::post('/logbook/{logbook}/review', [MitraLogbookController::class, 'review'])
             ->name('logbook.review');
     });
+
+
+
+
+

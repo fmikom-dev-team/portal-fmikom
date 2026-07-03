@@ -5,6 +5,7 @@ namespace App\Modules\Wims\Controllers\Mahasiswa;
 use App\Http\Controllers\Controller;
 use App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportActionService;
 use App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportFileService;
+use App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportTemplateService;
 use App\Modules\Wims\Services\Mahasiswa\Report\StudentReportPageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,6 +19,7 @@ class LaporanController extends Controller
         private readonly StudentReportPageService $studentReportPageService,
         private readonly StudentFinalReportActionService $studentFinalReportActionService,
         private readonly StudentFinalReportFileService $studentFinalReportFileService,
+        private readonly StudentFinalReportTemplateService $studentFinalReportTemplateService,
     ) {}
 
     public function index(Request $request): Response
@@ -57,4 +59,10 @@ class LaporanController extends Controller
             $this->studentFinalReportFileService->resolveLatestRegistrationWithReport($request->user()->id),
         );
     }
+
+    public function downloadTemplate(): BinaryFileResponse
+    {
+        return $this->studentFinalReportTemplateService->downloadActiveTemplate();
+    }
 }
+

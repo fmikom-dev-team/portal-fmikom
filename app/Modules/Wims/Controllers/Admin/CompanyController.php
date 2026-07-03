@@ -51,18 +51,5 @@ class CompanyController extends Controller
         return back()->with('success', 'Perusahaan mitra berhasil dihapus.');
     }
 
-    public function storeAccount(Request $request, PerusahaanMitra $company): RedirectResponse
-    {
-        if ($company->user_id) {
-            return back()->with('error', 'Perusahaan ini sudah terhubung dengan satu akun Portal mitra.');
-        }
-
-        $validated = $this->adminCompanyActionService->validateAccountLink($request);
-
-        if (! $this->adminCompanyActionService->linkCompanyPortalAccount($company, $validated)) {
-            return back()->with('error', 'Role mitra WIMS belum tersedia pada Portal.');
-        }
-
-        return back()->with('success', 'Akun Portal mitra berhasil dihubungkan ke perusahaan.');
-    }
 }
+

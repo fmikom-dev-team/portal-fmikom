@@ -37,6 +37,8 @@ class AdminCompanyActionService
             'kontak_person' => ['nullable', 'string', 'max:255'],
             'telepon' => ['nullable', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:255'],
+            'portal_user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'mitra_jabatan' => ['nullable', 'string', 'max:255'],
             'is_active' => ['required', 'boolean'],
         ], [
             'nama.required' => 'Nama perusahaan wajib diisi.',
@@ -55,6 +57,7 @@ class AdminCompanyActionService
             'longitude.between' => 'Longitude lokasi perusahaan tidak valid.',
             'bidang_industri.required' => 'Bidang industri wajib diisi.',
             'email.email' => 'Format email perusahaan tidak valid.',
+            'portal_user_id.exists' => 'Akun Portal mitra yang dipilih tidak ditemukan.',
             'hari_kerja.required' => 'Hari kerja perusahaan wajib dipilih.',
         ]);
 
@@ -83,12 +86,16 @@ class AdminCompanyActionService
 
     public function createCompany(array $validated): void
     {
-        PerusahaanMitra::create($validated);
+        $company = PerusahaanMitra::create($validated);
+
+        $this->syncPortalAccount($company, $validated);
     }
 
     public function updateCompany(PerusahaanMitra $company, array $validated): void
     {
         $company->update($validated);
+
+        $this->syncPortalAccount($company, $validated);
     }
 
     public function deleteCompany(PerusahaanMitra $company): void
@@ -115,27 +122,26 @@ class AdminCompanyActionService
         });
     }
 
-    public function validateAccountLink(Request $request): array
-    {
-        return $request->validate([
-            'email' => ['required', 'email', 'max:255'],
-            'jabatan' => ['nullable', 'string', 'max:255'],
-        ]);
-    }
 
-    public function linkCompanyPortalAccount(PerusahaanMitra $company, array $validated): bool
+    private function syncPortalAccount(PerusahaanMitra $company, array $validated): void
     {
-        if (! $this->wimsModuleRoleService->resolveModule() || ! $this->wimsModuleRoleService->resolveRole('mitra')) {
-            return false;
+        $portalUserId = $validated['portal_user_id'] ?? null;
+
+        if (! $portalUserId) {
+            return;
         }
 
-        $user = User::query()
-            ->where('email', $validated['email'])
-            ->first();
+        $user = User::query()->find($portalUserId);
 
         if (! $user) {
             throw ValidationException::withMessages([
-                'email' => 'Akun Portal dengan email tersebut belum ditemukan.',
+                'portal_user_id' => 'Akun Portal mitra yang dipilih tidak ditemukan.',
+            ]);
+        }
+
+        if (! $this->wimsModuleRoleService->hasActiveRole($user->id, 'mitra')) {
+            throw ValidationException::withMessages([
+                'portal_user_id' => 'Akun yang dipilih harus memiliki role mitra aktif.',
             ]);
         }
 
@@ -146,7 +152,7 @@ class AdminCompanyActionService
 
         if ($alreadyLinkedCompany) {
             throw ValidationException::withMessages([
-                'email' => 'Akun Portal ini sudah terhubung ke perusahaan mitra lain.',
+                'portal_user_id' => 'Akun Portal ini sudah terhubung ke perusahaan mitra lain.',
             ]);
         }
 
@@ -155,10 +161,11 @@ class AdminCompanyActionService
 
             $company->update([
                 'user_id' => $user->id,
-                'mitra_jabatan' => $validated['jabatan'] ?? null,
+                'mitra_jabatan' => $validated['mitra_jabatan'] ?? $company->mitra_jabatan,
             ]);
         });
-
-        return true;
     }
 }
+
+
+

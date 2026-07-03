@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import {
@@ -50,6 +50,7 @@ type RegistrationItem = {
         } | null;
     } | null;
     submitted_at?: string | null;
+    updated_at?: string | null;
 };
 type PageState = { can_submit?: boolean; is_revision?: boolean; is_locked?: boolean; completed_once?: boolean };
 type FormDefaults = {
@@ -209,10 +210,10 @@ const activityLog = computed(() => {
         logs.push({ icon: 'submit', color: 'blue',   text: 'Pendaftaran diajukan ke kampus', time: r.submitted_at });
     }
     if (r.status === 'revisi' && r.revision_note) {
-        logs.push({ icon: 'revisi', color: 'amber',  text: 'Kampus meminta revisi data',     time: '—' });
+        logs.push({ icon: 'revisi', color: 'amber',  text: 'Kampus meminta revisi data',     time: r.updated_at ?? r.submitted_at ?? '—' });
     }
     if (r.status === 'approved' || r.status === 'aktif' || r.status === 'selesai') {
-        logs.push({ icon: 'approved', color: 'emerald', text: 'Pendaftaran disetujui kampus', time: '—' });
+        logs.push({ icon: 'approved', color: 'emerald', text: 'Pendaftaran disetujui kampus', time: r.updated_at ?? r.submitted_at ?? '—' });
     }
     if (r.status === 'aktif') {
         logs.push({ icon: 'aktif', color: 'sky', text: 'PKL/Magang sedang berjalan',         time: r.tanggal_mulai_label ?? '—' });
@@ -221,7 +222,7 @@ const activityLog = computed(() => {
         logs.push({ icon: 'selesai', color: 'violet', text: 'PKL/Magang selesai',            time: r.tanggal_selesai_label ?? '—' });
     }
     if (r.status === 'rejected') {
-        logs.push({ icon: 'rejected', color: 'rose', text: 'Pendaftaran ditolak kampus',     time: '—' });
+        logs.push({ icon: 'rejected', color: 'rose', text: 'Pendaftaran ditolak kampus',     time: r.updated_at ?? r.submitted_at ?? '—' });
     }
     return logs.reverse();
 });
@@ -393,7 +394,7 @@ watch(
                         <div class="flex min-w-0 flex-1 flex-col items-center gap-1.5">
                             <div
                                 class="flex size-7 items-center justify-center rounded-full text-[11px] font-bold transition-all duration-300"
-                                :class="step.done ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : step.active ? 'border-2 border-blue-500 bg-wims-card text-blue-600 dark:text-blue-400' : 'border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500'"
+                                :class="step.done ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : step.active ? 'border-2 border-blue-500 bg-wims-card text-blue-600 shadow-[0_0_0_1px_rgba(59,130,246,0.12)] dark:text-blue-400' : 'border border-slate-200 bg-white text-slate-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] dark:border-slate-600/80 dark:bg-slate-800/70 dark:text-slate-400 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'"
                             >
                                 <CheckCircle2 v-if="step.done" class="size-4" />
                                 <span v-else>{{ i + 1 }}</span>
@@ -402,63 +403,8 @@ watch(
                                 {{ step.label }}
                             </span>
                         </div>
-                        <div v-if="i < steps.length - 1" class="mb-4 h-px flex-1 transition-colors duration-500" :class="step.done ? 'bg-blue-500' : 'bg-wims-border/60'" />
+                        <div v-if="i < steps.length - 1" class="mb-4 h-px flex-1 rounded-full transition-colors duration-500" :class="step.done ? 'bg-blue-500 dark:bg-blue-400' : 'bg-slate-200 dark:bg-slate-600/70'" />
                     </template>
-                </div>
-            </div>
-
-            <!-- NEW ELEMENT: Quick Stats Bar -->
-            <div class="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-                <div class="group relative overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(59,130,246,0.12)] hover:-translate-y-0.5">
-                    <div class="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-blue-500 to-blue-400 rounded-t-2xl" />
-                    <div class="p-4 lg:p-5">
-                        <div class="flex items-center justify-between">
-                            <div class="flex size-9 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-500/15">
-                                <Briefcase class="size-4 text-blue-600 dark:text-blue-400" />
-                            </div>
-                        </div>
-                        <p class="mt-2.5 text-[18px] font-bold tabular-nums text-wims-text leading-none">{{ statusLabel(registration?.status) }}</p>
-                        <p class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Status</p>
-                    </div>
-                </div>
-
-                <div class="group relative overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(6,182,212,0.12)] hover:-translate-y-0.5">
-                    <div class="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-cyan-500 to-teal-400 rounded-t-2xl" />
-                    <div class="p-4 lg:p-5">
-                        <div class="flex items-center justify-between">
-                            <div class="flex size-9 items-center justify-center rounded-lg bg-cyan-50 dark:bg-cyan-500/15">
-                                <Timer class="size-4 text-cyan-600 dark:text-cyan-400" />
-                            </div>
-                        </div>
-                        <p class="mt-2.5 text-[18px] font-bold tabular-nums text-wims-text leading-none">{{ countdown ? countdown.totalDays + ' hari' : '—' }}</p>
-                        <p class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Total Durasi</p>
-                    </div>
-                </div>
-
-                <div class="group relative overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(249,115,22,0.12)] hover:-translate-y-0.5">
-                    <div class="absolute top-0 inset-x-0 h-[3px] rounded-t-2xl" :class="countdown?.phase === 'selesai' ? 'bg-gradient-to-r from-emerald-500 to-teal-400' : countdown?.phase === 'berjalan' ? 'bg-gradient-to-r from-blue-500 to-cyan-400' : 'bg-gradient-to-r from-amber-500 to-orange-400'" />
-                    <div class="p-4 lg:p-5">
-                        <div class="flex items-center justify-between">
-                            <div class="flex size-9 items-center justify-center rounded-lg" :class="countdown?.phase === 'selesai' ? 'bg-emerald-50 dark:bg-emerald-500/15' : countdown?.phase === 'berjalan' ? 'bg-blue-50 dark:bg-blue-500/15' : 'bg-amber-50 dark:bg-amber-500/15'">
-                                <Clock3 class="size-4" :class="countdown?.phase === 'selesai' ? 'text-emerald-600 dark:text-emerald-400' : countdown?.phase === 'berjalan' ? 'text-blue-600 dark:text-blue-400' : 'text-amber-600 dark:text-amber-400'" />
-                            </div>
-                        </div>
-                        <p class="mt-2.5 text-[18px] font-bold tabular-nums text-wims-text leading-none">{{ countdown ? (countdown.phase === 'selesai' ? 'Selesai' : countdown.diffDays + ' hari') : '—' }}</p>
-                        <p class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ countdown?.phase === 'berjalan' ? 'Sisa Waktu' : countdown?.phase === 'belum' ? 'Menuju Mulai' : 'Countdown' }}</p>
-                    </div>
-                </div>
-
-                <div class="group relative overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(16,185,129,0.12)] hover:-translate-y-0.5">
-                    <div class="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-emerald-500 to-green-400 rounded-t-2xl" />
-                    <div class="p-4 lg:p-5">
-                        <div class="flex items-center justify-between">
-                            <div class="flex size-9 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-500/15">
-                                <Building2 class="size-4 text-emerald-600 dark:text-emerald-400" />
-                            </div>
-                        </div>
-                        <p class="mt-2.5 text-[14px] font-bold text-wims-text leading-tight truncate">{{ registration ? (registration.company?.final?.name || registration.company?.proposal?.name || '—') : '—' }}</p>
-                        <p class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Perusahaan</p>
-                    </div>
                 </div>
             </div>
 

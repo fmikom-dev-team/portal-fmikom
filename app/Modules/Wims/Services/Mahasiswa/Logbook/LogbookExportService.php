@@ -72,7 +72,7 @@ class LogbookExportService
                     ? $registration->tanggal_mulai->locale('id')->translatedFormat('d M Y').' - '.$registration->tanggal_selesai->locale('id')->translatedFormat('d M Y')
                     : '-',
                 'supervisor_lecturer' => $registration->dosenPembimbing?->name ?? '-',
-                'mentor' => $registration->perusahaan?->user?->name ?? '-',
+                'mentor' => $registration->finalMentor()?->name ?? '-',
             ],
             'rows' => $rows,
         ], 'logbook-pkl-periode-terakhir-'.now()->format('Y-m-d').'.pdf');

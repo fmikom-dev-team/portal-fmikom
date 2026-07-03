@@ -62,10 +62,10 @@ class StudentProfilePageService
                         : null,
                 ],
                 'mentor' => [
-                    'id' => $latestRegistration->perusahaan?->user?->id,
-                    'name' => $latestRegistration->perusahaan?->user?->name ?? '-',
-                    'role_context' => $latestRegistration->perusahaan?->user
-                        ? $this->wimsModuleRoleService->resolveContextRoleData($latestRegistration->perusahaan->user, 'mitra')
+                    'id' => $latestRegistration->finalMentor()?->id,
+                    'name' => $latestRegistration->finalMentor()?->name ?? '-',
+                    'role_context' => $latestRegistration->finalMentor()
+                        ? $this->wimsModuleRoleService->resolveContextRoleData($latestRegistration->finalMentor(), 'mitra')
                         : null,
                 ],
                 'period_label' => $latestRegistration->tanggal_mulai && $latestRegistration->tanggal_selesai

@@ -243,40 +243,45 @@ const historyStatusTone = (item: HistoryProps) => {
 
     if (value.includes('alfa') || value.includes('tidak hadir')) {
         return {
-            card: 'border-rose-200/60 bg-rose-50 dark:bg-rose-500/15',
+            card: 'border-rose-200/60 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/15',
             icon: 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400',
             text: 'text-rose-700',
+            badge: 'border-rose-200/60 bg-rose-100 dark:border-rose-500/40 dark:bg-rose-500/25 text-rose-700 dark:text-rose-300',
         };
     }
 
     if (value.includes('izin')) {
         return {
-            card: 'border-amber-200/60 bg-amber-50 dark:bg-amber-500/15',
+            card: 'border-amber-200/60 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/15',
             icon: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400',
             text: 'text-amber-700',
+            badge: 'border-amber-200/60 bg-amber-100 dark:border-amber-500/40 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300',
         };
     }
 
     if (value.includes('sakit')) {
         return {
-            card: 'border-violet-200/60 bg-violet-50 dark:bg-violet-500/15',
+            card: 'border-violet-200/60 bg-violet-50 dark:border-violet-500/30 dark:bg-violet-500/15',
             icon: 'bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400',
             text: 'text-violet-700',
+            badge: 'border-violet-200/60 bg-violet-100 dark:border-violet-500/40 dark:bg-violet-500/25 text-violet-700 dark:text-violet-300',
         };
     }
 
     if (value.includes('terlambat')) {
         return {
-            card: 'border-amber-200/60 bg-amber-50 dark:bg-amber-500/15',
+            card: 'border-amber-200/60 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/15',
             icon: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400',
             text: 'text-amber-700',
+            badge: 'border-amber-200/60 bg-amber-100 dark:border-amber-500/40 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300',
         };
     }
 
     return {
-        card: 'border-emerald-200/60 bg-emerald-50 dark:bg-emerald-500/15',
+        card: 'border-emerald-200/60 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/15',
         icon: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
         text: 'text-emerald-700',
+        badge: 'border-emerald-200/60 bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300',
     };
 };
 
@@ -325,30 +330,58 @@ const registrationStatusLabel = computed(() => {
 
 const registrationStatusClasses = computed(() => {
     if (props.registration.status === 'approved') {
-        return 'border-emerald-200/60 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300';
+        return 'border-emerald-200/60 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300';
     }
 
     if (props.registration.status === 'aktif') {
-        return 'border-sky-200/60 dark:border-sky-500/30 bg-sky-50 dark:bg-sky-500/15 text-sky-700 dark:text-sky-300';
+        return 'border-sky-200/60 dark:border-sky-500/40 bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300';
     }
 
     if (props.registration.status === 'selesai') {
-        return 'border-violet-200/60 dark:border-violet-500/30 bg-violet-50 dark:bg-violet-500/15 text-violet-700 dark:text-violet-300';
+        return 'border-violet-200/60 dark:border-violet-500/40 bg-violet-50 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300';
     }
 
     if (props.registration.status === 'revisi') {
-        return 'border-amber-200/60 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300';
+        return 'border-amber-200/60 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300';
     }
 
     if (props.registration.status === 'rejected') {
-        return 'border-rose-200/60 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300';
+        return 'border-rose-200/60 dark:border-rose-500/40 bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300';
     }
 
     if (props.registration.status === 'pending') {
-        return 'border-blue-200/60 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300';
+        return 'border-blue-200/60 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300';
     }
 
-    return 'border-wims-border bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400';
+    return 'border-wims-border bg-slate-50 dark:border-slate-700 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300';
+});
+
+const registrationStatusCardClasses = computed(() => {
+    if (props.registration.status === 'approved') {
+        return 'border-emerald-200/60 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/15';
+    }
+
+    if (props.registration.status === 'aktif') {
+        return 'border-sky-200/60 bg-sky-50 dark:border-sky-500/30 dark:bg-sky-500/15';
+    }
+
+    if (props.registration.status === 'selesai') {
+        return 'border-violet-200/60 bg-violet-50 dark:border-violet-500/30 dark:bg-violet-500/15';
+    }
+
+    if (props.registration.status === 'revisi') {
+        return 'border-amber-200/60 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/15';
+    }
+
+    if (props.registration.status === 'rejected') {
+        return 'border-rose-200/60 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/15';
+    }
+
+    if (props.registration.status === 'pending') {
+        return 'border-blue-200/60 bg-blue-50 dark:border-blue-500/30 dark:bg-blue-500/15';
+    }
+
+    return 'border-wims-border/60 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-800/70';
 });
 
 const heroTitle = computed(() => {
@@ -440,7 +473,7 @@ const activityStatusClasses = computed(() => {
         return {
             card: 'border-orange-200/60 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/15',
             icon: 'border-orange-200/60 bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400',
-            badge: 'border-orange-200/60 bg-orange-100 dark:bg-orange-500/20 text-orange-700',
+            badge: 'border-orange-200/60 bg-orange-100 dark:border-orange-500/40 dark:bg-orange-500/25 text-orange-700 dark:text-orange-300',
             accent: 'bg-orange-500',
             subtitle: 'text-orange-700',
         };
@@ -450,7 +483,7 @@ const activityStatusClasses = computed(() => {
         return {
             card: 'border-sky-200/60 bg-sky-50 dark:bg-sky-500/15',
             icon: 'border-sky-200/60 bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400',
-            badge: 'border-sky-200/60 bg-sky-100 dark:bg-sky-500/20 text-sky-700',
+            badge: 'border-sky-200/60 bg-sky-100 dark:border-sky-500/40 dark:bg-sky-500/25 text-sky-700 dark:text-sky-300',
             accent: 'bg-sky-500',
             subtitle: 'text-sky-700',
         };
@@ -459,7 +492,7 @@ const activityStatusClasses = computed(() => {
     return {
         card: 'border-emerald-200/60 bg-emerald-50 dark:bg-emerald-500/15',
         icon: 'border-emerald-200/60 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
-        badge: 'border-emerald-200/60 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700',
+        badge: 'border-emerald-200/60 bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300',
         accent: 'bg-emerald-500',
         subtitle: 'text-emerald-700',
     };
@@ -811,7 +844,7 @@ const showHeroActions = computed(() => dashboardState.value === 'active');
                                 </div>
 
                                 <!-- Registration status -->
-                                <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-4 py-3.5 transition-colors hover:bg-slate-100/80 dark:hover:bg-slate-700/40">
+                                <div class="rounded-xl border px-4 py-3.5 transition-colors" :class="registrationStatusCardClasses">
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Status pengajuan</p>
@@ -819,7 +852,7 @@ const showHeroActions = computed(() => dashboardState.value === 'active');
                                         </div>
                                         <FileText class="size-4 flex-shrink-0 text-slate-400" />
                                     </div>
-                                    <p class="mt-2 text-[12px] font-medium text-slate-500 dark:text-slate-400">{{ props.registration.submitted_at || 'Belum ada data pengajuan' }}</p>
+                                    <p class="mt-2 text-[12px] font-medium text-slate-500 dark:text-slate-300">{{ props.registration.submitted_at || 'Belum ada data pengajuan' }}</p>
                                 </div>
                             </div>
                         </div>
@@ -895,7 +928,7 @@ const showHeroActions = computed(() => dashboardState.value === 'active');
                                         <p class="text-[13px] font-bold text-wims-text">{{ item.date || 'Tanggal tidak tersedia' }}</p>
                                         <p class="mt-0.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">{{ item.time ? `${item.time} WIB` : 'Waktu belum tersedia' }}</p>
                                     </div>
-                                    <Badge variant="outline" class="flex-shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-bold" :class="historyStatusTone(item).text">
+                                    <Badge variant="outline" class="flex-shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-bold" :class="historyStatusTone(item).badge">
                                         {{ item.label ?? item.status }}
                                     </Badge>
                                 </div>

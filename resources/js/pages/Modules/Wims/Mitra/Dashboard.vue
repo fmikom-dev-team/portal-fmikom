@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3';
 import {
     AlertTriangle,
@@ -152,7 +152,7 @@ const summaryCards = computed(() => [
     {
         label: 'Mahasiswa Aktif',
         value: props.summary.active_students ?? 0,
-        caption: 'Peserta yang sedang menjalani magang saat ini.',
+        caption: 'Sedang PKL.',
         tone: 'text-sky-700',
         cardClass:
             'border-blue-100/80 bg-blue-50/40 dark:bg-blue-500/8 dark:border-blue-500/20',
@@ -163,7 +163,7 @@ const summaryCards = computed(() => [
     {
         label: 'Mahasiswa Selesai',
         value: props.summary.completed_students ?? 0,
-        caption: 'Mahasiswa yang telah selesai PKL di mitra ini.',
+        caption: 'Sudah selesai PKL.',
         tone: 'text-emerald-700',
         cardClass:
             'border-emerald-100/80 bg-emerald-50/38 dark:bg-emerald-500/8 dark:border-emerald-500/20',
@@ -174,7 +174,7 @@ const summaryCards = computed(() => [
     {
         label: 'Perlu Tindak Lanjut',
         value: props.summary.active_warnings ?? 0,
-        caption: 'Mahasiswa aktif yang terlambat presensi atau logbook.',
+        caption: 'Perlu dicek.',
         tone: 'text-amber-700',
         cardClass:
             'border-amber-100/80 bg-amber-50/42 dark:bg-amber-500/8 dark:border-amber-500/20',
@@ -185,7 +185,7 @@ const summaryCards = computed(() => [
     {
         label: 'Belum Dinilai',
         value: props.summary.not_evaluated ?? 0,
-        caption: 'Mahasiswa selesai yang penilaian mitranya belum dikirim.',
+        caption: 'Penilaian belum masuk.',
         tone: 'text-slate-700 dark:text-slate-200',
         cardClass: 'border-slate-200 bg-slate-50/65 dark:bg-slate-800/40',
         iconClass:
@@ -195,7 +195,7 @@ const summaryCards = computed(() => [
     {
         label: 'Pengajuan Menunggu',
         value: props.summary.pending_absence_requests ?? 0,
-        caption: 'Permintaan izin atau sakit yang menunggu keputusan mitra.',
+        caption: 'Menunggu keputusan.',
         tone: 'text-orange-700',
         cardClass:
             'border-orange-100/80 bg-orange-50/40 dark:bg-orange-500/8 dark:border-orange-500/20',
@@ -260,14 +260,14 @@ const sectionDefinitions: Array<{
         key: 'active',
         title: 'Mahasiswa Aktif',
         description:
-            'Preview operasional mahasiswa yang sedang menjalani PKL pada periode aktif.',
+            'Ringkasan mahasiswa aktif.',
         empty: 'Tidak ada mahasiswa aktif pada filter saat ini.',
     },
     {
         key: 'completed',
         title: 'Mahasiswa Selesai',
         description:
-            'Preview mahasiswa yang sudah selesai PKL dan siap untuk penilaian mitra.',
+            'Ringkasan mahasiswa selesai.',
         empty: 'Belum ada mahasiswa yang masuk fase selesai.',
     },
 ];
@@ -488,7 +488,7 @@ const notificationItems = computed<DashboardNotificationItem[]>(() => {
             id: 'pending-absence',
             title: `${props.pendingAbsenceRequests.length} pengajuan izin menunggu`,
             description:
-                'Segera setujui atau tolak izin dan sakit yang masih menunggu keputusan.',
+                'Segera proses izin/sakit yang menunggu.',
             actionLabel: 'Tinjau',
             tone: 'amber',
             targetType: 'section',
@@ -504,9 +504,9 @@ const notificationItems = computed<DashboardNotificationItem[]>(() => {
                 ? `${firstWarning.name || 'Mahasiswa'}${
                       warningDetails(firstWarning).length
                           ? `: ${warningDetails(firstWarning).join(', ')}.`
-                          : ' perlu segera diperiksa.'
+                          : ' perlu dicek.'
                   }`
-                : 'Ada mahasiswa dengan keterlambatan presensi atau logbook.',
+                : 'Ada mahasiswa yang perlu dicek.',
             actionLabel: 'Periksa',
             tone: 'rose',
             targetType: 'section',
@@ -519,7 +519,7 @@ const notificationItems = computed<DashboardNotificationItem[]>(() => {
             id: 'attendance',
             title: `${props.summary.not_present_today} mahasiswa belum presensi`,
             description:
-                'Cek board presensi hari ini untuk melihat siapa yang belum check-in.',
+                'Cek presensi hari ini.',
             actionLabel: 'Lihat Presensi',
             tone: 'blue',
             targetType: 'section',
@@ -532,7 +532,7 @@ const notificationItems = computed<DashboardNotificationItem[]>(() => {
             id: 'review-board',
             title: `${props.reviewBoard.length} logbook menunggu review`,
             description:
-                'Prioritaskan review harian atau revisi logbook yang masih antre.',
+                'Utamakan logbook yang antre review.',
             actionLabel: 'Review',
             tone: 'amber',
             targetType: 'section',
@@ -545,7 +545,7 @@ const notificationItems = computed<DashboardNotificationItem[]>(() => {
             id: 'assessment',
             title: `${props.summary.not_evaluated} mahasiswa selesai belum dinilai`,
             description:
-                'Lengkapi penilaian mitra agar proses akhir mahasiswa tidak tertunda.',
+                'Lengkapi penilaian akhir.',
             actionLabel: 'Isi Nilai',
             tone: 'slate',
             targetType: 'assessment-index',
@@ -557,7 +557,7 @@ const notificationItems = computed<DashboardNotificationItem[]>(() => {
             id: 'all-clear',
             title: 'Tidak ada notifikasi prioritas',
             description:
-                'Operasional harian saat ini relatif aman. Anda bisa lanjut memantau mahasiswa aktif.',
+                'Operasional harian aman.',
             tone: 'emerald',
         });
     }
@@ -632,14 +632,14 @@ onBeforeUnmount(() => {
 
     <div class="min-h-screen bg-wims-bg">
         <div class="mx-auto w-full max-w-[1320px] space-y-4 px-4 py-3 lg:space-y-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8 xl:px-10">
-            <header class="relative overflow-hidden rounded-2xl border border-wims-border/50 bg-wims-card/95 px-5 py-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] sm:px-6 sm:py-6">
+            <header class="relative overflow-hidden rounded-2xl border border-wims-border/50 bg-wims-card/95 px-4 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)] sm:px-6 sm:py-6">
                 <div class="flex flex-col gap-2.5 sm:gap-3">
                     <div class="min-w-0 max-w-3xl">
-                        <h1 class="text-[20px] font-bold tracking-tight text-slate-950 dark:text-slate-100 sm:text-[24px] lg:text-[30px]">
+                        <h1 class="text-[18px] font-bold tracking-tight text-slate-950 dark:text-slate-100 sm:text-[22px] lg:text-[28px]">
                             Ringkasan Operasional Hari Ini
                         </h1>
-                        <p class="mt-1.5 max-w-2xl text-[13px] leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm">
-                            Ringkasan operasional mahasiswa magang pada portal web, dengan fokus pada tindak lanjut harian, presensi, dan review logbook.
+                        <p class="mt-1.5 max-w-2xl text-[12px] leading-5 text-slate-600 dark:text-slate-400 sm:text-[13px]">
+                            Pantau PKL, presensi, logbook, dan tindak lanjut hari ini.
                         </p>
                     </div>
                 </div>
@@ -664,7 +664,7 @@ onBeforeUnmount(() => {
                                 <component :is="card.icon" class="size-4" />
                             </div>
                         </div>
-                        <p class="mt-1.5 text-[24px] font-bold tracking-tight sm:text-3xl" :class="card.tone">
+                        <p class="mt-1.5 text-[22px] font-bold tracking-tight sm:text-3xl" :class="card.tone">
                             {{ card.value }}
                         </p>
                         <p class="mt-2 text-[11px] leading-5 text-slate-600 dark:text-slate-400">
@@ -677,11 +677,11 @@ onBeforeUnmount(() => {
             <section id="warning-section" class="space-y-4">
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div class="max-w-3xl">
-                        <h2 class="text-[15px] font-bold text-wims-text">
+                        <h2 class="text-[14px] font-bold text-wims-text">
                             Perlu Tindak Lanjut
                         </h2>
                         <p class="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-400">
-                            Daftar ini menampilkan mahasiswa aktif yang melewati ambang keterlambatan presensi atau logbook.
+                            Mahasiswa aktif yang perlu dicek.
                         </p>
                     </div>
                     <Badge
@@ -693,7 +693,7 @@ onBeforeUnmount(() => {
                 </div>
 
                 <Card class="rounded-2xl border border-amber-100 bg-wims-card py-0 shadow-[0_20px_44px_-32px_rgba(245,158,11,0.45)] dark:border-amber-500/20">
-                    <CardContent class="space-y-4 px-5 py-5 sm:px-6">
+                    <CardContent class="space-y-4 px-4 py-4 sm:px-5 sm:py-5">
                         <button
                             v-for="warning in props.warnings"
                             :key="warning.pendaftaran_id ?? warning.student_id ?? warning.name ?? 'warning-item'"
@@ -702,7 +702,7 @@ onBeforeUnmount(() => {
                             @click="openWarningMonitoring(warning)"
                         >
                             <div class="min-w-0">
-                                <p class="text-[13px] font-bold text-wims-text">
+                                <p class="text-[12px] font-bold text-wims-text">
                                     {{ warning.name || 'Mahasiswa' }}
                                 </p>
                                 <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
@@ -728,7 +728,7 @@ onBeforeUnmount(() => {
                             v-if="!props.warnings.length"
                             class="rounded-xl border border-wims-border bg-slate-50 px-4 py-3 text-[11px] text-slate-500 dark:bg-slate-800/50 dark:text-slate-400"
                         >
-                            Belum ada kasus monitoring yang memerlukan tindak lanjut.
+                            Belum ada data monitoring.
                         </p>
                     </CardContent>
                 </Card>
@@ -739,14 +739,14 @@ onBeforeUnmount(() => {
                     id="pending-absence-section"
                     class="self-start rounded-2xl border border-wims-border bg-wims-card py-0 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)]"
                 >
-                    <CardContent class="space-y-4 px-5 py-5 sm:px-6">
+                    <CardContent class="space-y-4 px-4 py-4 sm:px-5 sm:py-5">
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <h2 class="text-[15px] font-bold text-wims-text">
+                                <h2 class="text-[14px] font-bold text-wims-text">
                                     Pengajuan Ketidakhadiran
                                 </h2>
                                 <p class="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-400">
-                                    Setujui atau tolak izin dan sakit dari mahasiswa bimbingan.
+                                    Izin dan sakit yang menunggu keputusan.
                                 </p>
                             </div>
                             <Badge
@@ -765,7 +765,7 @@ onBeforeUnmount(() => {
                             >
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="min-w-0">
-                                        <p class="text-[13px] font-bold text-wims-text">
+                                        <p class="text-[12px] font-bold text-wims-text">
                                             {{ item.name || 'Mahasiswa' }}
                                         </p>
                                         <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
@@ -783,7 +783,7 @@ onBeforeUnmount(() => {
                                 <p class="mt-2 text-[11px] font-medium text-orange-700 dark:text-orange-300">
                                     {{ formatDateUi(item.tanggal_label) }}
                                 </p>
-                                <p class="mt-1.5 text-[12px] leading-5 text-slate-700 dark:text-slate-300">
+                                <p class="mt-1.5 text-[11px] leading-5 text-slate-700 dark:text-slate-300">
                                     {{ item.alasan || '-' }}
                                 </p>
 
@@ -824,11 +824,11 @@ onBeforeUnmount(() => {
                     <CardContent class="space-y-3 px-4 py-4 sm:px-5">
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <h2 class="text-[15px] font-bold text-wims-text">
-                                    Board Presensi Hari Ini
+                                <h2 class="text-[14px] font-bold text-wims-text">
+                                    Presensi Hari Ini
                                 </h2>
                                 <p class="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-400">
-                                    Ringkasan mahasiswa aktif yang sudah hadir, terlambat, atau belum presensi masuk.
+                                    Ringkasan presensi harian.
                                 </p>
                             </div>
                             <Badge
@@ -847,7 +847,7 @@ onBeforeUnmount(() => {
                                     >
                                         <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                             <div class="min-w-0">
-                                                <p class="text-[13px] font-bold text-wims-text">
+                                                <p class="text-[12px] font-bold text-wims-text">
                                                     {{ student.name || 'Mahasiswa' }}
                                                 </p>
                                                 <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{{ student.nim || '-' }}</p>
@@ -870,7 +870,7 @@ onBeforeUnmount(() => {
                             v-else
                             class="rounded-xl border border-wims-border bg-slate-50 px-4 py-3 text-[11px] leading-5 text-slate-500 dark:bg-slate-800/50 dark:text-slate-400"
                         >
-                            Belum ada mahasiswa aktif yang perlu dipantau pada board presensi.
+                            Belum ada data presensi.
                         </p>
                     </CardContent>
                 </Card>
@@ -882,11 +882,11 @@ onBeforeUnmount(() => {
                     <CardContent class="space-y-3 px-4 py-4 sm:px-5">
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <h2 class="text-[15px] font-bold text-wims-text">
-                                    Review Harian Logbook
+                                <h2 class="text-[14px] font-bold text-wims-text">
+                                    Logbook Terbaru
                                 </h2>
                                 <p class="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-400">
-                                    Prioritaskan logbook yang menunggu review harian atau perlu revisi.
+                                    Entri yang perlu review.
                                 </p>
                             </div>
                             <Badge
@@ -905,7 +905,7 @@ onBeforeUnmount(() => {
                             >
                                     <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                         <div class="min-w-0">
-                                            <p class="text-[13px] font-bold text-wims-text">
+                                            <p class="text-[12px] font-bold text-wims-text">
                                                 {{ student.name || 'Mahasiswa' }}
                                             </p>
                                             <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
@@ -920,7 +920,7 @@ onBeforeUnmount(() => {
                                             {{ logbookLabel(student.logbook_status) }}
                                         </Badge>
                                     </div>
-                                    <p class="mt-2 line-clamp-2 text-[12px] leading-5 text-slate-700 dark:text-slate-300">
+                                    <p class="mt-2 line-clamp-2 text-[11px] leading-5 text-slate-700 dark:text-slate-300">
                                         {{ student.latest_logbook_activity || 'Belum ada ringkasan aktivitas logbook terakhir.' }}
                                     </p>
                                     <div class="mt-2.5 flex justify-end">
@@ -938,7 +938,7 @@ onBeforeUnmount(() => {
                                 v-if="!props.reviewBoard.length"
                                 class="rounded-xl border border-wims-border bg-slate-50 px-4 py-3 text-[11px] leading-5 text-slate-500 dark:bg-slate-800/50 dark:text-slate-400"
                             >
-                                Tidak ada logbook yang menunggu review saat ini.
+                                Belum ada logbook terbaru.
                             </p>
                         </div>
                     </CardContent>
@@ -952,7 +952,7 @@ onBeforeUnmount(() => {
             >
                 <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div class="max-w-3xl">
-                        <h2 class="text-[15px] font-bold text-wims-text">
+                        <h2 class="text-[14px] font-bold text-wims-text">
                             {{ section.title }}
                         </h2>
                         <p class="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-400">
@@ -970,7 +970,7 @@ onBeforeUnmount(() => {
                             v-if="section.students.length > 3"
                             class="text-[11px] text-slate-500 dark:text-slate-400"
                         >
-                            Menampilkan 3 dari {{ section.students.length }} mahasiswa.
+                            3 dari {{ section.students.length }} ditampilkan.
                         </p>
                         <Button
                             type="button"
@@ -996,7 +996,7 @@ onBeforeUnmount(() => {
                             >
                                 <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                                     <div class="min-w-0 lg:flex-1">
-                                        <p class="text-[13px] font-bold text-wims-text">
+                                        <p class="text-[12px] font-bold text-wims-text">
                                             {{ student.name || 'Mahasiswa' }}
                                         </p>
                                         <div class="mt-1 flex flex-col gap-1 text-[11px] text-slate-500 dark:text-slate-400 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1">
@@ -1066,7 +1066,7 @@ onBeforeUnmount(() => {
                                                 </div>
                                                 <div class="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-wims-border bg-wims-card px-3 py-2 sm:justify-start sm:gap-1.5 sm:rounded-full sm:px-2.5 sm:py-1">
                                                     <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Nilai</span>
-                                                    <span class="text-[13px] font-bold text-wims-text">
+                                                    <span class="text-[12px] font-bold text-wims-text">
                                                         {{
                                                             student.objective_summary?.evaluation_total_score !== null &&
                                                             student.objective_summary?.evaluation_total_score !== undefined
@@ -1102,7 +1102,7 @@ onBeforeUnmount(() => {
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        class="h-10 w-full rounded-lg border-wims-border bg-wims-card px-3 text-[13px] font-bold text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/30"
+                                        class="h-9 w-full rounded-lg border-wims-border bg-wims-card px-3 text-[12px] font-bold text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/30"
                                         @click="openMonitoring(student)"
                                     >
                                         Lihat Monitoring
@@ -1110,7 +1110,7 @@ onBeforeUnmount(() => {
                                     <Button
                                         v-if="section.key === 'completed' && canAssess(student)"
                                         type="button"
-                                        class="h-10 w-full rounded-lg bg-[#0F62FE] px-3 text-[13px] font-bold text-white hover:bg-[#0050E6]"
+                                        class="h-9 w-full rounded-lg bg-[#0F62FE] px-3 text-[12px] font-bold text-white hover:bg-[#0050E6]"
                                         @click="openAssessment(student)"
                                     >
                                         {{ assessmentActionLabel(student) }}
@@ -1123,14 +1123,14 @@ onBeforeUnmount(() => {
                             v-if="remainingPreviewCount(section.students) > 0"
                             class="rounded-xl border border-wims-border bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-slate-800/50 dark:text-slate-400"
                         >
-                            {{ previewStudents(section.students).length }} dari {{ section.students.length }} mahasiswa ditampilkan.
+                            {{ previewStudents(section.students).length }} dari {{ section.students.length }} ditampilkan.
                         </div>
                     </CardContent>
                 </Card>
 
                 <p
                     v-else
-                    class="rounded-xl border border-wims-border bg-wims-card px-5 py-6 text-center text-sm text-slate-500 dark:text-slate-400"
+                    class="rounded-xl border border-wims-border bg-wims-card px-4 py-5 text-center text-[11px] text-slate-500 dark:text-slate-400"
                 >
                     {{ section.empty }}
                 </p>

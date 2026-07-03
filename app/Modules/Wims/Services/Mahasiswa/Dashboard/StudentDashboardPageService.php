@@ -132,10 +132,10 @@ class StudentDashboardPageService
                         : null,
                 ],
                 'mentor' => [
-                    'id' => $latestRegistration?->perusahaan?->user?->id,
-                    'name' => $latestRegistration?->perusahaan?->user?->name,
-                    'role_context' => $latestRegistration?->perusahaan?->user
-                        ? $this->wimsModuleRoleService->resolveContextRoleData($latestRegistration->perusahaan->user, 'mitra')
+                    'id' => $latestRegistration?->finalMentor()?->id,
+                    'name' => $latestRegistration?->finalMentor()?->name,
+                    'role_context' => $latestRegistration?->finalMentor()
+                        ? $this->wimsModuleRoleService->resolveContextRoleData($latestRegistration?->finalMentor(), 'mitra')
                         : null,
                 ],
                 'submitted_at' => $latestRegistration?->created_at?->translatedFormat('d M Y H:i'),

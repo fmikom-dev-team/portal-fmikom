@@ -528,8 +528,3 @@ const studentInitial = (student: StudentItem) => {
     </Dialog>
 </template>
 
-
-
-
-
-
