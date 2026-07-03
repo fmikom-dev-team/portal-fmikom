@@ -3,6 +3,7 @@
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import {
     Eye,
     CheckCircle2,
@@ -59,6 +60,7 @@ const props = defineProps<{
     categories: Array<{ id: number; nama: string }>;
 }>();
 const page = usePage<PageProps>();
+const { can } = useFastPermissions();
 const summary = props.summary;
 const defaultStatus = 'pending';
 const search = ref(props.filters.search ?? '');
@@ -72,6 +74,23 @@ const isFilterActive = computed(
 );
 const toastMessage = ref('');
 const toastVariant = ref<'success' | 'error'>('success');
+const selectedSuratIds = ref<number[]>([]);
+const selectableSurats = computed(() =>
+    (props.surats.data ?? []).filter(
+        (item) =>
+            item.status === 'pending' &&
+            Boolean(item.can_approve) &&
+            can('fast.admin.surat.approve'),
+    ),
+);
+const selectableSuratIds = computed(() =>
+    selectableSurats.value.map((item) => item.id),
+);
+const selectedSuratCount = computed(() => selectedSuratIds.value.length);
+const allSelectableSelected = computed(() =>
+    selectableSuratIds.value.length > 0 &&
+    selectableSuratIds.value.every((id) => selectedSuratIds.value.includes(id)),
+);
 
 function showToast(message: string, variant: 'success' | 'error' = 'success') {
     toastMessage.value = message;
@@ -95,6 +114,12 @@ watch(
     },
     { immediate: true },
 );
+watch(
+    () => props.surats.data.map((item) => item.id).join(','),
+    () => {
+        selectedSuratIds.value = [];
+    },
+);
 
 const statusFilters = computed(() => [
     {
@@ -103,8 +128,13 @@ const statusFilters = computed(() => [
         color: 'amber' as const,
     },
     {
+        key: 'revision_requested',
+        label: 'Dikembalikan Pimpinan',
+        color: 'amber' as const,
+    },
+    {
         key: 'rejected_admin',
-        label: 'Ditolak',
+        label: 'Ditolak Admin',
         color: 'red' as const,
     },
     { key: 'all', label: 'Semua', color: 'blue' as const },
@@ -126,6 +156,61 @@ function resetFilter() {
     status.value = defaultStatus;
     categoryId.value = '';
     applyFilter();
+}
+function isSuratSelected(id: number) {
+    return selectedSuratIds.value.includes(id);
+}
+function checkboxChecked(event: Event) {
+    return Boolean((event.target as HTMLInputElement | null)?.checked);
+}
+function toggleSuratSelection(item: SuratItem, checked: boolean) {
+    if (
+        item.status !== 'pending' ||
+        !item.can_approve ||
+        !can('fast.admin.surat.approve')
+    ) {
+        return;
+    }
+
+    if (checked) {
+        if (!selectedSuratIds.value.includes(item.id)) {
+            selectedSuratIds.value = [...selectedSuratIds.value, item.id];
+        }
+        return;
+    }
+
+    selectedSuratIds.value = selectedSuratIds.value.filter(
+        (id) => id !== item.id,
+    );
+}
+function toggleSelectAll(checked: boolean) {
+    selectedSuratIds.value = checked ? [...selectableSuratIds.value] : [];
+}
+function clearSelection() {
+    selectedSuratIds.value = [];
+}
+function bulkApproveSelected() {
+    if (selectedSuratIds.value.length === 0) return;
+
+    const total = selectedSuratIds.value.length;
+    const confirmed = window.confirm(`Validasi ${total} pengajuan sekaligus?`);
+    if (!confirmed) return;
+
+    router.post(
+        '/admin/surat/bulk-approve',
+        {
+            surat_ids: selectedSuratIds.value,
+        },
+        {
+            preserveScroll: true,
+            onError: () => {
+                showToast('Gagal memvalidasi pengajuan.', 'error');
+            },
+            onSuccess: () => {
+                clearSelection();
+            },
+        },
+    );
 }
 const rejectModalOpen = ref(false);
 const rejectTargetId = ref<number | null>(null);
@@ -181,9 +266,9 @@ function statusLabel(item: SuratItem) {
         validated_admin: 'Diteruskan untuk disetujui',
         approved_kaprodi: 'Disetujui Kaprodi',
         approved_dekan: 'Disetujui Dekan',
-        revision_requested: 'Ditolak',
+        revision_requested: item.revision_label ?? 'Dikembalikan Pimpinan',
         finished: 'Selesai',
-        rejected_admin: 'Ditolak',
+        rejected_admin: 'Ditolak Admin',
         rejected_approver: 'Ditolak Pimpinan',
     };
     return map[item.status] ?? item.status;
@@ -281,6 +366,41 @@ function initials(name?: string | null) {
                 </button>
             </div>
         </div>
+        <div
+            v-if="can('fast.admin.surat.approve') && selectableSurats.length > 0"
+            class="mb-4 flex flex-col gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+        >
+            <label class="flex items-center gap-2 text-sm font-medium text-slate-700">
+                <input
+                    type="checkbox"
+                    class="size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    :checked="allSelectableSelected"
+                    @change="toggleSelectAll(checkboxChecked($event))"
+                />
+                <span>Tandai semua di halaman ini</span>
+            </label>
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs font-medium text-slate-500">
+                    {{ selectedSuratCount }} dipilih
+                </span>
+                <button
+                    type="button"
+                    class="fast-btn fast-btn-primary inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="selectedSuratCount === 0"
+                    @click="bulkApproveSelected"
+                >
+                    <CheckCircle2 class="size-3.5" /> Proses Terpilih
+                </button>
+                <button
+                    v-if="selectedSuratCount > 0"
+                    type="button"
+                    class="fast-btn fast-btn-outline inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-600"
+                    @click="clearSelection"
+                >
+                    <X class="size-3.5" /> Bersihkan
+                </button>
+            </div>
+        </div>
         <!-- Card list with colored left border stripe -->
         <div class="space-y-2">
             <div
@@ -302,8 +422,8 @@ function initials(name?: string | null) {
             <div
                 v-for="item in surats.data"
                 :key="item.id"
-                        class="group relative flex items-start gap-0 overflow-hidden rounded-xl border border-slate-200 bg-white transition-all hover:shadow-md"
-                    :class="[
+                class="group relative flex items-start gap-0 overflow-hidden rounded-xl border border-slate-200 bg-white transition-all hover:shadow-md"
+                :class="[
                     item.status === 'finished'
                         ? 'hover:border-blue-300'
                         : item.status.startsWith('approved')
@@ -338,6 +458,26 @@ function initials(name?: string | null) {
                     >
                         <!-- Main info: avatar + name + surat -->
                         <div class="flex min-w-0 flex-1 items-center gap-3">
+                            <label
+                                v-if="
+                                    item.status === 'pending' &&
+                                    item.can_approve &&
+                                    can('fast.admin.surat.approve')
+                                "
+                                class="mt-0.5 flex shrink-0 items-center"
+                            >
+                                <input
+                                    type="checkbox"
+                                    class="size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                    :checked="isSuratSelected(item.id)"
+                                    @change="
+                                        toggleSuratSelection(
+                                            item,
+                                            checkboxChecked($event),
+                                        )
+                                    "
+                                />
+                            </label>
                             <div
                                 class="grid size-9 shrink-0 place-items-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-500"
                             >
@@ -354,7 +494,12 @@ function initials(name?: string | null) {
                                         class="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold"
                                         :class="statusClass(item.status)"
                                     >
-                                        {{ statusLabel(item) }}
+                                        {{
+                                            item.status === 'revision_requested'
+                                                ? item.revision_label ??
+                                                  statusLabel(item)
+                                                : statusLabel(item)
+                                        }}
                                     </span>
                                 </div>
                                 <p
@@ -396,7 +541,7 @@ function initials(name?: string | null) {
                                 <Eye class="size-3" /> Lihat
                             </Link>
                             <button
-                                v-if="item.can_approve"
+                                v-if="item.can_approve && can('fast.admin.surat.approve')"
                                 type="button"
                                 :disabled="approvingId === item.id"
                                 class="fast-btn fast-btn-primary flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium"
@@ -406,30 +551,22 @@ function initials(name?: string | null) {
                                 <CheckCircle2 class="size-3" /> Proses
                             </button>
                             <Link
-                                v-if="item.can_edit"
+                                v-if="item.status !== 'pending' && item.can_edit && can('fast.admin.surat.update')"
                                 :href="`/admin/surat/${item.id}/edit?return_to=/admin/surat`"
                                 class="fast-btn flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium bg-orange-500 text-white hover:bg-orange-600 border border-orange-500"
-                                :title="
-                                    item.status === 'pending'
-                                        ? 'Lengkapi Data & Validasi'
-                                        : 'Edit & Teruskan'
-                                "
+                                title="Edit & Teruskan"
                             >
                                 <CheckCircle2 class="size-3" />
-                                {{
-                                    item.status === 'pending'
-                                        ? 'Lengkapi'
-                                        : 'Proses Ulang'
-                                }}
+                                Proses Ulang
                             </Link>
                             <button
-                                v-if="item.status === 'pending'"
+                                v-if="item.status === 'pending' && can('fast.admin.surat.approve')"
                                 type="button"
-                                class="fast-btn fast-btn-danger flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium"
-                                title="Tolak"
+                                class="fast-btn flex items-center gap-1 border border-red-200 bg-red-50 px-2.5 py-1.5 text-[10px] font-medium text-red-700 transition-colors hover:border-red-300 hover:bg-red-100 hover:text-red-800"
+                                title="Tolak Pengajuan"
                                 @click="openRejectModal(item.id)"
                             >
-                                <XCircle class="size-3" /> Tolak
+                                <XCircle class="size-3 text-red-600" />
                             </button>
                         </div>
                     </div>

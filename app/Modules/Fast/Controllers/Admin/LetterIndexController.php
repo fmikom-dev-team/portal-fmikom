@@ -16,11 +16,24 @@ class LetterIndexController extends Controller
 {
     public function index(Request $request): Response
     {
+        $this->authorize('viewAny', Surat::class);
+
         $search = $request->string('search')->trim()->toString();
         $status = $request->has('status')
             ? $request->string('status')->toString()
             : Surat::STATUS_PENDING;
         $categoryId = $request->integer('category_id');
+        $statusFilters = [
+            'pending' => [Surat::STATUS_PENDING],
+            'revision_requested' => [Surat::STATUS_REVISION_REQUESTED],
+            'rejected_admin' => [Surat::STATUS_REJECTED_ADMIN],
+            'all' => [
+                Surat::STATUS_PENDING,
+                Surat::STATUS_VALIDATED_ADMIN,
+                Surat::STATUS_REVISION_REQUESTED,
+                Surat::STATUS_REJECTED_ADMIN,
+            ],
+        ];
         $baseStatuses = [
             Surat::STATUS_PENDING,
             Surat::STATUS_VALIDATED_ADMIN,
@@ -36,12 +49,8 @@ class LetterIndexController extends Controller
 
         $query = clone $baseQuery;
 
-        if ($status === 'pending') {
-            $query->where('status', Surat::STATUS_PENDING);
-        } elseif ($status === 'rejected_admin') {
-            $query->where('status', Surat::STATUS_REJECTED_ADMIN);
-        } elseif ($status === 'all') {
-            // show all statuses in the current base scope
+        if (isset($statusFilters[$status])) {
+            $query->whereIn('status', $statusFilters[$status]);
         } elseif ($status !== '') {
             $query->whereRaw('1 = 0');
         }
@@ -108,6 +117,7 @@ class LetterIndexController extends Controller
             'summary' => [
                 'total' => (clone $baseQuery)->count(),
                 'pending' => (clone $baseQuery)->where('status', Surat::STATUS_PENDING)->count(),
+                'revision_requested' => (clone $baseQuery)->where('status', Surat::STATUS_REVISION_REQUESTED)->count(),
                 'rejected' => (clone $baseQuery)->where('status', Surat::STATUS_REJECTED_ADMIN)->count(),
             ],
         ]);
