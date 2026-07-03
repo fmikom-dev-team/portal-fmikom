@@ -6,6 +6,7 @@ use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 
 class AdminCompanyPageService
 {
@@ -51,7 +52,7 @@ class AdminCompanyPageService
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'no_telepon', 'is_active']);
 
-        /** @var \Illuminate\Database\Eloquent\Collection<int, User> $portalMitraUsers */
+        /** @var Collection<int, User> $portalMitraUsers */
         $portalMitraUsers = $portalMitraUsers;
 
         $companies = $companies
