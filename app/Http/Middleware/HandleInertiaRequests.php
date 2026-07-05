@@ -141,7 +141,6 @@ class HandleInertiaRequests extends Middleware
                 'active_role' => session('active_role'),
             ] : null,
             'selected_period_id' => fn () => $this->resolveWimsSelectedPeriodId($request),
-            'selected_period_id' => fn () => $this->resolveWimsSelectedPeriodId($request),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'pending_comments_count' => fn () => ($user && ($user->isAdmin() || $user->isSuperAdmin()))
                 // BUG-013: Cache admin-only pending comments count
