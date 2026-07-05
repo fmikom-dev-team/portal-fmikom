@@ -3,7 +3,7 @@ import { toast } from "vue-sonner";
 
 /**
  * Initialize global flash toast handler using Inertia's router events.
- * Call once in app.ts â€” no need to call in layouts or pages.
+ * Call once in app.ts Ã¢â‚¬â€ no need to call in layouts or pages.
  *
  * Uses the success event payload so we read the freshly navigated page,
  * which is more reliable than reading router.page on finish.
