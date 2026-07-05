@@ -5,8 +5,8 @@ namespace App\Modules\Wims\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Magang\PendaftaranMagang;
 use App\Modules\Wims\Services\Admin\AdminRegistrationActionService;
-use App\Support\WimsStorage;
 use App\Modules\Wims\Services\Admin\AdminRegistrationPageService;
+use App\Support\WimsStorage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -69,7 +69,6 @@ class RegistrationController extends Controller
 
         return back()->with('success', sprintf('%d pendaftaran berhasil disetujui.', $registrations->count()));
     }
-
 
     public function downloadProposal(PendaftaranMagang $pendaftaran): BinaryFileResponse
     {

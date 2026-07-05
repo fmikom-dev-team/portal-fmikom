@@ -5,7 +5,6 @@ namespace App\Modules\Wims\Services\Mahasiswa\Logbook;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\LogbookPhoto;
 use App\Models\Magang\PendaftaranMagang;
-use App\Models\User;
 use App\Modules\Wims\Services\Mahasiswa\Period\StudentPeriodResolverService;
 use App\Support\PublicStorageUrl;
 use Illuminate\Support\Carbon;

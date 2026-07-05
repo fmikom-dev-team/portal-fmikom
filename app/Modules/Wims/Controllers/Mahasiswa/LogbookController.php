@@ -120,4 +120,3 @@ class LogbookController extends Controller
         return $this->logbookExportService->downloadCurrentPeriod($request->user()->id);
     }
 }
-

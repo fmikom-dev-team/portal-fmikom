@@ -3,7 +3,6 @@
 namespace App\Modules\Wims\Services\Mahasiswa\Logbook;
 
 use App\Models\Magang\LogbookMagang;
-use App\Models\Magang\PendaftaranMagang;
 use App\Modules\Wims\Services\Mahasiswa\Period\StudentPeriodResolverService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;

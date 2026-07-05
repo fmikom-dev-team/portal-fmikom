@@ -3,7 +3,6 @@
 namespace App\Modules\Wims\Services\Mahasiswa\Attendance;
 
 use App\Models\Magang\AbsensiMagang;
-use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
 use App\Modules\Wims\Services\Mahasiswa\Period\StudentPeriodResolverService;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
