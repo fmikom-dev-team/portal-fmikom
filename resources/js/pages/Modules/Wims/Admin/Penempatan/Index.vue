@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import {
@@ -636,18 +636,28 @@ const studentInitial = (name?: string | null) => {
                     perusahaan aktif tersedia untuk penempatan saat ini.
                 </div>
 
-                <div
-                    class="flex flex-col gap-3 rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-4 lg:flex-row lg:items-center lg:justify-between"
-                >
-                    <div class="space-y-1">
-                        <p class="text-sm font-bold text-sky-900">
-                            Penyelesaian massal PKL
-                        </p>
-                        <p class="text-xs leading-5 text-sky-900/80">
-                            Filter periode terlebih dahulu, lalu pilih mahasiswa aktif yang periodenya sudah lewat atau tandai semua hasil filter sekaligus.
-                        </p>
-                        <div class="flex flex-wrap items-center gap-2 text-xs text-sky-900/80">
-                            <label class="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white px-3 py-1.5 font-medium">
+                <div class="rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-4">
+                    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-sm font-bold text-sky-900">
+                                    Selesai Massal PKL
+                                </p>
+                                <p class="mt-1 text-xs leading-5 text-sky-900/80">
+                                    Filter dulu, lalu pilih yang siap selesai atau gunakan semua hasil filter.
+                                </p>
+                            </div>
+
+                            <div class="flex flex-wrap gap-2 text-xs font-medium text-sky-900/80">
+                                <span class="rounded-full border border-sky-200 bg-white px-3 py-1.5">
+                                    Di halaman ini: {{ props.batchActions.eligible_on_current_page ?? 0 }}
+                                </span>
+                                <span class="rounded-full border border-sky-200 bg-white px-3 py-1.5">
+                                    Dalam filter: {{ props.batchActions.eligible_with_current_filters ?? 0 }}
+                                </span>
+                            </div>
+
+                            <label class="inline-flex items-center gap-2 text-sm text-sky-900/90">
                                 <input
                                     type="checkbox"
                                     class="size-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
@@ -655,32 +665,29 @@ const studentInitial = (name?: string | null) => {
                                     :disabled="!eligibleCompletionItems.length"
                                     @change="toggleSelectAllEligibleOnPage(($event.target as HTMLInputElement).checked)"
                                 />
-                                Pilih semua siap diselesaikan di halaman ini ({{ props.batchActions.eligible_on_current_page ?? 0 }})
+                                Pilih semua di halaman ini
                             </label>
-                            <span class="rounded-full border border-sky-200 bg-white px-3 py-1.5 font-medium">
-                                Siap diselesaikan hasil filter: {{ props.batchActions.eligible_with_current_filters ?? 0 }}
-                            </span>
                         </div>
-                    </div>
 
-                    <div class="flex flex-col gap-2 sm:flex-row">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            class="h-10 rounded-lg border-sky-200 bg-white px-4 text-sky-800 hover:bg-sky-100"
-                            :disabled="!selectedCompletionIds.length || bulkProcessing !== null"
-                            @click="completeSelectedPlacements"
-                        >
-                            Tandai Selesai Terpilih
-                        </Button>
-                        <Button
-                            type="button"
-                            class="h-10 rounded-lg bg-sky-700 px-4 text-white hover:bg-sky-800"
-                            :disabled="!(props.batchActions.eligible_with_current_filters ?? 0) || bulkProcessing !== null"
-                            @click="completeFilteredPlacements"
-                        >
-                            Tandai Semua Hasil Filter
-                        </Button>
+                        <div class="flex flex-col gap-2 sm:flex-row">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                class="h-10 rounded-lg border-sky-200 bg-white px-4 text-sky-800 hover:bg-sky-100"
+                                :disabled="!selectedCompletionIds.length || bulkProcessing !== null"
+                                @click="completeSelectedPlacements"
+                            >
+                                Selesai Terpilih
+                            </Button>
+                            <Button
+                                type="button"
+                                class="h-10 rounded-lg bg-sky-700 px-4 text-white hover:bg-sky-800"
+                                :disabled="!(props.batchActions.eligible_with_current_filters ?? 0) || bulkProcessing !== null"
+                                @click="completeFilteredPlacements"
+                            >
+                                Selesai Semua Hasil Filter
+                            </Button>
+                        </div>
                     </div>
                 </div>
 

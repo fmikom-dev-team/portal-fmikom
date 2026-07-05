@@ -51,6 +51,7 @@ class AssessmentIndexService
                         'label' => $this->formatPeriodLabel($pendaftaran),
                     ],
                     'registration_status' => $pendaftaran->status,
+                    'dashboard_phase' => $pendaftaran->isReadyForAssessment(now()) ? 'completed' : ($pendaftaran->status === 'aktif' ? 'active' : 'assigned'),
                     'assessment' => [
                         'status_key' => $submission?->status ?? 'not_assessed',
                         'status_label' => $this->resolveSubmissionStatusLabel($submission?->status),
@@ -120,6 +121,7 @@ class AssessmentIndexService
                         'label' => $this->formatPeriodLabel($pendaftaran),
                     ],
                     'registration_status' => $pendaftaran->status,
+                    'dashboard_phase' => $pendaftaran->isReadyForAssessment(now()) ? 'completed' : ($pendaftaran->status === 'aktif' ? 'active' : 'assigned'),
                     'assessment' => [
                         'status_key' => $statusKey,
                         'status_label' => $this->resolveSubmissionStatusLabel($statusKey),

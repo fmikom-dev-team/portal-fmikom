@@ -12,6 +12,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
+/**
+ * @property-read User|null $mahasiswa
+ * @property-read User|null $dosenPembimbing
+ * @property-read PerusahaanMitra|null $perusahaan
+ */
 class PendaftaranMagang extends Model
 {
     protected $fillable = [
@@ -19,13 +24,15 @@ class PendaftaranMagang extends Model
         'pembimbing_lapangan_id', 'surat_tugas_id', 'tanggal_mulai',
         'tanggal_selesai', 'status', 'perusahaan_diminati_nama',
         'perusahaan_diminati_alamat', 'catatan_pengajuan',
-        'catatan_revisi_admin', 'laporan_akhir_path',
-        'laporan_akhir_original_name', 'laporan_akhir_uploaded_at',
+        'catatan_revisi_admin', 'proposal_pkl_path',
+        'proposal_pkl_original_name', 'proposal_pkl_uploaded_at',
+        'laporan_akhir_path', 'laporan_akhir_original_name', 'laporan_akhir_uploaded_at',
     ];
 
     protected $casts = [
         'tanggal_mulai' => 'date',
         'tanggal_selesai' => 'date',
+        'proposal_pkl_uploaded_at' => 'datetime',
         'laporan_akhir_uploaded_at' => 'datetime',
     ];
 
@@ -37,6 +44,11 @@ class PendaftaranMagang extends Model
     public function perusahaan(): BelongsTo
     {
         return $this->belongsTo(PerusahaanMitra::class, 'perusahaan_id');
+    }
+
+    public function finalMentor(): ?User
+    {
+        return $this->perusahaan?->user;
     }
 
     public function dosenPembimbing(): BelongsTo
@@ -84,6 +96,14 @@ class PendaftaranMagang extends Model
         return $query->where('mahasiswa_id', $mahasiswaId);
     }
 
+    public function scopeLatestForMahasiswa(Builder $query, int $mahasiswaId): Builder
+    {
+        return $query
+            ->forMahasiswa($mahasiswaId)
+            ->orderByDesc('tanggal_mulai')
+            ->orderByDesc('id');
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'aktif');
@@ -91,18 +111,7 @@ class PendaftaranMagang extends Model
 
     public function scopeReadyForAssessment(Builder $query, ?CarbonInterface $date = null): Builder
     {
-        $referenceDate = ($date ?? now())->copy()->startOfDay()->toDateString();
-
-        return $query->where(function (Builder $builder) use ($referenceDate): void {
-            $builder
-                ->where('status', 'selesai')
-                ->orWhere(function (Builder $periodQuery) use ($referenceDate): void {
-                    $periodQuery
-                        ->where('status', 'aktif')
-                        ->whereNotNull('tanggal_selesai')
-                        ->whereDate('tanggal_selesai', '<', $referenceDate);
-                });
-        });
+        return $query->whereNotNull('laporan_akhir_path');
     }
 
     public function isWithinActivePeriod(?CarbonInterface $date = null): bool
@@ -154,7 +163,25 @@ class PendaftaranMagang extends Model
 
     public function isReadyForAssessment(?CarbonInterface $date = null): bool
     {
-        return $this->isPostInternshipPhase($date);
+        return filled($this->laporan_akhir_path);
+    }
+
+    public function proposalAttachmentDownloadName(): string
+    {
+        $studentName = Str::slug((string) ($this->mahasiswa?->name ?? 'mahasiswa'));
+        $studentId = $this->mahasiswa?->nim_nip ?: $this->mahasiswa?->nomor_induk ?: 'tanpa-identitas';
+        $periodStart = $this->tanggal_mulai?->format('Ymd') ?? 'mulai';
+        $periodEnd = $this->tanggal_selesai?->format('Ymd') ?? 'selesai';
+        $extension = pathinfo((string) ($this->proposal_pkl_original_name ?: $this->proposal_pkl_path), PATHINFO_EXTENSION) ?: 'pdf';
+
+        return sprintf(
+            'proposal-pkl-%s-%s-%s-%s.%s',
+            $studentName ?: 'mahasiswa',
+            Str::slug((string) $studentId) ?: 'tanpa-identitas',
+            $periodStart,
+            $periodEnd,
+            strtolower((string) $extension),
+        );
     }
 
     public function finalReportDownloadName(): string
@@ -175,6 +202,49 @@ class PendaftaranMagang extends Model
         );
     }
 
+    public function periodLabel(): ?string
+    {
+        if (! $this->tanggal_mulai || ! $this->tanggal_selesai) {
+            return null;
+        }
+
+        return sprintf(
+            '%s - %s',
+            $this->tanggal_mulai->translatedFormat('d M Y'),
+            $this->tanggal_selesai->translatedFormat('d M Y'),
+        );
+    }
+
+    public function statusLabel(): string
+    {
+        return match ($this->status) {
+            'pending' => 'Menunggu Review',
+            'approved' => 'Disetujui',
+            'revisi' => 'Revisi',
+            'rejected' => 'Ditolak',
+            'aktif' => 'Aktif',
+            'selesai' => 'Selesai',
+            default => ucfirst((string) $this->status ?: '-'),
+        };
+    }
+
+    public function dashboardPhase(): string
+    {
+        if ($this->isReadyForAssessment(now())) {
+            return 'completed';
+        }
+
+        if ($this->status === 'aktif') {
+            return 'active';
+        }
+
+        if ($this->status) {
+            return 'assigned';
+        }
+
+        return 'unregistered';
+    }
+
     public function getTotalHadir(): int
     {
         return $this->absensis()->where('status', 'hadir')->count();
@@ -187,3 +257,7 @@ class PendaftaranMagang extends Model
         return $this->status === 'approved' && $now->between($this->tanggal_mulai, $this->tanggal_selesai);
     }
 }
+
+
+
+

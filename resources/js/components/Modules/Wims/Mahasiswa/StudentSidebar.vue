@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import {
@@ -28,6 +28,15 @@ const currentPath = computed(() => {
 });
 
 const user = computed(() => page.props.auth?.user ?? null);
+const selectedPeriodId = computed(() => (page.props as any).selected_period_id ?? null);
+
+const withSelectedPeriod = (href: string) => {
+    if (!selectedPeriodId.value) return href;
+
+    const url = new URL(href, window.location.origin);
+    url.searchParams.set('pendaftaran', String(selectedPeriodId.value));
+    return url.pathname + url.search + url.hash;
+};
 const avatarLoadFailed = ref(false);
 const userAvatar = computed<string | null>(() => {
     const avatar = user.value?.avatar ?? user.value?.photo_url ?? user.value?.foto_url ?? null;
@@ -132,7 +141,7 @@ const logout = () => {
                     <Link
                         v-for="item in items"
                         :key="item.label"
-                        :href="item.href"
+                        :href="withSelectedPeriod(item.href)"
                         class="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200"
                         :class="
                             item.match(currentPath)

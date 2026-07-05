@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import {
@@ -16,15 +16,16 @@ import {
     ClipboardList,
     IdCard,
     History,
-    Printer,
     ChevronDown,
     ChevronUp,
     Circle,
+    FileText,
+    Download,
+    Upload,
 } from 'lucide-vue-next';
 import StudentLayout from '@/layouts/Modules/Wims/Mahasiswa/Layout.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatIndonesianDateTime } from '@/lib/date';
 import registrationRoutes from '@/routes/wims/registration';
 import { toast } from '@/pages/WorkOs/composables/useWorkOs';
 
@@ -39,6 +40,11 @@ type RegistrationItem = {
     tanggal_selesai_label?: string | null;
     application_note?: string | null;
     revision_note?: string | null;
+    proposal_attachment?: {
+        exists?: boolean;
+        name?: string | null;
+        uploaded_at?: string | null;
+    } | null;
     company?: {
         proposal?: {
             name?: string | null;
@@ -50,8 +56,27 @@ type RegistrationItem = {
         } | null;
     } | null;
     submitted_at?: string | null;
+    updated_at?: string | null;
 };
-type PageState = { can_submit?: boolean; is_revision?: boolean; is_locked?: boolean; completed_once?: boolean };
+type PageState = { can_submit?: boolean; is_revision?: boolean; is_locked?: boolean };
+type PeriodOption = {
+    id?: number | string | null;
+    label?: string | null;
+    period_label?: string | null;
+    status_label?: string | null;
+    is_active?: boolean | null;
+};
+
+type TemplateCard = {
+    id?: number | string | null;
+    title?: string | null;
+    description?: string | null;
+    original_name?: string | null;
+    mime_type?: string | null;
+    updated_at?: string | null;
+    download_url?: string | null;
+} | null;
+
 type FormDefaults = {
     tanggal_mulai?: string | null;
     tanggal_selesai?: string | null;
@@ -68,6 +93,9 @@ const props = defineProps<{
     registration?: RegistrationItem | null;
     pageState: PageState;
     formDefaults: FormDefaults;
+    periods?: PeriodOption[];
+    selected_period_id?: number | string | null;
+    proposal_template?: TemplateCard;
 }>();
 
 const page = usePage<PageProps>();
@@ -78,31 +106,33 @@ const form = useForm({
     perusahaan_diminati_nama: props.formDefaults.perusahaan_diminati_nama ?? '',
     perusahaan_diminati_alamat: props.formDefaults.perusahaan_diminati_alamat ?? '',
     catatan_pengajuan: props.formDefaults.catatan_pengajuan ?? '',
+    proposal_pkl: null as File | null,
 });
 
 const flash        = computed(() => page.props.flash ?? {});
 const pageErrors   = computed(() => page.props.errors ?? {});
 const registration = computed(() => props.registration ?? null);
+const proposalAttachment = computed(() => registration.value?.proposal_attachment ?? null);
+const proposalExistingFlag = computed(() => proposalAttachment.value?.exists ? '1' : '');
+const proposalInputRef = ref<HTMLInputElement | null>(null);
 const isLocked     = computed(() => Boolean(props.pageState.is_locked));
 const isRevision   = computed(() => Boolean(props.pageState.is_revision));
 const canSubmit    = computed(() => Boolean(props.pageState.can_submit));
-const completedOnce = computed(() => Boolean(props.pageState.completed_once));
 const localSuccess = ref<string | null>(flash.value.success ?? null);
 const localError = ref<string | null>(flash.value.error ?? null);
 const globalError  = computed(() =>
     pageErrors.value.registration
     || localError.value
-    || (completedOnce.value ? 'PKL sudah pernah diselesaikan pada akun ini. Pendaftaran baru tidak tersedia lagi.' : null),
 );
 
 const proposalCompanyLabel = (registrationItem?: RegistrationItem | null) =>
-    registrationItem?.company?.proposal?.name ?? '—';
+    registrationItem?.company?.proposal?.name ?? '-';
 
 const finalCompanyLabel = (registrationItem?: RegistrationItem | null) =>
-    registrationItem?.company?.final?.name ?? '—';
+    registrationItem?.company?.final?.name ?? '-';
 
 const companyAddressLabel = (registrationItem?: RegistrationItem | null) =>
-    registrationItem?.company?.proposal?.address ?? '—';
+    registrationItem?.company?.proposal?.address ?? '-';
 
 // -- UI toggles ----------------------------------------------
 const showChecklist  = ref(true);
@@ -137,7 +167,7 @@ const steps = computed(() => {
         { key: 'pending',  label: 'Review Kampus', done: ['approved','aktif','selesai'].includes(s ?? ''),       active: s === 'pending' || s === 'revisi' },
         { key: 'approved', label: 'Disetujui',     done: ['aktif','selesai'].includes(s ?? ''),                  active: s === 'approved' },
         { key: 'aktif',    label: 'Aktif',         done: s === 'selesai',                                        active: s === 'aktif' },
-        { key: 'selesai',  label: 'Selesai',       done: s === 'selesai',                                        active: s === 'selesai' },
+        { key: 'selesai',  label: 'Selesai', done: s === 'selesai',                                        active: s === 'selesai' },
     ];
 });
 
@@ -170,6 +200,12 @@ const countdown = computed(() => {
 
 // -- FITUR 2: Checklist kelengkapan --------------------------
 const checklist = computed(() => [
+    {
+        id: 'proposal',
+        label: 'Proposal PKL dilampirkan',
+        done: Boolean(form.proposal_pkl || proposalExistingFlag.value),
+        required: true,
+    },
     {
         id: 'tanggal',
         label: 'Tanggal mulai & selesai diisi',
@@ -209,80 +245,48 @@ const activityLog = computed(() => {
         logs.push({ icon: 'submit', color: 'blue',   text: 'Pendaftaran diajukan ke kampus', time: r.submitted_at });
     }
     if (r.status === 'revisi' && r.revision_note) {
-        logs.push({ icon: 'revisi', color: 'amber',  text: 'Kampus meminta revisi data',     time: '—' });
+        logs.push({ icon: 'revisi', color: 'amber',  text: 'Kampus meminta revisi data',     time: r.updated_at ?? r.submitted_at ?? '-' });
     }
     if (r.status === 'approved' || r.status === 'aktif' || r.status === 'selesai') {
-        logs.push({ icon: 'approved', color: 'emerald', text: 'Pendaftaran disetujui kampus', time: '—' });
+        logs.push({ icon: 'approved', color: 'emerald', text: 'Pendaftaran disetujui kampus', time: r.updated_at ?? r.submitted_at ?? '-' });
     }
     if (r.status === 'aktif') {
-        logs.push({ icon: 'aktif', color: 'sky', text: 'PKL/Magang sedang berjalan',         time: r.tanggal_mulai_label ?? '—' });
+        logs.push({ icon: 'aktif', color: 'sky', text: 'PKL/Magang sedang berjalan',         time: r.tanggal_mulai_label ?? '-' });
     }
     if (r.status === 'selesai') {
-        logs.push({ icon: 'selesai', color: 'violet', text: 'PKL/Magang selesai',            time: r.tanggal_selesai_label ?? '—' });
+        logs.push({ icon: 'selesai', color: 'violet', text: 'PKL/Magang selesai',            time: r.tanggal_selesai_label ?? '-' });
     }
     if (r.status === 'rejected') {
-        logs.push({ icon: 'rejected', color: 'rose', text: 'Pendaftaran ditolak kampus',     time: '—' });
+        logs.push({ icon: 'rejected', color: 'rose', text: 'Pendaftaran ditolak kampus',     time: r.updated_at ?? r.submitted_at ?? '-' });
     }
     return logs.reverse();
 });
-
-// -- FITUR 3: Print/preview card ------------------------------
-const printCard = () => {
-    const r = registration.value;
-    const html = `
-        <html><head><title>Kartu Pendaftaran PKL</title>
-        <style>
-            body { font-family: Arial, sans-serif; margin: 0; padding: 32px; color: #1e293b; }
-            .card { border: 2px solid #0F62FE; border-radius: 12px; padding: 24px; max-width: 500px; margin: auto; }
-            .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 16px; }
-            .title { font-size: 18px; font-weight: bold; color: #0F62FE; }
-            .subtitle { font-size: 11px; color: #64748b; margin-top: 2px; }
-            .row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
-            .label { color: #64748b; }
-            .value { font-weight: 600; }
-            .badge { display: inline-block; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 99px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
-            .footer { margin-top: 20px; text-align: center; font-size: 10px; color: #94a3b8; }
-        </style></head>
-        <body>
-        <div class="card">
-            <div class="header">
-                <div>
-                    <div class="title">WIMS — Kartu Pendaftaran PKL</div>
-                    <div class="subtitle">Dokumen ini digenerate otomatis dari sistem WIMS</div>
-                </div>
-                <span class="badge">${statusLabel(r?.status)}</span>
-            </div>
-            <div class="row"><span class="label">Nama Perusahaan Final</span><span class="value">${finalCompanyLabel(r)}</span></div>
-            <div class="row"><span class="label">Usulan Mahasiswa</span><span class="value">${proposalCompanyLabel(r)}</span></div>
-            <div class="row"><span class="label">Tanggal Mulai</span><span class="value">${r?.tanggal_mulai_label || '—'}</span></div>
-            <div class="row"><span class="label">Tanggal Selesai</span><span class="value">${r?.tanggal_selesai_label || '—'}</span></div>
-            <div class="row"><span class="label">Alamat Perusahaan</span><span class="value">${companyAddressLabel(r)}</span></div>
-            <div class="row"><span class="label">Tanggal Pengajuan</span><span class="value">${r?.submitted_at || '—'}</span></div>
-            <div class="footer">Dicetak pada ${formatIndonesianDateTime(new Date(), {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-            })} · WIMS Student Portal</div>
-        </div>
-        </body></html>
-    `;
-    const win = window.open('', '_blank');
-    if (win) { win.document.write(html); win.document.close(); win.print(); }
-};
 
 // -- Form -----------------------------------------------------
 const actionLabel = computed(() =>
     isRevision.value ? 'Kirim Ulang Pendaftaran' : 'Ajukan Pendaftaran',
 );
 const submitDisabled = computed(
-    () => !canSubmit.value || !form.tanggal_mulai || !form.tanggal_selesai || form.processing,
+    () => !canSubmit.value || !form.tanggal_mulai || !form.tanggal_selesai || (!form.proposal_pkl && !proposalExistingFlag.value) || form.processing,
 );
+const handleProposalFileChange = (event: Event) => {
+    const target = event.target as HTMLInputElement | null;
+    form.proposal_pkl = target?.files?.[0] ?? null;
+};
+
+const clearProposalFile = () => {
+    form.proposal_pkl = null;
+    if (proposalInputRef.value) {
+        proposalInputRef.value.value = '';
+    }
+};
 const submit = () => {
     if (submitDisabled.value) return;
     localError.value = null;
+    form.transform((data) => ({
+        ...data,
+        proposal_pkl_existing: proposalExistingFlag.value,
+    }));
     form.post(registrationRoutes.store.url(), {
         preserveScroll: true,
         onSuccess: (pageResponse) => {
@@ -291,6 +295,10 @@ const submit = () => {
                     ? 'Perbaikan pendaftaran berhasil dikirim ulang dan menunggu review kampus.'
                     : 'Pendaftaran PKL/magang berhasil dikirim dan menunggu review kampus.');
 
+            form.proposal_pkl = null;
+            if (proposalInputRef.value) {
+                proposalInputRef.value.value = '';
+            }
             localSuccess.value = message;
         },
         onError: (errors) => {
@@ -301,6 +309,7 @@ const submit = () => {
                 ?? errors.perusahaan_diminati_nama
                 ?? errors.perusahaan_diminati_alamat
                 ?? errors.catatan_pengajuan
+                ?? errors.proposal_pkl
                 ?? 'Pendaftaran gagal dikirim. Periksa kembali data yang diisi.';
 
             localSuccess.value = null;
@@ -367,7 +376,7 @@ watch(
                                 Pendaftaran PKL / Magang
                             </h1>
                             <p class="mt-2 text-[13px] leading-relaxed text-white/78 dark:text-white/70 sm:text-sm">
-                                Ajukan periode PKL/magang Anda. Perusahaan diminati bersifat opsional — keputusan final ditentukan oleh kampus.
+                                Ajukan periode PKL/magang Anda. Perusahaan diminati bersifat opsional - keputusan final ditentukan oleh kampus.
                             </p>
                         </div>
 
@@ -384,8 +393,7 @@ watch(
                     </div>
                 </div>
             </section>
-
-            <!-- Progress Steps -->
+<!-- Progress Steps -->
             <div class="rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] px-5 py-4 sm:px-6">
                 <p class="mb-4 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Alur Pendaftaran</p>
                 <div class="flex items-center">
@@ -393,7 +401,7 @@ watch(
                         <div class="flex min-w-0 flex-1 flex-col items-center gap-1.5">
                             <div
                                 class="flex size-7 items-center justify-center rounded-full text-[11px] font-bold transition-all duration-300"
-                                :class="step.done ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : step.active ? 'border-2 border-blue-500 bg-wims-card text-blue-600 dark:text-blue-400' : 'border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500'"
+                                :class="step.done ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : step.active ? 'border-2 border-blue-500 bg-wims-card text-blue-600 shadow-[0_0_0_1px_rgba(59,130,246,0.12)] dark:text-blue-400' : 'border border-slate-200 bg-white text-slate-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] dark:border-slate-600/80 dark:bg-slate-800/70 dark:text-slate-400 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'"
                             >
                                 <CheckCircle2 v-if="step.done" class="size-4" />
                                 <span v-else>{{ i + 1 }}</span>
@@ -402,63 +410,8 @@ watch(
                                 {{ step.label }}
                             </span>
                         </div>
-                        <div v-if="i < steps.length - 1" class="mb-4 h-px flex-1 transition-colors duration-500" :class="step.done ? 'bg-blue-500' : 'bg-wims-border/60'" />
+                        <div v-if="i < steps.length - 1" class="mb-4 h-px flex-1 rounded-full transition-colors duration-500" :class="step.done ? 'bg-blue-500 dark:bg-blue-400' : 'bg-slate-200 dark:bg-slate-600/70'" />
                     </template>
-                </div>
-            </div>
-
-            <!-- NEW ELEMENT: Quick Stats Bar -->
-            <div class="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-                <div class="group relative overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(59,130,246,0.12)] hover:-translate-y-0.5">
-                    <div class="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-blue-500 to-blue-400 rounded-t-2xl" />
-                    <div class="p-4 lg:p-5">
-                        <div class="flex items-center justify-between">
-                            <div class="flex size-9 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-500/15">
-                                <Briefcase class="size-4 text-blue-600 dark:text-blue-400" />
-                            </div>
-                        </div>
-                        <p class="mt-2.5 text-[18px] font-bold tabular-nums text-wims-text leading-none">{{ statusLabel(registration?.status) }}</p>
-                        <p class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Status</p>
-                    </div>
-                </div>
-
-                <div class="group relative overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(6,182,212,0.12)] hover:-translate-y-0.5">
-                    <div class="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-cyan-500 to-teal-400 rounded-t-2xl" />
-                    <div class="p-4 lg:p-5">
-                        <div class="flex items-center justify-between">
-                            <div class="flex size-9 items-center justify-center rounded-lg bg-cyan-50 dark:bg-cyan-500/15">
-                                <Timer class="size-4 text-cyan-600 dark:text-cyan-400" />
-                            </div>
-                        </div>
-                        <p class="mt-2.5 text-[18px] font-bold tabular-nums text-wims-text leading-none">{{ countdown ? countdown.totalDays + ' hari' : '—' }}</p>
-                        <p class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Total Durasi</p>
-                    </div>
-                </div>
-
-                <div class="group relative overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(249,115,22,0.12)] hover:-translate-y-0.5">
-                    <div class="absolute top-0 inset-x-0 h-[3px] rounded-t-2xl" :class="countdown?.phase === 'selesai' ? 'bg-gradient-to-r from-emerald-500 to-teal-400' : countdown?.phase === 'berjalan' ? 'bg-gradient-to-r from-blue-500 to-cyan-400' : 'bg-gradient-to-r from-amber-500 to-orange-400'" />
-                    <div class="p-4 lg:p-5">
-                        <div class="flex items-center justify-between">
-                            <div class="flex size-9 items-center justify-center rounded-lg" :class="countdown?.phase === 'selesai' ? 'bg-emerald-50 dark:bg-emerald-500/15' : countdown?.phase === 'berjalan' ? 'bg-blue-50 dark:bg-blue-500/15' : 'bg-amber-50 dark:bg-amber-500/15'">
-                                <Clock3 class="size-4" :class="countdown?.phase === 'selesai' ? 'text-emerald-600 dark:text-emerald-400' : countdown?.phase === 'berjalan' ? 'text-blue-600 dark:text-blue-400' : 'text-amber-600 dark:text-amber-400'" />
-                            </div>
-                        </div>
-                        <p class="mt-2.5 text-[18px] font-bold tabular-nums text-wims-text leading-none">{{ countdown ? (countdown.phase === 'selesai' ? 'Selesai' : countdown.diffDays + ' hari') : '—' }}</p>
-                        <p class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">{{ countdown?.phase === 'berjalan' ? 'Sisa Waktu' : countdown?.phase === 'belum' ? 'Menuju Mulai' : 'Countdown' }}</p>
-                    </div>
-                </div>
-
-                <div class="group relative overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(16,185,129,0.12)] hover:-translate-y-0.5">
-                    <div class="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-emerald-500 to-green-400 rounded-t-2xl" />
-                    <div class="p-4 lg:p-5">
-                        <div class="flex items-center justify-between">
-                            <div class="flex size-9 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-500/15">
-                                <Building2 class="size-4 text-emerald-600 dark:text-emerald-400" />
-                            </div>
-                        </div>
-                        <p class="mt-2.5 text-[14px] font-bold text-wims-text leading-tight truncate">{{ registration ? (registration.company?.final?.name || registration.company?.proposal?.name || '—') : '—' }}</p>
-                        <p class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Perusahaan</p>
-                    </div>
                 </div>
             </div>
 
@@ -540,7 +493,7 @@ watch(
                                 <template v-else>
                                     <div class="flex flex-col items-center gap-1.5 py-1">
                                         <CheckCircle2 class="size-8 text-emerald-500 dark:text-emerald-400" />
-                                        <p class="text-xs font-bold text-emerald-700 dark:text-emerald-300">PKL Telah Selesai</p>
+                                        <p class="text-xs font-bold text-emerald-700 dark:text-emerald-300">Periode PKL Berakhir</p>
                                         <p class="text-[11px] text-slate-400 dark:text-slate-500">Total {{ countdown.totalDays }} hari</p>
                                     </div>
                                 </template>
@@ -559,7 +512,7 @@ watch(
                             </div>
                             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Perusahaan Final</p>
                         </div>
-                        <p class="text-sm font-bold leading-snug text-wims-text">{{ registration?.company?.final?.name || '—' }}</p>
+                        <p class="text-sm font-bold leading-snug text-wims-text">{{ registration?.company?.final?.name || '-' }}</p>
                         <p v-if="!registration?.company?.final?.name" class="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">Menunggu keputusan kampus</p>
                     </div>
 
@@ -574,11 +527,11 @@ watch(
                         <div class="space-y-2">
                             <div class="flex items-center justify-between rounded-lg bg-slate-50/80 dark:bg-slate-800/40 px-3 py-2">
                                 <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Mulai</span>
-                                <span class="text-xs font-bold text-wims-text">{{ registration?.tanggal_mulai_label || '—' }}</span>
+                                <span class="text-xs font-bold text-wims-text">{{ registration?.tanggal_mulai_label || '-' }}</span>
                             </div>
                             <div class="flex items-center justify-between rounded-lg bg-slate-50/80 dark:bg-slate-800/40 px-3 py-2">
                                 <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Selesai</span>
-                                <span class="text-xs font-bold text-wims-text">{{ registration?.tanggal_selesai_label || '—' }}</span>
+                                <span class="text-xs font-bold text-wims-text">{{ registration?.tanggal_selesai_label || '-' }}</span>
                             </div>
                         </div>
                     </div>
@@ -608,11 +561,88 @@ watch(
                             <p class="text-xs leading-relaxed text-amber-900 dark:text-amber-200">{{ registration.revision_note }}</p>
                         </div>
                     </div>
+                    <!-- Activity Log -->
+                    <div v-if="activityLog.length" class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                        <button
+                            type="button"
+                            class="flex w-full items-center justify-between px-5 py-3.5 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+                            @click="showLog = !showLog"
+                        >
+                            <div class="flex items-center gap-2.5">
+                                <div class="flex size-8 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-500/15">
+                                    <History class="size-4 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <span class="text-sm font-bold text-wims-text">Riwayat Aktivitas</span>
+                                <span class="rounded-full bg-slate-100 dark:bg-slate-700/50 px-2 py-0.5 text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                                    {{ activityLog.length }}
+                                </span>
+                            </div>
+                            <ChevronUp v-if="showLog" class="size-4 text-slate-400 dark:text-slate-500" />
+                            <ChevronDown v-else class="size-4 text-slate-400 dark:text-slate-500" />
+                        </button>
+                        <div v-if="showLog" class="border-t border-wims-border/50 px-5 py-4">
+                            <div class="relative space-y-0">
+                                <div class="absolute top-2 bottom-2 left-[9px] w-px bg-wims-border/40" />
+                                <div v-for="(log, i) in activityLog" :key="i" class="relative flex items-start gap-3 pb-4 last:pb-0">
+                                    <div
+                                        class="relative z-10 mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full"
+                                        :class="{
+                                            'bg-blue-100 dark:bg-blue-500/20': log.color === 'blue',
+                                            'bg-emerald-100 dark:bg-emerald-500/20': log.color === 'emerald',
+                                            'bg-amber-100 dark:bg-amber-500/20': log.color === 'amber',
+                                            'bg-sky-100 dark:bg-sky-500/20': log.color === 'sky',
+                                            'bg-violet-100 dark:bg-violet-500/20': log.color === 'violet',
+                                            'bg-rose-100 dark:bg-rose-500/20': log.color === 'rose',
+                                        }"
+                                    >
+                                        <div
+                                            class="size-2 rounded-full"
+                                            :class="{
+                                                'bg-blue-500': log.color === 'blue',
+                                                'bg-emerald-500': log.color === 'emerald',
+                                                'bg-amber-500': log.color === 'amber',
+                                                'bg-sky-500': log.color === 'sky',
+                                                'bg-violet-500': log.color === 'violet',
+                                                'bg-rose-500': log.color === 'rose',
+                                            }"
+                                        />
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="text-xs font-semibold text-wims-text">{{ log.text }}</p>
+                                        <p class="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">{{ log.time }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Form Column -->
                 <div class="space-y-4">
-
+                    <div v-if="props.proposal_template?.download_url" class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-blue-200/40 dark:border-blue-500/20 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                        <div class="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                            <div class="flex min-w-0 items-start gap-3">
+                                <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400">
+                                    <FileText class="size-5" />
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-bold text-wims-text">
+                                        Template Proposal PKL
+                                    </p>
+                                    <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                        Sudah punya template proposal?
+                                    </p>
+                                </div>
+                            </div>
+                            <a
+                                :href="props.proposal_template.download_url"
+                                class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-blue-200/60 bg-wims-card px-4 py-2.5 text-sm font-semibold text-blue-600 dark:text-blue-400 dark:border-blue-500/30 transition hover:bg-blue-50 dark:hover:bg-blue-500/10 sm:w-auto"
+                            >
+                                <Download class="size-4" />
+                                Download
+                            </a>
+                        </div>
+                    </div>
                     <!-- Checklist -->
                     <div class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
                         <button
@@ -625,8 +655,7 @@ watch(
                                     <ClipboardList class="size-4 text-blue-600 dark:text-blue-400" />
                                 </div>
                                 <span class="text-sm font-bold text-wims-text">Kelengkapan Form</span>
-                                <span class="rounded-full px-2 py-0.5 text-[11px] font-bold"
-                                    :class="checklistScore === checklistTotal ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400' : 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400'">
+                                <span class="rounded-full px-2 py-0.5 text-[11px] font-bold" :class="checklistScore === checklistTotal ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400' : 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400'">
                                     {{ checklistScore }}/{{ checklistTotal }}
                                 </span>
                             </div>
@@ -635,16 +664,11 @@ watch(
                         </button>
                         <div v-if="showChecklist" class="border-t border-wims-border/50 px-5 py-3">
                             <div class="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/50">
-                                <div
-                                    class="h-full rounded-full transition-all duration-700"
-                                    :class="checklistScore === checklistTotal ? 'bg-emerald-500' : 'bg-blue-500'"
-                                    :style="{ width: (checklistScore / checklistTotal * 100) + '%' }"
-                                />
+                                <div class="h-full rounded-full transition-all duration-700" :class="checklistScore === checklistTotal ? 'bg-emerald-500' : 'bg-blue-500'" :style="{ width: (checklistScore / checklistTotal * 100) + '%' }" />
                             </div>
                             <div class="space-y-2">
                                 <div v-for="item in checklist" :key="item.id" class="flex items-center gap-3">
-                                    <div class="flex size-5 shrink-0 items-center justify-center rounded-full transition-colors duration-300"
-                                        :class="item.done ? 'bg-emerald-500' : 'border border-wims-border/60 bg-wims-card'">
+                                    <div class="flex size-5 shrink-0 items-center justify-center rounded-full transition-colors duration-300" :class="item.done ? 'bg-emerald-500' : 'border border-wims-border/60 bg-wims-card'">
                                         <svg v-if="item.done" class="size-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                                         </svg>
@@ -660,45 +684,30 @@ watch(
 
                     <!-- Main Form Card -->
                     <div class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                        <!-- Header -->
                         <div class="flex items-center justify-between border-b border-wims-border/50 px-5 py-4 sm:px-6">
                             <div>
                                 <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Form Pengajuan</p>
                                 <h2 class="mt-0.5 text-[15px] font-bold text-wims-text">Data Pendaftaran</h2>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <button
-                                    v-if="registration"
-                                    type="button"
-                                    title="Cetak Kartu Pendaftaran"
-                                    class="flex items-center gap-1.5 rounded-lg border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-400 transition-colors hover:border-blue-300/60 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400"
-                                    @click="printCard"
-                                >
-                                    <Printer class="size-3.5" />
-                                    Cetak
-                                </button>
-                                <Badge v-if="registration" variant="outline" class="rounded-full px-2.5 py-0.5 text-xs font-bold" :class="statusConfig(registration.status).badge">
-                                    {{ statusLabel(registration.status) }}
-                                </Badge>
-                            </div>
+                            <Badge v-if="registration" variant="outline" class="rounded-full px-2.5 py-0.5 text-xs font-bold" :class="statusConfig(registration.status).badge">
+                                {{ statusLabel(registration.status) }}
+                            </Badge>
                         </div>
 
                         <form class="space-y-5 px-5 py-5 sm:px-6" @submit.prevent="submit">
-                            <!-- Notice: Locked -->
-                            <div v-if="isLocked" class="flex items-start gap-3 rounded-xl border border-blue-200/60 bg-blue-50 dark:border-blue-500/30 dark:bg-blue-500/10 px-4 py-3">
+                            <div v-if="isLocked" class="flex items-start gap-3 rounded-xl border border-blue-200/60 bg-blue-50 px-4 py-3 dark:border-blue-500/30 dark:bg-blue-500/10">
                                 <Clock3 class="mt-0.5 size-4 shrink-0 text-blue-500 dark:text-blue-400" />
                                 <p class="text-xs leading-relaxed text-blue-700 dark:text-blue-300">Pendaftaran sedang menunggu keputusan kampus atau sudah aktif. Form dikunci sampai status berubah atau ada permintaan revisi.</p>
                             </div>
-                            <div v-else-if="isRevision" class="flex items-start gap-3 rounded-xl border border-amber-200/60 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10 px-4 py-3">
+                            <div v-else-if="isRevision" class="flex items-start gap-3 rounded-xl border border-amber-200/60 bg-amber-50 px-4 py-3 dark:border-amber-500/30 dark:bg-amber-500/10">
                                 <RefreshCcw class="mt-0.5 size-4 shrink-0 text-amber-500 dark:text-amber-400" />
                                 <p class="text-xs leading-relaxed text-amber-800 dark:text-amber-300">Pendaftaran dikembalikan untuk revisi. Perbarui data di bawah lalu kirim ulang ke kampus.</p>
                             </div>
-                            <div v-if="registration?.revision_note" class="rounded-xl border border-amber-200/60 bg-amber-50/50 dark:border-amber-500/20 dark:bg-amber-500/5 px-4 py-3">
+                            <div v-if="registration?.revision_note" class="rounded-xl border border-amber-200/60 bg-amber-50/50 px-4 py-3 dark:border-amber-500/20 dark:bg-amber-500/5">
                                 <p class="text-[10px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Catatan Revisi Kampus</p>
                                 <p class="mt-2 text-xs leading-relaxed text-slate-700 dark:text-slate-300">{{ registration.revision_note }}</p>
                             </div>
 
-                            <!-- Section: Periode -->
                             <div class="flex items-center gap-2">
                                 <div class="flex size-6 items-center justify-center rounded-md bg-blue-50 dark:bg-blue-500/15">
                                     <CalendarDays class="size-3.5 text-blue-600 dark:text-blue-400" />
@@ -711,8 +720,7 @@ watch(
                                     <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">Tanggal Mulai <span class="text-rose-400">*</span></label>
                                     <div class="relative">
                                         <CalendarDays class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-                                        <input v-model="form.tanggal_mulai" type="date" :disabled="isLocked"
-                                            class="student-date-input h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card pr-3 pl-10 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
+                                        <input v-model="form.tanggal_mulai" type="date" :disabled="isLocked" class="student-date-input h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card pr-3 pl-10 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
                                     </div>
                                     <p v-if="form.errors.tanggal_mulai" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.tanggal_mulai }}</p>
                                 </div>
@@ -720,14 +728,12 @@ watch(
                                     <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">Tanggal Selesai <span class="text-rose-400">*</span></label>
                                     <div class="relative">
                                         <CalendarDays class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-                                        <input v-model="form.tanggal_selesai" type="date" :disabled="isLocked"
-                                            class="student-date-input h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card pr-3 pl-10 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
+                                        <input v-model="form.tanggal_selesai" type="date" :disabled="isLocked" class="student-date-input h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card pr-3 pl-10 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
                                     </div>
                                     <p v-if="form.errors.tanggal_selesai" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.tanggal_selesai }}</p>
                                 </div>
                             </div>
 
-                            <!-- Section: Perusahaan -->
                             <div class="flex items-center gap-2">
                                 <div class="flex size-6 items-center justify-center rounded-md bg-violet-50 dark:bg-violet-500/15">
                                     <Building2 class="size-3.5 text-violet-600 dark:text-violet-400" />
@@ -740,9 +746,7 @@ watch(
                                 <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">Nama Perusahaan</label>
                                 <div class="relative">
                                     <Building2 class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-                                    <input v-model="form.perusahaan_diminati_nama" type="text" :disabled="isLocked"
-                                        placeholder="Isi jika sudah memiliki usulan perusahaan"
-                                        class="h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card pr-3 pl-10 text-sm text-wims-text placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
+                                    <input v-model="form.perusahaan_diminati_nama" type="text" :disabled="isLocked" placeholder="Isi jika sudah memiliki usulan perusahaan" class="h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card pr-3 pl-10 text-sm text-wims-text placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
                                 </div>
                                 <p v-if="form.errors.perusahaan_diminati_nama" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.perusahaan_diminati_nama }}</p>
                             </div>
@@ -750,14 +754,11 @@ watch(
                                 <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">Alamat / Kota</label>
                                 <div class="relative">
                                     <MapPinned class="pointer-events-none absolute top-3 left-3 size-4 text-slate-400 dark:text-slate-500" />
-                                    <textarea v-model="form.perusahaan_diminati_alamat" :disabled="isLocked" rows="2"
-                                        placeholder="Tambahkan alamat singkat atau kota perusahaan jika diperlukan"
-                                        class="w-full rounded-xl border border-wims-border/60 bg-wims-card py-2.5 pr-3 pl-10 text-sm leading-relaxed text-wims-text placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
+                                    <textarea v-model="form.perusahaan_diminati_alamat" :disabled="isLocked" rows="2" placeholder="Tambahkan alamat singkat atau kota perusahaan jika diperlukan" class="w-full rounded-xl border border-wims-border/60 bg-wims-card py-2.5 pr-3 pl-10 text-sm leading-relaxed text-wims-text placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
                                 </div>
                                 <p v-if="form.errors.perusahaan_diminati_alamat" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.perusahaan_diminati_alamat }}</p>
                             </div>
 
-                            <!-- Section: Catatan -->
                             <div class="flex items-center gap-2">
                                 <div class="flex size-6 items-center justify-center rounded-md bg-cyan-50 dark:bg-cyan-500/15">
                                     <ClipboardPenLine class="size-3.5 text-cyan-600 dark:text-cyan-400" />
@@ -768,79 +769,74 @@ watch(
                             </div>
                             <div class="space-y-1.5">
                                 <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">Catatan untuk Kampus</label>
-                                <textarea v-model="form.catatan_pengajuan" :disabled="isLocked" rows="3"
-                                    placeholder="Contoh: alasan memilih perusahaan, kebutuhan bidang, atau catatan tambahan untuk kampus"
-                                    class="w-full rounded-xl border border-wims-border/60 bg-wims-card px-4 py-2.5 text-sm leading-relaxed text-wims-text placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
+                                <textarea v-model="form.catatan_pengajuan" :disabled="isLocked" rows="3" placeholder="Contoh: alasan memilih perusahaan, kebutuhan bidang, atau catatan tambahan untuk kampus" class="w-full rounded-xl border border-wims-border/60 bg-wims-card px-4 py-2.5 text-sm leading-relaxed text-wims-text placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
                                 <p v-if="form.errors.catatan_pengajuan" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.catatan_pengajuan }}</p>
                             </div>
 
-                            <!-- Submit -->
+                            <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 px-4 py-4 dark:bg-slate-800/30">
+                                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Dokumen Proposal PKL</p>
+
+                                <div
+                                    v-if="form.proposal_pkl || proposalAttachment?.name"
+                                    class="mt-3 rounded-xl border border-wims-border/50 bg-wims-card px-4 py-3.5"
+                                >
+                                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                                        <div class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400">
+                                            <FileText class="size-4" />
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <p class="break-all text-sm font-bold leading-5 text-wims-text">
+                                                {{ form.proposal_pkl?.name || proposalAttachment?.name || 'Dokumen tersimpan' }}
+                                            </p>
+                                            <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                                {{ proposalAttachment?.uploaded_at || 'Waktu upload belum tersedia' }}
+                                            </p>
+                                        </div>
+                                        <div class="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:items-center">
+                                            <Button type="button" variant="outline" class="h-9 rounded-xl border-blue-200 bg-white px-3.5 text-xs font-bold text-blue-600 shadow-sm transition-colors hover:bg-blue-50 dark:border-blue-500/30 dark:bg-slate-900/30 dark:text-blue-300 dark:hover:bg-blue-500/10" @click="proposalInputRef?.click()">
+                                                <Upload class="mr-2 size-4" />
+                                                {{ form.proposal_pkl ? 'Ganti File' : 'Pilih File' }}
+                                            </Button>
+                                            <Button v-if="form.proposal_pkl || proposalAttachment?.name" type="button" variant="ghost" class="h-9 rounded-xl px-3.5 text-xs font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200" @click="clearProposalFile">
+                                                Hapus File
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="mt-3 rounded-xl border-2 border-dashed transition-all duration-200"
+                                    :class="isLocked ? 'border-slate-200 bg-slate-100/60 dark:border-slate-700 dark:bg-slate-800/30' : 'border-blue-200/70 bg-white/70 hover:border-blue-300/70 dark:border-blue-500/25 dark:bg-slate-900/20'"
+                                >
+                                    <label class="flex cursor-pointer flex-col items-center gap-2 px-4 py-6 text-center" :class="isLocked ? 'cursor-not-allowed opacity-60' : ''">
+                                        <div class="flex size-11 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-500/15">
+                                            <Upload class="size-5 text-blue-600 dark:text-blue-400" />
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-semibold text-wims-text">
+                                                Klik untuk pilih file atau drop file ke sini
+                                            </p>
+                                            <p class="mt-1 text-[11px] text-slate-400 dark:text-slate-500">PDF, DOC, DOCX maksimal 5 MB</p>
+                                        </div>
+                                        <input ref="proposalInputRef" type="file" accept=".pdf,.doc,.docx" class="hidden" :disabled="isLocked" @change="handleProposalFileChange" />
+                                    </label>
+                                </div>
+
+                                <p v-if="form.errors.proposal_pkl" class="mt-2 text-xs text-rose-500 dark:text-rose-400">{{ form.errors.proposal_pkl }}</p>
+                            </div>
+
                             <div class="pt-1">
-                                <Button type="submit"
-                                    class="h-11 w-full rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:from-slate-300 disabled:to-slate-300 disabled:text-slate-500 dark:disabled:from-slate-700 dark:disabled:to-slate-700 dark:disabled:text-slate-400"
-                                    :disabled="submitDisabled">
+                                <Button type="submit" class="h-11 w-full rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:from-slate-300 disabled:to-slate-300 disabled:text-slate-500 dark:disabled:from-slate-700 dark:disabled:to-slate-700 dark:disabled:text-slate-400" :disabled="submitDisabled">
                                     <LoaderCircle v-if="form.processing" class="mr-2 size-4 animate-spin" />
                                     <span>{{ actionLabel }}</span>
                                 </Button>
-                                <p v-if="!canSubmit && !isLocked" class="mt-2 text-center text-[11px] text-slate-400 dark:text-slate-500">
-                                    Lengkapi tanggal mulai dan selesai untuk mengajukan
-                                </p>
+                                <p v-if="!canSubmit && !isLocked" class="mt-2 text-center text-[11px] text-slate-400 dark:text-slate-500">Lengkapi tanggal mulai dan selesai untuk mengajukan</p>
                             </div>
                         </form>
-                    </div>
-
-                    <!-- Activity Log -->
-                    <div v-if="activityLog.length > 0" class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                        <button
-                            type="button"
-                            class="flex w-full items-center justify-between px-5 py-3.5 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
-                            @click="showLog = !showLog"
-                        >
-                            <div class="flex items-center gap-2.5">
-                                <div class="flex size-8 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-500/15">
-                                    <History class="size-4 text-indigo-600 dark:text-indigo-400" />
-                                </div>
-                                <span class="text-sm font-bold text-wims-text">Riwayat Aktivitas</span>
-                                <span class="rounded-full bg-slate-100 dark:bg-slate-700/50 px-2 py-0.5 text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                                    {{ activityLog.length }}
-                                </span>
-                            </div>
-                            <ChevronUp v-if="showLog" class="size-4 text-slate-400 dark:text-slate-500" />
-                            <ChevronDown v-else class="size-4 text-slate-400 dark:text-slate-500" />
-                        </button>
-                        <div v-if="showLog" class="border-t border-wims-border/50 px-5 py-4">
-                            <div class="relative space-y-0">
-                                <div class="absolute top-2 bottom-2 left-[9px] w-px bg-wims-border/40" />
-                                <div v-for="(log, i) in activityLog" :key="i" class="relative flex items-start gap-3 pb-4 last:pb-0">
-                                    <div class="relative z-10 mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full"
-                                        :class="{
-                                            'bg-blue-100 dark:bg-blue-500/20':    log.color === 'blue',
-                                            'bg-emerald-100 dark:bg-emerald-500/20': log.color === 'emerald',
-                                            'bg-amber-100 dark:bg-amber-500/20':   log.color === 'amber',
-                                            'bg-sky-100 dark:bg-sky-500/20':     log.color === 'sky',
-                                            'bg-violet-100 dark:bg-violet-500/20':  log.color === 'violet',
-                                            'bg-rose-100 dark:bg-rose-500/20':    log.color === 'rose',
-                                        }">
-                                        <div class="size-2 rounded-full"
-                                            :class="{
-                                                'bg-blue-500':    log.color === 'blue',
-                                                'bg-emerald-500': log.color === 'emerald',
-                                                'bg-amber-500':   log.color === 'amber',
-                                                'bg-sky-500':     log.color === 'sky',
-                                                'bg-violet-500':  log.color === 'violet',
-                                                'bg-rose-500':    log.color === 'rose',
-                                            }" />
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <p class="text-xs font-semibold text-wims-text">{{ log.text }}</p>
-                                        <p class="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">{{ log.time }}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </template>
+

@@ -48,7 +48,7 @@ class PenilaianMahasiswaController extends Controller
         abort_if(
             ! $this->lecturerAssessmentWorkflowService->canAssess($pendaftaran),
             403,
-            'Penilaian hanya dapat dilakukan setelah PKL diselesaikan admin.',
+            'Penilaian hanya dapat dilakukan setelah laporan akhir diunggah.',
         );
 
         $this->lecturerAssessmentWorkflowService->loadAssessmentRelations($pendaftaran);
@@ -75,7 +75,7 @@ class PenilaianMahasiswaController extends Controller
         abort_if(
             ! $this->lecturerAssessmentWorkflowService->canAssess($pendaftaran),
             403,
-            'Penilaian hanya dapat dilakukan setelah PKL selesai.',
+            'Penilaian hanya dapat dilakukan setelah laporan akhir diunggah.',
         );
 
         $existingSubmission = $this->assessmentSubmissionService->resolveLatestSubmission($pendaftaran, $user, 'dosen');
@@ -139,3 +139,4 @@ class PenilaianMahasiswaController extends Controller
         return response()->download($absolutePath, $pendaftaran->finalReportDownloadName());
     }
 }
+

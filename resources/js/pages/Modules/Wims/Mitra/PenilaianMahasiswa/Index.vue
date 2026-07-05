@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import {
@@ -40,6 +40,7 @@ type StudentItem = {
         label?: string | null;
     };
     registration_status?: string | null;
+    dashboard_phase?: 'assigned' | 'upcoming' | 'active' | 'completed' | null;
     assessment: {
         status_key: 'not_assessed' | 'draft' | 'submitted';
         status_label: string;
@@ -128,6 +129,9 @@ const registrationStatusClass = (value?: string | null) => {
     return 'border-slate-200 bg-slate-50 text-slate-600';
 };
 
+const assessmentStatusValue = (item: StudentItem) =>
+    item.dashboard_phase === 'completed' ? 'selesai' : item.registration_status;
+
 const actionLabel = (item: StudentItem) => {
     if (item.assessment.status_key === 'submitted') {
         return 'Lihat Nilai';
@@ -167,7 +171,7 @@ const goBack = () => {
                 </button>
                 <div class="flex flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div class="max-w-3xl pr-10 sm:pr-12">
-                        <h1 class="text-[20px] font-bold tracking-tight text-wims-text sm:text-[24px] lg:text-[30px]">
+                        <h1 class="text-[18px] font-bold tracking-tight text-wims-text sm:text-[22px] lg:text-[28px]">
                             Ringkasan Penilaian Mitra
                         </h1>
                         <p class="mt-1.5 max-w-3xl text-[13px] leading-relaxed text-slate-600 sm:text-sm">
@@ -215,13 +219,13 @@ const goBack = () => {
                         <table class="min-w-full border-collapse">
                             <thead class="bg-slate-50/70">
                                 <tr class="border-y border-wims-border">
-                                    <th class="px-5 py-3 text-left text-sm font-bold uppercase tracking-[0.06em] text-slate-500">Mahasiswa</th>
-                                    <th class="px-5 py-3 text-left text-sm font-bold uppercase tracking-[0.06em] text-slate-500">Perusahaan</th>
-                                    <th class="px-5 py-3 text-left text-sm font-bold uppercase tracking-[0.06em] text-slate-500">Periode</th>
-                                    <th class="px-5 py-3 text-left text-sm font-bold uppercase tracking-[0.06em] text-slate-500">Status Magang</th>
-                                    <th class="px-5 py-3 text-left text-sm font-bold uppercase tracking-[0.06em] text-slate-500">Status Penilaian</th>
-                                    <th class="px-5 py-3 text-right text-sm font-bold uppercase tracking-[0.06em] text-slate-500">Nilai Mitra</th>
-                                    <th class="px-5 py-3 text-right text-sm font-bold uppercase tracking-[0.06em] text-slate-500">Aksi</th>
+                                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">Mahasiswa</th>
+                                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">Perusahaan</th>
+                                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">Periode</th>
+                                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">Status Magang</th>
+                                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">Status Penilaian</th>
+                                    <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">Nilai Mitra</th>
+                                    <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-500">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -233,7 +237,7 @@ const goBack = () => {
                                     <td class="px-5 py-4">
                                         <p class="text-[13px] font-bold text-wims-text">{{ item.student.name || 'Mahasiswa' }}</p>
                                         <p class="mt-1 text-[11px] text-slate-500">
-                                            {{ item.student.nim || '-' }} • {{ item.student.email || '-' }}
+                                            {{ item.student.nim || '-' }} &bull; {{ item.student.email || '-' }}
                                         </p>
                                     </td>
                                     <td class="px-5 py-4 text-sm text-wims-text">
@@ -246,9 +250,9 @@ const goBack = () => {
                                         <Badge
                                             variant="outline"
                                             class="rounded-full px-3 py-1 text-[11px] font-bold"
-                                            :class="registrationStatusClass(item.registration_status)"
+                                            :class="registrationStatusClass(assessmentStatusValue(item))"
                                         >
-                                            {{ registrationStatusLabel(item.registration_status) }}
+                                            {{ registrationStatusLabel(assessmentStatusValue(item)) }}
                                         </Badge>
                                     </td>
                                     <td class="px-5 py-4">
@@ -285,70 +289,55 @@ const goBack = () => {
                         </table>
                     </div>
 
-                    <div v-if="filteredStudents.length" class="space-y-3 px-4 pb-4 md:hidden">
+                    <div v-if="filteredStudents.length" class="overflow-hidden rounded-2xl border border-wims-border bg-white md:hidden">
                         <div
                             v-for="item in filteredStudents"
                             :key="`mobile-${item.id}`"
-                            class="rounded-2xl border border-wims-border bg-white px-4 py-4 shadow-[0_12px_28px_-28px_rgba(15,23,42,0.3)]"
+                            class="border-b border-wims-border/70 px-4 py-3 last:border-b-0"
                         >
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
-                                    <p class="text-[13px] font-bold text-wims-text">{{ item.student.name || 'Mahasiswa' }}</p>
-                                    <p class="mt-1 break-words text-[11px] leading-5 text-slate-500">
+                                    <p class="text-[12px] font-bold leading-5 text-wims-text">{{ item.student.name || 'Mahasiswa' }}</p>
+                                    <p class="mt-0.5 break-words text-[11px] leading-5 text-slate-500">
                                         {{ item.student.nim || '-' }} &bull; {{ item.student.email || '-' }}
                                     </p>
                                 </div>
                                 <Badge
                                     variant="outline"
-                                    class="rounded-full px-3 py-1 text-[11px] font-bold"
+                                    class="rounded-full px-2.5 py-0.5 text-[11px] font-bold"
                                     :class="statusLabelClass(item.assessment.status_key)"
                                 >
                                     {{ item.assessment.status_label }}
                                 </Badge>
                             </div>
 
-                            <div class="mt-4 grid gap-3 sm:grid-cols-2">
-                                <div class="rounded-xl border border-wims-border bg-slate-50/80 px-3.5 py-3">
-                                    <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Perusahaan</p>
-                                    <p class="mt-1.5 text-[13px] font-bold text-wims-text">{{ item.company?.name || '-' }}</p>
-                                </div>
-                                <div class="rounded-xl border border-wims-border bg-slate-50/80 px-3.5 py-3">
-                                    <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Periode</p>
-                                    <p class="mt-1.5 text-[13px] font-bold text-wims-text">
-                                        {{ formatIndonesianDateLabel(item.period.label) }}
-                                    </p>
-                                </div>
-                                <div class="rounded-xl border border-wims-border bg-slate-50/80 px-3.5 py-3">
-                                    <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Status Magang</p>
-                                    <div class="mt-1.5">
-                                        <Badge
-                                            variant="outline"
-                                            class="rounded-full px-3 py-1 text-[11px] font-bold"
-                                            :class="registrationStatusClass(item.registration_status)"
-                                        >
-                                            {{ registrationStatusLabel(item.registration_status) }}
-                                        </Badge>
-                                    </div>
-                                </div>
-                                <div class="rounded-xl border border-wims-border bg-slate-50/80 px-3.5 py-3">
-                                    <p class="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">Nilai Mitra</p>
-                                    <p class="mt-1.5 text-[13px] font-bold text-wims-text">
-                                        {{ item.assessment.total_score !== null && item.assessment.total_score !== undefined ? item.assessment.total_score.toFixed(2) : '-' }}
-                                    </p>
-                                    <p v-if="item.assessment.submitted_at" class="mt-1 text-[11px] text-slate-500">
-                                        Dikirim {{ formatIndonesianDateLabel(item.assessment.submitted_at) }}
-                                    </p>
-                                </div>
+                            <div class="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500">
+                                <span class="font-medium text-wims-text">{{ item.company?.name || '-' }}</span>
+                                <span class="text-slate-300">&bull;</span>
+                                <span>{{ formatIndonesianDateLabel(item.period.label) }}</span>
+                                <span class="text-slate-300">&bull;</span>
+                                <span class="font-medium text-slate-700">{{ item.assessment.total_score !== null && item.assessment.total_score !== undefined ? item.assessment.total_score.toFixed(2) : '-' }}</span>
                             </div>
 
-                            <Button
-                                type="button"
-                                class="mt-4 h-10 w-full rounded-lg bg-[#0F62FE] px-4 text-[13px] font-bold text-white shadow-sm transition duration-200 hover:bg-[#0050E6]"
-                                @click="openAssessment(item.id)"
-                            >
-                                <FilePenLine class="mr-2 size-4" />
-                                {{ actionLabel(item) }}
-                            </Button>
+                            <div class="mt-2 flex items-center justify-between gap-3">
+                                <div class="min-w-0">
+                                    <Badge
+                                        variant="outline"
+                                        class="rounded-full px-2.5 py-0.5 text-[11px] font-bold"
+                                        :class="registrationStatusClass(assessmentStatusValue(item))"
+                                    >
+                                        {{ registrationStatusLabel(assessmentStatusValue(item)) }}
+                                    </Badge>
+                                </div>
+                                <Button
+                                    type="button"
+                                    class="h-8 rounded-lg bg-[#0F62FE] px-3 text-[12px] font-bold text-white shadow-sm transition duration-200 hover:bg-[#0050E6]"
+                                    @click="openAssessment(item.id)"
+                                >
+                                    <FilePenLine class="mr-1.5 size-4" />
+                                    {{ actionLabel(item) }}
+                                </Button>
+                            </div>
                         </div>
                     </div>
 
@@ -374,3 +363,5 @@ const goBack = () => {
         </div>
     </div>
 </template>
+
+

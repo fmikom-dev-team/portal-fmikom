@@ -75,6 +75,11 @@ class AdminRegistrationPageService
             ],
             'application_note' => $pendaftaran->catatan_pengajuan,
             'revision_note' => $pendaftaran->catatan_revisi_admin,
+            'proposal_attachment' => filled($pendaftaran->proposal_pkl_path) ? [
+                'exists' => true,
+                'name' => $pendaftaran->proposal_pkl_original_name,
+                'uploaded_at' => $pendaftaran->proposal_pkl_uploaded_at?->translatedFormat('d M Y H:i'),
+            ] : null,
             'tanggal_mulai' => $this->formatDate($pendaftaran->tanggal_mulai),
             'tanggal_selesai' => $this->formatDate($pendaftaran->tanggal_selesai),
             'status' => $pendaftaran->status,

@@ -2,12 +2,15 @@
 
 namespace App\Modules\Wims\Services\Mahasiswa\Profile;
 
+use App\Concerns\HandlesImageCompression;
 use App\Models\User;
 use App\Support\WimsStorage;
 use Illuminate\Http\UploadedFile;
 
 class StudentProfileUpdateService
 {
+    use HandlesImageCompression;
+
     public function update(User $user, array $validated, ?UploadedFile $photo): void
     {
         // Field profil dibersihkan lebih dulu supaya data kosong tersimpan konsisten sebagai null,
@@ -30,11 +33,13 @@ class StudentProfileUpdateService
                 WimsStorage::delete($user->foto_path);
             }
 
-            // File lama diganti agar storage tidak menumpuk foto profil yang sudah tidak dipakai.
-            $updates['foto_path'] = WimsStorage::storeUploadedFileAs(
+            // Ikuti alur core portal: gambar diproses lalu disimpan ke public storage.
+            $updates['foto_path'] = $this->compressAndSaveImage(
                 $photo,
-                'profile-photos',
-                uniqid('img_', true).'.'.strtolower($photo->getClientOriginalExtension() ?: $photo->extension() ?: 'webp'),
+                'profile_photos',
+                400,
+                400,
+                80,
             );
         }
 

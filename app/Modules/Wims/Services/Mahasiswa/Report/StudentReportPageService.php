@@ -5,6 +5,7 @@ namespace App\Modules\Wims\Services\Mahasiswa\Report;
 use App\Models\Magang\AbsensiMagang;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
+use App\Modules\Wims\Services\Mahasiswa\Period\StudentPeriodResolverService;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use App\Modules\Wims\Support\AssessmentSummary;
 use App\Support\PublicStorageUrl;
@@ -15,24 +16,24 @@ class StudentReportPageService
 {
     public function __construct(
         private readonly WimsModuleRoleService $wimsModuleRoleService,
+        private readonly StudentFinalReportTemplateService $studentFinalReportTemplateService,
+        private readonly StudentPeriodResolverService $studentPeriodResolverService,
     ) {}
 
-    public function build(int $userId): array
+    public function build(int $userId, ?int $selectedRegistrationId = null): array
     {
-        $registration = PendaftaranMagang::query()
-            ->with([
-                'perusahaan.user',
-                'dosenPembimbing',
-                'assessmentSubmissions' => fn ($query) => $query
-                    ->whereIn('assessor_role', ['dosen', 'mitra'])
-                    ->orderByDesc('submitted_at')
-                    ->orderByDesc('updated_at')
-                    ->orderByDesc('id'),
-            ])
-            ->forMahasiswa($userId)
-            ->orderByDesc('tanggal_mulai')
-            ->orderByDesc('id')
-            ->first();
+        $registrations = $this->studentPeriodResolverService->resolveRegistrations($userId, [
+            'perusahaan.user',
+            'dosenPembimbing',
+            'assessmentSubmissions' => fn ($query) => $query
+                ->whereIn('assessor_role', ['dosen', 'mitra'])
+                ->orderByDesc('submitted_at')
+                ->orderByDesc('updated_at')
+                ->orderByDesc('id'),
+        ]);
+        $registration = $this->studentPeriodResolverService->resolveSelectedRegistrationFromCollection($registrations, $selectedRegistrationId);
+        $periods = $this->studentPeriodResolverService->buildPeriodOptions($registrations, $registration?->id);
+
         $historyRegistration = $registration && (
             $registration->status === 'aktif' || $registration->isPostInternshipPhase()
         ) ? $registration : null;
@@ -70,8 +71,11 @@ class StudentReportPageService
         $attendanceTotals = $attendanceHistory->groupBy(fn (AbsensiMagang $item) => (string) $item->status);
 
         return [
+            'selected_period_id' => $registration?->id,
+            'periods' => $periods,
             'pageState' => $pageState,
             'registration' => $registration ? [
+                'id' => $registration->id,
                 'status' => $registration->status,
                 'company' => [
                     'proposal' => [
@@ -90,25 +94,22 @@ class StudentReportPageService
                         : null,
                 ],
                 'mentor' => [
-                    'id' => $registration->perusahaan?->user?->id,
-                    'name' => $registration->perusahaan?->user?->name ?? '-',
-                    'role_context' => $registration->perusahaan?->user
-                        ? $this->wimsModuleRoleService->resolveContextRoleData($registration->perusahaan->user, 'mitra')
+                    'id' => $registration->finalMentor()?->id,
+                    'name' => $registration->finalMentor()?->name ?? '-',
+                    'role_context' => $registration->finalMentor()
+                        ? $this->wimsModuleRoleService->resolveContextRoleData($registration->finalMentor(), 'mitra')
                         : null,
                 ],
-                'period_label' => $registration->tanggal_mulai && $registration->tanggal_selesai
-                    ? $this->formatLocalizedDate($registration->tanggal_mulai, 'd M Y')
-                        .' - '
-                        .$this->formatLocalizedDate($registration->tanggal_selesai, 'd M Y')
-                    : null,
+                'period_label' => $registration->periodLabel(),
                 'submitted_at' => $this->formatLocalizedDate($registration->created_at, 'd M Y H:i'),
                 'laporan_akhir' => $registration->laporan_akhir_path ? [
                     'name' => $registration->laporan_akhir_original_name,
-                    'view_url' => route('wims.laporan.final-report.view'),
-                    'download_url' => route('wims.laporan.final-report.download'),
+                    'view_url' => route('wims.laporan.final-report.view', ['pendaftaran' => $registration->id]),
+                    'download_url' => route('wims.laporan.final-report.download', ['pendaftaran' => $registration->id]),
                     'uploaded_at' => $this->formatLocalizedDate($registration->laporan_akhir_uploaded_at, 'd M Y H:i'),
                 ] : null,
             ] : null,
+            'final_report_template' => $this->studentFinalReportTemplateService->buildTemplateCard('final_report', 'wims.laporan.template.download'),
             'internship' => [
                 'progress_percentage' => $progressPercentage,
                 'completed_days' => $completedDays,
@@ -174,10 +175,10 @@ class StudentReportPageService
                     ->all(),
             ],
             'currentPeriodHistoryDownloadUrl' => $historyRegistration?->id
-                ? route('wims.absensi.download', ['scope' => 'current'])
+                ? route('wims.absensi.download', ['scope' => 'current', 'pendaftaran' => $historyRegistration->id])
                 : null,
             'currentPeriodLogbookDownloadUrl' => $historyRegistration?->id
-                ? route('wims.logbook.download')
+                ? route('wims.logbook.download', ['pendaftaran' => $historyRegistration->id])
                 : null,
         ];
     }

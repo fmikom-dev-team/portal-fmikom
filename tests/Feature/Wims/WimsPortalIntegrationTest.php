@@ -531,6 +531,7 @@ it('allows admin recap and assessor pages during post-internship phase even if r
         'status' => 'aktif',
         'tanggal_mulai' => '2026-06-01',
         'tanggal_selesai' => '2026-06-30',
+        'laporan_akhir_path' => 'laporan-final/penilaian-aktif.pdf',
     ]);
 
     $this->actingAs($admin)

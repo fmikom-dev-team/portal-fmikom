@@ -3,6 +3,7 @@
 namespace App\Modules\Wims\Services\Mahasiswa\Report;
 
 use App\Models\Magang\PendaftaranMagang;
+use App\Modules\Wims\Services\Mahasiswa\Period\StudentPeriodResolverService;
 use App\Modules\Wims\Services\Shared\Assessment\FinalReportAccessService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -12,15 +13,17 @@ class StudentFinalReportActionService
 {
     public function __construct(
         private readonly FinalReportAccessService $finalReportAccessService,
+        private readonly StudentPeriodResolverService $studentPeriodResolverService,
     ) {}
 
     public function resolveLatestRegistration(int $userId): ?PendaftaranMagang
     {
-        return PendaftaranMagang::query()
-            ->forMahasiswa($userId)
-            ->orderByDesc('tanggal_mulai')
-            ->orderByDesc('id')
-            ->first();
+        return $this->studentPeriodResolverService->resolveSelectedRegistration($userId);
+    }
+
+    public function resolveRegistration(int $userId, ?int $registrationId = null): ?PendaftaranMagang
+    {
+        return $this->studentPeriodResolverService->resolveSelectedRegistration($userId, $registrationId);
     }
 
     public function upload(PendaftaranMagang $registration, UploadedFile $file): void

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Http\Resources\UserResource;
+use App\Models\Magang\PendaftaranMagang;
 use App\Models\Pagi\PagiMessage;
 use App\Models\Portal\PortalComment;
 use App\Models\Portal\PortalMenu;
@@ -53,11 +54,21 @@ class HandleInertiaRequests extends Middleware
             'siteSettings' => Cache::rememberForever('portal_settings', function () {
                 $raw = PortalSetting::pluck('value', 'key')->toArray();
                 $raw['brand_name'] = $raw['brand_name'] ?? 'Portal FMIKOM';
-                $raw['brand_subtitle'] = $raw['brand_subtitle'] ?? 'Fakultas Matematika dan Ilmu Komputer';
                 $raw['brand_logo'] = $raw['brand_logo'] ?? '/asset/brand-logo.webp';
                 $raw['brand_favicon'] = $raw['brand_favicon'] ?? '/asset/favicon.ico';
 
                 return $raw;
+            }),
+            'wims_sidebar_counts' => Cache::remember('wims_sidebar_counts', 30, function (): array {
+                return [
+                    'pending_registrations' => PendaftaranMagang::where('status', 'pending')->count(),
+                    'needs_assignment' => PendaftaranMagang::where('status', 'approved')
+                        ->where(function ($query): void {
+                            $query->whereNull('perusahaan_id')
+                                ->orWhereNull('dosen_pembimbing_id');
+                        })
+                        ->count(),
+                ];
             }),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
@@ -80,25 +91,33 @@ class HandleInertiaRequests extends Middleware
                 ? Cache::remember("unread_notif_count_{$user->id}_".session('active_role', ''), 30, function () use ($user) {
                     $activeRole = strtolower(session('active_role', ''));
                     $activeModule = strtoupper(session('active_module', ''));
-                    $query = $user->unreadNotifications();
+                    $unreadNotifs = $user->unreadNotifications;
 
                     if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
-                        $query->whereNotIn('data->type', ['like', 'comment', 'follow', 'collaboration']);
+                        $studentNotifTypes = ['like', 'comment', 'follow', 'collaboration'];
+                        $unreadNotifs = $unreadNotifs->filter(function ($n) use ($studentNotifTypes) {
+                            $type = $n->data['type'] ?? 'system';
+
+                            return ! in_array($type, $studentNotifTypes);
+                        });
                     }
 
-                    return $query->count();
+                    return $unreadNotifs->count();
                 })
                 : 0,
             'recent_notifications' => $user ? fn () => Cache::remember("recent_notifs_{$user->id}_".session('active_role', ''), 30, function () use ($user) {
                 $activeRole = strtolower(session('active_role', ''));
                 $activeModule = strtoupper(session('active_module', ''));
-                $query = $user->notifications()->latest();
+                $notifs = $user->notifications()->latest()->limit(30)->get();
 
                 if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
-                    $query->whereNotIn('data->type', ['like', 'comment', 'follow', 'collaboration']);
-                }
+                    $studentNotifTypes = ['like', 'comment', 'follow', 'collaboration'];
+                    $notifs = $notifs->filter(function ($n) use ($studentNotifTypes) {
+                        $type = $n->data['type'] ?? 'system';
 
-                $notifs = $query->limit(30)->get();
+                        return ! in_array($type, $studentNotifTypes);
+                    });
+                }
 
                 return $notifs->map(fn ($n) => [
                     'id' => $n->id,
@@ -121,6 +140,8 @@ class HandleInertiaRequests extends Middleware
                 'active_module' => session('active_module'),
                 'active_role' => session('active_role'),
             ] : null,
+            'selected_period_id' => fn () => $this->resolveWimsSelectedPeriodId($request),
+            'selected_period_id' => fn () => $this->resolveWimsSelectedPeriodId($request),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'pending_comments_count' => fn () => ($user && ($user->isAdmin() || $user->isSuperAdmin()))
                 // BUG-013: Cache admin-only pending comments count
@@ -151,5 +172,33 @@ class HandleInertiaRequests extends Middleware
                     ->toArray();
             }))->once(),
         ];
+    }
+
+    private function resolveWimsSelectedPeriodId(Request $request): ?int
+    {
+        if (! $request->is('wims*')) {
+            return null;
+        }
+
+        $queryValue = $request->query('pendaftaran');
+        if ($queryValue !== null && $queryValue !== '') {
+            $selectedId = (int) $queryValue;
+
+            if ($selectedId > 0 && $request->hasSession()) {
+                $request->session()->put('wims.selected_pendaftaran_id', $selectedId);
+            }
+
+            return $selectedId > 0 ? $selectedId : null;
+        }
+
+        if ($request->hasSession()) {
+            $storedValue = $request->session()->get('wims.selected_pendaftaran_id');
+
+            return is_numeric($storedValue) && (int) $storedValue > 0
+                ? (int) $storedValue
+                : null;
+        }
+
+        return null;
     }
 }

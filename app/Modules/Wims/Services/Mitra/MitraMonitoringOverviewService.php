@@ -39,6 +39,9 @@ class MitraMonitoringOverviewService
         $pendaftarans = $this->buildDashboardQuery($mentor, $company)->get();
 
         $this->attendanceSyncService->syncForRegistrations($pendaftarans);
+
+        /** @var \Illuminate\Database\Eloquent\Collection<int, PendaftaranMagang> $pendaftarans */
+        $pendaftarans = $pendaftarans;
         $this->wimsModuleRoleService->preloadContextRoles([
             ...$pendaftarans->pluck('perusahaan.user')->filter()->all(),
             ...$pendaftarans->pluck('dosenPembimbing')->filter()->all(),

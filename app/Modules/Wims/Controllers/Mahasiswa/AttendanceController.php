@@ -23,7 +23,7 @@ class AttendanceController extends Controller
     public function index(Request $request): Response
     {
         return Inertia::render('Modules/Wims/Mahasiswa/Presensi/Index', [
-            'attendance' => $this->attendancePageService->build($request->user()),
+            'attendance' => $this->attendancePageService->build($request->user(), $request->integer('pendaftaran')),
         ]);
     }
 
@@ -52,10 +52,12 @@ class AttendanceController extends Controller
         ]);
 
         $pendaftaran = PendaftaranMagang::with('perusahaan')
-            ->findOrFail($request->pendaftaran_id);
+            ->where('mahasiswa_id', $request->user()->id)
+            ->whereKey($request->integer('pendaftaran_id'))
+            ->firstOrFail();
 
         // Presensi hanya sah untuk mahasiswa pemilik pendaftaran yang sudah berada pada fase PKL aktif.
-        if ($pendaftaran->mahasiswa_id !== $request->user()->id || $pendaftaran->status !== 'aktif') {
+        if ($pendaftaran->status !== 'aktif') {
             abort(403);
         }
 
@@ -119,17 +121,25 @@ class AttendanceController extends Controller
         // Endpoint check-out memakai validasi lokasi yang sama agar bukti kehadiran
         // saat pulang tetap memenuhi aturan geofencing sistem.
         $request->validate([
+            'pendaftaran_id' => [
+                'required',
+                Rule::exists('pendaftaran_magangs', 'id')->where(
+                    fn ($query) => $query->where('mahasiswa_id', $request->user()->id)
+                ),
+            ],
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'photo' => 'required|image|max:5120',
         ]);
 
         $pendaftaran = PendaftaranMagang::with('perusahaan')
-            ->forMahasiswa($request->user()->id)
-            ->active()
-            ->orderByDesc('tanggal_mulai')
-            ->orderByDesc('id')
+            ->where('mahasiswa_id', $request->user()->id)
+            ->whereKey($request->integer('pendaftaran_id'))
             ->firstOrFail();
+
+        if ($pendaftaran->status !== 'aktif') {
+            abort(403);
+        }
 
         $absensi = $this->attendanceActionService->findTodayAttendance($pendaftaran);
 
@@ -192,3 +202,4 @@ class AttendanceController extends Controller
         ]);
     }
 }
+

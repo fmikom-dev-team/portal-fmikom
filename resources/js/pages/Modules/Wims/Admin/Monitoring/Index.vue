@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import {
@@ -695,3 +695,7 @@ const studentInitial = (name?: string | null) => {
         </Card>
     </div>
 </template>
+
+
+
+

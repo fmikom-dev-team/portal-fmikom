@@ -4,26 +4,27 @@ namespace App\Modules\Wims\Services\Mahasiswa\Profile;
 
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
+use App\Modules\Wims\Services\Mahasiswa\Period\StudentPeriodResolverService;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 
 class StudentProfilePageService
 {
     public function __construct(
         private readonly WimsModuleRoleService $wimsModuleRoleService,
+        private readonly StudentPeriodResolverService $studentPeriodResolverService,
     ) {}
 
-    public function build(User $user): array
+    public function build(User $user, ?int $selectedRegistrationId = null): array
     {
         $user->loadMissing('programStudi.fakultas');
 
-        $latestRegistration = PendaftaranMagang::query()
-            ->with(['perusahaan.user', 'dosenPembimbing'])
-            ->forMahasiswa($user->id)
-            ->orderByDesc('tanggal_mulai')
-            ->orderByDesc('id')
-            ->first();
+        $registrations = $this->studentPeriodResolverService->resolveRegistrations($user->id, ['perusahaan.user', 'dosenPembimbing']);
+        $selectedRegistration = $this->studentPeriodResolverService->resolveSelectedRegistrationFromCollection($registrations, $selectedRegistrationId);
+        $periods = $this->studentPeriodResolverService->buildPeriodOptions($registrations, $selectedRegistration?->id);
 
         return [
+            'selected_period_id' => $selectedRegistration?->id,
+            'periods' => $periods,
             'profile' => [
                 'name' => $user->name,
                 'email' => $user->email,
@@ -43,37 +44,34 @@ class StudentProfilePageService
                 'status_approval' => $user->status_approval,
                 'is_active' => (bool) $user->is_active,
             ],
-            'registration' => $latestRegistration ? [
-                'status' => $latestRegistration->status,
+            'registration' => $selectedRegistration ? [
+                'id' => $selectedRegistration->id,
+                'status' => $selectedRegistration->status,
                 'company' => [
                     'proposal' => [
-                        'name' => $latestRegistration->perusahaan_diminati_nama,
+                        'name' => $selectedRegistration->perusahaan_diminati_nama,
                     ],
                     'final' => [
-                        'id' => $latestRegistration->perusahaan?->id,
-                        'name' => $latestRegistration->perusahaan?->nama,
+                        'id' => $selectedRegistration->perusahaan?->id,
+                        'name' => $selectedRegistration->perusahaan?->nama,
                     ],
                 ],
                 'lecturer' => [
-                    'id' => $latestRegistration->dosenPembimbing?->id,
-                    'name' => $latestRegistration->dosenPembimbing?->name,
-                    'role_context' => $latestRegistration->dosenPembimbing
-                        ? $this->wimsModuleRoleService->resolveContextRoleData($latestRegistration->dosenPembimbing, 'dosen')
+                    'id' => $selectedRegistration->dosenPembimbing?->id,
+                    'name' => $selectedRegistration->dosenPembimbing?->name,
+                    'role_context' => $selectedRegistration->dosenPembimbing
+                        ? $this->wimsModuleRoleService->resolveContextRoleData($selectedRegistration->dosenPembimbing, 'dosen')
                         : null,
                 ],
                 'mentor' => [
-                    'id' => $latestRegistration->perusahaan?->user?->id,
-                    'name' => $latestRegistration->perusahaan?->user?->name ?? '-',
-                    'role_context' => $latestRegistration->perusahaan?->user
-                        ? $this->wimsModuleRoleService->resolveContextRoleData($latestRegistration->perusahaan->user, 'mitra')
+                    'id' => $selectedRegistration->finalMentor()?->id,
+                    'name' => $selectedRegistration->finalMentor()?->name ?? '-',
+                    'role_context' => $selectedRegistration->finalMentor()
+                        ? $this->wimsModuleRoleService->resolveContextRoleData($selectedRegistration->finalMentor(), 'mitra')
                         : null,
                 ],
-                'period_label' => $latestRegistration->tanggal_mulai && $latestRegistration->tanggal_selesai
-                    ? $latestRegistration->tanggal_mulai->translatedFormat('d M Y')
-                        .' - '
-                        .$latestRegistration->tanggal_selesai->translatedFormat('d M Y')
-                    : null,
-                'submitted_at' => $latestRegistration->created_at?->translatedFormat('d M Y H:i'),
+                'period_label' => $selectedRegistration->periodLabel(),
+                'submitted_at' => $selectedRegistration->created_at?->translatedFormat('d M Y H:i'),
             ] : null,
         ];
     }

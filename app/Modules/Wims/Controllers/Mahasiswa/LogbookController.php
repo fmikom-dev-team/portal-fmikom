@@ -24,12 +24,15 @@ class LogbookController extends Controller
 
     public function index(Request $request): Response
     {
-        return Inertia::render('Modules/Wims/Mahasiswa/Logbook/Index', $this->logbookPageService->build($request->user()->id));
+        return Inertia::render('Modules/Wims/Mahasiswa/Logbook/Index', $this->logbookPageService->build(
+            $request->user()->id,
+            $request->integer('pendaftaran'),
+        ));
     }
 
     public function store(StoreLogbookRequest $request): RedirectResponse
     {
-        $pendaftaran = $this->logbookPageService->resolvePendaftaran($request->user()->id);
+        $pendaftaran = $this->logbookPageService->resolvePendaftaran($request->user()->id, $request->integer('pendaftaran_id'));
 
         if (! $pendaftaran) {
             return back()->withErrors([
@@ -75,7 +78,7 @@ class LogbookController extends Controller
 
     public function update(StoreLogbookRequest $request, LogbookMagang $logbook): RedirectResponse
     {
-        $pendaftaran = $this->logbookPageService->resolvePendaftaran($request->user()->id);
+        $pendaftaran = $this->logbookPageService->resolvePendaftaran($request->user()->id, $request->integer('pendaftaran_id'));
 
         if (! $pendaftaran || (int) $logbook->pendaftaran_id !== (int) $pendaftaran->id) {
             abort(403);
@@ -117,3 +120,4 @@ class LogbookController extends Controller
         return $this->logbookExportService->downloadCurrentPeriod($request->user()->id);
     }
 }
+
