@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
  * @property-read User|null $mahasiswa
  * @property-read User|null $dosenPembimbing
  * @property-read PerusahaanMitra|null $perusahaan
+ * @method static Builder forMahasiswa(int $mahasiswaId)
  */
 class PendaftaranMagang extends Model
 {
@@ -99,7 +100,7 @@ class PendaftaranMagang extends Model
     public function scopeLatestForMahasiswa(Builder $query, int $mahasiswaId): Builder
     {
         return $query
-            ->forMahasiswa($mahasiswaId)
+            ->where('mahasiswa_id', $mahasiswaId)
             ->orderByDesc('tanggal_mulai')
             ->orderByDesc('id');
     }
@@ -116,13 +117,16 @@ class PendaftaranMagang extends Model
 
     public function isWithinActivePeriod(?CarbonInterface $date = null): bool
     {
-        if (! $this->tanggal_mulai || ! $this->tanggal_selesai) {
+        $tanggalMulai = data_get($this, 'tanggal_mulai');
+        $tanggalSelesai = data_get($this, 'tanggal_selesai');
+
+        if (! $tanggalMulai instanceof CarbonInterface || ! $tanggalSelesai instanceof CarbonInterface) {
             return false;
         }
 
         $currentDate = ($date ?? now())->copy()->startOfDay();
-        $tanggalMulai = $this->tanggal_mulai->copy()->startOfDay();
-        $tanggalSelesai = $this->tanggal_selesai->copy()->startOfDay();
+        $tanggalMulai = $tanggalMulai->copy()->startOfDay();
+        $tanggalSelesai = $tanggalSelesai->copy()->startOfDay();
 
         return $currentDate->greaterThanOrEqualTo($tanggalMulai)
             && $currentDate->lessThanOrEqualTo($tanggalSelesai);
@@ -140,25 +144,34 @@ class PendaftaranMagang extends Model
 
     public function hasInternshipPeriodEnded(?CarbonInterface $date = null): bool
     {
-        if (! $this->tanggal_selesai) {
+        $tanggalSelesai = data_get($this, 'tanggal_selesai');
+
+        if (! $tanggalSelesai instanceof CarbonInterface) {
             return false;
         }
 
         $currentDate = ($date ?? now())->copy()->startOfDay();
-        $tanggalSelesai = $this->tanggal_selesai->copy()->startOfDay();
+        $tanggalSelesai = $tanggalSelesai->copy()->startOfDay();
 
         return $currentDate->greaterThan($tanggalSelesai);
     }
 
     public function isPostInternshipPhase(?CarbonInterface $date = null): bool
     {
-        return $this->status === 'selesai'
-            || ($this->status === 'aktif' && $this->hasInternshipPeriodEnded($date));
+        if ($this->status === 'selesai') {
+            return true;
+        }
+
+        return $this->status === 'aktif' && $this->hasInternshipPeriodEnded($date);
     }
 
     public function canBeMarkedComplete(?CarbonInterface $date = null): bool
     {
-        return $this->status === 'aktif' && $this->hasInternshipPeriodEnded($date);
+        if ($this->status !== 'aktif') {
+            return false;
+        }
+
+        return $this->hasInternshipPeriodEnded($date);
     }
 
     public function isReadyForAssessment(?CarbonInterface $date = null): bool
@@ -168,10 +181,16 @@ class PendaftaranMagang extends Model
 
     public function proposalAttachmentDownloadName(): string
     {
-        $studentName = Str::slug((string) ($this->mahasiswa?->name ?? 'mahasiswa'));
-        $studentId = $this->mahasiswa?->nim_nip ?: $this->mahasiswa?->nomor_induk ?: 'tanpa-identitas';
-        $periodStart = $this->tanggal_mulai?->format('Ymd') ?? 'mulai';
-        $periodEnd = $this->tanggal_selesai?->format('Ymd') ?? 'selesai';
+        $mahasiswa = $this->mahasiswa;
+        $studentName = Str::slug((string) data_get($mahasiswa, 'name', 'mahasiswa'));
+        $studentId = data_get($mahasiswa, 'nim_nip') ?: data_get($mahasiswa, 'nomor_induk') ?: 'tanpa-identitas';
+
+        $tanggalMulai = data_get($this, 'tanggal_mulai');
+        $periodStart = $tanggalMulai instanceof CarbonInterface ? $tanggalMulai->format('Ymd') : 'mulai';
+
+        $tanggalSelesai = data_get($this, 'tanggal_selesai');
+        $periodEnd = $tanggalSelesai instanceof CarbonInterface ? $tanggalSelesai->format('Ymd') : 'selesai';
+
         $extension = pathinfo((string) ($this->proposal_pkl_original_name ?: $this->proposal_pkl_path), PATHINFO_EXTENSION) ?: 'pdf';
 
         return sprintf(
@@ -186,10 +205,16 @@ class PendaftaranMagang extends Model
 
     public function finalReportDownloadName(): string
     {
-        $studentName = Str::slug((string) ($this->mahasiswa?->name ?? 'mahasiswa'));
-        $studentId = $this->mahasiswa?->nim_nip ?: $this->mahasiswa?->nomor_induk ?: 'tanpa-identitas';
-        $periodStart = $this->tanggal_mulai?->format('Ymd') ?? 'mulai';
-        $periodEnd = $this->tanggal_selesai?->format('Ymd') ?? 'selesai';
+        $mahasiswa = $this->mahasiswa;
+        $studentName = Str::slug((string) data_get($mahasiswa, 'name', 'mahasiswa'));
+        $studentId = data_get($mahasiswa, 'nim_nip') ?: data_get($mahasiswa, 'nomor_induk') ?: 'tanpa-identitas';
+
+        $tanggalMulai = data_get($this, 'tanggal_mulai');
+        $periodStart = $tanggalMulai instanceof CarbonInterface ? $tanggalMulai->format('Ymd') : 'mulai';
+
+        $tanggalSelesai = data_get($this, 'tanggal_selesai');
+        $periodEnd = $tanggalSelesai instanceof CarbonInterface ? $tanggalSelesai->format('Ymd') : 'selesai';
+
         $extension = pathinfo((string) ($this->laporan_akhir_original_name ?: $this->laporan_akhir_path), PATHINFO_EXTENSION) ?: 'pdf';
 
         return sprintf(
@@ -204,14 +229,17 @@ class PendaftaranMagang extends Model
 
     public function periodLabel(): ?string
     {
-        if (! $this->tanggal_mulai || ! $this->tanggal_selesai) {
+        $tanggalMulai = data_get($this, 'tanggal_mulai');
+        $tanggalSelesai = data_get($this, 'tanggal_selesai');
+
+        if (! $tanggalMulai instanceof CarbonInterface || ! $tanggalSelesai instanceof CarbonInterface) {
             return null;
         }
 
         return sprintf(
             '%s - %s',
-            $this->tanggal_mulai->translatedFormat('d M Y'),
-            $this->tanggal_selesai->translatedFormat('d M Y'),
+            $tanggalMulai->translatedFormat('d M Y'),
+            $tanggalSelesai->translatedFormat('d M Y'),
         );
     }
 

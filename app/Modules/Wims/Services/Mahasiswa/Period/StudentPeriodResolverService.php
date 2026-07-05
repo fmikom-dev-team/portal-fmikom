@@ -10,11 +10,14 @@ class StudentPeriodResolverService
 {
     private const SESSION_KEY = 'wims.selected_pendaftaran_id';
 
+    /**
+     * @return Collection<int, PendaftaranMagang>
+     */
     public function resolveRegistrations(int $userId, array $with = ['perusahaan']): Collection
     {
         return PendaftaranMagang::query()
             ->with($with)
-            ->forMahasiswa($userId)
+            ->where('mahasiswa_id', $userId)
             ->orderByDesc('tanggal_mulai')
             ->orderByDesc('id')
             ->get();
@@ -27,6 +30,9 @@ class StudentPeriodResolverService
         return $this->resolveSelectedRegistrationFromCollection($registrations, $selectedRegistrationId);
     }
 
+    /**
+     * @param Collection<int, PendaftaranMagang> $registrations
+     */
     public function resolveSelectedRegistrationFromCollection(Collection $registrations, ?int $selectedRegistrationId = null): ?PendaftaranMagang
     {
         if (! $selectedRegistrationId || $selectedRegistrationId <= 0) {
@@ -34,23 +40,25 @@ class StudentPeriodResolverService
         }
 
         if ($selectedRegistrationId) {
-            $selected = $registrations->firstWhere('id', $selectedRegistrationId);
-
-            if ($selected) {
-                return $selected;
+            foreach ($registrations as $registration) {
+                if ($registration->id === $selectedRegistrationId) {
+                    return $registration;
+                }
             }
         }
 
-        return $registrations->firstWhere('status', 'aktif') ?? $registrations->first();
+        foreach ($registrations as $registration) {
+            if ($registration->status === 'aktif') {
+                return $registration;
+            }
+        }
+
+        return $registrations->first();
     }
 
     public function resolveSelectedRegistrationIdFromRequest(?Request $request = null): ?int
     {
         $request ??= request();
-
-        if (! $request instanceof Request) {
-            return null;
-        }
 
         $queryValue = $request->query('pendaftaran');
         if ($queryValue !== null && $queryValue !== '') {
@@ -74,6 +82,9 @@ class StudentPeriodResolverService
         return null;
     }
 
+    /**
+     * @param Collection<int, PendaftaranMagang> $registrations
+     */
     public function buildPeriodOptions(Collection $registrations, ?int $selectedRegistrationId = null): array
     {
         return $registrations
@@ -81,7 +92,7 @@ class StudentPeriodResolverService
                 return [
                     'id' => $registration->id,
                     'label' => $registration->periodLabel() ?? 'Periode belum ditentukan',
-                    'company' => $registration->perusahaan?->nama ?? $registration->perusahaan_diminati_nama,
+                    'company' => data_get($registration->perusahaan, 'nama', $registration->perusahaan_diminati_nama),
                     'status' => $registration->status,
                     'status_label' => $registration->statusLabel(),
                     'dashboard_phase' => $registration->dashboardPhase(),
