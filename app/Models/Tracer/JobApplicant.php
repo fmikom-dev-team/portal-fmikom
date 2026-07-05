@@ -2,10 +2,24 @@
 
 namespace App\Models\Tracer;
 
+use App\Modules\Trace\Services\TraceCacheService;
 use Illuminate\Database\Eloquent\Model;
 
 class JobApplicant extends Model
 {
+    protected static function booted(): void
+    {
+        static::saved(function ($applicant) {
+            TraceCacheService::forgetDashboardCaches(userId: $applicant->alumni?->user_id);
+            TraceCacheService::forgetJobCaches(mitraId: $applicant->jobListing?->mitra_id);
+        });
+
+        static::deleted(function ($applicant) {
+            TraceCacheService::forgetDashboardCaches(userId: $applicant->alumni?->user_id);
+            TraceCacheService::forgetJobCaches(mitraId: $applicant->jobListing?->mitra_id);
+        });
+    }
+
     protected $table = 'job_applicants';
 
     protected $fillable = [

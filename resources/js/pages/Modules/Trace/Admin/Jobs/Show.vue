@@ -75,6 +75,7 @@ interface Job {
     mitra: { nama_perusahaan: string; logo_path: string | null; logo_url: string | null } | null;
     user: { name: string } | null;
     created_at: string;
+    poster_url: string | null;
 }
 
 const props = defineProps<{
@@ -479,6 +480,17 @@ function confirmReview() {
 
                 <!-- ═══════ Sidebar (1 col) ═══════ -->
                 <div class="space-y-4">
+                    <!-- Poster Banner (4:5 Aspect Ratio Card) -->
+                    <Card v-if="job.poster_url" class="overflow-hidden rounded-2xl border border-slate-100 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 p-2">
+                        <div class="relative w-full aspect-[4/5] overflow-hidden rounded-xl bg-slate-50 dark:bg-zinc-800">
+                            <img
+                                :src="job.poster_url"
+                                :alt="`Poster ${job.title}`"
+                                class="w-full h-full object-cover object-center animate-fade-in"
+                            />
+                        </div>
+                    </Card>
+
                     <!-- Info Card -->
                     <Card class="rounded-2xl border-slate-100 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                         <CardHeader class="pb-3">

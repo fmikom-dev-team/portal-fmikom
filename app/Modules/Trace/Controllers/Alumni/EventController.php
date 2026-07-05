@@ -3,7 +3,6 @@
 namespace App\Modules\Trace\Controllers\Alumni;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\Event;
 use App\Models\Tracer\EventRegistration;
 use App\Models\User;
@@ -147,8 +146,6 @@ class EventController extends Controller
             $event->max_participants,
         ));
 
-        ActivityLog::record('event.registered', "Mendaftar event: {$event->title}", $event);
-
         return redirect()->back()->with('success', 'Berhasil mendaftar pada event.');
     }
 
@@ -164,7 +161,6 @@ class EventController extends Controller
         ]);
 
         $event = Event::find($registration->event_id);
-        ActivityLog::record('event.unregistered', 'Membatalkan pendaftaran event: '.($event->title ?? ''), $event);
 
         return redirect()->back()->with('success', 'Pendaftaran berhasil dibatalkan.');
     }

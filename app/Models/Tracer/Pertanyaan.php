@@ -4,6 +4,8 @@ namespace App\Models\Tracer;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Pertanyaan extends Model
@@ -46,20 +48,32 @@ class Pertanyaan extends Model
     |-------------------------
     */
 
-    // Pertanyaan milik 1 kuesioner
-    public function kuesioner()
+    /**
+     * Pertanyaan milik 1 kuesioner
+     *
+     * @return BelongsTo<Kuesioner, $this>
+     */
+    public function kuesioner(): BelongsTo
     {
         return $this->belongsTo(Kuesioner::class);
     }
 
-    // Pertanyaan milik 1 section
-    public function section()
+    /**
+     * Pertanyaan milik 1 section
+     *
+     * @return BelongsTo<Section, $this>
+     */
+    public function section(): BelongsTo
     {
         return $this->belongsTo(Section::class);
     }
 
-    // Pertanyaan punya banyak opsi jawaban
-    public function opsiJawabans()
+    /**
+     * Pertanyaan punya banyak opsi jawaban
+     *
+     * @return HasMany<OpsiJawaban, $this>
+     */
+    public function opsiJawabans(): HasMany
     {
         return $this->hasMany(OpsiJawaban::class);
     }

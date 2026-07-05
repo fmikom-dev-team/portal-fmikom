@@ -3,12 +3,12 @@
 namespace App\Http\Middleware;
 
 use App\Http\Resources\UserResource;
-use App\Models\Magang\PendaftaranMagang;
 use App\Models\Pagi\PagiMessage;
 use App\Models\Portal\PortalComment;
 use App\Models\Portal\PortalMenu;
 use App\Models\Portal\PortalPost;
 use App\Models\Portal\PortalSetting;
+use App\Models\Surat;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -54,21 +54,11 @@ class HandleInertiaRequests extends Middleware
             'siteSettings' => Cache::rememberForever('portal_settings', function () {
                 $raw = PortalSetting::pluck('value', 'key')->toArray();
                 $raw['brand_name'] = $raw['brand_name'] ?? 'Portal FMIKOM';
+                $raw['brand_subtitle'] = $raw['brand_subtitle'] ?? 'Fakultas Matematika dan Ilmu Komputer';
                 $raw['brand_logo'] = $raw['brand_logo'] ?? '/asset/brand-logo.webp';
                 $raw['brand_favicon'] = $raw['brand_favicon'] ?? '/asset/favicon.ico';
 
                 return $raw;
-            }),
-            'wims_sidebar_counts' => Cache::remember('wims_sidebar_counts', 30, function (): array {
-                return [
-                    'pending_registrations' => PendaftaranMagang::where('status', 'pending')->count(),
-                    'needs_assignment' => PendaftaranMagang::where('status', 'approved')
-                        ->where(function ($query): void {
-                            $query->whereNull('perusahaan_id')
-                                ->orWhereNull('dosen_pembimbing_id');
-                        })
-                        ->count(),
-                ];
             }),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
@@ -76,48 +66,48 @@ class HandleInertiaRequests extends Middleware
                 'import_errors' => fn () => $request->session()->get('import_errors'),
             ],
             'auth' => [
-                // ⚠️ KEAMANAN: HANYA field yang dibutuhkan UI yang dibagikan ke frontend.
+                // âš ï¸ KEAMANAN: HANYA field yang dibutuhkan UI yang dibagikan ke frontend.
                 // Field sensitif (password, two_factor_secret, otp_code, dll) DILARANG di sini.
                 'user' => $user ? (new UserResource($user))->resolve() : null,
                 'session_lifetime' => (int) config('session.lifetime') * 60 * 1000,
             ],
             'unread_messages_count' => $user
-                // BUG-013: Cache per-user unread count — was firing DB query on every Inertia request.
+                // BUG-013: Cache per-user unread count â€” was firing DB query on every Inertia request.
                 // 30-second TTL is short enough for near-real-time feel, eliminates 90% of queries.
                 ? Cache::remember("unread_msg_count_{$user->id}", 30, fn () => PagiMessage::where('receiver_id', $user->id)->whereNull('read_at')->count()
                 )
                 : 0,
             'unread_notifications_count' => $user
-                ? Cache::remember("unread_notif_count_{$user->id}_".session('active_role', ''), 30, function () use ($user) {
+                ? Cache::remember("unread_notif_count_{$user->id}_".session('active_module', '').'_'.session('active_role', ''), 30, function () use ($user) {
                     $activeRole = strtolower(session('active_role', ''));
                     $activeModule = strtoupper(session('active_module', ''));
-                    $unreadNotifs = $user->unreadNotifications;
+                    $query = $user->unreadNotifications();
 
                     if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
-                        $studentNotifTypes = ['like', 'comment', 'follow', 'collaboration'];
-                        $unreadNotifs = $unreadNotifs->filter(function ($n) use ($studentNotifTypes) {
-                            $type = $n->data['type'] ?? 'system';
-
-                            return ! in_array($type, $studentNotifTypes);
-                        });
+                        $query->whereNotIn('data->type', ['like', 'comment', 'follow', 'collaboration']);
                     }
 
-                    return $unreadNotifs->count();
+                    if ($activeModule === 'TRACE') {
+                        $query->where('data->href', 'like', '/trace%');
+                    }
+
+                    return $query->count();
                 })
                 : 0,
-            'recent_notifications' => $user ? fn () => Cache::remember("recent_notifs_{$user->id}_".session('active_role', ''), 30, function () use ($user) {
+            'recent_notifications' => $user ? fn () => Cache::remember("recent_notifs_{$user->id}_".session('active_module', '').'_'.session('active_role', ''), 30, function () use ($user) {
                 $activeRole = strtolower(session('active_role', ''));
                 $activeModule = strtoupper(session('active_module', ''));
-                $notifs = $user->notifications()->latest()->limit(30)->get();
+                $query = $user->notifications()->latest();
 
                 if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
-                    $studentNotifTypes = ['like', 'comment', 'follow', 'collaboration'];
-                    $notifs = $notifs->filter(function ($n) use ($studentNotifTypes) {
-                        $type = $n->data['type'] ?? 'system';
-
-                        return ! in_array($type, $studentNotifTypes);
-                    });
+                    $query->whereNotIn('data->type', ['like', 'comment', 'follow', 'collaboration']);
                 }
+
+                if ($activeModule === 'TRACE') {
+                    $query->where('data->href', 'like', '/trace%');
+                }
+
+                $notifs = $query->limit(30)->get();
 
                 return $notifs->map(fn ($n) => [
                     'id' => $n->id,
@@ -146,6 +136,12 @@ class HandleInertiaRequests extends Middleware
                 // BUG-013: Cache admin-only pending comments count
                 ? Cache::remember('pending_comments_count', 30, fn () => PortalComment::where('status', 'pending')->count())
                 : 0,
+            'notif_count_pending_admin' => $user ? $this->fastPendingAdminCount() : 0,
+            'notif_count_revision_admin' => $user ? $this->fastRevisionAdminCount() : 0,
+            'nav_counts' => $user ? $this->fastNavCounts() : [
+                'admin_queue' => 0,
+                'approval_queue' => 0,
+            ],
             'portal_menus' => Inertia::defer(fn () => Cache::rememberForever('portal_menus', function () {
                 return PortalMenu::with(['children.page', 'page'])
                     ->whereNull('parent_id')
@@ -199,5 +195,50 @@ class HandleInertiaRequests extends Middleware
         }
 
         return null;
+    }
+
+    protected function fastPendingAdminCount(): int
+    {
+        return Cache::remember('notif_count_pending_admin', 30, fn () => Surat::query()
+            ->where('type', 'pengajuan')
+            ->where('status', Surat::STATUS_PENDING)
+            ->count());
+    }
+
+    protected function fastRevisionAdminCount(): int
+    {
+        return Cache::remember('notif_count_revision_admin', 30, fn () => Surat::query()
+            ->where('type', 'surat_keluar')
+            ->where('status', Surat::STATUS_REVISION_REQUESTED)
+            ->count());
+    }
+
+    /**
+     * @return array{admin_queue: int, approval_queue: int}
+     */
+    protected function fastNavCounts(): array
+    {
+        $activeModule = strtoupper((string) session('active_module', ''));
+        $activeRole = strtolower((string) session('active_role', ''));
+
+        if ($activeModule !== 'FAST') {
+            return [
+                'admin_queue' => 0,
+                'approval_queue' => 0,
+            ];
+        }
+
+        $approvalQueueCount = in_array($activeRole, ['kaprodi', 'dekan'], true)
+            ? Cache::remember("notif_count_approval_queue_{$activeRole}", 30, fn () => Surat::query()
+                ->where('type', 'pengajuan')
+                ->where('status', Surat::STATUS_VALIDATED_ADMIN)
+                ->whereHas('jenisSurat.approvalRole', fn ($roleQuery) => $roleQuery->where('slug', $activeRole))
+                ->count())
+            : 0;
+
+        return [
+            'admin_queue' => $this->fastPendingAdminCount(),
+            'approval_queue' => $approvalQueueCount,
+        ];
     }
 }

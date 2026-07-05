@@ -3,7 +3,6 @@
 namespace App\Modules\Trace\Controllers\Alumni;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\CareerHistory;
 use App\Models\Tracer\Kota;
 use App\Models\Tracer\Provinsi;
@@ -33,12 +32,31 @@ class CareerController extends Controller
     {
         $this->authorize('viewAny', CareerHistory::class);
         $role = $request->attributes->get('resolved_role', session('active_role'));
+        $readOnly = (bool) $request->attributes->get('trace_alumni_read_only', false);
 
         $user = auth()->user();
         $profile = $user->alumniProfile;
 
         if (! $profile) {
-            return redirect()->route('profile-alumni')
+            if ($readOnly) {
+                return Inertia::render('Modules/Trace/Alumni/Career', [
+                    'currentCareer' => null,
+                    'careerHistory' => [],
+                    'educationHistory' => [],
+                    'stats' => [
+                        'totalCareers' => 0,
+                        'totalCompanies' => 0,
+                        'currentStatus' => 'mencari_kerja',
+                        'yearsOfExperience' => '0 tahun',
+                    ],
+                    'provinces' => Cache::remember('trace_provinsi_all', 3600, fn () => Provinsi::select('id', 'name')->orderBy('name')->get()),
+                    'cities' => Cache::remember('trace_kota_all', 3600, fn () => Kota::select('id', 'name', 'provinsi_id')->orderBy('name')->get()),
+                    'roleName' => $role,
+                    'readOnly' => true,
+                ]);
+            }
+
+            return redirect()->route('module.trace.profile-alumni')
                 ->with('error', 'Silakan lengkapi profil Anda terlebih dahulu.');
         }
 
@@ -82,11 +100,14 @@ class CareerController extends Controller
             'provinces' => Cache::remember('trace_provinsi_all', 3600, fn () => Provinsi::select('id', 'name')->orderBy('name')->get()),
             'cities' => Cache::remember('trace_kota_all', 3600, fn () => Kota::select('id', 'name', 'provinsi_id')->orderBy('name')->get()),
             'roleName' => $role,
+            'readOnly' => $readOnly,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        abort_if($request->attributes->get('trace_alumni_read_only', false), 403, 'Mode alumni untuk admin hanya dapat melihat data.');
+
         $this->authorize('create', CareerHistory::class);
 
         $user = auth()->user();
@@ -106,8 +127,6 @@ class CareerController extends Controller
                 'profile_id' => $profile->id,
                 'status' => $validated['status'],
             ]);
-
-            ActivityLog::record('career.created', 'Menambah riwayat karir: '.($validated['jabatan'] ?? $validated['status']).' di '.($validated['nama_perusahaan'] ?? '-'));
 
             return back()->with('success', 'Riwayat karir berhasil ditambahkan.');
 
@@ -131,6 +150,8 @@ class CareerController extends Controller
 
     public function update(Request $request, string $id): RedirectResponse
     {
+        abort_if($request->attributes->get('trace_alumni_read_only', false), 403, 'Mode alumni untuk admin hanya dapat melihat data.');
+
         $user = auth()->user();
         $profile = $user->alumniProfile;
 
@@ -152,8 +173,6 @@ class CareerController extends Controller
                 'career_id' => $career->id,
                 'status' => $validated['status'],
             ]);
-
-            ActivityLog::record('career.updated', "Memperbarui riwayat karir: {$career->jabatan}", $career);
 
             return back()->with('success', 'Riwayat karir berhasil diperbarui.');
 
@@ -186,6 +205,8 @@ class CareerController extends Controller
 
     public function destroy(string $id): RedirectResponse
     {
+        abort_if(request()->attributes->get('trace_alumni_read_only', false), 403, 'Mode alumni untuk admin hanya dapat melihat data.');
+
         $user = auth()->user();
         $profile = $user->alumniProfile;
 
@@ -208,8 +229,6 @@ class CareerController extends Controller
             }
 
             $wasCurrent = $career->is_current;
-
-            ActivityLog::record('career.deleted', "Menghapus riwayat karir: {$career->jabatan}", $career);
 
             $career->delete();
 
@@ -249,6 +268,8 @@ class CareerController extends Controller
 
     public function setCurrent(string $id): RedirectResponse
     {
+        abort_if(request()->attributes->get('trace_alumni_read_only', false), 403, 'Mode alumni untuk admin hanya dapat melihat data.');
+
         $user = auth()->user();
         $profile = $user->alumniProfile;
 

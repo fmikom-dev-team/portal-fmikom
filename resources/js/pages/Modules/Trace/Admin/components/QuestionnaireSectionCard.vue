@@ -36,6 +36,7 @@ const addQuestion = () => {
         meta: {
             kategori: 'Umum',
             acuan: [],
+            indikator: [],
             acuan_text: '',
             target_table: 'detail_jawabans',
             scale_min: 1,
@@ -75,6 +76,7 @@ const addOption = (qIndex: number) => {
 
     question.opsi_jawabans.push({
         label: 'Opsi ' + (question.opsi_jawabans.length + 1),
+        nilai: 0,
         skor: 0,
     });
 };
@@ -114,7 +116,7 @@ const removeMatrixColumn = (qIndex: number, colIndex: number) => {
     <Card
         class="group/section relative overflow-hidden rounded-2xl border-l-8 border-l-[#0C447C] shadow-sm"
     >
-        <CardHeader class="pb-4">
+        <CardHeader class="px-4 pb-4 sm:px-6">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <Badge
@@ -126,7 +128,7 @@ const removeMatrixColumn = (qIndex: number, colIndex: number) => {
                 <Button
                     variant="ghost"
                     size="icon"
-                    class="h-8 w-8 text-destructive opacity-0 transition-opacity group-hover/section:opacity-100"
+                    class="h-8 w-8 text-destructive opacity-100 transition-opacity sm:opacity-0 sm:group-hover/section:opacity-100"
                     @click="emit('remove')"
                 >
                     <Trash2 class="h-4 w-4" />
@@ -137,7 +139,7 @@ const removeMatrixColumn = (qIndex: number, colIndex: number) => {
                 <Input
                     v-model="section.judul"
                     placeholder="Judul"
-                    class="h-auto border-none bg-transparent p-0 text-2xl font-bold focus-visible:ring-0"
+                    class="h-auto border-none bg-transparent p-0 text-xl font-bold focus-visible:ring-0 sm:text-2xl"
                 />
                 <Textarea
                     v-model="section.deskripsi"
@@ -147,9 +149,9 @@ const removeMatrixColumn = (qIndex: number, colIndex: number) => {
             </div>
         </CardHeader>
 
-        <Separator class="mx-6 w-auto" />
+        <Separator class="mx-4 w-auto sm:mx-6" />
 
-        <CardContent class="space-y-6 p-6">
+        <CardContent class="space-y-6 p-4 sm:p-6">
             <div class="space-y-6">
                 <QuestionEditorCard
                     v-for="(question, qIndex) in section.pertanyaans"
@@ -180,7 +182,7 @@ const removeMatrixColumn = (qIndex: number, colIndex: number) => {
 
                 <Button
                     variant="outline"
-                    class="h-14 w-full gap-2 rounded-2xl border-dashed border-slate-300 bg-white/50 text-slate-500 transition-all hover:border-[#85B7EB] hover:bg-[#85B7EB]/10 hover:text-[#0C447C] dark:bg-slate-900/50"
+                    class="h-12 w-full gap-2 rounded-2xl border-dashed border-slate-300 bg-white/50 text-slate-500 transition-all hover:border-[#85B7EB] hover:bg-[#85B7EB]/10 hover:text-[#0C447C] sm:h-14 dark:bg-slate-900/50"
                     @click="addQuestion"
                 >
                     <PlusCircle class="h-5 w-5" />

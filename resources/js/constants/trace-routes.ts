@@ -19,7 +19,6 @@ export const TRACE_ROUTES = {
 	ADMIN_JOB_DETAIL: (id: number) => `/trace/admin/jobs/${id}`,
 	ADMIN_EVENTS: "/trace/admin/events",
 	ADMIN_EVENT_DETAIL: (id: number) => `/trace/admin/events/${id}`,
-	ADMIN_ACTIVITY_LOG: "/trace/admin/activity-log",
 	ADMIN_RESPONDENTS: "/trace/admin/respondents",
 
 	// Alumni

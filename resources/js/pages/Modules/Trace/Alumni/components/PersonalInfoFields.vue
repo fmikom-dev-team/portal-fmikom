@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ChevronDown, Globe } from "lucide-vue-next";
-import type { InertiaForm } from '@inertiajs/vue3';
+import type { InertiaForm } from "@inertiajs/vue3";
 
 interface PersonalInfoFormData {
     bio: string;
-    location: string;
     website: string;
     linkedin: string;
     github: string;
@@ -52,29 +51,7 @@ defineProps<{
                 </p>
             </div>
 
-            <div
-                class="grid grid-cols-1 sm:grid-cols-2 gap-4"
-            >
-                <!-- Lokasi -->
-                <div class="space-y-1.5">
-                    <label
-                        class="block text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                        >Lokasi / Domisili Kota</label
-                    >
-                    <input
-                        v-model="form.location"
-                        type="text"
-                        placeholder="Contoh: Jakarta Selatan, DKI Jakarta"
-                        class="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-semibold text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                    />
-                    <p
-                        v-if="form.errors.location"
-                        class="text-xs font-medium text-rose-500"
-                    >
-                        {{ form.errors.location }}
-                    </p>
-                </div>
-
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <!-- Website -->
                 <div class="space-y-1.5">
                     <label

@@ -3,6 +3,7 @@
 namespace App\Models\Tracer;
 
 use App\Models\User;
+use App\Modules\Trace\Services\TraceCacheService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,6 +12,17 @@ class Kuesioner extends Model
 {
     use HasFactory;
     use SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::saved(function ($kuesioner) {
+            TraceCacheService::forgetQuestionnaireCaches($kuesioner->id);
+        });
+
+        static::deleted(function ($kuesioner) {
+            TraceCacheService::forgetQuestionnaireCaches($kuesioner->id);
+        });
+    }
 
     protected $table = 'kuesioner';
 

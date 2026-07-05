@@ -61,8 +61,11 @@ type SuratKomponen =
     | {
           type: 'subjudul';
           teks: string;
+          align?: 'left' | 'center' | 'right';
           font_size?: string;
           margin_left?: number;
+          bold?: boolean;
+          underline?: boolean;
       }
     | {
           type: 'paragraf';
@@ -125,10 +128,22 @@ type SuratKomponen =
       }
     | {
           type: 'tanda_tangan';
-          kolom: Array<{ jabatan: string; nama: string; nik: string }>;
-          posisi?: 'kiri' | 'kanan' | 'tengah' | 'full';
+          kolom: Array<{
+              jabatan: string;
+              nama: string;
+              nik: string;
+              posisi?: 'kiri' | 'kanan' | 'tengah';
+          }>;
           tanggal?: string;
           show_tanggal?: boolean;
+          font_size?: string;
+          margin_left?: number;
+      }
+    | {
+          type: 'qr_validasi';
+          align?: 'left' | 'center' | 'right';
+          title?: string;
+          caption?: string;
           font_size?: string;
           margin_left?: number;
       }
@@ -139,7 +154,7 @@ type SuratKomponen =
           margin_left?: number;
       }
     | { type: 'spasi'; tinggi: number }
-    | { type: 'garis' };
+    | { type: 'garis'; font_size?: string; margin_left?: number };
 type FieldOption = { label: string; value: string };
 type FieldConfig = {
     name: string;
@@ -171,6 +186,7 @@ type Template = {
 type JenisSuratItem = {
     id: number;
     nama: string;
+    slug?: string | null;
     is_active: boolean;
     category?: { id?: number | null; nama?: string | null } | null;
     template?: { id: number; name: string; version: number } | null;
@@ -236,7 +252,7 @@ const showGlobalSettings = ref(false);
 const activeTab = ref<'template' | 'fields' | 'meta'>('template');
 const toastMessage = ref('');
 const toastVariant = ref<'success' | 'error'>('success');
-let toastTimer: ReturnType<typeof window.setTimeout> | null = null;
+let toastTimer: number | null = null;
 
 function showToast(message: string, variant: 'success' | 'error' = 'success') {
     if (toastTimer !== null) {
@@ -343,6 +359,21 @@ function cloneKomponen(items?: SuratKomponen[]) {
 function prepareKomponenForUi(items?: SuratKomponen[]) {
     return cloneKomponen(items).map((item) => {
         if (!item || typeof item !== 'object') return item;
+        if (item.type === 'tanda_tangan') {
+            const fallbackPosisi = (item as any).posisi ?? 'kanan';
+            const kolom = Array.isArray((item as any).kolom) ? (item as any).kolom : [];
+            const { posisi, ...rest } = item as any;
+
+            return {
+                ...rest,
+                kolom: kolom.length > 0
+                    ? kolom.map((entry: any) => ({
+                          ...entry,
+                          posisi: entry?.posisi ?? fallbackPosisi,
+                      }))
+                    : [{ jabatan: 'Jabatan', nama: 'Nama', nik: 'NIP/NIK', posisi: fallbackPosisi }],
+            } as SuratKomponen;
+        }
         if (item.type === 'tabel_biasa') {
             const headers = Array.isArray((item as any).headers)
                 ? (item as any).headers.filter((header: unknown) => String(header ?? '').trim() !== '')
@@ -387,7 +418,7 @@ function prepareKomponenForUi(items?: SuratKomponen[]) {
 function normalizeKomponenFontSize(items: SuratKomponen[]): SuratKomponen[] {
     return items.map((item) => {
         if (!item || typeof item !== 'object') return item;
-        if (['spasi', 'garis'].includes(item.type)) return item;
+        if (item.type === 'spasi' || item.type === 'garis') return item;
         if (typeof item.font_size === 'string' && item.font_size.trim() !== '') return item;
         return { ...item, font_size: '12pt' };
     });
@@ -516,7 +547,7 @@ function createKomponenDefaults(type: SuratKomponen['type']): SuratKomponen {
         case 'judul':
             return { type, teks: 'JUDUL SURAT', align: 'center', bold: true, font_size: '12pt' };
         case 'subjudul':
-            return { type, teks: 'Sub judul surat', font_size: '12pt', margin_left: 0 };
+            return { type, teks: 'Sub judul surat', align: 'center', bold: false, underline: false, font_size: '12pt', margin_left: 0 };
         case 'paragraf':
             return { type, teks: 'Teks paragraf', align: 'justify', margin_left: 0, text_indent: 0, font_size: '12pt' };
         case 'paragraf_indent':
@@ -559,12 +590,20 @@ function createKomponenDefaults(type: SuratKomponen['type']): SuratKomponen {
         case 'tanda_tangan':
             return {
                 type,
-                kolom: [{ jabatan: 'Jabatan', nama: 'Nama', nik: 'NIP/NIK' }],
-                posisi: 'kanan',
+                kolom: [{ jabatan: 'Jabatan', nama: 'Nama', nik: 'NIP/NIK', posisi: 'kanan' }],
                 tanggal: '',
                 show_tanggal: true,
                 margin_left: 0,
                 font_size: '12pt',
+            };
+        case 'qr_validasi':
+            return {
+                type,
+                align: 'right',
+                title: 'Validasi Surat',
+                caption: 'Scan QR code untuk verifikasi dokumen.',
+                margin_left: 0,
+                font_size: '11pt',
             };
         case 'tembusan':
             return { type, items: [''], margin_left: 0, font_size: '12pt' };
@@ -579,9 +618,6 @@ function updateKomponen(updater: (items: SuratKomponen[]) => void) {
 }
 function addKomponen(type: SuratKomponen['type']) {
     komponen.value.push(createKomponenDefaults(type));
-}
-function addCenteredNomorPreset() {
-    komponen.value.push(createKomponenDefaults('header_surat'));
 }
 function moveUp(index: number) {
     if (index <= 0) return;
@@ -688,7 +724,7 @@ function removeRow(komp: any, index: number) {
 }
 function addKolom(komp: any) {
     komp.kolom = Array.isArray(komp.kolom) ? komp.kolom : [];
-    komp.kolom.push({ jabatan: '', nama: '', nik: '' });
+    komp.kolom.push({ jabatan: '', nama: '', nik: '', posisi: 'kanan' });
 }
 function removeKolom(komp: any, index: number) {
     komp.kolom = Array.isArray(komp.kolom) ? komp.kolom : [];
@@ -770,6 +806,10 @@ function stripUiMetaFromFieldConfig(fields: FieldConfig[]): FieldConfig[] {
 function stripUiMetaFromKomponen(items: SuratKomponen[]): SuratKomponen[] {
     return items.map((item) => {
         if (!item || typeof item !== 'object') return item;
+        if (item.type === 'tanda_tangan') {
+            const { posisi, ...rest } = item as any;
+            return rest as SuratKomponen;
+        }
         if ('rows' in item && Array.isArray((item as any).rows)) {
             return {
                 ...item,
@@ -839,6 +879,7 @@ const tipeLabel: Record<string, string> = {
     tabel_biasa: 'Tabel Biasa',
     tabel_indent: 'Tabel Indent',
     tanda_tangan: 'Tanda Tangan',
+    qr_validasi: 'QR Validasi',
     tembusan: 'Tembusan',
     spasi: 'Spasi',
     garis: 'Garis',
@@ -854,6 +895,7 @@ const tipeBorder: Record<string, string> = {
     tabel_biasa: 'border-blue-300 bg-white',
     tabel_indent: 'border-blue-100 bg-blue-50/50',
     tanda_tangan: 'border-amber-200 bg-amber-50',
+    qr_validasi: 'border-emerald-200 bg-emerald-50',
     tembusan: 'border-slate-200 bg-slate-50',
     spasi: 'border-dashed border-slate-300 bg-slate-50',
     garis: 'border-slate-200 bg-slate-50',
@@ -862,7 +904,7 @@ const tipeGroups = [
     { label: 'Struktur Surat', items: ['header_surat', 'kepada_yth'] },
     { label: 'Teks', items: ['judul', 'subjudul', 'paragraf'] },
     { label: 'Tabel', items: ['tabel_data', 'tabel_biasa'] },
-    { label: 'Lainnya', items: ['tanda_tangan', 'tembusan', 'spasi', 'garis'] },
+    { label: 'Lainnya', items: ['tanda_tangan', 'qr_validasi', 'tembusan', 'spasi', 'garis'] },
 ];
 // layout: form.layout,         layout: layout,     }, { preserveScroll: true }); }
 function deleteTemplate() {
@@ -1516,13 +1558,6 @@ function settingLabel(key: string): string {
                         </div>
                     </div>
                     <div class="flex flex-wrap items-center gap-1.5">
-                    <button
-                        type="button"
-                        class="fast-btn fast-btn-outline rounded-lg border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 transition-colors hover:border-blue-300 hover:bg-blue-100"
-                        @click="addCenteredNomorPreset"
-                    >
-                        Preset Nomor Tengah
-                    </button>
                         <span
                             class="ml-1 text-[10px] text-slate-400"
                             >Placeholder:</span
@@ -1822,6 +1857,59 @@ function settingLabel(key: string): string {
                             }"
                             placeholder="Sub judul, misal: Nomor: {{nomor_surat}}"
                         />
+                        <div class="flex flex-wrap items-center gap-2">
+                            <div class="flex gap-1">
+                                <button
+                                    v-for="a in [
+                                        ['left', 'Kiri'],
+                                        ['center', 'Tengah'],
+                                        ['right', 'Kanan'],
+                                    ]"
+                                    :key="a[0]"
+                                    type="button"
+                                    class="fast-btn rounded-lg px-2.5 py-1 text-xs"
+                                    :class="
+                                        (komp as any).align === a[0]
+                                            ? 'fast-btn-primary'
+                                            : 'fast-btn-outline'
+                                    "
+                                    @click="(komp as any).align = a[0]"
+                                >
+                                    {{ a[1] }}
+                                </button>
+                            </div>
+                            <div class="flex gap-1">
+                                <button
+                                    type="button"
+                                    class="fast-btn rounded-lg px-2.5 py-1 text-xs font-bold"
+                                    :class="
+                                        (komp as any).bold
+                                            ? 'fast-btn-primary'
+                                            : 'fast-btn-outline'
+                                    "
+                                    @click="
+                                        (komp as any).bold = !(komp as any).bold
+                                    "
+                                >
+                                    B
+                                </button>
+                                <button
+                                    type="button"
+                                    class="fast-btn rounded-lg px-2.5 py-1 text-xs underline"
+                                    :class="
+                                        (komp as any).underline
+                                            ? 'fast-btn-primary'
+                                            : 'fast-btn-outline'
+                                    "
+                                    @click="
+                                        (komp as any).underline = !(komp as any)
+                                            .underline
+                                    "
+                                >
+                                    U
+                                </button>
+                            </div>
+                        </div>
                         <div class="flex items-center gap-1.5">
                             <span class="shrink-0 text-[10px] text-slate-400"
                                 >Indent kiri:</span
@@ -2101,36 +2189,49 @@ function settingLabel(key: string): string {
                             <span class="text-[10px] text-slate-400">px</span>
                         </div>
                     </div>
+                    <!-- QR VALIDASI -->
+                    <div v-else-if="komp.type === 'qr_validasi'" class="space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-600">Posisi:</span>
+                            <div class="flex gap-1">
+                                <button
+                                    v-for="a in [
+                                        ['left', 'Kiri'],
+                                        ['center', 'Tengah'],
+                                        ['right', 'Kanan'],
+                                    ]"
+                                    :key="a[0]"
+                                    type="button"
+                                    class="fast-btn rounded-lg px-2.5 py-1 text-xs"
+                                    :class="
+                                        (komp as any).align === a[0]
+                                            ? 'fast-btn-primary'
+                                            : 'fast-btn-outline'
+                                    "
+                                    @click="(komp as any).align = a[0]"
+                                >
+                                    {{ a[1] }}
+                                </button>
+                            </div>
+                        </div>
+                        <input
+                            v-model="(komp as any).title"
+                            type="text"
+                            class="h-8 w-full rounded-lg border border-slate-300 bg-white px-2 text-xs font-semibold text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
+                            placeholder="Validasi Surat"
+                        />
+                        <input
+                            v-model="(komp as any).caption"
+                            type="text"
+                            class="h-8 w-full rounded-lg border border-slate-300 bg-white px-2 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
+                            placeholder="Scan QR code untuk verifikasi dokumen."
+                        />
+                    </div>
                     <!-- TANDA TANGAN -->
                     <div
                         v-else-if="komp.type === 'tanda_tangan'"
                         class="space-y-3"
                     >
-                        <!-- Posisi tanda tangan -->
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs text-slate-600">Posisi:</span>
-                            <div class="flex gap-1">
-                                <button
-                                    v-for="p in [
-                                        ['kanan', 'Kanan'],
-                                        ['kiri', 'Kiri'],
-                                        ['tengah', 'Tengah'],
-                                        ['full', 'Penuh'],
-                                    ]"
-                                    :key="p[0]"
-                                    type="button"
-                                    class="fast-btn rounded-lg px-2.5 py-1 text-xs"
-                                    :class="
-                                        (komp as any).posisi === p[0]
-                                            ? 'fast-btn-primary'
-                                            : 'fast-btn-outline'
-                                    "
-                                    @click="(komp as any).posisi = p[0]"
-                                >
-                                    {{ p[1] }}
-                                </button>
-                            </div>
-                        </div>
                         <!-- Tanggal (opsional) -->
                         <label class="flex items-center gap-2">
                             <input
@@ -2174,6 +2275,31 @@ function settingLabel(key: string): string {
                                 >
                                     <X class="size-3.5" />
                                 </button>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[11px] text-slate-500"
+                                    >Posisi kolom:</span
+                                >
+                                <div class="flex gap-1">
+                                    <button
+                                        v-for="p in [
+                                            ['kiri', 'Kiri'],
+                                            ['tengah', 'Tengah'],
+                                            ['kanan', 'Kanan'],
+                                        ]"
+                                        :key="p[0]"
+                                        type="button"
+                                        class="fast-btn rounded-lg px-2 py-1 text-[11px]"
+                                        :class="
+                                            (kol as any).posisi === p[0]
+                                                ? 'fast-btn-primary'
+                                                : 'fast-btn-outline'
+                                        "
+                                        @click="(kol as any).posisi = p[0]"
+                                    >
+                                        {{ p[1] }}
+                                    </button>
+                                </div>
                             </div>
                             <input
                                 v-model="kol.jabatan"

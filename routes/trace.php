@@ -2,7 +2,6 @@
 
 use App\Http\Middleware\EnsureFirstTimeLoginComplete;
 use App\Http\Middleware\EnsureMitraProfileExists;
-use App\Modules\Trace\Controllers\Admin\ActivityLogController;
 use App\Modules\Trace\Controllers\Admin\AnalyticsController;
 use App\Modules\Trace\Controllers\Admin\DashboardAdminController;
 use App\Modules\Trace\Controllers\Admin\EventController as AdminEventController;
@@ -17,6 +16,7 @@ use App\Modules\Trace\Controllers\Alumni\CareerController;
 use App\Modules\Trace\Controllers\Alumni\EventController as AlumniEventController;
 use App\Modules\Trace\Controllers\Alumni\JobBrowseController;
 use App\Modules\Trace\Controllers\Alumni\TraceAlumniProfileController;
+use App\Modules\Trace\Controllers\AlumniRoleChangeController;
 use App\Modules\Trace\Controllers\Mitra\DashboardMitraController;
 use App\Modules\Trace\Controllers\Mitra\JobListingController;
 use App\Modules\Trace\Controllers\Mitra\MitraProfileController;
@@ -35,6 +35,17 @@ use Illuminate\Support\Facades\Route;
 */
 
 $baseMiddleware = ['auth', EnsureFirstTimeLoginComplete::class, 'module.context:trace'];
+$alumniMiddleware = ['auth', EnsureFirstTimeLoginComplete::class, 'module.context:trace,alumni', 'trace.alumni-read-only', 'role:alumni'];
+$adminMiddleware = ['auth', EnsureFirstTimeLoginComplete::class, 'module.context:trace,admin,super-admin', 'role:admin,super-admin'];
+$mitraOrAdminMiddleware = ['auth', EnsureFirstTimeLoginComplete::class, 'module.context:trace,admin,super-admin,mitra', 'role:admin,super-admin,mitra'];
+
+Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'throttle:10,1'])
+    ->prefix('trace/alumni-role-change')
+    ->name('module.trace.alumni-role-change.')
+    ->group(function () {
+        Route::get('/options', [AlumniRoleChangeController::class, 'options'])->name('options');
+        Route::post('/', [AlumniRoleChangeController::class, 'store'])->name('store');
+    });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared Routes (all authenticated users)
@@ -56,7 +67,7 @@ Route::middleware($baseMiddleware)
 // ─────────────────────────────────────────────────────────────────────────────
 // Alumni Routes
 // ─────────────────────────────────────────────────────────────────────────────
-Route::middleware([...$baseMiddleware, 'role:alumni', 'throttle:30,1'])
+Route::middleware([...$alumniMiddleware, 'throttle:30,1'])
     ->prefix('trace')
     ->name('module.trace.')
     ->where(['id' => '[0-9]+'])
@@ -79,7 +90,7 @@ Route::middleware([...$baseMiddleware, 'role:alumni', 'throttle:30,1'])
     });
 
 // Alumni — Jobs
-Route::middleware([...$baseMiddleware, 'role:alumni', 'throttle:30,1'])
+Route::middleware([...$alumniMiddleware, 'throttle:30,1'])
     ->prefix('trace/jobs')
     ->name('module.trace.jobs.')
     ->where(['id' => '[0-9]+'])
@@ -94,7 +105,7 @@ Route::middleware([...$baseMiddleware, 'role:alumni', 'throttle:30,1'])
     });
 
 // Alumni — Events
-Route::middleware([...$baseMiddleware, 'role:alumni', 'throttle:30,1'])
+Route::middleware([...$alumniMiddleware, 'throttle:30,1'])
     ->prefix('trace/events')
     ->name('module.trace.events.')
     ->where(['id' => '[0-9]+'])
@@ -109,7 +120,7 @@ Route::middleware([...$baseMiddleware, 'role:alumni', 'throttle:30,1'])
 // ─────────────────────────────────────────────────────────────────────────────
 // Admin Routes
 // ─────────────────────────────────────────────────────────────────────────────
-Route::middleware([...$baseMiddleware, 'role:admin,super-admin', 'throttle:60,1'])
+Route::middleware([...$adminMiddleware, 'throttle:60,1'])
     ->prefix('trace/admin')
     ->name('module.trace.')
     ->where(['id' => '[0-9]+', 'jobId' => '[0-9]+', 'applicantId' => '[0-9]+'])
@@ -136,12 +147,10 @@ Route::middleware([...$baseMiddleware, 'role:admin,super-admin', 'throttle:60,1'
         Route::delete('/jobs/{id}', [JobManagementController::class, 'destroy'])->name('admin.jobs.destroy');
         Route::put('/jobs/{jobId}/applicants/{applicantId}/status', [JobManagementController::class, 'updateApplicantStatus'])->name('admin.applicant-status');
 
-        // Activity Log
-        Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('admin.activity-log');
     });
 
 // Admin — Kuesioner
-Route::middleware([...$baseMiddleware, 'role:admin,super-admin', 'throttle:60,1'])
+Route::middleware([...$adminMiddleware, 'throttle:60,1'])
     ->prefix('trace/admin/questionnaires')
     ->name('module.trace.admin.questionnaires.')
     ->where(['id' => '[0-9]+'])
@@ -163,17 +172,20 @@ Route::middleware([...$baseMiddleware, 'role:admin,super-admin', 'throttle:60,1'
     });
 
 // Admin — Alumni Management
-Route::middleware([...$baseMiddleware, 'role:admin,super-admin', 'throttle:60,1'])
+Route::middleware([...$adminMiddleware, 'throttle:60,1'])
     ->prefix('trace/admin/alumni')
     ->name('module.trace.admin.alumni.')
     ->where(['id' => '[0-9]+'])
     ->group(function () {
         Route::get('/', [RespondenController::class, 'index'])->name('index');
+        Route::get('/role-change/{userId}/proof', [RespondenController::class, 'showRoleChangeProof'])->name('role-change.proof');
+        Route::post('/role-change/{userId}/approve', [RespondenController::class, 'approveRoleChange'])->name('role-change.approve');
+        Route::post('/role-change/{userId}/reject', [RespondenController::class, 'rejectRoleChange'])->name('role-change.reject');
         Route::get('/{id}', [RespondenController::class, 'show'])->name('show');
     });
 
 // Admin — Events
-Route::middleware([...$baseMiddleware, 'role:admin,super-admin', 'throttle:60,1'])
+Route::middleware([...$adminMiddleware, 'throttle:60,1'])
     ->prefix('trace/admin/events')
     ->name('module.trace.admin.events.')
     ->where(['id' => '[0-9]+', 'eventId' => '[0-9]+', 'registrationId' => '[0-9]+'])
@@ -192,7 +204,7 @@ Route::middleware([...$baseMiddleware, 'role:admin,super-admin', 'throttle:60,1'
 // ─────────────────────────────────────────────────────────────────────────────
 // Mitra Routes
 // ─────────────────────────────────────────────────────────────────────────────
-Route::middleware([...$baseMiddleware, 'role:admin,super-admin,mitra', 'throttle:30,1'])
+Route::middleware([...$mitraOrAdminMiddleware, 'throttle:30,1'])
     ->prefix('trace/open-job')
     ->name('module.trace.open-job.')
     ->where(['id' => '[0-9]+', 'jobId' => '[0-9]+', 'applicantId' => '[0-9]+'])
@@ -215,6 +227,7 @@ Route::middleware([...$baseMiddleware, 'role:admin,super-admin,mitra', 'throttle
             Route::get('/jobs-listings/create', [JobListingController::class, 'create'])->name('mitra.jobs-listings.create');
             Route::post('/jobs-listings', [JobListingController::class, 'store'])->name('mitra.jobs-listings.store');
             Route::get('/jobs-listings/{id}', [JobListingController::class, 'show'])->name('detail-job');
+            Route::get('/jobs-listings/{id}/edit', [JobListingController::class, 'edit'])->name('mitra.jobs-listings.edit');
             Route::put('/jobs-listings/{id}', [JobListingController::class, 'update'])->name('mitra.jobs-listings.update');
             Route::delete('/jobs-listings/{id}', [JobListingController::class, 'destroy'])->name('mitra.jobs-listings.destroy');
             Route::put('/jobs-listings/{jobId}/applicants/{applicantId}/status', [JobListingController::class, 'updateApplicantStatus'])->name('mitra.applicant-status');

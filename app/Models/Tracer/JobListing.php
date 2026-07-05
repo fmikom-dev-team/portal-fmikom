@@ -3,12 +3,25 @@
 namespace App\Models\Tracer;
 
 use App\Models\User;
+use App\Modules\Trace\Services\TraceCacheService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class JobListing extends Model
 {
     use SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::saved(function ($job) {
+            TraceCacheService::forgetJobCaches(mitraId: $job->mitra_id);
+        });
+
+        static::deleted(function ($job) {
+            TraceCacheService::forgetJobCaches(mitraId: $job->mitra_id);
+        });
+    }
 
     protected $table = 'jobs_listings';
 
@@ -18,7 +31,7 @@ class JobListing extends Model
         'experience_level', 'location_type', 'location_city',
         'tipe_kerja', 'salary_min', 'salary_max', 'status',
         'deadline', 'is_salary_visible',
-        'rejection_reason', 'rejected_at',
+        'rejection_reason', 'rejected_at', 'poster_path',
     ];
 
     protected $casts = [
@@ -28,6 +41,8 @@ class JobListing extends Model
         'deadline' => 'date',
         'rejected_at' => 'datetime',
     ];
+
+    protected $appends = ['poster_url'];
 
     /*
     |-------------------------
@@ -73,5 +88,22 @@ class JobListing extends Model
     public function bookmarks()
     {
         return $this->hasMany(Bookmark::class, 'job_id');
+    }
+
+    public function getPosterUrlAttribute(): ?string
+    {
+        if (! $this->poster_path) {
+            return null;
+        }
+
+        // Handle both formats: with /storage/ prefix (legacy) and without (current)
+        if (str_starts_with($this->poster_path, '/storage/')) {
+            return $this->poster_path;
+        }
+        if (str_starts_with($this->poster_path, 'http')) {
+            return $this->poster_path;
+        }
+
+        return '/storage/'.$this->poster_path;
     }
 }

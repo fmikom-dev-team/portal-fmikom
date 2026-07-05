@@ -4,6 +4,7 @@ namespace App\Notifications\Trace;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class JobApplicationSubmitted extends Notification implements ShouldQueue
@@ -18,7 +19,23 @@ class JobApplicationSubmitted extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        $isAdmin = in_array($notifiable->user_type, ['admin', 'staff', 'super-admin']);
+
+        return $isAdmin ? ['database'] : ['database', 'mail'];
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $companyName = $notifiable->mitraProfile->nama_perusahaan ?? 'Mitra';
+
+        return (new MailMessage)
+            ->subject('[Portal FMIKOM] Ada Pelamar Baru untuk Lowongan Anda')
+            ->markdown('emails.trace.job-application-submitted', [
+                'companyName' => $companyName,
+                'alumniName' => $this->alumniName,
+                'jobTitle' => $this->jobTitle,
+                'jobId' => $this->jobId,
+            ]);
     }
 
     public function toArray(object $notifiable): array

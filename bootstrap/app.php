@@ -12,6 +12,7 @@ use App\Http\Middleware\CheckMaintenanceMode;
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\CustomCsrfMiddleware;
 use App\Http\Middleware\EnsureModuleAccess;
+use App\Http\Middleware\EnsureTraceAlumniPreviewIsReadOnly;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\Radar\RadarSecurityShield;
@@ -211,6 +212,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // Existing
             'module.context' => CheckActiveContext::class,
             'module.access' => EnsureModuleAccess::class,
+            'trace.alumni-read-only' => EnsureTraceAlumniPreviewIsReadOnly::class,
             'admin.access' => AdminAccess::class,
             'approval.access' => ApprovalAccess::class,
             'role' => CheckRole::class,

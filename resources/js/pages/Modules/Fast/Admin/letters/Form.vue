@@ -3,6 +3,7 @@ import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import LetterStepIndicator from '@/components/Modules/Fast/Admin/LetterStepIndicator.vue';
+import SubjectAutocomplete from '@/components/Modules/Fast/Admin/SubjectAutocomplete.vue';
 import {
     ChevronRight,
     ChevronLeft,
@@ -47,11 +48,25 @@ type JenisSurat = {
 };
 type FormData = {
     jenis_surat_id: number;
+    subject_user_id?: number | null;
     keperluan: string;
     perihal?: string;
+    kepada_yth?: string[];
+    lampiran_keterangan?: string;
     data: Record<string, string | boolean | string[]>;
 };
-const props = defineProps<{ jenisSurat: JenisSurat; formData: FormData }>();
+type SubjectOption = {
+    id: number;
+    name: string;
+    email?: string | null;
+    nomor_induk?: string | null;
+    program_studi?: string | null;
+};
+const props = defineProps<{
+    jenisSurat: JenisSurat;
+    formData: FormData;
+    subjectOptions: SubjectOption[];
+}>();
 const defaultPresets = [
     'Dekan FMIKOM',
     'Ketua Program Studi Informatika',
@@ -60,10 +75,20 @@ const defaultPresets = [
 ];
 const form = useForm({
     jenis_surat_id: props.formData.jenis_surat_id,
+    subject_user_id: props.formData.subject_user_id ?? '',
     keperluan: props.formData.keperluan ?? '',
-    perihal: props.formData.perihal ?? '',
-    kepada_yth: [] as string[],
-    lampiran_keterangan: '',
+    perihal:
+        props.formData.perihal ??
+        (props.formData.data.perihal as string | undefined) ??
+        '',
+    kepada_yth:
+        props.formData.kepada_yth ??
+        (props.formData.data.kepada_yth as string[] | undefined) ??
+        ([] as string[]),
+    lampiran_keterangan:
+        props.formData.lampiran_keterangan ??
+        (props.formData.data.lampiran_keterangan as string | undefined) ??
+        '',
     form_data: { ...props.formData.data } as Record<
         string,
         string | boolean | string[]
@@ -135,31 +160,31 @@ const visibleFields = computed(() =>
             !!f && (f.mode_form_pemohon ?? 'editable') !== 'hidden',
     ),
 );
+const selectedSubject = ref<SubjectOption | null>(props.subjectOptions[0] ?? null);
 </script>
 <template>
     <AdminLayout
-        title="Isi Data Surat"
+        title="Buat Surat"
         :subtitle="`${jenisSurat.category?.nama ?? 'Surat'} - ${jenisSurat.nama}`"
         active-menu="letters.create"
         :breadcrumbs="[
             { label: 'Buat Surat Keluar', href: '/admin/surat/create' },
-            { label: 'Isi Form' },
+            { label: 'Isi Data Surat' },
         ]"
     >
         <Head :title="`Form - ${jenisSurat.nama}`" />
-        <!-- Hero header -->
         <div
             class="mb-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-6"
         >
             <div class="flex items-start justify-between gap-4">
                 <div class="flex-1">
                     <h2 class="mt-1 text-xl font-bold text-slate-900">
-                        Isi Data Surat
+                        Buat Surat Atas Nama Subjek
                     </h2>
                     <p class="mt-1 max-w-lg text-sm text-slate-500">
-                        Lengkapi informasi surat sesuai dengan keperluan. Field
-                        yang bertanda <span class="text-red-500">*</span> wajib
-                        diisi.
+                        Admin mengisi data surat untuk subjek yang dipilih.
+                        Pastikan identitas subjek, isi surat, dan field wajib
+                        sudah lengkap sebelum lanjut ke preview.
                     </p>
                 </div>
                 <div class="hidden sm:block">
@@ -194,6 +219,60 @@ const visibleFields = computed(() =>
                         </div>
                     </div>
                 </div>
+                <!-- Subjek surat -->
+                <div
+                    class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5"
+                >
+                    <h3 class="text-sm font-semibold text-slate-800">
+                        Subjek Surat
+                    </h3>
+                    <label class="block space-y-1.5">
+                        <span class="text-xs font-medium text-slate-700"
+                            >Atas Nama
+                            <span class="text-red-500">*</span></span
+                        >
+                        <SubjectAutocomplete
+                            v-model="form.subject_user_id"
+                            :initial-options="subjectOptions"
+                            search-url="/admin/surat/subjects/search"
+                            :error="form.errors.subject_user_id"
+                            @select="selectedSubject = $event"
+                        />
+                        <p
+                            v-if="form.errors.subject_user_id"
+                            class="text-xs text-red-500"
+                        >
+                            {{ form.errors.subject_user_id }}
+                        </p>
+                        <p class="text-xs text-slate-400">
+                            Surat ini akan dibuat atas nama pengguna yang
+                            dipilih, bukan atas nama admin yang sedang login.
+                        </p>
+                    </label>
+                    <div
+                        v-if="selectedSubject"
+                        class="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs text-slate-700"
+                    >
+                        <p class="font-semibold text-slate-900">
+                            {{ selectedSubject.name }}
+                        </p>
+                        <p v-if="selectedSubject.program_studi" class="mt-0.5">
+                            {{ selectedSubject.program_studi }}
+                        </p>
+                        <p
+                            v-if="
+                                selectedSubject.nomor_induk ||
+                                selectedSubject.email
+                            "
+                            class="mt-0.5 text-slate-500"
+                        >
+                            {{
+                                selectedSubject.nomor_induk ||
+                                selectedSubject.email
+                            }}
+                        </p>
+                    </div>
+                </div>
                 <!-- Informasi Umum -->
                 <div
                     class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5"
@@ -203,7 +282,7 @@ const visibleFields = computed(() =>
                     </h3>
                     <label class="block space-y-1.5">
                         <span class="text-xs font-medium text-slate-700"
-                            >Keperluan Surat
+                            >Tujuan / Keperluan Surat
                             <span class="text-red-500">*</span></span
                         >
                         <input
@@ -214,7 +293,7 @@ const visibleFields = computed(() =>
                             :class="
                                 form.errors.keperluan ? 'border-red-300' : ''
                             "
-                            placeholder="Contoh: Untuk keperluan akademik"
+                            placeholder="Contoh: Pengajuan cuti akademik"
                         />
                         <p
                             v-if="form.errors.keperluan"
@@ -252,8 +331,8 @@ const visibleFields = computed(() =>
                         Kepada Yth.
                     </h3>
                     <p class="mb-3 text-xs text-slate-400">
-                        Pilih dari daftar atau ketik manual. Bisa lebih dari
-                        satu.
+                        Tentukan penerima surat. Bisa pilih dari preset atau
+                        isi manual lebih dari satu tujuan.
                     </p>
                     <!-- Tags terpilih -->
                     <div
@@ -346,6 +425,10 @@ const visibleFields = computed(() =>
                     <h3 class="mb-4 text-sm font-semibold text-slate-800">
                         Data Surat
                     </h3>
+                    <p class="text-xs text-slate-400">
+                        Lengkapi field template yang akan muncul pada dokumen
+                        surat untuk subjek terpilih.
+                    </p>
                     <div class="space-y-4">
                         <div v-for="field in visibleFields" :key="field.name">
                             <!-- Textarea -->
@@ -655,7 +738,7 @@ const visibleFields = computed(() =>
                         href="/admin/surat/create"
                         class="fast-btn fast-btn-outline flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-700"
                     >
-                        <ChevronLeft class="size-4" /> Kembali
+                        <ChevronLeft class="size-4" /> Kembali Pilih Jenis
                     </a>
                     <button
                         type="submit"
@@ -678,6 +761,15 @@ const visibleFields = computed(() =>
                         Info Surat
                     </h3>
                     <div class="space-y-2 text-xs">
+                        <div class="flex justify-between gap-3">
+                            <span class="text-slate-400">Atas Nama</span>
+                            <span
+                                class="max-w-[140px] text-right font-medium text-slate-700"
+                                >{{
+                                    selectedSubject?.name ?? 'Belum dipilih'
+                                }}</span
+                            >
+                        </div>
                         <div class="flex justify-between">
                             <span class="text-slate-400">Jenis</span>
                             <span
@@ -700,6 +792,14 @@ const visibleFields = computed(() =>
                                         ? jenisSurat.approval_role.nama
                                         : 'Langsung Selesai'
                                 }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between gap-3">
+                            <span class="text-slate-400">Peran Anda</span>
+                            <span
+                                class="max-w-[140px] text-right font-medium text-slate-700"
+                            >
+                                Admin pembuat surat
                             </span>
                         </div>
                     </div>

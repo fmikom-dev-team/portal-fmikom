@@ -3,6 +3,7 @@
 namespace App\Models\Tracer;
 
 use App\Models\User;
+use App\Modules\Trace\Services\TraceCacheService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -12,6 +13,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Event extends Model
 {
     use SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => TraceCacheService::forgetDashboardCaches());
+        static::deleted(fn () => TraceCacheService::forgetDashboardCaches());
+    }
 
     protected $table = 'events';
 

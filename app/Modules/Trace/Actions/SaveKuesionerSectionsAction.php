@@ -123,7 +123,7 @@ class SaveKuesionerSectionsAction
                             ['id' => $opsiData['id'] ?? null],
                             [
                                 'label' => $opsiData['label'] ?? '',
-                                'nilai' => $opsiData['skor'] ?? $opsiData['nilai'] ?? null,
+                                'nilai' => $opsiData['nilai'] ?? $opsiData['skor'] ?? null,
                                 'urutan' => $oOrder,
                             ]
                         );

@@ -5,7 +5,6 @@ namespace App\Modules\Trace\Controllers\Alumni;
 use App\Http\Controllers\Controller;
 use App\Models\Pagi\PagiCv;
 use App\Models\Pagi\PagiWork;
-use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\Bookmark;
 use App\Models\Tracer\JobApplicant;
 use App\Models\Tracer\JobCategory;
@@ -14,7 +13,9 @@ use App\Models\Tracer\MitraProfile;
 use App\Models\Tracer\ProfilAlumni;
 use App\Models\User;
 use App\Modules\Trace\Actions\ApplyToJobAction;
+use App\Notifications\Trace\JobApplicationConfirmation;
 use App\Notifications\Trace\JobApplicationSubmitted;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -72,6 +73,15 @@ class JobBrowseController extends Controller
         }
 
         $jobs = $query->latest()->paginate(12)->withQueryString();
+        $bookmarkedJobIds = Bookmark::where('user_id', auth()->id())
+            ->whereIn('job_id', $jobs->getCollection()->pluck('id'))
+            ->pluck('job_id');
+
+        $jobs->getCollection()->transform(function (JobListing $job) use ($bookmarkedJobIds) {
+            $job->setAttribute('is_bookmarked', $bookmarkedJobIds->contains($job->id));
+
+            return $job;
+        });
 
         $categories = Cache::remember('trace_job_categories', now()->addHours(1), function () {
             return JobCategory::select('id', 'nama')->get();
@@ -170,12 +180,18 @@ class JobBrowseController extends Controller
             $job->id,
         ));
 
-        ActivityLog::record('job.applied', "Melamar lowongan: {$job->title}", $job);
+        // Notify applicant (alumni)
+        $companyName = $job->mitra->nama_perusahaan ?? 'Mitra FMIKOM';
+        auth()->user()->notify(new JobApplicationConfirmation(
+            $job->title,
+            $companyName,
+            $job->id
+        ));
 
         return redirect()->back()->with('success', 'Lamaran berhasil dikirim.');
     }
 
-    public function toggleBookmark($id): RedirectResponse
+    public function toggleBookmark(Request $request, $id): RedirectResponse|JsonResponse
     {
         $job = JobListing::where('status', 'published')->findOrFail($id);
 
@@ -185,13 +201,19 @@ class JobBrowseController extends Controller
 
         if ($bookmark) {
             $bookmark->delete();
-            ActivityLog::record('job.unbookmarked', "Menghapus simpanan lowongan: {$job->title}", $job);
+            $bookmarked = false;
         } else {
             Bookmark::create([
                 'user_id' => auth()->id(),
                 'job_id' => $job->id,
             ]);
-            ActivityLog::record('job.bookmarked', "Menyimpan lowongan: {$job->title}", $job);
+            $bookmarked = true;
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'bookmarked' => $bookmarked,
+            ]);
         }
 
         return redirect()->back();

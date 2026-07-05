@@ -17,6 +17,7 @@ import { TPageHeader, TStatusBadge, TEmptyState } from '@/components/Trace';
 
 defineProps<{
     kuesioners: Kuesioner[];
+    readOnly?: boolean;
 }>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
@@ -161,7 +162,9 @@ const formatDateRange = (
                         :href="alumniTracerShow(kuesioner.id).url"
                         class="flex w-full items-center justify-center gap-2 rounded-xl py-4 text-sm font-black transition-all"
                         :class="
-                            kuesioner.responses_count > 0
+                            readOnly
+                                ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-200'
+                                : kuesioner.responses_count > 0
                                 ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:hover:bg-emerald-950/40'
                                 : 'bg-[#0C447C]/5 text-[#0C447C] group-hover:bg-[#0C447C] group-hover:text-white dark:bg-[#85B7EB]/10 dark:text-[#85B7EB] dark:group-hover:bg-[#85B7EB] dark:group-hover:text-slate-900'
                         "
@@ -171,12 +174,14 @@ const formatDateRange = (
                             class="h-4 w-4"
                         />
                         {{
-                            kuesioner.responses_count > 0
+                            readOnly
+                                ? "Lihat Kuesioner"
+                                : kuesioner.responses_count > 0
                                 ? "Lihat Jawaban"
                                 : "Isi Sekarang"
                         }}
                         <ArrowRight
-                            v-if="kuesioner.responses_count === 0"
+                            v-if="!readOnly && kuesioner.responses_count === 0"
                             class="h-4 w-4"
                         />
                     </Link>

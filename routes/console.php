@@ -102,3 +102,11 @@ Schedule::command('trace:kuesioner-reminder')
     ->onOneServer()
     ->withoutOverlapping()
     ->name('trace:kuesioner-reminder');
+
+// Career History Update Reminder — daily at 08:00
+// Reminds alumni who have not updated their career history in the last 1 year
+Schedule::command('trace:career-reminder')
+    ->dailyAt('08:00')
+    ->onOneServer()
+    ->withoutOverlapping()
+    ->name('trace:career-reminder');
