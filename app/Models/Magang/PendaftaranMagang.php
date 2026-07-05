@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
  * @property-read User|null $mahasiswa
  * @property-read User|null $dosenPembimbing
  * @property-read PerusahaanMitra|null $perusahaan
+ *
  * @method static Builder forMahasiswa(int $mahasiswaId)
  */
 class PendaftaranMagang extends Model

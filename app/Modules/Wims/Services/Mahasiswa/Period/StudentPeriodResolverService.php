@@ -31,7 +31,7 @@ class StudentPeriodResolverService
     }
 
     /**
-     * @param Collection<int, PendaftaranMagang> $registrations
+     * @param  Collection<int, PendaftaranMagang>  $registrations
      */
     public function resolveSelectedRegistrationFromCollection(Collection $registrations, ?int $selectedRegistrationId = null): ?PendaftaranMagang
     {
@@ -83,7 +83,7 @@ class StudentPeriodResolverService
     }
 
     /**
-     * @param Collection<int, PendaftaranMagang> $registrations
+     * @param  Collection<int, PendaftaranMagang>  $registrations
      */
     public function buildPeriodOptions(Collection $registrations, ?int $selectedRegistrationId = null): array
     {
