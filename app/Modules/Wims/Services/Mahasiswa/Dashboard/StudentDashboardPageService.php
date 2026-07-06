@@ -7,6 +7,7 @@ use App\Models\Magang\KetidakhadiranMagang;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
+use App\Modules\Wims\Services\Mahasiswa\Period\StudentPeriodResolverService;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use Illuminate\Support\Carbon;
@@ -16,32 +17,30 @@ class StudentDashboardPageService
     public function __construct(
         private readonly AttendanceSyncService $attendanceSyncService,
         private readonly WimsModuleRoleService $wimsModuleRoleService,
+        private readonly StudentPeriodResolverService $studentPeriodResolverService,
     ) {}
 
-    public function build(User $user): array
+    public function build(User $user, ?int $selectedRegistrationId = null): array
     {
-        $registrations = PendaftaranMagang::with('perusahaan')
-            ->forMahasiswa($user->id)
-            ->orderByDesc('tanggal_mulai')
-            ->orderByDesc('id')
-            ->get();
+        $registrations = $this->studentPeriodResolverService->resolveRegistrations($user->id, ['perusahaan']);
         $this->attendanceSyncService->syncForRegistrations($registrations);
 
-        $activeRegistration = $registrations->firstWhere('status', 'aktif');
-        $latestRegistration = $registrations->first();
-        $progressSource = $this->resolveProgressSource($activeRegistration, $latestRegistration);
-        $historySource = $this->resolveHistorySource($activeRegistration, $latestRegistration);
-        $dashboardState = $this->resolveDashboardState($activeRegistration, $latestRegistration);
+        $selectedRegistration = $this->studentPeriodResolverService->resolveSelectedRegistrationFromCollection($registrations, $selectedRegistrationId);
+        $periodOptions = $this->studentPeriodResolverService->buildPeriodOptions($registrations, $selectedRegistration?->id);
+
+        $progressSource = $selectedRegistration;
+        $historySource = $selectedRegistration;
+        $dashboardState = $this->resolveDashboardState($selectedRegistration);
 
         $attendanceToday = AbsensiMagang::query()
-            ->where('pendaftaran_id', $activeRegistration?->id)
+            ->where('pendaftaran_id', $selectedRegistration?->id)
             ->whereDate('tanggal', now()->toDateString())
             ->first();
-        $canDoDailyActivity = $activeRegistration?->allowsDailyActivity() ?? false;
+        $canDoDailyActivity = $selectedRegistration?->allowsDailyActivity() ?? false;
 
-        $approvedAbsenceToday = $activeRegistration
+        $approvedAbsenceToday = $selectedRegistration
             ? KetidakhadiranMagang::query()
-                ->where('pendaftaran_id', $activeRegistration->id)
+                ->where('pendaftaran_id', $selectedRegistration->id)
                 ->where('status', 'approved')
                 ->whereDate('tanggal_mulai', '<=', now()->toDateString())
                 ->whereDate('tanggal_selesai', '>=', now()->toDateString())
@@ -49,11 +48,13 @@ class StudentDashboardPageService
                 ->first()
             : null;
 
-        $history = AbsensiMagang::query()
+        $attendanceRecords = AbsensiMagang::query()
             ->where('pendaftaran_id', $historySource?->id)
             ->latest('tanggal')
             ->latest('timestamp_masuk')
-            ->get()
+            ->get();
+
+        $history = $attendanceRecords
             ->map(fn (AbsensiMagang $attendance) => [
                 'id' => $attendance->id,
                 'date' => optional($attendance->tanggal)->translatedFormat('d M Y'),
@@ -77,6 +78,13 @@ class StudentDashboardPageService
 
         [$progressPercentage, $totalDays, $completedDays, $remainingDays] = $this->buildProgress($progressSource);
 
+        $mentor = $selectedRegistration?->finalMentor();
+        $mentorRoleContext = $mentor ? $this->wimsModuleRoleService->resolveContextRoleData($mentor, 'mitra') : null;
+
+        $logbookHistory = LogbookMagang::query()
+            ->where('pendaftaran_id', $historySource?->id)
+            ->get();
+
         $latestLogbook = LogbookMagang::query()
             ->where('pendaftaran_id', $historySource?->id)
             ->latest('tanggal')
@@ -84,6 +92,8 @@ class StudentDashboardPageService
             ->first();
 
         return [
+            'selected_period_id' => $selectedRegistration?->id,
+            'periods' => $periodOptions,
             'user' => [
                 'name' => $user->name,
                 'avatar' => $user->photoUrl(),
@@ -93,7 +103,7 @@ class StudentDashboardPageService
                     ? 'checked_out'
                     : ($attendanceToday?->timestamp_masuk ? 'checked_in' : ($approvedAbsenceToday ? 'excused_absence' : 'not_checked_in')),
                 'current_time' => now()->format('H:i').' WIB',
-                'location_status' => ! $activeRegistration
+                'location_status' => ! $selectedRegistration
                     ? 'Pendaftaran aktif belum tersedia'
                     : (! $canDoDailyActivity
                         ? 'Menunggu tanggal mulai periode PKL'
@@ -111,39 +121,38 @@ class StudentDashboardPageService
                 'completed_days' => $completedDays,
                 'total_days' => $totalDays,
                 'remaining_days' => $remainingDays,
+                'total_logbook_entries' => $logbookHistory->count(),
+                'total_hadir' => $attendanceRecords->whereIn('status', ['hadir', 'tepat_waktu', 'terlambat'])->count(),
+                'total_izin' => $attendanceRecords->where('status', 'izin')->count(),
+                'total_sakit' => $attendanceRecords->where('status', 'sakit')->count(),
             ],
             'registration' => [
-                'status' => $latestRegistration?->status,
+                'id' => $selectedRegistration?->id,
+                'status' => $selectedRegistration?->status,
                 'dashboard_state' => $dashboardState,
                 'company' => [
                     'proposal' => [
-                        'name' => $latestRegistration?->perusahaan_diminati_nama,
+                        'name' => $selectedRegistration?->perusahaan_diminati_nama,
                     ],
                     'final' => [
-                        'id' => $latestRegistration?->perusahaan?->id,
-                        'name' => $latestRegistration?->perusahaan?->nama,
+                        'id' => $selectedRegistration?->perusahaan?->id,
+                        'name' => $selectedRegistration?->perusahaan?->nama,
                     ],
                 ],
                 'lecturer' => [
-                    'id' => $latestRegistration?->dosenPembimbing?->id,
-                    'name' => $latestRegistration?->dosenPembimbing?->name,
-                    'role_context' => $latestRegistration?->dosenPembimbing
-                        ? $this->wimsModuleRoleService->resolveContextRoleData($latestRegistration->dosenPembimbing, 'dosen')
+                    'id' => $selectedRegistration?->dosenPembimbing?->id,
+                    'name' => $selectedRegistration?->dosenPembimbing?->name,
+                    'role_context' => $selectedRegistration?->dosenPembimbing
+                        ? $this->wimsModuleRoleService->resolveContextRoleData($selectedRegistration->dosenPembimbing, 'dosen')
                         : null,
                 ],
                 'mentor' => [
-                    'id' => $latestRegistration?->perusahaan?->user?->id,
-                    'name' => $latestRegistration?->perusahaan?->user?->name,
-                    'role_context' => $latestRegistration?->perusahaan?->user
-                        ? $this->wimsModuleRoleService->resolveContextRoleData($latestRegistration->perusahaan->user, 'mitra')
-                        : null,
+                    'id' => $mentor?->id,
+                    'name' => $mentor?->name,
+                    'role_context' => $mentorRoleContext,
                 ],
-                'submitted_at' => $latestRegistration?->created_at?->translatedFormat('d M Y H:i'),
-                'period_label' => $latestRegistration?->tanggal_mulai && $latestRegistration?->tanggal_selesai
-                    ? Carbon::parse($latestRegistration->tanggal_mulai)->translatedFormat('d M Y')
-                        .' - '
-                        .Carbon::parse($latestRegistration->tanggal_selesai)->translatedFormat('d M Y')
-                    : null,
+                'submitted_at' => $selectedRegistration?->created_at?->translatedFormat('d M Y H:i'),
+                'period_label' => $selectedRegistration?->periodLabel(),
             ],
             'latest_logbook' => [
                 'date' => $latestLogbook?->tanggal?->translatedFormat('d M Y'),
@@ -155,51 +164,21 @@ class StudentDashboardPageService
         ];
     }
 
-    private function resolveDashboardState(?PendaftaranMagang $activeRegistration, ?PendaftaranMagang $latestRegistration): string
+    private function resolveDashboardState(?PendaftaranMagang $registration): string
     {
-        if ($latestRegistration?->isPostInternshipPhase()) {
+        if ($registration?->status === 'selesai') {
             return 'completed';
         }
 
-        if ($activeRegistration) {
+        if ($registration?->status === 'aktif') {
             return 'active';
         }
 
-        if ($latestRegistration?->status) {
+        if ($registration?->status) {
             return 'waiting';
         }
 
         return 'not_registered';
-    }
-
-    private function resolveProgressSource(?PendaftaranMagang $activeRegistration, ?PendaftaranMagang $latestRegistration): ?PendaftaranMagang
-    {
-        if ($activeRegistration) {
-            return $activeRegistration;
-        }
-
-        if ($latestRegistration?->status === 'selesai') {
-            return $latestRegistration;
-        }
-
-        if ($latestRegistration?->isPostInternshipPhase()) {
-            return $latestRegistration;
-        }
-
-        return null;
-    }
-
-    private function resolveHistorySource(?PendaftaranMagang $activeRegistration, ?PendaftaranMagang $latestRegistration): ?PendaftaranMagang
-    {
-        if ($activeRegistration) {
-            return $activeRegistration;
-        }
-
-        if ($latestRegistration?->isPostInternshipPhase()) {
-            return $latestRegistration;
-        }
-
-        return null;
     }
 
     private function buildProgress(?PendaftaranMagang $progressSource): array

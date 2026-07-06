@@ -27,6 +27,9 @@ class DosenMonitoringOverviewService
         $pendaftarans = $this->buildDashboardQuery($lecturer)->get();
         $this->attendanceSyncService->syncForRegistrations($pendaftarans);
 
+        /** @var \Illuminate\Database\Eloquent\Collection<int, PendaftaranMagang> $pendaftarans */
+        $pendaftarans = $pendaftarans;
+
         $students = $pendaftarans
             ->map(function (PendaftaranMagang $pendaftaran) use ($today) {
                 $assessmentSubmission = AssessmentSummary::latestSubmission(

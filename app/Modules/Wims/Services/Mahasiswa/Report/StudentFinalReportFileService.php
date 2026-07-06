@@ -3,6 +3,7 @@
 namespace App\Modules\Wims\Services\Mahasiswa\Report;
 
 use App\Models\Magang\PendaftaranMagang;
+use App\Modules\Wims\Services\Mahasiswa\Period\StudentPeriodResolverService;
 use App\Modules\Wims\Services\Shared\Assessment\FinalReportAccessService;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -10,15 +11,17 @@ class StudentFinalReportFileService
 {
     public function __construct(
         private readonly FinalReportAccessService $finalReportAccessService,
+        private readonly StudentPeriodResolverService $studentPeriodResolverService,
     ) {}
 
     public function resolveLatestRegistrationWithReport(int $userId): PendaftaranMagang
     {
-        $registration = PendaftaranMagang::query()
-            ->forMahasiswa($userId)
-            ->orderByDesc('tanggal_mulai')
-            ->orderByDesc('id')
-            ->first();
+        return $this->resolveRegistrationWithReport($userId);
+    }
+
+    public function resolveRegistrationWithReport(int $userId, ?int $registrationId = null): PendaftaranMagang
+    {
+        $registration = $this->studentPeriodResolverService->resolveSelectedRegistration($userId, $registrationId);
 
         abort_unless($registration && filled($registration->laporan_akhir_path), 404);
 

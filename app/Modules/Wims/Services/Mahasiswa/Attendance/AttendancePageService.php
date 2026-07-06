@@ -4,8 +4,8 @@ namespace App\Modules\Wims\Services\Mahasiswa\Attendance;
 
 use App\Models\Magang\AbsensiMagang;
 use App\Models\Magang\KetidakhadiranMagang;
-use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
+use App\Modules\Wims\Services\Mahasiswa\Period\StudentPeriodResolverService;
 use App\Modules\Wims\Services\Shared\Absence\KetidakhadiranService;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use App\Support\PublicStorageUrl;
@@ -16,22 +16,22 @@ class AttendancePageService
         private readonly AttendanceSyncService $attendanceSyncService,
         private readonly KetidakhadiranService $ketidakhadiranService,
         private readonly AttendanceAvailabilityService $attendanceAvailabilityService,
+        private readonly StudentPeriodResolverService $studentPeriodResolverService,
     ) {}
 
-    public function build(User $user): array
+    public function build(User $user, ?int $selectedRegistrationId = null): array
     {
-        $registrations = PendaftaranMagang::with('perusahaan')
-            ->forMahasiswa($user->id)
-            ->orderByDesc('tanggal_mulai')
-            ->orderByDesc('id')
-            ->get();
+        $registrations = $this->studentPeriodResolverService->resolveRegistrations($user->id, ['perusahaan']);
         $this->attendanceSyncService->syncForRegistrations($registrations);
 
-        $attendanceHistoryCount = AbsensiMagang::query()
-            ->whereHas('pendaftaran', fn ($query) => $query->where('mahasiswa_id', $user->id))
-            ->count();
+        $pendaftaran = $this->studentPeriodResolverService->resolveSelectedRegistrationFromCollection($registrations, $selectedRegistrationId);
+        $periods = $this->studentPeriodResolverService->buildPeriodOptions($registrations, $pendaftaran?->id);
 
-        $pendaftaran = $registrations->firstWhere('status', 'aktif');
+        $attendanceHistoryCount = $pendaftaran
+            ? AbsensiMagang::query()
+                ->where('pendaftaran_id', $pendaftaran->id)
+                ->count()
+            : 0;
 
         $absensiHariIni = AbsensiMagang::query()
             ->where('pendaftaran_id', $pendaftaran?->id)
@@ -72,6 +72,8 @@ class AttendancePageService
             ->values();
 
         return [
+            'selected_period_id' => $pendaftaran?->id,
+            'periods' => $periods,
             'pendaftaran_id' => $pendaftaran?->id,
             'company' => [
                 'id' => $pendaftaran?->perusahaan?->id,
@@ -110,7 +112,7 @@ class AttendancePageService
                 : ($absensiHariIni->lokasi_valid ? 'valid' : 'invalid'),
             'history_count' => $attendanceHistoryCount,
             'current_period_history_download_url' => $pendaftaran?->id
-                ? route('wims.absensi.download', ['scope' => 'current'])
+                ? route('wims.absensi.download', ['scope' => 'current', 'pendaftaran' => $pendaftaran->id])
                 : null,
             'absence_requests' => $absenceRequests->all(),
         ];

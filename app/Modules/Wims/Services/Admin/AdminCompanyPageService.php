@@ -3,8 +3,10 @@
 namespace App\Modules\Wims\Services\Admin;
 
 use App\Models\Magang\PerusahaanMitra;
+use App\Models\User;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 
 class AdminCompanyPageService
 {
@@ -35,6 +37,23 @@ class AdminCompanyPageService
         $this->wimsModuleRoleService->preloadContextRoles(
             $companies->pluck('user')->filter()->all(),
         );
+
+        $linkedCompaniesByUserId = $companies
+            ->filter(fn (PerusahaanMitra $company) => filled($company->user_id))
+            ->mapWithKeys(fn (PerusahaanMitra $company) => [
+                (int) $company->user_id => [
+                    'company_id' => $company->id,
+                    'company_name' => $company->nama,
+                ],
+            ]);
+
+        $portalMitraUsers = $this->wimsModuleRoleService->usersForRole('mitra')
+            ->with(['moduleRoles.module'])
+            ->orderBy('name')
+            ->get(['id', 'name', 'email', 'no_telepon', 'is_active']);
+
+        /** @var Collection<int, User> $portalMitraUsers */
+        $portalMitraUsers = $portalMitraUsers;
 
         $companies = $companies
             ->map(fn (PerusahaanMitra $company) => [
@@ -67,6 +86,23 @@ class AdminCompanyPageService
             ])
             ->values();
 
+        $portalUsers = $portalMitraUsers
+            ->map(function (User $user) use ($linkedCompaniesByUserId): array {
+                $linkedCompany = $linkedCompaniesByUserId->get((int) $user->id);
+
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->no_telepon,
+                    'is_active' => (bool) $user->is_active,
+                    'label' => trim(sprintf('%s - %s', $user->name ?: 'Tanpa nama', $user->email)),
+                    'linked_company_id' => $linkedCompany['company_id'] ?? null,
+                    'linked_company_name' => $linkedCompany['company_name'] ?? null,
+                ];
+            })
+            ->values();
+
         return [
             'filters' => [
                 'search' => $search,
@@ -91,6 +127,7 @@ class AdminCompanyPageService
                 ])
                 ->all(),
             'companies' => $companies->all(),
+            'portalUsers' => $portalUsers->all(),
         ];
     }
 

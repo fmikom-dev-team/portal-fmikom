@@ -5,15 +5,22 @@ namespace App\Modules\Wims\Services\Mahasiswa\Logbook;
 use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\LogbookPhoto;
 use App\Models\Magang\PendaftaranMagang;
+use App\Modules\Wims\Services\Mahasiswa\Period\StudentPeriodResolverService;
 use App\Support\PublicStorageUrl;
 use Illuminate\Support\Carbon;
 use Throwable;
 
 class LogbookPageService
 {
-    public function build(int $userId): array
+    public function __construct(
+        private readonly StudentPeriodResolverService $studentPeriodResolverService,
+    ) {}
+
+    public function build(int $userId, ?int $selectedRegistrationId = null): array
     {
-        $pendaftaran = $this->resolvePendaftaran($userId);
+        $registrations = $this->studentPeriodResolverService->resolveRegistrations($userId, ['perusahaan']);
+        $pendaftaran = $this->studentPeriodResolverService->resolveSelectedRegistrationFromCollection($registrations, $selectedRegistrationId);
+        $periods = $this->studentPeriodResolverService->buildPeriodOptions($registrations, $pendaftaran?->id);
 
         $todayLogbook = LogbookMagang::with('photos')
             ->where('pendaftaran_id', $pendaftaran?->id)
@@ -30,6 +37,8 @@ class LogbookPageService
         $canSubmitToday = $this->canSubmitToday($pendaftaran);
 
         return [
+            'selected_period_id' => $pendaftaran?->id,
+            'periods' => $periods,
             'todayLabel' => now()->locale('id')->translatedFormat('l, d F Y'),
             'hasPendaftaran' => $pendaftaran !== null,
             'canSubmitToday' => $canSubmitToday,
@@ -44,13 +53,11 @@ class LogbookPageService
         ];
     }
 
-    public function resolvePendaftaran(int $userId): ?PendaftaranMagang
+    public function resolvePendaftaran(int $userId, ?int $selectedRegistrationId = null): ?PendaftaranMagang
     {
-        return PendaftaranMagang::forMahasiswa($userId)
-            ->active()
-            ->orderByDesc('tanggal_mulai')
-            ->orderByDesc('id')
-            ->first();
+        $registrations = $this->studentPeriodResolverService->resolveRegistrations($userId, ['perusahaan']);
+
+        return $this->studentPeriodResolverService->resolveSelectedRegistrationFromCollection($registrations, $selectedRegistrationId);
     }
 
     public function canSubmitToday(?PendaftaranMagang $pendaftaran): bool

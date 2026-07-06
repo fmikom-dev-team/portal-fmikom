@@ -66,13 +66,13 @@ class HandleInertiaRequests extends Middleware
                 'import_errors' => fn () => $request->session()->get('import_errors'),
             ],
             'auth' => [
-                // ⚠️ KEAMANAN: HANYA field yang dibutuhkan UI yang dibagikan ke frontend.
+                // âš ï¸ KEAMANAN: HANYA field yang dibutuhkan UI yang dibagikan ke frontend.
                 // Field sensitif (password, two_factor_secret, otp_code, dll) DILARANG di sini.
                 'user' => $user ? (new UserResource($user))->resolve() : null,
                 'session_lifetime' => (int) config('session.lifetime') * 60 * 1000,
             ],
             'unread_messages_count' => $user
-                // BUG-013: Cache per-user unread count — was firing DB query on every Inertia request.
+                // BUG-013: Cache per-user unread count â€” was firing DB query on every Inertia request.
                 // 30-second TTL is short enough for near-real-time feel, eliminates 90% of queries.
                 ? Cache::remember("unread_msg_count_{$user->id}", 30, fn () => PagiMessage::where('receiver_id', $user->id)->whereNull('read_at')->count()
                 )
@@ -130,6 +130,7 @@ class HandleInertiaRequests extends Middleware
                 'active_module' => session('active_module'),
                 'active_role' => session('active_role'),
             ] : null,
+            'selected_period_id' => fn () => $this->resolveWimsSelectedPeriodId($request),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'pending_comments_count' => fn () => ($user && ($user->isAdmin() || $user->isSuperAdmin()))
                 // BUG-013: Cache admin-only pending comments count
@@ -166,6 +167,34 @@ class HandleInertiaRequests extends Middleware
                     ->toArray();
             }))->once(),
         ];
+    }
+
+    private function resolveWimsSelectedPeriodId(Request $request): ?int
+    {
+        if (! $request->is('wims*')) {
+            return null;
+        }
+
+        $queryValue = $request->query('pendaftaran');
+        if ($queryValue !== null && $queryValue !== '') {
+            $selectedId = (int) $queryValue;
+
+            if ($selectedId > 0 && $request->hasSession()) {
+                $request->session()->put('wims.selected_pendaftaran_id', $selectedId);
+            }
+
+            return $selectedId > 0 ? $selectedId : null;
+        }
+
+        if ($request->hasSession()) {
+            $storedValue = $request->session()->get('wims.selected_pendaftaran_id');
+
+            return is_numeric($storedValue) && (int) $storedValue > 0
+                ? (int) $storedValue
+                : null;
+        }
+
+        return null;
     }
 
     protected function fastPendingAdminCount(): int
