@@ -7,6 +7,7 @@ use App\Models\SuratApprovalFlow;
 use App\Modules\Fast\Workflow\Approvals\FastApprovalWorkflowService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ApprovalActionService
@@ -31,6 +32,32 @@ class ApprovalActionService
         return back()->with('success', 'Pengajuan berhasil disetujui.');
     }
 
+    /**
+     * @param  array<int, Surat>  $surats
+     */
+    public function bulkApprove(Request $request, array $surats): RedirectResponse
+    {
+        $user = $request->user();
+        abort_if($user === null, 403);
+
+        $role = $this->resolveActorRole($request, $user);
+        $count = 0;
+
+        DB::transaction(function () use ($surats, $role, $user, &$count): void {
+            foreach ($surats as $surat) {
+                $this->workflow->approve($surat, $role, $user);
+                $count++;
+            }
+        });
+
+        return back()->with(
+            'success',
+            $count > 0
+                ? "{$count} pengajuan berhasil diproses sekaligus."
+                : 'Tidak ada pengajuan yang diproses.',
+        );
+    }
+
     public function approveAdmin(Request $request, int $id): RedirectResponse
     {
         $user = $request->user();
@@ -41,6 +68,31 @@ class ApprovalActionService
         $this->workflow->approve($surat, FastApprovalWorkflowService::ROLE_ADMIN, $user);
 
         return back()->with('success', 'Pengajuan berhasil divalidasi.');
+    }
+
+    /**
+     * @param  array<int, Surat>  $surats
+     */
+    public function bulkApproveAdmin(Request $request, array $surats): RedirectResponse
+    {
+        $user = $request->user();
+        abort_if($user === null, 403);
+
+        $count = 0;
+
+        DB::transaction(function () use ($surats, $user, &$count): void {
+            foreach ($surats as $surat) {
+                $this->workflow->approve($surat, FastApprovalWorkflowService::ROLE_ADMIN, $user);
+                $count++;
+            }
+        });
+
+        return back()->with(
+            'success',
+            $count > 0
+                ? "{$count} pengajuan berhasil divalidasi sekaligus."
+                : 'Tidak ada pengajuan yang diproses.',
+        );
     }
 
     public function saveNote(Request $request, int $id): RedirectResponse

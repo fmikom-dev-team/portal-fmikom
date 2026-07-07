@@ -5,6 +5,7 @@ defineOptions({
 
 import FastLayout from '@/layouts/Modules/Fast/FastLayout.vue';
 import DocumentPreviewModal from '@/components/DocumentPreviewModal.vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -28,6 +29,8 @@ import {
     ShieldAlert,
     X,
 } from 'lucide-vue-next';
+
+const { can } = useFastPermissions();
 
 type Lampiran = {
     id: number;
@@ -130,11 +133,9 @@ const pemohonNumber = computed(
     () => surat.value.pemohon?.nim_nip || surat.value.pemohon?.nomor_induk || '-',
 );
 const attachmentCount = computed(() => surat.value.lampiran?.length ?? 0);
-const importantDetailEntries = computed(() => detailEntries.value.slice(0, 8));
+const importantDetailEntries = computed(() => detailEntries.value);
 const extraDetailEntries = computed(() =>
-    detailEntries.value
-        .filter(({ key }) => !isCoreDetailKey(key))
-        .slice(0, 6),
+    detailEntries.value.filter(({ key }) => !isCoreDetailKey(key)),
 );
 const timeline = computed(() => {
     const approval = surat.value.approval_timeline ?? [];
@@ -255,12 +256,12 @@ function isTimelineNoteVisible(status?: string | null, action?: string | null): 
 const statusMap: Record<string, string> = {
     pending: 'Menunggu Validasi',
     validated_admin: 'Diteruskan untuk disetujui',
-    revision_requested: 'Perlu Revisi',
+    revision_requested: 'Menunggu Revisi Admin',
     approved_kaprodi: 'Disetujui Kaprodi',
     approved_dekan: 'Disetujui Dekan',
     finished: 'Selesai',
     rejected_admin: 'Ditolak Admin',
-    rejected_approver: 'Ditolak Pimpinan',
+    rejected_approver: 'Ditolak Final',
     cancelled: 'Dibatalkan',
 };
 
@@ -406,11 +407,11 @@ function isPdfDocumentUrl(source: string): boolean {
 }
 
 function openPreview() {
-    const source = surat.value.generatedDocumentUrl || surat.value.previewTemplateUrl;
+    const source = surat.value.generatedDocumentUrl;
     if (!source) return;
 
     viewerOpen.value = true;
-    viewerType.value = isPdfDocumentUrl(source) ? 'pdf' : 'html';
+    viewerType.value = 'pdf';
     viewerUrl.value = source;
     viewerTitle.value = documentTitle.value;
 }
@@ -539,29 +540,32 @@ async function copyNomor() {
                     <ArrowLeft class="size-4" />
                     Kembali
                 </Link>
-
-                <span
-                    class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold"
-                    :class="statusClass(surat.status)"
-                >
-                    {{ statusLabel(surat.status) }}
-                </span>
             </div>
 
             <section class="grid gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.9fr)]">
+                <div class="space-y-4">
                 <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-                    <div class="mb-4 flex items-center gap-3">
-                        <div class="grid size-10 place-items-center rounded-2xl bg-sky-50 text-sky-600 ring-1 ring-sky-100">
-                            <FileText class="size-5" />
+                    <div class="mb-4 flex items-start justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="grid size-10 place-items-center rounded-2xl bg-sky-50 text-sky-600 ring-1 ring-sky-100">
+                                <FileText class="size-5" />
+                            </div>
+                            <div>
+                                <h2 class="text-base font-bold text-slate-900">
+                                    Data Surat
+                                </h2>
+                                <p class="text-sm text-slate-500">
+                                    Detail isi dan informasi yang tercantum pada surat.
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h2 class="text-base font-bold text-slate-900">
-                                Data Surat
-                            </h2>
-                            <p class="text-sm text-slate-500">
-                                Detail isi dan informasi yang tercantum pada surat.
-                            </p>
-                        </div>
+
+                        <span
+                            class="inline-flex shrink-0 items-center rounded-full border px-3 py-1 text-xs font-semibold"
+                            :class="statusClass(surat.status)"
+                        >
+                            {{ statusLabel(surat.status) }}
+                        </span>
                     </div>
 
                     <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
@@ -666,8 +670,108 @@ async function copyNomor() {
                     </div>
                 </div>
 
-                <aside class="space-y-4">
-                    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                    <div class="mb-4 flex items-center gap-3">
+                        <div class="grid size-10 place-items-center rounded-2xl bg-sky-50 text-sky-600 ring-1 ring-sky-100">
+                            <CheckCircle2 class="size-5" />
+                        </div>
+                        <div>
+                            <h2 class="text-base font-bold text-slate-900">
+                                Riwayat Persetujuan
+                            </h2>
+                            <p class="text-sm text-slate-500">
+                                Alur proses surat dari pengajuan sampai selesai.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div v-if="timeline.length" class="space-y-3 sm:space-y-4">
+                        <div
+                            v-for="(step, index) in timeline"
+                            :key="step.id"
+                            class="grid grid-cols-[24px_minmax(0,1fr)] gap-3 sm:gap-4"
+                        >
+                            <div class="relative flex items-start justify-center">
+                                <span
+                                    v-if="index !== timeline.length - 1"
+                                    class="absolute left-1/2 top-6 h-full w-px -translate-x-1/2 bg-blue-200"
+                                />
+                                <span
+                                    class="relative z-10 mt-0.5 grid size-6 place-items-center rounded-full"
+                                    :class="timelineDotClasses(timelineStepState(index, step.timestamp))"
+                                >
+                                    <CheckCircle2
+                                        v-if="timelineStepState(index, step.timestamp) === 'done'"
+                                        class="size-3.5"
+                                    />
+                                    <Clock3
+                                        v-else-if="timelineStepState(index, step.timestamp) === 'current'"
+                                        class="size-3.5"
+                                    />
+                                    <span
+                                        v-else
+                                        class="size-2.5 rounded-full bg-current"
+                                    />
+                                </span>
+                            </div>
+
+                            <div
+                                class="min-w-0 rounded-2xl border p-4"
+                                :class="timelineCardClasses(timelineStepState(index, step.timestamp))"
+                            >
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0 flex-1">
+                                        <p class="break-words text-sm font-semibold leading-6 text-slate-900">
+                                            {{ step.label }}
+                                        </p>
+                                        <p
+                                            v-if="step.role"
+                                            class="mt-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400"
+                                        >
+                                            {{ step.role }}
+                                        </p>
+                                        <p
+                                            v-if="step.actor"
+                                            class="mt-1 text-xs font-medium text-slate-500"
+                                        >
+                                            {{ step.actor }}
+                                        </p>
+                                    </div>
+                                    <div class="flex shrink-0 flex-col items-end gap-2 text-right">
+                                        <p class="text-xs font-medium text-slate-500">
+                                            {{ formatDateTime(step.timestamp) }}
+                                        </p>
+                                        <button
+                                            v-if="step.note"
+                                            type="button"
+                                            class="fast-btn fast-btn-danger shrink-0 px-2.5 py-1 text-xs"
+                                            :aria-expanded="expandedTimelineNoteId === step.id"
+                                            :aria-controls="`timeline-note-${step.id}`"
+                                            @click="toggleTimelineNote(step.id)"
+                                        >
+                                            <ShieldAlert class="size-3.5" />
+                                            Catatan
+                                        </button>
+                                    </div>
+                                </div>
+                                <div
+                                    v-if="step.note && expandedTimelineNoteId === step.id"
+                                    :id="`timeline-note-${step.id}`"
+                                    class="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm leading-6 text-red-700"
+                                >
+                                    {{ step.note }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+                        Riwayat belum tersedia.
+                    </div>
+                </section>
+
+                </div>
+                <div class="self-start rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
                         <div class="flex items-center gap-3">
                             <div class="grid size-10 place-items-center rounded-2xl bg-sky-50 text-sky-600 ring-1 ring-sky-100">
                                 <Download class="size-5" />
@@ -734,6 +838,7 @@ async function copyNomor() {
 
                         <div class="mt-4 space-y-3">
                             <button
+                                v-if="can('fast.document.preview')"
                                 type="button"
                                 :disabled="surat.status !== 'finished'"
                                 class="fast-btn fast-btn-outline w-full px-4 py-2.5 text-sm transition"
@@ -749,7 +854,7 @@ async function copyNomor() {
                             </button>
 
                             <button
-                                v-if="surat.canDownloadPdf"
+                                v-if="surat.canDownloadPdf && can('fast.document.download')"
                                 type="button"
                                 class="fast-btn fast-btn-primary w-full px-4 py-2.5 text-sm"
                                 @click="openPdf"
@@ -758,12 +863,14 @@ async function copyNomor() {
                                 Download PDF
                             </button>
 
+                            <template v-else-if="can('fast.document.download')" />
+
                             <div
                                 v-else
-                                class="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700"
+                                class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500"
                             >
                                 <Clock3 class="size-4 shrink-0" />
-                                Dokumen belum tersedia - surat belum selesai diproses.
+                                Anda tidak memiliki akses untuk mengunduh dokumen.
                             </div>
                         </div>
 
@@ -777,133 +884,26 @@ async function copyNomor() {
                                     :key="attachment.id"
                                     class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
                                 >
-                                    <p class="text-sm font-semibold text-slate-900">
-                                        {{ attachment.name }}
-                                    </p>
-                                    <p class="mt-1 text-xs text-slate-500">
-                                        {{ attachment.type || 'Lampiran' }}
-                                    </p>
-                                    <button
-                                        v-if="attachment.url"
-                                        type="button"
-                                        class="mt-3 inline-flex items-center text-sm font-medium text-blue-600 transition hover:text-blue-700"
-                                        @click="openAttachmentPreview(attachment)"
-                                    >
-                                        Lihat lampiran
-                                    </button>
+                                    <div class="flex flex-col gap-2">
+                                        <div class="min-w-0">
+                                            <p class="break-words text-sm font-semibold leading-5 text-slate-900">
+                                                {{ attachment.name }}
+                                            </p>
+                                        </div>
+                                        <button
+                                            v-if="attachment.url && can('fast.document.preview')"
+                                            type="button"
+                                            class="self-end inline-flex items-center text-sm font-medium text-blue-600 transition hover:text-blue-700"
+                                            @click="openAttachmentPreview(attachment)"
+                                        >
+                                            Lihat lampiran
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </aside>
-            </section>
 
-            <section class="rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-6">
-                <div class="flex items-center gap-3">
-                    <div class="grid size-10 place-items-center rounded-2xl bg-sky-50 text-sky-600 ring-1 ring-sky-100">
-                        <CheckCircle2 class="size-5" />
                     </div>
-                    <div>
-                        <h2 class="text-base font-bold text-slate-900">
-                            Riwayat Persetujuan
-                        </h2>
-                        <p class="text-sm text-slate-500">
-                            Alur proses surat dari pengajuan sampai selesai.
-                        </p>
-                    </div>
-                </div>
-
-                <div v-if="timeline.length" class="mt-4 space-y-3 sm:mt-6 sm:space-y-4">
-                    <div
-                        v-for="(step, index) in timeline"
-                        :key="step.id"
-                        class="grid grid-cols-[24px_minmax(0,1fr)] gap-3 md:grid-cols-[24px_minmax(0,1fr)_190px] md:items-start md:gap-4"
-                    >
-                        <div class="relative flex items-start justify-center">
-                            <span
-                                v-if="index !== timeline.length - 1"
-                                class="absolute left-1/2 top-6 h-full w-px -translate-x-1/2 bg-blue-200"
-                            />
-                            <span
-                                class="relative z-10 mt-0.5 grid size-6 place-items-center rounded-full"
-                                :class="timelineDotClasses(timelineStepState(index, step.timestamp))"
-                            >
-                                <CheckCircle2
-                                    v-if="timelineStepState(index, step.timestamp) === 'done'"
-                                    class="size-3.5"
-                                />
-                                <Clock3
-                                    v-else-if="timelineStepState(index, step.timestamp) === 'current'"
-                                    class="size-3.5"
-                                />
-                                <span
-                                    v-else
-                                    class="size-2.5 rounded-full bg-current"
-                                />
-                            </span>
-                        </div>
-
-                        <div
-                            class="min-w-0 rounded-2xl border p-4"
-                            :class="timelineCardClasses(timelineStepState(index, step.timestamp))"
-                        >
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="min-w-0">
-                                    <p class="break-words text-sm font-semibold text-slate-900">
-                                        {{ step.label }}
-                                    </p>
-                                    <p
-                                        v-if="step.role"
-                                        class="mt-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400"
-                                    >
-                                        {{ step.role }}
-                                    </p>
-                                    <p
-                                        v-if="step.actor"
-                                        class="mt-1 text-xs font-medium text-slate-500"
-                                    >
-                                        {{ step.actor }}
-                                    </p>
-                                </div>
-                                <button
-                                v-if="step.note"
-                                type="button"
-                                class="fast-btn fast-btn-danger shrink-0 px-2.5 py-1 text-xs"
-                                :aria-expanded="expandedTimelineNoteId === step.id"
-                                :aria-controls="`timeline-note-${step.id}`"
-                                @click="toggleTimelineNote(step.id)"
-                            >
-                                    <ShieldAlert class="size-3.5" />
-                                    Catatan
-                                </button>
-                            </div>
-                            <div
-                                v-if="step.note && expandedTimelineNoteId === step.id"
-                                :id="`timeline-note-${step.id}`"
-                                class="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm leading-6 text-red-700"
-                            >
-                                {{ step.note }}
-                            </div>
-                            <p class="mt-3 text-xs font-medium text-slate-500 md:hidden">
-                                {{
-                                    timelineStepState(index, step.timestamp) === 'pending'
-                                        ? 'Menunggu'
-                                        : formatDateTime(step.timestamp)
-                                }}
-                            </p>
-                        </div>
-
-                        <div class="hidden pt-1 text-xs text-slate-500 md:block md:text-right">
-                            {{ formatDateTime(step.timestamp) }}
-                            <div v-if="step.actor" class="mt-1 font-medium text-slate-400">
-                                {{ step.actor }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-else class="mt-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
-                    Riwayat proses belum tersedia.
-                </div>
             </section>
 
         </div>

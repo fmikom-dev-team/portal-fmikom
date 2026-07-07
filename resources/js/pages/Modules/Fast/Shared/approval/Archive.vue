@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,8 @@ import {
     ExternalLink,
     Calendar,
 } from 'lucide-vue-next';
+
+const { can } = useFastPermissions();
 type DetailLampiran = {
     id: number;
     name: string;
@@ -261,21 +264,6 @@ async function openDetail(id: number) {
                 type="button"
                 class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
                 :class="
-                    !status
-                        ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
-                "
-                @click="
-                    status = '';
-                    applyFilters();
-                "
-            >
-                Semua
-            </button>
-            <button
-                type="button"
-                class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
-                :class="
                     status === 'approved'
                         ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
                         : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
@@ -292,7 +280,7 @@ async function openDetail(id: number) {
                 class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
                 :class="
                     status === 'revision_requested'
-                        ? 'border-amber-500 bg-amber-500 text-white shadow-sm'
+                        ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
                         : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
                 "
                 @click="
@@ -307,7 +295,7 @@ async function openDetail(id: number) {
                 class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
                 :class="
                     status === 'rejected_approver'
-                        ? 'border-red-500 bg-red-500 text-white shadow-sm'
+                        ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
                         : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
                 "
                 @click="
@@ -315,7 +303,22 @@ async function openDetail(id: number) {
                     applyFilters();
                 "
             >
-                Ditolak
+                Ditolak Final
+            </button>
+            <button
+                type="button"
+                class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                :class="
+                    !status
+                        ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                "
+                @click="
+                    status = '';
+                    applyFilters();
+                "
+            >
+                Semua Status
             </button>
         </div>
         <!-- Timeline cards -->
@@ -413,6 +416,7 @@ async function openDetail(id: number) {
                         <!-- Actions -->
                         <div class="flex shrink-0 items-start gap-2">
                             <button
+                                v-if="can('fast.approval.surat.view')"
                                 type="button"
                                 class="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[10px] font-medium text-slate-600 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
                                 title="Lihat"
@@ -421,20 +425,27 @@ async function openDetail(id: number) {
                                 <Eye class="size-3" /> Lihat
                             </button>
                             <a
-                                v-if="item.download_url"
+                                v-if="item.download_url && can('fast.document.download')"
                                 :href="item.download_url"
                                 target="_blank"
-                                class="flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1.5 text-[10px] font-medium text-blue-600 transition-colors hover:bg-blue-100"
+                                class="fast-btn fast-btn-primary px-3 py-1.5 text-[10px] font-medium"
                                 title="Download PDF"
                             >
-                                <Download class="size-3" /> Unduh PDF
+                                <Download class="size-3" /> PDF
                             </a>
                             <div
-                                v-else
-                                class="flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-[10px] font-medium text-slate-400"
+                                v-else-if="can('fast.document.download')"
+                                class="fast-btn fast-btn-soft cursor-not-allowed px-3 py-1.5 text-[10px] font-medium text-slate-400"
                                 title="PDF belum tersedia"
                             >
                                 <FileText class="size-3" /> PDF Belum Tersedia
+                            </div>
+                            <div
+                                v-else
+                                class="flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-[10px] font-medium text-slate-400"
+                                title="Akses unduh tidak tersedia"
+                            >
+                                <FileText class="size-3" /> Akses Terkunci
                             </div>
                         </div>
                     </div>

@@ -23,7 +23,7 @@ class DocxPreview
             throw new RuntimeException('Ekstensi Zip tidak tersedia untuk pratinjau DOCX.');
         }
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         if ($zip->open($absolutePath) !== true) {
             throw new RuntimeException('File DOCX tidak dapat dibuka.');
         }
@@ -35,7 +35,7 @@ class DocxPreview
             throw new RuntimeException('Isi DOCX tidak ditemukan.');
         }
 
-        $dom = new DOMDocument();
+        $dom = new DOMDocument;
         $dom->loadXML($documentXml, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
 
         $xpath = new DOMXPath($dom);
@@ -137,7 +137,7 @@ HTML;
             $text .= match ($child->nodeName) {
                 'w:t' => htmlspecialchars($child->textContent, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
                 'w:tab' => "\t",
-                default => "<br>",
+                default => '<br>',
             };
         }
 

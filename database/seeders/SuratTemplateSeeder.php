@@ -15,15 +15,19 @@ class SuratTemplateSeeder extends Seeder
             $jenisSurat = JenisSurat::query()
                 ->with('template.placeholders')
                 ->where('slug', $templateData['jenis_surat_slug'])
+                ->orWhere('nama', $templateData['jenis_surat_nama'])
                 ->first();
 
             if ($jenisSurat === null) {
                 continue;
             }
 
-            $template = SuratTemplate::withTrashed()->firstOrNew([
-                'slug' => $templateData['slug'],
-            ]);
+            $template = SuratTemplate::withTrashed()
+                ->where('slug', $templateData['slug'])
+                ->orWhere('jenis_surat_id', $jenisSurat->id)
+                ->orWhere('name', $templateData['name'])
+                ->orderByDesc('id')
+                ->first() ?? new SuratTemplate;
 
             $template->fill([
                 'jenis_surat_id' => $jenisSurat->id,
@@ -32,11 +36,12 @@ class SuratTemplateSeeder extends Seeder
                 'format' => 'html',
                 'source_reference' => $templateData['source_reference'],
                 'subject' => $templateData['subject'],
-                'template_header' => $templateData['template_header'] ?? null,
-                'template_body' => $this->body($templateData['components']),
-                'template_footer' => $templateData['template_footer'] ?? null,
-                'version' => $templateData['version'] ?? 1,
+                'template_header' => $templateData['template_header'],
+                'template_body' => $templateData['template_body'],
+                'template_footer' => $templateData['template_footer'],
+                'version' => $templateData['version'],
                 'is_active' => true,
+                'css_style' => $templateData['css_style'],
             ]);
 
             if ($template->trashed()) {
@@ -59,240 +64,121 @@ class SuratTemplateSeeder extends Seeder
     {
         return [
             [
-                'jenis_surat_slug' => 'permohonan-cuti-mahasiswa',
-                'name' => 'Template Permohonan Cuti Mahasiswa',
-                'slug' => 'template-permohonan-cuti-mahasiswa',
-                'source_reference' => '[Template] Permohonan Cuti Mahasiswa.docx',
-                'subject' => 'Permohonan Cuti Mahasiswa',
-                'components' => [
-                    $this->judul('PERMOHONAN CUTI MAHASISWA'),
-                    $this->subjudul('Nomor: {{nomor_surat}}'),
-                    $this->paragraf('Yang bertanda tangan di bawah ini:'),
-                    $this->tabelData([
-                        ['label' => 'Nama', 'nilai' => '{{nama_pemohon}}'],
-                        ['label' => 'NIM', 'nilai' => '{{nim}}'],
-                        ['label' => 'Semester', 'nilai' => '{{semester}} ({{semester_terbilang}})'],
-                        ['label' => 'Program Studi', 'nilai' => '{{program_studi}}'],
-                        ['label' => 'Tahun Akademik', 'nilai' => '{{tahun_akademik}}'],
-                        ['label' => 'Semester Pengajuan', 'nilai' => '{{semester_pengajuan}}'],
-                    ]),
-                    $this->paragraf('Dengan ini mengajukan permohonan cuti akademik pada Tahun Akademik {{tahun_akademik}} dengan alasan {{alasan_cuti}}.'),
-                    $this->paragraf('Demikian permohonan ini saya sampaikan. Atas perhatian dan persetujuannya, saya ucapkan terima kasih.'),
-                    $this->signature(),
-                ],
+                'jenis_surat_slug' => 'surat-permohonan-cuti-mahasiswa-1782391599',
+                'jenis_surat_nama' => 'Surat Permohonan Cuti Mahasiswa',
+                'name' => 'Surat Permohonan Cuti Mahasiswa',
+                'slug' => 'template-surat-permohonan-cuti-mahasiswa-1782391599-v1',
+                'source_reference' => null,
+                'subject' => 'personal',
+                'template_header' => null,
+                'template_body' => $this->jsonBody(<<<'JSON'
+[{"type":"judul","teks":"Permohonan cuti mahasiswa","align":"center","bold":true,"font_size":"12pt","underline":true},{"type":"subjudul","teks":"Nomor: {{nomor_surat}}","font_size":"12pt","margin_left":0,"align":"center","bold":false,"underline":false},{"type":"spasi","tinggi":12},{"type":"paragraf","teks":"Yang bertanda tangan di bawah ini:","align":"justify","margin_left":0,"text_indent":0,"font_size":"12pt"},{"type":"tabel_data","rows":[{"label":"Nama ","nilai":"{{nama_pemohon}}"},{"label":"NIM","nilai":"{{nim}}"},{"label":"Semester","nilai":"{{semester}}"},{"label":"Fak/Prodi","nilai":"{{fak_prodi}}"}],"margin_left":0,"font_size":"12pt"},{"type":"paragraf","teks":"Dengan ini mengajukan permohonan cuti, dengan alasan dikarenakan {{alasan}}","align":"justify","margin_left":0,"text_indent":0,"font_size":"12pt"},{"type":"paragraf","teks":"Demikian permohonan ini saya sampaikan, atas perhatian dan terkabulnya permohonan ini disampaikan terima kasih.","align":"justify","margin_left":0,"text_indent":0,"font_size":"12pt"},{"type":"tanda_tangan","kolom":[{"jabatan":"Kaprodi,","nama":"{{kaprodi}}","nik":"NIK: {{nik}}","posisi":"kanan","jabatan_bold":false,"jabatan_underline":false,"nama_bold":true,"nama_underline":true,"nik_bold":false,"nik_underline":false}],"tanggal":"Cilacap, {{tanggal_surat_panjang}}","show_tanggal":true,"margin_left":0,"font_size":"12pt"}]
+JSON),
+                'template_footer' => null,
+                'version' => 61,
+                'css_style' => $this->commonCss(),
             ],
             [
-                'jenis_surat_slug' => 'surat-keterangan-lulus',
-                'name' => 'Template Surat Keterangan Lulus',
-                'slug' => 'template-surat-keterangan-lulus',
-                'source_reference' => '[Template] Surat Keterangan Lulus.docx',
-                'subject' => 'Surat Keterangan Lulus',
-                'components' => [
-                    $this->judul('SURAT KETERANGAN LULUS'),
-                    $this->subjudul('Nomor: {{nomor_surat}}'),
-                    $this->paragraf('Yang bertanda tangan di bawah ini menerangkan bahwa:'),
-                    $this->tabelData([
-                        ['label' => 'Nama', 'nilai' => '{{nama_mahasiswa}}'],
-                        ['label' => 'NIM', 'nilai' => '{{nim}}'],
-                        ['label' => 'Tempat, Tanggal Lahir', 'nilai' => '{{tempat_tanggal_lahir}}'],
-                        ['label' => 'Tahun Masuk', 'nilai' => '{{tahun_masuk}}'],
-                        ['label' => 'Jenjang', 'nilai' => '{{jenjang}}'],
-                        ['label' => 'Program Studi', 'nilai' => '{{program_studi}}'],
-                        ['label' => 'IPK Akhir', 'nilai' => '{{ipk_akhir}}'],
-                    ]),
-                    $this->paragraf('Berdasarkan data akademik yang tercantum di atas, mahasiswa tersebut dinyatakan lulus.'),
-                    $this->paragraf('{{judul_tugas_akhir_kalimat}}'),
-                    $this->paragraf('Demikian surat keterangan ini kami buat, untuk dipergunakan sebagaimana mestinya.'),
-                    $this->signature(),
-                ],
+                'jenis_surat_slug' => 'surat-permohonan-dispensasi-mahasiswa-1782467416',
+                'jenis_surat_nama' => 'Surat Permohonan Dispensasi Mahasiswa',
+                'name' => 'Surat Permohonan Dispensasi Mahasiswa',
+                'slug' => 'template-surat-permohonan-dispensasi-mahasiswa-1782467416-v1',
+                'source_reference' => null,
+                'subject' => 'institution',
+                'template_header' => null,
+                'template_body' => $this->jsonBody(<<<'JSON'
+[{"type":"header_surat","nomor":"{{nomor_surat}}","lampiran":"-","perihal":"Surat Permohonan Dispensasi","kota":"{{kota_surat}}","tanggal":"{{tanggal_surat_panjang}}","margin_left":"","font_size":"12pt"},{"type":"spasi","tinggi":16},{"type":"kepada_yth","penerima":["Bapak/Ibu"],"lokasi":"di-","tempat":"Tempat","margin_left":100,"font_size":"12pt"},{"type":"spasi","tinggi":16},{"type":"paragraf","teks":"Assalamu’alaikum Wr. Wb.","align":"justify","margin_left":0,"text_indent":100,"font_size":"12pt","bold":false,"italic":true},{"type":"paragraf","teks":"Salam silaturrahmi kami sampaikan semoga Bapak/Ibu Dosen di Lingkungan Fakultas Matematika dan Ilmu Komputer Universitas Nahdlatul Ulama Al Ghazali Cilacap, senantiasa dalam lindungan Allah  SWT. Amin.","align":"justify","margin_left":100,"text_indent":"","font_size":"12pt"},{"type":"spasi","tinggi":12},{"type":"paragraf","teks":"Sehubungan dengan adanya {{text}}, yang akan dilaksanakan pada:","align":"justify","margin_left":100,"text_indent":0,"font_size":"12pt"},{"type":"tabel_data","rows":[{"label":"Hari/Tanggal","nilai":"{{hari_tanggal}}"},{"label":"Waktu","nilai":"{{waktu}}"},{"label":"Tempat","nilai":"{{tempat}}"}],"margin_left":120,"font_size":"12pt"},{"type":"spasi","tinggi":12},{"type":"paragraf","teks":"Maka kami dari Fakultas Matematika dan Ilmu Komputer UNUGHA Cilacap bermaksud mohon ijin kepada Bapak/Ibu Dosen untuk mahasiswa kami atas nama {{nama}} mengikuti kegiatan tersebut.","align":"justify","margin_left":100,"text_indent":0,"font_size":"12pt"},{"type":"spasi","tinggi":12},{"type":"paragraf","teks":"Demikian surat ini kami sampaikan, atas kesediaan Bapak/Ibu Dosen memberikan dispensasi kepada mahasiswa tersebut disampaikan terima kasih.","align":"justify","margin_left":100,"text_indent":0,"font_size":"12pt"},{"type":"spasi","tinggi":12},{"type":"paragraf","teks":"Wassalamu’alaikum Wr. Wb.","align":"justify","margin_left":0,"text_indent":100,"font_size":"12pt","bold":false,"italic":true},{"type":"tanda_tangan","kolom":[{"jabatan":"Dekan FMIKOM,","nama":"Mochamad T.A. Aziz Zein, M.Kom.","nik":"NIK. 41 230714 020","posisi":"kanan","nama_bold":true,"nama_underline":true}],"tanggal":"","show_tanggal":false,"margin_left":0,"font_size":"12pt"}]
+JSON),
+                'template_footer' => null,
+                'version' => 28,
+                'css_style' => $this->commonCss(),
             ],
             [
-                'jenis_surat_slug' => 'surat-permohonan-observasi',
-                'name' => 'Template Surat Permohonan Observasi',
-                'slug' => 'template-surat-permohonan-observasi',
-                'source_reference' => '[Template] Surat Permohonan Observasi.docx',
-                'subject' => 'Surat Permohonan Observasi',
-                'components' => [
-                    $this->judul('SURAT PERMOHONAN OBSERVASI'),
-                    $this->subjudul('Nomor: {{nomor_surat}}'),
-                    $this->paragraf('Kepada Yth. Pimpinan {{instansi_tujuan}}'),
-                    $this->paragraf('di {{alamat_instansi}}'),
-                    $this->paragraf('Dengan hormat, kami mengajukan permohonan observasi untuk mahasiswa berikut:'),
-                    $this->tabelData([
-                        ['label' => 'Nama', 'nilai' => '{{nama_pemohon}}'],
-                        ['label' => 'NIM', 'nilai' => '{{nim}}'],
-                        ['label' => 'Program Studi', 'nilai' => '{{program_studi}}'],
-                        ['label' => 'Topik Observasi', 'nilai' => '{{topik_observasi}}'],
-                        ['label' => 'Tanggal Mulai', 'nilai' => '{{tanggal_mulai_panjang}}'],
-                        ['label' => 'Tanggal Selesai', 'nilai' => '{{tanggal_selesai_panjang}}'],
-                    ]),
-                    $this->paragraf('Adapun topik observasi yang diajukan adalah {{topik_observasi}}, yang direncanakan berlangsung pada {{tanggal_mulai_panjang}} sampai dengan {{tanggal_selesai_panjang}}.'),
-                    $this->paragraf('Demikian permohonan ini kami sampaikan. Atas perhatian dan kerja samanya, kami ucapkan terima kasih.'),
-                    $this->signature(),
-                ],
+                'jenis_surat_slug' => 'surat-permohonan-observasi-mahasiswa-1782469453',
+                'jenis_surat_nama' => 'Surat Permohonan Observasi Mahasiswa',
+                'name' => 'Surat Permohonan Observasi Mahasiswa',
+                'slug' => 'template-surat-permohonan-observasi-mahasiswa-1782469453-v1',
+                'source_reference' => null,
+                'subject' => 'personal',
+                'template_header' => null,
+                'template_body' => $this->jsonBody(<<<'JSON'
+[{"type":"header_surat","nomor":"{{nomor_surat}}","lampiran":"-","perihal":"Surat Permohonan Observasi","kota":"{{kota_surat}}","tanggal":"{{tanggal_surat_panjang}}","margin_left":0,"font_size":"12pt"},{"type":"spasi","tinggi":12},{"type":"kepada_yth","penerima":["Bapak/Ibu"],"lokasi":"di-","tempat":"Tempat","margin_left":100,"font_size":"12pt"},{"type":"spasi","tinggi":12},{"type":"paragraf","teks":"Assalamu’alaikum Wr.Wb.","align":"justify","margin_left":100,"text_indent":0,"font_size":"12pt","italic":true},{"type":"paragraf","teks":"Salam silaturahmi dan sejahtera kami sampaikan semoga kita senantiasa mendapatkan ridlo dan pertolongan dari Allah SWT dalam menjalankan aktivitas sehari-hari. Amin","align":"justify","margin_left":100,"text_indent":20,"font_size":"12pt"},{"type":"paragraf","teks":"Sehubungan dengan tuntutan kebutuhan mahasiswa untuk mendapatkan pengalaman nyata di lapangan, maka Fakultas Matematika dan Ilmu Komputer Universitas Nahdlatul Ulama Al Ghazali Cilacap menugaskan kepada mahasiswa kami:","align":"justify","margin_left":100,"text_indent":20,"font_size":"12pt"},{"type":"tabel_data","rows":[{"label":"Nama","nilai":"{{nama_pemohon}}"},{"label":"NIM","nilai":"{{nim}}"},{"label":"Prodi","nilai":"{{prodi}}"}],"margin_left":120,"font_size":"12pt"},{"type":"paragraf","teks":"Untuk mengadakan riset terkait dengan skripsi yang sedang di kerjakan dengan Judul “{{judul_skripsi}}”. Berkenaan dengan hal tersebut, maka kami mengajukan permohonan kepada Bapak/Ibu {{nama_lembaga}}untuk mengizinkan mahasiswa kami melaksanakan kegiatan tersebut.","align":"justify","margin_left":100,"text_indent":0,"font_size":"12pt"},{"type":"paragraf","teks":"Demikian surat ini kami sampaikan, atas bimbingan dan kerjasamanya disampaikan terimakasih.","align":"justify","margin_left":100,"text_indent":20,"font_size":"12pt"},{"type":"paragraf","teks":"Wassalamu’alaikum Wr.Wb","align":"justify","margin_left":100,"text_indent":0,"font_size":"12pt","italic":true},{"type":"tanda_tangan","kolom":[{"jabatan":"Dekan,","nama":"Mochamad T.A. Aziz Zein, M.Kom","nik":"NIK. 41 230714 020","posisi":"kanan","nama_underline":true,"nama_bold":true}],"tanggal":"","show_tanggal":false,"margin_left":0,"font_size":"12pt"}]
+JSON),
+                'template_footer' => null,
+                'version' => 14,
+                'css_style' => $this->commonCss(),
             ],
             [
-                'jenis_surat_slug' => 'permohonan-dispensasi-mahasiswa',
-                'name' => 'Template Permohonan Dispensasi Mahasiswa',
-                'slug' => 'template-permohonan-dispensasi-mahasiswa',
-                'source_reference' => '142. permohonan dispensasi Mhs.docx',
-                'subject' => 'Permohonan Dispensasi Mahasiswa',
-                'components' => [
-                    $this->judul('SURAT PERMOHONAN DISPENSASI'),
-                    $this->subjudul('Nomor: {{nomor_surat}}'),
-                    $this->paragraf('Yang bertanda tangan di bawah ini:'),
-                    $this->tabelData([
-                        ['label' => 'Nama', 'nilai' => '{{nama_pemohon}}'],
-                        ['label' => 'NIM', 'nilai' => '{{nim}}'],
-                        ['label' => 'Program Studi', 'nilai' => '{{program_studi}}'],
-                        ['label' => 'Mata Kuliah', 'nilai' => '{{mata_kuliah}}'],
-                        ['label' => 'Kelas', 'nilai' => '{{kelas}}'],
-                        ['label' => 'Dosen Pengampu', 'nilai' => '{{dosen_pengampu}}'],
-                        ['label' => 'Tanggal Kegiatan', 'nilai' => '{{tanggal_kegiatan_panjang}}'],
-                        ['label' => 'Alasan Dispensasi', 'nilai' => '{{alasan_dispensasi}}'],
-                    ]),
-                    $this->paragraf('Mengajukan permohonan dispensasi untuk mata kuliah {{mata_kuliah}}{{kelas_info}} pada tanggal {{tanggal_kegiatan_panjang}}{{dosen_pengampu_info}}, dengan alasan {{alasan_dispensasi}}.'),
-                    $this->paragraf('Demikian surat permohonan ini saya sampaikan. Atas perhatian dan kebijaksanaannya saya ucapkan terima kasih.'),
-                    $this->signature(),
-                ],
+                'jenis_surat_slug' => 'surat-permohonan-menjadi-penguji-sidang-1782470954',
+                'jenis_surat_nama' => 'Surat Permohonan menjadi Penguji Sidang',
+                'name' => 'Surat Permohonan menjadi Penguji Sidang',
+                'slug' => 'template-surat-permohonan-menjadi-penguji-sidang-1782470954-v1',
+                'source_reference' => null,
+                'subject' => 'institution',
+                'template_header' => null,
+                'template_body' => $this->jsonBody(<<<'JSON'
+[{"type":"header_surat","nomor":"{{nomor_surat}}","lampiran":"-","perihal":"Surat Permohonan menjadi Penguji Sidang","kota":"{{kota_surat}}","tanggal":"{{tanggal_surat_panjang}}","margin_left":0,"font_size":"12pt"},{"type":"spasi","tinggi":12},{"type":"kepada_yth","penerima":["Bapak/Ibu"],"lokasi":"di -","tempat":"Tempat","margin_left":100,"font_size":"12pt"},{"type":"spasi","tinggi":12},{"type":"paragraf","teks":"Assalamu’alaikum Wr. Wb.","align":"justify","margin_left":100,"text_indent":0,"font_size":"12pt"},{"type":"paragraf","teks":"Salam silaturahmi dan sejahtera semoga kita senantiasa mendapatkan ridlo dan pertolongan dari Allah SWT dalam menjalankan aktivitas sehari-hari, Amiiin.\\n","align":"justify","margin_left":100,"text_indent":20,"font_size":"12pt"},{"type":"paragraf","teks":"Sehubungan dengan adanya Sidang Skripsi Mahasiswa Program Studi S1 Fakultas Matematika dan Ilmu Komputer, maka kami mohon kehadiran Bapak/Ibu sebagai Penguji yang akan dilaksanakan pada:","align":"justify","margin_left":100,"text_indent":20,"font_size":"12pt"},{"type":"tabel_data","rows":[{"label":"Hari/Tanggal","nilai":"{{hari_tanggal}}"},{"label":"Waktu","nilai":"{{waktu}}"},{"label":"Tempat","nilai":"{{tempat}}"}],"margin_left":100,"font_size":"12pt"},{"type":"paragraf","teks":"Adapun terkait dengan berita acara sidang dapat dilakukan pengisiannya melalui Sistem Akademik (SIAKAD) dan untuk tandatangan berita acara dapat dilakukan di Fakultas Matematika dan Ilmu Komputer.","align":"justify","margin_left":100,"text_indent":20,"font_size":"12pt"},{"type":"paragraf","teks":"Demikian surat ini kami sampaikan, atas perhatian dan kerjasamanya diucapkan terimakasih. ","align":"justify","margin_left":100,"text_indent":0,"font_size":"12pt"},{"type":"paragraf","teks":"Wassalamu’alaikum Wr.Wb.","align":"justify","margin_left":100,"text_indent":20,"font_size":"12pt"},{"type":"tanda_tangan","kolom":[{"jabatan":"Dekan,","nama":"Mochamad T.A. Aziz Zein, S.Si, M.Kom","nik":"NIK. 41230714020","posisi":"kanan","nama_bold":true,"nama_underline":true}],"tanggal":"","show_tanggal":false,"margin_left":0,"font_size":"12pt"}]
+JSON),
+                'template_footer' => null,
+                'version' => 8,
+                'css_style' => $this->commonCss(),
             ],
             [
-                'jenis_surat_slug' => 'permohonan-pindah-kelas',
-                'name' => 'Template Permohonan Pindah Kelas',
-                'slug' => 'template-permohonan-pindah-kelas',
-                'source_reference' => 'permohonan  pindah kelas.docx',
-                'subject' => 'Permohonan Pindah Kelas',
-                'components' => [
-                    $this->judul('SURAT PERMOHONAN PINDAH KELAS'),
-                    $this->subjudul('Nomor: {{nomor_surat}}'),
-                    $this->paragraf('Yang bertanda tangan di bawah ini:'),
-                    $this->tabelData([
-                        ['label' => 'Nama', 'nilai' => '{{nama_pemohon}}'],
-                        ['label' => 'NIM', 'nilai' => '{{nim}}'],
-                        ['label' => 'Program Studi', 'nilai' => '{{program_studi}}'],
-                        ['label' => 'Mata Kuliah', 'nilai' => '{{mata_kuliah}}'],
-                        ['label' => 'Kelas Asal', 'nilai' => '{{kelas_asal}}'],
-                        ['label' => 'Kelas Tujuan', 'nilai' => '{{kelas_tujuan}}'],
-                        ['label' => 'Alasan Pindah', 'nilai' => '{{alasan_pindah}}'],
-                    ]),
-                    $this->paragraf('Mengajukan permohonan pindah kelas untuk mata kuliah {{mata_kuliah}} dari kelas {{kelas_asal}} ke kelas {{kelas_tujuan}} dengan alasan {{alasan_pindah}}.'),
-                    $this->paragraf('Demikian permohonan ini saya ajukan. Atas perhatian dan persetujuannya, saya ucapkan terima kasih.'),
-                    $this->signature(),
-                ],
+                'jenis_surat_slug' => 'surat-keterangan-lulus-mahasiswa-1782471658',
+                'jenis_surat_nama' => 'Surat Keterangan Lulus Mahasiswa',
+                'name' => 'Surat Keterangan Lulus Mahasiswa',
+                'slug' => 'template-surat-keterangan-lulus-mahasiswa-1782471658-v1',
+                'source_reference' => null,
+                'subject' => 'personal',
+                'template_header' => null,
+                'template_body' => $this->jsonBody(<<<'JSON'
+[{"type":"judul","teks":"surat keterangan lulus","align":"center","bold":true,"font_size":"12pt","underline":true},{"type":"subjudul","teks":"Nomor: {{nomor_surat}}","align":"center","bold":false,"underline":false,"font_size":"12pt","margin_left":0},{"type":"spasi","tinggi":16},{"type":"paragraf","teks":"Yang bertandatangan di bawah ini :","align":"justify","margin_left":0,"text_indent":0,"font_size":"12pt"},{"type":"tabel_data","rows":[{"label":"Nama","nilai":"Mochamad T.A. Aziz Zein, S.Si, M.Kom"},{"label":"NIK","nilai":"41 230714 020"},{"label":"Jabatan","nilai":"Dekan Fakultas Matematika dan Ilmu Komputer"}],"margin_left":0,"font_size":"12pt"},{"type":"spasi","tinggi":16},{"type":"paragraf","teks":"Menerangkan Mahasiswa tersebut di bawah ini :","align":"justify","margin_left":0,"text_indent":0,"font_size":"12pt"},{"type":"tabel_data","rows":[{"label":"Nama","nilai":"{{nama_pemohon}}"},{"label":"NIM","nilai":"{{nim}}"},{"label":"Tempat, Tanggal Lahir","nilai":"{{tempat_tanggal_lahir}}"},{"label":"Tahun Masuk","nilai":"{{tahun_masuk}}"},{"label":"Jenjang","nilai":"{{jenjang}}"},{"label":"Program Studi","nilai":"{{program_studi}}"},{"label":"Akreditasi","nilai":"{{akreditasi}}"},{"label":"Nomor SK Akreditasi","nilai":"{{nomor_sk_akreditasi}}"},{"label":"Nomor SK Yudisium","nilai":"{{nomor_sk_yudisium}}"}],"margin_left":0,"font_size":"12pt"},{"type":"spasi","tinggi":12},{"type":"paragraf","teks":"Adalah benar mahasiswa kami yang TELAH DINYATAKAN LULUS pada Tanggal {{tanggal_lulus}}. Adapun ijazah masih dalam proses. ","align":"justify","margin_left":0,"text_indent":0,"font_size":"12pt"},{"type":"paragraf","teks":"Demikian surat keterangan ini kami buat, untuk dipergunakan sebagaimana mestinya.","align":"justify","margin_left":0,"text_indent":0,"font_size":"12pt"},{"type":"tanda_tangan","kolom":[{"jabatan":"Dekan,","nama":"Mochamad T.A. Aziz Zein, S.Si, M.Kom","nik":"NIK. 41 230714 020","posisi":"kanan","nama_underline":true,"nama_bold":true,"nik_bold":false}],"tanggal":"Cilacap, {{tanggal_surat_panjang}}","show_tanggal":true,"margin_left":0,"font_size":"12pt"}]
+JSON),
+                'template_footer' => null,
+                'version' => 19,
+                'css_style' => $this->commonCss(),
             ],
             [
-                'jenis_surat_slug' => 'permohonan-menjadi-penguji-sidang',
-                'name' => 'Template Permohonan Menjadi Penguji Sidang',
-                'slug' => 'template-permohonan-menjadi-penguji-sidang',
-                'source_reference' => 'PERMOHONAN MENJADI PENGUJI SIDANG (fix) (1).docx',
-                'subject' => 'Permohonan Menjadi Penguji Sidang',
-                'components' => [
-                    $this->judul('SURAT TUGAS / PERMOHONAN MENJADI PENGUJI SIDANG'),
-                    $this->subjudul('Nomor: {{nomor_surat}}'),
-                    $this->paragraf('Yang bertanda tangan di bawah ini menugaskan / memohonkan kepada:'),
-                    $this->tabelData([
-                        ['label' => 'Nama Dosen', 'nilai' => '{{nama_dosen}}'],
-                        ['label' => 'NIP / NIDN', 'nilai' => '{{nip}}'],
-                        ['label' => 'Nama Mahasiswa', 'nilai' => '{{nama_mahasiswa}}'],
-                        ['label' => 'NIM Mahasiswa', 'nilai' => '{{nim_mahasiswa}}'],
-                        ['label' => 'Judul Skripsi', 'nilai' => '{{judul_skripsi}}'],
-                        ['label' => 'Tanggal Sidang', 'nilai' => '{{tanggal_sidang_panjang}}'],
-                        ['label' => 'Ruang Sidang', 'nilai' => '{{ruang_sidang}}'],
-                    ]),
-                    $this->paragraf('Untuk menjadi penguji sidang mahasiswa {{nama_mahasiswa}} (NIM {{nim_mahasiswa}}) dengan judul tugas akhir {{judul_skripsi}}.'),
-                    $this->paragraf('Sidang dijadwalkan pada {{tanggal_sidang_panjang}}{{ruang_sidang_info}}.'),
-                    $this->paragraf('Demikian surat ini dibuat untuk dilaksanakan sebagaimana mestinya.'),
-                    $this->signature(),
-                ],
+                'jenis_surat_slug' => 'yoyoy-1782530493',
+                'jenis_surat_nama' => 'Surat Undangan Persiapan PKL FMIKOM',
+                'name' => 'Surat Undangan Persiapan PKL FMIKOM',
+                'slug' => 'template-yoyoy-1782530493-v1',
+                'source_reference' => null,
+                'subject' => 'institution',
+                'template_header' => null,
+                'template_body' => $this->jsonBody(<<<'JSON'
+[{"type":"header_surat","nomor":"{{nomor_surat}}","lampiran":"-","perihal":"Surat Undangan Persiapan PKL FMIKOM","kota":"{{kota_surat}}","tanggal":"{{tanggal_surat_panjang}}","margin_left":0,"font_size":"12pt"},{"type":"spasi","tinggi":16},{"type":"kepada_yth","penerima":["Bapak/Ibu"],"lokasi":"di-","tempat":"Tempat","margin_left":100,"font_size":"12pt"},{"type":"spasi","tinggi":16},{"type":"paragraf","teks":"Assalamualaikum Wr.Wb","align":"justify","margin_left":100,"text_indent":0,"font_size":"12pt","italic":true},{"type":"paragraf","teks":"Salam silaturahmi kami sampaikan, semoga kita senantiasa dalam lindungan Allah SWT. Amiin.","align":"justify","margin_left":100,"text_indent":0,"font_size":"12pt"},{"type":"paragraf","teks":"Mengharap dengan hormat kehadiran Bapak/Ibu Panitia PKL FMIKOM Tahun {{tahun_dilaksanakan}}, Pada:","align":"justify","margin_left":100,"text_indent":0,"font_size":"12pt"},{"type":"tabel_data","rows":[{"label":"Hari/Tanggal","nilai":"{{hari_tanggal}}"},{"label":"Waktu","nilai":"{{waktu}}"},{"label":"Tempat","nilai":"{{tempat}}"},{"label":"Agenda","nilai":"{{agenda}}"}],"margin_left":100,"font_size":"12pt"},{"type":"paragraf","teks":"Demikian undangan ini, atas kehadirannya disampaikan terima kasih.","align":"justify","margin_left":100,"text_indent":"","font_size":"12pt"},{"type":"paragraf","teks":"Wassalamualaikum Wr. Wb","align":"justify","margin_left":100,"text_indent":0,"font_size":"12pt","italic":true},{"type":"tanda_tangan","kolom":[{"jabatan":"Ketua Panitia PKL FMIKOM,","nama":"{{ketua_panitia}}","nik":"NIK. {{nik}}","posisi":"kanan","nama_bold":true,"nama_underline":true}],"tanggal":"","show_tanggal":true,"margin_left":0,"font_size":"12pt"}]
+JSON),
+                'template_footer' => null,
+                'version' => 13,
+                'css_style' => $this->commonCss(),
             ],
         ];
     }
 
-    /**
-     * @param  array<int, array<string, mixed>>  $components
-     */
-    protected function body(array $components): string
+    protected function jsonBody(string $json): string
     {
-        return json_encode($components, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+        $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+
+        return json_encode($decoded, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    protected function judul(string $teks): array
+    protected function commonCss(): string
     {
-        return [
-            'type' => 'judul',
-            'teks' => $teks,
-            'align' => 'center',
-            'bold' => true,
-            'font_size' => '12pt',
-            'underline' => true,
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    protected function subjudul(string $teks): array
-    {
-        return [
-            'type' => 'subjudul',
-            'teks' => $teks,
-            'align' => 'center',
-            'font_size' => '12pt',
-            'margin_left' => 0,
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    protected function paragraf(string $teks): array
-    {
-        return [
-            'type' => 'paragraf',
-            'teks' => $teks,
-            'align' => 'justify',
-            'margin_left' => 12,
-            'text_indent' => 0,
-            'font_size' => '12pt',
-        ];
-    }
-
-    /**
-     * @param  array<int, array<string, mixed>>  $rows
-     * @return array<string, mixed>
-     */
-    protected function tabelData(array $rows): array
-    {
-        return [
-            'type' => 'tabel_data',
-            'rows' => $rows,
-            'margin_left' => 12,
-            'font_size' => '12pt',
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    protected function signature(): array
-    {
-        return [
-            'type' => 'tanda_tangan',
-            'kolom' => [
-                [
-                    'jabatan' => '{{jabatan_penanda_tangan}}',
-                    'nama' => '{{nama_penanda_tangan}}',
-                    'nik' => '{{nik_penanda_tangan}}',
-                ],
-            ],
-            'posisi' => 'kanan',
-            'tanggal' => '{{kota_surat}}, {{tanggal_surat_panjang}}',
-            'show_tanggal' => true,
-            'margin_left' => 0,
-            'font_size' => '12pt',
-        ];
+        return <<<'CSS'
+@page {
+    margin: 12mm 15mm 25mm 15mm;
+}
+.surat-content {
+    padding-left: 0mm;
+    padding-right: 0mm;
+}
+.surat-paragraf {
+    text-indent: 0mm;
+}
+.surat-tabel {
+    margin-left: 0mm;
+}
+CSS;
     }
 }

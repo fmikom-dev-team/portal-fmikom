@@ -98,6 +98,23 @@ class SuratKomponenRenderer
      */
     public static function mpdfFontConfig(): array
     {
+        if (! class_exists(ConfigVariables::class) || ! class_exists(FontVariables::class)) {
+            return [
+                'fontDir' => array_values(array_filter([
+                    storage_path('fonts'),
+                    is_dir('C:\\Windows\\Fonts') ? 'C:\\Windows\\Fonts' : null,
+                ])),
+                'fontdata' => [
+                    'timesnewroman' => [
+                        'R' => 'times.ttf',
+                        'B' => 'timesbd.ttf',
+                        'I' => 'timesi.ttf',
+                        'BI' => 'timesbi.ttf',
+                    ],
+                ],
+            ];
+        }
+
         $configDefaults = (new ConfigVariables)->getDefaults();
         $fontDefaults = (new FontVariables)->getDefaults();
 
@@ -741,7 +758,6 @@ HTML;
     <div style="width: {$qrBoxSize}; height: {$qrBoxSize}; margin: 0 auto;">
         {$qrSvg}
     </div>
-    <p style="margin: 2px 0 0 0; font-size: {$qrLabelSize}; text-align: center; font-weight: bold; letter-spacing: 0.02em;">Dokumen Terverifikasi</p>
 </div>
 HTML;
         } else {
@@ -790,7 +806,7 @@ HTML;
         $singleSignatureBlock = (int) ($data['__tanda_tangan_component_count'] ?? 0) === 1;
         $qrInline = $singleSignatureBlock && ! ($data['__qr_hidden'] ?? false);
         $signatureGap = $qrInline
-            ? ($renderMode === 'pdf' ? '25mm' : '94px')
+            ? ($renderMode === 'pdf' ? '20mm' : '78px')
             : ($renderMode === 'pdf' ? '8mm' : '32mm');
         $tableMarginTop = $renderMode === 'pdf' ? '2px' : '16px';
         $singleColumnPosisi = (string) (($kolom[0]['posisi'] ?? null) ?: ($komp['posisi'] ?? 'kanan'));
@@ -841,7 +857,7 @@ HTML;
                 default => 'center',
             };
             $tanggalRow = $showTanggal ? "<tr><td style=\"padding: 0 0 2mm 0; text-align: {$textAlign};\">{$tanggalHtml}</td></tr>" : '';
-            $qrRow = $qrInline ? "<tr><td style=\"height: {$signatureGap}; padding: 0; text-align: {$textAlign}; vertical-align: middle;\">".static::buildInlineQrStampHtml($komp, $data)."</td></tr>" : "<tr><td style=\"height: {$signatureGap}; padding: 0; text-align: {$textAlign}; vertical-align: middle;\">&nbsp;</td></tr>";
+            $qrRow = $qrInline ? "<tr><td style=\"height: {$signatureGap}; padding: 0; text-align: {$textAlign}; vertical-align: middle;\">".static::buildInlineQrStampHtml($komp, $data).'</td></tr>' : "<tr><td style=\"height: {$signatureGap}; padding: 0; text-align: {$textAlign}; vertical-align: middle;\">&nbsp;</td></tr>";
             $ttdCols .= <<<HTML
 <td style="width: {$colWidth}%; vertical-align: top; text-align: {$textAlign}; padding: 0 4px; font-size: {$size};">
     <table style="display: inline-table; border-collapse: collapse; text-align: {$textAlign};">
@@ -922,7 +938,6 @@ HTML;
     <div style="width: {$qrBoxSize}; height: {$qrBoxSize}; margin: 0 auto;">
         {$qrSvg}
     </div>
-    <p style="margin: 1mm 0 0 0; font-size: {$qrLabelSize}; text-align: center; font-weight: bold; letter-spacing: 0.02em;">Dokumen Terverifikasi</p>
 </div>
 HTML;
     }

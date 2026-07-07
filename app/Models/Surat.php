@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -164,13 +165,14 @@ class Surat extends Model
     public function serializeSubjectIdentity(): array
     {
         $user = $this->resolvedSubjectUser();
+        $manualSubject = $this->extractManualSubjectIdentity();
 
         return [
             'id' => $user?->id,
-            'name' => $user?->name,
-            'nim' => $user ? ($user->nim_nip ?? $user->nomor_induk) : null,
-            'nomor_induk' => $user?->nomor_induk,
-            'email' => $user?->email,
+            'name' => $user?->name ?? Arr::get($manualSubject, 'name'),
+            'nim' => $user ? ($user->nim_nip ?? $user->nomor_induk) : Arr::get($manualSubject, 'nim'),
+            'nomor_induk' => $user?->nomor_induk ?? Arr::get($manualSubject, 'nomor_induk'),
+            'email' => $user?->email ?? Arr::get($manualSubject, 'email'),
         ];
     }
 
@@ -201,7 +203,8 @@ class Surat extends Model
 
         if (
             $this->type === 'surat_keluar' &&
-            $this->resolvedSubjectUser() === null
+            $this->resolvedSubjectUser() === null &&
+            blank($this->extractManualSubjectIdentity()['name'] ?? null)
         ) {
             return 'institution';
         }
@@ -517,6 +520,43 @@ class Surat extends Model
         }
 
         return true;
+    }
+
+    /**
+     * @return array{name: string|null, nim: string|null, nomor_induk: string|null, email: string|null}
+     */
+    protected function extractManualSubjectIdentity(): array
+    {
+        $data = [];
+
+        if ($this->relationLoaded('dataEntries')) {
+            $data = $this->dataEntries
+                ->mapWithKeys(fn (SuratData $entry): array => [
+                    $entry->field_name => $entry->field_value,
+                ])
+                ->all();
+        }
+
+        if ($data === [] && filled($this->isi_surat)) {
+            $decoded = json_decode((string) $this->isi_surat, true);
+            $data = is_array($decoded) ? Arr::wrap(Arr::get($decoded, 'data', [])) : [];
+        }
+
+        return [
+            'name' => Arr::get($data, 'subject_name')
+                ?? Arr::get($data, 'nama')
+                ?? Arr::get($data, 'nama_pemohon')
+                ?? Arr::get($data, 'nama_mahasiswa')
+                ?? Arr::get($data, 'nama_dosen'),
+            'nim' => Arr::get($data, 'nim')
+                ?? Arr::get($data, 'nim_pemohon')
+                ?? Arr::get($data, 'nim_mahasiswa'),
+            'nomor_induk' => Arr::get($data, 'nomor_induk')
+                ?? Arr::get($data, 'nomor_induk_pemohon')
+                ?? Arr::get($data, 'nomor_induk_mahasiswa'),
+            'email' => Arr::get($data, 'email')
+                ?? Arr::get($data, 'email_pemohon'),
+        ];
     }
 
     public function hasIncompleteCampusData(): bool

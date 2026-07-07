@@ -265,9 +265,9 @@ function isInstitutionLetter(item: { is_institution?: boolean | null; letter_mod
                                         v-if="item.download_url"
                                         :href="item.download_url"
                                         target="_blank"
-                                        class="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-100"
+                                        class="fast-btn fast-btn-primary px-3 py-1.5 text-[10px] font-medium"
                                     >
-                                        <Download class="size-3.5" /> Unduh PDF
+                                        <Download class="size-3" /> PDF
                                     </a>
                                     <span v-else class="text-xs text-slate-400"
                                         >Belum tersedia</span

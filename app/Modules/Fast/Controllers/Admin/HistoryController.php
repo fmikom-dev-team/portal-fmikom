@@ -14,6 +14,8 @@ class HistoryController extends Controller
 {
     public function index(Request $request): Response
     {
+        $this->authorize('viewAny', Surat::class);
+
         $search = $request->string('search')->trim()->toString();
         $status = $request->has('status')
             ? $request->string('status')->toString()
@@ -28,7 +30,12 @@ class HistoryController extends Controller
                 'jenisSurat:id,nama,category_id',
             ])
             ->where('type', 'surat_keluar')
-            ->where('status', '!=', Surat::STATUS_FINISHED)
+            ->whereIn('status', [
+                Surat::STATUS_PENDING,
+                Surat::STATUS_VALIDATED_ADMIN,
+                Surat::STATUS_REVISION_REQUESTED,
+                Surat::STATUS_REJECTED_APPROVER,
+            ])
             ->latest();
 
         if ($search !== '') {
@@ -41,17 +48,23 @@ class HistoryController extends Controller
             });
         }
 
-        if ($status === 'pending') {
-            $query->whereIn('status', [
+        $statusFilters = [
+            'pending' => [
                 Surat::STATUS_PENDING,
                 Surat::STATUS_VALIDATED_ADMIN,
-            ]);
-        } elseif (in_array($status, ['revisi', 'rejected'], true)) {
-            $query->whereIn('status', [
+            ],
+            'revisi' => [Surat::STATUS_REVISION_REQUESTED],
+            'rejected_approver' => [Surat::STATUS_REJECTED_APPROVER],
+            'all' => [
+                Surat::STATUS_PENDING,
+                Surat::STATUS_VALIDATED_ADMIN,
                 Surat::STATUS_REVISION_REQUESTED,
-                Surat::STATUS_REJECTED_ADMIN,
                 Surat::STATUS_REJECTED_APPROVER,
-            ]);
+            ],
+        ];
+
+        if (isset($statusFilters[$status])) {
+            $query->whereIn('status', $statusFilters[$status]);
         } elseif ($status !== '') {
             $query->where('status', $status);
         }

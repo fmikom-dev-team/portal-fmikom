@@ -6,12 +6,20 @@ use App\Models\Auth\AuthEmailLog;
 use App\Models\Auth\AuthLoginAttempt;
 use App\Models\Auth\AuthSession;
 use App\Models\Auth\AuthSetting;
+use App\Models\JenisSurat;
+use App\Models\Surat;
+use App\Models\SuratCategory;
+use App\Models\TemplateGlobalSetting;
 use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\CareerHistory;
 use App\Models\User;
 use App\Modules\WorkOs\Services\AuditLogger;
 use App\Modules\WorkOs\Services\AuthPlatform\SessionEngine;
 use App\Policies\CareerHistoryPolicy;
+use App\Policies\FastJenisSuratPolicy;
+use App\Policies\FastSuratCategoryPolicy;
+use App\Policies\FastSuratPolicy;
+use App\Policies\FastTemplateGlobalSettingPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
@@ -26,6 +34,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -197,6 +206,10 @@ class AppServiceProvider extends ServiceProvider
 
         // Register Tracer Policies explicitly due to sub-namespace auto-discovery limitation
         Gate::policy(CareerHistory::class, CareerHistoryPolicy::class);
+        Gate::policy(Surat::class, FastSuratPolicy::class);
+        Gate::policy(JenisSurat::class, FastJenisSuratPolicy::class);
+        Gate::policy(SuratCategory::class, FastSuratCategoryPolicy::class);
+        Gate::policy(TemplateGlobalSetting::class, FastTemplateGlobalSettingPolicy::class);
 
         // ── Pagi Chat Rate Limiting (Flood Prevention) ─────────────────────────
         RateLimiter::for('pagi-chat-send', function ($request) {
@@ -229,6 +242,10 @@ class AppServiceProvider extends ServiceProvider
 
         // ── Activity Log: Auth Events ─────────────────────────────────────────
         Event::listen(Login::class, function (Login $event) {
+            if (! Schema::hasTable('activity_logs')) {
+                return;
+            }
+
             ActivityLog::create([
                 'user_id' => $event->user->id,
                 'action' => 'auth.login',
@@ -238,6 +255,10 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Event::listen(Logout::class, function (Logout $event) {
+            if (! Schema::hasTable('activity_logs')) {
+                return;
+            }
+
             if ($event->user) {
                 ActivityLog::create([
                     'user_id' => $event->user->id,

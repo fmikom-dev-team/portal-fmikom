@@ -285,14 +285,17 @@ function applicantFieldDefault(field: FieldConfig): FieldValue {
 }
 
 function openForm(jenis: JenisSuratOption) {
-    form.jenis_surat_id = String(jenis.id);
+    form.reset();
     form.clearErrors();
+    form.jenis_surat_id = String(jenis.id);
     initFieldData(jenis);
     showFormModal.value = true;
 }
 
 function closeForm() {
     showFormModal.value = false;
+    form.reset();
+    form.clearErrors();
 }
 function initFieldData(jenis: JenisSuratOption | null) {
     const values: Record<string, FieldValue> = {};
@@ -312,11 +315,39 @@ function isApplicantFieldVisible(field: FieldConfig) {
 function isApplicantFieldReadonly(field: FieldConfig) {
     return (field.mode_form_pemohon ?? 'editable') === 'readonly' || isApplicantIdentityField(field);
 }
-function isApplicantFieldDisabled(field: FieldConfig) {
-    return isApplicantFieldReadonly(field);
-}
-function applicantFieldHelp(field: FieldConfig) {
-    return field.help ?? '';
+function fieldSourceLabel(field: FieldConfig): string {
+    const source = field.sumber_data ?? 'data_pemohon';
+    const normalized = normalizeFieldName(field.name);
+    const isIdentityField = [
+        'nama',
+        'name',
+        'nama_pemohon',
+        'nama_mahasiswa',
+        'nim',
+        'nim_nip',
+        'nomor_induk',
+        'nomor_induk_pemohon',
+        'nomor_induk_mahasiswa',
+        'program_studi',
+        'program_studi_pemohon',
+        'program_studi_mahasiswa',
+        'fakultas',
+        'prodi',
+    ].includes(normalized);
+
+    if (source === 'data_kampus') {
+        return 'Data kampus';
+    }
+
+    if (source === 'data_sistem') {
+        return 'Data sistem';
+    }
+
+    if (!isIdentityField) {
+        return '';
+    }
+
+    return 'Data pemohon';
 }
 
 function setApplicantFieldRef(name: string, el: any) {
@@ -691,51 +722,6 @@ function fieldError(name: string): string | undefined {
                                 </div>
 
                                 <div class="mt-4 space-y-4">
-                                    <div class="space-y-4">
-                                        <div>
-                                            <label class="mb-1 block text-xs font-medium text-slate-700">
-                                                Nama
-                                            </label>
-                                            <p class="mb-1 text-[10px] font-medium text-emerald-600">
-                                                otomatis dari akun pemohon
-                                            </p>
-                                            <input
-                                                :value="applicantProfile.name || '-'"
-                                                type="text"
-                                                readonly
-                                                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label class="mb-1 block text-xs font-medium text-slate-700">
-                                                {{ applicantProfile.identifierLabel }}
-                                            </label>
-                                            <p class="mb-1 text-[10px] font-medium text-emerald-600">
-                                                otomatis dari akun pemohon
-                                            </p>
-                                            <input
-                                                :value="applicantProfile.identifierValue || '-'"
-                                                type="text"
-                                                readonly
-                                                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label class="mb-1 block text-xs font-medium text-slate-700">
-                                                Program Studi
-                                            </label>
-                                            <p class="mb-1 text-[10px] font-medium text-emerald-600">
-                                                otomatis dari akun pemohon
-                                            </p>
-                                            <input
-                                                :value="applicantProfile.programStudi || '-'"
-                                                type="text"
-                                                readonly
-                                                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none"
-                                            />
-                                        </div>
-                                    </div>
-
                                     <div data-field-key="keperluan">
                                         <label class="mb-1 block text-xs font-medium text-slate-700">
                                             Keperluan <span class="text-red-500">*</span>
@@ -772,22 +758,18 @@ function fieldError(name: string): string | undefined {
                                             :data-field-key="`field_data.${field.name}`"
                                             :ref="(el) => setApplicantFieldRef(`field_data.${field.name}`, el)"
                                         >
-                                        <label class="mb-1 block text-xs font-medium text-slate-700">
-                                            {{ field.label }}
-                                            <span v-if="field.required" class="text-red-500">*</span>
-                                        </label>
-                                            <span
-                                                v-if="isApplicantFieldReadonly(field)"
-                                                class="mb-2 inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700"
-                                            >
-                                                Data oleh kampus
-                                            </span>
-                                            <p
-                                                v-if="applicantFieldHelp(field)"
-                                                class="mb-2 text-[10px] text-amber-600"
-                                            >
-                                                {{ applicantFieldHelp(field) }}
-                                            </p>
+                                            <div class="mb-1 flex items-center justify-between gap-2">
+                                                <label class="block text-xs font-medium text-slate-700">
+                                                    {{ field.label }}
+                                                    <span v-if="field.required" class="text-red-500">*</span>
+                                                </label>
+                                                <span
+                                                    v-if="fieldSourceLabel(field)"
+                                                    class="inline-flex shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600"
+                                                >
+                                                    {{ fieldSourceLabel(field) }}
+                                                </span>
+                                            </div>
 
                                             <textarea
                                                 v-if="field.type === 'textarea'"

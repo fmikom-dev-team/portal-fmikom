@@ -29,6 +29,7 @@ class SubmissionController extends Controller
     {
         $user = $request->user();
         abort_if($user === null, 403);
+        $this->authorize('create', Surat::class);
 
         $jenisSurats = $this->visibleSubmissionJenisSuratQuery($user)
             ->orderBy('nama')
@@ -48,7 +49,6 @@ class SubmissionController extends Controller
         $diprosesStatuses = [
             Surat::STATUS_PENDING,
             Surat::STATUS_VALIDATED_ADMIN,
-            Surat::STATUS_REVISION_REQUESTED,
             Surat::STATUS_APPROVED_KAPRODI,
             Surat::STATUS_APPROVED_DEKAN,
         ];
@@ -122,6 +122,7 @@ class SubmissionController extends Controller
     {
         $user = $request->user();
         abort_if($user === null, 403);
+        $this->authorize('create', Surat::class);
 
         $validated = Validator::make($request->all(), [
             'jenis_surat_id' => [

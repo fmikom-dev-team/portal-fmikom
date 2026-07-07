@@ -98,7 +98,7 @@ class TemplateService
             }
         });
 
-        return to_route('admin.templates.index')->with('success', 'Jenis surat berhasil dihapus.');
+        return to_route($this->templatesIndexRouteName())->with('success', 'Jenis surat berhasil dihapus.');
     }
 
     public function toggleActive(JenisSurat $jenisSurat): RedirectResponse
@@ -107,7 +107,7 @@ class TemplateService
             'is_active' => ! $jenisSurat->is_active,
         ])->save();
 
-        return to_route('admin.templates.index', [
+        return to_route($this->templatesIndexRouteName(), [
             'jenis_surat_id' => $jenisSurat->id,
         ])->with('success', 'Status jenis surat diperbarui.');
     }
@@ -115,5 +115,12 @@ class TemplateService
     public function duplicate(JenisSurat $jenisSurat): RedirectResponse
     {
         return $this->templateMutationService->duplicate($jenisSurat);
+    }
+
+    protected function templatesIndexRouteName(): string
+    {
+        $role = strtolower((string) (auth()->user()?->getResolvedRoleSlug() ?? auth()->user()?->getGlobalRoleSlug() ?? 'admin'));
+
+        return in_array($role, ['kaprodi', 'dekan'], true) ? "{$role}.admin.templates.index" : 'admin.templates.index';
     }
 }

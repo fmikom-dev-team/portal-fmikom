@@ -127,7 +127,7 @@ return new class extends Migration
 
         // ══════════════════════════════════════════════════════════════
         // 5. surat_qr_codes (TABEL BARU)
-        // Manajemen QR yang lebih detail: revoke, status, activated_at
+        // Manajemen QR dasar: status, activated_at
         // qr_token di surats tetap dipakai untuk kompatibilitas
         // ══════════════════════════════════════════════════════════════
         if (! Schema::hasTable('surat_qr_codes')) {
@@ -136,9 +136,6 @@ return new class extends Migration
                 $table->foreignId('surat_id')->constrained('surats')->cascadeOnDelete();
                 $table->string('token', 64)->unique()->comment('UUID token QR');
                 $table->enum('status', ['active', 'revoked', 'expired'])->default('active');
-                $table->string('revoked_reason')->nullable();
-                $table->foreignId('revoked_by')->nullable()->constrained('users')->nullOnDelete();
-                $table->timestamp('revoked_at')->nullable();
                 $table->timestamp('activated_at')->nullable()
                     ->comment('Kapan QR mulai aktif — null jika belum disetujui');
                 $table->timestamps();

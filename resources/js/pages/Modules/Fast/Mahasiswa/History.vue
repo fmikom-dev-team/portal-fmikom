@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import FastLayout from '@/layouts/Modules/Fast/FastLayout.vue';
 import DocumentPreviewModal from '@/components/DocumentPreviewModal.vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import {
@@ -18,6 +19,7 @@ import {
     FileCheck,
     RotateCcw,
 } from 'lucide-vue-next';
+const { can } = useFastPermissions();
 type Surat = {
     id: number;
     reference: string;
@@ -106,12 +108,12 @@ function statusLabel(status: string) {
     const map: Record<string, string> = {
         pending: 'Menunggu Validasi',
         validated_admin: 'Diteruskan untuk disetujui',
-        revision_requested: 'Sedang Direvisi Admin',
+        revision_requested: 'Menunggu Revisi Admin',
         approved_kaprodi: 'Disetujui Kaprodi',
         approved_dekan: 'Disetujui Dekan',
         finished: 'Selesai',
         rejected_admin: 'Ditolak Admin',
-        rejected_approver: 'Ditolak Pimpinan',
+        rejected_approver: 'Ditolak Final',
         cancelled: 'Dibatalkan',
     };
     return map[status] ?? 'Diproses';
@@ -303,23 +305,8 @@ function goToPage(page: number) {
                         type="button"
                         class="inline-flex items-center rounded-full border px-4 py-2 text-xs font-semibold transition duration-200"
                         :class="
-                            !status
-                                ? 'border-blue-200 bg-blue-50 text-blue-700 shadow-sm'
-                                : 'border-slate-200 bg-white text-slate-600'
-                        "
-                        @click="
-                            status = '';
-                            applyFilter();
-                        "
-                    >
-                        Semua
-                    </button>
-                    <button
-                        type="button"
-                        class="inline-flex items-center rounded-full border px-4 py-2 text-xs font-semibold transition duration-200"
-                        :class="
                             status === 'pending'
-                                ? 'border-blue-200 bg-blue-50 text-blue-700 shadow-sm'
+                                ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
                                 : 'border-slate-200 bg-white text-slate-600'
                         "
                         @click="
@@ -334,7 +321,7 @@ function goToPage(page: number) {
                         class="inline-flex items-center rounded-full border px-4 py-2 text-xs font-semibold transition duration-200"
                         :class="
                             status === 'finished'
-                                ? 'border-blue-200 bg-blue-50 text-blue-700 shadow-sm'
+                                ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
                                 : 'border-slate-200 bg-white text-slate-600'
                         "
                         @click="
@@ -349,7 +336,7 @@ function goToPage(page: number) {
                         class="inline-flex items-center rounded-full border px-4 py-2 text-xs font-semibold transition duration-200"
                         :class="
                             status === 'rejected_admin'
-                                ? 'border-blue-200 bg-blue-50 text-blue-700 shadow-sm'
+                                ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
                                 : 'border-slate-200 bg-white text-slate-600'
                         "
                         @click="
@@ -364,15 +351,30 @@ function goToPage(page: number) {
                         class="inline-flex items-center rounded-full border px-4 py-2 text-xs font-semibold transition duration-200"
                         :class="
                             status === 'rejected_approver'
-                                ? 'border-blue-200 bg-blue-50 text-blue-700 shadow-sm'
+                                ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
                                 : 'border-slate-200 bg-white text-slate-600'
                         "
                         @click="
                             status = 'rejected_approver';
                             applyFilter();
                         "
+                        >
+                        Ditolak Final
+                    </button>
+                    <button
+                        type="button"
+                        class="inline-flex items-center rounded-full border px-4 py-2 text-xs font-semibold transition duration-200"
+                        :class="
+                            !status
+                                ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
+                                : 'border-slate-200 bg-white text-slate-600'
+                        "
+                        @click="
+                            status = '';
+                            applyFilter();
+                        "
                     >
-                        Ditolak Pimpinan
+                        Semua Status
                     </button>
                 </div>
 
@@ -515,6 +517,7 @@ function goToPage(page: number) {
                         <!-- Actions -->
                         <div class="flex shrink-0 flex-wrap items-start gap-2 lg:justify-end">
                             <Link
+                                v-if="can('fast.submission.view')"
                                 :href="detailHref(item)"
                                 title="Lihat"
                                 class="fast-btn fast-btn-outline px-3 py-1.5 text-[10px] font-medium text-slate-600"
@@ -522,7 +525,7 @@ function goToPage(page: number) {
                                 <Eye class="size-3" /> Lihat
                             </Link>
                             <button
-                                v-if="item.status === 'finished'"
+                                v-if="item.status === 'finished' && can('fast.document.download')"
                                 type="button"
                                 title="Download PDF"
                                 class="fast-btn fast-btn-primary px-3 py-1.5 text-[10px] font-medium"
@@ -537,6 +540,7 @@ function goToPage(page: number) {
                                         'rejected_admin',
                                         'rejected_approver',
                                     ].includes(item.status) &&
+                                    can('fast.submission.view') &&
                                     (item.rejectionReason ||
                                         item.revisionReason)
                                 "
@@ -548,7 +552,7 @@ function goToPage(page: number) {
                                 <AlertCircle class="size-3" /> Catatan
                             </button>
                             <button
-                                v-if="item.status === 'pending'"
+                                v-if="item.status === 'pending' && can('fast.submission.cancel')"
                                 type="button"
                                 title="Batalkan"
                                 class="fast-btn fast-btn-danger px-2.5 py-1.5 text-xs font-medium"

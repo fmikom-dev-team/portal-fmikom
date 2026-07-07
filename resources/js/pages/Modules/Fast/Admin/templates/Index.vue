@@ -3,6 +3,7 @@
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import {
     Plus,
     Eye,
@@ -256,6 +257,7 @@ const props = withDefaults(
     },
 );
 const page = usePage<PageProps>();
+const { can } = useFastPermissions();
 const sidebarSearch = ref('');
 const categoryFilter = ref<'all' | string>('all');
 const statusFilter = ref<'all' | 'active' | 'inactive'>('all');
@@ -657,27 +659,46 @@ function fieldModeLabel(value?: string) {
     if (value === 'hidden') return 'Tidak tampil di form pemohon';
     return 'Bisa diisi pemohon';
 }
+function isApplicantIdentityFieldName(name: string): boolean {
+    const normalized = slugifyLabel(name);
+
+    return [
+        'nama',
+        'name',
+        'nama_pemohon',
+        'nama_mahasiswa',
+        'nim',
+        'nim_nip',
+        'nomor_induk',
+        'nomor_induk_pemohon',
+        'nomor_induk_mahasiswa',
+        'program_studi',
+        'program_studi_pemohon',
+        'program_studi_mahasiswa',
+        'fakultas',
+        'prodi',
+    ].includes(normalized);
+}
 function applyFieldSourcePreset(field: FieldConfig) {
     if (field.sumber_data === 'data_pemohon') {
         field.editable_role = 'mahasiswa';
-        field.mode_form_pemohon = 'readonly';
+        if (isApplicantIdentityFieldName(field.name)) {
+            field.mode_form_pemohon = 'readonly';
+        }
         return;
     }
 
     if (field.sumber_data === 'data_kampus') {
         field.editable_role = 'admin';
-        field.mode_form_pemohon = 'readonly';
         return;
     }
 
     if (field.sumber_data === 'data_sistem') {
         field.editable_role = 'sistem';
-        field.mode_form_pemohon = 'hidden';
         return;
     }
 
     field.editable_role = 'mahasiswa';
-    field.mode_form_pemohon = 'editable';
 }
 watch(
     selectedTemplateComponents,
@@ -915,7 +936,7 @@ function addField() {
         options: [],
         sumber_data: 'data_pemohon',
         editable_role: 'mahasiswa',
-        mode_form_pemohon: 'readonly',
+        mode_form_pemohon: 'editable',
         __auto_name: true,
     });
 }
@@ -1504,6 +1525,7 @@ function settingLabel(key: string): string {
                 </div>
                 <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
                     <button
+                        v-if="can('fast.admin.settings.manage')"
                         type="button"
                         class="fast-btn fast-btn-outline inline-flex h-11 w-full items-center justify-center gap-1.5 px-4 text-sm font-medium text-slate-700 sm:w-auto"
                         @click="openGlobalSettings"
@@ -1511,6 +1533,7 @@ function settingLabel(key: string): string {
                         <Settings class="size-4 text-slate-500" /> Pengaturan Kop & Footer
                     </button>
                     <button
+                        v-if="can('fast.admin.template.manage')"
                         type="button"
                         class="fast-btn fast-btn-primary inline-flex h-11 w-full items-center justify-center gap-1.5 px-4 text-sm font-semibold sm:w-auto"
                         @click="openAddDialog"
@@ -1588,7 +1611,7 @@ function settingLabel(key: string): string {
 
                 <button
                     type="button"
-                    class="fast-btn fast-btn-outline h-11 px-4 text-sm font-semibold text-blue-700"
+                    class="h-11 w-full rounded-2xl border border-blue-200 bg-blue-50 px-5 text-sm font-medium text-blue-700 transition-colors hover:border-blue-300 hover:bg-blue-100 hover:text-blue-800 sm:w-auto"
                     @click="resetTemplateFilters"
                 >
                     Reset Filter
@@ -1736,6 +1759,7 @@ function settingLabel(key: string): string {
                     </div>
                     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:flex xl:shrink-0 xl:flex-wrap xl:justify-end">
                         <button
+                            v-if="can('fast.admin.template.manage')"
                             type="button"
                             class="fast-btn fast-btn-outline inline-flex w-full items-center justify-center gap-1 px-3 py-2 text-xs font-medium text-slate-700 xl:w-auto"
                             @click="duplicate(selectedJenisSurat.id)"
@@ -1743,6 +1767,7 @@ function settingLabel(key: string): string {
                             <Copy class="size-3.5 text-slate-500" /> Duplikat
                         </button>
                         <button
+                            v-if="can('fast.admin.template.manage')"
                             type="button"
                             class="fast-btn inline-flex w-full items-center justify-center gap-1 rounded-xl border px-3 py-2 text-xs font-semibold xl:w-auto"
                             :class="
@@ -1773,6 +1798,7 @@ function settingLabel(key: string): string {
                             }}
                         </button>
                         <button
+                            v-if="can('fast.admin.template.manage')"
                             type="button"
                             class="fast-btn fast-btn-danger inline-flex w-full items-center justify-center gap-1 rounded-xl px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 xl:w-auto"
                             :disabled="deletingTemplate"
@@ -1911,7 +1937,10 @@ function settingLabel(key: string): string {
                         <span class="text-xs font-semibold text-slate-700">{{
                             tipeLabel[komp.type]
                         }}</span>
-                        <div class="flex items-center gap-1">
+                        <div
+                            v-if="can('fast.admin.template.manage')"
+                            class="flex items-center gap-1"
+                        >
                             <button
                                 type="button"
                                 class="grid size-6 place-items-center rounded-lg bg-white/80 text-slate-400 hover:text-slate-700 disabled:opacity-30"
@@ -2050,6 +2079,7 @@ function settingLabel(key: string): string {
                                 placeholder="Bapak/Ibu Nama Jabatan"
                             />
                             <button
+                                v-if="can('fast.admin.template.manage')"
                                 type="button"
                                 class="text-slate-400 hover:text-red-500"
                                 @click="removePenerima(komp, pi)"
@@ -2058,6 +2088,7 @@ function settingLabel(key: string): string {
                             </button>
                         </div>
                         <button
+                            v-if="can('fast.admin.template.manage')"
                             type="button"
                             class="fast-btn fast-btn-outline h-8 px-3 text-xs font-medium text-blue-700"
                             @click="addPenerima(komp)"
@@ -2267,7 +2298,7 @@ function settingLabel(key: string): string {
                                 textAlign: (komp as any).align || 'justify',
                                 textIndent:
                                     ((komp as any).text_indent || 0) + 'px',
-                                marginLeft:
+                                paddingLeft:
                                     ((komp as any).margin_left || 0) + 'px',
                             }"
                             placeholder="Ketik isi paragraf. Gunakan {{placeholder}} untuk data otomatis."
@@ -2503,6 +2534,7 @@ function settingLabel(key: string): string {
                                 @input="markRowValueManual(row)"
                             />
                             <button
+                                v-if="can('fast.admin.template.manage')"
                                 type="button"
                                 class="text-slate-400 hover:text-red-500"
                                 @click="removeRow(komp, ri)"
@@ -2511,6 +2543,7 @@ function settingLabel(key: string): string {
                             </button>
                         </div>
                         <button
+                            v-if="can('fast.admin.template.manage')"
                             type="button"
                             class="flex items-center gap-1 text-xs font-medium text-blue-700"
                             @click="addRow(komp)"
@@ -2591,13 +2624,14 @@ function settingLabel(key: string): string {
                                     class="text-xs font-semibold text-slate-700"
                                     >Kolom {{ ki + 1 }}</span
                                 >
-                                <button
-                                    type="button"
-                                    class="text-slate-400 hover:text-red-500"
-                                    @click="removeKolom(komp, ki)"
-                                >
-                                    <X class="size-3.5" />
-                                </button>
+                            <button
+                                v-if="can('fast.admin.template.manage')"
+                                type="button"
+                                class="text-slate-400 hover:text-red-500"
+                                @click="removeKolom(komp, ki)"
+                            >
+                                <X class="size-3.5" />
+                            </button>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="text-[11px] text-slate-500"
@@ -2745,6 +2779,7 @@ function settingLabel(key: string): string {
                             </div>
                         </div>
                         <button
+                            v-if="can('fast.admin.template.manage')"
                             type="button"
                             class="fast-btn fast-btn-outline h-8 px-3 text-xs font-medium text-blue-700"
                             @click="addKolom(komp)"
@@ -2782,6 +2817,7 @@ function settingLabel(key: string): string {
                                 placeholder="Nama penerima"
                             />
                             <button
+                                v-if="can('fast.admin.template.manage')"
                                 type="button"
                                 class="text-slate-400 hover:text-red-500"
                                 @click="removeTembusan(komp, ti)"
@@ -2790,6 +2826,7 @@ function settingLabel(key: string): string {
                             </button>
                         </div>
                         <button
+                            v-if="can('fast.admin.template.manage')"
                             type="button"
                             class="fast-btn fast-btn-outline h-8 px-3 text-xs font-medium text-blue-700"
                             @click="addTembusan(komp)"
@@ -2987,12 +3024,13 @@ function settingLabel(key: string): string {
                         <Eye class="size-3.5 text-slate-500" /> Preview PDF
                     </a>
                     <div class="sm:ml-auto">
-                    <button
-                        type="button"
-                        data-template-save
-                        class="fast-btn fast-btn-primary inline-flex w-full items-center justify-center gap-1.5 px-4 py-1.5 text-[11px] font-semibold sm:w-auto sm:text-xs"
-                        @click="saveTemplate"
-                    >
+                        <button
+                            v-if="can('fast.admin.template.manage')"
+                            type="button"
+                            data-template-save
+                            class="fast-btn fast-btn-primary inline-flex w-full items-center justify-center gap-1.5 px-4 py-1.5 text-[11px] font-semibold sm:w-auto sm:text-xs"
+                            @click="saveTemplate"
+                        >
                             <Save class="size-3.5" /> Simpan Isi Surat
                         </button>
                     </div>
@@ -3013,6 +3051,7 @@ function settingLabel(key: string): string {
                     </div>
                     <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                         <button
+                            v-if="can('fast.admin.template.manage')"
                             type="button"
                             class="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-100 sm:w-auto sm:text-xs"
                             @click="addApplicantPresetFields"
@@ -3020,6 +3059,7 @@ function settingLabel(key: string): string {
                             <Plus class="size-3" /> Preset Data Pemohon
                         </button>
                         <button
+                            v-if="can('fast.admin.template.manage')"
                             type="button"
                             class="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-blue-100 px-3 py-1.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-200 sm:w-auto sm:text-xs"
                             @click="addField"
@@ -3087,6 +3127,7 @@ function settingLabel(key: string): string {
                             </div>
                             <div class="flex shrink-0 items-center gap-1">
                                 <button
+                                    v-if="can('fast.admin.template.manage')"
                                     type="button"
                                     class="grid size-7 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30 sm:size-8"
                                     :disabled="idx === 0"
@@ -3096,6 +3137,7 @@ function settingLabel(key: string): string {
                                     <ChevronUp class="size-3.5 sm:size-4" />
                                 </button>
                                 <button
+                                    v-if="can('fast.admin.template.manage')"
                                     type="button"
                                     class="grid size-7 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30 sm:size-8"
                                     :disabled="idx === form.field_config.length - 1"
@@ -3105,6 +3147,7 @@ function settingLabel(key: string): string {
                                     <ChevronDown class="size-3.5 sm:size-4" />
                                 </button>
                                 <button
+                                    v-if="can('fast.admin.template.manage')"
                                     type="button"
                                     class="grid size-7 place-items-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-500 sm:size-8"
                                     title="Hapus field"
@@ -3226,6 +3269,7 @@ function settingLabel(key: string): string {
                     class="mt-4 flex justify-end"
                 >
                     <button
+                        v-if="can('fast.admin.template.manage')"
                         type="button"
                         class="fast-btn fast-btn-primary inline-flex w-full items-center justify-center gap-1.5 px-4 py-1.5 text-[11px] font-semibold sm:w-auto sm:text-xs"
                         @click="saveTemplate"
@@ -3370,6 +3414,7 @@ function settingLabel(key: string): string {
                 </div>
                 <div class="mt-4 flex justify-end">
                     <button
+                        v-if="can('fast.admin.template.manage')"
                         type="button"
                         class="fast-btn fast-btn-primary flex items-center gap-1.5 px-4 py-1.5 text-[11px] font-semibold sm:text-xs"
                         @click="saveTemplate"
@@ -3547,93 +3592,93 @@ function settingLabel(key: string): string {
             @update:open="(v) => (v ? null : closeGlobalSettings())"
         >
             <DialogContent
-                class="max-h-[90vh] w-[min(620px,calc(100vw-2rem))] overflow-y-auto rounded-2xl border-0 bg-white p-0 shadow-xl"
+                class="max-h-[92vh] w-[min(1400px,calc(100vw-1rem))] overflow-y-auto rounded-[28px] border border-slate-200 bg-slate-50 p-0 shadow-[0_20px_70px_rgba(15,23,42,0.18)]"
             >
-                <div class="border-b border-slate-100 px-6 py-5">
+                <div class="border-b border-slate-200 bg-white px-8 py-6">
                     <DialogHeader>
                         <DialogTitle
-                            class="text-base font-semibold text-slate-900"
+                            class="text-lg font-semibold text-slate-900"
                             >Pengaturan Kop & Footer Global</DialogTitle
                         >
-                        <DialogDescription class="mt-1 text-xs text-slate-500"
+                        <DialogDescription class="mt-1 text-sm text-slate-500"
                             >Berlaku untuk
                             <strong>semua surat</strong>.</DialogDescription
                         >
                     </DialogHeader>
                 </div>
-                <div class="space-y-4 px-6 py-5">
+                <div class="space-y-6 px-8 py-6">
                     <!-- KOP / HEADER -->
                     <div
                         v-if="false"
-                        class="space-y-3 rounded-xl border border-blue-200 bg-blue-50 p-4"
+                        class="space-y-4 rounded-3xl border border-blue-200 bg-blue-50 p-5"
                     >
-                        <p class="text-xs font-bold text-blue-800">
+                        <p class="text-sm font-bold text-blue-800">
                             Kop / Header Surat
                         </p>
                         <template v-for="key in kopKeys" :key="key">
                             <label
                                 v-if="settingsData[key] !== undefined"
-                                class="block space-y-1"
+                                class="block space-y-1.5"
                             >
                                 <span
-                                    class="text-[10px] font-medium text-slate-700"
+                                    class="text-xs font-medium text-slate-700"
                                     >{{ settingLabel(key) }}</span
                                 >
                                 <input
                                     v-model="settingsData[key]"
                                     type="text"
-                                    class="h-9 w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
+                                    class="h-10 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
                                 />
                             </label>
                         </template>
-                        <p class="text-[10px] text-blue-600">
+                        <p class="text-xs leading-5 text-blue-600">
                             "Nama Instansi" tampil di baris pertama kop (misal:
                             UNUGHA CILACAP). "Singkatan" tampil dalam kurung
                             setelah nama fakultas - kosongkan jika tidak perlu.
                         </p>
                     </div>
-                    <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                        <div class="flex items-start justify-between gap-3">
+                    <div class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                        <div class="flex items-start justify-between gap-4">
                             <div>
-                                <p class="text-xs font-bold text-slate-900">
+                                <p class="text-sm font-bold text-slate-900">
                                     Pengaturan Utama Kop & Footer
                                 </p>
-                                <p class="mt-0.5 text-[10px] text-slate-500">
+                                <p class="mt-1 text-sm text-slate-500">
                                     Mode standar untuk pengguna umum.
                                 </p>
                             </div>
-                            <div class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-medium text-slate-600">
+                            <div class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600">
                                 Layout aman
                             </div>
                         </div>
 
-                        <div class="mt-4 grid gap-4 lg:grid-cols-2">
-                            <div class="space-y-3 rounded-xl border border-blue-200 bg-blue-50 p-4">
+                        <div class="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.95fr)]">
+                            <div class="space-y-4 rounded-[24px] border border-blue-200 bg-blue-50 p-5">
                                 <div>
-                                    <p class="text-xs font-bold text-blue-800">Kop Surat</p>
-                                    <p class="mt-0.5 text-[10px] text-blue-700">
+                                    <p class="text-sm font-bold text-blue-800">Kop Surat</p>
+                                    <p class="mt-1 text-xs leading-5 text-blue-700">
                                         Nama instansi, fakultas, singkatan, dan logo.
                                     </p>
                                 </div>
                                 <template v-for="key in kopKeys" :key="key">
                                     <label
                                         v-if="settingsData[key] !== undefined"
-                                        class="block space-y-1"
+                                        class="block space-y-1.5"
                                     >
                                         <span
-                                            class="text-[10px] font-medium text-slate-700"
+                                            class="text-xs font-medium text-slate-700"
                                             >{{ settingLabel(key) }}</span
                                         >
                                         <input
                                             v-model="settingsData[key]"
                                             type="text"
-                                            class="h-9 w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
+                                            class="h-10 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
                                         />
                                     </label>
                                 </template>
-                                <div class="space-y-2 rounded-lg border border-blue-100 bg-white/80 p-3">
-                                    <div class="flex items-start gap-3">
-                                        <div class="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                                <div class="space-y-3 rounded-2xl border border-blue-100 bg-white/80 p-4">
+                                    <div class="flex items-start gap-4">
+                                        <div class="h-18 w-18 shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                             <img
                                                 :src="logoPreviewUrl"
                                                 alt="Preview Logo Kop"
@@ -3641,10 +3686,10 @@ function settingLabel(key: string): string {
                                             />
                                         </div>
                                         <div class="min-w-0 flex-1">
-                                            <p class="text-[10px] font-medium text-slate-700">
+                                            <p class="text-xs font-medium text-slate-700">
                                                 Logo Kop Surat
                                             </p>
-                                            <p class="mt-0.5 break-all text-[10px] text-slate-500">
+                                            <p class="mt-1 break-all text-xs text-slate-500">
                                                 {{ settingsData['logo_path'] || defaultKopLogoUrl }}
                                             </p>
                                             <input
@@ -3654,17 +3699,18 @@ function settingLabel(key: string): string {
                                                 class="sr-only"
                                                 @change="onLogoFileChange"
                                             />
-                                            <div class="mt-3 flex flex-wrap gap-2">
+                                            <div class="mt-4 flex flex-wrap gap-2">
                                                 <button
+                                                    v-if="can('fast.admin.template.manage')"
                                                     type="button"
-                                                    class="inline-flex items-center rounded-lg border border-blue-200 bg-blue-600 px-3 py-1.5 text-[10px] font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                                                    class="inline-flex items-center rounded-xl border border-blue-200 bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700"
                                                     @click="logoInputRef?.click()"
                                                 >
                                                     Upload / Ganti Logo
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-semibold text-slate-600 transition hover:bg-slate-50"
+                                                    class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
                                                     @click="clearLogoSelection"
                                                 >
                                                     Reset Preview
@@ -3672,88 +3718,88 @@ function settingLabel(key: string): string {
                                             </div>
                                         </div>
                                     </div>
-                                    <p class="text-[10px] text-blue-600">
+                                    <p class="text-xs leading-5 text-blue-600">
                                         Logo ini dipakai untuk kop surat saja. Jika kosong, sistem otomatis memakai file default kop lama.
                                     </p>
                                 </div>
                                 <label
                                     v-if="settingsData['logo_kop_position'] !== undefined"
-                                    class="block space-y-1"
+                                    class="block space-y-1.5"
                                 >
                                     <span
-                                        class="text-[10px] font-medium text-slate-700"
+                                        class="text-xs font-medium text-slate-700"
                                         >{{ settingLabel('logo_kop_position') }}</span
                                     >
                                     <select
                                         v-model="settingsData['logo_kop_position']"
-                                        class="h-9 w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-800 outline-none focus:border-blue-400"
+                                        class="h-10 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm text-slate-800 outline-none focus:border-blue-400"
                                     >
                                         <option value="top">Logo di atas</option>
                                         <option value="side">Logo di samping</option>
                                     </select>
                                 </label>
-                                <p class="text-[10px] text-blue-600">
+                                <p class="text-xs leading-5 text-blue-600">
                                     Logo diambil dari `Logo Universitas`. Kosongkan `Singkatan` jika tidak perlu.
                                 </p>
                             </div>
 
-                            <div class="space-y-3 rounded-xl border border-blue-200 bg-blue-50 p-4">
+                            <div class="space-y-4 rounded-[24px] border border-blue-200 bg-blue-50 p-5">
                                 <div>
-                                    <p class="text-xs font-bold text-blue-800">Footer Surat</p>
-                                    <p class="mt-0.5 text-[10px] text-blue-700">
+                                    <p class="text-sm font-bold text-blue-800">Footer Surat</p>
+                                    <p class="mt-1 text-xs leading-5 text-blue-700">
                                         Kontak footer bisa beda dari kop bila diperlukan.
                                     </p>
                                 </div>
                                 <template v-for="key in footerKeys" :key="key">
                                     <label
                                         v-if="settingsData[key] !== undefined"
-                                        class="block space-y-1"
+                                        class="block space-y-1.5"
                                     >
                                         <span
-                                            class="text-[10px] font-medium text-slate-700"
+                                            class="text-xs font-medium text-slate-700"
                                             >{{ settingLabel(key) }}</span
                                         >
                                         <input
                                             v-model="settingsData[key]"
                                             type="text"
-                                            class="h-9 w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
+                                            class="h-10 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
                                         />
                                     </label>
                                 </template>
-                                <p class="text-[10px] text-blue-600">
+                                <p class="text-xs leading-5 text-blue-600">
                                     Kosongkan bila ingin mengikuti nilai kop secara default.
                                 </p>
                             </div>
                         </div>
 
-                        <div class="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-4">
-                            <p class="text-xs font-bold text-purple-800">
+                        <div class="mt-5 rounded-[24px] border border-purple-200 bg-purple-50 p-5">
+                            <p class="text-sm font-bold text-purple-800">
                                 Tampilan Cepat
                             </p>
-                            <p class="mt-0.5 text-[10px] text-purple-700">
+                            <p class="mt-1 text-xs leading-5 text-purple-700">
                                 Atur warna utama tanpa menyentuh layout.
                             </p>
                             <label
                                 v-if="settingsData['warna_primer'] !== undefined"
-                                class="mt-3 block space-y-1"
+                                class="mt-4 block space-y-1.5"
                             >
-                                <span class="text-[10px] font-medium text-slate-700"
+                                <span class="text-xs font-medium text-slate-700"
                                     >Warna Primer Kop & Footer</span
                                 >
                                 <div class="flex items-center gap-2">
                                     <input
                                         v-model="settingsData['warna_primer']"
                                         type="color"
-                                        class="h-9 w-12 cursor-pointer rounded-lg border border-slate-300 bg-white p-0.5"
+                                        class="h-10 w-12 cursor-pointer rounded-xl border border-slate-300 bg-white p-0.5"
                                     />
                                     <input
                                         v-model="settingsData['warna_primer']"
                                         type="text"
-                                        class="h-9 w-28 rounded-lg border border-slate-300 bg-white px-3 font-mono text-xs text-slate-800 outline-none focus:border-purple-400"
+                                        class="h-10 w-32 rounded-xl border border-slate-300 bg-white px-3.5 font-mono text-sm text-slate-800 outline-none focus:border-purple-400"
                                         placeholder="#00b050"
                                     />
                                     <div
-                                        class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5"
+                                        class="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2"
                                     >
                                         <div
                                             class="size-4 rounded border border-slate-200"
@@ -3773,134 +3819,134 @@ function settingLabel(key: string): string {
                     </div>
 
                     <!-- FONT FAMILY -->
-                    <div class="space-y-3 rounded-xl border border-sky-200 bg-sky-50 p-4">
-                        <div class="flex items-start justify-between gap-3">
+                    <div class="space-y-4 rounded-[24px] border border-sky-200 bg-sky-50 p-5">
+                        <div class="flex items-start justify-between gap-4">
                             <div>
-                                <p class="text-xs font-bold text-sky-800">
+                                <p class="text-sm font-bold text-sky-800">
                                     Font Surat
                                 </p>
-                                <p class="mt-0.5 text-[10px] text-sky-700">
+                                <p class="mt-1 text-xs leading-5 text-sky-700">
                                     Pilih font yang familiar seperti di Microsoft Word.
                                 </p>
                             </div>
-                            <div class="rounded-full border border-sky-200 bg-white/80 px-2.5 py-1 text-[10px] font-medium text-sky-700">
+                            <div class="rounded-full border border-sky-200 bg-white/80 px-3 py-1.5 text-xs font-medium text-sky-700">
                                 Word-like
                             </div>
                         </div>
 
                         <label
                             v-if="settingsData['font_family_all'] !== undefined"
-                            class="block space-y-1 rounded-lg border border-sky-100 bg-white/80 p-3"
+                            class="block space-y-1.5 rounded-2xl border border-sky-100 bg-white/80 p-4"
                         >
-                            <span class="text-[10px] font-medium text-slate-700">
+                            <span class="text-xs font-medium text-slate-700">
                                 {{ settingLabel('font_family_all') }}
                             </span>
                             <select
                                 v-model="settingsData['font_family_all']"
-                                class="h-9 w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-800 outline-none focus:border-sky-400"
+                                class="h-10 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm text-slate-800 outline-none focus:border-sky-400"
                             >
                                 <option value="">Gunakan font per bagian</option>
                                 <option v-for="font in fontFamilyOptions" :key="font" :value="font">
                                     {{ font }}
                                 </option>
                             </select>
-                            <p class="text-[10px] text-sky-700">
+                            <p class="text-xs leading-5 text-sky-700">
                                 Jika diisi, font kop, isi surat, dan footer mengikuti pilihan ini.
                             </p>
                         </label>
 
-                        <div class="grid gap-3 md:grid-cols-3">
+                        <div class="grid gap-4 md:grid-cols-3">
                             <label
                                 v-if="settingsData['font_family_kop'] !== undefined"
-                                class="space-y-1 rounded-lg border border-sky-100 bg-white/80 p-3"
+                                class="space-y-1.5 rounded-2xl border border-sky-100 bg-white/80 p-4"
                             >
-                                <span class="text-[10px] font-medium text-slate-700">
+                                <span class="text-xs font-medium text-slate-700">
                                     {{ settingLabel('font_family_kop') }}
                                 </span>
                                 <select
                                     v-model="settingsData['font_family_kop']"
                                     :disabled="(settingsData['font_family_all'] ?? '').trim() !== ''"
-                                    class="h-9 w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-800 outline-none focus:border-sky-400 disabled:cursor-not-allowed disabled:bg-slate-100"
+                                    class="h-10 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm text-slate-800 outline-none focus:border-sky-400 disabled:cursor-not-allowed disabled:bg-slate-100"
                                 >
                                     <option v-for="font in fontFamilyOptions" :key="font" :value="font">
                                         {{ font }}
                                     </option>
                                 </select>
-                                <p class="text-[10px] text-slate-500">Header surat / kop.</p>
+                                <p class="text-xs leading-5 text-slate-500">Header surat / kop.</p>
                             </label>
 
                             <label
                                 v-if="settingsData['font_family_body'] !== undefined"
-                                class="space-y-1 rounded-lg border border-sky-100 bg-white/80 p-3"
+                                class="space-y-1.5 rounded-2xl border border-sky-100 bg-white/80 p-4"
                             >
-                                <span class="text-[10px] font-medium text-slate-700">
+                                <span class="text-xs font-medium text-slate-700">
                                     {{ settingLabel('font_family_body') }}
                                 </span>
                                 <select
                                     v-model="settingsData['font_family_body']"
                                     :disabled="(settingsData['font_family_all'] ?? '').trim() !== ''"
-                                    class="h-9 w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-800 outline-none focus:border-sky-400 disabled:cursor-not-allowed disabled:bg-slate-100"
+                                    class="h-10 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm text-slate-800 outline-none focus:border-sky-400 disabled:cursor-not-allowed disabled:bg-slate-100"
                                 >
                                     <option v-for="font in fontFamilyOptions" :key="font" :value="font">
                                         {{ font }}
                                     </option>
                                 </select>
-                                <p class="text-[10px] text-slate-500">Isi surat utama.</p>
+                                <p class="text-xs leading-5 text-slate-500">Isi surat utama.</p>
                             </label>
 
                             <label
                                 v-if="settingsData['font_family_footer'] !== undefined"
-                                class="space-y-1 rounded-lg border border-sky-100 bg-white/80 p-3"
+                                class="space-y-1.5 rounded-2xl border border-sky-100 bg-white/80 p-4"
                             >
-                                <span class="text-[10px] font-medium text-slate-700">
+                                <span class="text-xs font-medium text-slate-700">
                                     {{ settingLabel('font_family_footer') }}
                                 </span>
                                 <select
                                     v-model="settingsData['font_family_footer']"
                                     :disabled="(settingsData['font_family_all'] ?? '').trim() !== ''"
-                                    class="h-9 w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-800 outline-none focus:border-sky-400 disabled:cursor-not-allowed disabled:bg-slate-100"
+                                    class="h-10 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm text-slate-800 outline-none focus:border-sky-400 disabled:cursor-not-allowed disabled:bg-slate-100"
                                 >
                                     <option v-for="font in fontFamilyOptions" :key="font" :value="font">
                                         {{ font }}
                                     </option>
                                 </select>
-                                <p class="text-[10px] text-slate-500">Footer surat.</p>
+                                <p class="text-xs leading-5 text-slate-500">Footer surat.</p>
                             </label>
                         </div>
                     </div>
 
                     <!-- UKURAN FONT -->
                     <div
-                        class="space-y-3 rounded-xl border border-violet-200 bg-violet-50 p-4"
+                        class="space-y-4 rounded-[24px] border border-violet-200 bg-violet-50 p-5"
                     >
-                        <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-start justify-between gap-4">
                             <div>
-                                <p class="text-xs font-bold text-violet-800">
+                                <p class="text-sm font-bold text-violet-800">
                                     Ukuran Font Kop & Footer
                                 </p>
-                                <p class="mt-0.5 text-[10px] text-violet-700">
+                                <p class="mt-1 text-xs leading-5 text-violet-700">
                                     Mengatur ukuran teks utama pada kop dan footer.
                                 </p>
                             </div>
-                            <div class="rounded-full border border-violet-200 bg-white/80 px-2.5 py-1 text-[10px] font-medium text-violet-700">
+                            <div class="rounded-full border border-violet-200 bg-white/80 px-3 py-1.5 text-xs font-medium text-violet-700">
                                 pt
                             </div>
                         </div>
 
-                        <div class="grid gap-3 md:grid-cols-2">
+                        <div class="grid gap-4 md:grid-cols-2">
                             <template v-for="key in fontKeys" :key="key">
                                 <label
                                     v-if="settingsData[key] !== undefined"
-                                    class="space-y-1 rounded-lg border border-violet-100 bg-white/80 p-3"
+                                    class="space-y-1.5 rounded-2xl border border-violet-100 bg-white/80 p-4"
                                 >
                                     <span
-                                        class="text-[10px] font-medium text-slate-700"
+                                        class="text-xs font-medium text-slate-700"
                                         >{{ settingLabel(key) }}</span
                                     >
                                     <input
                                         v-model="settingsData[key]"
                                         type="text"
-                                        class="h-9 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-violet-400"
+                                        class="h-10 w-full rounded-xl border border-slate-300 bg-white px-3.5 font-mono text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-violet-400"
                                         placeholder="17pt"
                                     />
                                 </label>
@@ -3909,35 +3955,35 @@ function settingLabel(key: string): string {
                     </div>
 
                     <!-- GARIS -->
-                    <div class="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                        <div class="flex items-start justify-between gap-3">
+                    <div class="space-y-4 rounded-[24px] border border-emerald-200 bg-emerald-50 p-5">
+                        <div class="flex items-start justify-between gap-4">
                             <div>
-                                <p class="text-xs font-bold text-emerald-800">
+                                <p class="text-sm font-bold text-emerald-800">
                                     Garis Kop & Footer
                                 </p>
-                                <p class="mt-0.5 text-[10px] text-emerald-700">
+                                <p class="mt-1 text-xs leading-5 text-emerald-700">
                                     Atur ketebalan garis pemisah agar proporsional.
                                 </p>
                             </div>
-                            <div class="rounded-full border border-emerald-200 bg-white/80 px-2.5 py-1 text-[10px] font-medium text-emerald-700">
+                            <div class="rounded-full border border-emerald-200 bg-white/80 px-3 py-1.5 text-xs font-medium text-emerald-700">
                                 px / mm
                             </div>
                         </div>
 
-                        <div class="grid gap-3 md:grid-cols-2">
+                        <div class="grid gap-4 md:grid-cols-2">
                             <template v-for="key in garisKeys" :key="key">
                                 <label
                                     v-if="settingsData[key] !== undefined"
-                                    class="space-y-1 rounded-lg border border-emerald-100 bg-white/80 p-3"
+                                    class="space-y-1.5 rounded-2xl border border-emerald-100 bg-white/80 p-4"
                                 >
                                     <span
-                                        class="text-[10px] font-medium text-slate-700"
+                                        class="text-xs font-medium text-slate-700"
                                         >{{ settingLabel(key) }}</span
                                     >
                                     <input
                                         v-model="settingsData[key]"
                                         type="text"
-                                        class="h-9 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-emerald-400"
+                                        class="h-10 w-full rounded-xl border border-slate-300 bg-white px-3.5 font-mono text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-emerald-400"
                                         placeholder="2px"
                                     />
                                 </label>
@@ -3945,99 +3991,71 @@ function settingLabel(key: string): string {
                         </div>
                     </div>
 
-                    <!-- MARGIN -->
-                    <div class="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
-                        <p class="text-xs font-bold text-amber-800">
-                            Margin Halaman
-                        </p>
-                        <div class="grid grid-cols-2 gap-3">
-                            <template v-for="key in marginKeys" :key="key">
-                                <label
-                                    v-if="settingsData[key] !== undefined"
-                                    class="space-y-1"
-                                >
-                                    <span
-                                        class="text-[10px] font-medium text-slate-700"
-                                        >{{ settingLabel(key) }}</span
-                                    >
-                                    <input
-                                        v-model="settingsData[key]"
-                                        type="text"
-                                        class="h-9 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-amber-400"
-                                        placeholder="12mm"
-                                    />
-                                </label>
-                            </template>
-                        </div>
-                        <p class="text-[10px] text-amber-600">
-                            Contoh: 12mm, 15mm, 1cm, 1in
-                        </p>
-                    </div>
                     <!-- FORMAT NOMOR -->
-                    <div class="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                        <p class="text-xs font-bold text-slate-700">
+                    <div class="space-y-4 rounded-[24px] border border-slate-200 bg-slate-50 p-5">
+                        <p class="text-sm font-bold text-slate-700">
                             Format Nomor & Kota
                         </p>
                         <template v-for="key in nomorKeys" :key="key">
                             <label
                                 v-if="settingsData[key] !== undefined"
-                                class="block space-y-1"
+                                class="block space-y-1.5"
                             >
                                 <span
-                                    class="text-[10px] font-medium text-slate-700"
+                                    class="text-xs font-medium text-slate-700"
                                     >{{ settingLabel(key) }}</span
                                 >
                                 <input
                                     v-model="settingsData[key]"
                                     type="text"
-                                    class="h-9 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
+                                    class="h-10 w-full rounded-xl border border-slate-300 bg-white px-3.5 font-mono text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
                                 />
                             </label>
                         </template>
                         <div
-                            class="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[10px] text-blue-700"
+                            class="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs leading-5 text-blue-700"
                         >
                             Contoh hasil: <strong>CUTI-MHS/0042/IV/2026</strong>
                         </div>
                     </div>
                     <!-- HTML KUSTOM (collapsed) -->
-                    <details class="rounded-xl border border-slate-200 bg-slate-50">
+                    <details class="rounded-[24px] border border-slate-200 bg-slate-50">
                         <summary
-                            class="cursor-pointer px-4 py-3 text-xs font-semibold text-slate-700"
+                            class="cursor-pointer px-5 py-4 text-sm font-semibold text-slate-700"
                         >
                             Opsi Lanjutan
                         </summary>
-                        <div class="space-y-3 px-4 pb-4">
-                            <p class="text-[10px] text-slate-500">
+                        <div class="space-y-4 px-5 pb-5">
+                            <p class="text-xs leading-5 text-slate-500">
                                 Gunakan ini hanya jika ingin layout kop/footer kustom penuh.
                             </p>
                             <label
                                 v-if="settingsData['kop_html'] !== undefined"
-                                class="block space-y-1"
+                                class="block space-y-1.5"
                             >
                                 <span
-                                    class="text-[10px] font-medium text-slate-600"
+                                    class="text-xs font-medium text-slate-600"
                                     >HTML Kop Surat</span
                                 >
                                 <textarea
                                     v-model="settingsData['kop_html']"
                                     rows="4"
-                                    class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
+                                    class="w-full rounded-2xl border border-slate-300 bg-white px-3.5 py-3 font-mono text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
                                     placeholder="Kosongkan untuk otomatis"
                                 />
                             </label>
                             <label
                                 v-if="settingsData['footer_html'] !== undefined"
-                                class="block space-y-1"
+                                class="block space-y-1.5"
                             >
                                 <span
-                                    class="text-[10px] font-medium text-slate-600"
+                                    class="text-xs font-medium text-slate-600"
                                     >HTML Footer Surat</span
                                 >
                                 <textarea
                                     v-model="settingsData['footer_html']"
                                     rows="3"
-                                    class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
+                                    class="w-full rounded-2xl border border-slate-300 bg-white px-3.5 py-3 font-mono text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
                                     placeholder="Kosongkan untuk otomatis"
                                 />
                             </label>
@@ -4045,18 +4063,19 @@ function settingLabel(key: string): string {
                     </details>
                 </div>
                 <div
-                    class="flex justify-end gap-2 border-t border-slate-100 px-6 py-4"
+                    class="flex justify-end gap-3 border-t border-slate-200 bg-white px-8 py-5"
                 >
                     <Button
                         type="button"
                         variant="outline"
-                        class="rounded-xl border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300 hover:bg-blue-100"
+                        class="rounded-xl border-blue-200 bg-blue-50 px-5 py-2.5 text-sm text-blue-700 hover:border-blue-300 hover:bg-blue-100"
                         @click="closeGlobalSettings"
                         >Batal</Button
                     >
                     <Button
+                        v-if="can('fast.admin.settings.manage')"
                         type="button"
-                        class="fast-btn fast-btn-primary rounded-xl"
+                        class="fast-btn fast-btn-primary rounded-xl px-5 py-2.5 text-sm"
                         @click="saveGlobalSettings"
                         >Simpan Semua Pengaturan</Button
                     >

@@ -51,7 +51,7 @@ class TemplateMutationService
             'is_active' => $request->boolean('is_active', true),
         ]);
 
-        return to_route('admin.templates.index', [
+        return to_route($this->templatesIndexRouteName(), [
             'jenis_surat_id' => $jenisSurat->id,
         ]);
     }
@@ -204,7 +204,7 @@ class TemplateMutationService
             }
         }
 
-        return to_route('admin.templates.index', [
+        return to_route($this->templatesIndexRouteName(), [
             'jenis_surat_id' => $jenisSurat->id,
         ])->with('success', 'Template surat berhasil disimpan.');
     }
@@ -246,7 +246,7 @@ class TemplateMutationService
                 }
             }
 
-            return to_route('admin.templates.index', [
+            return to_route($this->templatesIndexRouteName(), [
                 'jenis_surat_id' => $copy->id,
             ])->with('success', 'Template surat berhasil diduplikasi.');
         });
@@ -267,5 +267,12 @@ class TemplateMutationService
             && (string) ($field['sumber_data'] ?? 'data_pemohon') === 'data_pemohon'
             && (string) ($field['editable_role'] ?? 'mahasiswa') === 'mahasiswa'
             && in_array((string) ($field['mode_form_pemohon'] ?? 'readonly'), ['editable', 'readonly'], true);
+    }
+
+    protected function templatesIndexRouteName(): string
+    {
+        $role = strtolower((string) (auth()->user()?->getResolvedRoleSlug() ?? auth()->user()?->getGlobalRoleSlug() ?? 'admin'));
+
+        return in_array($role, ['kaprodi', 'dekan'], true) ? "{$role}.admin.templates.index" : 'admin.templates.index';
     }
 }

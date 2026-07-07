@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // resources/js/pages/Modules/Fast/Admin/letters/Preview.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import LetterStepIndicator from '@/components/Modules/Fast/Admin/LetterStepIndicator.vue';
@@ -11,6 +12,8 @@ import {
     Maximize2,
     Minimize2,
 } from 'lucide-vue-next';
+type AttachmentColumn = { key: string; label: string; align: 'left' | 'center' | 'right'; bold: boolean };
+type AttachmentRow = Record<string, string>;
 type JenisSurat = {
     id: number;
     nama: string;
@@ -35,12 +38,24 @@ type JenisSurat = {
 };
 type FormData = {
     jenis_surat_id: number;
-    subject_user_id?: number | null;
+    subject_name?: string | null;
     keperluan: string;
     perihal?: string;
     kepada_yth?: string[];
     lampiran_keterangan?: string;
-    data: Record<string, string | boolean | string[]>;
+    lampiran_judul?: string;
+    lampiran_orientation?: string;
+    lampiran_judul_align?: string;
+    lampiran_judul_bold?: string;
+    lampiran_label_no?: string;
+    lampiran_label_nama?: string;
+    lampiran_label_nim?: string;
+    lampiran_label_prodi?: string;
+    lampiran_mode?: string;
+    lampiran_mahasiswa?: Array<{ nama: string; nim: string; prodi: string }>;
+    lampiran_columns?: AttachmentColumn[];
+    lampiran_rows?: AttachmentRow[];
+    data: Record<string, unknown>;
 };
 type SubjectSummary = {
     id: number;
@@ -54,19 +69,39 @@ const props = defineProps<{
     formData: FormData;
     subjectSummary?: SubjectSummary | null;
     renderedHtml: string;
+    renderedAttachmentHtml?: string | null;
     previewDocumentUrl: string;
 }>();
 const form = useForm({
     jenis_surat_id: props.formData.jenis_surat_id,
-    subject_user_id: props.formData.subject_user_id ?? '',
+    subject_name: props.formData.subject_name ?? '',
     keperluan: props.formData.keperluan,
     perihal: props.formData.perihal ?? '',
     kepada_yth: props.formData.kepada_yth ?? [],
     lampiran_keterangan: props.formData.lampiran_keterangan ?? '',
+    lampiran_judul: props.formData.lampiran_judul ?? '',
+    lampiran_orientation: props.formData.lampiran_orientation ?? 'portrait',
+    lampiran_judul_align: props.formData.lampiran_judul_align ?? 'center',
+    lampiran_judul_bold: props.formData.lampiran_judul_bold ?? '1',
+    lampiran_label_no: props.formData.lampiran_label_no ?? 'No',
+    lampiran_label_nama: props.formData.lampiran_label_nama ?? 'Nama Mahasiswa',
+    lampiran_label_nim: props.formData.lampiran_label_nim ?? 'NIM',
+    lampiran_label_prodi: props.formData.lampiran_label_prodi ?? 'Program Studi',
+    lampiran_mode: props.formData.lampiran_mode ?? 'none',
+    lampiran_mahasiswa: props.formData.lampiran_mahasiswa ?? [],
+    lampiran_columns: props.formData.lampiran_columns ?? [],
+    lampiran_rows: props.formData.lampiran_rows ?? [],
     form_data: props.formData.data,
 });
+const { can } = useFastPermissions();
 const fullPreview = ref(false);
 const previewDocumentUrl = computed(() => props.previewDocumentUrl);
+const hasAttachmentPreview = computed(
+    () => props.formData.lampiran_mode === 'student_list' && !!props.renderedAttachmentHtml,
+);
+const attachmentOrientationLabel = computed(() =>
+    (props.formData.lampiran_orientation ?? 'portrait') === 'landscape' ? 'Landscape' : 'Potret',
+);
 const requiresSubjectUser = computed(() => !!props.jenisSurat.requires_subject_user);
 const isInstitutionLetter = computed(
     () => !requiresSubjectUser.value || props.jenisSurat.letter_mode === 'institution',
@@ -176,6 +211,31 @@ const steps = needsApproval
                         />
                     </div>
                 </div>
+                <div
+                    v-if="hasAttachmentPreview"
+                    class="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                >
+                    <div class="flex items-center justify-between border-b border-slate-100 px-5 py-3">
+                        <div>
+                            <h3 class="text-sm font-semibold text-slate-800">
+                                Preview Lampiran
+                            </h3>
+                            <p class="text-xs text-slate-400">
+                                Daftar mahasiswa akan digenerate bersama surat utama dalam bundle PDF final.
+                            </p>
+                        </div>
+                        <span class="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
+                            {{ attachmentOrientationLabel }} • {{ formData.lampiran_rows?.length ?? 0 }} baris
+                        </span>
+                    </div>
+                    <div :class="fullPreview ? 'h-[760px]' : ((formData.lampiran_orientation ?? 'portrait') === 'landscape' ? 'h-[520px]' : 'h-[420px]')">
+                        <iframe
+                            class="h-full w-full border-0"
+                            :srcdoc="renderedAttachmentHtml ?? ''"
+                            title="Preview lampiran surat"
+                        />
+                    </div>
+                </div>
                 <!-- Navigasi -->
                 <div
                     class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4"
@@ -188,6 +248,7 @@ const steps = needsApproval
                         <ChevronLeft class="size-4" /> Kembali Edit
                     </button>
                     <button
+                        v-if="can('fast.admin.surat.create')"
                         type="button"
                         class="fast-btn fast-btn-primary flex items-center gap-1.5 px-5 py-2 text-sm font-semibold"
                         :disabled="form.processing"
@@ -238,14 +299,11 @@ const steps = needsApproval
                             <p class="mt-0.5 font-semibold text-slate-800">
                                 Surat institusi
                             </p>
-                            <p class="mt-0.5 text-slate-500">
-                                Dokumen diterbitkan atas nama fakultas atau kampus, bukan individu tertentu.
-                            </p>
                         </div>
                         <div>
                             <p class="text-slate-400">Peran Admin</p>
-                            <p class="mt-0.5 text-slate-700">
-                                Admin pembuat surat
+                            <p class="mt-0.5 font-semibold text-slate-800">
+                                Pembuat surat
                             </p>
                         </div>
                         <div>
@@ -262,33 +320,16 @@ const steps = needsApproval
                                 {{ formData.keperluan }}
                             </p>
                         </div>
-                        <div v-if="formData.perihal">
-                            <p class="text-slate-400">Perihal</p>
+                        <div v-if="formData.lampiran_judul">
+                            <p class="text-slate-400">Judul Lampiran</p>
                             <p class="mt-0.5 text-slate-700">
-                                {{ formData.perihal }}
+                                {{ formData.lampiran_judul }}
                             </p>
                         </div>
-                        <div
-                            v-if="
-                                formData.kepada_yth &&
-                                formData.kepada_yth.length > 0
-                            "
-                        >
-                            <p class="text-slate-400">Kepada Yth.</p>
-                            <div class="mt-1 space-y-0.5">
-                                <p
-                                    v-for="k in formData.kepada_yth"
-                                    :key="k"
-                                    class="text-slate-700"
-                                >
-                                    {{ k }}
-                                </p>
-                            </div>
-                        </div>
-                        <div v-if="formData.lampiran_keterangan">
-                            <p class="text-slate-400">Lampiran</p>
+                        <div v-if="hasAttachmentPreview">
+                            <p class="text-slate-400">Dokumen Lampiran</p>
                             <p class="mt-0.5 text-slate-700">
-                                {{ formData.lampiran_keterangan }}
+                                Tabel lampiran ({{ formData.lampiran_rows?.length ?? 0 }} baris)
                             </p>
                         </div>
                     </div>

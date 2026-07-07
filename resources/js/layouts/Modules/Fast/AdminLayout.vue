@@ -4,6 +4,7 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import NotificationBell from '@/components/Modules/Fast/NotificationBell.vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import {
     LayoutDashboard,
     FilePlus2,
@@ -48,6 +49,7 @@ type PageProps = {
         admin_queue?: number;
         approval_queue?: number;
     };
+    fast_permissions?: string[];
     recent_notifications?: Array<{
         id: number | string;
         title?: string;
@@ -99,6 +101,11 @@ const userRole = computed(() => user.value?.role_title ?? 'Administrator');
 const userSlug = computed(() => user.value?.user_type ?? 'admin');
 const activeRoleSlug = computed(() =>
     String(page.props.context?.active_role ?? userSlug.value ?? '').toLowerCase(),
+);
+const adminMirrorBasePath = computed(() =>
+    ['kaprodi', 'dekan'].includes(activeRoleSlug.value)
+        ? `/${activeRoleSlug.value}/admin`
+        : '/admin',
 );
 const userInitials = computed(() =>
     userName.value
@@ -166,10 +173,14 @@ type NavItem = {
     label: string;
     href: string;
     icon: unknown;
+    permission?: string;
     badge?: number | string;
     badgeColor?: string;
     onlyFor?: string[]; // role slugs yang boleh lihat
 };
+
+const { can } = useFastPermissions();
+const currentPath = computed(() => page.url.split('?')[0]);
 
 const navItems = computed<NavItem[]>(() => {
     const slug = activeRoleSlug.value;
@@ -187,18 +198,21 @@ const navItems = computed<NavItem[]>(() => {
                 label: 'Dashboard',
                 href: '/admin/dashboard',
                 icon: LayoutDashboard,
+                permission: 'fast.admin.dashboard.view',
             },
             {
                 key: 'letters.create',
                 label: 'Buat Surat',
                 href: '/admin/surat/create',
                 icon: FilePlus2,
+                permission: 'fast.admin.surat.create',
             },
             {
                 key: 'letters.index',
                 label: 'Pengajuan',
                 href: '/admin/surat',
                 icon: ClipboardList,
+                permission: 'fast.admin.queue.view',
                 badge: navAdminQueueCount.value || undefined,
                 badgeColor: 'amber',
             },
@@ -207,6 +221,7 @@ const navItems = computed<NavItem[]>(() => {
                 label: 'Riwayat Admin',
                 href: '/admin/history',
                 icon: History,
+                permission: 'fast.admin.history.view',
                 badge: notifCountRevisionAdmin.value || undefined,
                 badgeColor: 'red',
             },
@@ -215,20 +230,29 @@ const navItems = computed<NavItem[]>(() => {
                 label: 'Arsip',
                 href: '/admin/archive',
                 icon: Archive,
+                permission: 'fast.admin.archive.view',
             },
             {
                 key: 'templates',
                 label: 'Template',
                 href: '/admin/templates',
                 icon: FileCode2,
+                permission: 'fast.admin.template.manage',
             },
             {
                 key: 'categories',
                 label: 'Kategori',
                 href: '/admin/categories',
                 icon: Tag,
+                permission: 'fast.admin.category.manage',
             },
-            { key: 'qr', label: 'QR Code', href: '/admin/qr', icon: QrCode },
+            {
+                key: 'qr',
+                label: 'QR Code',
+                href: '/admin/qr',
+                icon: QrCode,
+                permission: 'fast.admin.qr.manage',
+            },
         ];
     }
     if (isApproverRole) {
@@ -238,12 +262,14 @@ const navItems = computed<NavItem[]>(() => {
                 label: 'Dashboard',
                 href: `/${slug}/dashboard`,
                 icon: LayoutDashboard,
+                permission: 'fast.approval.dashboard.view',
             },
             {
                 key: 'approval.antrian',
                 label: 'Antrian Approval',
                 href: `/${slug}/antrian`,
                 icon: Clock,
+                permission: 'fast.approval.queue.view',
                 badge: navApprovalQueueCount.value || undefined,
                 badgeColor: 'amber',
             },
@@ -252,6 +278,60 @@ const navItems = computed<NavItem[]>(() => {
                 label: 'Riwayat Approval',
                 href: `/${slug}/arsip`,
                 icon: Archive,
+                permission: 'fast.approval.archive.view',
+            },
+            {
+                key: 'dashboard',
+                label: 'Dashboard',
+                href: `${adminMirrorBasePath.value}/dashboard`,
+                icon: LayoutDashboard,
+                permission: 'fast.admin.dashboard.view',
+            },
+            {
+                key: 'letters.index',
+                label: 'Pengajuan',
+                href: `${adminMirrorBasePath.value}/surat`,
+                icon: ClipboardList,
+                permission: 'fast.admin.queue.view',
+                badge: navAdminQueueCount.value || undefined,
+                badgeColor: 'amber',
+            },
+            {
+                key: 'history',
+                label: 'Riwayat Admin',
+                href: `${adminMirrorBasePath.value}/history`,
+                icon: History,
+                permission: 'fast.admin.history.view',
+                badge: notifCountRevisionAdmin.value || undefined,
+                badgeColor: 'red',
+            },
+            {
+                key: 'archive',
+                label: 'Arsip',
+                href: `${adminMirrorBasePath.value}/archive`,
+                icon: Archive,
+                permission: 'fast.admin.archive.view',
+            },
+            {
+                key: 'templates',
+                label: 'Template',
+                href: `${adminMirrorBasePath.value}/templates`,
+                icon: FileCode2,
+                permission: 'fast.admin.template.view',
+            },
+            {
+                key: 'categories',
+                label: 'Kategori',
+                href: `${adminMirrorBasePath.value}/categories`,
+                icon: Tag,
+                permission: 'fast.admin.category.view',
+            },
+            {
+                key: 'qr',
+                label: 'QR Code',
+                href: `${adminMirrorBasePath.value}/qr`,
+                icon: QrCode,
+                permission: 'fast.admin.qr.view',
             },
         ];
     }
@@ -275,15 +355,63 @@ const navItems = computed<NavItem[]>(() => {
 });
 
 const headerLabel = computed(() => {
-    const activeItem = navItems.value.find((item) => isActive(item.key));
+    const activeItem = visibleNavItems.value.find((item) => isActive(item));
     if (activeItem) return activeItem.label;
 
     const lastBreadcrumb = props.breadcrumbs?.[props.breadcrumbs.length - 1];
     return lastBreadcrumb?.label ?? props.title;
 });
 
-function isActive(key: string) {
-    return props.activeMenu === key || props.activeMenu?.startsWith(key + '.');
+const visibleNavItems = computed(() =>
+    navItems.value.filter((item) => !item.permission || can(item.permission)),
+);
+
+const approverSidebarSections = computed(() => {
+    const slug = activeRoleSlug.value;
+    if (!['kaprodi', 'dekan'].includes(slug)) {
+        return null;
+    }
+
+    const items = visibleNavItems.value;
+    const approvalItems = items.filter((item) =>
+        String(item.permission ?? '').startsWith('fast.approval.'),
+    );
+    const adminItems = items.filter((item) =>
+        String(item.permission ?? '').startsWith('fast.admin.'),
+    );
+
+    return [
+        { title: 'Approval', items: approvalItems },
+        { title: 'Admin Read Only', items: adminItems },
+    ].filter((section) => section.items.length > 0);
+});
+
+function isActive(item: NavItem) {
+    const activeKey = props.activeMenu ?? '';
+    const matchesMenu = activeKey === item.key || activeKey.startsWith(item.key + '.');
+
+    if (!matchesMenu) {
+        return false;
+    }
+
+    const itemPath = item.href.split('?')[0];
+
+    if (['kaprodi', 'dekan'].includes(activeRoleSlug.value)) {
+        const mirrorBase = adminMirrorBasePath.value;
+        const approvalBase = `/${activeRoleSlug.value}`;
+        const isMirrorItem = itemPath.startsWith(mirrorBase);
+        const isApprovalItem = itemPath.startsWith(approvalBase) && !isMirrorItem;
+
+        if (currentPath.value.startsWith(mirrorBase)) {
+            return isMirrorItem;
+        }
+
+        if (currentPath.value.startsWith(approvalBase)) {
+            return isApprovalItem;
+        }
+    }
+
+    return true;
 }
 
 function toggleSidebar() {
@@ -497,52 +625,118 @@ function batteryIcon() {
 
             <!-- Nav -->
             <nav class="flex-1 overflow-x-hidden overflow-y-auto px-2 py-2">
-                <Link
-                    v-for="item in navItems"
-                    :key="item.key + item.label"
-                    :href="item.href"
-                    :prefetch="false"
-                    class="mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors"
-                    :class="[
-                        isActive(item.key)
-                            ? 'bg-blue-500 text-white shadow-sm'
-                            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700',
-                        !sidebarExpanded ? 'justify-center' : '',
-                    ]"
-                    :title="!sidebarExpanded ? item.label : undefined"
-                >
-                    <span class="relative shrink-0">
-                        <component
-                            :is="item.icon"
-                            class="size-5"
-                            :class="
-                                isActive(item.key) ? 'text-white' : 'text-slate-400'
-                            "
-                        />
+                <template v-if="approverSidebarSections">
+                    <div
+                        v-for="section in approverSidebarSections"
+                        :key="section.title"
+                        class="mb-3"
+                    >
+                        <p
+                            v-if="sidebarExpanded"
+                            class="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400"
+                        >
+                            {{ section.title }}
+                        </p>
+                        <Link
+                            v-for="item in section.items"
+                            :key="item.key + item.label"
+                            :href="item.href"
+                            :prefetch="false"
+                            class="mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors"
+                            :class="[
+                                isActive(item)
+                                    ? 'bg-blue-500 text-white shadow-sm'
+                                    : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700',
+                                !sidebarExpanded ? 'justify-center' : '',
+                            ]"
+                            :title="!sidebarExpanded ? item.label : undefined"
+                        >
+                            <span class="relative shrink-0">
+                                <component
+                                    :is="item.icon"
+                                    class="size-5"
+                                    :class="
+                                        isActive(item)
+                                            ? 'text-white'
+                                            : 'text-slate-400'
+                                    "
+                                />
+                                <span
+                                    v-if="!sidebarExpanded && Number(item.badge ?? 0) > 0"
+                                    class="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[8px] font-bold leading-none text-white"
+                                >
+                                    {{ item.badge }}
+                                </span>
+                            </span>
+                            <span v-if="sidebarExpanded" class="flex-1 truncate">{{
+                                item.label
+                            }}</span>
+                            <span
+                                v-if="sidebarExpanded && item.badge"
+                                class="rounded-full px-1.5 py-0.5 text-[10px] leading-none font-bold"
+                                :class="
+                                    item.badgeColor === 'amber'
+                                        ? 'bg-amber-100 text-amber-700'
+                                        : item.badgeColor === 'red'
+                                          ? 'bg-red-100 text-red-700'
+                                          : 'bg-blue-100 text-blue-700'
+                                "
+                            >
+                                {{ item.badge }}
+                            </span>
+                        </Link>
+                    </div>
+                </template>
+                <template v-else>
+                    <Link
+                        v-for="item in visibleNavItems"
+                        :key="item.key + item.label"
+                        :href="item.href"
+                        :prefetch="false"
+                        class="mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors"
+                        :class="[
+                            isActive(item)
+                                ? 'bg-blue-500 text-white shadow-sm'
+                                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700',
+                            !sidebarExpanded ? 'justify-center' : '',
+                        ]"
+                        :title="!sidebarExpanded ? item.label : undefined"
+                    >
+                        <span class="relative shrink-0">
+                            <component
+                                :is="item.icon"
+                                class="size-5"
+                                :class="
+                                    isActive(item)
+                                        ? 'text-white'
+                                        : 'text-slate-400'
+                                "
+                            />
+                            <span
+                                v-if="!sidebarExpanded && Number(item.badge ?? 0) > 0"
+                                class="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[8px] font-bold leading-none text-white"
+                            >
+                                {{ item.badge }}
+                            </span>
+                        </span>
+                        <span v-if="sidebarExpanded" class="flex-1 truncate">{{
+                            item.label
+                        }}</span>
                         <span
-                            v-if="!sidebarExpanded && Number(item.badge ?? 0) > 0"
-                            class="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[8px] font-bold leading-none text-white"
+                            v-if="sidebarExpanded && item.badge"
+                            class="rounded-full px-1.5 py-0.5 text-[10px] leading-none font-bold"
+                            :class="
+                                item.badgeColor === 'amber'
+                                    ? 'bg-amber-100 text-amber-700'
+                                    : item.badgeColor === 'red'
+                                      ? 'bg-red-100 text-red-700'
+                                      : 'bg-blue-100 text-blue-700'
+                            "
                         >
                             {{ item.badge }}
                         </span>
-                    </span>
-                    <span v-if="sidebarExpanded" class="flex-1 truncate">{{
-                        item.label
-                    }}</span>
-                    <span
-                        v-if="sidebarExpanded && item.badge"
-                        class="rounded-full px-1.5 py-0.5 text-[10px] leading-none font-bold"
-                        :class="
-                            item.badgeColor === 'amber'
-                                ? 'bg-amber-100 text-amber-700'
-                                : item.badgeColor === 'red'
-                                  ? 'bg-red-100 text-red-700'
-                                : 'bg-blue-100 text-blue-700'
-                        "
-                    >
-                        {{ item.badge }}
-                    </span>
-                </Link>
+                    </Link>
+                </template>
             </nav>
 
             <!-- Bottom -->
@@ -706,13 +900,13 @@ function batteryIcon() {
         >
             <div class="flex items-center justify-around">
                 <Link
-                    v-for="item in navItems.slice(0, 5)"
+                    v-for="item in visibleNavItems.slice(0, 5)"
                     :key="item.key + 'mb'"
                     :href="item.href"
                     :prefetch="false"
                     class="relative flex flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[10px] font-medium transition-colors"
                     :class="
-                        isActive(item.key) ? 'text-blue-600' : 'text-slate-400'
+                        isActive(item) ? 'text-blue-600' : 'text-slate-400'
                     "
                 >
                     <component :is="item.icon" class="size-5" />

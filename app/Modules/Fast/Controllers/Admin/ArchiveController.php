@@ -16,6 +16,8 @@ class ArchiveController extends Controller
 {
     public function index(Request $request): Response
     {
+        $this->authorize('viewAny', Surat::class);
+
         $search = $request->string('search')->trim()->toString();
         $categoryId = $request->integer('category_id');
         $dateFrom = $request->string('date_from')->toString();

@@ -191,9 +191,16 @@ function subjectNim(item: { subject?: { nim?: string | null } | null }) {
 function rowCanBeProcessed(item: SuratItem) {
     return ns(item.status) === 'validated_admin';
 }
-function statusLabel(status: string) {
-    const s = ns(status);
-    if (s === 'validated_admin') return 'Divalidasi Admin';
+function statusLabel(
+    item: {
+        status: string;
+        is_institution?: boolean;
+        letter_mode?: string | null;
+    },
+) {
+    const s = ns(item.status);
+    const isInstitution = isInstitutionLetter(item);
+    if (s === 'validated_admin') return isInstitution ? 'Menunggu Persetujuan' : 'Divalidasi Admin';
     if (s === 'approved_kaprodi') return 'Disetujui Kaprodi';
     if (s === 'approved_dekan') return 'Disetujui Dekan';
     if (s === 'revision_requested')
@@ -295,38 +302,29 @@ function isWordAttachment(f?: DetailLampiran | null) {
     >
         <Head :title="`Dashboard ${role.name || 'Approval'}`" />
         <!-- Monitoring Hero -->
-        <div class="mb-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-            <div class="flex min-h-[96px] flex-col justify-center gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 via-white to-blue-50 px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:py-7">
-                <div class="max-w-3xl">
-                    <h2 class="text-xl font-bold text-slate-900">
-                        Pantau antrian, keputusan, dan surat final
-                    </h2>
-                </div>
-            </div>
-            <div class="grid gap-3 p-5 sm:grid-cols-2 xl:grid-cols-4">
-                <div
-                    v-for="stat in summaryCards"
-                    :key="stat.label"
-                    class="rounded-2xl border bg-white p-4 text-left transition hover:shadow-sm"
-                    :class="stat.border"
-                >
-                    <div class="flex items-center justify-between">
-                        <p class="text-[11px] text-slate-500">
-                            {{ stat.label }}
-                        </p>
-                        <component
-                            :is="stat.icon"
-                            class="size-4"
-                            :class="stat.iconColor"
-                        />
-                    </div>
-                    <p class="mt-2 text-2xl font-bold text-slate-900">
-                        {{ String(stat.value).padStart(2, '0') }}
+        <div class="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div
+                v-for="stat in summaryCards"
+                :key="stat.label"
+                class="rounded-2xl border bg-white p-4 text-left transition hover:shadow-sm"
+                :class="stat.border"
+            >
+                <div class="flex items-center justify-between">
+                    <p class="text-[11px] text-slate-500">
+                        {{ stat.label }}
                     </p>
-                    <p class="mt-1 text-[11px] text-slate-400">
-                        {{ stat.status === 'validated_admin' ? 'Surat menunggu tindakan approver' : stat.status === 'approved_kaprodi' || stat.status === 'approved_dekan' ? 'Sudah disetujui dan masuk arsip' : stat.status === 'revision_requested' ? 'Perlu revisi dari admin' : 'Keputusan final telah dibuat' }}
-                    </p>
+                    <component
+                        :is="stat.icon"
+                        class="size-4"
+                        :class="stat.iconColor"
+                    />
                 </div>
+                <p class="mt-2 text-2xl font-bold text-slate-900">
+                    {{ String(stat.value).padStart(2, '0') }}
+                </p>
+                <p class="mt-1 text-[11px] text-slate-400">
+                    {{ stat.status === 'validated_admin' ? 'Surat menunggu tindakan approver' : stat.status === 'approved_kaprodi' || stat.status === 'approved_dekan' ? 'Sudah disetujui dan masuk arsip' : stat.status === 'revision_requested' ? 'Perlu revisi dari admin' : 'Keputusan final telah dibuat' }}
+                </p>
             </div>
         </div>
         <!-- Main grid: Tabel + Sidebar -->
@@ -414,7 +412,7 @@ function isWordAttachment(f?: DetailLampiran | null) {
                                         class="rounded-full px-2 py-1 text-[10px] font-semibold"
                                         :class="statusBadgeClass(item.status)"
                                     >
-                                        {{ statusLabel(item.status) }}
+                                        {{ statusLabel(item) }}
                                     </span>
                                 </td>
                             </tr>
@@ -487,7 +485,7 @@ function isWordAttachment(f?: DetailLampiran | null) {
                                                     )
                                                 "
                                             >
-                                                {{ statusLabel(item.status) }}
+                                                {{ statusLabel(item) }}
                                             </span>
                                             <span class="text-[10px] text-slate-400">
                                                 {{
@@ -516,52 +514,6 @@ function isWordAttachment(f?: DetailLampiran | null) {
                     </div>
                 </div>
 
-                <!-- Panduan Cepat -->
-                <div class="rounded-2xl border border-slate-200 bg-white p-4">
-                    <h3
-                        class="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900"
-                    >
-                        <FileText class="size-4 text-blue-500" /> Panduan Cepat
-                    </h3>
-                    <div class="space-y-2.5 text-xs text-slate-600">
-                        <div class="flex items-start gap-2">
-                            <Check
-                                class="mt-0.5 size-3.5 shrink-0 text-emerald-500"
-                            />
-                            <p>
-                                Klik
-                                <span class="font-semibold text-slate-800"
-                                    >Setujui</span
-                                >
-                                untuk menyetujui pengajuan.
-                            </p>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <X
-                                class="mt-0.5 size-3.5 shrink-0 text-amber-500"
-                            />
-                            <p>
-                                Klik
-                                <span class="font-semibold text-slate-800"
-                                    >Kembalikan</span
-                                >
-                                untuk minta revisi ke admin.
-                            </p>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <XCircle
-                                class="mt-0.5 size-3.5 shrink-0 text-red-500"
-                            />
-                            <p>
-                                Klik
-                                <span class="font-semibold text-slate-800"
-                                    >Tolak Final</span
-                                >
-                                untuk menolak permanen.
-                            </p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
         <!-- Modal Lampiran -->

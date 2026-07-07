@@ -1,6 +1,14 @@
 <script setup lang="ts">
 // resources/js/pages/Modules/Fast/Admin/letters/Index.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
@@ -22,6 +30,8 @@ type SuratItem = {
     can_approve?: boolean;
     revision_label?: string | null;
     can_edit?: boolean;
+    needs_admin_completion?: boolean;
+    missing_campus_fields?: string[];
     nomor_surat?: string | null;
     keperluan?: string | null;
     tanggal_pengajuan?: string | null;
@@ -75,6 +85,9 @@ const isFilterActive = computed(
 const toastMessage = ref('');
 const toastVariant = ref<'success' | 'error'>('success');
 const selectedSuratIds = ref<number[]>([]);
+const actionConfirmOpen = ref(false);
+const actionTargetId = ref<number | null>(null);
+const pendingAction = ref<'approve' | 'revision' | 'reject' | null>(null);
 const selectableSurats = computed(() =>
     (props.surats.data ?? []).filter(
         (item) =>
@@ -91,6 +104,9 @@ const allSelectableSelected = computed(() =>
     selectableSuratIds.value.length > 0 &&
     selectableSuratIds.value.every((id) => selectedSuratIds.value.includes(id)),
 );
+function needsCompletion(item: SuratItem) {
+    return item.status === 'pending' && item.can_approve === false;
+}
 
 function showToast(message: string, variant: 'success' | 'error' = 'success') {
     toastMessage.value = message;
@@ -125,19 +141,16 @@ const statusFilters = computed(() => [
     {
         key: 'pending',
         label: 'Pending',
-        color: 'amber' as const,
     },
     {
         key: 'revision_requested',
-        label: 'Dikembalikan Pimpinan',
-        color: 'amber' as const,
+        label: 'Revisi',
     },
     {
         key: 'rejected_admin',
         label: 'Ditolak Admin',
-        color: 'red' as const,
     },
-    { key: 'all', label: 'Semua', color: 'blue' as const },
+    { key: 'all', label: 'Semua Status' },
 ]);
 
 function applyFilter() {
@@ -212,6 +225,46 @@ function bulkApproveSelected() {
         },
     );
 }
+function openActionConfirm(id: number, action: 'approve' | 'revision' | 'reject') {
+    actionTargetId.value = id;
+    pendingAction.value = action;
+    actionConfirmOpen.value = true;
+}
+function closeActionConfirm() {
+    actionConfirmOpen.value = false;
+    actionTargetId.value = null;
+    pendingAction.value = null;
+}
+function editSuratRoute(id: number) {
+    return `/admin/surat/${id}/edit?return_to=/admin/surat`;
+}
+function confirmAction() {
+    if (actionTargetId.value === null || pendingAction.value === null) return;
+
+    const item = props.surats.data.find((surat) => surat.id === actionTargetId.value);
+    const targetId = actionTargetId.value;
+    const targetAction = pendingAction.value;
+
+    closeActionConfirm();
+
+    if (targetAction === 'approve') {
+        approveSurat(targetId);
+        return;
+    }
+
+    if (targetAction === 'revision') {
+        router.visit(editSuratRoute(targetId));
+        return;
+    }
+
+    if (targetAction === 'reject') {
+        if (item && needsCompletion(item)) {
+            showToast('Lengkapi data kampus terlebih dahulu.', 'error');
+            return;
+        }
+        openRejectModal(targetId);
+    }
+}
 const rejectModalOpen = ref(false);
 const rejectTargetId = ref<number | null>(null);
 const rejectForm = useForm({ reason: '' });
@@ -236,6 +289,11 @@ function submitReject() {
     });
 }
 function approveSurat(id: number) {
+    const item = props.surats.data.find((surat) => surat.id === id);
+    if (item && needsCompletion(item)) {
+        showToast('Lengkapi data kampus terlebih dahulu.', 'error');
+        return;
+    }
     if (approvingId.value) return;
     approvingId.value = id;
     router.post(
@@ -252,6 +310,30 @@ function approveSurat(id: number) {
         },
     );
 }
+function actionConfirmTitle() {
+    if (pendingAction.value === 'approve') return 'Konfirmasi Proses';
+    if (pendingAction.value === 'revision') return 'Konfirmasi Revisi';
+    if (pendingAction.value === 'reject') return 'Konfirmasi Tolak';
+    return 'Konfirmasi Aksi';
+}
+function actionConfirmDescription() {
+    if (pendingAction.value === 'approve') {
+        return 'Surat akan divalidasi dan diteruskan ke tahap berikutnya. Pastikan data sudah benar.';
+    }
+    if (pendingAction.value === 'revision') {
+        return 'Anda akan membuka form revisi untuk melengkapi atau memperbaiki data surat.';
+    }
+    if (pendingAction.value === 'reject') {
+        return 'Setelah konfirmasi ini, Anda dapat mengisi alasan penolakan.';
+    }
+    return 'Lanjutkan aksi yang dipilih.';
+}
+function actionConfirmButtonLabel() {
+    if (pendingAction.value === 'approve') return 'Lanjutkan Proses';
+    if (pendingAction.value === 'revision') return 'Lanjutkan Revisi';
+    if (pendingAction.value === 'reject') return 'Lanjutkan Tolak';
+    return 'Lanjutkan';
+}
 function formatDate(d?: string | null) {
     if (!d) return '';
     return new Intl.DateTimeFormat('id-ID', {
@@ -261,15 +343,18 @@ function formatDate(d?: string | null) {
     }).format(new Date(d));
 }
 function statusLabel(item: SuratItem) {
+    if (needsCompletion(item)) {
+        return 'Perlu Dilengkapi';
+    }
     const map: Record<string, string> = {
         pending: 'Pending',
         validated_admin: 'Diteruskan untuk disetujui',
         approved_kaprodi: 'Disetujui Kaprodi',
         approved_dekan: 'Disetujui Dekan',
-        revision_requested: item.revision_label ?? 'Dikembalikan Pimpinan',
+        revision_requested: 'Revisi',
         finished: 'Selesai',
         rejected_admin: 'Ditolak Admin',
-        rejected_approver: 'Ditolak Pimpinan',
+        rejected_approver: 'Ditolak Final',
     };
     return map[item.status] ?? item.status;
 }
@@ -350,11 +435,7 @@ function initials(name?: string | null) {
                     class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
                     :class="
                         status === filter.key
-                            ? filter.color === 'red'
-                                ? 'border-red-500 bg-red-500 text-white shadow-sm'
-                                : filter.color === 'amber'
-                                  ? 'border-amber-500 bg-amber-500 text-white shadow-sm'
-                                  : 'border-blue-500 bg-blue-500 text-white shadow-sm'
+                            ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
                             : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
                     "
                     @click="
@@ -494,14 +575,15 @@ function initials(name?: string | null) {
                                         class="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold"
                                         :class="statusClass(item.status)"
                                     >
-                                        {{
-                                            item.status === 'revision_requested'
-                                                ? item.revision_label ??
-                                                  statusLabel(item)
-                                                : statusLabel(item)
-                                        }}
+                                        {{ statusLabel(item) }}
                                     </span>
                                 </div>
+                                <p
+                                    v-if="needsCompletion(item)"
+                                    class="mt-1 text-[10px] text-amber-600"
+                                >
+                                    Data kampus wajib dilengkapi admin
+                                </p>
                                 <p
                                     v-if="item.pemohon?.nim"
                                     class="mt-0.5 font-mono text-[10px] text-slate-400"
@@ -541,30 +623,40 @@ function initials(name?: string | null) {
                                 <Eye class="size-3" /> Lihat
                             </Link>
                             <button
-                                v-if="item.can_approve && can('fast.admin.surat.approve')"
+                                v-if="needsCompletion(item) && can('fast.admin.surat.update')"
+                                type="button"
+                                class="fast-btn flex items-center gap-1 border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[10px] font-medium text-amber-700 transition-colors hover:border-amber-300 hover:bg-amber-100 hover:text-amber-800"
+                                title="Lengkapi data kampus"
+                                @click="openActionConfirm(item.id, 'revision')"
+                            >
+                                <FileEdit class="size-3" /> Lengkapi Data
+                            </button>
+                            <button
+                                v-if="item.status === 'pending' && can('fast.admin.surat.approve')"
                                 type="button"
                                 :disabled="approvingId === item.id"
                                 class="fast-btn fast-btn-primary flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium"
                                 title="Validasi & Teruskan"
-                                @click="approveSurat(item.id)"
+                                @click="openActionConfirm(item.id, 'approve')"
                             >
                                 <CheckCircle2 class="size-3" /> Proses
                             </button>
-                            <Link
+                            <button
                                 v-if="item.status !== 'pending' && item.can_edit && can('fast.admin.surat.update')"
-                                :href="`/admin/surat/${item.id}/edit?return_to=/admin/surat`"
+                                type="button"
                                 class="fast-btn flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium bg-orange-500 text-white hover:bg-orange-600 border border-orange-500"
                                 title="Edit & Teruskan"
+                                @click="openActionConfirm(item.id, 'revision')"
                             >
                                 <CheckCircle2 class="size-3" />
                                 Proses Ulang
-                            </Link>
+                            </button>
                             <button
                                 v-if="item.status === 'pending' && can('fast.admin.surat.approve')"
                                 type="button"
                                 class="fast-btn flex items-center gap-1 border border-red-200 bg-red-50 px-2.5 py-1.5 text-[10px] font-medium text-red-700 transition-colors hover:border-red-300 hover:bg-red-100 hover:text-red-800"
                                 title="Tolak Pengajuan"
-                                @click="openRejectModal(item.id)"
+                                @click="openActionConfirm(item.id, 'reject')"
                             >
                                 <XCircle class="size-3 text-red-600" />
                             </button>
@@ -592,6 +684,60 @@ function initials(name?: string | null) {
                     v-html="link.label"
                 />
         </div>
+        <Dialog
+            :open="actionConfirmOpen"
+            @update:open="(v) => (v ? null : closeActionConfirm())"
+        >
+            <DialogContent
+                class="max-w-md rounded-2xl border-0 bg-white p-0 sm:max-w-md"
+                :show-close-button="false"
+            >
+                <div class="p-6">
+                    <DialogHeader class="mb-4 text-left">
+                        <DialogTitle class="text-lg font-semibold text-slate-900">
+                            {{ actionConfirmTitle() }}
+                        </DialogTitle>
+                        <DialogDescription class="text-sm text-slate-400">
+                            {{ actionConfirmDescription() }}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                        {{
+                            actionTargetId !== null
+                                ? (props.surats.data.find((item) => item.id === actionTargetId)?.pemohon?.name
+                                    ?? props.surats.data.find((item) => item.id === actionTargetId)?.jenisSurat?.nama
+                                    ?? '-')
+                                : '-'
+                        }}
+                    </div>
+
+                    <DialogFooter class="mt-5 gap-2">
+                        <button
+                            type="button"
+                            class="fast-btn fast-btn-outline rounded-xl px-4 py-2 text-sm font-medium text-slate-600"
+                            @click="closeActionConfirm"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="button"
+                            class="fast-btn rounded-xl px-4 py-2 text-sm text-white"
+                            :class="
+                                pendingAction === 'approve'
+                                    ? 'bg-blue-600 hover:bg-blue-700'
+                                    : pendingAction === 'revision'
+                                        ? 'bg-amber-500 hover:bg-amber-600'
+                                        : 'bg-red-600 hover:bg-red-700'
+                            "
+                            @click="confirmAction"
+                        >
+                            {{ actionConfirmButtonLabel() }}
+                        </button>
+                    </DialogFooter>
+                </div>
+            </DialogContent>
+        </Dialog>
         <Transition name="fade">
             <div
                 v-if="rejectModalOpen"

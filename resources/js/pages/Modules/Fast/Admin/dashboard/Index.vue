@@ -16,6 +16,8 @@ type SuratItem = {
     status: string;
     can_approve?: boolean;
     can_edit?: boolean;
+    needs_admin_completion?: boolean;
+    missing_campus_fields?: string[];
     nomor_surat?: string | null;
     tanggal_pengajuan?: string | null;
     created_at?: string | null;
@@ -134,10 +136,14 @@ function statusLabel(s: string) {
         revision_requested: 'Revisi',
         finished: 'Selesai',
         rejected_admin: 'Ditolak Admin',
-        rejected_approver: 'Ditolak Pimpinan',
+        rejected_approver: 'Ditolak Final',
         cancelled: 'Dibatalkan',
     };
     return map[s] ?? s;
+}
+
+function itemNeedsCompletion(item: SuratItem) {
+    return item.status === 'pending' && !!item.needs_admin_completion;
 }
 
 function statusClass(s: string) {
@@ -300,11 +306,21 @@ function activityBadgeClass(action?: string | null) {
                                 </td>
                                 <td class="px-5 py-3.5">
                                     <span
-                                        class="rounded-full px-2 py-1 text-[10px] font-semibold"
-                                        :class="statusClass(item.status)"
-                                    >
-                                        {{ statusLabel(item.status) }}
+                                class="rounded-full px-2 py-1 text-[10px] font-semibold"
+                                :class="statusClass(item.status)"
+                            >
+                                        {{
+                                            itemNeedsCompletion(item)
+                                                ? 'Perlu Dilengkapi'
+                                                : statusLabel(item.status)
+                                        }}
                                     </span>
+                                    <p
+                                        v-if="itemNeedsCompletion(item)"
+                                        class="mt-1 text-[10px] text-amber-600"
+                                    >
+                                        Data kampus wajib dilengkapi admin
+                                    </p>
                                 </td>
                             </tr>
                         </tbody>
@@ -349,7 +365,11 @@ function activityBadgeClass(action?: string | null) {
                                                     statusClass(item.status)
                                                 "
                                             >
-                                                {{ statusLabel(item.status) }}
+                                                {{
+                                                    itemNeedsCompletion(item)
+                                                        ? 'Perlu Dilengkapi'
+                                                        : statusLabel(item.status)
+                                                }}
                                             </span>
                                             <span class="text-[10px] text-slate-400">
                                                 {{

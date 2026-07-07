@@ -105,11 +105,31 @@ class SuratDataContract
     public static function inferFieldFormMode(string $source): string
     {
         return match ($source) {
-            'data_pemohon' => 'readonly',
+            'data_pemohon' => 'editable',
             'data_kampus' => 'readonly',
             'data_sistem' => 'hidden',
             default => 'editable',
         };
+    }
+
+    public static function isApplicantIdentityFieldName(string $name): bool
+    {
+        return in_array(Str::slug($name, '_'), [
+            'nama',
+            'name',
+            'nama_pemohon',
+            'nama_mahasiswa',
+            'nim',
+            'nim_nip',
+            'nomor_induk',
+            'nomor_induk_pemohon',
+            'nomor_induk_mahasiswa',
+            'program_studi',
+            'program_studi_pemohon',
+            'program_studi_mahasiswa',
+            'fakultas',
+            'prodi',
+        ], true);
     }
 
     /**
@@ -137,8 +157,10 @@ class SuratDataContract
         if (! in_array($mode, ['editable', 'readonly', 'hidden'], true)) {
             $mode = static::inferFieldFormMode($source);
         }
-        if ($source === 'data_pemohon' && $mode === 'editable') {
-            $mode = 'readonly';
+        if ($source === 'data_pemohon') {
+            $mode = static::isApplicantIdentityFieldName($name)
+                ? 'readonly'
+                : ($mode === 'hidden' ? 'hidden' : 'editable');
         }
 
         $editableRole = strtolower(trim((string) ($field['editable_role'] ?? '')));

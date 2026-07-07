@@ -3,6 +3,7 @@
 import FastLayout from '@/layouts/Modules/Fast/FastLayout.vue';
 import DocumentPreviewModal from '@/components/DocumentPreviewModal.vue';
 import LetterFlowCard from '@/components/Modules/Fast/LetterFlowCard.vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, nextTick, ref, watch } from 'vue';
 import {
@@ -35,6 +36,8 @@ import {
     getProgressStepIndex,
     progressSteps,
 } from '@/lib/fastProgress';
+
+const { can } = useFastPermissions();
 
 type Summary = {
     total: number;
@@ -282,6 +285,40 @@ function isApplicantFieldVisible(field: FieldConfig) {
 }
 function isApplicantFieldReadonly(field: FieldConfig) {
     return (field.mode_form_pemohon ?? 'editable') === 'readonly' || isApplicantIdentityField(field);
+}
+function fieldSourceLabel(field: FieldConfig): string {
+    const source = field.sumber_data ?? 'data_pemohon';
+    const normalized = normalizeFieldName(field.name);
+    const isIdentityField = [
+        'nama',
+        'name',
+        'nama_pemohon',
+        'nama_mahasiswa',
+        'nim',
+        'nim_nip',
+        'nomor_induk',
+        'nomor_induk_pemohon',
+        'nomor_induk_mahasiswa',
+        'program_studi',
+        'program_studi_pemohon',
+        'program_studi_mahasiswa',
+        'fakultas',
+        'prodi',
+    ].includes(normalized);
+
+    if (source === 'data_kampus') {
+        return 'Data kampus';
+    }
+
+    if (source === 'data_sistem') {
+        return 'Data sistem';
+    }
+
+    if (!isIdentityField) {
+        return '';
+    }
+
+    return 'Data pemohon';
 }
 
 function setApplicantFieldRef(name: string, el: any) {
@@ -598,7 +635,7 @@ function statusLabel(status: string) {
         approved_dekan: 'Disetujui',
         finished: 'Selesai',
         rejected_admin: 'Ditolak Admin',
-        rejected_approver: 'Ditolak Pimpinan',
+        rejected_approver: 'Ditolak Final',
         cancelled: 'Dibatalkan',
     };
     return map[status] ?? 'Diproses';
@@ -694,7 +731,7 @@ function statusTone(status: string) {
 function dashboardProgressLabel(item: LatestSubmission): string {
     const status = item.status;
     if (status === 'rejected_admin') return 'Ditolak Admin';
-    if (status === 'rejected_approver') return 'Ditolak Pimpinan';
+    if (status === 'rejected_approver') return 'Ditolak Final';
     if (status === 'revision_requested') return 'Perlu Revisi';
     if (status === 'cancelled') return 'Dibatalkan';
     if (status === 'approved_kaprodi' || status === 'approved_dekan') {
@@ -1139,6 +1176,7 @@ function fieldError(name: string): string | undefined {
                             <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <Link
+                                        v-if="can('fast.submission.view')"
                                         :href="`${safeEndpoints.basePath}/history/${item.id}`"
                                         title="Lihat"
                                         class="fast-btn fast-btn-outline px-3 py-1.5 text-[11px] font-medium text-slate-600"
@@ -1146,7 +1184,7 @@ function fieldError(name: string): string | undefined {
                                         <Eye class="size-3.5" /> Lihat
                                     </Link>
                                     <button
-                                        v-if="item.hasPdf"
+                                        v-if="item.hasPdf && can('fast.document.download')"
                                         type="button"
                                         title="Download PDF"
                                         class="fast-btn fast-btn-primary px-3 py-1.5 text-[10px] font-medium"
@@ -1201,9 +1239,9 @@ function fieldError(name: string): string | undefined {
                             Tidak ada jenis surat
                         </p>
                     </div>
-                    <div v-else class="grid gap-2">
+                    <div v-else-if="can('fast.submission.create')" class="grid gap-2">
                         <button
-                        v-for="jenis in visibleJenis"
+                            v-for="jenis in visibleJenis"
                             :key="jenis.id"
                             type="button"
                             class="group relative rounded-2xl border border-slate-200 bg-white p-3 text-left transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
@@ -1231,8 +1269,15 @@ function fieldError(name: string): string | undefined {
                         </button>
                     </div>
 
+                    <div
+                        v-else
+                        class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-5 text-center text-xs text-slate-500"
+                    >
+                        Aksi pengajuan tidak tersedia untuk role ini.
+                    </div>
+
                     <Link
-                        v-if="hasMoreJenis"
+                        v-if="hasMoreJenis && can('fast.submission.create')"
                         href="/mahasiswa/ajukan"
                         class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-blue-600 transition-colors hover:text-blue-700"
                     >
@@ -1284,51 +1329,6 @@ function fieldError(name: string): string | undefined {
                         v-if="formStep === 'form'"
                         class="max-h-[70vh] space-y-4 overflow-y-auto p-5"
                     >
-                        <div class="space-y-4">
-                            <div>
-                                <label class="mb-1 block text-xs font-medium text-slate-700">
-                                    Nama
-                                </label>
-                                <p class="mb-1 text-[10px] font-medium text-emerald-600">
-                                    otomatis dari akun pemohon
-                                </p>
-                                <input
-                                    :value="applicantProfile.name || '-'"
-                                    type="text"
-                                    readonly
-                                    class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label class="mb-1 block text-xs font-medium text-slate-700">
-                                    {{ applicantProfile.identifierLabel }}
-                                </label>
-                                <p class="mb-1 text-[10px] font-medium text-emerald-600">
-                                    otomatis dari akun pemohon
-                                </p>
-                                <input
-                                    :value="applicantProfile.identifierValue || '-'"
-                                    type="text"
-                                    readonly
-                                    class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label class="mb-1 block text-xs font-medium text-slate-700">
-                                    Program Studi
-                                </label>
-                                <p class="mb-1 text-[10px] font-medium text-emerald-600">
-                                    otomatis dari akun pemohon
-                                </p>
-                                <input
-                                    :value="applicantProfile.programStudi || '-'"
-                                    type="text"
-                                    readonly
-                                    class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none"
-                                />
-                            </div>
-                        </div>
-
                         <!-- Keperluan -->
                         <div data-field-key="keperluan">
                             <label
@@ -1382,22 +1382,22 @@ function fieldError(name: string): string | undefined {
                                 :data-field-key="`field_data.${field.name}`"
                                 :ref="(el) => setApplicantFieldRef(`field_data.${field.name}`, el)"
                             >
-                                <label
-                                    class="mb-1 block text-xs font-medium text-slate-700"
-                                >
-                                    {{ field.label }}
+                                <div class="mb-1 flex items-center justify-between gap-2">
+                                    <label class="block text-xs font-medium text-slate-700">
+                                        {{ field.label }}
+                                        <span
+                                            v-if="field.required"
+                                            class="text-red-500"
+                                            >*</span
+                                        >
+                                    </label>
                                     <span
-                                        v-if="field.required"
-                                        class="text-red-500"
-                                        >*</span
+                                        v-if="fieldSourceLabel(field)"
+                                        class="inline-flex shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600"
                                     >
-                                </label>
-                                <span
-                                    v-if="isApplicantFieldReadonly(field)"
-                                    class="mb-2 inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700"
-                                >
-                                    Data oleh kampus
-                                </span>
+                                        {{ fieldSourceLabel(field) }}
+                                    </span>
+                                </div>
                                 <!-- textarea -->
                                 <textarea
                                     v-if="field.type === 'textarea'"

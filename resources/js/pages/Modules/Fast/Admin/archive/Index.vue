@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // resources/js/pages/Modules/Fast/Admin/archive/Index.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import {
@@ -11,6 +12,8 @@ import {
     FileText,
     ChevronDown,
 } from 'lucide-vue-next';
+
+const { can } = useFastPermissions();
 type SuratItem = {
     id: number;
     type: string;
@@ -312,6 +315,7 @@ function isInstitutionLetter(item: SuratItem) {
                         class="flex items-center gap-2 border-t border-slate-100 pt-3"
                     >
                         <Link
+                            v-if="can('fast.admin.archive.view')"
                             :href="`/admin/surat/${item.id}`"
                             class="fast-btn fast-btn-outline flex flex-1 items-center justify-center gap-1.5 py-2 text-[10px] font-medium text-slate-600"
                             title="Lihat"
@@ -319,20 +323,27 @@ function isInstitutionLetter(item: SuratItem) {
                             <Eye class="size-3" /> Lihat
                         </Link>
                         <a
-                            v-if="item.download_url"
+                            v-if="item.download_url && can('fast.document.download')"
                             :href="item.download_url"
                             target="_blank"
                             class="fast-btn fast-btn-primary flex flex-1 items-center justify-center gap-1.5 py-2 text-[10px] font-medium"
-                            title="Download PDF"
+                            title="Unduh PDF"
                         >
                             <Download class="size-3" /> Unduh PDF
                         </a>
                         <div
-                            v-else
+                            v-else-if="can('fast.document.download')"
                             class="flex flex-1 cursor-not-allowed items-center justify-center gap-1.5 rounded-lg bg-slate-100 py-2 text-[10px] font-medium text-slate-400"
                             title="PDF belum tersedia"
                         >
                             <FileText class="size-3" /> PDF Belum Tersedia
+                        </div>
+                        <div
+                            v-else
+                            class="flex flex-1 cursor-not-allowed items-center justify-center gap-1.5 rounded-lg bg-slate-100 py-2 text-[10px] font-medium text-slate-400"
+                            title="Akses unduh tidak tersedia"
+                        >
+                            <FileText class="size-3" /> Akses Terkunci
                         </div>
                     </div>
                 </div>

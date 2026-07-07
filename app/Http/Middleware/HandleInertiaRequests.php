@@ -10,6 +10,7 @@ use App\Models\Portal\PortalPost;
 use App\Models\Portal\PortalSetting;
 use App\Models\Surat;
 use App\Modules\Fast\Services\Shared\NotificationFeedService;
+use App\Modules\Fast\Support\FastPermissionCatalog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -82,6 +83,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user ? (new UserResource($user))->resolve() : null,
                 'session_lifetime' => (int) config('session.lifetime') * 60 * 1000,
             ],
+            'fast_permissions' => $user ? $this->fastPermissions($request) : [],
             'unread_messages_count' => $user
                 // BUG-013: Cache per-user unread count to avoid a query on every Inertia request.
                 // 30-second TTL is short enough for near-real-time feel, eliminates 90% of queries.
@@ -244,5 +246,35 @@ class HandleInertiaRequests extends Middleware
             'admin_queue' => $this->fastPendingAdminCount(),
             'approval_queue' => $approvalQueueCount,
         ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function fastPermissions(Request $request): array
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return [];
+        }
+
+        $activeModule = strtoupper((string) $request->attributes->get('resolved_module', session('active_module', '')));
+        $routeRole = strtolower((string) ($request->segment(1) ?? ''));
+        $activeRole = strtolower((string) $request->attributes->get('resolved_role', session('active_role', $routeRole ?: ($user->userTypeSlug() ?? ''))));
+
+        if ($activeModule !== 'FAST' && in_array($routeRole, ['admin', 'kaprodi', 'dekan', 'mahasiswa', 'dosen'], true)) {
+            $activeModule = 'FAST';
+        }
+
+        if ($activeModule !== 'FAST') {
+            return [];
+        }
+
+        return Cache::remember(
+            "fast_permissions_{$user->id}_{$activeRole}",
+            60,
+            fn () => FastPermissionCatalog::permissionsForUser($user, $activeRole),
+        );
     }
 }

@@ -20,6 +20,7 @@ class DashboardController extends Controller
     {
         $user = $request->user();
         abort_if($user === null, 403);
+        $this->authorize('viewAny', Surat::class);
 
         $roleSlug = $user->userTypeSlug();
         $isLecturer = str($roleSlug)->contains('dosen');
@@ -30,7 +31,8 @@ class DashboardController extends Controller
                 'approvalFlows' => fn ($q) => $q->with('approver:id,name')->latest('tanggal_aksi')->latest('id'),
                 'histories' => fn ($q) => $q->latest('created_at')->latest('id')->limit(6),
             ])
-            ->where('pemohon_id', $user->id);
+            ->where('pemohon_id', $user->id)
+            ->where('status', '!=', Surat::STATUS_REVISION_REQUESTED);
 
         $jenisSurats = $this->visibleSubmissionJenisSuratQuery($user)
             ->with('category')
@@ -50,7 +52,6 @@ class DashboardController extends Controller
         $diprosesStatuses = [
             Surat::STATUS_PENDING,
             Surat::STATUS_VALIDATED_ADMIN,
-            Surat::STATUS_REVISION_REQUESTED,
             Surat::STATUS_APPROVED_KAPRODI,
             Surat::STATUS_APPROVED_DEKAN,
         ];

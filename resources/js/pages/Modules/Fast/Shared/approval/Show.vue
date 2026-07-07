@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
 import DocumentPreviewModal from '@/components/DocumentPreviewModal.vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -27,6 +28,8 @@ import {
     ShieldCheck,
     X,
 } from 'lucide-vue-next';
+
+const { can } = useFastPermissions();
 
 type Lampiran = { id: number; name: string; url?: string | null; type: string };
 
@@ -66,6 +69,7 @@ type Surat = {
     lampiran: Lampiran[];
     tanggal_pengajuan: string | null;
     status: string;
+    detail_data?: Record<string, unknown>;
     latest_rejection?: {
         role?: string | null;
         label: string;
@@ -83,6 +87,8 @@ type Surat = {
     generatedDocumentUrl: string | null;
     pdfUrl?: string | null;
     canDownloadPdf?: boolean;
+    hasAttachmentDocument?: boolean;
+    attachmentPreviewUrl?: string | null;
 };
 
 type PageProps = {
@@ -159,8 +165,22 @@ watch(
 
 const hiddenFields = new Set(['created_by', 'jenis_surat_id', 'jenis_surat', 'keperluan']);
 
+const detailSource = computed<Record<string, unknown>>(() => {
+    const candidate = props.detail_data ?? props.isi_surat ?? {};
+
+    if (Array.isArray(candidate)) {
+        return {};
+    }
+
+    if (candidate && typeof candidate === 'object') {
+        return candidate as Record<string, unknown>;
+    }
+
+    return {};
+});
+
 const detailRows = computed(() =>
-    Object.entries(props.isi_surat ?? {})
+    Object.entries(detailSource.value)
         .filter(([key]) => !hiddenFields.has(String(key)))
         .map(([key, value]) => ({
             key: String(key),
@@ -242,7 +262,7 @@ const statusLabel: Record<string, string> = {
     approved_dekan: 'Disetujui Dekan',
     finished: 'Selesai',
     rejected_admin: 'Ditolak Admin',
-    rejected_approver: props.latest_rejection?.label ?? 'Ditolak Pimpinan',
+    rejected_approver: props.latest_rejection?.label ?? 'Ditolak Final',
 };
 
 const statusColor: Record<string, string> = {
@@ -298,14 +318,17 @@ function formatDate(iso: string | null): string {
     );
 }
 
+function formatDateTime(iso: string | null): string {
+    return formatDate(iso);
+}
+
 function openPreviewDocument() {
-    const sourceUrl = props.generatedDocumentUrl ?? props.previewTemplateUrl;
+    const sourceUrl = props.generatedDocumentUrl;
     if (!sourceUrl) return;
 
-    const isPdfDocument = sourceUrl.endsWith('/pdf');
-    viewerUrl.value = isPdfDocument ? `${sourceUrl}?refresh=1` : sourceUrl;
+    viewerUrl.value = sourceUrl;
     viewerTitle.value = documentTitle.value;
-    viewerType.value = isPdfDocument ? 'pdf' : 'html';
+    viewerType.value = 'pdf';
     viewerOpen.value = true;
 }
 
@@ -318,6 +341,15 @@ function openDownloadPdf() {
     document.body.appendChild(link);
     link.click();
     link.remove();
+}
+
+function openPreviewAttachmentDocument() {
+    if (!props.attachmentPreviewUrl) return;
+
+    viewerUrl.value = props.attachmentPreviewUrl;
+    viewerTitle.value = `${documentTitle.value} - Lampiran`;
+    viewerType.value = 'pdf';
+    viewerOpen.value = true;
 }
 
 function goBack() {
@@ -520,8 +552,9 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
 
             </div>
 
-            <section class="grid gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.95fr)]">
-                <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <section class="grid items-start gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.95fr)]">
+                <div class="space-y-4">
+                <div class="self-start rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
                     <div class="mb-4 flex items-start justify-between gap-3">
                         <div class="flex items-center gap-3">
                             <div class="grid size-10 place-items-center rounded-2xl bg-sky-50 text-sky-600 ring-1 ring-sky-100">
@@ -609,10 +642,148 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                                 {{ keperluan || '-' }}
                             </p>
                         </div>
+
+                        <div
+                            v-if="detailRows.length"
+                            class="border-t border-slate-100 bg-slate-50/60"
+                        >
+                            <div class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+                                <div>
+                                    <p class="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+                                        Data tambahan
+                                    </p>
+                                    <p class="mt-1 text-sm font-semibold text-slate-900">
+                                        Informasi pendukung surat
+                                    </p>
+                                </div>
+                                <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-500">
+                                    {{ detailRows.length }} data
+                                </span>
+                            </div>
+
+                            <div class="divide-y divide-slate-200">
+                                <div
+                                    v-for="field in detailRows"
+                                    :key="field.key"
+                                    class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4"
+                                >
+                                    <p class="text-slate-500">{{ field.label }}</p>
+                                    <p class="min-w-0 break-words font-medium leading-6 text-slate-900">
+                                        {{ field.value }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                    <div class="mb-4 flex items-center gap-3">
+                        <div class="grid size-10 place-items-center rounded-2xl bg-sky-50 text-sky-600 ring-1 ring-sky-100">
+                            <ShieldCheck class="size-5" />
+                        </div>
+                        <div>
+                            <h2 class="text-base font-bold text-slate-900">
+                                Riwayat Persetujuan
+                            </h2>
+                            <p class="text-sm text-slate-500">
+                                Alur proses surat dari validasi sampai keputusan akhir.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div v-if="processTimeline.length > 0" class="space-y-3 sm:space-y-4">
+                        <div
+                            v-for="(entry, index) in processTimeline"
+                            :key="entry.id"
+                            class="grid grid-cols-[24px_minmax(0,1fr)] gap-3 sm:gap-4"
+                        >
+                            <div class="relative flex items-start justify-center">
+                                <span
+                                    v-if="index !== processTimeline.length - 1"
+                                    class="absolute left-1/2 top-6 h-full w-px -translate-x-1/2 bg-blue-200"
+                                />
+                                <span
+                                    class="relative z-10 mt-0.5 grid size-6 place-items-center rounded-full"
+                                    :class="timelineDotClasses(timelineStepState(index, entry.timestamp))"
+                                >
+                                    <CheckCircle
+                                        v-if="timelineStepState(index, entry.timestamp) === 'done'"
+                                        class="size-3.5"
+                                    />
+                                    <Clock
+                                        v-else-if="timelineStepState(index, entry.timestamp) === 'current'"
+                                        class="size-3.5"
+                                    />
+                                    <span
+                                        v-else
+                                        class="size-2.5 rounded-full bg-current"
+                                    />
+                                </span>
+                            </div>
+
+                            <div
+                                class="min-w-0 rounded-2xl border p-4"
+                                :class="timelineCardClasses(timelineStepState(index, entry.timestamp))"
+                            >
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0 flex-1">
+                                        <p class="break-words text-sm font-semibold leading-6 text-slate-900">
+                                            {{ entry.label }}
+                                        </p>
+                                        <p
+                                            v-if="entry.role"
+                                            class="mt-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400"
+                                        >
+                                            {{ entry.role }}
+                                        </p>
+                                        <p
+                                            v-if="entry.actor"
+                                            class="mt-1 text-xs font-medium text-slate-500"
+                                        >
+                                            {{ entry.actor }}
+                                        </p>
+                                    </div>
+                                    <div class="flex shrink-0 flex-col items-end gap-2 text-right">
+                                        <p class="text-xs font-medium text-slate-500">
+                                            {{ formatDateTime(entry.timestamp) }}
+                                        </p>
+                                        <button
+                                            v-if="entry.note"
+                                            type="button"
+                                            class="fast-btn fast-btn-danger shrink-0 px-2.5 py-1 text-xs"
+                                            :aria-expanded="expandedTimelineNoteId === entry.id"
+                                            :aria-controls="`timeline-note-${entry.id}`"
+                                            @click="toggleTimelineNote(entry.id)"
+                                        >
+                                            <AlertCircle class="size-3.5" />
+                                            Catatan
+                                        </button>
+                                    </div>
+                                </div>
+                                <Transition name="fade">
+                                    <div
+                                        v-if="entry.note && expandedTimelineNoteId === entry.id"
+                                        :id="`timeline-note-${entry.id}`"
+                                        class="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm leading-6 text-red-700"
+                                    >
+                                        {{ entry.note }}
+                                    </div>
+                                </Transition>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        v-else
+                        class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500"
+                    >
+                        Riwayat belum tersedia.
+                    </div>
+                </section>
+
+                </div>
+                <div class="self-start h-fit rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
                     <div class="mb-4 flex items-center gap-3">
                         <div class="grid size-10 place-items-center rounded-2xl bg-sky-50 text-sky-600 ring-1 ring-sky-100">
                             <Download class="size-5" />
@@ -627,24 +798,50 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                         </div>
                     </div>
 
-                    <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
-                        <div
-                            class="flex items-start gap-3"
-                        >
-                            <ShieldCheck class="mt-0.5 size-5 shrink-0 text-emerald-600" />
+                    <div
+                        class="rounded-2xl border px-4 py-4"
+                        :class="
+                            isFinished
+                                ? 'border-emerald-200 bg-emerald-50'
+                                : 'border-amber-200 bg-amber-50'
+                        "
+                    >
+                        <div class="flex items-start gap-3">
+                            <ShieldCheck
+                                class="mt-0.5 size-5 shrink-0"
+                                :class="
+                                    isFinished
+                                        ? 'text-emerald-600'
+                                        : 'text-orange-500'
+                                "
+                            />
                             <div class="min-w-0">
-                                <p class="text-sm font-semibold text-emerald-800">
+                                <p
+                                    class="text-sm font-semibold"
+                                    :class="
+                                        isFinished
+                                            ? 'text-emerald-800'
+                                            : 'text-orange-800'
+                                    "
+                                >
                                     {{
                                         isFinished
                                             ? 'Dokumen Siap'
-                                            : 'Dokumen Belum Siap'
+                                            : 'Dokumen Belum Aktif'
                                     }}
                                 </p>
-                                <p class="mt-1 text-xs leading-5 text-emerald-700">
+                                <p
+                                    class="mt-1 text-sm leading-6"
+                                    :class="
+                                        isFinished
+                                            ? 'text-emerald-700'
+                                            : 'text-orange-700'
+                                    "
+                                >
                                     {{
                                         isFinished
                                             ? 'Surat sudah divalidasi. Dokumen PDF dapat dibuka dan diunduh.'
-                                            : 'Surat masih diproses. Dokumen PDF belum dapat dibuka dan diunduh.'
+                                            : 'Dokumen akan aktif setelah surat selesai diproses.'
                                     }}
                                 </p>
                             </div>
@@ -653,166 +850,76 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
 
                     <div class="mt-4 space-y-3">
                         <button
+                            v-if="can('fast.document.preview')"
                             type="button"
                             :disabled="!isFinished"
-                            class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                            class="fast-btn fast-btn-outline w-full px-4 py-2.5 text-sm transition"
                             :class="
                                 !isFinished
-                                    ? 'cursor-not-allowed border-dashed bg-slate-50 text-slate-400 opacity-50 hover:bg-slate-50'
+                                    ? 'cursor-not-allowed border-dashed border-slate-200 bg-slate-50 text-slate-400 opacity-50 hover:bg-slate-50'
                                     : ''
                             "
                             @click="openPreviewDocument"
                         >
-                            <Eye class="size-4 text-slate-500" />
+                            <Eye class="size-4" />
                             Preview Dokumen
                         </button>
 
                         <button
-                            v-if="canDownloadPdf"
+                            v-if="can('fast.document.download') && canDownloadPdf"
                             type="button"
-                            class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700"
+                            class="fast-btn fast-btn-primary w-full px-4 py-2.5 text-sm"
                             @click="openDownloadPdf"
                         >
                             <Download class="size-4" />
-                            Download PDF
+                            Unduh PDF
                         </button>
 
-                        <div
-                            v-else
-                            class="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700"
+                        <button
+                            v-if="isFinished && hasAttachmentDocument && can('fast.document.preview')"
+                            type="button"
+                            class="fast-btn fast-btn-outline w-full px-4 py-2.5 text-sm"
+                            @click="openPreviewAttachmentDocument"
                         >
-                            <Clock class="size-4 shrink-0" />
-                            PDF belum siap diunduh.
-                        </div>
+                            <Eye class="size-4" />
+                            Preview Lampiran
+                        </button>
+
                     </div>
 
                     <div
                         v-if="lampiran.length > 0"
-                        class="mt-5"
+                        class="mt-4 border-t border-slate-100 pt-4"
                     >
-                        <h3 class="mb-3 text-sm font-semibold text-slate-900">
+                        <p class="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
                             Lampiran
-                        </h3>
+                        </p>
                         <div class="space-y-2">
-                            <button
+                            <div
                                 v-for="file in lampiran"
                                 :key="file.id"
-                                type="button"
-                                class="fast-btn fast-btn-soft flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-                                @click="openAttachmentPreview(file)"
+                                class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
                             >
-                                <div class="min-w-0">
-                                    <p class="truncate text-sm font-medium text-slate-800">
-                                        {{ file.name }}
-                                    </p>
-                                    <p class="text-xs text-slate-400">
-                                        {{ file.type || 'File pendukung' }}
-                                    </p>
+                                <div class="flex flex-col gap-2">
+                                    <div class="min-w-0">
+                                        <p class="break-words text-sm font-semibold leading-5 text-slate-900">
+                                            {{ file.name }}
+                                        </p>
+                                    </div>
+                                    <button
+                                        v-if="file.url && can('fast.document.preview')"
+                                        type="button"
+                                        class="self-end inline-flex items-center text-sm font-medium text-blue-600 transition hover:text-blue-700"
+                                        @click="openAttachmentPreview(file)"
+                                    >
+                                        Lihat lampiran
+                                    </button>
                                 </div>
-                                <span class="text-xs font-semibold text-blue-600">
-                                    Lihat lampiran
-                                </span>
-                            </button>
-                        </div>
-                    </div>
-
-                </div>
-            </section>
-
-            <section class="rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-6">
-                <div class="mb-5 flex items-center gap-3">
-                    <div class="grid size-10 place-items-center rounded-2xl bg-sky-50 text-sky-600 ring-1 ring-sky-100">
-                        <ShieldCheck class="size-5" />
-                    </div>
-                    <div>
-                        <h2 class="text-base font-bold text-slate-900">
-                            Riwayat Persetujuan
-                        </h2>
-                        <p class="text-sm text-slate-500">
-                            Alur proses surat dari validasi sampai keputusan akhir.
-                        </p>
-                    </div>
-                </div>
-
-                <div v-if="processTimeline.length > 0" class="space-y-3 sm:space-y-4">
-                    <div
-                        v-for="(entry, index) in processTimeline"
-                        :key="entry.id"
-                        class="grid grid-cols-[24px_minmax(0,1fr)] gap-3 md:grid-cols-[24px_minmax(0,1fr)_190px] md:items-start md:gap-4"
-                    >
-                        <div class="relative flex items-start justify-center">
-                            <span
-                                v-if="index !== processTimeline.length - 1"
-                                class="absolute left-1/2 top-6 h-full w-px -translate-x-1/2 bg-blue-200"
-                            />
-                            <span
-                                class="relative z-10 mt-0.5 grid size-6 place-items-center rounded-full"
-                                :class="timelineDotClasses(timelineStepState(index, entry.timestamp))"
-                            >
-                                <CheckCircle
-                                    v-if="timelineStepState(index, entry.timestamp) === 'done'"
-                                    class="size-3.5"
-                                />
-                                <Clock
-                                    v-else-if="timelineStepState(index, entry.timestamp) === 'current'"
-                                    class="size-3.5"
-                                />
-                                <span
-                                    v-else
-                                    class="size-2.5 rounded-full bg-current"
-                                />
-                            </span>
-                        </div>
-
-                        <div
-                            class="min-w-0 rounded-2xl border p-4"
-                            :class="timelineCardClasses(timelineStepState(index, entry.timestamp))"
-                        >
-                            <div class="flex items-start justify-between gap-3">
-                                <p class="break-words text-sm font-semibold text-slate-900">
-                                    {{ entry.label }}
-                                </p>
-                                <button
-                                    v-if="entry.note"
-                                    type="button"
-                                class="fast-btn fast-btn-danger shrink-0 px-2 py-1 text-xs"
-                                    :aria-expanded="expandedTimelineNoteId === entry.id"
-                                    :aria-controls="`timeline-note-${entry.id}`"
-                                    @click="toggleTimelineNote(entry.id)"
-                                >
-                                    <AlertCircle class="size-3.5" />
-                                    Catatan
-                                </button>
                             </div>
-                            <Transition name="fade">
-                                <div
-                                    v-if="entry.note && expandedTimelineNoteId === entry.id"
-                                    :id="`timeline-note-${entry.id}`"
-                                    class="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm leading-6 text-red-700"
-                                >
-                                    {{ entry.note }}
-                                </div>
-                            </Transition>
-                            <p class="mt-3 text-xs font-medium text-slate-500 md:hidden">
-                                {{
-                                    timelineStepState(index, entry.timestamp) === 'pending'
-                                        ? 'Menunggu'
-                                        : formatDate(entry.timestamp)
-                                }}
-                            </p>
-                        </div>
-
-                        <div class="hidden pt-1 text-xs text-slate-500 md:block md:text-right">
-                            {{ formatDate(entry.timestamp) }}
                         </div>
                     </div>
-                </div>
 
-                <div
-                    v-else
-                    class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500"
-                >
-                    Riwayat belum tersedia.
+
                 </div>
             </section>
         </div>

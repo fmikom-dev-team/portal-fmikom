@@ -5,6 +5,7 @@ namespace App\Modules\Fast\Services\Admin;
 use App\Models\Surat;
 use App\Models\SuratApprovalFlow;
 use App\Models\SuratLampiran;
+use App\Modules\Fast\Services\Shared\OutgoingLetterAttachmentService;
 use App\Modules\Fast\Support\FastUserIdentitySearch;
 use App\Modules\Fast\Support\TemplateAdminSupport;
 use App\Modules\Fast\Workflow\Approvals\FastApprovalWorkflowService;
@@ -21,6 +22,7 @@ class ApprovalService
 {
     public function __construct(
         protected TemplateAdminSupport $templateAdminSupport,
+        protected OutgoingLetterAttachmentService $outgoingAttachmentService,
     ) {}
 
     public function index(Request $request): Response
@@ -260,6 +262,7 @@ class ApprovalService
                 'subjectUser',
                 'jenisSurat.approvalRole',
                 'lampirans',
+                'dataEntries',
                 'approvalFlows.approver',
                 'histories.user',
             ])
@@ -407,6 +410,7 @@ class ApprovalService
             'jenis_surat' => $surat->jenisSurat?->nama,
             'keperluan' => $surat->keperluan,
             'isi_surat' => is_array($isiSurat) ? $isiSurat : [],
+            'detail_data' => $this->buildDetailData($surat),
             'lampiran' => $surat->lampirans->map(fn ($lampiran): array => [
                 'id' => $lampiran->id,
                 'name' => $lampiran->nama_file,
@@ -423,14 +427,13 @@ class ApprovalService
                 ? route('documents.surat.pdf', $surat->id, absolute: false)
                 : null,
             'canDownloadPdf' => $surat->canViewFinalDocumentPreview(),
+            'hasAttachmentDocument' => $this->outgoingAttachmentService->hasStudentAttachment($surat),
+            'attachmentPreviewUrl' => $surat->canViewFinalDocumentPreview() && $this->outgoingAttachmentService->hasStudentAttachment($surat)
+                ? route('documents.surat.attachment-document', $surat->id, absolute: false)
+                : null,
             'latest_rejection' => $latestRejectedFlow === null ? null : [
                 'role' => $latestRejectedFlow->role,
-                'label' => match ($latestRejectedFlow->role) {
-                    'admin' => 'Ditolak Admin',
-                    'kaprodi' => $latestRejectedFlow->status === Surat::STATUS_REVISION_REQUESTED ? 'Dikembalikan Kaprodi' : 'Ditolak Kaprodi',
-                    'dekan' => $latestRejectedFlow->status === Surat::STATUS_REVISION_REQUESTED ? 'Dikembalikan Dekan' : 'Ditolak Dekan',
-                    default => 'Riwayat Penolakan',
-                },
+                'label' => 'Ditolak Final',
                 'type' => $latestRejectedFlow->status === Surat::STATUS_REVISION_REQUESTED ? 'revision' : 'final_reject',
                 'note' => $latestRejectedFlow->catatan,
                 'acted_at' => optional($latestRejectedFlow->tanggal_aksi ?? $latestRejectedFlow->created_at)?->toISOString(),
@@ -521,11 +524,169 @@ class ApprovalService
                 ? route('documents.surat.template-preview', $surat->id, absolute: false)
                 : null,
             'generatedDocumentUrl' => $surat->canViewFinalDocumentPreview()
-                ? route('documents.surat.pdf', $surat->id, absolute: false)
+                ? route('documents.surat.generated-document', $surat->id, absolute: false)
                 : null,
             'back_href' => null,
             'back_label' => null,
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function buildDetailData(Surat $surat): array
+    {
+        $entries = $surat->dataEntries
+            ->mapWithKeys(function ($entry): array {
+                $decoded = $this->decodeJsonPayload($entry->field_value);
+
+                return [
+                    (string) $entry->field_name => $decoded,
+                ];
+            })
+            ->all();
+
+        if (! empty($entries)) {
+            return $this->filterDetailData($entries);
+        }
+
+        $decoded = $this->decodeJsonPayload($surat->isi_surat);
+        if (is_array($decoded)) {
+            return $this->filterDetailData($decoded);
+        }
+
+        return [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function filterDetailData(array $data): array
+    {
+        $labels = [];
+
+        foreach ($data as $key => $value) {
+            $name = strtolower(trim((string) $key));
+
+            if ($this->isTechnicalDetailKey($name)) {
+                continue;
+            }
+
+            if ($value === null || $value === '' || $value === []) {
+                continue;
+            }
+
+            $labels[$key] = $value;
+        }
+
+        return $labels;
+    }
+
+    protected function isTechnicalDetailKey(string $key): bool
+    {
+        $technical = [
+            'id',
+            'surat_id',
+            'jenis_surat_id',
+            'pemohon_id',
+            'type',
+            'status',
+            'created_at',
+            'updated_at',
+            'deleted_at',
+            'generated_at',
+            'generated_file_path',
+            'generated_file_type',
+            'rendered_snapshot',
+            'template_version',
+            'qr_token',
+            'qr_validated_at',
+            'validated_by_admin_id',
+            'validated_by_admin_at',
+            'approved_by_id',
+            'approved_at',
+            'file_path',
+            'path',
+            'url',
+            'token',
+            'slug',
+            'nama_file',
+            'nama_asli',
+            'mime_type',
+            'field_name',
+            'field_value',
+            'approval_role',
+            'approval_role_id',
+            'approvalrole',
+            'approval',
+            'meta',
+            'metadata',
+            'catatan_revisi',
+            'rejection_reason',
+            'admin_note',
+            'subject_name',
+            'perihal',
+            'kepada_yth',
+            'nama_penanda_tangan',
+            'nik_penanda_tangan',
+            'jabatan_penanda_tangan',
+            'nama_penandatangan',
+            'nik_penandatangan',
+            'jabatan_penandatangan',
+            'nip_dosen',
+            'nip_kaprodi',
+            'nip_dekan',
+            'lampiran_keterangan',
+            'lampiran_judul',
+            'lampiran_judul_align',
+            'lampiran_judul_bold',
+            'lampiran_label_no',
+            'lampiran_label_nama',
+            'lampiran_label_nim',
+            'lampiran_label_prodi',
+            'lampiran_mode',
+            'lampiran_orientation',
+            'lampiran_mahasiswa',
+            'lampiran_columns',
+            'lampiran_rows',
+        ];
+
+        if (in_array($key, $technical, true)) {
+            return true;
+        }
+
+        return str_contains($key, 'tanda_tangan')
+            || str_contains($key, 'penanda_tangan')
+            || str_contains($key, 'penandatangan')
+            || str_starts_with($key, '_')
+            || $key === 'id'
+            || str_ends_with($key, '_id')
+            || str_contains($key, 'created_at')
+            || str_contains($key, 'updated_at')
+            || $key === 'status'
+            || str_contains($key, 'token')
+            || str_contains($key, 'path')
+            || str_contains($key, 'url')
+            || str_contains($key, 'file');
+    }
+
+    /**
+     * @return array<string, mixed>|string|int|float|bool|null
+     */
+    protected function decodeJsonPayload(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+
+        if (! is_string($value) || trim($value) === '') {
+            return [];
+        }
+
+        $decoded = json_decode($value, true);
+
+        return json_last_error() === JSON_ERROR_NONE ? $decoded : $value;
     }
 
     protected function serializeShowItem(Surat $surat): array

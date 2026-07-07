@@ -1,8 +1,9 @@
 <script setup lang="ts">
 // File: resources/js/pages/Modules/Fast/Admin/letters/Create.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import { Head, useForm } from '@inertiajs/vue3';
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref } from 'vue';
 import LetterStepIndicator from '@/components/Modules/Fast/Admin/LetterStepIndicator.vue';
 import {
     Search,
@@ -10,6 +11,7 @@ import {
     FileText,
     AlertCircle,
     ArrowRight,
+    ChevronDown,
 } from 'lucide-vue-next';
 type JenisSurat = {
     id: number;
@@ -45,8 +47,10 @@ const props = withDefaults(
     },
 );
 const form = useForm({ jenis_surat_id: '' });
+const { can } = useFastPermissions();
 const searchQuery = ref('');
 const activeCategory = ref<number | null>(null);
+const submittingJenisId = ref<number | null>(null);
 const filtered = computed(() => {
     let list = props.jenisSurats ?? [];
     if (activeCategory.value !== null) {
@@ -63,12 +67,6 @@ const filtered = computed(() => {
     }
     return list;
 });
-const jenisSuratOptions = computed(() => filtered.value);
-const selected = computed(
-    () =>
-        (props.jenisSurats ?? []).find((j) => String(j.id) === form.jenis_surat_id) ??
-        null,
-);
 const colorMap: Record<string, string> = {
     indigo: 'bg-indigo-50 text-indigo-600 border-indigo-200',
     emerald: 'bg-blue-50 text-blue-600 border-blue-200',
@@ -82,9 +80,27 @@ const colorMap: Record<string, string> = {
 function catColor(warna?: string | null) {
     return colorMap[warna ?? ''] ?? colorMap['slate'];
 }
-const isPaused = ref(false);
+function selectJenisSurat(jenis: JenisSurat) {
+    form.jenis_surat_id = String(jenis.id);
+}
+function resetFilters() {
+    searchQuery.value = '';
+    activeCategory.value = null;
+}
+function handleJenisAction(jenis: JenisSurat) {
+    selectJenisSurat(jenis);
+    submittingJenisId.value = jenis.id;
+    submit();
+}
 function submit() {
-    form.post('/admin/surat/select-type');
+    form.post('/admin/surat/select-type', {
+        onFinish: () => {
+            submittingJenisId.value = null;
+        },
+    });
+}
+function isSubmittingJenis(jenis: JenisSurat): boolean {
+    return submittingJenisId.value === jenis.id && form.processing;
 }
 </script>
 <template>
@@ -117,7 +133,7 @@ function submit() {
         <div class="space-y-5">
             <!-- Search & Category tabs -->
             <div class="space-y-3">
-                <div class="grid gap-3 xl:grid-cols-[minmax(0,1.4fr)_220px_260px] xl:items-end">
+                <div class="grid gap-3 xl:grid-cols-[minmax(0,1.4fr)_220px_auto] xl:items-end">
                     <label class="block">
                         <span class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                             Pencarian
@@ -130,7 +146,7 @@ function submit() {
                                 v-model="searchQuery"
                                 type="text"
                                 placeholder="Cari nama surat, kode, atau kategori..."
-                                class="h-11 w-full rounded-xl border border-slate-200 bg-white py-0 pr-10 pl-10 text-sm text-slate-700 transition outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                                class="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 pr-4 pl-10 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
                             />
                             <button
                                 v-if="searchQuery"
@@ -142,13 +158,13 @@ function submit() {
                             </button>
                         </div>
                     </label>
-                    <label class="block">
+                    <div class="relative w-full">
                         <span class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                             Kategori
                         </span>
                         <select
                             v-model="activeCategory"
-                            class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                            class="h-11 w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50 pr-8 pl-4 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
                         >
                             <option :value="null">Semua kategori</option>
                             <option
@@ -159,185 +175,18 @@ function submit() {
                                 {{ cat.nama }}
                             </option>
                         </select>
-                    </label>
-                    <label class="block">
-                        <span class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                            Jenis Surat
-                        </span>
-                        <select
-                            v-model="form.jenis_surat_id"
-                            class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                        >
-                            <option value="">Pilih jenis surat</option>
-                            <option
-                                v-for="jenis in jenisSuratOptions"
-                                :key="jenis.id"
-                                :value="String(jenis.id)"
-                            >
-                                {{ jenis.nama }}
-                            </option>
-                        </select>
-                    </label>
-                </div>
-                <!-- Category tabs infinite marquee -->
-                <div
-                    class="overflow-hidden rounded-xl"
-                    @mouseenter="isPaused = true"
-                    @mouseleave="isPaused = false"
-                >
-                    <div
-                        class="marquee-track flex gap-2"
-                        :class="{ 'marquee-paused': isPaused }"
-                    >
-                        <!-- Set 1 -->
-                        <button
-                            type="button"
-                            class="fast-btn shrink-0 px-3 py-1.5 text-xs font-medium"
-                            :class="
-                                activeCategory === null
-                                    ? 'fast-btn-primary'
-                                    : 'fast-btn-outline text-slate-500'
-                            "
-                            @click="activeCategory = null"
-                        >
-                            Semua ({{ jenisSurats.length }})
-                        </button>
-                        <button
-                            v-for="cat in categories"
-                            :key="'a-' + cat.id"
-                            type="button"
-                            class="fast-btn shrink-0 px-3 py-1.5 text-xs font-medium"
-                            :class="
-                                activeCategory === cat.id
-                                    ? 'fast-btn-primary'
-                                    : 'fast-btn-outline text-slate-500'
-                            "
-                            @click="
-                                activeCategory =
-                                    activeCategory === cat.id ? null : cat.id
-                            "
-                        >
-                            {{ cat.nama }}
-                        </button>
-                        <!-- Set 2 (duplicate untuk seamless loop) -->
-                        <button
-                            type="button"
-                            class="fast-btn shrink-0 px-3 py-1.5 text-xs font-medium"
-                            :class="
-                                activeCategory === null
-                                    ? 'fast-btn-primary'
-                                    : 'fast-btn-outline text-slate-500'
-                            "
-                            @click="activeCategory = null"
-                        >
-                            Semua ({{ jenisSurats.length }})
-                        </button>
-                        <button
-                            v-for="cat in categories"
-                            :key="'b-' + cat.id"
-                            type="button"
-                            class="fast-btn shrink-0 px-3 py-1.5 text-xs font-medium"
-                            :class="
-                                activeCategory === cat.id
-                                    ? 'fast-btn-primary'
-                                    : 'fast-btn-outline text-slate-500'
-                            "
-                            @click="
-                                activeCategory =
-                                    activeCategory === cat.id ? null : cat.id
-                            "
-                        >
-                            {{ cat.nama }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <!-- Selected detail card (horizontal, full width) -->
-            <div
-                v-if="selected"
-                class="rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 to-white p-5"
-            >
-                <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-                    <div class="min-w-0 flex-1">
-                        <p
-                            class="text-[10px] font-semibold tracking-wider text-blue-500 uppercase"
-                        >
-                            {{ selected.category?.nama ?? 'Tanpa Kategori' }}
-                        </p>
-                        <p class="mt-0.5 text-base font-bold text-slate-900">
-                            {{ selected.nama }}
-                        </p>
-                        <p
-                            v-if="selected.deskripsi"
-                            class="mt-1 text-xs text-slate-500"
-                        >
-                            {{ selected.deskripsi }}
-                        </p>
-                        <div class="mt-2 flex items-center gap-3">
-                            <span
-                                class="inline-flex items-center gap-1 rounded-full border bg-white px-2 py-0.5 text-[10px] font-medium"
-                                :class="
-                                    selected.perlu_approval
-                                        ? 'border-amber-100 text-amber-700'
-                                        : 'border-blue-100 text-blue-700'
-                                "
-                            >
-                                <span
-                                    class="size-1.5 rounded-full"
-                                    :class="
-                                        selected.perlu_approval
-                                            ? 'bg-amber-400'
-                                            : 'bg-blue-400'
-                                    "
-                                />
-                                {{
-                                    selected.perlu_approval
-                                        ? 'Approval Diperlukan'
-                                        : 'Langsung Selesai'
-                                }}
-                            </span>
-                            <span
-                                class="inline-flex items-center gap-1 rounded-full border bg-white px-2 py-0.5 text-[10px] font-medium"
-                                :class="
-                                    selected.letter_mode === 'institution'
-                                        ? 'border-blue-100 text-blue-700'
-                                        : 'border-amber-100 text-amber-700'
-                                "
-                            >
-                                <span
-                                    class="size-1.5 rounded-full"
-                                    :class="
-                                        selected.letter_mode === 'institution'
-                                            ? 'bg-blue-400'
-                                            : 'bg-amber-400'
-                                    "
-                                />
-                                {{ selected.letter_mode_label ?? (selected.letter_mode === 'institution' ? 'Surat Institusi' : 'Surat Personal') }}
-                            </span>
-                        </div>
+                        <ChevronDown
+                            class="pointer-events-none absolute top-1/2 right-3.5 size-3.5 -translate-y-1/2 text-slate-400"
+                        />
                     </div>
                     <button
                         type="button"
-                        class="fast-btn fast-btn-primary flex shrink-0 items-center justify-center gap-2 px-6 py-2.5 text-sm"
-                        :disabled="form.processing"
-                        @click="submit"
+                        class="h-11 w-full rounded-2xl border border-blue-200 bg-blue-50 px-5 text-sm font-medium text-blue-700 transition-colors hover:border-blue-300 hover:bg-blue-100 hover:text-blue-800 sm:w-auto"
+                        @click="resetFilters"
                     >
-                        {{
-                            form.processing ? 'Memproses...' : 'Isi Form Surat'
-                        }}
-                        <ArrowRight v-if="!form.processing" class="size-4" />
+                        Reset Filter
                     </button>
                 </div>
-            </div>
-            <!-- Empty hint -->
-            <div
-                v-else
-                class="flex items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-5 py-4"
-            >
-                <FileText class="size-5 shrink-0 text-slate-300" />
-                <p class="text-xs text-slate-400">
-                    Klik salah satu kartu di bawah untuk memilih jenis surat.
-                </p>
             </div>
             <!-- Grid cards -->
             <div
@@ -351,26 +200,22 @@ function submit() {
                 <button
                     type="button"
                     class="text-xs text-blue-600 hover:underline"
-                    @click="
-                        searchQuery = '';
-                        activeCategory = null;
-                    "
+                    @click="resetFilters"
                 >
                     Hapus filter
                 </button>
             </div>
             <div v-else class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <button
+                <article
                     v-for="jenis in filtered"
                     :key="jenis.id"
-                    type="button"
-                    class="group relative rounded-2xl border p-5 text-left transition-all hover:shadow-md"
+                    class="group relative flex h-full cursor-pointer flex-col rounded-2xl border p-5 text-left transition-all hover:shadow-md"
                     :class="
                         String(jenis.id) === form.jenis_surat_id
                             ? 'border-blue-300 bg-blue-50/50 shadow-sm ring-1 ring-blue-200'
                             : 'border-slate-200 bg-white hover:border-blue-200'
                     "
-                    @click="form.jenis_surat_id = String(jenis.id)"
+                    @click="selectJenisSurat(jenis)"
                 >
                     <!-- Selected indicator -->
                     <div
@@ -437,7 +282,28 @@ function submit() {
                             </div>
                         </div>
                     </div>
-                </button>
+                    <div
+                        v-if="can('fast.admin.surat.create')"
+                        class="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-4"
+                    >
+                        <p class="text-xs text-slate-500">
+                            Klik tombol untuk lanjut ke form
+                        </p>
+                        <button
+                            type="button"
+                            class="fast-btn fast-btn-primary inline-flex items-center gap-1.5 border border-blue-500/10 px-3 py-2 text-xs font-semibold shadow-[0_8px_18px_rgba(37,99,235,0.22)] transition-all hover:shadow-[0_10px_20px_rgba(37,99,235,0.28)] disabled:cursor-not-allowed disabled:opacity-50"
+                            :disabled="form.processing"
+                            @click.stop="handleJenisAction(jenis)"
+                        >
+                            {{
+                                isSubmittingJenis(jenis)
+                                    ? 'Memproses...'
+                                    : 'Isi Form Surat'
+                            }}
+                            <ArrowRight v-if="!isSubmittingJenis(jenis)" class="size-3.5" />
+                        </button>
+                    </div>
+                </article>
             </div>
         </div>
     </AdminLayout>
@@ -445,20 +311,5 @@ function submit() {
 <style scoped>
 .scrollbar-hide::-webkit-scrollbar {
     display: none;
-}
-.marquee-track {
-    animation: marquee 25s linear infinite;
-    width: max-content;
-}
-.marquee-paused {
-    animation-play-state: paused;
-}
-@keyframes marquee {
-    0% {
-        transform: translateX(0);
-    }
-    100% {
-        transform: translateX(-50%);
-    }
 }
 </style>

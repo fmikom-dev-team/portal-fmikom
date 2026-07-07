@@ -4,6 +4,7 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import NotificationBell from '@/components/Modules/Fast/NotificationBell.vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import {
     LayoutDashboard,
     FilePlus2,
@@ -52,6 +53,7 @@ type PageProps = {
             tone?: 'amber' | 'blue' | 'green' | 'rose' | 'slate';
         }>;
     };
+    fast_permissions?: string[];
 };
 
 const props = withDefaults(
@@ -140,7 +142,9 @@ watch(
     },
 );
 
-type NavItem = { key: string; label: string; href: string; icon: unknown };
+type NavItem = { key: string; label: string; href: string; icon: unknown; permission?: string };
+
+const { can } = useFastPermissions();
 
 const navItems = computed<NavItem[]>(() => {
     const prefix = `/${routePrefix.value}`;
@@ -150,24 +154,31 @@ const navItems = computed<NavItem[]>(() => {
             label: 'Dashboard',
             href: `${prefix}/dashboard`,
             icon: LayoutDashboard,
+            permission: 'fast.dashboard.view',
         },
         {
             key: 'submit',
             label: 'Ajukan Surat',
             href: `${prefix}/ajukan`,
             icon: FilePlus2,
+            permission: 'fast.submission.create',
         },
         {
             key: 'history',
             label: 'Riwayat Surat',
             href: `${prefix}/history`,
             icon: History,
+            permission: 'fast.submission.view',
         },
     ];
 });
 
+const visibleNavItems = computed(() =>
+    navItems.value.filter((item) => !item.permission || can(item.permission)),
+);
+
 const headerLabel = computed(() => {
-    const activeItem = navItems.value.find((item) => isActive(item.key));
+    const activeItem = visibleNavItems.value.find((item) => isActive(item.key));
     if (activeItem) return activeItem.label;
 
     const lastBreadcrumb = props.breadcrumbs?.[props.breadcrumbs.length - 1];
@@ -389,7 +400,7 @@ function batteryIcon() {
             <!-- Nav -->
             <nav class="flex-1 overflow-x-hidden overflow-y-auto px-2 py-2">
                 <Link
-                    v-for="item in navItems"
+                    v-for="item in visibleNavItems"
                     :key="item.key"
                     :href="item.href"
                     :prefetch="false"
@@ -571,7 +582,7 @@ function batteryIcon() {
         >
             <div class="flex items-center justify-around">
                 <Link
-                    v-for="item in navItems"
+                    v-for="item in visibleNavItems"
                     :key="item.key + 'mb'"
                     :href="item.href"
                     :prefetch="false"

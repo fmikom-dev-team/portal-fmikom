@@ -33,6 +33,7 @@ class SuratDocumentGeneratorService
 
     public function __construct(
         protected SuratTemplateRendererService $renderer,
+        protected OutgoingLetterAttachmentService $outgoingAttachmentService,
     ) {}
 
     public function generate(Surat $surat): Surat
@@ -54,6 +55,7 @@ class SuratDocumentGeneratorService
             'generated_at' => $finalizedAt,
         ]);
         $rendered = $this->renderer->renderForSurat($renderSurat, true, 'pdf');
+        $attachmentSection = $this->outgoingAttachmentService->buildBundleAttachmentSection($renderSurat);
         $qrCodeBase64 = $this->makeQrCodeBase64($renderSurat);
 
         $renderedHtml = is_array($rendered) ? ($rendered['full'] ?? $rendered['html'] ?? '') : (string) $rendered;
@@ -93,7 +95,7 @@ class SuratDocumentGeneratorService
 
         FastStorage::put(
             $outputPath,
-            $this->renderPdfOutput($viewPayload),
+            $this->renderPdfOutput($viewPayload, $attachmentSection),
             'local',
         );
 
@@ -113,7 +115,6 @@ class SuratDocumentGeneratorService
         }
 
         $freshSurat->forceFill($updates)->save();
-
         $this->ensureActiveQrCodeRecord($freshSurat, $finalizedAt);
 
         return $freshSurat->fresh();
@@ -198,6 +199,53 @@ class SuratDocumentGeneratorService
         return $value;
     }
 
+    protected function normalizeWrapperTopPadding(string $marginTop): string
+    {
+        $value = $this->normalizeTopMargin($marginTop);
+
+        if (preg_match('/^(\d+(?:\.\d+)?)\s*mm$/i', $value, $matches) === 1) {
+            $adjusted = max(0, (float) $matches[1] - 5);
+
+            return rtrim(rtrim(number_format($adjusted, 1, '.', ''), '0'), '.').'mm';
+        }
+
+        if (is_numeric($value)) {
+            $adjusted = max(0, (float) $value - 5);
+
+            return rtrim(rtrim(number_format($adjusted, 1, '.', ''), '0'), '.').'mm';
+        }
+
+        return $value;
+    }
+
+    protected function resolveContentWidth(string $marginLeft, string $marginRight): string
+    {
+        $left = $this->extractMillimeters($marginLeft, 15.0);
+        $right = $this->extractMillimeters($marginRight, 15.0);
+        $width = max(0.0, 210.0 - $left - $right);
+
+        return rtrim(rtrim(number_format($width, 1, '.', ''), '0'), '.').'mm';
+    }
+
+    protected function extractMillimeters(string $value, float $fallback): float
+    {
+        $trimmed = trim($value);
+
+        if ($trimmed === '') {
+            return $fallback;
+        }
+
+        if (preg_match('/^(\d+(?:\.\d+)?)\s*mm$/i', $trimmed, $matches) === 1) {
+            return (float) $matches[1];
+        }
+
+        if (is_numeric($trimmed)) {
+            return (float) $trimmed;
+        }
+
+        return $fallback;
+    }
+
     protected function makeOutputPath(Surat $surat): string
     {
         $surat->loadMissing('jenisSurat');
@@ -221,9 +269,6 @@ class SuratDocumentGeneratorService
                 'surat_id' => $surat->id,
                 'status' => SuratQrCode::STATUS_ACTIVE,
                 'activated_at' => $timestamp,
-                'revoked_reason' => null,
-                'revoked_by' => null,
-                'revoked_at' => null,
             ])->save();
 
             return;
@@ -253,11 +298,21 @@ class SuratDocumentGeneratorService
         return 'data:image/svg+xml;base64,'.base64_encode($writer->writeString($url));
     }
 
-    protected function renderPdfOutput(array $viewPayload): string
+    /**
+     * @param  array{html?: string, bodyHtml?: string, headerHtml?: string, footerHtml?: string, styles?: string, customCss?: string}|null  $attachmentSection
+     */
+    protected function renderPdfOutput(array $viewPayload, ?array $attachmentSection = null): string
     {
-        $browserPdf = $this->renderPdfOutputWithChrome($viewPayload);
-        if ($browserPdf !== null) {
-            return $browserPdf;
+        if ($attachmentSection === null) {
+            $browserPdf = $this->renderPdfOutputWithChrome($viewPayload);
+            if ($browserPdf !== null) {
+                return $browserPdf;
+            }
+        } else {
+            $browserPdf = $this->renderPdfOutputWithChrome($viewPayload, $attachmentSection);
+            if ($browserPdf !== null) {
+                return $browserPdf;
+            }
         }
 
         $styles = (string) ($viewPayload['styles'] ?? '');
@@ -292,6 +347,12 @@ class SuratDocumentGeneratorService
             $fontDefaults['fontdata'] ?? [],
             $mpdfFontConfig['fontdata'] ?? [],
         );
+        $marginLeft = (string) ($settings['margin_left'] ?? '15mm');
+        $marginRight = (string) ($settings['margin_right'] ?? '15mm');
+        $contentWidth = $this->resolveContentWidth($marginLeft, $marginRight);
+        if ($attachmentSection !== null) {
+            $styles .= ' '.$this->outgoingAttachmentService->attachmentStyles();
+        }
         $fontCss = <<<CSS
 :root {
     --font-family-kop: {$fontFamilyKop};
@@ -327,6 +388,10 @@ CSS;
 
         File::ensureDirectoryExists($tempDir);
 
+        if (! class_exists(Mpdf::class)) {
+            throw new \RuntimeException('Renderer PDF bundle tidak tersedia di server ini.');
+        }
+
         // Margin (mm). margin_bottom harus cukup menampung tinggi footer
         // berjalan (kop instansi + alamat + email) agar isi surat di SEMUA
         // halaman tidak menabrak footer.
@@ -338,7 +403,7 @@ CSS;
             'margin_left' => 15,
             'margin_right' => 15,
             'margin_header' => 3,
-            'margin_footer' => 6,
+            'margin_footer' => 4,
             'default_font' => $fontFamilyBody,
             'fontDir' => $fontDir,
             'fontdata' => $fontdata,
@@ -346,17 +411,40 @@ CSS;
             'cacheCleanupInterval' => app()->runningUnitTests() ? false : 3600,
         ]);
 
+        $digitalValidationNote = 'Dokumen ini telah ditandatangani secara elektronik dan diterbitkan oleh Universitas Nahdlatul Ulama Al Ghazali.';
+        $footerWrapper = '<div style="width:'.$contentWidth.'; margin:0 auto; display:flex; flex-direction:column; align-items:center; text-align:center;">';
+        $footerWrapper .= '<div style="width:100%; font-size:8.5pt; line-height:1.15; color:#475569; text-align:center; margin:0 0 0.15mm 0;">'
+            .e($digitalValidationNote)
+            .'</div>';
+
+        if (trim($footerHtml) !== '') {
+            $footerWrapper .= '<div style="width:100%; text-align:center;">'.$footerHtml.'</div>';
+        }
+
+        $footerWrapper .= '</div>';
+
         $mpdf->SetHTMLHeader('<div style="width:100%; margin-top: -1mm;">'.$headerHtml.'</div>');
-        $mpdf->SetHTMLFooter('<div style="width:100%;">'.$footerHtml.'</div>');
+        $mpdf->SetHTMLFooter($footerWrapper);
 
         // Tulis style sekali, lalu body sekali (jangan duplikat).
         $mpdf->WriteHTML("<style>{$fontCss} {$styles} {$customCss}</style>", HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($bodyHtml, HTMLParserMode::HTML_BODY);
 
+        if ($attachmentSection !== null && filled($attachmentSection['html'] ?? null)) {
+            $orientation = strtolower((string) ($attachmentSection['orientation'] ?? 'portrait')) === 'landscape'
+                ? 'L'
+                : 'P';
+            $mpdf->AddPage($orientation);
+            $mpdf->WriteHTML((string) $attachmentSection['html'], HTMLParserMode::HTML_BODY);
+        }
+
         return $mpdf->Output('', 'S');
     }
 
-    protected function renderPdfOutputWithChrome(array $viewPayload): ?string
+    /**
+     * @param  array{html?: string, orientation?: string}|null  $attachmentSection
+     */
+    protected function renderPdfOutputWithChrome(array $viewPayload, ?array $attachmentSection = null): ?string
     {
         $chromeBinary = $this->resolveChromeBinary();
 
@@ -370,7 +458,7 @@ CSS;
 
         $htmlPath = $tempDir.DIRECTORY_SEPARATOR.'document.html';
         $pdfPath = $tempDir.DIRECTORY_SEPARATOR.'document.pdf';
-        $html = $this->buildBrowserPdfHtml($viewPayload);
+        $html = $this->buildBrowserPdfHtml($viewPayload, $attachmentSection);
 
         File::put($htmlPath, $html);
 
@@ -402,13 +490,178 @@ CSS;
         return File::get($pdfPath);
     }
 
-    protected function buildBrowserPdfHtml(array $viewPayload): string
+    /**
+     * @param  array{html?: string, orientation?: string}|null  $attachmentSection
+     */
+    protected function buildBrowserPdfHtml(array $viewPayload, ?array $attachmentSection = null): string
     {
-        return $this->renderer->wrapDocumentHtml(
-            (string) ($viewPayload['title'] ?? 'Surat'),
-            (string) ($viewPayload['html'] ?? ''),
-            $viewPayload['template'] ?? null,
+        $styles = (string) ($viewPayload['styles'] ?? '');
+        $customCss = (string) ($viewPayload['customCss'] ?? '');
+        $bodyHtml = (string) ($viewPayload['bodyHtml'] ?? '');
+        $headerHtml = (string) ($viewPayload['headerHtml'] ?? '');
+        $footerHtml = (string) ($viewPayload['footerHtml'] ?? '');
+        $settings = TemplateGlobalSetting::allAsArray();
+        $marginTop = $this->normalizeTopMargin((string) ($settings['margin_top'] ?? '15mm'));
+        $marginRight = $settings['margin_right'] ?? '15mm';
+        $marginBottom = $settings['margin_bottom'] ?? '12mm';
+        $marginLeft = $settings['margin_left'] ?? '15mm';
+        $paddingTop = $this->normalizeWrapperTopPadding((string) ($settings['margin_top'] ?? '15mm'));
+        $contentWidth = $this->resolveContentWidth((string) $marginLeft, (string) $marginRight);
+
+        $fontFamilyKop = SuratKomponenRenderer::fontFamilyStack(
+            SuratKomponenRenderer::resolveFontFamily($settings, 'font_family_kop')
         );
+        $fontFamilyBody = SuratKomponenRenderer::fontFamilyStack(
+            SuratKomponenRenderer::resolveFontFamily($settings, 'font_family_body')
+        );
+        $fontFamilyFooter = SuratKomponenRenderer::fontFamilyStack(
+            SuratKomponenRenderer::resolveFontFamily($settings, 'font_family_footer')
+        );
+
+        $fontVars = ":root { --font-family-kop: {$fontFamilyKop}; --font-family-body: {$fontFamilyBody}; --font-family-footer: {$fontFamilyFooter}; }";
+        $pageStyle = '@page { margin: 0; size: A4 portrait; }';
+
+        $attachmentPageHtml = '';
+        if ($attachmentSection !== null && filled($attachmentSection['html'] ?? null)) {
+            $attachmentPageHtml = <<<HTML
+<div class="page preview-sheet preview-sheet--attachment">
+    <div class="preview-sheet__body">
+        {$attachmentSection['html']}
+    </div>
+</div>
+HTML;
+        }
+
+        $attachmentStyles = $attachmentSection !== null && filled($attachmentSection['html'] ?? null)
+            ? $this->outgoingAttachmentService->attachmentStyles()
+            : '';
+
+        $bundlePageCss = <<<'CSS'
+.preview-sheet {
+    box-sizing: border-box;
+    position: relative;
+    width: 100%;
+    height: 297mm;
+    overflow: hidden;
+    padding: calc(__PADDING_TOP__ + 6mm) __MARGIN_RIGHT__ calc(__MARGIN_BOTTOM__ + 18mm) __MARGIN_LEFT__;
+    display: block;
+    break-after: auto;
+    page-break-after: auto;
+}
+.preview-sheet--main {
+    break-after: page;
+    page-break-after: always;
+}
+.preview-sheet:last-child {
+    break-after: auto;
+    page-break-after: auto;
+}
+.preview-sheet--attachment {
+    break-before: auto;
+    page-break-before: auto;
+}
+.preview-sheet__header {
+    width: 100%%;
+    box-sizing: border-box;
+}
+.preview-sheet__body {
+    width: 100%%;
+    box-sizing: border-box;
+    min-height: 0;
+    overflow: hidden;
+}
+.preview-sheet__footer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(__MARGIN_BOTTOM__ + 1mm);
+    width: __CONTENT_WIDTH__;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+    margin-top: 0;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.preview-sheet__footer > * {
+    margin-top: 0;
+}
+.preview-sheet__footer p,
+.preview-sheet__footer div,
+.preview-sheet__footer table {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+.preview-sheet__digital-note {
+    width: 100%%;
+    margin: 0 0 0.15mm 0;
+    font-size: 8.5pt;
+    line-height: 1.15;
+    color: #475569;
+    text-align: center;
+}
+.preview-sheet__header,
+.preview-sheet__header * {
+    font-family: var(--font-family-kop, "Times New Roman", serif);
+}
+.preview-sheet__body,
+.preview-sheet__body * {
+    font-family: var(--font-family-body, "Times New Roman", serif);
+}
+.preview-sheet__footer,
+.preview-sheet__footer * {
+    font-family: var(--font-family-footer, "Times New Roman", serif);
+}
+.preview-sheet__body p,
+.preview-sheet__body td,
+.preview-sheet__body th,
+.preview-sheet__body li,
+.preview-sheet__body div {
+    font-weight: 500;
+}
+CSS;
+
+        $bundlePageCss = str_replace(
+            ['__PADDING_TOP__', '__MARGIN_RIGHT__', '__MARGIN_BOTTOM__', '__MARGIN_LEFT__', '__CONTENT_WIDTH__'],
+            [$paddingTop, $marginRight, $marginBottom, $marginLeft, $contentWidth],
+            $bundlePageCss,
+        );
+
+        return <<<HTML
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{$viewPayload['title']}</title>
+    <style>
+        {$fontVars}
+        {$styles}
+        {$attachmentStyles}
+        {$customCss}
+        {$pageStyle}
+        html, body {
+            background: #fff;
+            color: #0f172a;
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-family-body, "Times New Roman", serif);
+            font-size: 12pt;
+        }
+        {$bundlePageCss}
+    </style>
+</head>
+        <body>
+    <div class="page preview-sheet preview-sheet--main">
+        {$viewPayload['html']}
+    </div>
+    {$attachmentPageHtml}
+</body>
+</html>
+HTML;
     }
 
     protected function resolveChromeBinary(): ?string

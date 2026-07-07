@@ -76,6 +76,8 @@ class LetterIndexController extends Controller
                 'nomor_surat' => $surat->nomor_surat,
                 'status' => $surat->status,
                 'can_approve' => $surat->canBeValidatedByAdmin(),
+                'needs_admin_completion' => $surat->hasIncompleteCampusData(),
+                'missing_campus_fields' => array_values($surat->missingCampusDataFields()),
                 'revision_label' => $surat->status === Surat::STATUS_REVISION_REQUESTED
                     ? match ($surat->finalApprovalRoleSlug()) {
                         'kaprodi' => 'Dikembalikan Kaprodi',

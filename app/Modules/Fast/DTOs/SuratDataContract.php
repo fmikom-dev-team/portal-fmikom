@@ -105,11 +105,31 @@ class SuratDataContract
     public static function inferFieldFormMode(string $source): string
     {
         return match ($source) {
-            'data_pemohon' => 'readonly',
+            'data_pemohon' => 'editable',
             'data_kampus' => 'readonly',
             'data_sistem' => 'hidden',
             default => 'editable',
         };
+    }
+
+    public static function isApplicantIdentityFieldName(string $name): bool
+    {
+        return in_array(Str::slug($name, '_'), [
+            'nama',
+            'name',
+            'nama_pemohon',
+            'nama_mahasiswa',
+            'nim',
+            'nim_nip',
+            'nomor_induk',
+            'nomor_induk_pemohon',
+            'nomor_induk_mahasiswa',
+            'program_studi',
+            'program_studi_pemohon',
+            'program_studi_mahasiswa',
+            'fakultas',
+            'prodi',
+        ], true);
     }
 
     /**
@@ -137,8 +157,10 @@ class SuratDataContract
         if (! in_array($mode, ['editable', 'readonly', 'hidden'], true)) {
             $mode = static::inferFieldFormMode($source);
         }
-        if ($source === 'data_pemohon' && $mode === 'editable') {
-            $mode = 'readonly';
+        if ($source === 'data_pemohon') {
+            $mode = static::isApplicantIdentityFieldName($name)
+                ? 'readonly'
+                : ($mode === 'hidden' ? 'hidden' : 'editable');
         }
 
         $editableRole = strtolower(trim((string) ($field['editable_role'] ?? '')));
@@ -329,6 +351,15 @@ class SuratDataContract
         return [
             'perihal' => '',
             'lampiran_keterangan' => '',
+            'lampiran_judul' => '',
+            'lampiran_orientation' => 'portrait',
+            'lampiran_judul_align' => 'center',
+            'lampiran_judul_bold' => '1',
+            'lampiran_label_no' => 'No',
+            'lampiran_label_nama' => 'Nama Mahasiswa',
+            'lampiran_label_nim' => 'NIM',
+            'lampiran_label_prodi' => 'Program Studi',
+            'lampiran_mode' => 'none',
         ];
     }
 
@@ -337,7 +368,7 @@ class SuratDataContract
      */
     public static function adminManualArrayFields(): array
     {
-        return ['kepada_yth'];
+        return ['kepada_yth', 'lampiran_mahasiswa', 'lampiran_columns', 'lampiran_rows'];
     }
 
     /**
@@ -367,8 +398,20 @@ class SuratDataContract
         return [
             'perihal' => ['nullable', 'string', 'max:255'],
             'lampiran_keterangan' => ['nullable', 'string', 'max:255'],
+            'lampiran_judul' => ['nullable', 'string', 'max:1000'],
+            'lampiran_orientation' => ['nullable', 'string', 'in:portrait,landscape'],
+            'lampiran_judul_align' => ['nullable', 'string', 'in:left,center,right'],
+            'lampiran_judul_bold' => ['nullable', 'boolean'],
+            'lampiran_label_no' => ['nullable', 'string', 'max:255'],
+            'lampiran_label_nama' => ['nullable', 'string', 'max:255'],
+            'lampiran_label_nim' => ['nullable', 'string', 'max:255'],
+            'lampiran_label_prodi' => ['nullable', 'string', 'max:255'],
+            'lampiran_mode' => ['nullable', 'string', 'in:none,student_list'],
             'kepada_yth' => ['nullable', 'array'],
             'kepada_yth.*' => ['string', 'max:255'],
+            'lampiran_mahasiswa' => ['nullable', 'array'],
+            'lampiran_columns' => ['nullable', 'array'],
+            'lampiran_rows' => ['nullable', 'array'],
         ];
     }
 
@@ -452,10 +495,6 @@ class SuratDataContract
 
         foreach (static::normalizeDynamicFieldConfig($fieldConfig) as $field) {
             if ((string) ($field['sumber_data'] ?? 'data_pemohon') !== 'data_kampus') {
-                continue;
-            }
-
-            if (! (bool) ($field['required'] ?? false)) {
                 continue;
             }
 
@@ -585,6 +624,18 @@ class SuratDataContract
             'judul_tugas_akhir_kalimat' => ['label' => 'Kalimat Judul Tugas Akhir', 'source_type' => 'computed', 'source_key' => 'judul_tugas_akhir_kalimat', 'is_required' => false, 'default_value' => null, 'description' => 'Kalimat judul tugas akhir jika tersedia.'],
             'ruang_sidang_info' => ['label' => 'Informasi Ruang Sidang', 'source_type' => 'computed', 'source_key' => 'ruang_sidang_info', 'is_required' => false, 'default_value' => null, 'description' => 'Potongan teks ruang sidang jika tersedia.'],
             'lampiran_keterangan' => ['label' => 'Keterangan Lampiran', 'source_type' => 'surat_data', 'source_key' => 'lampiran_keterangan', 'is_required' => false, 'default_value' => null, 'description' => 'Keterangan lampiran surat.'],
+            'lampiran_judul' => ['label' => 'Judul Lampiran', 'source_type' => 'surat_data', 'source_key' => 'lampiran_judul', 'is_required' => false, 'default_value' => null, 'description' => 'Judul konten utama lampiran surat.'],
+            'lampiran_orientation' => ['label' => 'Orientasi Lampiran', 'source_type' => 'surat_data', 'source_key' => 'lampiran_orientation', 'is_required' => false, 'default_value' => 'portrait', 'description' => 'Orientasi halaman lampiran PDF.'],
+            'lampiran_judul_align' => ['label' => 'Posisi Judul Lampiran', 'source_type' => 'surat_data', 'source_key' => 'lampiran_judul_align', 'is_required' => false, 'default_value' => 'center', 'description' => 'Posisi teks judul lampiran.'],
+            'lampiran_judul_bold' => ['label' => 'Judul Lampiran Tebal', 'source_type' => 'surat_data', 'source_key' => 'lampiran_judul_bold', 'is_required' => false, 'default_value' => '1', 'description' => 'Pengaturan tebal untuk judul lampiran.'],
+            'lampiran_label_no' => ['label' => 'Label Kolom No', 'source_type' => 'surat_data', 'source_key' => 'lampiran_label_no', 'is_required' => false, 'default_value' => 'No', 'description' => 'Label header kolom nomor lampiran.'],
+            'lampiran_label_nama' => ['label' => 'Label Kolom Nama', 'source_type' => 'surat_data', 'source_key' => 'lampiran_label_nama', 'is_required' => false, 'default_value' => 'Nama Mahasiswa', 'description' => 'Label header kolom nama lampiran.'],
+            'lampiran_label_nim' => ['label' => 'Label Kolom NIM', 'source_type' => 'surat_data', 'source_key' => 'lampiran_label_nim', 'is_required' => false, 'default_value' => 'NIM', 'description' => 'Label header kolom NIM lampiran.'],
+            'lampiran_label_prodi' => ['label' => 'Label Kolom Program Studi', 'source_type' => 'surat_data', 'source_key' => 'lampiran_label_prodi', 'is_required' => false, 'default_value' => 'Program Studi', 'description' => 'Label header kolom program studi lampiran.'],
+            'lampiran_mode' => ['label' => 'Mode Lampiran', 'source_type' => 'surat_data', 'source_key' => 'lampiran_mode', 'is_required' => false, 'default_value' => 'none', 'description' => 'Mode lampiran surat keluar admin.'],
+            'lampiran_mahasiswa' => ['label' => 'Daftar Mahasiswa Lampiran', 'source_type' => 'surat_data', 'source_key' => 'lampiran_mahasiswa', 'is_required' => false, 'default_value' => null, 'description' => 'Daftar mahasiswa yang dijadikan lampiran surat.'],
+            'lampiran_columns' => ['label' => 'Kolom Tabel Lampiran', 'source_type' => 'surat_data', 'source_key' => 'lampiran_columns', 'is_required' => false, 'default_value' => null, 'description' => 'Definisi kolom tabel lampiran dinamis.'],
+            'lampiran_rows' => ['label' => 'Baris Tabel Lampiran', 'source_type' => 'surat_data', 'source_key' => 'lampiran_rows', 'is_required' => false, 'default_value' => null, 'description' => 'Isi tabel lampiran dinamis.'],
             'perihal' => ['label' => 'Perihal', 'source_type' => 'surat_data', 'source_key' => 'perihal', 'is_required' => false, 'default_value' => null, 'description' => 'Perihal surat.'],
             'kepada_yth' => ['label' => 'Kepada Yth', 'source_type' => 'surat_data', 'source_key' => 'kepada_yth', 'is_required' => false, 'default_value' => null, 'description' => 'Daftar penerima surat.'],
         ];
