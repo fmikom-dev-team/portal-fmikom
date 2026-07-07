@@ -69,9 +69,11 @@ class OutgoingLetterAttachmentService
     {
         $surat->loadMissing('dataEntries');
 
-        $rawRows = $surat->dataEntries
-            ->firstWhere('field_name', 'lampiran_mahasiswa')
-            ?->field_value;
+        $rawRows = data_get(
+            $surat->dataEntries->firstWhere('field_name', 'lampiran_mahasiswa'),
+            'field_value',
+            '',
+        );
 
         if (is_string($rawRows)) {
             $decoded = json_decode($rawRows, true);
@@ -95,9 +97,11 @@ class OutgoingLetterAttachmentService
     {
         $surat->loadMissing('dataEntries');
 
-        $storedMode = $surat->dataEntries
-            ->firstWhere('field_name', 'lampiran_mode')
-            ?->field_value;
+        $storedMode = data_get(
+            $surat->dataEntries->firstWhere('field_name', 'lampiran_mode'),
+            'field_value',
+            '',
+        );
 
         $mode = strtolower(trim((string) $storedMode));
 
@@ -196,9 +200,11 @@ class OutgoingLetterAttachmentService
     {
         $surat->loadMissing('dataEntries');
 
-        $rawColumns = $surat->dataEntries
-            ->firstWhere('field_name', 'lampiran_columns')
-            ?->field_value;
+        $rawColumns = data_get(
+            $surat->dataEntries->firstWhere('field_name', 'lampiran_columns'),
+            'field_value',
+            '',
+        );
 
         if (is_string($rawColumns)) {
             $decoded = json_decode($rawColumns, true);
@@ -227,9 +233,11 @@ class OutgoingLetterAttachmentService
         $columns = $this->extractAttachmentColumnsFromSurat($surat);
         $surat->loadMissing('dataEntries');
 
-        $rawRows = $surat->dataEntries
-            ->firstWhere('field_name', 'lampiran_rows')
-            ?->field_value;
+        $rawRows = data_get(
+            $surat->dataEntries->firstWhere('field_name', 'lampiran_rows'),
+            'field_value',
+            '',
+        );
 
         if (is_string($rawRows)) {
             $decoded = json_decode($rawRows, true);
@@ -257,9 +265,11 @@ class OutgoingLetterAttachmentService
     {
         $surat->loadMissing('dataEntries');
 
-        $storedTitle = $surat->dataEntries
-            ->firstWhere('field_name', 'lampiran_judul')
-            ?->field_value;
+        $storedTitle = data_get(
+            $surat->dataEntries->firstWhere('field_name', 'lampiran_judul'),
+            'field_value',
+            '',
+        );
 
         $title = trim((string) $storedTitle);
 
@@ -553,7 +563,7 @@ class OutgoingLetterAttachmentService
             e($normalizedTitleWeight),
         );
         $headersHtml = collect($columnLabels)->map(function (array $column): string {
-            $align = $this->normalizeAttachmentAlign($column['align'] ?? 'left');
+            $align = $this->normalizeAttachmentAlign($column['align']);
             $headerWeight = ! empty($column['bold']) ? '700' : '400';
 
             return sprintf(
@@ -566,7 +576,7 @@ class OutgoingLetterAttachmentService
 
         $rowsHtml = collect($rows)->values()->map(function (array $row) use ($columnLabels): string {
             $cellsHtml = collect($columnLabels)->map(function (array $column) use ($row): string {
-                $align = $this->normalizeAttachmentAlign($column['align'] ?? 'left');
+                $align = $this->normalizeAttachmentAlign($column['align']);
                 $value = trim((string) ($row[$column['key']] ?? ''));
 
                 return sprintf(
@@ -652,8 +662,8 @@ CSS;
             'pdf'
         );
         $mpdfFontConfig = SuratKomponenRenderer::mpdfFontConfig();
-        $fontDir = $mpdfFontConfig['fontDir'] ?? [];
-        $fontdata = $mpdfFontConfig['fontdata'] ?? [];
+        $fontDir = $mpdfFontConfig['fontDir'];
+        $fontdata = $mpdfFontConfig['fontdata'];
         $fontCss = <<<CSS
 :root {
     --font-family-kop: {$fontFamilyKop};
@@ -706,7 +716,7 @@ CSS;
         ]);
 
         $styles = $this->renderer->documentStyles().' '.$this->attachmentStyles();
-        $customCss = (string) ($template?->css_style ?? '');
+        $customCss = (string) ($template?->css_style);
 
         $mpdf->WriteHTML("<style>{$fontCss} {$styles} {$customCss}</style>", HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($bodyHtml, HTMLParserMode::HTML_BODY);
@@ -810,7 +820,11 @@ CSS;
     ): string {
         $surat->loadMissing('dataEntries');
 
-        $storedValue = trim((string) ($surat->dataEntries->firstWhere('field_name', $fieldName)?->field_value ?? ''));
+        $storedValue = trim((string) data_get(
+            $surat->dataEntries->firstWhere('field_name', $fieldName),
+            'field_value',
+            '',
+        ));
 
         if ($storedValue === '') {
             $isiSurat = json_decode((string) $surat->isi_surat, true);
@@ -849,7 +863,7 @@ CSS;
 
     /**
      * @param  array<string, mixed>  $payload
-     * @return array{no: string, nama: string, nim: string, prodi: string}
+     * @return array<int, array{key: string, label: string, align: string, bold: bool}>
      */
     protected function normalizeAttachmentColumnLabels(array $payload): array
     {
@@ -942,7 +956,7 @@ CSS;
     protected function resolveChromeBinary(): ?string
     {
         $candidates = array_filter([
-            env('FAST_PDF_CHROME_PATH'),
+            config('fast.pdf_chrome_path'),
             'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
             'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
             'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
@@ -950,7 +964,9 @@ CSS;
         ]);
 
         foreach ($candidates as $candidate) {
-            if (is_string($candidate) && $candidate !== '' && File::exists($candidate)) {
+            $candidate = (string) $candidate;
+
+            if (File::exists($candidate)) {
                 return $candidate;
             }
         }

@@ -246,8 +246,10 @@ class AppServiceProvider extends ServiceProvider
                 return;
             }
 
+            $userId = $event->user->getAuthIdentifier();
+
             ActivityLog::create([
-                'user_id' => $event->user->id,
+                'user_id' => $userId,
                 'action' => 'auth.login',
                 'description' => 'Login ke sistem',
                 'ip_address' => request()->ip(),
@@ -259,14 +261,14 @@ class AppServiceProvider extends ServiceProvider
                 return;
             }
 
-            if ($event->user) {
-                ActivityLog::create([
-                    'user_id' => $event->user->id,
-                    'action' => 'auth.logout',
-                    'description' => 'Logout dari sistem',
-                    'ip_address' => request()->ip(),
-                ]);
-            }
+            $userId = $event->user->getAuthIdentifier();
+
+            ActivityLog::create([
+                'user_id' => $userId,
+                'action' => 'auth.logout',
+                'description' => 'Logout dari sistem',
+                'ip_address' => request()->ip(),
+            ]);
         });
     }
 

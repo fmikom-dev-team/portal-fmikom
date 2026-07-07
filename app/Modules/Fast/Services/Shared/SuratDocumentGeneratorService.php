@@ -305,7 +305,7 @@ class SuratDocumentGeneratorService
     }
 
     /**
-     * @param  array{html?: string, bodyHtml?: string, headerHtml?: string, footerHtml?: string, styles?: string, customCss?: string}|null  $attachmentSection
+     * @param  array{html?: string, bodyHtml?: string, headerHtml?: string, footerHtml?: string, styles?: string, customCss?: string, orientation?: string}|null  $attachmentSection
      */
     protected function renderPdfOutput(array $viewPayload, ?array $attachmentSection = null): string
     {
@@ -434,15 +434,17 @@ CSS;
         $mpdf->SetHTMLFooter($footerWrapper);
 
         // Tulis style sekali, lalu body sekali (jangan duplikat).
+        $htmlBodyMode = HTMLParserMode::HTML_BODY;
         $mpdf->WriteHTML("<style>{$fontCss} {$styles} {$customCss}</style>", HTMLParserMode::HEADER_CSS);
-        $mpdf->WriteHTML($bodyHtml, HTMLParserMode::HTML_BODY);
+        $mpdf->WriteHTML($bodyHtml, $htmlBodyMode);
 
-        if ($attachmentSection !== null && filled($attachmentSection['html'] ?? null)) {
-            $orientation = strtolower((string) ($attachmentSection['orientation'] ?? 'portrait')) === 'landscape'
+        if ($attachmentSection !== null && isset($attachmentSection['html']) && filled($attachmentSection['html'])) {
+            $attachmentOrientation = $this->normalizeAttachmentOrientation($attachmentSection['orientation'] ?? 'portrait');
+            $orientation = strtolower((string) $attachmentOrientation) === 'landscape'
                 ? 'L'
                 : 'P';
             $mpdf->AddPage($orientation);
-            $mpdf->WriteHTML((string) $attachmentSection['html'], HTMLParserMode::HTML_BODY);
+            $mpdf->WriteHTML((string) $attachmentSection['html'], $htmlBodyMode);
         }
 
         return $mpdf->Output('', 'S');
@@ -456,7 +458,7 @@ CSS;
      */
     protected function shouldUseBrowserPdfForAttachmentSection(?array $attachmentSection): bool
     {
-        if ($attachmentSection === null || ! filled($attachmentSection['html'] ?? null)) {
+        if ($attachmentSection === null || ! isset($attachmentSection['html']) || ! filled($attachmentSection['html'])) {
             return true;
         }
 
@@ -464,11 +466,15 @@ CSS;
             return true;
         }
 
-        return strtolower((string) ($attachmentSection['orientation'] ?? 'portrait')) !== 'landscape';
+        $attachmentOrientation = isset($attachmentSection['orientation'])
+            ? $this->normalizeAttachmentOrientation($attachmentSection['orientation'])
+            : 'portrait';
+
+        return strtolower((string) $attachmentOrientation) !== 'landscape';
     }
 
     /**
-     * @param  array{html?: string, bodyHtml?: string, headerHtml?: string, footerHtml?: string, styles?: string, customCss?: string}|null  $attachmentSection
+     * @param  array{html?: string, bodyHtml?: string, headerHtml?: string, footerHtml?: string, styles?: string, customCss?: string, orientation?: string}|null  $attachmentSection
      */
     protected function renderPdfOutputWithDompdf(array $viewPayload, ?array $attachmentSection = null): ?string
     {
@@ -567,24 +573,27 @@ CSS;
         $pageStyle = '@page preview-main { margin: 0; size: A4 portrait; }';
 
         $attachmentPageHtml = '';
-        if ($attachmentSection !== null && filled($attachmentSection['html'] ?? null)) {
-            $attachmentOrientation = $this->normalizeAttachmentOrientation($attachmentSection['orientation'] ?? 'portrait');
+        if ($attachmentSection !== null && isset($attachmentSection['html']) && filled($attachmentSection['html'])) {
+            $attachmentOrientation = isset($attachmentSection['orientation'])
+                ? $this->normalizeAttachmentOrientation($attachmentSection['orientation'])
+                : 'portrait';
             if ($attachmentOrientation === 'landscape') {
                 $attachmentHeight = '210mm';
                 $attachmentPageName = 'preview-attachment';
                 $attachmentPageStyle = '@page preview-attachment { margin: 0; size: A4 landscape; }';
             }
 
+            $attachmentHtml = (string) $attachmentSection['html'];
             $attachmentPageHtml = <<<HTML
 <div class="page preview-sheet preview-sheet--attachment" style="page: {$attachmentPageName};">
     <div class="preview-sheet__body">
-        {$attachmentSection['html']}
+        {$attachmentHtml}
     </div>
 </div>
 HTML;
         }
 
-        $attachmentStyles = $attachmentSection !== null && filled($attachmentSection['html'] ?? null)
+        $attachmentStyles = $attachmentSection !== null && isset($attachmentSection['html']) && filled($attachmentSection['html'])
             ? $this->outgoingAttachmentService->attachmentStyles()
             : '';
 
@@ -721,7 +730,7 @@ HTML;
     protected function resolveChromeBinary(): ?string
     {
         $candidates = array_filter([
-            env('FAST_PDF_CHROME_PATH'),
+            config('fast.pdf_chrome_path'),
             'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
             'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
             'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',

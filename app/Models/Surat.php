@@ -12,6 +12,12 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
+/**
+ * @property string|null $status
+ * @property string|null $nomor_surat
+ * @property string|null $nomor_surat_status
+ * @property string|null $qr_token
+ */
 class Surat extends Model
 {
     public const STATUS_PENDING = 'pending';
@@ -167,12 +173,22 @@ class Surat extends Model
         $user = $this->resolvedSubjectUser();
         $manualSubject = $this->extractManualSubjectIdentity();
 
+        if ($user === null) {
+            return [
+                'id' => null,
+                'name' => Arr::get($manualSubject, 'name'),
+                'nim' => Arr::get($manualSubject, 'nim'),
+                'nomor_induk' => Arr::get($manualSubject, 'nomor_induk'),
+                'email' => Arr::get($manualSubject, 'email'),
+            ];
+        }
+
         return [
-            'id' => $user?->id,
-            'name' => $user?->name ?? Arr::get($manualSubject, 'name'),
-            'nim' => $user ? ($user->nim_nip ?? $user->nomor_induk) : Arr::get($manualSubject, 'nim'),
-            'nomor_induk' => $user?->nomor_induk ?? Arr::get($manualSubject, 'nomor_induk'),
-            'email' => $user?->email ?? Arr::get($manualSubject, 'email'),
+            'id' => $user->id,
+            'name' => $user->name ?? Arr::get($manualSubject, 'name'),
+            'nim' => $user->nim_nip ?? $user->nomor_induk ?? Arr::get($manualSubject, 'nim'),
+            'nomor_induk' => $user->nomor_induk ?? Arr::get($manualSubject, 'nomor_induk'),
+            'email' => $user->email ?? Arr::get($manualSubject, 'email'),
         ];
     }
 
@@ -183,12 +199,22 @@ class Surat extends Model
     {
         $user = $this->pemohon;
 
+        if ($user === null) {
+            return [
+                'id' => null,
+                'name' => null,
+                'nim' => null,
+                'nomor_induk' => null,
+                'email' => null,
+            ];
+        }
+
         return [
-            'id' => $user?->id,
-            'name' => $user?->name,
-            'nim' => $user ? ($user->nim_nip ?? $user->nomor_induk) : null,
-            'nomor_induk' => $user?->nomor_induk,
-            'email' => $user?->email,
+            'id' => $user->id,
+            'name' => $user->name,
+            'nim' => $user->nim_nip ?? $user->nomor_induk,
+            'nomor_induk' => $user->nomor_induk,
+            'email' => $user->email,
         ];
     }
 
@@ -515,7 +541,9 @@ class Surat extends Model
             return false;
         }
 
-        if ($this->qrCode !== null && $this->qrCode->status !== SuratQrCode::STATUS_ACTIVE) {
+        $qrCode = $this->qrCode;
+
+        if ($qrCode !== null && data_get($qrCode, 'status') !== SuratQrCode::STATUS_ACTIVE) {
             return false;
         }
 

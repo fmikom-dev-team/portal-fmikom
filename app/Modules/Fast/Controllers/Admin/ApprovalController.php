@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ApprovalController extends Controller
@@ -64,7 +65,7 @@ class ApprovalController extends Controller
         return response()->json($this->approvalService->show($id));
     }
 
-    public function previewAttachment(Request $request, int $id): StreamedResponse
+    public function previewAttachment(Request $request, int $id): SymfonyResponse|StreamedResponse
     {
         $lampiran = SuratLampiran::query()
             ->with('surat')

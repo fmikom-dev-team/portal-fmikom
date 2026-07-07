@@ -119,8 +119,8 @@ class DashboardController extends Controller
                 'name' => $user->name,
                 'identifierLabel' => $isLecturer ? 'NIP' : 'NIM',
                 'identifierValue' => $user->nim_nip ?: $user->nomor_induk,
-                'programStudi' => $user->programStudi?->nama,
-                'fakultas' => $user->programStudi?->fakultas?->nama,
+                'programStudi' => data_get($user->programStudi, 'nama'),
+                'fakultas' => data_get($user->programStudi, 'fakultas.nama'),
             ],
             'endpoints' => [
                 'submission' => route($this->submissionRouteName(), absolute: false),

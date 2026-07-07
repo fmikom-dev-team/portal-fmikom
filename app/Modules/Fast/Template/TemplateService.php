@@ -858,24 +858,24 @@ HTML,
     protected function buildManualSubjectContext(array $suratData, ?User $subjectUser): array
     {
         return [
-            'name' => $subjectUser?->name
+            'name' => data_get($subjectUser, 'name')
                 ?? Arr::get($suratData, 'subject_name')
                 ?? Arr::get($suratData, 'nama')
                 ?? Arr::get($suratData, 'nama_pemohon')
                 ?? Arr::get($suratData, 'nama_mahasiswa')
                 ?? Arr::get($suratData, 'nama_dosen'),
-            'email' => $subjectUser?->email ?? Arr::get($suratData, 'email') ?? Arr::get($suratData, 'email_pemohon'),
-            'nim_nip' => $subjectUser?->nim_nip
+            'email' => data_get($subjectUser, 'email') ?? Arr::get($suratData, 'email') ?? Arr::get($suratData, 'email_pemohon'),
+            'nim_nip' => data_get($subjectUser, 'nim_nip')
                 ?? Arr::get($suratData, 'nim')
                 ?? Arr::get($suratData, 'nim_pemohon')
                 ?? Arr::get($suratData, 'nim_mahasiswa'),
-            'nomor_induk' => $subjectUser?->nomor_induk
+            'nomor_induk' => data_get($subjectUser, 'nomor_induk')
                 ?? Arr::get($suratData, 'nomor_induk')
                 ?? Arr::get($suratData, 'nomor_induk_pemohon')
                 ?? Arr::get($suratData, 'nomor_induk_mahasiswa'),
-            'no_telepon' => $subjectUser?->no_telepon ?? Arr::get($suratData, 'telepon_pemohon'),
+            'no_telepon' => data_get($subjectUser, 'no_telepon') ?? Arr::get($suratData, 'telepon_pemohon'),
             'programStudi' => [
-                'nama' => $subjectUser?->programStudi?->nama
+                'nama' => data_get($subjectUser, 'programStudi.nama')
                     ?? Arr::get($suratData, 'program_studi')
                     ?? Arr::get($suratData, 'program_studi_pemohon')
                     ?? Arr::get($suratData, 'program_studi_mahasiswa'),
@@ -1034,11 +1034,11 @@ HTML,
         }
 
         return $cache[$cacheKey] = [
-            'name' => (string) ($signer?->name ?? ''),
-            'email' => (string) ($signer?->email ?? ''),
-            'nomor_induk' => (string) ($signer?->nomor_induk ?? $signer?->nim_nip ?? ''),
+            'name' => (string) data_get($signer, 'name', ''),
+            'email' => (string) data_get($signer, 'email', ''),
+            'nomor_induk' => (string) (data_get($signer, 'nomor_induk') ?? data_get($signer, 'nim_nip') ?? ''),
             'jabatan' => $this->resolveSignerJabatan($approvalRoleSlug),
-            'program_studi' => (string) ($signer?->programStudi?->nama ?? ''),
+            'program_studi' => (string) data_get($signer, 'programStudi.nama', ''),
         ];
     }
 

@@ -4,6 +4,7 @@ namespace App\Modules\Fast\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class FastDashboardController extends Controller
 {

@@ -2,7 +2,7 @@
 
 namespace App\Models\Magang;
 
-use App\Models\Surat\Surat;
+use App\Models\Surat;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;

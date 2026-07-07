@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\JenisSurat;
 use App\Models\Surat;
 use App\Models\SuratCategory;
+use App\Models\User;
 use App\Modules\Fast\DTOs\SuratDataContract;
 use App\Modules\Fast\Services\Shared\OutgoingLetterAttachmentService;
+use App\Modules\Fast\Support\FastUserIdentitySearch;
 use App\Modules\Fast\Support\TemplateAdminSupport;
 use App\Modules\Fast\Template\Renderers\SuratTemplateRendererService;
 use App\Modules\Fast\Workflow\Actions\SuratWorkflowService;
@@ -628,9 +630,30 @@ class LetterController extends Controller
         return $returnTo;
     }
 
+    protected function subjectUserQuery()
+    {
+        return User::query()
+            ->select(['id', 'name', 'email', 'nomor_induk', 'program_studi_id']);
+    }
+
     /**
-     * @param  mixed  $rows
-     * @return array<int, array{nama: string, nim: string, prodi: string}>
+     * @return array{id: int, name: string, email: string, nomor_induk: string|null, program_studi: string|null}
+     */
+    protected function serializeSubjectOption(User $user): array
+    {
+        $user->loadMissing('programStudi');
+
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'nomor_induk' => $user->nomor_induk,
+            'program_studi' => $user->programStudi?->nama,
+        ];
+    }
+
+    /**
+     * @return array<int, array{key: string, label: string, align: string, bold: bool}>
      */
     protected function validateLampiranColumnsPayload(mixed $columns): array
     {
