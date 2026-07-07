@@ -62,7 +62,7 @@ it('builds an attachment bundle section that can be appended to the final surat 
     expect($section['html'])->toContain('lampiran-table');
 });
 
-it('falls back to the browser path for landscape attachment bundles when mPDF is missing', function () {
+it('uses the mPDF path for landscape attachment bundles when mPDF is available', function () {
     $student = User::factory()->create([
         'user_type' => 'mahasiswa',
         'email_verified_at' => now(),
@@ -119,5 +119,5 @@ it('falls back to the browser path for landscape attachment bundles when mPDF is
     $method = $reflection->getMethod('shouldUseBrowserPdfForAttachmentSection');
     $method->setAccessible(true);
 
-    expect($method->invoke($service, $section))->toBeTrue();
+    expect($method->invoke($service, $section))->toBeFalse();
 });
