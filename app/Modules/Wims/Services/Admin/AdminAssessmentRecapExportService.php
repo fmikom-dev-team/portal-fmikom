@@ -70,8 +70,6 @@ class AdminAssessmentRecapExportService
             'rows' => $rows,
             'total_weight' => round((float) $template->components->sum('weight_percentage'), 2),
             'total_score' => number_format((float) $submission->total_score, 2, '.', ''),
-            'submission_status' => $submission->status,
-            'submitted_at' => $submission->submitted_at?->translatedFormat('d M Y H:i'),
             'signer_label' => $role === 'dosen' ? 'Dosen Pembimbing Lapangan' : 'Pembimbing Lapangan Mitra',
             'signer_name' => $submission->assessor?->name ?? '-',
             'year' => $submission->submitted_at?->format('Y') ?? now()->format('Y'),

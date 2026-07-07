@@ -4,6 +4,7 @@ namespace App\Notifications\Trace;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class JobRejectedForMitra extends Notification implements ShouldQueue
@@ -18,7 +19,21 @@ class JobRejectedForMitra extends Notification implements ShouldQueue
 
     public function via($notifiable): array
     {
-        return ['database'];
+        return ['database', 'mail'];
+    }
+
+    public function toMail($notifiable): MailMessage
+    {
+        $companyName = $notifiable->mitraProfile->nama_perusahaan ?? 'Mitra';
+
+        return (new MailMessage)
+            ->subject('[Portal FMIKOM] Perubahan Status Lowongan Pekerjaan Anda')
+            ->markdown('emails.trace.job-rejected-mitra', [
+                'companyName' => $companyName,
+                'jobTitle' => $this->jobTitle,
+                'jobId' => $this->jobId,
+                'reason' => $this->reason,
+            ]);
     }
 
     public function toArray($notifiable): array

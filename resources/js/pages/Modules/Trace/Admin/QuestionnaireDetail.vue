@@ -91,6 +91,7 @@ const form = useForm<any>({
                 ...rawMeta,
                 kategori: rawMeta.kategori || q.kategori || "Umum",
                 acuan: rawMeta.acuan || (Array.isArray(q.acuan) ? q.acuan : []),
+                indikator: rawMeta.indikator || [],
             };
 
             return {
@@ -327,129 +328,132 @@ const saveChanges = () => doSave(false);
         <div class="min-h-screen bg-slate-50/50 dark:bg-slate-950/20">
             <!-- ═══ STICKY TOOLBAR ═══ -->
             <div
-                class="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/80 px-6 backdrop-blur-md"
+                class="sticky top-0 z-30 border-b bg-background/80 backdrop-blur-md"
             >
-                <div class="flex items-center gap-4">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        class="h-9 w-9 rounded-full"
-                        @click="handleBack"
-                    >
-                        <ChevronLeft class="h-5 w-5" />
-                    </Button>
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm font-medium text-muted-foreground"
-                            >Editor</span
+                <!-- Top row: back + title + actions -->
+                <div class="flex h-14 items-center justify-between gap-2 px-3 sm:h-16 sm:px-6">
+                    <div class="flex min-w-0 items-center gap-2 sm:gap-4">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            class="h-8 w-8 shrink-0 rounded-full sm:h-9 sm:w-9"
+                            @click="handleBack"
                         >
-                        <Separator orientation="vertical" class="h-4" />
-                        <span
-                            class="max-w-[200px] truncate text-sm font-bold"
-                            >{{ form.judul || "Kuesioner Tanpa Judul" }}</span
-                        >
-                        <!-- Status Badge — computed from dates -->
-                        <TStatusBadge
-                            :status="
-                                computedStatus.label === 'Aktif'
-                                    ? 'active'
-                                    : computedStatus.label === 'Draft'
-                                      ? 'draft'
-                                      : computedStatus.label === 'Terjadwal'
-                                        ? 'pending'
-                                        : 'closed'
-                            "
-                            :label="computedStatus.label"
-                            size="sm"
-                            class="ml-2"
-                        />
+                            <ChevronLeft class="h-5 w-5" />
+                        </Button>
+                        <div class="flex min-w-0 items-center gap-1.5 sm:gap-2">
+                            <span class="hidden text-sm font-medium text-muted-foreground sm:inline"
+                                >Editor</span
+                            >
+                            <Separator orientation="vertical" class="hidden h-4 sm:block" />
+                            <span
+                                class="max-w-[120px] truncate text-sm font-bold sm:max-w-[200px]"
+                                >{{ form.judul || "Kuesioner Tanpa Judul" }}</span
+                            >
+                            <!-- Status Badge — computed from dates -->
+                            <TStatusBadge
+                                :status="
+                                    computedStatus.label === 'Aktif'
+                                        ? 'active'
+                                        : computedStatus.label === 'Draft'
+                                          ? 'draft'
+                                          : computedStatus.label === 'Terjadwal'
+                                            ? 'pending'
+                                            : 'closed'
+                                "
+                                :label="computedStatus.label"
+                                size="sm"
+                                class="ml-1 sm:ml-2"
+                            />
 
-                        <!-- Save State Indicator -->
-                        <div
-                            class="ml-2 flex items-center gap-1.5 text-[10px] font-bold"
-                        >
-                            <template v-if="saveState === 'saving'">
-                                <Loader2
-                                    class="h-3 w-3 animate-spin text-[#0C447C]"
-                                />
-                                <span class="text-[#0C447C]">Menyimpan...</span>
-                            </template>
-                            <template v-else-if="saveState === 'saved'">
-                                <CheckCircle2
-                                    class="h-3 w-3 text-emerald-500"
-                                />
-                                <span class="text-emerald-500">Tersimpan</span>
-                            </template>
-                            <template v-else-if="hasUnsavedChanges">
-                                <Circle
-                                    class="h-2.5 w-2.5 fill-amber-400 text-amber-400"
-                                />
-                                <span class="text-amber-500"
-                                    >Belum disimpan</span
-                                >
-                            </template>
+                            <!-- Save State Indicator -->
+                            <div
+                                class="ml-1 flex items-center gap-1 text-[10px] font-bold sm:ml-2 sm:gap-1.5"
+                            >
+                                <template v-if="saveState === 'saving'">
+                                    <Loader2
+                                        class="h-3 w-3 animate-spin text-[#0C447C]"
+                                    />
+                                    <span class="hidden text-[#0C447C] sm:inline">Menyimpan...</span>
+                                </template>
+                                <template v-else-if="saveState === 'saved'">
+                                    <CheckCircle2
+                                        class="h-3 w-3 text-emerald-500"
+                                    />
+                                    <span class="hidden text-emerald-500 sm:inline">Tersimpan</span>
+                                </template>
+                                <template v-else-if="hasUnsavedChanges">
+                                    <Circle
+                                        class="h-2.5 w-2.5 fill-amber-400 text-amber-400"
+                                    />
+                                    <span class="hidden text-amber-500 sm:inline"
+                                        >Belum disimpan</span
+                                    >
+                                </template>
+                            </div>
                         </div>
                     </div>
-                    <div
-                        class="ml-4 flex items-center gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800"
-                    >
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            class="h-8 gap-2 rounded-lg transition-all"
-                            :class="
-                                activeTab === 'builder'
-                                    ? 'bg-white text-[#0C447C] shadow-sm dark:bg-slate-700'
-                                    : 'text-muted-foreground'
-                            "
-                            @click="activeTab = 'builder'"
+
+                    <div class="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                        <div
+                            class="flex items-center gap-0.5 rounded-xl bg-slate-100 p-0.5 sm:gap-1 sm:p-1 dark:bg-slate-800"
                         >
-                            <Settings class="h-4 w-4" />
-                            <span class="text-xs font-bold">Builder</span>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                class="h-7 gap-1.5 rounded-lg px-2 transition-all sm:h-8 sm:gap-2 sm:px-3"
+                                :class="
+                                    activeTab === 'builder'
+                                        ? 'bg-white text-[#0C447C] shadow-sm dark:bg-slate-700'
+                                        : 'text-muted-foreground'
+                                "
+                                @click="activeTab = 'builder'"
+                            >
+                                <Settings class="h-4 w-4" />
+                                <span class="hidden text-xs font-bold sm:inline">Builder</span>
+                            </Button>
+                            <Button
+                                v-if="props.kuesioner.id"
+                                variant="ghost"
+                                size="sm"
+                                class="h-7 gap-1.5 rounded-lg px-2 transition-all text-muted-foreground hover:text-[#0C447C] sm:h-8 sm:gap-2 sm:px-3 dark:hover:text-[#85B7EB]"
+                                @click="openAnalytics"
+                            >
+                                <BarChart2 class="h-4 w-4" />
+                                <span class="hidden text-xs font-bold sm:inline">Analisis</span>
+                                <ExternalLink class="hidden h-3 w-3 sm:block" />
+                            </Button>
+                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            class="h-7 gap-1.5 rounded-xl px-2 sm:h-9 sm:gap-2 sm:px-3"
+                            @click="showPreview = true"
+                        >
+                            <Eye class="h-4 w-4" />
+                            <span class="hidden sm:inline">Pratinjau</span>
                         </Button>
                         <Button
-                            v-if="props.kuesioner.id"
-                            variant="ghost"
                             size="sm"
-                            class="h-8 gap-2 rounded-lg transition-all text-muted-foreground hover:text-[#0C447C] dark:hover:text-[#85B7EB]"
-                            @click="openAnalytics"
+                            class="h-7 gap-1.5 rounded-xl bg-[#0C447C] px-2.5 hover:bg-[#0C447C]/90 sm:h-9 sm:gap-2 sm:px-3"
+                            :disabled="saveState === 'saving'"
+                            @click="saveChanges"
                         >
-                            <BarChart2 class="h-4 w-4" />
-                            <span class="text-xs font-bold">Analisis</span>
-                            <ExternalLink class="h-3 w-3" />
+                            <Loader2
+                                v-if="saveState === 'saving'"
+                                class="h-4 w-4 animate-spin"
+                            />
+                            <Save v-else class="h-4 w-4" />
+                            <span class="hidden sm:inline">{{ saveState === "saving" ? "Menyimpan..." : "Simpan" }}</span>
                         </Button>
                     </div>
-                </div>
-
-                <div class="flex items-center gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        class="gap-2 rounded-xl"
-                        @click="showPreview = true"
-                    >
-                        <Eye class="h-4 w-4" />
-                        Pratinjau
-                    </Button>
-                    <Button
-                        size="sm"
-                        class="gap-2 rounded-xl bg-[#0C447C] hover:bg-[#0C447C]/90"
-                        :disabled="saveState === 'saving'"
-                        @click="saveChanges"
-                    >
-                        <Loader2
-                            v-if="saveState === 'saving'"
-                            class="h-4 w-4 animate-spin"
-                        />
-                        <Save v-else class="h-4 w-4" />
-                        {{ saveState === "saving" ? "Menyimpan..." : "Simpan" }}
-                    </Button>
                 </div>
             </div>
 
             <!-- ═══ BUILDER TAB ═══ -->
             <div
                 v-if="activeTab === 'builder'"
-                class="mx-auto max-w-4xl animate-in space-y-8 p-6 pb-32 duration-300 zoom-in-95 fade-in lg:p-10"
+                class="mx-auto max-w-4xl animate-in space-y-6 p-3 pb-32 duration-300 zoom-in-95 fade-in sm:space-y-8 sm:p-6 lg:p-10"
             >
                 <div
                     v-if="form.errors.error"
@@ -495,13 +499,13 @@ const saveChanges = () => doSave(false);
                 </div>
 
                 <Button
-                    class="h-20 w-full gap-4 rounded-[2rem] border-2 border-dashed border-[#85B7EB]/40 bg-[#0C447C]/5 text-lg font-black tracking-tight text-[#0C447C] shadow-sm transition-all hover:border-[#85B7EB] hover:bg-[#0C447C]/10 hover:shadow-md dark:border-[#85B7EB]/30 dark:bg-[#0C447C]/5"
+                    class="h-16 w-full gap-3 rounded-[2rem] border-2 border-dashed border-[#85B7EB]/40 bg-[#0C447C]/5 text-base font-black tracking-tight text-[#0C447C] shadow-sm transition-all hover:border-[#85B7EB] hover:bg-[#0C447C]/10 hover:shadow-md sm:h-20 sm:gap-4 sm:text-lg dark:border-[#85B7EB]/30 dark:bg-[#0C447C]/5"
                     @click="addSection"
                 >
                     <div
-                        class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#0C447C] text-white shadow-lg shadow-[#0C447C]/30"
+                        class="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0C447C] text-white shadow-lg shadow-[#0C447C]/30 sm:h-10 sm:w-10 sm:rounded-2xl"
                     >
-                        <Layout class="h-6 w-6" />
+                        <Layout class="h-5 w-5 sm:h-6 sm:w-6" />
                     </div>
                     TAMBAH HALAMAN
                 </Button>
@@ -510,7 +514,7 @@ const saveChanges = () => doSave(false);
             <!-- ═══ PREVIEW DIALOG ═══ -->
             <Dialog v-model:open="showPreview">
                 <DialogContent
-                    class="max-w-4xl overflow-hidden rounded-3xl border-none p-0 shadow-2xl"
+                    class="max-h-[90vh] w-[95vw] max-w-4xl overflow-hidden rounded-2xl border-none p-0 shadow-2xl sm:rounded-3xl"
                 >
                     <DialogHeader class="sr-only">
                         <DialogTitle>Pratinjau Kuesioner</DialogTitle>

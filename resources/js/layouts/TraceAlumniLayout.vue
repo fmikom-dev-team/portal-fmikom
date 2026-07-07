@@ -40,7 +40,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useInitials } from "@/composables/useInitials";
 import type { BreadcrumbItem } from "@/types";
 import Breadcrumbs from "@/components/Breadcrumbs.vue";
-import NotificationBell from '@/components/Trace/NotificationBell.vue';
+import NotificationBell from "@/components/Trace/NotificationBell.vue";
 
 interface TracePageProps extends PageProps {
     auth: { user: any };
@@ -132,8 +132,15 @@ const navItems = [
 <template>
     <Head :title="title ? `${title} — TRACE Alumni` : 'TRACE — Alumni'">
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link
+            rel="preconnect"
+            href="https://fonts.gstatic.com"
+            crossorigin="anonymous"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
     </Head>
 
     <AppShell variant="sidebar">
@@ -270,6 +277,10 @@ const navItems = [
             >
                 <!-- Left: Breadcrumbs -->
                 <div class="flex items-center gap-2 min-w-0">
+                    <SidebarTrigger
+                        class="-ml-2 h-9 w-9 text-slate-500 hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400"
+                    />
+
                     <template v-if="breadcrumbs && breadcrumbs.length > 0">
                         <Breadcrumbs :breadcrumbs="breadcrumbs" />
                     </template>
@@ -449,9 +460,12 @@ const navItems = [
     background: #334155;
 }
 .trace-content {
-    font-family: 'Inter', sans-serif;
+    font-family: "Inter", sans-serif;
 }
-.trace-content h1, .trace-content h2, .trace-content h3, .trace-content h4 {
-    font-family: 'Poppins', sans-serif;
+.trace-content h1,
+.trace-content h2,
+.trace-content h3,
+.trace-content h4 {
+    font-family: "Poppins", sans-serif;
 }
 </style>

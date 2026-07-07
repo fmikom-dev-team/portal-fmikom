@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
+/**
+ * @property-read User|null $user
+ */
 class PerusahaanMitra extends Model
 {
     public const WORKING_DAY_OPTIONS = [

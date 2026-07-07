@@ -22,14 +22,14 @@ const form = defineModel<Record<string, unknown>>('form', { required: true });
 
 <template>
   <Card class="border-t-8 border-t-blue-600 rounded-2xl shadow-sm border-x border-b">
-    <CardContent class="pt-6 space-y-4">
+    <CardContent class="p-4 pt-5 space-y-4 sm:p-6 sm:pt-6">
       <div class="space-y-3">
         <div class="space-y-1">
           <Label class="text-[10px] font-black uppercase tracking-widest text-blue-600">Judul Kuesioner Utama</Label>
           <Input 
             v-model="form.judul" 
             placeholder="Masukkan Judul Kuesioner di sini..." 
-            class="border-none bg-transparent px-0 text-3xl font-black focus-visible:ring-0 active:bg-slate-50/50"
+            class="border-none bg-transparent px-0 text-2xl font-black focus-visible:ring-0 active:bg-slate-50/50 sm:text-3xl"
             id="judul-input"
           />
         </div>
@@ -41,14 +41,14 @@ const form = defineModel<Record<string, unknown>>('form', { required: true });
         <Input 
           v-model="form.subtitle" 
           placeholder="Sub-judul (contoh: Fakultas Ilmu Komputer)" 
-          class="border-none bg-transparent px-0 text-lg font-medium text-muted-foreground focus-visible:ring-0"
+          class="border-none bg-transparent px-0 text-base font-medium text-muted-foreground focus-visible:ring-0 sm:text-lg"
         />
         <p v-if="form.errors.subtitle" class="text-sm font-medium text-red-500">{{ form.errors.subtitle }}</p>
       </div>
       
       <Separator />
       
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
+      <div class="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2 md:grid-cols-4">
         <div class="space-y-2">
           <Label class="text-[10px] font-bold uppercase tracking-wider">Kategori</Label>
           <Select v-model="form.kategori">

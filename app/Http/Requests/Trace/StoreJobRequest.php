@@ -33,6 +33,7 @@ class StoreJobRequest extends FormRequest
             'is_salary_visible' => 'boolean',
             'status' => 'in:draft,published,pending_review,closed',
             'mitra_id' => 'nullable|exists:mitra_profiles,id',
+            'poster' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ];
     }
 
@@ -62,6 +63,9 @@ class StoreJobRequest extends FormRequest
             'deadline.after' => 'Deadline harus setelah hari ini.',
             'status.in' => 'Status yang dipilih tidak valid.',
             'mitra_id.exists' => 'Mitra yang dipilih tidak ditemukan.',
+            'poster.image' => 'Poster harus berupa gambar.',
+            'poster.mimes' => 'Format gambar poster harus berupa jpg, jpeg, png, atau webp.',
+            'poster.max' => 'Ukuran gambar poster tidak boleh lebih dari 5MB.',
         ];
     }
 }

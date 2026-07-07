@@ -21,7 +21,7 @@ const props = withDefaults(
 );
 
 const activeAlumniList = computed(() => {
-    // Only map alumni whose status is bekerja, wirausaha, or lanjut_studi
+    // Map alumni with a known current status, including home-location fallback for those not working yet.
     const list = props.alumniData || [];
     return list.filter((a) => {
         const s = a.status;
@@ -29,7 +29,9 @@ const activeAlumniList = computed(() => {
             s === "bekerja" ||
             s === "wirausaha" ||
             s === "lanjut_studi" ||
-            s === "studi"
+            s === "studi" ||
+            s === "mencari_kerja" ||
+            s === "belum"
         );
     });
 });
@@ -62,11 +64,13 @@ const labels = {
 };
 
 const getStatusLabel = (status: string) => {
-    return labels[status as keyof typeof labels] || "Bekerja";
+    if (status === "mencari_kerja") return labels.belum;
+    return labels[status as keyof typeof labels] || "Belum Bekerja";
 };
 
 const getStatusColor = (status: string) => {
-    return colors[status as keyof typeof colors] || colors.bekerja;
+    if (status === "mencari_kerja") return colors.belum;
+    return colors[status as keyof typeof colors] || colors.belum;
 };
 
 const createMarkerIcon = (status: string, size: number = 10) => {
@@ -185,7 +189,7 @@ watch(
 
                 try {
                     const marker = L.marker([jitterLat, jitterLng], {
-                        icon: createMarkerIcon(alumni.status || "bekerja", 10),
+                        icon: createMarkerIcon(alumni.status || "belum", 10),
                     });
 
                     marker.bindPopup(createPopupContent(alumni), {

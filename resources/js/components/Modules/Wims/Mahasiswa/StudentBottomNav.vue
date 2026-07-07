@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import {
@@ -12,6 +12,17 @@ import wimsRoutes from '@/routes/wims';
 
 const page = usePage();
 
+const selectedPeriodId = computed(() => (page.props as any).selected_period_id ?? null);
+
+const withSelectedPeriod = (href: string) => {
+    if (!selectedPeriodId.value) {
+        return href;
+    }
+
+    const url = new URL(href, window.location.origin);
+    url.searchParams.set('pendaftaran', String(selectedPeriodId.value));
+    return url.pathname + url.search + url.hash;
+};
 const currentPath = computed(() => {
     const [path] = page.url.split('?');
     return path || '/';
@@ -20,35 +31,35 @@ const currentPath = computed(() => {
 const items = [
     {
         label: 'Daftar',
-        href: wimsRoutes.registration().url,
+        href: withSelectedPeriod(wimsRoutes.registration().url),
         match: (path: string) => path.startsWith('/wims/pendaftaran'),
         icon: BookOpenText,
         center: false,
     },
     {
         label: 'Presensi',
-        href: wimsRoutes.attendance().url,
+        href: withSelectedPeriod(wimsRoutes.attendance().url),
         match: (path: string) => path.startsWith('/wims/absensi'),
         icon: CalendarCheck,
         center: false,
     },
     {
         label: 'Home',
-        href: '/wims/dashboard',
+        href: withSelectedPeriod('/wims/dashboard'),
         match: (path: string) => path === '/wims/dashboard',
         icon: House,
         center: true,
     },
     {
         label: 'Logbook',
-        href: wimsRoutes.logbook().url,
+        href: withSelectedPeriod(wimsRoutes.logbook().url),
         match: (path: string) => path.startsWith('/wims/logbook'),
         icon: ClipboardList,
         center: false,
     },
     {
         label: 'Laporan',
-        href: wimsRoutes.laporan().url,
+        href: withSelectedPeriod(wimsRoutes.laporan().url),
         match: (path: string) => path.startsWith('/wims/laporan'),
         icon: FileText,
         center: false,

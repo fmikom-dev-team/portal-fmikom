@@ -5,6 +5,7 @@ namespace App\Modules\Wims\Controllers\Mahasiswa;
 use App\Http\Controllers\Controller;
 use App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportActionService;
 use App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportFileService;
+use App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportTemplateService;
 use App\Modules\Wims\Services\Mahasiswa\Report\StudentReportPageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,16 +19,23 @@ class LaporanController extends Controller
         private readonly StudentReportPageService $studentReportPageService,
         private readonly StudentFinalReportActionService $studentFinalReportActionService,
         private readonly StudentFinalReportFileService $studentFinalReportFileService,
+        private readonly StudentFinalReportTemplateService $studentFinalReportTemplateService,
     ) {}
 
     public function index(Request $request): Response
     {
-        return Inertia::render('Modules/Wims/Mahasiswa/Laporan/Index', $this->studentReportPageService->build($request->user()->id));
+        return Inertia::render('Modules/Wims/Mahasiswa/Laporan/Index', $this->studentReportPageService->build(
+            $request->user()->id,
+            $request->integer('pendaftaran'),
+        ));
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $registration = $this->studentFinalReportActionService->resolveLatestRegistration($request->user()->id);
+        $registration = $this->studentFinalReportActionService->resolveRegistration(
+            $request->user()->id,
+            $request->integer('pendaftaran_id'),
+        );
 
         if (! $registration || ! $registration->isPostInternshipPhase()) {
             return back()->withErrors([
@@ -47,14 +55,25 @@ class LaporanController extends Controller
     public function viewFinalReport(Request $request): BinaryFileResponse
     {
         return $this->studentFinalReportFileService->view(
-            $this->studentFinalReportFileService->resolveLatestRegistrationWithReport($request->user()->id),
+            $this->studentFinalReportFileService->resolveRegistrationWithReport(
+                $request->user()->id,
+                $request->integer('pendaftaran'),
+            ),
         );
     }
 
     public function downloadFinalReport(Request $request): BinaryFileResponse
     {
         return $this->studentFinalReportFileService->download(
-            $this->studentFinalReportFileService->resolveLatestRegistrationWithReport($request->user()->id),
+            $this->studentFinalReportFileService->resolveRegistrationWithReport(
+                $request->user()->id,
+                $request->integer('pendaftaran'),
+            ),
         );
+    }
+
+    public function downloadTemplate(): BinaryFileResponse
+    {
+        return $this->studentFinalReportTemplateService->downloadActiveTemplate('final_report');
     }
 }

@@ -291,7 +291,7 @@ const formatTimeAgo = (dateStr: string) => {
                     label="Status Karir"
                     :value="statusLabel[stats.currentStatus] ?? 'N/A'"
                     :icon="Briefcase"
-                    :color="stats.currentStatus === 'bekerja' ? 'emerald' : stats.currentStatus === 'wirausaha' ? 'violet' : 'accent'"
+                    :color="stats.currentStatus === 'bekerja' ? 'emerald' : stats.currentStatus === 'wirausaha' ? 'violet' : stats.currentStatus === 'lanjut_studi' ? 'blue' : 'accent'"
                 />
                 <TStatCard
                     label="Riwayat Karir"

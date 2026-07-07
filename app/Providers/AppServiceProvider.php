@@ -62,7 +62,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
-        // ── Auth Event Listeners for Audit Logging & Session Tracking ─────────────
+        // -- Auth Event Listeners for Audit Logging & Session Tracking -------------
         Event::listen(Login::class, function ($event) {
             $email = $event->user->email;
             $ip = request()->ip();
@@ -116,7 +116,7 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
-        // ── Real Email Logging ─────────────────────────────────────────────────────
+        // -- Real Email Logging -----------------------------------------------------
         Event::listen(MessageSent::class, function ($event) {
             $message = $event->message;
             $toAddresses = $message->getTo();
@@ -211,12 +211,12 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(SuratCategory::class, FastSuratCategoryPolicy::class);
         Gate::policy(TemplateGlobalSetting::class, FastTemplateGlobalSettingPolicy::class);
 
-        // ── Pagi Chat Rate Limiting (Flood Prevention) ─────────────────────────
+        // -- Pagi Chat Rate Limiting (Flood Prevention) -------------------------
         RateLimiter::for('pagi-chat-send', function ($request) {
             return Limit::perMinute(30)->by($request->user()->id);
         });
 
-        // ── File Upload Rate Limiting (Flood & DoS Prevention) ─────────────────
+        // -- File Upload Rate Limiting (Flood & DoS Prevention) -----------------
         RateLimiter::for('uploads', function ($request) {
             return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
         });
@@ -240,7 +240,7 @@ class AppServiceProvider extends ServiceProvider
             }
         }
 
-        // ── Activity Log: Auth Events ─────────────────────────────────────────
+        // -- Activity Log: Auth Events -----------------------------------------
         Event::listen(Login::class, function (Login $event) {
             if (! Schema::hasTable('activity_logs')) {
                 return;

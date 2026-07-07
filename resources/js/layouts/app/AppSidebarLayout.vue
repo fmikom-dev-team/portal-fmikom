@@ -47,7 +47,12 @@ const isPortalDashboard = computed(() => {
 	return page.component === "Dashboard";
 });
 
-import { onUnmounted, watch } from "vue";
+import { onMounted, onUnmounted, watch } from "vue";
+
+onMounted(() => {
+	document.documentElement.classList.add("app-sidebar-layout-active");
+	document.body.classList.add("app-sidebar-layout-active");
+});
 
 watch(
 	isPortalDashboard,
@@ -66,6 +71,8 @@ watch(
 onUnmounted(() => {
 	document.documentElement.classList.remove("portal-dashboard-mobile-bg");
 	document.body.classList.remove("portal-dashboard-mobile-bg");
+	document.documentElement.classList.remove("app-sidebar-layout-active");
+	document.body.classList.remove("app-sidebar-layout-active");
 });
 
 const isScrolled = ref(false);
@@ -230,7 +237,7 @@ const handleScroll = (e: Event) => {
 <style>
 /* Mobile: clean fixed slate background — stays fixed so rounded-t of content always shows against it */
 @media (max-width: 767px) {
-    html, body {
+    html.app-sidebar-layout-active, body.app-sidebar-layout-active {
         overflow: hidden !important;
         height: 100% !important;
         background: #0f172a !important;

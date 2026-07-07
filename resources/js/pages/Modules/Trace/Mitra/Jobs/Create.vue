@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
-import { ArrowLeft, Briefcase } from 'lucide-vue-next';
+import { ArrowLeft, Briefcase, ImageUp, X } from 'lucide-vue-next';
 import TraceMitraLayout from '@/layouts/TraceMitraLayout.vue';
 import { TPageHeader, TFormSection } from '@/components/Trace';
 import { Button } from '@/components/ui/button';
@@ -34,7 +35,23 @@ const form = useForm({
     is_salary_visible: true,
     deadline: '',
     status: 'draft',
+    poster: null as File | null,
 });
+
+const posterPreview = ref<string | null>(null);
+
+function onPosterChange(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) {
+        form.poster = file;
+        posterPreview.value = URL.createObjectURL(file);
+    }
+}
+
+function removePoster() {
+    form.poster = null;
+    posterPreview.value = null;
+}
 
 const experienceLevels = [
     { value: 'fresh_graduate', label: 'Fresh Graduate' },
@@ -67,6 +84,7 @@ function submit() {
         ...data,
         description: data.description ? JSON.stringify(data.description) : '',
     })).post('/trace/open-job/jobs-listings', {
+        forceFormData: true,
         onError: () => toast.error('Gagal menyimpan lowongan. Periksa kembali form Anda.'),
     });
 }
@@ -135,6 +153,40 @@ const selectClass = 'flex h-10 w-full rounded-md border border-input bg-backgrou
                             </option>
                         </select>
                         <p v-if="form.errors.job_category_id" class="text-sm text-red-500">{{ form.errors.job_category_id }}</p>
+                    </div>
+
+                    <!-- Poster Upload -->
+                    <div class="space-y-2">
+                        <Label>Poster / Gambar Lowongan</Label>
+                        <div
+                            v-if="!posterPreview"
+                            class="relative flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 dark:border-zinc-600 bg-slate-50/50 dark:bg-zinc-800/30 p-8 text-center cursor-pointer hover:border-[#0C447C] dark:hover:border-[#85B7EB] hover:bg-slate-100/50 dark:hover:bg-zinc-700/30 transition-all"
+                            @click="($refs.posterInput as HTMLInputElement)?.click()"
+                        >
+                            <ImageUp class="h-10 w-10 text-slate-400 dark:text-zinc-500" />
+                            <div>
+                                <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Klik untuk upload poster</p>
+                                <p class="text-xs text-slate-400 dark:text-zinc-500 mt-1">JPG, PNG, atau WebP (maks. 5MB)</p>
+                            </div>
+                            <input
+                                ref="posterInput"
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                class="hidden"
+                                @change="onPosterChange"
+                            />
+                        </div>
+                        <div v-else class="relative rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-700">
+                            <img :src="posterPreview" alt="Preview poster" class="w-full h-48 object-cover" />
+                            <button
+                                type="button"
+                                class="absolute top-2 right-2 rounded-full bg-red-500 hover:bg-red-600 text-white p-1.5 shadow-lg transition-colors"
+                                @click="removePoster"
+                            >
+                                <X class="h-4 w-4" />
+                            </button>
+                        </div>
+                        <p v-if="form.errors.poster" class="text-sm text-red-500">{{ form.errors.poster }}</p>
                     </div>
                 </div>
             </TFormSection>

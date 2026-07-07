@@ -1,6 +1,7 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
 import {
     AlertTriangle,
     MapPin,
@@ -10,7 +11,6 @@ import {
     Trash2,
     UserRound,
 } from 'lucide-vue-next';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import InputError from '@/components/InputError.vue';
 import { Input } from '@/components/ui/input';
@@ -82,11 +82,23 @@ type AccountItem = {
     is_active?: boolean;
 };
 
+type PortalUserOption = {
+    id: number;
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    is_active?: boolean;
+    label: string;
+    linked_company_id?: number | null;
+    linked_company_name?: string | null;
+};
+
 const props = defineProps<{
     filters: Filters;
     summary: Summary;
     workingDayOptions: WorkingDayOption[];
     companies: CompanyItem[];
+    portalUsers: PortalUserOption[];
 }>();
 
 const page = usePage<{
@@ -100,7 +112,6 @@ const page = usePage<{
 const search = ref(props.filters.search || '');
 const activeCompanyId = ref<number | null>(props.companies[0]?.id ?? null);
 const processing = ref(false);
-const accountProcessing = ref(false);
 const editorOpen = ref(false);
 const deleteDialogOpen = ref(false);
 const deleteProcessing = ref(false);
@@ -128,8 +139,8 @@ const emptyForm = () => ({
 
 const form = reactive(emptyForm());
 const accountForm = reactive({
-    email: '',
-    jabatan: '',
+    portal_user_id: null as number | null,
+    mitra_jabatan: '',
 });
 
 const selectedCompany = computed(
@@ -236,8 +247,8 @@ const filteredCompanies = computed(() => {
 });
 
 function resetPortalAccountForm(company: CompanyItem | null = selectedCompany.value) {
-    accountForm.email = company?.email ?? '';
-    accountForm.jabatan = '';
+    accountForm.portal_user_id = company?.account?.user_id ?? null;
+    accountForm.mitra_jabatan = company?.account?.jabatan ?? '';
 }
 
 const startCreate = () => {
@@ -276,6 +287,8 @@ const submit = () => {
         toleransi_terlambat_menit: form.toleransi_terlambat_menit || 0,
         hari_kerja: form.hari_kerja,
         bidang_industri: form.bidang_industri || null,
+        portal_user_id: accountForm.portal_user_id,
+        mitra_jabatan: accountForm.mitra_jabatan || null,
         is_active: form.is_active,
     };
 
@@ -286,6 +299,10 @@ const submit = () => {
             editorOpen.value = false;
             activeCompanyId.value = null;
             hydrateForm(null);
+        },
+        onError: (errors) => {
+            const firstError = Object.values(errors)[0];
+            toast.error(Array.isArray(firstError) ? firstError[0] : firstError || 'Gagal menyimpan perusahaan.');
         },
         onFinish: () => {
             processing.value = false;
@@ -304,31 +321,7 @@ const submit = () => {
     router.post('/wims/admin/perusahaan', payload, options);
 };
 
-const submitMitraAccount = () => {
-    if (!selectedCompany.value) {
-        return;
-    }
 
-    accountProcessing.value = true;
-
-    router.post(
-        `/wims/admin/perusahaan/${selectedCompany.value.id}/account`,
-        {
-            email: selectedCompany.value.email || accountForm.email,
-            jabatan: accountForm.jabatan || null,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            onSuccess: () => {
-                resetPortalAccountForm();
-            },
-            onFinish: () => {
-                accountProcessing.value = false;
-            },
-        },
-    );
-};
 
 const destroyCompany = () => {
     if (!selectedCompany.value) {
@@ -345,6 +338,9 @@ const destroyCompany = () => {
             editorOpen.value = false;
             activeCompanyId.value = null;
             hydrateForm(null);
+        },
+        onError: () => {
+            toast.error('Gagal menghapus perusahaan.');
         },
         onFinish: () => {
             deleteProcessing.value = false;
@@ -559,22 +555,6 @@ const destroyCompany = () => {
                 </div>
 
                 <div class="max-h-[calc(100vh-11rem)] space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
-                    <Alert
-                        v-if="
-                            companyValidationError ||
-                            page.props.flash?.error
-                        "
-                        variant="destructive"
-                        class="border-rose-200 bg-rose-50 text-rose-700"
-                    >
-                        <AlertTitle>Data perusahaan belum valid</AlertTitle>
-                        <AlertDescription>
-                            {{
-                                companyValidationError ||
-                                page.props.flash?.error
-                            }}
-                        </AlertDescription>
-                    </Alert>
 
                     <section class="space-y-5 rounded-xl border border-zinc-200 bg-white p-4 sm:p-5">
                         <div class="space-y-1">
@@ -822,17 +802,15 @@ const destroyCompany = () => {
 
                         <div class="border-t border-zinc-200 pt-5">
                             <div class="flex items-start gap-3">
-                                <div
-                                    class="flex size-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600"
-                                >
+                                <div class="flex size-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                                     <UserRound class="size-4" />
                                 </div>
                                 <div>
                                     <p class="text-[15px] font-bold text-slate-950">
-                                        Hubungkan Akun Portal
+                                        Akun Portal Mitra
                                     </p>
                                     <p class="text-xs text-slate-500">
-                                        WIMS tidak membuat akun mitra sendiri. Hubungkan perusahaan ini ke akun Portal yang sudah ada.
+                                        Pilih email akun Portal ber-role mitra, lalu simpan untuk menghubungkan atau mengganti akun perusahaan ini.
                                     </p>
                                 </div>
                             </div>
@@ -881,103 +859,54 @@ const destroyCompany = () => {
                                 </div>
                             </div>
 
-                            <div
-                                v-else-if="isEditMode"
-                                class="mt-4 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-4 text-sm text-slate-600"
-                            >
-                                Akun Portal akan dihubungkan menggunakan email perusahaan: 
-                                <span class="font-semibold text-zinc-950">
-                                    {{ selectedCompany?.email || 'belum diisi' }}
-                                </span>
-                            </div>
-
-                            <div
-                                v-else
-                                class="mt-4 rounded-xl border border-dashed border-zinc-200 bg-white px-4 py-4 text-center text-sm text-slate-500"
-                            >
-                                Simpan data perusahaan terlebih dahulu untuk menghubungkan akun Portal mitra.
-                            </div>
-
-                            <form
-                                v-if="isEditMode && !selectedCompanyAccount"
-                                class="mt-4 grid gap-4 border-t border-zinc-200 pt-5 md:grid-cols-2"
-                                autocomplete="off"
-                                @submit.prevent="submitMitraAccount"
-                            >
-                                <Alert
-                                    v-if="
-                                        page.props.errors?.email ||
-                                        page.props.errors?.jabatan
-                                    "
-                                    variant="destructive"
-                                    class="border-rose-200 bg-rose-50 text-rose-700 md:col-span-2"
-                                >
-                                    <AlertTitle>Data akun Portal belum valid</AlertTitle>
-                                    <AlertDescription>
-                                        {{
-                                            page.props.errors?.email ||
-                                            page.props.errors?.jabatan
-                                        }}
-                                    </AlertDescription>
-                                </Alert>
-
-                                <label class="block space-y-2">
-                                    <span
-                                        class="text-[11px] font-bold tracking-[0.16em] text-slate-500 uppercase"
-                                    >
-                                        Email Akun Portal
+                            <div class="mt-4 grid gap-4 md:grid-cols-2">
+                                <label class="block space-y-2 md:col-span-2">
+                                    <span class="text-[11px] font-bold tracking-[0.16em] text-slate-500 uppercase">
+                                        Email Akun Portal Mitra
                                     </span>
-                                    <template v-if="selectedCompany?.email">
-                                        <div class="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm font-medium text-zinc-900">
-                                            {{ selectedCompany.email }}
-                                        </div>
-                                        <p class="text-xs text-slate-500">
-                                            Akun Portal akan dicocokkan otomatis dari email perusahaan yang sudah tersimpan.
-                                        </p>
-                                    </template>
-                                    <template v-else>
-                                        <Input
-                                            v-model="accountForm.email"
-                                            name="account_email"
-                                            autocomplete="email"
-                                            type="email"
-                                            placeholder="Masukkan email akun Portal"
-                                            class="h-10 rounded-lg border-zinc-200 bg-white"
-                                        />
-                                        <p class="text-xs text-slate-500">
-                                            Email ini dipakai untuk menghubungkan perusahaan ke akun Portal yang sudah ada.
-                                        </p>
-                                    </template>
-                                </label>
-                                <label class="block space-y-2">
-                                    <span
-                                        class="text-[11px] font-bold tracking-[0.16em] text-slate-500 uppercase"
-                                        >Jabatan di Perusahaan</span
+                                    <select
+                                        v-model="accountForm.portal_user_id"
+                                        class="h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-900 transition outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
                                     >
+                                        <option :value="null">
+                                            Pilih akun mitra...
+                                        </option>
+                                        <option
+                                            v-for="user in props.portalUsers"
+                                            :key="user.id"
+                                            :value="user.id"
+                                            :disabled="Boolean(user.linked_company_id && user.linked_company_id !== selectedCompany?.id)"
+                                        >
+                                            {{ user.label }}
+                                            <template v-if="user.linked_company_id && user.linked_company_id !== selectedCompany?.id">
+                                                (sudah dipakai {{ user.linked_company_name }})
+                                            </template>
+                                        </option>
+                                    </select>
+                                    <InputError :message="companyFieldError('portal_user_id')" />
+                                    <p class="text-xs text-slate-500">
+                                        Jika ingin mengubah akun mitra, pilih email lain dari daftar ini lalu simpan perubahan perusahaan.
+                                    </p>
+                                </label>
+
+                                <label class="block space-y-2">
+                                    <span class="text-[11px] font-bold tracking-[0.16em] text-slate-500 uppercase">
+                                        Jabatan di Perusahaan
+                                    </span>
                                     <Input
-                                        v-model="accountForm.jabatan"
+                                        v-model="accountForm.mitra_jabatan"
                                         name="account_position"
                                         autocomplete="organization-title"
                                         type="text"
                                         class="h-10 rounded-lg border-zinc-200 bg-white"
                                     />
+                                    <InputError :message="companyFieldError('mitra_jabatan')" />
                                     <p class="text-xs text-slate-500">
                                         Contoh: Supervisor, HRD, Kepala Divisi, atau PIC Mitra.
                                     </p>
                                 </label>
-                                <div class="flex justify-end md:col-span-2">
-                                    <Button
-                                        type="submit"
-                                        class="h-9 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] dark:from-[#214FAF] dark:to-[#0F6FBE] dark:shadow-[0_14px_34px_-18px_rgba(8,15,30,0.84)] dark:hover:shadow-[0_18px_38px_-18px_rgba(8,15,30,0.92)]"
-                                        :disabled="accountProcessing"
-                                    >
-                                        <Plus class="size-4" />
-                                        Hubungkan Akun Portal
-                                    </Button>
-                                </div>
-                            </form>
-                        </div>
-                    </section>
+                            </div>
+                        </div>                    </section>
 
                     <div
                         class="sticky bottom-0 z-30 -mx-5 flex flex-col-reverse gap-3 border-t border-zinc-200 bg-white px-5 py-4 shadow-[0_-8px_18px_rgba(15,23,42,0.06)] sm:mx-0 sm:flex-row sm:items-center sm:justify-end sm:px-0"
@@ -1086,3 +1015,6 @@ const destroyCompany = () => {
     background: #f8fafc;
 }
 </style>
+
+
+

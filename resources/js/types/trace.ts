@@ -71,6 +71,10 @@ export interface ProfilAlumni {
 	id: number;
 	user_id: number;
 	angkatan: number;
+	nama_lengkap?: string | null;
+	nim?: string | null;
+	program_studi?: string | null;
+	tahun_lulus?: number | null;
 	alamat_rumah?: string | null;
 	latitude_rumah?: number | null;
 	longitude_rumah?: number | null;
@@ -100,6 +104,17 @@ export interface CareerHistory {
 	provinsi_id?: number | null;
 	employment?: Employment | null;
 	education?: Education | null;
+	nama_perusahaan?: string | null;
+	jabatan?: string | null;
+	sektor_industri?: string | null;
+	alamat_perusahaan?: string | null;
+	gaji_min?: number | null;
+	gaji_max?: number | null;
+	nama_universitas?: string | null;
+	program_studi_lanjutan?: string | null;
+	jenjang_pendidikan?: string | null;
+	sumber_biaya?: string | null;
+	alamat_universitas?: string | null;
 	provinsi?: Lokasi | null;
 	kota?: Lokasi | null;
 }
@@ -110,6 +125,9 @@ export interface Employment {
 	nama_perusahaan: string;
 	jabatan?: string | null;
 	sektor_industri?: string | null;
+	alamat_perusahaan?: string | null;
+	gaji_min?: number | null;
+	gaji_max?: number | null;
 	gaji_range?: string | null;
 }
 
@@ -119,6 +137,9 @@ export interface Education {
 	nama_universitas: string;
 	program_studi_lanjutan?: string | null;
 	jenjang?: string | null;
+	jenjang_pendidikan?: string | null;
+	sumber_biaya?: string | null;
+	alamat_universitas?: string | null;
 }
 
 export interface EducationHistory {
@@ -279,6 +300,8 @@ export interface OpsiJawaban {
 	id: number;
 	pertanyaan_id: number;
 	label: string;
+	nilai?: number | null;
+	skor?: number | null;
 	value?: string | null;
 	urutan: number;
 }

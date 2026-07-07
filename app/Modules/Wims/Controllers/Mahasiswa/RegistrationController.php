@@ -6,16 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Modules\Wims\Requests\Mahasiswa\StoreRegistrationRequest;
 use App\Modules\Wims\Services\Mahasiswa\Registration\StudentRegistrationActionService;
 use App\Modules\Wims\Services\Mahasiswa\Registration\StudentRegistrationPageService;
+use App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportTemplateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class RegistrationController extends Controller
 {
     public function __construct(
         private readonly StudentRegistrationPageService $studentRegistrationPageService,
         private readonly StudentRegistrationActionService $studentRegistrationActionService,
+        private readonly StudentFinalReportTemplateService $studentFinalReportTemplateService,
     ) {}
 
     public function index(Request $request): Response
@@ -23,17 +26,20 @@ class RegistrationController extends Controller
         return Inertia::render('Modules/Wims/Mahasiswa/Pendaftaran/Index', $this->studentRegistrationPageService->build($request->user()));
     }
 
+    public function downloadProposalTemplate(): BinaryFileResponse
+    {
+        return $this->studentFinalReportTemplateService->downloadActiveTemplate('proposal');
+    }
+
     public function store(StoreRegistrationRequest $request): RedirectResponse
     {
         $user = $request->user();
         $latestRegistration = $this->studentRegistrationPageService->latestRegistration($user->id);
-        $hasCompletedHistory = $this->studentRegistrationPageService->hasCompletedInternshipHistory($user->id);
+        $proposalFile = $request->file('proposal_pkl');
 
-        if (! $this->studentRegistrationPageService->canSubmitRegistration($latestRegistration, $hasCompletedHistory)) {
+        if (! $this->studentRegistrationPageService->canSubmitRegistration($latestRegistration)) {
             return back()->withErrors([
-                'registration' => $hasCompletedHistory
-                    ? 'Akun ini sudah pernah menyelesaikan PKL dan tidak dapat mendaftar kembali.'
-                    : 'Pendaftaran sedang menunggu keputusan kampus atau periode magang yang berjalan belum selesai.',
+                'registration' => 'Pendaftaran sedang menunggu keputusan kampus atau periode magang yang berjalan belum selesai.',
             ]);
         }
 
@@ -46,12 +52,12 @@ class RegistrationController extends Controller
         ]);
 
         if ($latestRegistration?->status === 'revisi') {
-            $this->studentRegistrationActionService->resubmitRevision($latestRegistration, $payload);
+            $this->studentRegistrationActionService->resubmitRevision($latestRegistration, $payload, $proposalFile);
 
             return back()->with('success', 'Perbaikan pendaftaran berhasil dikirim ulang dan menunggu review kampus.');
         }
 
-        $this->studentRegistrationActionService->create($user, $payload);
+        $this->studentRegistrationActionService->create($user, $payload, $proposalFile);
 
         return back()->with('success', 'Pendaftaran PKL/magang berhasil dikirim dan menunggu review kampus.');
     }

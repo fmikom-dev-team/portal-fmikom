@@ -180,9 +180,12 @@ const emit = defineEmits<{
                                         v-model="form.nik"
                                         type="text"
                                         maxlength="16"
-                                        placeholder="Masukkan 16 digit NIK"
+                                        placeholder="Isi hanya jika ingin mengganti NIK"
                                         class="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-semibold text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                                     />
+                                    <p class="text-[9px] font-medium text-slate-400 dark:text-slate-500">
+                                        Kosongkan jika tidak ingin mengubah NIK tersimpan.
+                                    </p>
                                     <p
                                         v-if="form.errors.nik"
                                         class="text-xs font-medium text-rose-500"
@@ -200,9 +203,12 @@ const emit = defineEmits<{
                                     <input
                                         v-model="form.npwp"
                                         type="text"
-                                        placeholder="Masukkan NPWP jika ada"
+                                        placeholder="Isi hanya jika ingin mengganti NPWP"
                                         class="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-semibold text-slate-800 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                                     />
+                                    <p class="text-[9px] font-medium text-slate-400 dark:text-slate-500">
+                                        Kosongkan jika tidak ingin mengubah NPWP tersimpan.
+                                    </p>
                                     <p
                                         v-if="form.errors.npwp"
                                         class="text-xs font-medium text-rose-500"
@@ -377,6 +383,27 @@ const emit = defineEmits<{
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="space-y-2 sm:col-span-2">
+                                    <LocationPicker
+                                        v-if="isOpen"
+                                        v-model:province-id="form.provinsi_id"
+                                        v-model:city-id="form.kota_id"
+                                        v-model:latitude="form.latitude_rumah"
+                                        v-model:longitude="form.longitude_rumah"
+                                        v-model:address="form.alamat_rumah"
+                                        map-label="Tandai Domisili di Peta"
+                                        :provinces="provinsis"
+                                        :cities="kotas"
+                                    />
+                                    <p
+                                        class="text-[10px] text-slate-400 dark:text-slate-500 leading-normal"
+                                    >
+                                        Geser pin penanda di atas untuk
+                                        menentukan koordinat tempat tinggal Anda
+                                        untuk visualisasi peta alumni.
+                                    </p>
+                                </div>
+
                                 <!-- Alamat Lengkap -->
                                 <div class="space-y-1.5 sm:col-span-2">
                                     <label
@@ -394,26 +421,6 @@ const emit = defineEmits<{
                                         class="text-xs font-medium text-rose-500"
                                     >
                                         {{ form.errors.alamat_rumah }}
-                                    </p>
-                                </div>
-
-                                <!-- LocationPicker replaces province/city selects + MapPicker -->
-                                <div class="space-y-2 sm:col-span-2">
-                                    <LocationPicker
-                                        v-if="isOpen"
-                                        v-model:province-id="form.provinsi_id"
-                                        v-model:city-id="form.kota_id"
-                                        v-model:latitude="form.latitude_rumah"
-                                        v-model:longitude="form.longitude_rumah"
-                                        :provinces="provinsis"
-                                        :cities="kotas"
-                                    />
-                                    <p
-                                        class="text-[10px] text-slate-400 dark:text-slate-500 leading-normal"
-                                    >
-                                        Geser pin penanda di atas untuk
-                                        menentukan koordinat tempat tinggal Anda
-                                        untuk visualisasi peta alumni.
                                     </p>
                                 </div>
                             </div>

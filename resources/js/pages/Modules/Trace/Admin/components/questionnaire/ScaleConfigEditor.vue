@@ -59,13 +59,13 @@ const props = defineProps<{
             </div>
         </div>
         <!-- Preview -->
-        <div class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800/50">
+        <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-3 sm:px-4 dark:bg-slate-800/50">
             <span class="text-[9px] font-bold text-slate-400">{{ question.meta?.scale_label_min || 'Min' }}</span>
-            <div class="flex gap-1.5">
+            <div class="flex flex-wrap justify-center gap-1.5">
                 <div
                     v-for="n in ((question.meta?.scale_max || 5) - (question.meta?.scale_min || 1) + 1)"
                     :key="n"
-                    class="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-[10px] font-bold text-slate-500 dark:border-slate-700"
+                    class="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 text-[10px] font-bold text-slate-500 sm:h-7 sm:w-7 dark:border-slate-700"
                 >
                     {{ (question.meta?.scale_min || 1) + n - 1 }}
                 </div>

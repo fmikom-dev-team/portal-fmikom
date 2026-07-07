@@ -87,8 +87,7 @@ class HandleInertiaRequests extends Middleware
             'unread_messages_count' => $user
                 // BUG-013: Cache per-user unread count to avoid a query on every Inertia request.
                 // 30-second TTL is short enough for near-real-time feel, eliminates 90% of queries.
-                ? Cache::remember("unread_msg_count_{$user->id}", 30, fn () => PagiMessage::where('receiver_id', $user->id)->whereNull('read_at')->count()
-                )
+                ? Cache::remember("unread_msg_count_{$user->id}", 30, fn () => PagiMessage::where('receiver_id', $user->id)->whereNull('read_at')->count())
                 : 0,
             'unread_notifications_count' => $user
                 ? Cache::remember("unread_notif_count_{$user->id}_{$activeRole}", 30, function () use ($user, $activeModule, $activeRole) {
@@ -96,6 +95,10 @@ class HandleInertiaRequests extends Middleware
 
                     if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
                         $query->whereNotIn('data->type', ['like', 'comment', 'follow', 'collaboration']);
+                    }
+
+                    if ($activeModule === 'TRACE') {
+                        $query->where('data->href', 'like', '/trace%');
                     }
 
                     return $query->count();
@@ -106,6 +109,10 @@ class HandleInertiaRequests extends Middleware
 
                 if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
                     $query->whereNotIn('data->type', ['like', 'comment', 'follow', 'collaboration']);
+                }
+
+                if ($activeModule === 'TRACE') {
+                    $query->where('data->href', 'like', '/trace%');
                 }
 
                 $notifs = $query->limit(30)->get();
@@ -132,9 +139,9 @@ class HandleInertiaRequests extends Middleware
                 'active_module' => $activeModule,
                 'active_role' => $activeRole,
             ] : null,
+            'selected_period_id' => fn () => $this->resolveWimsSelectedPeriodId($request),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'pending_comments_count' => fn () => ($user && ($user->isAdmin() || $user->isSuperAdmin()))
-                // BUG-013: Cache admin-only pending comments count
                 ? Cache::remember('pending_comments_count', 30, fn () => PortalComment::where('status', 'pending')->count())
                 : 0,
             'notif_count_pending_admin' => $user ? $this->fastPendingAdminCount() : 0,
@@ -168,6 +175,34 @@ class HandleInertiaRequests extends Middleware
                     ->toArray();
             }))->once(),
         ];
+    }
+
+    private function resolveWimsSelectedPeriodId(Request $request): ?int
+    {
+        if (! $request->is('wims*')) {
+            return null;
+        }
+
+        $queryValue = $request->query('pendaftaran');
+        if ($queryValue !== null && $queryValue !== '') {
+            $selectedId = (int) $queryValue;
+
+            if ($selectedId > 0 && $request->hasSession()) {
+                $request->session()->put('wims.selected_pendaftaran_id', $selectedId);
+            }
+
+            return $selectedId > 0 ? $selectedId : null;
+        }
+
+        if ($request->hasSession()) {
+            $storedValue = $request->session()->get('wims.selected_pendaftaran_id');
+
+            return is_numeric($storedValue) && (int) $storedValue > 0
+                ? (int) $storedValue
+                : null;
+        }
+
+        return null;
     }
 
     protected function fastPendingAdminCount(): int
