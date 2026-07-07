@@ -13,12 +13,13 @@ use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Mpdf\HTMLParserMode;
 // use Barryvdh\DomPDF\Facade\Pdf;
 // use Throwable;
+use Mpdf\HTMLParserMode;
 use Mpdf\Mpdf;
 use Symfony\Component\Process\Process;
 
@@ -471,13 +472,13 @@ CSS;
      */
     protected function renderPdfOutputWithDompdf(array $viewPayload, ?array $attachmentSection = null): ?string
     {
-        if (! class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+        if (! class_exists(Pdf::class)) {
             return null;
         }
 
         $html = $this->buildBrowserPdfHtml($viewPayload, $attachmentSection);
 
-        return \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
+        return Pdf::loadHTML($html)
             ->setPaper('a4', 'portrait')
             ->output();
     }
