@@ -1902,18 +1902,6 @@ function settingLabel(key: string): string {
                             </div>
                         </div>
                     </div>
-                    <div class="flex flex-wrap items-center gap-1.5">
-                        <span
-                            class="ml-1 text-[10px] text-slate-400"
-                            >Placeholder:</span
-                        >
-                        <code
-                            v-for="p in placeholderUmum"
-                            :key="p.key"
-                            class="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-600"
-                            >&#123;&#123;{{ p.key }}&#125;&#125;</code
-                        >
-                    </div>
                 </div>
                 <!-- Daftar komponen -->
                 <div

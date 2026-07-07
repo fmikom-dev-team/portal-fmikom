@@ -87,8 +87,6 @@ type Surat = {
     generatedDocumentUrl: string | null;
     pdfUrl?: string | null;
     canDownloadPdf?: boolean;
-    hasAttachmentDocument?: boolean;
-    attachmentPreviewUrl?: string | null;
 };
 
 type PageProps = {
@@ -341,15 +339,6 @@ function openDownloadPdf() {
     document.body.appendChild(link);
     link.click();
     link.remove();
-}
-
-function openPreviewAttachmentDocument() {
-    if (!props.attachmentPreviewUrl) return;
-
-    viewerUrl.value = props.attachmentPreviewUrl;
-    viewerTitle.value = `${documentTitle.value} - Lampiran`;
-    viewerType.value = 'pdf';
-    viewerOpen.value = true;
 }
 
 function goBack() {
@@ -873,16 +862,6 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                         >
                             <Download class="size-4" />
                             Unduh PDF
-                        </button>
-
-                        <button
-                            v-if="isFinished && hasAttachmentDocument && can('fast.document.preview')"
-                            type="button"
-                            class="fast-btn fast-btn-outline w-full px-4 py-2.5 text-sm"
-                            @click="openPreviewAttachmentDocument"
-                        >
-                            <Eye class="size-4" />
-                            Preview Lampiran
                         </button>
 
                     </div>

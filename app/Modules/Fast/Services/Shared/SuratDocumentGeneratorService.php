@@ -16,8 +16,6 @@ use BaconQrCode\Writer;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Mpdf\Config\ConfigVariables;
-use Mpdf\Config\FontVariables;
 use Mpdf\HTMLParserMode;
 // use Barryvdh\DomPDF\Facade\Pdf;
 // use Throwable;
@@ -227,6 +225,13 @@ class SuratDocumentGeneratorService
         return rtrim(rtrim(number_format($width, 1, '.', ''), '0'), '.').'mm';
     }
 
+    protected function normalizeAttachmentOrientation(mixed $value): string
+    {
+        $orientation = strtolower(trim((string) $value));
+
+        return in_array($orientation, ['portrait', 'landscape'], true) ? $orientation : 'portrait';
+    }
+
     protected function extractMillimeters(string $value, float $fallback): float
     {
         $trimmed = trim($value);
@@ -303,15 +308,24 @@ class SuratDocumentGeneratorService
      */
     protected function renderPdfOutput(array $viewPayload, ?array $attachmentSection = null): string
     {
+        $canUseMpdf = class_exists(Mpdf::class);
+
         if ($attachmentSection === null) {
             $browserPdf = $this->renderPdfOutputWithChrome($viewPayload);
             if ($browserPdf !== null) {
                 return $browserPdf;
             }
-        } else {
+        } elseif ($this->shouldUseBrowserPdfForAttachmentSection($attachmentSection)) {
             $browserPdf = $this->renderPdfOutputWithChrome($viewPayload, $attachmentSection);
             if ($browserPdf !== null) {
                 return $browserPdf;
+            }
+        }
+
+        if (! $canUseMpdf) {
+            $domPdf = $this->renderPdfOutputWithDompdf($viewPayload, $attachmentSection);
+            if ($domPdf !== null) {
+                return $domPdf;
             }
         }
 
@@ -337,16 +351,8 @@ class SuratDocumentGeneratorService
             'pdf'
         );
         $mpdfFontConfig = SuratKomponenRenderer::mpdfFontConfig();
-        $configDefaults = (new ConfigVariables)->getDefaults();
-        $fontDefaults = (new FontVariables)->getDefaults();
-        $fontDir = array_values(array_unique(array_merge(
-            $configDefaults['fontDir'] ?? [],
-            $mpdfFontConfig['fontDir'] ?? [],
-        )));
-        $fontdata = array_merge(
-            $fontDefaults['fontdata'] ?? [],
-            $mpdfFontConfig['fontdata'] ?? [],
-        );
+        $fontDir = $mpdfFontConfig['fontDir'] ?? [];
+        $fontdata = $mpdfFontConfig['fontdata'] ?? [];
         $marginLeft = (string) ($settings['margin_left'] ?? '15mm');
         $marginRight = (string) ($settings['margin_right'] ?? '15mm');
         $contentWidth = $this->resolveContentWidth($marginLeft, $marginRight);
@@ -388,7 +394,7 @@ CSS;
 
         File::ensureDirectoryExists($tempDir);
 
-        if (! class_exists(Mpdf::class)) {
+        if (! $canUseMpdf) {
             throw new \RuntimeException('Renderer PDF bundle tidak tersedia di server ini.');
         }
 
@@ -439,6 +445,41 @@ CSS;
         }
 
         return $mpdf->Output('', 'S');
+    }
+
+    /**
+     * Chrome printing is the preferred path. Landscape attachments use mPDF
+     * when available, otherwise we fall back to the browser/DomPDF path.
+     *
+     * @param  array{html?: string, orientation?: string}|null  $attachmentSection
+     */
+    protected function shouldUseBrowserPdfForAttachmentSection(?array $attachmentSection): bool
+    {
+        if ($attachmentSection === null || ! filled($attachmentSection['html'] ?? null)) {
+            return true;
+        }
+
+        if (! class_exists(Mpdf::class)) {
+            return true;
+        }
+
+        return strtolower((string) ($attachmentSection['orientation'] ?? 'portrait')) !== 'landscape';
+    }
+
+    /**
+     * @param  array{html?: string, bodyHtml?: string, headerHtml?: string, footerHtml?: string, styles?: string, customCss?: string}|null  $attachmentSection
+     */
+    protected function renderPdfOutputWithDompdf(array $viewPayload, ?array $attachmentSection = null): ?string
+    {
+        if (! class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            return null;
+        }
+
+        $html = $this->buildBrowserPdfHtml($viewPayload, $attachmentSection);
+
+        return \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
+            ->setPaper('a4', 'portrait')
+            ->output();
     }
 
     /**
@@ -507,6 +548,9 @@ CSS;
         $marginLeft = $settings['margin_left'] ?? '15mm';
         $paddingTop = $this->normalizeWrapperTopPadding((string) ($settings['margin_top'] ?? '15mm'));
         $contentWidth = $this->resolveContentWidth((string) $marginLeft, (string) $marginRight);
+        $attachmentHeight = '297mm';
+        $attachmentPageName = 'preview-main';
+        $attachmentPageStyle = '';
 
         $fontFamilyKop = SuratKomponenRenderer::fontFamilyStack(
             SuratKomponenRenderer::resolveFontFamily($settings, 'font_family_kop')
@@ -519,12 +563,19 @@ CSS;
         );
 
         $fontVars = ":root { --font-family-kop: {$fontFamilyKop}; --font-family-body: {$fontFamilyBody}; --font-family-footer: {$fontFamilyFooter}; }";
-        $pageStyle = '@page { margin: 0; size: A4 portrait; }';
+        $pageStyle = '@page preview-main { margin: 0; size: A4 portrait; }';
 
         $attachmentPageHtml = '';
         if ($attachmentSection !== null && filled($attachmentSection['html'] ?? null)) {
+            $attachmentOrientation = $this->normalizeAttachmentOrientation($attachmentSection['orientation'] ?? 'portrait');
+            if ($attachmentOrientation === 'landscape') {
+                $attachmentHeight = '210mm';
+                $attachmentPageName = 'preview-attachment';
+                $attachmentPageStyle = '@page preview-attachment { margin: 0; size: A4 landscape; }';
+            }
+
             $attachmentPageHtml = <<<HTML
-<div class="page preview-sheet preview-sheet--attachment">
+<div class="page preview-sheet preview-sheet--attachment" style="page: {$attachmentPageName};">
     <div class="preview-sheet__body">
         {$attachmentSection['html']}
     </div>
@@ -557,6 +608,7 @@ HTML;
     page-break-after: auto;
 }
 .preview-sheet--attachment {
+    height: __ATTACHMENT_HEIGHT__;
     break-before: auto;
     page-break-before: auto;
 }
@@ -625,8 +677,8 @@ HTML;
 CSS;
 
         $bundlePageCss = str_replace(
-            ['__PADDING_TOP__', '__MARGIN_RIGHT__', '__MARGIN_BOTTOM__', '__MARGIN_LEFT__', '__CONTENT_WIDTH__'],
-            [$paddingTop, $marginRight, $marginBottom, $marginLeft, $contentWidth],
+            ['__PADDING_TOP__', '__MARGIN_RIGHT__', '__MARGIN_BOTTOM__', '__MARGIN_LEFT__', '__CONTENT_WIDTH__', '__ATTACHMENT_HEIGHT__'],
+            [$paddingTop, $marginRight, $marginBottom, $marginLeft, $contentWidth, $attachmentHeight],
             $bundlePageCss,
         );
 
@@ -643,6 +695,7 @@ CSS;
         {$attachmentStyles}
         {$customCss}
         {$pageStyle}
+        {$attachmentPageStyle}
         html, body {
             background: #fff;
             color: #0f172a;
@@ -655,7 +708,7 @@ CSS;
     </style>
 </head>
         <body>
-    <div class="page preview-sheet preview-sheet--main">
+    <div class="page preview-sheet preview-sheet--main" style="page: preview-main;">
         {$viewPayload['html']}
     </div>
     {$attachmentPageHtml}

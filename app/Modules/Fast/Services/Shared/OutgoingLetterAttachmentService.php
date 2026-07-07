@@ -14,8 +14,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use Mpdf\Config\ConfigVariables;
-use Mpdf\Config\FontVariables;
 use Mpdf\HTMLParserMode;
 use Mpdf\Mpdf;
 use Symfony\Component\Process\Process;
@@ -654,16 +652,8 @@ CSS;
             'pdf'
         );
         $mpdfFontConfig = SuratKomponenRenderer::mpdfFontConfig();
-        $configDefaults = (new ConfigVariables)->getDefaults();
-        $fontDefaults = (new FontVariables)->getDefaults();
-        $fontDir = array_values(array_unique(array_merge(
-            $configDefaults['fontDir'] ?? [],
-            $mpdfFontConfig['fontDir'] ?? [],
-        )));
-        $fontdata = array_merge(
-            $fontDefaults['fontdata'] ?? [],
-            $mpdfFontConfig['fontdata'] ?? [],
-        );
+        $fontDir = $mpdfFontConfig['fontDir'] ?? [];
+        $fontdata = $mpdfFontConfig['fontdata'] ?? [];
         $fontCss = <<<CSS
 :root {
     --font-family-kop: {$fontFamilyKop};
