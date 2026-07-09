@@ -10,7 +10,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use Illuminate\View\Compilers\BladeCompiler;
 use Symfony\Component\HttpFoundation\Response;
 
 class AdminMonitoringExportService
@@ -45,15 +44,15 @@ class AdminMonitoringExportService
 
         return $this->renderPdfWithIsolatedCompiledViews('pdf.attendance-history', [
             'student' => [
-                'name' => $pendaftaran->mahasiswa?->name ?? '-',
-                'nim' => $pendaftaran->mahasiswa?->nim_nip ?: $pendaftaran->mahasiswa?->nomor_induk ?: '-',
-                'program_studi' => $pendaftaran->mahasiswa?->programStudi?->nama ?? '-',
+                'name' => data_get($pendaftaran->mahasiswa, 'name', '-'),
+                'nim' => data_get($pendaftaran->mahasiswa, 'nim_nip') ?: data_get($pendaftaran->mahasiswa, 'nomor_induk') ?: '-',
+                'program_studi' => data_get($pendaftaran->mahasiswa, 'programStudi.nama', '-'),
             ],
             'internship' => [
-                'company' => $pendaftaran->perusahaan?->nama ?? '-',
+                'company' => data_get($pendaftaran->perusahaan, 'nama', '-'),
                 'period' => $pendaftaran->periodLabel() ?? '-',
-                'supervisor_lecturer' => $pendaftaran->dosenPembimbing?->name ?? '-',
-                'mentor' => $pendaftaran->finalMentor()?->name ?? '-',
+                'supervisor_lecturer' => data_get($pendaftaran->dosenPembimbing, 'name', '-'),
+                'mentor' => data_get($pendaftaran->finalMentor(), 'name', '-'),
             ],
             'rows' => $rows,
         ], $this->attendanceFileName());
@@ -74,7 +73,7 @@ class AdminMonitoringExportService
             ->orderBy('jam_mulai')
             ->orderBy('id')
             ->get()
-            ->map(function (LogbookMagang $logbook, int $index): array {
+            ->map(function ($logbook, int $index): array {
                 $activityContent = $this->buildStructuredContent($logbook->aktivitas_harian);
                 $competencyContent = $this->buildStructuredContent($logbook->kompetensi_dicapai);
 
@@ -94,15 +93,15 @@ class AdminMonitoringExportService
 
         return $this->renderPdfWithIsolatedCompiledViews('pdf.logbook-history', [
             'student' => [
-                'name' => $pendaftaran->mahasiswa?->name ?? '-',
-                'nim' => $pendaftaran->mahasiswa?->nim_nip ?: $pendaftaran->mahasiswa?->nomor_induk ?: '-',
-                'program_studi' => $pendaftaran->mahasiswa?->programStudi?->nama ?? '-',
+                'name' => data_get($pendaftaran->mahasiswa, 'name', '-'),
+                'nim' => data_get($pendaftaran->mahasiswa, 'nim_nip') ?: data_get($pendaftaran->mahasiswa, 'nomor_induk') ?: '-',
+                'program_studi' => data_get($pendaftaran->mahasiswa, 'programStudi.nama', '-'),
             ],
             'internship' => [
-                'company' => $pendaftaran->perusahaan?->nama ?? '-',
+                'company' => data_get($pendaftaran->perusahaan, 'nama', '-'),
                 'period' => $pendaftaran->periodLabel() ?? '-',
-                'supervisor_lecturer' => $pendaftaran->dosenPembimbing?->name ?? '-',
-                'mentor' => $pendaftaran->finalMentor()?->name ?? '-',
+                'supervisor_lecturer' => data_get($pendaftaran->dosenPembimbing, 'name', '-'),
+                'mentor' => data_get($pendaftaran->finalMentor(), 'name', '-'),
             ],
             'rows' => $rows,
         ], $this->logbookFileName());
@@ -141,10 +140,6 @@ class AdminMonitoringExportService
     {
         $blade = app('blade.compiler');
 
-        if (! $blade instanceof BladeCompiler) {
-            return;
-        }
-
         $reflection = new \ReflectionObject($blade);
 
         if ($reflection->hasProperty('cachePath')) {
@@ -156,10 +151,6 @@ class AdminMonitoringExportService
 
     private function getBladeCompiledPath(object $blade): ?string
     {
-        if (! $blade instanceof BladeCompiler) {
-            return null;
-        }
-
         $reflection = new \ReflectionObject($blade);
 
         if (! $reflection->hasProperty('cachePath')) {
@@ -205,6 +196,17 @@ class AdminMonitoringExportService
             'hari_libur' => 'Hari libur',
             'bukan_hari_kerja' => 'Bukan hari kerja',
             default => '-',
+        };
+    }
+
+    private function formatStatusLabel(?string $status): string
+    {
+        return match ($status) {
+            'approved' => 'Disetujui',
+            'disetujui' => 'Disetujui',
+            'rejected' => 'Ditolak',
+            'revisi' => 'Revisi',
+            default => 'Menunggu Review Mitra',
         };
     }
 

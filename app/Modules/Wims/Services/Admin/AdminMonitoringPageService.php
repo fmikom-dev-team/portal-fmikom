@@ -202,8 +202,8 @@ class AdminMonitoringPageService
                         optional($pendaftaran->tanggal_selesai)->toDateString(),
                     ))
                     ->map(function (PendaftaranMagang $pendaftaran): array {
-                        $start = $pendaftaran->tanggal_mulai?->toDateString();
-                        $end = $pendaftaran->tanggal_selesai?->toDateString();
+                        $start = $pendaftaran->tanggal_mulai->toDateString();
+                        $end = $pendaftaran->tanggal_selesai->toDateString();
 
                         return [
                             'value' => sprintf('%s__%s', $start, $end),

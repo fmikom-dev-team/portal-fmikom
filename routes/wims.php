@@ -220,4 +220,3 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
         Route::post('/logbook/{logbook}/review', [MitraLogbookController::class, 'review'])
             ->name('logbook.review');
     });
-
