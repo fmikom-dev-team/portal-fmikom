@@ -7,9 +7,16 @@ import {
     ClipboardList,
     FileCheck2,
     Search,
+    MoreVertical,
 } from 'lucide-vue-next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
     Card,
@@ -27,6 +34,7 @@ defineOptions({
 type Filters = {
     status?: string;
     search?: string;
+    period?: string;
     company_id?: number | null;
     dosen_id?: number | null;
 };
@@ -40,7 +48,8 @@ type Summary = {
 };
 
 type OptionItem = {
-    id: number;
+    id?: number;
+    value?: string;
     label: string;
 };
 
@@ -110,6 +119,7 @@ const props = defineProps<{
     options: {
         companies: OptionItem[];
         dosen: OptionItem[];
+        periods: OptionItem[];
     };
 }>();
 
@@ -121,6 +131,7 @@ const companyId = ref(
 const dosenId = ref(
     props.filters.dosen_id ? String(props.filters.dosen_id) : '',
 );
+const period = ref(props.filters.period || '');
 
 watch(
     () => props.filters,
@@ -129,6 +140,7 @@ watch(
         search.value = filters.search || '';
         companyId.value = filters.company_id ? String(filters.company_id) : '';
         dosenId.value = filters.dosen_id ? String(filters.dosen_id) : '';
+        period.value = filters.period || '';
     },
     { deep: true },
 );
@@ -167,6 +179,7 @@ const applyFilters = () => {
         {
             status: status.value,
             search: search.value || undefined,
+            period: period.value || undefined,
             company_id: companyId.value || undefined,
             dosen_id: dosenId.value || undefined,
         },
@@ -183,6 +196,7 @@ const resetFilters = () => {
     search.value = '';
     companyId.value = '';
     dosenId.value = '';
+    period.value = '';
     applyFilters();
 };
 
@@ -335,7 +349,7 @@ const studentInitial = (name?: string | null) => {
                         </CardTitle>
                         <CardDescription class="mt-1 text-sm leading-6 text-slate-600">
                             Gunakan filter untuk memantau mahasiswa berdasarkan
-                            status magang, perusahaan, atau dosen pembimbing.
+                            status magang, periode, perusahaan, atau dosen pembimbing.
                         </CardDescription>
                     </div>
                 </div>
@@ -343,7 +357,7 @@ const studentInitial = (name?: string | null) => {
 
             <CardContent class="space-y-5 px-5 py-5">
                 <form
-                    class="grid gap-3 xl:grid-cols-[minmax(0,1fr)_170px_210px_210px_auto_auto]"
+                    class="grid gap-3 xl:grid-cols-[minmax(0,1fr)_160px_180px_180px_180px_auto_auto]"
                     @submit.prevent="applyFilters"
                 >
                     <div class="relative">
@@ -360,7 +374,7 @@ const studentInitial = (name?: string | null) => {
 
                     <select
                         v-model="status"
-                        class="h-10 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 transition outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
+                        class="h-10 w-full max-w-[180px] rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 transition outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
                     >
                         <option value="all">Semua Status</option>
                         <option value="pending">Menunggu</option>
@@ -372,8 +386,21 @@ const studentInitial = (name?: string | null) => {
                     </select>
 
                     <select
+                        v-model="period"
+                        class="h-10 w-full max-w-[180px] rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 transition outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
+                    >
+                        <option value="">Semua Periode</option>
+                        <option
+                            v-for="periodOption in options.periods"
+                            :key="periodOption.value || periodOption.label"
+                            :value="periodOption.value || ''"
+                        >
+                            {{ periodOption.label }}
+                        </option>
+                    </select>
+                    <select
                         v-model="companyId"
-                        class="h-10 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 transition outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
+                        class="h-10 w-full max-w-[180px] rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 transition outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
                     >
                         <option value="">Semua Perusahaan</option>
                         <option
@@ -387,7 +414,7 @@ const studentInitial = (name?: string | null) => {
 
                     <select
                         v-model="dosenId"
-                        class="h-10 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 transition outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
+                        class="h-10 w-full max-w-[180px] rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 transition outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
                     >
                         <option value="">Semua Dosen</option>
                         <option
@@ -420,10 +447,29 @@ const studentInitial = (name?: string | null) => {
                     <div
                         v-for="item in registrations.data"
                         :key="item.id"
-                        class="rounded-xl border border-zinc-200 bg-white px-4 py-4 sm:px-5"
+                        class="relative rounded-xl border border-zinc-200 bg-white px-4 py-4 sm:px-5"
                     >
+                        <DropdownMenu>
+                            <DropdownMenuTrigger as-child>
+                                <button
+                                    type="button"
+                                    class="absolute right-4 top-4 inline-flex size-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-slate-600 shadow-none transition-colors hover:bg-zinc-50 hover:text-slate-900"
+                                    aria-label="Aksi monitoring"
+                                >
+                                    <MoreVertical class="size-4" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" class="w-40 rounded-xl border border-zinc-200 bg-white shadow-lg">
+                                <DropdownMenuItem as-child class="cursor-pointer">
+                                    <Link :href="`/wims/admin/monitoring/${item.id}`">
+                                        Detail
+                                    </Link>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
                         <div
-                            class="flex flex-col gap-4"
+                            class="flex flex-col gap-4 pr-12 sm:pr-14"
                         >
                             <div class="min-w-0">
                                 <div class="flex items-start gap-3">
@@ -499,6 +545,7 @@ const studentInitial = (name?: string | null) => {
                                 </div>
                             </div>
                         </div>
+
 
                         <div
                             class="mt-5 border-t border-zinc-200 pt-5"
@@ -695,7 +742,5 @@ const studentInitial = (name?: string | null) => {
         </Card>
     </div>
 </template>
-
-
 
 
