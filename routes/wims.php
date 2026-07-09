@@ -130,6 +130,12 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
 
         Route::get('/monitoring', [AdminMonitoringController::class, 'index'])
             ->name('monitoring.index');
+        Route::get('/monitoring/{pendaftaran}', [AdminMonitoringController::class, 'show'])
+            ->name('monitoring.show');
+        Route::get('/monitoring/{pendaftaran}/download/absensi', [AdminMonitoringController::class, 'downloadAttendance'])
+            ->name('monitoring.attendance.download');
+        Route::get('/monitoring/{pendaftaran}/download/logbook', [AdminMonitoringController::class, 'downloadLogbook'])
+            ->name('monitoring.logbook.download');
 
         Route::get('/rekap-nilai', [AdminAssessmentRecapController::class, 'index'])
             ->name('assessment-recap.index');
@@ -214,3 +220,4 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
         Route::post('/logbook/{logbook}/review', [MitraLogbookController::class, 'review'])
             ->name('logbook.review');
     });
+
