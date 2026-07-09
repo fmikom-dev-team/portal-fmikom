@@ -5,18 +5,24 @@ namespace App\Modules\Fast\Services\Admin;
 use App\Models\Surat;
 use App\Models\SuratApprovalFlow;
 use App\Models\SuratLampiran;
+use App\Modules\Fast\Services\Shared\OutgoingLetterAttachmentService;
+use App\Modules\Fast\Support\FastUserIdentitySearch;
 use App\Modules\Fast\Support\TemplateAdminSupport;
 use App\Modules\Fast\Workflow\Approvals\FastApprovalWorkflowService;
+use App\Support\DocxPreview;
 use App\Support\FastStorage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ApprovalService
 {
     public function __construct(
         protected TemplateAdminSupport $templateAdminSupport,
+        protected OutgoingLetterAttachmentService $outgoingAttachmentService,
     ) {}
 
     public function index(Request $request): Response
@@ -90,11 +96,15 @@ class ApprovalService
             Surat::STATUS_REVISION_REQUESTED,
             Surat::STATUS_REJECTED_ADMIN,
             Surat::STATUS_REJECTED_APPROVER,
+            Surat::STATUS_APPROVED_KAPRODI,
+            Surat::STATUS_APPROVED_DEKAN,
+            Surat::STATUS_FINISHED,
         ];
 
         $effectiveStatuses = match ($status) {
             '', 'pending' => [Surat::STATUS_VALIDATED_ADMIN],
             'all' => $queueStatuses,
+            'finished' => [Surat::STATUS_FINISHED],
             'revision_requested' => [Surat::STATUS_REVISION_REQUESTED],
             'rejected' => [Surat::STATUS_REJECTED_ADMIN, Surat::STATUS_REJECTED_APPROVER],
             default => [Surat::STATUS_VALIDATED_ADMIN],
@@ -252,6 +262,7 @@ class ApprovalService
                 'subjectUser',
                 'jenisSurat.approvalRole',
                 'lampirans',
+                'dataEntries',
                 'approvalFlows.approver',
                 'histories.user',
             ])
@@ -269,7 +280,7 @@ class ApprovalService
             default => 'Riwayat Approval',
         };
 
-        return inertia('approval/Show', array_merge([
+        return inertia('approval/Show', array_merge($this->serializeDetailItem($surat, $request), [
             'context' => [
                 'active_module' => 'FAST',
                 'active_role' => $normalizedRole,
@@ -280,7 +291,7 @@ class ApprovalService
             ],
             'back_href' => $backHref,
             'back_label' => $backLabel,
-        ], $this->serializeDetailItem($surat, $request)));
+        ]));
     }
 
     public function show(int $id): array
@@ -292,9 +303,21 @@ class ApprovalService
         return $this->serializeShowItem($surat);
     }
 
-    public function previewAttachment(int $id): StreamedResponse
+    public function previewAttachment(int $id): SymfonyResponse|StreamedResponse
     {
         $lampiran = SuratLampiran::query()->findOrFail($id);
+        $located = FastStorage::locate($lampiran->file_path);
+
+        if ($located !== null && DocxPreview::isDocx($located['relative_path'], $located['mime_type'])) {
+            try {
+                return response(
+                    DocxPreview::renderHtml($located['absolute_path'], $lampiran->nama_file),
+                    200,
+                )->header('Content-Type', 'text/html; charset=UTF-8');
+            } catch (\Throwable) {
+                // Fall through to the file response below when DOCX parsing fails.
+            }
+        }
 
         return FastStorage::response(
             $lampiran->file_path,
@@ -311,8 +334,16 @@ class ApprovalService
         $user = $request->user();
         abort_if($user === null, 403);
 
-        $roleName = $user->roleDisplayName() ?: 'Approval';
-        $roleSlug = $user->userTypeSlug() ?: 'approval';
+        $resolvedRole = $request->attributes->get('resolved_role');
+
+        if (is_string($resolvedRole) && filled($resolvedRole)) {
+            $roleSlug = $resolvedRole;
+            $roleName = Str::headline(str_replace('-', ' ', $roleSlug));
+        } else {
+            $roleName = $user->roleDisplayName() ?: 'Approval';
+            $roleSlug = $user->userTypeSlug() ?: 'approval';
+        }
+
         $normalizedRole = $this->normalizeRole($roleSlug, $roleName);
 
         return [$user, $roleName, $roleSlug, $normalizedRole];
@@ -320,6 +351,8 @@ class ApprovalService
 
     protected function serializeSuratListItem(Surat $surat): array
     {
+        $letterMode = $surat->serializeLetterMode();
+
         return [
             'id' => $surat->id,
             'type' => $surat->type,
@@ -327,10 +360,16 @@ class ApprovalService
             'tanggal_pengajuan' => optional($surat->tanggal_pengajuan ?? $surat->created_at)?->toISOString(),
             'created_at' => optional($surat->created_at)?->toISOString(),
             'subject' => $surat->serializeSubjectIdentity(),
+            'letter_mode' => $letterMode['mode'],
+            'letter_mode_label' => $letterMode['label'],
+            'is_institution' => $letterMode['is_institution'],
             'jenisSurat' => [
                 'id' => $surat->jenisSurat?->id,
                 'nama' => $surat->jenisSurat?->nama,
             ],
+            'download_url' => $surat->canViewFinalDocumentPreview()
+                ? route('documents.surat.pdf', $surat->id, absolute: false)
+                : null,
         ];
     }
 
@@ -338,6 +377,9 @@ class ApprovalService
     {
         return array_merge($this->serializeSuratListItem($surat), [
             'nomor_surat' => $surat->nomor_surat,
+            'download_url' => $surat->canViewFinalDocumentPreview()
+                ? route('documents.surat.pdf', $surat->id, absolute: false)
+                : null,
         ]);
     }
 
@@ -355,31 +397,43 @@ class ApprovalService
     {
         $isiSurat = json_decode((string) $surat->isi_surat, true);
         $latestRejectedFlow = $surat->latestRejectedFlow();
+        $letterMode = $surat->serializeLetterMode();
 
         return [
             'id' => $surat->id,
             'type' => $surat->type,
             'nomor_surat' => $surat->nomor_surat,
             'subject' => $surat->serializeSubjectIdentity(),
+            'letter_mode' => $letterMode['mode'],
+            'letter_mode_label' => $letterMode['label'],
+            'is_institution' => $letterMode['is_institution'],
             'jenis_surat' => $surat->jenisSurat?->nama,
             'keperluan' => $surat->keperluan,
             'isi_surat' => is_array($isiSurat) ? $isiSurat : [],
+            'detail_data' => $this->buildDetailData($surat),
             'lampiran' => $surat->lampirans->map(fn ($lampiran): array => [
                 'id' => $lampiran->id,
                 'name' => $lampiran->nama_file,
-                'url' => route('documents.lampiran.preview', $lampiran->id, absolute: false),
+                'url' => URL::temporarySignedRoute(
+                    'documents.public.lampiran.preview',
+                    now()->addMinutes(15),
+                    ['id' => $lampiran->id],
+                ),
                 'type' => $lampiran->tipe,
             ])->values(),
             'tanggal_pengajuan' => optional($surat->tanggal_pengajuan ?? $surat->created_at)?->toISOString(),
             'status' => $surat->status,
+            'pdfUrl' => $surat->canViewFinalDocumentPreview()
+                ? route('documents.surat.pdf', $surat->id, absolute: false)
+                : null,
+            'canDownloadPdf' => $surat->canViewFinalDocumentPreview(),
+            'hasAttachmentDocument' => $this->outgoingAttachmentService->hasStudentAttachment($surat),
+            'attachmentPreviewUrl' => $surat->canViewFinalDocumentPreview() && $this->outgoingAttachmentService->hasStudentAttachment($surat)
+                ? route('documents.surat.attachment-document', $surat->id, absolute: false)
+                : null,
             'latest_rejection' => $latestRejectedFlow === null ? null : [
                 'role' => $latestRejectedFlow->role,
-                'label' => match ($latestRejectedFlow->role) {
-                    'admin' => 'Ditolak Admin',
-                    'kaprodi' => $latestRejectedFlow->status === Surat::STATUS_REVISION_REQUESTED ? 'Dikembalikan Kaprodi' : 'Ditolak Kaprodi',
-                    'dekan' => $latestRejectedFlow->status === Surat::STATUS_REVISION_REQUESTED ? 'Dikembalikan Dekan' : 'Ditolak Dekan',
-                    default => 'Riwayat Penolakan',
-                },
+                'label' => 'Ditolak Final',
                 'type' => $latestRejectedFlow->status === Surat::STATUS_REVISION_REQUESTED ? 'revision' : 'final_reject',
                 'note' => $latestRejectedFlow->catatan,
                 'acted_at' => optional($latestRejectedFlow->tanggal_aksi ?? $latestRejectedFlow->created_at)?->toISOString(),
@@ -389,9 +443,16 @@ class ApprovalService
                     ['tanggal_aksi', 'asc'],
                     ['id', 'asc'],
                 ])
-                ->map(function ($flow): array {
+                ->map(function ($flow) use ($surat): array {
+                    $isAdminInitiatedInstitutionLetter =
+                        $surat->type === 'surat_keluar'
+                        && $surat->created_by !== null
+                        && $surat->resolvedLetterMode() === 'institution';
+
                     $label = match (true) {
-                        $flow->status === 'approved' && $flow->role === 'admin' => 'Divalidasi Admin',
+                        $flow->status === 'approved' && $flow->role === 'admin' => $isAdminInitiatedInstitutionLetter
+                            ? 'Diajukan Admin'
+                            : 'Divalidasi Admin',
                         $flow->status === 'approved' && $flow->role === 'kaprodi' => 'Disetujui Kaprodi',
                         $flow->status === 'approved' && $flow->role === 'dekan' => 'Disetujui Dekan',
                         $flow->status === 'rejected_final' && $flow->role === 'admin' => 'Ditolak Admin',
@@ -448,7 +509,7 @@ class ApprovalService
                         $flow->status === Surat::STATUS_REVISION_REQUESTED && $flow->role === 'dekan' => 'Catatan Revisi Dekan',
                         $flow->status === SuratApprovalFlow::STATUS_REJECTED_FINAL && $flow->role === 'kaprodi' => 'Catatan Penolakan Kaprodi',
                         $flow->status === SuratApprovalFlow::STATUS_REJECTED_FINAL && $flow->role === 'dekan' => 'Catatan Penolakan Dekan',
-                        $flow->status === Surat::STATUS_NOTE => 'Catatan Approval',
+                        $flow->status === SuratApprovalFlow::STATUS_NOTE => 'Catatan Approval',
                         default => 'Catatan Approval',
                     },
                     'note' => $flow->catatan,
@@ -459,35 +520,199 @@ class ApprovalService
             'can_approve' => $surat->canBeApprovedByRole($this->normalizeRole($request->user()?->userTypeSlug(), $request->user()?->roleDisplayName())),
             'can_request_revision' => $surat->canRequestRevisionByRole($this->normalizeRole($request->user()?->userTypeSlug(), $request->user()?->roleDisplayName())),
             'can_final_reject' => $surat->canBeFinalRejectedByRole($this->normalizeRole($request->user()?->userTypeSlug(), $request->user()?->roleDisplayName())),
-            'previewTemplateUrl' => route('documents.surat.template-preview', $surat->id, absolute: false),
-            'generatedDocumentUrl' => filled($surat->nomor_surat) || filled($surat->rendered_snapshot)
-                ? (
-                    $surat->status === Surat::STATUS_FINISHED
-                        ? route('documents.surat.pdf', $surat->id, absolute: false)
-                        : route('documents.surat.generated-document', $surat->id, absolute: false)
-                )
+            'previewTemplateUrl' => $surat->canViewFinalDocumentPreview()
+                ? route('documents.surat.template-preview', $surat->id, absolute: false)
+                : null,
+            'generatedDocumentUrl' => $surat->canViewFinalDocumentPreview()
+                ? route('documents.surat.generated-document', $surat->id, absolute: false)
                 : null,
             'back_href' => null,
             'back_label' => null,
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    protected function buildDetailData(Surat $surat): array
+    {
+        $entries = $surat->dataEntries
+            ->mapWithKeys(function ($entry): array {
+                $decoded = $this->decodeJsonPayload($entry->field_value);
+
+                return [
+                    (string) $entry->field_name => $decoded,
+                ];
+            })
+            ->all();
+
+        if (! empty($entries)) {
+            return $this->filterDetailData($entries);
+        }
+
+        $decoded = $this->decodeJsonPayload($surat->isi_surat);
+        if (is_array($decoded)) {
+            return $this->filterDetailData($decoded);
+        }
+
+        return [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function filterDetailData(array $data): array
+    {
+        $labels = [];
+
+        foreach ($data as $key => $value) {
+            $name = strtolower(trim((string) $key));
+
+            if ($this->isTechnicalDetailKey($name)) {
+                continue;
+            }
+
+            if ($value === null || $value === '' || $value === []) {
+                continue;
+            }
+
+            $labels[$key] = $value;
+        }
+
+        return $labels;
+    }
+
+    protected function isTechnicalDetailKey(string $key): bool
+    {
+        $technical = [
+            'id',
+            'surat_id',
+            'jenis_surat_id',
+            'pemohon_id',
+            'type',
+            'status',
+            'created_at',
+            'updated_at',
+            'deleted_at',
+            'generated_at',
+            'generated_file_path',
+            'generated_file_type',
+            'rendered_snapshot',
+            'template_version',
+            'qr_token',
+            'qr_validated_at',
+            'validated_by_admin_id',
+            'validated_by_admin_at',
+            'approved_by_id',
+            'approved_at',
+            'file_path',
+            'path',
+            'url',
+            'token',
+            'slug',
+            'nama_file',
+            'nama_asli',
+            'mime_type',
+            'field_name',
+            'field_value',
+            'approval_role',
+            'approval_role_id',
+            'approvalrole',
+            'approval',
+            'meta',
+            'metadata',
+            'catatan_revisi',
+            'rejection_reason',
+            'admin_note',
+            'subject_name',
+            'perihal',
+            'kepada_yth',
+            'nama_penanda_tangan',
+            'nik_penanda_tangan',
+            'jabatan_penanda_tangan',
+            'nama_penandatangan',
+            'nik_penandatangan',
+            'jabatan_penandatangan',
+            'nip_dosen',
+            'nip_kaprodi',
+            'nip_dekan',
+            'lampiran_keterangan',
+            'lampiran_judul',
+            'lampiran_judul_align',
+            'lampiran_judul_bold',
+            'lampiran_label_no',
+            'lampiran_label_nama',
+            'lampiran_label_nim',
+            'lampiran_label_prodi',
+            'lampiran_mode',
+            'lampiran_orientation',
+            'lampiran_mahasiswa',
+            'lampiran_columns',
+            'lampiran_rows',
+        ];
+
+        if (in_array($key, $technical, true)) {
+            return true;
+        }
+
+        return str_contains($key, 'tanda_tangan')
+            || str_contains($key, 'penanda_tangan')
+            || str_contains($key, 'penandatangan')
+            || str_starts_with($key, '_')
+            || $key === 'id'
+            || str_ends_with($key, '_id')
+            || str_contains($key, 'created_at')
+            || str_contains($key, 'updated_at')
+            || $key === 'status'
+            || str_contains($key, 'token')
+            || str_contains($key, 'path')
+            || str_contains($key, 'url')
+            || str_contains($key, 'file');
+    }
+
+    /**
+     * @return array<string, mixed>|string|int|float|bool|null
+     */
+    protected function decodeJsonPayload(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+
+        if (! is_string($value) || trim($value) === '') {
+            return [];
+        }
+
+        $decoded = json_decode($value, true);
+
+        return json_last_error() === JSON_ERROR_NONE ? $decoded : $value;
+    }
+
     protected function serializeShowItem(Surat $surat): array
     {
         $isiSurat = json_decode((string) $surat->isi_surat, true);
+        $letterMode = $surat->serializeLetterMode();
 
         return [
             'id' => $surat->id,
             'type' => $surat->type,
             'nomor_surat' => $surat->nomor_surat,
             'subject' => $surat->serializeSubjectIdentity(),
+            'letter_mode' => $letterMode['mode'],
+            'letter_mode_label' => $letterMode['label'],
+            'is_institution' => $letterMode['is_institution'],
             'jenis_surat' => $surat->jenisSurat?->nama,
             'keperluan' => $surat->keperluan,
             'isi_surat' => is_array($isiSurat) ? $isiSurat : [],
             'lampiran' => $surat->lampirans->map(fn ($lampiran): array => [
                 'id' => $lampiran->id,
                 'name' => $lampiran->nama_file,
-                'url' => route('approval.lampiran.preview', $lampiran->id, absolute: false),
+                'url' => URL::temporarySignedRoute(
+                    'documents.public.lampiran.preview',
+                    now()->addMinutes(15),
+                    ['id' => $lampiran->id],
+                ),
                 'type' => $lampiran->tipe,
             ])->values(),
             'approval_notes' => $surat->approvalFlows
@@ -504,7 +729,7 @@ class ApprovalService
                         $flow->status === Surat::STATUS_REVISION_REQUESTED && $flow->role === 'dekan' => 'Catatan Revisi Dekan',
                         $flow->status === SuratApprovalFlow::STATUS_REJECTED_FINAL && $flow->role === 'kaprodi' => 'Catatan Penolakan Kaprodi',
                         $flow->status === SuratApprovalFlow::STATUS_REJECTED_FINAL && $flow->role === 'dekan' => 'Catatan Penolakan Dekan',
-                        $flow->status === Surat::STATUS_NOTE => 'Catatan Approval',
+                        $flow->status === SuratApprovalFlow::STATUS_NOTE => 'Catatan Approval',
                         default => 'Catatan Approval',
                     },
                     'note' => $flow->catatan,
@@ -514,7 +739,7 @@ class ApprovalService
                 ->values(),
             'tanggal_pengajuan' => optional($surat->tanggal_pengajuan ?? $surat->created_at)?->toISOString(),
             'status' => $surat->status,
-            'draft_preview_url' => filled($surat->nomor_surat) || filled($surat->rendered_snapshot)
+            'draft_preview_url' => $surat->canViewFinalDocumentPreview()
                 ? route('documents.surat.generated-document', $surat->id, absolute: false)
                 : null,
         ];
@@ -586,18 +811,14 @@ class ApprovalService
                     $typeQuery
                         ->where('type', 'pengajuan')
                         ->whereHas('pemohon', function ($pemohonQuery) use ($search): void {
-                            $pemohonQuery
-                                ->where('name', 'like', "%{$search}%")
-                                ->orWhere('nomor_induk', 'like', "%{$search}%");
+                            FastUserIdentitySearch::apply($pemohonQuery, $search);
                         });
                 })
                 ->orWhere(function ($typeQuery) use ($search): void {
                     $typeQuery
                         ->where('type', 'surat_keluar')
                         ->whereHas('subjectUser', function ($subjectQuery) use ($search): void {
-                            $subjectQuery
-                                ->where('name', 'like', "%{$search}%")
-                                ->orWhere('nomor_induk', 'like', "%{$search}%");
+                            FastUserIdentitySearch::apply($subjectQuery, $search);
                         });
                 });
         });

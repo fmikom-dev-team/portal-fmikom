@@ -7,8 +7,7 @@ namespace App\Modules\Fast\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Surat;
 use App\Models\SuratQrCode;
-use App\Modules\Fast\Services\Shared\SuratHistoryService;
-use Illuminate\Http\RedirectResponse;
+use App\Modules\Fast\Support\FastUserIdentitySearch;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,10 +16,11 @@ class QrManageController extends Controller
 {
     public function index(Request $request): Response
     {
+        $this->authorize('viewAny', Surat::class);
+
         $search = $request->string('search')->trim()->toString();
         $status = $request->string('status')->toString();
 
-        // Ambil dari tabel surat_qr_codes jika ada, fallback ke surats.qr_token
         $query = Surat::query()
             ->select(['id', 'jenis_surat_id', 'pemohon_id', 'type', 'nomor_surat', 'status', 'qr_token', 'created_at'])
             ->with([
@@ -31,11 +31,6 @@ class QrManageController extends Controller
             ])
             ->whereNotNull('qr_token')
             ->latest();
-        // $query = Surat::query()
-        //         ->select(['id', 'jenis_surat_id', 'pemohon_id', 'nomor_surat', 'status', 'qr_token', 'created_at'])
-        //         ->with(['pemohon:id,name,nomor_induk', 'jenisSurat:id,nama', 'qrCode:id,surat_id,status,revoked_at'])
-        //         ->whereNotNull('qr_token')
-        //         ->latest();
 
         if ($search !== '') {
             $query->where(function ($q) use ($search): void {
@@ -44,18 +39,14 @@ class QrManageController extends Controller
                         $typeQuery
                             ->where('type', 'pengajuan')
                             ->whereHas('pemohon', function ($userQuery) use ($search): void {
-                                $userQuery
-                                    ->where('name', 'like', "%{$search}%")
-                                    ->orWhere('nomor_induk', 'like', "%{$search}%");
+                                FastUserIdentitySearch::apply($userQuery, $search);
                             });
                     })
                     ->orWhere(function ($typeQuery) use ($search): void {
                         $typeQuery
                             ->where('type', 'surat_keluar')
                             ->whereHas('subjectUser', function ($userQuery) use ($search): void {
-                                $userQuery
-                                    ->where('name', 'like', "%{$search}%")
-                                    ->orWhere('nomor_induk', 'like', "%{$search}%");
+                                FastUserIdentitySearch::apply($userQuery, $search);
                             });
                     });
             });
@@ -83,10 +74,11 @@ class QrManageController extends Controller
                 'qr_token' => $s->qr_token,
                 'created_at' => $s->created_at?->toISOString(),
                 'subject' => $s->serializeSubjectIdentity(),
+                'letter_mode' => $s->resolvedLetterMode(),
+                'letter_mode_label' => $s->letterModeLabel(),
+                'is_institution' => $s->resolvedLetterMode() === 'institution',
                 'jenisSurat' => ['nama' => $s->jenisSurat?->nama],
-                // Cek dari tabel surat_qr_codes
                 'qr_status' => $s->qrCode?->status ?? 'active',
-                'qr_revoked_at' => $s->qrCode?->revoked_at?->toISOString(),
             ])
             ->withQueryString();
 
@@ -94,28 +86,5 @@ class QrManageController extends Controller
             'surats' => $surats,
             'filters' => compact('search', 'status'),
         ]);
-    }
-
-    public function revoke(Request $request, int $suratId): RedirectResponse
-    {
-        $request->validate([
-            'alasan' => 'nullable|string|max:255',
-        ]);
-
-        $surat = Surat::findOrFail($suratId);
-
-        // Update di tabel surat_qr_codes jika ada
-        $qrCode = SuratQrCode::where('surat_id', $suratId)
-            ->where('status', 'active')
-            ->first();
-
-        if ($qrCode) {
-            $qrCode->revoke(auth()->id(), $request->alasan ?? '');
-        }
-
-        // Catat history
-        SuratHistoryService::qrRevoked($suratId, $request->alasan ?? 'Dicabut oleh admin');
-
-        return back()->with('success', 'QR Code berhasil dicabut.');
     }
 }

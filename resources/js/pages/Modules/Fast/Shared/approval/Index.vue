@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, reactive, ref, watch } from 'vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
     DialogDescription,
-    DialogFooter,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
@@ -15,8 +14,6 @@ import {
     BadgeCheck,
     Check,
     Clock3,
-    Eye,
-    ExternalLink,
     X,
     XCircle,
     FileText,
@@ -39,6 +36,9 @@ type SuratItem = {
     status: string;
     tanggal_pengajuan?: string | null;
     created_at?: string | null;
+    letter_mode?: string | null;
+    letter_mode_label?: string | null;
+    is_institution?: boolean;
     subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { id?: number | null; nama?: string | null } | null;
 };
@@ -78,12 +78,25 @@ type PageProps = {
     auth: { user?: { name?: string } };
     flash?: { success?: string };
 };
-const props = defineProps<{
-    role: { name?: string | null; slug?: string | null };
-    surats: PaginatedSurats;
-    summary: Summary;
-    filters: FilterState;
-}>();
+const props = withDefaults(
+    defineProps<{
+        role?: { name?: string | null; slug?: string | null };
+        surats?: PaginatedSurats;
+        summary?: Summary;
+        filters?: FilterState;
+    }>(),
+    {
+        role: () => ({ name: 'Approval', slug: 'dekan' }),
+        surats: () => ({ data: [], links: [], total: 0 }),
+        summary: () => ({
+            waiting: 0,
+            approved: 0,
+            revision_requested: 0,
+            final_rejected: 0,
+        }),
+        filters: () => ({ status: 'validated_admin' }),
+    },
+);
 
 const page = usePage<PageProps>();
 const filters = reactive({
@@ -91,12 +104,7 @@ const filters = reactive({
 });
 const attachmentPreviewOpen = ref(false);
 const activeAttachment = ref<DetailLampiran | null>(null);
-const rejectModalOpen = ref(false);
-const finalRejectModalOpen = ref(false);
-const selectedSurat = ref<SuratItem | null>(null);
 const toastMessage = ref('');
-const rejectForm = useForm({ reason: '' });
-const finalRejectForm = useForm({ reason: '' });
 const normalizedRole = computed(() =>
     String(props.role.slug ?? props.role.name ?? '')
         .toLowerCase()
@@ -109,7 +117,7 @@ const visibleSurats = computed(() => props.surats.data.slice(0, 7));
 const quickSubmissions = computed(() => visibleSurats.value);
 const summaryCards = computed(() => [
     {
-        label: 'Pending',
+        label: 'Divalidasi Admin',
         value: props.summary.waiting,
         status: 'validated_admin',
         icon: Clock3,
@@ -137,9 +145,9 @@ const summaryCards = computed(() => [
         value: props.summary.revision_requested,
         status: 'revision_requested',
         icon: XCircle,
-        border: 'border-red-200',
-        iconColor: 'text-red-500',
-        textColor: 'text-red-700',
+        border: 'border-amber-200',
+        iconColor: 'text-amber-500',
+        textColor: 'text-amber-700',
     },
     {
         label: 'Ditolak Final',
@@ -171,6 +179,9 @@ const ns = (s?: string | null) =>
 function subjectLabel(type?: string | null) {
     return type === 'surat_keluar' ? 'Atas Nama' : 'Pemohon';
 }
+function isInstitutionLetter(item: { is_institution?: boolean | null; letter_mode?: string | null }) {
+    return Boolean(item.is_institution) || item.letter_mode === 'institution';
+}
 function subjectName(item: { type?: string | null; subject?: { name?: string | null } | null }) {
     return item.subject?.name ?? '-';
 }
@@ -180,9 +191,16 @@ function subjectNim(item: { subject?: { nim?: string | null } | null }) {
 function rowCanBeProcessed(item: SuratItem) {
     return ns(item.status) === 'validated_admin';
 }
-function statusLabel(status: string) {
-    const s = ns(status);
-    if (s === 'validated_admin') return 'Pending';
+function statusLabel(
+    item: {
+        status: string;
+        is_institution?: boolean;
+        letter_mode?: string | null;
+    },
+) {
+    const s = ns(item.status);
+    const isInstitution = isInstitutionLetter(item);
+    if (s === 'validated_admin') return isInstitution ? 'Menunggu Persetujuan' : 'Divalidasi Admin';
     if (s === 'approved_kaprodi') return 'Disetujui Kaprodi';
     if (s === 'approved_dekan') return 'Disetujui Dekan';
     if (s === 'revision_requested')
@@ -197,12 +215,12 @@ function statusLabel(status: string) {
 }
 function statusBadgeClass(status: string) {
     const s = ns(status);
-    if (s === 'validated_admin') return 'bg-slate-100 text-slate-700';
+    if (s === 'validated_admin') return 'bg-amber-50 text-amber-700';
     if (s === 'approved_kaprodi' || s === 'approved_dekan')
         return 'bg-emerald-50 text-emerald-700';
     if (s === 'revision_requested') return 'bg-amber-50 text-amber-700';
     if (s === 'rejected_approver') return 'bg-red-50 text-red-700';
-    return 'bg-slate-100 text-slate-600';
+    return 'bg-amber-50 text-amber-700';
 }
 function formatDate(date?: string | null) {
     if (!date) return '-';
@@ -220,59 +238,29 @@ function applyFilters() {
         replace: true,
     });
 }
-function submitApprove(item: SuratItem) {
-    router.post(
-        `${basePath.value}/surat/${item.id}/approve`,
-        {},
-        { preserveScroll: true },
-    );
-}
-async function openDetail(id: number) {
-    router.visit(`${basePath.value}/surat/${id}/detail?from=dashboard`);
-}
 function openAttachmentPreview(f: DetailLampiran) {
+    if (isPdfAttachment(f) && f.url) {
+        window.open(f.url, '_blank', 'noopener,noreferrer');
+        return;
+    }
+
+    if (isWordAttachment(f) && f.url) {
+        const link = document.createElement('a');
+        link.href = f.url;
+        link.download = f.name || 'lampiran.docx';
+        link.rel = 'noopener';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        return;
+    }
+
     activeAttachment.value = f;
     attachmentPreviewOpen.value = true;
 }
 function closeAttachmentPreview() {
     attachmentPreviewOpen.value = false;
     activeAttachment.value = null;
-}
-function openRejectModal(item: SuratItem) {
-    selectedSurat.value = item;
-    rejectForm.reset();
-    rejectForm.clearErrors();
-    rejectModalOpen.value = true;
-}
-function closeRejectModal() {
-    rejectModalOpen.value = false;
-    selectedSurat.value = null;
-    rejectForm.reset();
-}
-function submitReject() {
-    if (!selectedSurat.value) return;
-    rejectForm.post(
-        `${basePath.value}/surat/${selectedSurat.value.id}/reject`,
-        { preserveScroll: true, onSuccess: () => closeRejectModal() },
-    );
-}
-function openFinalRejectModal(item: SuratItem) {
-    selectedSurat.value = item;
-    finalRejectForm.reset();
-    finalRejectForm.clearErrors();
-    finalRejectModalOpen.value = true;
-}
-function closeFinalRejectModal() {
-    finalRejectModalOpen.value = false;
-    selectedSurat.value = null;
-    finalRejectForm.reset();
-}
-function submitFinalReject() {
-    if (!selectedSurat.value) return;
-    finalRejectForm.post(
-        `${basePath.value}/surat/${selectedSurat.value.id}/final-reject`,
-        { preserveScroll: true, onSuccess: () => closeFinalRejectModal() },
-    );
 }
 function isImageAttachment(f?: DetailLampiran | null) {
     if (!f) return false;
@@ -290,21 +278,35 @@ function isPdfAttachment(f?: DetailLampiran | null) {
         f.name.toLowerCase().endsWith('.pdf')
     );
 }
+
+function isWordAttachment(f?: DetailLampiran | null) {
+    if (!f) return false;
+
+    const type = (f.type ?? '').toLowerCase();
+    const name = f.name.toLowerCase();
+
+    return (
+        type.includes('msword') ||
+        type.includes('wordprocessingml.document') ||
+        name.endsWith('.doc') ||
+        name.endsWith('.docx')
+    );
+}
 </script>
 <template>
     <AdminLayout
         :title="`Dashboard ${role.name || 'Approval'}`"
-        subtitle="Approval lanjutan setelah validasi admin"
+        subtitle="Monitoring approval lanjutan setelah validasi admin"
         active-menu="approval.dashboard"
         :breadcrumbs="[{ label: 'Approval' }]"
     >
         <Head :title="`Dashboard ${role.name || 'Approval'}`" />
-        <!-- Statistik -->
-        <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <!-- Monitoring Hero -->
+        <div class="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div
                 v-for="stat in summaryCards"
                 :key="stat.label"
-                class="rounded-xl border bg-white p-3 text-left transition hover:shadow-sm"
+                class="rounded-2xl border bg-white p-4 text-left transition hover:shadow-sm"
                 :class="stat.border"
             >
                 <div class="flex items-center justify-between">
@@ -317,8 +319,11 @@ function isPdfAttachment(f?: DetailLampiran | null) {
                         :class="stat.iconColor"
                     />
                 </div>
-                <p class="mt-1 text-2xl font-bold text-slate-900">
+                <p class="mt-2 text-2xl font-bold text-slate-900">
                     {{ String(stat.value).padStart(2, '0') }}
+                </p>
+                <p class="mt-1 text-[11px] text-slate-400">
+                    {{ stat.status === 'validated_admin' ? 'Surat menunggu tindakan approver' : stat.status === 'approved_kaprodi' || stat.status === 'approved_dekan' ? 'Sudah disetujui dan masuk arsip' : stat.status === 'revision_requested' ? 'Perlu revisi dari admin' : 'Keputusan final telah dibuat' }}
                 </p>
             </div>
         </div>
@@ -353,12 +358,11 @@ function isPdfAttachment(f?: DetailLampiran | null) {
                                 <th class="px-5 py-3">Jenis Surat</th>
                                 <th class="px-5 py-3">Tanggal</th>
                                 <th class="px-5 py-3">Status</th>
-                                <th class="px-5 py-3 text-right">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-if="surats.data.length === 0">
-                                <td colspan="5" class="px-5 py-12 text-center">
+                                <td colspan="4" class="px-5 py-12 text-center">
                                     <FileText
                                         class="mx-auto mb-2 size-10 text-slate-300"
                                     />
@@ -377,9 +381,14 @@ function isPdfAttachment(f?: DetailLampiran | null) {
                                     <p
                                         class="text-xs font-semibold text-slate-900"
                                     >
-                                        {{ subjectName(item) }}
-                                    </p>
+                                        {{
+                                            isInstitutionLetter(item)
+                                                ? 'Surat Institusi'
+                                                : subjectName(item)
+                                        }}
+                                        </p>
                                     <p
+                                        v-if="!isInstitutionLetter(item)"
                                         class="font-mono text-[10px] text-slate-400"
                                     >
                                         {{ subjectNim(item) }}
@@ -403,72 +412,8 @@ function isPdfAttachment(f?: DetailLampiran | null) {
                                         class="rounded-full px-2 py-1 text-[10px] font-semibold"
                                         :class="statusBadgeClass(item.status)"
                                     >
-                                        {{ statusLabel(item.status) }}
+                                        {{ statusLabel(item) }}
                                     </span>
-                                </td>
-                                <td class="px-5 py-3.5">
-                                    <div
-                                        class="flex items-center justify-end gap-1.5"
-                                    >
-                                        <button
-                                            type="button"
-                                            title="Lihat Detail"
-                                            class="grid size-7 place-items-center rounded-lg bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200"
-                                            @click="openDetail(item.id)"
-                                        >
-                                            <Eye class="size-3.5" />
-                                        </button>
-                                        <template
-                                            v-if="rowCanBeProcessed(item)"
-                                        >
-                                            <button
-                                                type="button"
-                                                title="Setujui"
-                                                class="grid size-7 place-items-center rounded-lg bg-emerald-50 text-emerald-600 transition-colors hover:bg-emerald-100"
-                                                @click="submitApprove(item)"
-                                            >
-                                                <Check class="size-3.5" />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                title="Kembalikan untuk revisi"
-                                                class="grid size-7 place-items-center rounded-lg bg-amber-50 text-amber-600 transition-colors hover:bg-amber-100"
-                                                @click="openRejectModal(item)"
-                                            >
-                                                <X class="size-3.5" />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                title="Tolak final"
-                                                class="grid size-7 place-items-center rounded-lg bg-red-50 text-red-600 transition-colors hover:bg-red-100"
-                                                @click="
-                                                    openFinalRejectModal(item)
-                                                "
-                                            >
-                                                <XCircle class="size-3.5" />
-                                            </button>
-                                        </template>
-                                        <template v-else>
-                                            <button
-                                                disabled
-                                                class="grid size-7 cursor-not-allowed place-items-center rounded-lg bg-slate-100 text-slate-300 opacity-50"
-                                            >
-                                                <Check class="size-3.5" />
-                                            </button>
-                                            <button
-                                                disabled
-                                                class="grid size-7 cursor-not-allowed place-items-center rounded-lg bg-slate-100 text-slate-300 opacity-50"
-                                            >
-                                                <X class="size-3.5" />
-                                            </button>
-                                            <button
-                                                disabled
-                                                class="grid size-7 cursor-not-allowed place-items-center rounded-lg bg-red-50 text-red-200 opacity-50"
-                                            >
-                                                <XCircle class="size-3.5" />
-                                            </button>
-                                        </template>
-                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -496,12 +441,12 @@ function isPdfAttachment(f?: DetailLampiran | null) {
             </div>
             <!-- Sidebar -->
             <div class="space-y-4">
-                <!-- Ringkasan Cepat -->
+                <!-- Surat Terbaru -->
                 <div class="rounded-2xl border border-slate-200 bg-white p-4">
                     <h3
                         class="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900"
                     >
-                        <Clock3 class="size-4 text-blue-500" /> Ringkasan Cepat
+                        <Clock3 class="size-4 text-blue-500" /> Surat Terbaru
                     </h3>
                     <div class="space-y-3">
                         <template v-if="quickSubmissions.length">
@@ -518,10 +463,18 @@ function isPdfAttachment(f?: DetailLampiran | null) {
                                         <p
                                             class="truncate text-xs font-medium text-slate-700"
                                         >
-                                            {{ subjectName(item) }}
+                                            {{
+                                                isInstitutionLetter(item)
+                                                    ? 'Surat Institusi'
+                                                    : subjectName(item)
+                                            }}
                                         </p>
                                         <p class="text-[10px] text-slate-400">
-                                            {{ item.jenisSurat?.nama ?? '-' }}
+                                            {{
+                                                isInstitutionLetter(item)
+                                                    ? (item.jenisSurat?.nama ?? '-')
+                                                    : (item.jenisSurat?.nama ?? '-')
+                                            }}
                                         </p>
                                         <div class="mt-1 flex items-center gap-2">
                                             <span
@@ -532,7 +485,7 @@ function isPdfAttachment(f?: DetailLampiran | null) {
                                                     )
                                                 "
                                             >
-                                                {{ statusLabel(item.status) }}
+                                                {{ statusLabel(item) }}
                                             </span>
                                             <span class="text-[10px] text-slate-400">
                                                 {{
@@ -561,170 +514,8 @@ function isPdfAttachment(f?: DetailLampiran | null) {
                     </div>
                 </div>
 
-                <!-- Panduan Cepat -->
-                <div class="rounded-2xl border border-slate-200 bg-white p-4">
-                    <h3
-                        class="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900"
-                    >
-                        <FileText class="size-4 text-blue-500" /> Panduan Cepat
-                    </h3>
-                    <div class="space-y-2.5 text-xs text-slate-600">
-                        <div class="flex items-start gap-2">
-                            <Check
-                                class="mt-0.5 size-3.5 shrink-0 text-emerald-500"
-                            />
-                            <p>
-                                Klik
-                                <span class="font-semibold text-slate-800"
-                                    >Setujui</span
-                                >
-                                untuk menyetujui pengajuan.
-                            </p>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <X
-                                class="mt-0.5 size-3.5 shrink-0 text-amber-500"
-                            />
-                            <p>
-                                Klik
-                                <span class="font-semibold text-slate-800"
-                                    >Kembalikan</span
-                                >
-                                untuk minta revisi ke admin.
-                            </p>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <XCircle
-                                class="mt-0.5 size-3.5 shrink-0 text-red-500"
-                            />
-                            <p>
-                                Klik
-                                <span class="font-semibold text-slate-800"
-                                    >Tolak Final</span
-                                >
-                                untuk menolak permanen.
-                            </p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
-        <!-- Modal Reject -->
-        <Dialog
-            :open="rejectModalOpen"
-            @update:open="(v) => (v ? null : closeRejectModal())"
-        >
-            <DialogContent
-                class="max-w-md rounded-2xl border-0 bg-white p-0"
-                :show-close-button="false"
-            >
-                <div class="p-6">
-                    <DialogHeader class="mb-4 text-left">
-                        <DialogTitle
-                            class="text-lg font-semibold text-slate-900"
-                            >Kembalikan untuk Revisi</DialogTitle
-                        >
-                        <DialogDescription class="text-sm text-slate-400"
-                            >Isi catatan revisi untuk admin terkait surat
-                            {{
-                                subjectName(selectedSurat ?? {})
-                            }}.</DialogDescription
-                        >
-                    </DialogHeader>
-                    <form @submit.prevent="submitReject" class="space-y-4">
-                        <label class="block space-y-1.5">
-                            <span class="text-xs font-medium text-slate-700"
-                                >Catatan Revisi
-                                <span class="text-red-500">*</span></span
-                            >
-                            <textarea
-                                v-model="rejectForm.reason"
-                                rows="4"
-                                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
-                                placeholder="Jelaskan bagian draft yang perlu direvisi..."
-                            ></textarea>
-                            <p
-                                v-if="rejectForm.errors.reason"
-                                class="text-xs text-red-500"
-                            >
-                                {{ rejectForm.errors.reason }}
-                            </p>
-                        </label>
-                        <DialogFooter class="gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                @click="closeRejectModal"
-                                >Batal</Button
-                            >
-                            <Button
-                                type="submit"
-                                variant="destructive"
-                                :disabled="rejectForm.processing"
-                                >Kembalikan ke Admin</Button
-                            >
-                        </DialogFooter>
-                    </form>
-                </div>
-            </DialogContent>
-        </Dialog>
-        <Dialog
-            :open="finalRejectModalOpen"
-            @update:open="(v) => (v ? null : closeFinalRejectModal())"
-        >
-            <DialogContent
-                class="max-w-md rounded-2xl border-0 bg-white p-0"
-                :show-close-button="false"
-            >
-                <div class="p-6">
-                    <DialogHeader class="mb-4 text-left">
-                        <DialogTitle
-                            class="text-lg font-semibold text-slate-900"
-                            >Tolak Final</DialogTitle
-                        >
-                        <DialogDescription class="text-sm text-slate-400"
-                            >Keputusan akhir. Pengajuan tidak kembali ke admin
-                            dan alasan akan terlihat oleh
-                            subjek surat ini.</DialogDescription
-                        >
-                    </DialogHeader>
-                    <form @submit.prevent="submitFinalReject" class="space-y-4">
-                        <label class="block space-y-1.5">
-                            <span class="text-xs font-medium text-slate-700"
-                                >Alasan Penolakan
-                                <span class="text-red-500">*</span></span
-                            >
-                            <textarea
-                                v-model="finalRejectForm.reason"
-                                rows="4"
-                                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
-                                placeholder="Jelaskan alasan penolakan final..."
-                            ></textarea>
-                            <p
-                                v-if="finalRejectForm.errors.reason"
-                                class="text-xs text-red-500"
-                            >
-                                {{ finalRejectForm.errors.reason }}
-                            </p>
-                        </label>
-                        <DialogFooter class="gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                @click="closeFinalRejectModal"
-                                >Batal</Button
-                            >
-                            <Button
-                                type="submit"
-                                variant="destructive"
-                                :disabled="finalRejectForm.processing"
-                                >Tolak Final</Button
-                            >
-                        </DialogFooter>
-                    </form>
-                </div>
-            </DialogContent>
-        </Dialog>
         <!-- Modal Lampiran -->
         <Dialog
             :open="attachmentPreviewOpen"

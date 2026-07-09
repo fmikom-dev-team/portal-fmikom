@@ -3,6 +3,7 @@
 import FastLayout from '@/layouts/Modules/Fast/FastLayout.vue';
 import DocumentPreviewModal from '@/components/DocumentPreviewModal.vue';
 import LetterFlowCard from '@/components/Modules/Fast/LetterFlowCard.vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, nextTick, ref, watch } from 'vue';
 import {
@@ -35,6 +36,8 @@ import {
     getProgressStepIndex,
     progressSteps,
 } from '@/lib/fastProgress';
+
+const { can } = useFastPermissions();
 
 type Summary = {
     total: number;
@@ -126,6 +129,8 @@ const props = defineProps<{
         name?: string | null;
         identifierLabel?: string | null;
         identifierValue?: string | null;
+        programStudi?: string | null;
+        fakultas?: string | null;
     };
     endpoints: { submission: string; jenisSuratBase: string; basePath: string };
 }>();
@@ -165,6 +170,20 @@ const hasMoreJenis = computed(
 const latestVisible = computed(() => safeLatest.value.slice(0, 5));
 
 type FieldValue = string | boolean | string[] | number | null;
+type ApplicantProfile = {
+    name: string;
+    identifierLabel: string;
+    identifierValue: string;
+    programStudi: string;
+    fakultas: string;
+};
+const applicantProfile = computed<ApplicantProfile>(() => ({
+    name: props.userProfile?.name ?? '',
+    identifierLabel: props.userProfile?.identifierLabel ?? 'NIM',
+    identifierValue: props.userProfile?.identifierValue ?? '',
+    programStudi: props.userProfile?.programStudi ?? '',
+    fakultas: props.userProfile?.fakultas ?? '',
+}));
 
 const submitForm = useForm<{
     jenis_surat_id: string;
@@ -187,18 +206,119 @@ function initFormData(jenis: JenisSuratOption) {
     submitForm.lampiran = [];
     const fieldValues: Record<string, FieldValue> = {};
     for (const f of jenis.fieldConfig ?? []) {
-        if (f.type === 'checkbox') fieldValues[f.name] = false;
+        if (isApplicantIdentityField(f)) {
+            fieldValues[f.name] = applicantFieldDefault(f);
+        } else if (f.type === 'checkbox') fieldValues[f.name] = false;
         else if (['checkbox-group', 'multiselect'].includes(f.type))
             fieldValues[f.name] = [];
         else fieldValues[f.name] = '';
     }
     submitForm.field_data = fieldValues;
 }
+
+function normalizeFieldName(name: string): string {
+    return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
+}
+
+function isApplicantIdentityField(field: FieldConfig): boolean {
+    if ((field.sumber_data ?? 'data_pemohon') !== 'data_pemohon') {
+        return false;
+    }
+
+    return [
+        'nama',
+        'name',
+        'nama_pemohon',
+        'nama_mahasiswa',
+        'nim',
+        'nim_nip',
+        'nomor_induk',
+        'nomor_induk_pemohon',
+        'nomor_induk_mahasiswa',
+        'program_studi',
+        'program_studi_pemohon',
+        'program_studi_mahasiswa',
+        'fakultas',
+        'prodi',
+    ].includes(normalizeFieldName(field.name));
+}
+
+function applicantFieldDefault(field: FieldConfig): FieldValue {
+    const normalized = normalizeFieldName(field.name);
+
+    if (['nama', 'name', 'nama_pemohon', 'nama_mahasiswa'].includes(normalized)) {
+        return applicantProfile.value.name;
+    }
+
+    if (
+        [
+            'nim',
+            'nim_nip',
+            'nomor_induk',
+            'nomor_induk_pemohon',
+            'nomor_induk_mahasiswa',
+        ].includes(normalized)
+    ) {
+        return applicantProfile.value.identifierValue;
+    }
+
+    if (
+        [
+            'program_studi',
+            'program_studi_pemohon',
+            'program_studi_mahasiswa',
+            'prodi',
+        ].includes(normalized)
+    ) {
+        return applicantProfile.value.programStudi;
+    }
+
+    if (['fakultas'].includes(normalized)) {
+        return applicantProfile.value.fakultas;
+    }
+
+    return '';
+}
+
 function isApplicantFieldVisible(field: FieldConfig) {
     return (field.mode_form_pemohon ?? 'editable') !== 'hidden';
 }
 function isApplicantFieldReadonly(field: FieldConfig) {
-    return (field.mode_form_pemohon ?? 'editable') === 'readonly';
+    return (field.mode_form_pemohon ?? 'editable') === 'readonly' || isApplicantIdentityField(field);
+}
+function fieldSourceLabel(field: FieldConfig): string {
+    const source = field.sumber_data ?? 'data_pemohon';
+    const normalized = normalizeFieldName(field.name);
+    const isIdentityField = [
+        'nama',
+        'name',
+        'nama_pemohon',
+        'nama_mahasiswa',
+        'nim',
+        'nim_nip',
+        'nomor_induk',
+        'nomor_induk_pemohon',
+        'nomor_induk_mahasiswa',
+        'program_studi',
+        'program_studi_pemohon',
+        'program_studi_mahasiswa',
+        'fakultas',
+        'prodi',
+    ].includes(normalized);
+
+    if (source === 'data_kampus') {
+        return 'Data kampus';
+    }
+
+    if (source === 'data_sistem') {
+        return 'Data sistem';
+    }
+
+    if (!isIdentityField) {
+        return '';
+    }
+
+    return 'Data pemohon';
 }
 
 function setApplicantFieldRef(name: string, el: any) {
@@ -510,12 +630,12 @@ function statusLabel(status: string) {
     const map: Record<string, string> = {
         pending: 'Menunggu Validasi',
         revision_requested: 'Sedang Direvisi Admin',
-        validated_admin: 'Diteruskan ke Approver',
+        validated_admin: 'Diteruskan untuk disetujui',
         approved_kaprodi: 'Disetujui',
         approved_dekan: 'Disetujui',
         finished: 'Selesai',
         rejected_admin: 'Ditolak Admin',
-        rejected_approver: 'Ditolak Pimpinan',
+        rejected_approver: 'Ditolak Final',
         cancelled: 'Dibatalkan',
     };
     return map[status] ?? 'Diproses';
@@ -548,7 +668,7 @@ function statusBadgeClass(status: string) {
     if (status === 'rejected_admin' || status === 'rejected_approver')
         return 'bg-red-50 text-red-700';
     if (status === 'pending') return 'bg-amber-50 text-amber-700';
-    if (status === 'validated_admin') return 'bg-slate-100 text-slate-700';
+    if (status === 'validated_admin') return 'bg-amber-50 text-amber-700';
     if (status === 'cancelled') return 'bg-slate-100 text-slate-600';
     return 'bg-emerald-50 text-emerald-700';
 }
@@ -583,11 +703,11 @@ function statusTone(status: string) {
     }
     if (status === 'validated_admin') {
         return {
-            card: 'border-slate-200',
-            iconWrap: 'bg-slate-100 text-slate-600',
-            accent: 'bg-slate-400',
-            text: 'text-slate-600',
-            progress: 'bg-slate-400',
+            card: 'border-amber-200',
+            iconWrap: 'bg-amber-50 text-amber-600',
+            accent: 'bg-amber-400',
+            text: 'text-amber-600',
+            progress: 'bg-amber-400',
         };
     }
     if (status.startsWith('approved')) {
@@ -611,7 +731,7 @@ function statusTone(status: string) {
 function dashboardProgressLabel(item: LatestSubmission): string {
     const status = item.status;
     if (status === 'rejected_admin') return 'Ditolak Admin';
-    if (status === 'rejected_approver') return 'Ditolak Pimpinan';
+    if (status === 'rejected_approver') return 'Ditolak Final';
     if (status === 'revision_requested') return 'Perlu Revisi';
     if (status === 'cancelled') return 'Dibatalkan';
     if (status === 'approved_kaprodi' || status === 'approved_dekan') {
@@ -704,7 +824,7 @@ function fieldError(name: string): string | undefined {
 
 <template>
     <FastLayout
-        title="Dashboard"
+        title=""
         active-menu="dashboard"
         :breadcrumbs="[{ label: 'Dashboard' }]"
     >
@@ -1056,14 +1176,15 @@ function fieldError(name: string): string | undefined {
                             <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <Link
+                                        v-if="can('fast.submission.view')"
                                         :href="`${safeEndpoints.basePath}/history/${item.id}`"
-                                        title="Detail Surat"
+                                        title="Lihat"
                                         class="fast-btn fast-btn-outline px-3 py-1.5 text-[11px] font-medium text-slate-600"
                                     >
-                                        <FileText class="size-3.5" /> Detail Surat
+                                        <Eye class="size-3.5" /> Lihat
                                     </Link>
                                     <button
-                                        v-if="item.hasPdf"
+                                        v-if="item.hasPdf && can('fast.document.download')"
                                         type="button"
                                         title="Download PDF"
                                         class="fast-btn fast-btn-primary px-3 py-1.5 text-[10px] font-medium"
@@ -1118,9 +1239,9 @@ function fieldError(name: string): string | undefined {
                             Tidak ada jenis surat
                         </p>
                     </div>
-                    <div v-else class="grid gap-2">
+                    <div v-else-if="can('fast.submission.create')" class="grid gap-2">
                         <button
-                        v-for="jenis in visibleJenis"
+                            v-for="jenis in visibleJenis"
                             :key="jenis.id"
                             type="button"
                             class="group relative rounded-2xl border border-slate-200 bg-white p-3 text-left transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
@@ -1148,8 +1269,15 @@ function fieldError(name: string): string | undefined {
                         </button>
                     </div>
 
+                    <div
+                        v-else
+                        class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-5 text-center text-xs text-slate-500"
+                    >
+                        Aksi pengajuan tidak tersedia untuk role ini.
+                    </div>
+
                     <Link
-                        v-if="hasMoreJenis"
+                        v-if="hasMoreJenis && can('fast.submission.create')"
                         href="/mahasiswa/ajukan"
                         class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-blue-600 transition-colors hover:text-blue-700"
                     >
@@ -1254,22 +1382,22 @@ function fieldError(name: string): string | undefined {
                                 :data-field-key="`field_data.${field.name}`"
                                 :ref="(el) => setApplicantFieldRef(`field_data.${field.name}`, el)"
                             >
-                                <label
-                                    class="mb-1 block text-xs font-medium text-slate-700"
-                                >
-                                    {{ field.label }}
+                                <div class="mb-1 flex items-center justify-between gap-2">
+                                    <label class="block text-xs font-medium text-slate-700">
+                                        {{ field.label }}
+                                        <span
+                                            v-if="field.required"
+                                            class="text-red-500"
+                                            >*</span
+                                        >
+                                    </label>
                                     <span
-                                        v-if="field.required"
-                                        class="text-red-500"
-                                        >*</span
+                                        v-if="fieldSourceLabel(field)"
+                                        class="inline-flex shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600"
                                     >
-                                </label>
-                                <span
-                                    v-if="isApplicantFieldReadonly(field)"
-                                    class="mb-2 inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700"
-                                >
-                                    Data oleh kampus
-                                </span>
+                                        {{ fieldSourceLabel(field) }}
+                                    </span>
+                                </div>
                                 <!-- textarea -->
                                 <textarea
                                     v-if="field.type === 'textarea'"

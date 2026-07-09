@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // resources/js/pages/Modules/Fast/Admin/archive/Index.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import {
@@ -11,6 +12,8 @@ import {
     FileText,
     ChevronDown,
 } from 'lucide-vue-next';
+
+const { can } = useFastPermissions();
 type SuratItem = {
     id: number;
     type: string;
@@ -19,6 +22,9 @@ type SuratItem = {
     tanggal_selesai?: string | null;
     generated_file_path?: string | null;
     download_url?: string | null;
+    letter_mode?: string | null;
+    letter_mode_label?: string | null;
+    is_institution?: boolean;
     subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { nama?: string | null } | null;
 };
@@ -85,6 +91,9 @@ function subjectLabel(type: string) {
 }
 function subjectIdentityLabel(type: string) {
     return type === 'surat_keluar' ? 'No. Induk' : 'NIM';
+}
+function isInstitutionLetter(item: SuratItem) {
+    return !!item.is_institution || item.letter_mode === 'institution';
 }
 </script>
 <template>
@@ -255,10 +264,20 @@ function subjectIdentityLabel(type: string) {
                                 {{ item.nomor_surat ?? '-' }}
                             </p>
                             <p class="mt-0.5 truncate text-xs text-slate-500">
-                                {{ item.jenisSurat?.nama ?? '-' }}
+                                {{
+                                    isInstitutionLetter(item)
+                                        ? 'Surat Institusi'
+                                        : (item.jenisSurat?.nama ?? '-')
+                                }}
                             </p>
                         </div>
                     </div>
+                    <p
+                        v-if="isInstitutionLetter(item)"
+                        class="mb-4 text-xs text-slate-500"
+                    >
+                        {{ item.jenisSurat?.nama ?? '-' }}
+                    </p>
                     <!-- Details -->
                         <div class="mb-4 space-y-1.5">
                             <div class="flex items-center gap-2">
@@ -266,10 +285,13 @@ function subjectIdentityLabel(type: string) {
                                 >{{ subjectLabel(item.type) }}</span
                             >
                             <span class="text-xs font-medium text-slate-700">{{
-                                item.subject?.name ?? '-'
+                                isInstitutionLetter(item) ? 'Surat Institusi' : (item.subject?.name ?? '-')
                             }}</span>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div
+                            v-if="!isInstitutionLetter(item)"
+                            class="flex items-center gap-2"
+                        >
                             <span class="w-14 text-[10px] text-slate-400"
                                 >{{ subjectIdentityLabel(item.type) }}</span
                             >
@@ -293,27 +315,35 @@ function subjectIdentityLabel(type: string) {
                         class="flex items-center gap-2 border-t border-slate-100 pt-3"
                     >
                         <Link
+                            v-if="can('fast.admin.archive.view')"
                             :href="`/admin/surat/${item.id}`"
                             class="fast-btn fast-btn-outline flex flex-1 items-center justify-center gap-1.5 py-2 text-[10px] font-medium text-slate-600"
-                            title="Lihat Detail"
+                            title="Lihat"
                         >
-                            <Eye class="size-3" /> Detail
+                            <Eye class="size-3" /> Lihat
                         </Link>
                         <a
-                            v-if="item.download_url"
+                            v-if="item.download_url && can('fast.document.download')"
                             :href="item.download_url"
                             target="_blank"
                             class="fast-btn fast-btn-primary flex flex-1 items-center justify-center gap-1.5 py-2 text-[10px] font-medium"
-                            title="Download PDF"
+                            title="Unduh PDF"
                         >
                             <Download class="size-3" /> Unduh PDF
                         </a>
                         <div
-                            v-else
+                            v-else-if="can('fast.document.download')"
                             class="flex flex-1 cursor-not-allowed items-center justify-center gap-1.5 rounded-lg bg-slate-100 py-2 text-[10px] font-medium text-slate-400"
                             title="PDF belum tersedia"
                         >
                             <FileText class="size-3" /> PDF Belum Tersedia
+                        </div>
+                        <div
+                            v-else
+                            class="flex flex-1 cursor-not-allowed items-center justify-center gap-1.5 rounded-lg bg-slate-100 py-2 text-[10px] font-medium text-slate-400"
+                            title="Akses unduh tidak tersedia"
+                        >
+                            <FileText class="size-3" /> Akses Terkunci
                         </div>
                     </div>
                 </div>

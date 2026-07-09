@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Admin\QrManageController::index
 * @see app/Modules/Fast/Controllers/Admin/QrManageController.php:18
@@ -43,58 +43,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-/**
-* @see \App\Modules\Fast\Controllers\Admin\QrManageController::revoke
-* @see app/Modules/Fast/Controllers/Admin/QrManageController.php:76
-* @route '/admin/qr/{id}/revoke'
-*/
-export const revoke = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
-    url: revoke.url(args, options),
-    method: 'post',
-})
-
-revoke.definition = {
-    methods: ["post"],
-    url: '/admin/qr/{id}/revoke',
-} satisfies RouteDefinition<["post"]>
-
-/**
-* @see \App\Modules\Fast\Controllers\Admin\QrManageController::revoke
-* @see app/Modules/Fast/Controllers/Admin/QrManageController.php:76
-* @route '/admin/qr/{id}/revoke'
-*/
-revoke.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
-    if (typeof args === 'string' || typeof args === 'number') {
-        args = { id: args }
-    }
-
-    if (Array.isArray(args)) {
-        args = {
-            id: args[0],
-        }
-    }
-
-    args = applyUrlDefaults(args)
-
-    const parsedArgs = {
-        id: args.id,
-    }
-
-    return revoke.definition.url
-            .replace('{id}', parsedArgs.id.toString())
-            .replace(/\/+$/, '') + queryParams(options)
-}
-
-/**
-* @see \App\Modules\Fast\Controllers\Admin\QrManageController::revoke
-* @see app/Modules/Fast/Controllers/Admin/QrManageController.php:76
-* @route '/admin/qr/{id}/revoke'
-*/
-revoke.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
-    url: revoke.url(args, options),
-    method: 'post',
-})
-
-const QrManageController = { index, revoke }
+const QrManageController = { index }
 
 export default QrManageController

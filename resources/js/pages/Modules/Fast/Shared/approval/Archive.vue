@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ import {
 import {
     Search,
     FileText,
+    Download,
     XCircle,
     RefreshCcw,
     CheckCircle2,
@@ -22,6 +24,8 @@ import {
     ExternalLink,
     Calendar,
 } from 'lucide-vue-next';
+
+const { can } = useFastPermissions();
 type DetailLampiran = {
     id: number;
     name: string;
@@ -34,9 +38,13 @@ type SuratItem = {
     status: string;
     tanggal_pengajuan?: string | null;
     created_at?: string | null;
+    letter_mode?: string | null;
+    letter_mode_label?: string | null;
+    is_institution?: boolean;
     subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { id?: number | null; nama?: string | null } | null;
     nomor_surat?: string | null;
+    download_url?: string | null;
 };
 type PaginationLink = { url: string | null; label: string; active: boolean };
 type PaginatedSurats = {
@@ -48,13 +56,22 @@ type PaginatedSurats = {
 };
 type StatusOption = { value: string; label: string };
 type CategoryOption = { id: number; nama: string };
-const props = defineProps<{
-    role: { name?: string | null; slug?: string | null };
-    surats: PaginatedSurats;
-    filters: { status?: string; search?: string; category_id?: string };
-    statusOptions: StatusOption[];
-    categories: CategoryOption[];
-}>();
+const props = withDefaults(
+    defineProps<{
+        role?: { name?: string | null; slug?: string | null };
+        surats?: PaginatedSurats;
+        filters?: { status?: string; search?: string; category_id?: string };
+        statusOptions?: StatusOption[];
+        categories?: CategoryOption[];
+    }>(),
+    {
+        role: () => ({ name: 'Approval', slug: 'dekan' }),
+        surats: () => ({ data: [], links: [], total: 0 }),
+        filters: () => ({ status: '', search: '', category_id: '' }),
+        statusOptions: () => [],
+        categories: () => [],
+    },
+);
 const search = ref(props.filters.search ?? '');
 const status = ref(props.filters.status ?? '');
 const categoryId = ref(props.filters.category_id ?? '');
@@ -163,6 +180,13 @@ function statusColor(s: string) {
             text: 'text-amber-600',
             line: 'bg-amber-300',
         };
+    if (lowered === 'pending' || lowered === 'validated_admin')
+        return {
+            bg: 'bg-amber-50',
+            border: 'border-amber-200',
+            text: 'text-amber-600',
+            line: 'bg-amber-300',
+        };
     return {
         bg: 'bg-slate-50',
         border: 'border-slate-200',
@@ -240,21 +264,6 @@ async function openDetail(id: number) {
                 type="button"
                 class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
                 :class="
-                    !status
-                        ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
-                "
-                @click="
-                    status = '';
-                    applyFilters();
-                "
-            >
-                Semua
-            </button>
-            <button
-                type="button"
-                class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
-                :class="
                     status === 'approved'
                         ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
                         : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
@@ -271,7 +280,7 @@ async function openDetail(id: number) {
                 class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
                 :class="
                     status === 'revision_requested'
-                        ? 'border-amber-500 bg-amber-500 text-white shadow-sm'
+                        ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
                         : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
                 "
                 @click="
@@ -286,7 +295,7 @@ async function openDetail(id: number) {
                 class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
                 :class="
                     status === 'rejected_approver'
-                        ? 'border-red-500 bg-red-500 text-white shadow-sm'
+                        ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
                         : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
                 "
                 @click="
@@ -294,7 +303,22 @@ async function openDetail(id: number) {
                     applyFilters();
                 "
             >
-                Ditolak
+                Ditolak Final
+            </button>
+            <button
+                type="button"
+                class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                :class="
+                    !status
+                        ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                "
+                @click="
+                    status = '';
+                    applyFilters();
+                "
+            >
+                Semua Status
             </button>
         </div>
         <!-- Timeline cards -->
@@ -343,7 +367,11 @@ async function openDetail(id: number) {
                         <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center gap-2">
                                 <p class="text-sm font-bold text-slate-900">
-                                    {{ item.jenisSurat?.nama ?? '-' }}
+                                    {{
+                                        item.is_institution || item.letter_mode === 'institution'
+                                            ? 'Surat Institusi'
+                                            : (item.jenisSurat?.nama ?? '-')
+                                    }}
                                 </p>
                                 <span
                                     class="rounded-full px-2 py-0.5 text-[10px] font-semibold"
@@ -358,6 +386,12 @@ async function openDetail(id: number) {
                             >
                                 {{ item.nomor_surat }}
                             </p>
+                            <p
+                                v-if="item.is_institution || item.letter_mode === 'institution'"
+                                class="mt-1 text-xs text-slate-500"
+                            >
+                                {{ item.jenisSurat?.nama ?? '-' }}
+                            </p>
                             <div
                                 class="mt-3 flex items-center gap-3 text-[10px] text-slate-400"
                             >
@@ -371,7 +405,7 @@ async function openDetail(id: number) {
                                     }}
                                 </span>
                                 <span
-                                    v-if="subjectName(item) !== '-'"
+                                    v-if="subjectName(item) !== '-' && !(item.is_institution || item.letter_mode === 'institution')"
                                     class="flex items-center gap-1"
                                 >
                                     <FileText class="size-3" />
@@ -382,13 +416,37 @@ async function openDetail(id: number) {
                         <!-- Actions -->
                         <div class="flex shrink-0 items-start gap-2">
                             <button
+                                v-if="can('fast.approval.surat.view')"
                                 type="button"
                                 class="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[10px] font-medium text-slate-600 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
-                                title="Lihat detail"
+                                title="Lihat"
                                 @click="openDetail(item.id)"
                             >
-                                <Eye class="size-3" /> Detail
+                                <Eye class="size-3" /> Lihat
                             </button>
+                            <a
+                                v-if="item.download_url && can('fast.document.download')"
+                                :href="item.download_url"
+                                target="_blank"
+                                class="fast-btn fast-btn-primary px-3 py-1.5 text-[10px] font-medium"
+                                title="Download PDF"
+                            >
+                                <Download class="size-3" /> PDF
+                            </a>
+                            <div
+                                v-else-if="can('fast.document.download')"
+                                class="fast-btn fast-btn-soft cursor-not-allowed px-3 py-1.5 text-[10px] font-medium text-slate-400"
+                                title="PDF belum tersedia"
+                            >
+                                <FileText class="size-3" /> PDF Belum Tersedia
+                            </div>
+                            <div
+                                v-else
+                                class="flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-[10px] font-medium text-slate-400"
+                                title="Akses unduh tidak tersedia"
+                            >
+                                <FileText class="size-3" /> Akses Terkunci
+                            </div>
                         </div>
                     </div>
                 </div>

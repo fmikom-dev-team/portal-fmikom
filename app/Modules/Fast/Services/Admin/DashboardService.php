@@ -4,10 +4,13 @@ namespace App\Modules\Fast\Services\Admin;
 
 use App\Models\Surat;
 use App\Models\SuratApprovalFlow;
+use App\Modules\Fast\Services\Shared\OutgoingLetterAttachmentService;
+use App\Modules\Fast\Support\FastUserIdentitySearch;
 use App\Modules\Fast\Support\TemplateAdminSupport;
 use App\Modules\Fast\Template\Renderers\SuratTemplateRendererService;
 use App\Support\FastStorage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -19,6 +22,7 @@ class DashboardService
         protected TemplateAdminSupport $templateAdminSupport,
         protected SuratTemplateRendererService $templateRenderer,
         protected ApprovalService $approvalService,
+        protected OutgoingLetterAttachmentService $outgoingAttachmentService,
     ) {}
 
     public function index(Request $request): Response
@@ -41,10 +45,8 @@ class DashboardService
 
         if ($search !== '') {
             $query->whereHas('pemohon', function ($pemohonQuery) use ($search): void {
-                $pemohonQuery
-                    ->where('name', 'like', "%{$search}%")
-                    ->orWhere('nomor_induk', 'like', "%{$search}%")
-                    ->orWhere('nomor_induk', 'like', "%{$search}%");
+                FastUserIdentitySearch::apply($pemohonQuery, $search);
+                $pemohonQuery->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -58,6 +60,7 @@ class DashboardService
                 'status' => $surat->status,
                 'can_approve' => $surat->canBeValidatedByAdmin(),
                 'can_edit' => $surat->canBeEditedByAdmin(),
+                'needs_admin_completion' => $surat->hasIncompleteCampusData(),
                 'tanggal_pengajuan' => optional($surat->tanggal_pengajuan ?? $surat->created_at)?->toISOString(),
                 'created_at' => optional($surat->created_at)?->toISOString(),
                 'subject' => $surat->serializeSubjectIdentity(),
@@ -132,8 +135,8 @@ class DashboardService
                 'recent' => $adminActivityHistory,
             ],
             'links' => [
-                'submissionsIndex' => '/admin/surat',
-                'archiveIndex' => '/admin/archive',
+                'submissionsIndex' => $this->adminBasePath().'/surat',
+                'archiveIndex' => $this->adminBasePath().'/archive',
             ],
         ]);
     }
@@ -150,18 +153,27 @@ class DashboardService
             'id' => $surat->id,
             'type' => $surat->type,
             'nomor_surat' => $surat->nomor_surat,
+            'letter_mode' => $surat->resolvedLetterMode(),
+            'letter_mode_label' => $surat->letterModeLabel(),
+            'is_institution' => $surat->resolvedLetterMode() === 'institution',
             'subject' => $surat->serializeSubjectIdentity(),
             'jenis_surat' => $surat->jenisSurat?->nama,
             'keperluan' => $surat->keperluan,
             'isi_surat' => is_array($isiSurat) ? $isiSurat : [],
+            'detail_data' => $this->buildDetailData($surat),
             'lampiran' => $surat->lampirans->map(fn ($lampiran): array => [
                 'id' => $lampiran->id,
                 'name' => $lampiran->nama_file,
-                'url' => route('documents.lampiran.preview', $lampiran->id, absolute: false),
+                'url' => URL::temporarySignedRoute(
+                    'documents.public.lampiran.preview',
+                    now()->addMinutes(15),
+                    ['id' => $lampiran->id],
+                ),
                 'type' => $lampiran->tipe,
             ])->values(),
             'tanggal_pengajuan' => optional($surat->tanggal_pengajuan ?? $surat->created_at)?->toISOString(),
             'status' => $surat->status,
+            'hasAttachmentDocument' => $this->outgoingAttachmentService->hasStudentAttachment($surat),
             'latest_rejection' => (function () use ($surat): ?array {
                 $latestRevisionFlow = $surat->latestRevisionRequestFlow();
                 $latestAdminRejectionFlow = $surat->latestAdminRejectionFlow();
@@ -176,12 +188,7 @@ class DashboardService
 
                 return [
                     'role' => $latestRejectedFlow->role,
-                    'label' => match ($latestRejectedFlow->role) {
-                        'admin' => 'Ditolak Admin',
-                        'kaprodi' => $isRevisionRequest ? 'Dikembalikan Kaprodi' : 'Ditolak Kaprodi',
-                        'dekan' => $isRevisionRequest ? 'Dikembalikan Dekan' : 'Ditolak Dekan',
-                        default => 'Riwayat Penolakan',
-                    },
+                    'label' => 'Ditolak Final',
                     'type' => $isRevisionRequest ? 'revision' : 'final_reject',
                     'note' => $latestRejectedFlow->catatan,
                     'acted_at' => optional($latestRejectedFlow->tanggal_aksi ?? $latestRejectedFlow->created_at)?->toISOString(),
@@ -192,9 +199,10 @@ class DashboardService
                     ['tanggal_aksi', 'asc'],
                     ['id', 'asc'],
                 ])
-                ->map(function ($flow): array {
+                ->map(function ($flow) use ($surat): array {
+                    $isInstitutionLetter = $surat->resolvedLetterMode() === 'institution';
                     $label = match (true) {
-                        $flow->status === 'approved' && $flow->role === 'admin' => 'Divalidasi Admin',
+                        $flow->status === 'approved' && $flow->role === 'admin' => $isInstitutionLetter ? 'Diajukan Admin' : 'Divalidasi Admin',
                         $flow->status === 'approved' && $flow->role === 'kaprodi' => 'Disetujui Kaprodi',
                         $flow->status === 'approved' && $flow->role === 'dekan' => 'Disetujui Dekan',
                         $flow->status === 'rejected_final' && $flow->role === 'admin' => 'Ditolak Admin',
@@ -238,15 +246,155 @@ class DashboardService
                 ->values(),
             'can_approve' => $surat->canBeValidatedByAdmin(),
             'can_edit' => $surat->canBeEditedByAdmin(),
-            'previewTemplateUrl' => route('documents.surat.template-preview', $surat->id, absolute: false),
-            'generatedDocumentUrl' => filled($surat->nomor_surat) || filled($surat->rendered_snapshot)
-                ? (
-                    $surat->status === Surat::STATUS_FINISHED
-                        ? route('documents.surat.pdf', $surat->id, absolute: false)
-                        : route('documents.surat.generated-document', $surat->id, absolute: false)
-                )
+            'previewTemplateUrl' => $surat->canViewFinalDocumentPreview()
+                ? route('documents.surat.template-preview', $surat->id, absolute: false)
+                : null,
+            'generatedDocumentUrl' => $surat->canViewFinalDocumentPreview()
+                ? route('documents.surat.generated-document', $surat->id, absolute: false)
+                : null,
+            'attachmentPreviewUrl' => $surat->canViewFinalDocumentPreview() && $this->outgoingAttachmentService->hasStudentAttachment($surat)
+                ? route('documents.surat.attachment-document', $surat->id, absolute: false)
                 : null,
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function buildDetailData(Surat $surat): array
+    {
+        $entries = $surat->dataEntries
+            ->mapWithKeys(function ($entry): array {
+                $decoded = $this->decodeJsonPayload($entry->field_value);
+
+                return [
+                    (string) $entry->field_name => $decoded,
+                ];
+            })
+            ->all();
+
+        if (! empty($entries)) {
+            return $this->filterDetailData($entries);
+        }
+
+        $decoded = $this->decodeJsonPayload($surat->isi_surat);
+        if (is_array($decoded)) {
+            return $this->filterDetailData($decoded);
+        }
+
+        return [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function filterDetailData(array $data): array
+    {
+        $labels = [];
+
+        foreach ($data as $key => $value) {
+            $name = strtolower(trim((string) $key));
+
+            if ($this->isTechnicalDetailKey($name)) {
+                continue;
+            }
+
+            if ($value === null || $value === '' || $value === []) {
+                continue;
+            }
+
+            $labels[$key] = $value;
+        }
+
+        return $labels;
+    }
+
+    protected function isTechnicalDetailKey(string $key): bool
+    {
+        $technical = [
+            'id',
+            'surat_id',
+            'jenis_surat_id',
+            'pemohon_id',
+            'type',
+            'status',
+            'created_at',
+            'updated_at',
+            'deleted_at',
+            'generated_at',
+            'generated_file_path',
+            'generated_file_type',
+            'rendered_snapshot',
+            'template_version',
+            'qr_token',
+            'qr_validated_at',
+            'validated_by_admin_id',
+            'validated_by_admin_at',
+            'approved_by_id',
+            'approved_at',
+            'file_path',
+            'path',
+            'url',
+            'token',
+            'slug',
+            'nama_file',
+            'nama_asli',
+            'mime_type',
+            'size',
+            'original_name',
+            'subject_name',
+            'perihal',
+            'kepada_yth',
+            'nama_penanda_tangan',
+            'nik_penanda_tangan',
+            'jabatan_penanda_tangan',
+            'nama_penandatangan',
+            'nik_penandatangan',
+            'jabatan_penandatangan',
+            'nip_dosen',
+            'nip_kaprodi',
+            'nip_dekan',
+            'lampiran_keterangan',
+            'lampiran_judul',
+            'lampiran_judul_align',
+            'lampiran_judul_bold',
+            'lampiran_label_no',
+            'lampiran_label_nama',
+            'lampiran_label_nim',
+            'lampiran_label_prodi',
+            'lampiran_mode',
+            'lampiran_orientation',
+            'lampiran_mahasiswa',
+            'lampiran_columns',
+            'lampiran_rows',
+        ];
+
+        if (in_array($key, $technical, true)) {
+            return true;
+        }
+
+        return str_contains($key, 'tanda_tangan')
+            || str_contains($key, 'penanda_tangan')
+            || str_contains($key, 'penandatangan');
+    }
+
+    protected function decodeJsonPayload(mixed $value): mixed
+    {
+        if (! is_string($value) || $value === '') {
+            return $value;
+        }
+
+        $decoded = json_decode($value, true);
+
+        return json_last_error() === JSON_ERROR_NONE ? $decoded : $value;
+    }
+
+    protected function adminBasePath(): string
+    {
+        $role = strtolower((string) (auth()->user()?->getResolvedRoleSlug() ?? auth()->user()?->getGlobalRoleSlug() ?? 'admin'));
+
+        return in_array($role, ['kaprodi', 'dekan'], true) ? "/{$role}/admin" : '/admin';
     }
 
     public function previewTemplate(int $id): SymfonyResponse
@@ -254,11 +402,26 @@ class DashboardService
         $surat = Surat::query()
             ->with(['pemohon', 'jenisSurat.template.placeholders', 'dataEntries'])
             ->findOrFail($id);
+        abort_unless($surat->canViewFinalDocumentPreview(), 404, 'Pratinjau surat hanya tersedia setelah surat final.');
+        $jenisSurat = $surat->jenisSurat;
+        $jenisSuratName = $jenisSurat ? $jenisSurat->nama : 'Surat';
+        $template = $jenisSurat?->template;
+
+        if ($template === null && filled($surat->rendered_snapshot)) {
+            return response(
+                $this->templateRenderer->wrapDocumentHtml(
+                    'Preview '.$jenisSuratName,
+                    (string) $surat->rendered_snapshot,
+                    null,
+                ),
+                200,
+            )->header('Content-Type', 'text/html; charset=UTF-8');
+        }
 
         $rendered = $this->templateRenderer->renderForSurat($surat, true, 'pdf');
 
         return response(
-            $this->templateRenderer->wrapDocumentHtml('Preview '.$surat->jenisSurat?->nama, $rendered['html'], $surat->jenisSurat?->template),
+            $this->templateRenderer->wrapDocumentHtml('Preview '.$jenisSuratName, $rendered['html'], $template),
             200,
         )->header('Content-Type', 'text/html; charset=UTF-8');
     }
@@ -268,10 +431,14 @@ class DashboardService
         $surat = Surat::query()
             ->with(['pemohon', 'jenisSurat.template.placeholders', 'dataEntries'])
             ->findOrFail($id);
+        abort_unless($surat->canViewFinalDocumentPreview(), 404, 'Pratinjau surat hanya tersedia setelah surat final.');
+        $jenisSurat = $surat->jenisSurat;
+        $jenisSuratName = $jenisSurat ? $jenisSurat->nama : 'surat';
+        $template = $jenisSurat?->template;
 
         $filename = sprintf(
             '%s-%d.pdf',
-            str_replace(' ', '-', strtolower((string) ($surat->jenisSurat?->nama ?: 'surat'))),
+            str_replace(' ', '-', strtolower($jenisSuratName)),
             $surat->id,
         );
 
@@ -295,21 +462,66 @@ class DashboardService
 
         abort_if($surat->status === Surat::STATUS_FINISHED, 404, 'File PDF final tidak ditemukan.');
 
+        if (filled($surat->rendered_snapshot)) {
+            return response(
+                $this->templateRenderer->wrapDocumentHtml(
+                    ucfirst($jenisSuratName).' - '.($surat->nomor_surat ?? ''),
+                    (string) $surat->rendered_snapshot,
+                    $template,
+                ),
+                200,
+            )->header('Content-Type', 'text/html; charset=UTF-8');
+        }
+
         $rendered = $this->templateRenderer->renderForSurat($surat, true, 'pdf');
 
         return response(
             $this->templateRenderer->wrapDocumentHtml(
-                ($surat->jenisSurat?->nama ?? 'Surat').' - '.($surat->nomor_surat ?? ''),
+                ucfirst($jenisSuratName).' - '.($surat->nomor_surat ?? ''),
                 $rendered['html'],
-                $surat->jenisSurat?->template,
+                $template,
             ),
             200,
         )->header('Content-Type', 'text/html; charset=UTF-8');
     }
 
-    public function previewAttachment(int $id): StreamedResponse
+    public function previewAttachment(int $id): SymfonyResponse|StreamedResponse
     {
         return $this->approvalService->previewAttachment($id);
+    }
+
+    public function previewAttachmentDocument(int $id): SymfonyResponse|StreamedResponse
+    {
+        $surat = Surat::query()
+            ->with(['jenisSurat', 'dataEntries'])
+            ->findOrFail($id);
+        abort_unless($surat->canViewFinalDocumentPreview(), 404, 'Pratinjau lampiran hanya tersedia setelah surat final.');
+
+        $columns = $this->outgoingAttachmentService->extractAttachmentColumnsFromSurat($surat);
+        $rows = $this->outgoingAttachmentService->extractAttachmentRowsFromSurat($surat);
+        abort_if($this->outgoingAttachmentService->extractAttachmentMode($surat) !== 'student_list' || $columns === [] || $rows === [], 404, 'Lampiran daftar mahasiswa tidak tersedia.');
+
+        $path = $this->outgoingAttachmentService->ensureGeneratedPdf($surat);
+        $filename = $this->outgoingAttachmentService->attachmentFileName($surat);
+
+        if ($path !== null && FastStorage::exists($path)) {
+            return FastStorage::response(
+                $path,
+                $filename,
+                [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'inline; filename="'.addslashes($filename).'"',
+                    'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+                    'Pragma' => 'no-cache',
+                    'Expires' => '0',
+                ],
+            );
+        }
+
+        return response(
+            $this->outgoingAttachmentService->buildPreviewHtmlForSurat($surat, $columns, $rows),
+            200,
+        )->header('Content-Type', 'text/html; charset=UTF-8');
     }
 
     public function downloadPdf(Request $request, int $id): SymfonyResponse
@@ -326,7 +538,7 @@ class DashboardService
         );
         $headers = [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="'.addslashes($filename).'"',
+            'Content-Disposition' => 'attachment; filename="'.addslashes($filename).'"',
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
             'Pragma' => 'no-cache',
             'Expires' => '0',
@@ -346,5 +558,10 @@ class DashboardService
 
         abort_if($user === null, 403);
         abort(404, 'PDF final belum tersedia.');
+    }
+
+    public function downloadAttachmentPdf(Request $request, int $id): SymfonyResponse
+    {
+        return $this->downloadPdf($request, $id);
     }
 }

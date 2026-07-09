@@ -2,7 +2,9 @@
 
 namespace App\Models\Surat;
 
+use App\Models\JenisSurat;
 use App\Models\Magang\PendaftaranMagang;
+use App\Models\SuratLampiran;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;

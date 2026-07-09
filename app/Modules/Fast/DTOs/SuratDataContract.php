@@ -105,10 +105,31 @@ class SuratDataContract
     public static function inferFieldFormMode(string $source): string
     {
         return match ($source) {
+            'data_pemohon' => 'editable',
             'data_kampus' => 'readonly',
             'data_sistem' => 'hidden',
             default => 'editable',
         };
+    }
+
+    public static function isApplicantIdentityFieldName(string $name): bool
+    {
+        return in_array(Str::slug($name, '_'), [
+            'nama',
+            'name',
+            'nama_pemohon',
+            'nama_mahasiswa',
+            'nim',
+            'nim_nip',
+            'nomor_induk',
+            'nomor_induk_pemohon',
+            'nomor_induk_mahasiswa',
+            'program_studi',
+            'program_studi_pemohon',
+            'program_studi_mahasiswa',
+            'fakultas',
+            'prodi',
+        ], true);
     }
 
     /**
@@ -118,7 +139,13 @@ class SuratDataContract
     public static function normalizeDynamicFieldConfigItem(array $field): array
     {
         $name = trim((string) ($field['name'] ?? ''));
-        $label = trim((string) ($field['label'] ?? '')) ?: $name;
+        $label = trim((string) ($field['label'] ?? ''));
+
+        if ($name === '' && $label !== '') {
+            $name = Str::slug($label, '_');
+        }
+
+        $label = $label !== '' ? $label : $name;
         $type = strtolower(trim((string) ($field['type'] ?? 'text')));
 
         $source = strtolower(trim((string) ($field['sumber_data'] ?? $field['source_type'] ?? '')));
@@ -129,6 +156,11 @@ class SuratDataContract
         $mode = strtolower(trim((string) ($field['mode_form_pemohon'] ?? $field['applicant_mode'] ?? '')));
         if (! in_array($mode, ['editable', 'readonly', 'hidden'], true)) {
             $mode = static::inferFieldFormMode($source);
+        }
+        if ($source === 'data_pemohon') {
+            $mode = static::isApplicantIdentityFieldName($name)
+                ? 'readonly'
+                : ($mode === 'hidden' ? 'hidden' : 'editable');
         }
 
         $editableRole = strtolower(trim((string) ($field['editable_role'] ?? '')));
@@ -160,8 +192,9 @@ class SuratDataContract
     public static function normalizeDynamicFieldConfig(array $fieldConfig): array
     {
         return collect($fieldConfig)
-            ->filter(fn ($field): bool => is_array($field) && filled($field['name'] ?? null))
+            ->filter(fn ($field): bool => is_array($field))
             ->map(fn (array $field): array => static::normalizeDynamicFieldConfigItem($field))
+            ->filter(fn (array $field): bool => filled($field['name'] ?? null))
             ->values()
             ->all();
     }
@@ -196,15 +229,18 @@ class SuratDataContract
     public static function accountBoundFieldKeys(): array
     {
         return [
+            'nama',
             'nama_pemohon',
             'nama_mahasiswa',
             'nama_dosen',
             'nama_kaprodi',
             'nama_dekan',
+            'nim',
             'nim_mahasiswa',
             'nip_dosen',
             'nip_kaprodi',
             'nip_dekan',
+            'program_studi',
             'nomor_induk_mahasiswa',
             'nomor_induk_dosen',
             'nomor_induk_kaprodi',
@@ -213,6 +249,7 @@ class SuratDataContract
             'program_studi_dosen',
             'program_studi_kaprodi',
             'program_studi_dekan',
+            'fakultas',
             'email_pemohon',
             'nim_pemohon',
             'nomor_induk_pemohon',
@@ -251,6 +288,62 @@ class SuratDataContract
     }
 
     /**
+     * @param  array<int, mixed>  $fieldConfig
+     * @param  array<int, mixed>  $templatePlaceholders
+     */
+    public static function requiresSubjectUser(array $fieldConfig = [], array $templatePlaceholders = []): bool
+    {
+        $accountBoundKeys = collect([
+            ...static::accountBoundFieldKeys(),
+            'nama',
+            'nama_pemohon',
+            'nama_mahasiswa',
+            'nama_dosen',
+            'nim',
+            'nim_pemohon',
+            'nomor_induk_pemohon',
+            'program_studi',
+            'program_studi_pemohon',
+            'fakultas',
+            'email_pemohon',
+            'telepon_pemohon',
+        ])->map(fn (string $key): string => strtolower(trim($key)))
+            ->unique()
+            ->values();
+
+        $normalizedFieldConfig = static::normalizeDynamicFieldConfig($fieldConfig);
+
+        $fieldConfigUsesSubjectIdentity = collect($normalizedFieldConfig)->contains(function (array $field) use ($accountBoundKeys): bool {
+            $fieldName = strtolower(trim((string) ($field['name'] ?? '')));
+
+            return $fieldName !== '' && $accountBoundKeys->contains($fieldName);
+        });
+
+        if ($fieldConfigUsesSubjectIdentity) {
+            return true;
+        }
+
+        return collect($templatePlaceholders)->contains(function ($placeholder) use ($accountBoundKeys): bool {
+            if (! is_array($placeholder)) {
+                return false;
+            }
+
+            $sourceType = strtolower(trim((string) ($placeholder['source_type'] ?? '')));
+            $sourceKey = strtolower(trim((string) ($placeholder['source_key'] ?? $placeholder['placeholder_key'] ?? '')));
+
+            if ($sourceType === 'user') {
+                return true;
+            }
+
+            if (! in_array($sourceType, ['computed', 'surat_data'], true)) {
+                return false;
+            }
+
+            return $sourceKey !== '' && $accountBoundKeys->contains($sourceKey);
+        });
+    }
+
+    /**
      * @return array<string, string>
      */
     public static function adminManualFieldDefaults(): array
@@ -258,6 +351,15 @@ class SuratDataContract
         return [
             'perihal' => '',
             'lampiran_keterangan' => '',
+            'lampiran_judul' => '',
+            'lampiran_orientation' => 'portrait',
+            'lampiran_judul_align' => 'center',
+            'lampiran_judul_bold' => '1',
+            'lampiran_label_no' => 'No',
+            'lampiran_label_nama' => 'Nama Mahasiswa',
+            'lampiran_label_nim' => 'NIM',
+            'lampiran_label_prodi' => 'Program Studi',
+            'lampiran_mode' => 'none',
         ];
     }
 
@@ -266,7 +368,7 @@ class SuratDataContract
      */
     public static function adminManualArrayFields(): array
     {
-        return ['kepada_yth'];
+        return ['kepada_yth', 'lampiran_mahasiswa', 'lampiran_columns', 'lampiran_rows'];
     }
 
     /**
@@ -296,8 +398,20 @@ class SuratDataContract
         return [
             'perihal' => ['nullable', 'string', 'max:255'],
             'lampiran_keterangan' => ['nullable', 'string', 'max:255'],
+            'lampiran_judul' => ['nullable', 'string', 'max:1000'],
+            'lampiran_orientation' => ['nullable', 'string', 'in:portrait,landscape'],
+            'lampiran_judul_align' => ['nullable', 'string', 'in:left,center,right'],
+            'lampiran_judul_bold' => ['nullable', 'boolean'],
+            'lampiran_label_no' => ['nullable', 'string', 'max:255'],
+            'lampiran_label_nama' => ['nullable', 'string', 'max:255'],
+            'lampiran_label_nim' => ['nullable', 'string', 'max:255'],
+            'lampiran_label_prodi' => ['nullable', 'string', 'max:255'],
+            'lampiran_mode' => ['nullable', 'string', 'in:none,student_list'],
             'kepada_yth' => ['nullable', 'array'],
             'kepada_yth.*' => ['string', 'max:255'],
+            'lampiran_mahasiswa' => ['nullable', 'array'],
+            'lampiran_columns' => ['nullable', 'array'],
+            'lampiran_rows' => ['nullable', 'array'],
         ];
     }
 
@@ -362,7 +476,9 @@ class SuratDataContract
     public static function filterDynamicFieldConfig(array $fieldConfig): array
     {
         return collect($fieldConfig)
-            ->filter(fn ($field): bool => is_array($field) && filled($field['name'] ?? null))
+            ->filter(fn ($field): bool => is_array($field))
+            ->map(fn (array $field): array => static::normalizeDynamicFieldConfigItem($field))
+            ->filter(fn (array $field): bool => filled($field['name'] ?? null))
             ->reject(fn (array $field): bool => static::isReservedManualFieldConfig($field))
             ->values()
             ->all();
@@ -379,10 +495,6 @@ class SuratDataContract
 
         foreach (static::normalizeDynamicFieldConfig($fieldConfig) as $field) {
             if ((string) ($field['sumber_data'] ?? 'data_pemohon') !== 'data_kampus') {
-                continue;
-            }
-
-            if (! (bool) ($field['required'] ?? false)) {
                 continue;
             }
 
@@ -466,12 +578,15 @@ class SuratDataContract
             'tanggal_kebutuhan' => ['label' => 'Tanggal Kebutuhan', 'source_type' => 'surat', 'source_key' => 'tanggal_kebutuhan', 'is_required' => false, 'default_value' => null, 'description' => 'Tanggal kebutuhan surat.'],
             'tanggal_selesai' => ['label' => 'Tanggal Selesai', 'source_type' => 'surat', 'source_key' => 'tanggal_selesai', 'is_required' => false, 'default_value' => null, 'description' => 'Tanggal selesai surat.'],
             'nama_pemohon' => ['label' => 'Nama Pemohon', 'source_type' => 'user', 'source_key' => 'name', 'is_required' => false, 'default_value' => null, 'description' => 'Nama pemohon dari akun pengguna.'],
+            'nama' => ['label' => 'Nama', 'source_type' => 'user', 'source_key' => 'name', 'is_required' => false, 'default_value' => null, 'description' => 'Nama dari akun pengguna.'],
             'email_pemohon' => ['label' => 'Email Pemohon', 'source_type' => 'computed', 'source_key' => 'email_pemohon', 'is_required' => false, 'default_value' => null, 'description' => 'Email pemohon dari akun pengguna.'],
+            'nim' => ['label' => 'NIM', 'source_type' => 'computed', 'source_key' => 'nim', 'is_required' => false, 'default_value' => null, 'description' => 'NIM pemohon dari akun pengguna.'],
             'nim_pemohon' => ['label' => 'NIM Pemohon', 'source_type' => 'computed', 'source_key' => 'nim_pemohon', 'is_required' => false, 'default_value' => null, 'description' => 'Nomor induk pemohon dari akun pengguna.'],
             'nomor_induk_pemohon' => ['label' => 'Nomor Induk Pemohon', 'source_type' => 'computed', 'source_key' => 'nomor_induk_pemohon', 'is_required' => false, 'default_value' => null, 'description' => 'Nomor induk pemohon dari akun pengguna.'],
+            'program_studi' => ['label' => 'Program Studi', 'source_type' => 'computed', 'source_key' => 'program_studi', 'is_required' => false, 'default_value' => null, 'description' => 'Program studi pemohon dari akun pengguna.'],
             'program_studi_pemohon' => ['label' => 'Program Studi Pemohon', 'source_type' => 'computed', 'source_key' => 'program_studi_pemohon', 'is_required' => false, 'default_value' => null, 'description' => 'Program studi pemohon dari akun pengguna.'],
+            'fakultas' => ['label' => 'Fakultas', 'source_type' => 'computed', 'source_key' => 'fakultas', 'is_required' => false, 'default_value' => null, 'description' => 'Fakultas pemohon dari akun pengguna.'],
             'telepon_pemohon' => ['label' => 'Telepon Pemohon', 'source_type' => 'computed', 'source_key' => 'telepon_pemohon', 'is_required' => false, 'default_value' => null, 'description' => 'Nomor telepon pemohon dari akun pengguna.'],
-            'nama' => ['label' => 'Nama', 'source_type' => 'user', 'source_key' => 'name', 'is_required' => false, 'default_value' => null, 'description' => 'Nama dari akun pengguna.'],
             'email' => ['label' => 'Email', 'source_type' => 'user', 'source_key' => 'email', 'is_required' => false, 'default_value' => null, 'description' => 'Email pengguna.'],
             'nama_mahasiswa' => ['label' => 'Nama Mahasiswa', 'source_type' => 'user', 'source_key' => 'name', 'is_required' => false, 'default_value' => null, 'description' => 'Nama pemohon yang berperan sebagai mahasiswa.'],
             'nim_mahasiswa' => ['label' => 'NIM Mahasiswa', 'source_type' => 'computed', 'source_key' => 'nim_mahasiswa', 'is_required' => false, 'default_value' => null, 'description' => 'NIM mahasiswa dari akun pemohon.'],
@@ -509,6 +624,18 @@ class SuratDataContract
             'judul_tugas_akhir_kalimat' => ['label' => 'Kalimat Judul Tugas Akhir', 'source_type' => 'computed', 'source_key' => 'judul_tugas_akhir_kalimat', 'is_required' => false, 'default_value' => null, 'description' => 'Kalimat judul tugas akhir jika tersedia.'],
             'ruang_sidang_info' => ['label' => 'Informasi Ruang Sidang', 'source_type' => 'computed', 'source_key' => 'ruang_sidang_info', 'is_required' => false, 'default_value' => null, 'description' => 'Potongan teks ruang sidang jika tersedia.'],
             'lampiran_keterangan' => ['label' => 'Keterangan Lampiran', 'source_type' => 'surat_data', 'source_key' => 'lampiran_keterangan', 'is_required' => false, 'default_value' => null, 'description' => 'Keterangan lampiran surat.'],
+            'lampiran_judul' => ['label' => 'Judul Lampiran', 'source_type' => 'surat_data', 'source_key' => 'lampiran_judul', 'is_required' => false, 'default_value' => null, 'description' => 'Judul konten utama lampiran surat.'],
+            'lampiran_orientation' => ['label' => 'Orientasi Lampiran', 'source_type' => 'surat_data', 'source_key' => 'lampiran_orientation', 'is_required' => false, 'default_value' => 'portrait', 'description' => 'Orientasi halaman lampiran PDF.'],
+            'lampiran_judul_align' => ['label' => 'Posisi Judul Lampiran', 'source_type' => 'surat_data', 'source_key' => 'lampiran_judul_align', 'is_required' => false, 'default_value' => 'center', 'description' => 'Posisi teks judul lampiran.'],
+            'lampiran_judul_bold' => ['label' => 'Judul Lampiran Tebal', 'source_type' => 'surat_data', 'source_key' => 'lampiran_judul_bold', 'is_required' => false, 'default_value' => '1', 'description' => 'Pengaturan tebal untuk judul lampiran.'],
+            'lampiran_label_no' => ['label' => 'Label Kolom No', 'source_type' => 'surat_data', 'source_key' => 'lampiran_label_no', 'is_required' => false, 'default_value' => 'No', 'description' => 'Label header kolom nomor lampiran.'],
+            'lampiran_label_nama' => ['label' => 'Label Kolom Nama', 'source_type' => 'surat_data', 'source_key' => 'lampiran_label_nama', 'is_required' => false, 'default_value' => 'Nama Mahasiswa', 'description' => 'Label header kolom nama lampiran.'],
+            'lampiran_label_nim' => ['label' => 'Label Kolom NIM', 'source_type' => 'surat_data', 'source_key' => 'lampiran_label_nim', 'is_required' => false, 'default_value' => 'NIM', 'description' => 'Label header kolom NIM lampiran.'],
+            'lampiran_label_prodi' => ['label' => 'Label Kolom Program Studi', 'source_type' => 'surat_data', 'source_key' => 'lampiran_label_prodi', 'is_required' => false, 'default_value' => 'Program Studi', 'description' => 'Label header kolom program studi lampiran.'],
+            'lampiran_mode' => ['label' => 'Mode Lampiran', 'source_type' => 'surat_data', 'source_key' => 'lampiran_mode', 'is_required' => false, 'default_value' => 'none', 'description' => 'Mode lampiran surat keluar admin.'],
+            'lampiran_mahasiswa' => ['label' => 'Daftar Mahasiswa Lampiran', 'source_type' => 'surat_data', 'source_key' => 'lampiran_mahasiswa', 'is_required' => false, 'default_value' => null, 'description' => 'Daftar mahasiswa yang dijadikan lampiran surat.'],
+            'lampiran_columns' => ['label' => 'Kolom Tabel Lampiran', 'source_type' => 'surat_data', 'source_key' => 'lampiran_columns', 'is_required' => false, 'default_value' => null, 'description' => 'Definisi kolom tabel lampiran dinamis.'],
+            'lampiran_rows' => ['label' => 'Baris Tabel Lampiran', 'source_type' => 'surat_data', 'source_key' => 'lampiran_rows', 'is_required' => false, 'default_value' => null, 'description' => 'Isi tabel lampiran dinamis.'],
             'perihal' => ['label' => 'Perihal', 'source_type' => 'surat_data', 'source_key' => 'perihal', 'is_required' => false, 'default_value' => null, 'description' => 'Perihal surat.'],
             'kepada_yth' => ['label' => 'Kepada Yth', 'source_type' => 'surat_data', 'source_key' => 'kepada_yth', 'is_required' => false, 'default_value' => null, 'description' => 'Daftar penerima surat.'],
         ];

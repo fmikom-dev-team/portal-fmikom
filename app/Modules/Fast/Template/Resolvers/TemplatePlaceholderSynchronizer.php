@@ -18,6 +18,10 @@ class TemplatePlaceholderSynchronizer
             (string) ($template->template_footer ?? ''),
         );
 
+        if ($templateKeys === [] && $fieldConfig === []) {
+            return;
+        }
+
         $fieldKeys = collect($fieldConfig)
             ->filter(fn ($field): bool => is_array($field) && filled($field['name'] ?? null))
             ->map(fn (array $field): string => trim((string) $field['name']))
@@ -39,10 +43,28 @@ class TemplatePlaceholderSynchronizer
             ->all();
 
         foreach ($keys as $key) {
-            $template->placeholders()->updateOrCreate(
+            $payload = static::buildPlaceholderPayload($key, $fieldMap[$key] ?? null, $existing->get($key));
+            $placeholder = $template->placeholders()
+                ->withTrashed()
+                ->where('placeholder_key', $key)
+                ->first();
+
+            if ($placeholder) {
+                $placeholder->fill($payload);
+
+                if ($placeholder->trashed()) {
+                    $placeholder->restore();
+                }
+
+                $placeholder->save();
+
+                continue;
+            }
+
+            $template->placeholders()->create(array_merge(
                 ['placeholder_key' => $key],
-                static::buildPlaceholderPayload($key, $fieldMap[$key] ?? null, $existing->get($key)),
-            );
+                $payload,
+            ));
         }
 
         if ($keys !== []) {

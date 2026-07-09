@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // File: resources/js/pages/Modules/Fast/Admin/history/Index.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import {
@@ -15,6 +16,8 @@ import {
     FileCheck,
     ChevronDown,
 } from 'lucide-vue-next';
+
+const { can } = useFastPermissions();
 type SuratItem = {
     id: number;
     type: string;
@@ -23,6 +26,9 @@ type SuratItem = {
     keperluan: string;
     tanggal_pengajuan?: string | null;
     tanggal_selesai?: string | null;
+    letter_mode?: string | null;
+    letter_mode_label?: string | null;
+    is_institution?: boolean;
     subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { nama?: string | null } | null;
 };
@@ -48,9 +54,10 @@ const isFilterActive = computed(
 const revisionNotifCount = computed(() => props.notif_count_revision_admin ?? 0);
 
 const statusFilters = computed(() => [
-    { key: 'pending', label: 'Pending', color: 'amber' as const },
-    { key: 'revisi', label: 'Revisi', color: 'red' as const },
-    { key: '', label: 'Semua', color: 'blue' as const },
+    { key: 'pending', label: 'Pending' },
+    { key: 'revisi', label: 'Revisi' },
+    { key: 'rejected_approver', label: 'Ditolak Final' },
+    { key: '', label: 'Semua Status' },
 ]);
 
 function applyFilter() {
@@ -82,25 +89,21 @@ function formatDate(d?: string | null) {
 function statusLabel(s: string) {
     const map: Record<string, string> = {
         pending: 'Pending',
-        validated_admin: 'Diteruskan ke Approver',
+        validated_admin: 'Diteruskan untuk disetujui',
         approved_kaprodi: 'Disetujui Kaprodi',
         approved_dekan: 'Disetujui Dekan',
         revision_requested: 'Revisi',
         finished: 'Selesai',
-        rejected: 'Revisi',
-        rejected_admin: 'Ditolak',
-        rejected_approver: 'Ditolak',
+        rejected: 'Ditolak',
+        rejected_approver: 'Ditolak Final',
     };
     return map[s] ?? s;
 }
 function statusIcon(s: string) {
     if (s === 'finished') return FileCheck;
-    if (
-        s === 'revision_requested' ||
-        s === 'rejected' ||
-        s.startsWith('rejected_')
-    )
+    if (s === 'rejected' || s.startsWith('rejected_'))
         return XCircle;
+    if (s === 'revision_requested') return Clock3;
     if (s.startsWith('approved')) return CheckCircle2;
     if (s === 'validated_admin') return FileCheck;
     return Clock3;
@@ -113,11 +116,14 @@ function statusColor(s: string) {
             text: 'text-emerald-600',
             line: 'bg-emerald-300',
         };
-    if (
-        s === 'revision_requested' ||
-        s === 'rejected' ||
-        s.startsWith('rejected_')
-    )
+    if (s === 'revision_requested')
+        return {
+            bg: 'bg-amber-50',
+            border: 'border-amber-200',
+            text: 'text-amber-600',
+            line: 'bg-amber-300',
+        };
+    if (s === 'rejected' || s.startsWith('rejected_'))
         return {
             bg: 'bg-red-50',
             border: 'border-red-200',
@@ -133,10 +139,10 @@ function statusColor(s: string) {
         };
     if (s === 'validated_admin')
         return {
-            bg: 'bg-slate-100',
-            border: 'border-slate-200',
-            text: 'text-slate-600',
-            line: 'bg-slate-300',
+            bg: 'bg-amber-50',
+            border: 'border-amber-200',
+            text: 'text-amber-600',
+            line: 'bg-amber-300',
         };
     return {
         bg: 'bg-amber-50',
@@ -147,15 +153,15 @@ function statusColor(s: string) {
 }
 function statusClass(s: string) {
     if (s === 'finished') return 'bg-emerald-50 text-emerald-700';
-    if (
-        s === 'revision_requested' ||
-        s === 'rejected' ||
-        s.startsWith('rejected_')
-    )
+    if (s === 'revision_requested') return 'bg-amber-50 text-amber-700';
+    if (s === 'rejected' || s.startsWith('rejected_'))
         return 'bg-red-50 text-red-700';
     if (s.startsWith('approved')) return 'bg-emerald-50 text-emerald-700';
-    if (s === 'validated_admin') return 'bg-slate-100 text-slate-700';
+    if (s === 'validated_admin') return 'bg-amber-50 text-amber-700';
     return 'bg-amber-50 text-amber-700';
+}
+function isInstitutionLetter(item: SuratItem) {
+    return !!item.is_institution || item.letter_mode === 'institution';
 }
 </script>
 <template>
@@ -222,7 +228,7 @@ function statusClass(s: string) {
                 </div>
                 <button
                     type="button"
-                    class="fast-btn fast-btn-soft h-11 w-full px-5 text-sm font-medium text-blue-700 sm:w-auto"
+                    class="h-11 w-full rounded-2xl border border-blue-200 bg-blue-50 px-5 text-sm font-medium text-blue-700 transition-colors hover:border-blue-300 hover:bg-blue-100 hover:text-blue-800 sm:w-auto"
                     @click="resetFilter"
                 >
                     Reset Filter
@@ -241,11 +247,7 @@ function statusClass(s: string) {
                     class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
                     :class="
                         status === filter.key
-                            ? filter.color === 'red'
-                                ? 'border-red-500 bg-red-500 text-white shadow-sm'
-                                : filter.color === 'amber'
-                                  ? 'border-amber-500 bg-amber-500 text-white shadow-sm'
-                                  : 'border-blue-500 bg-blue-500 text-white shadow-sm'
+                            ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
                             : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
                     "
                     @click="
@@ -291,12 +293,14 @@ function statusClass(s: string) {
                     :class="[
                         item.status === 'finished'
                             ? 'hover:border-blue-300'
-                            : item.status === 'rejected' ||
-                                item.status.startsWith('rejected_')
-                              ? 'hover:border-red-300'
-                              : item.status.startsWith('approved')
-                                ? 'hover:border-sky-300'
-                                : 'hover:border-amber-300',
+                            : item.status === 'revision_requested'
+                              ? 'hover:border-amber-300'
+                              : item.status === 'rejected' ||
+                                  item.status.startsWith('rejected_')
+                                ? 'hover:border-red-300'
+                                : item.status.startsWith('approved')
+                                  ? 'hover:border-sky-300'
+                                  : 'hover:border-amber-300',
                         'border-slate-200',
                     ]"
                 >
@@ -305,7 +309,11 @@ function statusClass(s: string) {
                         <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center gap-2">
                                 <p class="text-sm font-bold text-slate-900">
-                                    {{ item.jenisSurat?.nama ?? '-' }}
+                                    {{
+                                        isInstitutionLetter(item)
+                                            ? 'Surat Institusi'
+                                            : (item.jenisSurat?.nama ?? '-')
+                                    }}
                                 </p>
                                 <span
                                     class="rounded-full px-2 py-0.5 text-[10px] font-semibold"
@@ -321,6 +329,12 @@ function statusClass(s: string) {
                                 {{ item.nomor_surat }}
                             </p>
                             <p
+                                v-if="isInstitutionLetter(item)"
+                                class="mt-1 text-xs text-slate-500"
+                            >
+                                {{ item.jenisSurat?.nama ?? '-' }}
+                            </p>
+                            <p
                                 class="mt-2 text-xs leading-relaxed text-slate-600"
                             >
                                 {{ item.keperluan }}
@@ -333,7 +347,7 @@ function statusClass(s: string) {
                                     {{ formatDate(item.tanggal_pengajuan) }}
                                 </span>
                                 <span
-                                    v-if="item.subject?.name"
+                                    v-if="item.subject?.name && !isInstitutionLetter(item)"
                                     class="flex items-center gap-1"
                                 >
                                     <FileText class="size-3" />
@@ -344,21 +358,29 @@ function statusClass(s: string) {
                         <!-- Actions -->
                         <div class="flex shrink-0 items-start gap-2">
                             <Link
+                                v-if="can('fast.admin.history.view')"
                                 :href="`/admin/surat/${item.id}`"
                                 class="fast-btn fast-btn-outline flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-medium text-slate-600"
-                                title="Lihat detail"
+                                title="Lihat"
                             >
-                                <Eye class="size-3" /> Detail
+                                <Eye class="size-3" /> Lihat
                             </Link>
                             <a
-                                v-if="item.status === 'finished'"
+                                v-if="item.status === 'finished' && can('fast.document.download')"
                                 :href="`/admin/surat/${item.id}/pdf`"
-                                target="_blank"
+                                download
                                 class="fast-btn fast-btn-primary flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-medium"
                                 title="Unduh PDF"
                             >
                                 <Download class="size-3" /> PDF
                             </a>
+                            <div
+                                v-else-if="can('fast.document.download')"
+                                class="fast-btn fast-btn-soft flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-medium text-slate-400"
+                                title="PDF belum tersedia"
+                            >
+                                <Download class="size-3" /> PDF Belum Tersedia
+                            </div>
                         </div>
                     </div>
                 </div>

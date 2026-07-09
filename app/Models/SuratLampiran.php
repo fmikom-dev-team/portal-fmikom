@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\URL;
 
 class SuratLampiran extends Model
 {
@@ -17,7 +18,11 @@ class SuratLampiran extends Model
     public function getUrlAttribute(): string
     {
         if ($this->exists && $this->getKey()) {
-            return route('documents.lampiran.preview', $this->getKey(), absolute: false);
+            return URL::temporarySignedRoute(
+                'documents.public.lampiran.preview',
+                now()->addMinutes(15),
+                ['id' => $this->getKey()],
+            );
         }
 
         return '';
