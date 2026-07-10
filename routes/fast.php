@@ -42,6 +42,12 @@ $documentRoutes = function (): void {
     Route::get('/surat/{id}/pdf', [DashboardController::class, 'downloadPdf'])
         ->whereNumber('id')
         ->name('surat.pdf');
+    Route::get('/surat/{id}/attachment-document', [DashboardController::class, 'previewAttachmentDocument'])
+        ->whereNumber('id')
+        ->name('surat.attachment-document');
+    Route::get('/surat/{id}/attachment-pdf', [DashboardController::class, 'downloadAttachmentPdf'])
+        ->whereNumber('id')
+        ->name('surat.attachment-pdf');
     Route::get('/lampiran/{id}/preview', [DashboardController::class, 'previewAttachment'])
         ->whereNumber('id')
         ->name('lampiran.preview');
@@ -57,6 +63,15 @@ $publicDocumentRoutes = function (): void {
     Route::get('/surat/{id}/pdf', [DashboardController::class, 'downloadPdf'])
         ->whereNumber('id')
         ->name('surat.pdf');
+    Route::get('/surat/{id}/attachment-document', [DashboardController::class, 'previewAttachmentDocument'])
+        ->whereNumber('id')
+        ->name('surat.attachment-document');
+    Route::get('/surat/{id}/attachment-pdf', [DashboardController::class, 'downloadAttachmentPdf'])
+        ->whereNumber('id')
+        ->name('surat.attachment-pdf');
+    Route::get('/lampiran/{id}/preview', [DashboardController::class, 'previewAttachment'])
+        ->whereNumber('id')
+        ->name('lampiran.preview');
 };
 
 Route::middleware(['signed'])
@@ -74,6 +89,15 @@ $publicDocumentRoutes = function (): void {
     Route::get('/surat/{id}/pdf', [DashboardController::class, 'downloadPdf'])
         ->whereNumber('id')
         ->name('surat.pdf');
+    Route::get('/surat/{id}/attachment-document', [DashboardController::class, 'previewAttachmentDocument'])
+        ->whereNumber('id')
+        ->name('surat.attachment-document');
+    Route::get('/surat/{id}/attachment-pdf', [DashboardController::class, 'downloadAttachmentPdf'])
+        ->whereNumber('id')
+        ->name('surat.attachment-pdf');
+    Route::get('/lampiran/{id}/preview', [DashboardController::class, 'previewAttachment'])
+        ->whereNumber('id')
+        ->name('lampiran.preview');
 };
 
 Route::middleware(['signed'])
@@ -103,6 +127,87 @@ Route::middleware(['auth', 'verified'])
     ->prefix('admin')
     ->name('admin.')
     ->group($documentRoutes);
+
+$adminRoutes = function (): void {
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
+    Route::get('/archive', [ArchiveController::class, 'index'])
+        ->name('archive.index');
+    Route::get('/surat/{id}', [DashboardController::class, 'show'])
+        ->whereNumber('id')
+        ->name('surat.show');
+
+    Route::get('/surat/create', [LetterController::class, 'create'])
+        ->name('surat.create');
+    Route::post('/surat/select-type', [LetterController::class, 'selectType'])
+        ->name('surat.select-type');
+    Route::get('/surat/form/{jenisSurat}', [LetterController::class, 'form'])
+        ->name('surat.form');
+    Route::get('/surat/subjects/search', [LetterController::class, 'searchSubjects'])
+        ->name('surat.subjects.search');
+    Route::get('/surat/preview/html', [LetterController::class, 'previewHtml'])
+        ->name('surat.preview-html');
+    Route::get('/surat/preview', [LetterController::class, 'previewPage'])
+        ->name('surat.preview-page');
+    Route::post('/surat/preview', [LetterController::class, 'preview'])
+        ->name('surat.preview');
+    Route::post('/surat/store', [LetterController::class, 'store'])
+        ->name('surat.store');
+
+    Route::get('/surat', [LetterIndexController::class, 'index'])
+        ->name('surat.index');
+    Route::get('/surat/{id}/edit', [LetterController::class, 'edit'])
+        ->whereNumber('id')
+        ->name('surat.edit');
+    Route::patch('/surat/{id}', [LetterController::class, 'update'])
+        ->whereNumber('id')
+        ->name('surat.update');
+    Route::post('/surat/bulk-approve', [DashboardController::class, 'bulkApprove'])
+        ->name('surat.bulk-approve');
+    Route::post('/surat/{id}/approve', [DashboardController::class, 'approve'])
+        ->whereNumber('id')
+        ->name('surat.approve');
+    Route::get('/surat/{id}/reject', [DashboardController::class, 'rejectRedirect'])
+        ->whereNumber('id');
+    Route::post('/surat/{id}/reject', [DashboardController::class, 'reject'])
+        ->whereNumber('id')
+        ->name('surat.reject');
+
+    Route::get('/history', [HistoryController::class, 'index'])
+        ->name('history');
+
+    Route::get('/templates', [TemplateController::class, 'index'])
+        ->name('templates.index');
+    Route::post('/templates', [TemplateController::class, 'store'])
+        ->name('templates.store');
+    Route::get('/templates/{jenisSurat}/preview', [TemplateController::class, 'preview'])
+        ->name('templates.preview');
+    Route::post('/templates/{jenisSurat}/duplicate', [TemplateController::class, 'duplicate'])
+        ->name('templates.duplicate');
+    Route::patch('/templates/{jenisSurat}/toggle-active', [TemplateController::class, 'toggleActive'])
+        ->name('templates.toggle-active');
+    Route::put('/templates/{jenisSurat}', [TemplateController::class, 'update'])
+        ->name('templates.update');
+    Route::delete('/templates/{jenisSurat}', [TemplateController::class, 'destroy'])
+        ->name('templates.destroy');
+
+    Route::get('/categories', [CategoryController::class, 'index'])
+        ->name('categories.index');
+    Route::post('/categories', [CategoryController::class, 'store'])
+        ->name('categories.store');
+    Route::put('/categories/{category}', [CategoryController::class, 'update'])
+        ->name('categories.update');
+    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])
+        ->name('categories.destroy');
+
+    Route::get('/qr', [QrManageController::class, 'index'])
+        ->name('qr.index');
+
+    Route::post('/settings/template', [GlobalSettingsController::class, 'save'])
+        ->name('settings.template');
+    Route::get('/settings/template/logo-preview', [GlobalSettingsController::class, 'previewLogo'])
+        ->name('settings.template.logo-preview');
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -200,87 +305,17 @@ Route::middleware(['auth', 'verified', 'module.context:fast'])->group(function (
 Route::middleware(['auth', 'verified', 'admin.access'])
     ->prefix('admin')
     ->name('admin.')
-    ->group(function (): void {
-        Route::get('/dashboard', [DashboardController::class, 'index'])
-            ->name('dashboard');
-        Route::get('/archive', [ArchiveController::class, 'index'])
-            ->name('archive.index');
-        Route::get('/surat/{id}', [DashboardController::class, 'show'])
-            ->whereNumber('id')
-            ->name('surat.show');
+    ->group($adminRoutes);
 
-        Route::get('/surat/create', [LetterController::class, 'create'])
-            ->name('surat.create');
-        Route::post('/surat/select-type', [LetterController::class, 'selectType'])
-            ->name('surat.select-type');
-        Route::get('/surat/form/{jenisSurat}', [LetterController::class, 'form'])
-            ->name('surat.form');
-        Route::get('/surat/subjects/search', [LetterController::class, 'searchSubjects'])
-            ->name('surat.subjects.search');
-        Route::get('/surat/preview/html', [LetterController::class, 'previewHtml'])
-            ->name('surat.preview-html');
-        Route::get('/surat/preview', [LetterController::class, 'previewPage'])
-            ->name('surat.preview-page');
-        Route::post('/surat/preview', [LetterController::class, 'preview'])
-            ->name('surat.preview');
-        Route::post('/surat/store', [LetterController::class, 'store'])
-            ->name('surat.store');
+Route::middleware(['auth', 'verified', 'admin.access'])
+    ->prefix('kaprodi/admin')
+    ->name('kaprodi.admin.')
+    ->group($adminRoutes);
 
-        Route::get('/surat', [LetterIndexController::class, 'index'])
-            ->name('surat.index');
-        Route::get('/surat/{id}/edit', [LetterController::class, 'edit'])
-            ->whereNumber('id')
-            ->name('surat.edit');
-        Route::patch('/surat/{id}', [LetterController::class, 'update'])
-            ->whereNumber('id')
-            ->name('surat.update');
-        Route::post('/surat/{id}/approve', [DashboardController::class, 'approve'])
-            ->whereNumber('id')
-            ->name('surat.approve');
-        Route::get('/surat/{id}/reject', [DashboardController::class, 'rejectRedirect'])
-            ->whereNumber('id');
-        Route::post('/surat/{id}/reject', [DashboardController::class, 'reject'])
-            ->whereNumber('id')
-            ->name('surat.reject');
-
-        Route::get('/history', [HistoryController::class, 'index'])
-            ->name('history');
-
-        Route::get('/templates', [TemplateController::class, 'index'])
-            ->name('templates.index');
-        Route::post('/templates', [TemplateController::class, 'store'])
-            ->name('templates.store');
-        Route::get('/templates/{jenisSurat}/preview', [TemplateController::class, 'preview'])
-            ->name('templates.preview');
-        Route::post('/templates/{jenisSurat}/duplicate', [TemplateController::class, 'duplicate'])
-            ->name('templates.duplicate');
-        Route::patch('/templates/{jenisSurat}/toggle-active', [TemplateController::class, 'toggleActive'])
-            ->name('templates.toggle-active');
-        Route::put('/templates/{jenisSurat}', [TemplateController::class, 'update'])
-            ->name('templates.update');
-        Route::delete('/templates/{jenisSurat}', [TemplateController::class, 'destroy'])
-            ->name('templates.destroy');
-
-        Route::get('/categories', [CategoryController::class, 'index'])
-            ->name('categories.index');
-        Route::post('/categories', [CategoryController::class, 'store'])
-            ->name('categories.store');
-        Route::put('/categories/{category}', [CategoryController::class, 'update'])
-            ->name('categories.update');
-        Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])
-            ->name('categories.destroy');
-
-        Route::get('/qr', [QrManageController::class, 'index'])
-            ->name('qr.index');
-        Route::post('/qr/{id}/revoke', [QrManageController::class, 'revoke'])
-            ->whereNumber('id')
-            ->name('qr.revoke');
-
-        Route::post('/settings/template', [GlobalSettingsController::class, 'save'])
-            ->name('settings.template');
-        Route::get('/settings/template/logo-preview', [GlobalSettingsController::class, 'previewLogo'])
-            ->name('settings.template.logo-preview');
-    });
+Route::middleware(['auth', 'verified', 'admin.access'])
+    ->prefix('dekan/admin')
+    ->name('dekan.admin.')
+    ->group($adminRoutes);
 
 // Approval routes kept for backward compatibility.
 
@@ -303,6 +338,8 @@ $approvalRoutes = function (string $controller): void {
     Route::post('/surat/{id}/approve', [$controller, 'approve'])
         ->whereNumber('id')
         ->name('surat.approve');
+    Route::post('/surat/bulk-approve', [$controller, 'bulkApprove'])
+        ->name('surat.bulk-approve');
     Route::post('/surat/{id}/reject', [$controller, 'reject'])
         ->whereNumber('id')
         ->name('surat.reject');

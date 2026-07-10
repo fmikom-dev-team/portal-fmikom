@@ -11,6 +11,7 @@ use App\Models\Surat;
 use App\Modules\Fast\Workflow\Actions\SuratWorkflowService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 
 class SuratController extends Controller
 {
@@ -158,8 +159,15 @@ class SuratController extends Controller
             'tanggal_pengajuan' => optional($surat->tanggal_pengajuan)?->toISOString(),
             'tanggal_kebutuhan' => optional($surat->tanggal_kebutuhan)?->toDateString(),
             'tanggal_selesai' => optional($surat->tanggal_selesai)?->toISOString(),
-            'generated_file_path' => $surat->generated_file_path,
             'generated_file_type' => $surat->generated_file_type,
+            'has_generated_document' => filled($surat->generated_file_path),
+            'generated_document_url' => filled($surat->nomor_surat) || filled($surat->rendered_snapshot)
+                ? (
+                    $surat->status === Surat::STATUS_FINISHED
+                        ? route('documents.surat.pdf', $surat->id, absolute: false)
+                        : route('documents.surat.generated-document', $surat->id, absolute: false)
+                )
+                : null,
             'jenis_surat' => [
                 'id' => $surat->jenisSurat?->id,
                 'nama' => $surat->jenisSurat?->nama,
@@ -185,8 +193,12 @@ class SuratController extends Controller
                 ->map(fn ($lampiran): array => [
                     'id' => $lampiran->id,
                     'nama_file' => $lampiran->nama_file,
-                    'file_path' => $lampiran->file_path,
                     'tipe' => $lampiran->tipe,
+                    'preview_url' => URL::temporarySignedRoute(
+                        'documents.public.lampiran.preview',
+                        now()->addMinutes(15),
+                        ['id' => $lampiran->id],
+                    ),
                 ])
                 ->values()
                 ->all(),

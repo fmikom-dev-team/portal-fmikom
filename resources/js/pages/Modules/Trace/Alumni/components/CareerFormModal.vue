@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useForm } from "@inertiajs/vue3";
 import { X } from "lucide-vue-next";
-import { watch, computed, ref, nextTick, onUnmounted } from "vue";
+import { watch, computed } from "vue";
 import { toast } from "vue-sonner";
 import EmploymentFields from "./EmploymentFields.vue";
 import EducationFields from "./EducationFields.vue";
@@ -39,7 +39,7 @@ const props = defineProps<{
     show: boolean;
     career?: Career | null;
     provinces: Lokasi[];
-    cities: Lokasi[];
+    cities: Array<Lokasi & { provinsi_id: number }>;
 }>();
 
 const emit = defineEmits<{
@@ -85,6 +85,58 @@ const needsUniversityInfo = computed(() => {
 
 const needsLocation = computed(() => {
     return ["bekerja", "wirausaha", "lanjut_studi"].includes(form.status);
+});
+
+const locationAddress = computed({
+    get() {
+        return form.status === "lanjut_studi"
+            ? form.alamat_universitas
+            : form.alamat_perusahaan;
+    },
+    set(value: string) {
+        if (form.status === "lanjut_studi") {
+            form.alamat_universitas = value;
+            return;
+        }
+
+        form.alamat_perusahaan = value;
+    },
+});
+
+const locationMapLabel = computed(() => {
+    if (form.status === "lanjut_studi") {
+        return "Tandai Lokasi Kampus di Peta";
+    }
+
+    return form.status === "wirausaha"
+        ? "Tandai Lokasi Usaha di Peta"
+        : "Tandai Lokasi Perusahaan di Peta";
+});
+
+const locationAddressLabel = computed(() => {
+    if (form.status === "lanjut_studi") {
+        return "Alamat Lengkap Kampus / Universitas";
+    }
+
+    return form.status === "wirausaha"
+        ? "Alamat Lengkap Usaha"
+        : "Alamat Lengkap Perusahaan";
+});
+
+const locationAddressPlaceholder = computed(() => {
+    if (form.status === "lanjut_studi") {
+        return "Alamat lengkap kampus/universitas";
+    }
+
+    return form.status === "wirausaha"
+        ? "Alamat lengkap lokasi usaha"
+        : "Alamat lengkap perusahaan";
+});
+
+const locationAddressError = computed(() => {
+    return form.status === "lanjut_studi"
+        ? form.errors.alamat_universitas
+        : form.errors.alamat_perusahaan;
 });
 
 // Date validation: tanggal_selesai cannot be before tanggal_mulai
@@ -302,9 +354,31 @@ const submit = () => {
                         v-model:city-id="form.kota_id"
                         v-model:latitude="form.latitude"
                         v-model:longitude="form.longitude"
+                        v-model:address="locationAddress"
+                        :map-label="locationMapLabel"
                         :provinces="provinces"
                         :cities="cities"
                     />
+
+                    <div v-if="needsLocation">
+                        <label
+                            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >
+                            {{ locationAddressLabel }}
+                        </label>
+                        <textarea
+                            v-model="locationAddress"
+                            rows="3"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                            :placeholder="locationAddressPlaceholder"
+                        />
+                        <p
+                            v-if="locationAddressError"
+                            class="mt-1 text-sm text-red-500"
+                        >
+                            {{ locationAddressError }}
+                        </p>
+                    </div>
 
                     <!-- Period -->
                     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">

@@ -2,13 +2,14 @@
 
 namespace App\Models\Tracer;
 
+use App\Casts\LegacyCompatibleEncryptedString;
 use App\Models\User;
+use App\Modules\Trace\Services\TraceCacheService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Cache;
 
 class ProfilAlumni extends Model
 {
@@ -17,15 +18,11 @@ class ProfilAlumni extends Model
     protected static function booted(): void
     {
         static::saved(function ($alumni) {
-            Cache::forget('portal_total_alumni');
-            Cache::forget('portal_welcome_alumni_data');
-            Cache::forget('portal_welcome_alumni_stats');
+            TraceCacheService::forgetDashboardCaches(userId: $alumni->user_id);
         });
 
         static::deleted(function ($alumni) {
-            Cache::forget('portal_total_alumni');
-            Cache::forget('portal_welcome_alumni_data');
-            Cache::forget('portal_welcome_alumni_stats');
+            TraceCacheService::forgetDashboardCaches(userId: $alumni->user_id);
         });
     }
 
@@ -45,6 +42,8 @@ class ProfilAlumni extends Model
     protected $hidden = ['nik', 'npwp'];
 
     protected $casts = [
+        'nik' => LegacyCompatibleEncryptedString::class,
+        'npwp' => LegacyCompatibleEncryptedString::class,
         'latitude_rumah' => 'float',
         'longitude_rumah' => 'float',
         'angkatan' => 'integer',
@@ -121,19 +120,19 @@ class ProfilAlumni extends Model
     }
 
     /**
-     * Masked NIK — hanya tampilkan 6 digit awal untuk identifikasi.
+     * Masked NIK - hanya tampilkan 6 digit awal untuk identifikasi.
      */
     public function getNikMaskedAttribute(): ?string
     {
-        return $this->nik ? substr($this->nik, 0, 6).'••••••••••' : null;
+        return $this->nik ? substr($this->nik, 0, 6).'**********' : null;
     }
 
     /**
-     * Masked NPWP — hanya tampilkan 4 digit awal.
+     * Masked NPWP - hanya tampilkan 4 digit awal.
      */
     public function getNpwpMaskedAttribute(): ?string
     {
-        return $this->npwp ? substr($this->npwp, 0, 4).'•••••••••••' : null;
+        return $this->npwp ? substr($this->npwp, 0, 4).'***********' : null;
     }
 
     public function getCompletenessPercentageAttribute()

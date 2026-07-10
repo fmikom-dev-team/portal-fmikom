@@ -11,8 +11,6 @@ use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PenilaianMagang;
 use App\Models\Pagi\PagiCv;
 use App\Models\Pagi\PagiWork;
-use App\Models\Surat\Surat;
-use App\Models\Surat\SuratApprovalFlow;
 use App\Models\Tracer\Bookmark;
 use App\Models\Tracer\EventRegistration;
 use App\Models\Tracer\Kuesioner;

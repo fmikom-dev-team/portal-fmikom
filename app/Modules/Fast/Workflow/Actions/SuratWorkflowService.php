@@ -89,20 +89,29 @@ class SuratWorkflowService
         $jenisSurat = JenisSurat::query()
             ->with(['template.placeholders', 'approvalRole'])
             ->findOrFail((int) $payload['jenis_surat_id']);
-        $subjectUserId = (int) ($payload['subject_user_id'] ?? 0);
+        $template = $jenisSurat->template;
+        $subjectName = trim((string) ($payload['subject_name'] ?? ''));
+        $requiresSubjectUser = SuratDataContract::requiresSubjectUser(
+            $jenisSurat->field_config ?? [],
+            $template?->placeholders
+                ? $template->placeholders->map(fn ($placeholder): array => [
+                    'placeholder_key' => $placeholder->placeholder_key,
+                    'source_type' => $placeholder->source_type,
+                    'source_key' => $placeholder->source_key,
+                ])->values()->all()
+                : [],
+        );
 
-        abort_if($subjectUserId <= 0, 422, 'Subjek surat wajib dipilih.');
+        abort_if($requiresSubjectUser && $subjectName === '', 422, 'Atas nama wajib diisi.');
 
         $dynamicData = $this->validateDynamicData($jenisSurat, Arr::wrap($payload['data'] ?? []));
 
-        $surat = DB::transaction(function () use ($admin, $payload, $jenisSurat, $dynamicData, $subjectUserId): Surat {
+        $surat = DB::transaction(function () use ($admin, $payload, $jenisSurat, $dynamicData): Surat {
             $surat = Surat::query()->create([
                 'jenis_surat_id' => $jenisSurat->id,
-                // Kompatibilitas sementara: modul lama masih membaca pemohon_id
-                // sebagai subjek surat untuk surat keluar admin.
-                'pemohon_id' => $subjectUserId,
+                'pemohon_id' => $admin->id,
                 'created_by' => $admin->id,
-                'subject_user_id' => $subjectUserId,
+                'subject_user_id' => null,
                 'type' => 'surat_keluar',
                 'keperluan' => (string) $payload['keperluan'],
                 'status' => Surat::STATUS_PENDING,
@@ -552,6 +561,12 @@ class SuratWorkflowService
     {
         if ($storedValue === null) {
             return null;
+        }
+
+        if (in_array($fieldName, ['lampiran_mahasiswa', 'lampiran_columns', 'lampiran_rows'], true)) {
+            $decoded = json_decode($storedValue, true);
+
+            return is_array($decoded) ? $decoded : [];
         }
 
         if (in_array($fieldName, SuratDataContract::adminManualArrayFields(), true)

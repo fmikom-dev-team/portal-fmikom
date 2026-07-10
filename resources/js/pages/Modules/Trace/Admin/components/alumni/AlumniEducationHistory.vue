@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { GraduationCap } from 'lucide-vue-next';
 import { Badge } from '@/components/ui/badge';
-import type { ProfilAlumni, CareerHistory } from '@/types/trace';
+import type { CareerHistory } from '@/types/trace';
 
 defineProps<{
-    alumni: ProfilAlumni;
+    educationHistory: CareerHistory[];
 }>();
 </script>
 
@@ -25,11 +25,7 @@ defineProps<{
                 variant="secondary"
                 class="ml-auto border-none bg-purple-50 px-2.5 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-900/20 dark:text-purple-400"
             >
-                {{
-                    alumni.careers?.filter(
-                        (c: CareerHistory) => c.status === 'lanjut_studi',
-                    ).length || 0
-                }}
+                {{ educationHistory.length }}
                 entri
             </Badge>
         </div>
@@ -37,16 +33,12 @@ defineProps<{
         <div class="flex-1 p-6">
             <div
                 v-if="
-                    alumni.careers?.some(
-                        (c: CareerHistory) => c.status === 'lanjut_studi',
-                    )
+                    educationHistory.length > 0
                 "
                 class="grid grid-cols-1 gap-4 sm:grid-cols-2"
             >
                 <div
-                    v-for="edu in alumni.careers.filter(
-                        (c: CareerHistory) => c.status === 'lanjut_studi',
-                    )"
+                    v-for="edu in educationHistory"
                     :key="edu.id"
                     class="relative flex flex-col justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/40 p-4 transition-all duration-200 hover:border-purple-200 hover:bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900/30 dark:hover:border-purple-900/50 dark:hover:bg-slate-900/60"
                     :class="{
@@ -62,8 +54,8 @@ defineProps<{
                                 class="text-xs leading-tight font-bold text-slate-800 dark:text-white"
                             >
                                 {{
-                                    edu.education
-                                        .nama_universitas ||
+                                    edu.nama_universitas ||
+                                    edu.education?.nama_universitas ||
                                     'Universitas tidak disebutkan'
                                 }}
                             </span>
@@ -81,28 +73,28 @@ defineProps<{
                             class="text-[11px] font-medium text-slate-500 dark:text-slate-400"
                         >
                             {{
-                                edu.education
-                                    .program_studi_lanjutan ||
+                                edu.program_studi_lanjutan ||
+                                edu.education?.program_studi_lanjutan ||
                                 '-'
                             }}
                             <span
                                 v-if="
-                                    edu.education
-                                        .jenjang_pendidikan
+                                    edu.jenjang_pendidikan ||
+                                    edu.education?.jenjang_pendidikan
                                 "
                                 class="text-slate-400"
                                 >({{
-                                    edu.education
-                                        .jenjang_pendidikan
+                                    edu.jenjang_pendidikan ||
+                                    edu.education?.jenjang_pendidikan
                                 }})</span
                             >
                         </div>
                         <div
-                            v-if="edu.education.sumber_biaya"
+                            v-if="edu.sumber_biaya || edu.education?.sumber_biaya"
                             class="text-[10px] text-slate-400"
                         >
                             Biaya:
-                            {{ edu.education.sumber_biaya }}
+                            {{ edu.sumber_biaya || edu.education?.sumber_biaya }}
                         </div>
                     </div>
                     <div

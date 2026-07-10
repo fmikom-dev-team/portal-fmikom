@@ -29,6 +29,7 @@ interface Career {
 defineProps<{
     careers: Career[];
     title?: string;
+    readOnly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -181,6 +182,7 @@ const calculateDuration = (start?: string, end?: string) => {
 
                             <!-- Actions -->
                             <div
+                                v-if="!readOnly"
                                 class="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100"
                             >
                                 <button
@@ -264,7 +266,7 @@ const calculateDuration = (start?: string, end?: string) => {
                 Belum ada riwayat karir sebelumnya
             </p>
             <p class="mt-1 text-xs text-gray-500">
-                Tambahkan riwayat pekerjaan Anda untuk melengkapi profil
+                {{ readOnly ? "Belum ada data yang dapat ditampilkan." : "Tambahkan riwayat pekerjaan Anda untuk melengkapi profil" }}
             </p>
         </div>
     </div>

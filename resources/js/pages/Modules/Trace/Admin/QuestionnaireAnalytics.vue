@@ -234,6 +234,28 @@ const filteredCategories = computed(() => {
         .filter((cat: { name: string; statistics: unknown[] }) => cat.statistics.length > 0);
 });
 
+const normalizeIndicatorLabels = (indicator: unknown): string[] => {
+    if (!indicator) return [];
+
+    const values = Array.isArray(indicator) ? indicator : [indicator];
+
+    return values
+        .map((item) => {
+            if (typeof item === 'string') return item;
+            if (item && typeof item === 'object') {
+                const record = item as Record<string, unknown>;
+                return (record.nama || record.label || record.kode || record.value || '') as string;
+            }
+            return '';
+        })
+        .filter(Boolean)
+        .map((item) =>
+            item
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, (char) => char.toUpperCase()),
+        );
+};
+
 const getChartData = (stat: Record<string, unknown>) => {
     const analysis = stat.analysis as Record<string, unknown>;
     if (analysis.distribution) {
@@ -617,18 +639,12 @@ const getRadarOptions = (stat: Record<string, unknown>) => ({
                                                         </template>
                                                     </template>
 
-                                                    <!-- Indikator Badge -->
                                                     <Badge
-                                                        v-if="stat.indikator"
-                                                        class="rounded-lg border border-[#85B7EB] bg-[#0C447C]/10 px-2 py-0.5 text-[9px] font-bold text-[#0C447C] hover:bg-[#85B7EB]/20 dark:border-[#0C447C] dark:bg-[#0C447C]/20 dark:text-[#85B7EB]"
+                                                        v-for="indicator in normalizeIndicatorLabels(stat.indikator)"
+                                                        :key="indicator"
+                                                        class="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-700 uppercase hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300"
                                                     >
-                                                        {{
-                                                            stat.indikator.kode
-                                                        }}
-                                                        -
-                                                        {{
-                                                            stat.indikator.nama
-                                                        }}
+                                                        {{ indicator }}
                                                     </Badge>
                                                 </div>
 
@@ -682,6 +698,13 @@ const getRadarOptions = (stat: Record<string, unknown>) => ({
                                                         :data="getChartData(stat)"
                                                         :options="chartOptions"
                                                     />
+                                                </div>
+                                                <div
+                                                    v-if="stat.analysis.average !== undefined && stat.analysis.average !== null"
+                                                    class="flex items-center justify-between rounded-2xl bg-emerald-50 px-4 py-3 dark:bg-emerald-950/20"
+                                                >
+                                                    <span class="text-[10px] font-black tracking-widest text-emerald-700 uppercase dark:text-emerald-300">Skor Rata-rata</span>
+                                                    <span class="text-lg font-black text-emerald-700 dark:text-emerald-300">{{ stat.analysis.average }}</span>
                                                 </div>
                                             </div>
 

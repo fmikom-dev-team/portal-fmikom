@@ -2,28 +2,28 @@
 
 namespace App\Modules\Fast\Services\Shared;
 
-use App\Models\FastNotification;
 use App\Models\Surat;
 use App\Models\SuratApprovalFlow;
 use App\Models\User;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class NotificationFeedService
 {
+    protected const NOTIFICATION_TYPE_PREFIX = 'fast.notification';
+
     /**
      * @return array{count: int, items: array<int, array<string, mixed>>}
      */
-    public function build(User $user): array
+    public function build(User $user, ?string $activeRole = null): array
     {
-        $roleSlug = Str::slug((string) $user->userTypeSlug());
-        $items = match (true) {
-            $roleSlug === 'admin' => $this->adminItems($user),
-            in_array($roleSlug, ['kaprodi', 'dekan'], true) => $this->approverItems($user, $roleSlug),
-            default => $this->requesterItems($user, $roleSlug),
-        };
+        $notifiableType = $user->getMorphClass();
+        $roleSlug = Str::slug((string) ($activeRole ?: $user->userTypeSlug()));
+        $items = $this->itemsForRole($user, $roleSlug);
 
-        if (! Schema::hasTable('fast_notifications')) {
+        if (! Schema::hasTable('notifications')) {
             $fallbackItems = array_map(function (array $item): array {
                 return [
                     'id' => $item['notification_key'],
@@ -44,33 +44,69 @@ class NotificationFeedService
         }
         $this->sync($user, $items);
 
-        $records = FastNotification::query()
-            ->where('user_id', $user->id)
-            ->whereIn('notification_key', array_column($items, 'notification_key'))
-            ->orderByRaw('read_at is not null asc')
+        $notificationTypes = array_map(
+            fn (array $item): string => $this->notificationType($item['notification_key']),
+            $items,
+        );
+
+        $records = DB::table('notifications')
+            ->where('notifiable_type', $notifiableType)
+            ->where('notifiable_id', $user->id)
+            ->whereIn('type', $notificationTypes)
+            ->whereNull('read_at')
             ->orderByDesc('updated_at')
             ->limit(6)
             ->get();
 
-        $notificationKeys = array_column($items, 'notification_key');
-
         return [
-            'count' => FastNotification::query()
-                ->where('user_id', $user->id)
-                ->whereIn('notification_key', $notificationKeys)
+            'count' => DB::table('notifications')
+                ->where('notifiable_type', $notifiableType)
+                ->where('notifiable_id', $user->id)
+                ->whereIn('type', $notificationTypes)
                 ->whereNull('read_at')
                 ->count(),
-            'items' => $this->sortNewestFirst($records->map(fn (FastNotification $notification): array => [
-                'id' => $notification->id,
-                'notification_key' => $notification->notification_key,
-                'title' => $notification->title,
-                'message' => $notification->message,
-                'href' => $notification->href ?? '#',
-                'time' => $notification->updated_at?->toISOString(),
-                'tone' => $notification->tone,
-                'readAt' => $notification->read_at?->toISOString(),
-            ])->values()->all()),
+            'items' => $this->sortNewestFirst($records->map(function (object $notification): array {
+                $data = json_decode((string) $notification->data, true);
+                $data = is_array($data) ? $data : [];
+
+                return [
+                    'id' => $notification->id,
+                    'notification_key' => $data['notification_key'] ?? $notification->type,
+                    'title' => $data['title'] ?? 'Notifikasi FAST',
+                    'message' => $data['message'] ?? '',
+                    'href' => $data['href'] ?? '#',
+                    'time' => isset($notification->updated_at) ? Carbon::parse($notification->updated_at)->toISOString() : null,
+                    'tone' => $data['tone'] ?? 'slate',
+                    'readAt' => isset($notification->read_at) ? Carbon::parse($notification->read_at)->toISOString() : null,
+                ];
+            })->values()->all()),
         ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function notificationTypesForRole(User $user, ?string $activeRole = null): array
+    {
+        $roleSlug = Str::slug((string) ($activeRole ?: $user->userTypeSlug()));
+        $items = $this->itemsForRole($user, $roleSlug);
+
+        return array_values(array_map(
+            fn (array $item): string => $this->notificationType($item['notification_key']),
+            $items,
+        ));
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    protected function itemsForRole(User $user, string $roleSlug): array
+    {
+        return match (true) {
+            $roleSlug === 'admin' => $this->adminItems($user),
+            in_array($roleSlug, ['kaprodi', 'dekan'], true) => $this->approverItems($user, $roleSlug),
+            default => $this->requesterItems($user, $roleSlug),
+        };
     }
 
     /**
@@ -240,22 +276,53 @@ class NotificationFeedService
      */
     protected function sync(User $user, array $items): void
     {
+        $notifiableType = $user->getMorphClass();
+
         foreach ($items as $item) {
-            FastNotification::query()->updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'notification_key' => $item['notification_key'],
-                ],
-                [
-                    'scope' => $item['scope'],
-                    'title' => $item['title'],
-                    'message' => $item['message'],
-                    'href' => $item['href'],
-                    'tone' => $item['tone'],
-                    'meta' => $item['meta'] ?? null,
-                ],
-            );
+            $type = $this->notificationType($item['notification_key']);
+            $existing = DB::table('notifications')
+                ->where('notifiable_type', $notifiableType)
+                ->where('notifiable_id', $user->id)
+                ->where('type', $type)
+                ->first();
+
+            $data = [
+                'scope' => $item['scope'],
+                'notification_key' => $item['notification_key'],
+                'title' => $item['title'],
+                'message' => $item['message'],
+                'href' => $item['href'],
+                'tone' => $item['tone'],
+                'meta' => $item['meta'] ?? null,
+            ];
+
+            if ($existing) {
+                DB::table('notifications')
+                    ->where('id', $existing->id)
+                    ->update([
+                        'data' => json_encode($data, JSON_THROW_ON_ERROR),
+                        'updated_at' => now(),
+                    ]);
+
+                continue;
+            }
+
+            DB::table('notifications')->insert([
+                'id' => (string) Str::uuid(),
+                'type' => $type,
+                'notifiable_type' => $notifiableType,
+                'notifiable_id' => $user->id,
+                'data' => json_encode($data, JSON_THROW_ON_ERROR),
+                'read_at' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
+    }
+
+    protected function notificationType(string $notificationKey): string
+    {
+        return self::NOTIFICATION_TYPE_PREFIX.'.'.$notificationKey;
     }
 
     protected function requesterBasePath(string $roleSlug): string

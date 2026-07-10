@@ -4,6 +4,7 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import NotificationBell from '@/components/Modules/Fast/NotificationBell.vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import {
     LayoutDashboard,
     FilePlus2,
@@ -31,6 +32,16 @@ type PageProps = {
     };
     flash?: { success?: string; error?: string; warning?: string };
     notif_count?: number;
+    unread_notifications_count?: number;
+    recent_notifications?: Array<{
+        id: number | string;
+        title?: string;
+        message?: string;
+        href?: string;
+        time?: string | null;
+        created_at?: string | null;
+        unread?: boolean;
+    }>;
     notifications?: {
         count?: number;
         items?: Array<{
@@ -42,6 +53,7 @@ type PageProps = {
             tone?: 'amber' | 'blue' | 'green' | 'rose' | 'slate';
         }>;
     };
+    fast_permissions?: string[];
 };
 
 const props = withDefaults(
@@ -50,11 +62,13 @@ const props = withDefaults(
         subtitle?: string;
         activeMenu?: string;
         breadcrumbs?: BreadcrumbItem[];
+        titleClass?: string;
     }>(),
     {
         subtitle: '',
         activeMenu: 'dashboard',
         breadcrumbs: () => [],
+        titleClass: 'text-lg font-semibold tracking-tight text-slate-900 md:text-xl',
     },
 );
 
@@ -90,9 +104,26 @@ const brandName = computed(
     () => siteSettings.value.brand_name || 'FMIKOM',
 );
 const notifCount = computed(
-    () => page.props.notifications?.count ?? page.props.notif_count ?? 0,
+    () =>
+        page.props.notifications?.count ??
+        page.props.notif_count ??
+        page.props.unread_notifications_count ??
+        0,
 );
-const notifItems = computed(() => page.props.notifications?.items ?? []);
+const notifItems = computed(() => {
+    if (page.props.notifications) {
+        return page.props.notifications.items ?? [];
+    }
+
+    return (page.props.recent_notifications ?? []).map((item) => ({
+        id: item.id,
+        title: item.title ?? 'Notifikasi FAST',
+        message: item.message ?? '',
+        href: item.href ?? '#',
+        time: item.created_at ?? item.time ?? null,
+        readAt: item.unread === false ? item.created_at ?? item.time ?? null : null,
+    }));
+});
 function checkMobile() {
     isMobile.value = window.innerWidth < 1024;
     if (isMobile.value) sidebarOpen.value = false;
@@ -111,7 +142,9 @@ watch(
     },
 );
 
-type NavItem = { key: string; label: string; href: string; icon: unknown };
+type NavItem = { key: string; label: string; href: string; icon: unknown; permission?: string };
+
+const { can } = useFastPermissions();
 
 const navItems = computed<NavItem[]>(() => {
     const prefix = `/${routePrefix.value}`;
@@ -121,24 +154,31 @@ const navItems = computed<NavItem[]>(() => {
             label: 'Dashboard',
             href: `${prefix}/dashboard`,
             icon: LayoutDashboard,
+            permission: 'fast.dashboard.view',
         },
         {
             key: 'submit',
             label: 'Ajukan Surat',
             href: `${prefix}/ajukan`,
             icon: FilePlus2,
+            permission: 'fast.submission.create',
         },
         {
             key: 'history',
             label: 'Riwayat Surat',
             href: `${prefix}/history`,
             icon: History,
+            permission: 'fast.submission.view',
         },
     ];
 });
 
+const visibleNavItems = computed(() =>
+    navItems.value.filter((item) => !item.permission || can(item.permission)),
+);
+
 const headerLabel = computed(() => {
-    const activeItem = navItems.value.find((item) => isActive(item.key));
+    const activeItem = visibleNavItems.value.find((item) => isActive(item.key));
     if (activeItem) return activeItem.label;
 
     const lastBreadcrumb = props.breadcrumbs?.[props.breadcrumbs.length - 1];
@@ -307,12 +347,12 @@ function batteryIcon() {
                     <p
                         class="truncate text-[13px] font-bold tracking-tight text-slate-900 leading-tight"
                     >
-                        FAST Academic
+                        FASt
                     </p>
                     <p
-                        class="mt-0.5 text-[10px] tracking-widest text-slate-400 uppercase leading-none"
+                        class="mt-0.5 text-[10px] tracking-widest text-slate-400 leading-none"
                     >
-                        FMIKOM
+                        FMIKOM Administration System
                     </p>
                 </div>
             </div>
@@ -360,7 +400,7 @@ function batteryIcon() {
             <!-- Nav -->
             <nav class="flex-1 overflow-x-hidden overflow-y-auto px-2 py-2">
                 <Link
-                    v-for="item in navItems"
+                    v-for="item in visibleNavItems"
                     :key="item.key"
                     :href="item.href"
                     :prefetch="false"
@@ -499,7 +539,7 @@ function batteryIcon() {
                         </Transition>
                     </div>
                     <NotificationBell
-                        class="hidden md:block"
+                        class="shrink-0"
                         :count="notifCount"
                         :items="notifItems"
                         aria-label="Notifikasi Surat"
@@ -509,14 +549,14 @@ function batteryIcon() {
 
             <!-- Page header -->
             <div
-                v-if="subtitle || $slots.actions"
+                v-if="title || subtitle || $slots.actions"
                 class="flex shrink-0 items-center justify-between gap-4 border-b border-slate-100 bg-white px-5 py-3.5"
             >
                 <div>
                     <p v-if="subtitle" class="text-xs text-slate-400">
                         {{ subtitle }}
                     </p>
-                    <h1 class="text-lg font-semibold text-slate-900">
+                    <h1 :class="titleClass">
                         {{ title }}
                     </h1>
                 </div>
@@ -542,7 +582,7 @@ function batteryIcon() {
         >
             <div class="flex items-center justify-around">
                 <Link
-                    v-for="item in navItems"
+                    v-for="item in visibleNavItems"
                     :key="item.key + 'mb'"
                     :href="item.href"
                     :prefetch="false"

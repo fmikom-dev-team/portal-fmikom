@@ -15,6 +15,8 @@ class CategoryController extends Controller
 {
     public function index(): Response
     {
+        $this->authorize('viewAny', SuratCategory::class);
+
         return Inertia::render('admin/categories/Index', [
             'categories' => SuratCategory::orderBy('urutan')->get(),
         ]);
@@ -22,10 +24,11 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', SuratCategory::class);
+
         $data = $request->validate([
             'nama' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
-            'icon' => 'nullable|string|max:50',
             'warna' => 'nullable|string|max:20',
             'urutan' => 'nullable|integer',
         ]);
@@ -39,10 +42,11 @@ class CategoryController extends Controller
 
     public function update(Request $request, SuratCategory $category)
     {
+        $this->authorize('update', $category);
+
         $data = $request->validate([
             'nama' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
-            'icon' => 'nullable|string|max:50',
             'warna' => 'nullable|string|max:20',
             'urutan' => 'nullable|integer',
             'is_active' => 'boolean',
@@ -55,6 +59,8 @@ class CategoryController extends Controller
 
     public function destroy(SuratCategory $category)
     {
+        $this->authorize('delete', $category);
+
         if ($category->jenisSurats()->exists()) {
             return back()->with('error', 'Kategori tidak bisa dihapus karena masih memiliki jenis surat.');
         }

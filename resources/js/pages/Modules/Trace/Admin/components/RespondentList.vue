@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import axios from 'axios';
 import { toast } from 'vue-sonner';
-import { Loader2, Mail, Calendar, User } from 'lucide-vue-next';
+import { Loader2, Mail } from 'lucide-vue-next';
 import { ref, onMounted } from 'vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +18,25 @@ const props = defineProps<{
     kuesionerId: number | string;
 }>();
 
-const formatDate = (dateString: string) => {
+interface RespondentInfo {
+    name: string;
+    email: string;
+    nim?: string | null;
+    program_studi?: string | null;
+    tahun_lulus?: number | null;
+    angkatan?: number | null;
+    alumni_profile_id?: number | null;
+}
+
+interface QuestionnaireRespondent {
+    id: number;
+    submitted_at?: string | null;
+    created_at?: string | null;
+    angkatan?: number | null;
+    respondent: RespondentInfo;
+}
+
+const formatDate = (dateString?: string | null) => {
     if (!dateString) {
 return '-';
 }
@@ -30,7 +48,7 @@ return '-';
     }).format(new Date(dateString));
 };
 
-const formatTime = (dateString: string) => {
+const formatTime = (dateString?: string | null) => {
     if (!dateString) {
 return '';
 }
@@ -42,7 +60,7 @@ return '';
 };
 
 const loading = ref(true);
-const respondents = ref<any[]>([]);
+const respondents = ref<QuestionnaireRespondent[]>([]);
 
 const fetchRespondents = async () => {
     loading.value = true;
@@ -61,6 +79,10 @@ const fetchRespondents = async () => {
 onMounted(fetchRespondents);
 
 const getInitials = (name: string) => {
+    if (!name || name === '-') {
+        return '??';
+    }
+
     return name
         .split(' ')
         .map(n => n[0])
@@ -97,27 +119,27 @@ const getInitials = (name: string) => {
                             <div class="flex items-center gap-3">
                                 <Avatar class="h-9 w-9 border border-white shadow-sm">
                                     <AvatarFallback class="bg-blue-600 text-white text-[10px] font-black">
-                                        {{ getInitials(res.user?.alumni_profile?.nama_lengkap || res.user.name) }}
+                                        {{ getInitials(res.respondent.name) }}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div class="flex flex-col">
-                                    <span class="text-sm font-bold">{{ res.user?.alumni_profile?.nama_lengkap || res.user.name }}</span>
-                                    <span class="text-[10px] text-muted-foreground font-medium">{{ res.user?.alumni_profile?.program_studi || 'Alumni' }}</span>
+                                    <span class="text-sm font-bold">{{ res.respondent.name }}</span>
+                                    <span class="text-[10px] text-muted-foreground font-medium">{{ res.respondent.program_studi || 'Alumni' }}</span>
                                 </div>
                             </div>
                         </TableCell>
                         <TableCell class="text-center font-mono text-xs font-bold text-slate-500">
-                            {{ res.user?.alumni_profile?.nim || '-' }}
+                            {{ res.respondent.nim || '-' }}
                         </TableCell>
                         <TableCell>
                             <div class="flex items-center gap-2 text-xs font-medium text-slate-600">
                                 <Mail class="h-3 w-3 opacity-40" />
-                                {{ res.user.email }}
+                                {{ res.respondent.email }}
                             </div>
                         </TableCell>
                         <TableCell>
                              <Badge variant="outline" class="rounded-full bg-slate-100 text-[10px] font-bold border-none">
-                                {{ res.user?.alumni_profile?.tahun_lulus || res.angkatan || '-' }}
+                                {{ res.respondent.tahun_lulus || res.respondent.angkatan || res.angkatan || '-' }}
                              </Badge>
                         </TableCell>
                         <TableCell class="text-right">

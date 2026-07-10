@@ -4,13 +4,17 @@ namespace App\Modules\Trace\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 
 class NotificationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = $request->user()->notifications()->latest();
+        $query = $request->user()
+            ->notifications()
+            ->where('data->href', 'like', '/trace%')
+            ->latest();
 
         if ($request->input('filter') === 'unread') {
             $query->whereNull('read_at');
@@ -46,14 +50,38 @@ class NotificationController extends Controller
     {
         $notification = $request->user()->notifications()->findOrFail($id);
         $notification->markAsRead();
+        $this->forgetNotificationCaches($request);
+
+        if ($request->wantsJson()) {
+            return response()->json(['read' => true]);
+        }
 
         return back();
     }
 
     public function markAllRead(Request $request)
     {
-        $request->user()->unreadNotifications()->update(['read_at' => now()]);
+        $request->user()
+            ->unreadNotifications()
+            ->where('data->href', 'like', '/trace%')
+            ->update(['read_at' => now()]);
+
+        $this->forgetNotificationCaches($request);
+
+        if ($request->wantsJson()) {
+            return response()->json(['read' => true]);
+        }
 
         return back();
+    }
+
+    private function forgetNotificationCaches(Request $request): void
+    {
+        $user = $request->user();
+        $activeModule = session('active_module', '');
+        $activeRole = session('active_role', '');
+
+        Cache::forget("unread_notif_count_{$user->id}_{$activeModule}_{$activeRole}");
+        Cache::forget("recent_notifs_{$user->id}_{$activeModule}_{$activeRole}");
     }
 }

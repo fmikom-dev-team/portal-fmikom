@@ -17,21 +17,12 @@
 </head>
 <body>
     <h1>{{ $title ?? 'Lembar Penilaian PKL' }}</h1>
-    <p class="muted">
-        Status submission:
-        {{ ($submission_status ?? 'draft') === 'submitted' ? 'Final / submitted' : 'Draft / belum final' }}
-    </p>
-
     <h2>Identitas Mahasiswa</h2>
     <table class="meta">
         <tr><td>Nama</td><td>{{ $student['name'] ?? '-' }}</td></tr>
         <tr><td>NIM</td><td>{{ $student['nim'] ?? '-' }}</td></tr>
         <tr><td>Program Studi</td><td>{{ $student['program_studi'] ?? '-' }}</td></tr>
         <tr><td>Perusahaan</td><td>{{ $company_name ?? '-' }}</td></tr>
-        <tr><td>Template</td><td>{{ $template['name'] ?? '-' }}</td></tr>
-        <tr><td>Role Penilai</td><td>{{ $template['assessor_role'] ?? '-' }}</td></tr>
-        <tr><td>Periode Template</td><td>{{ $template['periode_label'] ?? '-' }}</td></tr>
-        <tr><td>Waktu Submit</td><td>{{ $submitted_at ?? '-' }}</td></tr>
     </table>
 
     <h2>Komponen Penilaian</h2>

@@ -100,7 +100,7 @@ Route::get('/', function () {
                 'kota:id,name',
                 'careers' => function ($query) {
                     $query->where('is_current', true)
-                        ->whereIn('status', ['bekerja', 'wirausaha', 'lanjut_studi'])
+                        ->whereIn('status', ['bekerja', 'wirausaha', 'lanjut_studi', 'mencari_kerja'])
                         ->with([
                             'employment:career_history_id,nama_perusahaan,jabatan',
                             'education:career_history_id,nama_universitas,program_studi_lanjutan',
@@ -108,9 +108,13 @@ Route::get('/', function () {
                 },
             ])
                 ->whereHas('user')
-                ->whereHas('careers', function ($query) {
-                    $query->where('is_current', true)
-                        ->whereIn('status', ['bekerja', 'wirausaha', 'lanjut_studi']);
+                ->where(function ($query) {
+                    $query->whereHas('careers', function ($careerQuery) {
+                        $careerQuery->where('is_current', true)
+                            ->whereIn('status', ['bekerja', 'wirausaha', 'lanjut_studi', 'mencari_kerja']);
+                    })->orWhereDoesntHave('careers', function ($careerQuery) {
+                        $careerQuery->where('is_current', true);
+                    });
                 })
                 ->get()
                 ->map(function ($alumni) {
@@ -126,6 +130,8 @@ Route::get('/', function () {
                         } elseif ($currentCareer->status->value === 'lanjut_studi') {
                             $edu = $currentCareer->education;
                             $careerInfo = $edu ? ('Lanjut Studi di '.$edu->nama_universitas) : 'Lanjut Studi';
+                        } elseif ($currentCareer->status->value === 'mencari_kerja') {
+                            $careerInfo = 'Mencari kerja / belum bekerja';
                         }
                     }
 
@@ -139,12 +145,14 @@ Route::get('/', function () {
                         'foto_path' => $alumni->user->foto_path,
                         'provinsi' => $alumni->provinsi?->name,
                         'kota' => $alumni->kota?->name,
-                        'status' => $currentCareer?->status?->value,
-                        'detail_karir' => $careerInfo,
+                        'status' => $currentCareer?->status?->value === 'mencari_kerja' || ! $currentCareer ? 'belum' : $currentCareer?->status?->value,
+                        'detail_karir' => $careerInfo ?: 'Belum bekerja',
                         'latitude' => $lat,
                         'longitude' => $lng,
                     ];
                 })
+                ->filter(fn ($alumni) => ! empty($alumni['latitude']) && ! empty($alumni['longitude']) && (float) $alumni['latitude'] !== 0.0 && (float) $alumni['longitude'] !== 0.0)
+                ->values()
                 ->toArray();
         } catch (Throwable $e) {
             return [];

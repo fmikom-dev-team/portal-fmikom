@@ -6,12 +6,20 @@ use App\Models\Auth\AuthEmailLog;
 use App\Models\Auth\AuthLoginAttempt;
 use App\Models\Auth\AuthSession;
 use App\Models\Auth\AuthSetting;
+use App\Models\JenisSurat;
+use App\Models\Surat;
+use App\Models\SuratCategory;
+use App\Models\TemplateGlobalSetting;
 use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\CareerHistory;
 use App\Models\User;
 use App\Modules\WorkOs\Services\AuditLogger;
 use App\Modules\WorkOs\Services\AuthPlatform\SessionEngine;
 use App\Policies\CareerHistoryPolicy;
+use App\Policies\FastJenisSuratPolicy;
+use App\Policies\FastSuratCategoryPolicy;
+use App\Policies\FastSuratPolicy;
+use App\Policies\FastTemplateGlobalSettingPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
@@ -26,6 +34,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -53,7 +62,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
-        // ── Auth Event Listeners for Audit Logging & Session Tracking ─────────────
+        // -- Auth Event Listeners for Audit Logging & Session Tracking -------------
         Event::listen(Login::class, function ($event) {
             $email = $event->user->email;
             $ip = request()->ip();
@@ -107,7 +116,7 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
-        // ── Real Email Logging ─────────────────────────────────────────────────────
+        // -- Real Email Logging -----------------------------------------------------
         Event::listen(MessageSent::class, function ($event) {
             $message = $event->message;
             $toAddresses = $message->getTo();
@@ -197,13 +206,17 @@ class AppServiceProvider extends ServiceProvider
 
         // Register Tracer Policies explicitly due to sub-namespace auto-discovery limitation
         Gate::policy(CareerHistory::class, CareerHistoryPolicy::class);
+        Gate::policy(Surat::class, FastSuratPolicy::class);
+        Gate::policy(JenisSurat::class, FastJenisSuratPolicy::class);
+        Gate::policy(SuratCategory::class, FastSuratCategoryPolicy::class);
+        Gate::policy(TemplateGlobalSetting::class, FastTemplateGlobalSettingPolicy::class);
 
-        // ── Pagi Chat Rate Limiting (Flood Prevention) ─────────────────────────
+        // -- Pagi Chat Rate Limiting (Flood Prevention) -------------------------
         RateLimiter::for('pagi-chat-send', function ($request) {
             return Limit::perMinute(30)->by($request->user()->id);
         });
 
-        // ── File Upload Rate Limiting (Flood & DoS Prevention) ─────────────────
+        // -- File Upload Rate Limiting (Flood & DoS Prevention) -----------------
         RateLimiter::for('uploads', function ($request) {
             return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
         });
@@ -227,10 +240,16 @@ class AppServiceProvider extends ServiceProvider
             }
         }
 
-        // ── Activity Log: Auth Events ─────────────────────────────────────────
+        // -- Activity Log: Auth Events -----------------------------------------
         Event::listen(Login::class, function (Login $event) {
+            if (! Schema::hasTable('activity_logs')) {
+                return;
+            }
+
+            $userId = $event->user->getAuthIdentifier();
+
             ActivityLog::create([
-                'user_id' => $event->user->id,
+                'user_id' => $userId,
                 'action' => 'auth.login',
                 'description' => 'Login ke sistem',
                 'ip_address' => request()->ip(),
@@ -238,14 +257,18 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Event::listen(Logout::class, function (Logout $event) {
-            if ($event->user) {
-                ActivityLog::create([
-                    'user_id' => $event->user->id,
-                    'action' => 'auth.logout',
-                    'description' => 'Logout dari sistem',
-                    'ip_address' => request()->ip(),
-                ]);
+            if (! Schema::hasTable('activity_logs')) {
+                return;
             }
+
+            $userId = $event->user->getAuthIdentifier();
+
+            ActivityLog::create([
+                'user_id' => $userId,
+                'action' => 'auth.logout',
+                'description' => 'Logout dari sistem',
+                'ip_address' => request()->ip(),
+            ]);
         });
     }
 

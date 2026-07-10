@@ -1,10 +1,13 @@
 <script setup lang="ts">
 // resources/js/pages/Modules/Fast/Admin/letters/Edit.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
-import SubjectAutocomplete from '@/components/Modules/Fast/Admin/SubjectAutocomplete.vue';
+import { computed } from 'vue';
+import RecipientSelector from '@/components/Modules/Fast/Admin/RecipientSelector.vue';
 import { ChevronLeft, Save, Search, Plus, X, FileEdit } from 'lucide-vue-next';
+type AttachmentColumn = { key: string; label: string; align: 'left' | 'center' | 'right'; bold: boolean };
+type AttachmentRow = Record<string, string>;
 type FieldOption = { label: string; value: string };
 type FieldConfig = {
     name: string;
@@ -37,43 +40,52 @@ type JenisSurat = {
         name?: string | null;
         subject?: string | null;
     } | null;
+    requires_subject_user?: boolean;
     field_config: FieldConfig[];
 };
 type FormData = {
     jenis_surat_id: number;
-    subject_user_id?: number | null;
+    subject_name?: string | null;
     keperluan: string;
     perihal?: string;
     kepada_yth?: string[];
     lampiran_keterangan?: string;
-    data: Record<string, string | boolean | string[]>;
-};
-type SubjectOption = {
-    id: number;
-    name: string;
-    email?: string | null;
-    nomor_induk?: string | null;
-    program_studi?: string | null;
+    lampiran_judul?: string;
+    lampiran_orientation?: string;
+    lampiran_judul_align?: string;
+    lampiran_judul_bold?: string;
+    lampiran_label_no?: string;
+    lampiran_label_nama?: string;
+    lampiran_label_nim?: string;
+    lampiran_label_prodi?: string;
+    lampiran_mode?: string;
+    lampiran_mahasiswa?: Array<{ nama: string; nim: string; prodi: string }>;
+    lampiran_columns?: AttachmentColumn[];
+    lampiran_rows?: AttachmentRow[];
+    data: Record<string, unknown>;
 };
 const props = defineProps<{
-    surat: { id: number; keperluan: string; status: string };
+    surat: {
+        id: number;
+        type: string;
+        keperluan: string;
+        status: string;
+        pemohon?: {
+            id?: number | null;
+            name?: string | null;
+            email?: string | null;
+            nomor_induk?: string | null;
+        } | null;
+    };
     returnTo?: string | null;
     jenisSurat: JenisSurat;
     formData: FormData;
-    subjectOptions: SubjectOption[];
 }>();
-// â”€â”€ Preset Kepada Yth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const defaultPresets = [
-    'Dekan FMIKOM',
-    'Ketua Program Studi Informatika',
-    'Ketua Program Studi Sistem Informasi',
-    'Wakil Dekan Bidang Akademik',
-];
-const consumedFormKeys = ['kepada_yth', 'lampiran_keterangan', 'perihal'] as const;
-// â”€â”€ Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const consumedFormKeys = ['kepada_yth', 'lampiran_keterangan', 'lampiran_judul', 'lampiran_orientation', 'lampiran_judul_align', 'lampiran_judul_bold', 'lampiran_label_no', 'lampiran_label_nama', 'lampiran_label_nim', 'lampiran_label_prodi', 'lampiran_mode', 'lampiran_mahasiswa', 'lampiran_columns', 'lampiran_rows', 'perihal'] as const;
+// Form
 const form = useForm({
     jenis_surat_id: props.formData.jenis_surat_id,
-    subject_user_id: props.formData.subject_user_id ?? '',
+    subject_name: props.formData.subject_name ?? '',
     keperluan: props.formData.keperluan ?? '',
     perihal:
         props.formData.perihal ??
@@ -87,55 +99,75 @@ const form = useForm({
         props.formData.lampiran_keterangan ??
         (props.formData.data.lampiran_keterangan as string | undefined) ??
         '',
+    lampiran_judul:
+        props.formData.lampiran_judul ??
+        (props.formData.data.lampiran_judul as string | undefined) ??
+        '',
+    lampiran_orientation:
+        props.formData.lampiran_orientation ??
+        (props.formData.data.lampiran_orientation as string | undefined) ??
+        'portrait',
+    lampiran_judul_align:
+        props.formData.lampiran_judul_align ??
+        (props.formData.data.lampiran_judul_align as string | undefined) ??
+        'center',
+    lampiran_judul_bold:
+        props.formData.lampiran_judul_bold ??
+        (props.formData.data.lampiran_judul_bold as string | undefined) ??
+        '1',
+    lampiran_label_no:
+        props.formData.lampiran_label_no ??
+        (props.formData.data.lampiran_label_no as string | undefined) ??
+        'No',
+    lampiran_label_nama:
+        props.formData.lampiran_label_nama ??
+        (props.formData.data.lampiran_label_nama as string | undefined) ??
+        'Nama Mahasiswa',
+    lampiran_label_nim:
+        props.formData.lampiran_label_nim ??
+        (props.formData.data.lampiran_label_nim as string | undefined) ??
+        'NIM',
+    lampiran_label_prodi:
+        props.formData.lampiran_label_prodi ??
+        (props.formData.data.lampiran_label_prodi as string | undefined) ??
+        'Program Studi',
+    lampiran_mode:
+        props.formData.lampiran_mode ??
+        (props.formData.data.lampiran_mode as string | undefined) ??
+        'none',
+    lampiran_mahasiswa:
+        props.formData.lampiran_mahasiswa ??
+        (props.formData.data.lampiran_mahasiswa as
+            | Array<{ nama: string; nim: string; prodi: string }>
+            | undefined) ??
+        [],
+    lampiran_columns:
+        props.formData.lampiran_columns ??
+        (props.formData.data.lampiran_columns as AttachmentColumn[] | undefined) ??
+        [
+            { key: 'col_1', label: 'No', align: 'center', bold: true },
+            { key: 'col_2', label: 'Nama Mahasiswa', align: 'left', bold: true },
+            { key: 'col_3', label: 'NIM', align: 'center', bold: true },
+            { key: 'col_4', label: 'Program Studi', align: 'left', bold: true },
+        ],
+    lampiran_rows:
+        props.formData.lampiran_rows ??
+        (props.formData.data.lampiran_rows as AttachmentRow[] | undefined) ??
+        [],
     form_data: { ...props.formData.data } as Record<
         string,
-        string | boolean | string[]
+        unknown
     >,
     return_to: props.returnTo ?? `/admin/surat/${props.surat.id}`,
 });
+const { can } = useFastPermissions();
 function stripConsumedFormKeys() {
     consumedFormKeys.forEach((key) => {
         if (form.form_data[key] !== undefined) delete form.form_data[key];
     });
 }
 stripConsumedFormKeys();
-// â”€â”€ Kepada Yth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const kepadaSearch = ref('');
-const kepadaManual = ref('');
-const showDropdown = ref(false);
-let blurTimer: ReturnType<typeof setTimeout> | null = null;
-const filteredPresets = computed(() =>
-    defaultPresets.filter(
-        (p) =>
-            p.toLowerCase().includes(kepadaSearch.value.toLowerCase()) &&
-            !form.kepada_yth.includes(p),
-    ),
-);
-function onSearchFocus() {
-    showDropdown.value = true;
-}
-function onSearchBlur() {
-    blurTimer = setTimeout(() => {
-        showDropdown.value = false;
-    }, 200);
-}
-function cancelBlur() {
-    if (blurTimer) {
-        clearTimeout(blurTimer);
-        blurTimer = null;
-    }
-}
-function addKepada(value: string) {
-    const v = value.trim();
-    if (v && !form.kepada_yth.includes(v)) form.kepada_yth.push(v);
-    kepadaSearch.value = '';
-    kepadaManual.value = '';
-    showDropdown.value = false;
-}
-function removeKepada(i: number) {
-    form.kepada_yth.splice(i, 1);
-}
-// â”€â”€ Repeatable â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Repeatable
 function addRepeat(name: string) {
     const cur = form.form_data[name];
     if (Array.isArray(cur)) cur.push('');
@@ -145,7 +177,45 @@ function removeRepeat(name: string, i: number) {
     const cur = form.form_data[name];
     if (Array.isArray(cur)) cur.splice(i, 1);
 }
-// â”€â”€ Submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function addStudentAttachmentRow() {
+    form.lampiran_mode = 'student_list';
+    if (!form.lampiran_columns.length) {
+        addAttachmentColumn();
+    }
+    const row: AttachmentRow = {};
+    form.lampiran_columns.forEach((column) => {
+        row[column.key] = '';
+    });
+    form.lampiran_rows.push(row);
+}
+function removeStudentAttachmentRow(index: number) {
+    form.lampiran_rows.splice(index, 1);
+    if (!form.lampiran_rows.length) {
+        form.lampiran_mode = 'none';
+    }
+}
+function addAttachmentColumn() {
+    form.lampiran_mode = 'student_list';
+    const nextKey = `col_${Date.now()}_${form.lampiran_columns.length + 1}`;
+    form.lampiran_columns.push({
+        key: nextKey,
+        label: `Kolom ${form.lampiran_columns.length + 1}`,
+        align: 'left',
+        bold: true,
+    });
+    form.lampiran_rows.forEach((row) => {
+        row[nextKey] = '';
+    });
+}
+function removeAttachmentColumn(index: number) {
+    const column = form.lampiran_columns[index];
+    if (!column) return;
+    form.lampiran_columns.splice(index, 1);
+    form.lampiran_rows.forEach((row) => {
+        delete row[column.key];
+    });
+}
+// Submit
 function submit() {
     // Merge special fields back into form_data before sending
     const payload = buildPayload();
@@ -156,14 +226,31 @@ function submit() {
 function buildPayload() {
     return {
         jenis_surat_id: form.jenis_surat_id,
-        subject_user_id: form.subject_user_id,
+        subject_name: form.subject_name,
         keperluan: form.keperluan,
         perihal: form.perihal,
         form_data: {
             ...form.form_data,
             kepada_yth: form.kepada_yth,
             lampiran_keterangan: form.lampiran_keterangan,
+            lampiran_judul: form.lampiran_judul,
+            lampiran_orientation: form.lampiran_orientation,
+            lampiran_judul_align: form.lampiran_judul_align,
+            lampiran_judul_bold: form.lampiran_judul_bold,
+            lampiran_label_no: form.lampiran_label_no,
+            lampiran_label_nama: form.lampiran_label_nama,
+            lampiran_label_nim: form.lampiran_label_nim,
+            lampiran_label_prodi: form.lampiran_label_prodi,
+            lampiran_mode: form.lampiran_mode,
+            lampiran_mahasiswa: form.lampiran_mahasiswa,
+            lampiran_columns: form.lampiran_columns,
+            lampiran_rows: form.lampiran_rows,
         },
+        lampiran_orientation: form.lampiran_orientation,
+        lampiran_mode: form.lampiran_mode,
+        lampiran_mahasiswa: form.lampiran_mahasiswa,
+        lampiran_columns: form.lampiran_columns,
+        lampiran_rows: form.lampiran_rows,
         return_to: form.return_to,
     };
 }
@@ -185,7 +272,9 @@ const visibleFields = computed(() =>
             !!f && (f.mode_form_pemohon ?? 'editable') !== 'hidden',
     ),
 );
-const selectedSubject = ref<SubjectOption | null>(props.subjectOptions[0] ?? null);
+const requiresSubjectUser = computed(() => !!props.jenisSurat.requires_subject_user);
+const isRequesterSubmission = computed(() => props.surat.type === 'pengajuan');
+const showSubjectSection = computed(() => !isRequesterSubmission.value);
 const isPendingEdit = computed(() => props.surat.status === 'pending');
 const alertTitle = computed(() =>
     isPendingEdit.value
@@ -199,6 +288,14 @@ const alertDescription = computed(() =>
 );
 const submitLabel = computed(() =>
     isPendingEdit.value ? 'Simpan & Validasi' : 'Simpan & Teruskan',
+);
+const infoSubjectLabel = computed(() =>
+    isRequesterSubmission.value ? 'Pemohon' : 'Atas Nama',
+);
+const infoSubjectName = computed(() =>
+    isRequesterSubmission.value
+        ? (props.surat.pemohon?.name ?? 'Belum tersedia')
+        : (form.subject_name || 'Belum diisi'),
 );
 </script>
 <template>
@@ -268,6 +365,7 @@ const submitLabel = computed(() =>
                     </div>
                 </div>
                 <div
+                    v-if="showSubjectSection"
                     class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5"
                 >
                     <h3 class="text-sm font-semibold text-slate-800">
@@ -276,49 +374,29 @@ const submitLabel = computed(() =>
                     <label class="block space-y-1.5">
                         <span class="text-xs font-medium text-slate-700"
                             >Atas Nama
-                            <span class="text-red-500">*</span></span
+                            <span v-if="requiresSubjectUser" class="text-red-500">*</span></span
                         >
-                        <SubjectAutocomplete
-                            v-model="form.subject_user_id"
-                            :initial-options="subjectOptions"
-                            search-url="/admin/surat/subjects/search"
-                            :error="form.errors.subject_user_id"
-                            @select="selectedSubject = $event"
+                        <input
+                            v-model="form.subject_name"
+                            type="text"
+                            class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                            :class="form.errors.subject_name ? 'border-red-300' : ''"
+                            placeholder="Contoh: Ahmad Fauzi"
                         />
                         <p
-                            v-if="form.errors.subject_user_id"
+                            v-if="form.errors.subject_name"
                             class="text-xs text-red-500"
                         >
-                            {{ form.errors.subject_user_id }}
+                            {{ form.errors.subject_name }}
                         </p>
                         <p class="text-xs text-slate-400">
-                            Identitas ini menjadi subjek utama surat yang
-                            diterbitkan oleh admin.
-                        </p>
-                    </label>
-                    <div
-                        v-if="selectedSubject"
-                        class="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs text-slate-700"
-                    >
-                        <p class="font-semibold text-slate-900">
-                            {{ selectedSubject.name }}
-                        </p>
-                        <p v-if="selectedSubject.program_studi" class="mt-0.5">
-                            {{ selectedSubject.program_studi }}
-                        </p>
-                        <p
-                            v-if="
-                                selectedSubject.nomor_induk ||
-                                selectedSubject.email
-                            "
-                            class="mt-0.5 text-slate-500"
-                        >
                             {{
-                                selectedSubject.nomor_induk ||
-                                selectedSubject.email
+                                requiresSubjectUser
+                                    ? 'Isi nama subjek surat secara manual. Nilai ini akan dipakai sebagai identitas atas nama pada dokumen.'
+                                    : 'Kosongkan jika surat ini merupakan surat institusi. Isi hanya bila surat perlu mewakili individu tertentu.'
                             }}
                         </p>
-                    </div>
+                    </label>
                 </div>
                 <!-- Informasi Umum -->
                 <div
@@ -362,7 +440,7 @@ const submitLabel = computed(() =>
                     </label>
                     <label class="block space-y-1.5">
                         <span class="text-xs font-medium text-slate-700"
-                            >Keterangan Lampiran</span
+                            >Lampiran</span
                         >
                         <input
                             v-model="form.lampiran_keterangan"
@@ -370,94 +448,211 @@ const submitLabel = computed(() =>
                             class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
                             placeholder="Contoh: 1 (satu) lembar"
                         />
+                        <p class="text-xs text-slate-400">
+                            Isi keterangan lampiran yang tertulis di surat utama agar ikut tersusun dalam bundle PDF final.
+                        </p>
                     </label>
                 </div>
-                <!-- Kepada Yth -->
-                <div class="rounded-2xl border border-slate-200 bg-white p-5">
-                    <h3 class="mb-1 text-sm font-semibold text-slate-800">
-                        Kepada Yth.
-                    </h3>
-                    <p class="mb-3 text-xs text-slate-400">
-                        Tentukan penerima surat. Bisa pilih dari preset atau
-                        isi manual lebih dari satu tujuan.
-                    </p>
-                    <div
-                        v-if="form.kepada_yth.length > 0"
-                        class="mb-3 flex flex-wrap gap-2"
-                    >
-                        <div
-                            v-for="(k, idx) in form.kepada_yth"
-                            :key="idx"
-                            class="flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1"
-                        >
-                            <span
-                                class="text-xs font-medium text-blue-800"
-                                >{{ k }}</span
-                            >
-                            <button
-                                type="button"
-                                class="fast-btn fast-btn-ghost fast-btn-icon text-blue-500 hover:text-blue-700"
-                                @click="removeKepada(idx)"
-                            >
-                                <X class="size-3" />
-                            </button>
+                <RecipientSelector
+                    v-model="form.kepada_yth"
+                />
+                <div
+                    class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5"
+                >
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <h3 class="text-sm font-semibold text-slate-800">
+                                Lampiran Surat
+                            </h3>
+                            <p class="mt-1 text-xs text-slate-400">
+                                Jika surat ini memiliki lampiran daftar mahasiswa, data lampiran final akan ikut digenerate bersama surat utama.
+                            </p>
                         </div>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                        <div class="relative min-w-[160px] flex-1">
-                            <Search
-                                class="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-slate-400"
-                            />
+                        <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
                             <input
-                                v-model="kepadaSearch"
-                                type="text"
-                                placeholder="Cari preset..."
-                                class="h-9 w-full rounded-xl border border-slate-200 bg-white pr-3 pl-9 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
-                                @focus="onSearchFocus"
-                                @blur="onSearchBlur"
-                                @keyup.enter.prevent="
-                                    kepadaSearch && addKepada(kepadaSearch)
-                                "
+                                v-model="form.lampiran_mode"
+                                type="checkbox"
+                                true-value="student_list"
+                                false-value="none"
+                                class="rounded border-slate-300 text-blue-600"
                             />
-                            <div
-                                v-if="
-                                    showDropdown && filteredPresets.length > 0
-                                "
-                                class="absolute top-full left-0 z-10 mt-1 w-64 rounded-xl border border-slate-200 bg-white shadow-lg"
+                            Lampiran daftar mahasiswa
+                        </label>
+                    </div>
+                    <div
+                        v-if="form.lampiran_mode === 'student_list'"
+                        class="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
+                    >
+                        <label class="block space-y-1.5">
+                            <span class="text-xs font-medium text-slate-700"
+                                >Judul Konten Lampiran</span
                             >
-                                <button
-                                    v-for="p in filteredPresets"
-                                    :key="p"
-                                    type="button"
-                                    class="fast-btn fast-btn-outline flex w-full items-center gap-2 px-3 py-2 text-xs text-slate-700"
-                                    @mousedown.prevent="
-                                        cancelBlur();
-                                        addKepada(p);
-                                    "
+                            <textarea
+                                v-model="form.lampiran_judul"
+                                rows="4"
+                                class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
+                                placeholder="Contoh: DAFTAR NAMA MAHASISWA PESERTA RESPONSI PROGRAM KERJA PRAKTEK KERJA LAPANGAN&#10;FAKULTAS MATEMATIKA DAN ILMU KOMPUTER&#10;UNIVERSITAS NAHDLATUL ULAMA AL GHAZALI [UNUGHA] CILACAP&#10;TAHUN 2025"
+                            />
+                            <p class="text-xs text-slate-500">
+                                Judul ini tampil di tengah di atas tabel lampiran. Satu baris satu kalimat.
+                            </p>
+                        </label>
+                        <div class="grid gap-3 md:grid-cols-[180px_180px_auto]">
+                            <label class="block space-y-1.5">
+                                <span class="text-xs font-medium text-slate-700">Orientasi Lampiran</span>
+                                <select
+                                    v-model="form.lampiran_orientation"
+                                    class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-blue-400"
                                 >
-                                    <Plus
-                                        class="size-3 shrink-0 text-blue-500"
-                                    />
-                                    {{ p }}
+                                    <option value="portrait">Potret</option>
+                                    <option value="landscape">Landscape</option>
+                                </select>
+                            </label>
+                            <label class="block space-y-1.5">
+                                <span class="text-xs font-medium text-slate-700">Posisi Judul</span>
+                                <select
+                                    v-model="form.lampiran_judul_align"
+                                    class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-blue-400"
+                                >
+                                    <option value="left">Kiri</option>
+                                    <option value="center">Tengah</option>
+                                    <option value="right">Kanan</option>
+                                </select>
+                            </label>
+                            <label class="inline-flex items-center gap-2 pt-7 text-sm font-medium text-slate-700">
+                                <input
+                                    v-model="form.lampiran_judul_bold"
+                                    type="checkbox"
+                                    true-value="1"
+                                    false-value="0"
+                                    class="rounded border-slate-300 text-blue-600"
+                                />
+                                Judul tebal
+                            </label>
+                        </div>
+                        <p class="text-xs text-slate-500">
+                            Gunakan `landscape` jika tabel lampiran punya banyak kolom atau isi kolom cukup lebar.
+                        </p>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <p class="text-xs font-medium text-slate-700">Kolom Tabel</p>
+                                <button
+                                    type="button"
+                                    class="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+                                    @click="addAttachmentColumn"
+                                >
+                                    <Plus class="size-3.5" />
+                                    Tambah Kolom
                                 </button>
                             </div>
+                            <div
+                                v-for="(column, index) in form.lampiran_columns"
+                                :key="column.key"
+                                class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-3 md:grid-cols-[1fr_140px_110px_44px]"
+                            >
+                                <label class="block space-y-1.5">
+                                    <span class="text-xs font-medium text-slate-700">Label Kolom {{ index + 1 }}</span>
+                                    <input
+                                        v-model="column.label"
+                                        type="text"
+                                        class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-blue-400"
+                                        :placeholder="`Kolom ${index + 1}`"
+                                    />
+                                </label>
+                                <label class="block space-y-1.5">
+                                    <span class="text-xs font-medium text-slate-700">Alignment</span>
+                                    <select
+                                        v-model="column.align"
+                                        class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-blue-400"
+                                    >
+                                        <option value="left">Kiri</option>
+                                        <option value="center">Tengah</option>
+                                        <option value="right">Kanan</option>
+                                    </select>
+                                </label>
+                                <label class="inline-flex items-center gap-2 pt-7 text-sm font-medium text-slate-700">
+                                    <input
+                                        v-model="column.bold"
+                                        type="checkbox"
+                                        class="rounded border-slate-300 text-blue-600"
+                                    />
+                                    Bold
+                                </label>
+                                <div class="pt-7 text-right">
+                                    <button
+                                        type="button"
+                                        class="text-slate-400 hover:text-red-500"
+                                        @click="removeAttachmentColumn(index)"
+                                    >
+                                        <X class="size-4" />
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <input
-                            v-model="kepadaManual"
-                            type="text"
-                            placeholder="Ketik manual..."
-                            class="h-9 w-44 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-400"
-                            @keyup.enter.prevent="
-                                kepadaManual && addKepada(kepadaManual)
-                            "
-                        />
-                        <button
-                            type="button"
-                            class="fast-btn fast-btn-outline flex h-9 items-center gap-1 px-3 text-xs font-medium text-slate-700"
-                            @click="kepadaManual && addKepada(kepadaManual)"
-                        >
-                            <Plus class="size-3.5" /> Tambah
-                        </button>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                                <thead>
+                                    <tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                        <th
+                                            v-for="column in form.lampiran_columns"
+                                            :key="column.key"
+                                            class="px-3 py-2"
+                                            :class="{
+                                                'text-left': column.align === 'left',
+                                                'text-center': column.align === 'center',
+                                                'text-right': column.align === 'right',
+                                                'font-bold': column.bold,
+                                            }"
+                                        >
+                                            {{ column.label || 'Kolom' }}
+                                        </th>
+                                        <th class="w-12 px-3 py-2"></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200">
+                                    <tr
+                                        v-for="(row, index) in form.lampiran_rows"
+                                        :key="index"
+                                    >
+                                        <td
+                                            v-for="column in form.lampiran_columns"
+                                            :key="column.key"
+                                            class="px-3 py-2"
+                                        >
+                                            <input
+                                                v-model="row[column.key]"
+                                                type="text"
+                                                class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-blue-400"
+                                                :placeholder="column.label || 'Isi nilai'"
+                                            />
+                                        </td>
+                                        <td class="px-3 py-2 text-right">
+                                            <button
+                                                type="button"
+                                                class="text-slate-400 hover:text-red-500"
+                                                @click="removeStudentAttachmentRow(index)"
+                                            >
+                                                <X class="size-4" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <p class="text-xs text-slate-500">
+                                Anda bisa menambah, menghapus, dan mengatur alignment tiap kolom tabel lampiran.
+                            </p>
+                            <button
+                                type="button"
+                                class="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+                                @click="addStudentAttachmentRow"
+                            >
+                                <Plus class="size-3.5" />
+                                Tambah Baris
+                            </button>
+                        </div>
+                        <p v-if="form.errors.lampiran_rows" class="text-xs text-red-500">{{ form.errors.lampiran_rows }}</p>
                     </div>
                 </div>
                 <!-- Field dinamis -->
@@ -784,6 +979,11 @@ const submitLabel = computed(() =>
                         <ChevronLeft class="size-4" /> Kembali
                     </a>
                     <button
+                        v-if="
+                            isPendingEdit
+                                ? can('fast.admin.surat.create')
+                                : can('fast.admin.surat.update')
+                        "
                         type="submit"
                         class="fast-btn fast-btn-primary flex items-center gap-1.5 px-5 py-2 text-sm font-semibold"
                         :disabled="form.processing"
@@ -805,11 +1005,11 @@ const submitLabel = computed(() =>
                     </h3>
                     <div class="space-y-2 text-xs">
                         <div class="flex justify-between gap-3">
-                            <span class="text-slate-400">Atas Nama</span>
+                            <span class="text-slate-400">{{ infoSubjectLabel }}</span>
                             <span
                                 class="max-w-[140px] text-right font-medium text-slate-700"
                                 >{{
-                                    selectedSubject?.name ?? 'Belum dipilih'
+                                    infoSubjectName
                                 }}</span
                             >
                         </div>

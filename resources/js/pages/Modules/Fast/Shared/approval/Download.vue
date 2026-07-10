@@ -15,6 +15,9 @@ type SuratItem = {
     status: string;
     tanggal_selesai?: string | null;
     created_at?: string | null;
+    letter_mode?: string | null;
+    letter_mode_label?: string | null;
+    is_institution?: boolean;
     subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { id?: number | null; nama?: string | null } | null;
     nomor_surat?: string | null;
@@ -28,17 +31,30 @@ type PaginatedSurats = {
     to?: number | null;
     total: number;
 };
-const props = defineProps<{
-    role: { name?: string | null; slug?: string | null };
-    surats: PaginatedSurats;
-    filters: {
-        search?: string;
-        jenis_surat_id?: string;
-        tanggal_mulai?: string;
-        tanggal_akhir?: string;
-    };
-    jenisSuratOptions: Record<string, string>;
-}>();
+const props = withDefaults(
+    defineProps<{
+        role?: { name?: string | null; slug?: string | null };
+        surats?: PaginatedSurats;
+        filters?: {
+            search?: string;
+            jenis_surat_id?: string;
+            tanggal_mulai?: string;
+            tanggal_akhir?: string;
+        };
+        jenisSuratOptions?: Record<string, string>;
+    }>(),
+    {
+        role: () => ({ name: 'Approval', slug: 'dekan' }),
+        surats: () => ({ data: [], links: [], total: 0 }),
+        filters: () => ({
+            search: '',
+            jenis_surat_id: '',
+            tanggal_mulai: '',
+            tanggal_akhir: '',
+        }),
+        jenisSuratOptions: () => ({}),
+    },
+);
 const search = ref(props.filters.search ?? '');
 const jenisSuratId = ref(props.filters.jenis_surat_id ?? '');
 const tanggalMulai = ref(props.filters.tanggal_mulai ?? '');
@@ -83,6 +99,9 @@ function subjectName(item: { subject?: { name?: string | null } | null }) {
 }
 function subjectNim(item: { subject?: { nim?: string | null } | null }) {
     return item.subject?.nim ?? '-';
+}
+function isInstitutionLetter(item: { is_institution?: boolean | null; letter_mode?: string | null }) {
+    return Boolean(item.is_institution) || item.letter_mode === 'institution';
 }
 </script>
 <template>
@@ -213,16 +232,27 @@ function subjectNim(item: { subject?: { nim?: string | null } | null }) {
                             </td>
                             <td class="px-5 py-3.5">
                                 <p class="text-xs font-semibold text-slate-900">
-                                    {{ subjectName(item) }}
+                                    {{
+                                        isInstitutionLetter(item)
+                                            ? 'Surat Institusi'
+                                            : subjectName(item)
+                                    }}
                                 </p>
-                                <p class="font-mono text-[10px] text-slate-400">
-                                    {{ subjectNim(item) }}
+                                <p
+                                    class="text-[10px] text-slate-400"
+                                    :class="isInstitutionLetter(item) ? '' : 'font-mono'"
+                                >
+                                    {{
+                                        isInstitutionLetter(item)
+                                            ? (item.jenisSurat?.nama || '-')
+                                            : subjectNim(item)
+                                    }}
                                 </p>
                             </td>
                             <td
                                 class="max-w-[180px] truncate px-5 py-3.5 text-xs text-slate-600"
                             >
-                                {{ item.jenisSurat?.nama || '-' }}
+                                {{ isInstitutionLetter(item) ? '-' : (item.jenisSurat?.nama || '-') }}
                             </td>
                             <td class="px-5 py-3.5 text-xs text-slate-400">
                                 {{ formatDate(item.tanggal_selesai) }}
@@ -235,9 +265,9 @@ function subjectNim(item: { subject?: { nim?: string | null } | null }) {
                                         v-if="item.download_url"
                                         :href="item.download_url"
                                         target="_blank"
-                                        class="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-100"
+                                        class="fast-btn fast-btn-primary px-3 py-1.5 text-[10px] font-medium"
                                     >
-                                        <Download class="size-3.5" /> Unduh PDF
+                                        <Download class="size-3" /> PDF
                                     </a>
                                     <span v-else class="text-xs text-slate-400"
                                         >Belum tersedia</span

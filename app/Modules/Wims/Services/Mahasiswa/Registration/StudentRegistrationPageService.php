@@ -4,24 +4,37 @@ namespace App\Modules\Wims\Services\Mahasiswa\Registration;
 
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
+use App\Modules\Wims\Services\Mahasiswa\Period\StudentPeriodResolverService;
+use App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportTemplateService;
 use Carbon\Carbon;
 
 class StudentRegistrationPageService
 {
-    public function build(User $user): array
+    public function __construct(
+        private readonly StudentFinalReportTemplateService $studentFinalReportTemplateService,
+        private readonly StudentPeriodResolverService $studentPeriodResolverService,
+    ) {}
+
+    public function build(User $user, ?int $selectedRegistrationId = null): array
     {
+        $registrations = $this->studentPeriodResolverService->resolveRegistrations($user->id);
+        $selectedRegistration = $this->studentPeriodResolverService->resolveSelectedRegistrationFromCollection($registrations, $selectedRegistrationId);
         $latestRegistration = $this->latestRegistration($user->id);
-        $formSource = $latestRegistration?->status === 'revisi' ? $latestRegistration : null;
         $hasCompletedHistory = $this->hasCompletedInternshipHistory($user->id);
+        $formSource = $selectedRegistration?->status === 'revisi' ? $selectedRegistration : null;
+        $periods = $this->studentPeriodResolverService->buildPeriodOptions($registrations, $selectedRegistration?->id);
 
         return [
-            'registration' => $latestRegistration ? $this->transformRegistration($latestRegistration) : null,
+            'registration' => $selectedRegistration ? $this->transformRegistration($selectedRegistration) : null,
+            'selected_period_id' => $selectedRegistration?->id,
+            'periods' => $periods,
             'pageState' => [
-                'can_submit' => $this->canSubmitRegistration($latestRegistration, $hasCompletedHistory),
-                'is_revision' => $latestRegistration?->status === 'revisi',
-                'is_locked' => in_array($latestRegistration?->status, ['pending', 'approved', 'aktif'], true),
                 'completed_once' => $hasCompletedHistory,
+                'can_submit' => $this->canSubmitRegistration($selectedRegistration, $hasCompletedHistory),
+                'is_revision' => $selectedRegistration?->status === 'revisi',
+                'is_locked' => in_array($selectedRegistration?->status, ['pending', 'approved', 'aktif'], true),
             ],
+            'proposal_template' => $this->studentFinalReportTemplateService->buildTemplateCard('proposal', 'wims.registration.proposal-template.download'),
             'formDefaults' => [
                 'tanggal_mulai' => $formSource?->tanggal_mulai?->toDateString(),
                 'tanggal_selesai' => $formSource?->tanggal_selesai?->toDateString(),
@@ -43,9 +56,7 @@ class StudentRegistrationPageService
     public function latestRegistration(int $userId): ?PendaftaranMagang
     {
         return PendaftaranMagang::with('perusahaan')
-            ->forMahasiswa($userId)
-            ->orderByDesc('tanggal_mulai')
-            ->orderByDesc('id')
+            ->latestForMahasiswa($userId)
             ->first();
     }
 
@@ -59,7 +70,7 @@ class StudentRegistrationPageService
             return true;
         }
 
-        return in_array($registration->status, ['revisi', 'rejected'], true);
+        return in_array($registration->status, ['revisi', 'rejected', 'selesai'], true);
     }
 
     public function transformRegistration(PendaftaranMagang $registration): array
@@ -83,6 +94,11 @@ class StudentRegistrationPageService
             ],
             'application_note' => $registration->catatan_pengajuan,
             'revision_note' => $registration->catatan_revisi_admin,
+            'proposal_attachment' => filled($registration->proposal_pkl_path) ? [
+                'exists' => true,
+                'name' => $registration->proposal_pkl_original_name,
+                'uploaded_at' => $registration->proposal_pkl_uploaded_at?->translatedFormat('d M Y H:i'),
+            ] : null,
             'submitted_at' => $registration->created_at?->translatedFormat('d M Y H:i'),
             'updated_at' => $registration->updated_at?->translatedFormat('d M Y H:i'),
         ];

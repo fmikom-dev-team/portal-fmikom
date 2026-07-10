@@ -25,7 +25,10 @@ class AdminAccess
             return redirect('/login');
         }
 
-        $resolvedRole = $this->resolveAllowedRole($user, ['admin', 'super-admin', 'admin-universitas', 'admin-akademik', 'prodi']);
+        $resolvedRole = $this->resolveAllowedRole(
+            $user,
+            ['admin', 'super-admin', 'admin-universitas', 'admin-akademik', 'prodi', 'kaprodi', 'dekan'],
+        );
 
         if (! $resolvedRole) {
             return redirect()->route('dashboard')

@@ -36,6 +36,7 @@ const addQuestion = () => {
         meta: {
             kategori: 'Umum',
             acuan: [],
+            indikator: [],
             acuan_text: '',
             target_table: 'detail_jawabans',
             scale_min: 1,
@@ -75,6 +76,7 @@ const addOption = (qIndex: number) => {
 
     question.opsi_jawabans.push({
         label: 'Opsi ' + (question.opsi_jawabans.length + 1),
+        nilai: 0,
         skor: 0,
     });
 };

@@ -137,6 +137,9 @@ CSS;
         return [
             'template' => $template,
             'html' => $html['full'],
+            'body' => $html['body'],
+            'footer' => $html['footer'],
+            'header' => $html['header'],
             'placeholders' => $placeholderValues,
         ];
     }
@@ -185,6 +188,7 @@ CSS;
         $marginRight = $settings['margin_right'] ?? '15mm';
         $marginBottom = $settings['margin_bottom'] ?? '12mm';
         $marginLeft = $settings['margin_left'] ?? '15mm';
+        $contentWidth = $this->resolveContentWidth((string) $marginLeft, (string) $marginRight);
 
         $fontFamilyKop = SuratKomponenRenderer::fontFamilyStack(
             SuratKomponenRenderer::resolveFontFamily($settings, 'font_family_kop')
@@ -251,14 +255,32 @@ CSS;
                     bottom: calc({$marginBottom} + 1mm);
                     transform: translateX(-50%);
                     box-sizing: border-box;
-                    width: calc(100% - {$marginLeft} - {$marginRight});
+                    width: {$contentWidth};
                     margin-top: 0;
                     break-inside: avoid;
                     page-break-inside: avoid;
                     text-align: center;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
                 }
                 .preview-sheet__footer > * {
                     margin-top: 0;
+                }
+                .preview-sheet__footer p,
+                .preview-sheet__footer div,
+                .preview-sheet__footer table {
+                    margin-left: auto;
+                    margin-right: auto;
+                    text-align: center;
+                }
+                .preview-sheet__digital-note {
+                    width: 100%;
+                    margin: 0 0 0.15mm 0;
+                    font-size: 8.5pt;
+                    line-height: 1.15;
+                    color: #475569;
+                    text-align: center;
                 }
                 .preview-sheet__header,
                 .preview-sheet__header * {
@@ -293,6 +315,34 @@ CSS;
     public function documentStyles(): string
     {
         return self::DOCUMENT_STYLES;
+    }
+
+    protected function resolveContentWidth(string $marginLeft, string $marginRight): string
+    {
+        $left = $this->extractMillimeters($marginLeft, 15.0);
+        $right = $this->extractMillimeters($marginRight, 15.0);
+        $width = max(0.0, 210.0 - $left - $right);
+
+        return rtrim(rtrim(number_format($width, 1, '.', ''), '0'), '.').'mm';
+    }
+
+    protected function extractMillimeters(string $value, float $fallback): float
+    {
+        $trimmed = trim($value);
+
+        if ($trimmed === '') {
+            return $fallback;
+        }
+
+        if (preg_match('/^(\d+(?:\.\d+)?)\s*mm$/i', $trimmed, $matches) === 1) {
+            return (float) $matches[1];
+        }
+
+        if (is_numeric($trimmed)) {
+            return (float) $trimmed;
+        }
+
+        return $fallback;
     }
 
     protected function normalizeTopMargin(string $marginTop): string
@@ -383,6 +433,9 @@ CSS;
         $footer = ! empty(trim((string) ($template->template_footer ?? '')))
             ? $this->replacePlaceholders((string) $template->template_footer, $placeholderValues)
             : SuratKomponenRenderer::renderFooter($settings, $placeholderValues);
+        $digitalValidationNote = ($qrActive && $renderMode === 'pdf')
+            ? '<div class="preview-sheet__digital-note">Dokumen ini telah ditandatangani secara elektronik dan diterbitkan oleh Universitas Nahdlatul Ulama Al Ghazali.</div>'
+            : '';
 
         // return implode("\n", array_filter([$header, $renderedBody, $footer]));
         return [
@@ -392,7 +445,10 @@ CSS;
             'full' => <<<HTML
 <div class="preview-sheet__header">{$header}</div>
 <div class="preview-sheet__body">{$renderedBody}</div>
-<div class="preview-sheet__footer">{$footer}</div>
+<div class="preview-sheet__footer">
+{$digitalValidationNote}
+{$footer}
+</div>
 HTML,
         ];
     }
@@ -423,7 +479,8 @@ HTML,
     public function resolvePlaceholderValues(Surat $surat, SuratTemplate $template): array
     {
         $suratData = $this->extractSuratData($surat);
-        $subjectUser = $surat->subjectUser ?? $surat->pemohon;
+        $subjectUser = $surat->resolvedSubjectUser();
+        $subjectContext = $this->buildManualSubjectContext($suratData, $subjectUser);
         $subjectProgramStudiId = $subjectUser?->program_studi_id;
         $payload = $this->buildImplicitPlaceholderPayload(
             $suratData,
@@ -438,16 +495,7 @@ HTML,
                     'tanggal_selesai' => $surat->tanggal_selesai,
                     'generated_at' => $surat->generated_at,
                 ],
-                'user' => [
-                    'name' => $subjectUser?->name,
-                    'email' => $subjectUser?->email,
-                    'nim_nip' => $subjectUser?->nim_nip,
-                    'nomor_induk' => $subjectUser?->nomor_induk,
-                    'no_telepon' => $subjectUser?->no_telepon,
-                    'programStudi' => [
-                        'nama' => $subjectUser?->programStudi?->nama,
-                    ],
-                ],
+                'user' => $subjectContext,
                 'signer' => $this->resolveSignerContext(
                     $surat->finalApprovalRoleSlug(),
                     $subjectProgramStudiId,
@@ -462,7 +510,7 @@ HTML,
 
             $value = match ($placeholder->source_type) {
                 'surat' => data_get($surat, $sourceKey),
-                'user' => data_get($subjectUser, $sourceKey),
+                'user' => data_get($subjectContext, $sourceKey),
                 'surat_data' => Arr::get($suratData, $sourceKey),
                 'computed' => $this->resolveComputedValue($surat, $suratData, $sourceKey),
                 'system' => $this->resolveSystemValue($sourceKey, $placeholder->default_value),
@@ -669,6 +717,8 @@ HTML,
                 ?? Arr::get($userContext, 'nim_nip'),
             'program_studi' => Arr::get($data, 'program_studi')
                 ?? Arr::get($userContext, 'programStudi.nama'),
+            'fakultas' => Arr::get($data, 'fakultas')
+                ?? Arr::get($userContext, 'programStudi.fakultas.nama'),
             'nama_prodi' => Arr::get($data, 'nama_prodi')
                 ?? Arr::get($data, 'program_studi')
                 ?? Arr::get($userContext, 'programStudi.nama'),
@@ -757,23 +807,25 @@ HTML,
 
     protected function resolveComputedValue(Surat $surat, array $suratData, string $sourceKey): mixed
     {
-        $subjectUser = $surat->subjectUser ?? $surat->pemohon;
+        $subjectUser = $surat->resolvedSubjectUser();
+        $subjectContext = $this->buildManualSubjectContext($suratData, $subjectUser);
         $subjectProgramStudiId = $subjectUser?->program_studi_id;
 
         return match ($sourceKey) {
-            'email_pemohon' => Arr::get($subjectUser, 'email'),
-            'nama_mahasiswa' => Arr::get($subjectUser, 'name'),
-            'nama_dosen' => Arr::get($subjectUser, 'name'),
-            'nim_mahasiswa' => Arr::get($subjectUser, 'nim_nip') ?? Arr::get($subjectUser, 'nomor_induk'),
-            'nip_dosen' => Arr::get($subjectUser, 'nim_nip') ?? Arr::get($subjectUser, 'nomor_induk'),
-            'nomor_induk_mahasiswa' => Arr::get($subjectUser, 'nomor_induk') ?? Arr::get($subjectUser, 'nim_nip'),
-            'nomor_induk_dosen' => Arr::get($subjectUser, 'nomor_induk') ?? Arr::get($subjectUser, 'nim_nip'),
-            'program_studi_mahasiswa' => Arr::get($subjectUser, 'programStudi.nama'),
-            'program_studi_dosen' => Arr::get($subjectUser, 'programStudi.nama'),
-            'nim_pemohon' => Arr::get($subjectUser, 'nim_nip') ?? Arr::get($subjectUser, 'nomor_induk'),
-            'nomor_induk_pemohon' => Arr::get($subjectUser, 'nomor_induk') ?? Arr::get($subjectUser, 'nim_nip'),
-            'program_studi_pemohon' => Arr::get($subjectUser, 'programStudi.nama'),
-            'telepon_pemohon' => Arr::get($subjectUser, 'no_telepon'),
+            'email_pemohon' => Arr::get($subjectContext, 'email'),
+            'nama_mahasiswa' => Arr::get($subjectContext, 'name'),
+            'nama_dosen' => Arr::get($subjectContext, 'name'),
+            'nim_mahasiswa' => Arr::get($subjectContext, 'nim_nip') ?? Arr::get($subjectContext, 'nomor_induk'),
+            'nip_dosen' => Arr::get($subjectContext, 'nim_nip') ?? Arr::get($subjectContext, 'nomor_induk'),
+            'nomor_induk_mahasiswa' => Arr::get($subjectContext, 'nomor_induk') ?? Arr::get($subjectContext, 'nim_nip'),
+            'nomor_induk_dosen' => Arr::get($subjectContext, 'nomor_induk') ?? Arr::get($subjectContext, 'nim_nip'),
+            'program_studi_mahasiswa' => Arr::get($subjectContext, 'programStudi.nama'),
+            'program_studi_dosen' => Arr::get($subjectContext, 'programStudi.nama'),
+            'fakultas' => Arr::get($subjectContext, 'programStudi.fakultas.nama'),
+            'nim_pemohon' => Arr::get($subjectContext, 'nim_nip') ?? Arr::get($subjectContext, 'nomor_induk'),
+            'nomor_induk_pemohon' => Arr::get($subjectContext, 'nomor_induk') ?? Arr::get($subjectContext, 'nim_nip'),
+            'program_studi_pemohon' => Arr::get($subjectContext, 'programStudi.nama'),
+            'telepon_pemohon' => Arr::get($subjectContext, 'no_telepon'),
             'nama_kaprodi' => $this->resolveSignerContext('kaprodi', $subjectProgramStudiId)['name'] ?? null,
             'nip_kaprodi' => $this->resolveSignerContext('kaprodi', $subjectProgramStudiId)['nomor_induk'] ?? null,
             'nomor_induk_kaprodi' => $this->resolveSignerContext('kaprodi', $subjectProgramStudiId)['nomor_induk'] ?? null,
@@ -803,6 +855,37 @@ HTML,
         };
     }
 
+    protected function buildManualSubjectContext(array $suratData, ?User $subjectUser): array
+    {
+        return [
+            'name' => data_get($subjectUser, 'name')
+                ?? Arr::get($suratData, 'subject_name')
+                ?? Arr::get($suratData, 'nama')
+                ?? Arr::get($suratData, 'nama_pemohon')
+                ?? Arr::get($suratData, 'nama_mahasiswa')
+                ?? Arr::get($suratData, 'nama_dosen'),
+            'email' => data_get($subjectUser, 'email') ?? Arr::get($suratData, 'email') ?? Arr::get($suratData, 'email_pemohon'),
+            'nim_nip' => data_get($subjectUser, 'nim_nip')
+                ?? Arr::get($suratData, 'nim')
+                ?? Arr::get($suratData, 'nim_pemohon')
+                ?? Arr::get($suratData, 'nim_mahasiswa'),
+            'nomor_induk' => data_get($subjectUser, 'nomor_induk')
+                ?? Arr::get($suratData, 'nomor_induk')
+                ?? Arr::get($suratData, 'nomor_induk_pemohon')
+                ?? Arr::get($suratData, 'nomor_induk_mahasiswa'),
+            'no_telepon' => data_get($subjectUser, 'no_telepon') ?? Arr::get($suratData, 'telepon_pemohon'),
+            'programStudi' => [
+                'nama' => data_get($subjectUser, 'programStudi.nama')
+                    ?? Arr::get($suratData, 'program_studi')
+                    ?? Arr::get($suratData, 'program_studi_pemohon')
+                    ?? Arr::get($suratData, 'program_studi_mahasiswa'),
+                'fakultas' => [
+                    'nama' => Arr::get($suratData, 'fakultas'),
+                ],
+            ],
+        ];
+    }
+
     /**
      * @param  array<string, mixed>  $data
      * @param  array<string, mixed>  $context
@@ -819,6 +902,7 @@ HTML,
             'nomor_induk_dosen' => Arr::get($context, 'user.nomor_induk') ?? Arr::get($context, 'user.nim_nip'),
             'program_studi_mahasiswa' => Arr::get($context, 'user.programStudi.nama'),
             'program_studi_dosen' => Arr::get($context, 'user.programStudi.nama'),
+            'fakultas' => Arr::get($context, 'user.programStudi.fakultas.nama'),
             'nim_pemohon' => Arr::get($data, 'nim_pemohon') ?? Arr::get($data, 'nim') ?? Arr::get($context, 'user.nim_nip') ?? Arr::get($context, 'user.nomor_induk'),
             'nomor_induk_pemohon' => Arr::get($data, 'nomor_induk_pemohon') ?? Arr::get($data, 'nim') ?? Arr::get($data, 'nik') ?? Arr::get($context, 'user.nomor_induk') ?? Arr::get($context, 'user.nim_nip'),
             'program_studi_pemohon' => Arr::get($data, 'program_studi_pemohon') ?? Arr::get($data, 'program_studi') ?? Arr::get($context, 'user.programStudi.nama'),
@@ -950,11 +1034,11 @@ HTML,
         }
 
         return $cache[$cacheKey] = [
-            'name' => (string) ($signer?->name ?? ''),
-            'email' => (string) ($signer?->email ?? ''),
-            'nomor_induk' => (string) ($signer?->nomor_induk ?? $signer?->nim_nip ?? ''),
+            'name' => (string) data_get($signer, 'name', ''),
+            'email' => (string) data_get($signer, 'email', ''),
+            'nomor_induk' => (string) (data_get($signer, 'nomor_induk') ?? data_get($signer, 'nim_nip') ?? ''),
             'jabatan' => $this->resolveSignerJabatan($approvalRoleSlug),
-            'program_studi' => (string) ($signer?->programStudi?->nama ?? ''),
+            'program_studi' => (string) data_get($signer, 'programStudi.nama', ''),
         ];
     }
 

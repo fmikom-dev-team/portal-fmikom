@@ -8,7 +8,6 @@ import {
     ChevronDown,
     FileText,
     GraduationCap,
-    History,
     LayoutDashboard,
     LogOut,
     Search,
@@ -100,7 +99,6 @@ const navGroups = [
             { label: "Kuesioner",        href: "/trace/admin/questionnaires",      icon: BookOpen,        match: (u: string) => u.startsWith("/trace/admin/questionnaires") },
             { label: "Job & Lowongan",   href: "/trace/admin/jobs",         icon: FileText,    match: (u: string) => u.startsWith("/trace/admin/jobs") },
             { label: "Events",           href: "/trace/admin/events",             icon: Users,           match: (u: string) => u.startsWith("/trace/admin/events") },
-            { label: "Activity Log",     href: "/trace/admin/activity-log", icon: History,         match: (u: string) => u.startsWith("/trace/admin/activity-log") },
         ],
     },
 ];

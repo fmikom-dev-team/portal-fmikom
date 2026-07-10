@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import {
     AlertCircle,
@@ -88,10 +88,20 @@ type AttendanceProps = {
     absence_requests?: AbsenceRequestItem[];
 };
 
+type PeriodOption = {
+    id?: number | string | null;
+    label?: string | null;
+    period_label?: string | null;
+    status_label?: string | null;
+    is_active?: boolean | null;
+};
+
 type PageProps = {
     flash?: FlashProps;
     errors?: Record<string, string | undefined>;
     attendance?: AttendanceProps;
+    periods?: PeriodOption[];
+    selected_period_id?: number | string | null;
 };
 
 const page = usePage<PageProps>();
@@ -1258,8 +1268,7 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
             </section>
-
-            <div v-if="flash.success">
+<div v-if="flash.success">
                 <Alert class="rounded-xl border-emerald-200/60 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300">
                     <CheckCircle2 class="size-4" />
                     <AlertTitle class="text-sm font-semibold">Check-in berhasil</AlertTitle>
@@ -1634,3 +1643,4 @@ onBeforeUnmount(() => {
         </div>
     </div>
 </template>
+

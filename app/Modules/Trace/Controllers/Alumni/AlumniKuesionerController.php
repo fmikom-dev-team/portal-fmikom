@@ -3,17 +3,16 @@
 namespace App\Modules\Trace\Controllers\Alumni;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\Kuesioner;
 use App\Models\Tracer\Response;
 use App\Models\User;
 use App\Modules\Trace\Actions\SubmitKuesionerResponseAction;
 use App\Modules\Trace\Services\AuditLogService;
+use App\Modules\Trace\Services\TraceCacheService;
 use App\Notifications\Trace\KuesionerResponseSubmitted;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
@@ -32,8 +31,9 @@ class AlumniKuesionerController extends Controller
     /**
      * Display list of available questionnaires for the alumni.
      */
-    public function index(): InertiaResponse
+    public function index(Request $request): InertiaResponse
     {
+        $readOnly = (bool) $request->attributes->get('trace_alumni_read_only', false);
         $now = now();
 
         $kuesioners = Kuesioner::whereIn('status', ['active', 'published'])
@@ -63,6 +63,7 @@ class AlumniKuesionerController extends Controller
 
         return Inertia::render('Modules/Trace/Alumni/Quiz', [
             'kuesioners' => $kuesioners,
+            'readOnly' => $readOnly,
         ]);
     }
 
@@ -72,6 +73,7 @@ class AlumniKuesionerController extends Controller
     public function show(int $id): InertiaResponse|RedirectResponse
     {
         try {
+            $readOnly = (bool) request()->attributes->get('trace_alumni_read_only', false);
             $kuesioner = Kuesioner::whereIn('status', ['active', 'published'])
                 ->with([
                     'sections.pertanyaans.opsiJawabans',
@@ -113,6 +115,7 @@ class AlumniKuesionerController extends Controller
                 'kuesioner' => $kuesioner,
                 'hasResponded' => (bool) $response,
                 'existingAnswers' => $existingAnswers,
+                'readOnly' => $readOnly,
             ]);
 
         } catch (ModelNotFoundException $e) {
@@ -121,7 +124,7 @@ class AlumniKuesionerController extends Controller
                 'kuesioner_id' => $id,
             ]);
 
-            return redirect()->route('tracer')->with('error', 'Kuesioner tidak ditemukan.');
+            return redirect()->route('module.trace.kuesioner')->with('error', 'Kuesioner tidak ditemukan.');
         }
     }
 
@@ -130,6 +133,8 @@ class AlumniKuesionerController extends Controller
      */
     public function store(Request $request, int $id): RedirectResponse
     {
+        abort_if($request->attributes->get('trace_alumni_read_only', false), 403, 'Mode alumni untuk admin hanya dapat melihat data.');
+
         $action = new SubmitKuesionerResponseAction;
 
         try {
@@ -163,16 +168,14 @@ class AlumniKuesionerController extends Controller
                 throw $e; // lempar ulang jika bukan duplikat
             }
 
-            // Invalidate analytics cache so admin sees fresh data
-            Cache::forget("kuesioner_analytics_{$kuesioner->id}");
+            TraceCacheService::forgetQuestionnaireCaches($kuesioner->id);
+            TraceCacheService::forgetDashboardCaches(userId: auth()->id());
 
             AuditLogService::log('kuesioner_submitted', 'Response', null, [
                 'kuesioner_id' => $kuesioner->id,
                 'kuesioner_judul' => $kuesioner->judul,
                 'total_answers' => count($answers),
             ]);
-
-            ActivityLog::record('kuesioner.submitted', "Mengisi kuesioner: {$kuesioner->judul}", $kuesioner);
 
             // Notify admins about new kuesioner response
             $totalResponses = Response::where('kuesioner_id', $kuesioner->id)->count();
@@ -190,7 +193,7 @@ class AlumniKuesionerController extends Controller
                 'answer_count' => count($answers),
             ]);
 
-            return redirect()->route('tracer')
+            return redirect()->route('module.trace.kuesioner')
                 ->with('success', 'Kuesioner berhasil dikirim. Terima kasih atas partisipasi Anda!');
 
         } catch (ValidationException $e) {
@@ -232,7 +235,7 @@ class AlumniKuesionerController extends Controller
                 'kuesioner_id' => $kuesioner->id,
             ]);
 
-            return redirect()->route('tracer')->with('error', 'Kuesioner ini belum dibuka.');
+            return redirect()->route('module.trace.kuesioner')->with('error', 'Kuesioner ini belum dibuka.');
         }
 
         if ($kuesioner->date_selesai && $kuesioner->date_selesai < $now) {
@@ -241,7 +244,7 @@ class AlumniKuesionerController extends Controller
                 'kuesioner_id' => $kuesioner->id,
             ]);
 
-            return redirect()->route('tracer')->with('error', 'Kuesioner ini sudah ditutup.');
+            return redirect()->route('module.trace.kuesioner')->with('error', 'Kuesioner ini sudah ditutup.');
         }
 
         return null;

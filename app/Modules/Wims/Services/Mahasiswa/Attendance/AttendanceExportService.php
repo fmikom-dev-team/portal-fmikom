@@ -3,8 +3,8 @@
 namespace App\Modules\Wims\Services\Mahasiswa\Attendance;
 
 use App\Models\Magang\AbsensiMagang;
-use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
+use App\Modules\Wims\Services\Mahasiswa\Period\StudentPeriodResolverService;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -17,23 +17,19 @@ class AttendanceExportService
 {
     public function __construct(
         private readonly AttendanceSyncService $attendanceSyncService,
+        private readonly StudentPeriodResolverService $studentPeriodResolverService,
     ) {}
 
-    public function download(User $user, string $scope): Response
+    public function download(User $user, string $scope, ?int $registrationId = null): Response
     {
         app()->setLocale('id');
         Carbon::setLocale('id');
 
         $student = $user->loadMissing('programStudi');
-        $registrations = PendaftaranMagang::query()
-            ->with([
-                'perusahaan.user',
-                'dosenPembimbing',
-            ])
-            ->forMahasiswa($user->id)
-            ->orderByDesc('tanggal_mulai')
-            ->orderByDesc('id')
-            ->get();
+        $registrations = $this->studentPeriodResolverService->resolveRegistrations($user->id, [
+            'perusahaan.user',
+            'dosenPembimbing',
+        ]);
         $this->attendanceSyncService->syncForRegistrations($registrations);
 
         $attendanceHistoryQuery = AbsensiMagang::query()
@@ -46,17 +42,7 @@ class AttendanceExportService
         $headerRegistration = $registrations->first();
 
         if ($scope === 'current') {
-            $currentRegistration = PendaftaranMagang::query()
-                ->with([
-                    'mahasiswa.programStudi',
-                    'perusahaan.user',
-                    'dosenPembimbing',
-                ])
-                ->forMahasiswa($user->id)
-                ->orderByDesc('tanggal_mulai')
-                ->orderByDesc('id')
-                ->get()
-                ->first(fn (PendaftaranMagang $registration) => $registration->status === 'aktif' || $registration->isPostInternshipPhase());
+            $currentRegistration = $this->studentPeriodResolverService->resolveSelectedRegistrationFromCollection($registrations, $registrationId);
 
             abort_if($currentRegistration === null, 404);
 
@@ -88,11 +74,9 @@ class AttendanceExportService
             ],
             'internship' => [
                 'company' => $headerRegistration?->perusahaan?->nama ?? '-',
-                'period' => $headerRegistration?->tanggal_mulai && $headerRegistration?->tanggal_selesai
-                    ? $headerRegistration->tanggal_mulai->locale('id')->translatedFormat('d M Y').' - '.$headerRegistration->tanggal_selesai->locale('id')->translatedFormat('d M Y')
-                    : '-',
+                'period' => $headerRegistration?->periodLabel() ?? '-',
                 'supervisor_lecturer' => $headerRegistration?->dosenPembimbing?->name ?? '-',
-                'mentor' => $headerRegistration?->perusahaan?->user?->name ?? '-',
+                'mentor' => $headerRegistration?->finalMentor()?->name ?? '-',
             ],
             'rows' => $exportRows,
         ], $fileName);

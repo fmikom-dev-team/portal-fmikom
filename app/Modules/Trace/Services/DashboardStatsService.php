@@ -2,7 +2,6 @@
 
 namespace App\Modules\Trace\Services;
 
-use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\CareerHistory;
 use App\Models\Tracer\Event;
 use App\Models\Tracer\JobListing;
@@ -150,21 +149,6 @@ class DashboardStatsService
         });
 
         // Recent activities are NOT cached — always fresh
-        $recentActivities = ActivityLog::with('user:id,name')
-            ->latest()
-            ->limit(8)
-            ->get()
-            ->map(fn ($log) => [
-                'id' => $log->id,
-                'action' => $log->action,
-                'description' => $log->description,
-                'user_name' => $log->user?->name ?? 'System',
-                'ip_address' => $log->ip_address,
-                'created_at' => $log->created_at->toISOString(),
-            ]);
-
-        $cachedStats['recentActivities'] = $recentActivities;
-
         // Active jobs & events — not cached (real-time)
         $cachedStats['activeJobs'] = JobListing::where('status', 'published')
             ->where(function ($q) {
@@ -189,7 +173,7 @@ class DashboardStatsService
                 'registrations_count' => $e->registrations()->count(),
             ]);
 
-        $cachedStats['pendingJobs'] = JobListing::where('status', 'pending')->count();
+        $cachedStats['pendingJobs'] = JobListing::where('status', 'pending_review')->count();
 
         return $cachedStats;
     }

@@ -34,6 +34,7 @@ class AssessmentShowService
                     'name' => $pendaftaran->perusahaan?->nama,
                 ],
                 'status_pendaftaran' => $pendaftaran->status,
+                'dashboard_phase' => $pendaftaran->isReadyForAssessment(now()) ? 'completed' : ($pendaftaran->status === 'aktif' ? 'active' : 'assigned'),
                 'period_label' => $this->formatPeriodLabel($pendaftaran),
                 'final_report' => $pendaftaran->laporan_akhir_path ? [
                     'name' => $pendaftaran->laporan_akhir_original_name,

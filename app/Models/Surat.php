@@ -7,10 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
+/**
+ * @property string|null $status
+ * @property string|null $nomor_surat
+ * @property string|null $nomor_surat_status
+ * @property string|null $qr_token
+ */
 class Surat extends Model
 {
     public const STATUS_PENDING = 'pending';
@@ -147,6 +154,14 @@ class Surat extends Model
 
     public function resolvedSubjectUser(): ?User
     {
+        if (
+            $this->type === 'surat_keluar' &&
+            $this->created_by !== null &&
+            $this->subject_user_id === null
+        ) {
+            return null;
+        }
+
         return $this->subjectUser ?? $this->pemohon;
     }
 
@@ -156,13 +171,24 @@ class Surat extends Model
     public function serializeSubjectIdentity(): array
     {
         $user = $this->resolvedSubjectUser();
+        $manualSubject = $this->extractManualSubjectIdentity();
+
+        if ($user === null) {
+            return [
+                'id' => null,
+                'name' => Arr::get($manualSubject, 'name'),
+                'nim' => Arr::get($manualSubject, 'nim'),
+                'nomor_induk' => Arr::get($manualSubject, 'nomor_induk'),
+                'email' => Arr::get($manualSubject, 'email'),
+            ];
+        }
 
         return [
-            'id' => $user?->id,
-            'name' => $user?->name,
-            'nim' => $user ? ($user->nim_nip ?? $user->nomor_induk) : null,
-            'nomor_induk' => $user?->nomor_induk,
-            'email' => $user?->email,
+            'id' => $user->id,
+            'name' => $user->name ?? Arr::get($manualSubject, 'name'),
+            'nim' => $user->nim_nip ?? $user->nomor_induk ?? Arr::get($manualSubject, 'nim'),
+            'nomor_induk' => $user->nomor_induk ?? Arr::get($manualSubject, 'nomor_induk'),
+            'email' => $user->email ?? Arr::get($manualSubject, 'email'),
         ];
     }
 
@@ -173,12 +199,63 @@ class Surat extends Model
     {
         $user = $this->pemohon;
 
+        if ($user === null) {
+            return [
+                'id' => null,
+                'name' => null,
+                'nim' => null,
+                'nomor_induk' => null,
+                'email' => null,
+            ];
+        }
+
         return [
-            'id' => $user?->id,
-            'name' => $user?->name,
-            'nim' => $user ? ($user->nim_nip ?? $user->nomor_induk) : null,
-            'nomor_induk' => $user?->nomor_induk,
-            'email' => $user?->email,
+            'id' => $user->id,
+            'name' => $user->name,
+            'nim' => $user->nim_nip ?? $user->nomor_induk,
+            'nomor_induk' => $user->nomor_induk,
+            'email' => $user->email,
+        ];
+    }
+
+    public function resolvedLetterMode(): string
+    {
+        $jenisSurat = $this->jenisSurat;
+        $storedMode = strtolower(trim((string) ($jenisSurat ? $jenisSurat->letter_mode : '')));
+
+        if (in_array($storedMode, ['personal', 'institution'], true)) {
+            return $storedMode;
+        }
+
+        if (
+            $this->type === 'surat_keluar' &&
+            $this->resolvedSubjectUser() === null &&
+            blank($this->extractManualSubjectIdentity()['name'] ?? null)
+        ) {
+            return 'institution';
+        }
+
+        return 'personal';
+    }
+
+    public function letterModeLabel(): string
+    {
+        return $this->resolvedLetterMode() === 'institution'
+            ? 'Surat Institusi'
+            : 'Surat Personal';
+    }
+
+    /**
+     * @return array{mode: string, label: string, is_institution: bool}
+     */
+    public function serializeLetterMode(): array
+    {
+        $mode = $this->resolvedLetterMode();
+
+        return [
+            'mode' => $mode,
+            'label' => $this->letterModeLabel(),
+            'is_institution' => $mode === 'institution',
         ];
     }
 
@@ -445,6 +522,69 @@ class Surat extends Model
 
         return $this->validated_by_admin_id !== null
             || $this->approvalFlows()->where('role', 'admin')->where('status', 'approved')->exists();
+    }
+
+    public function canViewFinalDocumentPreview(): bool
+    {
+        $this->loadMissing('qrCode');
+
+        if ($this->status !== self::STATUS_FINISHED) {
+            return false;
+        }
+
+        $hasValidation = $this->validated_by_admin_id !== null
+            && $this->validated_by_admin_at !== null;
+        $hasFinalApproval = ($this->approved_by_id !== null && $this->approved_at !== null)
+            || $this->approvalFlows()->where('status', 'approved')->exists();
+
+        if (! $hasValidation || ! $hasFinalApproval || blank($this->qr_token)) {
+            return false;
+        }
+
+        $qrCode = $this->qrCode;
+
+        if ($qrCode !== null && data_get($qrCode, 'status') !== SuratQrCode::STATUS_ACTIVE) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @return array{name: string|null, nim: string|null, nomor_induk: string|null, email: string|null}
+     */
+    protected function extractManualSubjectIdentity(): array
+    {
+        $data = [];
+
+        if ($this->relationLoaded('dataEntries')) {
+            $data = $this->dataEntries
+                ->mapWithKeys(fn (SuratData $entry): array => [
+                    $entry->field_name => $entry->field_value,
+                ])
+                ->all();
+        }
+
+        if ($data === [] && filled($this->isi_surat)) {
+            $decoded = json_decode((string) $this->isi_surat, true);
+            $data = is_array($decoded) ? Arr::wrap(Arr::get($decoded, 'data', [])) : [];
+        }
+
+        return [
+            'name' => Arr::get($data, 'subject_name')
+                ?? Arr::get($data, 'nama')
+                ?? Arr::get($data, 'nama_pemohon')
+                ?? Arr::get($data, 'nama_mahasiswa')
+                ?? Arr::get($data, 'nama_dosen'),
+            'nim' => Arr::get($data, 'nim')
+                ?? Arr::get($data, 'nim_pemohon')
+                ?? Arr::get($data, 'nim_mahasiswa'),
+            'nomor_induk' => Arr::get($data, 'nomor_induk')
+                ?? Arr::get($data, 'nomor_induk_pemohon')
+                ?? Arr::get($data, 'nomor_induk_mahasiswa'),
+            'email' => Arr::get($data, 'email')
+                ?? Arr::get($data, 'email_pemohon'),
+        ];
     }
 
     public function hasIncompleteCampusData(): bool

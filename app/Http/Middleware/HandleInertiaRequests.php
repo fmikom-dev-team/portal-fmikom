@@ -9,6 +9,8 @@ use App\Models\Portal\PortalMenu;
 use App\Models\Portal\PortalPost;
 use App\Models\Portal\PortalSetting;
 use App\Models\Surat;
+use App\Modules\Fast\Services\Shared\NotificationFeedService;
+use App\Modules\Fast\Support\FastPermissionCatalog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -36,6 +38,16 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+        $activeModule = strtoupper((string) $request->attributes->get('resolved_module', session('active_module', '')));
+        $routeRole = strtolower((string) ($request->segment(1) ?? ''));
+        $activeRole = strtolower((string) $request->attributes->get(
+            'resolved_role',
+            session('active_role', $routeRole ?: ($user?->userTypeSlug() ?? '')),
+        ));
+
+        if ($activeModule !== 'FAST' && in_array($routeRole, ['admin', 'kaprodi', 'dekan', 'mahasiswa', 'dosen'], true)) {
+            $activeModule = 'FAST';
+        }
 
         // Auto-prune notifications older than 3 months (run ~1% of requests to keep performance)
         if ($user && rand(1, 100) === 1) {
@@ -66,37 +78,41 @@ class HandleInertiaRequests extends Middleware
                 'import_errors' => fn () => $request->session()->get('import_errors'),
             ],
             'auth' => [
-                // ⚠️ KEAMANAN: HANYA field yang dibutuhkan UI yang dibagikan ke frontend.
+                // SECURITY: Only UI-safe fields are shared to the frontend.
                 // Field sensitif (password, two_factor_secret, otp_code, dll) DILARANG di sini.
                 'user' => $user ? (new UserResource($user))->resolve() : null,
                 'session_lifetime' => (int) config('session.lifetime') * 60 * 1000,
             ],
+            'fast_permissions' => $user ? $this->fastPermissions($request) : [],
             'unread_messages_count' => $user
-                // BUG-013: Cache per-user unread count — was firing DB query on every Inertia request.
+                // BUG-013: Cache per-user unread count to avoid a query on every Inertia request.
                 // 30-second TTL is short enough for near-real-time feel, eliminates 90% of queries.
-                ? Cache::remember("unread_msg_count_{$user->id}", 30, fn () => PagiMessage::where('receiver_id', $user->id)->whereNull('read_at')->count()
-                )
+                ? Cache::remember("unread_msg_count_{$user->id}", 30, fn () => PagiMessage::where('receiver_id', $user->id)->whereNull('read_at')->count())
                 : 0,
             'unread_notifications_count' => $user
-                ? Cache::remember("unread_notif_count_{$user->id}_".session('active_role', ''), 30, function () use ($user) {
-                    $activeRole = strtolower(session('active_role', ''));
-                    $activeModule = strtoupper(session('active_module', ''));
+                ? Cache::remember("unread_notif_count_{$user->id}_{$activeRole}", 30, function () use ($user, $activeModule, $activeRole) {
                     $query = $user->unreadNotifications();
 
                     if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
                         $query->whereNotIn('data->type', ['like', 'comment', 'follow', 'collaboration']);
                     }
 
+                    if ($activeModule === 'TRACE') {
+                        $query->where('data->href', 'like', '/trace%');
+                    }
+
                     return $query->count();
                 })
                 : 0,
-            'recent_notifications' => $user ? fn () => Cache::remember("recent_notifs_{$user->id}_".session('active_role', ''), 30, function () use ($user) {
-                $activeRole = strtolower(session('active_role', ''));
-                $activeModule = strtoupper(session('active_module', ''));
+            'recent_notifications' => $user ? fn () => Cache::remember("recent_notifs_{$user->id}_{$activeRole}", 30, function () use ($user, $activeModule, $activeRole) {
                 $query = $user->notifications()->latest();
 
                 if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
                     $query->whereNotIn('data->type', ['like', 'comment', 'follow', 'collaboration']);
+                }
+
+                if ($activeModule === 'TRACE') {
+                    $query->where('data->href', 'like', '/trace%');
                 }
 
                 $notifs = $query->limit(30)->get();
@@ -115,21 +131,22 @@ class HandleInertiaRequests extends Middleware
                     'portfolio_id' => $n->data['portfolio_id'] ?? null,
                 ])->values()->toArray();
             }) : [],
+            'notifications' => $user ? fn () => $this->fastNotifications($request, $user) : null,
 
             // Bagikan active context ke semua Vue component via usePage().props.context
             // Digunakan untuk menampilkan badge modul/role aktif di navbar, sidebar, dll.
             'context' => $user ? [
-                'active_module' => session('active_module'),
-                'active_role' => session('active_role'),
+                'active_module' => $activeModule,
+                'active_role' => $activeRole,
             ] : null,
+            'selected_period_id' => fn () => $this->resolveWimsSelectedPeriodId($request),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'pending_comments_count' => fn () => ($user && ($user->isAdmin() || $user->isSuperAdmin()))
-                // BUG-013: Cache admin-only pending comments count
                 ? Cache::remember('pending_comments_count', 30, fn () => PortalComment::where('status', 'pending')->count())
                 : 0,
             'notif_count_pending_admin' => $user ? $this->fastPendingAdminCount() : 0,
             'notif_count_revision_admin' => $user ? $this->fastRevisionAdminCount() : 0,
-            'nav_counts' => $user ? $this->fastNavCounts() : [
+            'nav_counts' => $user ? $this->fastNavCounts($request) : [
                 'admin_queue' => 0,
                 'approval_queue' => 0,
             ],
@@ -160,6 +177,34 @@ class HandleInertiaRequests extends Middleware
         ];
     }
 
+    private function resolveWimsSelectedPeriodId(Request $request): ?int
+    {
+        if (! $request->is('wims*')) {
+            return null;
+        }
+
+        $queryValue = $request->query('pendaftaran');
+        if ($queryValue !== null && $queryValue !== '') {
+            $selectedId = (int) $queryValue;
+
+            if ($selectedId > 0 && $request->hasSession()) {
+                $request->session()->put('wims.selected_pendaftaran_id', $selectedId);
+            }
+
+            return $selectedId > 0 ? $selectedId : null;
+        }
+
+        if ($request->hasSession()) {
+            $storedValue = $request->session()->get('wims.selected_pendaftaran_id');
+
+            return is_numeric($storedValue) && (int) $storedValue > 0
+                ? (int) $storedValue
+                : null;
+        }
+
+        return null;
+    }
+
     protected function fastPendingAdminCount(): int
     {
         return Cache::remember('notif_count_pending_admin', 30, fn () => Surat::query()
@@ -177,12 +222,42 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
+     * @return array{count: int, items: array<int, array<string, mixed>>}|null
+     */
+    protected function fastNotifications(Request $request, $user): ?array
+    {
+        $activeModule = strtoupper((string) $request->attributes->get('resolved_module', session('active_module', '')));
+        $routeRole = strtolower((string) ($request->segment(1) ?? ''));
+
+        if ($activeModule !== 'FAST' && in_array($routeRole, ['admin', 'kaprodi', 'dekan', 'mahasiswa', 'dosen'], true)) {
+            $activeModule = 'FAST';
+        }
+
+        if ($activeModule !== 'FAST') {
+            return null;
+        }
+
+        $activeRole = strtolower((string) $request->attributes->get('resolved_role', session('active_role', $routeRole ?: ($user->userTypeSlug() ?? ''))));
+
+        return Cache::remember(
+            "fast_notifications_{$user->id}_{$activeRole}",
+            30,
+            fn () => app(NotificationFeedService::class)->build($user, $activeRole),
+        );
+    }
+
+    /**
      * @return array{admin_queue: int, approval_queue: int}
      */
-    protected function fastNavCounts(): array
+    protected function fastNavCounts(Request $request): array
     {
         $activeModule = strtoupper((string) session('active_module', ''));
-        $activeRole = strtolower((string) session('active_role', ''));
+        $routeRole = strtolower((string) ($request->segment(1) ?? ''));
+        $activeRole = strtolower((string) $request->attributes->get('resolved_role', session('active_role', $routeRole)));
+
+        if ($activeModule !== 'FAST' && in_array($routeRole, ['dekan', 'kaprodi'], true)) {
+            $activeModule = 'FAST';
+        }
 
         if ($activeModule !== 'FAST') {
             return [
@@ -192,16 +267,49 @@ class HandleInertiaRequests extends Middleware
         }
 
         $approvalQueueCount = in_array($activeRole, ['kaprodi', 'dekan'], true)
-            ? Cache::remember("notif_count_approval_queue_{$activeRole}", 30, fn () => Surat::query()
-                ->where('type', 'pengajuan')
+            ? Surat::query()
                 ->where('status', Surat::STATUS_VALIDATED_ADMIN)
-                ->whereHas('jenisSurat.approvalRole', fn ($roleQuery) => $roleQuery->where('slug', $activeRole))
-                ->count())
+                ->whereHas('jenisSurat.approvalRole', function ($roleQuery) use ($activeRole): void {
+                    $roleQuery
+                        ->where('slug', 'like', "%{$activeRole}%")
+                        ->orWhere('nama', 'like', "%{$activeRole}%");
+                })
+                ->count()
             : 0;
 
         return [
             'admin_queue' => $this->fastPendingAdminCount(),
             'approval_queue' => $approvalQueueCount,
         ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function fastPermissions(Request $request): array
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return [];
+        }
+
+        $activeModule = strtoupper((string) $request->attributes->get('resolved_module', session('active_module', '')));
+        $routeRole = strtolower((string) ($request->segment(1) ?? ''));
+        $activeRole = strtolower((string) $request->attributes->get('resolved_role', session('active_role', $routeRole ?: ($user->userTypeSlug() ?? ''))));
+
+        if ($activeModule !== 'FAST' && in_array($routeRole, ['admin', 'kaprodi', 'dekan', 'mahasiswa', 'dosen'], true)) {
+            $activeModule = 'FAST';
+        }
+
+        if ($activeModule !== 'FAST') {
+            return [];
+        }
+
+        return Cache::remember(
+            "fast_permissions_{$user->id}_{$activeRole}",
+            60,
+            fn () => FastPermissionCatalog::permissionsForUser($user, $activeRole),
+        );
     }
 }

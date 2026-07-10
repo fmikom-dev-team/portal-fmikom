@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, ref } from 'vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import StudentLayout from '@/layouts/Modules/Wims/Mahasiswa/Layout.vue';
@@ -12,9 +12,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import {
-    Activity,
     Award,
-    BriefcaseBusiness,
     CheckCircle2,
     ClipboardCheck,
     Clock,
@@ -138,9 +136,20 @@ const props = withDefaults(
             attendance?: AttendanceHistoryItem[];
             logbook?: LogbookHistoryItem[];
         };
-        currentPeriodHistoryDownloadUrl?: string | null;
+currentPeriodHistoryDownloadUrl?: string | null;
         currentPeriodLogbookDownloadUrl?: string | null;
+        final_report_template?: {
+            id?: number | string;
+            title?: string | null;
+            description?: string | null;
+            original_name?: string | null;
+            mime_type?: string | null;
+            updated_at?: string | null;
+            download_url?: string | null;
+        } | null;
         activityLogs?: ActivityLog[];
+        periods?: PeriodOption[];
+        selected_period_id?: number | string | null;
     }>(),
     {
         registration: null,
@@ -174,6 +183,18 @@ const props = withDefaults(
 );
 
 const page = usePage<PageProps>();
+const selectedPeriodId = computed(() => (props.selected_period_id != null ? String(props.selected_period_id) : ''));
+
+const withSelectedPeriod = (href: string) => {
+    if (!selectedPeriodId.value) {
+        return href;
+    }
+
+    const url = new URL(href, window.location.origin);
+    url.searchParams.set('pendaftaran', selectedPeriodId.value);
+    return url.pathname + url.search + url.hash;
+};
+
 const reportForm = useForm({
     laporan_akhir: null as File | null,
 });
@@ -182,7 +203,7 @@ const reportForm = useForm({
 const isDragging = ref(false);
 const filePreview = ref<{ name: string; size: string; type: string } | null>(null);
 
-const registrationHref = computed(() => wimsRoutes.registration().url);
+const registrationHref = computed(() => withSelectedPeriod(wimsRoutes.registration().url));
 const progressPercentage = computed(() =>
     Number(props.internship.progress_percentage ?? 0),
 );
@@ -283,15 +304,15 @@ const timelineSteps = computed(() => [
 const checklistItems = computed(() => [
     {
         label: 'Dosen pembimbing sudah ditetapkan',
-        done: Boolean(props.registration?.lecturer?.name),
+        done: isAssignmentConfirmed.value && Boolean(props.registration?.lecturer?.name),
     },
     {
         label: 'Pembimbing lapangan mitra sudah ditetapkan',
-        done: Boolean(props.registration?.mentor?.name),
+        done: isAssignmentConfirmed.value && Boolean(props.registration?.mentor?.name),
     },
     {
-        label: 'Periode PKL telah selesai',
-        done: props.pageState === 'completed',
+        label: 'Laporan akhir siap dinilai',
+        done: Boolean(props.registration?.laporan_akhir),
     },
     {
         label: 'Dokumen laporan akhir sudah diunggah',
@@ -300,6 +321,10 @@ const checklistItems = computed(() => [
     {
         label: 'Penilaian dosen sudah dikirim',
         done: props.evaluation?.dosen_score !== null && props.evaluation?.dosen_score !== undefined,
+    },
+    {
+        label: 'Penilaian mitra sudah dikirim',
+        done: props.evaluation?.mitra_score !== null && props.evaluation?.mitra_score !== undefined,
     },
 ]);
 
@@ -324,6 +349,10 @@ const lecturerLabel = computed(
 );
 const mentorLabel = computed(
     () => props.registration?.mentor?.name ?? 'Belum ditetapkan',
+);
+
+const isAssignmentConfirmed = computed(() =>
+    ['approved', 'aktif', 'selesai'].includes(props.registration?.status ?? ''),
 );
 
 // --- FITUR 5: Konversi Nilai ke Huruf -----------------------------------------
@@ -486,22 +515,6 @@ const logbookStatusClass = (value?: string | null) => {
 
     return 'border-blue-200 bg-blue-50 text-blue-700';
 };
-
-// --- FITUR 6: Icon & warna untuk riwayat aktivitas ----------------------------
-const activityIconMap = {
-    upload: Upload,
-    penilaian: Star,
-    status: CheckCircle2,
-    logbook: NotebookPen,
-};
-
-const activityColorMap: Record<string, string> = {
-    upload: 'bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-100',
-    penilaian: 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-100',
-    status: 'bg-violet-50 dark:bg-violet-500/15 text-violet-600 dark:text-violet-400 border-violet-100',
-    logbook: 'bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-100',
-};
-
 // --- NEW ELEMENT: PKL Completion Score ---------------------------------------
 const completionScore = computed(() => {
     const logbookPercent = Math.min(100, Math.round(((props.internship?.total_logbook_entries ?? 0) / Math.max(1, props.internship?.completed_days ?? 1)) * 100));
@@ -560,9 +573,11 @@ const completionScore = computed(() => {
                             <p class="mt-2 text-[13px] leading-relaxed text-white/78 dark:text-white/70 sm:text-sm">
                                 {{
                                     props.pageState === 'completed'
-                                        ? 'Periode PKL telah selesai. Pantau status laporan akhir dan status penilaian.'
+                                        ? props.registration?.laporan_akhir
+                                            ? 'Laporan akhir sudah diunggah. Pantau penilaian dari dosen dan mitra.'
+                                            : 'Fase akhir PKL sudah dibuka. Unggah laporan akhir untuk memulai penilaian dari dosen dan mitra.'
                                         : props.pageState === 'active'
-                                          ? 'Laporan akhir akan diproses setelah periode PKL selesai.'
+                                          ? 'Laporan akhir akan diproses setelah dokumen final diunggah.'
                                           : props.pageState === 'waiting'
                                             ? 'Modul laporan akhir akan aktif setelah penempatan PKL resmi berjalan.'
                                             : 'Mulai proses PKL terlebih dahulu agar modul laporan akhir dapat digunakan.'
@@ -583,8 +598,7 @@ const completionScore = computed(() => {
                     </div>
                 </div>
             </section>
-
-            <!-- Flash -->
+<!-- Flash -->
             <div v-if="flash.success" class="flex items-start gap-3 rounded-xl border border-emerald-200/60 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10 px-4 py-3">
                 <CheckCircle2 class="mt-0.5 size-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
                 <div>
@@ -592,9 +606,34 @@ const completionScore = computed(() => {
                     <p class="mt-0.5 text-xs leading-relaxed text-emerald-700 dark:text-emerald-400">{{ flash.success }}</p>
                 </div>
             </div>
+            <div v-if="props.final_report_template" class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-blue-200/40 dark:border-blue-500/20 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                <div class="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                    <div class="flex min-w-0 items-start gap-3">
+                        <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400">
+                            <FileText class="size-5" />
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-bold text-wims-text">
+                                Template Laporan Akhir
+                            </p>
+                            <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                Sudah punya template laporan akhir?
+                            </p>
+                        </div>
+                    </div>
+                    <a
+                        v-if="props.final_report_template.download_url"
+                        :href="props.final_report_template.download_url"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-blue-200/60 bg-wims-card px-4 py-2.5 text-sm font-semibold text-blue-600 dark:text-blue-400 dark:border-blue-500/30 transition hover:bg-blue-50 dark:hover:bg-blue-500/10 sm:w-auto"
+                    >
+                        <Download class="size-4" />
+                        Download
+                    </a>
+                </div>
+            </div>
 
             <!-- Timeline Status PKL -->
-            <div class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+            <div class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-blue-200/40 dark:border-blue-500/20 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
                 <div class="border-b border-wims-border/50 px-5 py-4 sm:px-6">
                     <div class="flex items-center gap-3">
                         <div class="flex size-9 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-500/15 text-violet-600 dark:text-violet-400">
@@ -646,7 +685,7 @@ const completionScore = computed(() => {
             </div>
 
             <!-- NEW ELEMENT: PKL Completion Score -->
-            <div v-if="props.pageState === 'active' || props.pageState === 'completed'" class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+            <div v-if="props.pageState === 'active' || props.pageState === 'completed'" class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-blue-200/40 dark:border-blue-500/20 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
                 <div class="px-5 py-5 sm:px-6">
                     <div class="flex items-center gap-3 mb-4">
                         <div class="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-md shadow-blue-500/20">
@@ -682,7 +721,7 @@ const completionScore = computed(() => {
                     <!-- not_registered -->
                     <div
                         v-if="props.pageState === 'not_registered'"
-                        class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+                        class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-blue-200/40 dark:border-blue-500/20 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
                     >
                         <div class="space-y-4 px-5 py-5 sm:px-6">
                             <div>
@@ -705,13 +744,13 @@ const completionScore = computed(() => {
                     <!-- waiting -->
                     <div
                         v-else-if="props.pageState === 'waiting'"
-                        class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+                        class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-blue-200/40 dark:border-blue-500/20 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
                     >
                         <div class="space-y-4 px-5 py-5 sm:px-6">
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div>
                                     <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Status Pendaftaran</p>
-                                    <h2 class="mt-2 text-xl font-bold tracking-tight text-wims-text sm:text-2xl">
+                                    <h2 class="mt-2 text-sm font-bold tracking-tight text-wims-text">
                                         {{ statusLabel }}
                                     </h2>
                                 </div>
@@ -747,13 +786,13 @@ const completionScore = computed(() => {
                     <!-- active -->
                     <div
                         v-else-if="props.pageState === 'active'"
-                        class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+                        class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-blue-200/40 dark:border-blue-500/20 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
                     >
                         <div class="space-y-4 px-5 py-5 sm:px-6">
                             <div class="flex items-center justify-between gap-4">
                                 <div>
                                     <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Fase Berjalan</p>
-                                    <h2 class="mt-2 text-xl font-bold tracking-tight text-wims-text sm:text-2xl">
+                                    <h2 class="mt-2 text-sm font-bold tracking-tight text-wims-text">
                                         PKL Sedang Aktif
                                     </h2>
                                 </div>
@@ -784,16 +823,16 @@ const completionScore = computed(() => {
                         </div>
                     </div>
 
-                    <!-- completed — Drag & Drop File -->
+                    <!-- completed - Drag & Drop File -->
                     <div
                         v-else
-                        class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+                        class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-blue-200/40 dark:border-blue-500/20 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
                     >
                         <div class="space-y-4 px-5 py-5 sm:px-6">
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div>
                                     <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Fase Penutupan</p>
-                                    <h2 class="mt-2 text-xl font-bold tracking-tight text-wims-text sm:text-2xl">
+                                    <h2 class="mt-2 text-sm font-bold tracking-tight text-wims-text">
                                         Laporan dan Penilaian Akhir
                                     </h2>
                                 </div>
@@ -817,9 +856,7 @@ const completionScore = computed(() => {
                                 </div>
                             </div>
 
-                            <div class="rounded-xl border border-blue-200/60 bg-blue-50 dark:border-blue-500/30 dark:bg-blue-500/10 px-4 py-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
-                                Fase akhir PKL sudah dibuka. Unggah dokumen laporan akhir dalam format PDF atau Word, lalu pantau status penilaian pada panel sebelah kanan.
-                            </div>
+
 
                             <!-- File Upload Section -->
                             <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-4">
@@ -939,7 +976,7 @@ const completionScore = computed(() => {
                     <!-- Dokumen & Rekap PKL -->
                     <div
                         v-if="hasCurrentPeriodHistoryDownload || hasCurrentPeriodLogbookDownload"
-                        class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+                        class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-blue-200/40 dark:border-blue-500/20 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
                     >
                         <div class="border-b border-wims-border/50 px-5 py-4 sm:px-6">
                             <div class="flex items-center gap-3">
@@ -957,7 +994,7 @@ const completionScore = computed(() => {
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="min-w-0 flex-1">
                                         <p class="text-sm font-bold text-wims-text">Riwayat Presensi</p>
-                                        <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Lihat seluruh presensi periode PKL ini dalam popup, lalu unduh bila diperlukan.</p>
+
                                     </div>
                                     <div class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
                                         <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -995,7 +1032,7 @@ const completionScore = computed(() => {
                                 <div class="flex items-center justify-between gap-3">
                                     <div class="min-w-0 flex-1">
                                         <p class="text-sm font-bold text-wims-text">Logbook PKL</p>
-                                        <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Lihat seluruh entri logbook periode PKL ini dalam popup, lalu unduh rekapnya.</p>
+
                                     </div>
                                     <div class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-500/15 text-violet-600 dark:text-violet-400">
                                         <NotebookPen class="size-4" />
@@ -1026,101 +1063,6 @@ const completionScore = computed(() => {
                         </div>
                     </div>
 
-                    <!-- Statistik Kehadiran & Logbook -->
-                    <div
-                        v-if="props.pageState === 'active' || props.pageState === 'completed'"
-                        class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
-                    >
-                        <div class="border-b border-wims-border/50 px-5 py-4 sm:px-6">
-                            <div class="flex items-center gap-3">
-                                <div class="flex size-9 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-500/15 text-sky-600 dark:text-sky-400">
-                                    <ClipboardCheck class="size-4" />
-                                </div>
-                                <div>
-                                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Rekap Magang</p>
-                                    <p class="text-sm font-bold text-wims-text">Statistik Kehadiran & Logbook</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="px-5 py-4 sm:px-6">
-                            <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-                                <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-3 py-3 text-center">
-                                    <p class="text-xl font-bold text-wims-text">{{ props.internship?.total_hadir ?? '—' }}</p>
-                                    <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Hadir</p>
-                                </div>
-                                <div class="rounded-xl border border-amber-200/60 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10 px-3 py-3 text-center">
-                                    <p class="text-xl font-bold text-amber-700 dark:text-amber-300">{{ props.internship?.total_izin ?? '—' }}</p>
-                                    <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">Izin</p>
-                                </div>
-                                <div class="rounded-xl border border-rose-200/60 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/10 px-3 py-3 text-center">
-                                    <p class="text-xl font-bold text-rose-700 dark:text-rose-300">{{ props.internship?.total_sakit ?? '—' }}</p>
-                                    <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-600 dark:text-rose-400">Sakit</p>
-                                </div>
-                                <div class="rounded-xl border border-violet-200/60 bg-violet-50 dark:border-violet-500/30 dark:bg-violet-500/10 px-3 py-3 text-center">
-                                    <p class="text-xl font-bold text-violet-700 dark:text-violet-300">{{ props.internship?.total_logbook_entries ?? '—' }}</p>
-                                    <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-600 dark:text-violet-400">Logbook</p>
-                                </div>
-                            </div>
-                            <div class="mt-3 rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-2.5">
-                                <div class="flex flex-col items-center gap-1 text-center text-xs text-slate-500 dark:text-slate-400 sm:flex-row sm:justify-center sm:gap-2">
-                                    <p>
-                                        Total hari kerja:
-                                        <span class="font-bold text-wims-text">
-                                            {{ props.internship?.completed_days ?? 0 }} / {{ props.internship?.total_days ?? 0 }} hari
-                                        </span>
-                                    </p>
-                                    <p>
-                                        Sisa:
-                                        <span class="font-bold text-blue-600 dark:text-blue-400">
-                                            {{ props.internship?.remaining_days ?? 0 }} hari
-                                        </span>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Riwayat Aktivitas -->
-                    <div class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                        <div class="border-b border-wims-border/50 px-5 py-4 sm:px-6">
-                            <div class="flex items-center gap-3">
-                                <div class="flex size-9 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400">
-                                    <Activity class="size-4" />
-                                </div>
-                                <div>
-                                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Log</p>
-                                    <p class="text-sm font-bold text-wims-text">Riwayat Aktivitas</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="px-5 py-4 sm:px-6">
-                            <div v-if="props.activityLogs && props.activityLogs.length > 0" class="relative space-y-0">
-                                <div class="absolute top-2 bottom-2 left-4 w-px bg-slate-100 dark:bg-slate-700/50" />
-                                <div
-                                    v-for="(log, idx) in props.activityLogs"
-                                    :key="idx"
-                                    class="relative flex gap-3 pb-4 last:pb-0"
-                                >
-                                    <div
-                                        class="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full border"
-                                        :class="activityColorMap[log.type]"
-                                    >
-                                        <component :is="activityIconMap[log.type]" class="size-3.5" />
-                                    </div>
-                                    <div class="min-w-0 pt-1">
-                                        <p class="break-words text-sm font-bold text-wims-text">{{ log.label }}</p>
-                                        <p class="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{{ log.timestamp }}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div v-else class="rounded-xl border border-dashed border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-5 text-center">
-                                <p class="text-sm font-bold text-wims-text">Belum ada aktivitas</p>
-                                <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">Aktivitas terkait laporan akan muncul di sini.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
 
                 <Dialog v-model:open="attendanceHistoryDialogOpen">
                     <DialogContent class="w-full max-w-[calc(100vw-2rem)] rounded-2xl border border-wims-border bg-wims-card sm:max-w-4xl">
@@ -1262,70 +1204,12 @@ const completionScore = computed(() => {
                     </DialogContent>
                 </Dialog>
 
-                <!-- Right Column -->
-                <div class="min-w-0 space-y-4">
-
-                    <!-- Data Penempatan -->
-                    <div class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                        <div class="border-b border-wims-border/50 px-5 py-4 sm:px-6">
-                            <div class="flex items-center gap-3">
-                                <div class="flex size-9 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400">
-                                    <BriefcaseBusiness class="size-4" />
-                                </div>
-                                <div>
-                                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Ringkasan PKL</p>
-                                    <p class="text-sm font-bold text-wims-text">Data Penempatan</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="space-y-2.5 px-5 py-4 sm:px-6">
-                            <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3">
-                                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Status</p>
-                                <div class="mt-1.5">
-                                    <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold" :class="statusClasses">
-                                        {{ statusLabel }}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3">
-                                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Perusahaan</p>
-                                <p class="mt-1.5 break-words text-sm font-bold text-wims-text">
-                                    {{ currentCompanyLabel }}
-                                </p>
-                            </div>
-                            <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3">
-                                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Periode</p>
-                                <p class="mt-1.5 break-words text-sm font-bold text-wims-text">
-                                    {{ props.registration?.period_label || 'Belum tersedia' }}
-                                </p>
-                            </div>
-                            <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3">
-                                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Dosen Pembimbing</p>
-                                <div class="mt-1.5 flex items-center gap-2">
-                                    <div v-if="props.registration?.lecturer?.name" class="flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-500/15 text-blue-500">
-                                        <User class="size-2.5" />
-                                    </div>
-                                    <p class="break-words text-sm font-bold text-wims-text">
-                                        {{ lecturerLabel }}
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3">
-                                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Pembimbing Mitra</p>
-                                <div class="mt-1.5 flex items-center gap-2">
-                                    <div v-if="props.registration?.mentor?.name" class="flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-500/15 text-emerald-500">
-                                        <User class="size-2.5" />
-                                    </div>
-                                    <p class="break-words text-sm font-bold text-wims-text">
-                                        {{ mentorLabel }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
+                <!-- Right Column -->
+                <div class="min-w-0 space-y-4">
                     <!-- Checklist Kelengkapan -->
-                    <div class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                    <div class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-blue-200/40 dark:border-blue-500/20 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
                         <div class="border-b border-wims-border/50 px-5 py-4 sm:px-6">
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div class="flex items-center gap-3">
@@ -1383,119 +1267,9 @@ const completionScore = computed(() => {
                         </div>
                     </div>
 
-                    <!-- Status Penilaian -->
-                    <div class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                        <div class="border-b border-wims-border/50 px-5 py-4 sm:px-6">
-                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                <div class="flex items-center gap-3">
-                                    <div class="flex size-9 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
-                                        <Star class="size-4" />
-                                    </div>
-                                    <div>
-                                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Penilaian</p>
-                                        <p class="text-sm font-bold text-wims-text">Status Penilaian</p>
-                                    </div>
-                                </div>
-                                <span class="inline-flex w-fit items-center rounded-full border px-2.5 py-1 text-[10px] font-bold" :class="evaluationStatusClasses">
-                                    {{ evaluationStatusLabel }}
-                                </span>
-                            </div>
-                        </div>
-                        <div class="space-y-3 px-5 py-4 sm:px-6">
-                            <template v-if="hasAnyEvaluationScore">
-                                <div v-if="hasDosenScore" class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3.5">
-                                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Nilai Dosen</p>
-                                    <div class="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end">
-                                        <p class="text-3xl font-bold tracking-tight text-wims-text">
-                                            {{ props.evaluation.dosen_score }}
-                                        </p>
-                                        <div
-                                            v-if="nilaiHurufDosen"
-                                            class="flex flex-wrap items-center gap-1.5 rounded-lg border px-2.5 py-1 sm:mb-1"
-                                            :class="`${nilaiHurufDosen.bg} ${nilaiHurufDosen.border}`"
-                                        >
-                                            <Star class="size-3.5" :class="nilaiHurufDosen.color" />
-                                            <span class="text-sm font-bold" :class="nilaiHurufDosen.color">{{ nilaiHurufDosen.huruf }}</span>
-                                            <span class="text-xs" :class="nilaiHurufDosen.color">— {{ nilaiHurufDosen.label }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3">
-                                        <div class="h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/50">
-                                            <div
-                                                class="h-2.5 rounded-full transition-all duration-700 ease-out"
-                                                :class="nilaiBarColorDosen"
-                                                :style="{ width: `${nilaiBarWidthDosen}%` }"
-                                            />
-                                        </div>
-                                        <div class="mt-1.5 grid grid-cols-5 gap-1 text-center text-[10px] text-slate-400 dark:text-slate-500">
-                                            <span>0</span>
-                                            <span>55 (D)</span>
-                                            <span>65 (C)</span>
-                                            <span>75 (B)</span>
-                                            <span>85 (A)</span>
-                                        </div>
-                                    </div>
-                                    <p class="mt-2.5 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                                        Terakhir diperbarui {{ props.evaluation.finalized_at || 'belum tersedia' }}.
-                                    </p>
-                                </div>
-
-                                <div v-if="hasMitraScore" class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3.5">
-                                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Nilai Mitra</p>
-                                    <div class="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end">
-                                        <p class="text-3xl font-bold tracking-tight text-wims-text">
-                                            {{ props.evaluation.mitra_score }}
-                                        </p>
-                                        <div
-                                            v-if="nilaiHurufMitra"
-                                            class="flex flex-wrap items-center gap-1.5 rounded-lg border px-2.5 py-1 sm:mb-1"
-                                            :class="`${nilaiHurufMitra.bg} ${nilaiHurufMitra.border}`"
-                                        >
-                                            <Star class="size-3.5" :class="nilaiHurufMitra.color" />
-                                            <span class="text-sm font-bold" :class="nilaiHurufMitra.color">{{ nilaiHurufMitra.huruf }}</span>
-                                            <span class="text-xs" :class="nilaiHurufMitra.color">— {{ nilaiHurufMitra.label }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3">
-                                        <div class="h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/50">
-                                            <div
-                                                class="h-2.5 rounded-full transition-all duration-700 ease-out"
-                                                :class="nilaiBarColorMitra"
-                                                :style="{ width: `${nilaiBarWidthMitra}%` }"
-                                            />
-                                        </div>
-                                        <div class="mt-1.5 grid grid-cols-5 gap-1 text-center text-[10px] text-slate-400 dark:text-slate-500">
-                                            <span>0</span>
-                                            <span>55 (D)</span>
-                                            <span>65 (C)</span>
-                                            <span>75 (B)</span>
-                                            <span>85 (A)</span>
-                                        </div>
-                                    </div>
-                                    <p class="mt-2.5 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                                        Terakhir diperbarui {{ props.evaluation.finalized_at || 'belum tersedia' }}.
-                                    </p>
-                                </div>
-
-                                <div v-if="props.evaluation?.catatan_dosen" class="rounded-xl border border-wims-border/50 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-3.5">
-                                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Catatan Dosen</p>
-                                    <p class="mt-1.5 text-sm leading-6 text-slate-700 dark:text-slate-300">{{ props.evaluation.catatan_dosen }}</p>
-                                </div>
-                            </template>
-
-                            <template v-else>
-                                <div class="rounded-xl border border-dashed border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/30 px-4 py-4 text-center">
-                                    <p class="text-sm font-bold text-wims-text">Penilaian belum tersedia</p>
-                                    <p class="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                                        Nilai dosen dan mitra akan muncul setelah masing-masing penilai mengirimkan penilaian.
-                                    </p>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-
                 </div>
             </div>
         </div>
     </div>
 </template>
+

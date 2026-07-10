@@ -3,16 +3,17 @@
 namespace App\Modules\Trace\Controllers\Mitra;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\JobApplicant;
 use App\Models\Tracer\JobCategory;
 use App\Models\Tracer\JobListing;
 use App\Models\User;
+use App\Modules\Trace\Services\ImageService;
 use App\Notifications\Trace\ApplicationStatusChanged;
 use App\Notifications\Trace\JobSubmittedForReview;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -47,6 +48,23 @@ class JobListingController extends Controller
         ]);
     }
 
+    public function edit(Request $request, $id): InertiaResponse|RedirectResponse
+    {
+        $mitra = $request->user()->mitraProfile;
+
+        if (! $mitra) {
+            return redirect()->route('module.trace.open-job.mitra-profile-setup');
+        }
+
+        $job = JobListing::where('mitra_id', $mitra->id)->findOrFail($id);
+        $categories = JobCategory::all();
+
+        return Inertia::render('Modules/Trace/Mitra/Jobs/Edit', [
+            'job' => $job,
+            'categories' => $categories,
+        ]);
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $user = $request->user();
@@ -57,6 +75,12 @@ class JobListingController extends Controller
         }
 
         $validated = $request->validate($this->validationRules());
+
+        if ($request->hasFile('poster')) {
+            $validated['poster_path'] = ImageService::compressToWebp(
+                $request->file('poster'), 'job-posters', quality: 80, maxWidth: 1200
+            );
+        }
 
         $validated['user_id'] = $user->id;
         $validated['mitra_id'] = $mitra->id;
@@ -73,7 +97,6 @@ class JobListingController extends Controller
         }
 
         $job = JobListing::create($validated);
-        ActivityLog::record('job.created_by_mitra', "Mitra membuat lowongan: {$job->title}", $job);
 
         return redirect()->route('module.trace.open-job.jobs-listings')
             ->with('success', 'Lowongan berhasil dibuat.');
@@ -125,8 +148,13 @@ class JobListingController extends Controller
             $validated['status'] = 'pending_review';
         }
 
+        if ($request->hasFile('poster')) {
+            $validated['poster_path'] = ImageService::replaceWithWebp(
+                $request->file('poster'), $job->poster_path, 'job-posters', quality: 80, maxWidth: 1200
+            );
+        }
+
         $job->update($validated);
-        ActivityLog::record('job.updated_by_mitra', "Mitra memperbarui lowongan: {$job->title}", $job);
 
         return back()->with('success', 'Lowongan berhasil diperbarui.');
     }
@@ -140,9 +168,13 @@ class JobListingController extends Controller
         }
 
         $job = JobListing::where('mitra_id', $mitra->id)->findOrFail($id);
+        $posterPath = $job->poster_path;
 
-        ActivityLog::record('job.deleted_by_mitra', "Mitra menghapus lowongan: {$job->title}", $job);
         $job->delete(); // SoftDeletes
+
+        if ($posterPath) {
+            Storage::disk('public')->delete($posterPath);
+        }
 
         return redirect()->route('module.trace.open-job.jobs-listings')
             ->with('success', 'Lowongan berhasil dihapus.');
@@ -177,8 +209,6 @@ class JobListingController extends Controller
         }
 
         $applicant->update($updateData);
-        ActivityLog::record('applicant.status_changed', "Mengubah status pelamar di lowongan: {$job->title} → {$validated['status']}", $applicant, ['status' => $validated['status']]);
-
         // Notify alumni about status change
         $alumniUser = $applicant->alumni?->user;
         if ($alumniUser) {
@@ -232,6 +262,7 @@ class JobListingController extends Controller
             'deadline' => 'nullable|date|after:today',
             'is_salary_visible' => 'boolean',
             'status' => 'in:draft,pending_review,closed',
+            'poster' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ];
     }
 }

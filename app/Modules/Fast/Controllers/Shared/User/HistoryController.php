@@ -4,6 +4,7 @@ namespace App\Modules\Fast\Controllers\Shared\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Surat;
+use App\Models\SuratApprovalFlow;
 use App\Models\SuratHistory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ class HistoryController extends Controller
     {
         $user = $request->user();
         abort_if($user === null, 403);
+        $this->authorize('viewAny', Surat::class);
 
         $search = $request->string('search')->trim()->toString();
         $status = $request->string('status')->toString();
@@ -28,9 +30,29 @@ class HistoryController extends Controller
                 'histories' => fn ($q) => $q->latest('created_at')->latest('id')->limit(8),
             ])
             ->where('pemohon_id', $user->id)
-            ->when($search, fn ($q) => $q->whereHas('jenisSurat', fn ($j) => $j->where('nama', 'like', "%{$search}%"))
-                ->orWhere('keperluan', 'like', "%{$search}%"))
-            ->when($status, fn ($q) => $q->where('status', $status))
+            ->where('status', '!=', Surat::STATUS_REVISION_REQUESTED)
+            ->when($search, function ($q) use ($search): void {
+                $q->where(function ($searchQuery) use ($search): void {
+                    $searchQuery
+                        ->whereHas('jenisSurat', fn ($j) => $j->where('nama', 'like', "%{$search}%"))
+                        ->orWhere('keperluan', 'like', "%{$search}%");
+                });
+            })
+            ->when($status, function ($q) use ($status): void {
+                match ($status) {
+                    'pending' => $q->whereIn('status', [
+                        Surat::STATUS_PENDING,
+                        Surat::STATUS_VALIDATED_ADMIN,
+                        Surat::STATUS_APPROVED_KAPRODI,
+                        Surat::STATUS_APPROVED_DEKAN,
+                    ]),
+                    'finished' => $q->where('status', Surat::STATUS_FINISHED),
+                    'rejected_admin' => $q->where('status', Surat::STATUS_REJECTED_ADMIN),
+                    'rejected_approver' => $q->where('status', Surat::STATUS_REJECTED_APPROVER),
+                    'cancelled' => $q->where('status', Surat::STATUS_CANCELLED),
+                    default => $q->where('status', $status),
+                };
+            })
             ->latest('tanggal_pengajuan')
             ->latest('id')
             ->paginate(10)
@@ -67,6 +89,8 @@ class HistoryController extends Controller
             ->where('pemohon_id', $user->id)
             ->findOrFail($id);
 
+        $this->authorize('view', $surat);
+
         return Inertia::render($this->detailPageName(), [
             'userType' => [
                 'value' => $user->userTypeSlug(),
@@ -76,6 +100,9 @@ class HistoryController extends Controller
             'back_label' => 'Riwayat Surat',
             'surat' => [
                 'id' => $surat->id,
+                'letter_mode' => $surat->resolvedLetterMode(),
+                'letter_mode_label' => $surat->letterModeLabel(),
+                'is_institution' => $surat->resolvedLetterMode() === 'institution',
                 'pemohon' => [
                     'name' => $surat->pemohon?->name,
                     'nim_nip' => $surat->pemohon?->nim_nip ?? $surat->pemohon?->nomor_induk,
@@ -92,7 +119,7 @@ class HistoryController extends Controller
                 'lampiran' => $surat->lampirans->map(fn ($lampiran): array => [
                     'id' => $lampiran->id,
                     'name' => $lampiran->nama_asli ?? $lampiran->nama_file ?? $lampiran->name ?? 'Lampiran',
-                    'url' => route('documents.lampiran.preview', $lampiran->id, absolute: false),
+                    'url' => $this->signedDocumentRoute('lampiran.preview', $lampiran->id),
                     'type' => $lampiran->mime_type ?? $lampiran->type ?? null,
                 ])->values(),
                 'tanggal_pengajuan' => optional($surat->tanggal_pengajuan)?->toISOString(),
@@ -119,12 +146,16 @@ class HistoryController extends Controller
                     'action' => $history->action,
                     'actor' => $history->user?->name ?? null,
                 ])->values(),
-                'previewTemplateUrl' => $this->signedDocumentRoute('surat.template-preview', $surat->id),
-                'generatedDocumentUrl' => $surat->status === Surat::STATUS_FINISHED
+                'previewTemplateUrl' => $surat->canViewFinalDocumentPreview()
+                    ? $this->signedDocumentRoute('surat.template-preview', $surat->id)
+                    : null,
+                'generatedDocumentUrl' => $surat->canViewFinalDocumentPreview()
+                    ? $this->signedDocumentRoute('surat.generated-document', $surat->id)
+                    : null,
+                'pdfUrl' => $surat->canViewFinalDocumentPreview()
                     ? $this->signedDocumentRoute('surat.pdf', $surat->id)
-                    : $this->signedDocumentRoute('surat.generated-document', $surat->id),
-                'pdfUrl' => $this->signedDocumentRoute('surat.pdf', $surat->id),
-                'canDownloadPdf' => $surat->status === Surat::STATUS_FINISHED,
+                    : null,
+                'canDownloadPdf' => $surat->canViewFinalDocumentPreview(),
             ],
         ]);
     }
@@ -155,13 +186,21 @@ class HistoryController extends Controller
 
     protected function approvalFlowLabel($flow): string
     {
-        if (($flow->role ?? null) === 'admin' && ($flow->status ?? null) === 'approved') {
-            return 'Validasi Admin';
-        }
+        $role = (string) ($flow->role ?? '');
+        $status = (string) ($flow->status ?? '');
 
-        return $flow->label
-            ?? $flow->status_label
-            ?? ucfirst(str_replace('_', ' ', (string) $flow->status));
+        return match (true) {
+            $role === 'admin' && $status === 'approved' => 'Validasi Admin',
+            $status === SuratApprovalFlow::STATUS_REJECTED_FINAL && $role === 'admin' => 'Ditolak Admin',
+            $status === SuratApprovalFlow::STATUS_REJECTED_FINAL && $role === 'kaprodi' => 'Ditolak Kaprodi',
+            $status === SuratApprovalFlow::STATUS_REJECTED_FINAL && $role === 'dekan' => 'Ditolak Dekan',
+            $status === SuratApprovalFlow::STATUS_REVISION_REQUESTED && $role === 'kaprodi' => 'Dikembalikan Kaprodi',
+            $status === SuratApprovalFlow::STATUS_REVISION_REQUESTED && $role === 'dekan' => 'Dikembalikan Dekan',
+            $status === SuratApprovalFlow::STATUS_NOTE => 'Catatan Approval',
+            default => $flow->label
+                ?? $flow->status_label
+                ?? ucfirst(str_replace('_', ' ', $status)),
+        };
     }
 
     protected function historyActionLabel(SuratHistory $history): string
@@ -181,6 +220,7 @@ class HistoryController extends Controller
         abort_if($user === null, 403);
 
         $surat = Surat::where('pemohon_id', $user->id)->findOrFail($id);
+        $this->authorize('cancel', $surat);
 
         abort_if(
             $surat->status !== Surat::STATUS_PENDING,
@@ -208,6 +248,9 @@ class HistoryController extends Controller
             'reference' => $surat->nomor_surat ?: sprintf('REQ-%05d', $surat->id),
             'jenisSurat' => $surat->jenisSurat?->nama ?? 'Surat Akademik',
             'jenisSuratId' => $surat->jenis_surat_id,
+            'letter_mode' => $surat->resolvedLetterMode(),
+            'letter_mode_label' => $surat->letterModeLabel(),
+            'is_institution' => $surat->resolvedLetterMode() === 'institution',
             'approvalRole' => [
                 'id' => $surat->jenisSurat?->approvalRole?->id,
                 'nama' => $surat->jenisSurat?->approvalRole?->nama,
@@ -254,7 +297,7 @@ class HistoryController extends Controller
             'role' => $latestRevisionFlow?->role ?? $latestFinalRejectionFlow?->role,
             'label' => $latestRevisionFlow?->role
                 ? ('Catatan revisi '.ucfirst((string) $latestRevisionFlow->role))
-                : ($latestFinalRejectionFlow?->role ? 'Alasan penolakan' : 'Catatan'),
+                : 'Ditolak Final',
             'type' => $latestRevisionFlow ? 'revision' : 'final_reject',
             'note' => $latestRevisionFlow?->catatan ?? $latestFinalRejectionFlow?->catatan,
             'acted_at' => optional($latestRevisionFlow?->tanggal_aksi ?? $latestFinalRejectionFlow?->tanggal_aksi)?->toISOString(),

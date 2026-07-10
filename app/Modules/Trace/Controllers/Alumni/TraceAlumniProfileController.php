@@ -5,7 +5,6 @@ namespace App\Modules\Trace\Controllers\Alumni;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Trace\UpdateAlumniProfileRequest;
 use App\Models\ProgramStudi;
-use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\Kota;
 use App\Models\Tracer\ProfilAlumni;
 use App\Models\Tracer\Provinsi;
@@ -23,9 +22,13 @@ class TraceAlumniProfileController extends Controller
     {
         $user = Auth::user();
         $roleName = $request->attributes->get('resolved_role', session('active_role'));
+        $readOnly = (bool) $request->attributes->get('trace_alumni_read_only', false);
 
-        $profil = ProfilAlumni::with(['careers', 'educationHistories'])
-            ->firstOrCreate(
+        $profilQuery = ProfilAlumni::with(['careers', 'educationHistories'])->where('user_id', $user->id);
+        /** @var ProfilAlumni|null $profil */
+        $profil = $readOnly
+            ? $profilQuery->first()
+            : ProfilAlumni::with(['careers', 'educationHistories'])->firstOrCreate(
                 ['user_id' => $user->id],
                 ['angkatan' => $user->tahun_lulus ?? null]
             );
@@ -50,25 +53,26 @@ class TraceAlumniProfileController extends Controller
             'instagram' => $user->instagram,
             'twitter' => $user->twitter,
 
-            'profil_id' => $profil->id,
-            'angkatan' => $profil->angkatan,
-            'alamat_rumah' => $profil->alamat_rumah,
-            'latitude_rumah' => $profil->latitude_rumah,
-            'longitude_rumah' => $profil->longitude_rumah,
-            'jenis_kelamin' => $profil->jenis_kelamin,
-            'nik' => $profil->nik ? str_repeat('*', 12).substr($profil->nik, -4) : null,
-            'npwp' => $profil->npwp ? str_repeat('*', max(0, strlen($profil->npwp) - 4)).substr($profil->npwp, -4) : null,
-            'provinsi_id' => $profil->provinsi_id,
-            'kota_id' => $profil->kota_id,
-            'completeness_percentage' => $profil->completeness_percentage,
+            'profil_id' => $profil?->id,
+            'angkatan' => $profil?->angkatan,
+            'alamat_rumah' => $profil?->alamat_rumah,
+            'latitude_rumah' => $profil?->latitude_rumah,
+            'longitude_rumah' => $profil?->longitude_rumah,
+            'jenis_kelamin' => $profil?->jenis_kelamin,
+            'nik' => $profil?->nik_masked,
+            'npwp' => $profil?->npwp_masked,
+            'provinsi_id' => $profil?->provinsi_id,
+            'kota_id' => $profil?->kota_id,
+            'completeness_percentage' => $profil?->completeness_percentage ?? 0,
 
             // Riwayat Pendidikan & Karir
-            'careers' => $profil->careers,
-            'education_histories' => $profil->educationHistories,
+            'careers' => $profil?->careers ?? [],
+            'education_histories' => $profil?->educationHistories ?? [],
         ];
 
         return Inertia::render('Modules/Trace/Alumni/ProfileAlumni', [
             'roleName' => $roleName,
+            'readOnly' => $readOnly,
             'alumni' => $alumniData,
             'provinsis' => Cache::remember('trace_provinsi_all', 3600, fn () => Provinsi::orderBy('name')->get(['id', 'name'])),
             'kotas' => Cache::remember('trace_kota_all', 3600, fn () => Kota::orderBy('name')->get(['id', 'name', 'provinsi_id'])),
@@ -78,6 +82,8 @@ class TraceAlumniProfileController extends Controller
 
     public function update(UpdateAlumniProfileRequest $request): RedirectResponse
     {
+        abort_if($request->attributes->get('trace_alumni_read_only', false), 403, 'Mode alumni untuk admin hanya dapat melihat data.');
+
         $user = Auth::user();
 
         $profil = ProfilAlumni::firstOrCreate(
@@ -87,7 +93,25 @@ class TraceAlumniProfileController extends Controller
 
         $validated = $request->validated();
 
-        DB::transaction(function () use ($user, $profil, $validated) {
+        $profilePayload = [
+            'jenis_kelamin' => $validated['jenis_kelamin'] ?? null,
+            'angkatan' => $validated['angkatan'],
+            'provinsi_id' => $validated['provinsi_id'] ?? null,
+            'kota_id' => $validated['kota_id'] ?? null,
+            'alamat_rumah' => $validated['alamat_rumah'] ?? null,
+            'latitude_rumah' => $validated['latitude_rumah'] ?? null,
+            'longitude_rumah' => $validated['longitude_rumah'] ?? null,
+        ];
+
+        if ($request->filled('nik')) {
+            $profilePayload['nik'] = $validated['nik'];
+        }
+
+        if ($request->filled('npwp')) {
+            $profilePayload['npwp'] = $validated['npwp'];
+        }
+
+        DB::transaction(function () use ($user, $profil, $validated, $profilePayload) {
             // Update User
             $user->update([
                 'name' => $validated['name'],
@@ -105,20 +129,8 @@ class TraceAlumniProfileController extends Controller
             ]);
 
             // Update ProfilAlumni
-            $profil->update([
-                'jenis_kelamin' => $validated['jenis_kelamin'] ?? null,
-                'angkatan' => $validated['angkatan'],
-                'nik' => $validated['nik'] ?? null,
-                'npwp' => $validated['npwp'] ?? null,
-                'provinsi_id' => $validated['provinsi_id'] ?? null,
-                'kota_id' => $validated['kota_id'] ?? null,
-                'alamat_rumah' => $validated['alamat_rumah'] ?? null,
-                'latitude_rumah' => $validated['latitude_rumah'] ?? null,
-                'longitude_rumah' => $validated['longitude_rumah'] ?? null,
-            ]);
+            $profil->update($profilePayload);
         });
-
-        ActivityLog::record('profile.updated', 'Memperbarui profil alumni');
 
         return redirect()->back()->with('success', 'Profil karir berhasil diperbarui');
     }
