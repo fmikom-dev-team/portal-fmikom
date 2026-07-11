@@ -52,7 +52,7 @@ jobs:
           cache: 'npm' # <-- Enable npm caching to speed up tests run
 
       - name: Install Node Dependencies
-        run: npm ci # <-- npm ci is cleaner and faster for CI than npm i
+        run: npm install --no-audit --no-fund
 
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
