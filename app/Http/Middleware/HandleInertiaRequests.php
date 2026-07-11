@@ -90,7 +90,9 @@ class HandleInertiaRequests extends Middleware
                 ? Cache::remember("unread_msg_count_{$user->id}", 30, fn () => PagiMessage::where('receiver_id', $user->id)->whereNull('read_at')->count())
                 : 0,
             'unread_notifications_count' => $user
-                ? Cache::remember("unread_notif_count_{$user->id}_{$activeRole}", 30, function () use ($user, $activeModule, $activeRole) {
+                ? Cache::remember("unread_notif_count_{$user->id}_".session('active_module', '').'_'.session('active_role', ''), 30, function () use ($user) {
+                    $activeRole = strtolower(session('active_role', ''));
+                    $activeModule = strtoupper(session('active_module', ''));
                     $query = $user->unreadNotifications();
 
                     if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
@@ -104,7 +106,9 @@ class HandleInertiaRequests extends Middleware
                     return $query->count();
                 })
                 : 0,
-            'recent_notifications' => $user ? fn () => Cache::remember("recent_notifs_{$user->id}_{$activeRole}", 30, function () use ($user, $activeModule, $activeRole) {
+            'recent_notifications' => $user ? fn () => Cache::remember("recent_notifs_{$user->id}_".session('active_module', '').'_'.session('active_role', ''), 30, function () use ($user) {
+                $activeRole = strtolower(session('active_role', ''));
+                $activeModule = strtoupper(session('active_module', ''));
                 $query = $user->notifications()->latest();
 
                 if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {

@@ -6,11 +6,6 @@ use App\Models\Auth\AuthEmailLog;
 use App\Models\Auth\AuthLoginAttempt;
 use App\Models\Auth\AuthSession;
 use App\Models\Auth\AuthSetting;
-use App\Models\JenisSurat;
-use App\Models\Surat;
-use App\Models\SuratCategory;
-use App\Models\TemplateGlobalSetting;
-use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\CareerHistory;
 use App\Models\User;
 use App\Modules\WorkOs\Services\AuditLogger;
@@ -240,36 +235,6 @@ class AppServiceProvider extends ServiceProvider
             }
         }
 
-        // -- Activity Log: Auth Events -----------------------------------------
-        Event::listen(Login::class, function (Login $event) {
-            if (! Schema::hasTable('activity_logs')) {
-                return;
-            }
-
-            $userId = $event->user->getAuthIdentifier();
-
-            ActivityLog::create([
-                'user_id' => $userId,
-                'action' => 'auth.login',
-                'description' => 'Login ke sistem',
-                'ip_address' => request()->ip(),
-            ]);
-        });
-
-        Event::listen(Logout::class, function (Logout $event) {
-            if (! Schema::hasTable('activity_logs')) {
-                return;
-            }
-
-            $userId = $event->user->getAuthIdentifier();
-
-            ActivityLog::create([
-                'user_id' => $userId,
-                'action' => 'auth.logout',
-                'description' => 'Logout dari sistem',
-                'ip_address' => request()->ip(),
-            ]);
-        });
     }
 
     /**
