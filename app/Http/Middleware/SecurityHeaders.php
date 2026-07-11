@@ -268,8 +268,13 @@ class SecurityHeaders
     {
         return $request->is(
             'documents/surat/*',
+            'documents/lampiran/*',
             'documents/public/surat/*',
             'admin/surat/*',
+            'admin/lampiran/*',
+            'approval/lampiran/*',
+            'kaprodi/lampiran/*',
+            'dekan/lampiran/*',
         );
     }
 

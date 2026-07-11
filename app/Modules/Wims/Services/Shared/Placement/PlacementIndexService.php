@@ -112,6 +112,13 @@ class PlacementIndexService
                 ->whereIn('status', $allowedStatuses)
                 ->whereNotNull('dosen_pembimbing_id')
                 ->count(),
+            'needs_assignment' => PendaftaranMagang::query()
+                ->where('status', 'approved')
+                ->where(function (Builder $query): void {
+                    $query->whereNull('perusahaan_id')
+                        ->orWhereNull('dosen_pembimbing_id');
+                })
+                ->count(),
             'available_companies' => (clone $activeCompaniesQuery)->count(),
             'fully_assigned' => PendaftaranMagang::query()
                 ->whereIn('status', $allowedStatuses)

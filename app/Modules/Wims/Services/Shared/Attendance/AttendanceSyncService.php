@@ -48,7 +48,7 @@ class AttendanceSyncService
 
         $holidayDates = $this->getHolidayLookup($startDate, $syncUntil);
         $workDates = collect(CarbonPeriod::create($startDate, $syncUntil))
-            ->filter(fn (Carbon $date) => $registration->perusahaan?->worksOnDate($date, $holidayDates))
+            ->filter(fn (Carbon $date) => $registration->perusahaan->worksOnDate($date, $holidayDates))
             ->map(fn (Carbon $date) => $date->toDateString())
             ->values();
 

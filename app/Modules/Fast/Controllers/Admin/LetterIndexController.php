@@ -7,6 +7,7 @@ namespace App\Modules\Fast\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Surat;
 use App\Models\SuratCategory;
+use App\Modules\Fast\Support\FastUserIdentitySearch;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,11 +16,24 @@ class LetterIndexController extends Controller
 {
     public function index(Request $request): Response
     {
+        $this->authorize('viewAny', Surat::class);
+
         $search = $request->string('search')->trim()->toString();
         $status = $request->has('status')
             ? $request->string('status')->toString()
             : Surat::STATUS_PENDING;
         $categoryId = $request->integer('category_id');
+        $statusFilters = [
+            'pending' => [Surat::STATUS_PENDING],
+            'revision_requested' => [Surat::STATUS_REVISION_REQUESTED],
+            'rejected_admin' => [Surat::STATUS_REJECTED_ADMIN],
+            'all' => [
+                Surat::STATUS_PENDING,
+                Surat::STATUS_VALIDATED_ADMIN,
+                Surat::STATUS_REVISION_REQUESTED,
+                Surat::STATUS_REJECTED_ADMIN,
+            ],
+        ];
         $baseStatuses = [
             Surat::STATUS_PENDING,
             Surat::STATUS_VALIDATED_ADMIN,
@@ -35,12 +49,8 @@ class LetterIndexController extends Controller
 
         $query = clone $baseQuery;
 
-        if ($status === 'pending') {
-            $query->where('status', Surat::STATUS_PENDING);
-        } elseif ($status === 'rejected_admin') {
-            $query->where('status', Surat::STATUS_REJECTED_ADMIN);
-        } elseif ($status === 'all') {
-            // show all statuses in the current base scope
+        if (isset($statusFilters[$status])) {
+            $query->whereIn('status', $statusFilters[$status]);
         } elseif ($status !== '') {
             $query->whereRaw('1 = 0');
         }
@@ -54,8 +64,7 @@ class LetterIndexController extends Controller
         if ($search !== '') {
             $query->where(function ($q) use ($search): void {
                 $q->whereHas('pemohon', function ($pemohon) use ($search): void {
-                    $pemohon->where('name', 'like', "%{$search}%")
-                        ->orWhere('nomor_induk', 'like', "%{$search}%");
+                    FastUserIdentitySearch::apply($pemohon, $search);
                 });
             });
         }
@@ -67,6 +76,8 @@ class LetterIndexController extends Controller
                 'nomor_surat' => $surat->nomor_surat,
                 'status' => $surat->status,
                 'can_approve' => $surat->canBeValidatedByAdmin(),
+                'needs_admin_completion' => $surat->hasIncompleteCampusData(),
+                'missing_campus_fields' => array_values($surat->missingCampusDataFields()),
                 'revision_label' => $surat->status === Surat::STATUS_REVISION_REQUESTED
                     ? match ($surat->finalApprovalRoleSlug()) {
                         'kaprodi' => 'Dikembalikan Kaprodi',
@@ -108,6 +119,7 @@ class LetterIndexController extends Controller
             'summary' => [
                 'total' => (clone $baseQuery)->count(),
                 'pending' => (clone $baseQuery)->where('status', Surat::STATUS_PENDING)->count(),
+                'revision_requested' => (clone $baseQuery)->where('status', Surat::STATUS_REVISION_REQUESTED)->count(),
                 'rejected' => (clone $baseQuery)->where('status', Surat::STATUS_REJECTED_ADMIN)->count(),
             ],
         ]);

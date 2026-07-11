@@ -11,6 +11,7 @@ class SuratCategory extends Model
         'nama',
         'slug',
         'deskripsi',
+        'warna',
         'urutan',
         'is_active',
     ];

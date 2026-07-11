@@ -7,6 +7,7 @@ use App\Models\SuratApprovalFlow;
 use App\Modules\Fast\Workflow\Approvals\FastApprovalWorkflowService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ApprovalActionService
@@ -24,11 +25,37 @@ class ApprovalActionService
 
         $this->workflow->approve(
             $surat,
-            $this->normalizeRole($user->userTypeSlug(), $user->roleDisplayName()),
+            $this->resolveActorRole($request, $user),
             $user,
         );
 
         return back()->with('success', 'Pengajuan berhasil disetujui.');
+    }
+
+    /**
+     * @param  array<int, Surat>  $surats
+     */
+    public function bulkApprove(Request $request, array $surats): RedirectResponse
+    {
+        $user = $request->user();
+        abort_if($user === null, 403);
+
+        $role = $this->resolveActorRole($request, $user);
+        $count = 0;
+
+        DB::transaction(function () use ($surats, $role, $user, &$count): void {
+            foreach ($surats as $surat) {
+                $this->workflow->approve($surat, $role, $user);
+                $count++;
+            }
+        });
+
+        return back()->with(
+            'success',
+            $count > 0
+                ? "{$count} pengajuan berhasil diproses sekaligus."
+                : 'Tidak ada pengajuan yang diproses.',
+        );
     }
 
     public function approveAdmin(Request $request, int $id): RedirectResponse
@@ -43,6 +70,31 @@ class ApprovalActionService
         return back()->with('success', 'Pengajuan berhasil divalidasi.');
     }
 
+    /**
+     * @param  array<int, Surat>  $surats
+     */
+    public function bulkApproveAdmin(Request $request, array $surats): RedirectResponse
+    {
+        $user = $request->user();
+        abort_if($user === null, 403);
+
+        $count = 0;
+
+        DB::transaction(function () use ($surats, $user, &$count): void {
+            foreach ($surats as $surat) {
+                $this->workflow->approve($surat, FastApprovalWorkflowService::ROLE_ADMIN, $user);
+                $count++;
+            }
+        });
+
+        return back()->with(
+            'success',
+            $count > 0
+                ? "{$count} pengajuan berhasil divalidasi sekaligus."
+                : 'Tidak ada pengajuan yang diproses.',
+        );
+    }
+
     public function saveNote(Request $request, int $id): RedirectResponse
     {
         $request->validate(['catatan' => ['required', 'string', 'max:1000']]);
@@ -55,7 +107,7 @@ class ApprovalActionService
         $surat->approvalFlows()->create([
             'approver_id' => $user->id,
             'urutan' => 0,
-            'role' => $this->normalizeRole($user->userTypeSlug(), $user->roleDisplayName()),
+            'role' => $this->resolveActorRole($request, $user),
             'status' => SuratApprovalFlow::STATUS_NOTE,
             'keterangan' => 'Catatan',
             'catatan' => $request->string('catatan')->toString(),
@@ -78,7 +130,7 @@ class ApprovalActionService
 
         $this->workflow->requestRevision(
             $surat,
-            $this->normalizeRole($user->userTypeSlug(), $user->roleDisplayName()),
+            $this->resolveActorRole($request, $user),
             $user,
             $request->string('reason')->toString(),
         );
@@ -116,7 +168,7 @@ class ApprovalActionService
         abort_if($user === null, 403);
 
         $surat = Surat::query()->findOrFail($id);
-        $normalizedRole = $this->normalizeRole($user->userTypeSlug(), $user->roleDisplayName());
+        $normalizedRole = $this->resolveActorRole($request, $user);
 
         $this->workflow->finalReject(
             $surat,
@@ -138,5 +190,16 @@ class ApprovalActionService
         }
 
         return FastApprovalWorkflowService::ROLE_DEKAN;
+    }
+
+    protected function resolveActorRole(Request $request, $user): string
+    {
+        $resolvedRole = $request->attributes->get('resolved_role');
+
+        if (is_string($resolvedRole) && filled($resolvedRole)) {
+            return $this->normalizeRole($resolvedRole, $resolvedRole);
+        }
+
+        return $this->normalizeRole($user->userTypeSlug(), $user->roleDisplayName());
     }
 }

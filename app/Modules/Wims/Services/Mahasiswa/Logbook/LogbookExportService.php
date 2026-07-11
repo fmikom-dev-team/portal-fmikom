@@ -3,7 +3,7 @@
 namespace App\Modules\Wims\Services\Mahasiswa\Logbook;
 
 use App\Models\Magang\LogbookMagang;
-use App\Models\Magang\PendaftaranMagang;
+use App\Modules\Wims\Services\Mahasiswa\Period\StudentPeriodResolverService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -14,22 +14,20 @@ use Throwable;
 
 class LogbookExportService
 {
-    public function downloadCurrentPeriod(int $userId)
+    public function __construct(
+        private readonly StudentPeriodResolverService $studentPeriodResolverService,
+    ) {}
+
+    public function downloadCurrentPeriod(int $userId, ?int $registrationId = null)
     {
         app()->setLocale('id');
         Carbon::setLocale('id');
 
-        $registration = PendaftaranMagang::query()
-            ->with([
-                'mahasiswa.programStudi.fakultas',
-                'perusahaan.user',
-                'dosenPembimbing',
-            ])
-            ->forMahasiswa($userId)
-            ->orderByDesc('tanggal_mulai')
-            ->orderByDesc('id')
-            ->get()
-            ->first(fn (PendaftaranMagang $item) => $item->status === 'aktif' || $item->isPostInternshipPhase());
+        $registration = $this->studentPeriodResolverService->resolveSelectedRegistration($userId, $registrationId, [
+            'mahasiswa.programStudi.fakultas',
+            'perusahaan.user',
+            'dosenPembimbing',
+        ]);
 
         abort_if($registration === null, 404);
 
@@ -68,11 +66,9 @@ class LogbookExportService
             ],
             'internship' => [
                 'company' => $registration->perusahaan?->nama ?? '-',
-                'period' => $registration->tanggal_mulai && $registration->tanggal_selesai
-                    ? $registration->tanggal_mulai->locale('id')->translatedFormat('d M Y').' - '.$registration->tanggal_selesai->locale('id')->translatedFormat('d M Y')
-                    : '-',
+                'period' => $registration->periodLabel() ?? '-',
                 'supervisor_lecturer' => $registration->dosenPembimbing?->name ?? '-',
-                'mentor' => $registration->perusahaan?->user?->name ?? '-',
+                'mentor' => $registration->finalMentor()?->name ?? '-',
             ],
             'rows' => $rows,
         ], 'logbook-pkl-periode-terakhir-'.now()->format('Y-m-d').'.pdf');

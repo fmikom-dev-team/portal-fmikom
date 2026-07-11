@@ -52,6 +52,7 @@
 		"laravel/socialite": "^5.27",
 		"laravel/tinker": "^2.10.1",
 		"laravel/wayfinder": "^0.1.9",
+		"mpdf/mpdf": "^8.1.1",
 		"mews/purifier": "^3.4",
 		"pbmedia/laravel-ffmpeg": "^8.9",
 		"phpoffice/phpspreadsheet": "^5.7",

@@ -30,23 +30,29 @@ class TemplateService
             : null;
 
         return [
-            'jenisSurats' => $jenisSurats->map(fn (JenisSurat $jenisSurat): array => [
-                'id' => $jenisSurat->id,
-                'nama' => $jenisSurat->nama,
-                'slug' => $jenisSurat->slug,
-                'is_active' => $jenisSurat->is_active,
-                'category' => [
-                    'id' => $jenisSurat->category?->id,
-                    'nama' => $jenisSurat->category?->nama,
-                ],
-                'template' => $jenisSurat->template ? [
-                    'id' => $jenisSurat->template->id,
-                    'name' => $jenisSurat->template->name,
-                    'version' => $jenisSurat->template->version,
-                    'created_at' => optional($jenisSurat->template->created_at)?->toISOString(),
-                    'updated_at' => optional($jenisSurat->template->updated_at)?->toISOString(),
-                ] : null,
-            ])->values(),
+            'jenisSurats' => $jenisSurats->map(function (JenisSurat $jenisSurat): array {
+                $letterMode = $this->templateAdminSupport->resolveLetterMode($jenisSurat);
+
+                return [
+                    'letter_mode' => $letterMode,
+                    'letter_mode_label' => $this->templateAdminSupport->letterModeLabel($letterMode),
+                    'id' => $jenisSurat->id,
+                    'nama' => $jenisSurat->nama,
+                    'slug' => $jenisSurat->slug,
+                    'is_active' => $jenisSurat->is_active,
+                    'category' => [
+                        'id' => $jenisSurat->category?->id,
+                        'nama' => $jenisSurat->category?->nama,
+                    ],
+                    'template' => $jenisSurat->template ? [
+                        'id' => $jenisSurat->template->id,
+                        'name' => $jenisSurat->template->name,
+                        'version' => $jenisSurat->template->version,
+                        'created_at' => optional($jenisSurat->template->created_at)?->toISOString(),
+                        'updated_at' => optional($jenisSurat->template->updated_at)?->toISOString(),
+                    ] : null,
+                ];
+            })->values(),
             'selectedJenisSurat' => $selectedJenisSurat ? $this->templateAdminSupport->serializeJenisSurat($selectedJenisSurat) : null,
             'selectedJenisSuratId' => $selectedJenisSurat?->id,
             'categories' => $this->templateAdminSupport->listCategories(),
@@ -92,7 +98,7 @@ class TemplateService
             }
         });
 
-        return to_route('admin.templates.index')->with('success', 'Jenis surat berhasil dihapus.');
+        return to_route($this->templatesIndexRouteName())->with('success', 'Jenis surat berhasil dihapus.');
     }
 
     public function toggleActive(JenisSurat $jenisSurat): RedirectResponse
@@ -101,7 +107,7 @@ class TemplateService
             'is_active' => ! $jenisSurat->is_active,
         ])->save();
 
-        return to_route('admin.templates.index', [
+        return to_route($this->templatesIndexRouteName(), [
             'jenis_surat_id' => $jenisSurat->id,
         ])->with('success', 'Status jenis surat diperbarui.');
     }
@@ -109,5 +115,12 @@ class TemplateService
     public function duplicate(JenisSurat $jenisSurat): RedirectResponse
     {
         return $this->templateMutationService->duplicate($jenisSurat);
+    }
+
+    protected function templatesIndexRouteName(): string
+    {
+        $role = strtolower((string) (auth()->user()?->getResolvedRoleSlug() ?? auth()->user()?->getGlobalRoleSlug() ?? 'admin'));
+
+        return in_array($role, ['kaprodi', 'dekan'], true) ? "{$role}.admin.templates.index" : 'admin.templates.index';
     }
 }

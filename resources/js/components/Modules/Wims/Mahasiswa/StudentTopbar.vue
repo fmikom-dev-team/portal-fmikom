@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import {
@@ -15,6 +15,18 @@ const currentPath = computed(() => {
 });
 
 const user = computed(() => page.props.auth?.user ?? null);
+const selectedPeriodId = computed(() => (page.props as any).selected_period_id ?? null);
+
+const withSelectedPeriod = (href: string) => {
+    if (!selectedPeriodId.value) {
+        return href;
+    }
+
+    const url = new URL(href, window.location.origin);
+    url.searchParams.set('pendaftaran', String(selectedPeriodId.value));
+    return url.pathname + url.search + url.hash;
+};
+
 const showNotifications = ref(false);
 const showProfileDropdown = ref(false);
 const isRefreshing = ref(false);
@@ -268,7 +280,7 @@ watch(currentPath, () => {
                             <!-- Footer -->
                             <div class="border-t border-wims-border/40 p-2">
                                 <Link
-                                    href="/wims/dashboard"
+                                    :href="withSelectedPeriod('/wims/dashboard')"
                                     class="flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-[12px] font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50/80 dark:hover:bg-blue-500/10 transition-colors"
                                     @click="showNotifications = false"
                                 >
@@ -311,7 +323,7 @@ watch(currentPath, () => {
                         >
                             <div class="p-1.5">
                                 <Link
-                                    href="/wims/profil"
+                                    :href="withSelectedPeriod('/wims/profil')"
                                     class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-wims-text hover:bg-slate-50/80 dark:hover:bg-slate-700/25 transition-colors"
                                     @click="showProfileDropdown = false"
                                 >
@@ -472,7 +484,7 @@ watch(currentPath, () => {
                             <!-- Footer -->
                             <div class="border-t border-wims-border/40 p-2">
                                 <Link
-                                    href="/wims/dashboard"
+                                    :href="withSelectedPeriod('/wims/dashboard')"
                                     class="flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-[12px] font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50/80 dark:hover:bg-blue-500/10 transition-colors"
                                     @click="showNotifications = false"
                                 >
@@ -488,7 +500,7 @@ watch(currentPath, () => {
 
                 <!-- User profile chip -->
                 <Link
-                    href="/wims/profil"
+                    :href="withSelectedPeriod('/wims/profil')"
                     class="flex items-center gap-2.5 rounded-xl border border-wims-border/80 bg-wims-card px-3 py-1.5 transition-all duration-200 hover:border-blue-300/60 dark:hover:border-blue-500/25 hover:bg-blue-50/60 dark:hover:bg-blue-500/[0.06]"
                 >
                     <div class="flex size-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-xs font-bold text-white shadow-[0_0_10px_rgba(59,130,246,0.2)] dark:shadow-[0_0_10px_rgba(59,130,246,0.15)]">

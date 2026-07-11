@@ -64,10 +64,24 @@ const props = defineProps<{
         value?: string | null;
         label?: string | null;
     };
+    userProfile?: {
+        name?: string | null;
+        identifierLabel?: string | null;
+        identifierValue?: string | null;
+        programStudi?: string | null;
+        fakultas?: string | null;
+    };
     endpoints?: { basePath: string };
 }>();
 const basePath = computed(() => props.endpoints?.basePath ?? '/mahasiswa');
 type FieldValue = string | boolean | string[] | null;
+type ApplicantProfile = {
+    name: string;
+    identifierLabel: string;
+    identifierValue: string;
+    programStudi: string;
+    fakultas: string;
+};
 const form = useForm<{
     jenis_surat_id: string;
     keperluan: string;
@@ -84,6 +98,13 @@ const form = useForm<{
 const searchQuery = ref('');
 const activeCategory = ref<number | null>(null);
 const applicantFieldRefs = ref<Record<string, HTMLElement | null>>({});
+const applicantProfile = computed<ApplicantProfile>(() => ({
+    name: props.userProfile?.name ?? '',
+    identifierLabel: props.userProfile?.identifierLabel ?? 'NIM',
+    identifierValue: props.userProfile?.identifierValue ?? '',
+    programStudi: props.userProfile?.programStudi ?? '',
+    fakultas: props.userProfile?.fakultas ?? '',
+}));
 const filteredJenis = computed(() => {
     let list = props.jenisSurats;
     if (activeCategory.value !== null) {
@@ -197,20 +218,91 @@ function cardState(jenis: JenisSuratOption) {
         : '';
 }
 
+function normalizeFieldName(name: string): string {
+    return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
+}
+
+function isApplicantIdentityField(field: FieldConfig): boolean {
+    if ((field.sumber_data ?? 'data_pemohon') !== 'data_pemohon') {
+        return false;
+    }
+
+    const normalized = normalizeFieldName(field.name);
+
+    return [
+        'nama',
+        'name',
+        'nama_pemohon',
+        'nama_mahasiswa',
+        'nim',
+        'nim_nip',
+        'nomor_induk',
+        'nomor_induk_pemohon',
+        'nomor_induk_mahasiswa',
+        'program_studi',
+        'program_studi_pemohon',
+        'program_studi_mahasiswa',
+        'fakultas',
+        'prodi',
+    ].includes(normalized);
+}
+
+function applicantFieldDefault(field: FieldConfig): FieldValue {
+    const normalized = normalizeFieldName(field.name);
+
+    if (['nama', 'name', 'nama_pemohon', 'nama_mahasiswa'].includes(normalized)) {
+        return applicantProfile.value.name;
+    }
+
+    if (
+        [
+            'nim',
+            'nim_nip',
+            'nomor_induk',
+            'nomor_induk_pemohon',
+            'nomor_induk_mahasiswa',
+        ].includes(normalized)
+    ) {
+        return applicantProfile.value.identifierValue;
+    }
+
+    if (
+        [
+            'program_studi',
+            'program_studi_pemohon',
+            'program_studi_mahasiswa',
+            'prodi',
+        ].includes(normalized)
+    ) {
+        return applicantProfile.value.programStudi;
+    }
+
+    if (['fakultas'].includes(normalized)) {
+        return applicantProfile.value.fakultas;
+    }
+
+    return '';
+}
+
 function openForm(jenis: JenisSuratOption) {
-    form.jenis_surat_id = String(jenis.id);
+    form.reset();
     form.clearErrors();
+    form.jenis_surat_id = String(jenis.id);
     initFieldData(jenis);
     showFormModal.value = true;
 }
 
 function closeForm() {
     showFormModal.value = false;
+    form.reset();
+    form.clearErrors();
 }
 function initFieldData(jenis: JenisSuratOption | null) {
     const values: Record<string, FieldValue> = {};
     for (const f of jenis?.fieldConfig ?? []) {
-        if (f.type === 'checkbox') values[f.name] = false;
+        if (isApplicantIdentityField(f)) {
+            values[f.name] = applicantFieldDefault(f);
+        } else if (f.type === 'checkbox') values[f.name] = false;
         else if (['checkbox-group', 'multiselect'].includes(f.type))
             values[f.name] = [];
         else values[f.name] = '';
@@ -221,13 +313,41 @@ function isApplicantFieldVisible(field: FieldConfig) {
     return (field.mode_form_pemohon ?? 'editable') !== 'hidden';
 }
 function isApplicantFieldReadonly(field: FieldConfig) {
-    return (field.mode_form_pemohon ?? 'editable') === 'readonly';
+    return (field.mode_form_pemohon ?? 'editable') === 'readonly' || isApplicantIdentityField(field);
 }
-function isApplicantFieldDisabled(field: FieldConfig) {
-    return isApplicantFieldReadonly(field);
-}
-function applicantFieldHelp(field: FieldConfig) {
-    return field.help ?? '';
+function fieldSourceLabel(field: FieldConfig): string {
+    const source = field.sumber_data ?? 'data_pemohon';
+    const normalized = normalizeFieldName(field.name);
+    const isIdentityField = [
+        'nama',
+        'name',
+        'nama_pemohon',
+        'nama_mahasiswa',
+        'nim',
+        'nim_nip',
+        'nomor_induk',
+        'nomor_induk_pemohon',
+        'nomor_induk_mahasiswa',
+        'program_studi',
+        'program_studi_pemohon',
+        'program_studi_mahasiswa',
+        'fakultas',
+        'prodi',
+    ].includes(normalized);
+
+    if (source === 'data_kampus') {
+        return 'Data kampus';
+    }
+
+    if (source === 'data_sistem') {
+        return 'Data sistem';
+    }
+
+    if (!isIdentityField) {
+        return '';
+    }
+
+    return 'Data pemohon';
 }
 
 function setApplicantFieldRef(name: string, el: any) {
@@ -638,22 +758,18 @@ function fieldError(name: string): string | undefined {
                                             :data-field-key="`field_data.${field.name}`"
                                             :ref="(el) => setApplicantFieldRef(`field_data.${field.name}`, el)"
                                         >
-                                        <label class="mb-1 block text-xs font-medium text-slate-700">
-                                            {{ field.label }}
-                                            <span v-if="field.required" class="text-red-500">*</span>
-                                        </label>
-                                            <span
-                                                v-if="isApplicantFieldReadonly(field)"
-                                                class="mb-2 inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700"
-                                            >
-                                                Data oleh kampus
-                                            </span>
-                                            <p
-                                                v-if="applicantFieldHelp(field)"
-                                                class="mb-2 text-[10px] text-amber-600"
-                                            >
-                                                {{ applicantFieldHelp(field) }}
-                                            </p>
+                                            <div class="mb-1 flex items-center justify-between gap-2">
+                                                <label class="block text-xs font-medium text-slate-700">
+                                                    {{ field.label }}
+                                                    <span v-if="field.required" class="text-red-500">*</span>
+                                                </label>
+                                                <span
+                                                    v-if="fieldSourceLabel(field)"
+                                                    class="inline-flex shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600"
+                                                >
+                                                    {{ fieldSourceLabel(field) }}
+                                                </span>
+                                            </div>
 
                                             <textarea
                                                 v-if="field.type === 'textarea'"

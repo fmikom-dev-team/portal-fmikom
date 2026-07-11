@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import {
@@ -53,6 +53,14 @@ type LogbookItem  = {
     is_revisable?: boolean;
     photos?: LogbookPhoto[];
 };
+type PeriodOption = {
+    id?: number | string | null;
+    label?: string | null;
+    period_label?: string | null;
+    status_label?: string | null;
+    is_active?: boolean | null;
+};
+
 type PageProps = { flash?: FlashProps; errors?: Record<string, string | undefined> };
 
 const props = defineProps<{
@@ -62,6 +70,8 @@ const props = defineProps<{
     submitBlockedMessage?: string | null;
     todayLogbook?: LogbookItem | null;
     logbooks?: LogbookItem[];
+    periods?: PeriodOption[];
+    selected_period_id?: number | string | null;
 }>();
 
 const page               = usePage<PageProps>();
@@ -474,8 +484,7 @@ watch(
                     </div>
                 </div>
             </section>
-
-            <!-- Quick Stats Bar -->
+<!-- Quick Stats Bar -->
             <div class="grid grid-cols-3 gap-3 lg:gap-4">
                 <div class="group relative overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(16,185,129,0.12)] hover:-translate-y-0.5">
                     <div class="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-emerald-500 to-teal-400 rounded-t-2xl" />
@@ -615,7 +624,7 @@ watch(
                         <label class="space-y-1.5">
                             <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Jam Mulai</span>
                             <div class="relative">
-                                <Clock3 class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                                <Clock3 class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-blue-500/80 dark:text-blue-300" />
                                 <div
                                     v-if="hasLockedTodayLogbook"
                                     class="flex h-10 w-full items-center rounded-xl border border-emerald-200/60 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10 pl-9 pr-3 text-sm font-bold text-wims-text"
@@ -627,7 +636,7 @@ watch(
                                     v-model="form.jam_mulai"
                                     type="time"
                                     :disabled="formDisabled"
-                                    class="h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card pl-9 pr-3 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                    class="h-10 w-full appearance-none rounded-xl border border-wims-border/60 bg-wims-card pl-9 pr-3 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50"
                                 />
                             </div>
                             <p v-if="form.errors.jam_mulai" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.jam_mulai }}</p>
@@ -635,7 +644,7 @@ watch(
                         <label class="space-y-1.5">
                             <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Jam Selesai</span>
                             <div class="relative">
-                                <Clock3 class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                                <Clock3 class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-blue-500/80 dark:text-blue-300" />
                                 <div
                                     v-if="hasLockedTodayLogbook"
                                     class="flex h-10 w-full items-center rounded-xl border border-emerald-200/60 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10 pl-9 pr-3 text-sm font-bold text-wims-text"
@@ -647,7 +656,7 @@ watch(
                                     v-model="form.jam_selesai"
                                     type="time"
                                     :disabled="formDisabled"
-                                    class="h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card pl-9 pr-3 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                    class="h-10 w-full appearance-none rounded-xl border border-wims-border/60 bg-wims-card pl-9 pr-3 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50"
                                 />
                             </div>
                             <p v-if="form.errors.jam_selesai" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.jam_selesai }}</p>
@@ -946,9 +955,23 @@ watch(
 </template>
 
 <style scoped>
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-clear-button,
+input[type="time"]::-webkit-inner-spin-button {
+    display: none;
+}
+
+input[type="time"] {
+    color-scheme: light dark;
+}
+
 .lb-enter-active,
 .lb-leave-active { transition: opacity 0.18s ease; }
 .lb-enter-from,
 .lb-leave-to { opacity: 0; }
 </style>
+
+
+
+
 

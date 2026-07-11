@@ -3,14 +3,14 @@ import { toast } from "vue-sonner";
 
 /**
  * Initialize global flash toast handler using Inertia's router events.
- * Call once in app.ts — no need to call in layouts or pages.
+ * Call once in app.ts Ã¢â‚¬â€ no need to call in layouts or pages.
  *
- * Uses router.on('finish') to reliably fire ONCE per navigation,
- * preventing duplicate toasts from watch reactivity.
+ * Uses the success event payload so we read the freshly navigated page,
+ * which is more reliable than reading router.page on finish.
  */
 export function initFlashToast() {
-	router.on("finish", () => {
-		const flash = (router.page?.props as any)?.flash;
+	router.on("success", (event) => {
+		const flash = (event.detail.page.props as any)?.flash;
 		if (!flash) return;
 		if (flash.success) toast.success(flash.success);
 		if (flash.error) toast.error(flash.error);

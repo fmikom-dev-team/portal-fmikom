@@ -12,17 +12,18 @@ import {
     Search,
 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
+import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 type Category = {
     id: number;
     nama: string;
     slug: string;
     deskripsi?: string | null;
-    icon?: string | null;
     warna?: string | null;
     urutan: number;
     is_active: boolean;
 };
 const props = defineProps<{ categories: Category[] }>();
+const { can } = useFastPermissions();
 const categorySearch = ref('');
 const filteredCategories = computed(() =>
     categorySearch.value.trim()
@@ -64,7 +65,6 @@ const editTarget = ref<Category | null>(null);
 const form = useForm({
     nama: '',
     deskripsi: '',
-    icon: '',
     warna: 'indigo',
     urutan: 0,
     is_active: true,
@@ -80,7 +80,6 @@ function openEdit(cat: Category) {
     editTarget.value = cat;
     form.nama = cat.nama;
     form.deskripsi = cat.deskripsi ?? '';
-    form.icon = cat.icon ?? '';
     form.warna = cat.warna ?? 'blue';
     form.urutan = cat.urutan;
     form.is_active = cat.is_active;
@@ -123,6 +122,7 @@ function destroy(cat: Category) {
     >
         <template #actions>
             <button
+                v-if="can('fast.admin.category.manage')"
                 type="button"
                 class="fast-btn fast-btn-primary flex items-center gap-1.5 px-4 py-2 text-xs font-semibold"
                 @click="openAdd"
@@ -157,7 +157,7 @@ function destroy(cat: Category) {
                     }}
                 </p>
                 <button
-                    v-if="!categorySearch"
+                    v-if="!categorySearch && can('fast.admin.category.manage')"
                     type="button"
                     class="text-xs text-blue-600 hover:underline"
                     @click="openAdd"
@@ -213,15 +213,10 @@ function destroy(cat: Category) {
                         <span class="text-[10px] text-slate-400"
                             >Urutan: {{ cat.urutan }}</span
                         >
-                        <span
-                            v-if="cat.icon"
-                            class="text-[10px] text-slate-400"
-                        >
-                            Icon: {{ cat.icon }}
-                        </span>
                     </div>
                     <div class="flex items-center gap-1.5">
                         <button
+                            v-if="can('fast.admin.category.manage')"
                             type="button"
                             class="fast-btn fast-btn-outline grid size-7 place-items-center rounded-lg text-slate-500"
                             title="Edit"
@@ -230,6 +225,7 @@ function destroy(cat: Category) {
                             <Pencil class="size-3.5" />
                         </button>
                         <button
+                            v-if="can('fast.admin.category.manage')"
                             type="button"
                             class="fast-btn grid size-7 place-items-center rounded-lg"
                             :class="
@@ -246,6 +242,7 @@ function destroy(cat: Category) {
                             />
                         </button>
                         <button
+                            v-if="can('fast.admin.category.manage')"
                             type="button"
                             class="fast-btn fast-btn-soft grid size-7 place-items-center rounded-lg border-red-200 bg-red-50 text-red-600 hover:border-red-300 hover:bg-red-100 hover:text-red-700"
                             title="Hapus"
@@ -319,36 +316,23 @@ function destroy(cat: Category) {
                                 placeholder="Deskripsi singkat kategori ini"
                             />
                         </label>
-                        <div class="grid grid-cols-2 gap-3">
-                            <label class="block space-y-1.5">
-                                <span class="text-xs font-medium text-slate-700"
-                                    >Warna</span
+                        <label class="block space-y-1.5">
+                            <span class="text-xs font-medium text-slate-700"
+                                >Warna</span
+                            >
+                            <select
+                                v-model="form.warna"
+                                class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-400"
+                            >
+                                <option
+                                    v-for="w in warnaOptions"
+                                    :key="w.value"
+                                    :value="w.value"
                                 >
-                                <select
-                                    v-model="form.warna"
-                                    class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-400"
-                                >
-                                    <option
-                                        v-for="w in warnaOptions"
-                                        :key="w.value"
-                                        :value="w.value"
-                                    >
-                                        {{ w.label }}
-                                    </option>
-                                </select>
-                            </label>
-                            <label class="block space-y-1.5">
-                                <span class="text-xs font-medium text-slate-700"
-                                    >Icon (Lucide)</span
-                                >
-                                <input
-                                    v-model="form.icon"
-                                    type="text"
-                                    class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-400"
-                                    placeholder="Contoh: mail"
-                                />
-                            </label>
-                        </div>
+                                    {{ w.label }}
+                                </option>
+                            </select>
+                        </label>
                         <div class="grid grid-cols-2 gap-3">
                             <label class="block space-y-1.5">
                                 <span class="text-xs font-medium text-slate-700"

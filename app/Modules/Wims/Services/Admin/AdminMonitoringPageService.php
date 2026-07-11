@@ -22,6 +22,7 @@ class AdminMonitoringPageService
     {
         $status = (string) $request->string('status', 'all');
         $search = trim((string) $request->string('search', ''));
+        $period = trim((string) $request->string('period', ''));
         $companyId = $request->integer('company_id') ?: null;
         $dosenId = $request->integer('dosen_id') ?: null;
 
@@ -63,6 +64,16 @@ class AdminMonitoringPageService
                     $dosenQuery->where('name', 'like', "%{$search}%");
                 });
             });
+        }
+
+        if ($period !== '') {
+            [$start, $end] = array_pad(explode('__', $period, 2), 2, null);
+
+            if (filled($start) && filled($end)) {
+                $query
+                    ->whereDate('tanggal_mulai', $start)
+                    ->whereDate('tanggal_selesai', $end);
+            }
         }
 
         if ($companyId) {
@@ -143,6 +154,7 @@ class AdminMonitoringPageService
             'filters' => [
                 'status' => $status,
                 'search' => $search,
+                'period' => $period,
                 'company_id' => $companyId,
                 'dosen_id' => $dosenId,
             ],
@@ -176,6 +188,32 @@ class AdminMonitoringPageService
                         'id' => $dosen->id,
                         'label' => $dosen->name,
                     ])
+                    ->values()
+                    ->all(),
+                'periods' => PendaftaranMagang::query()
+                    ->whereIn('status', ['approved', 'aktif', 'selesai'])
+                    ->whereNotNull('tanggal_mulai')
+                    ->whereNotNull('tanggal_selesai')
+                    ->orderByDesc('tanggal_selesai')
+                    ->get(['tanggal_mulai', 'tanggal_selesai'])
+                    ->unique(fn (PendaftaranMagang $pendaftaran) => sprintf(
+                        '%s__%s',
+                        optional($pendaftaran->tanggal_mulai)->toDateString(),
+                        optional($pendaftaran->tanggal_selesai)->toDateString(),
+                    ))
+                    ->map(function (PendaftaranMagang $pendaftaran): array {
+                        $start = $pendaftaran->tanggal_mulai->toDateString();
+                        $end = $pendaftaran->tanggal_selesai->toDateString();
+
+                        return [
+                            'value' => sprintf('%s__%s', $start, $end),
+                            'label' => sprintf(
+                                '%s - %s',
+                                $this->formatDate($pendaftaran->tanggal_mulai),
+                                $this->formatDate($pendaftaran->tanggal_selesai),
+                            ),
+                        ];
+                    })
                     ->values()
                     ->all(),
             ],

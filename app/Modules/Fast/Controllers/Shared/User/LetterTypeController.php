@@ -15,6 +15,7 @@ class LetterTypeController extends Controller
         $user = $request->user();
         abort_if($user === null, 403);
         abort_if(! $jenisSurat->is_active || $jenisSurat->template === null, 404);
+        $this->authorize('view', $jenisSurat);
         abort_unless($this->canAccessJenisSurat($user, $jenisSurat), 404);
 
         return response()->json([

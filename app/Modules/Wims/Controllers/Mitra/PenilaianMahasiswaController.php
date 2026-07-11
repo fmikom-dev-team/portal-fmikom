@@ -58,7 +58,7 @@ class PenilaianMahasiswaController extends Controller
         abort_if(
             ! $authorizedPendaftaran->isReadyForAssessment(now()),
             403,
-            'Penilaian hanya dapat dilakukan setelah PKL memasuki tahap penilaian.',
+            'Penilaian hanya dapat dilakukan setelah laporan akhir diunggah.',
         );
 
         $authorizedPendaftaran->load([
@@ -92,7 +92,7 @@ class PenilaianMahasiswaController extends Controller
         abort_if(
             ! $authorizedPendaftaran->isReadyForAssessment(now()),
             403,
-            'Penilaian hanya dapat dilakukan setelah PKL memasuki tahap penilaian.',
+            'Penilaian hanya dapat dilakukan setelah laporan akhir diunggah.',
         );
 
         $existingSubmission = $this->assessmentSubmissionService->resolveLatestSubmission($authorizedPendaftaran, $user, 'mitra');

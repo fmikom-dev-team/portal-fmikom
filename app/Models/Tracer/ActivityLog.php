@@ -4,6 +4,7 @@ namespace App\Models\Tracer;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class ActivityLog extends Model
 {
@@ -32,6 +33,10 @@ class ActivityLog extends Model
         $subject = null,
         ?array $properties = null
     ): self {
+        if (! Schema::hasTable('activity_logs')) {
+            return new self;
+        }
+
         return self::create([
             'user_id' => auth()->id(),
             'action' => $action,

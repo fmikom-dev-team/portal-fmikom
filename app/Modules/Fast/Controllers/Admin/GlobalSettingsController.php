@@ -14,6 +14,8 @@ class GlobalSettingsController extends Controller
 {
     public function previewLogo(): SymfonyResponse|StreamedResponse
     {
+        $this->authorize('previewLogo', new TemplateGlobalSetting);
+
         $logoPath = (string) TemplateGlobalSetting::get('logo_path', '');
 
         if (trim($logoPath) !== '' && FastStorage::exists($logoPath)) {
@@ -38,6 +40,8 @@ class GlobalSettingsController extends Controller
 
     public function save(Request $request): RedirectResponse
     {
+        $this->authorize('update', new TemplateGlobalSetting);
+
         $validated = $request->validate([
             'settings' => ['nullable', 'array'],
             'logo_file' => ['nullable', 'image', 'max:3072'],

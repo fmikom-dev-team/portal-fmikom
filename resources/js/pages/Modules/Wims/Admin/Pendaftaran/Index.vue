@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import {
@@ -100,6 +100,8 @@ const props = defineProps<{
 const status = ref(props.filters.status || 'all');
 const search = ref(props.filters.search || '');
 const processingId = ref<number | null>(null);
+const bulkProcessing = ref(false);
+const selectedIds = ref<number[]>([]);
 const revisionDialogOpen = ref(false);
 const revisionTarget = ref<RegistrationItem | null>(null);
 const revisionNote = ref('');
@@ -206,6 +208,88 @@ const statusClass = (value?: string | null) => {
 
 const canReview = (item: RegistrationItem) =>
     !inArrayStatus(item.status, ['aktif', 'selesai']);
+
+const selectableRegistrations = computed(() =>
+    props.registrations.data.filter((item) => canReview(item)),
+);
+
+const selectedCount = computed(() => selectedIds.value.length);
+
+const selectedAll = computed(
+    () =>
+        selectableRegistrations.value.length > 0 &&
+        selectedIds.value.length === selectableRegistrations.value.length,
+);
+
+const selectedIndeterminate = computed(
+    () => selectedCount.value > 0 && !selectedAll.value,
+);
+
+const clearSelection = () => {
+    selectedIds.value = [];
+};
+
+const isSelected = (id: number) => selectedIds.value.includes(id);
+
+const toggleSelection = (item: RegistrationItem, checked: boolean) => {
+    if (!canReview(item)) {
+        return;
+    }
+
+    if (checked) {
+        if (!selectedIds.value.includes(item.id)) {
+            selectedIds.value.push(item.id);
+        }
+
+        return;
+    }
+
+    selectedIds.value = selectedIds.value.filter((selectedId) => selectedId !== item.id);
+};
+
+const toggleSelectAll = (checked: boolean) => {
+    selectedIds.value = checked ? selectableRegistrations.value.map((item) => item.id) : [];
+};
+
+const handleSelectAllChange = (event: Event) => {
+    toggleSelectAll((event.target as HTMLInputElement).checked);
+};
+
+const handleSelectionChange = (item: RegistrationItem, event: Event) => {
+    toggleSelection(item, (event.target as HTMLInputElement).checked);
+};
+
+const bulkApproveSelected = () => {
+    if (!selectedIds.value.length) {
+        return;
+    }
+
+    if (
+        typeof window !== 'undefined' &&
+        !window.confirm(`Setujui ${selectedIds.value.length} pendaftaran terpilih?`)
+    ) {
+        return;
+    }
+
+    bulkProcessing.value = true;
+
+    router.post(
+        wimsRoutes.admin.registrations.bulkApprove().url,
+        {
+            ids: selectedIds.value,
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                clearSelection();
+            },
+            onFinish: () => {
+                bulkProcessing.value = false;
+            },
+        },
+    );
+};
 
 const inArrayStatus = (value: string | null | undefined, items: string[]) =>
     value !== null && value !== undefined && items.includes(value);
@@ -410,6 +494,32 @@ const placementLink = (item: RegistrationItem) =>
                     </Button>
                 </form>
 
+                <div class="flex flex-col gap-2.5 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <label class="inline-flex items-center gap-2 text-[13px] font-semibold text-zinc-700">
+                            <input
+                                :checked="selectedAll"
+                                :indeterminate="selectedIndeterminate"
+                                type="checkbox"
+                                class="size-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                                @change="handleSelectAllChange"
+                            />
+                            Tandai semua yang bisa disetujui
+                        </label>
+                        <span class="text-[11px] text-zinc-500">Hanya pendaftaran berstatus pending, revisi, atau ditolak</span>
+                        <span v-if="selectedCount" class="rounded-full border border-blue-200 bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+                            {{ selectedCount }} dipilih
+                        </span>
+                    </div>
+                    <div v-if="selectedCount" class="flex flex-wrap items-center gap-1.5">
+                        <Button type="button" variant="outline" class="h-8 rounded-xl border-zinc-200 bg-white px-3 text-[13px] font-semibold text-zinc-700 shadow-sm" @click="clearSelection">Batal</Button>
+                        <Button type="button" class="h-8 rounded-xl bg-emerald-600 px-3 text-[13px] font-bold text-white shadow-sm disabled:opacity-60" :disabled="bulkProcessing" @click="bulkApproveSelected">
+                            <CheckCheck class="size-3.5" />
+                            {{ bulkProcessing ? 'Menyetujui...' : 'Setujui' }}
+                        </Button>
+                    </div>
+                </div>
+
                 <div class="space-y-4">
                     <div
                         v-if="registrations.data.length"
@@ -421,8 +531,18 @@ const placementLink = (item: RegistrationItem) =>
                             class="rounded-xl border border-zinc-200 bg-white px-4 py-4 shadow-none sm:px-5"
                         >
                             <div
-                                class="flex flex-col gap-4 xl:grid xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.25fr)_minmax(280px,0.85fr)] xl:items-start"
+                                class="flex flex-col gap-4 xl:grid xl:grid-cols-[auto_minmax(0,0.9fr)_minmax(0,1.25fr)_minmax(280px,0.85fr)] xl:items-start"
                             >
+                                <div class="pt-1">
+                                    <input
+                                        v-if="canReview(item)"
+                                        :checked="isSelected(item.id)"
+                                        type="checkbox"
+                                        class="size-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                                        @change="handleSelectionChange(item, $event)"
+                                    />
+                                </div>
+
                                 <div class="min-w-0">
                                     <div class="flex items-start gap-3">
                                         <div
@@ -543,11 +663,6 @@ const placementLink = (item: RegistrationItem) =>
 
                                     <div class="flex flex-wrap items-center gap-2">
                                         <template v-if="item.status === 'approved'">
-                                            <span
-                                                class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700"
-                                            >
-                                                Siap ditempatkan
-                                            </span>
                                             <Link
                                                 :href="placementLink(item)"
                                                 class="inline-flex h-9 items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] dark:from-[#214FAF] dark:to-[#0F6FBE] dark:shadow-[0_14px_34px_-18px_rgba(8,15,30,0.84)] dark:hover:shadow-[0_18px_38px_-18px_rgba(8,15,30,0.92)]"

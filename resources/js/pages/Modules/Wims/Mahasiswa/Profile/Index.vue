@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import {
@@ -35,6 +35,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import StudentLayout from '@/layouts/Modules/Wims/Mahasiswa/Layout.vue';
+import StudentPeriodSwitcher from '@/components/Modules/Wims/Mahasiswa/StudentPeriodSwitcher.vue';
 import { formatIndonesianDateTime } from '@/lib/date';
 
 defineOptions({
@@ -85,6 +86,8 @@ type RegistrationProps = {
 const props = defineProps<{
     profile: ProfileProps;
     registration?: RegistrationProps | null;
+    periods?: PeriodOption[];
+    selected_period_id?: number | string | null;
 }>();
 
 // --- EXISTING LOGIC -----------------------------------------------------------
@@ -324,23 +327,34 @@ const timelineEvents = computed(() => {
         events.push({ label: 'Pengajuan dikirim', date: formattedSubmittedAt.value, icon: 'FileText', color: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/15 border-blue-200' });
     }
     if (status === 'approved' || status === 'aktif' || status === 'selesai') {
-        events.push({ label: 'Pengajuan disetujui', date: props.registration?.period_label ?? '—', icon: 'CircleCheck', color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/15 border-emerald-200' });
+        events.push({ label: 'Pengajuan disetujui', date: props.registration?.period_label ?? '-', icon: 'CircleCheck', color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/15 border-emerald-200' });
     }
     if (status === 'revisi') {
-        events.push({ label: 'Diminta revisi', date: '—', icon: 'AlertCircle', color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/15 border-amber-200' });
+        events.push({ label: 'Diminta revisi', date: '-', icon: 'AlertCircle', color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/15 border-amber-200' });
     }
     if (status === 'rejected') {
-        events.push({ label: 'Pengajuan ditolak', date: '—', icon: 'AlertCircle', color: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/15 border-rose-200' });
+        events.push({ label: 'Pengajuan ditolak', date: '-', icon: 'AlertCircle', color: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/15 border-rose-200' });
     }
     if (status === 'aktif' || status === 'selesai') {
-        events.push({ label: 'Magang dimulai', date: props.registration?.period_label ?? '—', icon: 'TrendingUp', color: 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/15 border-sky-200' });
+        events.push({ label: 'Magang dimulai', date: props.registration?.period_label ?? '-', icon: 'TrendingUp', color: 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/15 border-sky-200' });
     }
     if (status === 'selesai') {
-        events.push({ label: 'Magang selesai', date: '—', icon: 'GraduationCap', color: 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/15 border-violet-200' });
+        events.push({ label: 'Selesai', date: '-', icon: 'GraduationCap', color: 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/15 border-violet-200' });
     }
     return events;
 });
 
+const selectedPeriodId = computed(() => (props.selected_period_id != null ? String(props.selected_period_id) : ''));
+
+const withSelectedPeriod = (href: string) => {
+    if (!selectedPeriodId.value) {
+        return href;
+    }
+
+    const url = new URL(href, window.location.origin);
+    url.searchParams.set('pendaftaran', selectedPeriodId.value);
+    return url.pathname + url.search + url.hash;
+};
 const quickActions = computed(() => {
     const status = props.registration?.status;
     const actions: {
@@ -354,7 +368,7 @@ const quickActions = computed(() => {
     if (!status) {
         actions.push({
             label: 'Daftar Magang',
-            href: '/wims/pendaftaran',
+            href: withSelectedPeriod('/wims/pendaftaran'),
             icon: 'building',
             desc: 'Ajukan pendaftaran PKL baru.',
             color: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/15 border-blue-200 hover:bg-blue-100 dark:hover:bg-blue-500/20',
@@ -364,7 +378,7 @@ const quickActions = computed(() => {
     if (status === 'revisi') {
         actions.push({
             label: 'Perbaiki Pengajuan',
-            href: '/wims/pendaftaran',
+            href: withSelectedPeriod('/wims/pendaftaran'),
             icon: 'alert',
             desc: 'Buka ulang halaman pendaftaran untuk revisi.',
             color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/15 border-amber-200 hover:bg-amber-100 dark:hover:bg-amber-500/20',
@@ -374,14 +388,14 @@ const quickActions = computed(() => {
     if (status === 'aktif' || status === 'selesai') {
         actions.push({
             label: 'Logbook Harian',
-            href: '/wims/logbook',
+            href: withSelectedPeriod('/wims/logbook'),
             icon: 'book',
             desc: 'Lihat dan kelola catatan aktivitas magang.',
             color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/15 border-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-500/20',
         });
         actions.push({
             label: 'Laporan Akhir',
-            href: '/wims/laporan',
+            href: withSelectedPeriod('/wims/laporan'),
             icon: 'file',
             desc: 'Kelola dokumen laporan akhir magang.',
             color: 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/15 border-violet-200 hover:bg-violet-100 dark:hover:bg-violet-500/20',
@@ -391,7 +405,7 @@ const quickActions = computed(() => {
     if (status === 'approved' || status === 'pending' || status === 'aktif' || status === 'selesai') {
         actions.push({
             label: 'Status Magang',
-            href: '/wims/pendaftaran',
+            href: withSelectedPeriod('/wims/pendaftaran'),
             icon: 'building',
             desc: 'Tinjau perusahaan, periode, dan status pengajuan.',
             color: 'text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 border-wims-border hover:bg-slate-100 dark:hover:bg-slate-700/40',
@@ -440,8 +454,14 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                 </p>
             </section>
 
+            <StudentPeriodSwitcher
+                :periods="props.periods"
+                :selected-period-id="props.selected_period_id"
+                label="Periode aktif"
+                helper="Pilih periode PKL/Magang yang ingin dibuka."
+            />
             <!-- ----------------------------------------------------------------
-                 FITUR 2 — PROFILE COMPLETION SCORE
+                 FITUR 2 - PROFILE COMPLETION SCORE
                  Menampilkan persentase kelengkapan data profil mahasiswa
                  dengan progress bar berwarna dan checklist item.
             ----------------------------------------------------------------- -->
@@ -495,7 +515,7 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                                 <div class="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:items-start">
 
                                     <!-- ----------------------------------------
-                                         FITUR 6 — DRAG & DROP AVATAR
+                                         FITUR 6 - DRAG & DROP AVATAR
                                          Avatar bisa diklik ATAU di-drag-and-drop
                                          file foto langsung ke atasnya. Muncul
                                          overlay hint saat hover dan highlight
@@ -543,7 +563,7 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                                                 </p>
 
                                                 <!-- ----------------------------
-                                                     FITUR 1 — COPY EMAIL
+                                                     FITUR 1 - COPY EMAIL
                                                      Klik teks email untuk menyalin
                                                      ke clipboard; ikon berubah jadi
                                                      centang selama 2 detik.
@@ -628,7 +648,7 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                                             <div>
                                                 <dt class="text-sm text-slate-500 dark:text-slate-400">NIM</dt>
                                                 <!-- ----------------------------
-                                                     FITUR 1 — COPY NIM
+                                                     FITUR 1 - COPY NIM
                                                      Tombol ikon kecil di samping
                                                      NIM untuk menyalin ke clipboard.
                                                 ----------------------------- -->
@@ -752,29 +772,7 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                                             </div>
                                         </div>
 
-                                        <div class="rounded-xl border border-wims-border/80 bg-slate-50/80 px-4 py-4 dark:bg-slate-800/40">
-                                            <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">Tampilan Profil Tambahan</p>
-                                            <div class="mt-3 grid gap-3 sm:grid-cols-2">
-                                                <div>
-                                                    <p class="text-xs uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Website</p>
-                                                    <p class="mt-1 text-sm font-medium text-wims-text break-all">
-                                                        {{ profileForm.website || 'Belum diisi' }}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p class="text-xs uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">LinkedIn</p>
-                                                    <p class="mt-1 text-sm font-medium text-wims-text break-all">
-                                                        {{ profileForm.linkedin || 'Belum diisi' }}
-                                                    </p>
-                                                </div>
-                                                <div class="sm:col-span-2">
-                                                    <p class="text-xs uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Bio</p>
-                                                    <p class="mt-1 text-sm leading-6 text-wims-text whitespace-pre-line">
-                                                        {{ profileForm.bio || 'Belum ada bio singkat.' }}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
+
                                         <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
                                             <Button
                                                 type="submit"
@@ -834,151 +832,6 @@ const handleDragLeave = () => { isDraggingOver.value = false; };
                         </form>
                     </CardContent>
                 </Card>
-            </div>
-
-            <!-- ----------------------------------------------------------------
-                 FITUR 3 — INTERNSHIP PROGRESS TRACKER
-                 Stepper horizontal yang menunjukkan posisi mahasiswa
-                 dalam alur PKL: Pengajuan ? Disetujui ? Aktif ? Selesai.
-                 Ditampilkan hanya jika ada data registration.
-            ----------------------------------------------------------------- -->
-            <Card
-                v-if="registration"
-                class="rounded-xl border border-wims-border bg-wims-card py-0 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)]"
-            >
-                <CardHeader class="border-b border-wims-border/80 px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
-                    <CardTitle class="text-base text-slate-950 dark:text-white">Progress Magang</CardTitle>
-                    <CardDescription class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-                        Tahapan alur proses PKL Anda di WIMS.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent class="px-5 py-5 sm:px-6">
-                    <div class="relative flex items-start justify-between gap-2">
-                        <!-- background connector -->
-                        <div class="absolute top-4 left-4 right-4 h-0.5 bg-slate-100 dark:bg-slate-700/50" aria-hidden="true" />
-                        <!-- filled progress -->
-                        <div
-                            class="absolute top-4 left-4 h-0.5 bg-[#0F62FE] transition-all duration-700"
-                            :style="{
-                                width: currentStageIndex >= 0
-                                    ? `calc(${(currentStageIndex / (internshipStages.length - 1)) * 100}% - 2rem)`
-                                    : '0%',
-                            }"
-                            aria-hidden="true"
-                        />
-                        <div
-                            v-for="(stage, idx) in internshipStages"
-                            :key="stage.key"
-                            class="relative z-10 flex flex-1 flex-col items-center gap-2"
-                        >
-                            <div
-                                class="flex size-8 items-center justify-center rounded-full border-2 transition-all duration-300"
-                                :class="idx <= currentStageIndex
-                                    ? 'border-[#0F62FE] bg-[#0F62FE] text-white'
-                                    : 'border-wims-border bg-wims-card text-slate-400'"
-                            >
-                                <CircleCheck v-if="idx < currentStageIndex || (stage.key === 'selesai' && currentStageIndex === internshipStages.length - 1)" class="size-4" />
-                                <span v-else class="text-[11px] font-bold">{{ idx + 1 }}</span>
-                            </div>
-                            <span
-                                class="text-center text-[11px] font-medium leading-tight"
-                                :class="idx <= currentStageIndex ? 'text-slate-800 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'"
-                            >
-                                {{ stage.label }}
-                            </span>
-                        </div>
-                    </div>
-                    <p v-if="currentStageIndex === -1" class="mt-4 text-center text-xs text-slate-500 dark:text-slate-400">
-                        Belum ada pendaftaran magang aktif.
-                    </p>
-                </CardContent>
-            </Card>
-
-            <!-- Bottom Row: Timeline + Quick Actions -->
-            <div class="grid gap-5 lg:grid-cols-2">
-
-                <!-- ------------------------------------------------------------
-                     FITUR 4 — RIWAYAT AKTIVITAS (TIMELINE)
-                     Menampilkan kronologi event pengajuan magang secara
-                     vertikal — dari submit hingga selesai atau ditolak.
-                ------------------------------------------------------------- -->
-                <Card class="rounded-xl border border-wims-border bg-wims-card py-0 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)]">
-                    <CardHeader class="border-b border-wims-border/80 px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
-                        <CardTitle class="flex items-center gap-2 text-base text-slate-950 dark:text-white">
-                            <Clock class="size-4 text-slate-400" />
-                            Riwayat Aktivitas
-                        </CardTitle>
-                        <CardDescription class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-                            Kronologi proses pengajuan magang Anda.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent class="px-5 py-5 sm:px-6">
-                        <div v-if="timelineEvents.length > 0" class="relative space-y-4 pl-5">
-                            <div class="absolute top-1 bottom-0 left-[9px] w-px bg-slate-100 dark:bg-slate-700/50" aria-hidden="true" />
-                            <div
-                                v-for="(event, idx) in timelineEvents"
-                                :key="idx"
-                                class="relative flex items-start gap-3"
-                            >
-                                <div
-                                    class="absolute -left-5 flex size-[18px] items-center justify-center rounded-full border"
-                                    :class="event.color"
-                                >
-                                    <CircleCheck v-if="event.icon === 'CircleCheck'" class="size-3" />
-                                    <AlertCircle v-else-if="event.icon === 'AlertCircle'" class="size-3" />
-                                    <TrendingUp v-else-if="event.icon === 'TrendingUp'" class="size-3" />
-                                    <GraduationCap v-else-if="event.icon === 'GraduationCap'" class="size-3" />
-                                    <FileText v-else class="size-3" />
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-slate-800 dark:text-slate-100">{{ event.label }}</p>
-                                    <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ event.date }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div v-else class="flex flex-col items-center justify-center py-6 text-center">
-                            <Clock class="size-8 text-slate-200 dark:text-slate-600" />
-                            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Belum ada riwayat aktivitas.</p>
-                            <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">Mulai dengan mengajukan pendaftaran magang.</p>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card class="rounded-xl border border-wims-border bg-wims-card py-0 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.18)]">
-                    <CardHeader class="border-b border-wims-border/80 px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
-                        <CardTitle class="flex items-center gap-2 text-base text-slate-950 dark:text-white">
-                            <Zap class="size-4 text-slate-400" />
-                            Aksi Cepat
-                        </CardTitle>
-                        <CardDescription class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-                            Pintasan ke halaman yang paling sering dipakai.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent class="px-5 py-5 sm:px-6">
-                        <div class="grid gap-2">
-                            <Link
-                                v-for="action in quickActions"
-                                :key="`${action.label}-${action.href}`"
-                                :href="action.href"
-                                class="flex items-center justify-between rounded-lg border px-3.5 py-3 transition-colors"
-                                :class="action.color"
-                            >
-                                <div class="flex items-center gap-3">
-                                    <Building2 v-if="action.icon === 'building'" class="size-4 shrink-0" />
-                                    <BookOpen v-else-if="action.icon === 'book'" class="size-4 shrink-0" />
-                                    <FileText v-else-if="action.icon === 'file'" class="size-4 shrink-0" />
-                                    <AlertCircle v-else class="size-4 shrink-0" />
-                                    <div>
-                                        <p class="text-sm font-medium">{{ action.label }}</p>
-                                        <p class="text-xs opacity-70">{{ action.desc }}</p>
-                                    </div>
-                                </div>
-                                <ChevronRight class="size-4 shrink-0 opacity-50" />
-                            </Link>
-                        </div>
-                    </CardContent>
-                </Card>
-
             </div>
         </div>
     </div>

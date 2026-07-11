@@ -3,6 +3,7 @@
 namespace App\Concerns;
 
 use App\Models\Auth\AuthMfa;
+use App\Modules\Fast\Support\FastPermissionCatalog;
 use App\Support\PublicStorageUrl;
 
 trait UserHelpers
@@ -91,6 +92,35 @@ trait UserHelpers
         $candidateRoles = array_values(array_unique(array_filter($candidateRoles)));
 
         return (bool) array_intersect($normalizedRoles, $candidateRoles);
+    }
+
+    /**
+     * FAST permission helper used by policies and sidebar visibility.
+     */
+    public function hasFastPermission(string ...$permissions): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        $permissions = array_values(array_filter(array_map(
+            fn (string $permission): string => strtolower(trim($permission)),
+            $permissions,
+        )));
+
+        if ($permissions === []) {
+            return false;
+        }
+
+        return FastPermissionCatalog::hasAny($this, $permissions);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function fastPermissionSlugs(): array
+    {
+        return FastPermissionCatalog::permissionsForUser($this);
     }
 
     public function getGlobalRoleLabel(): ?string

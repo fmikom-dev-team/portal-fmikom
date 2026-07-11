@@ -5,6 +5,7 @@ use App\Modules\Wims\Controllers\Admin\AssessmentRecapController as AdminAssessm
 use App\Modules\Wims\Controllers\Admin\AssessmentTemplateController as AdminAssessmentTemplateController;
 use App\Modules\Wims\Controllers\Admin\CompanyController as AdminCompanyController;
 use App\Modules\Wims\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Modules\Wims\Controllers\Admin\FinalReportTemplateController as AdminFinalReportTemplateController;
 use App\Modules\Wims\Controllers\Admin\MonitoringController as AdminMonitoringController;
 use App\Modules\Wims\Controllers\Admin\PlacementController as AdminPlacementController;
 use App\Modules\Wims\Controllers\Admin\RegistrationController as AdminRegistrationController;
@@ -49,6 +50,8 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('registration');
         Route::post('/pendaftaran', [MahasiswaRegistrationController::class, 'store'])
             ->name('registration.store');
+        Route::get('/pendaftaran/template-proposal/download', [MahasiswaRegistrationController::class, 'downloadProposalTemplate'])
+            ->name('registration.proposal-template.download');
 
         Route::get('/absensi', [AttendanceController::class, 'index'])
             ->name('attendance');
@@ -79,6 +82,8 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('laporan.store');
         Route::get('/laporan/final-report/view', [LaporanController::class, 'viewFinalReport'])
             ->name('laporan.final-report.view');
+        Route::get('/laporan/template/download', [LaporanController::class, 'downloadTemplate'])
+            ->name('laporan.template.download');
         Route::get('/laporan/final-report/download', [LaporanController::class, 'downloadFinalReport'])
             ->name('laporan.final-report.download');
     });
@@ -105,6 +110,10 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('registrations.index');
         Route::patch('/pendaftaran/{pendaftaran}/status', [AdminRegistrationController::class, 'updateStatus'])
             ->name('registrations.update-status');
+        Route::post('/pendaftaran/bulk-approve', [AdminRegistrationController::class, 'bulkApprove'])
+            ->name('registrations.bulk-approve');
+        Route::get('/pendaftaran/{pendaftaran}/proposal/download', [AdminRegistrationController::class, 'downloadProposal'])
+            ->name('registrations.proposal.download');
 
         Route::get('/penempatan', [AdminPlacementController::class, 'index'])
             ->name('placements.index');
@@ -121,12 +130,30 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
 
         Route::get('/monitoring', [AdminMonitoringController::class, 'index'])
             ->name('monitoring.index');
+        Route::get('/monitoring/{pendaftaran}', [AdminMonitoringController::class, 'show'])
+            ->name('monitoring.show');
+        Route::get('/monitoring/{pendaftaran}/download/absensi', [AdminMonitoringController::class, 'downloadAttendance'])
+            ->name('monitoring.attendance.download');
+        Route::get('/monitoring/{pendaftaran}/download/logbook', [AdminMonitoringController::class, 'downloadLogbook'])
+            ->name('monitoring.logbook.download');
 
         Route::get('/rekap-nilai', [AdminAssessmentRecapController::class, 'index'])
             ->name('assessment-recap.index');
         Route::get('/rekap-nilai/{pendaftaran}/download/{role}', [AdminAssessmentRecapController::class, 'download'])
             ->whereIn('role', ['dosen', 'mitra'])
             ->name('assessment-recap.download');
+
+        Route::redirect('/template-laporan-akhir', '/template-proposal-laporan', 301);
+        Route::get('/template-proposal-laporan', [AdminFinalReportTemplateController::class, 'index'])
+            ->name('final-report-templates.index');
+        Route::post('/template-proposal-laporan', [AdminFinalReportTemplateController::class, 'store'])
+            ->name('final-report-templates.store');
+        Route::get('/template-proposal-laporan/{finalReportTemplate}/download', [AdminFinalReportTemplateController::class, 'download'])
+            ->name('final-report-templates.download');
+        Route::put('/template-proposal-laporan/{finalReportTemplate}', [AdminFinalReportTemplateController::class, 'update'])
+            ->name('final-report-templates.update');
+        Route::delete('/template-proposal-laporan/{finalReportTemplate}', [AdminFinalReportTemplateController::class, 'destroy'])
+            ->name('final-report-templates.destroy');
 
         Route::get('/penilaian-template', [AdminAssessmentTemplateController::class, 'index'])
             ->name('assessment-templates.index');

@@ -1,14 +1,14 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { toast } from 'vue-sonner';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import {
     Building2,
     BriefcaseBusiness,
     ClipboardCheck,
     ClipboardList,
-    CheckCircle2,
     FileCheck2,
-    AlertTriangle,
+    FileText,
     LayoutDashboard,
     LogOut,
     Menu,
@@ -48,32 +48,7 @@ const currentPath = computed(() => {
 });
 
 const user = computed(() => page.props.auth?.user);
-const flash = computed(() => page.props.flash ?? {});
-const flashBannerDismissed = ref(false);
-let flashBannerTimeout: ReturnType<typeof setTimeout> | null = null;
-const flashBanner = computed(() => {
-    if (flashBannerDismissed.value) {
-        return null;
-    }
-
-    if (flash.value.error) {
-        return {
-            type: 'error' as const,
-            title: 'Terjadi kendala',
-            message: flash.value.error,
-        };
-    }
-
-    if (flash.value.success) {
-        return {
-            type: 'success' as const,
-            title: 'Berhasil',
-            message: flash.value.success,
-        };
-    }
-
-    return null;
-});
+const pageSummary = computed(() => (page.props as any).wims_sidebar_counts ?? (page.props as any).summary ?? {});
 const userInitials = computed(() => {
     const name = user.value?.name?.trim();
 
@@ -87,6 +62,21 @@ const userInitials = computed(() => {
         .map((part) => part.charAt(0).toUpperCase())
         .join('');
 });
+
+type NavigationItem = {
+    label: string;
+    href: string;
+    icon: any;
+    active: (path: string) => boolean;
+    disabled?: boolean;
+    badge?: (summary: Record<string, any>) => number;
+};
+
+const resolveNavigationBadgeCount = (item: NavigationItem) => {
+    const value = item.badge?.(pageSummary.value) ?? 0;
+    return Number(value) > 0 ? Number(value) : 0;
+};
+
 const isMenuOpen = ref(false);
 let initialHtmlDarkClass = false;
 let initialBodyDarkClass = false;
@@ -125,27 +115,6 @@ const closeMenu = () => {
     isMenuOpen.value = false;
 };
 
-const dismissFlashBanner = () => {
-    flashBannerDismissed.value = true;
-};
-
-watch(
-    flash,
-    () => {
-        flashBannerDismissed.value = false;
-
-        if (flashBannerTimeout) {
-            clearTimeout(flashBannerTimeout);
-        }
-
-        flashBannerTimeout = setTimeout(() => {
-            flashBannerDismissed.value = true;
-            flashBannerTimeout = null;
-        }, 3500);
-    },
-    { immediate: true, deep: true },
-);
-
 onMounted(() => {
     if (typeof document !== 'undefined') {
         initialHtmlDarkClass = document.documentElement.classList.contains('dark');
@@ -153,13 +122,12 @@ onMounted(() => {
     }
 
     syncAdminDocumentTheme();
+    cleanupToastHandlers = registerToastHandlers();
 });
 
 onBeforeUnmount(() => {
-    if (flashBannerTimeout) {
-        clearTimeout(flashBannerTimeout);
-    }
-
+    cleanupToastHandlers?.();
+    cleanupToastHandlers = null;
     cleanupAdminDocumentTheme();
 });
 
@@ -168,6 +136,27 @@ watch(currentPath, () => {
     syncAdminDocumentTheme();
 });
 
+const registerToastHandlers = () => {
+    const offException = router.on('exception', (event) => {
+        const message = event.detail.exception?.message || 'Terjadi kendala pada server.';
+        toast.error(message);
+    });
+
+    const onHttpError = (event: Event) => {
+        const detail = (event as CustomEvent<{ message?: string }>).detail;
+        const message = detail?.message || 'Terjadi kendala saat memproses permintaan.';
+        toast.error(message);
+    };
+
+    window.addEventListener('pagi-http-error', onHttpError as EventListener);
+
+    return () => {
+        offException();
+        window.removeEventListener('pagi-http-error', onHttpError as EventListener);
+    };
+};
+
+let cleanupToastHandlers: (() => void) | null = null;
 const logout = () => {
     closeMenu();
     router.post('/logout');
@@ -178,56 +167,56 @@ const navigationItems = [
         label: 'Dashboard',
         href: '/wims/admin/dashboard',
         icon: LayoutDashboard,
-        description: 'Ringkasan operasional',
         active: (path: string) => path === '/wims/admin/dashboard',
     },
     {
         label: 'Pendaftaran Magang',
         href: '/wims/admin/pendaftaran',
         icon: ClipboardCheck,
-        description: 'Verifikasi pengajuan',
         active: (path: string) => path.startsWith('/wims/admin/pendaftaran'),
+        badge: (summary: Record<string, any>) => summary.pending ?? summary.pending_registrations ?? 0,
     },
     {
         label: 'Penempatan & Pembimbing',
         href: '/wims/admin/penempatan',
         icon: BriefcaseBusiness,
-        description: 'Lokasi dan dosen',
         active: (path: string) => path.startsWith('/wims/admin/penempatan'),
+        badge: (summary: Record<string, any>) => summary.needs_assignment ?? 0,
     },
     {
         label: 'Monitoring Mahasiswa',
         href: '/wims/admin/monitoring',
         icon: Users,
-        description: 'Presensi dan logbook',
         active: (path: string) => path.startsWith('/wims/admin/monitoring'),
     },
     {
         label: 'Rekap Nilai',
         href: '/wims/admin/rekap-nilai',
         icon: NotebookPen,
-        description: 'Nilai dosen dan mitra',
         active: (path: string) => path.startsWith('/wims/admin/rekap-nilai'),
     },
     {
         label: 'Template Penilaian',
         href: '/wims/admin/penilaian-template',
         icon: ClipboardList,
-        description: 'Komponen dan bobot',
         active: (path: string) => path.startsWith('/wims/admin/penilaian-template'),
+    },
+    {
+        label: 'Template Proposal & Laporan',
+        href: '/wims/admin/template-proposal-laporan',
+        icon: FileText,
+        active: (path: string) => path.startsWith('/wims/admin/template-proposal-laporan'),
     },
     {
         label: 'Perusahaan Mitra',
         href: '/wims/admin/perusahaan',
         icon: Building2,
-        description: 'Lokasi, radius, dan jam kerja',
         active: (path: string) => path.startsWith('/wims/admin/perusahaan'),
     },
     {
         label: 'Validasi Laporan',
         href: '#',
         icon: FileCheck2,
-        description: 'Laporan akhir magang',
         active: () => false,
         disabled: true,
     },
@@ -237,44 +226,34 @@ const pageHeaderMeta = [
     {
         match: (path: string) => path === '/wims/admin/dashboard',
         title: 'Dashboard Admin',
-        description:
-            'Ringkasan approval, penempatan, dan status dokumen untuk operasional PKL/magang.',
     },
     {
         match: (path: string) => path.startsWith('/wims/admin/perusahaan'),
         title: 'Perusahaan Mitra',
-        description:
-            'Kelola data perusahaan mitra, lokasi presensi, radius, jam kerja, dan akun pembimbing mitra.',
     },
     {
         match: (path: string) => path.startsWith('/wims/admin/pendaftaran'),
         title: 'Pendaftaran Magang',
-        description:
-            'Verifikasi pengajuan PKL/magang mahasiswa sebelum masuk tahap penempatan.',
     },
     {
         match: (path: string) => path.startsWith('/wims/admin/penempatan'),
         title: 'Penempatan & Pembimbing',
-        description:
-            'Atur perusahaan mitra dan dosen pembimbing untuk pengajuan yang sudah disetujui.',
     },
     {
         match: (path: string) => path.startsWith('/wims/admin/penilaian-template'),
         title: 'Template Penilaian',
-        description:
-            'Kelola komponen dan bobot penilaian yang digunakan oleh dosen dan mitra.',
+    },
+    {
+        match: (path: string) => path.startsWith('/wims/admin/template-proposal-laporan'),
+        title: 'Template Proposal & Laporan',
     },
     {
         match: (path: string) => path.startsWith('/wims/admin/rekap-nilai'),
         title: 'Rekap Nilai Mahasiswa',
-        description:
-            'Pantau nilai dosen dan mitra secara terpisah untuk mahasiswa yang telah selesai masa PKL.',
     },
     {
         match: (path: string) => path.startsWith('/wims/admin/monitoring'),
         title: 'Monitoring Mahasiswa',
-        description:
-            'Pantau pelaksanaan PKL/magang, presensi, logbook, laporan akhir, dan nilai mahasiswa.',
     },
 ];
 
@@ -282,7 +261,6 @@ const activePageHeader = computed(
     () =>
         pageHeaderMeta.find((item) => item.match(currentPath.value)) ?? {
             title: 'WIMS Admin',
-            description: 'Kelola operasional PKL dan magang dari satu panel.',
         },
 );
 </script>
@@ -357,15 +335,17 @@ const activePageHeader = computed(
                                     />
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <p class="text-[13px] font-bold leading-none" :class="item.active(currentPath) ? 'text-blue-700' : ''">
-                                        {{ item.label }}
-                                    </p>
-                                    <p
-                                        class="mt-1 truncate text-[11px] leading-none"
-                                        :class="item.active(currentPath) ? 'text-blue-500/80' : 'text-slate-400'"
-                                    >
-                                        {{ item.description }}
-                                    </p>
+                                    <div class="flex items-center gap-2">
+                                        <p class="text-[13px] font-bold leading-none" :class="item.active(currentPath) ? 'text-blue-700' : ''">
+                                            {{ item.label }}
+                                        </p>
+                                        <span
+                                            v-if="resolveNavigationBadgeCount(item) > 0"
+                                            class="inline-flex min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white"
+                                        >
+                                            {{ resolveNavigationBadgeCount(item) }}
+                                        </span>
+                                    </div>
                                 </div>
                             </component>
                         </template>
@@ -469,50 +449,7 @@ const activePageHeader = computed(
                 </header>
 
                 <main class="min-h-0 flex-1 overflow-y-auto">
-                    <div
-                        v-if="flashBanner"
-                        class="mx-auto w-full max-w-[1320px] px-4 pt-4 sm:px-6 lg:px-8"
-                    >
-                        <div
-                            class="flex items-start gap-3 rounded-xl border px-4 py-3 shadow-sm"
-                            :class="
-                                flashBanner.type === 'error'
-                                    ? 'border-rose-200 bg-rose-50 text-rose-700'
-                                    : 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                            "
-                        >
-                            <div
-                                class="mt-0.5 flex size-8 items-center justify-center rounded-lg"
-                                :class="
-                                    flashBanner.type === 'error'
-                                        ? 'bg-rose-100 text-rose-600'
-                                        : 'bg-emerald-100 text-emerald-600'
-                                "
-                            >
-                                <CheckCircle2
-                                    v-if="flashBanner.type === 'success'"
-                                    class="size-4"
-                                />
-                                <AlertTriangle v-else class="size-4" />
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <p class="text-sm font-bold">
-                                    {{ flashBanner.title }}
-                                </p>
-                                <p class="mt-1 text-sm leading-5">
-                                    {{ flashBanner.message }}
-                                </p>
-                            </div>
-                            <button
-                                type="button"
-                                class="mt-0.5 inline-flex size-8 items-center justify-center rounded-lg text-current transition hover:bg-white/70"
-                                aria-label="Tutup notifikasi"
-                                @click="dismissFlashBanner"
-                            >
-                                <X class="size-4" />
-                            </button>
-                        </div>
-                    </div>
+
                     <slot />
                 </main>
             </div>
@@ -626,12 +563,17 @@ const activePageHeader = computed(
                                     <component :is="item.icon" class="size-4" />
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <p class="text-[13px] font-semibold leading-none" :class="item.active(currentPath) ? 'text-blue-700' : ''">
-                                        {{ item.label }}
-                                    </p>
-                                    <p class="mt-1 text-[11px] leading-none" :class="item.active(currentPath) ? 'text-blue-500/80' : 'text-slate-400'">
-                                        {{ item.description }}
-                                    </p>
+                                    <div class="flex items-center gap-2">
+                                        <p class="text-[13px] font-semibold leading-none" :class="item.active(currentPath) ? 'text-blue-700' : ''">
+                                            {{ item.label }}
+                                        </p>
+                                        <span
+                                            v-if="resolveNavigationBadgeCount(item) > 0"
+                                            class="inline-flex min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white"
+                                        >
+                                            {{ resolveNavigationBadgeCount(item) }}
+                                        </span>
+                                    </div>
                                 </div>
                             </component>
                         </template>
@@ -655,3 +597,9 @@ const activePageHeader = computed(
         </transition>
     </div>
 </template>
+
+
+
+
+
+

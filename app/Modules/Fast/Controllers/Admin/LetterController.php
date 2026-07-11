@@ -8,6 +8,9 @@ use App\Models\Surat;
 use App\Models\SuratCategory;
 use App\Models\User;
 use App\Modules\Fast\DTOs\SuratDataContract;
+use App\Modules\Fast\Services\Shared\OutgoingLetterAttachmentService;
+use App\Modules\Fast\Support\FastUserIdentitySearch;
+use App\Modules\Fast\Support\TemplateAdminSupport;
 use App\Modules\Fast\Template\Renderers\SuratTemplateRendererService;
 use App\Modules\Fast\Workflow\Actions\SuratWorkflowService;
 use Illuminate\Http\JsonResponse;
@@ -16,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -24,10 +28,14 @@ class LetterController extends Controller
     public function __construct(
         protected SuratWorkflowService $workflow,
         protected SuratTemplateRendererService $templateService,
+        protected TemplateAdminSupport $templateAdminSupport,
+        protected OutgoingLetterAttachmentService $outgoingAttachmentService,
     ) {}
 
     public function create(): Response
     {
+        $this->authorize('create', Surat::class);
+
         $jenisSurats = JenisSurat::query()
             ->with(['category', 'template'])
             ->where('is_active', true)
@@ -41,6 +49,11 @@ class LetterController extends Controller
                 'nama' => $jenisSurat->nama,
                 'slug' => $jenisSurat->slug,
                 'deskripsi' => $jenisSurat->deskripsi,
+                'letter_mode' => $this->templateAdminSupport->resolveLetterMode($jenisSurat),
+                'letter_mode_label' => $this->templateAdminSupport->letterModeLabel(
+                    $this->templateAdminSupport->resolveLetterMode($jenisSurat),
+                ),
+                'requires_subject_user' => $this->templateAdminSupport->resolveLetterMode($jenisSurat) === TemplateAdminSupport::LETTER_MODE_PERSONAL,
                 'category' => [
                     'id' => $jenisSurat->category?->id,
                     'nama' => $jenisSurat->category?->nama,
@@ -57,6 +70,8 @@ class LetterController extends Controller
 
     public function selectType(Request $request): RedirectResponse
     {
+        $this->authorize('create', Surat::class);
+
         $validated = $request->validate([
             'jenis_surat_id' => [
                 'required',
@@ -70,16 +85,21 @@ class LetterController extends Controller
 
     public function form(Request $request, JenisSurat $jenisSurat): Response
     {
+        $this->authorize('create', Surat::class);
+
         $jenisSurat->loadMissing(['category', 'template.placeholders', 'approvalRole']);
 
         abort_if(! $jenisSurat->is_active || $jenisSurat->template === null, 404);
 
         $formData = [
             'jenis_surat_id' => $jenisSurat->id,
-            'subject_user_id' => null,
+            'subject_name' => '',
             'keperluan' => '',
             ...SuratDataContract::adminManualFieldDefaults(),
             'kepada_yth' => [],
+            'lampiran_mahasiswa' => [],
+            'lampiran_columns' => $this->outgoingAttachmentService->defaultAttachmentColumns(),
+            'lampiran_rows' => [],
             'data' => $this->initialDynamicData($jenisSurat),
         ];
 
@@ -98,9 +118,7 @@ class LetterController extends Controller
                 $formData = array_replace(
                     $formData,
                     [
-                        'subject_user_id' => isset($payload['subject_user_id'])
-                            ? (int) $payload['subject_user_id']
-                            : null,
+                        'subject_name' => (string) ($payload['subject_name'] ?? ''),
                         'keperluan' => (string) ($payload['keperluan'] ?? ''),
                         ...array_replace(
                             SuratDataContract::adminManualFieldDefaults(),
@@ -109,6 +127,17 @@ class LetterController extends Controller
                         'kepada_yth' => is_array($manualData['kepada_yth'] ?? null)
                             ? $manualData['kepada_yth']
                             : [],
+                        'lampiran_mahasiswa' => $this->outgoingAttachmentService->normalizeStudentRows(
+                            $manualData['lampiran_mahasiswa'] ?? [],
+                        ),
+                        'lampiran_columns' => $this->outgoingAttachmentService->normalizeAttachmentColumns(
+                            $manualData['lampiran_columns'] ?? [],
+                        ) ?: $this->outgoingAttachmentService->defaultAttachmentColumns(),
+                        'lampiran_rows' => $this->outgoingAttachmentService->normalizeAttachmentRows(
+                            $manualData['lampiran_rows'] ?? [],
+                            $this->outgoingAttachmentService->normalizeAttachmentColumns($manualData['lampiran_columns'] ?? [])
+                                ?: $this->outgoingAttachmentService->defaultAttachmentColumns(),
+                        ),
                         'data' => array_replace($formData['data'], $dynamicData),
                     ]
                 );
@@ -118,27 +147,26 @@ class LetterController extends Controller
         return Inertia::render('admin/letters/Form', [
             'jenisSurat' => $this->serializeJenisSurat($jenisSurat),
             'formData' => $formData,
-            'subjectOptions' => $this->subjectOptions($formData['subject_user_id'] ?? null),
         ]);
     }
 
     public function searchSubjects(Request $request): JsonResponse
     {
+        $this->authorize('create', Surat::class);
+
         $search = $request->string('q')->trim()->toString();
 
         $subjects = $this->subjectUserQuery()
             ->with('programStudi:id,nama')
             ->when($search !== '', function ($query) use ($search): void {
                 $query->where(function ($searchQuery) use ($search): void {
-                    $searchQuery
-                        ->where('name', 'like', "%{$search}%")
-                        ->orWhere('nomor_induk', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
+                    FastUserIdentitySearch::apply($searchQuery, $search);
+                    $searchQuery->orWhere('email', 'like', "%{$search}%");
                 });
             })
             ->orderBy('name')
             ->limit($search === '' ? 10 : 20)
-            ->get(['id', 'name', 'email', 'nomor_induk', 'program_studi_id']);
+            ->get(FastUserIdentitySearch::selectColumns(['id', 'name', 'email', 'nomor_induk', 'program_studi_id']));
 
         return response()->json([
             'data' => $subjects
@@ -150,6 +178,8 @@ class LetterController extends Controller
 
     public function preview(Request $request): RedirectResponse
     {
+        $this->authorize('create', Surat::class);
+
         [$jenisSurat, $payload] = $this->validatedPayload($request);
 
         $request->session()->put('admin_surat_preview', [
@@ -162,29 +192,24 @@ class LetterController extends Controller
 
     public function previewPage(Request $request): Response
     {
-        [$jenisSurat, $payload, $previewDocumentHtml] = $this->buildPreviewDocument($request);
-        $subjectUserId = isset($payload['subject_user_id']) ? (int) $payload['subject_user_id'] : 0;
-        $subjectUser = $subjectUserId > 0
-            ? User::query()->with('programStudi:id,nama')->find($subjectUserId)
-            : null;
+        $this->authorize('create', Surat::class);
+
+        [$jenisSurat, $payload, $previewDocumentHtml, $previewAttachmentHtml] = $this->buildPreviewDocument($request);
 
         return Inertia::render('admin/letters/Preview', [
             'jenisSurat' => $this->serializeJenisSurat($jenisSurat),
             'formData' => $payload,
-            'subjectSummary' => $subjectUser ? [
-                'id' => $subjectUser->id,
-                'name' => $subjectUser->name,
-                'email' => $subjectUser->email,
-                'nomor_induk' => $subjectUser->nomor_induk,
-                'program_studi' => data_get($subjectUser, 'programStudi.nama'),
-            ] : null,
+            'subjectSummary' => $this->buildSubjectSummary($payload),
             'renderedHtml' => $previewDocumentHtml,
+            'renderedAttachmentHtml' => $previewAttachmentHtml,
             'previewDocumentUrl' => route('admin.surat.preview-html', absolute: false),
         ]);
     }
 
     public function previewHtml(Request $request): HttpResponse
     {
+        $this->authorize('create', Surat::class);
+
         [, , $previewDocumentHtml] = $this->buildPreviewDocument($request);
 
         return response($previewDocumentHtml, 200, [
@@ -196,6 +221,8 @@ class LetterController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $this->authorize('create', Surat::class);
+
         [, $payload] = $this->validatedPayload($request);
         $user = $request->user();
 
@@ -222,6 +249,7 @@ class LetterController extends Controller
         abort_if($user === null, 403);
 
         $surat = Surat::query()->findOrFail($id);
+        $this->authorize('generate', $surat);
 
         abort_if($surat->type !== 'surat_keluar', 404);
 
@@ -237,6 +265,7 @@ class LetterController extends Controller
         $surat = Surat::query()
             ->with(['jenisSurat.category', 'jenisSurat.template', 'jenisSurat.approvalRole', 'dataEntries', 'approvalFlows'])
             ->findOrFail($id);
+        $this->authorize('update', $surat);
 
         abort_unless(in_array($surat->status, [Surat::STATUS_PENDING, Surat::STATUS_REVISION_REQUESTED], true), 403);
         abort_unless(auth()->user()?->hasRole('admin'), 403);
@@ -252,23 +281,34 @@ class LetterController extends Controller
         return Inertia::render('admin/letters/Edit', [
             'surat' => [
                 'id' => $surat->id,
+                'type' => $surat->type,
                 'keperluan' => $surat->keperluan,
                 'status' => $surat->status,
+                'pemohon' => $surat->pemohon ? [
+                    'id' => $surat->pemohon->id,
+                    'name' => $surat->pemohon->name,
+                    'email' => $surat->pemohon->email,
+                    'nomor_induk' => $surat->pemohon->nomor_induk,
+                ] : null,
             ],
             'returnTo' => $returnTo,
             'jenisSurat' => $this->serializeJenisSurat($jenisSurat),
             'formData' => [
                 'jenis_surat_id' => $jenisSurat->id,
-                'subject_user_id' => $surat->subject_user_id ?? $surat->pemohon_id,
+                'subject_name' => (string) (Arr::get($existingData, 'subject_name') ?? Arr::get($existingData, 'nama') ?? ''),
                 'keperluan' => $surat->keperluan,
                 ...array_replace(
                     SuratDataContract::adminManualFieldDefaults(),
                     Arr::only($manualData, SuratDataContract::adminManualScalarFields()),
                 ),
                 'kepada_yth' => is_array($manualData['kepada_yth'] ?? null) ? $manualData['kepada_yth'] : [],
+                'lampiran_mahasiswa' => $this->outgoingAttachmentService->normalizeStudentRows(
+                    $manualData['lampiran_mahasiswa'] ?? [],
+                ),
+                'lampiran_columns' => $this->outgoingAttachmentService->extractAttachmentColumnsFromSurat($surat),
+                'lampiran_rows' => $this->outgoingAttachmentService->extractAttachmentRowsFromSurat($surat),
                 'data' => Arr::except($existingData, SuratDataContract::adminManualDataKeys()),
             ],
-            'subjectOptions' => $this->subjectOptions($surat->subject_user_id ?? $surat->pemohon_id),
         ]);
     }
 
@@ -278,8 +318,9 @@ class LetterController extends Controller
         $user = $request->user();
 
         abort_if($user === null, 403);
+        $this->authorize('update', $surat);
 
-        [, $payload] = $this->validatedPayload($request);
+        [, $payload] = $this->validatedPayload($request, $surat);
 
         $updatedSurat = $surat->status === Surat::STATUS_PENDING
             ? $this->workflow->editPending($surat, $user, $payload)
@@ -297,7 +338,7 @@ class LetterController extends Controller
     /**
      * @return array{0: JenisSurat, 1: array{jenis_surat_id: int, keperluan: string, data: array<string, mixed>}}
      */
-    protected function validatedPayload(Request $request): array
+    protected function validatedPayload(Request $request, ?Surat $existingSurat = null): array
     {
         $validated = $request->validate([
             'jenis_surat_id' => [
@@ -305,27 +346,7 @@ class LetterController extends Controller
                 'integer',
                 Rule::exists('jenis_surats', 'id')->where(fn ($query) => $query->where('is_active', true)),
             ],
-            'subject_user_id' => [
-                'required',
-                'integer',
-                Rule::exists('users', 'id')->where(function ($query): void {
-                    $query
-                        ->where('is_active', true)
-                        ->where('status_approval', 'approved')
-                        ->whereIn('user_type', ['mahasiswa', 'dosen', 'alumni'])
-                        ->whereNotExists(function ($subQuery): void {
-                            $subQuery
-                                ->selectRaw('1')
-                                ->from('user_module_roles')
-                                ->join('modules', 'modules.id', '=', 'user_module_roles.module_id')
-                                ->join('roles', 'roles.id', '=', 'user_module_roles.role_id')
-                                ->whereColumn('user_module_roles.user_id', 'users.id')
-                                ->where('user_module_roles.is_active', true)
-                                ->where('modules.code', 'FAST')
-                                ->whereIn('roles.slug', ['admin', 'kaprodi', 'dekan']);
-                        });
-                }),
-            ],
+            'subject_name' => ['nullable', 'string', 'max:255'],
             'keperluan' => ['required', 'string', 'max:255'],
             'data' => ['nullable', 'array'],
             'form_data' => ['nullable', 'array'],
@@ -339,10 +360,33 @@ class LetterController extends Controller
 
         abort_if($jenisSurat->template === null, 404, 'Template surat belum tersedia.');
 
+        $requiresSubjectUser = $existingSurat?->type === 'pengajuan'
+            ? false
+            : $this->jenisSuratRequiresSubjectUser($jenisSurat);
+        $subjectName = trim((string) ($validated['subject_name'] ?? ''));
+
+        if ($requiresSubjectUser && $subjectName === '') {
+            throw ValidationException::withMessages([
+                'subject_name' => 'Atas nama wajib diisi untuk jenis surat ini.',
+            ]);
+        }
+
         $rawDynamicData = $validated['form_data'] ?? $validated['data'] ?? [];
+        $lampiranColumns = $this->validateLampiranColumnsPayload(Arr::get($validated, 'lampiran_columns', Arr::get($rawDynamicData, 'lampiran_columns', [])));
+        $lampiranRows = $this->validateLampiranRowsPayload(
+            Arr::get($validated, 'lampiran_rows', Arr::get($rawDynamicData, 'lampiran_rows', [])),
+            $lampiranColumns,
+        );
+        $lampiranMahasiswa = $this->outgoingAttachmentService->normalizeStudentRows(
+            Arr::get($validated, 'lampiran_mahasiswa', Arr::get($rawDynamicData, 'lampiran_mahasiswa', [])),
+        );
+        $lampiranMode = $this->normalizeLampiranMode(
+            (string) Arr::get($validated, 'lampiran_mode', Arr::get($rawDynamicData, 'lampiran_mode', 'none')),
+            $lampiranRows,
+        );
         $payload = [
             'jenis_surat_id' => (int) $validated['jenis_surat_id'],
-            'subject_user_id' => (int) $validated['subject_user_id'],
+            'subject_name' => $subjectName,
             'keperluan' => (string) $validated['keperluan'],
             'data' => $this->workflow->validateDynamicData($jenisSurat, $rawDynamicData),
         ];
@@ -351,6 +395,16 @@ class LetterController extends Controller
             $payload,
             SuratDataContract::extractManualDataFromValidatedPayload($validated),
         );
+        $payload['data'] = $this->mergeSubjectNameIntoDynamicPayload($payload['data'], $payload['subject_name'] ?? '');
+        $payload['kepada_yth'] = $this->normalizeRecipientList($payload['kepada_yth'] ?? []);
+        $payload['lampiran_mode'] = $lampiranMode;
+        $payload['lampiran_mahasiswa'] = $lampiranMahasiswa;
+        $payload['lampiran_columns'] = $lampiranColumns;
+        $payload['lampiran_rows'] = $lampiranRows;
+        $payload['data']['lampiran_mode'] = $lampiranMode;
+        $payload['data']['lampiran_mahasiswa'] = $lampiranMahasiswa;
+        $payload['data']['lampiran_columns'] = $lampiranColumns;
+        $payload['data']['lampiran_rows'] = $lampiranRows;
         $payload['data'] = SuratDataContract::mergeManualDataIntoDynamicPayload($payload['data'], $payload);
 
         return [$jenisSurat, $payload];
@@ -381,6 +435,7 @@ class LetterController extends Controller
                 'name' => $jenisSurat->template?->name,
                 'subject' => $jenisSurat->template?->subject,
             ],
+            'requires_subject_user' => $this->jenisSuratRequiresSubjectUser($jenisSurat),
             'field_config' => collect(SuratDataContract::filterDynamicFieldConfig($jenisSurat->field_config ?? []))
                 ->map(fn (array $field): array => SuratDataContract::normalizeDynamicFieldConfigItem($field))
                 ->values()
@@ -393,51 +448,59 @@ class LetterController extends Controller
         return $jenisSurat->approvalRole?->slug;
     }
 
-    /**
-     * @return array<int, array{id: int, name: string, email: string|null, nomor_induk: string|null, program_studi: string|null}>
-     */
-    protected function subjectOptions(int|string|null $selectedUserId = null): array
+    protected function buildSubjectSummary(array $payload): ?array
     {
-        $selectedUserId = (int) $selectedUserId;
+        $name = trim((string) ($payload['subject_name'] ?? Arr::get($payload, 'data.subject_name') ?? ''));
 
-        return $this->subjectUserQuery()
-            ->with('programStudi:id,nama')
-            ->when($selectedUserId > 0, fn ($query) => $query->whereKey($selectedUserId))
-            ->orderBy('name')
-            ->limit($selectedUserId > 0 ? 1 : 10)
-            ->get(['id', 'name', 'email', 'nomor_induk', 'program_studi_id'])
-            ->map(fn (User $user): array => $this->serializeSubjectOption($user))
+        if ($name === '') {
+            return null;
+        }
+
+        return [
+            'id' => null,
+            'name' => $name,
+            'email' => null,
+            'nomor_induk' => null,
+            'program_studi' => null,
+        ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function normalizeRecipientList(mixed $values): array
+    {
+        if (! is_array($values)) {
+            return [];
+        }
+
+        return collect($values)
+            ->map(fn ($value): string => trim((string) $value))
+            ->filter(fn (string $value): bool => $value !== '')
+            ->unique()
             ->values()
             ->all();
     }
 
-    protected function serializeSubjectOption(User $user): array
+    protected function mergeSubjectNameIntoDynamicPayload(array $dynamicPayload, string $subjectName): array
     {
-        return [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'nomor_induk' => $user->nomor_induk,
-            'program_studi' => data_get($user, 'programStudi.nama'),
-        ];
-    }
+        $subjectName = trim($subjectName);
 
-    protected function subjectUserQuery()
-    {
-        return User::query()
-            ->where('is_active', true)
-            ->where('status_approval', 'approved')
-            ->whereIn('user_type', ['mahasiswa', 'dosen', 'alumni'])
-            ->whereDoesntHave('moduleRoles', function ($moduleRoleQuery): void {
-                $moduleRoleQuery
-                    ->where('is_active', true)
-                    ->whereHas('module', fn ($moduleQuery) => $moduleQuery->where('code', 'FAST'))
-                    ->whereHas('role', fn ($roleQuery) => $roleQuery->whereIn('slug', ['admin', 'kaprodi', 'dekan']));
-            });
+        if ($subjectName === '') {
+            return $dynamicPayload;
+        }
+
+        foreach (['subject_name', 'nama', 'nama_pemohon', 'nama_mahasiswa', 'nama_dosen'] as $key) {
+            if (! filled($dynamicPayload[$key] ?? null)) {
+                $dynamicPayload[$key] = $subjectName;
+            }
+        }
+
+        return $dynamicPayload;
     }
 
     /**
-     * @return array{0: JenisSurat, 1: array<string, mixed>, 2: string}
+     * @return array{0: JenisSurat, 1: array<string, mixed>, 2: string, 3: string|null}
      */
     protected function buildPreviewDocument(Request $request): array
     {
@@ -453,13 +516,6 @@ class LetterController extends Controller
         $payload = $previewState['payload'] ?? [];
         abort_if(! is_array($payload), 404, 'Payload preview surat tidak valid.');
 
-        $operator = $request->user()?->loadMissing('programStudi');
-        $subjectUserId = isset($payload['subject_user_id']) ? (int) $payload['subject_user_id'] : 0;
-        $subjectUser = $subjectUserId > 0
-            ? User::query()->with('programStudi')->find($subjectUserId)
-            : null;
-        $contextUser = $subjectUser ?? $operator;
-
         $previewData = $payload['data'];
 
         $previewData = array_replace(
@@ -467,33 +523,41 @@ class LetterController extends Controller
             SuratDataContract::extractManualDataFromValidatedPayload($payload),
         );
 
+        $previewContext = [
+            'approval_role_slug' => $this->approvalRoleSlug($jenisSurat),
+            'tanggal_surat' => now(),
+            'kota_surat' => \DB::table('template_global_settings')->where('key', 'kota_surat')->value('value') ?? 'Cilacap',
+            'pemohon_program_studi_id' => null,
+            'surat' => [
+                'nomor_surat' => 'AUTO/GENERATED/AFTER/APPROVAL',
+                'keperluan' => $payload['keperluan'],
+                'tanggal_pengajuan' => now(),
+                'tanggal_kebutuhan' => $payload['tanggal_kebutuhan'] ?? null,
+                'type' => 'surat_keluar',
+            ],
+            'user' => [
+                'name' => $payload['subject_name'] ?? Arr::get($previewData, 'subject_name') ?? Arr::get($previewData, 'nama'),
+                'email' => null,
+                'nim_nip' => Arr::get($previewData, 'nim') ?? Arr::get($previewData, 'nim_mahasiswa'),
+                'nomor_induk' => Arr::get($previewData, 'nomor_induk') ?? Arr::get($previewData, 'nomor_induk_mahasiswa'),
+                'no_telepon' => Arr::get($previewData, 'telepon_pemohon'),
+                'programStudi' => [
+                    'nama' => Arr::get($previewData, 'program_studi') ?? Arr::get($previewData, 'program_studi_mahasiswa'),
+                ],
+            ],
+        ];
+
         $rendered = $this->templateService->renderJenisSuratPreview(
             $jenisSurat,
             $previewData,
-            [
-                'approval_role_slug' => $this->approvalRoleSlug($jenisSurat),
-                'tanggal_surat' => now(),
-                'kota_surat' => \DB::table('template_global_settings')->where('key', 'kota_surat')->value('value') ?? 'Cilacap',
-                'pemohon_program_studi_id' => $contextUser?->program_studi_id,
-                'surat' => [
-                    'nomor_surat' => 'AUTO/GENERATED/AFTER/APPROVAL',
-                    'keperluan' => $payload['keperluan'],
-                    'tanggal_pengajuan' => now(),
-                    'tanggal_kebutuhan' => $payload['tanggal_kebutuhan'] ?? null,
-                    'type' => 'surat_keluar',
-                ],
-                'user' => [
-                    'name' => $contextUser?->name,
-                    'email' => $contextUser?->email,
-                    'nim_nip' => $contextUser?->nim_nip,
-                    'nomor_induk' => $contextUser?->nomor_induk,
-                    'no_telepon' => $contextUser?->no_telepon,
-                    'programStudi' => [
-                        'nama' => data_get($contextUser, 'programStudi.nama'),
-                    ],
-                ],
-            ],
+            $previewContext,
             'pdf',
+        );
+
+        $attachmentColumns = $this->outgoingAttachmentService->normalizeAttachmentColumns($payload['lampiran_columns'] ?? []);
+        $attachmentRows = $this->outgoingAttachmentService->normalizeAttachmentRows(
+            $payload['lampiran_rows'] ?? [],
+            $attachmentColumns,
         );
 
         return [
@@ -504,6 +568,15 @@ class LetterController extends Controller
                 $rendered['html'],
                 $jenisSurat->template,
             ),
+            (($payload['lampiran_mode'] ?? 'none') === 'student_list' && $attachmentColumns !== [] && $attachmentRows !== [])
+                ? $this->outgoingAttachmentService->buildPreviewHtmlForJenisSuratPreview(
+                    $jenisSurat,
+                    $previewData,
+                    $previewContext,
+                    $attachmentColumns,
+                    $attachmentRows,
+                )
+                : null,
         ];
     }
 
@@ -533,6 +606,11 @@ class LetterController extends Controller
             ->all();
     }
 
+    protected function jenisSuratRequiresSubjectUser(JenisSurat $jenisSurat): bool
+    {
+        return $this->templateAdminSupport->resolveLetterMode($jenisSurat) === TemplateAdminSupport::LETTER_MODE_PERSONAL;
+    }
+
     protected function safeReturnTo(string $returnTo, string $fallback): string
     {
         $returnTo = trim($returnTo);
@@ -550,5 +628,72 @@ class LetterController extends Controller
         }
 
         return $returnTo;
+    }
+
+    protected function subjectUserQuery()
+    {
+        return User::query()
+            ->select(['id', 'name', 'email', 'nomor_induk', 'program_studi_id']);
+    }
+
+    /**
+     * @return array{id: int, name: string, email: string, nomor_induk: string|null, program_studi: string|null}
+     */
+    protected function serializeSubjectOption(User $user): array
+    {
+        $user->loadMissing('programStudi');
+
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'nomor_induk' => $user->nomor_induk,
+            'program_studi' => $user->programStudi?->nama,
+        ];
+    }
+
+    /**
+     * @return array<int, array{key: string, label: string, align: string, bold: bool}>
+     */
+    protected function validateLampiranColumnsPayload(mixed $columns): array
+    {
+        $normalizedColumns = $this->outgoingAttachmentService->normalizeAttachmentColumns($columns);
+
+        if ($normalizedColumns === []) {
+            return $this->outgoingAttachmentService->defaultAttachmentColumns();
+        }
+
+        return $normalizedColumns;
+    }
+
+    protected function validateLampiranRowsPayload(mixed $rows, array $columns): array
+    {
+        $normalizedRows = $this->outgoingAttachmentService->normalizeAttachmentRows($rows, $columns);
+
+        foreach ($normalizedRows as $index => $row) {
+            $hasAnyFilledCell = collect($row)->contains(fn (string $value): bool => trim($value) !== '');
+
+            if (! $hasAnyFilledCell) {
+                throw ValidationException::withMessages([
+                    "lampiran_rows.{$index}" => 'Setiap baris lampiran minimal harus memiliki satu nilai.',
+                ]);
+            }
+        }
+
+        return $normalizedRows;
+    }
+
+    /**
+     * @param  array<int, array<string, string>>  $rows
+     */
+    protected function normalizeLampiranMode(string $mode, array $rows): string
+    {
+        $mode = strtolower(trim($mode));
+
+        if ($rows !== []) {
+            return 'student_list';
+        }
+
+        return in_array($mode, ['none', 'student_list'], true) ? $mode : 'none';
     }
 }

@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import StudentLayout from '@/layouts/Modules/Wims/Mahasiswa/Layout.vue';
@@ -7,6 +7,7 @@ import {
     BarChart3,
     BriefcaseBusiness,
     CalendarDays,
+    ClipboardCheck,
     ClipboardList,
     Clock3,
     FileText,
@@ -71,6 +72,10 @@ type InternshipProps = {
     completed_days: number | string | null;
     total_days: number | string | null;
     remaining_days: number | string | null;
+    total_logbook_entries?: number | string | null;
+    total_hadir?: number | string | null;
+    total_izin?: number | string | null;
+    total_sakit?: number | string | null;
 };
 
 type AlertProps = {
@@ -103,8 +108,23 @@ type RegistrationProps = {
             name?: string | null;
         } | null;
     } | null;
+    lecturer?: {
+        id?: number | null;
+        name?: string | null;
+    } | null;
+    mentor?: {
+        id?: number | null;
+        name?: string | null;
+    } | null;
     submitted_at?: string | null;
     period_label?: string | null;
+};
+type PeriodOption = {
+    id?: number | string | null;
+    label?: string | null;
+    period_label?: string | null;
+    status_label?: string | null;
+    is_active?: boolean | null;
 };
 
 type LatestLogbookProps = {
@@ -120,6 +140,8 @@ const props = withDefaults(
         attendance?: AttendanceProps;
         internship?: InternshipProps;
         registration?: RegistrationProps;
+        periods?: PeriodOption[];
+        selected_period_id?: number | string | null;
         alerts?: AlertProps[];
         latest_logbook?: LatestLogbookProps;
         history?: HistoryProps[];
@@ -144,6 +166,10 @@ const props = withDefaults(
             completed_days: null,
             total_days: null,
             remaining_days: null,
+            total_logbook_entries: null,
+            total_hadir: null,
+            total_izin: null,
+            total_sakit: null,
         }),
         registration: () => ({
             status: null,
@@ -151,6 +177,8 @@ const props = withDefaults(
             submitted_at: null,
             period_label: null,
         }),
+        periods: () => [],
+        selected_period_id: null,
         alerts: () => [],
         latest_logbook: () => ({
             date: null,
@@ -161,9 +189,21 @@ const props = withDefaults(
     },
 );
 
-const attendancePageHref = computed(() => wimsRoutes.attendance().url);
-const logbookPageHref = computed(() => wimsRoutes.logbook().url);
-const registrationPageHref = computed(() => wimsRoutes.registration().url);
+const selectedPeriodId = computed(() => (props.selected_period_id != null ? String(props.selected_period_id) : ''));
+
+const withSelectedPeriod = (href: string) => {
+    if (!selectedPeriodId.value) {
+        return href;
+    }
+
+    const url = new URL(href, window.location.origin);
+    url.searchParams.set('pendaftaran', selectedPeriodId.value);
+    return url.pathname + url.search + url.hash;
+};
+
+const attendancePageHref = computed(() => withSelectedPeriod(wimsRoutes.attendance().url));
+const logbookPageHref = computed(() => withSelectedPeriod(wimsRoutes.logbook().url));
+const registrationPageHref = computed(() => withSelectedPeriod(wimsRoutes.registration().url));
 const safeUserName = computed(() => props.user.name ?? 'Mahasiswa');
 const attendanceStatus = computed<AttendanceStatus>(
     () => props.attendance.status ?? 'not_checked_in',
@@ -229,6 +269,8 @@ const registrationCompanyLabel = computed(
         props.registration?.company?.proposal?.name ??
         'Belum ada',
 );
+const lecturerLabel = computed(() => props.registration?.lecturer?.name ?? 'Belum ada');
+const mentorLabel = computed(() => props.registration?.mentor?.name ?? 'Belum ada');
 const checkInTimeLabel = computed(
     () => props.attendance.check_in_time ?? 'Belum check-in',
 );
@@ -243,40 +285,45 @@ const historyStatusTone = (item: HistoryProps) => {
 
     if (value.includes('alfa') || value.includes('tidak hadir')) {
         return {
-            card: 'border-rose-200/60 bg-rose-50 dark:bg-rose-500/15',
+            card: 'border-rose-200/60 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/15',
             icon: 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400',
             text: 'text-rose-700',
+            badge: 'border-rose-200/60 bg-rose-100 dark:border-rose-500/40 dark:bg-rose-500/25 text-rose-700 dark:text-rose-300',
         };
     }
 
     if (value.includes('izin')) {
         return {
-            card: 'border-amber-200/60 bg-amber-50 dark:bg-amber-500/15',
+            card: 'border-amber-200/60 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/15',
             icon: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400',
             text: 'text-amber-700',
+            badge: 'border-amber-200/60 bg-amber-100 dark:border-amber-500/40 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300',
         };
     }
 
     if (value.includes('sakit')) {
         return {
-            card: 'border-violet-200/60 bg-violet-50 dark:bg-violet-500/15',
+            card: 'border-violet-200/60 bg-violet-50 dark:border-violet-500/30 dark:bg-violet-500/15',
             icon: 'bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400',
             text: 'text-violet-700',
+            badge: 'border-violet-200/60 bg-violet-100 dark:border-violet-500/40 dark:bg-violet-500/25 text-violet-700 dark:text-violet-300',
         };
     }
 
     if (value.includes('terlambat')) {
         return {
-            card: 'border-amber-200/60 bg-amber-50 dark:bg-amber-500/15',
+            card: 'border-amber-200/60 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/15',
             icon: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400',
             text: 'text-amber-700',
+            badge: 'border-amber-200/60 bg-amber-100 dark:border-amber-500/40 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300',
         };
     }
 
     return {
-        card: 'border-emerald-200/60 bg-emerald-50 dark:bg-emerald-500/15',
+        card: 'border-emerald-200/60 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/15',
         icon: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
         text: 'text-emerald-700',
+        badge: 'border-emerald-200/60 bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300',
     };
 };
 
@@ -325,30 +372,58 @@ const registrationStatusLabel = computed(() => {
 
 const registrationStatusClasses = computed(() => {
     if (props.registration.status === 'approved') {
-        return 'border-emerald-200/60 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300';
+        return 'border-emerald-200/60 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300';
     }
 
     if (props.registration.status === 'aktif') {
-        return 'border-sky-200/60 dark:border-sky-500/30 bg-sky-50 dark:bg-sky-500/15 text-sky-700 dark:text-sky-300';
+        return 'border-sky-200/60 dark:border-sky-500/40 bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300';
     }
 
     if (props.registration.status === 'selesai') {
-        return 'border-violet-200/60 dark:border-violet-500/30 bg-violet-50 dark:bg-violet-500/15 text-violet-700 dark:text-violet-300';
+        return 'border-violet-200/60 dark:border-violet-500/40 bg-violet-50 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300';
     }
 
     if (props.registration.status === 'revisi') {
-        return 'border-amber-200/60 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300';
+        return 'border-amber-200/60 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300';
     }
 
     if (props.registration.status === 'rejected') {
-        return 'border-rose-200/60 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300';
+        return 'border-rose-200/60 dark:border-rose-500/40 bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300';
     }
 
     if (props.registration.status === 'pending') {
-        return 'border-blue-200/60 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300';
+        return 'border-blue-200/60 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300';
     }
 
-    return 'border-wims-border bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400';
+    return 'border-wims-border bg-slate-50 dark:border-slate-700 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300';
+});
+
+const registrationStatusCardClasses = computed(() => {
+    if (props.registration.status === 'approved') {
+        return 'border-emerald-200/60 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/15';
+    }
+
+    if (props.registration.status === 'aktif') {
+        return 'border-sky-200/60 bg-sky-50 dark:border-sky-500/30 dark:bg-sky-500/15';
+    }
+
+    if (props.registration.status === 'selesai') {
+        return 'border-violet-200/60 bg-violet-50 dark:border-violet-500/30 dark:bg-violet-500/15';
+    }
+
+    if (props.registration.status === 'revisi') {
+        return 'border-amber-200/60 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/15';
+    }
+
+    if (props.registration.status === 'rejected') {
+        return 'border-rose-200/60 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/15';
+    }
+
+    if (props.registration.status === 'pending') {
+        return 'border-blue-200/60 bg-blue-50 dark:border-blue-500/30 dark:bg-blue-500/15';
+    }
+
+    return 'border-wims-border/60 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-800/70';
 });
 
 const heroTitle = computed(() => {
@@ -373,7 +448,7 @@ const heroDescription = computed(() => {
     }
 
     if (dashboardState.value === 'completed') {
-        return 'Periode PKL/magang telah ditutup. Riwayat kegiatan dan progres tetap tersimpan sebagai arsip akademik.';
+        return 'Selesai. Riwayat kegiatan dan progres tetap tersimpan sebagai arsip akademik.';
     }
 
     if (dashboardState.value === 'waiting') {
@@ -440,7 +515,7 @@ const activityStatusClasses = computed(() => {
         return {
             card: 'border-orange-200/60 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/15',
             icon: 'border-orange-200/60 bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400',
-            badge: 'border-orange-200/60 bg-orange-100 dark:bg-orange-500/20 text-orange-700',
+            badge: 'border-orange-200/60 bg-orange-100 dark:border-orange-500/40 dark:bg-orange-500/25 text-orange-700 dark:text-orange-300',
             accent: 'bg-orange-500',
             subtitle: 'text-orange-700',
         };
@@ -450,7 +525,7 @@ const activityStatusClasses = computed(() => {
         return {
             card: 'border-sky-200/60 bg-sky-50 dark:bg-sky-500/15',
             icon: 'border-sky-200/60 bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400',
-            badge: 'border-sky-200/60 bg-sky-100 dark:bg-sky-500/20 text-sky-700',
+            badge: 'border-sky-200/60 bg-sky-100 dark:border-sky-500/40 dark:bg-sky-500/25 text-sky-700 dark:text-sky-300',
             accent: 'bg-sky-500',
             subtitle: 'text-sky-700',
         };
@@ -459,7 +534,7 @@ const activityStatusClasses = computed(() => {
     return {
         card: 'border-emerald-200/60 bg-emerald-50 dark:bg-emerald-500/15',
         icon: 'border-emerald-200/60 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
-        badge: 'border-emerald-200/60 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700',
+        badge: 'border-emerald-200/60 bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300',
         accent: 'bg-emerald-500',
         subtitle: 'text-emerald-700',
     };
@@ -471,7 +546,7 @@ const primaryCtaHref = computed(() => {
     }
 
     if (dashboardState.value === 'completed') {
-        return wimsRoutes.laporan().url;
+        return withSelectedPeriod(wimsRoutes.laporan().url);
     }
 
     return registrationPageHref.value;
@@ -499,7 +574,7 @@ const primaryCtaLabel = computed(() => {
 
 const latestLogbookLabel = computed(() => {
     if (dashboardState.value !== 'active' && !props.latest_logbook.date) {
-        if (dashboardState.value === 'completed') return 'Periode selesai';
+        if (dashboardState.value === 'completed') return 'Selesai';
         if (dashboardState.value === 'waiting') return 'Menunggu periode aktif';
         return 'Belum tersedia';
     }
@@ -534,7 +609,7 @@ const latestLogbookMeta = computed(() => {
     }
 
     if (dashboardState.value === 'completed') {
-        return 'Periode PKL sudah selesai';
+        return 'Selesai';
     }
 
     return heroDescription.value;
@@ -651,8 +726,7 @@ const showHeroActions = computed(() => dashboardState.value === 'active');
                     </div>
                 </div>
             </div>
-
-            <!-- Stats Grid -->
+<!-- Stats Grid -->
             <div class="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4" :class="cardVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'" style="transition: all 0.6s ease-out 0.15s;">
                 <!-- Progress Card -->
                 <div class="group relative overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(59,130,246,0.12)] hover:-translate-y-0.5">
@@ -731,40 +805,37 @@ const showHeroActions = computed(() => dashboardState.value === 'active');
             <div class="grid gap-4 xl:grid-cols-[1.35fr_1fr]" :class="cardVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'" style="transition: all 0.6s ease-out 0.3s;">
                 <!-- Left Column -->
                 <div class="space-y-4">
-                    <!-- Status Magang Card -->
+                    <!-- Ringkasan PKL Card -->
                     <div class="rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.06)]">
                         <div class="p-5 sm:p-6">
-                            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                <div class="flex items-center gap-3">
-                                    <div class="flex size-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400">
-                                        <BriefcaseBusiness class="size-5" />
-                                    </div>
-                                    <div>
-                                        <p class="text-[15px] font-bold text-wims-text">Status Magang</p>
-                                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Ringkasan progres dan periode</p>
-                                    </div>
+                            <div class="flex items-center gap-3">
+                                <div class="flex size-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400">
+                                    <BriefcaseBusiness class="size-5" />
                                 </div>
-                                <Badge variant="outline" class="w-fit rounded-full border px-3 py-1 text-[11px] font-bold" :class="registrationStatusClasses">
-                                    {{ registrationStatusLabel }}
-                                </Badge>
+                                <div>
+                                    <p class="text-[15px] font-bold text-wims-text">Penempatan Saya</p>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Data penempatan PKL</p>
+                                </div>
                             </div>
 
-                            <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-4 py-3 transition-colors hover:bg-slate-100/80 dark:hover:bg-slate-700/40">
+                            <div class="mt-5 overflow-hidden rounded-xl border border-wims-border/60 bg-slate-50/70 dark:border-slate-700/70 dark:bg-slate-800/30 divide-y divide-slate-200/70 dark:divide-slate-700/70">
+                                <div class="px-4 py-3">
                                     <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Perusahaan</p>
-                                    <p class="mt-1.5 text-[13px] font-bold leading-5 text-wims-text break-words sm:leading-tight">{{ registrationCompanyLabel }}</p>
+                                    <p class="mt-1 break-words text-sm font-bold text-wims-text">{{ registrationCompanyLabel }}</p>
                                 </div>
-                                <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-4 py-3 transition-colors hover:bg-slate-100/80 dark:hover:bg-slate-700/40">
+                                <div class="grid gap-0 sm:grid-cols-2">
+                                    <div class="px-4 py-3 sm:border-r sm:border-slate-200/70 dark:sm:border-slate-700/70">
+                                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Dosen Pembimbing</p>
+                                        <p class="mt-1 break-words text-sm font-bold text-wims-text">{{ lecturerLabel }}</p>
+                                    </div>
+                                    <div class="px-4 py-3">
+                                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Pembimbing Mitra</p>
+                                        <p class="mt-1 break-words text-sm font-bold text-wims-text">{{ mentorLabel }}</p>
+                                    </div>
+                                </div>
+                                <div class="px-4 py-3">
                                     <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Periode</p>
-                                    <p class="mt-1.5 text-[13px] font-bold leading-5 text-wims-text break-words sm:leading-tight">{{ props.registration.period_label || 'Belum ditentukan' }}</p>
-                                </div>
-                                <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-4 py-3 transition-colors hover:bg-slate-100/80 dark:hover:bg-slate-700/40">
-                                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Progress</p>
-                                    <p class="mt-1.5 text-[13px] font-bold leading-5 text-wims-text break-words">{{ currentProgressDays }}</p>
-                                </div>
-                                <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-4 py-3 transition-colors hover:bg-slate-100/80 dark:hover:bg-slate-700/40">
-                                    <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Pengajuan</p>
-                                    <p class="mt-1.5 text-[13px] font-bold leading-5 text-wims-text break-words sm:leading-tight">{{ props.registration.submitted_at || 'Belum ada' }}</p>
+                                    <p class="mt-1 break-words text-sm font-bold text-wims-text">{{ props.registration?.period_label || 'Belum tersedia' }}</p>
                                 </div>
                             </div>
                         </div>
@@ -811,7 +882,7 @@ const showHeroActions = computed(() => dashboardState.value === 'active');
                                 </div>
 
                                 <!-- Registration status -->
-                                <div class="rounded-xl border border-wims-border/60 bg-slate-50/80 dark:bg-slate-800/40 px-4 py-3.5 transition-colors hover:bg-slate-100/80 dark:hover:bg-slate-700/40">
+                                <div class="rounded-xl border px-4 py-3.5 transition-colors" :class="registrationStatusCardClasses">
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Status pengajuan</p>
@@ -819,7 +890,7 @@ const showHeroActions = computed(() => dashboardState.value === 'active');
                                         </div>
                                         <FileText class="size-4 flex-shrink-0 text-slate-400" />
                                     </div>
-                                    <p class="mt-2 text-[12px] font-medium text-slate-500 dark:text-slate-400">{{ props.registration.submitted_at || 'Belum ada data pengajuan' }}</p>
+                                    <p class="mt-2 text-[12px] font-medium text-slate-500 dark:text-slate-300">{{ props.registration.submitted_at || 'Belum ada data pengajuan' }}</p>
                                 </div>
                             </div>
                         </div>
@@ -877,6 +948,53 @@ const showHeroActions = computed(() => dashboardState.value === 'active');
                         </div>
                     </div>
 
+                    <!-- Rekap Magang Card -->
+                    <div class="rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.06)]">
+                        <div class="p-5 sm:p-6">
+                            <div class="flex items-center gap-3">
+                                <div class="flex size-10 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-500/15 text-sky-600 dark:text-sky-400">
+                                    <ClipboardCheck class="size-5" />
+                                </div>
+                                <div>
+                                    <p class="text-[15px] font-bold text-wims-text">Statistik PKL</p>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Kehadiran, izin, sakit, dan logbook</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                <div class="rounded-xl border border-blue-200/60 bg-slate-50/80 px-3 py-3 text-center dark:border-slate-700/70 dark:bg-slate-800/30">
+                                    <p class="text-xl font-bold text-blue-700 dark:text-blue-300">{{ props.internship?.total_hadir ?? '-' }}</p>
+                                    <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Hadir</p>
+                                </div>
+                                <div class="rounded-xl border border-amber-200/60 bg-slate-50/80 px-3 py-3 text-center dark:border-slate-700/70 dark:bg-slate-800/30">
+                                    <p class="text-xl font-bold text-amber-700 dark:text-amber-300">{{ props.internship?.total_izin ?? '-' }}</p>
+                                    <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Izin</p>
+                                </div>
+                                <div class="rounded-xl border border-rose-200/60 bg-slate-50/80 px-3 py-3 text-center dark:border-slate-700/70 dark:bg-slate-800/30">
+                                    <p class="text-xl font-bold text-rose-700 dark:text-rose-300">{{ props.internship?.total_sakit ?? '-' }}</p>
+                                    <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Sakit</p>
+                                </div>
+                                <div class="rounded-xl border border-violet-200/60 bg-slate-50/80 px-3 py-3 text-center dark:border-slate-700/70 dark:bg-slate-800/30">
+                                    <p class="text-xl font-bold text-violet-700 dark:text-violet-300">{{ props.internship?.total_logbook_entries ?? '-' }}</p>
+                                    <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Logbook</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 rounded-xl border border-wims-border/60 bg-slate-50/80 px-4 py-3 dark:border-slate-700/70 dark:bg-slate-800/30">
+                                <div class="flex items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+                                    <p class="min-w-0">
+                                        Total hari kerja:
+                                        <span class="font-bold text-wims-text">{{ props.internship?.completed_days ?? 0 }} / {{ props.internship?.total_days ?? 0 }} hari</span>
+                                    </p>
+                                    <p class="shrink-0">
+                                        Sisa:
+                                        <span class="font-bold text-blue-600 dark:text-blue-400">{{ props.internship?.remaining_days ?? 0 }} hari</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Riwayat Presensi Card -->
                     <div class="rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.06)]">
                         <div class="p-5 sm:p-6">
@@ -895,7 +1013,7 @@ const showHeroActions = computed(() => dashboardState.value === 'active');
                                         <p class="text-[13px] font-bold text-wims-text">{{ item.date || 'Tanggal tidak tersedia' }}</p>
                                         <p class="mt-0.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">{{ item.time ? `${item.time} WIB` : 'Waktu belum tersedia' }}</p>
                                     </div>
-                                    <Badge variant="outline" class="flex-shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-bold" :class="historyStatusTone(item).text">
+                                    <Badge variant="outline" class="flex-shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-bold" :class="historyStatusTone(item).badge">
                                         {{ item.label ?? item.status }}
                                     </Badge>
                                 </div>
@@ -914,3 +1032,4 @@ const showHeroActions = computed(() => dashboardState.value === 'active');
         </div>
     </div>
 </template>
+
