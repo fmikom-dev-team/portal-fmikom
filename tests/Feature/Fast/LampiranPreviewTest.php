@@ -92,12 +92,28 @@ it('lets approvers preview the same attachment through the approval route', func
         'tipe' => 'application/pdf',
     ]);
 
-    $this->actingAs($approver)
+    fwrite(STDERR, "\nDEBUG: Role count: " . \App\Models\Role::count() . "\n");
+    fwrite(STDERR, "DEBUG: Roles: " . json_encode(\App\Models\Role::all()->toArray()) . "\n");
+    fwrite(STDERR, "DEBUG: User permissions: " . json_encode(\App\Modules\Fast\Support\FastPermissionCatalog::permissionsForUser($approver, 'kaprodi')) . "\n");
+
+    $response = $this->actingAs($approver)
         ->withSession([
             'active_module' => 'FAST',
             'active_role' => 'kaprodi',
         ])
-        ->get('/approval/lampiran/'.$lampiran->id.'/preview')
-        ->assertOk()
+        ->get('/approval/lampiran/'.$lampiran->id.'/preview');
+
+    if ($response->status() !== 200) {
+        fwrite(STDERR, "\nDEBUG: Response status: " . $response->status() . "\n");
+        fwrite(STDERR, "DEBUG: Error response: " . $response->getContent() . "\n");
+        if (session()->has('errors')) {
+            fwrite(STDERR, "DEBUG: Session errors: " . json_encode(session('errors')->all()) . "\n");
+        }
+        if (session()->has('error')) {
+            fwrite(STDERR, "DEBUG: Session error: " . session('error') . "\n");
+        }
+    }
+
+    $response->assertOk()
         ->assertHeader('Content-Type', 'application/pdf');
 });
