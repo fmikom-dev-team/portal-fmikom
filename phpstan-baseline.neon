@@ -7,12 +7,6 @@ parameters:
 			path: app/Actions/Fortify/CreateNewUser.php
 
 		-
-			message: '#^Parameter \#1 \$string of function str_pad expects string, int\<0, 999999\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Actions/Fortify/CreateNewUser.php
-
-		-
 			message: '#^Method App\\Actions\\Fortify\\ResetUserPassword\:\:passwordRules\(\) should return array\<int, array\<mixed\>\|Illuminate\\Contracts\\Validation\\Rule\|string\> but returns list\<int, App\\Rules\\NotUsedPassword\|App\\Rules\\PasswordComplexityRule\|Illuminate\\Validation\\Rules\\Password\|string\>\.$#'
 			identifier: return.type
 			count: 1
@@ -115,6 +109,12 @@ parameters:
 			path: app/Http/Controllers/Api/SuratController.php
 
 		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 2
+			path: app/Http/Controllers/PwaController.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
 			identifier: property.notFound
 			count: 1
@@ -157,6 +157,12 @@ parameters:
 			path: app/Http/Middleware/ApprovalAccess.php
 
 		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 1
+			path: app/Http/Middleware/Auth/SecureSession.php
+
+		-
 			message: '#^Left side of && is always true\.$#'
 			identifier: booleanAnd.leftAlwaysTrue
 			count: 1
@@ -165,6 +171,12 @@ parameters:
 		-
 			message: '#^Cannot call method addMinutes\(\) on string\.$#'
 			identifier: method.nonObject
+			count: 1
+			path: app/Http/Middleware/EnsureFirstTimeLoginComplete.php
+
+		-
+			message: '#^Right side of \|\| is always false\.$#'
+			identifier: booleanOr.rightAlwaysFalse
 			count: 1
 			path: app/Http/Middleware/EnsureFirstTimeLoginComplete.php
 
@@ -199,180 +211,6 @@ parameters:
 			path: app/Http/Requests/Settings/ProfileDeleteRequest.php
 
 		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$banner_path\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$bio\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$deletion_requested_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$foto_path\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$github\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$instagram\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$linkedin\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$location\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$metadata\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 4
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$no_telepon\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$nomor_induk\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$pagi_username\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$program_studi_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$tahun_lulus\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$tanggal_lahir\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$twitter\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$user_type\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Access to an undefined property App\\Http\\Resources\\UserResource\:\:\$website\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:getResolvedRoleTitle\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:isAdmin\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:isSuperAdmin\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:pagiFollowers\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:pagiFollowing\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:pagiWorks\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:photoUrl\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: app/Http/Resources/UserResource.php
-
-		-
-			message: '#^Call to an undefined method App\\Http\\Resources\\UserResource\:\:unreadNotifications\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Http/Resources/UserResource.php
-
-		-
 			message: '#^Comparison operation "\>" between 0 and 0 is always false\.$#'
 			identifier: greater.alwaysFalse
 			count: 1
@@ -388,11 +226,35 @@ parameters:
 			message: '#^Parameter \$to of class Illuminate\\Mail\\Mailables\\Envelope constructor expects array\<int, Illuminate\\Mail\\Mailables\\Address\|string\>, string given\.$#'
 			identifier: argument.type
 			count: 1
+			path: app/Mail/ActivationEmail.php
+
+		-
+			message: '#^Parameter \$to of class Illuminate\\Mail\\Mailables\\Envelope constructor expects array\<int, Illuminate\\Mail\\Mailables\\Address\|string\>, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Mail/MagicLinkEmail.php
+
+		-
+			message: '#^Parameter \$to of class Illuminate\\Mail\\Mailables\\Envelope constructor expects array\<int, Illuminate\\Mail\\Mailables\\Address\|string\>, string given\.$#'
+			identifier: argument.type
+			count: 1
 			path: app/Mail/OrganizationInvitationMail.php
 
 		-
 			message: '#^Parameter \$to of class Illuminate\\Mail\\Mailables\\Envelope constructor expects array\<int, Illuminate\\Mail\\Mailables\\Address\|string\>, string given\.$#'
 			identifier: argument.type
+			count: 1
+			path: app/Mail/SendOtpEmail.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Mail/SendOtpEmail.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Mail/SendOtpEmail.php
 
@@ -463,6 +325,36 @@ parameters:
 			path: app/Models/Auth/AuthInvitation.php
 
 		-
+			message: '#^Method App\\Models\\Auth\\AuthOtpToken\:\:findActive\(\) should return static\(App\\Models\\Auth\\AuthOtpToken\)\|null but returns App\\Models\\Auth\\AuthOtpToken\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Auth/AuthOtpToken.php
+
+		-
+			message: '#^Method App\\Models\\Auth\\AuthOtpToken\:\:generate\(\) should return array\{model\: static\(App\\Models\\Auth\\AuthOtpToken\), plaintext\: string\} but returns array\{model\: App\\Models\\Auth\\AuthOtpToken, plaintext\: non\-empty\-string\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Auth/AuthOtpToken.php
+
+		-
+			message: '#^Method App\\Models\\Auth\\IdentityVerification\:\:findActiveByToken\(\) should return static\(App\\Models\\Auth\\IdentityVerification\)\|null but returns App\\Models\\Auth\\IdentityVerification\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Auth/IdentityVerification.php
+
+		-
+			message: '#^Method App\\Models\\Auth\\IdentityVerification\:\:findVerifiedByToken\(\) should return static\(App\\Models\\Auth\\IdentityVerification\)\|null but returns App\\Models\\Auth\\IdentityVerification\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Auth/IdentityVerification.php
+
+		-
+			message: '#^Method App\\Models\\Auth\\IdentityVerification\:\:start\(\) should return static\(App\\Models\\Auth\\IdentityVerification\) but returns App\\Models\\Auth\\IdentityVerification\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Auth/IdentityVerification.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$perusahaan\.$#'
 			identifier: property.notFound
 			count: 2
@@ -491,54 +383,6 @@ parameters:
 			identifier: booleanOr.alwaysFalse
 			count: 1
 			path: app/Models/Magang/AssessmentTemplate.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Models/Magang/PendaftaranMagang.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Models/Magang/PendaftaranMagang.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Models/Magang/PendaftaranMagang.php
-
-		-
-			message: '#^Expression on left side of \?\? is not nullable\.$#'
-			identifier: nullCoalesce.expr
-			count: 2
-			path: app/Models/Magang/PendaftaranMagang.php
-
-		-
-			message: '#^Negated boolean expression is always false\.$#'
-			identifier: booleanNot.alwaysFalse
-			count: 3
-			path: app/Models/Magang/PendaftaranMagang.php
-
-		-
-			message: '#^Result of \|\| is always false\.$#'
-			identifier: booleanOr.alwaysFalse
-			count: 1
-			path: app/Models/Magang/PendaftaranMagang.php
-
-		-
-			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 2
-			path: app/Models/Magang/PendaftaranMagang.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Models/Magang/PendaftaranMagang.php
 
 		-
 			message: '#^Parameter \#1 \$string of function str_pad expects string, int given\.$#'
@@ -607,6 +451,36 @@ parameters:
 			path: app/Models/Pagi/PagiWork.php
 
 		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/Pagi/PagiWork.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>pagi_username" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/Pagi/PagiWork.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/Portal/PortalEvent.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Portal/PortalPost.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/Portal/PortalPost.php
+
+		-
 			message: '#^Cannot call method getTimestamp\(\) on string\.$#'
 			identifier: method.nonObject
 			count: 4
@@ -667,8 +541,26 @@ parameters:
 			path: app/Models/Tracer/ProfilAlumni.php
 
 		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/User.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
 			identifier: property.notFound
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Instanceof between App\\Enums\\UserAccountStatus and App\\Enums\\UserAccountStatus will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 2
+			path: app/Models/User.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>code" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Models/User.php
 
@@ -739,12 +631,6 @@ parameters:
 			path: app/Modules/Fast/Controllers/Admin/LetterIndexController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$revoked_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Fast/Controllers/Admin/QrManageController.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
 			identifier: property.notFound
 			count: 1
@@ -761,12 +647,6 @@ parameters:
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Modules/Fast/Controllers/Admin/QrManageController.php
-
-		-
-			message: '#^Call to static method query\(\) on an unknown class App\\Models\\FastNotification\.$#'
-			identifier: class.notFound
-			count: 2
-			path: app/Modules/Fast/Controllers/Shared/NotificationController.php
 
 		-
 			message: '#^Cannot call method toISOString\(\) on string\.$#'
@@ -877,18 +757,6 @@ parameters:
 			path: app/Modules/Fast/Services/Admin/ApprovalService.php
 
 		-
-			message: '#^Access to undefined constant App\\Models\\Surat\:\:STATUS_NOTE\.$#'
-			identifier: classConstant.notFound
-			count: 2
-			path: app/Modules/Fast/Services/Admin/ApprovalService.php
-
-		-
-			message: '#^Method App\\Modules\\Fast\\Services\\Admin\\ApprovalService\:\:previewAttachment\(\) should return Symfony\\Component\\HttpFoundation\\StreamedResponse but returns Symfony\\Component\\HttpFoundation\\Response\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Modules/Fast/Services/Admin/ApprovalService.php
-
-		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\SuratHistory\>\:\:map\(\) contains unresolvable type\.$#'
 			identifier: argument.unresolvableType
 			count: 1
@@ -907,40 +775,10 @@ parameters:
 			path: app/Modules/Fast/Services/Admin/DashboardService.php
 
 		-
-			message: '#^Using nullsafe property access "\?\-\>nama" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Modules/Fast/Services/Admin/DashboardService.php
-
-		-
 			message: '#^If condition is always true\.$#'
 			identifier: if.alwaysTrue
 			count: 1
 			path: app/Modules/Fast/Services/Admin/TemplateMutationService.php
-
-		-
-			message: '#^Property App\\Models\\JenisSurat\:\:\$field_config \(string\|null\) does not accept array\<int, array\<string, mixed\>\>\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: app/Modules/Fast/Services/Admin/TemplateMutationService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Fast/Services/Admin/TemplateService.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\),Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\|string\)\: array\{id\: int, nama\: string, slug\: string\|null, is_active\: bool, category\: array\{id\: int\|null, nama\: string\|null\}, template\: array\{id\: int, name\: string, version\: int\<0, max\>, created_at\: mixed, updated_at\: mixed\}\|null\}, Closure\(App\\Models\\JenisSurat\)\: array\{id\: int, nama\: string, slug\: string\|null, is_active\: bool, category\: array\{id\: int\|null, nama\: string\|null\}, template\: array\{id\: int, name\: string, version\: int\<0, max\>, created_at\: mixed, updated_at\: mixed\}\|null\} given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Modules/Fast/Services/Admin/TemplateService.php
-
-		-
-			message: '#^Parameter \#1 \$jenisSurat of method App\\Modules\\Fast\\Support\\TemplateAdminSupport\:\:serializeJenisSurat\(\) expects App\\Models\\JenisSurat, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Modules/Fast/Services/Admin/TemplateService.php
 
 		-
 			message: '#^Parameter \#1 \$string of function str_pad expects string, int given\.$#'
@@ -967,68 +805,8 @@ parameters:
 			path: app/Modules/Fast/Services/Shared/NomorSuratService.php
 
 		-
-			message: '#^Access to property \$href on an unknown class App\\Models\\FastNotification\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
-
-		-
-			message: '#^Access to property \$id on an unknown class App\\Models\\FastNotification\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
-
-		-
-			message: '#^Access to property \$message on an unknown class App\\Models\\FastNotification\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
-
-		-
-			message: '#^Access to property \$notification_key on an unknown class App\\Models\\FastNotification\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
-
-		-
-			message: '#^Access to property \$read_at on an unknown class App\\Models\\FastNotification\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
-
-		-
-			message: '#^Access to property \$title on an unknown class App\\Models\\FastNotification\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
-
-		-
-			message: '#^Access to property \$tone on an unknown class App\\Models\\FastNotification\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
-
-		-
-			message: '#^Access to property \$updated_at on an unknown class App\\Models\\FastNotification\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
-
-		-
-			message: '#^Call to static method query\(\) on an unknown class App\\Models\\FastNotification\.$#'
-			identifier: class.notFound
-			count: 3
-			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
-
-		-
 			message: '#^Parameter \#1 \$array \(list\<array\<string, mixed\>\>\) of array_values is already a list, call has no effect\.$#'
 			identifier: arrayValues.list
-			count: 1
-			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
-
-		-
-			message: '#^Parameter \$notification of anonymous function has invalid type App\\Models\\FastNotification\.$#'
-			identifier: class.notFound
 			count: 1
 			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
 
@@ -1069,81 +847,9 @@ parameters:
 			path: app/Modules/Fast/Services/Shared/NotificationFeedService.php
 
 		-
-			message: '#^Access to constant HEADER_CSS on an unknown class Mpdf\\HTMLParserMode\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
-
-		-
-			message: '#^Access to constant HTML_BODY on an unknown class Mpdf\\HTMLParserMode\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
-
-		-
 			message: '#^Call to function is_array\(\) with array\{template\: App\\Models\\SuratTemplate, html\: string, placeholders\: array\<string, mixed\>\} will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 4
-			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
-
-		-
-			message: '#^Call to method Output\(\) on an unknown class Mpdf\\Mpdf\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
-
-		-
-			message: '#^Call to method SetHTMLFooter\(\) on an unknown class Mpdf\\Mpdf\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
-
-		-
-			message: '#^Call to method SetHTMLHeader\(\) on an unknown class Mpdf\\Mpdf\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
-
-		-
-			message: '#^Call to method WriteHTML\(\) on an unknown class Mpdf\\Mpdf\.$#'
-			identifier: class.notFound
-			count: 2
-			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
-
-		-
-			message: '#^Call to method getDefaults\(\) on an unknown class Mpdf\\Config\\ConfigVariables\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
-
-		-
-			message: '#^Call to method getDefaults\(\) on an unknown class Mpdf\\Config\\FontVariables\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
-
-		-
-			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
-			identifier: larastan.noEnvCallsOutsideOfConfig
-			count: 1
-			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
-
-		-
-			message: '#^Instantiated class Mpdf\\Config\\ConfigVariables not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
-
-		-
-			message: '#^Instantiated class Mpdf\\Config\\FontVariables not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
-
-		-
-			message: '#^Instantiated class Mpdf\\Mpdf not found\.$#'
-			identifier: class.notFound
-			count: 1
 			path: app/Modules/Fast/Services/Shared/SuratDocumentGeneratorService.php
 
 		-
@@ -1217,30 +923,6 @@ parameters:
 			identifier: function.alreadyNarrowedType
 			count: 1
 			path: app/Modules/Fast/Template/Parsers/TemplatePlaceholderReplacer.php
-
-		-
-			message: '#^Call to method getDefaults\(\) on an unknown class Mpdf\\Config\\ConfigVariables\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Template/Renderers/SuratKomponenRenderer.php
-
-		-
-			message: '#^Call to method getDefaults\(\) on an unknown class Mpdf\\Config\\FontVariables\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Template/Renderers/SuratKomponenRenderer.php
-
-		-
-			message: '#^Instantiated class Mpdf\\Config\\ConfigVariables not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Template/Renderers/SuratKomponenRenderer.php
-
-		-
-			message: '#^Instantiated class Mpdf\\Config\\FontVariables not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Modules/Fast/Template/Renderers/SuratKomponenRenderer.php
 
 		-
 			message: '#^Call to function is_array\(\) with array\<string, mixed\> will always evaluate to true\.$#'
@@ -1333,37 +1015,7 @@ parameters:
 			path: app/Modules/Fast/Template/TemplateService.php
 
 		-
-			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Modules/Fast/Template/TemplateService.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Modules/Fast/Template/TemplateService.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>nama" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Modules/Fast/Template/TemplateService.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Modules/Fast/Template/TemplateService.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>nim_nip" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Modules/Fast/Template/TemplateService.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>nomor_induk" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Modules/Fast/Template/TemplateService.php
@@ -1429,6 +1081,12 @@ parameters:
 			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
 
 		-
+			message: '#^Offset ''cover_image'' on array\{title\: ''3D Visualisasi…'', user_email\: ''johan@student…'', description\: ''Rendering interior…'', category\: ''3D Modeling'', views_count\: 870, is_published\: true, status\: ''review'', cover_image\: ''https\://images…''\}\|array\{title\: ''Desain Poster Event…'', user_email\: ''naufal@student…'', description\: ''Poster promosi…'', category\: ''Graphic Design'', views_count\: 120, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Eksplorasi…'', user_email\: ''dimas@student…'', description\: ''Konsep tipografi…'', category\: ''Graphic Design'', views_count\: 980, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Perancangan UI…'', user_email\: ''sarah@student…'', description\: ''Eksplorasi UI/UX…'', category\: ''Design & UI/UX'', views_count\: 1200, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Prototype Aplikasi…'', user_email\: ''rizki@student…'', description\: ''Aplikasi pencarian…'', category\: ''Product Design'', views_count\: 320, is_published\: true, status\: ''hidden'', cover_image\: ''https\://images…''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
+
+		-
 			message: '#^Relation ''user'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
 			identifier: larastan.relationExistence
 			count: 3
@@ -1437,6 +1095,12 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Models\\Pagi\\PagiWork\:\:\$user\.$#'
 			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminModerationController.php
+
+		-
+			message: '#^Offset ''cover_image'' on array\{title\: ''3D Visualisasi…'', user_email\: ''johan@student…'', description\: ''Rendering interior…'', category\: ''3D Modeling'', views_count\: 870, is_published\: true, status\: ''review'', cover_image\: ''https\://images…''\}\|array\{title\: ''Desain Poster Event…'', user_email\: ''naufal@student…'', description\: ''Poster promosi…'', category\: ''Graphic Design'', views_count\: 120, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Eksplorasi…'', user_email\: ''dimas@student…'', description\: ''Konsep tipografi…'', category\: ''Graphic Design'', views_count\: 980, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Perancangan UI…'', user_email\: ''sarah@student…'', description\: ''Eksplorasi UI/UX…'', category\: ''Design & UI/UX'', views_count\: 1200, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Prototype Aplikasi…'', user_email\: ''rizki@student…'', description\: ''Aplikasi pencarian…'', category\: ''Product Design'', views_count\: 320, is_published\: true, status\: ''hidden'', cover_image\: ''https\://images…''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Modules/Pagi/Controllers/AdminModerationController.php
 
@@ -1453,6 +1117,12 @@ parameters:
 			path: app/Modules/Pagi/Controllers/AdminUserController.php
 
 		-
+			message: '#^Offset ''cover_image'' on array\{title\: ''3D Visualisasi…'', user_email\: ''johan@student…'', description\: ''Rendering interior…'', category\: ''3D Modeling'', views_count\: 870, is_published\: true, status\: ''review'', cover_image\: ''https\://images…''\}\|array\{title\: ''Desain Poster Event…'', user_email\: ''naufal@student…'', description\: ''Poster promosi…'', category\: ''Graphic Design'', views_count\: 120, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Eksplorasi…'', user_email\: ''dimas@student…'', description\: ''Konsep tipografi…'', category\: ''Graphic Design'', views_count\: 980, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Perancangan UI…'', user_email\: ''sarah@student…'', description\: ''Eksplorasi UI/UX…'', category\: ''Design & UI/UX'', views_count\: 1200, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Prototype Aplikasi…'', user_email\: ''rizki@student…'', description\: ''Aplikasi pencarian…'', category\: ''Product Design'', views_count\: 320, is_published\: true, status\: ''hidden'', cover_image\: ''https\://images…''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminUserController.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$cover_image\.$#'
 			identifier: property.notFound
 			count: 1
@@ -1461,6 +1131,12 @@ parameters:
 		-
 			message: '#^Comparison operation "\>\=" between 6 and 3 is always true\.$#'
 			identifier: greaterOrEqual.alwaysTrue
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminWorkController.php
+
+		-
+			message: '#^Offset ''cover_image'' on array\{title\: ''3D Visualisasi…'', user_email\: ''johan@student…'', description\: ''Rendering interior…'', category\: ''3D Modeling'', views_count\: 870, is_published\: true, status\: ''review'', cover_image\: ''https\://images…''\}\|array\{title\: ''Desain Poster Event…'', user_email\: ''naufal@student…'', description\: ''Poster promosi…'', category\: ''Graphic Design'', views_count\: 120, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Eksplorasi…'', user_email\: ''dimas@student…'', description\: ''Konsep tipografi…'', category\: ''Graphic Design'', views_count\: 980, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Perancangan UI…'', user_email\: ''sarah@student…'', description\: ''Eksplorasi UI/UX…'', category\: ''Design & UI/UX'', views_count\: 1200, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Prototype Aplikasi…'', user_email\: ''rizki@student…'', description\: ''Aplikasi pencarian…'', category\: ''Product Design'', views_count\: 320, is_published\: true, status\: ''hidden'', cover_image\: ''https\://images…''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Modules/Pagi/Controllers/AdminWorkController.php
 
@@ -2119,18 +1795,6 @@ parameters:
 			path: app/Modules/Trace/Services/KuesionerAnalyticsService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$latitude\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Controllers/Mahasiswa/AttendanceController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$longitude\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Controllers/Mahasiswa/AttendanceController.php
-
-		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'
 			identifier: nullCoalesce.expr
 			count: 1
@@ -2161,27 +1825,9 @@ parameters:
 			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
-			count: 4
-			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
-			identifier: property.notFound
-			count: 1
+			count: 2
 			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
 
 		-
@@ -2192,12 +1838,6 @@ parameters:
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$periode_selesai\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$programStudi\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
@@ -2225,60 +1865,6 @@ parameters:
 			identifier: nullsafe.neverNull
 			count: 3
 			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$programStudi\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Pagination\\AbstractPaginator\<int,App\\Models\\Magang\\PendaftaranMagang\>\:\:through\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:resolveContextRoleData\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapPageService.php
 
 		-
 			message: '#^Using nullsafe property access "\?\-\>status" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
@@ -2371,126 +1957,6 @@ parameters:
 			path: app/Modules/Wims/Services/Admin/AdminAssessmentTemplatePageService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminCompanyActionService.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:ensureAssignment\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminCompanyActionService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminCompanyPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Admin/AdminCompanyPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_active\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminCompanyPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminCompanyPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$no_telepon\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminCompanyPageService.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Magang\\PerusahaanMitra\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminCompanyPageService.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:resolveContextRoleData\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminCompanyPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminDashboardPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Admin/AdminDashboardPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminDashboardPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminDashboardPageService.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Magang\\PendaftaranMagang\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminDashboardPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
 			identifier: property.notFound
 			count: 2
@@ -2513,114 +1979,6 @@ parameters:
 			identifier: argument.unresolvableType
 			count: 1
 			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:resolveContextRoleData\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 2
-			path: app/Modules/Wims/Services/Admin/AdminMonitoringPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminRegistrationPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Admin/AdminRegistrationPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminRegistrationPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminRegistrationPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminRegistrationPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminRegistrationPageService.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Pagination\\AbstractPaginator\<int,App\\Models\\Magang\\PendaftaranMagang\>\:\:through\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminRegistrationPageService.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:resolveContextRoleData\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminRegistrationPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:worksOnDate\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\{id\: mixed, pendaftaran_id\: int, name\: mixed, nim\: mixed, company\: array\{id\: mixed, name\: mixed\}, period_start\: string\|null, period_end\: string\|null, status_pendaftaran\: string, dashboard_phase\: string, attendance_status\: string, check_in_time\: string\|null, check_out_time\: string\|null, logbook_status\: string, has_logbook\: bool, latest_logbook_date\: string\|null, latest_logbook_activity\: string\|null, objective_summary\: array\}, Closure\(App\\Models\\Magang\\PendaftaranMagang\)\: array\{id\: mixed, pendaftaran_id\: int, name\: mixed, nim\: mixed, company\: array\{id\: mixed, name\: mixed\}, period_start\: string\|null, period_end\: string\|null, status_pendaftaran\: string, dashboard_phase\: string, attendance_status\: string, check_in_time\: string\|null, check_out_time\: string\|null, logbook_status\: string, has_logbook\: bool, latest_logbook_date\: string\|null, latest_logbook_activity\: string\|null, objective_summary\: array\} given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,array\<string, mixed\>\>\:\:filter\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Modules/Wims/Services/Dosen/DosenMonitoringOverviewService.php
 
 		-
 			message: '#^Using nullsafe property access "\?\-\>status" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
@@ -2647,36 +2005,6 @@ parameters:
 			path: app/Modules/Wims/Services/Dosen/LecturerAssessmentWorkflowService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$jam_masuk\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceActionService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$latitude\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceActionService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$longitude\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceActionService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$radius_valid_meter\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceActionService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$toleransi_terlambat_menit\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceActionService.php
-
-		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'
 			identifier: nullCoalesce.expr
 			count: 2
@@ -2687,24 +2015,6 @@ parameters:
 			identifier: nullsafe.neverNull
 			count: 2
 			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceAvailabilityService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceExportService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceExportService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceExportService.php
 
 		-
 			message: '#^Call to function is_null\(\) with bool will always evaluate to false\.$#'
@@ -2721,12 +2031,6 @@ parameters:
 		-
 			message: '#^Instanceof between Illuminate\\View\\Compilers\\BladeCompiler and Illuminate\\View\\Compilers\\BladeCompiler will always evaluate to true\.$#'
 			identifier: instanceof.alwaysTrue
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceExportService.php
-
-		-
-			message: '#^Right side of && is always true\.$#'
-			identifier: booleanAnd.rightAlwaysTrue
 			count: 1
 			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceExportService.php
 
@@ -2749,42 +2053,6 @@ parameters:
 			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceExportService.php
 
 		-
-			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\Magang\\PendaftaranMagang\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendanceExportService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendancePageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$latitude\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendancePageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$longitude\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendancePageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendancePageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$radius_valid_meter\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendancePageService.php
-
-		-
 			message: '#^Left side of && is always true\.$#'
 			identifier: booleanAnd.leftAlwaysTrue
 			count: 2
@@ -2809,39 +2077,9 @@ parameters:
 			path: app/Modules/Wims/Services/Mahasiswa/Attendance/AttendancePageService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Mahasiswa/Dashboard/StudentDashboardPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Dashboard/StudentDashboardPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Dashboard/StudentDashboardPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
-			identifier: property.notFound
-			count: 3
-			path: app/Modules/Wims/Services/Mahasiswa/Dashboard/StudentDashboardPageService.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:resolveContextRoleData\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Dashboard/StudentDashboardPageService.php
-
-		-
 			message: '#^Right side of && is always true\.$#'
 			identifier: booleanAnd.rightAlwaysTrue
-			count: 2
+			count: 1
 			path: app/Modules/Wims/Services/Mahasiswa/Dashboard/StudentDashboardPageService.php
 
 		-
@@ -2859,60 +2097,12 @@ parameters:
 		-
 			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\Magang\\PendaftaranMagang\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
-			count: 2
+			count: 1
 			path: app/Modules/Wims/Services/Mahasiswa/Dashboard/StudentDashboardPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$programStudi\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
 
 		-
 			message: '#^Instanceof between Illuminate\\View\\Compilers\\BladeCompiler and Illuminate\\View\\Compilers\\BladeCompiler will always evaluate to true\.$#'
 			identifier: instanceof.alwaysTrue
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
-
-		-
-			message: '#^Left side of && is always true\.$#'
-			identifier: booleanAnd.leftAlwaysTrue
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
-
-		-
-			message: '#^Right side of && is always true\.$#'
-			identifier: booleanAnd.rightAlwaysTrue
 			count: 1
 			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookExportService.php
 
@@ -2947,44 +2137,8 @@ parameters:
 			path: app/Modules/Wims/Services/Mahasiswa/Logbook/LogbookPageService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Mahasiswa/Profile/StudentProfilePageService.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
 			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Mahasiswa/Profile/StudentProfilePageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Profile/StudentProfilePageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
-			identifier: property.notFound
-			count: 3
-			path: app/Modules/Wims/Services/Mahasiswa/Profile/StudentProfilePageService.php
-
-		-
-			message: '#^Left side of && is always true\.$#'
-			identifier: booleanAnd.leftAlwaysTrue
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Profile/StudentProfilePageService.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:resolveContextRoleData\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Profile/StudentProfilePageService.php
-
-		-
-			message: '#^Right side of && is always true\.$#'
-			identifier: booleanAnd.rightAlwaysTrue
 			count: 1
 			path: app/Modules/Wims/Services/Mahasiswa/Profile/StudentProfilePageService.php
 
@@ -2993,18 +2147,6 @@ parameters:
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Modules/Wims/Services/Mahasiswa/Profile/StudentProfilePageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Registration/StudentRegistrationPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Registration/StudentRegistrationPageService.php
 
 		-
 			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
@@ -3021,36 +2163,12 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 3
-			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
 			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
-			identifier: property.notFound
-			count: 3
 			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
 
 		-
 			message: '#^Call to function is_null\(\) with bool will always evaluate to false\.$#'
 			identifier: function.impossibleType
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
-
-		-
-			message: '#^Left side of && is always true\.$#'
-			identifier: booleanAnd.leftAlwaysTrue
 			count: 1
 			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
 
@@ -3061,15 +2179,9 @@ parameters:
 			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
 
 		-
-			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:resolveContextRoleData\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
-
-		-
 			message: '#^Right side of && is always true\.$#'
 			identifier: booleanAnd.rightAlwaysTrue
-			count: 2
+			count: 1
 			path: app/Modules/Wims/Services/Mahasiswa/Report/StudentReportPageService.php
 
 		-
@@ -3145,96 +2257,6 @@ parameters:
 			path: app/Modules/Wims/Services/Mitra/MitraDashboardPageService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 3
-			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$no_telepon\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
-			identifier: property.notFound
-			count: 3
-			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:photoUrl\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:worksOnDate\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\{registration_id\: int, student_id\: mixed, photo_url\: mixed, name\: mixed, email\: mixed, nim\: mixed, phone\: mixed, company\: array\{id\: mixed, name\: mixed\}, mentor\: array\{id\: mixed, name\: mixed, role_context\: array\|null\}, lecturer\: array\{id\: mixed, name\: mixed, role_context\: array\|null\}, period_start\: string\|null, period_end\: string\|null, submitted_at\: string\|null, status_pendaftaran\: string, dashboard_phase\: string, attendance_status\: string, check_in_time\: non\-falsy\-string\|null, check_out_time\: non\-falsy\-string\|null, latest_logbook_id\: int\|null, logbook_status\: string, latest_logbook_date\: string\|null, latest_logbook_sort_date\: string\|null, latest_logbook_activity\: string, latest_logbook_competency\: string\|null, latest_logbook_note\: string\|null, objective_summary\: array\}, Closure\(App\\Models\\Magang\\PendaftaranMagang\)\: array\{registration_id\: int, student_id\: mixed, photo_url\: mixed, name\: mixed, email\: mixed, nim\: mixed, phone\: mixed, company\: array\{id\: mixed, name\: mixed\}, mentor\: array\{id\: mixed, name\: mixed, role_context\: array\|null\}, lecturer\: array\{id\: mixed, name\: mixed, role_context\: array\|null\}, period_start\: string\|null, period_end\: string\|null, submitted_at\: string\|null, status_pendaftaran\: string, dashboard_phase\: string, attendance_status\: string, check_in_time\: non\-falsy\-string\|null, check_out_time\: non\-falsy\-string\|null, latest_logbook_id\: int\|null, logbook_status\: string, latest_logbook_date\: string\|null, latest_logbook_sort_date\: string\|null, latest_logbook_activity\: string, latest_logbook_competency\: string\|null, latest_logbook_note\: string\|null, objective_summary\: array\} given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,array\<string, mixed\>\>\:\:filter\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 4
-			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,array\<string, mixed\>\>\:\:sortByDesc\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:resolveContextRoleData\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Modules/Wims/Services/Mitra/MitraMonitoringOverviewService.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>aktivitas_harian" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
@@ -3265,12 +2287,6 @@ parameters:
 			path: app/Modules/Wims/Services/Shared/Absence/KetidakhadiranService.php
 
 		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:worksOnDate\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Absence/KetidakhadiranService.php
-
-		-
 			message: '#^Parameter \#1 \$pendaftaran of method App\\Modules\\Wims\\Services\\Shared\\Absence\\KetidakhadiranService\:\:resolveApplicableWorkDates\(\) expects App\\Models\\Magang\\PendaftaranMagang, Illuminate\\Database\\Eloquent\\Model given\.$#'
 			identifier: argument.type
 			count: 1
@@ -3283,37 +2299,7 @@ parameters:
 			path: app/Modules/Wims/Services/Shared/Absence/KetidakhadiranService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentIndexService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentIndexService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentIndexService.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 4
-			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentIndexService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentIndexService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
 			identifier: property.notFound
 			count: 2
 			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentIndexService.php
@@ -3355,37 +2341,13 @@ parameters:
 			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 6
-			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 1
+			count: 4
 			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentShowService.php
@@ -3451,58 +2413,10 @@ parameters:
 			path: app/Modules/Wims/Services/Shared/Assessment/AssessmentTemplateResolverService.php
 
 		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:worksOnDate\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Attendance/AttendanceSyncService.php
-
-		-
 			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 2
 			path: app/Modules/Wims/Services/Shared/Attendance/AttendanceSyncService.php
-
-		-
-			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Database\\Eloquent\\Model\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Attendance/AttendanceSyncService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringAlertService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringAlertService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringAlertService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringAlertService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringAlertService.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:worksOnDate\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringAlertService.php
 
 		-
 			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
@@ -3525,29 +2439,11 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 4
-			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringDetailService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringDetailService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
 			count: 2
 			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringDetailService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringDetailService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringDetailService.php
@@ -3567,12 +2463,6 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringHistoryService.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:worksOnDate\(\)\.$#'
-			identifier: method.notFound
 			count: 1
 			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringHistoryService.php
 
@@ -3727,42 +2617,6 @@ parameters:
 			path: app/Modules/Wims/Services/Shared/Monitoring/MonitoringSummaryService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Placement/PlacementIndexService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Modules/Wims/Services/Shared/Placement/PlacementIndexService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Placement/PlacementIndexService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Placement/PlacementIndexService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Placement/PlacementIndexService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Placement/PlacementIndexService.php
-
-		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Pagination\\AbstractPaginator\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:through\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array, Closure\(App\\Models\\Magang\\PendaftaranMagang\)\: array given\.$#'
 			identifier: argument.type
 			count: 1
@@ -3770,12 +2624,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:filter\(\) expects \(callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: bool\)\|null, Closure\(App\\Models\\Magang\\PendaftaranMagang\)\: bool given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Placement/PlacementIndexService.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Modules\\Wims\\Services\\Shared\\Portal\\WimsModuleRoleService\:\:resolveContextRoleData\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Modules/Wims/Services/Shared/Placement/PlacementIndexService.php
@@ -3791,42 +2639,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: app/Modules/Wims/Services/Shared/Placement/PlacementWorkflowService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Placement/SuratPenetapanService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Placement/SuratPenetapanService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Placement/SuratPenetapanService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Placement/SuratPenetapanService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nim_nip\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Placement/SuratPenetapanService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Shared/Placement/SuratPenetapanService.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
@@ -3847,6 +2659,66 @@ parameters:
 			path: app/Modules/Wims/Support/AssessmentSummary.php
 
 		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/ActivationConfirmController.php
+
+		-
+			message: '#^Method App\\Modules\\WorkOs\\Controllers\\Auth\\ActivationConfirmController\:\:passwordRules\(\) should return array\<int, array\<mixed\>\|Illuminate\\Contracts\\Validation\\Rule\|string\> but returns list\<int, App\\Rules\\NotUsedPassword\|App\\Rules\\PasswordComplexityRule\|Illuminate\\Validation\\Rules\\Password\|string\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/ActivationConfirmController.php
+
+		-
+			message: '#^Parameter \$userForDisplay of method App\\Services\\Auth\\OtpService\:\:generate\(\) expects App\\Models\\User\|null, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/ActivationConfirmController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status_approval\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
+
+		-
+			message: '#^Method App\\Modules\\WorkOs\\Controllers\\Auth\\ActivationController\:\:passwordRules\(\) should return array\<int, array\<mixed\>\|Illuminate\\Contracts\\Validation\\Rule\|string\> but returns list\<int, App\\Rules\\NotUsedPassword\|App\\Rules\\PasswordComplexityRule\|Illuminate\\Validation\\Rules\\Password\|string\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Services\\Auth\\ActivationService\:\:completeActivation\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Services\\Auth\\ActivationService\:\:markOtpVerified\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Services\\Auth\\ActivationService\:\:sendActivationOtp\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Illuminate\\Support\\Facades\\Auth\:\:login\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
+
+		-
 			message: '#^Relation ''device'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
 			identifier: larastan.relationExistence
 			count: 1
@@ -3859,8 +2731,8 @@ parameters:
 			path: app/Modules/WorkOs/Controllers/Auth/AuditController.php
 
 		-
-			message: '#^Cannot call method isFuture\(\) on string\.$#'
-			identifier: method.nonObject
+			message: '#^Access to an undefined property App\\Models\\ProgramStudi\:\:\$label\.$#'
+			identifier: property.notFound
 			count: 1
 			path: app/Modules/WorkOs/Controllers/Auth/FirstTimeLoginController.php
 
@@ -3871,8 +2743,20 @@ parameters:
 			path: app/Modules/WorkOs/Controllers/Auth/FirstTimeLoginController.php
 
 		-
-			message: '#^Parameter \#1 \$string of function str_pad expects string, int\<0, 999999\> given\.$#'
-			identifier: argument.type
+			message: '#^Using nullsafe property access "\?\-\>employee_number" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/FirstTimeLoginController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>label" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/FirstTimeLoginController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>student_number" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Modules/WorkOs/Controllers/Auth/FirstTimeLoginController.php
 
@@ -3943,6 +2827,18 @@ parameters:
 			path: app/Modules/WorkOs/Controllers/AuthenticationController.php
 
 		-
+			message: '#^Access to an undefined property App\\Models\\Auth\\AuthLoginAttempt\:\:\$count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Auth\\AuthLoginAttempt\:\:\$last_login\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
 			message: '#^Access to an undefined property App\\Models\\Module\:\:\$roles\.$#'
 			identifier: property.notFound
 			count: 1
@@ -4003,7 +2899,19 @@ parameters:
 			path: app/Modules/WorkOs/Controllers/DashboardController.php
 
 		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Radar\\RadarDetection\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\User\>\:\:map\(\) contains unresolvable type\.$#'
 			identifier: argument.unresolvableType
 			count: 1
 			path: app/Modules/WorkOs/Controllers/DashboardController.php
@@ -4022,6 +2930,12 @@ parameters:
 
 		-
 			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Support\\Carbon\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>url" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Modules/WorkOs/Controllers/DashboardController.php
@@ -4069,6 +2983,12 @@ parameters:
 			path: app/Modules/WorkOs/Controllers/PipesController.php
 
 		-
+			message: '#^Access to an undefined property App\\Models\\ProgramStudi\:\:\$label\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/UsersController.php
+
+		-
 			message: '#^Left side of && is always true\.$#'
 			identifier: booleanAnd.leftAlwaysTrue
 			count: 2
@@ -4083,6 +3003,12 @@ parameters:
 		-
 			message: '#^Relation ''device'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
 			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/WorkOs/Controllers/UsersController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>label" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Modules/WorkOs/Controllers/UsersController.php
 
@@ -4195,6 +3121,12 @@ parameters:
 			path: app/Modules/WorkOs/Services/Pipes/SyncEngine.php
 
 		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: app/Modules/WorkOs/Services/Radar/DetectionEngine.php
+
+		-
 			message: '#^Access to an undefined property App\\Models\\Auth\\AuthSession\:\:\$device\.$#'
 			identifier: property.notFound
 			count: 1
@@ -4259,6 +3191,30 @@ parameters:
 			identifier: method.nonObject
 			count: 1
 			path: app/Rules/VideoDurationRule.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Services/Auth/ActivationService.php
+
+		-
+			message: '#^Method App\\Services\\Auth\\ActivationService\:\:approveRegistrationRequest\(\) should return App\\Models\\User but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/Auth/ActivationService.php
+
+		-
+			message: '#^Parameter \#1 \$user of class App\\Mail\\ActivationEmail constructor expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/Auth/ActivationService.php
+
+		-
+			message: '#^Match arm comparison between ''invalid'' and ''invalid'' is always true\.$#'
+			identifier: match.alwaysTrue
+			count: 1
+			path: app/Services/Auth/OtpService.php
 
 		-
 			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
