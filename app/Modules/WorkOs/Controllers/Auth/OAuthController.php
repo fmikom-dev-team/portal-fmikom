@@ -2,8 +2,11 @@
 
 namespace App\Modules\WorkOs\Controllers\Auth;
 
+use App\Enums\RegistrationStatus;
+use App\Enums\UserAccountStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Auth\AuthOAuthCredential;
+use App\Models\Auth\RegistrationRequest;
 use App\Models\Module;
 use App\Models\User;
 use App\Models\UserModuleRole;
@@ -13,6 +16,8 @@ use Exception;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -71,12 +76,11 @@ class OAuthController extends Controller
 
             $user = $result;
 
-            // Check if user is active and approved
-            if (! $user->is_active) {
-                return redirect()->route('login')->with('error', 'Akun Anda telah dinonaktifkan.');
-            }
-            if ($user->status_approval !== 'approved') {
-                return redirect()->route('login')->with('error', 'Akun Anda belum disetujui atau telah ditolak.');
+            // ── Account Lifecycle Check ──────────────────────────────────────
+            if (! $user->isAccountActive()) {
+                $msg = $user->getLoginBlockMessage() ?? 'Akun Anda tidak dapat diakses saat ini.';
+
+                return redirect()->route('login')->with('error', $msg);
             }
 
             // 2. Authenticate the user (creates Laravel session)
@@ -143,11 +147,19 @@ class OAuthController extends Controller
 
         $oauthData = session()->get('oauth_register_data');
 
+        // If the user already exists in the DB with the same email, we link them instead of creating a new user,
+        // so we shouldn't fail validation on nomor_induk unique check.
+        $existingUser = User::where('email', '=', $oauthData['email'], 'and')->first();
+
         // Validation
         $allowedRoles = ['mahasiswa', 'alumni', 'mitra'];
+        $nomorIndukRules = ['required', 'string', 'max:50'];
+        if (! $existingUser) {
+            $nomorIndukRules[] = Rule::unique('users', 'nomor_induk');
+        }
         $rules = [
             'role' => ['required', 'string', Rule::in($allowedRoles)],
-            'nomor_induk' => ['required', 'string', 'max:50', Rule::unique('users', 'nomor_induk')],
+            'nomor_induk' => $nomorIndukRules,
         ];
 
         if ($request->role === 'mahasiswa' || $request->role === 'alumni') {
@@ -172,7 +184,7 @@ class OAuthController extends Controller
         ]);
 
         // Double check if user with this email was created in the meantime
-        $existingUser = User::where('email', $oauthData['email'])->first();
+        $existingUser = User::where('email', '=', $oauthData['email'], 'and')->first();
         if ($existingUser) {
             // Security: Jika akun lokal belum terverifikasi emailnya, jangan lakukan implicit linking untuk mencegah pembajakan akun (Account Takeover)
             if (! $existingUser->email_verified_at) {
@@ -183,7 +195,7 @@ class OAuthController extends Controller
 
             // Update user_type if not set
             if (! $existingUser->user_type && $request->role) {
-                $existingUser->update(['user_type' => $request->role]);
+                $existingUser->fill(['user_type' => $request->role])->save();
             }
 
             // Link OAuth Credential safely
@@ -202,24 +214,24 @@ class OAuthController extends Controller
                     ]
                 );
             } catch (UniqueConstraintViolationException $e) {
-                $credential = AuthOAuthCredential::where('provider_id', $oauthData['provider_id'])
-                    ->where('external_id', $oauthData['external_id'])
+                $credential = AuthOAuthCredential::where('provider_id', '=', $oauthData['provider_id'], 'and')
+                    ->where('external_id', '=', $oauthData['external_id'], 'and')
                     ->first();
                 if ($credential) {
-                    $credential->update([
+                    $credential->fill([
                         'user_id' => $existingUser->id,
                         'email' => $oauthData['email'],
                         'access_token' => $oauthData['access_token'],
                         'refresh_token' => $oauthData['refresh_token'] ?? null,
                         'expires_at' => $oauthData['expires_at'] ?? null,
-                    ]);
+                    ])->save();
                 } else {
                     throw $e;
                 }
             }
 
             // Ensure they have default module roles if they don't have any
-            if (! UserModuleRole::where('user_id', $existingUser->id)->exists()) {
+            if (! UserModuleRole::where('user_id', '=', $existingUser->id, 'and')->exists()) {
                 if (! $existingUser->user_type && $request->role) {
                     $existingUser->user_type = $request->role;
                     $existingUser->save();
@@ -227,16 +239,10 @@ class OAuthController extends Controller
                 $existingUser->assignDefaultModuleRoles();
             }
 
-            // Check if user is active and approved
-            if (! $existingUser->is_active) {
-                throw ValidationException::withMessages([
-                    'email' => 'Akun Anda telah dinonaktifkan.',
-                ]);
-            }
-            if ($existingUser->status_approval !== 'approved') {
-                throw ValidationException::withMessages([
-                    'email' => 'Akun Anda belum disetujui atau telah ditolak.',
-                ]);
+            // ── Status check for existing user ────────────────────────────
+            if (! $existingUser->isAccountActive()) {
+                $msg = $existingUser->getLoginBlockMessage() ?? 'Akun Anda tidak dapat diakses.';
+                throw ValidationException::withMessages(['email' => $msg]);
             }
 
             session()->forget('oauth_register_data');
@@ -249,72 +255,63 @@ class OAuthController extends Controller
                 ->with('success', 'Akun Anda sudah terdaftar dan berhasil dihubungkan.');
         }
 
-        // Create User using server-side session data for name and email
-        $user = User::create([
-            'name' => $oauthData['name'],
+        // ── REFACTORED: Create RegistrationRequest instead of active User ──
+        // OAuth users go through the approval flow, not directly to dashboard.
+        // [FIX HIGH-04] OAuth tokens are encrypted before storage using APP_KEY.
+        $registrationRequest = RegistrationRequest::create([
+            'full_name' => $oauthData['name'],
             'email' => $oauthData['email'],
-            'password' => Str::random(32),
-            'user_type' => $request->role,
-            'nomor_induk' => $request->nomor_induk,
-            'status_approval' => 'approved',
-            'password_changed_at' => now(),
-            'program_studi_id' => $request->program_studi_id ?? null,
-            'tahun_lulus' => $request->tahun_lulus ?? null,
-            'no_telepon' => $request->no_telepon ?? null,
+            'role' => $request->role ?? 'alumni',
+            'status' => RegistrationStatus::Pending->value,
+            'oauth_data' => [
+                'provider' => $oauthData['provider'],
+                'provider_id' => $oauthData['provider_id'],
+                'external_id' => $oauthData['external_id'],
+                'name' => $oauthData['name'],
+                'email' => $oauthData['email'],
+                // Tokens are encrypted at rest — decryptable only with the APP_KEY.
+                'access_token' => $this->encryptToken($oauthData['access_token'] ?? null),
+                'refresh_token' => $this->encryptToken($oauthData['refresh_token'] ?? null),
+                'expires_at' => $oauthData['expires_at'] ?? null,
+            ],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
         ]);
 
-        $user->email_verified_at = now();
-        $user->save();
+        // Create a temporary pending User record (so we have an ID to link later)
+        $tempUser = new User([
+            'name' => $oauthData['name'],
+            'email' => $oauthData['email'],
+            'password' => Hash::make(Str::random(32)),
+        ]);
+        $tempUser->user_type = $request->role;
+        $tempUser->status_approval = UserAccountStatus::Pending;
+        $tempUser->email_verified_at = now(); // Email verified by OAuth provider
+        $tempUser->is_active = false;
+        $tempUser->save();
 
-        // Link OAuth Credential safely
-        try {
-            AuthOAuthCredential::updateOrCreate(
-                [
-                    'provider_id' => $oauthData['provider_id'],
-                    'external_id' => $oauthData['external_id'],
-                ],
-                [
-                    'user_id' => $user->id,
-                    'email' => $oauthData['email'],
-                    'access_token' => $oauthData['access_token'],
-                    'refresh_token' => $oauthData['refresh_token'] ?? null,
-                    'expires_at' => $oauthData['expires_at'] ?? null,
-                ]
-            );
-        } catch (UniqueConstraintViolationException $e) {
-            $credential = AuthOAuthCredential::where('provider_id', $oauthData['provider_id'])
-                ->where('external_id', $oauthData['external_id'])
-                ->first();
-            if ($credential) {
-                $credential->update([
-                    'user_id' => $user->id,
-                    'email' => $oauthData['email'],
-                    'access_token' => $oauthData['access_token'],
-                    'refresh_token' => $oauthData['refresh_token'] ?? null,
-                    'expires_at' => $oauthData['expires_at'] ?? null,
-                ]);
-            } else {
-                throw $e;
-            }
-        }
+        $registrationRequest->update(['created_user_id' => $tempUser->id]);
 
-        // Clear session data
         session()->forget('oauth_register_data');
 
-        // Auto-assign default module access
-        $user->assignDefaultModuleRoles();
+        return redirect()->route('login')->with(
+            'status',
+            'Pendaftaran Anda sedang diproses oleh admin. '.
+            'Anda akan mendapatkan email setelah akun disetujui.'
+        );
+    }
 
-        // Log the user in
-        Auth::login($user, remember: false);
+    /**
+     * [FIX HIGH-04] Encrypt an OAuth token before storing in the database.
+     * Uses Laravel's Crypt facade backed by APP_KEY.
+     * Returns null if the token is empty/null to avoid storing empty encrypted strings.
+     */
+    private function encryptToken(?string $token): ?string
+    {
+        if (empty($token)) {
+            return null;
+        }
 
-        // Regenerate session
-        $request->session()->regenerate();
-
-        // Create enterprise session record
-        $session = $this->sessionEngine->createSession($user, $request);
-        $request->session()->put('auth_session_token', $session->id);
-
-        return redirect()->intended(route('dashboard', absolute: false))
-            ->with('success', 'Pendaftaran berhasil. Akun Google Anda telah terhubung.');
+        return Crypt::encryptString($token);
     }
 }

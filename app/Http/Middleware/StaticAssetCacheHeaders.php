@@ -28,6 +28,12 @@ class StaticAssetCacheHeaders
     {
         $response = $next($request);
 
+        // Hanya tambahkan header cache untuk response sukses (200)
+        // Mencegah cache-poisoning di mana error 404/500 dicache sebagai immutable oleh Cloudflare/browser
+        if ($response->getStatusCode() !== 200) {
+            return $response;
+        }
+
         $path = $request->getPathInfo();
 
         // Vite build assets: hash di nama file → immutable, 1 tahun

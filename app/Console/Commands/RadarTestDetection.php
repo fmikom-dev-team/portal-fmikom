@@ -100,10 +100,13 @@ class RadarTestDetection extends Command
     public function handle(): int
     {
         if ($this->option('clear')) {
-            DB::statement('SET FOREIGN_KEY_CHECKS=0');
-            RadarDetection::truncate();
-            RadarDevice::truncate();
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            try {
+                DB::statement('SET FOREIGN_KEY_CHECKS=0');
+                RadarDetection::truncate();
+                RadarDevice::truncate();
+            } finally {
+                DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            }
             cache()->forget('radar_detections_cleared');
             $this->line('<fg=yellow>✓ All detections cleared.</>');
         }

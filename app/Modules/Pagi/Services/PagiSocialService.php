@@ -12,6 +12,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PagiSocialService
 {
@@ -26,22 +27,32 @@ class PagiSocialService
             return [];
         }
 
-        return User::where(function ($q) use ($query) {
-            $q->where('name', 'like', '%'.$query.'%')
-                ->orWhere('email', 'like', '%'.$query.'%');
-        })
-            ->where('id', '!=', $authId)
-            ->limit(10)
-            ->get()
-            ->map(function ($u) {
-                return [
-                    'id' => $u->id,
-                    'name' => $u->name,
-                    'pagi_username' => $u->pagi_username,
-                    'foto_path' => $this->resolveAssetPath($u->foto_path),
-                    'role_title' => $u->role_title ?: 'PAGI Creator',
-                ];
-            })->toArray();
+        try {
+            $matchIds = User::search($query)->keys();
+            $users = User::whereIn('id', $matchIds)
+                ->where('id', '!=', $authId)
+                ->limit(10)
+                ->get();
+        } catch (\Throwable $e) {
+            Log::warning('Meilisearch unavailable (PagiSocialService::searchUsers), falling back to SQL.', ['error' => $e->getMessage()]);
+            $users = User::where(function ($q) use ($query) {
+                $q->where('name', 'like', '%'.$query.'%')
+                    ->orWhere('email', 'like', '%'.$query.'%');
+            })
+                ->where('id', '!=', $authId)
+                ->limit(10)
+                ->get();
+        }
+
+        return $users->map(function ($u) {
+            return [
+                'id' => $u->id,
+                'name' => $u->name,
+                'pagi_username' => $u->pagi_username,
+                'foto_path' => $this->resolveAssetPath($u->foto_path),
+                'role_title' => $u->role_title ?: 'PAGI Creator',
+            ];
+        })->toArray();
     }
 
     /**
@@ -236,13 +247,19 @@ class PagiSocialService
             });
 
         if (! empty($search)) {
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', '%'.$search.'%')
-                    ->orWhereHas('user', function ($qu) use ($search) {
-                        $qu->where('name', 'like', '%'.$search.'%')
-                            ->orWhere('pagi_username', 'like', '%'.$search.'%');
-                    });
-            });
+            try {
+                $matchIds = PagiWork::search($search)->keys();
+                $query->whereIn('id', $matchIds);
+            } catch (\Throwable $e) {
+                Log::warning('Meilisearch unavailable (PagiSocialService::buildGalleryQuery), falling back to SQL.', ['error' => $e->getMessage()]);
+                $query->where(function ($q) use ($search) {
+                    $q->where('title', 'like', '%'.$search.'%')
+                        ->orWhereHas('user', function ($qu) use ($search) {
+                            $qu->where('name', 'like', '%'.$search.'%')
+                                ->orWhere('pagi_username', 'like', '%'.$search.'%');
+                        });
+                });
+            }
         }
 
         match ($sort) {
@@ -277,7 +294,7 @@ class PagiSocialService
             'title' => $p->title ?? 'Untitled Project',
             'image' => $this->resolveAssetPath($p->cover_image) ?? $defaultPlaceholder,
             'author' => $this->formatName($u->name),
-            'avatar' => $this->resolveAssetPath($u->foto_path) ?? 'https://ui-avatars.com/api/?name='.urlencode($this->formatName($u->name)).'&background=random',
+            'avatar' => $this->resolveAssetPath($u->foto_path),
             'likes' => count($likes),
             'liked' => Auth::check() ? in_array(Auth::id(), $likes) : false,
             // Note: comments are intentionally omitted from gallery cards (lazy-loaded on demand)

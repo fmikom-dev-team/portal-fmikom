@@ -10,36 +10,38 @@ class CareerHistoryPolicy
 {
     use HandlesAuthorization;
 
-    private function getRole(): string
+    private function getRole(User $user): string
     {
-        return request()->attributes->get('resolved_role', session('active_role')) ?? '';
+        return $user->getResolvedRoleSlug() ?? '';
     }
 
     public function viewAny(User $user): bool
     {
-        return in_array($this->getRole(), ['alumni', 'admin']);
+        return in_array($this->getRole($user), ['alumni', 'admin']);
     }
 
     public function view(User $user, CareerHistory $career): bool
     {
-        return $this->getRole() === 'admin' ||
+        return $this->getRole($user) === 'admin' ||
                ($user->alumniProfile && $user->alumniProfile->id === $career->profil_alumni_id);
     }
 
     public function create(User $user): bool
     {
-        return $this->getRole() === 'alumni' && $user->alumniProfile !== null;
+        return $this->getRole($user) === 'alumni' && $user->alumniProfile !== null;
     }
 
     public function update(User $user, CareerHistory $career): bool
     {
-        return $user->alumniProfile &&
+        return $this->getRole($user) === 'alumni' &&
+               $user->alumniProfile &&
                $user->alumniProfile->id === $career->profil_alumni_id;
     }
 
     public function delete(User $user, CareerHistory $career): bool
     {
-        return $user->alumniProfile &&
+        return $this->getRole($user) === 'alumni' &&
+               $user->alumniProfile &&
                $user->alumniProfile->id === $career->profil_alumni_id;
     }
 }

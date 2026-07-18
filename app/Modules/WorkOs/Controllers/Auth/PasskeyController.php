@@ -7,6 +7,7 @@ use App\Models\Auth\AuthPasskey;
 use App\Modules\WorkOs\Services\AuthPlatform\PasskeyEngine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class PasskeyController extends Controller
 {
@@ -16,7 +17,7 @@ class PasskeyController extends Controller
 
     public function index(Request $request)
     {
-        $passkeys = AuthPasskey::where('user_id', $request->user()->id)
+        $passkeys = AuthPasskey::where('user_id', '=', $request->user()->id, 'and')
             ->select(['id', 'name', 'last_used_at', 'created_at'])
             ->get();
 
@@ -25,6 +26,13 @@ class PasskeyController extends Controller
 
     public function registrationOptions(Request $request)
     {
+        // Guard: Passkey registration is ONLY available to fully activated accounts
+        if (! $request->user()->isAccountActive()) {
+            return response()->json([
+                'error' => 'Passkey hanya dapat didaftarkan setelah akun Anda aktif.',
+            ], 403);
+        }
+
         try {
             $options = $this->passkeyEngine->getRegistrationOptions($request->user());
 
@@ -36,6 +44,13 @@ class PasskeyController extends Controller
 
     public function register(Request $request)
     {
+        // Guard: same as registrationOptions
+        if (! $request->user()->isAccountActive()) {
+            return response()->json([
+                'error' => 'Passkey hanya dapat didaftarkan setelah akun Anda aktif.',
+            ], 403);
+        }
+
         try {
             $passkey = $this->passkeyEngine->verifyRegistration($request->user(), $request->all());
 
@@ -65,11 +80,9 @@ class PasskeyController extends Controller
         try {
             $user = $this->passkeyEngine->verifyAuthentication($request->all());
 
-            if (! $user->is_active) {
-                return response()->json(['error' => 'Akun Anda telah dinonaktifkan.'], 403);
-            }
-            if ($user->status_approval !== 'approved') {
-                return response()->json(['error' => 'Akun Anda belum disetujui atau telah ditolak.'], 403);
+            if (! $user->isAccountActive()) {
+                $msg = $user->getLoginBlockMessage() ?? 'Akun Anda tidak dapat diakses saat ini.';
+                return response()->json(['error' => $msg], 403);
             }
 
             Auth::login($user);
@@ -86,7 +99,9 @@ class PasskeyController extends Controller
         if ($passkey->user_id !== $request->user()->id) {
             return response()->json(['error' => 'Unauthorized.'], 403);
         }
-        $passkey->delete();
+        DB::table('auth_passkeys')
+            ->where('id', '=', $passkey->id, 'and')
+            ->delete();
 
         return response()->json(['message' => 'Passkey removed.']);
     }
@@ -101,9 +116,9 @@ class PasskeyController extends Controller
             'name' => 'required|string|max:255',
         ]);
 
-        $passkey->update([
+        $passkey->fill([
             'name' => $request->name,
-        ]);
+        ])->save();
 
         return response()->json([
             'message' => 'Passkey renamed successfully.',

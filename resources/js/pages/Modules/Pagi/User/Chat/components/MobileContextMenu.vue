@@ -68,7 +68,7 @@ defineEmits<{
                 
                 <button 
                     @click="$emit('delete-conversation', mobileMenuConv)"
-                    class="w-full flex items-center gap-3 px-4 py-3 text-sm font-black text-red-650 dark:text-red-450 active:bg-red-50 dark:active:bg-red-955/20 transition-colors"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-sm font-black text-red-650 dark:text-red-450 active:bg-red-50 dark:active:bg-red-950/20 transition-colors"
                 >
                     <Trash2 class="w-4 h-4 text-red-500" />
                     <span>Hapus obrolan</span>

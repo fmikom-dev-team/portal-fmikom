@@ -83,6 +83,12 @@ const handleProjectClick = (proj: any) => {
 	}
 };
 
+const printPage = () => {
+	if (typeof window !== "undefined") {
+		window.print();
+	}
+};
+
 // Skill Categorization
 const skillCategories = computed(() => {
 	const skills = props.profileUser.skills || [
@@ -737,7 +743,7 @@ const timelineItems = [
 						</a>
 						<a 
 							v-if="props.profileUser.website" 
-							:href="props.profileUser.website" 
+							:href="props.profileUser.website.startsWith('http') ? props.profileUser.website : 'https://' + props.profileUser.website" 
 							target="_blank" 
 							class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center bg-white/5 hover:bg-white/10 text-white transition-colors"
 						>
@@ -796,7 +802,7 @@ const timelineItems = [
 						</a>
 						
 						<button 
-							@click="() => window.print()"
+							@click="printPage"
 							class="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white font-bold text-xs uppercase px-4 py-3 rounded-xl border border-white/10 transition-colors cursor-pointer bg-transparent"
 						>
 							<FileText class="w-4 h-4" /> Export Works PDF

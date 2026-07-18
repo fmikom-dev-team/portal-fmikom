@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureFirstTimeLoginComplete
@@ -47,6 +48,38 @@ class EnsureFirstTimeLoginComplete
         // Izinkan akses ke route OTP, force change password, dan logout
         if ($isOtpRoute || $isForcePass || $isLogout) {
             return $next($request);
+        }
+
+        // ── LANGKAH 0: Cek Status Akun & Aktivasi (Enforce Active State) ─────────
+        if ($user->isAccountActive()) {
+            if ($request->routeIs('waiting-room')) {
+                return redirect()->route('dashboard');
+            }
+        } else {
+            $isWaitingRoomRoute = $request->routeIs('waiting-room')
+                || $request->routeIs('waiting-room.resign')
+                || $request->routeIs('approval.status');
+
+            if ($user->isPendingReview() || $user->isRejected()) {
+                if ($isWaitingRoomRoute || $isLogout) {
+                    return $next($request);
+                }
+
+                return redirect()->route('waiting-room');
+            }
+
+            $message = $user->getLoginBlockMessage() ?? 'Akun Anda tidak aktif.';
+
+            // Log out user since session is invalid/not allowed
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            if ($request->expectsJson()) {
+                return response()->json(['error' => $message], 403);
+            }
+
+            return redirect()->route('login')->with('error', $message);
         }
 
         // ── LANGKAH 1: Cek verifikasi email via OTP ─────────────────────────────

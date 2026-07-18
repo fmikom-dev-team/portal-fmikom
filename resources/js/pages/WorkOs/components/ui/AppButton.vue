@@ -23,14 +23,14 @@ const cls = computed(() => {
 
 	const variants: Record<string, string> = {
 		primary:
-			"bg-[#111827] text-white hover:bg-[#1f2937] active:bg-[#111827] shadow-sm",
+			"bg-[#111827] dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-[#1f2937] dark:hover:bg-white active:bg-[#111827] shadow-sm",
 		secondary:
-			"bg-[#f3f4f6] text-[#111827] hover:bg-[#e5e7eb] active:bg-[#d1d5db]",
+			"bg-[#f3f4f6] dark:bg-zinc-800 text-[#111827] dark:text-zinc-100 hover:bg-[#e5e7eb] dark:hover:bg-zinc-700 active:bg-[#d1d5db] dark:active:bg-zinc-600",
 		outline:
-			"bg-white text-[#374151] border border-[#d1d5db] hover:bg-[#f9fafb] hover:border-[#9ca3af] shadow-sm",
-		ghost: "text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827]",
+			"bg-white dark:bg-zinc-900 text-[#374151] dark:text-zinc-300 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 hover:border-[#9ca3af] dark:hover:border-zinc-600 shadow-sm",
+		ghost: "text-[#6b7280] dark:text-zinc-400 hover:bg-[#f3f4f6] dark:hover:bg-zinc-800 hover:text-[#111827] dark:hover:text-zinc-100",
 		danger:
-			"bg-white text-[#dc2626] border border-[#fecaca] hover:bg-[#fef2f2] hover:border-[#f87171]",
+			"bg-white dark:bg-zinc-900 text-[#dc2626] dark:text-red-400 border border-[#fecaca] dark:border-red-900 hover:bg-[#fef2f2] dark:hover:bg-red-950/50 hover:border-[#f87171] dark:hover:border-red-700",
 	};
 
 	const sizes: Record<string, string> = {

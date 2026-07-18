@@ -3,7 +3,9 @@
 namespace App\Modules\Pagi\Requests;
 
 use App\Rules\VideoDurationRule;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Log;
 
 class QuickStorePortfolioRequest extends FormRequest
 {
@@ -44,5 +46,14 @@ class QuickStorePortfolioRequest extends FormRequest
             'original_work_confirmed' => 'nullable|string',
             'cover_fit' => 'nullable|string|in:cover,contain',
         ];
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     */
+    protected function failedValidation(Validator $validator)
+    {
+        Log::error('QuickStore validation failed: '.json_encode($validator->errors()->all()));
+        parent::failedValidation($validator);
     }
 }

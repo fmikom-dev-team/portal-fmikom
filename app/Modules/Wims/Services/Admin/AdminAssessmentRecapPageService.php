@@ -46,15 +46,16 @@ class AdminAssessmentRecapPageService
             ->orderByDesc('id');
 
         if ($search !== '') {
-            $baseQuery->where(function (Builder $builder) use ($search): void {
-                $builder->whereHas('mahasiswa', function (Builder $studentQuery) use ($search): void {
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
+            $baseQuery->where(function (Builder $builder) use ($escaped): void {
+                $builder->whereHas('mahasiswa', function (Builder $studentQuery) use ($escaped): void {
                     $studentQuery
-                        ->where('name', 'like', "%{$search}%")
-                        ->orWhere('nomor_induk', 'like', "%{$search}%");
-                })->orWhereHas('perusahaan', function (Builder $companyQuery) use ($search): void {
-                    $companyQuery->where('nama', 'like', "%{$search}%");
-                })->orWhereHas('dosenPembimbing', function (Builder $lecturerQuery) use ($search): void {
-                    $lecturerQuery->where('name', 'like', "%{$search}%");
+                        ->where('name', 'like', "%{$escaped}%")
+                        ->orWhere('nomor_induk', 'like', "%{$escaped}%");
+                })->orWhereHas('perusahaan', function (Builder $companyQuery) use ($escaped): void {
+                    $companyQuery->where('nama', 'like', "%{$escaped}%");
+                })->orWhereHas('dosenPembimbing', function (Builder $lecturerQuery) use ($escaped): void {
+                    $lecturerQuery->where('name', 'like', "%{$escaped}%");
                 });
             });
         }

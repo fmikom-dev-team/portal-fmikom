@@ -8,7 +8,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RadarSecurityEvent extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'user_id',
+        'event_type',
+        'severity',
+        'event_data',
+        'ip_address',
+        'user_agent',
+    ];
 
     protected $casts = [
         'event_data' => 'array',

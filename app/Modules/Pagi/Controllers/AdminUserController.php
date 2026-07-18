@@ -22,13 +22,16 @@ class AdminUserController extends Controller
     /**
      * Mahasiswa Management
      */
-    public function mahasiswa(Request $request): Response
+    /**
+     * Unified Users Management
+     */
+    public function index(Request $request): Response
     {
         if (PagiWork::query()->count('*') === 0) {
             $this->seedPagiDemoData();
         }
 
-        $users = User::query()->where('user_type', '=', 'mahasiswa', 'and')
+        $users = User::query()->whereIn('user_type', ['mahasiswa', 'mitra'])
             ->withCount('pagiWorks')
             ->get();
 
@@ -38,7 +41,7 @@ class AdminUserController extends Controller
             ->pluck('user_id')
             ->flip();
 
-        $users = $users->map(function ($u) use ($warnedUserIds) {
+        $formattedUsers = $users->map(function ($u) use ($warnedUserIds) {
             $status = 'suspended';
             if ($warnedUserIds->has($u->id)) {
                 $status = 'warning';
@@ -49,56 +52,33 @@ class AdminUserController extends Controller
             return [
                 'id' => $u->id,
                 'name' => $u->name,
-                'handle' => '@'.strstr($u->email, '@', true),
+                'type' => $u->user_type, // 'mahasiswa' | 'mitra'
+                'handle' => $u->user_type === 'mahasiswa' ? '@'.strstr($u->email, '@', true) : null,
                 'email' => $u->email,
-                'nim' => $u->nomor_induk ?: '-',
-                'prodi' => match ((int) $u->program_studi_id) {
+                'nim' => $u->user_type === 'mahasiswa' ? ($u->nomor_induk ?: '-') : null,
+                'prodi' => $u->user_type === 'mahasiswa' ? match ((int) $u->program_studi_id) {
                     1 => 'Informatika',
                     2 => 'Sistem Informasi',
                     default => 'Matematika',
-                },
+                } : null,
+                'pic' => $u->user_type === 'mitra' ? ($u->metadata['pic'] ?? 'PIC Perusahaan') : null,
                 'status' => $status,
                 'karyaCount' => $u->pagi_works_count,
                 'joinDate' => $u->created_at->format('d M Y'),
             ];
         });
 
-        return Inertia::render('Modules/Pagi/Admin/Users/Mahasiswa', [
-            'users' => $users,
-        ]);
-    }
-
-    /**
-     * Mitra Management
-     */
-    public function mitra(Request $request): Response
-    {
-        if (PagiWork::query()->count('*') === 0) {
-            $this->seedPagiDemoData();
-        }
-
-        $mitras = User::query()->where('user_type', '=', 'mitra', 'and')
-            ->withCount('pagiWorks')
-            ->get()
-            ->map(function ($u) {
-                return [
-                    'id' => $u->id,
-                    'name' => $u->name,
-                    'email' => $u->email,
-                    'pic' => $u->metadata['pic'] ?? 'PIC Perusahaan',
-                    'status' => $u->is_active ? 'active' : 'suspended',
-                    'karyaCount' => $u->pagi_works_count,
-                    'joinDate' => $u->created_at->format('d M Y'),
-                ];
-            });
-
-        // Fallback demo partners if database contains no partners yet
-        if ($mitras->isEmpty()) {
-            $mitras = collect([
+        // Add fallback partners if database contains no partners
+        if ($users->where('user_type', 'mitra')->isEmpty()) {
+            $fallbackMitra = collect([
                 [
                     'id' => 101,
                     'name' => 'PT Telkom Indonesia',
+                    'type' => 'mitra',
+                    'handle' => null,
                     'email' => 'hr@telkom.co.id',
+                    'nim' => null,
+                    'prodi' => null,
                     'pic' => 'Budi Santoso',
                     'status' => 'active',
                     'karyaCount' => 5,
@@ -107,7 +87,11 @@ class AdminUserController extends Controller
                 [
                     'id' => 102,
                     'name' => 'Gojek Tokopedia (GoTo)',
+                    'type' => 'mitra',
+                    'handle' => null,
                     'email' => 'partners@goto.com',
+                    'nim' => null,
+                    'prodi' => null,
                     'pic' => 'Andi Wijaya',
                     'status' => 'active',
                     'karyaCount' => 10,
@@ -116,7 +100,11 @@ class AdminUserController extends Controller
                 [
                     'id' => 103,
                     'name' => 'Shopee Indonesia',
+                    'type' => 'mitra',
+                    'handle' => null,
                     'email' => 'career@shopee.co.id',
+                    'nim' => null,
+                    'prodi' => null,
                     'pic' => 'Sinta',
                     'status' => 'warning',
                     'karyaCount' => 2,
@@ -125,17 +113,22 @@ class AdminUserController extends Controller
                 [
                     'id' => 104,
                     'name' => 'Ruangguru',
+                    'type' => 'mitra',
+                    'handle' => null,
                     'email' => 'info@ruangguru.com',
+                    'nim' => null,
+                    'prodi' => null,
                     'pic' => 'Deni',
                     'status' => 'active',
                     'karyaCount' => 8,
                     'joinDate' => '10 Jan 2023',
                 ],
             ]);
+            $formattedUsers = $formattedUsers->concat($fallbackMitra);
         }
 
-        return Inertia::render('Modules/Pagi/Admin/Users/Mitra', [
-            'mitras' => $mitras,
+        return Inertia::render('Modules/Pagi/Admin/Users/Index', [
+            'users' => $formattedUsers,
         ]);
     }
 

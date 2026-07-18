@@ -14,15 +14,21 @@ const currentYear = new Date().getFullYear();
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-8">
                     <!-- Brand & Info -->
                     <div class="md:col-span-5 lg:col-span-5">
-                        <Link href="/" class="flex items-center gap-2 mb-6">
-                            <div 
-                                class="flex h-8 w-8 items-center justify-center rounded-[8px] overflow-hidden shrink-0"
-                                :class="siteSettings.brand_logo ? 'bg-transparent' : 'bg-black text-white shadow-sm'"
-                            >
-                                <img v-if="siteSettings.brand_logo" :src="siteSettings.brand_logo" class="h-full w-full object-contain" alt="" />
-                                <svg v-else class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" /></svg>
+                        <Link href="/" class="group flex items-center gap-2.5 mb-6">
+                            <div v-if="siteSettings.brand_logo" class="h-8 w-8 flex items-center justify-center overflow-hidden bg-transparent shrink-0">
+                                <img :src="siteSettings.brand_logo" class="h-full w-full object-contain" alt="" />
                             </div>
-                            <span class="text-[17px] font-bold tracking-tight text-slate-900">{{ siteSettings.brand_name || 'Portal FMIKOM' }}</span>
+                            <div v-else class="flex h-8 w-8 items-center justify-center rounded-xl bg-[#2563eb] text-white shadow-md shadow-blue-200 transition-transform group-hover:scale-105 shrink-0">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" /></svg>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-md font-bold tracking-tight text-slate-900 leading-tight">
+                                    {{ siteSettings.brand_name || 'Portal FMIKOM' }}
+                                </span>
+                                <span class="text-[10px] font-medium text-slate-500 tracking-tight leading-none mt-0.5">
+                                    {{ siteSettings.brand_subtitle || 'Fakultas Matematika dan Ilmu Komputer' }}
+                                </span>
+                            </div>
                         </Link>
                         <p class="text-[13.5px] leading-[1.7] text-slate-700 mb-8 max-w-[280px] pr-4">
                             Portal informasi akademik, berita, dan layanan mahasiswa terintegrasi yang memudahkan akses informasi perkuliahan Anda.
@@ -106,7 +112,7 @@ const currentYear = new Date().getFullYear();
             <div class="absolute top-0 text-[30vw] md:text-[25vw] lg:text-[20rem] font-black text-slate-300/40 select-none pointer-events-none tracking-tighter leading-none whitespace-nowrap z-10"
                  aria-hidden="true"
                  style="-webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%); mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%);">
-                {{ siteSettings.brand_name || 'FMIKOM' }}
+                FMIKOM
             </div>
         </div>
     </footer>

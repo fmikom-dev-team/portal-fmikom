@@ -195,22 +195,22 @@ const isCustomCreds = computed(() => !form.value.use_demo);
         </Transition>
 
         <!-- Header -->
-        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-gray-200 pb-5">
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-gray-200 dark:border-zinc-700 pb-5">
             <div>
-                <h1 class="text-2xl font-semibold text-gray-900 tracking-tight">Providers</h1>
-                <p class="text-[14px] text-gray-500 mt-1">Allow users to sign in with an account from one of these providers.</p>
+                <h1 class="text-2xl font-semibold text-gray-900 dark:text-zinc-100 tracking-tight">Providers</h1>
+                <p class="text-[14px] text-gray-500 dark:text-zinc-400 mt-1">Allow users to sign in with an account from one of these providers.</p>
             </div>
-            <div class="text-[13px] text-gray-500 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-md">
-                <span class="font-semibold text-gray-700">{{ enabledCount }}</span> enabled
+            <div class="text-[13px] text-gray-500 dark:text-zinc-400 bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 px-3 py-1.5 rounded-md">
+                <span class="font-semibold text-gray-700 dark:text-zinc-300">{{ enabledCount }}</span> enabled
             </div>
         </div>
 
         <!-- Provider List -->
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl shadow-sm overflow-hidden dark:shadow-none">
 
             <!-- Loading -->
             <div v-if="isLoading" class="p-4 space-y-4">
-                <div v-for="i in 5" :key="i" class="flex items-center justify-between py-2 border-b border-gray-100 last:border-none">
+                <div v-for="i in 5" :key="i" class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-zinc-800 last:border-none">
                     <div class="flex items-center gap-4 w-1/2">
                         <div class="w-10 h-10 rounded-lg wos-shimmer" />
                         <div class="h-4 wos-shimmer rounded w-2/3" />
@@ -219,14 +219,14 @@ const isCustomCreds = computed(() => !form.value.use_demo);
                 </div>
             </div>
 
-            <div v-else class="divide-y divide-gray-100">
+            <div v-else class="divide-y divide-gray-100 dark:divide-zinc-800">
                 <div v-for="p in providers" :key="p.slug"
-                    class="p-4 flex items-center justify-between hover:bg-gray-50/60 transition-colors group">
+                    class="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-zinc-800 dark:bg-zinc-900/60 transition-colors group">
 
                     <!-- Provider Info -->
                     <div class="flex items-center gap-4">
                         <!-- Icon -->
-                        <div class="w-10 h-10 rounded-lg border border-gray-200 bg-white shadow-sm flex items-center justify-center overflow-hidden p-1.5">
+                        <div class="w-10 h-10 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm flex items-center justify-center overflow-hidden p-1.5 dark:shadow-none">
                             <span v-if="PROVIDER_META[p.slug]?.svg"
                                 class="w-full h-full flex items-center justify-center"
                                 v-html="PROVIDER_META[p.slug].svg" />
@@ -239,7 +239,7 @@ const isCustomCreds = computed(() => !form.value.use_demo);
 
                         <!-- Name & Badges -->
                         <div class="flex items-center gap-2 flex-wrap">
-                            <span class="font-medium text-[14px] text-gray-900">{{ p.name }}</span>
+                            <span class="font-medium text-[14px] text-gray-900 dark:text-zinc-100">{{ p.name }}</span>
                             <span v-if="p.is_enabled && p.use_demo" class="bg-yellow-100 text-yellow-700 text-[11px] font-medium px-2 py-0.5 rounded-full border border-yellow-200">
                                 Demo credentials
                             </span>
@@ -258,24 +258,24 @@ const isCustomCreds = computed(() => !form.value.use_demo);
 
                         <button v-if="p.is_enabled"
                             @click="openModal(p)"
-                            class="px-3 py-1.5 bg-gray-100 border border-transparent rounded-md text-[13px] font-medium text-gray-700 hover:bg-gray-200 transition-colors">
+                            class="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 border border-transparent rounded-md text-[13px] font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-200 transition-colors">
                             Manage
                         </button>
                         <button v-else
                             @click="openModal(p)"
-                            class="px-3 py-1.5 bg-white border border-gray-200 rounded-md text-[13px] font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+                            class="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-md text-[13px] font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-sm dark:shadow-none">
                             Enable
                         </button>
                     </div>
                 </div>
 
                 <!-- Footer -->
-                <div class="p-5 bg-gray-50/50 flex items-center justify-between">
+                <div class="p-5 bg-gray-50 dark:bg-zinc-900/50 flex items-center justify-between">
                     <div>
-                        <h4 class="text-[13px] font-medium text-gray-900">Need a different OAuth provider?</h4>
-                        <p class="text-[12px] text-gray-500">Let us know. Customer requests help shape what we add next.</p>
+                        <h4 class="text-[13px] font-medium text-gray-900 dark:text-zinc-100">Need a different OAuth provider?</h4>
+                        <p class="text-[12px] text-gray-500 dark:text-zinc-400">Let us know. Customer requests help shape what we add next.</p>
                     </div>
-                    <button class="px-3 py-1.5 bg-white border border-gray-200 rounded-md text-[13px] font-medium text-gray-700 shadow-sm hover:bg-gray-50">
+                    <button class="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-md text-[13px] font-medium text-gray-700 dark:text-zinc-300 shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-800 dark:shadow-none">
                         Contact support
                     </button>
                 </div>
@@ -291,37 +291,37 @@ const isCustomCreds = computed(() => !form.value.use_demo);
                     <div class="absolute inset-0 bg-black/40 backdrop-blur-[1px]" @click="closeModal" />
 
                     <!-- Panel -->
-                    <div class="relative z-10 bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                    <div class="relative z-10 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh dark:shadow-none]">
 
                         <!-- Body -->
                         <div class="p-6 md:p-8 space-y-7 overflow-y-auto wos-scroll flex-1">
                             
                             <!-- Title -->
-                            <h2 class="text-xl font-semibold text-gray-900">{{ activeProvider.name }} OAuth</h2>
+                            <h2 class="text-xl font-semibold text-gray-900 dark:text-zinc-100">{{ activeProvider.name }} OAuth</h2>
 
                             <!-- Enable Toggle -->
                             <div class="flex items-center gap-3">
                                 <label for="provider-enabled-toggle" class="relative inline-flex items-center cursor-pointer">
                                     <input id="provider-enabled-toggle" type="checkbox" v-model="form.is_enabled" class="sr-only peer" />
-                                    <div class="w-[34px] h-[20px] bg-gray-200 peer-focus:ring-2 peer-focus:ring-[#5c6dff]/30 rounded-full peer peer-checked:after:translate-x-[14px] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#5c6dff] peer-checked:after:border-white"></div>
+                                    <div class="w-[34px] h-[20px] bg-gray-200 peer-focus:ring-2 peer-focus:ring-[#5c6dff]/30 rounded-full peer peer-checked:after:translate-x-[14px] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:bg-zinc-900 after:border after:border-gray-300 dark:border-zinc-700 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#5c6dff] peer-checked:after:border-white"></div>
                                     <span class="sr-only">Enable OAuth Provider</span>
                                 </label>
-                                <span class="text-[14px] font-medium text-gray-900">Enable</span>
+                                <span class="text-[14px] font-medium text-gray-900 dark:text-zinc-100">Enable</span>
                             </div>
 
                             <!-- Credential Mode Cards -->
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <!-- Demo -->
                                 <div @click="form.use_demo = true"
-                                    :class="['border rounded-lg p-5 cursor-pointer transition-all', form.use_demo ? 'border-[#5c6dff] ring-1 ring-[#5c6dff]' : 'border-gray-200 hover:border-gray-300']">
-                                    <p class="text-[14px] font-semibold text-gray-900 mb-1">Demo credentials</p>
-                                    <p class="text-[13px] text-gray-500">Test {{ activeProvider.name }} OAuth without setup</p>
+                                    :class="['border rounded-lg p-5 cursor-pointer transition-all', form.use_demo ? 'border-[#5c6dff] ring-1 ring-[#5c6dff]' : 'border-gray-200 dark:border-zinc-700 hover:border-gray-300']">
+                                    <p class="text-[14px] font-semibold text-gray-900 dark:text-zinc-100 mb-1">Demo credentials</p>
+                                    <p class="text-[13px] text-gray-500 dark:text-zinc-400">Test {{ activeProvider.name }} OAuth without setup</p>
                                 </div>
                                 <!-- Custom -->
                                 <div @click="form.use_demo = false"
-                                    :class="['border rounded-lg p-5 cursor-pointer transition-all', !form.use_demo ? 'border-[#5c6dff] ring-1 ring-[#5c6dff]' : 'border-gray-200 hover:border-gray-300']">
-                                    <p class="text-[14px] font-semibold text-gray-900 mb-1">Your app's credentials</p>
-                                    <p class="text-[13px] text-gray-500">Configure your own {{ activeProvider.name }} OAuth</p>
+                                    :class="['border rounded-lg p-5 cursor-pointer transition-all', !form.use_demo ? 'border-[#5c6dff] ring-1 ring-[#5c6dff]' : 'border-gray-200 dark:border-zinc-700 hover:border-gray-300']">
+                                    <p class="text-[14px] font-semibold text-gray-900 dark:text-zinc-100 mb-1">Your app's credentials</p>
+                                    <p class="text-[13px] text-gray-500 dark:text-zinc-400">Configure your own {{ activeProvider.name }} OAuth</p>
                                 </div>
                             </div>
 
@@ -329,71 +329,71 @@ const isCustomCreds = computed(() => !form.value.use_demo);
                             <div v-if="!form.use_demo" class="space-y-6">
                                 <!-- Redirect URI -->
                                 <div>
-                                    <h3 class="text-[14px] font-semibold text-gray-900 mb-1">Redirect URI</h3>
-                                    <p class="text-[14px] text-gray-700 break-all">{{ activeProvider.redirect_uri }}</p>
+                                    <h3 class="text-[14px] font-semibold text-gray-900 dark:text-zinc-100 mb-1">Redirect URI</h3>
+                                    <p class="text-[14px] text-gray-700 dark:text-zinc-300 break-all">{{ activeProvider.redirect_uri }}</p>
                                 </div>
 
                                 <!-- Client ID -->
                                 <div>
                                     <div class="flex justify-between items-end mb-1.5">
-                                        <label for="client-id-input" class="text-[14px] font-semibold text-gray-900">{{ activeProvider.name }} Client ID</label>
+                                        <label for="client-id-input" class="text-[14px] font-semibold text-gray-900 dark:text-zinc-100">{{ activeProvider.name }} Client ID</label>
                                         <a href="#" class="text-[13px] text-[#5c6dff] hover:underline flex items-center gap-1">Learn more about {{ activeProvider.name }} OAuth <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a>
                                     </div>
                                     <input id="client-id-input" v-model="form.client_id" type="text"
                                         :placeholder="`Enter your ${activeProvider.name} Client ID`"
-                                        class="w-full px-3 py-2 text-[14px] border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#5c6dff] focus:border-[#5c6dff] outline-none transition" />
+                                        class="w-full px-3 py-2 text-[14px] border border-gray-300 dark:border-zinc-700 rounded-lg focus:ring-1 focus:ring-[#5c6dff] focus:border-[#5c6dff] outline-none transition" />
                                 </div>
 
                                 <!-- Client Secret -->
                                 <div>
                                     <div class="flex justify-between items-end mb-1.5">
-                                        <label for="client-secret-input" class="text-[14px] font-semibold text-gray-900">{{ activeProvider.name }} Client Secret</label>
+                                        <label for="client-secret-input" class="text-[14px] font-semibold text-gray-900 dark:text-zinc-100">{{ activeProvider.name }} Client Secret</label>
                                         <a href="#" class="text-[13px] text-[#5c6dff] hover:underline flex items-center gap-1">{{ activeProvider.name }} Developer Console <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a>
                                     </div>
                                     <input id="client-secret-input" v-model="form.client_secret" type="password"
                                         :placeholder="`Enter your ${activeProvider.name} Client Secret`"
-                                        class="w-full px-3 py-2 text-[14px] border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#5c6dff] focus:border-[#5c6dff] outline-none transition" />
+                                        class="w-full px-3 py-2 text-[14px] border border-gray-300 dark:border-zinc-700 rounded-lg focus:ring-1 focus:ring-[#5c6dff] focus:border-[#5c6dff] outline-none transition" />
                                 </div>
 
                                 <!-- OAuth tokens -->
                                 <div class="flex items-center gap-2 mt-4">
-                                    <input type="checkbox" id="return-tokens" class="w-4 h-4 rounded border-gray-300 text-[#5c6dff] focus:ring-[#5c6dff]"/>
-                                    <label for="return-tokens" class="text-[14px] font-medium text-gray-900 cursor-pointer">Return {{ activeProvider.name }} OAuth tokens</label>
+                                    <input type="checkbox" id="return-tokens" class="w-4 h-4 rounded border-gray-300 dark:border-zinc-700 text-[#5c6dff] focus:ring-[#5c6dff]"/>
+                                    <label for="return-tokens" class="text-[14px] font-medium text-gray-900 dark:text-zinc-100 cursor-pointer">Return {{ activeProvider.name }} OAuth tokens</label>
                                     <div class="group relative flex items-center cursor-help">
-                                        <AlertCircle class="w-4 h-4 text-gray-400" />
+                                        <AlertCircle class="w-4 h-4 text-gray-400 dark:text-zinc-500" />
                                     </div>
                                 </div>
 
                                 <!-- Scopes -->
                                 <div>
                                     <div class="flex justify-between items-end mb-1.5">
-                                        <label for="scopes-select" class="text-[14px] font-semibold text-gray-900 flex items-center gap-1">Scopes <AlertCircle class="w-3.5 h-3.5 text-gray-400"/></label>
+                                        <label for="scopes-select" class="text-[14px] font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1">Scopes <AlertCircle class="w-3.5 h-3.5 text-gray-400 dark:text-zinc-500"/></label>
                                         <a href="#" class="text-[13px] text-[#5c6dff] hover:underline flex items-center gap-1">See {{ activeProvider.name }} docs for OAuth scopes <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a>
                                     </div>
                                     <div class="relative">
-                                        <select id="scopes-select" class="w-full appearance-none px-3 py-2 text-[14px] border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#5c6dff] focus:border-[#5c6dff] outline-none transition bg-white text-gray-900">
+                                        <select id="scopes-select" class="w-full appearance-none px-3 py-2 text-[14px] border border-gray-300 dark:border-zinc-700 rounded-lg focus:ring-1 focus:ring-[#5c6dff] focus:border-[#5c6dff] outline-none transition bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100">
                                             <option>2 scopes selected</option>
                                         </select>
-                                        <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
+                                        <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500 dark:text-zinc-400">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                         </div>
                                     </div>
                                     <div class="flex flex-wrap gap-2 mt-3">
-                                        <span class="bg-gray-100 border border-gray-200 text-gray-700 px-2.5 py-1 rounded-md text-[12.5px] font-mono">openid</span>
-                                        <span class="bg-gray-100 border border-gray-200 text-gray-700 px-2.5 py-1 rounded-md text-[12.5px] font-mono">profile</span>
-                                        <span class="bg-gray-100 border border-gray-200 text-gray-700 px-2.5 py-1 rounded-md text-[12.5px] font-mono">email</span>
+                                        <span class="bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-300 px-2.5 py-1 rounded-md text-[12.5px] font-mono">openid</span>
+                                        <span class="bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-300 px-2.5 py-1 rounded-md text-[12.5px] font-mono">profile</span>
+                                        <span class="bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-300 px-2.5 py-1 rounded-md text-[12.5px] font-mono">email</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Footer -->
-                        <div class="px-6 py-4 bg-white flex justify-end gap-3 border-t border-gray-100 shrink-0">
-                            <button @click="closeModal" class="px-4 py-2 border border-gray-200 bg-white text-gray-700 rounded-md text-[13.5px] font-medium hover:bg-gray-50 transition-colors shadow-sm">
+                        <div class="px-6 py-4 bg-white dark:bg-zinc-900 flex justify-end gap-3 border-t border-gray-100 dark:border-zinc-800 shrink-0">
+                            <button @click="closeModal" class="px-4 py-2 border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-700 dark:text-zinc-300 rounded-md text-[13.5px] font-medium hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-sm dark:shadow-none">
                                 Cancel
                             </button>
                             <button @click="saveProvider" :disabled="isSaving"
-                                class="px-4 py-2 bg-[#5c6dff] border border-transparent text-white rounded-md text-[13.5px] font-medium hover:bg-[#4b59e6] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2">
+                                class="px-4 py-2 bg-[#5c6dff] border border-transparent text-white rounded-md text-[13.5px] font-medium hover:bg-[#4b59e6] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2 dark:shadow-none">
                                 <Loader2 v-if="isSaving" class="w-3.5 h-3.5 animate-spin" />
                                 Save changes
                             </button>

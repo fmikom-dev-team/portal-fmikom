@@ -16,9 +16,9 @@ defineProps<{
 	loading?: boolean;
 }>();
 
-const _brokenAvatars = ref<Record<string | number, boolean>>({});
+const brokenAvatars = ref<Record<string | number, boolean>>({});
 
-const _typeConfig = {
+const typeConfig = {
 	report: {
 		color:
 			"bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",

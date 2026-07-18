@@ -16,6 +16,12 @@ class Module extends Model
         'description',
         'is_active',
         'logo_path',
+        'settings_data',
+    ];
+
+    protected $casts = [
+        'settings_data' => 'array',
+        'is_active' => 'boolean',
     ];
 
     /**

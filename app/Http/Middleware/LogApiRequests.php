@@ -26,7 +26,7 @@ class LogApiRequests
         // Only log API routes
         if ($request->is('api/*')) {
             // Strip sensitive data from payload
-            $payload = $request->except(['password', 'password_confirmation', 'token']);
+            $payload = \Illuminate\Support\Arr::except($request->input(), ['password', 'password_confirmation', 'token']);
 
             AuditApiRequest::create([
                 'user_id' => auth()->id(),

@@ -8,11 +8,13 @@ use App\Models\Surat;
 use App\Models\SuratCategory;
 use App\Modules\Fast\DTOs\SuratDataContract;
 use App\Modules\Fast\Workflow\Actions\SuratWorkflowService;
+use App\Services\VirusScannerService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -204,6 +206,18 @@ class SubmissionController extends Controller
         }
 
         Validator::make($request->all(), $dynamicRules, $dynamicMessages)->validate();
+
+        $scanner = app(VirusScannerService::class);
+        if ($request->hasFile('lampiran')) {
+            foreach ($request->file('lampiran') as $file) {
+                $scanResult = $scanner->scan($file);
+                if (! $scanResult['safe']) {
+                    throw ValidationException::withMessages([
+                        'lampiran' => $scanResult['reason'],
+                    ]);
+                }
+            }
+        }
 
         $this->workflow->submit(
             $user,

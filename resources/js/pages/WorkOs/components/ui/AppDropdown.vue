@@ -42,7 +42,7 @@ onUnmounted(() => document.removeEventListener("mousedown", handleOutside));
             <div
                 v-if="open"
                 :class="[
-                    'absolute z-[70] mt-1.5 py-1 bg-white rounded-xl border border-[#e5e7eb] shadow-lg overflow-hidden',
+                    'absolute z-[70] mt-1.5 py-1 bg-white dark:bg-zinc-900 rounded-xl border border-[#e5e7eb] dark:border-zinc-800 shadow-lg overflow-hidden',
                     minWidth,
                     align === 'right' ? 'right-0' : 'left-0',
                 ]"

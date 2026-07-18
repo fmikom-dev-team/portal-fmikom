@@ -7,7 +7,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PortalComment extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'post_id',
+        'author_name',
+        'author_email',
+        'content',
+        'status',
+        'ip_address',
+        'user_agent',
+    ];
 
     public function post(): BelongsTo
     {

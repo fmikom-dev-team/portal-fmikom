@@ -9,8 +9,10 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+Route::get('/instant-search', [DashboardController::class, 'instantSearch'])->name('instant-search');
 
 Route::post('/emails/config', [DashboardController::class, 'updateMailConfig'])->name('emails.config.update');
+
 Route::post('/emails/test-send', [DashboardController::class, 'sendRealTestEmail'])->name('emails.test-send');
 
 Route::post('/settings/update', [DashboardController::class, 'updateSystemSettings'])->name('settings.update');
@@ -19,6 +21,10 @@ Route::post('/settings/flush-cache', [DashboardController::class, 'flushSystemCa
 Route::post('/notifications/mark-all-read', [DashboardController::class, 'markAllNotificationsRead'])->name('notifications.mark-all-read');
 Route::post('/notifications/clear', [DashboardController::class, 'clearNotifications'])->name('notifications.clear');
 Route::post('/notifications/{id}/toggle-read', [DashboardController::class, 'toggleNotificationRead'])->name('notifications.toggle-read');
+
+Route::post('/emails/logs/clear', [DashboardController::class, 'clearEmailLogs'])->name('emails.logs.clear');
+Route::post('/webhooks/save', [DashboardController::class, 'saveWebhookConfig'])->name('webhooks.save');
+Route::post('/webhooks/redeliver/{id}', [DashboardController::class, 'redeliverWebhookEvent'])->name('webhooks.redeliver');
 
 // SPA catch-all: every sub-path (e.g. /workos/organizations, /workos/users) returns
 // the same Dashboard page — client-side navigation handles the rest

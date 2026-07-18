@@ -216,4 +216,22 @@ return [
 
     'test_driver_checkable' => false,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Absolute Session Timeout (Hours)
+    |--------------------------------------------------------------------------
+    |
+    | [FIX CRIT-01 / MED-04] A session will be forcefully terminated after this
+    | many hours, regardless of user activity. This is enforced server-side by
+    | the SecureSession middleware using the AuthSession.created_at timestamp.
+    |
+    | This prevents the browser "restore previous session" bypass, where a browser
+    | may re-present a session cookie after being closed, as if it never expired.
+    |
+    | Default: 8 hours. For high-security environments, reduce to 4.
+    |
+    */
+
+    'absolute_timeout_hours' => (int) env('SESSION_ABSOLUTE_TIMEOUT_HOURS', 8),
+
 ];

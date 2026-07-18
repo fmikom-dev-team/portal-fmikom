@@ -193,7 +193,7 @@ onMounted(() => {
 							:key="s"
 							type="button"
 							@click="form.pagi_username = s"
-							class="px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-blue-600 dark:text-blue-400 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-955/30 transition-all cursor-pointer"
+							class="px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-blue-600 dark:text-blue-400 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all cursor-pointer"
 						>@{{ s }}</button>
 					</div>
 				</div>

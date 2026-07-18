@@ -3,8 +3,11 @@
 namespace App\Models;
 
 use App\Concerns\UserHelpers;
+use App\Enums\UserAccountStatus;
 use App\Exceptions\SuperAdminProtectionException;
+use App\Jobs\DispatchWorkOsWebhookJob;
 use App\Models\Auth\AuthOAuthCredential;
+use App\Models\Auth\AuthOtpToken;
 use App\Models\Magang\LowonganInfo;
 use App\Models\Magang\PembimbingLapangan;
 use App\Models\Magang\PendaftaranMagang;
@@ -28,7 +31,9 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Laravel\Sanctum\HasApiTokens;
+use Laravel\Scout\Searchable;
 
 /**
  * @property int $id
@@ -36,12 +41,13 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string $email
  * @property string $user_type
  * @property string|null $nomor_induk
- * @property string $status_approval
+ * @property UserAccountStatus $status_approval — Full account lifecycle state
  * @property bool $is_active
  * @property string|null $foto_path
  * @property string|null $location
  * @property array|null $metadata
  * @property Carbon|null $tanggal_lahir
+ * @property Carbon|null $password_changed_at
  * @property Role|null $role
  * @property Collection|UserModuleRole[] $moduleRoles
  * @property Collection|AuthOAuthCredential[] $oauthCredentials
@@ -50,13 +56,14 @@ use Laravel\Sanctum\HasApiTokens;
  */
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, HasPagiRelations, Notifiable, UserHelpers;
+    use HasApiTokens, HasFactory, HasPagiRelations, Notifiable, Searchable, UserHelpers;
 
     protected $fillable = [
         'name', 'email', 'password', 'program_studi_id',
-        'no_telepon', 'foto_path', 'banner_path', 'is_active',
-        'nomor_induk', 'status_approval', 'user_type',
-        'tahun_lulus', 'otp_code', 'otp_expires_at', 'password_changed_at',
+        'no_telepon', 'foto_path', 'banner_path',
+        'nomor_induk',
+        // otp_code / otp_expires_at removed — now in auth_otp_tokens table
+        'tahun_lulus', 'password_changed_at',
         'role_title', 'bio', 'location', 'website', 'twitter', 'linkedin', 'github', 'instagram',
         'metadata', 'tanggal_lahir', 'last_seen_at', 'pagi_username', 'deletion_requested_at',
     ];
@@ -71,29 +78,57 @@ class User extends Authenticatable
         'two_factor_secret',
         'two_factor_recovery_codes',
         'two_factor_confirmed_at',
-        'otp_code',
-        'otp_expires_at',
+        // otp_code / otp_expires_at removed (now in auth_otp_tokens)
         'password_changed_at',
         'nomor_induk',
         'clearHistory',
         'encryptHistory',
     ];
 
+    /**
+     * Scout: Only index public, safe fields.
+     * NEVER index: password, metadata, nomor_induk, tokens.
+     */
+    public function toSearchableArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'email' => $this->email,
+            'pagi_username' => $this->pagi_username ?? '',
+            'role_title' => $this->role_title ?? '',
+            'user_type' => $this->user_type ?? '',
+            'location' => $this->location ?? '',
+            'bio' => $this->bio ?? '',
+        ];
+    }
+
+    public function shouldBeSearchable(): bool
+    {
+        return (bool) $this->is_active
+            && $this->status_approval === UserAccountStatus::Activated;
+    }
+
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
-            'otp_expires_at' => 'datetime',
+            // otp_expires_at removed — OTP now in auth_otp_tokens table
             'password' => 'hashed',
             'is_active' => 'boolean',
             'tahun_lulus' => 'integer',
             // user_type = identity layer (mahasiswa, alumni, mitra, dosen, staff)
             // digunakan sebagai fallback role di module jika tidak ada assignment
             'user_type' => 'string',
+            // status_approval = full account lifecycle state machine
+            'status_approval' => UserAccountStatus::class,
             'metadata' => 'array',
             'tanggal_lahir' => 'date:Y-m-d',
             'last_seen_at' => 'datetime',
+            'password_changed_at' => 'datetime',
             'deletion_requested_at' => 'datetime',
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted',
         ];
     }
 
@@ -114,8 +149,36 @@ class User extends Authenticatable
             }
         });
 
+        static::created(function ($user) {
+            try {
+                dispatch(new DispatchWorkOsWebhookJob('user.created', [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'user_type' => $user->user_type,
+                    'created_at' => $user->created_at?->toIso8601String() ?? now()->toIso8601String(),
+                ]));
+            } catch (\Throwable $e) {
+                Log::warning('User created webhook failed: '.$e->getMessage());
+            }
+        });
+
+        static::deleted(function ($user) {
+            try {
+                dispatch(new DispatchWorkOsWebhookJob('user.deleted', [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'user_type' => $user->user_type,
+                    'deleted_at' => now()->toIso8601String(),
+                ]));
+            } catch (\Throwable $e) {
+                Log::warning('User deleted webhook failed: '.$e->getMessage());
+            }
+        });
+
         static::deleting(function ($user) {
-            if ($user->user_type === 'super_admin') {
+            if ($user->user_type === 'super_admin' || $user->user_type === 'super-admin') {
                 throw new SuperAdminProtectionException('Akun dengan tipe Super Admin dilindungi oleh sistem dan tidak dapat dihapus.');
             }
         });
@@ -292,5 +355,97 @@ class User extends Authenticatable
     public function getNimNipAttribute(): ?string
     {
         return $this->attributes['nim_nip'] ?? $this->attributes['nomor_induk'] ?? null;
+    }
+
+    // ─── Account Lifecycle Relations ──────────────────────────────────────────
+
+    /**
+     * OTP tokens for this user (replaces otp_code/otp_expires_at on users table).
+     */
+    public function otpTokens(): HasMany
+    {
+        return $this->hasMany(AuthOtpToken::class);
+    }
+
+    // ─── Account Lifecycle Helpers ────────────────────────────────────────────
+
+    /**
+     * True if the user can login and access the application.
+     * Only 'activated' accounts are allowed through.
+     */
+    public function isAccountActive(): bool
+    {
+        return (bool) $this->is_active
+            && $this->status_approval === UserAccountStatus::Activated;
+    }
+
+    /**
+     * True if the registration is pending admin review.
+     */
+    public function isPendingReview(): bool
+    {
+        return $this->status_approval === UserAccountStatus::Pending;
+    }
+
+    /**
+     * True if the account is in any "in progress" activation state.
+     * (approved but not yet activated)
+     */
+    public function isInActivation(): bool
+    {
+        return in_array($this->status_approval, [
+            UserAccountStatus::Approved,
+            UserAccountStatus::OtpSent,
+            UserAccountStatus::OtpVerified,
+        ]);
+    }
+
+    /**
+     * True if the account has been rejected.
+     */
+    public function isRejected(): bool
+    {
+        return $this->status_approval === UserAccountStatus::Rejected;
+    }
+
+    /**
+     * True if the account has been suspended.
+     */
+    public function isSuspended(): bool
+    {
+        return $this->status_approval === UserAccountStatus::Suspended;
+    }
+
+    /**
+     * Get the human-readable status label.
+     */
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->status_approval instanceof UserAccountStatus
+            ? $this->status_approval->label()
+            : ucfirst((string) $this->status_approval);
+    }
+
+    /**
+     * Get the login block message for this user's status (null if login is allowed).
+     */
+    public function getLoginBlockMessage(): ?string
+    {
+        if (! ($this->status_approval instanceof UserAccountStatus)) {
+            return 'Status akun tidak valid. Hubungi administrator.';
+        }
+
+        return $this->status_approval->loginBlockMessage();
+    }
+
+    /**
+     * Whether this user needs to complete the first-time setup
+     * (OTP verification → password creation).
+     * Used by EnsureFirstTimeLoginComplete middleware.
+     */
+    public function needsFirstTimeSetup(): bool
+    {
+        // Admin-created users: email not verified OR no password set yet
+        return is_null($this->email_verified_at) || is_null($this->password_changed_at);
     }
 }

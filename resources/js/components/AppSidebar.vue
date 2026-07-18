@@ -24,6 +24,7 @@ import {
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useCurrentUrl } from "@/composables/useCurrentUrl";
+import { toUrl } from "@/lib/utils";
 import { dashboard } from "@/routes";
 import SidebarSkeleton from "@/components/skeletons/SidebarSkeleton.vue";
 
@@ -49,7 +50,7 @@ onMounted(() => {
             class="flex flex-row items-center justify-between pl-5 pr-4 border-b border-slate-50 dark:border-zinc-900 group/header relative transition-all duration-300 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center shrink-0"
             style="height: 76px"
         >
-            <Link :href="dashboard()" class="flex items-center justify-center shrink-0 transition-all duration-300 group-data-[collapsible=icon]:group-hover/header:opacity-0 group-data-[collapsible=icon]:group-hover/header:scale-75">
+            <Link :href="toUrl(dashboard())" class="flex items-center justify-center shrink-0 transition-all duration-300 group-data-[collapsible=icon]:group-hover/header:opacity-0 group-data-[collapsible=icon]:group-hover/header:scale-75">
                 <AppLogo />
             </Link>
             <!-- Toggle Sidebar button - absolute centered when collapsed, fades in beautifully on hovering the logo brand area -->
@@ -74,7 +75,7 @@ onMounted(() => {
                               ? 'font-bold text-slate-900 bg-slate-105 dark:bg-slate-800 dark:text-slate-100 shadow-sm border border-slate-200/40 dark:border-slate-700/25' 
                               : 'font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900'"
                         >
-                            <Link :href="dashboard()">
+                            <Link :href="toUrl(dashboard())">
                                 <LayoutGrid class="h-[18px] w-[18px] shrink-0 transition-colors" 
                                             :class="isCurrentUrl(dashboard()) ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 group-hover:text-slate-650'" />
                                 <span class="text-[13.5px] transition-all duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0 truncate select-none">Dashboard</span>

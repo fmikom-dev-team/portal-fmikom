@@ -29,18 +29,19 @@ class AdminRegistrationPageService
         }
 
         if ($search !== '') {
-            $query->where(function ($builder) use ($search): void {
-                $builder->whereHas('mahasiswa', function ($mahasiswaQuery) use ($search): void {
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
+            $query->where(function ($builder) use ($escaped): void {
+                $builder->whereHas('mahasiswa', function ($mahasiswaQuery) use ($escaped): void {
                     $mahasiswaQuery
-                        ->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('nomor_induk', 'like', "%{$search}%");
+                        ->where('name', 'like', "%{$escaped}%")
+                        ->orWhere('email', 'like', "%{$escaped}%")
+                        ->orWhere('nomor_induk', 'like', "%{$escaped}%");
                 })
-                    ->orWhereHas('perusahaan', function ($perusahaanQuery) use ($search): void {
-                        $perusahaanQuery->where('nama', 'like', "%{$search}%");
+                    ->orWhereHas('perusahaan', function ($perusahaanQuery) use ($escaped): void {
+                        $perusahaanQuery->where('nama', 'like', "%{$escaped}%");
                     })
-                    ->orWhere('perusahaan_diminati_nama', 'like', "%{$search}%")
-                    ->orWhere('perusahaan_diminati_alamat', 'like', "%{$search}%");
+                    ->orWhere('perusahaan_diminati_nama', 'like', "%{$escaped}%")
+                    ->orWhere('perusahaan_diminati_alamat', 'like', "%{$escaped}%");
             });
         }
 

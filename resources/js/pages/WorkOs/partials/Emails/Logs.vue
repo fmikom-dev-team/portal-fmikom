@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import AppModal from "../../components/ui/AppModal.vue";
+import { sanitizeRich } from "@/composables/useSanitize";
 
 const props = defineProps<{
 	logs: any[];
@@ -41,7 +42,7 @@ function openLogDetails(log: any) {
     <!-- Filters -->
     <div class="flex flex-wrap items-center gap-3">
         <div class="relative flex-1 min-w-[240px] max-w-sm">
-            <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
             <input
@@ -49,14 +50,14 @@ function openLogDetails(log: any) {
                 v-model="searchQuery"
                 type="text"
                 placeholder="Search by recipient or subject..."
-                class="w-full h-[32px] pl-9 pr-3 text-[12.5px] border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors text-gray-900 bg-white"
+                class="w-full h-[32px] pl-9 pr-3 text-[12.5px] border border-gray-200 dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors text-gray-900 dark:text-zinc-100 bg-white dark:bg-zinc-900"
             />
         </div>
         
         <select
             id="status_filter_select"
             v-model="statusFilter"
-            class="h-[32px] px-2.5 text-[12.5px] border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] bg-white text-gray-700"
+            class="h-[32px] px-2.5 text-[12.5px] border border-gray-200 dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] bg-white dark:bg-zinc-900 text-gray-700 dark:text-zinc-300"
         >
             <option value="all">All Statuses</option>
             <option value="Delivered">Delivered</option>
@@ -66,7 +67,7 @@ function openLogDetails(log: any) {
         <select
             id="type_filter_select"
             v-model="typeFilter"
-            class="h-[32px] px-2.5 text-[12.5px] border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] bg-white text-gray-700"
+            class="h-[32px] px-2.5 text-[12.5px] border border-gray-200 dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] bg-white dark:bg-zinc-900 text-gray-700 dark:text-zinc-300"
         >
             <option value="all">All Types</option>
             <option value="Verification Email">Verification</option>
@@ -77,7 +78,7 @@ function openLogDetails(log: any) {
         <button
             v-if="props.logs.length > 0"
             id="clear_logs_button"
-            class="h-[32px] px-3 border border-red-200 rounded-md text-[12.5px] font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition-colors shadow-sm ml-auto flex items-center gap-1.5"
+            class="h-[32px] px-3 border border-red-200 rounded-md text-[12.5px] font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition-colors shadow-sm ml-auto flex items-center gap-1.5 dark:shadow-none"
             @click="emit('clear-logs')"
         >
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -88,35 +89,35 @@ function openLogDetails(log: any) {
     </div>
 
     <!-- Table -->
-    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+    <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm dark:shadow-none">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse whitespace-nowrap text-[13px]">
                 <caption class="sr-only">Email Dispatch Logs</caption>
                 <thead>
-                    <tr class="bg-gray-50/75 border-b border-gray-200/80">
-                        <th class="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Recipient</th>
-                        <th class="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Subject</th>
-                        <th class="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Type</th>
-                        <th class="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Sent At</th>
+                    <tr class="bg-gray-50 dark:bg-zinc-900/75 border-b border-gray-200 dark:border-zinc-700/80">
+                        <th class="px-4 py-3 text-[11px] font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Recipient</th>
+                        <th class="px-4 py-3 text-[11px] font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Subject</th>
+                        <th class="px-4 py-3 text-[11px] font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Type</th>
+                        <th class="px-4 py-3 text-[11px] font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Status</th>
+                        <th class="px-4 py-3 text-[11px] font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Sent At</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
+                <tbody class="divide-y divide-gray-100 dark:divide-zinc-800">
                     <tr v-if="filteredLogs.length === 0">
-                        <td colspan="5" class="px-4 py-12 text-center text-gray-500 bg-white">
+                        <td colspan="5" class="px-4 py-12 text-center text-gray-500 dark:text-zinc-400 bg-white dark:bg-zinc-900">
                             No email logs found.
                         </td>
                     </tr>
                     <tr
                         v-for="log in filteredLogs"
                         :key="log.id"
-                        class="hover:bg-gray-50/50 transition-colors cursor-pointer"
+                        class="hover:bg-gray-50 dark:hover:bg-zinc-800 dark:bg-zinc-900/50 transition-colors cursor-pointer"
                         @click="openLogDetails(log)"
                     >
-                        <td class="px-4 py-3 font-semibold text-gray-900">{{ log.recipient }}</td>
-                        <td class="px-4 py-3 text-gray-700 max-w-xs truncate">{{ log.subject }}</td>
+                        <td class="px-4 py-3 font-semibold text-gray-900 dark:text-zinc-100">{{ log.recipient }}</td>
+                        <td class="px-4 py-3 text-gray-700 dark:text-zinc-300 max-w-xs truncate">{{ log.subject }}</td>
                         <td class="px-4 py-3">
-                            <span class="font-mono text-[10.5px] bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded text-gray-600">
+                            <span class="font-mono text-[10.5px] bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded text-gray-600 dark:text-zinc-400">
                                 {{ log.type }}
                             </span>
                         </td>
@@ -126,7 +127,7 @@ function openLogDetails(log: any) {
                                 {{ log.status }}
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-gray-500">{{ log.sentAt }}</td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-zinc-400">{{ log.sentAt }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -144,21 +145,21 @@ function openLogDetails(log: any) {
         </template>
 
         <div v-if="selectedLog" class="space-y-4 text-[13px]">
-            <div class="grid grid-cols-2 gap-4 border-b border-gray-100 pb-3">
+            <div class="grid grid-cols-2 gap-4 border-b border-gray-100 dark:border-zinc-800 pb-3">
                 <div>
-                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Message ID</span>
-                    <span class="font-mono text-[12px] text-gray-800">{{ selectedLog.id }}</span>
+                    <span class="text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider block">Message ID</span>
+                    <span class="font-mono text-[12px] text-gray-800 dark:text-zinc-200">{{ selectedLog.id }}</span>
                 </div>
                 <div>
-                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Sent Via</span>
-                    <span class="font-semibold text-gray-800">{{ selectedLog.provider }}</span>
+                    <span class="text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider block">Sent Via</span>
+                    <span class="font-semibold text-gray-800 dark:text-zinc-200">{{ selectedLog.provider }}</span>
                 </div>
             </div>
 
             <!-- Variables -->
             <div>
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Shared Variables Payload</span>
-                <div class="bg-gray-50 border border-gray-150 p-2.5 rounded-lg font-mono text-[11.5px] text-gray-700 space-y-1">
+                <span class="text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider block mb-1.5">Shared Variables Payload</span>
+                <div class="bg-gray-50 dark:bg-zinc-900 border border-gray-150 p-2.5 rounded-lg font-mono text-[11.5px] text-gray-700 dark:text-zinc-300 space-y-1">
                     <div v-for="(val, key) in selectedLog.variables" :key="key">
                         <span class="text-blue-600">{{ key }}</span>: "{{ val }}"
                     </div>
@@ -167,28 +168,28 @@ function openLogDetails(log: any) {
 
             <!-- Event Timeline -->
             <div>
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Delivery Trace Timeline</span>
-                <div class="space-y-2 border-l border-gray-200 pl-3.5 ml-1">
+                <span class="text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider block mb-2">Delivery Trace Timeline</span>
+                <div class="space-y-2 border-l border-gray-200 dark:border-zinc-700 pl-3.5 ml-1">
                     <div v-for="(evt, idx) in selectedLog.events" :key="idx" class="relative">
                         <span class="absolute -left-[19px] top-1 w-2.5 h-2.5 rounded-full border border-white bg-blue-500" />
-                        <span class="text-[11px] text-gray-400 font-mono">{{ evt.time }}</span> &bull; 
-                        <span class="text-[12.5px] text-gray-700">{{ evt.event }}</span>
+                        <span class="text-[11px] text-gray-400 dark:text-zinc-500 font-mono">{{ evt.time }}</span> &bull; 
+                        <span class="text-[12.5px] text-gray-700 dark:text-zinc-300">{{ evt.event }}</span>
                     </div>
                 </div>
             </div>
 
             <!-- HTML rendering -->
             <div class="space-y-1.5">
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Rendered HTML Output</span>
-                <div class="border border-gray-200 rounded-lg overflow-hidden bg-white max-h-60 overflow-y-auto p-4 scale-98 origin-top">
-                    <div v-html="selectedLog.body"></div>
+                <span class="text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider block">Rendered HTML Output</span>
+                <div class="border border-gray-200 dark:border-zinc-700 rounded-lg overflow-hidden bg-white dark:bg-zinc-900 max-h-60 overflow-y-auto p-4 scale-98 origin-top">
+                    <div v-html="sanitizeRich(selectedLog.body)"></div>
                 </div>
             </div>
         </div>
 
         <template #footer>
             <button
-                class="h-[34px] px-5 rounded-md text-[13px] font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors bg-white shadow-sm"
+                class="h-[34px] px-5 rounded-md text-[13px] font-semibold text-gray-700 dark:text-zinc-300 border border-gray-300 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm dark:shadow-none"
                 @click="showLogModal = false"
             >
                 Close

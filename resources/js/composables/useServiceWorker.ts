@@ -59,6 +59,15 @@ export function initServiceWorkerUpdater(): void {
 		return;
 	initialized = true;
 
+	// Registrasi Service Worker PWA
+	navigator.serviceWorker.register('/sw-pwa.js', { scope: '/' })
+		.then((reg) => {
+			console.log("[PWA] Service Worker registered successfully with scope:", reg.scope);
+		})
+		.catch((err) => {
+			console.warn("[PWA] Service Worker registration failed:", err);
+		});
+
 	// Dengarkan pesan APP_UPDATED dari SW → reload seamless
 	navigator.serviceWorker.addEventListener("message", (event: MessageEvent) => {
 		if (event.data?.type === "APP_UPDATED") {

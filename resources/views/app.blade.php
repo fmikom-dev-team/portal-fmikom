@@ -1,21 +1,39 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"  @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
         <script nonce="{{ $csp_nonce ?? '' }}">
             (function() {
-                const appearance = '{{ $appearance ?? "system" }}';
+                const path = window.location.pathname;
+                const isPublic = path === '/' || path.indexOf('/login') === 0 || path.indexOf('/register') === 0 || path.indexOf('/signup') === 0 || path.indexOf('/two-factor') === 0;
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                let isDark = false;
 
-                if (appearance === 'system') {
-                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-                    if (prefersDark) {
-                        document.documentElement.classList.add('dark');
-                    }
+                if (isPublic) {
+                    isDark = prefersDark;
+                } else {
+                    const appearance = '{{ $appearance ?? "system" }}';
+                    isDark = appearance === 'dark' || (appearance === 'system' && prefersDark);
                 }
+
+                if (isDark) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+
+                // Dynamically update theme-color meta tag for seamless status bar (Image 2 style)
+                const themeColor = isDark ? '#0f172a' : '#ffffff';
+                let meta = document.querySelector('meta[name="theme-color"]');
+                if (!meta) {
+                    meta = document.createElement('meta');
+                    meta.name = 'theme-color';
+                    document.head.appendChild(meta);
+                }
+                meta.content = themeColor;
             })();
         </script>
 
@@ -32,9 +50,26 @@
 
         <title inertia>{{ $metaTitle ?? config('app.name', 'Laravel') }}</title>
 
-        <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        @php
+            $portalSettings = \Illuminate\Support\Facades\Cache::rememberForever('portal_settings', function () {
+                $raw = \App\Models\Portal\PortalSetting::pluck('value', 'key')->toArray();
+                $raw['brand_name'] = $raw['brand_name'] ?? 'Portal FMIKOM';
+                $raw['brand_subtitle'] = $raw['brand_subtitle'] ?? 'Fakultas Matematika dan Ilmu Komputer';
+                $raw['brand_logo'] = $raw['brand_logo'] ?? '/asset/brand-logo.webp';
+                $raw['brand_favicon'] = $raw['brand_favicon'] ?? '/asset/brand-logo.webp';
+                return $raw;
+            });
+            $brandFavicon = $portalSettings['brand_favicon'] ?? '/asset/brand-logo.webp';
+        @endphp
+        <link rel="icon" href="{{ $brandFavicon }}">
+        <link rel="apple-touch-icon" href="{{ $portalSettings['brand_logo'] ?? '/asset/brand-logo.webp' }}">
+        
+        <!-- PWA Manifest & iOS Standalone Settings -->
+        <link rel="manifest" href="/manifest.json">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="apple-mobile-web-app-title" content="Portal FMIKOM">
+        <meta name="mobile-web-app-capable" content="yes">
 
         <!-- SEO Meta Tags -->
         <meta name="description" content="{{ $metaDescription ?? 'FMIKOM Portal - Academic & Creative Network Fakultas Ilmu Komputer. Tempat berbagi karya, portofolio, dan kolaborasi mahasiswa dan creator.' }}">

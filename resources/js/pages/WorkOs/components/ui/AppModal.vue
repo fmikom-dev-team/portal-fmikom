@@ -77,19 +77,19 @@ onUnmounted(() => document.removeEventListener("keydown", handleKeydown));
                 >
                     <div
                         v-if="show"
-                        :class="['relative bg-white rounded-lg shadow-xl w-full overflow-hidden transition-all', sizes[size]]"
+                        :class="['relative bg-white dark:bg-zinc-900 rounded-lg shadow-xl w-full overflow-hidden transition-all', sizes[size]]"
                         style="font-family: var(--wos-font)"
                     >
                         <!-- Header -->
                         <div v-if="title || $slots.header" class="flex items-start justify-between px-6 py-5 border-b border-[#f3f4f6]">
                             <slot name="header">
                                 <div>
-                                    <h2 class="text-[15px] font-semibold text-[#111827]">{{ title }}</h2>
-                                    <p v-if="description" class="text-[12.5px] text-[#6b7280] mt-1">{{ description }}</p>
+                                    <h2 class="text-[15px] font-semibold text-[#111827] dark:text-zinc-100">{{ title }}</h2>
+                                    <p v-if="description" class="text-[12.5px] text-[#6b7280] dark:text-zinc-400 mt-1">{{ description }}</p>
                                 </div>
                             </slot>
                             <button
-                                class="ml-4 p-1.5 rounded-md text-[#9ca3af] hover:text-[#374151] hover:bg-[#f3f4f6] transition-colors shrink-0"
+                                class="ml-4 p-1.5 rounded-md text-[#9ca3af] hover:text-[#374151] dark:hover:text-zinc-200 dark:text-zinc-200 hover:bg-[#f3f4f6] dark:hover:bg-zinc-800 dark:bg-zinc-800 transition-colors shrink-0"
                                 aria-label="Close"
                                 @click="emit('close')"
                             >
@@ -105,7 +105,7 @@ onUnmounted(() => document.removeEventListener("keydown", handleKeydown));
                         </div>
 
                         <!-- Footer -->
-                        <div v-if="$slots.footer" class="px-6 py-4 border-t border-[#f3f4f6] flex items-center justify-end gap-2 bg-[#f9fafb]">
+                        <div v-if="$slots.footer" class="px-6 py-4 border-t border-[#f3f4f6] flex items-center justify-end gap-2 bg-[#f9fafb] dark:bg-zinc-900">
                             <slot name="footer" />
                         </div>
                     </div>

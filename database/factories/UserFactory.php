@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\UserAccountStatus;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -34,6 +35,8 @@ class UserFactory extends Factory
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
             'password_changed_at' => now(),
+            'status_approval' => UserAccountStatus::Activated,
+            'is_active' => true,
         ];
     }
 

@@ -186,7 +186,7 @@ const navGroups = [
         <!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
         <AppContent variant="sidebar" class="overflow-x-hidden pb-24 md:pb-0 relative z-[1]">
             <!-- Sticky Top Header -->
-            <header class="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4 dark:border-slate-800 dark:bg-slate-900 sm:px-6">
+            <header class="sticky top-0 z-20 flex shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4 dark:border-slate-800 dark:bg-slate-900 sm:px-6" style="padding-top: env(safe-area-inset-top); height: calc(3.5rem + env(safe-area-inset-top));">
                 <!-- Left: SidebarTrigger + Breadcrumbs -->
                 <div class="flex items-center gap-3">
                     <SidebarTrigger class="-ml-2 h-9 w-9 text-slate-500 hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400" />

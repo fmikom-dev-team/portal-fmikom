@@ -4,6 +4,8 @@ import { Bell, Command, Menu, Search } from "lucide-vue-next";
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import NotificationDropdown from "./NotificationDropdown.vue";
 import UserDropdown from "./UserDropdown.vue";
+import ShadcnSearch from "@/components/ui/ShadcnSearch.vue";
+
 
 defineProps<{
 	collapsed: boolean;
@@ -19,9 +21,8 @@ const user = computed(
 	() => page.props.auth?.user || { name: "Admin", email: "" },
 );
 
-const searchQuery = ref("");
-const searchFocused = ref(false);
 const showNotifications = ref(false);
+
 const showUserMenu = ref(false);
 const avatarError = ref(false);
 
@@ -204,7 +205,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <header class="sticky top-0 z-20 flex items-center justify-between h-[64px] px-4 sm:px-6 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md border-b border-slate-100 dark:border-zinc-800 shrink-0">
+    <header class="sticky top-0 z-20 flex items-center justify-between px-4 sm:px-6 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md border-b border-slate-100 dark:border-zinc-800 shrink-0" style="padding-top: env(safe-area-inset-top); height: calc(64px + env(safe-area-inset-top));">
 
         <!-- Left: Mobile Toggle + Breadcrumb hint -->
         <div class="flex items-center gap-3">
@@ -216,27 +217,13 @@ onBeforeUnmount(() => {
                 <Menu class="h-4 w-4" />
             </button>
 
-            <!-- Search -->
-            <div
-                class="relative hidden sm:flex items-center h-9 rounded-xl border transition-all duration-200"
-                :class="searchFocused
-                    ? 'w-[280px] border-indigo-400 bg-white dark:bg-zinc-900 shadow-sm shadow-indigo-100'
-                    : 'w-[220px] border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900'"
-            >
-                <Search class="ml-3 h-3.5 w-3.5 shrink-0 text-slate-400" />
-                <input
-                    v-model="searchQuery"
-                    type="text"
-                    placeholder="Cari mahasiswa, karya, laporan..."
-                    class="flex-1 bg-transparent px-2.5 text-[13px] font-medium text-slate-700 dark:text-zinc-200 placeholder-slate-400 focus:outline-none"
-                    @focus="searchFocused = true"
-                    @blur="searchFocused = false"
-                />
-                <div class="mr-2.5 flex items-center gap-0.5 text-slate-300 dark:text-zinc-600">
-                    <Command class="h-3 w-3" />
-                    <span class="text-[10px] font-bold">K</span>
-                </div>
-            </div>
+            <!-- Reusable ShadcnSearch configured for WorkOs scope -->
+            <ShadcnSearch 
+                endpoint="/workos/instant-search"
+                placeholder="Cari user, peran..."
+                class="hidden sm:block"
+            />
+
         </div>
 
         <!-- Right: Actions -->

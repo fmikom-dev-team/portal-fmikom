@@ -23,7 +23,7 @@ const emit = defineEmits<{
 
 const selectedRange = ref<"7d" | "30d" | "90d">("7d");
 
-const _onRangeChange = (range: "7d" | "30d" | "90d") => {
+const onRangeChange = (range: "7d" | "30d" | "90d") => {
 	selectedRange.value = range;
 	emit("rangeChange", range);
 };
@@ -46,7 +46,7 @@ const isDark = computed(() =>
 const gridColor = computed(() => (isDark.value ? "#27272a" : "#f1f5f9"));
 const labelColor = "#94a3b8";
 
-const _chartOptions = computed<ApexOptions>(() => ({
+const chartOptions = computed<ApexOptions>(() => ({
 	chart: {
 		type: "area",
 		height: 230,
@@ -122,13 +122,13 @@ const _chartOptions = computed<ApexOptions>(() => ({
 	},
 }));
 
-const _series = computed(() => [
+const series = computed(() => [
 	{ name: "Karya Dibuat", data: data.value.karya },
 	{ name: "Laporan Masuk", data: data.value.laporan },
 	{ name: "Peringatan", data: data.value.warnings },
 ]);
 
-const _rangeLabels = {
+const rangeLabels = {
 	"7d": "7 Hari",
 	"30d": "30 Hari",
 	"90d": "3 Bulan",

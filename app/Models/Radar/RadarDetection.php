@@ -8,7 +8,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RadarDetection extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'user_id',
+        'radar_protection_id',
+        'radar_device_id',
+        'detection_type',
+        'severity',
+        'ip_address',
+        'request_uri',
+        'user_agent',
+        'metadata',
+        'resolved_at',
+        'resolved_by',
+    ];
 
     protected $casts = [
         'metadata' => 'array',

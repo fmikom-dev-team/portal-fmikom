@@ -45,7 +45,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\SubmissionController::store
-* @see app/Modules/Fast/Controllers/Dosen/SubmissionController.php:120
+* @see app/Modules/Fast/Controllers/Dosen/SubmissionController.php:121
 * @route '/dosen/submissions'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -60,7 +60,7 @@ store.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\SubmissionController::store
-* @see app/Modules/Fast/Controllers/Dosen/SubmissionController.php:120
+* @see app/Modules/Fast/Controllers/Dosen/SubmissionController.php:121
 * @route '/dosen/submissions'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -69,7 +69,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\SubmissionController::store
-* @see app/Modules/Fast/Controllers/Dosen/SubmissionController.php:120
+* @see app/Modules/Fast/Controllers/Dosen/SubmissionController.php:121
 * @route '/dosen/submissions'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({

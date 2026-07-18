@@ -34,11 +34,12 @@ class AdminAssessmentTemplatePageService
             ->orderByDesc('id');
 
         if ($search !== '') {
-            $query->where(function ($builder) use ($search): void {
-                $builder->where('name', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%")
-                    ->orWhereHas('components', function ($componentQuery) use ($search): void {
-                        $componentQuery->where('name', 'like', "%{$search}%");
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
+            $query->where(function ($builder) use ($escaped): void {
+                $builder->where('name', 'like', "%{$escaped}%")
+                    ->orWhere('description', 'like', "%{$escaped}%")
+                    ->orWhereHas('components', function ($componentQuery) use ($escaped): void {
+                        $componentQuery->where('name', 'like', "%{$escaped}%");
                     });
             });
         }

@@ -686,22 +686,22 @@ function disableAllProtection() {
 <template>
     <div>
         <!-- Protections -->
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm mb-5">
-            <div class="px-6 py-4 border-b border-gray-100">
-                <p class="text-[14px] font-semibold text-gray-900">Protections</p>
-                <p class="text-[12px] text-gray-500 mt-0.5">Configure specific protections to automatically block or challenge behavior.</p>
+        <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-sm mb-5 dark:shadow-none">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-800">
+                <p class="text-[14px] font-semibold text-gray-900 dark:text-zinc-100">Protections</p>
+                <p class="text-[12px] text-gray-500 dark:text-zinc-400 mt-0.5">Configure specific protections to automatically block or challenge behavior.</p>
             </div>
-            <div class="divide-y divide-gray-50">
+            <div class="divide-y divide-gray-50 dark:divide-zinc-800">
                 <div v-for="p in protections" :key="p.name" class="flex flex-col sm:flex-row sm:items-center px-6 py-4 gap-3 sm:gap-4">
                     <div class="flex items-center gap-3 flex-1 min-w-0">
-                        <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                            <svg class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-gray-500 dark:text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                 <path stroke-linecap="round" stroke-linejoin="round" :d="p.icon"/>
                             </svg>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-[13px] font-semibold text-gray-800">{{ p.name }}</p>
-                            <p class="text-[11px] text-gray-400 mt-0.5 leading-tight">{{ p.desc }}</p>
+                            <p class="text-[13px] font-semibold text-gray-800 dark:text-zinc-200">{{ p.name }}</p>
+                            <p class="text-[11px] text-gray-400 dark:text-zinc-400 mt-0.5 leading-tight">{{ p.desc }}</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-4 sm:justify-end ml-11 sm:ml-0">
@@ -710,7 +710,7 @@ function disableAllProtection() {
                             {{ p.status }}
                         </span>
                         <button
-                            :class="['h-7 px-3 text-[12px] border rounded-md transition-colors w-[76px] font-medium shadow-sm', p.status === 'Enabled' ? 'border-[#d1d5db] text-[#374151] hover:bg-[#f9fafb]' : 'border-[#d1d5db] text-[#111827] bg-[#f9fafb] hover:bg-[#f3f4f6]']"
+                            :class="['h-7 px-3 text-[12px] border rounded-md transition-colors w-[76px] font-medium shadow-sm cursor-pointer', p.status === 'Enabled' ? 'border-[#d1d5db] dark:border-zinc-700 text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 bg-white dark:bg-zinc-900' : 'border-[#d1d5db] dark:border-zinc-700 text-[#111827] dark:text-zinc-100 bg-[#f9fafb] dark:bg-zinc-800 hover:bg-[#f3f4f6] dark:hover:bg-zinc-700/60']"
                             @click="handleManage(p)"
                         >
                             {{ p.status === 'Enabled' ? 'Manage' : 'Enable' }}
@@ -721,18 +721,18 @@ function disableAllProtection() {
         </div>
 
         <!-- Restrictions -->
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm mb-5">
-            <div class="px-6 py-4 border-b border-gray-100">
-                <p class="text-[14px] font-semibold text-[#111827]">Restrictions</p>
+        <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-sm mb-5 dark:shadow-none">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-800">
+                <p class="text-[14px] font-semibold text-[#111827] dark:text-zinc-100">Restrictions</p>
             </div>
             <!-- Managed lists -->
             <div class="px-6 py-4">
-                <p class="text-[12px] font-semibold text-gray-700 mb-1">Managed lists</p>
-                <p class="text-[11px] text-gray-400 mb-3">Restrict lists of known identifiers.</p>
-                <div v-for="r in managedLists" :key="r.name" class="flex items-center justify-between py-3 border-t border-gray-50">
+                <p class="text-[12px] font-semibold text-gray-700 dark:text-zinc-300 mb-1">Managed lists</p>
+                <p class="text-[11px] text-gray-400 dark:text-zinc-400 mb-3">Restrict lists of known identifiers.</p>
+                <div v-for="r in managedLists" :key="r.name" class="flex items-center justify-between py-3 border-t border-gray-50 dark:border-zinc-800">
                     <div>
-                        <p class="text-[13px] font-medium text-gray-800">{{ r.name }}</p>
-                        <p class="text-[11px] text-gray-400">{{ r.desc }}</p>
+                        <p class="text-[13px] font-medium text-gray-800 dark:text-zinc-200">{{ r.name }}</p>
+                        <p class="text-[11px] text-gray-400 dark:text-zinc-400">{{ r.desc }}</p>
                     </div>
                     <div class="flex items-center gap-3">
                         <span :class="['text-[11px] font-medium flex items-center gap-1.5 w-20', statusColor(r.status)]">
@@ -740,7 +740,7 @@ function disableAllProtection() {
                             {{ r.status }}
                         </span>
                         <button 
-                            :class="['h-7 px-3 text-[12px] border rounded-md transition-colors w-[76px] font-medium shadow-sm', r.status === 'Enabled' ? 'border-[#d1d5db] text-[#374151] hover:bg-[#f9fafb]' : 'border-[#d1d5db] text-[#111827] bg-[#f9fafb] hover:bg-[#f3f4f6]']"
+                            :class="['h-7 px-3 text-[12px] border rounded-md transition-colors w-[76px] font-medium shadow-sm cursor-pointer', r.status === 'Enabled' ? 'border-[#d1d5db] dark:border-zinc-700 text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 bg-white dark:bg-zinc-900' : 'border-[#d1d5db] dark:border-zinc-700 text-[#111827] dark:text-zinc-100 bg-[#f9fafb] dark:bg-zinc-800 hover:bg-[#f3f4f6] dark:hover:bg-zinc-700/60']"
                             @click="handleManage(r)"
                         >
                             {{ r.status === 'Enabled' ? 'Manage' : 'Enable' }}
@@ -751,20 +751,20 @@ function disableAllProtection() {
         </div>
 
         <!-- Custom lists -->
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm mb-5">
-            <div class="px-6 py-4 border-b border-gray-100">
-                <p class="text-[14px] font-semibold text-[#111827]">Custom lists</p>
-                <p class="text-[12px] text-gray-500 mt-0.5">Allow or block specific identifiers.</p>
+        <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-sm mb-5 dark:shadow-none">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-800">
+                <p class="text-[14px] font-semibold text-[#111827] dark:text-zinc-100">Custom lists</p>
+                <p class="text-[12px] text-gray-500 dark:text-zinc-400 mt-0.5">Allow or block specific identifiers.</p>
             </div>
-            <div class="divide-y divide-gray-50">
+            <div class="divide-y divide-gray-50 dark:divide-zinc-800">
                 <div v-for="cl in customListTypes" :key="cl.key" class="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 gap-2">
                     <div>
-                        <p class="text-[13px] font-medium text-gray-800">{{ cl.label }}</p>
-                        <p class="text-[11px] text-gray-400 mt-0.5">{{ getCustomListSummary(cl.key) }}</p>
+                        <p class="text-[13px] font-medium text-gray-800 dark:text-zinc-200">{{ cl.label }}</p>
+                        <p class="text-[11px] text-gray-400 dark:text-zinc-400 mt-0.5">{{ getCustomListSummary(cl.key) }}</p>
                     </div>
                     <button 
                         @click="openCustomListEdit(cl)"
-                        class="h-7 px-3 text-[12px] font-medium border border-[#d1d5db] rounded-md text-[#374151] hover:bg-[#f9fafb] transition-colors shadow-sm self-start sm:self-auto w-16"
+                        class="h-7 px-3 text-[12px] font-medium border border-[#d1d5db] dark:border-zinc-700 rounded-md text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 transition-colors shadow-sm self-start sm:self-auto w-16 bg-white dark:bg-zinc-900 cursor-pointer dark:shadow-none"
                     >
                         Edit
                     </button>
@@ -780,8 +780,8 @@ function disableAllProtection() {
             <div class="space-y-4" v-if="editingProtection">
                 <!-- Header Title & Subtitle inside default slot -->
                 <div>
-                    <h2 class="text-[16px] font-semibold text-[#111827]">{{ policyMeta[editingProtection.code]?.title || editingProtection.name }}</h2>
-                    <p class="text-[12.5px] text-[#6b7280] mt-1.5 leading-relaxed">{{ policyMeta[editingProtection.code]?.desc || editingProtection.desc }}</p>
+                    <h2 class="text-[16px] font-semibold text-[#111827] dark:text-zinc-100">{{ policyMeta[editingProtection.code]?.title || editingProtection.name }}</h2>
+                    <p class="text-[12.5px] text-[#6b7280] dark:text-zinc-400 mt-1.5 leading-relaxed">{{ policyMeta[editingProtection.code]?.desc || editingProtection.desc }}</p>
                 </div>
 
                 <!-- Enable switch -->
@@ -794,17 +794,17 @@ function disableAllProtection() {
                             @change="toggleStatus" 
                             class="sr-only peer"
                         >
-                        <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-[#2563eb]/20 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                        <div class="w-9 h-5 bg-gray-200 dark:bg-zinc-800 rounded-full peer peer-focus:ring-2 peer-focus:ring-[#2563eb]/20 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:bg-zinc-900 after:border-gray-300 dark:border-zinc-700 dark:after:border-zinc-700 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                         <span class="sr-only">Enable protection policy</span>
                     </label>
-                    <span class="text-sm font-semibold text-gray-800">Enable</span>
+                    <span class="text-sm font-semibold text-gray-800 dark:text-zinc-200">Enable</span>
                 </div>
 
                 <!-- Content below switch (with divider) -->
-                <div class="border-t border-gray-100 pt-4 space-y-4">
+                <div class="border-t border-gray-100 dark:border-zinc-800 pt-4 space-y-4">
                     <!-- Decision Section (Block / Challenge) -->
                     <div v-if="policyMeta[editingProtection.code]?.hasDecision" class="space-y-2">
-                        <span class="block text-[13px] font-semibold text-gray-900">Decision</span>
+                        <span class="block text-[13px] font-semibold text-gray-900 dark:text-zinc-100">Decision</span>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <!-- Block Card -->
                             <div 
@@ -812,14 +812,14 @@ function disableAllProtection() {
                                 :class="[
                                     'border rounded-xl p-3.5 flex flex-col justify-between h-20 transition-all', 
                                     editingProtection.status !== 'Enabled'
-                                        ? 'border-gray-200 bg-gray-50/50 opacity-50 cursor-not-allowed select-none' 
+                                        ? 'border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/10 opacity-50 cursor-not-allowed select-none' 
                                         : (editingProtection.threshold_config?.decision === 'block'
-                                            ? 'border-2 border-blue-600 bg-blue-50/10 cursor-pointer' 
-                                            : 'border border-gray-200 hover:border-gray-300 bg-white cursor-pointer')
+                                            ? 'border-2 border-blue-600 dark:border-blue-500 bg-blue-50/10 dark:bg-blue-950/10 cursor-pointer' 
+                                            : 'border border-gray-200 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700 bg-white dark:bg-zinc-900 cursor-pointer')
                                 ]"
                             >
-                                <span class="block text-[13px] font-semibold text-gray-900">Block</span>
-                                <span class="block text-[11px] text-gray-500 mt-1">{{ policyMeta[editingProtection.code]?.blockSubtext }}</span>
+                                <span class="block text-[13px] font-semibold text-gray-900 dark:text-zinc-100">Block</span>
+                                <span class="block text-[11px] text-gray-500 dark:text-zinc-400 mt-1">{{ policyMeta[editingProtection.code]?.blockSubtext }}</span>
                             </div>
 
                             <!-- Challenge Card -->
@@ -828,21 +828,21 @@ function disableAllProtection() {
                                 :class="[
                                     'border rounded-xl p-3.5 flex flex-col justify-between h-20 transition-all', 
                                     editingProtection.status !== 'Enabled'
-                                        ? 'border-gray-200 bg-gray-50/50 opacity-50 cursor-not-allowed select-none' 
+                                        ? 'border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/10 opacity-50 cursor-not-allowed select-none' 
                                         : (editingProtection.threshold_config?.decision === 'challenge'
-                                            ? 'border-2 border-blue-600 bg-blue-50/10 cursor-pointer' 
-                                            : 'border border-gray-200 hover:border-gray-300 bg-white cursor-pointer')
+                                            ? 'border-2 border-blue-600 dark:border-blue-500 bg-blue-50/10 dark:bg-blue-950/10 cursor-pointer' 
+                                            : 'border border-gray-200 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700 bg-white dark:bg-zinc-900 cursor-pointer')
                                 ]"
                             >
-                                <span class="block text-[13px] font-semibold text-gray-900">Challenge</span>
-                                <span class="block text-[11px] text-gray-500 mt-1">With one-time passcode</span>
+                                <span class="block text-[13px] font-semibold text-gray-900 dark:text-zinc-100">Challenge</span>
+                                <span class="block text-[11px] text-gray-500 dark:text-zinc-400 mt-1">With one-time passcode</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Notifications Section -->
                     <div class="space-y-3">
-                        <span class="block text-[13px] font-semibold text-[#111827]">Notifications</span>
+                        <span class="block text-[13px] font-semibold text-[#111827] dark:text-zinc-100">Notifications</span>
                         
                         <!-- Notify Admin -->
                         <label 
@@ -853,9 +853,9 @@ function disableAllProtection() {
                                 type="checkbox" 
                                 v-model="editingProtection.notify_admin" 
                                 :disabled="editingProtection.status !== 'Enabled'"
-                                class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-[#2563eb] disabled:opacity-50 disabled:cursor-not-allowed" 
+                                class="mt-1 h-4 w-4 rounded border-gray-300 dark:border-zinc-700 text-blue-600 focus:ring-[#2563eb] disabled:opacity-50 disabled:cursor-not-allowed" 
                             />
-                            <span class="text-[12.5px] text-[#4b5563] leading-normal">Notify admin by email every time this policy takes an action.</span>
+                            <span class="text-[12.5px] text-[#4b5563] dark:text-zinc-300 leading-normal">Notify admin by email every time this policy takes an action.</span>
                         </label>
 
                         <!-- Notify User (dynamic) -->
@@ -868,9 +868,9 @@ function disableAllProtection() {
                                 type="checkbox" 
                                 v-model="editingProtection.threshold_config.notify_user" 
                                 :disabled="editingProtection.status !== 'Enabled'"
-                                class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-[#2563eb] disabled:opacity-50 disabled:cursor-not-allowed" 
+                                class="mt-1 h-4 w-4 rounded border-gray-300 dark:border-zinc-700 text-blue-600 focus:ring-[#2563eb] disabled:opacity-50 disabled:cursor-not-allowed" 
                             />
-                            <span class="text-[12.5px] text-[#4b5563] leading-normal">Notify user by email every time this policy takes an action.</span>
+                            <span class="text-[12.5px] text-[#4b5563] dark:text-zinc-300 leading-normal">Notify user by email every time this policy takes an action.</span>
                         </label>
                     </div>
                 </div>
@@ -880,7 +880,7 @@ function disableAllProtection() {
                 <div class="flex justify-end gap-2 mt-4">
                     <button 
                         @click="showManageModal = false" 
-                        class="h-[34px] px-4 text-[13px] font-semibold text-[#374151] border border-[#d1d5db] hover:bg-[#f9fafb] bg-white rounded-md transition-colors shadow-sm"
+                        class="h-[34px] px-4 text-[13px] font-semibold text-[#374151] dark:text-zinc-300 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 bg-white dark:bg-zinc-900 rounded-md transition-colors shadow-sm cursor-pointer dark:shadow-none"
                     >
                         Cancel
                     </button>
@@ -890,13 +890,13 @@ function disableAllProtection() {
                         :class="[
                             'h-[34px] px-4 text-[13px] font-semibold rounded-md transition-colors relative flex items-center justify-center min-w-[100px]',
                             (hasChanges && !isSaving) 
-                                ? 'text-white bg-[#111827] hover:bg-black cursor-pointer shadow-sm' 
-                                : 'text-[#9ca3af] bg-[#f3f4f6] cursor-not-allowed'
+                                ? 'text-white bg-[#111827] dark:bg-zinc-100 dark:text-zinc-900 hover:bg-black dark:hover:bg-white cursor-pointer shadow-sm' 
+                                : 'text-[#9ca3af] bg-[#f3f4f6] dark:bg-zinc-800 dark:text-zinc-500 cursor-not-allowed'
                         ]"
                     >
                         <span :class="{ 'opacity-0': isSaving }">Save changes</span>
                         <div v-if="isSaving" class="absolute inset-0 flex items-center justify-center">
-                            <svg class="animate-spin h-4 w-4 text-[#9ca3af]" fill="none" viewBox="0 0 24 24">
+                            <svg class="animate-spin h-4 w-4 text-[#9ca3af] dark:text-zinc-500" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
@@ -914,19 +914,19 @@ function disableAllProtection() {
             <div class="space-y-4" v-if="activeCustomList">
                 <!-- Header Title & Subtitle inside default slot -->
                 <div>
-                    <h2 class="text-[16px] font-semibold text-[#111827]">{{ customListModalTitle }}</h2>
-                    <p class="text-[12.5px] text-[#6b7280] mt-1.5 leading-relaxed">{{ customListModalDesc }}</p>
+                    <h2 class="text-[16px] font-semibold text-[#111827] dark:text-zinc-100">{{ customListModalTitle }}</h2>
+                    <p class="text-[12.5px] text-[#6b7280] dark:text-zinc-400 mt-1.5 leading-relaxed">{{ customListModalDesc }}</p>
                 </div>
 
                 <!-- Tab Filter: Allowed vs Blocked -->
-                <div class="bg-gray-100 p-1 rounded-lg flex">
+                <div class="bg-gray-100 dark:bg-zinc-800 p-1 rounded-lg flex">
                     <button
                         v-for="tab in ([{ key: 'Allow', label: 'Allowed' }, { key: 'Block', label: 'Blocked' }] as const)"
                         :key="tab.key"
-                        :class="['flex-1 py-1.5 text-[13px] font-medium rounded-md transition-all duration-150 text-center',
+                        :class="['flex-1 py-1.5 text-[13px] font-medium rounded-md transition-all duration-150 text-center border-0 cursor-pointer',
                             customListTab === tab.key 
-                                ? 'bg-white text-gray-900 shadow-sm' 
-                                : 'text-gray-500 hover:text-gray-900']"
+                                ? 'bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 shadow-sm' 
+                                : 'text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-200 bg-transparent']"
                         @click="customListTab = tab.key"
                     >
                         {{ tab.label }}
@@ -935,10 +935,10 @@ function disableAllProtection() {
 
                 <!-- Form Add New Item -->
                 <div class="space-y-2">
-                    <label for="custom-item-value-input" class="flex items-center gap-1 text-[13px] font-semibold text-[#111827]">
+                    <label for="custom-item-value-input" class="flex items-center gap-1 text-[13px] font-semibold text-[#111827] dark:text-zinc-100">
                         <span>{{ customListTab === 'Allow' ? 'Allowed' : 'Blocked' }} {{ activeCustomList.label.toLowerCase() }}</span>
                         <!-- Small SVG info icon (i) -->
-                        <svg class="w-3.5 h-3.5 text-gray-400 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <svg class="w-3.5 h-3.5 text-gray-400 dark:text-zinc-500 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </label>
@@ -949,15 +949,15 @@ function disableAllProtection() {
                             type="text" 
                             v-model="customItemForm.value" 
                             :placeholder="activeCustomList.key === 'Device' ? 'Enter device identifier' : activeCustomList.key === 'IP' ? 'Enter IP address' : activeCustomList.key === 'Domain' ? 'Enter domain' : activeCustomList.key === 'Email' ? 'Enter email address' : 'Enter user agent'"
-                            class="flex-1 text-[13px] border border-gray-200 rounded-lg py-2 px-3 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 bg-white placeholder-gray-400"
+                            class="flex-1 text-[13px] border border-gray-250 dark:border-zinc-700 rounded-lg py-2 px-3 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 dark:ring-zinc-700 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-100 placeholder-gray-405 dark:placeholder-zinc-600"
                             @keyup.enter="customItemForm.value && addCustomItem()"
                         />
                         <button 
                             @click="addCustomItem"
                             :disabled="isSubmittingCustomItem || !customItemForm.value"
-                            class="h-[38px] px-4 text-[13px] font-semibold bg-white border border-[#d1d5db] text-[#374151] hover:bg-[#f9fafb] rounded-lg shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 shrink-0"
+                            class="h-[38px] px-4 text-[13px] font-semibold bg-white dark:bg-zinc-900 border border-[#d1d5db] dark:border-zinc-700 text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 rounded-lg shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 shrink-0 cursor-pointer dark:shadow-none"
                         >
-                            <svg v-if="isSubmittingCustomItem" class="animate-spin h-3.5 w-3.5 text-gray-500" fill="none" viewBox="0 0 24 24">
+                            <svg v-if="isSubmittingCustomItem" class="animate-spin h-3.5 w-3.5 text-gray-500 dark:text-zinc-400" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
@@ -966,35 +966,35 @@ function disableAllProtection() {
                     </div>
 
                     <!-- Error Alert -->
-                    <div v-if="customItemErrors" class="bg-red-50 border border-red-100 rounded-lg p-2.5 flex items-start gap-2.5 mt-2">
+                    <div v-if="customItemErrors" class="bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 rounded-lg p-2.5 flex items-start gap-2.5 mt-2">
                         <svg class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
-                        <p class="text-[12px] text-red-700 font-medium leading-normal">{{ customItemErrors }}</p>
+                        <p class="text-[12px] text-red-700 dark:text-red-400 font-medium leading-normal">{{ customItemErrors }}</p>
                     </div>
                 </div>
 
                 <!-- Items List Box -->
-                <div class="border border-gray-200 rounded-xl bg-white p-6 min-h-[300px] flex flex-col justify-start">
+                <div class="border border-gray-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 p-6 min-h-[300px] flex flex-col justify-start">
                     <div v-if="!filteredBlockedItems.length" class="flex flex-col items-center justify-center py-12 text-center my-auto">
-                        <div class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-3">
-                            <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <div class="w-10 h-10 rounded-full bg-gray-50 dark:bg-zinc-800 flex items-center justify-center mb-3">
+                            <svg class="w-5 h-5 text-gray-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-11.314l.707.707m11.314 11.314l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
                             </svg>
                         </div>
-                        <p class="text-[13px] text-gray-500 font-medium">
+                        <p class="text-[13px] text-gray-500 dark:text-zinc-400 font-medium">
                             No {{ activeCustomList.label.toLowerCase() }} have been {{ customListTab === 'Allow' ? 'allowed' : 'blocked' }}
                         </p>
                     </div>
                     
-                    <div v-else class="divide-y divide-gray-100 max-h-[300px] overflow-y-auto w-full">
-                        <div v-for="item in filteredBlockedItems" :key="item.id" class="flex items-center justify-between py-3 px-4 first:pt-0 last:pb-0 hover:bg-gray-50/50 transition-colors">
+                    <div v-else class="divide-y divide-gray-100 dark:divide-zinc-800 max-h-[300px] overflow-y-auto w-full">
+                        <div v-for="item in filteredBlockedItems" :key="item.id" class="flex items-center justify-between py-3 px-4 first:pt-0 last:pb-0 hover:bg-gray-50 dark:bg-zinc-900/50 dark:hover:bg-zinc-800/40 transition-colors">
                             <div class="min-w-0 flex-1 pr-4">
-                                <p class="text-[13px] font-mono font-medium text-gray-900 truncate">{{ item.value }}</p>
+                                <p class="text-[13px] font-mono font-medium text-gray-900 dark:text-zinc-100 truncate">{{ item.value }}</p>
                             </div>
                             <button 
                                 @click="removeCustomItem(item.id)"
-                                class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+                                class="p-1.5 rounded-lg text-gray-400 dark:text-zinc-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors shrink-0 bg-transparent border-0 cursor-pointer"
                                 title="Delete from list"
                             >
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -1009,7 +1009,7 @@ function disableAllProtection() {
                 <div class="flex justify-end gap-2 mt-4">
                     <button 
                         @click="showCustomListModal = false" 
-                        class="h-[34px] px-4 text-[13px] font-semibold text-[#374151] border border-[#d1d5db] hover:bg-[#f9fafb] bg-white rounded-md transition-colors shadow-sm"
+                        class="h-[34px] px-4 text-[13px] font-semibold text-[#374151] dark:text-zinc-300 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 bg-white dark:bg-zinc-900 rounded-md transition-colors shadow-sm cursor-pointer dark:shadow-none"
                     >
                         Cancel
                     </button>
@@ -1017,11 +1017,10 @@ function disableAllProtection() {
                         @click="showCustomListModal = false" 
                         :disabled="!hasCustomListChanges"
                         :class="[
-                            'h-[34px] px-4 text-[13px] font-semibold rounded-md transition-colors shadow-sm',
+                            'h-[34px] px-4 text-[13px] font-semibold rounded-md transition-colors shadow-sm cursor-pointer',
                             hasCustomListChanges 
-                                ? 'text-white bg-[#111827] hover:bg-black cursor-pointer' 
-                                : 'text-[#9ca3af] bg-[#f3f4f6] cursor-not-allowed'
-                        ]"
+                                ? 'text-white bg-[#111827] dark:bg-zinc-100 dark:text-zinc-900 hover:bg-black dark:hover:bg-white' 
+                                : 'text-[#9ca3af] bg-[#f3f4f6] dark:bg-zinc-800 dark:text-zinc-500 cursor-not-allowed']"
                     >
                         Save changes
                     </button>
@@ -1031,18 +1030,18 @@ function disableAllProtection() {
 
         <!-- Danger zone -->
         <div class="mt-8">
-            <p class="text-[14px] font-semibold text-[#dc2626] mb-3">Danger zone</p>
-            <div class="bg-white border border-[#fca5a5] rounded-xl shadow-sm p-6">
+            <p class="text-[14px] font-semibold text-[#dc2626] dark:text-red-400 mb-3">Danger zone</p>
+            <div class="bg-white dark:bg-zinc-900/40 border border-[#fca5a5] dark:border-red-900/40 rounded-xl shadow-sm p-6 dark:shadow-none">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <p class="text-[13px] font-semibold text-gray-900">Disable protection</p>
-                        <p class="text-[12px] text-[#6b7280] mt-1 leading-relaxed">
+                        <p class="text-[13px] font-semibold text-gray-900 dark:text-zinc-100">Disable protection</p>
+                        <p class="text-[12px] text-[#6b7280] dark:text-zinc-400 mt-1 leading-relaxed">
                             Turning off protection will stop defending your app against AI bots, account abuse, credential theft, and more.
                         </p>
                     </div>
                     <button 
                         @click="disableAllProtection"
-                        class="h-[34px] px-4 text-[13px] font-semibold text-[#dc2626] border border-[#fca5a5] hover:bg-red-50/30 bg-white rounded-md transition-colors shadow-sm shrink-0"
+                        class="h-[34px] px-4 text-[13px] font-semibold text-[#dc2626] dark:text-red-400 border border-[#fca5a5] dark:border-red-900/40 hover:bg-red-50/30 dark:hover:bg-red-950/20 bg-white dark:bg-zinc-900/40 rounded-md transition-colors shadow-sm shrink-0 cursor-pointer dark:shadow-none"
                     >
                         Disable protection
                     </button>
@@ -1052,14 +1051,14 @@ function disableAllProtection() {
 
         <!-- GENERIC CONFIRMATION MODAL -->
         <AppModal :show="confirmModal.show" :title="confirmModal.title" :description="confirmModal.description" @close="confirmModal.show = false">
-            <div class="py-2 text-[13.5px] text-[#4b5563]">
+            <div class="py-2 text-[13.5px] text-[#4b5563] dark:text-zinc-300">
                 {{ confirmModal.message }}
             </div>
             <template #footer>
-                <button class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] border border-[#d1d5db] hover:bg-[#f3f4f6] transition-colors bg-white shadow-sm" @click="confirmModal.show = false">Cancel</button>
+                <button class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-300 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f3f4f6] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm cursor-pointer dark:shadow-none" @click="confirmModal.show = false">Cancel</button>
                 <button
                     :disabled="confirmModal.isLoading"
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer border-0 dark:shadow-none"
                     :class="confirmModal.confirmBgClass"
                     @click="confirmModal.onConfirm"
                 >

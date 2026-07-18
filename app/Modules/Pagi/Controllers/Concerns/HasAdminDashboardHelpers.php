@@ -129,6 +129,7 @@ trait HasAdminDashboardHelpers
                 'views_count' => 1200,
                 'is_published' => true,
                 'status' => 'active',
+                'cover_image' => 'https://images.unsplash.com/photo-1586717791821-3f44a563fa4c?w=400&auto=format&fit=crop',
             ],
             [
                 'title' => 'Eksplorasi Tipografi Eksperimental',
@@ -138,6 +139,7 @@ trait HasAdminDashboardHelpers
                 'views_count' => 980,
                 'is_published' => true,
                 'status' => 'active',
+                'cover_image' => 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop',
             ],
             [
                 'title' => 'Prototype Aplikasi Traveling',
@@ -147,6 +149,7 @@ trait HasAdminDashboardHelpers
                 'views_count' => 320,
                 'is_published' => true,
                 'status' => 'hidden',
+                'cover_image' => 'https://images.unsplash.com/photo-1555774698-0b77e0d5fac6?w=400&auto=format&fit=crop',
             ],
             [
                 'title' => '3D Visualisasi Interior Cafe',
@@ -156,6 +159,7 @@ trait HasAdminDashboardHelpers
                 'views_count' => 870,
                 'is_published' => true,
                 'status' => 'review',
+                'cover_image' => 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&auto=format&fit=crop',
             ],
             [
                 'title' => 'Desain Poster Event Musik',
@@ -165,6 +169,7 @@ trait HasAdminDashboardHelpers
                 'views_count' => 120,
                 'is_published' => true,
                 'status' => 'active',
+                'cover_image' => 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&auto=format&fit=crop',
             ],
         ];
 
@@ -180,6 +185,7 @@ trait HasAdminDashboardHelpers
                     'views_count' => $pData['views_count'],
                     'is_published' => $pData['is_published'],
                     'status' => $pData['status'],
+                    'cover_image' => $pData['cover_image'] ?? null,
                     'content' => [['type' => 'paragraph', 'data' => ['text' => $pData['description']]]],
                 ]);
             }

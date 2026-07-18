@@ -535,25 +535,27 @@ onUnmounted(() => {
 		</div>
 
 		<!-- If loading, show skeletons -->
-		<div v-if="isLoading" class="columns-2 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
-			<Skeleton 
+		<div v-if="isLoading" class="columns-2 sm:columns-2 md:columns-3 lg:columns-4 gap-1.5 space-y-1.5 select-none">
+			<div 
 				v-for="n in 8" 
 				:key="n" 
-				class="break-inside-avoid w-full rounded-xl"
-				:style="{ height: `${Math.floor(Math.random() * 200) + 180}px` }"
-			/>
+				class="break-inside-avoid w-full rounded-xl border border-slate-200/40 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 overflow-hidden relative"
+				:style="{ height: `${Math.floor(Math.random() * 140) + 180}px` }"
+			>
+				<div class="absolute inset-0 bg-gradient-to-r from-slate-100 via-slate-200/60 to-slate-100 dark:from-zinc-900/60 dark:via-zinc-800/40 dark:to-zinc-900/60 animate-shimmer-fast" style="background-size: 200% 100%;"></div>
+			</div>
 		</div>
 
 		<!-- Pinterest Masonry Layout -->
-		<div v-else-if="galleryItems && galleryItems.length > 0" class="columns-2 sm:columns-2 md:columns-3 lg:columns-4 gap-1.5 space-y-1.5">
+		<div v-else-if="galleryItems && galleryItems.length > 0" class="columns-2 sm:columns-2 md:columns-3 lg:columns-4 gap-1.5">
 			<div 
 				v-for="item in galleryItems" 
 				:key="item.id" 
-				class="break-inside-avoid relative overflow-hidden rounded-xl border border-slate-200/50 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 cursor-pointer shadow-2xs hover:shadow-md transition-all duration-300 group" 
+				class="break-inside-avoid relative overflow-hidden rounded-xl border border-slate-200/50 dark:border-slate-800 cursor-pointer shadow-2xs hover:shadow-md transition-all duration-300 group mb-1.5" 
 				@click="emit('open-project', item.project)"
 			>
 				<VideoLazy v-if="item.type === 'video'" :src="item.url" :muted="true" className="w-full h-auto object-cover rounded-xl group-hover:scale-[1.02] transition-transform duration-500" />
-				<OptimizedImage v-else :src="item.url" :alt="item.title" className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-500" />
+				<OptimizedImage v-else :src="item.url" :alt="item.title" :masonry="true" className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-500" />
 				
 				<!-- Pinterest style gradient overlay -->
 				<div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-between p-4 z-10">
@@ -593,7 +595,7 @@ onUnmounted(() => {
 
 							<button 
 								@click.stop="handleDeleteItem(item)"
-								class="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-red-650 hover:bg-red-50 dark:hover:bg-red-955/20 border-t border-slate-100 dark:border-slate-800 mt-1 pt-2 transition-colors cursor-pointer text-left bg-transparent"
+								class="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold text-red-650 hover:bg-red-50 dark:hover:bg-red-950/20 border-t border-slate-100 dark:border-slate-800 mt-1 pt-2 transition-colors cursor-pointer text-left bg-transparent"
 							>
 								<Trash2 class="w-3.5 h-3.5 text-red-550" />
 								<span>{{ item.isManual ? 'Hapus' : 'Sembunyikan' }}</span>

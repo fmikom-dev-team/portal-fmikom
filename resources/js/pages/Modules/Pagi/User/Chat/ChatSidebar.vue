@@ -326,7 +326,7 @@ const filteredConversations = computed(() => {
                         'group w-full text-left flex items-center gap-3 pl-4 py-3.5 relative transition-transform duration-100 select-none touch-pan-y',
                         activePartnerId === conv.id
                             ? 'bg-slate-100/90 dark:bg-zinc-800/80 font-bold border-r-4 border-indigo-600 dark:border-indigo-500 pr-3 shadow-xs'
-                            : 'bg-white dark:bg-zinc-955 hover:bg-slate-50 dark:hover:bg-zinc-900/50 pr-4'
+                            : 'bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-900/50 pr-4'
                     ]"
                     :style="{ transform: swipeActiveId === conv.id ? `translateX(${swipeX}px)` : 'none' }"
                 >
@@ -372,7 +372,7 @@ const filteredConversations = computed(() => {
                                     <!-- Desktop Action Dropdown Menu -->
                                     <div 
                                         v-if="activeDropdownConvId === conv.id"
-                                        class="absolute right-0 top-full mt-1.5 w-48 bg-white dark:bg-zinc-955 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl py-1 z-55 text-slate-800 dark:text-zinc-200"
+                                        class="absolute right-0 top-full mt-1.5 w-48 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl py-1 z-55 text-slate-800 dark:text-zinc-200"
                                     >
                                         <button 
                                             @click.stop="$emit('toggle-read-status', conv)"

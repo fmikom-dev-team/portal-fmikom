@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Portal\PortalPost;
 use App\Models\Portal\PortalSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class PublicPostController extends Controller
@@ -90,18 +91,45 @@ class PublicPostController extends Controller
     {
         $search = $request->input('search');
         $settings = PortalSetting::pluck('value', 'key')->toArray();
-        $perPage = isset($settings['posts_per_page']) && is_numeric($settings['posts_per_page']) ? (int) $settings['posts_per_page'] : 12;
+        $perPage = isset($settings['posts_per_page']) && is_numeric($settings['posts_per_page'])
+            ? (int) $settings['posts_per_page']
+            : 12;
 
-        $posts = PortalPost::with(['category', 'user:id,name,foto_path'])
-            ->whereIn('status', [PortalPost::STATUS_PUBLISHED, PortalPost::STATUS_SCHEDULED])
-            ->where('published_at', '<=', now())
-            ->when($search, function ($query, $search) {
-                $query->where('title', 'like', "%{$search}%")
-                    ->orWhere('content', 'like', "%{$search}%");
-            })
-            ->latest()
-            ->paginate($perPage)
-            ->withQueryString();
+        $publishedFilter = function ($query) {
+            $query->whereIn('status', [PortalPost::STATUS_PUBLISHED, PortalPost::STATUS_SCHEDULED])
+                ->where('published_at', '<=', now());
+        };
+
+        if ($search) {
+            try {
+                // Meilisearch: instant, typo-tolerant full-text search
+                $matchIds = PortalPost::search($search)->keys();
+
+                $posts = PortalPost::with(['category', 'user:id,name,foto_path'])
+                    ->tap($publishedFilter)
+                    ->whereIn('id', $matchIds)
+                    ->latest()
+                    ->paginate($perPage)
+                    ->withQueryString();
+            } catch (\Throwable $e) {
+                Log::warning('Meilisearch unavailable (PublicPost), falling back to SQL.', ['error' => $e->getMessage()]);
+                $posts = PortalPost::with(['category', 'user:id,name,foto_path'])
+                    ->tap($publishedFilter)
+                    ->where(function ($q) use ($search) {
+                        $q->where('title', 'like', "%{$search}%")
+                            ->orWhere('excerpt', 'like', "%{$search}%");
+                    })
+                    ->latest()
+                    ->paginate($perPage)
+                    ->withQueryString();
+            }
+        } else {
+            $posts = PortalPost::with(['category', 'user:id,name,foto_path'])
+                ->tap($publishedFilter)
+                ->latest()
+                ->paginate($perPage)
+                ->withQueryString();
+        }
 
         return Inertia::render('Modules/Portal/Post/Index', [
             'posts' => $posts,

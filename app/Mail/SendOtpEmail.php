@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Enums\OtpPurpose;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -21,15 +22,31 @@ class SendOtpEmail extends Mailable implements ShouldQueue
 
     public string $userEmail;
 
+    public string $purposeLabel;
+
+    public string $subjectLine;
+
     /**
      * Create a new message instance.
      * Menerima data primitif (bukan model) agar queue tidak bergantung DB saat proses job.
+     *
+     * @param  User|null  $user  Null untuk pre-user OTPs (identity verification)
+     * @param  string  $otpCode  Plaintext OTP (NEVER store this — only pass to email)
+     * @param  OtpPurpose  $purpose  Context for subject line and message body
      */
-    public function __construct(User $user, string $otpCode)
+    public function __construct(?User $user, string $otpCode, OtpPurpose $purpose = OtpPurpose::EmailVerification)
     {
-        $this->userName = $user->name;
-        $this->userEmail = $user->email;
+        $this->userName = $user?->name ?? 'Pengguna';
+        $this->userEmail = $user?->email ?? '';
         $this->otpCode = $otpCode;
+        $this->purposeLabel = $purpose->label();
+
+        $this->subjectLine = match ($purpose) {
+            OtpPurpose::AccountActivation => 'Kode Aktivasi Akun FMIKOM Portal',
+            OtpPurpose::PasswordReset => 'Kode Reset Password Akun Portal FMIKOM',
+            OtpPurpose::MagicLink => 'Kode Login Akun Portal FMIKOM',
+            default => 'Kode Verifikasi Keamanan Akun Portal FMIKOM',
+        };
     }
 
     /**
@@ -38,7 +55,7 @@ class SendOtpEmail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Kode Verifikasi Keamanan Akun Portal FMIKOM',
+            subject: $this->subjectLine,
             to: $this->userEmail,
         );
     }

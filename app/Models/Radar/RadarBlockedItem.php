@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class RadarBlockedItem extends Model
 {
-    protected $guarded = [];
+    protected $fillable = ['type', 'value', 'reason', 'expires_at'];
 
     protected $casts = [
         'expires_at' => 'datetime',

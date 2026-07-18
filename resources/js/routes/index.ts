@@ -228,7 +228,7 @@ telescope.head = (args?: { view?: string | number } | [view: string | number ] |
 })
 
 /**
-* @see routes/web.php:56
+* @see routes/web.php:59
 * @route '/'
 */
 export const home = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -242,7 +242,7 @@ home.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:56
+* @see routes/web.php:59
 * @route '/'
 */
 home.url = (options?: RouteQueryOptions) => {
@@ -250,7 +250,7 @@ home.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:56
+* @see routes/web.php:59
 * @route '/'
 */
 home.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -259,7 +259,7 @@ home.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:56
+* @see routes/web.php:59
 * @route '/'
 */
 home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -268,7 +268,7 @@ home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:104
+* @see routes/web.php:208
 * @route '/privacy-policy'
 */
 export const privacyPolicy = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -282,7 +282,7 @@ privacyPolicy.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:104
+* @see routes/web.php:208
 * @route '/privacy-policy'
 */
 privacyPolicy.url = (options?: RouteQueryOptions) => {
@@ -290,7 +290,7 @@ privacyPolicy.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:104
+* @see routes/web.php:208
 * @route '/privacy-policy'
 */
 privacyPolicy.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -299,7 +299,7 @@ privacyPolicy.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:104
+* @see routes/web.php:208
 * @route '/privacy-policy'
 */
 privacyPolicy.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -308,7 +308,7 @@ privacyPolicy.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
 })
 
 /**
-* @see routes/web.php:107
+* @see routes/web.php:211
 * @route '/terms-of-service'
 */
 export const termsService = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -322,7 +322,7 @@ termsService.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:107
+* @see routes/web.php:211
 * @route '/terms-of-service'
 */
 termsService.url = (options?: RouteQueryOptions) => {
@@ -330,7 +330,7 @@ termsService.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:107
+* @see routes/web.php:211
 * @route '/terms-of-service'
 */
 termsService.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -339,7 +339,7 @@ termsService.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:107
+* @see routes/web.php:211
 * @route '/terms-of-service'
 */
 termsService.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -348,7 +348,7 @@ termsService.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:110
+* @see routes/web.php:214
 * @route '/cookie-policy'
 */
 export const cookiePolicy = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -362,7 +362,7 @@ cookiePolicy.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:110
+* @see routes/web.php:214
 * @route '/cookie-policy'
 */
 cookiePolicy.url = (options?: RouteQueryOptions) => {
@@ -370,7 +370,7 @@ cookiePolicy.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:110
+* @see routes/web.php:214
 * @route '/cookie-policy'
 */
 cookiePolicy.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -379,7 +379,7 @@ cookiePolicy.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:110
+* @see routes/web.php:214
 * @route '/cookie-policy'
 */
 cookiePolicy.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

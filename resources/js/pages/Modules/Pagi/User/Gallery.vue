@@ -2,25 +2,27 @@
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import {
-	ArrowLeftRight,
+	AlertCircle,
+	CheckCircle2,
 	Eye,
 	Flag,
 	Heart,
 	Image as ImageIcon,
 	ListFilter,
 	Loader2,
-	MapPin,
 	MoreHorizontal,
 	Search,
 	Share2,
 	SlidersHorizontal,
 	X,
 } from "lucide-vue-next";
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, onUnmounted, ref, watch } from "vue";
 import Navbar from "./ui/Navbar.vue";
 import OptimizedImage from "./ui/OptimizedImage.vue";
 import Preview from "./ui/Preview.vue";
 import VideoLazy from "./ui/VideoLazy.vue";
+import PagiShareModal from "./ui/PagiShareModal.vue";
+import { getInitialsAvatar } from "@/composables/useInitials";
 
 const props = defineProps<{
 	moduleName: string;
@@ -223,6 +225,22 @@ const closeMenu = () => {
 // Share modal
 const shareModalItem = ref<any>(null);
 const shareCopied = ref(false);
+const shareModalUser = computed(() => {
+	if (!shareModalItem.value) return { name: "", foto_path: null, pagi_username: null };
+	return {
+		name: shareModalItem.value.author?.name || "Kreator",
+		foto_path: shareModalItem.value.author?.avatar,
+		pagi_username: shareModalItem.value.author?.pagi_username
+	};
+});
+const shareModalProject = computed(() => {
+	if (!shareModalItem.value) return null;
+	return {
+		id: shareModalItem.value.portfolio_id || shareModalItem.value.id,
+		title: shareModalItem.value.title,
+		image: shareModalItem.value.url
+	};
+});
 const openShareModal = (item: any, e: Event) => {
 	e.stopPropagation();
 	closeMenu();
@@ -258,6 +276,15 @@ const openReportModal = (item: any, e: Event) => {
 	reportReason.value = "other";
 	reportDescription.value = "";
 };
+const toasts = ref<Array<{ id: number; message: string; type: string }>>([]);
+const addToast = (message: string, type = "success") => {
+	const id = Date.now();
+	toasts.value.push({ id, message, type });
+	setTimeout(() => {
+		toasts.value = toasts.value.filter((t) => t.id !== id);
+	}, 3000);
+};
+
 const submitReport = async () => {
 	if (!reportModalItem.value?.portfolio || !reportDescription.value.trim())
 		return;
@@ -269,8 +296,10 @@ const submitReport = async () => {
 			description: reportDescription.value,
 		});
 		reportModalItem.value = null;
+		addToast("Laporan berhasil dikirim.", "success");
 	} catch (err) {
 		console.error("Report failed", err);
+		addToast("Gagal mengirim laporan. Silakan coba lagi.", "error");
 	} finally {
 		reportSubmitting.value = false;
 	}
@@ -286,9 +315,9 @@ const submitReport = async () => {
 		<Navbar />
 
 		<!-- HERO BANNER -->
-		<div class="relative overflow-hidden bg-gradient-to-br from-[#030712] via-[#0b0f19] to-[#1e1b4b] border-b border-slate-900 py-16 px-6 text-center select-none">
+		<div class="relative overflow-hidden bg-linear-to-br from-[#030712] via-[#0b0f19] to-[#1e1b4b] border-b border-slate-900 py-16 px-6 text-center select-none">
 			<!-- Background Dot Grid -->
-			<div class="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(rgba(255,255,255,0.15)_1px,transparent_1px)] [background-size:20px_20px]"></div>
+			<div class="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(rgba(255,255,255,0.15)_1px,transparent_1px)] bg-size-[20px_20px]"></div>
 			
 			<!-- Glowing Blurs -->
 			<div class="absolute inset-0 pointer-events-none overflow-hidden">
@@ -319,6 +348,7 @@ const submitReport = async () => {
 				<div class="flex-1 relative rounded-full border border-slate-200/85 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/40 hover:border-slate-300 dark:hover:border-zinc-700 flex items-center pl-3.5 pr-2 py-1.5 transition-all min-w-0 shadow-3xs">
 					<Search class="h-4 w-4 text-slate-400 dark:text-zinc-550 shrink-0" />
 					<input
+						id="gallery-search"
 						type="text"
 						v-model="searchQuery"
 						placeholder="Search gallery by title, student, or program..."
@@ -364,41 +394,27 @@ const submitReport = async () => {
 		<!-- MAIN CONTAINER -->
 		<main class="mx-auto max-w-[1400px] px-4 py-8 pb-24 md:pb-12">
 			<!-- Loading Skeletons -->
-			<div v-if="isPageLoading" class="columns-2 sm:columns-2 md:columns-3 lg:columns-4 gap-2.5 space-y-2.5">
+			<div v-if="isPageLoading" class="columns-2 sm:columns-2 md:columns-3 lg:columns-4 gap-2.5 space-y-2.5 select-none">
 				<div 
 					v-for="n in 12" 
 					:key="n" 
-					class="break-inside-avoid w-full rounded-2xl border border-slate-200/40 dark:border-zinc-800/60 bg-white dark:bg-zinc-900 shadow-3xs p-3 flex flex-col gap-3 mb-2.5"
+					class="break-inside-avoid w-full rounded-2xl border border-slate-200/40 dark:border-zinc-800/50 bg-slate-50 dark:bg-zinc-900/60 overflow-hidden relative mb-2.5"
+					:style="{ height: `${Math.floor(Math.random() * 140) + 180}px` }"
 				>
-					<!-- Media placeholder -->
-					<div 
-						class="w-full rounded-xl bg-slate-200 dark:bg-zinc-850 animate-shimmer-fast"
-						:style="{ height: `${Math.floor(Math.random() * 120) + 160}px` }"
-					></div>
-					<!-- Title placeholder -->
-					<div class="h-4 w-3/4 rounded bg-slate-200 dark:bg-zinc-850 animate-shimmer-fast"></div>
-					<!-- Author placeholder -->
-					<div class="flex items-center gap-2 border-t border-slate-100 dark:border-zinc-800/80 pt-2.5">
-						<div class="h-6 w-6 rounded-full bg-slate-200 dark:bg-zinc-850 animate-shimmer-fast shrink-0"></div>
-						<div class="flex-1 space-y-1.5">
-							<div class="h-2 w-2/3 rounded bg-slate-200 dark:bg-zinc-850 animate-shimmer-fast"></div>
-							<div class="h-2 w-1/2 rounded bg-slate-200 dark:bg-zinc-850 animate-shimmer-fast"></div>
-						</div>
-						<div class="w-10 h-3 rounded bg-slate-200 dark:bg-zinc-850 animate-shimmer-fast shrink-0"></div>
-					</div>
+					<div class="absolute inset-0 bg-linear-to-r from-slate-100 via-slate-200/60 to-slate-100 dark:from-zinc-900/60 dark:via-zinc-800/40 dark:to-zinc-900/60 animate-shimmer-fast" style="background-size: 200% 100%;"></div>
 				</div>
 			</div>
 
 			<!-- Visual Masonry Grid -->
-			<div v-else-if="localGalleryItems && localGalleryItems.length > 0" class="columns-2 sm:columns-2 md:columns-3 lg:columns-4 gap-2.5 space-y-2.5">
+			<div v-else-if="localGalleryItems && localGalleryItems.length > 0" class="columns-2 sm:columns-2 md:columns-3 lg:columns-4 gap-2.5">
 				<div 
 					v-for="(item, idx) in localGalleryItems" 
 					:key="item.id" 
-					class="break-inside-avoid relative overflow-hidden rounded-2xl border border-slate-200/50 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer"
+					class="break-inside-avoid relative overflow-hidden rounded-2xl border border-slate-200/50 dark:border-zinc-800 shadow-2xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer mb-2.5"
 					@click="openProjectModal(item.portfolio)"
 				>
 					<VideoLazy v-if="item.type === 'video'" :src="item.url" className="w-full h-auto object-cover rounded-2xl group-hover:scale-[1.015] transition-transform duration-500" />
-					<OptimizedImage v-else :src="item.url" :alt="item.title" :fetchpriority="idx < 8 ? 'high' : 'auto'" :loading="idx < 8 ? 'eager' : 'lazy'" className="w-full h-auto object-cover group-hover:scale-[1.015] transition-transform duration-500" />
+					<OptimizedImage v-else :src="item.url" :alt="item.title" :fetchpriority="idx < 8 ? 'high' : 'auto'" :loading="idx < 8 ? 'eager' : 'lazy'" :masonry="true" className="w-full h-auto object-cover group-hover:scale-[1.015] transition-transform duration-500" />
 					
 					<!-- Three-dot menu button at top right -->
 					<div class="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity" @click.stop>
@@ -410,7 +426,7 @@ const submitReport = async () => {
 								<button @click.stop="openShareModal(item, $event)" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors text-left border-none bg-transparent cursor-pointer">
 									<Share2 class="h-3.5 w-3.5 text-indigo-500" /> Bagikan
 								</button>
-								<button v-if="!$page.props.auth?.user || $page.props.auth?.user?.id !== item.author?.id" @click.stop="openReportModal(item, $event)" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-955/20 transition-colors text-left border-none bg-transparent cursor-pointer">
+								<button v-if="!(($page.props as any).auth?.user) || ($page.props as any).auth?.user?.id !== item.author?.id" @click.stop="openReportModal(item, $event)" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors text-left border-none bg-transparent cursor-pointer">
 									<Flag class="h-3.5 w-3.5" /> Laporkan
 								</button>
 							</div>
@@ -418,7 +434,7 @@ const submitReport = async () => {
 					</div>
 
 					<!-- Hover Overlay details -->
-					<div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4 z-10">
+					<div class="absolute inset-0 bg-linear-to-t from-black/85 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4 z-10">
 						<div class="space-y-3">
 							<span class="text-white text-sm font-extrabold line-clamp-2 leading-snug">{{ item.title }}</span>
 							
@@ -433,7 +449,7 @@ const submitReport = async () => {
 									<!-- Collaborators Avatars -->
 									<template v-for="(collab, idx) in getAcceptedCollaborators(item).slice(0, 2)" :key="collab.id">
 										<div class="h-6 w-6 rounded-full overflow-hidden border border-white/20 shrink-0" :style="{ zIndex: 9 - Number(idx) }">
-											<img :src="collab.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(collab.name)}&background=random`" :alt="collab.name" :title="collab.name" class="w-full h-full object-cover" />
+											<img :src="collab.avatar || getInitialsAvatar(collab.name)" :alt="collab.name" :title="collab.name" class="w-full h-full object-cover" />
 										</div>
 									</template>
 									<!-- Overflow count -->
@@ -514,35 +530,54 @@ const submitReport = async () => {
 
 	</div>
 
-	<!-- SHARE MODAL -->
-	<Teleport to="body">
-		<div v-if="shareModalItem" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[9999] p-4" @click.self="shareModalItem = null">
-			<div class="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 shadow-2xl overflow-hidden">
-				<div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-zinc-800">
-					<div class="flex items-center gap-2">
-						<Share2 class="h-4 w-4 text-indigo-500" />
-						<h3 class="text-sm font-bold text-slate-800 dark:text-zinc-100">Bagikan Karya</h3>
-					</div>
-					<button @click="shareModalItem = null" class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors">
-						<X class="h-4 w-4" />
-					</button>
+	<!-- TOAST ALERTS CONTAINER -->
+	<div class="fixed bottom-20 right-4 z-99999 max-w-sm space-y-2 pointer-events-none select-none">
+		<TransitionGroup 
+			enter-active-class="transition ease-out duration-300"
+			enter-from-class="opacity-0 translate-y-2 scale-95"
+			enter-to-class="opacity-100 translate-y-0 scale-100"
+			leave-active-class="transition ease-in duration-200"
+			leave-from-class="opacity-100 scale-100"
+			leave-to-class="opacity-0 scale-95"
+		>
+			<div 
+				v-for="toast in toasts" 
+				:key="toast.id"
+				class="pointer-events-auto flex items-center justify-between gap-3 px-4.5 py-3 rounded-2xl border text-xs font-bold shadow-xl backdrop-blur-md"
+				:class="[
+					toast.type === 'success' 
+						? 'bg-emerald-500/90 border-emerald-500/10 text-white' 
+						: toast.type === 'error'
+						? 'bg-rose-500/90 border-rose-500/10 text-white'
+						: 'bg-slate-900/90 border-slate-800/10 text-white'
+				]"
+			>
+				<div class="flex items-center gap-2">
+					<CheckCircle2 v-if="toast.type === 'success'" class="w-4 h-4 text-emerald-500" />
+					<AlertCircle v-else class="w-4 h-4 text-red-400" />
+					{{ toast.message }}
 				</div>
-				<div class="p-5 space-y-4">
-					<p class="text-xs text-slate-500 dark:text-zinc-400">Salin tautan di bawah untuk berbagi karya ini:</p>
-					<div class="flex items-center gap-2">
-						<input :value="getShareUrl(shareModalItem)" readonly class="flex-1 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 px-3 py-2 text-xs font-medium text-slate-700 dark:text-zinc-200 outline-none truncate" />
-						<button @click="copyShareLink(shareModalItem)" class="shrink-0 rounded-lg px-3 py-2 text-xs font-bold transition-all" :class="shareCopied ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400' : 'bg-indigo-600 text-white hover:bg-indigo-700'">
-							{{ shareCopied ? 'Tersalin!' : 'Salin' }}
-						</button>
-					</div>
-				</div>
+				<button @click="toasts = toasts.filter(t => t.id !== toast.id)" class="text-slate-455 hover:text-slate-655 dark:hover:text-white shrink-0 bg-transparent border-none cursor-pointer p-0.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-zinc-800/50 transition-colors flex items-center justify-center">
+					<X class="w-3.5 h-3.5" />
+				</button>
 			</div>
-		</div>
-	</Teleport>
+		</TransitionGroup>
+	</div>
+
+	<!-- SHARE MODAL (Modern QR Code Share Component) -->
+	<PagiShareModal
+		v-if="shareModalItem"
+		:show="!!shareModalItem"
+		:user="shareModalUser"
+		:project="shareModalProject"
+		:activeShareUrl="getShareUrl(shareModalItem)"
+		@close="shareModalItem = null"
+		@toast="addToast"
+	/>
 
 	<!-- REPORT MODAL -->
 	<Teleport to="body">
-		<div v-if="reportModalItem" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[9999] p-4" @click.self="reportModalItem = null">
+		<div v-if="reportModalItem" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-9999 p-4" @click.self="reportModalItem = null">
 			<div class="w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 shadow-2xl overflow-hidden">
 				<div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-zinc-800">
 					<div class="flex items-center gap-2">
@@ -556,8 +591,8 @@ const submitReport = async () => {
 				<div class="p-5 space-y-4">
 					<p class="text-xs text-slate-500 dark:text-zinc-400">Laporkan karya <strong class="text-slate-700 dark:text-zinc-200">"{{ reportModalItem.title }}"</strong> kepada admin untuk ditinjau.</p>
 					<div>
-						<label class="block text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 uppercase tracking-wide">Alasan Laporan</label>
-						<select v-model="reportReason" class="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-200 focus:ring-2 focus:ring-rose-500 outline-none">
+						<label for="report-reason" class="block text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 uppercase tracking-wide">Alasan Laporan</label>
+						<select id="report-reason" v-model="reportReason" class="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-200 focus:ring-2 focus:ring-rose-500 outline-none">
 							<option value="inappropriate_content">Konten Tidak Pantas</option>
 							<option value="copyright_violation">Pelanggaran Hak Cipta</option>
 							<option value="spam">Spam</option>
@@ -567,8 +602,8 @@ const submitReport = async () => {
 						</select>
 					</div>
 					<div>
-						<label class="block text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 uppercase tracking-wide">Keterangan</label>
-						<textarea v-model="reportDescription" rows="3" placeholder="Jelaskan alasan laporan Anda secara detail..." class="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs font-medium text-slate-700 dark:text-zinc-200 placeholder-slate-400 focus:ring-2 focus:ring-rose-500 outline-none resize-none"></textarea>
+						<label for="report-description" class="block text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 uppercase tracking-wide">Keterangan</label>
+						<textarea id="report-description" v-model="reportDescription" rows="3" placeholder="Jelaskan alasan laporan Anda secara detail..." class="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs font-medium text-slate-700 dark:text-zinc-200 placeholder-slate-400 focus:ring-2 focus:ring-rose-500 outline-none resize-none"></textarea>
 					</div>
 					<div class="flex items-center justify-end gap-2 pt-1">
 						<button @click="reportModalItem = null" class="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-2 text-xs font-bold text-slate-600 dark:text-zinc-400 hover:bg-slate-50 transition-colors">Batal</button>

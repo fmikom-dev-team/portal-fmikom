@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link } from "@inertiajs/vue3";
+import { Link, usePage } from "@inertiajs/vue3";
 import {
 	ArrowDown,
 	ArrowUp,
@@ -10,16 +10,37 @@ import {
 	Image as ImageIcon,
 	MessageCircle,
 	MoreHorizontal,
+	Calendar,
 } from "lucide-vue-next";
 import { computed } from "vue";
 import PortalAdminLayout from "@/layouts/PortalAdminLayout.vue";
+
+const page = usePage();
+const userName = computed(() => (page.props as any).auth?.user?.name || "Admin");
+
+const greetingMessage = computed(() => {
+	const hour = new Date().getHours();
+	if (hour >= 5 && hour < 11) return "Selamat Pagi";
+	if (hour >= 11 && hour < 15) return "Selamat Siang";
+	if (hour >= 15 && hour < 18) return "Selamat Sore";
+	return "Selamat Malam";
+});
+
+const currentFormattedDate = computed(() => {
+	return new Intl.DateTimeFormat("id-ID", {
+		weekday: "long",
+		day: "numeric",
+		month: "long",
+		year: "numeric"
+	}).format(new Date());
+});
 
 const props = defineProps({
 	stats: {
 		type: Object,
 		default: () => ({
 			totalPosts: 0,
-			totalCategories: 0,
+			totalEvents: 0,
 			totalMedia: 0,
 			pendingComments: 0,
 		}),
@@ -70,6 +91,23 @@ const statusLabel = (status: string) => {
 <template>
     <PortalAdminLayout title="Dashboard">
 
+        <!-- Welcome Greeting -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                    {{ greetingMessage }}, {{ userName }}!
+                </h1>
+                <p class="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1 font-medium">
+                    Selamat datang kembali di Panel Admin Portal FMIKOM. Berikut ringkasan performa situs Anda hari ini.
+                </p>
+            </div>
+            <div class="text-right shrink-0">
+                <span class="inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-bold bg-blue-50 dark:bg-blue-500/10 text-[#2563EB] dark:text-blue-400 border border-blue-100/50 dark:border-blue-500/20">
+                    {{ currentFormattedDate }}
+                </span>
+            </div>
+        </div>
+
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5 mb-8">
             <!-- Total Posts -->
@@ -87,13 +125,13 @@ const statusLabel = (status: string) => {
                 </div>
             </Link>
 
-            <!-- Total Categories -->
-            <Link href="/portal-admin/categories" class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md hover:-translate-y-0.5 transition-all group">
+            <!-- Total Events -->
+            <Link href="/portal-admin/events" class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md hover:-translate-y-0.5 transition-all group">
                 <div class="w-9 h-9 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl flex items-center justify-center mb-4 text-indigo-500">
-                    <Folder class="w-4 h-4"/>
+                    <Calendar class="w-4 h-4"/>
                 </div>
-                <p class="text-slate-500 dark:text-slate-400 text-[12px] font-bold mb-1">Total Kategori</p>
-                <h2 class="text-slate-900 dark:text-white text-[28px] font-black mb-4 tracking-tight">{{ stats.totalCategories }}</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-[12px] font-bold mb-1">Total Event</p>
+                <h2 class="text-slate-900 dark:text-white text-[28px] font-black mb-4 tracking-tight">{{ stats.totalEvents }}</h2>
                 <div class="flex items-center justify-between">
                     <span class="text-slate-400 text-[11px] font-bold">Semua waktu</span>
                     <span class="text-indigo-500 text-[11px] font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">

@@ -24,6 +24,9 @@ class ResetUserPassword implements ResetsUserPasswords
 
         $user->forceFill([
             'password' => $input['password'],
+            'password_changed_at' => now(),
+            'status_approval' => \App\Enums\UserAccountStatus::Activated,
+            'is_active' => true,
         ])->save();
     }
 }

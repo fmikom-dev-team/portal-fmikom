@@ -10,12 +10,15 @@ const page = usePage();
 </script>
 
 <template>
-    <div class="min-h-screen bg-[#F4F6FB] flex flex-col p-4 sm:p-8 font-sans overflow-y-auto">
-        <div class="w-full max-w-[1000px] md:h-[720px] bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:p-2 overflow-hidden relative block m-auto shrink-0">
+    <div 
+        class="min-h-screen bg-[#F4F6FB] dark:bg-slate-950 flex flex-col p-4 sm:p-8 font-sans overflow-y-auto transition-colors duration-300"
+        style="padding-top: calc(env(safe-area-inset-top) + 1rem); padding-bottom: calc(env(safe-area-inset-bottom) + 1rem); padding-left: calc(env(safe-area-inset-left) + 1rem); padding-right: calc(env(safe-area-inset-right) + 1rem);"
+    >
+        <div class="w-full max-w-[1000px] md:h-[720px] bg-white dark:bg-slate-900 border border-transparent dark:border-slate-800 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] sm:p-2 overflow-hidden relative block m-auto shrink-0 transition-colors duration-300">
             
             <!-- Sliding Presentation Banner -->
             <div 
-                class="hidden md:flex flex-col justify-between w-[calc(45%-8px)] bg-[#2563eb] p-8 rounded-2xl text-white absolute top-2 bottom-2 z-20 transition-all duration-700 ease-in-out overflow-hidden"
+                class="hidden md:flex flex-col justify-between w-[calc(45%-8px)] bg-[#2563eb] dark:bg-blue-700 p-8 rounded-2xl text-white absolute top-2 bottom-2 z-20 transition-all duration-700 ease-in-out overflow-hidden"
                 :style="{ left: (page.component === 'auth/Register' || page.component === 'auth/OAuthRegister') ? 'calc(55% + 4px)' : '8px' }"
             >
                 <div class="relative z-10 flex flex-col h-full">
@@ -33,71 +36,71 @@ const page = usePage();
                     <!-- Mini Dashboard UI Mockup -->
                     <div class="relative flex-1 flex items-center justify-center min-h-0 mt-4 mb-6 mx-2">
                         <!-- Main Dashboard Frame -->
-                        <div class="w-full h-full max-h-[200px] bg-[#F8FAFC] rounded-xl overflow-hidden shadow-2xl flex flex-col relative border border-white/20">
+                        <div class="w-full h-full max-h-[200px] bg-[#F8FAFC] dark:bg-slate-950 rounded-xl overflow-hidden shadow-2xl flex flex-col relative border border-white/20">
                             <!-- Mac Window Controls -->
-                            <div class="h-6 bg-white border-b border-slate-200 flex items-center px-4 gap-1.5 shrink-0">
+                            <div class="h-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center px-4 gap-1.5 shrink-0">
                                 <div class="w-2 h-2 rounded-full bg-red-400"></div>
                                 <div class="w-2 h-2 rounded-full bg-amber-400"></div>
                                 <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
-                                <div class="ml-auto w-10 h-1.5 bg-slate-100 rounded-full"></div>
+                                <div class="ml-auto w-10 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full"></div>
                             </div>
                             
                             <!-- Application Content -->
-                            <div class="flex-1 p-3 bg-white relative overflow-hidden flex flex-col">
+                            <div class="flex-1 p-3 bg-white dark:bg-slate-900 relative overflow-hidden flex flex-col">
                                 <div class="flex justify-between items-end mb-3 shrink-0">
                                     <div class="space-y-1.5">
-                                        <div class="w-12 h-1.5 bg-slate-200 rounded-full"></div>
-                                        <div class="w-8 h-4 bg-slate-800 rounded-full"></div>
+                                        <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
+                                        <div class="w-8 h-4 bg-slate-800 dark:bg-slate-200 rounded-full"></div>
                                     </div>
                                     <!-- Bar Chart Mock -->
-                                    <div class="w-24 h-12 bg-indigo-50/50 rounded-lg flex items-end p-1.5 gap-1 justify-center border border-indigo-50">
-                                        <div class="w-full bg-indigo-200 h-[30%] rounded-sm"></div>
-                                        <div class="w-full bg-indigo-400 h-[80%] rounded-sm"></div>
-                                        <div class="w-full bg-indigo-600 h-full rounded-sm"></div>
-                                        <div class="w-full bg-indigo-300 h-[50%] rounded-sm"></div>
-                                        <div class="w-full bg-indigo-500 h-[70%] rounded-sm"></div>
+                                    <div class="w-24 h-12 bg-indigo-50/50 dark:bg-indigo-950/20 rounded-lg flex items-end p-1.5 gap-1 justify-center border border-indigo-50 dark:border-indigo-950">
+                                        <div class="w-full bg-indigo-200 dark:bg-indigo-800 h-[30%] rounded-sm"></div>
+                                        <div class="w-full bg-indigo-400 dark:bg-indigo-600 h-[80%] rounded-sm"></div>
+                                        <div class="w-full bg-indigo-600 dark:bg-indigo-400 h-full rounded-sm"></div>
+                                        <div class="w-full bg-indigo-300 dark:bg-indigo-700 h-[50%] rounded-sm"></div>
+                                        <div class="w-full bg-indigo-500 dark:bg-indigo-550 h-[70%] rounded-sm"></div>
                                     </div>
                                 </div>
                                 
                                 <div class="space-y-2.5 flex-1 min-h-0 overflow-hidden">
                                     <div class="flex items-center gap-2">
-                                        <div class="w-5 h-5 rounded-md bg-orange-100 shrink-0"></div>
-                                        <div class="flex-1 h-1.5 bg-slate-100 rounded-full"></div>
-                                        <div class="w-10 h-1.5 bg-slate-200 rounded-full shrink-0"></div>
+                                        <div class="w-5 h-5 rounded-md bg-orange-100 dark:bg-orange-950 shrink-0"></div>
+                                        <div class="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full"></div>
+                                        <div class="w-10 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full shrink-0"></div>
                                     </div>
                                     <div class="flex items-center gap-2">
-                                        <div class="w-5 h-5 rounded-md bg-emerald-100 shrink-0"></div>
-                                        <div class="flex-1 h-1.5 bg-slate-100 rounded-full"></div>
-                                        <div class="w-8 h-1.5 bg-slate-200 rounded-full shrink-0"></div>
+                                        <div class="w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-950 shrink-0"></div>
+                                        <div class="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full"></div>
+                                        <div class="w-8 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full shrink-0"></div>
                                     </div>
                                     <div class="flex items-center gap-2">
-                                        <div class="w-5 h-5 rounded-md bg-blue-100 shrink-0"></div>
-                                        <div class="flex-1 h-1.5 bg-slate-100 rounded-full"></div>
-                                        <div class="w-12 h-1.5 bg-slate-200 rounded-full shrink-0"></div>
+                                        <div class="w-5 h-5 rounded-md bg-blue-100 dark:bg-blue-950 shrink-0"></div>
+                                        <div class="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full"></div>
+                                        <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full shrink-0"></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
                         <!-- Floating Members Modal -->
-                        <div class="absolute -right-2 bottom-1 w-44 bg-white rounded-xl shadow-[0_15px_30px_rgba(0,0,0,0.12)] border border-slate-100 p-3 z-10">
+                        <div class="absolute -right-2 bottom-1 w-44 bg-white dark:bg-slate-850 rounded-xl shadow-[0_15px_30px_rgba(0,0,0,0.12)] border border-slate-100 dark:border-slate-800 p-3 z-10">
                             <div class="flex items-center justify-between mb-3">
-                                <div class="text-[11px] font-bold text-slate-800">Reviewers</div>
-                                <div class="text-[8px] font-semibold px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-700">All access</div>
+                                <div class="text-[11px] font-bold text-slate-800 dark:text-slate-200">Reviewers</div>
+                                <div class="text-[8px] font-semibold px-1.5 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">All access</div>
                             </div>
                             <div class="space-y-2.5">
                                 <div class="flex items-center gap-2">
-                                    <div class="w-5 h-5 rounded-full bg-teal-100 border border-teal-200 text-center text-teal-800 flex items-center justify-center text-[9px] font-bold shrink-0">A</div>
+                                    <div class="w-5 h-5 rounded-full bg-teal-100 border border-teal-200 dark:bg-teal-950 dark:border-teal-900 text-center text-teal-800 dark:text-teal-200 flex items-center justify-center text-[9px] font-bold shrink-0">A</div>
                                     <div class="space-y-1 flex-1">
-                                        <div class="w-full h-1 bg-slate-200 rounded-full"></div>
-                                        <div class="w-1/2 h-1 bg-slate-100 rounded-full"></div>
+                                        <div class="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
+                                        <div class="w-1/2 h-1 bg-slate-100 dark:bg-slate-900 rounded-full"></div>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <div class="w-5 h-5 rounded-full bg-rose-100 border border-rose-200 text-center text-rose-800 flex items-center justify-center text-[9px] font-bold shrink-0">R</div>
+                                    <div class="w-5 h-5 rounded-full bg-rose-100 border border-rose-200 dark:bg-rose-950 dark:border-rose-900 text-center text-rose-800 dark:text-rose-200 flex items-center justify-center text-[9px] font-bold shrink-0">R</div>
                                     <div class="space-y-1 flex-1">
-                                        <div class="w-3/4 h-1 bg-slate-200 rounded-full"></div>
-                                        <div class="w-1/3 h-1 bg-slate-100 rounded-full"></div>
+                                        <div class="w-3/4 h-1 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
+                                        <div class="w-1/3 h-1 bg-slate-100 dark:bg-slate-900 rounded-full"></div>
                                     </div>
                                 </div>
                              </div>
@@ -178,10 +181,10 @@ const page = usePage();
                     <svg class="w-6 h-6 text-[#2563eb] mb-3" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 2L13.1 8.5L19 7L16 12L19 17L13.1 15.5L12 22L10.9 15.5L5 17L8 12L5 7L10.9 8.5L12 2Z" />
                     </svg>
-                    <h2 class="text-2xl font-bold text-slate-900 mb-2">
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">
                         {{ title || (page.component === 'auth/Register' ? 'Create an account' : (page.component === 'auth/OAuthRegister' ? 'Selesaikan Pendaftaran' : 'Welcome back')) }}
                     </h2>
-                    <p class="text-slate-500 text-sm leading-relaxed">
+                    <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
                         {{ description || (page.component === 'auth/OAuthRegister' ? 'Lengkapi detail profil Anda untuk menautkan akun Google dan mengakses dasbor fungsionaris.' : 'Access your tasks, notes, and projects anytime, anywhere - and keep everything flowing in one place.') }}
                     </p>
                 </div>

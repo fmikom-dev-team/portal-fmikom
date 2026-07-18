@@ -52,16 +52,17 @@ class AdminMonitoringPageService
         }
 
         if ($search !== '') {
-            $query->where(function ($builder) use ($search): void {
-                $builder->whereHas('mahasiswa', function ($mahasiswaQuery) use ($search): void {
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
+            $query->where(function ($builder) use ($escaped): void {
+                $builder->whereHas('mahasiswa', function ($mahasiswaQuery) use ($escaped): void {
                     $mahasiswaQuery
-                        ->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('nomor_induk', 'like', "%{$search}%");
-                })->orWhereHas('perusahaan', function ($companyQuery) use ($search): void {
-                    $companyQuery->where('nama', 'like', "%{$search}%");
-                })->orWhereHas('dosenPembimbing', function ($dosenQuery) use ($search): void {
-                    $dosenQuery->where('name', 'like', "%{$search}%");
+                        ->where('name', 'like', "%{$escaped}%")
+                        ->orWhere('email', 'like', "%{$escaped}%")
+                        ->orWhere('nomor_induk', 'like', "%{$escaped}%");
+                })->orWhereHas('perusahaan', function ($companyQuery) use ($escaped): void {
+                    $companyQuery->where('nama', 'like', "%{$escaped}%");
+                })->orWhereHas('dosenPembimbing', function ($dosenQuery) use ($escaped): void {
+                    $dosenQuery->where('name', 'like', "%{$escaped}%");
                 });
             });
         }

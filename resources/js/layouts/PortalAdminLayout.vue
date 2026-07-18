@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { PageProps } from "@inertiajs/core";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
-import { useDark } from "@vueuse/core";
+import { useAppearance } from "@/composables/useAppearance";
 import {
 	Archive,
 	Bell,
@@ -15,6 +15,7 @@ import {
 	Image as ImageIcon,
 	LayoutGrid,
 	List,
+	Loader2,
 	Menu,
 	MessageCircle,
 	Moon,
@@ -25,7 +26,9 @@ import {
 	User,
 	X,
 } from "lucide-vue-next";
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { ThemeTogglerButton } from "@/components/animate-ui/components/buttons/theme-toggler";
+import ShadcnSearch from "@/components/ui/ShadcnSearch.vue";
 
 interface CustomPageProps extends PageProps {
 	auth: {
@@ -46,11 +49,13 @@ const user = computed(() => page.props.auth?.user);
 const firstName = computed(() => user.value?.name || "Admin");
 const siteSettings = computed(() => (page.props as any).siteSettings || {});
 
-const isDark = useDark({
-	selector: "html",
-	attribute: "class",
-	valueDark: "dark",
-	valueLight: "",
+const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
+
+const activeTheme = computed({
+	get: () => appearance.value === "system" ? resolvedAppearance.value : appearance.value,
+	set: (val) => {
+		updateAppearance(val);
+	}
 });
 
 // Desktop: collapsed (icon-only) vs expanded
@@ -63,21 +68,37 @@ const logout = () => {
 	router.post("/logout");
 };
 
-const searchQuery = ref("");
-const handleSearch = () => {
-	const url = page.url;
-	let target = "/portal-admin/posts";
-	if (url.startsWith("/portal-admin/events")) {
-		target = "/portal-admin/events";
-	} else if (url.startsWith("/portal-admin/pages")) {
-		target = "/portal-admin/pages";
-	} else if (url.startsWith("/portal-admin/academic-calendars")) {
-		target = "/portal-admin/academic-calendars";
-	} else if (url.startsWith("/portal-admin/documents")) {
-		target = "/portal-admin/documents";
-	}
-	router.get(target, { search: searchQuery.value }, { preserveState: true });
+// Floating/sliding sidebar hover highlight effect
+const hoverStyleMain = ref({ top: "0px", height: "0px", opacity: 0 });
+const hoverStyleSystem = ref({ top: "0px", height: "0px", opacity: 0 });
+
+const handleMouseEnterMain = (e: MouseEvent) => {
+	const el = e.currentTarget as HTMLElement;
+	hoverStyleMain.value = {
+		top: `${el.offsetTop}px`,
+		height: `${el.offsetHeight}px`,
+		opacity: 1,
+	};
 };
+
+const handleMouseLeaveMain = () => {
+	hoverStyleMain.value.opacity = 0;
+};
+
+const handleMouseEnterSystem = (e: MouseEvent) => {
+	const el = e.currentTarget as HTMLElement;
+	hoverStyleSystem.value = {
+		top: `${el.offsetTop}px`,
+		height: `${el.offsetHeight}px`,
+		opacity: 1,
+	};
+};
+
+const handleMouseLeaveSystem = () => {
+	hoverStyleSystem.value.opacity = 0;
+};
+
+// Replaced local search with global ShadcnSearch component
 
 const searchPlaceholder = computed(() => {
 	const url = page.url;
@@ -130,8 +151,17 @@ onUnmounted(() => {
             ]"
         >
             <!-- Logo Row -->
-            <div class="flex items-center justify-between px-4 h-[68px] shrink-0 border-b border-slate-100 dark:border-slate-800">
-                <div class="flex items-center gap-2 overflow-hidden min-w-0">
+            <div
+                class="flex items-center h-[68px] shrink-0 border-b border-slate-100 dark:border-slate-800 transition-all duration-300"
+                :class="sidebarCollapsed ? 'justify-center px-0' : 'justify-between px-4'"
+            >
+                <!-- Logo + Brand Name -->
+                <button
+                    v-if="sidebarCollapsed"
+                    @click="sidebarCollapsed = false"
+                    class="hidden lg:flex w-10 h-10 rounded-xl items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    title="Expand Sidebar"
+                >
                     <div 
                         class="w-[30px] h-[30px] rounded-[7px] flex items-center justify-center shrink-0 overflow-hidden"
                         :style="{ backgroundColor: siteSettings.brand_logo ? 'transparent' : '#2563EB' }"
@@ -149,28 +179,49 @@ onUnmounted(() => {
                             <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
                         </div>
                     </div>
-                    <span
-                        class="font-black text-[17px] tracking-wide text-slate-900 dark:text-white whitespace-nowrap transition-all duration-200 origin-left"
-                        :class="sidebarCollapsed ? 'opacity-0 scale-x-0 w-0' : 'opacity-100 scale-x-100 ml-1'"
-                    >{{ siteSettings.brand_name || 'Portal FMIKOM' }}</span>
-                </div>
-
-                <!-- Desktop: Collapse Toggle -->
-                <button
-                    @click="sidebarCollapsed = !sidebarCollapsed"
-                    class="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#2563EB] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
-                >
-                    <ChevronLeft v-if="!sidebarCollapsed" class="w-4 h-4" />
-                    <ChevronRight v-else class="w-4 h-4" />
                 </button>
 
-                <!-- Mobile: Close Button -->
-                <button
-                    @click="mobileOpen = false"
-                    class="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 shrink-0"
-                >
-                    <X class="w-4 h-4" />
-                </button>
+                <!-- Expanded state: logo + name + collapse button -->
+                <template v-if="!sidebarCollapsed">
+                    <div class="flex items-center gap-2 overflow-hidden min-w-0">
+                        <div 
+                            class="w-[30px] h-[30px] rounded-[7px] flex items-center justify-center shrink-0 overflow-hidden"
+                            :style="{ backgroundColor: siteSettings.brand_logo ? 'transparent' : '#2563EB' }"
+                        >
+                            <img v-if="siteSettings.brand_logo" :src="siteSettings.brand_logo" alt="Brand Logo" class="w-full h-full object-contain" />
+                            <div v-else class="grid grid-cols-3 gap-0.5 w-[22px] h-[22px] shrink-0">
+                                <div class="bg-[#2563EB] rounded-full w-[6px] h-[6px]"></div>
+                                <div class="bg-[#2563EB] rounded-full w-[6px] h-[6px]"></div>
+                                <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
+                                <div class="bg-[#2563EB] rounded-full w-[6px] h-[6px]"></div>
+                                <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
+                                <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
+                                <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
+                                <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
+                                <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
+                            </div>
+                        </div>
+                        <span class="font-black text-[17px] tracking-wide text-slate-900 dark:text-white whitespace-nowrap truncate">
+                            {{ siteSettings.brand_name || 'Portal FMIKOM' }}
+                        </span>
+                    </div>
+
+                    <!-- Desktop: Collapse Toggle -->
+                    <button
+                        @click="sidebarCollapsed = !sidebarCollapsed"
+                        class="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#2563EB] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+                    >
+                        <ChevronLeft class="w-4 h-4" />
+                    </button>
+
+                    <!-- Mobile: Close Button -->
+                    <button
+                        @click="mobileOpen = false"
+                        class="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 shrink-0"
+                    >
+                        <X class="w-4 h-4" />
+                    </button>
+                </template>
             </div>
 
             <!-- Scrollable Nav -->
@@ -184,18 +235,29 @@ onUnmounted(() => {
                     <span class="text-[10px] font-black text-slate-400 tracking-widest uppercase">MENU UTAMA</span>
                 </div>
 
-                <nav class="px-3 flex flex-col gap-0.5">
+                <nav class="px-3 flex flex-col gap-0.5 relative" @mouseleave="handleMouseLeaveMain">
+                    <!-- Floating Highlighter -->
+                    <div
+                        class="absolute left-3 right-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/60 transition-all duration-200 ease-out pointer-events-none z-0"
+                        :style="{
+                            top: hoverStyleMain.top,
+                            height: hoverStyleMain.height,
+                            opacity: hoverStyleMain.opacity,
+                        }"
+                    ></div>
+
                     <!-- Dashboard -->
                     <Link
                         href="/portal-admin"
                         :class="[
                             $page.url === '/portal-admin'
                                 ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
-                                : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4',
+                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
+                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
                             sidebarCollapsed ? 'justify-center px-0' : 'px-4'
                         ]"
                         :title="sidebarCollapsed ? 'Dashboard' : undefined"
+                        @mouseenter="handleMouseEnterMain"
                     >
                         <LayoutGrid class="w-[18px] h-[18px] shrink-0" />
                         <span v-if="!sidebarCollapsed" class="truncate">Dashboard</span>
@@ -207,30 +269,15 @@ onUnmounted(() => {
                         :class="[
                             $page.url.startsWith('/portal-admin/posts')
                                 ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
-                                : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4',
+                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
+                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
                             sidebarCollapsed ? 'justify-center px-0' : 'px-4'
                         ]"
                         :title="sidebarCollapsed ? 'Posts' : undefined"
+                        @mouseenter="handleMouseEnterMain"
                     >
                         <FileText class="w-[18px] h-[18px] shrink-0" />
                         <span v-if="!sidebarCollapsed" class="truncate">Posts</span>
-                    </Link>
-
-                    <!-- Categories -->
-                    <Link
-                        href="/portal-admin/categories"
-                        :class="[
-                            $page.url.startsWith('/portal-admin/categories')
-                                ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
-                                : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4',
-                            sidebarCollapsed ? 'justify-center px-0' : 'px-4'
-                        ]"
-                        :title="sidebarCollapsed ? 'Categories' : undefined"
-                    >
-                        <Folder class="w-[18px] h-[18px] shrink-0" />
-                        <span v-if="!sidebarCollapsed" class="truncate">Categories</span>
                     </Link>
 
                     <!-- Media -->
@@ -239,11 +286,12 @@ onUnmounted(() => {
                         :class="[
                             $page.url.startsWith('/portal-admin/media')
                                 ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
-                                : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4',
+                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
+                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
                             sidebarCollapsed ? 'justify-center px-0' : 'px-4'
                         ]"
                         :title="sidebarCollapsed ? 'Media' : undefined"
+                        @mouseenter="handleMouseEnterMain"
                     >
                         <ImageIcon class="w-[18px] h-[18px] shrink-0" />
                         <span v-if="!sidebarCollapsed" class="truncate">Media</span>
@@ -255,11 +303,12 @@ onUnmounted(() => {
                         :class="[
                             $page.url.startsWith('/portal-admin/pages')
                                 ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
-                                : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4',
+                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
+                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
                             sidebarCollapsed ? 'justify-center px-0' : 'px-4'
                         ]"
                         :title="sidebarCollapsed ? 'Pages' : undefined"
+                        @mouseenter="handleMouseEnterMain"
                     >
                         <PenTool class="w-[18px] h-[18px] shrink-0" />
                         <span v-if="!sidebarCollapsed" class="truncate">Pages</span>
@@ -271,11 +320,12 @@ onUnmounted(() => {
                         :class="[
                             $page.url.startsWith('/portal-admin/comments')
                                 ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
-                                : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4',
+                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
+                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
                             sidebarCollapsed ? 'justify-center px-0' : 'px-4'
                         ]"
                         :title="sidebarCollapsed ? 'Comments' : undefined"
+                        @mouseenter="handleMouseEnterMain"
                     >
                         <MessageCircle class="w-[18px] h-[18px] shrink-0" />
                         <span v-if="!sidebarCollapsed" class="truncate">Comments</span>
@@ -291,11 +341,12 @@ onUnmounted(() => {
                         :class="[
                             $page.url.startsWith('/portal-admin/academic-calendars')
                                 ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
-                                : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4',
+                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
+                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
                             sidebarCollapsed ? 'justify-center px-0' : 'px-4'
                         ]"
                         :title="sidebarCollapsed ? 'Kalender Akademik' : undefined"
+                        @mouseenter="handleMouseEnterMain"
                     >
                         <CalendarDays class="w-[18px] h-[18px] shrink-0" />
                         <span v-if="!sidebarCollapsed" class="truncate">Kalender Akademik</span>
@@ -307,11 +358,12 @@ onUnmounted(() => {
                         :class="[
                             $page.url.startsWith('/portal-admin/events')
                                 ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
-                                : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4',
+                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
+                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
                             sidebarCollapsed ? 'justify-center px-0' : 'px-4'
                         ]"
                         :title="sidebarCollapsed ? 'Event / Kegiatan' : undefined"
+                        @mouseenter="handleMouseEnterMain"
                     >
                         <Calendar class="w-[18px] h-[18px] shrink-0" />
                         <span v-if="!sidebarCollapsed" class="truncate">Event & Kegiatan</span>
@@ -323,11 +375,12 @@ onUnmounted(() => {
                         :class="[
                             $page.url.startsWith('/portal-admin/documents')
                                 ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
-                                : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4',
+                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
+                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
                             sidebarCollapsed ? 'justify-center px-0' : 'px-4'
                         ]"
                         :title="sidebarCollapsed ? 'Arsip Dokumen' : undefined"
+                        @mouseenter="handleMouseEnterMain"
                     >
                         <Archive class="w-[18px] h-[18px] shrink-0" />
                         <span v-if="!sidebarCollapsed" class="truncate">Arsip Dokumen</span>
@@ -343,18 +396,29 @@ onUnmounted(() => {
                         <span class="text-[10px] font-black text-slate-400 tracking-widest uppercase">SYSTEM</span>
                     </div>
 
-                    <nav class="px-3 flex flex-col gap-0.5">
+                    <nav class="px-3 flex flex-col gap-0.5 relative" @mouseleave="handleMouseLeaveSystem">
+                        <!-- Floating Highlighter -->
+                        <div
+                            class="absolute left-3 right-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/60 transition-all duration-200 ease-out pointer-events-none z-0"
+                            :style="{
+                                top: hoverStyleSystem.top,
+                                height: hoverStyleSystem.height,
+                                opacity: hoverStyleSystem.opacity,
+                            }"
+                        ></div>
+
                         <!-- Menu Navigation -->
                         <Link
                             href="/portal-admin/menus"
                             :class="[
                                 $page.url.startsWith('/portal-admin/menus')
                                     ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
-                                    : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                                'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4',
+                                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
+                                'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
                                 sidebarCollapsed ? 'justify-center px-0' : 'px-4'
                             ]"
                             :title="sidebarCollapsed ? 'Menu Navigation' : undefined"
+                            @mouseenter="handleMouseEnterSystem"
                         >
                             <List class="w-[18px] h-[18px] shrink-0" />
                             <span v-if="!sidebarCollapsed" class="truncate">Menu Navigation</span>
@@ -365,11 +429,12 @@ onUnmounted(() => {
                             :class="[
                                 $page.url.startsWith('/portal-admin/appearance')
                                     ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
-                                    : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                                'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4',
+                                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
+                                'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
                                 sidebarCollapsed ? 'justify-center px-0' : 'px-4'
                             ]"
                             :title="sidebarCollapsed ? 'Tata Letak' : undefined"
+                            @mouseenter="handleMouseEnterSystem"
                         >
                             <LayoutGrid class="w-[18px] h-[18px] shrink-0" />
                             <span v-if="!sidebarCollapsed" class="truncate">Tata Letak</span>
@@ -381,30 +446,15 @@ onUnmounted(() => {
                             :class="[
                                 $page.url.startsWith('/portal-admin/settings')
                                     ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
-                                    : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                                'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4',
+                                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
+                                'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
                                 sidebarCollapsed ? 'justify-center px-0' : 'px-4'
                             ]"
                             :title="sidebarCollapsed ? 'Settings' : undefined"
+                            @mouseenter="handleMouseEnterSystem"
                         >
                             <Settings class="w-[18px] h-[18px] shrink-0 opacity-70" />
                             <span v-if="!sidebarCollapsed" class="truncate">Settings</span>
-                        </Link>
-
-                        <!-- Profile -->
-                        <Link
-                            href="/settings/profile"
-                            :class="[
-                                $page.url.startsWith('/settings/profile')
-                                    ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
-                                    : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                                'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4',
-                                sidebarCollapsed ? 'justify-center px-0' : 'px-4'
-                            ]"
-                            :title="sidebarCollapsed ? 'Profile' : undefined"
-                        >
-                            <User class="w-[18px] h-[18px] shrink-0 opacity-70" />
-                            <span v-if="!sidebarCollapsed" class="truncate">Profile</span>
                         </Link>
                     </nav>
                 </div>
@@ -413,30 +463,26 @@ onUnmounted(() => {
             <!-- Footer: Theme Toggle + Back to Portal -->
             <div class="shrink-0 border-t border-slate-100 dark:border-slate-800 p-4">
                 <!-- Expanded: full Light/Dark toggle -->
-                <div v-if="!sidebarCollapsed" class="bg-slate-50 dark:bg-slate-800/80 p-1 rounded-[14px] flex border border-slate-100 dark:border-slate-700/50 mb-3">
-                    <button
-                        @click="isDark = false"
-                        :class="[!isDark ? 'bg-white text-slate-800 shadow-sm border border-slate-100/50' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300', 'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[10px] text-[12px] font-bold transition-all']"
-                    >
-                        <Sun class="w-3.5 h-3.5" /> Light
-                    </button>
-                    <button
-                        @click="isDark = true"
-                        :class="[isDark ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300', 'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[10px] text-[12px] font-bold transition-all']"
-                    >
-                        <Moon class="w-3.5 h-3.5" /> Dark
-                    </button>
+                <div v-if="!sidebarCollapsed" class="flex items-center justify-between px-2 mb-3">
+                    <span class="text-[13px] font-semibold text-slate-500 dark:text-slate-400">Mode Tampilan</span>
+                    <ThemeTogglerButton
+                        v-model="activeTheme"
+                        variant="default"
+                        size="default"
+                        direction="ltr"
+                        :modes="['light', 'dark']"
+                    />
                 </div>
 
                 <!-- Collapsed: icon-only toggle -->
                 <div v-else class="flex justify-center mb-3">
-                    <button
-                        @click="isDark = !isDark"
-                        class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-500 hover:text-[#2563EB] transition-colors"
-                    >
-                        <Sun v-if="isDark" class="w-4 h-4" />
-                        <Moon v-else class="w-4 h-4" />
-                    </button>
+                    <ThemeTogglerButton
+                        v-model="activeTheme"
+                        variant="default"
+                        size="default"
+                        direction="ltr"
+                        :modes="['light', 'dark']"
+                    />
                 </div>
 
                 <Link
@@ -464,7 +510,7 @@ onUnmounted(() => {
             :class="sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-[260px]'"
         >
             <!-- Sticky Top Header -->
-            <header class="sticky top-0 z-20 flex items-center justify-between h-[60px] sm:h-[68px] px-4 sm:px-6 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shrink-0">
+            <header class="portal-admin-header sticky top-0 z-20 flex items-center justify-between px-4 sm:px-6 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shrink-0">
                 <!-- Left: Mobile toggle -->
                 <div class="flex items-center gap-4">
                     <button
@@ -477,15 +523,11 @@ onUnmounted(() => {
 
                 <!-- Right: Search + Avatar -->
                 <div class="flex items-center gap-3">
-                    <div class="relative bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 h-[38px] w-[200px] sm:w-[260px] hidden sm:flex items-center px-3 focus-within:ring-1 focus-within:ring-slate-400 dark:focus-within:ring-slate-700 focus-within:border-slate-400 dark:focus-within:border-slate-700 transition-all">
-                        <Search class="w-4 h-4 text-slate-400 shrink-0" />
-                        <input
-                            v-model="searchQuery"
-                            @keyup.enter="handleSearch"
-                            :placeholder="searchPlaceholder"
-                            class="w-full h-full bg-transparent border-none focus:outline-none focus:ring-0 text-[13px] font-medium text-slate-700 dark:text-slate-200 placeholder-slate-400 pl-2.5"
-                        />
-                    </div>
+                    <ShadcnSearch 
+                        endpoint="/portal-admin/instant-search"
+                        :placeholder="searchPlaceholder"
+                        class="hidden sm:block"
+                    />
 
                     <!-- Profile Dropdown Component -->
                     <div class="relative">
@@ -587,6 +629,17 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.portal-admin-header {
+    height: calc(60px + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+}
+@media (min-width: 640px) {
+    .portal-admin-header {
+        height: 68px;
+        padding-top: 0;
+    }
+}
+
 .fade-enter-active,
 .fade-leave-active {
     transition: opacity 0.2s ease;

@@ -4,8 +4,12 @@ import { onMounted, onUnmounted, ref } from "vue";
 import { Button } from "@/components/ui/button";
 
 const props = defineProps<{
-	status: "pending" | "approved" | "rejected";
+	status: string; // 'pending' or 'rejected'
 	name: string;
+	email: string;
+	role: string;
+	identifier: string;
+	extra?: Record<string, string>;
 	flash?: string | null;
 }>();
 
@@ -16,8 +20,11 @@ const startPolling = () => {
 		fetch("/api/check-approval-status")
 			.then((res) => res.json())
 			.then((data) => {
-				if (data.status_approval === "approved") {
-					// Berhasil disetujui, muat ulang halaman agar diarahkan ke Dashboard/OTP
+				if (
+					data.status_approval !== "pending" &&
+					data.status_approval !== "rejected"
+				) {
+					// Berhasil disetujui / masuk alur aktivasi, reload agar middleware mengarahkan ke halaman yang sesuai
 					window.location.reload();
 				} else if (
 					data.status_approval === "rejected" &&
@@ -63,8 +70,8 @@ const logout = () => {
 <template>
     <div class="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4 relative overflow-hidden">
         <Head>
-        <title>Waiting Room</title>
-    </Head>
+            <title>Ruang Tunggu Pendaftaran</title>
+        </Head>
 
         <!-- Background Decor -->
         <div class="absolute inset-0 bg-grid-slate-100/[0.04] bg-[bottom_1px_center] opacity-20" style="mask-image: linear-gradient(to bottom, transparent, black);"></div>
@@ -74,51 +81,77 @@ const logout = () => {
             <div class="text-center">
                 <!-- Status: Pending -->
                 <div v-if="status === 'pending'" class="flex flex-col items-center">
-                    <div class="relative w-24 h-24 flex items-center justify-center mb-6">
+                    <div class="relative w-20 h-20 flex items-center justify-center mb-6">
                         <div class="absolute inset-0 border-4 border-[#2563eb]/20 rounded-full"></div>
                         <div class="absolute inset-0 border-4 border-[#2563eb] rounded-full border-t-transparent animate-spin"></div>
-                        <svg class="w-10 h-10 text-[#2563eb] animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <svg class="w-8 h-8 text-[#2563eb] animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
 
-                    <h1 class="text-2xl font-bold text-slate-800 tracking-tight mb-2">Akun Sedang Diverifikasi</h1>
+                    <h1 class="text-2xl font-bold text-slate-800 tracking-tight mb-2">Pendaftaran Ditinjau</h1>
 
-                    <!-- Flash dari verifikasi OTP -->
-                    <div v-if="props.flash" class="mb-4 text-sm font-medium text-green-700 bg-green-50 p-3 rounded-xl border border-green-200 flex items-center gap-2">
+                    <!-- Flash Message -->
+                    <div v-if="props.flash" class="mb-4 text-xs font-medium text-green-700 bg-green-50 p-2.5 rounded-xl border border-green-200 flex items-center gap-2">
                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         {{ props.flash }}
                     </div>
 
                     <p class="text-slate-500 text-sm leading-relaxed mb-6">
-                        Halo <span class="font-semibold text-slate-700">{{ name }}</span>,<br/>
-                        Pendaftaran Anda telah kami terima. Saat ini admin sedang meninjau data Anda. Silakan tunggu di halaman ini, sistem akan otomatis mengarahkan Anda ketika disetujui.
+                        Halo <span class="font-semibold text-slate-700">{{ name }}</span>, pendaftaran akun Anda berhasil terkirim. Data Anda sedang dalam peninjauan oleh Administrator.
                     </p>
 
-                    <div class="bg-indigo-50 text-indigo-700 text-xs font-medium px-4 py-2.5 rounded-full flex items-center gap-2 mb-6 shadow-sm border border-indigo-100 animate-pulse">
-                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-                        Status Update: Real-time Polling
+                    <!-- Submitted Data Summary Card -->
+                    <div class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-left text-xs mb-6 space-y-2">
+                        <p class="font-bold text-slate-700 border-b border-slate-200 pb-1.5 mb-2">Resume Data Pendaftaran:</p>
+                        <div class="grid grid-cols-3 gap-1">
+                            <span class="text-slate-400">Nama</span>
+                            <span class="col-span-2 font-medium text-slate-700">: {{ name }}</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1">
+                            <span class="text-slate-400">Email</span>
+                            <span class="col-span-2 font-medium text-slate-700">: {{ email }}</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1">
+                            <span class="text-slate-400">Peran</span>
+                            <span class="col-span-2 font-medium text-slate-700 capitalize">: {{ role }}</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1">
+                            <span class="text-slate-400">Identitas</span>
+                            <span class="col-span-2 font-medium text-slate-700">: {{ identifier }}</span>
+                        </div>
+                        <template v-if="extra && Object.keys(extra).length > 0">
+                            <div v-for="(val, key) in extra" :key="key" class="grid grid-cols-3 gap-1">
+                                <span class="text-slate-400">{{ key }}</span>
+                                <span class="col-span-2 font-medium text-slate-700">: {{ val }}</span>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="bg-indigo-50 text-indigo-700 text-[10px] sm:text-xs font-medium px-4 py-2.5 rounded-full flex items-center gap-2 mb-6 shadow-sm border border-indigo-100">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></span>
+                        Status Update: Peninjauan Real-time
                     </div>
                 </div>
 
                 <!-- Status: Rejected -->
                 <div v-if="status === 'rejected'" class="flex flex-col items-center">
-                    <div class="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mb-6 shadow-inner ring-4 ring-red-50/50">
-                        <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-6 shadow-inner ring-4 ring-red-50/50">
+                        <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                     </div>
 
                     <h1 class="text-2xl font-bold text-slate-800 tracking-tight mb-2">Pendaftaran Ditolak</h1>
                     <p class="text-slate-500 text-sm leading-relaxed mb-6">
-                        Mohon maaf <strong>{{ name }}</strong>, data pendaftaran Anda ditolak oleh admin karena kemungkinan data tidak valid atau duplikat.
+                        Mohon maaf <strong>{{ name }}</strong>, permohonan pendaftaran akun Anda ditolak oleh Administrator karena data tidak valid atau sudah ada.
                     </p>
 
                     <Button @click="ajukanUlang" class="w-full bg-[#2563eb] hover:bg-[#3B2DCB] text-white rounded-xl h-11 text-md font-medium shadow-md mb-3">
-                        Ajukan Ulang Permohonan
+                        Ajukan Ulang Pendaftaran
                     </Button>
                 </div>
 
                 <div class="mt-4 border-t border-slate-100 pt-6">
                     <button @click="logout" class="text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center gap-2 mx-auto">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                        Logout & Keluar
+                        Keluar & Log Out
                     </button>
                 </div>
             </div>

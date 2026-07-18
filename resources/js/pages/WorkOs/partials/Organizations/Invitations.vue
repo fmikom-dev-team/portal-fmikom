@@ -129,27 +129,27 @@ function formatDate(dateStr: string | null | undefined): string {
         <!-- Toolbar -->
         <div class="flex items-center gap-3 mb-5">
             <div class="relative flex-1 max-w-[480px]">
-                <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af] dark:text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/>
                 </svg>
                 <input
                     v-model="search"
                     type="text"
                     placeholder="Search by email"
-                    class="w-full h-[36px] pl-9 pr-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] placeholder:text-[#9ca3af] text-[#111827] transition-colors"
+                    class="w-full h-[36px] pl-9 pr-3 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] placeholder:text-[#9ca3af] dark:placeholder:text-zinc-600 text-[#111827] dark:text-zinc-100 bg-white dark:bg-zinc-900 transition-colors"
                 />
             </div>
             
             <!-- Clear History & Invite Buttons -->
             <button
                 v-if="inviteList.length > 0"
-                class="h-[36px] px-3.5 border border-[#d1d5db] text-[#374151] rounded-md text-[13px] font-semibold hover:bg-[#f9fafb] transition-colors ml-auto shadow-sm bg-white"
+                class="h-[36px] px-3.5 border border-[#d1d5db] dark:border-zinc-700 text-[#374151] dark:text-zinc-300 rounded-md text-[13px] font-semibold hover:bg-[#f9fafb] dark:hover:bg-zinc-800 transition-colors ml-auto shadow-sm bg-white dark:bg-zinc-900 dark:shadow-none"
                 @click="showClearConfirmModal = true"
             >
                 Remove history
             </button>
             <button
-                class="h-[36px] px-4 bg-[#2563eb] text-white rounded-md text-[13px] font-semibold hover:bg-[#1d4ed8] transition-colors shadow-sm"
+                class="h-[36px] px-4 bg-[#2563eb] text-white rounded-md text-[13px] font-semibold hover:bg-[#1d4ed8] transition-colors shadow-sm dark:shadow-none"
                 :class="{ 'ml-auto': inviteList.length === 0, 'ml-3': inviteList.length > 0 }"
                 @click="showInviteModal = true"
             >
@@ -158,7 +158,7 @@ function formatDate(dateStr: string | null | undefined): string {
         </div>
 
         <!-- Table -->
-        <div class="rounded-xl overflow-hidden bg-white ring-1 ring-gray-900/[0.04] shadow-sm">
+        <div class="rounded-xl overflow-x-auto bg-white dark:bg-zinc-900 ring-1 ring-gray-900/[0.04] dark:ring-white/[0.06] border dark:border-zinc-800 shadow-sm dark:shadow-none">
             <div v-if="isLoading" class="p-12 flex items-center justify-center">
                 <svg class="animate-spin h-6 w-6 text-[#2563eb]" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -168,28 +168,28 @@ function formatDate(dateStr: string | null | undefined): string {
             <table v-else class="w-full text-left">
                 <caption class="sr-only">Invitations</caption>
                 <thead>
-                    <tr class="bg-[#f9fafb] border-b border-[#e5e7eb]">
-                        <th class="px-6 py-3 text-[12px] font-semibold text-[#111827]">Email</th>
-                        <th class="px-6 py-3 text-[12px] font-semibold text-[#111827]">Role</th>
-                        <th class="px-6 py-3 text-[12px] font-semibold text-[#111827]">Status</th>
-                        <th class="px-6 py-3 text-[12px] font-semibold text-[#111827]">Created</th>
-                        <th class="px-6 py-3 text-[12px] font-semibold text-[#111827] text-right"></th>
+                    <tr class="bg-[#f9fafb] dark:bg-zinc-800/60 border-b border-[#e5e7eb] dark:border-zinc-800">
+                        <th class="px-6 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-300">Email</th>
+                        <th class="px-6 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-300">Role</th>
+                        <th class="px-6 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-300">Status</th>
+                        <th class="px-6 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-300">Created</th>
+                        <th class="px-6 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-100 text-right"></th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-[#e5e7eb]">
+                <tbody class="divide-y divide-[#e5e7eb] dark:divide-zinc-800">
                     <tr v-if="!filtered().length">
-                        <td colspan="5" class="px-6 py-8 text-center text-[13px] text-[#6b7280]">No invitations found.</td>
+                        <td colspan="5" class="px-6 py-8 text-center text-[13px] text-[#6b7280] dark:text-zinc-500">No invitations found.</td>
                     </tr>
-                    <tr v-for="invite in filtered()" :key="invite.id" class="hover:bg-[#f9fafb] transition-colors group">
+                    <tr v-for="invite in filtered()" :key="invite.id" class="hover:bg-[#f9fafb] dark:bg-zinc-900 dark:hover:bg-zinc-800/40 transition-colors group">
                         <td class="px-6 py-3">
                             <div class="flex items-center gap-2.5">
-                                <div class="w-6 h-6 rounded-full bg-[#eff6ff] flex items-center justify-center text-[11px] font-bold text-[#2563eb] shrink-0">
+                                <div class="w-6 h-6 rounded-full bg-[#eff6ff] dark:bg-blue-950/40 flex items-center justify-center text-[11px] font-bold text-[#2563eb] dark:text-blue-400 shrink-0">
                                     {{ invite.email.charAt(0).toUpperCase() }}
                                 </div>
-                                <span class="text-[13px] font-medium text-[#111827]">{{ invite.email }}</span>
+                                <span class="text-[13px] font-medium text-[#111827] dark:text-zinc-100">{{ invite.email }}</span>
                             </div>
                         </td>
-                        <td class="px-6 py-3 text-[13px] text-[#374151] font-medium">{{ invite.role || 'Member' }}</td>
+                        <td class="px-6 py-3 text-[13px] text-[#374151] dark:text-zinc-300 font-medium">{{ invite.role || 'Member' }}</td>
                         <td class="px-6 py-3">
                             <span class="flex items-center gap-1.5 text-[13px] font-medium"
                                 :class="invite.status === 'Accepted' ? 'text-[#10b981]' : invite.status === 'Pending' ? 'text-[#f59e0b]' : 'text-[#ef4444]'"
@@ -200,13 +200,13 @@ function formatDate(dateStr: string | null | undefined): string {
                                 {{ invite.status }}
                             </span>
                         </td>
-                        <td class="px-6 py-3 text-[13px] text-[#6b7280]">{{ formatDate(invite.created_at) }}</td>
+                        <td class="px-6 py-3 text-[13px] text-[#6b7280] dark:text-zinc-400">{{ formatDate(invite.created_at) }}</td>
                         
                         <!-- Delete individual button -->
                         <td class="px-6 py-3 text-right">
                             <button 
                                 @click="deleteInvitation(invite.id)"
-                                class="opacity-0 group-hover:opacity-100 text-[#df5c5f] hover:text-red-700 transition-all p-1 hover:bg-red-50 rounded inline-block"
+                                class="opacity-0 group-hover:opacity-100 text-[#df5c5f] hover:text-red-700 transition-all p-1 hover:bg-red-50 dark:hover:bg-red-950/30 rounded inline-block"
                                 title="Remove invitation"
                             >
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -221,31 +221,31 @@ function formatDate(dateStr: string | null | undefined): string {
 
         <!-- Invite User Modal (Fungsional) -->
         <div v-if="showInviteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showInviteModal = false">
-            <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 border border-gray-100">
-                <h3 class="text-base font-semibold text-[#111827] mb-2">Invite member</h3>
-                <p class="text-xs text-[#6b7280] mb-4">
-                    Send an email invitation to invite users to join <strong class="text-gray-800">{{ organization?.name || 'this organization' }}</strong>.
+            <div class="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 border border-gray-100 dark:border-zinc-800 dark:shadow-none">
+                <h3 class="text-base font-semibold text-[#111827] dark:text-zinc-100 mb-2">Invite member</h3>
+                <p class="text-xs text-[#6b7280] dark:text-zinc-400 mb-4">
+                    Send an email invitation to invite users to join <strong class="text-gray-800 dark:text-zinc-300">{{ organization?.name || 'this organization' }}</strong>.
                 </p>
                 
                 <form @submit.prevent="sendInvitation" class="space-y-4">
                     <div>
-                        <label for="invite_email" class="block text-xs font-semibold text-[#374151] mb-1.5">Email address</label>
+                        <label for="invite_email" class="block text-xs font-semibold text-[#374151] dark:text-zinc-300 mb-1.5">Email address</label>
                         <input 
                             id="invite_email"
                             v-model="inviteEmail" 
                             type="email" 
                             required
                             placeholder="user@example.com"
-                            class="w-full h-9 px-3 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-[#111827] bg-white"
+                            class="w-full h-9 px-3 text-sm border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-[#111827] dark:text-zinc-100 bg-white dark:bg-zinc-900"
                         />
                     </div>
                     
                     <div>
-                        <label for="invite_role" class="block text-xs font-semibold text-[#374151] mb-1.5">Organization Role</label>
+                        <label for="invite_role" class="block text-xs font-semibold text-[#374151] dark:text-zinc-300 mb-1.5">Organization Role</label>
                         <select 
                             id="invite_role"
                             v-model="inviteRole"
-                            class="w-full h-9 px-2 text-sm border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] text-[#111827] bg-white"
+                            class="w-full h-9 px-2 text-sm border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] text-[#111827] dark:text-zinc-100 bg-white dark:bg-zinc-900"
                         >
                             <option value="member">Member</option>
                             <option value="admin">Admin</option>
@@ -253,8 +253,8 @@ function formatDate(dateStr: string | null | undefined): string {
                         </select>
                     </div>
 
-                    <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-gray-100">
-                        <button type="button" class="h-9 px-4 border border-[#d1d5db] rounded-md text-xs font-semibold text-[#374151] hover:bg-[#f9fafb] transition-colors bg-white" @click="showInviteModal = false">Cancel</button>
+                    <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-gray-100 dark:border-zinc-800">
+                        <button type="button" class="h-9 px-4 border border-[#d1d5db] dark:border-zinc-700 rounded-md text-xs font-semibold text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900" @click="showInviteModal = false">Cancel</button>
                         <button type="submit" class="h-9 px-4 bg-[#2563eb] text-white rounded-md text-xs font-semibold hover:bg-[#1d4ed8] transition-colors disabled:opacity-60 flex items-center justify-center gap-1.5" :disabled="isSubmitting">
                             <svg v-if="isSubmitting" class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                             {{ isSubmitting ? 'Sending...' : 'Send invitation' }}
@@ -266,13 +266,13 @@ function formatDate(dateStr: string | null | undefined): string {
 
         <!-- Clear Confirm Modal -->
         <div v-if="showClearConfirmModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showClearConfirmModal = false">
-            <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 border border-gray-100">
-                <h3 class="text-base font-semibold text-[#111827] mb-2">Clear invitation history</h3>
-                <p class="text-xs text-[#6b7280] mb-6">
+            <div class="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 border border-gray-100 dark:border-zinc-800 dark:shadow-none">
+                <h3 class="text-base font-semibold text-[#111827] dark:text-zinc-100 mb-2">Clear invitation history</h3>
+                <p class="text-xs text-[#6b7280] dark:text-zinc-400 mb-6">
                     Are you sure you want to permanently clear the invitation history for this organization? This action cannot be undone.
                 </p>
-                <div class="flex justify-end gap-2 pt-4 border-t border-gray-100">
-                    <button class="h-9 px-4 border border-[#d1d5db] rounded-md text-xs font-semibold text-[#374151] hover:bg-[#f9fafb] transition-colors bg-white" @click="showClearConfirmModal = false">Cancel</button>
+                <div class="flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-zinc-800">
+                    <button class="h-9 px-4 border border-[#d1d5db] dark:border-zinc-700 rounded-md text-xs font-semibold text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900" @click="showClearConfirmModal = false">Cancel</button>
                     <button class="h-9 px-4 bg-red-600 text-white rounded-md text-xs font-semibold hover:bg-red-700 transition-colors" @click="clearInvitations">Yes, clear history</button>
                 </div>
             </div>

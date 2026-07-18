@@ -92,7 +92,8 @@ const handleScroll = (e: Event) => {
             <div class="md:contents">
                 <div 
                     @scroll="handleScroll"
-                    class="bg-white md:rounded-none md:shadow-none mt-[68px] md:mt-0 min-h-[calc(100dvh-68px)] md:min-h-0 max-md:fixed max-md:top-[68px] max-md:bottom-0 max-md:left-0 max-md:right-0 max-md:mt-0 max-md:min-h-0 max-md:overflow-y-auto max-md:pb-24 max-md:z-40 transition-all duration-300 ease-out"
+                    class="bg-white dark:bg-zinc-950 md:rounded-none md:shadow-none mt-[68px] md:mt-0 min-h-[calc(100dvh-68px)] md:min-h-0 max-md:fixed max-md:top-[68px] max-md:bottom-0 max-md:left-0 max-md:right-0 max-md:mt-0 max-md:min-h-0 max-md:overflow-y-auto max-md:pb-24 max-md:z-40 transition-all duration-300 ease-out"
+                    style="top: calc(68px + env(safe-area-inset-top));"
                     :class="[
                         isScrolled 
                             ? 'rounded-t-2xl border-t border-slate-200/80 dark:border-zinc-800 shadow-sm' 
@@ -116,7 +117,11 @@ const handleScroll = (e: Event) => {
                             <FormSkeleton v-else />
                         </div>
                     </template>
-                    <slot v-else />
+                    <Transition v-else name="page-slide" mode="out-in">
+                        <div :key="$page.url" class="grow w-full">
+                            <slot />
+                        </div>
+                    </Transition>
                 </div>
             </div>
         </AppContent>
@@ -162,7 +167,7 @@ const handleScroll = (e: Event) => {
                     <!-- floating button (absolute, tidak mempengaruhi flow) -->
                     <Link
                         href="/portal-admin/posts/create"
-                        class="absolute -top-7 flex items-center justify-center w-[48px] h-[48px] rounded-xl bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-950 shadow-sm border border-slate-800 dark:border-slate-200 ring-[4px] ring-white dark:ring-zinc-950 transition-transform active:scale-95 z-20"
+                        class="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center justify-center w-[48px] h-[48px] rounded-xl bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-950 shadow-sm border border-slate-800 dark:border-slate-200 ring-[4px] ring-white dark:ring-zinc-950 transition-transform active:scale-95 z-20"
                     >
                         <PenLine class="h-[20px] w-[20px] stroke-[2]" />
                     </Link>
@@ -174,7 +179,7 @@ const handleScroll = (e: Event) => {
                     <!-- floating button (absolute, tidak mempengaruhi flow) -->
                     <Link
                         :href="dashboard()"
-                        class="absolute -top-7 flex items-center justify-center w-[48px] h-[48px] rounded-xl bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-950 shadow-sm border border-slate-800 dark:border-slate-200 ring-[4px] ring-white dark:ring-zinc-950 transition-transform active:scale-95 z-20"
+                        class="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center justify-center w-[48px] h-[48px] rounded-xl bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-950 shadow-sm border border-slate-800 dark:border-slate-200 ring-[4px] ring-white dark:ring-zinc-950 transition-transform active:scale-95 z-20"
                     >
                         <LayoutGrid class="h-[20px] w-[20px] stroke-[2]" />
                     </Link>

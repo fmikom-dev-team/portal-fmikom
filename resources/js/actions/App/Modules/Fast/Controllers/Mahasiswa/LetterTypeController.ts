@@ -4,7 +4,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefa
 * @see app/Modules/Fast/Controllers/Mahasiswa/LetterTypeController.php:13
 * @route '/jenis-surat/{jenisSurat}'
 */
-export const show = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+export const show = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show.url(args, options),
     method: 'get',
 })
@@ -19,7 +19,7 @@ show.definition = {
 * @see app/Modules/Fast/Controllers/Mahasiswa/LetterTypeController.php:13
 * @route '/jenis-surat/{jenisSurat}'
 */
-show.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+show.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -52,7 +52,7 @@ show.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number 
 * @see app/Modules/Fast/Controllers/Mahasiswa/LetterTypeController.php:13
 * @route '/jenis-surat/{jenisSurat}'
 */
-show.get = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+show.get = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show.url(args, options),
     method: 'get',
 })
@@ -62,7 +62,7 @@ show.get = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number 
 * @see app/Modules/Fast/Controllers/Mahasiswa/LetterTypeController.php:13
 * @route '/jenis-surat/{jenisSurat}'
 */
-show.head = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+show.head = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: show.url(args, options),
     method: 'head',
 })

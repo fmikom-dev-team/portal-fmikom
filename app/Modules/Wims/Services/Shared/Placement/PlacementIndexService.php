@@ -34,14 +34,15 @@ class PlacementIndexService
         }
 
         if ($search !== '') {
-            $query->where(function (Builder $builder) use ($search): void {
-                $builder->whereHas('mahasiswa', function (Builder $mahasiswaQuery) use ($search): void {
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
+            $query->where(function (Builder $builder) use ($escaped): void {
+                $builder->whereHas('mahasiswa', function (Builder $mahasiswaQuery) use ($escaped): void {
                     $mahasiswaQuery
-                        ->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('nomor_induk', 'like', "%{$search}%");
-                })->orWhereHas('perusahaan', function (Builder $perusahaanQuery) use ($search): void {
-                    $perusahaanQuery->where('nama', 'like', "%{$search}%");
+                        ->where('name', 'like', "%{$escaped}%")
+                        ->orWhere('email', 'like', "%{$escaped}%")
+                        ->orWhere('nomor_induk', 'like', "%{$escaped}%");
+                })->orWhereHas('perusahaan', function (Builder $perusahaanQuery) use ($escaped): void {
+                    $perusahaanQuery->where('nama', 'like', "%{$escaped}%");
                 });
             });
         }

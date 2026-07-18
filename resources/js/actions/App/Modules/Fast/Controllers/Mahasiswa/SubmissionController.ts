@@ -99,7 +99,7 @@ export const create = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\SubmissionController::store
-* @see app/Modules/Fast/Controllers/Mahasiswa/SubmissionController.php:120
+* @see app/Modules/Fast/Controllers/Mahasiswa/SubmissionController.php:121
 * @route '/fast/user/submissions'
 */
 const storefa8f1b7ec6e51ab02156722b8385a8d5 = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -114,7 +114,7 @@ storefa8f1b7ec6e51ab02156722b8385a8d5.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\SubmissionController::store
-* @see app/Modules/Fast/Controllers/Mahasiswa/SubmissionController.php:120
+* @see app/Modules/Fast/Controllers/Mahasiswa/SubmissionController.php:121
 * @route '/fast/user/submissions'
 */
 storefa8f1b7ec6e51ab02156722b8385a8d5.url = (options?: RouteQueryOptions) => {
@@ -123,7 +123,7 @@ storefa8f1b7ec6e51ab02156722b8385a8d5.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\SubmissionController::store
-* @see app/Modules/Fast/Controllers/Mahasiswa/SubmissionController.php:120
+* @see app/Modules/Fast/Controllers/Mahasiswa/SubmissionController.php:121
 * @route '/fast/user/submissions'
 */
 storefa8f1b7ec6e51ab02156722b8385a8d5.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -133,7 +133,7 @@ storefa8f1b7ec6e51ab02156722b8385a8d5.post = (options?: RouteQueryOptions): Rout
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\SubmissionController::store
-* @see app/Modules/Fast/Controllers/Mahasiswa/SubmissionController.php:120
+* @see app/Modules/Fast/Controllers/Mahasiswa/SubmissionController.php:121
 * @route '/mahasiswa/submissions'
 */
 const storea3ef875fdb8283f578a11a3e7e42104d = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -148,7 +148,7 @@ storea3ef875fdb8283f578a11a3e7e42104d.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\SubmissionController::store
-* @see app/Modules/Fast/Controllers/Mahasiswa/SubmissionController.php:120
+* @see app/Modules/Fast/Controllers/Mahasiswa/SubmissionController.php:121
 * @route '/mahasiswa/submissions'
 */
 storea3ef875fdb8283f578a11a3e7e42104d.url = (options?: RouteQueryOptions) => {
@@ -157,7 +157,7 @@ storea3ef875fdb8283f578a11a3e7e42104d.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\SubmissionController::store
-* @see app/Modules/Fast/Controllers/Mahasiswa/SubmissionController.php:120
+* @see app/Modules/Fast/Controllers/Mahasiswa/SubmissionController.php:121
 * @route '/mahasiswa/submissions'
 */
 storea3ef875fdb8283f578a11a3e7e42104d.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({

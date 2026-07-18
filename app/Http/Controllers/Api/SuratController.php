@@ -9,9 +9,11 @@ use App\Http\Requests\Api\GenerateSuratDocumentRequest;
 use App\Http\Requests\Api\StoreSuratRequest;
 use App\Models\Surat;
 use App\Modules\Fast\Workflow\Actions\SuratWorkflowService;
+use App\Services\VirusScannerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Validation\ValidationException;
 
 class SuratController extends Controller
 {
@@ -60,6 +62,18 @@ class SuratController extends Controller
 
     public function store(StoreSuratRequest $request): JsonResponse
     {
+        $scanner = app(VirusScannerService::class);
+        if ($request->hasFile('lampiran')) {
+            foreach ($request->file('lampiran') as $file) {
+                $scanResult = $scanner->scan($file);
+                if (! $scanResult['safe']) {
+                    throw ValidationException::withMessages([
+                        'lampiran' => $scanResult['reason'],
+                    ]);
+                }
+            }
+        }
+
         $surat = $this->workflow->submit(
             $request->user(),
             $request->validated(),

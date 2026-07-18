@@ -11,6 +11,7 @@ import {
 	Plus,
 	ShieldCheck,
 	X,
+	Bell,
 } from "lucide-vue-next";
 import Heading from "@/components/Heading.vue";
 import InputError from "@/components/InputError.vue";
@@ -25,6 +26,7 @@ import SettingsLayout from "@/layouts/settings/Layout.vue";
 import { edit } from "@/routes/security";
 import { disable, enable } from "@/routes/two-factor/index";
 import type { BreadcrumbItem } from "@/types";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal.vue";
 
 type Props = {
 	canManageTwoFactor?: boolean;
@@ -57,11 +59,35 @@ const breadcrumbs: BreadcrumbItem[] = [
 const { hasSetupData, clearTwoFactorAuthData } = useTwoFactorAuth();
 const showSetupModal = ref<boolean>(false);
 
-const disableMfa = async () => {
-	if (confirm("Are you sure you want to disable 2FA?")) {
-		await axios.delete("/auth/mfa/disable");
-		window.location.reload();
+// Unified delete/action confirm modal
+const isConfirmModalOpen = ref(false);
+const confirmModalTitle = ref("");
+const confirmModalMessage = ref("");
+const confirmModalAction = ref<(() => void) | null>(null);
+
+const openConfirmModal = (title: string, message: string, action: () => void) => {
+	confirmModalTitle.value = title;
+	confirmModalMessage.value = message;
+	confirmModalAction.value = action;
+	isConfirmModalOpen.value = true;
+};
+
+const handleConfirm = () => {
+	if (confirmModalAction.value) {
+		confirmModalAction.value();
 	}
+	isConfirmModalOpen.value = false;
+};
+
+const disableMfa = () => {
+	openConfirmModal(
+		"Nonaktifkan Autentikasi 2 Langkah",
+		"Apakah Anda yakin ingin menonaktifkan autentikasi dua langkah (2FA)? Akun Anda akan menjadi kurang aman.",
+		async () => {
+			await axios.delete("/auth/mfa/disable");
+			window.location.reload();
+		}
+	);
 };
 
 onUnmounted(() => clearTwoFactorAuthData());
@@ -229,14 +255,19 @@ const registerNewPasskey = async () => {
 };
 
 const deletePasskey = async (id: number) => {
-	if (!confirm("Apakah Anda yakin ingin menghapus kunci sandi ini?")) return;
-	try {
-		await axios.delete(`/auth/passkeys/${id}`);
-		localPasskeys.value = localPasskeys.value.filter((pk) => pk.id !== id);
-		passkeySuccess.value = "Kunci sandi berhasil dihapus.";
-	} catch (e: any) {
-		passkeyError.value = "Gagal menghapus kunci sandi.";
-	}
+	openConfirmModal(
+		"Hapus Kunci Sandi",
+		"Apakah Anda yakin ingin menghapus kunci sandi ini? Anda tidak akan dapat menggunakan biometrik ini untuk masuk lagi.",
+		async () => {
+			try {
+				await axios.delete(`/auth/passkeys/${id}`);
+				localPasskeys.value = localPasskeys.value.filter((pk) => pk.id !== id);
+				passkeySuccess.value = "Kunci sandi berhasil dihapus.";
+			} catch (e: any) {
+				passkeyError.value = "Gagal menghapus kunci sandi.";
+			}
+		}
+	);
 };
 
 const getPasskeyIcon = (name: string) => {
@@ -275,6 +306,98 @@ const getPasskeyIcon = (name: string) => {
 		return "google";
 	}
 	return "key";
+};
+
+// ── PWA Push Notification state & logic ──
+const notificationPermission = ref(
+	typeof window !== "undefined" && typeof Notification !== "undefined"
+		? Notification.permission
+		: "default"
+);
+const isSubscribing = ref(false);
+const testSending = ref(false);
+const pwaError = ref("");
+const pwaSuccess = ref("");
+
+const requestPwaNotifications = async () => {
+	pwaError.value = "";
+	pwaSuccess.value = "";
+	if (
+		typeof window === "undefined" ||
+		!("serviceWorker" in navigator) ||
+		typeof Notification === "undefined"
+	) {
+		pwaError.value = "Browser atau perangkat Anda tidak mendukung push notifications PWA.";
+		return;
+	}
+
+	isSubscribing.value = true;
+	try {
+		const permission = await Notification.requestPermission();
+		notificationPermission.value = permission;
+		if (permission !== "granted") {
+			pwaError.value = "Izin notifikasi ditolak oleh pengguna.";
+			isSubscribing.value = false;
+			return;
+		}
+
+		const reg = await navigator.serviceWorker.ready;
+		let sub = await reg.pushManager.getSubscription();
+
+		if (!sub) {
+			const vapidKey =
+				import.meta.env.VITE_VAPID_PUBLIC_KEY ||
+				"BP3KHNNC6FtEUCPx5HId2mXRa60shi-__jq__h2KHccZEUKwWPEVpk7LgADAxZsY5Lj21SpZQ9vKHbEOjJ1vaSA";
+			
+			// Convert VAPID key to Uint8Array
+			const padding = "=".repeat((4 - (vapidKey.length % 4)) % 4);
+			const base64 = (vapidKey + padding)
+				.replace(/\-/g, "+")
+				.replace(/_/g, "/");
+			const rawData = window.atob(base64);
+			const outputArray = new Uint8Array(rawData.length);
+			for (let i = 0; i < rawData.length; ++i) {
+				outputArray[i] = rawData.charCodeAt(i);
+			}
+
+			sub = await reg.pushManager.subscribe({
+				userVisibleOnly: true,
+				applicationServerKey: outputArray,
+			});
+		}
+
+		const subData = sub.toJSON();
+		const response = await axios.post("/pwa/subscribe", subData);
+		if (response.data?.success) {
+			pwaSuccess.value = "Notifikasi PWA berhasil diaktifkan!";
+		}
+	} catch (err: any) {
+		console.error(err);
+		pwaError.value =
+			"Gagal mengaktifkan notifikasi: " +
+			(err.response?.data?.message || err.message || err);
+	} finally {
+		isSubscribing.value = false;
+	}
+};
+
+const sendTestNotification = async () => {
+	pwaError.value = "";
+	pwaSuccess.value = "";
+	testSending.value = true;
+	try {
+		const response = await axios.post("/pwa/send-test");
+		if (response.data?.success) {
+			pwaSuccess.value = "Notifikasi uji coba berhasil dikirim! Silakan cek lockscreen HP Anda.";
+		}
+	} catch (err: any) {
+		console.error(err);
+		pwaError.value =
+			"Gagal mengirim notifikasi: " +
+			(err.response?.data?.message || err.message || err);
+	} finally {
+		testSending.value = false;
+	}
 };
 </script>
 
@@ -635,6 +758,93 @@ const getPasskeyIcon = (name: string) => {
                     </div>
                 </div>
             </div>
+
+            <!-- Separator -->
+            <hr class="border-slate-100 dark:border-slate-800/80 my-8" />
+
+            <!-- PWA Push Notifications Section -->
+            <div class="space-y-6">
+                <Heading
+                    variant="small"
+                    title="Notifikasi PWA (Push Notifications)"
+                    description="Aktifkan notifikasi langsung ke perangkat mobile atau desktop Anda untuk mendapatkan info event terupdate secara instan."
+                />
+
+                <!-- Alerts -->
+                <div v-if="pwaError" class="bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-lg flex items-start gap-2 border border-red-100 dark:border-red-900/30 max-w-2xl">
+                    <AlertCircle class="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{{ pwaError }}</span>
+                </div>
+
+                <div v-if="pwaSuccess" class="bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 text-sm px-4 py-3 rounded-lg flex items-start gap-2 border border-emerald-100 dark:border-emerald-900/30 max-w-2xl">
+                    <CheckCircle2 class="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{{ pwaSuccess }}</span>
+                </div>
+
+                <!-- Google-styled Card Container -->
+                <div class="max-w-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+                    <div class="flex items-center gap-4 py-2">
+                        <!-- Icon -->
+                        <div class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/30 flex items-center justify-center shrink-0">
+                            <Bell class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+
+                        <!-- Content -->
+                        <div class="grow">
+                            <span class="block font-semibold text-slate-800 dark:text-slate-100 text-sm md:text-md">
+                                Status Izin Perangkat: 
+                                <span class="capitalize font-bold text-blue-600 dark:text-blue-400">{{ notificationPermission }}</span>
+                            </span>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                Jika diaktifkan, Anda akan menerima pembaruan, pengumuman penting, dan info event di layar kunci HP Anda meskipun aplikasi ditutup.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="mt-6 flex flex-wrap gap-3 border-t border-slate-100 dark:border-slate-800/80 pt-4">
+                        <Button 
+                            v-if="notificationPermission !== 'granted'"
+                            type="button" 
+                            @click="requestPwaNotifications" 
+                            :disabled="isSubscribing"
+                            class="flex items-center gap-2"
+                        >
+                            <Loader2 v-if="isSubscribing" class="w-4 h-4 animate-spin" />
+                            Aktifkan Notifikasi di Perangkat Ini
+                        </Button>
+                        <template v-else>
+                            <Button 
+                                type="button" 
+                                @click="sendTestNotification" 
+                                :disabled="testSending"
+                                variant="outline"
+                                class="flex items-center gap-2"
+                            >
+                                <Loader2 v-if="testSending" class="w-4 h-4 animate-spin" />
+                                Kirim Notifikasi Uji Coba
+                            </Button>
+                            <Button 
+                                type="button" 
+                                @click="requestPwaNotifications" 
+                                :disabled="isSubscribing"
+                                variant="secondary"
+                                class="flex items-center gap-2"
+                            >
+                                <Loader2 v-if="isSubscribing" class="w-4 h-4 animate-spin" />
+                                Perbarui Langganan Notifikasi
+                            </Button>
+                        </template>
+                    </div>
+                </div>
+            </div>
         </SettingsLayout>
+        <DeleteConfirmModal
+            :show="isConfirmModalOpen"
+            :title="confirmModalTitle"
+            :message="confirmModalMessage"
+            @confirm="handleConfirm"
+            @cancel="isConfirmModalOpen = false"
+        />
     </AppLayout>
 </template>

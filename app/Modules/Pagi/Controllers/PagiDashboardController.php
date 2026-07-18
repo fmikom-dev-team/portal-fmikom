@@ -16,10 +16,13 @@ use App\Modules\Pagi\Actions\LikeReplyAction;
 use App\Modules\Pagi\Actions\LikeWorkAction;
 use App\Modules\Pagi\Actions\ReplyCommentAction;
 use App\Modules\Pagi\Requests\StoreCertificateRequest;
+use App\Modules\Pagi\Requests\StoreEducationRequest;
 use App\Modules\Pagi\Requests\UpdateCertificateRequest;
+use App\Modules\Pagi\Requests\UpdateEducationRequest;
 use App\Modules\Pagi\Requests\UpdateProfileRequest;
 use App\Modules\Pagi\Requests\UpdateSettingsRequest;
 use App\Modules\Pagi\Services\PagiCertificateService;
+use App\Modules\Pagi\Services\PagiEducationService;
 use App\Modules\Pagi\Services\PagiNotificationService;
 use App\Modules\Pagi\Services\PagiProfileService;
 use App\Modules\Pagi\Services\PagiSocialService;
@@ -32,6 +35,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -80,6 +84,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
         protected PagiSocialService $socialService,
         protected PagiNotificationService $notificationService,
         protected PagiCertificateService $certificateService,
+        protected PagiEducationService $educationService,
         protected FollowUserAction $followUserAction,
         protected LikeWorkAction $likeWorkAction,
         protected CreateCommentAction $createCommentAction,
@@ -939,6 +944,21 @@ class PagiDashboardController extends Controller implements HasMiddleware
         return $this->certificateService->delete(Auth::user(), $id);
     }
 
+    public function storeEducation(StoreEducationRequest $request)
+    {
+        return $this->educationService->store(Auth::user(), $request->validated());
+    }
+
+    public function updateEducation(UpdateEducationRequest $request, string $id)
+    {
+        return $this->educationService->update(Auth::user(), $id, $request->validated());
+    }
+
+    public function destroyEducation(string $id)
+    {
+        return $this->educationService->delete(Auth::user(), $id);
+    }
+
     public function exploreGallery(Request $request)
     {
         $role = $request->attributes->get('resolved_role', session('active_role'));
@@ -1100,23 +1120,13 @@ class PagiDashboardController extends Controller implements HasMiddleware
         return $name;
     }
 
-    private function getAvatarUrl(?User $user): string
+    private function getAvatarUrl(?User $user): ?string
     {
         if (! $user) {
-            return 'https://ui-avatars.com/api/?name=User&background=random';
+            return null;
         }
 
-        $avatar = $this->getStorageUrl($user->foto_path);
-        if ($avatar) {
-            return $avatar;
-        }
-
-        $name = $user->name;
-        if ($name === strtoupper($name)) {
-            $name = ucwords(strtolower($name));
-        }
-
-        return 'https://ui-avatars.com/api/?name='.urlencode($name).'&background=random';
+        return $this->getStorageUrl($user->foto_path);
     }
 
     private function formatFeedProjects(Collection $projectsCollection, $reportedWorkIds, $preloadedUsers): Collection
@@ -1152,5 +1162,55 @@ class PagiDashboardController extends Controller implements HasMiddleware
                 ] : null,
             ];
         });
+    }
+
+    public function instantSearch(Request $request)
+    {
+        $q = $request->query('q', '');
+        if (strlen($q) < 2) {
+            return response()->json(['results' => []]);
+        }
+
+        try {
+            // Meilisearch: Search only PAGI module indexes (works + creators)
+            $works = PagiWork::search($q)->take(4)->get()->map(fn ($w) => [
+                'id' => $w->id,
+                'title' => $w->title,
+                'description' => $w->description,
+                'type' => 'Karya / Portofolio',
+                'url' => '/pagi/gallery?search='.urlencode($w->title),
+            ]);
+
+            $creators = User::search($q)->take(4)->get()->map(fn ($u) => [
+                'id' => $u->id,
+                'title' => $u->name,
+                'description' => $u->role_title ?? 'PAGI Creator',
+                'type' => 'Kreator / Akun',
+                'url' => '/pagi/explore-people?search='.urlencode($u->name), // or profile url
+            ]);
+
+            $results = collect()->concat($works)->concat($creators)->values();
+
+            return response()->json(['results' => $results]);
+
+        } catch (\Throwable $e) {
+            Log::warning('Meilisearch PAGI instant search failed, falling back to SQL', ['error' => $e->getMessage()]);
+
+            $works = PagiWork::where('title', 'like', "%{$q}%")
+                ->where('is_published', true)
+                ->take(4)
+                ->get()
+                ->map(fn ($w) => [
+                    'id' => $w->id,
+                    'title' => $w->title,
+                    'description' => $w->description,
+                    'type' => 'Karya / Portofolio',
+                    'url' => '/pagi/gallery?search='.urlencode($w->title),
+                ]);
+
+            $results = collect($works)->values();
+
+            return response()->json(['results' => $results]);
+        }
     }
 }

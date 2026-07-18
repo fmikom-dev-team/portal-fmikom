@@ -10,7 +10,7 @@ import {
 	Upload,
 	X,
 } from "lucide-vue-next";
-import { reactive, ref } from "vue";
+import { reactive, ref, computed, watch } from "vue";
 import PortalAdminLayout from "@/layouts/PortalAdminLayout.vue";
 
 const props = defineProps({
@@ -18,6 +18,32 @@ const props = defineProps({
 		type: Object,
 		default: () => ({}),
 	},
+	errors: {
+		type: Object,
+		default: () => ({}),
+	},
+});
+
+const hasGalleryError = computed(() => {
+	if (!props.errors) return false;
+	return Object.keys(props.errors).some(key => key === 'hero_gallery_files' || key.startsWith('hero_gallery_files.'));
+});
+
+const galleryError = computed(() => {
+	if (!props.errors) return "";
+	const key = Object.keys(props.errors).find(k => k === 'hero_gallery_files' || k.startsWith('hero_gallery_files.'));
+	return key ? props.errors[key] : "";
+});
+
+const hasPartnerError = computed(() => {
+	if (!props.errors) return false;
+	return Object.keys(props.errors).some(key => key === 'partner_files' || key.startsWith('partner_files.'));
+});
+
+const partnerError = computed(() => {
+	if (!props.errors) return "";
+	const key = Object.keys(props.errors).find(k => k === 'partner_files' || k.startsWith('partner_files.'));
+	return key ? props.errors[key] : "";
 });
 
 // Hero_gallery & partners are ALREADY parsed arrays (from web.php route)
@@ -83,6 +109,49 @@ const form = reactive({
 	remove_partners: [] as string[],
 });
 
+watch(() => props.settings, (newSettings) => {
+	if (!newSettings) return;
+
+	form.hero_title = newSettings.hero_title || "Satu Portal untuk \nSemua Layanan \nFMIKOM";
+	form.hero_subtitle = newSettings.hero_subtitle || "Sistem Informasi Terpadu";
+	form.hero_description = newSettings.hero_description || "Kelola administrasi, magang, alumni, dan portofolio dalam satu sistem terintegrasi.";
+	form.show_navbar = newSettings.show_navbar !== "0";
+	form.show_hero = newSettings.show_hero !== "0";
+	form.show_features = newSettings.show_features !== "0";
+	form.show_partners = newSettings.show_partners !== "0";
+	form.show_benefits = newSettings.show_benefits !== "0";
+	form.primary_color = newSettings.primary_color || "#2563eb";
+
+	form.benefits_title = newSettings.benefits_title || "Mengapa Memilih Portal FMIKOM?";
+	form.benefits_subtitle = newSettings.benefits_subtitle || "Platform digital terpadu yang dirancang khusus untuk kebutuhan civitas akademika FMIKOM.";
+	form.benefit_1_title = newSettings.benefit_1_title || "Akses Mudah";
+	form.benefit_1_desc = newSettings.benefit_1_desc || "Satu platform untuk semua layanan akademik dan administratif.";
+	form.benefit_2_title = newSettings.benefit_2_title || "Data Real-Time";
+	form.benefit_2_desc = newSettings.benefit_2_desc || "Informasi selalu terkini dan akurat langsung dari sumbernya.";
+	form.benefit_3_title = newSettings.benefit_3_title || "Keamanan Tinggi";
+	form.benefit_3_desc = newSettings.benefit_3_desc || "Sistem SSO dengan proteksi berlapis untuk menjaga keamanan data.";
+
+	if (Array.isArray(newSettings.hero_gallery)) {
+		form.hero_gallery = [...newSettings.hero_gallery];
+	} else {
+		try {
+			form.hero_gallery = JSON.parse(newSettings.hero_gallery || "[]");
+		} catch {
+			form.hero_gallery = [];
+		}
+	}
+
+	if (Array.isArray(newSettings.partners)) {
+		form.partners = [...newSettings.partners];
+	} else {
+		try {
+			form.partners = JSON.parse(newSettings.partners || "[]");
+		} catch {
+			form.partners = [];
+		}
+	}
+}, { deep: true });
+
 // New files selected but not yet submitted
 const newHeroFiles = ref<File[]>([]);
 const newHeroFilePreviews = ref<string[]>([]);
@@ -96,8 +165,25 @@ const handleHeroUpload = (event: Event) => {
 	const target = event.target as HTMLInputElement;
 	if (target.files) {
 		const files = Array.from(target.files);
+		const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+		const maxSize = 5 * 1024 * 1024; // 5MB
+
+		for (const file of files) {
+			if (!allowedTypes.includes(file.type)) {
+				alert(`File "${file.name}" tidak diizinkan. Hanya mendukung format PNG, JPG, JPEG, dan WEBP.`);
+				target.value = "";
+				return;
+			}
+			if (file.size > maxSize) {
+				alert(`File "${file.name}" melebihi ukuran maksimum 5MB.`);
+				target.value = "";
+				return;
+			}
+		}
+
 		newHeroFiles.value.push(...files);
 		files.forEach((f) => { newHeroFilePreviews.value.push(URL.createObjectURL(f)); });
+		target.value = "";
 	}
 };
 
@@ -105,8 +191,25 @@ const handlePartnerUpload = (event: Event) => {
 	const target = event.target as HTMLInputElement;
 	if (target.files) {
 		const files = Array.from(target.files);
+		const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
+		const maxSize = 5 * 1024 * 1024; // 5MB
+
+		for (const file of files) {
+			if (!allowedTypes.includes(file.type)) {
+				alert(`File "${file.name}" tidak diizinkan. Hanya mendukung format PNG, JPG, JPEG, WEBP, dan SVG.`);
+				target.value = "";
+				return;
+			}
+			if (file.size > maxSize) {
+				alert(`File "${file.name}" melebihi ukuran maksimum 5MB.`);
+				target.value = "";
+				return;
+			}
+		}
+
 		newPartnerFiles.value.push(...files);
 		files.forEach((f) => { newPartnerFilePreviews.value.push(URL.createObjectURL(f)); });
+		target.value = "";
 	}
 };
 
@@ -117,7 +220,10 @@ const removeExistingGallery = (url: string) => {
 
 const removeExistingPartner = (url: string) => {
 	form.remove_partners.push(url);
-	form.partners = form.partners.filter((u: string) => u !== url);
+	form.partners = form.partners.filter((u: any) => {
+		const uUrl = typeof u === 'object' ? u.logo : u;
+		return uUrl !== url;
+	});
 };
 
 const removeNewHero = (index: number) => {
@@ -280,16 +386,16 @@ const submit = () => {
                     </div>
                 </div>
 
-                <!-- SECTION: GALLERY (Karya Mahasiswa) -->
+                <!-- SECTION: GALLERY (Galeri dan Event) -->
                 <div class="bg-[#f8fafc] dark:bg-slate-900/50 rounded-2xl p-4 border border-dashed border-blue-300 dark:border-blue-700">
                     <div class="text-[11px] font-black tracking-widest text-blue-400 uppercase mb-3 ml-2 flex items-center gap-2">
                         <ImageIcon class="w-3.5 h-3.5"/>
-                        Galeri Karya Mahasiswa (Hero)
+                        Galeri dan Event (Hero)
                     </div>
                     
                     <div class="bg-white dark:bg-slate-800 border border-blue-100 dark:border-slate-600 rounded-xl p-4 shadow-sm">
                         <div class="flex items-start justify-between gap-4">
-                            <div class="flex items-start gap-4 flex-1">
+                            <div class="flex flex-col sm:flex-row items-start gap-4 flex-1">
                                 <!-- Preview Thumbnails Compact -->
                                 <div class="flex -space-x-3 shrink-0">
                                     <template v-if="form.hero_gallery.length > 0">
@@ -306,8 +412,8 @@ const submit = () => {
                                         <ImageIcon class="w-5 h-5 text-slate-400"/>
                                     </div>
                                 </div>
-                                <div>
-                                    <h4 class="text-[14px] font-bold text-slate-800 dark:text-slate-200">Galeri Karya Mahasiswa</h4>
+                                <div class="flex-1">
+                                    <h4 class="text-[14px] font-bold text-slate-800 dark:text-slate-200">Galeri dan Event</h4>
                                     <p class="text-[12px] font-bold text-slate-500 mt-0.5">
                                         {{ form.hero_gallery.length > 0 ? `${form.hero_gallery.length} gambar · Muncul sebagai card stack interaktif di halaman depan` : 'Belum ada gambar · Upload untuk menampilkan galeri di halaman depan' }}
                                     </p>
@@ -395,10 +501,10 @@ const submit = () => {
                             <!-- Inline Logo Previews -->
                             <div v-if="form.partners.length > 0" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
                                 <div class="flex flex-wrap gap-2">
-                                    <div v-for="logo in form.partners" :key="logo"
+                                    <div v-for="logo in form.partners" :key="typeof logo === 'object' ? logo.logo : logo"
                                         class="relative group h-10 w-[72px] rounded-lg overflow-hidden border border-slate-100 bg-white flex items-center justify-center p-1 shadow-sm">
-                                        <img :src="logo" alt="Partner logo" class="max-w-full max-h-full object-contain">
-                                        <button @click="removeExistingPartner(logo)"
+                                        <img :src="typeof logo === 'object' ? logo.logo : logo" alt="Partner logo" class="max-w-full max-h-full object-contain">
+                                        <button @click="removeExistingPartner(typeof logo === 'object' ? logo.logo : logo)"
                                             class="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                             <X class="w-3 h-3"/>
                                         </button>
@@ -466,7 +572,7 @@ const submit = () => {
                         <span v-if="editingWidget === 'hero'">Teks Utama & Hero</span>
                         <span v-if="editingWidget === 'navbar'">Navigasi Header</span>
                         <span v-if="editingWidget === 'partners'">Mitra & Kerjasama</span>
-                        <span v-if="editingWidget === 'gallery'">Galeri Karya Mahasiswa</span>
+                        <span v-if="editingWidget === 'gallery'">Galeri dan Event</span>
                         <span v-if="editingWidget === 'theme'">Warna Tema Utama</span>
                         <span v-if="editingWidget === 'benefits'">Seksi Keunggulan</span>
                     </h3>
@@ -492,44 +598,21 @@ const submit = () => {
                             <label class="block text-[12px] font-bold text-slate-600 dark:text-slate-400 mb-2">Deskripsi Singkat</label>
                             <textarea v-model="form.hero_description" rows="3" class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-[13px] font-bold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-[#2563EB] outline-none resize-none"></textarea>
                         </div>
-                        <div class="border-t border-slate-100 dark:border-slate-700 pt-5">
-                            <label class="block text-[12px] font-bold text-slate-600 dark:text-slate-400 mb-3">Galeri Karya Mahasiswa (Card Stacks)</label>
-                            
-                            <!-- Existing Uploaded Images -->
-                            <div v-if="form.hero_gallery.length > 0" class="mb-4">
-                                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Sudah Diunggah</p>
-                                <div class="grid grid-cols-4 gap-2">
-                                    <div v-for="img in form.hero_gallery" :key="img" class="relative group aspect-square rounded-lg overflow-hidden border border-slate-200">
-                                        <img :src="img" alt="Gallery image preview" class="w-full h-full object-cover">
-                                        <button @click="removeExistingGallery(img)" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <X class="w-3 h-3"/>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- New Files Preview -->
-                            <div v-if="newHeroFilePreviews.length > 0" class="mb-4">
-                                <p class="text-[11px] font-bold text-blue-500 uppercase tracking-wider mb-2">Baru Dipilih ({{ newHeroFilePreviews.length }} file)</p>
-                                <div class="grid grid-cols-4 gap-2">
-                                    <div v-for="(preview, i) in newHeroFilePreviews" :key="i" class="relative group aspect-square rounded-lg overflow-hidden border-2 border-blue-300">
-                                        <img :src="preview" alt="Gallery image preview" class="w-full h-full object-cover">
-                                        <button @click="removeNewHero(i)" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <X class="w-3 h-3"/>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <input type="file" multiple accept="image/*" class="hidden" ref="heroGalleryInput" @change="handleHeroUpload">
-                            <button @click="heroGalleryInput?.click()" class="flex items-center gap-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 px-4 py-2.5 rounded-xl text-[12px] font-bold hover:bg-blue-50 hover:text-[#2563EB] transition-colors border border-slate-200 dark:border-slate-600">
-                                <Upload class="w-4 h-4"/> Pilih Gambar
-                            </button>
-                            <p class="text-[11px] text-slate-400 mt-2">Klik Simpan Perubahan untuk mengupload gambar ke server.</p>
-                        </div>
                     </div>
 
                     <div v-if="editingWidget === 'partners'" class="space-y-5">
+                        <!-- Validation error alert if any -->
+                        <div v-if="hasPartnerError" class="bg-rose-50/80 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-800 rounded-2xl p-4 flex gap-3 shadow-sm">
+                            <div class="text-rose-500 shrink-0 mt-0.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-[13px] font-bold text-rose-800 dark:text-rose-300">Gagal Mengunggah Logo</h4>
+                                <p class="text-[11px] font-bold text-rose-700 dark:text-rose-400 mt-1">
+                                    {{ partnerError }}
+                                </p>
+                            </div>
+                        </div>
                         <div>
                             <label class="block text-[12px] font-bold text-slate-600 dark:text-slate-400 mb-3">Logo Mitra & Kerjasama</label>
                             
@@ -537,9 +620,9 @@ const submit = () => {
                             <div v-if="form.partners.length > 0" class="mb-4">
                                 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Sudah Diunggah</p>
                                 <div class="grid grid-cols-4 gap-2">
-                                    <div v-for="img in form.partners" :key="img" class="relative group aspect-video rounded-lg overflow-hidden border border-slate-200 bg-white flex items-center justify-center p-2">
-                                        <img :src="img" alt="Partner logo preview" class="max-w-full max-h-full object-contain">
-                                        <button @click="removeExistingPartner(img)" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div v-for="img in form.partners" :key="typeof img === 'object' ? img.logo : img" class="relative group aspect-video rounded-lg overflow-hidden border border-slate-200 bg-white flex items-center justify-center p-2">
+                                        <img :src="typeof img === 'object' ? img.logo : img" alt="Partner logo preview" class="max-w-full max-h-full object-contain">
+                                        <button @click="removeExistingPartner(typeof img === 'object' ? img.logo : img)" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <X class="w-3 h-3"/>
                                         </button>
                                     </div>
@@ -560,10 +643,17 @@ const submit = () => {
                             </div>
 
                             <input type="file" multiple accept="image/*" class="hidden" ref="partnerInput" @change="handlePartnerUpload">
-                            <button @click="partnerInput?.click()" class="flex items-center gap-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 px-4 py-2.5 rounded-xl text-[12px] font-bold hover:bg-blue-50 hover:text-[#2563EB] transition-colors border border-slate-200 dark:border-slate-600">
-                                <Upload class="w-4 h-4"/> Pilih Logo Mitra
-                            </button>
-                            <p class="text-[11px] text-slate-400 mt-2">Klik Simpan Perubahan untuk mengupload logo ke server.</p>
+                            <div 
+                                @click="partnerInput?.click()" 
+                                class="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 bg-slate-50/50 dark:bg-slate-900/30 hover:bg-indigo-50/10 rounded-xl p-5 cursor-pointer transition-all text-center group"
+                            >
+                                <div class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-500 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950/30 group-hover:text-indigo-600 transition-colors mb-2">
+                                    <Upload class="w-4 h-4"/>
+                                </div>
+                                <span class="text-[12px] font-bold text-slate-700 dark:text-zinc-300">Klik untuk unggah logo mitra</span>
+                                <span class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Rekomendasi rasio: <strong>Lanskap (16:9 / 4:3)</strong>, resolusi <strong>600x300 px</strong></span>
+                                <span class="text-[9px] text-slate-400 dark:text-zinc-600 mt-0.5">Mendukung format PNG, JPG, JPEG, WEBP, SVG (maks. 5MB)</span>
+                            </div>
                         </div>
                     </div>
 
@@ -585,16 +675,28 @@ const submit = () => {
 
                     <!-- GALLERY MODAL -->
                     <div v-if="editingWidget === 'gallery'" class="space-y-5">
+                        <!-- Validation error alert if any -->
+                        <div v-if="hasGalleryError" class="bg-rose-50/80 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-800 rounded-2xl p-4 flex gap-3 shadow-sm">
+                            <div class="text-rose-500 shrink-0 mt-0.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-[13px] font-bold text-rose-800 dark:text-rose-300">Gagal Mengunggah Gambar</h4>
+                                <p class="text-[11px] font-bold text-rose-700 dark:text-rose-400 mt-1">
+                                    {{ galleryError }}
+                                </p>
+                            </div>
+                        </div>
                         <div>
-                            <label class="block text-[12px] font-bold text-slate-600 dark:text-slate-400 mb-1">Gambar Galeri Karya Mahasiswa</label>
-                            <p class="text-[11px] text-slate-400 mb-4">Upload gambar karya mahasiswa. Akan muncul sebagai card stack interaktif di bagian atas Landing Page. Bisa lebih dari satu gambar.</p>
+                            <label class="block text-[12px] font-bold text-slate-600 dark:text-slate-400 mb-1">Gambar Galeri dan Event</label>
+                            <p class="text-[11px] text-slate-400 mb-4">Upload gambar galeri dan event. Akan muncul sebagai card stack interaktif di bagian atas Landing Page. Bisa lebih dari satu gambar.</p>
                         </div>
 
                         <!-- Existing Images Grid -->
                         <div v-if="form.hero_gallery.length > 0">
                             <p class="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-3">Gambar Tersimpan ({{ form.hero_gallery.length }})</p>
                             <div class="grid grid-cols-3 gap-3">
-                                <div v-for="img in form.hero_gallery" :key="img" class="relative group aspect-[4/3] rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+                                <div v-for="img in form.hero_gallery" :key="img" class="relative group aspect-square rounded-xl overflow-hidden border border-slate-200 shadow-sm">
                                     <img :src="img" alt="Gallery image preview" class="w-full h-full object-cover">
                                     <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
                                         <button @click="removeExistingGallery(img)" class="opacity-0 group-hover:opacity-100 bg-red-500 text-white rounded-full p-1.5 transition-opacity shadow-md">
@@ -609,7 +711,7 @@ const submit = () => {
                         <div v-if="newHeroFilePreviews.length > 0">
                             <p class="text-[11px] font-black text-blue-500 uppercase tracking-wider mb-3">Akan Diunggah ({{ newHeroFilePreviews.length }})</p>
                             <div class="grid grid-cols-3 gap-3">
-                                <div v-for="(preview, i) in newHeroFilePreviews" :key="i" class="relative group aspect-[4/3] rounded-xl overflow-hidden border-2 border-blue-300 shadow-sm">
+                                <div v-for="(preview, i) in newHeroFilePreviews" :key="i" class="relative group aspect-square rounded-xl overflow-hidden border-2 border-blue-300 shadow-sm">
                                     <img :src="preview" alt="Gallery image preview" class="w-full h-full object-cover">
                                     <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
                                         <button @click="removeNewHero(i)" class="opacity-0 group-hover:opacity-100 bg-red-500 text-white rounded-full p-1.5 transition-opacity shadow-md">
@@ -620,6 +722,20 @@ const submit = () => {
                             </div>
                         </div>
 
+                        <!-- Upload Click Area -->
+                        <div class="border-t border-slate-100 dark:border-slate-700 pt-5">
+                            <div 
+                                @click="heroGalleryInput?.click()" 
+                                class="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 bg-slate-50/50 dark:bg-slate-900/30 hover:bg-indigo-50/10 rounded-xl p-5 cursor-pointer transition-all text-center group"
+                            >
+                                <div class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-500 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950/30 group-hover:text-indigo-600 transition-colors mb-2">
+                                    <Upload class="w-4 h-4"/>
+                                </div>
+                                <span class="text-[12px] font-bold text-slate-700 dark:text-zinc-300">Klik untuk unggah gambar</span>
+                                <span class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Rekomendasi rasio: <strong>1:1 (Persegi)</strong>, resolusi <strong>800x800 px</strong></span>
+                                <span class="text-[9px] text-slate-400 dark:text-zinc-600 mt-0.5">Mendukung format PNG, JPG, JPEG, WEBP (maks. 5MB)</span>
+                            </div>
+                        </div>
                     </div>
 
                 </div>

@@ -45,7 +45,17 @@ class StudentRegistrationActionService
 
         try {
             DB::transaction(function () use ($registration, $payload, $newPath, $newOriginalName, $newUploadedAt): void {
-                $registration->update([
+                $locked = PendaftaranMagang::where('id', $registration->id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $locked || $locked->status !== 'revisi') {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'registration' => 'Status pendaftaran telah berubah atau tidak valid untuk perbaikan.',
+                    ]);
+                }
+
+                $locked->update([
                     ...$payload,
                     'proposal_pkl_path' => $newPath,
                     'proposal_pkl_original_name' => $newOriginalName,
@@ -71,6 +81,18 @@ class StudentRegistrationActionService
 
         try {
             DB::transaction(function () use ($user, $payload, $proposalFile, $newPath): void {
+                $latestRegistration = PendaftaranMagang::where('mahasiswa_id', $user->id)
+                    ->orderByDesc('tanggal_mulai')
+                    ->orderByDesc('id')
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($latestRegistration && ! in_array($latestRegistration->status, ['revisi', 'rejected', 'selesai'], true)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'registration' => 'Pendaftaran aktif atau pending sudah ada. Selesaikan atau tunggu review kampus.',
+                    ]);
+                }
+
                 PendaftaranMagang::create([
                     'mahasiswa_id' => $user->id,
                     ...$payload,

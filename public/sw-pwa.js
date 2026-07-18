@@ -206,3 +206,68 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
+
+// ── Web Push Notifications ───────────────────────────────────────────────────
+
+// Listener untuk event push (notifikasi latar belakang)
+self.addEventListener('push', (event) => {
+  if (!event.data) {
+    console.log('[Service Worker] Push event received with no data.');
+    return;
+  }
+
+  try {
+    const payload = event.data.json();
+    const title = payload.title || 'Portal FMIKOM';
+    const options = {
+      body: payload.body || 'Ada notifikasi terbaru untuk Anda.',
+      icon: payload.icon || '/asset/android-chrome-192x192.png',
+      badge: payload.badge || '/asset/android-chrome-192x192.png',
+      vibrate: payload.vibrate || [100, 50, 100],
+      data: {
+        url: payload.url || '/dashboard'
+      }
+    };
+
+    event.waitUntil(
+      self.registration.showNotification(title, options)
+    );
+  } catch (error) {
+    console.error('[Service Worker] Failed to parse push notification data:', error);
+    // Fallback if data is not JSON
+    const text = event.data.text();
+    event.waitUntil(
+      self.registration.showNotification('Portal FMIKOM', {
+        body: text,
+        icon: '/asset/android-chrome-192x192.png',
+        badge: '/asset/android-chrome-192x192.png',
+        data: {
+          url: '/dashboard'
+        }
+      })
+    );
+  }
+});
+
+// Listener untuk aksi klik pada notifikasi
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const targetUrl = event.notification.data?.url || '/dashboard';
+  const fullUrl = new URL(targetUrl, self.location.origin).href;
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Jika tab aplikasi sudah terbuka, fokuskan ke tab tersebut
+      for (const client of clientList) {
+        if (client.url === fullUrl && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Jika belum terbuka, buka tab baru
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(fullUrl);
+      }
+    })
+  );
+});

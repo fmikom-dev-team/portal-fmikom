@@ -137,7 +137,7 @@ const getCategoryColor = (category: string) => {
                             Modul Utama & Halaman Publik
                         </h2>
                         
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             <!-- FAST -->
                             <div class="p-4 bg-slate-50/50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 rounded-xl">
                                 <div class="flex items-center gap-2.5 mb-2 text-slate-900 dark:text-white font-bold text-sm">
@@ -159,6 +159,18 @@ const getCategoryColor = (category: string) => {
                                 <p class="text-xs text-slate-500 mb-3">Manajemen pendaftaran, logbook, dan penilaian magang.</p>
                                 <a href="/login" class="text-xs text-emerald-600 dark:text-emerald-400 font-bold inline-flex items-center gap-1 hover:underline">
                                     Akses WIMS <ArrowRight class="w-3 h-3" />
+                                </a>
+                            </div>
+
+                            <!-- TRACE -->
+                            <div class="p-4 bg-slate-50/50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 rounded-xl">
+                                <div class="flex items-center gap-2.5 mb-2 text-slate-900 dark:text-white font-bold text-sm">
+                                    <span class="px-2 py-0.5 text-[10px] font-black tracking-wider bg-rose-500 text-white rounded uppercase">TRACE</span>
+                                    Tracer Study
+                                </div>
+                                <p class="text-xs text-slate-500 mb-3">Pelacakan karir dan aktivitas alumni untuk pengembangan mutu kurikulum.</p>
+                                <a href="/login" class="text-xs text-rose-600 dark:text-rose-400 font-bold inline-flex items-center gap-1 hover:underline">
+                                    Akses TRACE <ArrowRight class="w-3 h-3" />
                                 </a>
                             </div>
 

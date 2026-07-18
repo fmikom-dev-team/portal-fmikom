@@ -82,31 +82,31 @@ const timeAgo = (iso: string) => {
     <div class="space-y-5 animate-fade-in max-w-[900px]">
 
         <!-- Header -->
-        <div class="flex items-center justify-between border-b border-gray-200 pb-5">
+        <div class="flex items-center justify-between border-b border-gray-200 dark:border-zinc-700 pb-5">
             <div>
-                <h1 class="text-2xl font-semibold text-gray-900">Audit Logs</h1>
-                <p class="text-[14px] text-gray-500 mt-1">Immutable record of all authentication events.</p>
+                <h1 class="text-2xl font-semibold text-gray-900 dark:text-zinc-100">Audit Logs</h1>
+                <p class="text-[14px] text-gray-500 dark:text-zinc-400 mt-1">Immutable record of all authentication events.</p>
             </div>
-            <button @click="loadLogs()" class="p-2 hover:bg-gray-100 rounded-lg text-gray-500">
+            <button @click="loadLogs()" class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 dark:bg-zinc-800 rounded-lg text-gray-500 dark:text-zinc-400">
                 <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': isLoading }" />
             </button>
         </div>
 
         <!-- Filters -->
         <div class="flex items-center gap-3 flex-wrap">
-            <div class="flex items-center gap-2 flex-1 min-w-48 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
-                <Search class="w-4 h-4 text-gray-400 shrink-0" />
-                <input v-model="searchInput" @input="onSearchInput" placeholder="Search events..." class="text-[13px] flex-1 outline-none placeholder-gray-400" />
+            <div class="flex items-center gap-2 flex-1 min-w-48 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg px-3 py-1.5">
+                <Search class="w-4 h-4 text-gray-400 dark:text-zinc-500 shrink-0" />
+                <input v-model="searchInput" @input="onSearchInput" placeholder="Search events..." class="text-[13px] flex-1 outline-none placeholder-gray-400 dark:placeholder-zinc-500" />
             </div>
             <select v-model="filters.severity" @change="loadLogs()"
-                class="text-[13px] border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-300 text-gray-600 bg-white">
+                class="text-[13px] border border-gray-200 dark:border-zinc-700 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-300 text-gray-600 dark:text-zinc-400 bg-white dark:bg-zinc-900">
                 <option value="">All severities</option>
                 <option value="info">Info</option>
                 <option value="warning">Warning</option>
                 <option value="critical">Critical</option>
             </select>
             <select v-model="filters.days" @change="loadLogs()"
-                class="text-[13px] border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-300 text-gray-600 bg-white">
+                class="text-[13px] border border-gray-200 dark:border-zinc-700 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-300 text-gray-600 dark:text-zinc-400 bg-white dark:bg-zinc-900">
                 <option :value="1">Last 24h</option>
                 <option :value="7">Last 7 days</option>
                 <option :value="30">Last 30 days</option>
@@ -115,23 +115,23 @@ const timeAgo = (iso: string) => {
         </div>
 
         <!-- Table -->
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-            <div v-if="!isLoading && logs.length === 0" class="text-center py-12 text-gray-500 text-[14px]">
+        <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl shadow-sm overflow-hidden dark:shadow-none">
+            <div v-if="!isLoading && logs.length === 0" class="text-center py-12 text-gray-500 dark:text-zinc-400 text-[14px]">
                 No audit events found for the selected filters.
             </div>
 
             <table v-else class="w-full text-[13px]">
                 <caption class="sr-only">Tabel Log Audit Otentikasi</caption>
-                <thead class="bg-gray-50 border-b border-gray-100">
+                <thead class="bg-gray-50 dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800">
                     <tr>
-                        <th class="text-left px-4 py-2.5 font-medium text-gray-500">Event</th>
-                        <th class="text-left px-4 py-2.5 font-medium text-gray-500">User</th>
-                        <th class="text-left px-4 py-2.5 font-medium text-gray-500">IP Address</th>
-                        <th class="text-left px-4 py-2.5 font-medium text-gray-500">Severity</th>
-                        <th class="text-left px-4 py-2.5 font-medium text-gray-500">When</th>
+                        <th class="text-left px-4 py-2.5 font-medium text-gray-500 dark:text-zinc-400">Event</th>
+                        <th class="text-left px-4 py-2.5 font-medium text-gray-500 dark:text-zinc-400">User</th>
+                        <th class="text-left px-4 py-2.5 font-medium text-gray-500 dark:text-zinc-400">IP Address</th>
+                        <th class="text-left px-4 py-2.5 font-medium text-gray-500 dark:text-zinc-400">Severity</th>
+                        <th class="text-left px-4 py-2.5 font-medium text-gray-500 dark:text-zinc-400">When</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-50">
+                <tbody class="divide-y divide-gray-50 dark:divide-zinc-800">
                     <template v-if="isLoading">
                         <tr v-for="i in 5" :key="`sk-aud-${i}`">
                             <td class="px-4 py-3"><div class="h-4 wos-shimmer rounded w-36" /></td>
@@ -142,37 +142,37 @@ const timeAgo = (iso: string) => {
                         </tr>
                     </template>
                     <template v-else>
-                        <tr v-for="log in logs" :key="log.id" class="hover:bg-gray-50/50 transition-colors">
+                        <tr v-for="log in logs" :key="log.id" class="hover:bg-gray-50 dark:hover:bg-zinc-800 dark:bg-zinc-900/50 transition-colors">
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2">
                                     <span class="text-[12px]">{{ EVENT_ICONS[log.event] ?? '•' }}</span>
-                                    <code class="text-gray-700 font-mono text-[12px] bg-gray-100 px-1.5 py-0.5 rounded">{{ log.event }}</code>
+                                    <code class="text-gray-700 dark:text-zinc-300 font-mono text-[12px] bg-gray-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">{{ log.event }}</code>
                                 </div>
                             </td>
                             <td class="px-4 py-3">
-                                <span v-if="log.user" class="text-gray-700">{{ log.user.name }}</span>
-                                <span v-else class="text-gray-400 text-[12px]">System</span>
+                                <span v-if="log.user" class="text-gray-700 dark:text-zinc-300">{{ log.user.name }}</span>
+                                <span v-else class="text-gray-400 dark:text-zinc-500 text-[12px]">System</span>
                             </td>
-                            <td class="px-4 py-3 text-gray-500 font-mono text-[12px]">{{ log.ip_address ?? '—' }}</td>
+                            <td class="px-4 py-3 text-gray-500 dark:text-zinc-400 font-mono text-[12px]">{{ log.ip_address ?? '—' }}</td>
                             <td class="px-4 py-3">
                                 <span :class="['px-2 py-0.5 rounded-full border text-[11px] font-medium', SEVERITY_STYLE[log.severity]]">
                                     {{ log.severity }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-gray-500">{{ timeAgo(log.occurred_at) }}</td>
+                            <td class="px-4 py-3 text-gray-500 dark:text-zinc-400">{{ timeAgo(log.occurred_at) }}</td>
                         </tr>
                     </template>
                 </tbody>
             </table>
 
             <!-- Pagination -->
-            <div v-if="pagination.last_page > 1" class="px-4 py-3 border-t border-gray-100 flex items-center justify-between text-[13px] text-gray-500">
+            <div v-if="pagination.last_page > 1" class="px-4 py-3 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between text-[13px] text-gray-500 dark:text-zinc-400">
                 <span>{{ pagination.total }} total events · Page {{ pagination.current_page }} / {{ pagination.last_page }}</span>
                 <div class="flex gap-2">
                     <button @click="loadLogs(pagination.current_page - 1)" :disabled="pagination.current_page === 1"
-                        class="px-3 py-1 border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-40">Previous</button>
+                        class="px-3 py-1 border border-gray-200 dark:border-zinc-700 rounded-md hover:bg-gray-50 dark:hover:bg-zinc-800 dark:bg-zinc-900 disabled:opacity-40">Previous</button>
                     <button @click="loadLogs(pagination.current_page + 1)" :disabled="pagination.current_page === pagination.last_page"
-                        class="px-3 py-1 border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-40">Next</button>
+                        class="px-3 py-1 border border-gray-200 dark:border-zinc-700 rounded-md hover:bg-gray-50 dark:hover:bg-zinc-800 dark:bg-zinc-900 disabled:opacity-40">Next</button>
                 </div>
             </div>
         </div>

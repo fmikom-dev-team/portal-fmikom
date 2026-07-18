@@ -6,6 +6,7 @@ import Navbar from "../ui/Navbar.vue";
 import UmumNavbar from "../ui/UmumNavbar.vue";
 
 const WorkTab = defineAsyncComponent(() => import("./WorkTab.vue"));
+const EducationalTab = defineAsyncComponent(() => import("./EducationalTab.vue"));
 const GalleryTab = defineAsyncComponent(() => import("./GalleryTab.vue"));
 const SertifikatTab = defineAsyncComponent(() => import("./SertifikatTab.vue"));
 const AboutTab = defineAsyncComponent(() => import("./AboutTab.vue"));
@@ -78,7 +79,7 @@ const props = defineProps<{
 	}>;
 }>();
 
-const tabs = ["Work", "Gallery", "Certificates", "About"];
+const tabs = ["Work", "Educational", "Gallery", "Certificates", "About"];
 const page = usePage();
 const user = computed(
 	() =>
@@ -221,6 +222,15 @@ watch(
 	() => props.profileUser?.certificates,
 	(newVal) => {
 		certificates.value = [...(newVal || [])];
+	},
+	{ deep: true },
+);
+
+const educations = ref<any[]>([...(props.profileUser?.educations || [])]);
+watch(
+	() => props.profileUser?.educations,
+	(newVal) => {
+		educations.value = [...(newVal || [])];
 	},
 	{ deep: true },
 );
@@ -695,6 +705,14 @@ const headUrl = computed(() => {
 							@open-add-work="openAddWorkModal"
 							@edit-quick-work="openEditQuickWorkModal"
 							@like-updated="handleLikeUpdated"
+						/>
+						<EducationalTab 
+							v-else-if="activeTab === 'Educational'"
+							:educations="educations"
+							:isOwnProfile="isOwnProfile"
+							:isLoading="isLoading"
+							@add-toast="addToast"
+							@update-educations="(list) => educations = list"
 						/>
 						<GalleryTab 
 							v-else-if="activeTab === 'Gallery'"

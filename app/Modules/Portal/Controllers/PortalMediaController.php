@@ -31,7 +31,7 @@ class PortalMediaController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'files.*' => 'required|file|max:10240', // 10MB limit
+            'files.*' => 'required|file|mimes:jpg,jpeg,png,gif,webp,pdf,mp4,webm|max:10240', // 10MB limit
         ]);
 
         if ($request->hasFile('files')) {

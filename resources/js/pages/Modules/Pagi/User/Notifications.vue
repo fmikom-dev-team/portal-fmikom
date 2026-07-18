@@ -20,6 +20,7 @@ import {
 } from "lucide-vue-next";
 import { computed, ref } from "vue";
 import Navbar from "./ui/Navbar.vue";
+import MotionTabs from "@/components/ui/tabs/MotionTabs.vue";
 
 const props = defineProps<{
 	moduleName: string;
@@ -50,6 +51,12 @@ const allItems = computed(() => groups.value.flatMap((g) => g.items));
 const computedUnreadCount = computed(
 	() => allItems.value.filter((n) => n.unread).length,
 );
+
+const notificationTabs = computed(() => [
+	{ id: "all", label: "Semua" },
+	{ id: "unread", label: "Belum Dibaca", badge: computedUnreadCount.value > 0 ? computedUnreadCount.value : undefined, badgeClass: activeTab.value === 'unread' ? 'bg-red-50 dark:bg-zinc-650 text-red-600 dark:text-red-400' : 'bg-red-500 text-white' },
+	{ id: "read", label: "Dibaca" },
+]);
 
 const filteredGroups = computed(() => {
 	return groups.value
@@ -240,28 +247,16 @@ const handleCollaborationResponse = async (
 					</div>
 				</div>
 
-				<!-- Tab Filters Card -->
-				<div class="w-full flex rounded-2xl border border-slate-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 shadow-2xs p-1 gap-1">
-					<button
-						v-for="tab in (['all', 'unread', 'read'] as const)"
-						:key="tab"
-						@click="activeTab = tab"
-						class="flex-1 py-2 text-[10px] sm:text-xs font-bold rounded-xl uppercase tracking-wider transition-all cursor-pointer"
-						:class="[
-							activeTab === tab
-								? 'bg-slate-950 text-white dark:bg-white dark:text-zinc-950 shadow-2xs font-black'
-								: 'text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:hover:bg-zinc-850 dark:text-zinc-450 dark:hover:text-zinc-200'
-						]"
-					>
-						{{ tab === 'all' ? 'Semua' : tab === 'unread' ? 'Belum Dibaca' : 'Dibaca' }}
-								<span
-									v-if="tab === 'unread' && computedUnreadCount > 0"
-									class="ml-1 px-1.5 py-0.5 rounded-full text-[8px] bg-red-500 text-white font-bold leading-none"
-								>
-									{{ computedUnreadCount }}
-						</span>
-					</button>
-				</div>
+				<!-- Tab Filters Card with motion transition -->
+				<MotionTabs
+					v-model="activeTab"
+					:tabs="notificationTabs"
+					variant="pill"
+					container-class="w-full flex rounded-2xl border border-slate-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 shadow-2xs p-1 gap-1"
+					pill-class="bg-slate-950 dark:bg-white rounded-xl shadow-2xs"
+					active-class="text-white dark:text-zinc-950 font-black flex-1 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider justify-center"
+					inactive-class="text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:hover:bg-zinc-850 dark:text-zinc-450 dark:hover:text-zinc-200 flex-1 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider justify-center"
+				/>
 
 				<!-- Empty State -->
 				<div

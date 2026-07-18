@@ -6,8 +6,6 @@ import {
 	FileText,
 	Plus,
 	Search,
-	Share2,
-	Sparkles,
 	Trash2,
 } from "lucide-vue-next";
 import { computed, ref, watch } from "vue";
@@ -31,15 +29,30 @@ const selectedStatus = ref("all");
 // Map paginator list
 const postsList = computed(() => props.posts.data || []);
 
+import DeleteConfirmModal from "@/components/DeleteConfirmModal.vue";
+
+const isDeleteModalOpen = ref(false);
+const deleteId = ref<number | null>(null);
+
 const confirmDelete = (id: number) => {
-	if (confirm("Apakah Anda yakin ingin menghapus postingan ini?")) {
-		router.delete(`/portal-admin/posts/${id}`);
+	deleteId.value = id;
+	isDeleteModalOpen.value = true;
+};
+
+const handleDeleteConfirm = () => {
+	if (deleteId.value !== null) {
+		router.delete(`/portal-admin/posts/${deleteId.value}`, {
+			onFinish: () => {
+				isDeleteModalOpen.value = false;
+				deleteId.value = null;
+			}
+		});
 	}
 };
 
 // Filtered posts logic
 const filteredPosts = computed(() => {
-	return postsList.value.filter((post) => {
+	return postsList.value.filter((post: any) => {
 		// Status filter
 		if (
 			selectedStatus.value !== "all" &&
@@ -54,13 +67,13 @@ const filteredPosts = computed(() => {
 // Stats counters (based on current page)
 const countAll = computed(() => postsList.value.length);
 const countPublished = computed(
-	() => postsList.value.filter((p) => p.status === "published").length,
+	() => postsList.value.filter((p: any) => p.status === "published").length,
 );
 const countScheduled = computed(
-	() => postsList.value.filter((p) => p.status === "scheduled").length,
+	() => postsList.value.filter((p: any) => p.status === "scheduled").length,
 );
 const countDraft = computed(
-	() => postsList.value.filter((p) => p.status === "draft").length,
+	() => postsList.value.filter((p: any) => p.status === "draft").length,
 );
 
 const getFormattedDate = (dateStr: string) => {
@@ -300,6 +313,13 @@ watch(localSearch, (newSearch) => {
                 </div>
             </div>
         </div>
+        <DeleteConfirmModal
+            :show="isDeleteModalOpen"
+            title="Hapus Postingan"
+            message="Apakah Anda yakin ingin menghapus postingan ini? Postingan akan dihapus secara permanen dari portal."
+            @confirm="handleDeleteConfirm"
+            @cancel="isDeleteModalOpen = false"
+        />
     </PortalAdminLayout>
 </template>
 

@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\SuratController::index
-* @see app/Http/Controllers/Api/SuratController.php:21
+* @see app/Http/Controllers/Api/SuratController.php:22
 * @route '/api/fast/surat'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::index
-* @see app/Http/Controllers/Api/SuratController.php:21
+* @see app/Http/Controllers/Api/SuratController.php:22
 * @route '/api/fast/surat'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::index
-* @see app/Http/Controllers/Api/SuratController.php:21
+* @see app/Http/Controllers/Api/SuratController.php:22
 * @route '/api/fast/surat'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::index
-* @see app/Http/Controllers/Api/SuratController.php:21
+* @see app/Http/Controllers/Api/SuratController.php:22
 * @route '/api/fast/surat'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::store
-* @see app/Http/Controllers/Api/SuratController.php:60
+* @see app/Http/Controllers/Api/SuratController.php:61
 * @route '/api/fast/surat'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -60,7 +60,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::store
-* @see app/Http/Controllers/Api/SuratController.php:60
+* @see app/Http/Controllers/Api/SuratController.php:61
 * @route '/api/fast/surat'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -69,7 +69,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::store
-* @see app/Http/Controllers/Api/SuratController.php:60
+* @see app/Http/Controllers/Api/SuratController.php:61
 * @route '/api/fast/surat'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -79,10 +79,10 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::show
-* @see app/Http/Controllers/Api/SuratController.php:74
+* @see app/Http/Controllers/Api/SuratController.php:75
 * @route '/api/fast/surat/{surat}'
 */
-export const show = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+export const show = (args: { surat: string | number | { id: string | number } } | [surat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show.url(args, options),
     method: 'get',
 })
@@ -94,10 +94,10 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::show
-* @see app/Http/Controllers/Api/SuratController.php:74
+* @see app/Http/Controllers/Api/SuratController.php:75
 * @route '/api/fast/surat/{surat}'
 */
-show.url = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+show.url = (args: { surat: string | number | { id: string | number } } | [surat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { surat: args }
     }
@@ -127,30 +127,30 @@ show.url = (args: { surat: number | { id: number } } | [surat: number | { id: nu
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::show
-* @see app/Http/Controllers/Api/SuratController.php:74
+* @see app/Http/Controllers/Api/SuratController.php:75
 * @route '/api/fast/surat/{surat}'
 */
-show.get = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+show.get = (args: { surat: string | number | { id: string | number } } | [surat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show.url(args, options),
     method: 'get',
 })
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::show
-* @see app/Http/Controllers/Api/SuratController.php:74
+* @see app/Http/Controllers/Api/SuratController.php:75
 * @route '/api/fast/surat/{surat}'
 */
-show.head = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+show.head = (args: { surat: string | number | { id: string | number } } | [surat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: show.url(args, options),
     method: 'head',
 })
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::adminValidate
-* @see app/Http/Controllers/Api/SuratController.php:110
+* @see app/Http/Controllers/Api/SuratController.php:111
 * @route '/api/fast/surat/{surat}/admin-validation'
 */
-export const adminValidate = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+export const adminValidate = (args: { surat: string | number | { id: string | number } } | [surat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: adminValidate.url(args, options),
     method: 'post',
 })
@@ -162,10 +162,10 @@ adminValidate.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::adminValidate
-* @see app/Http/Controllers/Api/SuratController.php:110
+* @see app/Http/Controllers/Api/SuratController.php:111
 * @route '/api/fast/surat/{surat}/admin-validation'
 */
-adminValidate.url = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+adminValidate.url = (args: { surat: string | number | { id: string | number } } | [surat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { surat: args }
     }
@@ -195,20 +195,20 @@ adminValidate.url = (args: { surat: number | { id: number } } | [surat: number |
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::adminValidate
-* @see app/Http/Controllers/Api/SuratController.php:110
+* @see app/Http/Controllers/Api/SuratController.php:111
 * @route '/api/fast/surat/{surat}/admin-validation'
 */
-adminValidate.post = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+adminValidate.post = (args: { surat: string | number | { id: string | number } } | [surat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: adminValidate.url(args, options),
     method: 'post',
 })
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::approve
-* @see app/Http/Controllers/Api/SuratController.php:122
+* @see app/Http/Controllers/Api/SuratController.php:123
 * @route '/api/fast/surat/{surat}/approval'
 */
-export const approve = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+export const approve = (args: { surat: string | number | { id: string | number } } | [surat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: approve.url(args, options),
     method: 'post',
 })
@@ -220,10 +220,10 @@ approve.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::approve
-* @see app/Http/Controllers/Api/SuratController.php:122
+* @see app/Http/Controllers/Api/SuratController.php:123
 * @route '/api/fast/surat/{surat}/approval'
 */
-approve.url = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+approve.url = (args: { surat: string | number | { id: string | number } } | [surat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { surat: args }
     }
@@ -253,20 +253,20 @@ approve.url = (args: { surat: number | { id: number } } | [surat: number | { id:
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::approve
-* @see app/Http/Controllers/Api/SuratController.php:122
+* @see app/Http/Controllers/Api/SuratController.php:123
 * @route '/api/fast/surat/{surat}/approval'
 */
-approve.post = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+approve.post = (args: { surat: string | number | { id: string | number } } | [surat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: approve.url(args, options),
     method: 'post',
 })
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::generateDocument
-* @see app/Http/Controllers/Api/SuratController.php:136
+* @see app/Http/Controllers/Api/SuratController.php:137
 * @route '/api/fast/surat/{surat}/generate-document'
 */
-export const generateDocument = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+export const generateDocument = (args: { surat: string | number | { id: string | number } } | [surat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: generateDocument.url(args, options),
     method: 'post',
 })
@@ -278,10 +278,10 @@ generateDocument.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::generateDocument
-* @see app/Http/Controllers/Api/SuratController.php:136
+* @see app/Http/Controllers/Api/SuratController.php:137
 * @route '/api/fast/surat/{surat}/generate-document'
 */
-generateDocument.url = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+generateDocument.url = (args: { surat: string | number | { id: string | number } } | [surat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { surat: args }
     }
@@ -311,10 +311,10 @@ generateDocument.url = (args: { surat: number | { id: number } } | [surat: numbe
 
 /**
 * @see \App\Http\Controllers\Api\SuratController::generateDocument
-* @see app/Http/Controllers/Api/SuratController.php:136
+* @see app/Http/Controllers/Api/SuratController.php:137
 * @route '/api/fast/surat/{surat}/generate-document'
 */
-generateDocument.post = (args: { surat: number | { id: number } } | [surat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+generateDocument.post = (args: { surat: string | number | { id: string | number } } | [surat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: generateDocument.url(args, options),
     method: 'post',
 })

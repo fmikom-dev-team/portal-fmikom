@@ -126,6 +126,26 @@
 	background-color: #f9fafb;
 }
 
+/* ── Safe Area Utilities ─────────────────────────────────────────── */
+.pt-safe {
+	padding-top: env(safe-area-inset-top);
+}
+.pb-safe {
+	padding-bottom: env(safe-area-inset-bottom);
+}
+.pl-safe {
+	padding-left: env(safe-area-inset-left);
+}
+.pr-safe {
+	padding-right: env(safe-area-inset-right);
+}
+.mt-safe {
+	margin-top: env(safe-area-inset-top);
+}
+.mb-safe {
+	margin-bottom: env(safe-area-inset-bottom);
+}
+
 /* ── Print ──────────────────────────────────────────────────────── */
 @media print {
 	.wos-sidebar,
@@ -196,4 +216,188 @@
 	opacity: 0;
 	transform: translateY(-4px);
 }
+
+/* ================================================================
+   Sidebar Floating Highlighter
+   Dedicated class to avoid !important override conflicts
+   ================================================================ */
+.wos-sidebar-highlighter {
+    background-color: rgba(243, 244, 246, 0.85);
+}
+.dark .wos-sidebar-highlighter {
+    background-color: rgba(39, 39, 42, 0.75) !important;
+}
+
+/* ================================================================
+   Dark Mode — Shadow Removal & Card Border System
+   Cards in dark mode look modern with clearer borders, not shadows.
+   ================================================================ */
+
+/* Remove ALL shadows in dark mode (Tailwind shadow utilities) */
+.dark .wos-app [class*="shadow-"],
+.dark .wos-app .shadow {
+    box-shadow: none !important;
+}
+
+/* Remove CSS custom property shadows */
+.dark .wos-app {
+    --wos-shadow-xs: none;
+    --wos-shadow-sm: none;
+    --wos-shadow-md: none;
+    --wos-shadow-lg: none;
+    --wos-shadow-xl: none;
+    --wos-shadow-card: none;
+    --wos-shadow-card-hover: none;
+}
+
+/* ── Dark mode card borders — clearly visible ── */
+/* Target cards specifically (white/zinc-900 backgrounds with rounded corners) */
+.dark .wos-app .bg-white.rounded-xl,
+.dark .wos-app .bg-white.rounded-lg,
+.dark .wos-app .bg-zinc-900.rounded-xl,
+.dark .wos-app .bg-zinc-900.rounded-lg {
+    box-shadow: none !important;
+    border: 1px solid #3f3f46 !important;  /* zinc-700 — clearly visible */
+}
+
+/* Also target generic cards that use border utility */
+.dark .wos-app [class~="border"][class~="rounded-xl"],
+.dark .wos-app [class~="border"][class~="rounded-lg"] {
+    border-color: #3f3f46 !important;  /* zinc-700 */
+}
+
+/* Absolute positioned dropdowns — keep subtle shadow for depth */
+.dark .wos-app .absolute.rounded-xl,
+.dark .wos-app .absolute.rounded-lg,
+.dark .wos-app .absolute.rounded-2xl {
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 8px 24px rgba(0,0,0,0.50) !important;
+    border-color: #3f3f46 !important;
+}
+
+/* ================================================================
+   WorkOS Dark Mode — Comprehensive Overrides
+   Covers all hardcoded Tailwind color classes used in WorkOS pages
+   ================================================================ */
+
+/* ── Scrollbar ── */
+.dark .wos-scroll::-webkit-scrollbar-thumb { background: #3f3f46; }
+.dark .wos-scroll::-webkit-scrollbar-thumb:hover { background: #52525b; }
+
+/* ── Active nav indicator ── */
+.dark .wos-nav-item-active::before { background: #f4f4f5; }
+
+/* ── Skeleton shimmer ── */
+.dark .wos-shimmer {
+	background: linear-gradient(90deg, #27272a 25%, #3f3f46 50%, #27272a 75%);
+	background-size: 800px 100%;
+}
+
+/* ── Table row hover ── */
+.dark .wos-tr:hover td { background-color: #18181b; }
+
+/* ================================================================
+   Text color overrides (all hardcoded grays → zinc equivalents)
+   ================================================================ */
+
+/* Dark/near-black text → light zinc */
+.dark .wos-app .text-gray-900,
+.dark .wos-app .text-gray-800,
+.dark .wos-app .text-slate-900,
+.dark .wos-app .text-slate-800 { color: #f4f4f5 !important; }
+
+/* Medium gray text → medium zinc */
+.dark .wos-app .text-gray-700,
+.dark .wos-app .text-gray-600,
+.dark .wos-app .text-slate-700,
+.dark .wos-app .text-slate-600 { color: #d4d4d8 !important; }
+
+/* Muted gray text → muted zinc */
+.dark .wos-app .text-gray-500,
+.dark .wos-app .text-slate-500 { color: #a1a1aa !important; }
+
+/* Subtle/placeholder gray text → subtle zinc */
+.dark .wos-app .text-gray-400,
+.dark .wos-app .text-gray-300,
+.dark .wos-app .text-slate-400,
+.dark .wos-app .text-slate-300 { color: #71717a !important; }
+
+/* ================================================================
+   Background color overrides
+   ================================================================ */
+
+/* White backgrounds → dark zinc */
+.dark .wos-app .bg-white { background-color: #18181b !important; }
+
+/* Very light gray backgrounds → dark zinc */
+.dark .wos-app .bg-gray-50,
+.dark .wos-app .bg-slate-50 { background-color: #18181b !important; }
+
+.dark .wos-app .bg-gray-100,
+.dark .wos-app .bg-slate-100 { background-color: #27272a !important; }
+
+.dark .wos-app .bg-gray-200,
+.dark .wos-app .bg-slate-200 { background-color: #3f3f46 !important; }
+
+/* Dark buttons (gray-900/black) stay readable in dark mode */
+.dark .wos-app .bg-gray-900 { background-color: #e4e4e7 !important; color: #09090b !important; }
+.dark .wos-app .bg-gray-900:hover,
+.dark .wos-app .hover\:bg-black:hover { background-color: #f4f4f5 !important; }
+
+/* ── Hover states ── */
+.dark .wos-app .hover\:bg-gray-50:hover,
+.dark .wos-app .hover\:bg-gray-50\/80:hover { background-color: #27272a !important; }
+.dark .wos-app .hover\:bg-gray-100:hover { background-color: #27272a !important; }
+
+/* ================================================================
+   Border color overrides
+   ================================================================ */
+.dark .wos-app .border-gray-50,
+.dark .wos-app .border-gray-100,
+.dark .wos-app .border-slate-100 { border-color: #27272a !important; }
+
+.dark .wos-app .border-gray-200,
+.dark .wos-app .border-slate-200 { border-color: #3f3f46 !important; }
+
+.dark .wos-app .border-gray-300,
+.dark .wos-app .border-slate-300 { border-color: #52525b !important; }
+
+/* ================================================================
+   Form inputs — override to dark
+   ================================================================ */
+.dark .wos-app input:not([type="checkbox"]):not([type="radio"]),
+.dark .wos-app select,
+.dark .wos-app textarea {
+	background-color: #18181b !important;
+	border-color: #3f3f46 !important;
+	color: #f4f4f5 !important;
+}
+.dark .wos-app input::placeholder,
+.dark .wos-app textarea::placeholder { color: #52525b !important; }
+
+/* ================================================================
+   Secondary sidebar (Authentication sub-nav panel)
+   ================================================================ */
+.dark .wos-app [class*="bg-[#f9fafb]"],
+.dark .wos-app .bg-\[#f9fafb\] { background-color: #18181b !important; }
+
+/* Auth sub-nav sidebar active item — handled via Tailwind dark: classes now */
+
+/* ================================================================
+   Main content wrappers that are bg-white without rounded corners
+   (covers the flat white container inside Authentication/Users etc.)
+   ================================================================ */
+.dark .wos-app [class~="bg-white"] { background-color: #18181b !important; }
+
+/* ================================================================
+   Badge & tag overrides
+   ================================================================ */
+.dark .wos-app .bg-gray-100.text-gray-700,
+.dark .wos-app .bg-gray-100 { background-color: #3f3f46 !important; }
+.dark .wos-app .text-gray-700 { color: #d4d4d8 !important; }
+
+/* ================================================================
+   Dividers / separators
+   ================================================================ */
+.dark .wos-app .divide-gray-100 > * + * { border-color: #27272a !important; }
+.dark .wos-app .divide-gray-200 > * + * { border-color: #3f3f46 !important; }
 

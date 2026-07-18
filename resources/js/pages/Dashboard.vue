@@ -16,7 +16,7 @@ const props = defineProps({
 
 const page = usePage();
 const user = computed(
-    () => page.props.auth?.user || { name: "User", email: "" },
+    () => (page.props as any).auth?.user || { name: "User", email: "" },
 );
 const avatarUrl = computed(() => {
 	if (!user.value?.foto_path) return undefined;
