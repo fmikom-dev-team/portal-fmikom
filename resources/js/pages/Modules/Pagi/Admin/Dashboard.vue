@@ -19,8 +19,8 @@ const ModerationSummary = defineAsyncComponent(
 import ModerationTable from "@/components/Admin/ModerationTable.vue";
 import StatsCard from "@/components/Admin/StatsCard.vue";
 import ModerationModal from "@/components/Admin/ui/ModerationModal.vue";
-import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
 import MotionTabs from "@/components/ui/tabs/MotionTabs.vue";
+import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
 
 // === Types ===
 interface StatsChange {
@@ -245,10 +245,43 @@ const statsCards = computed(() => {
 const activeTab = ref<"all" | "report" | "new" | "comment">("all");
 
 const moderationTabs = computed(() => [
-	{ id: 'all', label: 'Semua', badge: allModerationItems.value.length, badgeClass: activeTab.value === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400' },
-	{ id: 'report', label: 'Laporan', badge: allModerationItems.value.filter(i => i.type === 'Laporan').length, badgeClass: activeTab.value === 'report' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400' },
-	{ id: 'new', label: 'Karya Baru', badge: allModerationItems.value.filter(i => i.type === 'Karya Baru').length, badgeClass: activeTab.value === 'new' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400' },
-	{ id: 'comment', label: 'Komentar', badge: allModerationItems.value.filter(i => i.type === 'Komentar').length, badgeClass: activeTab.value === 'comment' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400' },
+	{
+		id: "all",
+		label: "Semua",
+		badge: allModerationItems.value.length,
+		badgeClass:
+			activeTab.value === "all"
+				? "bg-white/20 text-white"
+				: "bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400",
+	},
+	{
+		id: "report",
+		label: "Laporan",
+		badge: allModerationItems.value.filter((i) => i.type === "Laporan").length,
+		badgeClass:
+			activeTab.value === "report"
+				? "bg-white/20 text-white"
+				: "bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400",
+	},
+	{
+		id: "new",
+		label: "Karya Baru",
+		badge: allModerationItems.value.filter((i) => i.type === "Karya Baru")
+			.length,
+		badgeClass:
+			activeTab.value === "new"
+				? "bg-white/20 text-white"
+				: "bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400",
+	},
+	{
+		id: "comment",
+		label: "Komentar",
+		badge: allModerationItems.value.filter((i) => i.type === "Komentar").length,
+		badgeClass:
+			activeTab.value === "comment"
+				? "bg-white/20 text-white"
+				: "bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400",
+	},
 ]);
 
 const filteredModerationItems = computed(() => {

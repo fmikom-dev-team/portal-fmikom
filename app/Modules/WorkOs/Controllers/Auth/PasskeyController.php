@@ -82,6 +82,7 @@ class PasskeyController extends Controller
 
             if (! $user->isAccountActive()) {
                 $msg = $user->getLoginBlockMessage() ?? 'Akun Anda tidak dapat diakses saat ini.';
+
                 return response()->json(['error' => $msg], 403);
             }
 

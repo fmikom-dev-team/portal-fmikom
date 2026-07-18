@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\PwaController;
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\EnsureFirstTimeLoginComplete;
 use App\Models\Portal\PortalDocument;
+use App\Models\Portal\PortalEvent;
 use App\Models\Portal\PortalPost;
 use App\Models\Portal\PortalSetting;
 use App\Models\Role;
@@ -39,7 +41,6 @@ use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Requests\LoginRequest;
-use App\Http\Controllers\PwaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -190,25 +191,26 @@ Route::get('/', function () {
     $events = Cache::remember('portal_welcome_events', 600, function () {
         try {
             $now = now();
-            return \App\Models\Portal\PortalEvent::where(function ($q) use ($now) {
+
+            return PortalEvent::where(function ($q) use ($now) {
                 $q->where('status', 'published')
                     ->orWhere(function ($sq) use ($now) {
                         $sq->where('status', 'scheduled')
                             ->where('published_at', '<=', $now);
                     });
             })
-            ->where(function ($q) use ($now) {
-                $q->where(function ($inner) use ($now) {
-                    $inner->whereNull('end_time')->where('start_time', '>=', $now);
-                })->orWhere(function ($inner) use ($now) {
-                    $inner->whereNotNull('end_time')->where('end_time', '>=', $now);
-                });
-            })
-            ->orderBy('start_time', 'asc')
-            ->take(3)
-            ->get()
-            ->toArray();
-        } catch (\Throwable $e) {
+                ->where(function ($q) use ($now) {
+                    $q->where(function ($inner) use ($now) {
+                        $inner->whereNull('end_time')->where('start_time', '>=', $now);
+                    })->orWhere(function ($inner) use ($now) {
+                        $inner->whereNotNull('end_time')->where('end_time', '>=', $now);
+                    });
+                })
+                ->orderBy('start_time', 'asc')
+                ->take(3)
+                ->get()
+                ->toArray();
+        } catch (Throwable $e) {
             return [];
         }
     });

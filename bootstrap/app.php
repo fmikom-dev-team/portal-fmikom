@@ -23,8 +23,10 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
 
 if (! defined('ROLE_SUPER_ADMIN_SUFFIX')) {
     define('ROLE_SUPER_ADMIN_SUFFIX', ':super-admin');
@@ -263,9 +265,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->with('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
         });
 
-        $exceptions->render(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e, $request) {
+        $exceptions->render(function (ThrottleRequestsException $e, $request) {
             if ($request->inertia() || $request->wantsJson()) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
+                throw ValidationException::withMessages([
                     'email' => __('auth.throttle', ['seconds' => $e->getHeaders()['Retry-After'] ?? 60]),
                 ]);
             }

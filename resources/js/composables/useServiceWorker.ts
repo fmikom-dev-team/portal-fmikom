@@ -60,9 +60,13 @@ export function initServiceWorkerUpdater(): void {
 	initialized = true;
 
 	// Registrasi Service Worker PWA
-	navigator.serviceWorker.register('/sw-pwa.js', { scope: '/' })
+	navigator.serviceWorker
+		.register("/sw-pwa.js", { scope: "/" })
 		.then((reg) => {
-			console.log("[PWA] Service Worker registered successfully with scope:", reg.scope);
+			console.log(
+				"[PWA] Service Worker registered successfully with scope:",
+				reg.scope,
+			);
 		})
 		.catch((err) => {
 			console.warn("[PWA] Service Worker registration failed:", err);

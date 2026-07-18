@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { X } from "lucide-vue-next";
-import { getToolSlug } from "./editorSuggestions";
 import { getInitialsAvatar } from "@/composables/useInitials";
+import { getToolSlug } from "./editorSuggestions";
 
 const props = defineProps<{
 	form: any;

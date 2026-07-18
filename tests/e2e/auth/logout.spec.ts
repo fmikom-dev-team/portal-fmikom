@@ -1,54 +1,69 @@
-import { test, expect } from '../fixtures/auth.fixture';
-import { ROUTES, TEST_USERS } from '../utils/selectors';
-import { LoginPage } from '../pages/LoginPage';
+import { expect, test } from "../fixtures/auth.fixture";
+import { LoginPage } from "../pages/LoginPage";
+import { ROUTES, TEST_USERS } from "../utils/selectors";
 
-test.describe('Authentication — Logout', () => {
-    test('mahasiswa dapat logout dari dashboard', async ({ authenticatedPage }) => {
-        await authenticatedPage.goto(ROUTES.portal);
-        await authenticatedPage.waitForLoadState('networkidle');
+test.describe("Authentication — Logout", () => {
+	test("mahasiswa dapat logout dari dashboard", async ({
+		authenticatedPage,
+	}) => {
+		await authenticatedPage.goto(ROUTES.portal);
+		await authenticatedPage.waitForLoadState("networkidle");
 
-        // Click the logout button in the UI (Inertia Link doing POST /logout)
-        const logoutBtn = authenticatedPage.locator('button:has-text("Logout"), a:has-text("Logout"), button:has-text("Keluar"), [href="/logout"]').first();
-        await logoutBtn.click();
-        
-        // Fortify redirects to homepage on web logout
-        await authenticatedPage.waitForURL(ROUTES.home, { timeout: 15_000 });
-        expect(authenticatedPage.url()).toMatch(/\/$/);
-    });
+		// Click the logout button in the UI (Inertia Link doing POST /logout)
+		const logoutBtn = authenticatedPage
+			.locator(
+				'button:has-text("Logout"), a:has-text("Logout"), button:has-text("Keluar"), [href="/logout"]',
+			)
+			.first();
+		await logoutBtn.click();
 
-    test('setelah logout, halaman terproteksi tidak bisa diakses', async ({ authenticatedPage }) => {
-        await authenticatedPage.goto(ROUTES.portal);
-        await authenticatedPage.waitForLoadState('networkidle');
+		// Fortify redirects to homepage on web logout
+		await authenticatedPage.waitForURL(ROUTES.home, { timeout: 15_000 });
+		expect(authenticatedPage.url()).toMatch(/\/$/);
+	});
 
-        // Logout
-        const logoutBtn = authenticatedPage.locator('button:has-text("Logout"), a:has-text("Logout"), button:has-text("Keluar"), [href="/logout"]').first();
-        await logoutBtn.click();
-        await authenticatedPage.waitForURL(ROUTES.home, { timeout: 15_000 });
+	test("setelah logout, halaman terproteksi tidak bisa diakses", async ({
+		authenticatedPage,
+	}) => {
+		await authenticatedPage.goto(ROUTES.portal);
+		await authenticatedPage.waitForLoadState("networkidle");
 
-        // Try to access protected page
-        await authenticatedPage.goto(ROUTES.settingsProfile);
-        await authenticatedPage.waitForURL(/\/login/, { timeout: 10_000 });
-        expect(authenticatedPage.url()).toMatch(/\/login/);
-    });
+		// Logout
+		const logoutBtn = authenticatedPage
+			.locator(
+				'button:has-text("Logout"), a:has-text("Logout"), button:has-text("Keluar"), [href="/logout"]',
+			)
+			.first();
+		await logoutBtn.click();
+		await authenticatedPage.waitForURL(ROUTES.home, { timeout: 15_000 });
 
-    test('session dihapus setelah logout', async ({ page, auth, db }) => {
-        await db.seed();
+		// Try to access protected page
+		await authenticatedPage.goto(ROUTES.settingsProfile);
+		await authenticatedPage.waitForURL(/\/login/, { timeout: 10_000 });
+		expect(authenticatedPage.url()).toMatch(/\/login/);
+	});
 
-        // UI login
-        const loginPage = new LoginPage(page);
-        await loginPage.goto();
-        await loginPage.login(TEST_USERS.mahasiswa.email, TEST_USERS.mahasiswa.password);
-        await page.waitForURL(/\/(dashboard|portal)/, { timeout: 15_000 });
+	test("session dihapus setelah logout", async ({ page, auth, db }) => {
+		await db.seed();
 
-        // Verify authenticated
-        const meResponse = await auth.me();
-        expect(meResponse?.authenticated).toBe(true);
+		// UI login
+		const loginPage = new LoginPage(page);
+		await loginPage.goto();
+		await loginPage.login(
+			TEST_USERS.mahasiswa.email,
+			TEST_USERS.mahasiswa.password,
+		);
+		await page.waitForURL(/\/(dashboard|portal)/, { timeout: 15_000 });
 
-        // Logout
-        await auth.logout();
+		// Verify authenticated
+		const meResponse = await auth.me();
+		expect(meResponse?.authenticated).toBe(true);
 
-        // Verify unauthenticated
-        const meAfter = await auth.me();
-        expect(meAfter?.authenticated).toBe(false);
-    });
+		// Logout
+		await auth.logout();
+
+		// Verify unauthenticated
+		const meAfter = await auth.me();
+		expect(meAfter?.authenticated).toBe(false);
+	});
 });

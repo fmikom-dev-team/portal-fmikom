@@ -34,8 +34,8 @@ import {
 	watch,
 } from "vue";
 import { Skeleton } from "@/components/ui/skeleton";
-import OptimizedImage from "../ui/OptimizedImage.vue";
 import { getInitialsAvatar } from "@/composables/useInitials";
+import OptimizedImage from "../ui/OptimizedImage.vue";
 
 const Preview = defineAsyncComponent(() => import("../ui/Preview.vue"));
 

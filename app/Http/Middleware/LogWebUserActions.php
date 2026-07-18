@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Modules\WorkOs\Services\AuditLogger;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Symfony\Component\HttpFoundation\Response;
 
 class LogWebUserActions
@@ -46,7 +47,7 @@ class LogWebUserActions
                 'path' => $path,
                 'method' => $method,
                 'status_code' => $statusCode,
-                'payload' => \Illuminate\Support\Arr::except($request->input(), ['password', 'password_confirmation', 'token', '_token', '_method']),
+                'payload' => Arr::except($request->input(), ['password', 'password_confirmation', 'token', '_token', '_method']),
             ];
 
             try {

@@ -27,18 +27,17 @@ import {
 	watch,
 } from "vue";
 import LazyWrapper from "@/components/Portal/LazyWrapper.vue";
-import { Skeleton } from "@/components/ui/skeleton";
 import ShadcnSearch from "@/components/ui/ShadcnSearch.vue";
-
+import { Skeleton } from "@/components/ui/skeleton";
+import { getInitialsAvatar } from "@/composables/useInitials";
 import { useLoadingState } from "@/composables/useLoadingState";
 import Navbar from "./ui/Navbar.vue";
 import OptimizedImage from "./ui/OptimizedImage.vue";
-import { getInitialsAvatar } from "@/composables/useInitials";
 
 const Preview = defineAsyncComponent(() => import("./ui/Preview.vue"));
 
-import VideoLazy from "./ui/VideoLazy.vue";
 import PagiShareModal from "./ui/PagiShareModal.vue";
+import VideoLazy from "./ui/VideoLazy.vue";
 
 const { isLoading } = useLoadingState();
 
@@ -235,11 +234,13 @@ const closeMenu = () => {
 const shareModalProject = ref<any>(null);
 const shareCopied = ref(false);
 const shareModalUser = computed(() => {
-	if (!shareModalProject.value) return { name: "", foto_path: null, pagi_username: null };
+	if (!shareModalProject.value)
+		return { name: "", foto_path: null, pagi_username: null };
 	return {
 		name: shareModalProject.value.user?.name || shareModalProject.value.author,
-		foto_path: shareModalProject.value.user?.foto_path || shareModalProject.value.avatar,
-		pagi_username: shareModalProject.value.user?.pagi_username
+		foto_path:
+			shareModalProject.value.user?.foto_path || shareModalProject.value.avatar,
+		pagi_username: shareModalProject.value.user?.pagi_username,
 	};
 });
 const openShareModal = (p: any, e: Event) => {

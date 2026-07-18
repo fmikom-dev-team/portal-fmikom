@@ -11,8 +11,8 @@ import {
 	X,
 } from "lucide-vue-next";
 import { computed, onMounted, onUnmounted, ref } from "vue";
-import OptimizedImage from "../ui/OptimizedImage.vue";
 import { getInitialsAvatar } from "@/composables/useInitials";
+import OptimizedImage from "../ui/OptimizedImage.vue";
 
 const props = withDefaults(
 	defineProps<{

@@ -212,7 +212,7 @@ class UsersController extends Controller
                 'rejected_by' => Auth::id(),
                 'rejected_at' => now(),
                 'rejection_reason' => $rejectionReason,
-            ], []);
+            ]);
 
         // Send rejection email notification
         try {

@@ -6,8 +6,8 @@ use App\Models\Portal\PushSubscription;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
+use Minishlink\WebPush\WebPush;
 
 class PwaController extends Controller
 {
@@ -58,7 +58,7 @@ class PwaController extends Controller
     public function sendTest(Request $request): JsonResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 401);
         }
 
@@ -82,10 +82,10 @@ class PwaController extends Controller
 
         try {
             $webPush = new WebPush($auth);
-            
+
             $payload = json_encode([
                 'title' => 'Portal FMIKOM',
-                'body' => 'Halo ' . $user->name . '! Ini adalah uji coba notifikasi latar belakang PWA Anda. 🎉',
+                'body' => 'Halo '.$user->name.'! Ini adalah uji coba notifikasi latar belakang PWA Anda. 🎉',
                 'icon' => '/asset/android-chrome-192x192.png',
                 'badge' => '/asset/android-chrome-192x192.png',
                 'vibrate' => [100, 50, 100],
@@ -108,9 +108,9 @@ class PwaController extends Controller
             foreach ($webPush->flush() as $report) {
                 $endpoint = $report->getEndpoint();
                 if ($report->isSuccess()) {
-                    $results[] = "[Push Sent] Success for endpoint: " . substr($endpoint, 0, 30) . "...";
+                    $results[] = '[Push Sent] Success for endpoint: '.substr($endpoint, 0, 30).'...';
                 } else {
-                    $results[] = "[Push Failed] Reason: " . $report->getReason() . " for endpoint: " . substr($endpoint, 0, 30);
+                    $results[] = '[Push Failed] Reason: '.$report->getReason().' for endpoint: '.substr($endpoint, 0, 30);
                     // Optionally clean up expired subscriptions
                     if ($report->isSubscriptionExpired()) {
                         PushSubscription::where('endpoint', $endpoint)->delete();
@@ -127,7 +127,7 @@ class PwaController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to send push notification: ' . $e->getMessage(),
+                'message' => 'Failed to send push notification: '.$e->getMessage(),
             ], 500);
         }
     }

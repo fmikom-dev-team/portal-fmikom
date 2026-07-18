@@ -27,7 +27,7 @@ const emit = defineEmits([
 	"click-socials",
 ]);
 
-const mappedTabs = computed(() => props.tabs.map(t => ({ id: t, label: t })));
+const mappedTabs = computed(() => props.tabs.map((t) => ({ id: t, label: t })));
 </script>
 
 <template>

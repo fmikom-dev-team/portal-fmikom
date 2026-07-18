@@ -231,7 +231,7 @@ class FirstTimeLoginController extends Controller
     {
         $user = $request->user();
 
-        if ($user->status_approval !== UserAccountStatus::Rejected->value) {
+        if ($user->status_approval !== UserAccountStatus::Rejected) {
             return back()->withErrors(['error' => 'Hanya pendaftaran yang ditolak yang dapat dibatalkan.']);
         }
 
