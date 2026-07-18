@@ -6,6 +6,7 @@ use App\Jobs\OptimizeVideoJob;
 use App\Services\VirusScannerService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 trait HandlesImageCompression
