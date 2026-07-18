@@ -1,14 +1,17 @@
 <?php
 
-use App\Models\User;
-use App\Models\Auth\AuthOtpToken;
-use App\Models\Auth\AuthMagicLink;
-use App\Models\Magang\PendaftaranMagang;
-use App\Enums\UserAccountStatus;
+use App\Actions\Fortify\ResetUserPassword;
 use App\Enums\OtpPurpose;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Carbon;
+use App\Enums\UserAccountStatus;
+use App\Models\Auth\AuthMagicLink;
+use App\Models\Auth\AuthOtpToken;
+use App\Models\Magang\PendaftaranMagang;
+use App\Models\User;
+use App\Modules\Wims\Services\Mahasiswa\Registration\StudentRegistrationActionService;
+use App\Modules\WorkOs\Services\AuthPlatform\PasskeyEngine;
+use App\Services\Auth\MagicLinkService;
+use App\Services\Auth\OtpService;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Features;
 
 test('BL-01: MFA challenge fails if no login session is active in request session', function () {
@@ -34,9 +37,9 @@ test('BL-02: Passkey authentication enforces account active status check', funct
     ]);
 
     // Mock passkeyEngine to return this suspended user
-    $mockEngine = Mockery::mock(\App\Modules\WorkOs\Services\AuthPlatform\PasskeyEngine::class);
+    $mockEngine = Mockery::mock(PasskeyEngine::class);
     $mockEngine->shouldReceive('verifyAuthentication')->andReturn($user);
-    $this->app->instance(\App\Modules\WorkOs\Services\AuthPlatform\PasskeyEngine::class, $mockEngine);
+    $this->app->instance(PasskeyEngine::class, $mockEngine);
 
     $response = $this->postJson(route('auth.passkeys.auth.verify'), [
         'id' => 'dummy',
@@ -87,7 +90,7 @@ test('BL-04: Magic link verification locks link record during verification', fun
         'expires_at' => now()->addMinutes(15),
     ]);
 
-    $service = app(\App\Services\Auth\MagicLinkService::class);
+    $service = app(MagicLinkService::class);
     $resolvedUser = $service->verify($user->email, $plainToken);
 
     expect($resolvedUser->id)->toBe($user->id);
@@ -103,9 +106,9 @@ test('BL-06: resubmitRevision prevents updating if registration is not in revisi
         'tanggal_selesai' => now()->addMonths(3)->toDateString(),
     ]);
 
-    $service = app(\App\Modules\Wims\Services\Mahasiswa\Registration\StudentRegistrationActionService::class);
+    $service = app(StudentRegistrationActionService::class);
 
-    $this->expectException(\Illuminate\Validation\ValidationException::class);
+    $this->expectException(ValidationException::class);
     $service->resubmitRevision($pendaftaran, [
         'catatan_pengajuan' => 'Re-submitting',
     ]);
@@ -118,7 +121,7 @@ test('BL-07: password reset updates password_changed_at and sets status_approval
         'password_changed_at' => null,
     ]);
 
-    $action = app(\App\Actions\Fortify\ResetUserPassword::class);
+    $action = app(ResetUserPassword::class);
     $action->reset($user, [
         'password' => 'BaruPass123!@#',
         'password_confirmation' => 'BaruPass123!@#',
@@ -154,7 +157,7 @@ test('BL-08: pruneExpired keeps used OTPs for 24 hours', function () {
         'expires_at' => now()->subHours(24)->addMinutes(10),
     ]);
 
-    $service = app(\App\Services\Auth\OtpService::class);
+    $service = app(OtpService::class);
     $service->pruneExpired();
 
     expect(AuthOtpToken::find($otp1->id))->not->toBeNull(); // retained!

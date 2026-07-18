@@ -6,6 +6,7 @@ use App\Mail\MagicLinkEmail;
 use App\Models\Auth\AuthAuditLog;
 use App\Models\Auth\AuthMagicLink;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
@@ -60,7 +61,7 @@ class MagicLinkService
         AuthMagicLink::where('email', '=', $email, 'and')
             ->where('is_used', '=', false, 'and')
             ->where('expires_at', '>', now(), 'and')
-            ->update(['is_used' => true, 'used_at' => now()], []);
+            ->update(['is_used' => true, 'used_at' => now()]);
 
         // Generate token
         $plainToken = Str::random(64);
@@ -117,7 +118,7 @@ class MagicLinkService
         }
         RateLimiter::hit($rateLimitKey, decaySeconds: 60);
 
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($email, $plainToken) {
+        return DB::transaction(function () use ($email, $plainToken) {
             $link = AuthMagicLink::where('email', '=', $email, 'and')
                 ->where('is_used', '=', false, 'and')
                 ->where('expires_at', '>', now(), 'and')

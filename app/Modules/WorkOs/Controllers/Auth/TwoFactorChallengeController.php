@@ -37,7 +37,7 @@ class TwoFactorChallengeController extends Controller
         }
 
         $user = User::findOrFail($userId);
-        
+
         if (! $user->isAccountActive()) {
             $request->session()->forget('login.id');
             $msg = $user->getLoginBlockMessage() ?? 'Akun Anda tidak dapat diakses saat ini.';

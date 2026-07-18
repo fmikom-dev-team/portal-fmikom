@@ -37,16 +37,17 @@ const PagiProgressOverlay = defineAsyncComponent(
 	() => import("./PagiProgressOverlay.vue"),
 );
 
-import { useAppearance } from "@/composables/useAppearance";
 import { ThemeTogglerButton } from "@/components/animate-ui/components/buttons/theme-toggler";
+import { useAppearance } from "@/composables/useAppearance";
 
 const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
 
 const activeTheme = computed({
-	get: () => appearance.value === "system" ? resolvedAppearance.value : appearance.value,
+	get: () =>
+		appearance.value === "system" ? resolvedAppearance.value : appearance.value,
 	set: (val) => {
 		updateAppearance(val);
-	}
+	},
 });
 
 const props = defineProps<{

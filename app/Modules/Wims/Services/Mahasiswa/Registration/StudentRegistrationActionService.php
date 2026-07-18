@@ -6,6 +6,7 @@ use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class StudentRegistrationActionService
@@ -50,7 +51,7 @@ class StudentRegistrationActionService
                     ->first();
 
                 if (! $locked || $locked->status !== 'revisi') {
-                    throw \Illuminate\Validation\ValidationException::withMessages([
+                    throw ValidationException::withMessages([
                         'registration' => 'Status pendaftaran telah berubah atau tidak valid untuk perbaikan.',
                     ]);
                 }
@@ -88,7 +89,7 @@ class StudentRegistrationActionService
                     ->first();
 
                 if ($latestRegistration && ! in_array($latestRegistration->status, ['revisi', 'rejected', 'selesai'], true)) {
-                    throw \Illuminate\Validation\ValidationException::withMessages([
+                    throw ValidationException::withMessages([
                         'registration' => 'Pendaftaran aktif atau pending sudah ada. Selesaikan atau tunggu review kampus.',
                     ]);
                 }

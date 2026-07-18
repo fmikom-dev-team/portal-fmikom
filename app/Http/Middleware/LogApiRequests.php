@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\Audit\AuditApiRequest;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Symfony\Component\HttpFoundation\Response;
 
 class LogApiRequests
@@ -26,7 +27,7 @@ class LogApiRequests
         // Only log API routes
         if ($request->is('api/*')) {
             // Strip sensitive data from payload
-            $payload = \Illuminate\Support\Arr::except($request->input(), ['password', 'password_confirmation', 'token']);
+            $payload = Arr::except($request->input(), ['password', 'password_confirmation', 'token']);
 
             AuditApiRequest::create([
                 'user_id' => auth()->id(),

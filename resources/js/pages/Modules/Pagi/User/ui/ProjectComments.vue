@@ -2,8 +2,8 @@
 import { usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import { computed, ref, watch } from "vue";
-import OptimizedImage from "./OptimizedImage.vue";
 import { getInitialsAvatar } from "@/composables/useInitials";
+import OptimizedImage from "./OptimizedImage.vue";
 
 interface Props {
 	portfolio?: any;
@@ -146,9 +146,7 @@ const handleReplySubmit = async (commentId: string) => {
 			comment.replies.push({
 				id: Date.now().toString(),
 				name: authUser.value.name,
-				avatar:
-					authUser.value.avatar ||
-					getInitialsAvatar(authUser.value.name),
+				avatar: authUser.value.avatar || getInitialsAvatar(authUser.value.name),
 				body: state.text,
 				time: "baru saja",
 				likes: [],
@@ -211,9 +209,7 @@ const handleCommentSubmit = async () => {
 		const newComment = {
 			id: Date.now().toString(),
 			name: authUser.value.name,
-			avatar:
-				authUser.value.avatar ||
-				getInitialsAvatar(authUser.value.name),
+			avatar: authUser.value.avatar || getInitialsAvatar(authUser.value.name),
 			body: commentText.value,
 			time: "baru saja",
 			likes: [],

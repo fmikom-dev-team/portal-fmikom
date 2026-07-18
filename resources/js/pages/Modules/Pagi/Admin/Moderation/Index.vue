@@ -3,8 +3,8 @@ import { router } from "@inertiajs/vue3";
 import { computed, ref } from "vue";
 import ModerationTable from "@/components/Admin/ModerationTable.vue";
 import ModerationModal from "@/components/Admin/ui/ModerationModal.vue";
-import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
 import MotionTabs from "@/components/ui/tabs/MotionTabs.vue";
+import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
 
 const props = defineProps<{
 	items?: Array<{
@@ -37,10 +37,42 @@ const activeTab = ref<"all" | "report" | "new" | "comment">("all");
 const allItems = computed(() => props.items ?? []);
 
 const moderationTabs = computed(() => [
-	{ id: 'all', label: 'Semua', badge: allItems.value.length, badgeClass: activeTab.value === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400' },
-	{ id: 'report', label: 'Laporan', badge: allItems.value.filter(i => i.type === 'Laporan').length, badgeClass: activeTab.value === 'report' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400' },
-	{ id: 'new', label: 'Karya Baru', badge: allItems.value.filter(i => i.type === 'Karya Baru').length, badgeClass: activeTab.value === 'new' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400' },
-	{ id: 'comment', label: 'Komentar', badge: allItems.value.filter(i => i.type === 'Komentar').length, badgeClass: activeTab.value === 'comment' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400' },
+	{
+		id: "all",
+		label: "Semua",
+		badge: allItems.value.length,
+		badgeClass:
+			activeTab.value === "all"
+				? "bg-white/20 text-white"
+				: "bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400",
+	},
+	{
+		id: "report",
+		label: "Laporan",
+		badge: allItems.value.filter((i) => i.type === "Laporan").length,
+		badgeClass:
+			activeTab.value === "report"
+				? "bg-white/20 text-white"
+				: "bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400",
+	},
+	{
+		id: "new",
+		label: "Karya Baru",
+		badge: allItems.value.filter((i) => i.type === "Karya Baru").length,
+		badgeClass:
+			activeTab.value === "new"
+				? "bg-white/20 text-white"
+				: "bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400",
+	},
+	{
+		id: "comment",
+		label: "Komentar",
+		badge: allItems.value.filter((i) => i.type === "Komentar").length,
+		badgeClass:
+			activeTab.value === "comment"
+				? "bg-white/20 text-white"
+				: "bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400",
+	},
 ]);
 
 const isLoading = ref(false);

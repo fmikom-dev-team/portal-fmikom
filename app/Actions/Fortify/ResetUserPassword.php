@@ -3,6 +3,7 @@
 namespace App\Actions\Fortify;
 
 use App\Concerns\PasswordValidationRules;
+use App\Enums\UserAccountStatus;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\ResetsUserPasswords;
@@ -25,7 +26,7 @@ class ResetUserPassword implements ResetsUserPasswords
         $user->forceFill([
             'password' => $input['password'],
             'password_changed_at' => now(),
-            'status_approval' => \App\Enums\UserAccountStatus::Activated,
+            'status_approval' => UserAccountStatus::Activated,
             'is_active' => true,
         ])->save();
     }

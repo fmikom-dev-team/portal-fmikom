@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import {
-	GraduationCap,
-	Calendar,
-	BookOpen,
-	Plus,
-	Pencil,
-	Trash2,
-	Loader2,
 	AlertCircle,
+	BookOpen,
+	Calendar,
+	GraduationCap,
+	Loader2,
+	Pencil,
+	Plus,
+	Trash2,
 } from "lucide-vue-next";
 import { computed, ref, watch } from "vue";
 import { Skeleton } from "@/components/ui/skeleton";
 import Modal from "../ui/Modal.vue";
-import MonthYearPickerPopover from "./MonthYearPickerPopover.vue";
 import { useEducations } from "./composables/useEducations";
+import MonthYearPickerPopover from "./MonthYearPickerPopover.vue";
 
 const props = withDefaults(
 	defineProps<{
@@ -90,8 +90,18 @@ const formatMonthYear = (dateStr: string) => {
 	if (!dateStr.includes("-")) return dateStr;
 	const [year, month] = dateStr.split("-");
 	const monthNames = [
-		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+		"Jan",
+		"Feb",
+		"Mar",
+		"Apr",
+		"May",
+		"Jun",
+		"Jul",
+		"Aug",
+		"Sep",
+		"Oct",
+		"Nov",
+		"Dec",
 	];
 	const mIdx = parseInt(month, 10) - 1;
 	return `${monthNames[mIdx] || month} ${year}`;

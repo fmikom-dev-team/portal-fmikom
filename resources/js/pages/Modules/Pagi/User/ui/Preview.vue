@@ -3,6 +3,7 @@ import { Link, router, usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import { Link2, Paperclip, Plus, Share2, X } from "lucide-vue-next";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { getInitialsAvatar } from "@/composables/useInitials";
 import { sanitize } from "@/composables/useSanitize";
 import {
 	getJustifiedLayout as computeLayout,
@@ -11,7 +12,6 @@ import {
 } from "@/utils/justifiedLayout";
 import Modal from "./Modal.vue";
 import OptimizedImage from "./OptimizedImage.vue";
-import { getInitialsAvatar } from "@/composables/useInitials";
 import PagiShareModal from "./PagiShareModal.vue";
 import ProjectComments from "./ProjectComments.vue";
 import VideoLazy from "./VideoLazy.vue";

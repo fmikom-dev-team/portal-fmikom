@@ -83,7 +83,7 @@ const page = usePage();
 const user = computed(
 	() =>
 		props.profileUser ||
-		page.props['auth']?.user || {
+		page.props["auth"]?.user || {
 			name: "User",
 			email: "",
 			role_title: "",
@@ -101,8 +101,8 @@ const user = computed(
 );
 
 const isOwnProfile = computed(() => {
-	if (!page.props['auth']?.user) return false;
-	return page.props['auth']?.user?.id === user.value.id;
+	if (!page.props["auth"]?.user) return false;
+	return page.props["auth"]?.user?.id === user.value.id;
 });
 
 const displayRoleName = computed(() => {
@@ -340,7 +340,7 @@ onMounted(() => {
 // Follow toggle — calls real API
 const isFollowLoading = ref(false);
 const toggleFollow = async () => {
-	if (!page.props['auth']?.user) {
+	if (!page.props["auth"]?.user) {
 		addToast("Silakan login terlebih dahulu untuk mengikuti creator.", "info");
 		return;
 	}
@@ -370,13 +370,13 @@ const toggleFollow = async () => {
 		localStorage.setItem(`follow_${user.value.id}`, String(data.following));
 
 		// Update auth user following state globally
-		if (page.props['auth']?.user) {
-			if (!page.props['auth'].user.metadata) {
-				page.props['auth'].user.metadata = {};
+		if (page.props["auth"]?.user) {
+			if (!page.props["auth"].user.metadata) {
+				page.props["auth"].user.metadata = {};
 			}
 			let list =
-				page.props['auth'].user.following ??
-				page.props['auth'].user.metadata?.following ??
+				page.props["auth"].user.following ??
+				page.props["auth"].user.metadata?.following ??
 				[];
 			list = [...list];
 			const targetId = Number(user.value.id);
@@ -387,8 +387,8 @@ const toggleFollow = async () => {
 			} else {
 				list = list.filter((id: any) => Number(id) !== targetId);
 			}
-			page.props['auth'].user.metadata.following = list;
-			page.props['auth'].user.following = list;
+			page.props["auth"].user.metadata.following = list;
+			page.props["auth"].user.following = list;
 		}
 
 		if (data.following) {
@@ -440,7 +440,7 @@ const toggleMessageSwitch = (e: Event) => {
 };
 
 const openChat = () => {
-	if (!page.props['auth']?.user) {
+	if (!page.props["auth"]?.user) {
 		addToast("Silakan login terlebih dahulu untuk mengirim pesan.", "info");
 		return;
 	}
@@ -629,9 +629,7 @@ const computedProfileImage = computed(() => {
 	if (!user.value.foto_path) return "";
 	if (user.value.foto_path.startsWith("http")) return user.value.foto_path;
 	const origin =
-		globalThis.window === undefined
-			? ""
-			: globalThis.window.location.origin;
+		globalThis.window === undefined ? "" : globalThis.window.location.origin;
 	return `${origin}/storage/${user.value.foto_path}`;
 });
 
@@ -656,7 +654,7 @@ const jsonLdString = computed(() => {
 			? `${globalThis.window !== undefined ? globalThis.window.location.origin : ""}/pagi/${user.value.pagi_username}`
 			: `${globalThis.window !== undefined ? globalThis.window.location.origin : ""}/pagi/profile/${user.value.id}`,
 		sameAs: sameAs,
-	}).replaceAll('<', '\\u003c');
+	}).replaceAll("<", "\\u003c");
 });
 
 const headTitle = computed(() => {

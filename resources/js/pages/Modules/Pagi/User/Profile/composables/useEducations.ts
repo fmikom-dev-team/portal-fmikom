@@ -59,7 +59,12 @@ export function useEducations(
 
 	// CRUD API Functions
 	const storeEducation = async () => {
-		if (!educationForm.value.level || !educationForm.value.institution || !educationForm.value.start_date || !educationForm.value.end_date) {
+		if (
+			!educationForm.value.level ||
+			!educationForm.value.institution ||
+			!educationForm.value.start_date ||
+			!educationForm.value.end_date
+		) {
 			emitAddToast("Harap isi semua field wajib.", "error");
 			return;
 		}
@@ -78,15 +83,25 @@ export function useEducations(
 			if (res.data?.success) {
 				localEducations.value = res.data.educations;
 				emitUpdateEducations(res.data.educations);
-				emitAddToast(res.data.message || "Riwayat pendidikan berhasil ditambahkan!", "success");
+				emitAddToast(
+					res.data.message || "Riwayat pendidikan berhasil ditambahkan!",
+					"success",
+				);
 				showAddModal.value = false;
 				resetForm();
 			} else {
-				emitAddToast(res.data?.message || "Gagal menambahkan riwayat pendidikan.", "error");
+				emitAddToast(
+					res.data?.message || "Gagal menambahkan riwayat pendidikan.",
+					"error",
+				);
 			}
 		} catch (err: any) {
 			console.error("Store education error:", err);
-			emitAddToast(err.response?.data?.message || "Gagal menambahkan data. Periksa jaringan Anda.", "error");
+			emitAddToast(
+				err.response?.data?.message ||
+					"Gagal menambahkan data. Periksa jaringan Anda.",
+				"error",
+			);
 		} finally {
 			isSubmitting.value = false;
 		}
@@ -96,7 +111,12 @@ export function useEducations(
 		const id = educationForm.value.id;
 		if (!id) return;
 
-		if (!educationForm.value.level || !educationForm.value.institution || !educationForm.value.start_date || !educationForm.value.end_date) {
+		if (
+			!educationForm.value.level ||
+			!educationForm.value.institution ||
+			!educationForm.value.start_date ||
+			!educationForm.value.end_date
+		) {
 			emitAddToast("Harap isi semua field wajib.", "error");
 			return;
 		}
@@ -115,15 +135,25 @@ export function useEducations(
 			if (res.data?.success) {
 				localEducations.value = res.data.educations;
 				emitUpdateEducations(res.data.educations);
-				emitAddToast(res.data.message || "Riwayat pendidikan berhasil diperbarui!", "success");
+				emitAddToast(
+					res.data.message || "Riwayat pendidikan berhasil diperbarui!",
+					"success",
+				);
 				showEditModal.value = false;
 				resetForm();
 			} else {
-				emitAddToast(res.data?.message || "Gagal memperbarui riwayat pendidikan.", "error");
+				emitAddToast(
+					res.data?.message || "Gagal memperbarui riwayat pendidikan.",
+					"error",
+				);
 			}
 		} catch (err: any) {
 			console.error("Update education error:", err);
-			emitAddToast(err.response?.data?.message || "Gagal memperbarui data. Periksa jaringan Anda.", "error");
+			emitAddToast(
+				err.response?.data?.message ||
+					"Gagal memperbarui data. Periksa jaringan Anda.",
+				"error",
+			);
 		} finally {
 			isSubmitting.value = false;
 		}
@@ -139,13 +169,23 @@ export function useEducations(
 			if (res.data?.success) {
 				localEducations.value = res.data.educations;
 				emitUpdateEducations(res.data.educations);
-				emitAddToast(res.data.message || "Riwayat pendidikan berhasil dihapus!", "success");
+				emitAddToast(
+					res.data.message || "Riwayat pendidikan berhasil dihapus!",
+					"success",
+				);
 			} else {
-				emitAddToast(res.data?.message || "Gagal menghapus riwayat pendidikan.", "error");
+				emitAddToast(
+					res.data?.message || "Gagal menghapus riwayat pendidikan.",
+					"error",
+				);
 			}
 		} catch (err: any) {
 			console.error("Delete education error:", err);
-			emitAddToast(err.response?.data?.message || "Gagal menghapus data. Periksa jaringan Anda.", "error");
+			emitAddToast(
+				err.response?.data?.message ||
+					"Gagal menghapus data. Periksa jaringan Anda.",
+				"error",
+			);
 		}
 	};
 

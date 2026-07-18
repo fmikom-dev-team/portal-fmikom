@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Head, usePage, router } from "@inertiajs/vue3";
-import { ArrowDown, Globe, Mail, RefreshCw, LogOut } from "lucide-vue-next";
+import { Head, router, usePage } from "@inertiajs/vue3";
+import { ArrowDown, Globe, LogOut, Mail, RefreshCw } from "lucide-vue-next";
 import { computed, onMounted, onUnmounted, ref } from "vue";
 
 defineProps<{

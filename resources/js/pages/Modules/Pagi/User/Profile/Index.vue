@@ -6,7 +6,9 @@ import Navbar from "../ui/Navbar.vue";
 import UmumNavbar from "../ui/UmumNavbar.vue";
 
 const WorkTab = defineAsyncComponent(() => import("./WorkTab.vue"));
-const EducationalTab = defineAsyncComponent(() => import("./EducationalTab.vue"));
+const EducationalTab = defineAsyncComponent(
+	() => import("./EducationalTab.vue"),
+);
 const GalleryTab = defineAsyncComponent(() => import("./GalleryTab.vue"));
 const SertifikatTab = defineAsyncComponent(() => import("./SertifikatTab.vue"));
 const AboutTab = defineAsyncComponent(() => import("./AboutTab.vue"));

@@ -42,16 +42,17 @@ const UserProfileDropdownCard = defineAsyncComponent(
 	() => import("./UserProfileDropdownCard.vue"),
 );
 
-import { useAppearance } from "@/composables/useAppearance";
 import { ThemeTogglerButton } from "@/components/animate-ui/components/buttons/theme-toggler";
+import { useAppearance } from "@/composables/useAppearance";
 
 const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
 
 const activeTheme = computed({
-	get: () => appearance.value === "system" ? resolvedAppearance.value : appearance.value,
+	get: () =>
+		appearance.value === "system" ? resolvedAppearance.value : appearance.value,
 	set: (val) => {
 		updateAppearance(val);
-	}
+	},
 });
 
 function throttle<T extends (...args: any[]) => any>(

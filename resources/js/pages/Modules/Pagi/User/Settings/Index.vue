@@ -17,9 +17,9 @@ import {
 	X,
 } from "lucide-vue-next";
 import { computed, ref, watch } from "vue";
+import MotionTabs from "@/components/ui/tabs/MotionTabs.vue";
 import Navbar from "../ui/Navbar.vue";
 import FmikomIdCard from "./FmikomIdCard.vue";
-import MotionTabs from "@/components/ui/tabs/MotionTabs.vue";
 
 interface ProfileUser {
 	id: number;

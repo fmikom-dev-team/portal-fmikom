@@ -25,11 +25,13 @@ class PublicEventController extends Controller
 
         $activeEvents = $allEvents->filter(function ($event) use ($now) {
             $compareTime = $event->end_time ?: $event->start_time;
+
             return $compareTime >= $now;
         })->sortBy('start_time')->values();
 
         $pastEvents = $allEvents->filter(function ($event) use ($now) {
             $compareTime = $event->end_time ?: $event->start_time;
+
             return $compareTime < $now;
         })->sortByDesc('start_time')->values();
 

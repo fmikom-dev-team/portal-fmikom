@@ -173,7 +173,7 @@ const handleCancel = () => {
 
 const handleDiscardDraft = async () => {
 	const confirmDiscard = confirm(
-		"Apakah Anda yakin ingin membuang draf pekerjaan ini?\n\nSemua perubahan yang belum disimpan akan dihapus secara permanen."
+		"Apakah Anda yakin ingin membuang draf pekerjaan ini?\n\nSemua perubahan yang belum disimpan akan dihapus secara permanen.",
 	);
 	if (confirmDiscard) {
 		if (globalThis.window !== undefined) {

@@ -19,8 +19,8 @@ import {
 	X,
 } from "lucide-vue-next";
 import { computed, ref } from "vue";
-import Navbar from "./ui/Navbar.vue";
 import MotionTabs from "@/components/ui/tabs/MotionTabs.vue";
+import Navbar from "./ui/Navbar.vue";
 
 const props = defineProps<{
 	moduleName: string;
@@ -54,7 +54,16 @@ const computedUnreadCount = computed(
 
 const notificationTabs = computed(() => [
 	{ id: "all", label: "Semua" },
-	{ id: "unread", label: "Belum Dibaca", badge: computedUnreadCount.value > 0 ? computedUnreadCount.value : undefined, badgeClass: activeTab.value === 'unread' ? 'bg-red-50 dark:bg-zinc-650 text-red-600 dark:text-red-400' : 'bg-red-500 text-white' },
+	{
+		id: "unread",
+		label: "Belum Dibaca",
+		badge:
+			computedUnreadCount.value > 0 ? computedUnreadCount.value : undefined,
+		badgeClass:
+			activeTab.value === "unread"
+				? "bg-red-50 dark:bg-zinc-650 text-red-600 dark:text-red-400"
+				: "bg-red-500 text-white",
+	},
 	{ id: "read", label: "Dibaca" },
 ]);
 

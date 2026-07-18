@@ -17,12 +17,12 @@ import {
 	X,
 } from "lucide-vue-next";
 import { computed, onUnmounted, ref, watch } from "vue";
+import { getInitialsAvatar } from "@/composables/useInitials";
 import Navbar from "./ui/Navbar.vue";
 import OptimizedImage from "./ui/OptimizedImage.vue";
+import PagiShareModal from "./ui/PagiShareModal.vue";
 import Preview from "./ui/Preview.vue";
 import VideoLazy from "./ui/VideoLazy.vue";
-import PagiShareModal from "./ui/PagiShareModal.vue";
-import { getInitialsAvatar } from "@/composables/useInitials";
 
 const props = defineProps<{
 	moduleName: string;
@@ -226,11 +226,12 @@ const closeMenu = () => {
 const shareModalItem = ref<any>(null);
 const shareCopied = ref(false);
 const shareModalUser = computed(() => {
-	if (!shareModalItem.value) return { name: "", foto_path: null, pagi_username: null };
+	if (!shareModalItem.value)
+		return { name: "", foto_path: null, pagi_username: null };
 	return {
 		name: shareModalItem.value.author?.name || "Kreator",
 		foto_path: shareModalItem.value.author?.avatar,
-		pagi_username: shareModalItem.value.author?.pagi_username
+		pagi_username: shareModalItem.value.author?.pagi_username,
 	};
 });
 const shareModalProject = computed(() => {
@@ -238,7 +239,7 @@ const shareModalProject = computed(() => {
 	return {
 		id: shareModalItem.value.portfolio_id || shareModalItem.value.id,
 		title: shareModalItem.value.title,
-		image: shareModalItem.value.url
+		image: shareModalItem.value.url,
 	};
 });
 const openShareModal = (item: any, e: Event) => {

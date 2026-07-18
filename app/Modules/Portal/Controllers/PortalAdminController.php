@@ -4,7 +4,6 @@ namespace App\Modules\Portal\Controllers;
 
 use App\Concerns\HandlesImageCompression;
 use App\Http\Controllers\Controller;
-use App\Models\Portal\PortalCategory;
 use App\Models\Portal\PortalComment;
 use App\Models\Portal\PortalDocument;
 use App\Models\Portal\PortalEvent;

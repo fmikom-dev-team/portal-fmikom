@@ -16,16 +16,17 @@ export function updateTheme(value: Appearance): void {
 	}
 
 	const path = window.location.pathname;
-	const isPublic = path === '/'
-		|| path.indexOf('/login') === 0
-		|| path.indexOf('/register') === 0
-		|| path.indexOf('/signup') === 0
-		|| path.indexOf('/two-factor') === 0
-		|| path.indexOf('/forgot-password') === 0
-		|| path.indexOf('/reset-password') === 0
-		|| path.indexOf('/confirm-password') === 0
-		|| path.indexOf('/verify-email') === 0
-		|| path.indexOf('/activate') === 0;
+	const isPublic =
+		path === "/" ||
+		path.indexOf("/login") === 0 ||
+		path.indexOf("/register") === 0 ||
+		path.indexOf("/signup") === 0 ||
+		path.indexOf("/two-factor") === 0 ||
+		path.indexOf("/forgot-password") === 0 ||
+		path.indexOf("/reset-password") === 0 ||
+		path.indexOf("/confirm-password") === 0 ||
+		path.indexOf("/verify-email") === 0 ||
+		path.indexOf("/activate") === 0;
 
 	let isDark = false;
 	if (isPublic) {

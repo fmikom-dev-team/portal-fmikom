@@ -155,7 +155,7 @@ class FortifyServiceProvider extends ServiceProvider
     private function configureRateLimiting(): void
     {
         RateLimiter::for('two-factor', function (Request $request) {
-            if (app()->environment('testing')) {
+            if (app()->environment('testing') && ! app()->runningUnitTests()) {
                 return Limit::none();
             }
 
@@ -163,7 +163,7 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('login', function (Request $request) {
-            if (app()->environment('testing')) {
+            if (app()->environment('testing') && ! app()->runningUnitTests()) {
                 return Limit::none();
             }
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());

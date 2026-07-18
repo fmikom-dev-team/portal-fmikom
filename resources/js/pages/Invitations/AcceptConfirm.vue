@@ -10,7 +10,7 @@ const props = defineProps<{
 }>();
 
 const acceptInvitation = () => {
-    router.post(`/invitations/accept/${props.token}`);
+	router.post(`/invitations/accept/${props.token}`);
 };
 </script>
 
