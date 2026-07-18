@@ -1,9 +1,13 @@
 <?php
 
 use App\Models\JenisSurat;
+use App\Models\Module;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\Surat;
 use App\Models\SuratLampiran;
 use App\Models\User;
+use App\Models\UserModuleRole;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 
@@ -93,24 +97,24 @@ it('lets approvers preview the same attachment through the approval route', func
     ]);
 
     // Seed the FAST module, role, and permissions to guarantee authorization in all environments
-    $module = \App\Models\Module::firstOrCreate(['code' => 'FAST'], [
+    $module = Module::firstOrCreate(['code' => 'FAST'], [
         'name' => 'FAST',
         'is_active' => true,
     ]);
 
-    $role = \App\Models\Role::firstOrCreate(['slug' => 'kaprodi'], [
+    $role = Role::firstOrCreate(['slug' => 'kaprodi'], [
         'nama' => 'Koordinator Program Studi',
         'deskripsi' => 'Kaprodi',
     ]);
 
-    $permission = \App\Models\Permission::firstOrCreate(['slug' => 'fast.approval.surat.view'], [
+    $permission = Permission::firstOrCreate(['slug' => 'fast.approval.surat.view'], [
         'name' => 'View Approval Surat',
         'group' => 'fast',
     ]);
 
     $role->permissions()->syncWithoutDetaching([$permission->id]);
 
-    \App\Models\UserModuleRole::firstOrCreate([
+    UserModuleRole::firstOrCreate([
         'user_id' => $approver->id,
         'module_id' => $module->id,
         'role_id' => $role->id,

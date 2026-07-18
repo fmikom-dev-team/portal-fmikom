@@ -80,7 +80,7 @@ jobs:
 
       # ── Environment Setup ─────────────────────────────────────────────────────
       - name: Copy Playwright environment file
-        run: cp .env.playwright .env
+        run: cp .env.playwright.example .env
 
       - name: Generate application key
         run: php artisan key:generate
