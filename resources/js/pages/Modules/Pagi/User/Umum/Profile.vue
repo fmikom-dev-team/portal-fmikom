@@ -83,7 +83,7 @@ const page = usePage();
 const user = computed(
 	() =>
 		props.profileUser ||
-		page.props.auth?.user || {
+		page.props['auth']?.user || {
 			name: "User",
 			email: "",
 			role_title: "",
@@ -101,8 +101,8 @@ const user = computed(
 );
 
 const isOwnProfile = computed(() => {
-	if (!page.props.auth?.user) return false;
-	return page.props.auth.user.id === user.value.id;
+	if (!page.props['auth']?.user) return false;
+	return page.props['auth']?.user?.id === user.value.id;
 });
 
 const displayRoleName = computed(() => {
@@ -213,7 +213,7 @@ const getInitialTab = () => {
 const activeTab = ref(getInitialTab());
 
 watch(activeTab, (newTab) => {
-	if (typeof globalThis.window !== "undefined") {
+	if (globalThis.window !== undefined) {
 		const path = globalThis.window.location.pathname;
 		const segments = path.split("/").filter(Boolean);
 		if (segments.length >= 2 && segments[0].toLowerCase() === "pagi") {
@@ -340,7 +340,7 @@ onMounted(() => {
 // Follow toggle — calls real API
 const isFollowLoading = ref(false);
 const toggleFollow = async () => {
-	if (!page.props.auth?.user) {
+	if (!page.props['auth']?.user) {
 		addToast("Silakan login terlebih dahulu untuk mengikuti creator.", "info");
 		return;
 	}
@@ -370,13 +370,13 @@ const toggleFollow = async () => {
 		localStorage.setItem(`follow_${user.value.id}`, String(data.following));
 
 		// Update auth user following state globally
-		if (page.props.auth?.user) {
-			if (!page.props.auth.user.metadata) {
-				page.props.auth.user.metadata = {};
+		if (page.props['auth']?.user) {
+			if (!page.props['auth'].user.metadata) {
+				page.props['auth'].user.metadata = {};
 			}
 			let list =
-				page.props.auth.user.following ??
-				page.props.auth.user.metadata?.following ??
+				page.props['auth'].user.following ??
+				page.props['auth'].user.metadata?.following ??
 				[];
 			list = [...list];
 			const targetId = Number(user.value.id);
@@ -387,8 +387,8 @@ const toggleFollow = async () => {
 			} else {
 				list = list.filter((id: any) => Number(id) !== targetId);
 			}
-			page.props.auth.user.metadata.following = list;
-			page.props.auth.user.following = list;
+			page.props['auth'].user.metadata.following = list;
+			page.props['auth'].user.following = list;
 		}
 
 		if (data.following) {
@@ -440,7 +440,7 @@ const toggleMessageSwitch = (e: Event) => {
 };
 
 const openChat = () => {
-	if (!page.props.auth?.user) {
+	if (!page.props['auth']?.user) {
 		addToast("Silakan login terlebih dahulu untuk mengirim pesan.", "info");
 		return;
 	}
@@ -482,17 +482,17 @@ const openRelationsModal = (type: "followers" | "following") => {
 	showRelationsModal.value = true;
 };
 
+const realFollowingCount = ref<number>(
+	props.profileUser?.following_count ??
+		user.value.metadata?.following?.length ??
+		0,
+);
+
 const updateFollowingCount = (following: boolean) => {
-	if (props.profileUser) {
-		if (following) {
-			props.profileUser.following_count =
-				(props.profileUser.following_count ?? 0) + 1;
-		} else {
-			props.profileUser.following_count = Math.max(
-				0,
-				(props.profileUser.following_count ?? 1) - 1,
-			);
-		}
+	if (following) {
+		realFollowingCount.value = realFollowingCount.value + 1;
+	} else {
+		realFollowingCount.value = Math.max(0, realFollowingCount.value - 1);
 	}
 };
 
@@ -506,11 +506,7 @@ const dynamicFollowersCount = computed(() => {
 });
 
 const dynamicFollowingCount = computed(() => {
-	return (
-		props.profileUser?.following_count ??
-		user.value.metadata?.following?.length ??
-		0
-	);
+	return realFollowingCount.value;
 });
 
 const displayOwnerRoleName = computed(() => {
@@ -633,7 +629,7 @@ const computedProfileImage = computed(() => {
 	if (!user.value.foto_path) return "";
 	if (user.value.foto_path.startsWith("http")) return user.value.foto_path;
 	const origin =
-		typeof globalThis.window === "undefined"
+		globalThis.window === undefined
 			? ""
 			: globalThis.window.location.origin;
 	return `${origin}/storage/${user.value.foto_path}`;
@@ -657,10 +653,10 @@ const jsonLdString = computed(() => {
 		description: user.value.bio || "",
 		image: computedProfileImage.value,
 		url: user.value.pagi_username
-			? `${typeof globalThis.window !== "undefined" ? globalThis.window.location.origin : ""}/pagi/${user.value.pagi_username}`
-			: `${typeof globalThis.window !== "undefined" ? globalThis.window.location.origin : ""}/pagi/profile/${user.value.id}`,
+			? `${globalThis.window !== undefined ? globalThis.window.location.origin : ""}/pagi/${user.value.pagi_username}`
+			: `${globalThis.window !== undefined ? globalThis.window.location.origin : ""}/pagi/profile/${user.value.id}`,
 		sameAs: sameAs,
-	});
+	}).replaceAll('<', '\\u003c');
 });
 
 const headTitle = computed(() => {
@@ -737,7 +733,11 @@ const headUrl = computed(() => {
 		<link rel="canonical" :href="headUrl" />
 
 		<!-- Structured JSON-LD Data -->
-		<script type="application/ld+json" v-html="jsonLdString"></script>
+		<component
+			:is="'script'"
+			type="application/ld+json"
+			v-text="jsonLdString"
+		/>
 	</Head>
 
 	<div class="min-h-screen bg-slate-100 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-slate-900 selection:text-white dark:selection:bg-white dark:selection:text-slate-900" style="font-family:'Inter',system-ui,sans-serif;">

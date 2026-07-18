@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\HistoryController::index
-* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:16
+* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:17
 * @route '/dosen/history'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\HistoryController::index
-* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:16
+* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:17
 * @route '/dosen/history'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\HistoryController::index
-* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:16
+* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:17
 * @route '/dosen/history'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\HistoryController::index
-* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:16
+* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:17
 * @route '/dosen/history'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\HistoryController::show
-* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:53
+* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:75
 * @route '/dosen/history/{id}'
 */
 export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -60,7 +60,7 @@ show.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\HistoryController::show
-* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:53
+* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:75
 * @route '/dosen/history/{id}'
 */
 show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -87,7 +87,7 @@ show.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\HistoryController::show
-* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:53
+* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:75
 * @route '/dosen/history/{id}'
 */
 show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ show.get = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\HistoryController::show
-* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:53
+* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:75
 * @route '/dosen/history/{id}'
 */
 show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -107,7 +107,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\HistoryController::cancel
-* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:178
+* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:217
 * @route '/dosen/surat/{id}/cancel'
 */
 export const cancel = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -122,7 +122,7 @@ cancel.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\HistoryController::cancel
-* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:178
+* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:217
 * @route '/dosen/surat/{id}/cancel'
 */
 cancel.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -149,7 +149,7 @@ cancel.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\HistoryController::cancel
-* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:178
+* @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:217
 * @route '/dosen/surat/{id}/cancel'
 */
 cancel.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({

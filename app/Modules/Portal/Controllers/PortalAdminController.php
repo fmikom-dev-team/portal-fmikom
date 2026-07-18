@@ -6,10 +6,14 @@ use App\Concerns\HandlesImageCompression;
 use App\Http\Controllers\Controller;
 use App\Models\Portal\PortalCategory;
 use App\Models\Portal\PortalComment;
+use App\Models\Portal\PortalDocument;
+use App\Models\Portal\PortalEvent;
 use App\Models\Portal\PortalMedia;
+use App\Models\Portal\PortalPage;
 use App\Models\Portal\PortalPost;
 use App\Models\Portal\PortalSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -20,7 +24,7 @@ class PortalAdminController extends Controller
     public function index()
     {
         $totalPosts = PortalPost::count();
-        $totalCategories = PortalCategory::count();
+        $totalEvents = PortalEvent::count();
         $totalMedia = PortalMedia::count();
         $pendingComments = PortalComment::where('status', 'pending')->count();
 
@@ -37,7 +41,7 @@ class PortalAdminController extends Controller
         return Inertia::render('Modules/Portal/Admin/Dashboard', [
             'stats' => [
                 'totalPosts' => $totalPosts,
-                'totalCategories' => $totalCategories,
+                'totalEvents' => $totalEvents,
                 'totalMedia' => $totalMedia,
                 'pendingComments' => $pendingComments,
             ],
@@ -75,10 +79,16 @@ class PortalAdminController extends Controller
             'benefit_2_desc' => 'nullable|string',
             'benefit_3_title' => 'nullable|string',
             'benefit_3_desc' => 'nullable|string',
+            'hero_gallery_files' => 'nullable|array',
+            'hero_gallery_files.*' => 'file|image|mimes:png,jpeg,jpg,webp|max:5120',
+            'partner_files' => 'nullable|array',
+            'partner_files.*' => 'file|image|mimes:png,jpeg,jpg,webp,svg|max:5120',
         ]);
 
         foreach ($validated as $key => $value) {
-            PortalSetting::updateOrCreate(['key' => $key], ['value' => $value]);
+            if ($key !== 'hero_gallery_files' && $key !== 'partner_files') {
+                PortalSetting::updateOrCreate(['key' => $key], ['value' => $value]);
+            }
         }
 
         // Handle Hero Gallery uploads — key is hero_gallery_files[]
@@ -121,7 +131,11 @@ class PortalAdminController extends Controller
         $partners = json_decode(PortalSetting::where('key', 'partners')->value('value') ?: '[]', true);
         if ($request->has('remove_partners')) {
             foreach ($request->remove_partners as $url) {
-                $partners = array_values(array_filter($partners, fn ($item) => $item !== $url));
+                $partners = array_values(array_filter($partners, function ($item) use ($url) {
+                    $itemUrl = is_array($item) ? ($item['logo'] ?? '') : $item;
+
+                    return $itemUrl !== $url;
+                }));
                 $filePath = str_replace('/storage/', '', $url);
                 if (Storage::disk('public')->exists($filePath)) {
                     Storage::disk('public')->delete($filePath);
@@ -177,5 +191,74 @@ class PortalAdminController extends Controller
         }
 
         return redirect()->back()->with('success', 'Pengaturan berhasil disimpan!');
+    }
+
+    public function instantSearch(Request $request)
+    {
+        $q = $request->query('q', '');
+        if (strlen($q) < 2) {
+            return response()->json(['results' => []]);
+        }
+
+        try {
+            // Meilisearch fast fuzzy multi-model search
+            $posts = PortalPost::search($q)->take(3)->get()->map(fn ($p) => [
+                'id' => $p->id,
+                'title' => $p->title,
+                'type' => 'Post / Berita',
+                'url' => "/portal-admin/posts/{$p->id}/edit",
+            ]);
+
+            $pages = PortalPage::search($q)->take(3)->get()->map(fn ($p) => [
+                'id' => $p->id,
+                'title' => $p->title,
+                'type' => 'Halaman Statis',
+                'url' => '/portal-admin/pages',
+            ]);
+
+            $events = PortalEvent::search($q)->take(3)->get()->map(fn ($e) => [
+                'id' => $e->id,
+                'title' => $e->title,
+                'type' => 'Event / Kegiatan',
+                'url' => '/portal-admin/events',
+            ]);
+
+            $docs = PortalDocument::search($q)->take(3)->get()->map(fn ($d) => [
+                'id' => $d->id,
+                'title' => $d->title,
+                'type' => 'Dokumen / Arsip',
+                'url' => '/portal-admin/documents',
+            ]);
+
+            $results = collect()
+                ->concat($posts)
+                ->concat($pages)
+                ->concat($events)
+                ->concat($docs)
+                ->values();
+
+            return response()->json(['results' => $results]);
+
+        } catch (\Throwable $e) {
+            Log::warning('Meilisearch instant search failed, falling back to SQL', ['error' => $e->getMessage()]);
+
+            $posts = PortalPost::where('title', 'like', "%{$q}%")->take(3)->get()->map(fn ($p) => [
+                'id' => $p->id,
+                'title' => $p->title,
+                'type' => 'Post / Berita',
+                'url' => "/portal-admin/posts/{$p->id}/edit",
+            ]);
+
+            $pages = PortalPage::where('title', 'like', "%{$q}%")->take(3)->get()->map(fn ($p) => [
+                'id' => $p->id,
+                'title' => $p->title,
+                'type' => 'Halaman Statis',
+                'url' => '/portal-admin/pages',
+            ]);
+
+            $results = collect()->concat($posts)->concat($pages)->values();
+
+            return response()->json(['results' => $results]);
+        }
     }
 }

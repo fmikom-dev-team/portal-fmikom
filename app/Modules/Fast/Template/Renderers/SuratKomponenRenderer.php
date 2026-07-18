@@ -244,6 +244,12 @@ HTML;
     protected static function filePathToDataUri(string $path): ?string
     {
         $path = trim($path);
+
+        // [FIX LFI] Block path traversal sequences
+        if (str_contains($path, '..') || str_contains($path, '\\')) {
+            return null;
+        }
+
         $resolvedPath = null;
 
         if ($path === '') {
@@ -290,6 +296,23 @@ HTML;
         }
 
         if (! $resolvedPath || ! file_exists($resolvedPath)) {
+            return null;
+        }
+
+        // [FIX LFI] Ensure the real resolved path is strictly within the application's base storage or public directories
+        $real = realpath($resolvedPath);
+        $allowed = false;
+        if ($real !== false) {
+            $storageBase = realpath(storage_path());
+            $publicBase = realpath(public_path());
+
+            if (($storageBase && str_starts_with($real, $storageBase)) ||
+                ($publicBase && str_starts_with($real, $publicBase))) {
+                $allowed = true;
+            }
+        }
+
+        if (! $allowed) {
             return null;
         }
 

@@ -7,7 +7,9 @@ import {
 	User,
 	XCircle,
 } from "lucide-vue-next";
+import { ref } from "vue";
 import PortalAdminLayout from "@/layouts/PortalAdminLayout.vue";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal.vue";
 
 const props = defineProps({
 	comments: {
@@ -20,9 +22,22 @@ const updateStatus = (id: number, status: string) => {
 	router.put(`/portal-admin/comments/${id}`, { status });
 };
 
+const isDeleteCommentModalOpen = ref(false);
+const deleteCommentId = ref<number | null>(null);
+
 const deleteComment = (id: number) => {
-	if (confirm("Apakah Anda yakin ingin menghapus komentar ini?")) {
-		router.delete(`/portal-admin/comments/${id}`);
+	deleteCommentId.value = id;
+	isDeleteCommentModalOpen.value = true;
+};
+
+const handleDeleteComment = () => {
+	if (deleteCommentId.value !== null) {
+		router.delete(`/portal-admin/comments/${deleteCommentId.value}`, {
+			onSuccess: () => {
+				isDeleteCommentModalOpen.value = false;
+				deleteCommentId.value = null;
+			},
+		});
 	}
 };
 </script>
@@ -95,5 +110,12 @@ const deleteComment = (id: number) => {
                 </table>
             </div>
         </div>
+        <DeleteConfirmModal
+            :show="isDeleteCommentModalOpen"
+            title="Hapus Komentar"
+            message="Apakah Anda yakin ingin menghapus komentar ini secara permanen? Tindakan ini tidak dapat dibatalkan."
+            @confirm="handleDeleteComment"
+            @cancel="isDeleteCommentModalOpen = false"
+        />
     </PortalAdminLayout>
 </template>

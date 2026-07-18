@@ -13,7 +13,7 @@ defineProps<{
     </Head>
     
     <div 
-        class="min-h-screen bg-white"
+        class="min-h-screen bg-white dark:bg-zinc-900"
         style="font-family:'Inter',ui-sans-serif,system-ui,sans-serif"
     >
         <slot />
@@ -36,7 +36,7 @@ defineProps<{
                                 ? 'bg-amber-50 border-amber-200 text-amber-800'
                                 : toastState.type === 'info'
                                     ? 'bg-blue-50 border-blue-200 text-blue-800'
-                                    : 'bg-white border-gray-200 text-gray-900',
+                                    : 'bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100',
                     ]"
                 >
                     <div

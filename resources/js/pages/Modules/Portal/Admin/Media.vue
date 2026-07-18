@@ -40,9 +40,24 @@ const handleFileUpload = (e: any) => {
 	});
 };
 
+import DeleteConfirmModal from "@/components/DeleteConfirmModal.vue";
+
+const isDeleteModalOpen = ref(false);
+const deleteId = ref<number | null>(null);
+
 const deleteMedia = (id: number) => {
-	if (confirm("Apakah Anda yakin ingin menghapus file ini?")) {
-		form.delete(`/portal-admin/media/${id}`);
+	deleteId.value = id;
+	isDeleteModalOpen.value = true;
+};
+
+const handleDeleteConfirm = () => {
+	if (deleteId.value !== null) {
+		form.delete(`/portal-admin/media/${deleteId.value}`, {
+			onSuccess: () => {
+				isDeleteModalOpen.value = false;
+				deleteId.value = null;
+			}
+		});
 	}
 };
 
@@ -107,5 +122,12 @@ const isImage = (mime: string) => mime?.startsWith("image/");
                 <p class="text-slate-400 text-[12px] mt-1">Unggah beberapa file untuk melihatnya di sini.</p>
             </div>
         </div>
+        <DeleteConfirmModal
+            :show="isDeleteModalOpen"
+            title="Hapus Media"
+            message="Apakah Anda yakin ingin menghapus file media ini secara permanen dari server? File yang digunakan di postingan mungkin akan rusak."
+            @confirm="handleDeleteConfirm"
+            @cancel="isDeleteModalOpen = false"
+        />
     </PortalAdminLayout>
 </template>

@@ -407,7 +407,7 @@ watch(
 									<span class="block text-[11px] font-black uppercase text-[#677084]">Situs Web</span>
 									<span class="block text-xs font-semibold text-[#14171f] flex items-center gap-1.5">
 										<Globe class="w-3.5 h-3.5 text-[#677084]" />
-										<a v-if="props.profileUser.website" :href="props.profileUser.website" target="_blank" class="hover:underline text-indigo-600 flex items-center gap-0.5">
+										<a v-if="props.profileUser.website" :href="props.profileUser.website.startsWith('http') ? props.profileUser.website : 'https://' + props.profileUser.website" target="_blank" class="hover:underline text-indigo-600 flex items-center gap-0.5">
 											{{ props.profileUser.website }} <ExternalLink class="w-2.5 h-2.5" />
 										</a>
 										<span v-else>Belum diisi</span>

@@ -70,9 +70,24 @@ const submit = () => {
 	}
 };
 
+import DeleteConfirmModal from "@/components/DeleteConfirmModal.vue";
+
+const isDeleteModalOpen = ref(false);
+const deleteId = ref<number | null>(null);
+
 const deleteCategory = (id: number) => {
-	if (confirm("Apakah Anda yakin ingin menghapus kategori ini?")) {
-		form.delete(`/portal-admin/categories/${id}`);
+	deleteId.value = id;
+	isDeleteModalOpen.value = true;
+};
+
+const handleDeleteConfirm = () => {
+	if (deleteId.value !== null) {
+		form.delete(`/portal-admin/categories/${deleteId.value}`, {
+			onSuccess: () => {
+				isDeleteModalOpen.value = false;
+				deleteId.value = null;
+			}
+		});
 	}
 };
 </script>
@@ -178,5 +193,12 @@ const deleteCategory = (id: number) => {
                 </form>
             </div>
         </div>
+        <DeleteConfirmModal
+            :show="isDeleteModalOpen"
+            title="Hapus Kategori"
+            message="Apakah Anda yakin ingin menghapus kategori ini? Semua postingan di kategori ini mungkin akan dipindahkan ke kategori default."
+            @confirm="handleDeleteConfirm"
+            @cancel="isDeleteModalOpen = false"
+        />
     </PortalAdminLayout>
 </template>

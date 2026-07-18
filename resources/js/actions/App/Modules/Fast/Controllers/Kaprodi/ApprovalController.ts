@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::index
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:21
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:24
 * @route '/kaprodi/dashboard'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::index
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:21
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:24
 * @route '/kaprodi/dashboard'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::index
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:21
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:24
 * @route '/kaprodi/dashboard'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::index
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:21
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:24
 * @route '/kaprodi/dashboard'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::queue
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:26
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:31
 * @route '/kaprodi/antrian'
 */
 export const queue = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -60,7 +60,7 @@ queue.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::queue
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:26
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:31
 * @route '/kaprodi/antrian'
 */
 queue.url = (options?: RouteQueryOptions) => {
@@ -69,7 +69,7 @@ queue.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::queue
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:26
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:31
 * @route '/kaprodi/antrian'
 */
 queue.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -79,7 +79,7 @@ queue.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::queue
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:26
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:31
 * @route '/kaprodi/antrian'
 */
 queue.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -89,7 +89,7 @@ queue.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::archive
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:31
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:38
 * @route '/kaprodi/arsip'
 */
 export const archive = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -104,7 +104,7 @@ archive.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::archive
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:31
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:38
 * @route '/kaprodi/arsip'
 */
 archive.url = (options?: RouteQueryOptions) => {
@@ -113,7 +113,7 @@ archive.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::archive
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:31
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:38
 * @route '/kaprodi/arsip'
 */
 archive.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -123,7 +123,7 @@ archive.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::archive
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:31
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:38
 * @route '/kaprodi/arsip'
 */
 archive.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -133,7 +133,7 @@ archive.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::detail
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:41
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:52
 * @route '/kaprodi/surat/{id}/detail'
 */
 export const detail = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -148,7 +148,7 @@ detail.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::detail
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:41
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:52
 * @route '/kaprodi/surat/{id}/detail'
 */
 detail.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -175,7 +175,7 @@ detail.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::detail
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:41
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:52
 * @route '/kaprodi/surat/{id}/detail'
 */
 detail.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -185,7 +185,7 @@ detail.get = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::detail
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:41
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:52
 * @route '/kaprodi/surat/{id}/detail'
 */
 detail.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -195,7 +195,7 @@ detail.head = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::show
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:46
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:60
 * @route '/kaprodi/surat/{id}'
 */
 export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -210,7 +210,7 @@ show.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::show
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:46
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:60
 * @route '/kaprodi/surat/{id}'
 */
 show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -237,7 +237,7 @@ show.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::show
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:46
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:60
 * @route '/kaprodi/surat/{id}'
 */
 show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -247,7 +247,7 @@ show.get = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::show
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:46
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:60
 * @route '/kaprodi/surat/{id}'
 */
 show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -257,7 +257,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::previewAttachment
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:51
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:68
 * @route '/kaprodi/lampiran/{id}/preview'
 */
 export const previewAttachment = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -272,7 +272,7 @@ previewAttachment.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::previewAttachment
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:51
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:68
 * @route '/kaprodi/lampiran/{id}/preview'
 */
 previewAttachment.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -299,7 +299,7 @@ previewAttachment.url = (args: { id: string | number } | [id: string | number ] 
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::previewAttachment
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:51
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:68
 * @route '/kaprodi/lampiran/{id}/preview'
 */
 previewAttachment.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -309,7 +309,7 @@ previewAttachment.get = (args: { id: string | number } | [id: string | number ] 
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::previewAttachment
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:51
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:68
 * @route '/kaprodi/lampiran/{id}/preview'
 */
 previewAttachment.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -319,7 +319,7 @@ previewAttachment.head = (args: { id: string | number } | [id: string | number ]
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::approve
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:56
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:82
 * @route '/kaprodi/surat/{id}/approve'
 */
 export const approve = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -334,7 +334,7 @@ approve.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::approve
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:56
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:82
 * @route '/kaprodi/surat/{id}/approve'
 */
 approve.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -361,7 +361,7 @@ approve.url = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::approve
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:56
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:82
 * @route '/kaprodi/surat/{id}/approve'
 */
 approve.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -370,8 +370,42 @@ approve.post = (args: { id: string | number } | [id: string | number ] | string 
 })
 
 /**
+* @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::bulkApprove
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:90
+* @route '/kaprodi/surat/bulk-approve'
+*/
+export const bulkApprove = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkApprove.url(options),
+    method: 'post',
+})
+
+bulkApprove.definition = {
+    methods: ["post"],
+    url: '/kaprodi/surat/bulk-approve',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::bulkApprove
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:90
+* @route '/kaprodi/surat/bulk-approve'
+*/
+bulkApprove.url = (options?: RouteQueryOptions) => {
+    return bulkApprove.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::bulkApprove
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:90
+* @route '/kaprodi/surat/bulk-approve'
+*/
+bulkApprove.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: bulkApprove.url(options),
+    method: 'post',
+})
+
+/**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::reject
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:66
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:120
 * @route '/kaprodi/surat/{id}/reject'
 */
 export const reject = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -386,7 +420,7 @@ reject.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::reject
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:66
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:120
 * @route '/kaprodi/surat/{id}/reject'
 */
 reject.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -413,7 +447,7 @@ reject.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::reject
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:66
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:120
 * @route '/kaprodi/surat/{id}/reject'
 */
 reject.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -423,7 +457,7 @@ reject.post = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::finalReject
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:71
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:128
 * @route '/kaprodi/surat/{id}/final-reject'
 */
 export const finalReject = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -438,7 +472,7 @@ finalReject.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::finalReject
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:71
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:128
 * @route '/kaprodi/surat/{id}/final-reject'
 */
 finalReject.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -465,7 +499,7 @@ finalReject.url = (args: { id: string | number } | [id: string | number ] | stri
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::finalReject
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:71
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:128
 * @route '/kaprodi/surat/{id}/final-reject'
 */
 finalReject.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -475,7 +509,7 @@ finalReject.post = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::saveNote
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:61
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:112
 * @route '/kaprodi/surat/{id}/note'
 */
 export const saveNote = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -490,7 +524,7 @@ saveNote.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::saveNote
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:61
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:112
 * @route '/kaprodi/surat/{id}/note'
 */
 saveNote.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -517,7 +551,7 @@ saveNote.url = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Modules\Fast\Controllers\Kaprodi\ApprovalController::saveNote
-* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:61
+* @see app/Modules/Fast/Controllers/Kaprodi/ApprovalController.php:112
 * @route '/kaprodi/surat/{id}/note'
 */
 saveNote.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -525,6 +559,6 @@ saveNote.post = (args: { id: string | number } | [id: string | number ] | string
     method: 'post',
 })
 
-const ApprovalController = { index, queue, archive, detail, show, previewAttachment, approve, reject, finalReject, saveNote }
+const ApprovalController = { index, queue, archive, detail, show, previewAttachment, approve, bulkApprove, reject, finalReject, saveNote }
 
 export default ApprovalController

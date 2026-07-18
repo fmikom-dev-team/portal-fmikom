@@ -77,11 +77,19 @@ const props = defineProps({
         </div>
 
         <!-- Main Content -->
-        <main v-if="hideContainer" class="w-full">
-            <slot />
+        <main v-if="hideContainer" class="w-full overflow-hidden">
+            <Transition name="page-slide" mode="out-in">
+                <div :key="$page.url">
+                    <slot />
+                </div>
+            </Transition>
         </main>
-        <main v-else class="mx-auto max-w-7xl px-4 xl:px-0 py-12 lg:py-16">
-            <slot />
+        <main v-else class="mx-auto max-w-7xl px-4 xl:px-0 py-12 lg:py-16 overflow-hidden">
+            <Transition name="page-slide" mode="out-in">
+                <div :key="$page.url">
+                    <slot />
+                </div>
+            </Transition>
         </main>
 
         <!-- Footer -->

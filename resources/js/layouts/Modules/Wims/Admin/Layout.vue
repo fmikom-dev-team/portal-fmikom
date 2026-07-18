@@ -388,7 +388,7 @@ const activePageHeader = computed(
             </aside>
 
             <div class="flex min-h-screen min-w-0 flex-1 flex-col overflow-hidden">
-                <header class="sticky top-0 z-20 border-b border-wims-border bg-wims-topbar backdrop-blur-sm">
+                <header class="sticky top-0 z-20 border-b border-wims-border bg-wims-topbar backdrop-blur-sm" style="padding-top: env(safe-area-inset-top);">
                     <div
                         class="mx-auto hidden w-full max-w-[1320px] items-start px-4 py-4 sm:px-6 sm:py-5 lg:flex lg:px-8"
                     >

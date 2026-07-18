@@ -7,8 +7,10 @@ use App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportActionService;
 use App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportFileService;
 use App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportTemplateService;
 use App\Modules\Wims\Services\Mahasiswa\Report\StudentReportPageService;
+use App\Services\VirusScannerService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -46,6 +48,14 @@ class LaporanController extends Controller
         $validated = $request->validate([
             'laporan_akhir' => ['required', 'file', 'mimes:pdf', 'max:5120'],
         ]);
+
+        $scanner = app(VirusScannerService::class);
+        $scanResult = $scanner->scan($validated['laporan_akhir']);
+        if (! $scanResult['safe']) {
+            throw ValidationException::withMessages([
+                'laporan_akhir' => $scanResult['reason'],
+            ]);
+        }
 
         $this->studentFinalReportActionService->upload($registration, $validated['laporan_akhir']);
 

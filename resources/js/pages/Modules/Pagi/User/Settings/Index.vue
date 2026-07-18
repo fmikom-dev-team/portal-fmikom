@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from "@inertiajs/vue3";
+import { Head, router } from "@inertiajs/vue3";
 import {
 	Check,
 	CreditCard,
@@ -19,6 +19,7 @@ import {
 import { computed, ref, watch } from "vue";
 import Navbar from "../ui/Navbar.vue";
 import FmikomIdCard from "./FmikomIdCard.vue";
+import MotionTabs from "@/components/ui/tabs/MotionTabs.vue";
 
 interface ProfileUser {
 	id: number;
@@ -118,9 +119,9 @@ const currentTab = ref("akun");
 
 // Sidebar Tabs definitions
 const sidebarItems = [
-	{ id: "akun", name: "Akun", icon: UserIcon },
-	{ id: "fmikom-id", name: "FMIKOM-ID", icon: CreditCard },
-	{ id: "keamanan", name: "Keamanan", icon: Lock },
+	{ id: "akun", label: "Akun", icon: UserIcon },
+	{ id: "fmikom-id", label: "FMIKOM-ID", icon: CreditCard },
+	{ id: "keamanan", label: "Keamanan", icon: Lock },
 ];
 
 const locationOptions = [
@@ -191,21 +192,15 @@ watch(
 			
 			<!-- Left Navigation Sidebar -->
 			<aside class="w-full md:w-64 shrink-0 no-print space-y-2">
-				<div class="space-y-1">
-					<button 
-						v-for="item in sidebarItems" 
-						:key="item.id"
-						@click="currentTab = item.id"
-						class="w-full flex items-center gap-3.5 px-4 py-3 text-xs font-semibold rounded-xl transition-all outline-none border-none text-left cursor-pointer"
-						:class="[
-							item.id === currentTab 
-								? 'bg-[#f5f6f9] text-[#14171f]' 
-								: 'bg-transparent text-[#4a5264] hover:bg-slate-50 hover:text-[#14171f]'
-						]"
-					>
-						<component :is="item.icon" class="w-4.5 h-4.5" />
-						<span>{{ item.name }}</span>
-					</button>
+					<MotionTabs
+						v-model="currentTab"
+						:tabs="sidebarItems"
+						orientation="vertical"
+						variant="pill"
+						pill-class="bg-[#f5f6f9] dark:bg-zinc-800 rounded-xl"
+						active-class="text-[#14171f] dark:text-zinc-50 font-semibold"
+						inactive-class="text-[#4a5264] dark:text-zinc-400 hover:text-[#14171f] dark:hover:text-zinc-200"
+					/>
 
 					<!-- Log out button -->
 					<button 
@@ -215,7 +210,6 @@ watch(
 						<LogOut class="w-4.5 h-4.5" />
 						<span>Keluar</span>
 					</button>
-				</div>
 			</aside>
 
 			<!-- Right Content Panel -->
@@ -400,7 +394,7 @@ watch(
 									<span class="block text-[11px] font-black uppercase text-[#677084]">Situs Web</span>
 									<span class="block text-xs font-semibold text-[#14171f] flex items-center gap-1.5">
 										<Globe class="w-3.5 h-3.5 text-[#677084]" />
-										<a v-if="props.profileUser.website" :href="props.profileUser.website" target="_blank" class="hover:underline text-indigo-600 flex items-center gap-0.5">
+										<a v-if="props.profileUser.website" :href="props.profileUser.website.startsWith('http') ? props.profileUser.website : 'https://' + props.profileUser.website" target="_blank" class="hover:underline text-indigo-600 flex items-center gap-0.5">
 											{{ props.profileUser.website }} <ExternalLink class="w-2.5 h-2.5" />
 										</a>
 										<span v-else>Belum diisi</span>

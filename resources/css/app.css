@@ -170,6 +170,25 @@
 			"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
 			"Noto Color Emoji";
 	}
+
+	.pt-safe {
+		padding-top: env(safe-area-inset-top);
+	}
+	.pb-safe {
+		padding-bottom: env(safe-area-inset-bottom);
+	}
+	.pl-safe {
+		padding-left: env(safe-area-inset-left);
+	}
+	.pr-safe {
+		padding-right: env(safe-area-inset-right);
+	}
+	.mt-safe {
+		margin-top: env(safe-area-inset-top);
+	}
+	.mb-safe {
+		margin-bottom: env(safe-area-inset-bottom);
+	}
 }
 
 @layer components {
@@ -640,3 +659,71 @@ body.wims-role-body.dark {
 	background-color: rgb(59 130 246 / 0.35);
 	color: #f8fafc;
 }
+
+/* Ensure all elements with scroll animation classes are visible immediately */
+.hide-animate,
+.hide-animate.slide-up,
+.hide-animate.slide-left,
+.hide-animate.slide-right,
+.hide-animate.scale-in,
+.show-animate {
+	opacity: 1 !important;
+	transform: none !important;
+	transition: none !important;
+	will-change: auto !important;
+}
+
+/* View Transition Theme Switch Overrides (Left-to-Right Sweep) */
+@keyframes swipe-ltr {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+::view-transition-old(root) {
+  animation: none;
+  mix-blend-mode: normal;
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  animation: 600ms linear both swipe-ltr;
+  mix-blend-mode: normal;
+  z-index: 9999;
+}
+
+/* Prevent vue-sonner toaster wrapper section/ol elements from taking up layout flow space */
+section[aria-label^="Notifications"],
+ol[data-sonner-toaster] {
+	position: fixed !important;
+	top: 0 !important;
+	left: 0 !important;
+	width: 0 !important;
+	height: 0 !important;
+	overflow: visible !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: none !important;
+	pointer-events: none !important;
+	z-index: 99999 !important;
+}
+
+/* PWA Page Slide Transitions */
+.page-slide-enter-active,
+.page-slide-leave-active {
+	transition: opacity 0.28s cubic-bezier(0.4, 0, 0.2, 1), transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-slide-enter-from {
+	opacity: 0;
+	transform: translateX(16px);
+}
+
+.page-slide-leave-to {
+	opacity: 0;
+	transform: translateX(-16px);
+}
+

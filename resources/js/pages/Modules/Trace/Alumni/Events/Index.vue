@@ -15,7 +15,8 @@ import {
     Ticket,
     Clock,
 } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import MotionTabs from "@/components/ui/tabs/MotionTabs.vue";
 
 interface Event {
     id: number;
@@ -56,6 +57,8 @@ const tabs = [
     { value: 'ongoing', label: 'Berlangsung' },
     { value: 'past', label: 'Selesai' },
 ];
+
+const mappedTabs = computed(() => tabs.map(t => ({ id: t.value, label: t.label })));
 
 function applyFilters() {
     const params: Record<string, string> = {};
@@ -138,20 +141,17 @@ const isToday = (event: Event) => {
                     </button>
                 </div>
 
-                <!-- Filter tabs -->
-                <div class="flex flex-wrap items-center gap-1.5">
-                    <button
-                        v-for="tab in tabs"
-                        :key="tab.value"
-                        class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors"
-                        :class="activeTab === tab.value
-                            ? 'bg-[#0C447C] text-white shadow-sm dark:bg-[#85B7EB] dark:text-slate-900'
-                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'"
-                        @click="setTab(tab.value)"
-                    >
-                        {{ tab.label }}
-                    </button>
-                </div>
+                <!-- Filter tabs with motion transition -->
+                <MotionTabs
+                    :model-value="activeTab"
+                    :tabs="mappedTabs"
+                    variant="pill"
+                    container-class="flex flex-wrap items-center gap-1 p-0.5 bg-slate-100 dark:bg-zinc-800 rounded-lg"
+                    pill-class="bg-[#0C447C] dark:bg-[#85B7EB] rounded-md shadow-sm"
+                    active-class="text-white dark:text-slate-900 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold"
+                    inactive-class="text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold"
+                    @update:model-value="setTab"
+                />
             </div>
 
             <!-- Event Cards Grid -->

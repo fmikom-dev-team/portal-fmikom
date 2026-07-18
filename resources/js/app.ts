@@ -1,7 +1,9 @@
 import { createInertiaApp, router } from "@inertiajs/vue3";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import type { DefineComponent } from "vue";
-import { createApp, h } from "vue";
+import { createApp, h, Teleport } from "vue";
+import Echo from "laravel-echo";
+import Pusher from "pusher-js";
 import { Toaster } from 'vue-sonner';
 import 'vue-sonner/style.css';
 import "../css/app.css";
@@ -9,24 +11,73 @@ import axios from "axios";
 import { initializeTheme } from "@/composables/useAppearance";
 import { useLoadingState } from "@/composables/useLoadingState";
 import { initFlashToast } from "@/composables/useFlashToast";
+import { initServiceWorkerUpdater } from "@/composables/useServiceWorker";
 
 (globalThis as any).axios = axios;
 (globalThis as any).axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
 (globalThis as any).axios.defaults.xsrfCookieName = "fm_csrf";
 (globalThis as any).axios.defaults.xsrfHeaderName = "X-XSRF-TOKEN";
 
+// ── Handle Chunk/Dynamic Import Loading Failures ─────────────────────────
+// Ini terjadi ketika build baru telah dirilis ke server, sehingga hash file statis
+// berubah dan file lama dihapus. Jika user masih membuka halaman lama, navigasi
+// berikutnya akan memicu 404 pada dynamic import chunk. Kita memaksa reload halaman
+// untuk memuat versi/manifest terbaru.
+// GUARD: Reload hanya terjadi SATU KALI per sesi menggunakan sessionStorage
+// untuk mencegah infinite reload loop jika masalah berlanjut setelah reload.
+const CHUNK_RELOAD_FLAG = 'fmikom_chunk_reload_attempted';
+
+const handleChunkError = (error: any) => {
+	if (
+		error &&
+		(error.name === "TypeError" || error.message?.includes("Failed to fetch")) &&
+		typeof error.message === "string" &&
+		(error.message.includes("dynamically imported module") || error.message.includes("chunk"))
+	) {
+		const alreadyReloaded = sessionStorage.getItem(CHUNK_RELOAD_FLAG);
+		if (alreadyReloaded) {
+			console.warn("Chunk load failed again after reload. Skipping further auto-reloads.", error);
+			return;
+		}
+		console.warn("Dynamic import / chunk load failed. Clearing Service Worker and reloading page...", error);
+		
+		if (typeof navigator !== "undefined" && navigator.serviceWorker) {
+			navigator.serviceWorker.getRegistrations().then((registrations) => {
+				Promise.all(registrations.map(r => r.unregister())).finally(() => {
+					sessionStorage.setItem(CHUNK_RELOAD_FLAG, '1');
+					globalThis.location.reload();
+				});
+			}).catch(() => {
+				sessionStorage.setItem(CHUNK_RELOAD_FLAG, '1');
+				globalThis.location.reload();
+			});
+		} else {
+			sessionStorage.setItem(CHUNK_RELOAD_FLAG, '1');
+			globalThis.location.reload();
+		}
+	}
+};
+
+// Hapus flag setelah page load berhasil penuh (semua chunk dimuat tanpa error)
+globalThis.addEventListener("load", () => {
+	sessionStorage.removeItem(CHUNK_RELOAD_FLAG);
+});
+
+globalThis.addEventListener("unhandledrejection", (event) => {
+	handleChunkError(event.reason);
+});
+
+globalThis.addEventListener("error", (event) => {
+	handleChunkError(event.error);
+});
+
 let echoInitialized = false;
 
-async function initEcho(reverbProps?: { key?: string; host?: string; port?: string | number; scheme?: string }) {
+function initEcho(reverbProps?: { key?: string; host?: string; port?: string | number; scheme?: string }) {
 	if (echoInitialized || (globalThis as any).Broadcaster) return;
 	echoInitialized = true;
 
 	try {
-		const [{ default: Echo }, { default: Pusher }] = await Promise.all([
-			import("laravel-echo"),
-			import("pusher-js"),
-		]);
-
 		if ((globalThis as any).Pusher) {
 			delete (globalThis as any).Pusher;
 		}
@@ -98,10 +149,6 @@ window.addEventListener("pageshow", (event) => {
 const appName = import.meta.env.VITE_APP_NAME || "Portal";
 
 createInertiaApp({
-	http: {
-		xsrfCookieName: "fm_csrf",
-		xsrfHeaderName: "X-XSRF-TOKEN",
-	},
 	title: (title) => {
 		const brandName = ((router as any).page?.props?.siteSettings as any)?.brand_name || appName;
 		return title ? `${title} - ${brandName}` : brandName;
@@ -112,13 +159,22 @@ createInertiaApp({
 			import.meta.glob<DefineComponent>("./pages/**/*.vue"),
 		),
 	setup({ el, App, props, plugin }) {
-		createApp({ render: () => h('div', [h(App, props), h(Toaster, { position: 'top-center', offset: 28, mobileOffset: 16, duration: 3200, richColors: true, theme: 'light', closeButton: true, gap: 10, visibleToasts: 3, toastOptions: { class: 'w-[min(92vw,26rem)] rounded-3xl border px-4 py-3.5 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.28)] backdrop-blur-2xl', descriptionClass: 'text-sm leading-5 text-slate-500', classes: { toast: 'rounded-3xl border border-slate-200/80 bg-white/80 text-slate-800 ring-1 ring-white/50', title: 'text-[13px] font-semibold tracking-tight', description: 'text-[12px] leading-5 text-slate-500', success: 'border-emerald-400/95 bg-emerald-50 text-emerald-700 shadow-emerald-900/12', error: 'border-rose-400/95 bg-rose-50 text-rose-700 shadow-rose-900/12', info: 'border-sky-200/80 bg-sky-50/80 text-sky-900 shadow-sky-950/5', warning: 'border-amber-200/80 bg-amber-50/80 text-amber-900 shadow-amber-950/5' } } })]) })
+		createApp({ render: () => [h(App, props), h(Teleport, { to: 'body' }, [h(Toaster, { position: 'bottom-right', offset: 28, mobileOffset: 16, duration: 3200, richColors: true, theme: 'light', closeButton: true, gap: 10, visibleToasts: 3, toastOptions: { class: 'w-[min(92vw,26rem)] rounded-3xl border px-4 py-3.5 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.28)] backdrop-blur-2xl', descriptionClass: 'text-sm leading-5 text-slate-500', classes: { toast: 'rounded-3xl border border-slate-200/80 bg-white/80 text-slate-800 ring-1 ring-white/50', title: 'text-[13px] font-semibold tracking-tight', description: 'text-[12px] leading-5 text-slate-500', success: 'border-emerald-400/95 bg-emerald-50 text-emerald-700 shadow-emerald-900/12', error: 'border-rose-400/95 bg-rose-50 text-rose-700 shadow-rose-900/12', info: 'border-sky-200/80 bg-sky-50/80 text-sky-900 shadow-sky-950/5', warning: 'border-amber-200/80 bg-amber-50/80 text-amber-900 shadow-amber-950/5' } } })])] })
 			.use(plugin)
 			.mount(el);
 
-		if (props.initialPage.props.auth?.user) {
-			initEcho(props.initialPage.props.reverb as any);
+		if ((props.initialPage.props as any).auth?.user) {
+			initEcho((props.initialPage.props as any).reverb);
 		}
+
+		// Mount AppUpdateBanner sebagai app Vue mandiri di luar Inertia
+		// sehingga muncul di SEMUA halaman, tanpa peduli layout yang dipakai
+		import('@/components/AppUpdateBanner.vue').then(({ default: AppUpdateBanner }) => {
+			const bannerEl = document.createElement('div');
+			bannerEl.id = 'app-update-banner-root';
+			document.body.appendChild(bannerEl);
+			createApp(AppUpdateBanner).mount(bannerEl);
+		});
 	},
 	progress: {
 		color: "#4B5563",
@@ -146,6 +202,9 @@ router.on("navigate", () => {
 
 router.on("success", (event) => {
 	const props = event.detail.page.props as any;
+
+	// Re-apply theme state on page transitions to handle public vs private pages
+	initializeTheme();
 
 	if (props.auth?.user) {
 		initEcho(props.reverb);
@@ -212,20 +271,9 @@ router.on("invalid", (event) => {
 
 initializeTheme();
 
-if ("serviceWorker" in navigator) {
-	globalThis.addEventListener("load", () => {
-		navigator.serviceWorker
-			.register("/sw.js")
-			.then((registration) => {
-				console.log(
-					"[PWA] Service Worker registered with scope:",
-					registration.scope,
-				);
-			})
-			.catch((error) => {
-				console.error("[PWA] Service Worker registration failed:", error);
-			});
-	});
+// Inisialisasi Service Worker PWA
+if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+	initServiceWorkerUpdater();
 }
 
 // Global flash ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ toast handler (fires once per Inertia navigation)

@@ -17,6 +17,8 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
     ->group(function () {
         Route::get('/', [PagiDashboardController::class, 'index'])
             ->name('dashboard');
+        Route::get('/instant-search', [PagiDashboardController::class, 'instantSearch'])
+            ->name('instant-search');
 
         // Halaman People — dapat diakses semua role user di modul PAGI
         Route::get('/people', [PagiDashboardController::class, 'explorePeople'])
@@ -165,6 +167,12 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('certificates.update');
         Route::delete('/certificates/{id}', [PagiDashboardController::class, 'destroyCertificate'])
             ->name('certificates.destroy');
+        Route::post('/education', [PagiDashboardController::class, 'storeEducation'])
+            ->name('education.store');
+        Route::put('/education/{id}', [PagiDashboardController::class, 'updateEducation'])
+            ->name('education.update');
+        Route::delete('/education/{id}', [PagiDashboardController::class, 'destroyEducation'])
+            ->name('education.destroy');
         Route::post('/profile/reorder-projects', [PagiDashboardController::class, 'reorderProjects'])
             ->name('profile.reorder-projects');
         Route::get('/username/check', [PagiDashboardController::class, 'checkUsername'])
@@ -227,11 +235,15 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('moderation');
 
         // Users Management
-        Route::get('/users/mahasiswa', [AdminUserController::class, 'mahasiswa'])
-            ->name('users.mahasiswa');
+        Route::get('/users', [AdminUserController::class, 'index'])
+            ->name('users.index');
 
-        Route::get('/users/mitra', [AdminUserController::class, 'mitra'])
-            ->name('users.mitra');
+        // Redirects untuk rute lama agar mencegah error 404/500
+        Route::redirect('/users/mahasiswa', '/pagi/admin/users');
+        Route::redirect('/users/mitra', '/pagi/admin/users');
+        Route::redirect('/gallery', '/pagi/admin');
+        Route::redirect('/logs', '/pagi/admin');
+        Route::redirect('/roles', '/pagi/admin');
 
         // Analytics
         Route::get('/analytics', [AdminDashboardController::class, 'analytics'])
@@ -245,10 +257,6 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
         Route::get('/settings', [AdminDashboardController::class, 'settings'])
             ->name('settings');
 
-        // Activity Logs
-        Route::get('/logs', [AdminDashboardController::class, 'logs'])
-            ->name('logs');
-
         // Warnings
         Route::get('/warnings', [AdminWorkController::class, 'warnings'])
             ->name('warnings');
@@ -261,17 +269,9 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
         Route::get('/works', [AdminWorkController::class, 'works'])
             ->name('works');
 
-        // Gallery
-        Route::get('/gallery', [AdminDashboardController::class, 'gallery'])
-            ->name('gallery');
-
         // Tags
         Route::get('/tags', [AdminDashboardController::class, 'tags'])
             ->name('tags');
-
-        // Roles
-        Route::get('/roles', [AdminDashboardController::class, 'roles'])
-            ->name('roles');
 
         // Moderation Actions — POST only for CSRF protection
         Route::post('/users/{user}/warn', [AdminUserController::class, 'warnUser'])

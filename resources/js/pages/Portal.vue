@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
-import { useDark, useDateFormat, useNow } from "@vueuse/core";
+import { useDateFormat, useNow } from "@vueuse/core";
+import { useAppearance } from "@/composables/useAppearance";
 import {
 	Bell,
 	Box,
@@ -36,6 +37,7 @@ import {
 	Users,
 } from "lucide-vue-next";
 import { computed, ref } from "vue";
+import { ThemeTogglerButton } from "@/components/animate-ui/components/buttons/theme-toggler";
 
 // Define our standard user
 const page = usePage();
@@ -48,16 +50,19 @@ const firstName = computed(() => user.value?.name?.split(" ")[0] || "James");
 
 const time = useNow();
 const formattedTime = useDateFormat(time, "HH:mm:ss");
-const isDark = useDark({
-	selector: "html",
-	attribute: "class",
-	valueDark: "dark",
-	valueLight: "",
-});
+
+const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
 
 const notifications = computed<any[]>(
 	() => (user.value?.unreadNotifications as any[]) || [],
 );
+
+const activeTheme = computed({
+	get: () => appearance.value === "system" ? resolvedAppearance.value : appearance.value,
+	set: (val) => {
+		updateAppearance(val);
+	}
+});
 
 const searchQuery = ref("");
 const handleSearch = () => {
@@ -105,14 +110,14 @@ const handleSearch = () => {
                     <!-- Top Menu Actions -->
                     <div class="flex items-center gap-2 sm:gap-4 shrink-0 overflow-x-auto pb-1 lg:pb-0">
                         <!-- Theme Toggle -->
-                        <div class="flex items-center bg-[#f4f6fa] dark:bg-slate-800 p-1 rounded-2xl shrink-0">
-                            <button @click="isDark = false" :class="[!isDark ? 'bg-[#2563EB] text-white shadow-sm' : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-300', 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black transition-colors']">
-                                <Sun class="w-3.5 h-3.5"/> Light
-                            </button>
-                            <button @click="isDark = true" :class="[isDark ? 'bg-[#2563EB] text-white shadow-sm' : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-300', 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black transition-colors']">
-                                <Moon class="w-3.5 h-3.5"/> Dark
-                            </button>
-                        </div>
+                        <ThemeTogglerButton
+                            v-model="activeTheme"
+                            variant="ghost"
+                            size="default"
+                            direction="ltr"
+                            :modes="['light', 'dark']"
+                            class="bg-[#f4f6fa] dark:bg-slate-800 rounded-2xl"
+                        />
 
                         <!-- Notification & Settings -->
                         <button class="text-slate-400 hover:text-slate-800 dark:text-slate-100 transition-colors shrink-0"><Bell class="w-5 h-5"/></button>

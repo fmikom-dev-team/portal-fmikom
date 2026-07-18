@@ -7,12 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Cache;
+use Laravel\Scout\Searchable;
 
 /**
  * @method bool|null delete()
  */
 class PagiWork extends Model
 {
+    use Searchable;
+
     protected $table = 'pagi_works';
 
     protected $fillable = [
@@ -33,6 +36,36 @@ class PagiWork extends Model
         'content' => 'array',
         'is_published' => 'boolean',
     ];
+
+    /**
+     * Get the indexable data array for the model.
+     * Exclude 'content' (JSON array of blocks) — too large for full-text index.
+     */
+    public function toSearchableArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'title' => $this->title,
+            'description' => $this->description ?? '',
+            'category' => $this->category ?? '',
+            'tools_used' => $this->tools_used ?? '',
+            'user_id' => $this->user_id,
+            'user_name' => $this->user?->name ?? '',
+            'username' => $this->user?->pagi_username ?? '',
+            'views_count' => $this->views_count ?? 0,
+            'status' => $this->status ?? '',
+        ];
+    }
+
+    /**
+     * Only index published and visible works.
+     */
+    public function shouldBeSearchable(): bool
+    {
+        return (bool) $this->is_published
+            && $this->visibility !== 'private'
+            && $this->status !== 'hidden';
+    }
 
     protected static function booted(): void
     {

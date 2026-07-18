@@ -3,12 +3,43 @@
 namespace App\Models\Portal;
 
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Cache;
+use Laravel\Scout\Searchable;
 
 class PortalPost extends Model
 {
+    use Searchable;
+
+    /**
+     * Get the indexable data array for the model.
+     * Only index lean fields — avoid indexing full HTML content.
+     */
+    public function toSearchableArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'title' => $this->title,
+            'slug' => $this->slug,
+            'excerpt' => $this->excerpt ?? strip_tags((string) substr($this->content ?? '', 0, 300)),
+            'category' => $this->category?->name ?? '',
+            'status' => $this->status,
+            'published_at' => $this->published_at?->timestamp,
+        ];
+    }
+
+    /**
+     * Only index published posts that are already live.
+     */
+    public function shouldBeSearchable(): bool
+    {
+        return $this->status === self::STATUS_PUBLISHED
+            && $this->published_at !== null
+            && Carbon::parse($this->published_at)->isPast();
+    }
+
     protected static function booted()
     {
         static::saved(function () {
@@ -24,7 +55,22 @@ class PortalPost extends Model
         });
     }
 
-    protected $guarded = [];
+    protected $fillable = [
+        'title',
+        'slug',
+        'excerpt',
+        'content',
+        'category_id',
+        'status',
+        'published_at',
+        'thumbnail_path',
+        'user_id',
+        'is_featured',
+    ];
+
+    protected $casts = [
+        'published_at' => 'datetime',
+    ];
 
     const STATUS_DRAFT = 'draft';
 

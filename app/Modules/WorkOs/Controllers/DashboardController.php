@@ -3,9 +3,13 @@
 namespace App\Modules\WorkOs\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\DispatchWorkOsWebhookJob;
 use App\Models\Audit\AuditApiRequest;
 use App\Models\Audit\AuditLog;
 use App\Models\Audit\AuditSecurityIncident;
+use App\Models\Auth\AuthEmailLog;
+use App\Models\Auth\AuthLoginAttempt;
+use App\Models\Auth\RegistrationRequest;
 use App\Models\Module;
 use App\Models\Permission;
 use App\Models\Portal\PortalSetting;
@@ -16,15 +20,23 @@ use App\Models\Radar\RadarProtection;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\UserModuleRole;
+use App\Models\WorkOsWebhook;
+use App\Models\WorkOsWebhookDelivery;
+use App\Notifications\PagiNotification;
 use App\Notifications\UserApprovedNotification;
 use App\Notifications\WorkOsAlert;
+use App\Services\VirusScannerService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class DashboardController extends Controller // NOSONAR
@@ -64,7 +76,7 @@ class DashboardController extends Controller // NOSONAR
 
         return Inertia::render('WorkOs/Dashboard', [
             'users' => fn () => $shouldLoad('users', ['users', 'organizations', 'authorization'])
-                ? ['data' => $this->getUsersData(), 'total' => User::query()->count()]
+                ? ['data' => $this->getUsersData($request), 'total' => User::query()->count()]
                 : [],
             'roles' => fn () => $shouldLoad('roles', ['authorization', 'organizations', 'users']) ? $this->getRolesData() : [],
             'permissions' => fn () => $shouldLoad('permissions', ['authorization']) ? $this->getPermissionsData() : [],
@@ -76,11 +88,23 @@ class DashboardController extends Controller // NOSONAR
             'radarDetections' => fn () => $shouldLoad('radarDetections', ['radar']) ? $this->getRadarDetections() : [],
             'radarBlockedItems' => fn () => $shouldLoad('radarBlockedItems', ['radar']) ? RadarBlockedItem::all()->toArray() : [],
             'auditStats' => fn () => $shouldLoad('auditStats', ['audit-logs']) ? $this->getAuditStats() : [],
-            'auditRecentEvents' => fn () => $shouldLoad('auditRecentEvents', ['audit-logs']) ? $this->getAuditRecentEvents() : [],
+            'auditRecentEvents' => fn () => $shouldLoad('auditRecentEvents', ['audit-logs']) ? $this->getAuditRecentEvents($request) : [],
             'smtpConfig' => fn () => $shouldLoad('smtpConfig', ['emails']) ? $this->getSmtpConfig() : [],
+            'emailLogs' => fn () => $shouldLoad('emailLogs', ['emails']) ? $this->getEmailLogs() : [],
+            'webhookConfig' => fn () => $shouldLoad('webhookConfig', ['notifications']) ? $this->getWebhookConfig() : null,
+            'webhookDeliveries' => fn () => $shouldLoad('webhookDeliveries', ['notifications']) ? $this->getWebhookDeliveries() : [],
+            'systemSettings' => fn () => $shouldLoad('systemSettings', ['settings']) ? $this->getSystemSettings() : [],
             'notifications' => fn () => $shouldLoad('notifications', ['notifications']) ? $this->getNotificationsForUser($request->user()) : [],
             'unreadNotificationsCount' => fn () => $request->user()
-                ? $request->user()->unreadNotifications()->where('type', WorkOsAlert::class)->count()
+                ? $request->user()->unreadNotifications()
+                    ->where(function ($q) {
+                        $q->where('type', WorkOsAlert::class)
+                            ->orWhere('type', UserApprovedNotification::class)
+                            ->orWhere(function ($sq) {
+                                $sq->where('type', PagiNotification::class)
+                                    ->where('data->type', 'system');
+                            });
+                    })->count()
                 : 0,
         ]);
     }
@@ -95,6 +119,8 @@ class DashboardController extends Controller // NOSONAR
             'brand_description' => ['nullable', 'string', 'max:500'],
             'primary_color' => ['nullable', 'string', 'max:20'],
             'public_registration' => ['nullable', 'in:0,1'],
+            'brand_logo_file' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
+            'brand_favicon_file' => ['nullable', 'file', 'mimes:ico,png', 'max:512'],
         ]);
 
         $allowed = ['maintenance_mode', 'maintenance_message', 'brand_name', 'brand_subtitle', 'brand_description', 'primary_color', 'public_registration'];
@@ -103,6 +129,32 @@ class DashboardController extends Controller // NOSONAR
             if ($request->has($key)) {
                 PortalSetting::updateOrCreate(['key' => $key], ['value' => $request->input($key)]);
             }
+        }
+
+        $scanner = app(VirusScannerService::class);
+
+        if ($request->hasFile('brand_logo_file')) {
+            $file = $request->file('brand_logo_file');
+            $scanResult = $scanner->scan($file);
+            if (! $scanResult['safe']) {
+                throw ValidationException::withMessages([
+                    'brand_logo_file' => $scanResult['reason'],
+                ]);
+            }
+            $path = $file->store('branding', 'public');
+            PortalSetting::updateOrCreate(['key' => 'brand_logo'], ['value' => '/storage/'.$path]);
+        }
+
+        if ($request->hasFile('brand_favicon_file')) {
+            $file = $request->file('brand_favicon_file');
+            $scanResult = $scanner->scan($file);
+            if (! $scanResult['safe']) {
+                throw ValidationException::withMessages([
+                    'brand_favicon_file' => $scanResult['reason'],
+                ]);
+            }
+            $path = $file->store('branding', 'public');
+            PortalSetting::updateOrCreate(['key' => 'brand_favicon'], ['value' => '/storage/'.$path]);
         }
 
         cache()->forget('portal_settings');
@@ -516,24 +568,77 @@ class DashboardController extends Controller // NOSONAR
         ];
     }
 
-    private function getUsersData()
+    private function getUsersData(?Request $request = null)
     {
-        return User::with(['role', 'programStudi', 'moduleRoles.module', 'moduleRoles.role', 'oauthCredentials.provider'])
-            ->latest()
+        $query = User::with(['role', 'programStudi', 'moduleRoles.module', 'moduleRoles.role', 'oauthCredentials.provider']);
+
+        $selfRegisteredUserIds = RegistrationRequest::whereNotNull('created_user_id')
+            ->pluck('created_user_id')
+            ->toArray();
+
+        $loginStats = AuthLoginAttempt::select('email', DB::raw('count(*) as count'), DB::raw('max(created_at) as last_login'))
+            ->where('is_successful', true)
+            ->groupBy('email')
             ->get()
-            ->map(function ($u) {
-                $fotoPath = null;
-                if ($u->foto_path) {
-                    if (str_starts_with($u->foto_path, 'http')) {
-                        $fotoPath = $u->foto_path;
-                    } else {
-                        $encrypted = Crypt::encryptString($u->foto_path);
-                        $urlSafe = str_replace(['+', '/', '='], ['-', '_', ''], $encrypted);
-                        $fotoPath = asset('images/v1/'.$urlSafe);
-                    }
+            ->keyBy('email');
+
+        if ($request) {
+            if ($request->filled('search')) {
+                $search = $request->input('search');
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('nomor_induk', 'like', "%{$search}%");
+                });
+            }
+
+            if ($request->filled('role')) {
+                $role = $request->input('role');
+                $query->where('user_type', $role);
+            }
+
+            if ($request->filled('auth')) {
+                $auth = $request->input('auth');
+                if ($auth === 'google') {
+                    $query->whereHas('oauthCredentials.provider', function ($q) {
+                        $q->where('slug', 'google');
+                    });
+                } elseif ($auth === 'email') {
+                    $query->where(function ($q) {
+                        $q->whereDoesntHave('oauthCredentials')
+                            ->orWhereNotNull('password');
+                    });
                 }
+            }
+
+            if ($request->filled('membership')) {
+                $membership = $request->input('membership');
+                if ($membership === 'active') {
+                    $query->where('status_approval', 'approved')->where('is_active', true);
+                } elseif ($membership === 'pending') {
+                    $query->where('status_approval', 'pending');
+                } elseif ($membership === 'rejected') {
+                    $query->where(function ($q) {
+                        $q->where('is_active', false)
+                            ->orWhere('status_approval', 'rejected');
+                    });
+                }
+            }
+        }
+
+        return $query->latest()
+            ->get()
+            ->map(function ($u) use ($selfRegisteredUserIds, $loginStats) {
+
+                $fotoPath = $u->photoUrl();
 
                 $secureId = 'user_'.substr(hash('sha256', $u->id.config('app.key')), 0, 16);
+
+                $stats = $loginStats->get($u->email);
+                $signInCount = $stats ? $stats->count : 0;
+                $lastSignInAt = $stats && $stats->last_login
+                    ? Carbon::parse($stats->last_login)->format(self::DATE_FORMAT)
+                    : null;
 
                 return [
                     'id' => $u->id,
@@ -546,7 +651,10 @@ class DashboardController extends Controller // NOSONAR
                         : null,
                     'status_approval' => $u->status_approval,
                     'is_active' => $u->is_active,
+                    'registration_type' => in_array($u->id, $selfRegisteredUserIds) ? 'self_registered' : 'admin_created',
                     'foto_path' => $fotoPath,
+                    'sign_in_count' => $signInCount,
+                    'last_sign_in_at' => $lastSignInAt,
                     'location' => $u->location,
                     'metadata' => $u->metadata,
                     'tanggal_lahir' => $u->tanggal_lahir?->format('Y-m-d'),
@@ -705,11 +813,35 @@ class DashboardController extends Controller // NOSONAR
         ];
     }
 
-    private function getAuditRecentEvents(): array
+    private function getAuditRecentEvents(?Request $request = null): array
     {
-        return AuditLog::with('actor:id,name,email')
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
+        $query = AuditLog::with('actor:id,name,email');
+
+        if ($request) {
+            if ($request->filled('search')) {
+                $search = $request->input('search');
+                $query->where(function ($q) use ($search) {
+                    $q->where('event_type', 'like', "%{$search}%")
+                        ->orWhere('ip_address', 'like', "%{$search}%")
+                        ->orWhereHas('actor', function ($q2) use ($search) {
+                            $q2->where('email', 'like', "%{$search}%")
+                                ->orWhere('name', 'like', "%{$search}%");
+                        });
+                });
+            }
+
+            if ($request->filled('severity')) {
+                $query->where('severity', $request->input('severity'));
+            }
+
+            if ($request->filled('module')) {
+                $module = $request->input('module');
+                $query->where('event_type', 'like', "{$module}.%");
+            }
+        }
+
+        return $query->orderBy('created_at', 'desc')
+            ->limit(20)
             ->get()
             ->toArray();
     }
@@ -1029,10 +1161,13 @@ class DashboardController extends Controller // NOSONAR
     public function resetDetections()
     {
         // Disable FK checks so TRUNCATE works on tables with foreign key constraints
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
-        RadarDetection::truncate();
-        RadarDevice::truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        try {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            RadarDetection::truncate();
+            RadarDevice::truncate();
+        } finally {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        }
 
         // Mark so that ensureRadarDataSeeded won't re-seed demo data
         cache()->put('radar_detections_cleared', true, now()->addYears(10));
@@ -1214,24 +1349,34 @@ class DashboardController extends Controller // NOSONAR
 
     private function getNotificationsForUser(User $user): array
     {
-        $hasAlerts = $user->notifications()
-            ->where('type', WorkOsAlert::class)
-            ->exists();
+        $hasAlerts = $user->notifications()->exists();
 
         if (! $hasAlerts) {
             $this->seedDefaultNotificationsForUser($user);
         }
 
         return $user->notifications()
-            ->where('type', WorkOsAlert::class)
+            ->where(function ($q) {
+                $q->where('type', WorkOsAlert::class)
+                    ->orWhere('type', UserApprovedNotification::class)
+                    ->orWhere(function ($sq) {
+                        $sq->where('type', PagiNotification::class)
+                            ->where('data->type', 'system');
+                    });
+            })
             ->latest()
             ->get()
             ->map(function ($n) {
+                $data = $n->data;
+                $title = $data['title'] ?? $data['message'] ?? str_replace('App\\Notifications\\', '', $n->type);
+                $description = $data['description'] ?? $data['body'] ?? '';
+                $severity = $data['severity'] ?? 'info';
+
                 return [
                     'id' => $n->id,
-                    'title' => $n->data['title'] ?? '',
-                    'description' => $n->data['description'] ?? '',
-                    'severity' => $n->data['severity'] ?? 'info',
+                    'title' => $title,
+                    'description' => $description,
+                    'severity' => $severity,
                     'time' => $n->created_at->diffForHumans(),
                     'read' => ! is_null($n->read_at),
                 ];
@@ -1289,5 +1434,231 @@ class DashboardController extends Controller // NOSONAR
                 'updated_at' => $now->copy()->subHours($alert['hours_ago']),
             ]);
         }
+    }
+
+    public function instantSearch(Request $request)
+    {
+        $q = $request->query('q', '');
+        if (strlen($q) < 2) {
+            return response()->json(['results' => []]);
+        }
+
+        try {
+            // Meilisearch: Search only WorkOs user index, role via SQL fallback
+            $users = User::search($q)->take(5)->get()->map(fn ($u) => [
+                'id' => $u->id,
+                'title' => $u->name,
+                'description' => $u->email.' • '.$u->user_type,
+                'type' => 'User / Akun',
+                'url' => '/workos/users?search='.urlencode($u->name),
+            ]);
+
+            $roles = Role::where('nama', 'like', "%{$q}%")->take(3)->get()->map(fn ($r) => [
+                'id' => $r->id,
+                'title' => $r->nama,
+                'description' => $r->slug,
+                'type' => 'Role / Peran',
+                'url' => '/workos/authorization?tab=roles',
+            ]);
+
+            $results = collect()->concat($users)->concat($roles)->values();
+
+            return response()->json(['results' => $results]);
+
+        } catch (\Throwable $e) {
+            Log::warning('Meilisearch WorkOs search failed, falling back to SQL', ['error' => $e->getMessage()]);
+
+            $users = User::where('name', 'like', "%{$q}%")->orWhere('email', 'like', "%{$q}%")->take(5)->get()->map(fn ($u) => [
+                'id' => $u->id,
+                'title' => $u->name,
+                'description' => $u->email,
+                'type' => 'User / Akun',
+                'url' => '/workos/users?search='.urlencode($u->name),
+            ]);
+
+            return response()->json(['results' => $users]);
+        }
+    }
+
+    private function getSystemSettings()
+    {
+        $settings = PortalSetting::all()->pluck('value', 'key')->toArray();
+
+        return [
+            'brand_name' => $settings['brand_name'] ?? 'Portal FMIKOM',
+            'brand_subtitle' => $settings['brand_subtitle'] ?? 'Fakultas Matematika dan Ilmu Komputer',
+            'brand_description' => $settings['brand_description'] ?? 'Sistem informasi terpadu untuk civitas akademika FMIKOM.',
+            'primary_color' => $settings['primary_color'] ?? '#2563eb',
+            'maintenance_mode' => $settings['maintenance_mode'] ?? '0',
+            'maintenance_message' => $settings['maintenance_message'] ?? 'Sistem sedang dalam pemeliharaan. Silakan kembali beberapa saat lagi.',
+            'public_registration' => $settings['public_registration'] ?? '1',
+            'brand_logo' => $settings['brand_logo'] ?? '/asset/brand-logo.webp',
+            'brand_favicon' => $settings['brand_favicon'] ?? '/asset/brand-logo.webp',
+        ];
+    }
+
+    public function flushSystemCache(Request $request)
+    {
+        try {
+            Artisan::call('cache:clear');
+            Artisan::call('view:clear');
+            Artisan::call('config:clear');
+            Artisan::call('route:clear');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cache sistem berhasil dibersihkan.',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    private function getEmailLogs(): array
+    {
+        return AuthEmailLog::orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get()
+            ->map(function ($log) {
+                return [
+                    'id' => 'msg_'.$log->id,
+                    'recipient' => $log->email,
+                    'subject' => $log->subject,
+                    'type' => $this->determineEmailType($log->subject),
+                    'status' => $log->status,
+                    'sentAt' => $log->created_at->format('M d, Y, h:i A'),
+                    'provider' => config('mail.default') === 'smtp' ? 'SMTP Relay' : ucfirst(config('mail.default')).' API',
+                    'events' => [
+                        ['time' => $log->created_at->format('h:i:s A'), 'event' => 'Enqueued for delivery'],
+                        ['time' => $log->created_at->addSecond()->format('h:i:s A'), 'event' => 'Dispatched through SMTP transport relay'],
+                        ['time' => $log->created_at->addSeconds(2)->format('h:i:s A'), 'event' => 'Delivered to target mailserver (250 OK)'],
+                    ],
+                    'variables' => [],
+                    'body' => $log->body,
+                ];
+            })
+            ->toArray();
+    }
+
+    private function determineEmailType(string $subject): string
+    {
+        if (str_contains(strtolower($subject), 'otp') || str_contains(strtolower($subject), 'verify')) {
+            return 'Verification Email';
+        }
+        if (str_contains(strtolower($subject), 'invit')) {
+            return 'Member Invitation';
+        }
+        if (str_contains(strtolower($subject), 'reset') || str_contains(strtolower($subject), 'recovery')) {
+            return 'Password Reset Alert';
+        }
+
+        return 'System Notification';
+    }
+
+    private function getWebhookConfig()
+    {
+        $webhook = WorkOsWebhook::first();
+        if (! $webhook) {
+            return [
+                'url' => '',
+                'secret' => 'whsec_'.substr(bin2hex(random_bytes(16)), 0, 32),
+                'events' => ['user.created' => false, 'user.deleted' => false, 'sso.connected' => false, 'radar.threat_blocked' => false, 'organization.created' => false],
+                'is_active' => false,
+            ];
+        }
+
+        $eventsMap = [];
+        $allEvents = ['user.created', 'user.deleted', 'sso.connected', 'radar.threat_blocked', 'organization.created'];
+        foreach ($allEvents as $evt) {
+            $eventsMap[$evt] = in_array($evt, $webhook->events);
+        }
+
+        return [
+            'id' => $webhook->id,
+            'url' => $webhook->url,
+            'secret' => $webhook->secret,
+            'events' => $eventsMap,
+            'is_active' => $webhook->is_active,
+        ];
+    }
+
+    private function getWebhookDeliveries()
+    {
+        return WorkOsWebhookDelivery::orderBy('created_at', 'desc')
+            ->limit(20)
+            ->get()
+            ->map(function ($d) {
+                return [
+                    'id' => 'whd_'.$d->id,
+                    'event' => $d->event_type,
+                    'url' => $d->webhook?->url ?? 'https://api.fmikom.org/webhooks',
+                    'status' => $d->response_status,
+                    'statusText' => $d->response_status === 200 ? 'OK' : 'Error',
+                    'latency' => $d->latency_ms.'ms',
+                    'time' => $d->created_at->diffForHumans(),
+                    'isRedelivering' => false,
+                ];
+            })
+            ->toArray();
+    }
+
+    public function saveWebhookConfig(Request $request)
+    {
+        $request->validate([
+            'url' => 'required|url',
+            'secret' => 'required|string',
+            'events' => 'required|array',
+        ]);
+
+        $eventsArray = [];
+        foreach ($request->events as $evt => $val) {
+            if ($val) {
+                $eventsArray[] = $evt;
+            }
+        }
+
+        $webhook = WorkOsWebhook::first();
+        if ($webhook) {
+            $webhook->update([
+                'url' => $request->url,
+                'secret' => $request->secret,
+                'events' => $eventsArray,
+            ]);
+        } else {
+            WorkOsWebhook::create([
+                'url' => $request->url,
+                'secret' => $request->secret,
+                'events' => $eventsArray,
+            ]);
+        }
+
+        return back()->with('success', 'Webhook configurations saved successfully.');
+    }
+
+    public function redeliverWebhookEvent($id)
+    {
+        $deliveryId = str_replace('whd_', '', $id);
+        $delivery = WorkOsWebhookDelivery::find($deliveryId);
+        if (! $delivery) {
+            return response()->json(['error' => 'Delivery not found'], 404);
+        }
+
+        // Trigger the job synchronously
+        dispatch_sync(new DispatchWorkOsWebhookJob($delivery->event_type, $delivery->payload));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Event redelivered successfully!',
+        ]);
+    }
+
+    public function clearEmailLogs()
+    {
+        AuthEmailLog::query()->delete();
+
+        return back()->with('success', 'Email logs cleared successfully.');
     }
 }

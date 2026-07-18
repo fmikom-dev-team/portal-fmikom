@@ -229,7 +229,7 @@ const onDrop = (index: number) => {
 							<svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 10.742L12.02 12.2a2.003 2.003 0 11-.868 1.983L7.816 12.72a2.003 2.003 0 110-1.44l3.336-1.464a2.003 2.003 0 11.868 1.983L8.684 10.742z" /></svg>
 							<span>Share link</span>
 						</button>
-						<button v-if="canManageProject(p)" @click.stop="emit('delete-project', p.id, p.title); closeProjectMenu()" class="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-red-650 hover:bg-red-50 dark:hover:bg-red-955/20 border-t border-slate-100 dark:border-slate-800 mt-1 pt-2.5 transition-colors cursor-pointer text-left bg-transparent">
+						<button v-if="canManageProject(p)" @click.stop="emit('delete-project', p.id, p.title); closeProjectMenu()" class="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-red-650 hover:bg-red-50 dark:hover:bg-red-950/20 border-t border-slate-100 dark:border-slate-800 mt-1 pt-2.5 transition-colors cursor-pointer text-left bg-transparent">
 							<X class="w-3.5 h-3.5 text-red-500" /><span>Remove from profile</span>
 						</button>
 					</div>

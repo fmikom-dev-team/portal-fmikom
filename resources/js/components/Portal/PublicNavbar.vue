@@ -1,11 +1,25 @@
 <script setup>
 import { Deferred, Link, usePage } from "@inertiajs/vue3";
-import { ArrowRight, ChevronDown, Layers, Menu, X } from "lucide-vue-next";
+import { ArrowRight, ChevronDown, Layers, Menu, X, Download } from "lucide-vue-next";
 import { ref, computed } from "vue";
+import { usePwaInstall } from "@/composables/usePwaInstall";
 
 const page = usePage();
 const siteSettings = computed(() => page.props.siteSettings || {});
 import { dashboard, login, register } from "@/routes";
+
+import { useAppearance } from "@/composables/useAppearance";
+import { ThemeTogglerButton } from "@/components/animate-ui/components/buttons/theme-toggler";
+
+const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
+const { isInstallable, installPwa } = usePwaInstall();
+
+const activeTheme = computed({
+	get: () => appearance.value === "system" ? resolvedAppearance.value : appearance.value,
+	set: (val) => {
+		updateAppearance(val);
+	}
+});
 
 const isMobileMenuOpen = ref(false);
 const openMobile = ref(null);
@@ -38,6 +52,7 @@ const closeFlyout = () => {
 
 const getMenuHref = (menu) => {
 	if (menu.url) return menu.url;
+	if (menu.title === 'Agenda Event' || menu.title === 'Event') return '/event';
 	if (menu.page) return `/halaman/${menu.page.slug}`;
 	return "#";
 };
@@ -103,6 +118,24 @@ const iconMap = {
 		tc: "text-emerald-500",
 		bg: "bg-emerald-50/70",
 		desc: "Jadwal & agenda akademik",
+	},
+	informatika: {
+		d: "m18 16 4-4-4-4M6 8l-4 4 4 4M14.5 4l-5 16",
+		tc: "text-blue-600 dark:text-blue-400",
+		bg: "bg-blue-50/80 dark:bg-blue-950/30",
+		desc: "S1 Teknik Informatika",
+	},
+	"sistem-informasi": {
+		d: "M12 8c4.97 0 9-1.343 9-3S16.97 2 12 2 3 3.343 3 5s4.03 3 9 3M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5M3 12c0 1.66 4 3 9 3s9-1.34 9-3",
+		tc: "text-indigo-600 dark:text-indigo-400",
+		bg: "bg-indigo-50/80 dark:bg-indigo-950/30",
+		desc: "S1 Sistem Informasi",
+	},
+	matematika: {
+		d: "M9 4v16M17 4v16M3 4h18M14 20a3 3 0 0 1-3-3",
+		tc: "text-emerald-600 dark:text-emerald-400",
+		bg: "bg-emerald-50/80 dark:bg-emerald-950/30",
+		desc: "S1 Matematika",
 	},
 	mbkm: {
 		d: "M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
@@ -208,7 +241,7 @@ const getAccent = (menu) => accentColor[menu.title] || "text-blue-600";
         <span>Mode Maintenance Aktif. Publik terblokir, Anda melihat halaman ini sebagai Administrator.</span>
     </div>
 
-    <nav class="sticky top-0 z-50 w-full border-b border-gray-100/60 bg-white/80 backdrop-blur-xl transition-all duration-300 shadow-sm shadow-slate-100/50">
+    <nav class="sticky top-0 z-50 w-full border-b border-gray-100/60 bg-white/80 backdrop-blur-xl transition-all duration-300 shadow-sm shadow-slate-100/50" style="padding-top: env(safe-area-inset-top);">
         <div class="mx-auto max-w-7xl px-4 xl:px-0">
             <div class="flex h-[68px] items-center justify-between">
                 <!-- Logo -->
@@ -411,6 +444,16 @@ const getAccent = (menu) => accentColor[menu.title] || "text-blue-600";
 
                 <!-- Right CTA -->
                 <div class="hidden md:flex items-center gap-2">
+                    <!-- PWA Install Button (Desktop) -->
+                    <button 
+                        v-if="isInstallable" 
+                        @click="installPwa"
+                        class="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/50 hover:bg-blue-50 dark:bg-blue-950/20 dark:border-blue-900/30 px-3.5 text-xs font-bold text-blue-600 dark:text-blue-400 shadow-xs transition-all hover:scale-[1.02] cursor-pointer"
+                    >
+                        <Download class="w-3.5 h-3.5" />
+                        Install App
+                    </button>
+
                     <template v-if="$page.props.auth.user">
                         <Link :href="dashboard()"
                             class="inline-flex h-9 items-center justify-center rounded-xl border border-gray-200 bg-white/80 px-4 text-sm font-semibold text-[#111827] shadow-sm transition-all hover:bg-gray-50 hover:text-[#2563eb]">
@@ -501,6 +544,40 @@ const getAccent = (menu) => accentColor[menu.title] || "text-blue-600";
                     </template>
                 </template>
             </Deferred>
+
+                    <!-- PWA Premium Install Banner (Mobile) -->
+                    <div v-if="isInstallable" class="px-3 pt-4 pb-2 border-t border-slate-100">
+                        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#064e3b] via-[#022c22] to-[#0a0f1d] border border-emerald-500/20 p-5 shadow-lg flex flex-col gap-4">
+                            <!-- Glow effects -->
+                            <div class="absolute -right-10 -top-10 w-32 h-32 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none"></div>
+                            <div class="absolute -left-10 -bottom-10 w-24 h-24 rounded-full bg-teal-500/5 blur-xl pointer-events-none"></div>
+
+                            <div class="flex items-start gap-3">
+                                <!-- Circular Icon -->
+                                <div class="flex-shrink-0 w-8 h-8 rounded-full border border-emerald-500/30 flex items-center justify-center text-emerald-400 bg-emerald-500/10">
+                                    <Download class="w-4 h-4" />
+                                </div>
+                                
+                                <!-- Texts -->
+                                <div class="space-y-1">
+                                    <h4 class="text-sm font-bold text-white tracking-tight leading-tight">
+                                        Download Aplikasi Portal
+                                    </h4>
+                                    <p class="text-[11.5px] text-emerald-300/80 leading-relaxed font-normal">
+                                        Akses cepat, stabil, & fullscreen ke seluruh fitur FMIKOM.
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- Action button -->
+                            <button 
+                                @click="installPwa"
+                                class="w-full py-2.5 px-4 bg-white hover:bg-emerald-50 text-emerald-950 font-bold text-xs rounded-xl shadow-xs transition-all hover:scale-[1.01] active:scale-95 cursor-pointer text-center"
+                            >
+                                Unduh Sekarang
+                            </button>
+                        </div>
+                    </div>
 
                     <!-- Auth actions -->
                     <div class="pt-3 mt-3 border-t border-slate-100 flex flex-col gap-2">

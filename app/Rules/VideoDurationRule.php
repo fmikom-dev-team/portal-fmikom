@@ -35,7 +35,7 @@ class VideoDurationRule implements ValidationRule
                     if ($duration > 60.5) {
                         $fail('Durasi video maksimal adalah 1 menit (60 detik).');
                     }
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     Log::error('FFprobe duration check failed: '.$e->getMessage());
                 }
             }

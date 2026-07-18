@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
+import { router } from "@inertiajs/vue3";
+import axios from "axios";
 import { toast } from "../../composables/useWorkOs";
 
 const props = defineProps<{
 	notifications: any[];
+	webhookConfig?: any;
+	webhookDeliveries?: any[];
 }>();
 
 const emit = defineEmits<{
@@ -52,42 +56,33 @@ function toggleRead(notif: any) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Webhook Config State & Actions
 // ─────────────────────────────────────────────────────────────────────────────
-const webhookUrl = ref("https://api.fmikom.org/webhooks");
+const webhookUrl = ref(props.webhookConfig?.url || "");
 const isEditingWebhook = ref(false);
-const webhookSecret = ref("whsec_a58f6089c6c793f9f8b63b3c19e8c531");
+const webhookSecret = ref(props.webhookConfig?.secret || "");
 const showSecret = ref(false);
 const isSavingWebhook = ref(false);
 
 const subscribedEvents = ref<Record<string, boolean>>({
-	"user.created": true,
+	"user.created": false,
 	"user.deleted": false,
-	"sso.connected": true,
-	"radar.threat_blocked": true,
+	"sso.connected": false,
+	"radar.threat_blocked": false,
 	"organization.created": false,
 });
 
-const mockDeliveries = ref([
-	{
-		id: "whd_01J8G5S2Y9T",
-		event: "radar.threat_blocked",
-		url: "https://api.fmikom.org/webhooks",
-		status: 200,
-		statusText: "OK",
-		latency: "142ms",
-		time: "10 mins ago",
-		isRedelivering: false,
-	},
-	{
-		id: "whd_01J8G5S2YAA",
-		event: "sso.connected",
-		url: "https://api.fmikom.org/webhooks",
-		status: 500,
-		statusText: "Internal Error",
-		latency: "450ms",
-		time: "1 hour ago",
-		isRedelivering: false,
-	},
-]);
+watch(() => props.webhookConfig, (newConf) => {
+	if (newConf) {
+		webhookUrl.value = newConf.url;
+		webhookSecret.value = newConf.secret;
+		subscribedEvents.value = { ...newConf.events };
+	}
+}, { immediate: true });
+
+const mockDeliveries = ref<any[]>(props.webhookDeliveries || []);
+
+watch(() => props.webhookDeliveries, (newDeliv) => {
+	mockDeliveries.value = newDeliv || [];
+}, { immediate: true });
 
 function copySecret() {
 	navigator.clipboard.writeText(webhookSecret.value);
@@ -96,40 +91,49 @@ function copySecret() {
 
 function saveWebhookConfig() {
 	isSavingWebhook.value = true;
-	setTimeout(() => {
-		isSavingWebhook.value = false;
-		isEditingWebhook.value = false;
-		toast("Webhook configurations saved successfully", "success");
-	}, 800);
+	router.post("/workos/webhooks/save", {
+		url: webhookUrl.value,
+		secret: webhookSecret.value,
+		events: subscribedEvents.value,
+	}, {
+		preserveState: true,
+		preserveScroll: true,
+		onSuccess: () => {
+			isSavingWebhook.value = false;
+			isEditingWebhook.value = false;
+			toast("Webhook configurations saved successfully", "success");
+		},
+		onError: () => {
+			isSavingWebhook.value = false;
+		}
+	});
 }
 
-function triggerRedeliver(delivery: any) {
+async function triggerRedeliver(delivery: any) {
 	delivery.isRedelivering = true;
 	toast(`Redelivering event ${delivery.event}...`, "info");
 
-	setTimeout(() => {
+	try {
+		await axios.post(`/workos/webhooks/redeliver/${delivery.id}`);
+		toast(`Event ${delivery.event} redelivered successfully (200 OK)!`, "success");
+		router.reload({ only: ['webhookDeliveries'] });
+	} catch (e: any) {
+		toast(`Failed to redeliver: ${e.response?.data?.error || e.message}`, "error");
+	} finally {
 		delivery.isRedelivering = false;
-		delivery.status = 200;
-		delivery.statusText = "OK";
-		delivery.latency = "120ms";
-		delivery.time = "Just now";
-		toast(
-			`Event ${delivery.event} redelivered successfully (200 OK)!`,
-			"success",
-		);
-	}, 1000);
+	}
 }
 </script>
 
 <template>
   <div style="font-family: var(--wos-font)" class="p-6 md:p-8 space-y-5">
     <!-- Toolbar / Tabs -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 pb-3 gap-3">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 dark:border-zinc-700 pb-3 gap-3">
         <div class="flex items-center gap-1.5 overflow-x-auto wos-scroll -mb-3.5">
             <button
                 v-for="tab in tabs"
                 :key="tab.id"
-                :class="['h-[38px] px-3 pb-3 text-[13px] font-semibold border-b-2 transition-colors whitespace-nowrap', activeTab === tab.id ? 'border-blue-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900']"
+                :class="['h-[38px] px-3 pb-3 text-[13px] font-semibold border-b-2 transition-colors whitespace-nowrap', activeTab === tab.id ? 'border-blue-600 text-gray-900 dark:text-zinc-100' : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-900']"
                 @click="activeTab = tab.id"
             >
                 {{ tab.label }}
@@ -147,7 +151,7 @@ function triggerRedeliver(delivery: any) {
             <div class="flex items-center gap-2">
                 <select
                     v-model="severityFilter"
-                    class="h-[32px] px-2.5 text-[12.5px] border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] bg-white text-gray-700"
+                    class="h-[32px] px-2.5 text-[12.5px] border border-gray-200 dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] bg-white dark:bg-zinc-900 text-gray-700 dark:text-zinc-300"
                 >
                     <option value="all">All Alerts</option>
                     <option value="error">Errors</option>
@@ -158,13 +162,13 @@ function triggerRedeliver(delivery: any) {
             </div>
             <div class="flex items-center gap-2" v-if="props.notifications.length > 0">
                 <button
-                    class="h-[32px] px-3 border border-gray-200 rounded-md text-[12.5px] font-semibold text-gray-600 bg-white hover:bg-gray-50 transition-colors shadow-sm"
+                    class="h-[32px] px-3 border border-gray-200 dark:border-zinc-700 rounded-md text-[12.5px] font-semibold text-gray-600 dark:text-zinc-400 bg-white dark:bg-zinc-900 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-sm dark:shadow-none"
                     @click="markAllAsRead"
                 >
                     Mark all read
                 </button>
                 <button
-                    class="h-[32px] px-3 border border-red-200 rounded-md text-[12.5px] font-semibold text-red-600 bg-white hover:bg-red-50 transition-colors shadow-sm"
+                    class="h-[32px] px-3 border border-red-200 rounded-md text-[12.5px] font-semibold text-red-600 bg-white dark:bg-zinc-900 hover:bg-red-50 transition-colors shadow-sm dark:shadow-none"
                     @click="clearAllFeed"
                 >
                     Clear log
@@ -174,13 +178,13 @@ function triggerRedeliver(delivery: any) {
 
         <!-- Feed List -->
         <div class="space-y-2.5">
-            <div v-if="filteredNotifications.length === 0" class="bg-white border border-gray-200 rounded-xl p-12 text-center text-gray-500 shadow-sm">
+            <div v-if="filteredNotifications.length === 0" class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl p-12 text-center text-gray-500 dark:text-zinc-400 shadow-sm dark:shadow-none">
                 No activity notifications found.
             </div>
             <div
                 v-for="notif in filteredNotifications"
                 :key="notif.id"
-                :class="['p-4 rounded-xl border transition-all flex items-start gap-3 bg-white border-gray-200', !notif.read ? 'ring-1 ring-blue-500/10 bg-blue-50/5 border-blue-100 shadow-sm' : '']"
+                :class="['p-4 rounded-xl border transition-all flex items-start gap-3 bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-700', !notif.read ? 'ring-1 ring-blue-500/10 bg-blue-50/5 border-blue-100 shadow-sm' : '']"
             >
                 <!-- Severity Dot -->
                 <span
@@ -195,10 +199,10 @@ function triggerRedeliver(delivery: any) {
                 <!-- Details -->
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center justify-between gap-2">
-                        <span class="text-[13px] font-bold text-gray-900 leading-tight">{{ notif.title }}</span>
-                        <span class="text-[11px] text-gray-400 font-medium shrink-0">{{ notif.time }}</span>
+                        <span class="text-[13px] font-bold text-gray-900 dark:text-zinc-100 leading-tight">{{ notif.title }}</span>
+                        <span class="text-[11px] text-gray-400 dark:text-zinc-500 font-medium shrink-0">{{ notif.time }}</span>
                     </div>
-                    <p class="text-[12.5px] text-gray-600 mt-1 leading-normal">{{ notif.description }}</p>
+                    <p class="text-[12.5px] text-gray-600 dark:text-zinc-400 mt-1 leading-normal">{{ notif.description }}</p>
                 </div>
 
                 <!-- Read Toggle Button -->
@@ -215,12 +219,12 @@ function triggerRedeliver(delivery: any) {
     <!-- WEBHOOK CONFIG TAB -->
     <div v-if="activeTab === 'webhooks'" class="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <!-- Settings Form -->
-        <div class="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-5">
+        <div class="lg:col-span-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl p-5 shadow-sm space-y-5 dark:shadow-none">
             <div class="flex items-center justify-between">
-                <h3 class="text-sm font-bold text-gray-900 font-semibold">Endpoint Configuration</h3>
+                <h3 class="text-sm font-bold text-gray-900 dark:text-zinc-100 font-semibold">Endpoint Configuration</h3>
                 <button
                     v-if="!isEditingWebhook"
-                    class="h-[28px] px-2.5 border border-gray-200 rounded-md text-[11.5px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors bg-white"
+                    class="h-[28px] px-2.5 border border-gray-200 dark:border-zinc-700 rounded-md text-[11.5px] font-semibold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900"
                     @click="isEditingWebhook = true"
                 >
                     Edit details
@@ -229,31 +233,31 @@ function triggerRedeliver(delivery: any) {
 
             <div class="space-y-4">
                 <div>
-                    <label for="webhook_url_input" class="block text-xs font-semibold text-gray-700 mb-1.5">Destination URL</label>
+                    <label for="webhook_url_input" class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Destination URL</label>
                     <input
                         id="webhook_url_input"
                         v-model="webhookUrl"
                         type="url"
                         :disabled="!isEditingWebhook"
                         placeholder="https://yourserver.com/webhook-endpoint"
-                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 bg-white disabled:bg-gray-50 disabled:text-gray-500"
+                        class="w-full h-9 px-3 text-sm border border-gray-200 dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 bg-white dark:bg-zinc-900 disabled:bg-gray-50 disabled:text-gray-500 dark:text-zinc-400"
                     />
                 </div>
 
                 <!-- Webhook Secret key -->
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1.5">Signing Secret Key</label>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Signing Secret Key</label>
                     <div class="flex gap-2">
                         <div class="relative flex-1">
                             <input
                                 :type="showSecret ? 'text' : 'password'"
                                 :value="webhookSecret"
                                 readonly
-                                class="w-full h-9 pl-3 pr-10 text-sm border border-gray-200 rounded-md focus:outline-none bg-gray-50 text-gray-600 font-mono"
+                                class="w-full h-9 pl-3 pr-10 text-sm border border-gray-200 dark:border-zinc-700 rounded-md focus:outline-none bg-gray-50 dark:bg-zinc-900 text-gray-600 dark:text-zinc-400 font-mono"
                             />
                             <button
                                 @click="showSecret = !showSecret"
-                                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-zinc-400"
                                 type="button"
                             >
                                 <svg v-if="showSecret" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -267,7 +271,7 @@ function triggerRedeliver(delivery: any) {
                         </div>
                         <button
                             @click="copySecret"
-                            class="h-9 px-3.5 border border-gray-200 rounded-md text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors bg-white"
+                            class="h-9 px-3.5 border border-gray-200 dark:border-zinc-700 rounded-md text-xs font-semibold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900"
                             type="button"
                         >
                             Copy
@@ -276,32 +280,32 @@ function triggerRedeliver(delivery: any) {
                 </div>
 
                 <!-- Event checklist selection -->
-                <div class="border-t border-gray-100 pt-4">
-                    <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-3">Event Subscriptions</span>
+                <div class="border-t border-gray-100 dark:border-zinc-800 pt-4">
+                    <span class="text-[11px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider block mb-3">Event Subscriptions</span>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        <label v-for="(val, key) in subscribedEvents" :key="key" class="flex items-center gap-2.5 cursor-pointer py-1.5 hover:bg-gray-50 px-2 rounded-md transition-colors border border-transparent hover:border-gray-100">
+                        <label v-for="(val, key) in subscribedEvents" :key="key" class="flex items-center gap-2.5 cursor-pointer py-1.5 hover:bg-gray-50 dark:hover:bg-zinc-800 dark:bg-zinc-900 px-2 rounded-md transition-colors border border-transparent hover:border-gray-100 dark:border-zinc-800">
                             <input
                                 v-model="subscribedEvents[key]"
                                 type="checkbox"
                                 :disabled="!isEditingWebhook"
-                                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-[#2563eb]"
+                                class="w-4 h-4 text-blue-600 border-gray-300 dark:border-zinc-700 rounded focus:ring-[#2563eb]"
                             />
-                            <span class="font-mono text-[11.5px] text-gray-700">{{ key }}</span>
+                            <span class="font-mono text-[11.5px] text-gray-700 dark:text-zinc-300">{{ key }}</span>
                         </label>
                     </div>
                 </div>
             </div>
 
             <!-- Save buttons -->
-            <div v-if="isEditingWebhook" class="flex justify-end gap-2 border-t border-gray-100 pt-4">
+            <div v-if="isEditingWebhook" class="flex justify-end gap-2 border-t border-gray-100 dark:border-zinc-800 pt-4">
                 <button
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-gray-700 border border-gray-200 hover:bg-gray-50 transition-colors bg-white"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-gray-700 dark:text-zinc-300 border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900"
                     @click="isEditingWebhook = false"
                 >
                     Cancel
                 </button>
                 <button
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center gap-1.5"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center gap-1.5 dark:shadow-none"
                     :disabled="isSavingWebhook"
                     @click="saveWebhookConfig"
                 >
@@ -315,30 +319,30 @@ function triggerRedeliver(delivery: any) {
         </div>
 
         <!-- Deliveries history -->
-        <div class="lg:col-span-1 bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4">
-            <h3 class="text-sm font-bold text-gray-900 font-semibold">Recent Webhooks</h3>
-            <p class="text-[12px] text-gray-500 leading-normal">Logs of recently delivered payloads to your configured endpoint server.</p>
+        <div class="lg:col-span-1 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl p-5 shadow-sm space-y-4 dark:shadow-none">
+            <h3 class="text-sm font-bold text-gray-900 dark:text-zinc-100 font-semibold">Recent Webhooks</h3>
+            <p class="text-[12px] text-gray-500 dark:text-zinc-400 leading-normal">Logs of recently delivered payloads to your configured endpoint server.</p>
 
             <div class="space-y-3 pt-2">
                 <div v-for="d in mockDeliveries" :key="d.id" class="border border-gray-150 p-3 rounded-lg flex flex-col gap-2 bg-slate-50/30">
                     <div class="flex items-center justify-between">
-                        <span class="font-mono text-[10.5px] bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-gray-700 truncate max-w-[140px]">{{ d.event }}</span>
+                        <span class="font-mono text-[10.5px] bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-gray-700 dark:text-zinc-300 truncate max-w-[140px]">{{ d.event }}</span>
                         <span :class="['text-[11.5px] font-bold', d.status === 200 ? 'text-emerald-600' : 'text-red-500']">
                             {{ d.status }} {{ d.statusText }}
                         </span>
                     </div>
-                    <div class="flex items-center justify-between text-[11px] text-gray-400 font-medium">
+                    <div class="flex items-center justify-between text-[11px] text-gray-400 dark:text-zinc-500 font-medium">
                         <span>Latency: {{ d.latency }}</span>
                         <span>{{ d.time }}</span>
                     </div>
 
                     <!-- Redeliver trigger -->
                     <button
-                        class="w-full h-7 bg-white hover:bg-gray-50 border border-gray-200 rounded text-[11.5px] font-semibold text-gray-700 transition-colors flex items-center justify-center gap-1.5 shadow-sm mt-1"
+                        class="w-full h-7 bg-white dark:bg-zinc-900 hover:bg-gray-50 dark:hover:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded text-[11.5px] font-semibold text-gray-700 dark:text-zinc-300 transition-colors flex items-center justify-center gap-1.5 shadow-sm mt-1 dark:shadow-none"
                         :disabled="d.isRedelivering"
                         @click="triggerRedeliver(d)"
                     >
-                        <svg v-if="d.isRedelivering" class="animate-spin h-3 w-3 text-gray-700" fill="none" viewBox="0 0 24 24">
+                        <svg v-if="d.isRedelivering" class="animate-spin h-3 w-3 text-gray-700 dark:text-zinc-300" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>

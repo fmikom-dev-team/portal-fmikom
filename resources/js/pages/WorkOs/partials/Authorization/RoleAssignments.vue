@@ -190,12 +190,12 @@ function submitRemove() {
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-                <h1 class="text-[20px] font-semibold text-gray-900 tracking-tight">Role Assignments</h1>
-                <p class="text-[13px] text-gray-500 mt-0.5">Assign users to roles within specific modules or organizations.</p>
+                <h1 class="text-[20px] font-semibold text-gray-900 dark:text-zinc-100 tracking-tight">Role Assignments</h1>
+                <p class="text-[13px] text-gray-500 dark:text-zinc-400 mt-0.5">Assign users to roles within specific modules or organizations.</p>
             </div>
             
             <button
-                class="h-[34px] px-4 bg-gray-900 text-white rounded-md text-[13px] font-semibold hover:bg-black transition-colors shadow-sm flex items-center gap-1.5 self-start sm:self-auto"
+                class="h-[34px] px-4 bg-gray-900 text-white rounded-md text-[13px] font-semibold hover:bg-black transition-colors shadow-sm flex items-center gap-1.5 self-start sm:self-auto dark:shadow-none"
                 @click="openAssignModal"
             >
                 <UserPlus class="w-4 h-4" />
@@ -206,56 +206,56 @@ function submitRemove() {
         <!-- Toolbar -->
         <div class="flex items-center gap-2">
             <div class="relative flex-1 max-w-sm">
-                <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z" />
                 </svg>
                 <input
                     v-model="search"
                     type="text"
                     placeholder="Search assignments by user, module, or role..."
-                    class="w-full h-[34px] pl-8 pr-3 text-[13px] border border-gray-200 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 transition-colors placeholder:text-gray-400 text-gray-900 bg-white"
+                    class="w-full h-[34px] pl-8 pr-3 text-[13px] border border-gray-200 dark:border-zinc-700 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 dark:ring-zinc-700 transition-colors placeholder:text-gray-400 text-gray-900 dark:text-zinc-100 bg-white dark:bg-zinc-900"
                 />
             </div>
         </div>
 
         <!-- Empty State -->
-        <div v-if="!allAssignments.length" class="rounded-xl bg-[#f9fafb] border border-dashed border-gray-200 p-12 flex flex-col items-center justify-center text-center gap-2">
+        <div v-if="!allAssignments.length" class="rounded-xl bg-[#f9fafb] dark:bg-zinc-900 border border-dashed border-gray-200 dark:border-zinc-700 p-12 flex flex-col items-center justify-center text-center gap-2">
             <svg class="w-8 h-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.052-.03c0-.223.012-.447.037-.666A11.944 11.944 0 0112 12.75c2.17 0 4.207.576 5.963 1.584M12 3v1.75m0 2.25v.008H12V7.008z"/>
             </svg>
-            <p class="text-[13px] font-medium text-gray-800">No role assignments found</p>
-            <p class="text-[11.5px] text-gray-400">Click <strong>Assign role</strong> to create the first connection.</p>
+            <p class="text-[13px] font-medium text-gray-800 dark:text-zinc-200">No role assignments found</p>
+            <p class="text-[11.5px] text-gray-400 dark:text-zinc-500">Click <strong>Assign role</strong> to create the first connection.</p>
         </div>
 
         <!-- Assignments Table -->
-        <div v-else class="rounded-xl overflow-x-auto bg-white border border-gray-200 shadow-sm">
+        <div v-else class="rounded-xl overflow-x-auto bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 shadow-sm dark:shadow-none">
             <table class="w-full text-left whitespace-nowrap">
                 <caption class="sr-only">Tabel Alokasi Peran Pengguna</caption>
                 <thead>
-                    <tr class="bg-[#f9fafb] border-b border-gray-200">
-                        <th class="px-4 py-3 text-[12px] font-semibold text-gray-800">User</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-gray-800">Module / Organization</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-gray-800">Role</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-gray-800">Status</th>
+                    <tr class="bg-[#f9fafb] dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-700">
+                        <th class="px-4 py-3 text-[12px] font-semibold text-gray-800 dark:text-zinc-200">User</th>
+                        <th class="px-4 py-3 text-[12px] font-semibold text-gray-800 dark:text-zinc-200">Module / Organization</th>
+                        <th class="px-4 py-3 text-[12px] font-semibold text-gray-800 dark:text-zinc-200">Role</th>
+                        <th class="px-4 py-3 text-[12px] font-semibold text-gray-800 dark:text-zinc-200">Status</th>
                         <th class="px-4 py-3 w-6" />
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 text-sm">
+                <tbody class="divide-y divide-gray-100 dark:divide-zinc-800 text-sm">
                     <tr
                         v-for="assignment in allAssignments"
                         :key="assignment.id"
-                        class="hover:bg-[#f9fafb]/50 transition-colors group"
+                        class="hover:bg-[#f9fafb] dark:hover:bg-zinc-800 dark:bg-zinc-900/50 transition-colors group"
                     >
                         <!-- User Cell -->
                         <td class="px-4 py-3 align-middle">
                             <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-full bg-[#f3f4f6] border border-gray-200 flex items-center justify-center text-gray-900 text-[12px] font-bold shrink-0 overflow-hidden">
+                                <div class="w-8 h-8 rounded-full bg-[#f3f4f6] dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 flex items-center justify-center text-gray-900 dark:text-zinc-100 text-[12px] font-bold shrink-0 overflow-hidden">
                                     <img v-if="assignment.user_foto" :src="assignment.user_foto" :alt="assignment.user_name" class="w-full h-full object-cover" />
                                     <span v-else>{{ assignment.user_name?.charAt(0)?.toUpperCase() }}</span>
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="text-[13px] font-medium text-gray-900 truncate leading-tight">{{ assignment.user_name }}</p>
-                                    <p class="text-[12px] text-gray-400 truncate leading-tight mt-0.5">{{ assignment.user_email }}</p>
+                                    <p class="text-[13px] font-medium text-gray-900 dark:text-zinc-100 truncate leading-tight">{{ assignment.user_name }}</p>
+                                    <p class="text-[12px] text-gray-400 dark:text-zinc-500 truncate leading-tight mt-0.5">{{ assignment.user_email }}</p>
                                 </div>
                             </div>
                         </td>
@@ -263,15 +263,15 @@ function submitRemove() {
                         <!-- Module Cell -->
                         <td class="px-4 py-3 align-middle">
                             <div>
-                                <p class="text-[13px] font-medium text-gray-800 leading-tight">{{ assignment.module_name }}</p>
-                                <span class="inline-block mt-0.5 font-mono text-[10px] bg-gray-100 border border-gray-200 text-gray-500 px-1 rounded">{{ assignment.module_code }}</span>
+                                <p class="text-[13px] font-medium text-gray-800 dark:text-zinc-200 leading-tight">{{ assignment.module_name }}</p>
+                                <span class="inline-block mt-0.5 font-mono text-[10px] bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-500 dark:text-zinc-400 px-1 rounded">{{ assignment.module_code }}</span>
                             </div>
                         </td>
 
                         <!-- Role Cell -->
                         <td class="px-4 py-3 align-middle">
                             <div>
-                                <span class="text-[13px] font-medium text-gray-800 leading-tight">{{ assignment.role_name }}</span>
+                                <span class="text-[13px] font-medium text-gray-800 dark:text-zinc-200 leading-tight">{{ assignment.role_name }}</span>
                             </div>
                         </td>
 
@@ -287,15 +287,15 @@ function submitRemove() {
                         <!-- Actions Cell -->
                         <td class="px-4 py-3 text-right align-middle">
                             <div class="relative flex justify-end">
-                                <button class="p-1 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-all" @click.stop="toggleMenu(assignment.id, $event)">
+                                <button class="p-1 rounded text-gray-400 hover:text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 dark:bg-zinc-800 opacity-0 group-hover:opacity-100 transition-all" @click.stop="toggleMenu(assignment.id, $event)">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
                                     </svg>
                                 </button>
                                 
-                                <div v-if="activeMenu === assignment.id" class="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 text-left">
-                                    <button class="w-full flex items-center gap-2 px-3 py-1.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors" @click="openEditModal(assignment)">
-                                        <Edit class="w-3.5 h-3.5 text-gray-400" />
+                                <div v-if="activeMenu === assignment.id" class="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg z-50 py-1 text-left dark:shadow-none">
+                                    <button class="w-full flex items-center gap-2 px-3 py-1.5 text-[13px] text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 dark:bg-zinc-900 transition-colors" @click="openEditModal(assignment)">
+                                        <Edit class="w-3.5 h-3.5 text-gray-400 dark:text-zinc-500" />
                                         <span>Edit assignment</span>
                                     </button>
                                     <button class="w-full flex items-center gap-2 px-3 py-1.5 text-[13px] text-red-600 hover:bg-red-50 transition-colors" @click="openRemoveModal(assignment)">
@@ -323,11 +323,11 @@ function submitRemove() {
             <div class="space-y-4 py-2">
                 <!-- User Selector -->
                 <div>
-                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">User</label>
+                    <label class="block text-[13px] font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">User</label>
                     <div class="relative">
                         <select
                             v-model="assignForm.user_id"
-                            class="w-full h-9 pl-3 pr-8 text-[13px] border border-gray-300 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 bg-white text-gray-900"
+                            class="w-full h-9 pl-3 pr-8 text-[13px] border border-gray-300 dark:border-zinc-700 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 dark:ring-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100"
                         >
                             <option value="" disabled selected>Select a user...</option>
                             <option v-for="u in users" :key="u.id" :value="u.id">
@@ -339,11 +339,11 @@ function submitRemove() {
 
                 <!-- Module Selector -->
                 <div>
-                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Module / Organization</label>
+                    <label class="block text-[13px] font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Module / Organization</label>
                     <div class="relative">
                         <select
                             v-model="assignForm.module_id"
-                            class="w-full h-9 pl-3 pr-8 text-[13px] border border-gray-300 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 bg-white text-gray-900"
+                            class="w-full h-9 pl-3 pr-8 text-[13px] border border-gray-300 dark:border-zinc-700 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 dark:ring-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100"
                         >
                             <option value="" disabled selected>Select a module...</option>
                             <option v-for="m in modules" :key="m.id" :value="m.id">
@@ -355,11 +355,11 @@ function submitRemove() {
 
                 <!-- Role Selector -->
                 <div>
-                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Role</label>
+                    <label class="block text-[13px] font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Role</label>
                     <div class="relative">
                         <select
                             v-model="assignForm.role_id"
-                            class="w-full h-9 pl-3 pr-8 text-[13px] border border-gray-300 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 bg-white text-gray-900"
+                            class="w-full h-9 pl-3 pr-8 text-[13px] border border-gray-300 dark:border-zinc-700 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 dark:ring-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100"
                         >
                             <option value="" disabled selected>Select a role...</option>
                             <option v-for="r in roles" :key="r.id" :value="r.id">
@@ -372,7 +372,7 @@ function submitRemove() {
 
             <template #footer>
                 <button
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors bg-white"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-gray-700 dark:text-zinc-300 border border-gray-300 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900"
                     @click="showAssignModal = false"
                 >
                     Cancel
@@ -398,17 +398,17 @@ function submitRemove() {
             @close="showEditModal = false"
         >
             <template #description>
-                Modify role details and active status for <strong class="text-gray-900">{{ editingAssignment?.user_name }}</strong> in module <strong class="text-gray-900">{{ editingAssignment?.module_name }}</strong>.
+                Modify role details and active status for <strong class="text-gray-900 dark:text-zinc-100">{{ editingAssignment?.user_name }}</strong> in module <strong class="text-gray-900 dark:text-zinc-100">{{ editingAssignment?.module_name }}</strong>.
             </template>
             
             <div class="space-y-4 py-2" v-if="editingAssignment">
                 <!-- Role Selector -->
                 <div>
-                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Role</label>
+                    <label class="block text-[13px] font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Role</label>
                     <div class="relative">
                         <select
                             v-model="editForm.role_id"
-                            class="w-full h-9 pl-3 pr-8 text-[13px] border border-gray-300 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 bg-white text-gray-900"
+                            class="w-full h-9 pl-3 pr-8 text-[13px] border border-gray-300 dark:border-zinc-700 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 dark:ring-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100"
                         >
                             <option v-for="r in roles" :key="r.id" :value="r.id">
                                 {{ r.nama }}
@@ -418,16 +418,16 @@ function submitRemove() {
                 </div>
 
                 <!-- Active Status Toggle -->
-                <div class="flex items-center justify-between py-2.5 border-t border-gray-100 mt-2">
+                <div class="flex items-center justify-between py-2.5 border-t border-gray-100 dark:border-zinc-800 mt-2">
                     <div>
-                        <p class="text-[13px] font-semibold text-gray-800">Assignment Status</p>
-                        <p class="text-[11.5px] text-gray-400">Temporarily disable or enable this role assignment.</p>
+                        <p class="text-[13px] font-semibold text-gray-800 dark:text-zinc-200">Assignment Status</p>
+                        <p class="text-[11.5px] text-gray-400 dark:text-zinc-500">Temporarily disable or enable this role assignment.</p>
                     </div>
                     <button 
                         @click="editForm.is_active = !editForm.is_active"
-                        class="p-1 rounded-md text-gray-500 hover:bg-gray-50 transition-colors"
+                        class="p-1 rounded-md text-gray-500 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800 dark:bg-zinc-900 transition-colors"
                     >
-                        <CheckSquare v-if="editForm.is_active" class="w-5 h-5 text-gray-900" />
+                        <CheckSquare v-if="editForm.is_active" class="w-5 h-5 text-gray-900 dark:text-zinc-100" />
                         <Square v-else class="w-5 h-5 text-gray-300" />
                     </button>
                 </div>
@@ -435,7 +435,7 @@ function submitRemove() {
 
             <template #footer>
                 <button
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors bg-white"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-gray-700 dark:text-zinc-300 border border-gray-300 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900"
                     @click="showEditModal = false"
                 >
                     Cancel
@@ -462,13 +462,13 @@ function submitRemove() {
             @close="showRemoveModal = false"
         >
             <template #description>
-                Are you sure you want to remove the <strong class="text-gray-900">{{ selectedToRemove?.role_name }}</strong> assignment for <strong class="text-gray-900">{{ selectedToRemove?.user_name }}</strong> in module <strong class="text-gray-900">{{ selectedToRemove?.module_name }}</strong>?
+                Are you sure you want to remove the <strong class="text-gray-900 dark:text-zinc-100">{{ selectedToRemove?.role_name }}</strong> assignment for <strong class="text-gray-900 dark:text-zinc-100">{{ selectedToRemove?.user_name }}</strong> in module <strong class="text-gray-900 dark:text-zinc-100">{{ selectedToRemove?.module_name }}</strong>?
                 <span class="block mt-1 text-red-600">This action is permanent and cannot be undone.</span>
             </template>
 
             <template #footer>
                 <button
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors bg-white"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-gray-700 dark:text-zinc-300 border border-gray-300 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900"
                     @click="showRemoveModal = false"
                 >
                     Cancel

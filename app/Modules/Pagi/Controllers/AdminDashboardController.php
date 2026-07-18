@@ -100,35 +100,11 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * Activity Logs
-     */
-    public function logs(Request $request): Response
-    {
-        return Inertia::render('Modules/Pagi/Admin/Logs/Index');
-    }
-
-    /**
-     * Gallery
-     */
-    public function gallery(Request $request): Response
-    {
-        return Inertia::render('Modules/Pagi/Admin/Gallery/Index');
-    }
-
-    /**
      * Tags
      */
     public function tags(Request $request): Response
     {
         return Inertia::render('Modules/Pagi/Admin/Tags/Index');
-    }
-
-    /**
-     * Roles
-     */
-    public function roles(Request $request): Response
-    {
-        return Inertia::render('Modules/Pagi/Admin/Roles/Index');
     }
 
     /**

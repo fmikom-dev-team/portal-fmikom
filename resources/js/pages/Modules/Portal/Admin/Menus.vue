@@ -15,6 +15,7 @@ import {
 import { ref, watch } from "vue";
 import draggable from "vuedraggable";
 import PortalAdminLayout from "@/layouts/PortalAdminLayout.vue";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal.vue";
 
 const props = defineProps({
 	menus: Array,
@@ -90,13 +91,22 @@ const saveMenu = () => {
 	}
 };
 
+const isDeleteMenuModalOpen = ref(false);
+const deleteMenuId = ref(null);
+
 const deleteMenu = (id) => {
-	if (
-		confirm(
-			"Apakah Anda yakin ingin menghapus menu ini beserta semua sub-menunya?",
-		)
-	) {
-		form.delete(`/portal-admin/menus/${id}`);
+	deleteMenuId.value = id;
+	isDeleteMenuModalOpen.value = true;
+};
+
+const handleDeleteMenu = () => {
+	if (deleteMenuId.value !== null) {
+		form.delete(`/portal-admin/menus/${deleteMenuId.value}`, {
+			onSuccess: () => {
+				isDeleteMenuModalOpen.value = false;
+				deleteMenuId.value = null;
+			},
+		});
 	}
 };
 
@@ -306,5 +316,12 @@ const onDragEnd = () => {
                 </form>
             </div>
         </div>
+        <DeleteConfirmModal
+            :show="isDeleteMenuModalOpen"
+            title="Hapus Menu"
+            message="Apakah Anda yakin ingin menghapus menu ini beserta semua sub-menunya? Tindakan ini tidak dapat dibatalkan."
+            @confirm="handleDeleteMenu"
+            @cancel="isDeleteMenuModalOpen = false"
+        />
     </PortalAdminLayout>
 </template>

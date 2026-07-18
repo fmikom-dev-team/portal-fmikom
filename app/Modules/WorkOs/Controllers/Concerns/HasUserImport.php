@@ -4,9 +4,11 @@ namespace App\Modules\WorkOs\Controllers\Concerns;
 
 use App\Models\ProgramStudi;
 use App\Models\User;
+use App\Services\VirusScannerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -80,6 +82,14 @@ trait HasUserImport
 
         $file = $request->file('file');
         $userType = $request->user_type;
+
+        $scanner = app(VirusScannerService::class);
+        $scanResult = $scanner->scan($file);
+        if (! $scanResult['safe']) {
+            throw ValidationException::withMessages([
+                'file' => $scanResult['reason'],
+            ]);
+        }
 
         $rows = $this->loadSpreadsheetRows($file);
         if ($rows === null) {

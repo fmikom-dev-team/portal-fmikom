@@ -8,7 +8,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RadarDevice extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'user_id',
+        'device_fingerprint',
+        'geolocation',
+        'is_trusted',
+        'is_blocked',
+        'last_seen_at',
+        'risk_score',
+    ];
 
     protected $casts = [
         'geolocation' => 'array',

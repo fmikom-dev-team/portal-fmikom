@@ -250,19 +250,31 @@ class AdminModerationController extends Controller
             return back()->with('success', 'Antrean moderasi dan warnings berhasil di-reset.');
         }
 
+        $demoUserIds = User::query()->whereIn('email', [
+            'sarah@student.fmikom.ac.id',
+            'naufal@student.fmikom.ac.id',
+            'dimas@student.fmikom.ac.id',
+            'rizki@student.fmikom.ac.id',
+            'johan@student.fmikom.ac.id',
+            'fitria@student.fmikom.ac.id',
+        ])->pluck('id')->toArray();
+
         Schema::disableForeignKeyConstraints();
 
-        // 1. Hapus semua warning
-        PagiWarning::truncate();
+        // 1. Hapus warning yang terkait demo users
+        PagiWarning::query()->whereIn('user_id', $demoUserIds)->delete();
 
-        // 2. Hapus semua reports
-        PagiReport::truncate();
+        // 2. Ambil work IDs milik demo users untuk menghapus reports dan tags yang terkait
+        $demoWorkIds = PagiWork::query()->whereIn('user_id', $demoUserIds)->pluck('id')->toArray();
 
-        // 3. Hapus semua work tags
-        DB::table('pagi_work_tags')->truncate();
+        // Hapus reports yang terkait dengan karya demo
+        PagiReport::query()->whereIn('work_id', $demoWorkIds)->delete();
 
-        // 4. Hapus semua works untuk menghindari duplikasi
-        PagiWork::truncate();
+        // Hapus tag relasi yang terkait dengan karya demo
+        DB::table('pagi_work_tags')->whereIn('work_id', $demoWorkIds)->delete();
+
+        // Hapus karya demo saja
+        PagiWork::query()->whereIn('id', $demoWorkIds)->delete();
 
         Schema::enableForeignKeyConstraints();
 

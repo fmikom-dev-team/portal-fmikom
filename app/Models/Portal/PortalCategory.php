@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PortalCategory extends Model
 {
-    protected $guarded = [];
+    protected $fillable = ['name', 'slug', 'description'];
 
     public function posts(): HasMany
     {

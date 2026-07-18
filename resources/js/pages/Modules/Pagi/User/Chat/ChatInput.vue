@@ -158,7 +158,7 @@ function handleInput(e: Event) {
 </script>
 
 <template>
-    <div class="border-t border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-955 shrink-0 relative">
+    <div class="border-t border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0 relative">
         <!-- Blocked Banner -->
         <div v-if="isBlockedByMe || hasBlockedMe" class="px-6 py-5 bg-slate-50 dark:bg-zinc-900/40 text-center text-xs font-semibold text-slate-500 dark:text-zinc-400 select-none flex items-center justify-center gap-2">
             <svg class="w-4 h-4 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636" /></svg>
@@ -204,7 +204,7 @@ function handleInput(e: Event) {
             </div>
 
             <!-- WhatsApp-Style Message Input Area -->
-            <div class="px-4 sm:px-6 py-3 flex items-end gap-2.5 bg-white dark:bg-zinc-955">
+            <div class="px-4 sm:px-6 py-3 flex items-end gap-2.5 bg-white dark:bg-zinc-900">
                 <!-- Input Box (Pill Wrapper) -->
                 <div class="flex-1 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl px-3 py-1 flex items-end gap-2 focus-within:border-indigo-400 dark:focus-within:border-indigo-500 transition-colors min-h-[46px]">
                     <!-- Emoji/Keyboard toggle button on the left inside -->
@@ -247,14 +247,14 @@ function handleInput(e: Event) {
             </div>
 
             <!-- WhatsApp-Style Bottom Inline Emoji Picker (Occupies keyboard space) -->
-            <div v-if="showEmojiPicker" class="w-full border-t border-slate-150 dark:border-zinc-900 bg-white dark:bg-zinc-955 p-4 select-none flex flex-col h-72 shrink-0 animate-in slide-in-from-bottom duration-200">
+            <div v-if="showEmojiPicker" class="w-full border-t border-slate-150 dark:border-zinc-900 bg-white dark:bg-zinc-900 p-4 select-none flex flex-col h-72 shrink-0 animate-in slide-in-from-bottom duration-200">
                 <!-- Category tabs -->
                 <div class="flex gap-2 border-b border-slate-100 dark:border-zinc-800 pb-2 mb-2 overflow-x-auto shrink-0" style="scrollbar-width:none;">
                     <button v-for="cat in emojiCategories" :key="cat.name"
                         @click="activeEmojiTab = cat.name"
                         :class="['text-[10px] font-black px-2.5 py-1 rounded-full shrink-0 transition-all',
                             activeEmojiTab === cat.name
-                                ? 'bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-955 shadow-sm'
+                                ? 'bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm'
                                 : 'bg-slate-50 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-700'
                         ]"
                     >

@@ -71,27 +71,27 @@ const securityCenter = computed(() => {
         <!-- System Health Monitoring -->
         <DashboardCard title="System Health" subtitle="Status layanan dan uptime infrastruktur WorkOS">
             <template #actions>
-                <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[11px] font-semibold ring-1 ring-emerald-600/10">
+                <span class="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded text-[11px] font-semibold ring-1 ring-emerald-600/10 dark:ring-emerald-400/20">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                     Average {{ avgUptime }}
                 </span>
             </template>
 
             <div class="space-y-4">
-                <div v-for="service in services" :key="service.name" class="flex items-start justify-between gap-3 p-3 rounded-lg border border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors">
+                <div v-for="service in services" :key="service.name" class="flex items-start justify-between gap-3 p-3 rounded-lg border border-[#f3f4f6] dark:border-zinc-800 hover:bg-[#f9fafb] dark:bg-zinc-900 dark:hover:bg-zinc-800/40 transition-colors">
                     <div class="min-w-0">
                         <div class="flex items-center gap-2">
                             <span :class="[
                                 'w-2 h-2 rounded-full shrink-0',
                                 service.status === 'online' ? 'bg-emerald-500' : (service.status === 'warning' ? 'bg-amber-500' : 'bg-red-500')
                             ]"></span>
-                            <span class="text-[13px] font-semibold text-[#111827]">{{ service.name }}</span>
+                            <span class="text-[13px] font-semibold text-[#111827] dark:text-zinc-100">{{ service.name }}</span>
                         </div>
-                        <p class="text-[11px] text-[#6b7280] mt-0.5 leading-snug">{{ service.description }}</p>
+                        <p class="text-[11px] text-[#6b7280] dark:text-zinc-500 mt-0.5 leading-snug">{{ service.description }}</p>
                     </div>
                     <div class="text-right shrink-0">
-                        <span class="text-[12px] font-bold text-[#111827]">{{ service.uptime }}</span>
-                        <div class="text-[10px] text-[#9ca3af] mt-0.5">Uptime</div>
+                        <span class="text-[12px] font-bold text-[#111827] dark:text-zinc-100">{{ service.uptime }}</span>
+                        <div class="text-[10px] text-[#9ca3af] dark:text-zinc-600 mt-0.5">Uptime</div>
                     </div>
                 </div>
             </div>
@@ -100,21 +100,21 @@ const securityCenter = computed(() => {
         <!-- Security Center -->
         <DashboardCard title="Security Center" subtitle="Pemantauan integritas keamanan dan otentikasi">
             <template #actions>
-                <span class="text-[11px] text-[#9ca3af]">Real-time Protection</span>
+                <span class="text-[11px] text-[#9ca3af] dark:text-zinc-600">Real-time Protection</span>
             </template>
 
             <div class="grid grid-cols-2 gap-3">
-                <div v-for="item in securityCenter" :key="item.label" class="border border-[#e5e7eb] rounded-xl p-3.5 flex flex-col justify-between hover:bg-slate-50 transition-colors">
+                <div v-for="item in securityCenter" :key="item.label" class="border border-[#e5e7eb] dark:border-zinc-800 rounded-xl p-3.5 flex flex-col justify-between hover:bg-slate-50 dark:hover:bg-zinc-800/40 transition-colors bg-white dark:bg-zinc-900">
                     <div>
-                        <span class="text-[11px] font-medium text-[#6b7280] block truncate">{{ item.label }}</span>
-                        <span class="text-[24px] font-extrabold text-[#111827] block mt-1 tracking-tight">{{ item.value }}</span>
+                        <span class="text-[11px] font-medium text-[#6b7280] dark:text-zinc-400 block truncate">{{ item.label }}</span>
+                        <span class="text-[24px] font-extrabold text-[#111827] dark:text-zinc-50 block mt-1 tracking-tight">{{ item.value }}</span>
                     </div>
-                    <div class="flex items-center justify-between mt-3 pt-2 border-t border-[#f3f4f6]">
-                        <span class="text-[10px] text-[#9ca3af]">{{ item.unit }}</span>
+                    <div class="flex items-center justify-between mt-3 pt-2 border-t border-[#f3f4f6] dark:border-zinc-800">
+                        <span class="text-[10px] text-[#9ca3af] dark:text-zinc-600">{{ item.unit }}</span>
                         <span :class="[
                             'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase shrink-0',
-                            item.status === 'green' ? 'bg-emerald-50 text-emerald-700' : 
-                            (item.status === 'yellow' ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700')
+                            item.status === 'green' ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400' : 
+                            (item.status === 'yellow' ? 'bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400' : 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400')
                         ]">{{ item.desc }}</span>
                     </div>
                 </div>

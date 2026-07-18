@@ -100,8 +100,8 @@ const quickActions = [
     <div class="w-full px-8 pt-8 pb-12 space-y-6" style="font-family: var(--wos-font)">
         <!-- Page title -->
         <div>
-            <h1 class="text-[22px] font-semibold text-[#111827] tracking-tight">Overview</h1>
-            <p class="text-[13px] text-gray-500 mt-1">Status portal, aktivitas login harian, dan metrik keamanan sistem.</p>
+            <h1 class="text-[22px] font-semibold text-[#111827] dark:text-zinc-50 tracking-tight">Overview</h1>
+            <p class="text-[13px] text-gray-500 dark:text-zinc-500 mt-1">Status portal, aktivitas login harian, dan metrik keamanan sistem.</p>
         </div>
 
         <!-- ── 1. HERO STATISTICS ── -->
@@ -109,16 +109,16 @@ const quickActions = [
             <div
                 v-for="stat in heroStats"
                 :key="stat.key"
-                class="bg-white rounded-xl p-5 border border-[#e5e7eb] hover:border-blue-300 hover:shadow-sm transition-all"
+                class="bg-white dark:bg-zinc-900 rounded-xl p-5 border border-[#e5e7eb] dark:border-zinc-800 hover:border-blue-300 dark:hover:border-blue-800 hover:shadow-sm transition-all"
             >
                 <div class="flex items-center justify-between mb-2">
-                    <span class="text-[12px] font-semibold text-[#6B7280] uppercase tracking-wide truncate max-w-[130px]">{{ stat.label }}</span>
+                    <span class="text-[12px] font-semibold text-[#6B7280] dark:text-zinc-400 uppercase tracking-wide truncate max-w-[130px]">{{ stat.label }}</span>
                     <span class="text-base select-none shrink-0">{{ stat.icon }}</span>
                 </div>
-                <div class="text-[26px] font-extrabold text-[#111827] tracking-tight leading-none mt-1">
+                <div class="text-[26px] font-extrabold text-[#111827] dark:text-zinc-100 tracking-tight leading-none mt-1">
                     {{ stat.valueOverride || (stats[stat.key] !== undefined ? stats[stat.key].toLocaleString() : 0) }}
                 </div>
-                <p class="text-[11px] text-[#9CA3AF] mt-2 truncate">{{ stat.sublabel }}</p>
+                <p class="text-[11px] text-[#9CA3AF] dark:text-zinc-600 mt-2 truncate">{{ stat.sublabel }}</p>
             </div>
         </div>
 
@@ -129,11 +129,11 @@ const quickActions = [
                     v-for="action in quickActions"
                     :key="action.label"
                     @click="emit('navigate', action.target)"
-                    class="flex flex-col items-start p-4 rounded-xl border border-[#e5e7eb] hover:border-blue-300 hover:bg-slate-50/50 transition-all text-left group cursor-pointer"
+                    class="flex flex-col items-start p-4 rounded-xl border border-[#e5e7eb] dark:border-zinc-800 hover:border-blue-300 dark:hover:border-blue-800 hover:bg-slate-50/50 dark:hover:bg-zinc-800/40 transition-all text-left group cursor-pointer bg-white dark:bg-zinc-900"
                 >
-                    <div class="w-8 h-8 rounded-lg bg-slate-50 border border-gray-100 flex items-center justify-center group-hover:scale-105 transition-transform" v-html="action.icon"></div>
-                    <span class="text-[12.5px] font-bold text-[#111827] mt-3 group-hover:text-blue-600 transition-colors">{{ action.label }}</span>
-                    <span class="text-[10px] text-gray-400 mt-1 leading-snug">{{ action.desc }}</span>
+                    <div class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 flex items-center justify-center group-hover:scale-105 transition-transform" v-html="action.icon"></div>
+                    <span class="text-[12.5px] font-bold text-[#111827] dark:text-zinc-200 mt-3 group-hover:text-blue-600 transition-colors">{{ action.label }}</span>
+                    <span class="text-[10px] text-gray-400 dark:text-zinc-500 mt-1 leading-snug">{{ action.desc }}</span>
                 </button>
             </div>
         </DashboardCard>

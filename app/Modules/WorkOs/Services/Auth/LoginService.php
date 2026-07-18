@@ -58,19 +58,14 @@ class LoginService
         if (! $user || ! Hash::check($password, $user->password)) {
             $this->recordFailedAttempt($email, $ip, 'invalid_credentials');
 
-            return LoginResult::failed('These credentials do not match our records.');
+            return LoginResult::failed('Incorrect username or password.');
         }
 
-        if (! $user->is_active) {
-            $this->recordFailedAttempt($email, $ip, 'account_disabled');
+        if (! $user->isAccountActive()) {
+            $this->recordFailedAttempt($email, $ip, 'account_inactive');
+            $msg = $user->getLoginBlockMessage() ?? 'Akun Anda tidak aktif.';
 
-            return LoginResult::failed('Akun Anda telah dinonaktifkan.');
-        }
-
-        if ($user->status_approval !== 'approved') {
-            $this->recordFailedAttempt($email, $ip, 'account_not_approved');
-
-            return LoginResult::failed('Akun Anda belum disetujui atau telah ditolak.');
+            return LoginResult::failed($msg);
         }
 
         // 3. Check MFA requirement

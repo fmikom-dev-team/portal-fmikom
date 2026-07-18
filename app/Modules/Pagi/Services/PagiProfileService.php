@@ -184,6 +184,11 @@ class PagiProfileService
                         ['id' => 2, 'title' => 'Figma UI/UX Advanced Design Course', 'issuer' => 'FMIKOM Academy', 'date' => 'Desember 2025', 'credentialId' => 'FM-882143'],
                     ]
             ),
+            'educations' => array_key_exists('educations', $user->metadata ?? [])
+                ? $user->metadata['educations']
+                : [
+                    ['id' => 1, 'level' => 'S1', 'institution' => 'Fakultas Ilmu Komputer, Universitas Amikom Purwokerto', 'major' => 'Teknologi Informasi', 'start_date' => '2022', 'end_date' => 'Present', 'description' => 'IPK 3.85. Aktif dalam organisasi mahasiswa dan riset AI.'],
+                ],
         ];
 
         return [

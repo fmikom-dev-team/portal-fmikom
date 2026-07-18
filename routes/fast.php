@@ -377,7 +377,7 @@ Route::middleware(['auth', 'verified', 'approval.access'])
 | API Fast
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'verified'])
+Route::middleware(['auth', 'verified', 'module.context:fast'])
     ->prefix('api/fast')
     ->name('api.fast.')
     ->group(function (): void {

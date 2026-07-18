@@ -16,7 +16,7 @@ class MFAController extends Controller
 
     public function status(Request $request)
     {
-        $mfa = AuthMfa::where('user_id', $request->user()->id)->first();
+        $mfa = AuthMfa::where('user_id', '=', $request->user()->id, 'and')->first();
 
         return response()->json([
             'enabled' => $mfa?->is_active ?? false,
@@ -27,6 +27,9 @@ class MFAController extends Controller
 
     public function setup(Request $request)
     {
+        if (! $request->user()->isAccountActive()) {
+            return response()->json(['error' => 'Akun Anda tidak aktif.'], 403);
+        }
         try {
             return response()->json($this->mfaEngine->setupTotp($request->user()));
         } catch (\Exception $e) {
@@ -37,6 +40,9 @@ class MFAController extends Controller
     public function verify(Request $request)
     {
         $request->validate(['code' => 'required|string|min:6|max:6']);
+        if (! $request->user()->isAccountActive()) {
+            return response()->json(['error' => 'Akun Anda tidak aktif.'], 403);
+        }
         try {
             return response()->json($this->mfaEngine->verifyAndActivate($request->user(), $request->code));
         } catch (\Exception $e) {
@@ -46,16 +52,32 @@ class MFAController extends Controller
 
     public function challenge(Request $request)
     {
-        $request->validate(['code' => 'required|string', 'user_id' => 'required']);
-        $user = User::find($request->user_id);
-        if (! $user) {
-            return response()->json(['error' => 'User not found.'], 404);
+        $request->validate(['code' => 'required|string']);
+        $userId = $request->session()->get('login.id');
+
+        $status = 200;
+        $data = [];
+
+        if (! $userId) {
+            $data = ['error' => 'Sesi login tidak ditemukan atau kedaluwarsa.'];
+            $status = 403;
+        } else {
+            /** @var User|null $user */
+            $user = User::find($userId, ['*']);
+            if (! $user) {
+                $data = ['error' => 'User tidak ditemukan.'];
+                $status = 404;
+            } else {
+                try {
+                    $data = ['valid' => $this->mfaEngine->verifyLogin($user, $request->code)];
+                } catch (\Exception $e) {
+                    $data = ['error' => $e->getMessage()];
+                    $status = 400;
+                }
+            }
         }
-        try {
-            return response()->json(['valid' => $this->mfaEngine->verifyLogin($user, $request->code)]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
-        }
+
+        return response()->json($data, $status);
     }
 
     public function verifyBackupCode(Request $request)

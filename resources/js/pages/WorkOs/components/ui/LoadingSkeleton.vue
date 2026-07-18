@@ -24,7 +24,7 @@ withDefaults(
     </div>
 
     <!-- Card -->
-    <div v-else-if="type === 'card'" class="rounded-xl border border-[#e5e7eb] overflow-hidden">
+    <div v-else-if="type === 'card'" class="rounded-xl border border-[#e5e7eb] dark:border-zinc-800 overflow-hidden">
         <div class="h-36 wos-shimmer" />
         <div class="p-4 space-y-2.5">
             <div class="h-4 wos-shimmer rounded-md w-2/3" />

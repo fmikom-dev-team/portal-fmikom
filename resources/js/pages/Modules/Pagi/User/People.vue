@@ -265,7 +265,7 @@ const handleBlur = () => {
 
 
         <!-- BEHANCE-STYLE FILTER & SEARCH SUBNAVBAR -->
-        <div class="border-b border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-955 py-2.5 sm:py-3.5 select-none sticky top-14 z-40">
+        <div class="border-b border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 py-2.5 sm:py-3.5 select-none sticky top-14 z-40">
             <div class="mx-auto max-w-[1400px] px-3 sm:px-4 flex items-center gap-2 sm:gap-3">
 
                 <!-- Left: Filter Toggle Button (icon-only on mobile) -->
@@ -348,8 +348,11 @@ const handleBlur = () => {
                     <!-- SKELETON LOADER -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 select-none">
                         <div v-for="n in 8" :key="n" class="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden p-5 flex flex-col gap-4">
-                            <div class="relative h-36 bg-slate-100 dark:bg-zinc-900/60 rounded-lg overflow-hidden flex items-center justify-center">
-                                <Skeleton class="h-20 w-20 rounded-full border-4 border-white dark:border-zinc-900 absolute bottom-0 translate-y-1/2 shrink-0" />
+                            <div class="relative grid grid-cols-3 gap-0.5 h-36 bg-slate-100 dark:bg-zinc-850 overflow-hidden rounded-lg">
+                                <div class="h-36 bg-slate-200/50 dark:bg-zinc-900/40"></div>
+                                <div class="h-36 bg-slate-200/50 dark:bg-zinc-900/40 border-x border-white/20 dark:border-zinc-800/30"></div>
+                                <div class="h-36 bg-slate-200/50 dark:bg-zinc-900/40"></div>
+                                <Skeleton class="h-20 w-20 rounded-full border-4 border-white dark:border-zinc-900 absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-1/2 shrink-0 z-10" />
                             </div>
                             <div class="pt-8 flex flex-col items-center gap-3">
                                 <Skeleton class="h-4 w-32 rounded-full" />
@@ -384,7 +387,7 @@ const handleBlur = () => {
                             :key="p.id"
                             placeholderClass="h-[280px]"
                         >
-                            <div class="group rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-955 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer"
+                            <div class="group rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer"
                                 @click="selectPerson(p, filteredPeople.indexOf(p))">
 
                             <!-- 3 images/videos horizontal strip -->

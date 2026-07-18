@@ -10,6 +10,7 @@ import {
 	Share2,
 } from "lucide-vue-next";
 import { computed, onMounted, onUnmounted, ref } from "vue";
+import { sanitizeRich } from "@/composables/useSanitize";
 import BlockRenderer from "@/components/editor/renderer/BlockRenderer.vue";
 import PublicFooter from "@/components/Portal/PublicFooter.vue";
 import PublicNavbar from "@/components/Portal/PublicNavbar.vue";
@@ -262,7 +263,7 @@ const getAvatarUrl = (user) => {
                     prose-td:py-3 prose-td:border-b prose-td:border-slate-100 prose-td:text-slate-600
                 ">
                     <BlockRenderer v-if="isEditorJs" :data="parsedContent" />
-                    <div v-else v-html="legacyHtml" />
+                    <div v-else v-html="sanitizeRich(legacyHtml)" />
                 </article>
 
                 <!-- Previous & Next Navigation Block -->

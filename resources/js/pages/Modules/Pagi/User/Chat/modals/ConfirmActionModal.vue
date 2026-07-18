@@ -20,7 +20,7 @@ defineEmits<{
         leave-to-class="opacity-0 scale-95"
     >
         <div v-if="show" class="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/60" @click.self="$emit('close')">
-            <div class="bg-white dark:bg-zinc-955 border border-slate-200 dark:border-zinc-800 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl p-6 flex flex-col items-center text-center select-none animate-in fade-in zoom-in-95 duration-200">
+            <div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl p-6 flex flex-col items-center text-center select-none animate-in fade-in zoom-in-95 duration-200">
                 <!-- Icon box -->
                 <div :class="[
                     'p-4 rounded-full mb-4 shadow-sm flex items-center justify-center',

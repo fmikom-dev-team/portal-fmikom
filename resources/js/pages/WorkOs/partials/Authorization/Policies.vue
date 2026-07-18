@@ -174,12 +174,12 @@ function submitRemove() {
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-                <h1 class="text-[20px] font-semibold text-gray-900 tracking-tight">Authorization Policies</h1>
-                <p class="text-[13px] text-gray-500 mt-0.5">Configure access rules and security guardrails applied during evaluations.</p>
+                <h1 class="text-[20px] font-semibold text-gray-900 dark:text-zinc-100 tracking-tight">Authorization Policies</h1>
+                <p class="text-[13px] text-gray-500 dark:text-zinc-400 mt-0.5">Configure access rules and security guardrails applied during evaluations.</p>
             </div>
             
             <button
-                class="h-[34px] px-4 bg-gray-900 text-white rounded-md text-[13px] font-semibold hover:bg-black transition-colors shadow-sm flex items-center gap-1.5 self-start sm:self-auto"
+                class="h-[34px] px-4 bg-gray-900 text-white rounded-md text-[13px] font-semibold hover:bg-black transition-colors shadow-sm flex items-center gap-1.5 self-start sm:self-auto dark:shadow-none"
                 @click="openCreateModal"
             >
                 <Plus class="w-4 h-4" />
@@ -190,41 +190,41 @@ function submitRemove() {
         <!-- Toolbar -->
         <div class="flex items-center gap-2">
             <div class="relative flex-1 max-w-sm">
-                <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z" />
                 </svg>
                 <input
                     v-model="search"
                     type="text"
                     placeholder="Search policies by name or role..."
-                    class="w-full h-[34px] pl-8 pr-3 text-[13px] border border-gray-200 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 transition-colors placeholder:text-gray-400 text-gray-900 bg-white"
+                    class="w-full h-[34px] pl-8 pr-3 text-[13px] border border-gray-200 dark:border-zinc-700 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 dark:ring-zinc-700 transition-colors placeholder:text-gray-400 text-gray-900 dark:text-zinc-100 bg-white dark:bg-zinc-900"
                 />
             </div>
         </div>
 
         <!-- Table -->
-        <div v-if="filteredPolicies.length" class="rounded-xl overflow-x-auto bg-white border border-gray-200 shadow-sm">
+        <div v-if="filteredPolicies.length" class="rounded-xl overflow-x-auto bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 shadow-sm dark:shadow-none">
             <table class="w-full text-left whitespace-nowrap">
                 <caption class="sr-only">Authorization Policies</caption>
                 <thead>
-                    <tr class="bg-[#f9fafb] border-b border-gray-200">
-                        <th class="px-4 py-3 text-[12px] font-semibold text-gray-800">Policy Name</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-gray-800">Effect</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-gray-800">Roles Applied</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-gray-800">Status</th>
+                    <tr class="bg-[#f9fafb] dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-700">
+                        <th class="px-4 py-3 text-[12px] font-semibold text-gray-800 dark:text-zinc-200">Policy Name</th>
+                        <th class="px-4 py-3 text-[12px] font-semibold text-gray-800 dark:text-zinc-200">Effect</th>
+                        <th class="px-4 py-3 text-[12px] font-semibold text-gray-800 dark:text-zinc-200">Roles Applied</th>
+                        <th class="px-4 py-3 text-[12px] font-semibold text-gray-800 dark:text-zinc-200">Status</th>
                         <th class="px-4 py-3 w-28 text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 text-sm">
+                <tbody class="divide-y divide-gray-100 dark:divide-zinc-800 text-sm">
                     <tr
                         v-for="policy in filteredPolicies"
                         :key="policy.id"
-                        class="hover:bg-[#f9fafb]/50 transition-colors group"
+                        class="hover:bg-[#f9fafb] dark:hover:bg-zinc-800 dark:bg-zinc-900/50 transition-colors group"
                     >
                         <td class="px-4 py-3 align-middle max-w-sm">
                             <div>
-                                <p class="text-[13.5px] font-semibold text-gray-900 leading-tight">{{ policy.name }}</p>
-                                <p class="text-[11.5px] text-gray-400 mt-1 leading-normal whitespace-pre-wrap">{{ policy.description }}</p>
+                                <p class="text-[13.5px] font-semibold text-gray-900 dark:text-zinc-100 leading-tight">{{ policy.name }}</p>
+                                <p class="text-[11.5px] text-gray-400 dark:text-zinc-500 mt-1 leading-normal whitespace-pre-wrap">{{ policy.description }}</p>
                             </div>
                         </td>
                         <td class="px-4 py-3 align-middle">
@@ -235,12 +235,12 @@ function submitRemove() {
                                 {{ policy.effect }}
                             </span>
                         </td>
-                        <td class="px-4 py-3 align-middle text-gray-600 text-[12.5px]">
+                        <td class="px-4 py-3 align-middle text-gray-600 dark:text-zinc-400 text-[12.5px]">
                             {{ policy.roles }}
                         </td>
                         <td class="px-4 py-3 align-middle">
                             <span :class="['text-[11px] font-medium px-2 py-0.5 rounded-full inline-flex items-center gap-1',
-                                policy.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-gray-100 text-gray-500 border border-gray-200']">
+                                policy.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400 border border-gray-200 dark:border-zinc-700']">
                                 <span class="w-1.5 h-1.5 rounded-full" :class="policy.status === 'Active' ? 'bg-emerald-500' : 'bg-gray-400'"></span>
                                 {{ policy.status }}
                             </span>
@@ -249,7 +249,7 @@ function submitRemove() {
                             <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button 
                                     @click="openEditModal(policy)"
-                                    class="h-6 px-2.5 rounded-md text-[11px] text-gray-600 border border-gray-200 hover:bg-gray-100 transition-colors"
+                                    class="h-6 px-2.5 rounded-md text-[11px] text-gray-600 dark:text-zinc-400 border border-gray-200 dark:border-zinc-700 hover:bg-gray-100 dark:hover:bg-zinc-800 dark:bg-zinc-800 transition-colors"
                                 >
                                     Edit
                                 </button>
@@ -266,10 +266,10 @@ function submitRemove() {
             </table>
         </div>
 
-        <div v-else class="rounded-xl bg-[#f9fafb] border border-dashed border-gray-200 p-12 flex flex-col items-center justify-center text-center gap-2">
+        <div v-else class="rounded-xl bg-[#f9fafb] dark:bg-zinc-900 border border-dashed border-gray-200 dark:border-zinc-700 p-12 flex flex-col items-center justify-center text-center gap-2">
             <Shield class="w-8 h-8 text-gray-300" />
-            <p class="text-[13px] font-medium text-gray-800">No policies found</p>
-            <p class="text-[11.5px] text-gray-400">Try adjusting your search criteria or create a new policy.</p>
+            <p class="text-[13px] font-medium text-gray-800 dark:text-zinc-200">No policies found</p>
+            <p class="text-[11.5px] text-gray-400 dark:text-zinc-500">Try adjusting your search criteria or create a new policy.</p>
         </div>
 
         <!-- Create Modal -->
@@ -284,31 +284,31 @@ function submitRemove() {
             
             <div class="space-y-4 py-2">
                 <div>
-                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Policy Name</label>
+                    <label class="block text-[13px] font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Policy Name</label>
                     <input
                         v-model="policyForm.name"
                         type="text"
                         placeholder="e.g. Require MFA for admin operations"
-                        class="w-full h-9 px-3 text-[13px] border border-gray-300 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 bg-white text-gray-900"
+                        class="w-full h-9 px-3 text-[13px] border border-gray-300 dark:border-zinc-700 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 dark:ring-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100"
                     />
                 </div>
 
                 <div>
-                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Description</label>
+                    <label class="block text-[13px] font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Description</label>
                     <textarea
                         v-model="policyForm.description"
                         placeholder="Explain when and why this policy applies..."
                         rows="3"
-                        class="w-full px-3 py-2 text-[13px] border border-gray-300 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 bg-white text-gray-900 resize-none"
+                        class="w-full px-3 py-2 text-[13px] border border-gray-300 dark:border-zinc-700 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 dark:ring-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 resize-none"
                     ></textarea>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Effect</label>
+                        <label class="block text-[13px] font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Effect</label>
                         <select
                             v-model="policyForm.effect"
-                            class="w-full h-9 px-3 text-[13px] border border-gray-300 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 bg-white text-gray-900"
+                            class="w-full h-9 px-3 text-[13px] border border-gray-300 dark:border-zinc-700 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 dark:ring-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100"
                         >
                             <option value="Allow">Allow</option>
                             <option value="Deny">Deny</option>
@@ -316,10 +316,10 @@ function submitRemove() {
                     </div>
 
                     <div>
-                        <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Status</label>
+                        <label class="block text-[13px] font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Status</label>
                         <select
                             v-model="policyForm.status"
-                            class="w-full h-9 px-3 text-[13px] border border-gray-300 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 bg-white text-gray-900"
+                            class="w-full h-9 px-3 text-[13px] border border-gray-300 dark:border-zinc-700 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 dark:ring-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100"
                         >
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>
@@ -328,19 +328,19 @@ function submitRemove() {
                 </div>
 
                 <div>
-                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Applied Roles</label>
+                    <label class="block text-[13px] font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Applied Roles</label>
                     <input
                         v-model="policyForm.roles"
                         type="text"
                         placeholder="e.g. Admin, Super Admin or All Roles"
-                        class="w-full h-9 px-3 text-[13px] border border-gray-300 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 bg-white text-gray-900"
+                        class="w-full h-9 px-3 text-[13px] border border-gray-300 dark:border-zinc-700 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 dark:ring-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100"
                     />
                 </div>
             </div>
 
             <template #footer>
                 <button
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors bg-white"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-gray-700 dark:text-zinc-300 border border-gray-300 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900"
                     @click="showCreateModal = false"
                 >
                     Cancel
@@ -367,29 +367,29 @@ function submitRemove() {
         >
             <div class="space-y-4 py-2">
                 <div>
-                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Policy Name</label>
+                    <label class="block text-[13px] font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Policy Name</label>
                     <input
                         v-model="policyForm.name"
                         type="text"
-                        class="w-full h-9 px-3 text-[13px] border border-gray-300 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 bg-white text-gray-900"
+                        class="w-full h-9 px-3 text-[13px] border border-gray-300 dark:border-zinc-700 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 dark:ring-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100"
                     />
                 </div>
 
                 <div>
-                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Description</label>
+                    <label class="block text-[13px] font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Description</label>
                     <textarea
                         v-model="policyForm.description"
                         rows="3"
-                        class="w-full px-3 py-2 text-[13px] border border-gray-300 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 bg-white text-gray-900 resize-none"
+                        class="w-full px-3 py-2 text-[13px] border border-gray-300 dark:border-zinc-700 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 dark:ring-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 resize-none"
                     ></textarea>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Effect</label>
+                        <label class="block text-[13px] font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Effect</label>
                         <select
                             v-model="policyForm.effect"
-                            class="w-full h-9 px-3 text-[13px] border border-gray-300 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 bg-white text-gray-900"
+                            class="w-full h-9 px-3 text-[13px] border border-gray-300 dark:border-zinc-700 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 dark:ring-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100"
                         >
                             <option value="Allow">Allow</option>
                             <option value="Deny">Deny</option>
@@ -397,10 +397,10 @@ function submitRemove() {
                     </div>
 
                     <div>
-                        <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Status</label>
+                        <label class="block text-[13px] font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Status</label>
                         <select
                             v-model="policyForm.status"
-                            class="w-full h-9 px-3 text-[13px] border border-gray-300 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 bg-white text-gray-900"
+                            class="w-full h-9 px-3 text-[13px] border border-gray-300 dark:border-zinc-700 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 dark:ring-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100"
                         >
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>
@@ -409,18 +409,18 @@ function submitRemove() {
                 </div>
 
                 <div>
-                    <label class="block text-[13px] font-semibold text-gray-700 mb-1.5">Applied Roles</label>
+                    <label class="block text-[13px] font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Applied Roles</label>
                     <input
                         v-model="policyForm.roles"
                         type="text"
-                        class="w-full h-9 px-3 text-[13px] border border-gray-300 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 bg-white text-gray-900"
+                        class="w-full h-9 px-3 text-[13px] border border-gray-300 dark:border-zinc-700 rounded-md focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 dark:ring-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100"
                     />
                 </div>
             </div>
 
             <template #footer>
                 <button
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors bg-white"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-gray-700 dark:text-zinc-300 border border-gray-300 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900"
                     @click="showEditModal = false"
                 >
                     Cancel
@@ -447,13 +447,13 @@ function submitRemove() {
             @close="showRemoveModal = false"
         >
             <template #description>
-                Are you sure you want to delete the policy <strong class="text-gray-900">{{ selectedToRemove?.name }}</strong>?
+                Are you sure you want to delete the policy <strong class="text-gray-900 dark:text-zinc-100">{{ selectedToRemove?.name }}</strong>?
                 <span class="block mt-1 text-red-600">This action is permanent and cannot be undone.</span>
             </template>
 
             <template #footer>
                 <button
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors bg-white"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-gray-700 dark:text-zinc-300 border border-gray-300 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900"
                     @click="showRemoveModal = false"
                 >
                     Cancel

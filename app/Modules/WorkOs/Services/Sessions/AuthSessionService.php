@@ -173,12 +173,13 @@ class AuthSessionService
             return null;
         }
 
-        $unserialized = @unserialize($sessionData);
+        // [FIX PHP Object Injection] Set allowed_classes to false to prevent object instantiation
+        $unserialized = @unserialize($sessionData, ['allowed_classes' => false]);
 
         if ($unserialized === false && config('session.encrypt')) {
             try {
                 $decrypted = Crypt::decrypt($sessionData);
-                $unserialized = @unserialize($decrypted);
+                $unserialized = @unserialize($decrypted, ['allowed_classes' => false]);
             } catch (\Throwable $e) {
                 // Ignore decryption errors
                 return null;

@@ -9,6 +9,15 @@ use Symfony\Component\HttpFoundation\Cookie;
 class CustomCsrfMiddleware extends Middleware
 {
     /**
+     * The URIs that should be excluded from CSRF verification.
+     *
+     * @var array<int, string>
+     */
+    protected $except = [
+        '__testing/*',
+    ];
+
+    /**
      * Create a new "XSRF-TOKEN" cookie.
      *
      * @param  Request  $request

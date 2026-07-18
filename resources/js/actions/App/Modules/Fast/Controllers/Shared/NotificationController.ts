@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Shared\NotificationController::read
-* @see app/Modules/Fast/Controllers/Shared/NotificationController.php:15
+* @see app/Modules/Fast/Controllers/Shared/NotificationController.php:22
 * @route '/notifications/{notificationId}/read'
 */
 export const read = (args: { notificationId: string | number } | [notificationId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ read.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\NotificationController::read
-* @see app/Modules/Fast/Controllers/Shared/NotificationController.php:15
+* @see app/Modules/Fast/Controllers/Shared/NotificationController.php:22
 * @route '/notifications/{notificationId}/read'
 */
 read.url = (args: { notificationId: string | number } | [notificationId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -43,7 +43,7 @@ read.url = (args: { notificationId: string | number } | [notificationId: string 
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\NotificationController::read
-* @see app/Modules/Fast/Controllers/Shared/NotificationController.php:15
+* @see app/Modules/Fast/Controllers/Shared/NotificationController.php:22
 * @route '/notifications/{notificationId}/read'
 */
 read.post = (args: { notificationId: string | number } | [notificationId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -53,7 +53,7 @@ read.post = (args: { notificationId: string | number } | [notificationId: string
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\NotificationController::readAll
-* @see app/Modules/Fast/Controllers/Shared/NotificationController.php:39
+* @see app/Modules/Fast/Controllers/Shared/NotificationController.php:50
 * @route '/notifications/read-all'
 */
 export const readAll = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -68,7 +68,7 @@ readAll.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\NotificationController::readAll
-* @see app/Modules/Fast/Controllers/Shared/NotificationController.php:39
+* @see app/Modules/Fast/Controllers/Shared/NotificationController.php:50
 * @route '/notifications/read-all'
 */
 readAll.url = (options?: RouteQueryOptions) => {
@@ -77,7 +77,7 @@ readAll.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\NotificationController::readAll
-* @see app/Modules/Fast/Controllers/Shared/NotificationController.php:39
+* @see app/Modules/Fast/Controllers/Shared/NotificationController.php:50
 * @route '/notifications/read-all'
 */
 readAll.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({

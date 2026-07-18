@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { AlertTriangle, Clock, Ban, Loader2 } from "lucide-vue-next";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal.vue";
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -28,7 +29,7 @@ const requestForm = useForm({
 	password: "",
 });
 
-const cancelForm = useForm({});
+const isCancelModalOpen = ref(false);
 
 const submitRequest = () => {
 	requestForm.post("/settings/profile/deletion-request", {
@@ -43,12 +44,19 @@ const submitRequest = () => {
 	});
 };
 
+const cancelForm = useForm({});
+
 const cancelRequest = () => {
-	if (confirm("Apakah Anda yakin ingin membatalkan pengajuan penghapusan akun?")) {
-		cancelForm.post("/settings/profile/deletion-request/cancel", {
-			preserveScroll: true,
-		});
-	}
+	isCancelModalOpen.value = true;
+};
+
+const handleCancelConfirm = () => {
+	cancelForm.post("/settings/profile/deletion-request/cancel", {
+		preserveScroll: true,
+		onSuccess: () => {
+			isCancelModalOpen.value = false;
+		},
+	});
 };
 
 const formatDate = (dateString: string | null) => {
@@ -176,5 +184,13 @@ const formatDate = (dateString: string | null) => {
                 </Dialog>
             </div>
         </div>
+        <DeleteConfirmModal
+            :show="isCancelModalOpen"
+            title="Batalkan Pengajuan Penghapusan Akun"
+            message="Apakah Anda yakin ingin membatalkan pengajuan penghapusan akun? Akun Anda akan tetap aktif dan tidak akan dihapus."
+            confirm-text="Ya, Batalkan Pengajuan"
+            @confirm="handleCancelConfirm"
+            @cancel="isCancelModalOpen = false"
+        />
     </div>
 </template>

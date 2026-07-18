@@ -39,6 +39,18 @@ return new class extends Migration
                 $table->timestamps();
                 $table->index(['email', 'is_used', 'expires_at']); // Composite for lookup
             });
+        } else {
+            Schema::table('auth_magic_links', function (Blueprint $table) {
+                if (! Schema::hasColumn('auth_magic_links', 'used_at')) {
+                    $table->timestamp('used_at')->nullable()->after('is_used');
+                }
+                if (! Schema::hasColumn('auth_magic_links', 'token')) {
+                    $table->string('token', 64)->nullable()->after('email');
+                }
+                if (! Schema::hasColumn('auth_magic_links', 'user_agent')) {
+                    $table->text('user_agent')->nullable()->after('ip_address');
+                }
+            });
         }
 
         // auth_password_histories — prevent password reuse

@@ -199,16 +199,16 @@ const COMPLEXITY_LABELS = [
 	"Very Strong",
 ];
 const COMPLEXITY_COLORS = [
-	"text-red-500",
-	"text-orange-500",
-	"text-emerald-600",
-	"text-green-700",
+	"text-red-500 dark:text-red-400",
+	"text-orange-500 dark:text-orange-400",
+	"text-emerald-600 dark:text-emerald-455",
+	"text-green-700 dark:text-green-400",
 ];
 const COMPLEXITY_BG = [
-	"bg-red-50 border-red-200",
-	"bg-orange-50 border-orange-200",
-	"bg-emerald-50 border-emerald-200",
-	"bg-green-50 border-green-200",
+	"bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/30",
+	"bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900/30",
+	"bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/30",
+	"bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/30",
 ];
 
 const complexityLabel = computed(() => {
@@ -294,7 +294,7 @@ const isStrongPreset = computed(() => {
 
         <!-- Toast -->
         <Transition enter-from-class="translate-y-2 opacity-0" enter-to-class="translate-y-0 opacity-100" leave-to-class="opacity-0" enter-active-class="transition duration-200" leave-active-class="transition duration-150">
-            <div v-if="toast" :class="['fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-[13px] font-medium', toast.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800']">
+            <div v-if="toast" :class="['fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-[13px] font-medium', toast.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/30 text-emerald-800 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/30 text-red-800 dark:text-red-400']">
                 <Check v-if="toast.type === 'success'" class="w-4 h-4" />
                 <AlertCircle v-else class="w-4 h-4" />
                 {{ toast.message }}
@@ -302,14 +302,14 @@ const isStrongPreset = computed(() => {
         </Transition>
 
         <!-- Header -->
-        <div class="border-b border-gray-200 pb-5">
-            <h1 class="text-2xl font-semibold text-gray-900 tracking-tight">Methods</h1>
-            <p class="text-[14px] text-gray-500 mt-1">Configure which authentication methods are available to your users.</p>
+        <div class="border-b border-gray-200 dark:border-zinc-800 pb-5">
+            <h1 class="text-2xl font-semibold text-gray-900 dark:text-zinc-100 tracking-tight">Methods</h1>
+            <p class="text-[14px] text-gray-500 dark:text-zinc-400 mt-1">Configure which authentication methods are available to your users.</p>
         </div>
 
         <!-- Loading -->
         <div v-if="isLoading" class="space-y-4">
-            <div v-for="i in 4" :key="i" class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4">
+            <div v-for="i in 4" :key="i" class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-4 dark:shadow-none">
                 <div class="flex items-start justify-between">
                     <div class="flex items-center gap-3 w-3/4">
                         <div class="w-10 h-10 rounded-xl wos-shimmer shrink-0" />
@@ -320,7 +320,7 @@ const isStrongPreset = computed(() => {
                     </div>
                     <div class="h-4 wos-shimmer rounded w-12 shrink-0" />
                 </div>
-                <div class="divide-y divide-gray-100">
+                <div class="divide-y divide-gray-100 dark:divide-zinc-800">
                     <div v-for="j in 2" :key="j" class="flex justify-between items-center py-2.5">
                         <div class="h-3.5 wos-shimmer rounded w-1/3" />
                         <div class="h-3.5 wos-shimmer rounded w-16" />
@@ -333,66 +333,66 @@ const isStrongPreset = computed(() => {
         <template v-else-if="methods">
 
             <!-- ── Single Sign-On ───────────────────────────────────────────── -->
-            <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm dark:shadow-none">
                 <div class="flex items-start justify-between mb-4">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center shrink-0">
+                        <div class="w-10 h-10 bg-gray-900 dark:bg-zinc-950 rounded-xl flex items-center justify-center shrink-0">
                             <Shield class="w-5 h-5 text-white" />
                         </div>
                         <div>
-                            <h3 class="text-[14px] font-semibold text-gray-900">Single Sign-On</h3>
-                            <p class="text-[13px] text-gray-500">Allow users to sign in with SAML and OIDC identity providers like Entra ID, Okta, and Google Workspace.</p>
+                            <h3 class="text-[14px] font-semibold text-gray-900 dark:text-zinc-100">Single Sign-On</h3>
+                            <p class="text-[13px] text-gray-500 dark:text-zinc-400">Allow users to sign in with SAML and OIDC identity providers like Entra ID, Okta, and Google Workspace.</p>
                         </div>
                     </div>
                 </div>
                 <!-- Info rows -->
-                <div class="divide-y divide-gray-100 mb-3">
+                <div class="divide-y divide-gray-100 dark:divide-zinc-800 mb-3">
                     <div class="flex items-center justify-between py-2">
-                        <span class="text-[13px] text-gray-500">Enterprise SSO in AuthKit</span>
-                        <div :class="['flex items-center gap-1 text-[13px] font-medium', methods.sso.enabled ? 'text-emerald-600' : 'text-gray-400']">
+                        <span class="text-[13px] text-gray-500 dark:text-zinc-400">Enterprise SSO in AuthKit</span>
+                        <div :class="['flex items-center gap-1 text-[13px] font-medium', methods.sso.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-zinc-500']">
                             <Check v-if="methods.sso.enabled" class="w-3.5 h-3.5" />
                             {{ methods.sso.enabled ? 'Enabled' : 'Disabled' }}
                         </div>
                     </div>
                     <div class="flex items-center justify-between py-2">
-                        <span class="text-[13px] text-gray-500">Sign-in consent page</span>
-                        <div :class="['flex items-center gap-1 text-[13px] font-medium', ssoConfig.enforce_sso ? 'text-emerald-600' : 'text-gray-400']">
+                        <span class="text-[13px] text-gray-500 dark:text-zinc-400">Sign-in consent page</span>
+                        <div :class="['flex items-center gap-1 text-[13px] font-medium', ssoConfig.enforce_sso ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-zinc-500']">
                             <Check v-if="ssoConfig.enforce_sso" class="w-3.5 h-3.5" />
                             {{ ssoConfig.enforce_sso ? 'Enabled' : 'Disabled' }}
                         </div>
                     </div>
                 </div>
-                <button @click="activeModal = 'sso'" class="px-3 py-1.5 bg-white border border-gray-200 rounded-md text-[13px] font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+                <button @click="activeModal = 'sso'" class="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-md text-[13px] font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-sm cursor-pointer dark:shadow-none">
                     Manage
                 </button>
             </div>
 
             <!-- ── Email + Password ────────────────────────────────────────── -->
-            <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm dark:shadow-none">
                 <div class="flex items-start justify-between mb-4">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center border border-blue-200 shrink-0">
-                            <Mail class="w-5 h-5 text-blue-600" />
+                        <div class="w-10 h-10 bg-blue-100/10 dark:bg-blue-950/20 rounded-xl flex items-center justify-center border border-blue-200/25 dark:border-blue-900/30 shrink-0">
+                            <Mail class="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div>
-                            <h3 class="text-[14px] font-semibold text-gray-900">Email + Password</h3>
-                            <p class="text-[13px] text-gray-500">Allow users to sign in with email and password.</p>
+                            <h3 class="text-[14px] font-semibold text-gray-900 dark:text-zinc-100">Email + Password</h3>
+                            <p class="text-[13px] text-gray-500 dark:text-zinc-400">Allow users to sign in with email and password.</p>
                         </div>
                     </div>
-                    <div :class="['flex items-center gap-1 text-[13px] font-medium shrink-0', methods.email_password.enabled ? 'text-emerald-600' : 'text-gray-400']">
+                    <div :class="['flex items-center gap-1 text-[13px] font-medium shrink-0', methods.email_password.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-zinc-500']">
                         <Check v-if="methods.email_password.enabled" class="w-3.5 h-3.5" />
                         {{ methods.email_password.enabled ? 'Enabled' : 'Disabled' }}
                     </div>
                 </div>
                 <!-- Info rows -->
-                <div class="divide-y divide-gray-100 mb-3">
+                <div class="divide-y divide-gray-100 dark:divide-zinc-800 mb-3">
                     <div class="flex items-center justify-between py-2">
-                        <span class="text-[13px] text-gray-500">Min. password length</span>
-                        <span class="text-[13px] text-gray-700 font-medium">{{ methods.email_password.min_length }} characters</span>
+                        <span class="text-[13px] text-gray-500 dark:text-zinc-400">Min. password length</span>
+                        <span class="text-[13px] text-gray-700 dark:text-zinc-300 dark:text-zinc-300 font-medium">{{ methods.email_password.min_length }} characters</span>
                     </div>
                     <div class="flex items-center justify-between py-2">
-                        <span class="text-[13px] text-gray-500">Min. password complexity</span>
-                        <span class="text-[13px] text-gray-700 font-medium flex items-center gap-2">
+                        <span class="text-[13px] text-gray-500 dark:text-zinc-400">Min. password complexity</span>
+                        <span class="text-[13px] text-gray-700 dark:text-zinc-300 dark:text-zinc-300 font-medium flex items-center gap-2">
                             {{ methods.email_password.complexity }}
                             <span :class="['text-[11px] font-semibold px-1.5 py-0.5 rounded border', complexityColor, complexityBg]">
                                 {{ complexityLabel }}
@@ -400,71 +400,71 @@ const isStrongPreset = computed(() => {
                         </span>
                     </div>
                     <div class="flex items-center justify-between py-2">
-                        <span class="text-[13px] text-gray-500">Password rules</span>
-                        <span class="text-[13px] text-gray-700">{{ passwordRulesSummary }}</span>
+                        <span class="text-[13px] text-gray-500 dark:text-zinc-400">Password rules</span>
+                        <span class="text-[13px] text-gray-700 dark:text-zinc-300">{{ passwordRulesSummary }}</span>
                     </div>
                     <div class="flex items-center justify-between py-2">
-                        <span class="text-[13px] text-gray-500">Compromised passwords</span>
-                        <span class="text-[13px] text-gray-700">{{ breachedPasswordSummary }}</span>
+                        <span class="text-[13px] text-gray-500 dark:text-zinc-400">Compromised passwords</span>
+                        <span class="text-[13px] text-gray-700 dark:text-zinc-300">{{ breachedPasswordSummary }}</span>
                     </div>
                     <div class="flex items-center justify-between py-2">
-                        <span class="text-[13px] text-gray-500">Password history</span>
-                        <span class="text-[13px] text-gray-700">{{ historyCountSummary }}</span>
+                        <span class="text-[13px] text-gray-500 dark:text-zinc-400">Password history</span>
+                        <span class="text-[13px] text-gray-700 dark:text-zinc-300">{{ historyCountSummary }}</span>
                     </div>
                 </div>
-                <button @click="activeModal = 'email_password'" class="px-3 py-1.5 bg-white border border-gray-200 rounded-md text-[13px] font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+                <button @click="activeModal = 'email_password'" class="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-md text-[13px] font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-sm cursor-pointer dark:shadow-none">
                     Manage
                 </button>
             </div>
 
             <!-- ── Passkeys ────────────────────────────────────────────────── -->
-            <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm dark:shadow-none">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center border border-purple-200 shrink-0">
-                            <Key class="w-5 h-5 text-purple-600" />
+                        <div class="w-10 h-10 bg-purple-100/10 dark:bg-purple-950/20 rounded-xl flex items-center justify-center border border-purple-200/25 dark:border-purple-900/30 shrink-0">
+                            <Key class="w-5 h-5 text-purple-650 dark:text-purple-400" />
                         </div>
                         <div>
-                            <h3 class="text-[14px] font-semibold text-gray-900">Passkeys</h3>
-                            <p class="text-[13px] text-gray-500">Allow users to sign in with a passkey. Passkeys are faster, easier, and more secure than passwords.</p>
+                            <h3 class="text-[14px] font-semibold text-gray-900 dark:text-zinc-100">Passkeys</h3>
+                            <p class="text-[13px] text-gray-500 dark:text-zinc-400">Allow users to sign in with a passkey. Passkeys are faster, easier, and more secure than passwords.</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-4 mt-4 sm:mt-0">
-                        <div v-if="methods.passkeys.enabled" class="flex items-center gap-1.5 text-emerald-600 text-[13px] font-medium">
+                        <div v-if="methods.passkeys.enabled" class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-[13px] font-medium">
                             <Check class="w-4 h-4" /> Enabled
                         </div>
-                        <div v-else class="flex items-center gap-1.5 text-gray-500 text-[13px] font-medium">
-                            <div class="w-3.5 h-3.5 border-2 border-gray-300 rounded-full"></div> Disabled
+                        <div v-else class="flex items-center gap-1.5 text-gray-500 dark:text-zinc-400 text-[13px] font-medium">
+                            <div class="w-3.5 h-3.5 border-2 border-gray-300 dark:border-zinc-600 rounded-full"></div> Disabled
                         </div>
                     </div>
                 </div>
-                <button @click="activeModal = 'passkeys'" class="mt-4 px-3 py-1.5 bg-white border border-gray-200 rounded-md text-[13px] font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+                <button @click="activeModal = 'passkeys'" class="mt-4 px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-md text-[13px] font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-sm cursor-pointer dark:shadow-none">
                     Manage
                 </button>
             </div>
 
             <!-- ── Magic Links ─────────────────────────────────────────────── -->
-            <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm dark:shadow-none">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center border border-blue-200 shrink-0">
-                            <Link class="w-5 h-5 text-blue-600" />
+                        <div class="w-10 h-10 bg-blue-100/10 dark:bg-blue-950/20 rounded-xl flex items-center justify-center border border-blue-200/25 dark:border-blue-900/30 shrink-0">
+                            <Link class="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div>
-                            <h3 class="text-[14px] font-semibold text-gray-900">Magic Auth</h3>
-                            <p class="text-[13px] text-gray-500">Allow users to sign in with a unique six-digit code sent to their email address.</p>
+                            <h3 class="text-[14px] font-semibold text-gray-900 dark:text-zinc-100">Magic Auth</h3>
+                            <p class="text-[13px] text-gray-500 dark:text-zinc-400">Allow users to sign in with a unique six-digit code sent to their email address.</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-4 mt-4 sm:mt-0">
-                        <div v-if="methods.magic_links.enabled" class="flex items-center gap-1.5 text-emerald-600 text-[13px] font-medium">
+                        <div v-if="methods.magic_links.enabled" class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-[13px] font-medium">
                             <Check class="w-4 h-4" /> Enabled
                         </div>
-                        <div v-else class="flex items-center gap-1.5 text-gray-500 text-[13px] font-medium">
-                            <div class="w-3.5 h-3.5 border-2 border-gray-300 rounded-full"></div> Disabled
+                        <div v-else class="flex items-center gap-1.5 text-gray-500 dark:text-zinc-400 text-[13px] font-medium">
+                            <div class="w-3.5 h-3.5 border-2 border-gray-300 dark:border-zinc-600 rounded-full"></div> Disabled
                         </div>
                     </div>
                 </div>
-                <button @click="activeModal = 'magic_links'" class="mt-4 px-3 py-1.5 bg-white border border-gray-200 rounded-md text-[13px] font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+                <button @click="activeModal = 'magic_links'" class="mt-4 px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-md text-[13px] font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-sm cursor-pointer dark:shadow-none">
                     Manage
                 </button>
             </div>
@@ -481,34 +481,34 @@ const isStrongPreset = computed(() => {
             @close="activeModal = null"
         >
             <div class="space-y-6 text-[13px]">
-                <div class="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span class="font-medium text-gray-900 text-base">Enable</span>
+                <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-zinc-800">
+                    <span class="font-medium text-gray-900 dark:text-zinc-100 dark:text-zinc-100 text-base">Enable</span>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" v-model="methods.sso.enabled" class="sr-only peer" />
-                        <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:border-gray-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                        <div class="w-9 h-5 bg-gray-200 dark:bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white dark:after:bg-zinc-300 after:border after:border-gray-300 dark:border-zinc-700 dark:after:border-zinc-600 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                 </div>
                 
                 <div class="space-y-3">
                     <label class="flex items-start gap-3 cursor-pointer">
-                        <input type="checkbox" v-model="ssoConfig.auto_provision" class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-[#2563eb]" />
+                        <input type="checkbox" v-model="ssoConfig.auto_provision" class="mt-1 rounded border-gray-300 dark:border-zinc-700 text-blue-600 focus:ring-[#2563eb] dark:bg-zinc-950" />
                         <div>
-                            <span class="block font-medium text-gray-900">Auto-provision users</span>
-                            <span class="block text-gray-500 mt-0.5">Automatically create an account when a user signs in via SSO.</span>
+                            <span class="block font-medium text-gray-900 dark:text-zinc-100">Auto-provision users</span>
+                            <span class="block text-gray-500 dark:text-zinc-400 mt-0.5">Automatically create an account when a user signs in via SSO.</span>
                         </div>
                     </label>
                     <label class="flex items-start gap-3 cursor-pointer">
-                        <input type="checkbox" v-model="ssoConfig.enforce_sso" class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-[#2563eb]" />
+                        <input type="checkbox" v-model="ssoConfig.enforce_sso" class="mt-1 rounded border-gray-300 dark:border-zinc-700 text-blue-600 focus:ring-[#2563eb] dark:bg-zinc-950" />
                         <div>
-                            <span class="block font-medium text-gray-900">Enforce SSO</span>
-                            <span class="block text-gray-500 mt-0.5">Require all matching domains to authenticate via SSO.</span>
+                            <span class="block font-medium text-gray-900 dark:text-zinc-100">Enforce SSO</span>
+                            <span class="block text-gray-500 dark:text-zinc-400 mt-0.5">Require all matching domains to authenticate via SSO.</span>
                         </div>
                     </label>
                 </div>
             </div>
             <template #footer>
-                <button @click="activeModal = null" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button @click="saveSsoSettings" :disabled="saving === 'sso'" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60">
+                <button @click="activeModal = null" class="px-4 py-2 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-lg text-[13px] font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 cursor-pointer">Cancel</button>
+                <button @click="saveSsoSettings" :disabled="saving === 'sso'" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60 cursor-pointer border-0">
                     <Loader2 v-if="saving === 'sso'" class="w-4 h-4 animate-spin" />
                     Save changes
                 </button>
@@ -528,63 +528,63 @@ const isStrongPreset = computed(() => {
                 <div class="flex items-center gap-3">
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" v-model="methods.email_password.enabled" class="sr-only peer" />
-                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        <div class="w-11 h-6 bg-gray-200 dark:bg-zinc-800 rounded-full peer peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white dark:bg-zinc-900 dark:after:bg-zinc-300 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
-                    <span class="font-medium text-gray-900 text-[14px]">Enable</span>
+                    <span class="font-medium text-gray-900 dark:text-zinc-100 text-[14px]">Enable</span>
                 </div>
 
-                <hr class="border-gray-200" />
+                <hr class="border-gray-200 dark:border-zinc-800" />
 
                 <!-- Password policy -->
                 <div>
-                    <h4 class="font-semibold text-gray-900 text-[14px] mb-1">Password policy</h4>
-                    <p class="text-gray-500 text-[13px] mb-4">Rules that will be enforced for passwords on user sign up.</p>
+                    <h4 class="font-semibold text-gray-900 dark:text-zinc-100 text-[14px] mb-1">Password policy</h4>
+                    <p class="text-gray-500 dark:text-zinc-400 text-[13px] mb-4">Rules that will be enforced for passwords on user sign up.</p>
 
                     <!-- Strong / Custom selector cards -->
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         <div @click="applyStrongPreset"
-                            :class="['border rounded-lg p-3.5 cursor-pointer transition-all', isStrongPreset ? 'border-2 border-blue-600 bg-white' : 'border-gray-200 hover:border-gray-300']">
-                            <div :class="['font-semibold text-[13px]', isStrongPreset ? 'text-blue-700' : 'text-gray-900']">Strong</div>
-                            <div :class="['text-[12px] mt-0.5', isStrongPreset ? 'text-blue-500' : 'text-gray-500']">Recommended for most apps</div>
+                            :class="['border rounded-lg p-3.5 cursor-pointer transition-all', isStrongPreset ? 'border-2 border-blue-600 bg-white dark:bg-zinc-900' : 'border-gray-200 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700']">
+                            <div :class="['font-semibold text-[13px]', isStrongPreset ? 'text-blue-700 dark:text-blue-400' : 'text-gray-900 dark:text-zinc-100']">Strong</div>
+                            <div :class="['text-[12px] mt-0.5', isStrongPreset ? 'text-blue-500 dark:text-blue-400' : 'text-gray-500 dark:text-zinc-455']">Recommended for most apps</div>
                         </div>
                         <div @click="() => { methods.email_password.require_uppercase = false; methods.email_password.require_lowercase = false; methods.email_password.require_number = false; methods.email_password.require_special = false; password.reject_breached = false; }"
-                            :class="['border rounded-lg p-3.5 cursor-pointer transition-all', !isStrongPreset ? 'border-2 border-blue-600 bg-white' : 'border-gray-200 hover:border-gray-300']">
-                            <div :class="['font-semibold text-[13px]', !isStrongPreset ? 'text-blue-700' : 'text-gray-900']">Custom</div>
-                            <div :class="['text-[12px] mt-0.5', !isStrongPreset ? 'text-blue-500' : 'text-gray-500']">Full control over every rule</div>
+                            :class="['border rounded-lg p-3.5 cursor-pointer transition-all', !isStrongPreset ? 'border-2 border-blue-600 bg-white dark:bg-zinc-900' : 'border-gray-200 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700']">
+                            <div :class="['font-semibold text-[13px]', !isStrongPreset ? 'text-blue-700 dark:text-blue-400' : 'text-gray-900 dark:text-zinc-100']">Custom</div>
+                            <div :class="['text-[12px] mt-0.5', !isStrongPreset ? 'text-blue-500 dark:text-blue-400' : 'text-gray-500 dark:text-zinc-455']">Full control over every rule</div>
                         </div>
                     </div>
 
                     <!-- STRONG: summary bullet list (exactly like reference) -->
-                    <div v-if="isStrongPreset" class="border border-gray-200 rounded-lg divide-y divide-gray-100 overflow-hidden">
+                    <div v-if="isStrongPreset" class="border border-gray-200 dark:border-zinc-700 rounded-lg divide-y divide-gray-100 dark:divide-zinc-800 overflow-hidden">
                         <div class="flex items-center gap-3 px-4 py-3">
                             <svg class="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                            <span class="text-[13px] text-gray-700">Minimum password length of {{ methods.email_password.min_length }} characters</span>
+                            <span class="text-[13px] text-gray-700 dark:text-zinc-300">Minimum password length of {{ methods.email_password.min_length }} characters</span>
                         </div>
                         <div class="flex items-center gap-3 px-4 py-3">
-                            <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                            <span class="text-[13px] text-gray-700">Reject passwords with low complexity (<a href="https://github.com/dropbox/zxcvbn" target="_blank" class="text-blue-600 hover:underline">zxcvbn</a> score less than {{ methods.email_password.complexity }}).</span>
+                            <svg class="w-4 h-4 text-gray-400 dark:text-zinc-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            <span class="text-[13px] text-gray-700 dark:text-zinc-300">Reject passwords with low complexity (<a href="https://github.com/dropbox/zxcvbn" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">zxcvbn</a> score less than {{ methods.email_password.complexity }}).</span>
                         </div>
                         <div class="flex items-center gap-3 px-4 py-3">
-                            <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                            <span class="text-[13px] text-gray-700">Reject breached passwords, sourced by <a href="https://haveibeenpwned.com" target="_blank" class="text-blue-600 hover:underline">haveibeenpwned</a>.</span>
+                            <svg class="w-4 h-4 text-gray-400 dark:text-zinc-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            <span class="text-[13px] text-gray-700 dark:text-zinc-300">Reject breached passwords, sourced by <a href="https://haveibeenpwned.com" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">haveibeenpwned</a>.</span>
                         </div>
                     </div>
 
                     <!-- CUSTOM: full editable form -->
-                    <div v-else class="space-y-4 border border-gray-200 rounded-lg p-4">
+                    <div v-else class="space-y-4 border border-gray-200 dark:border-zinc-800 rounded-lg p-4">
                         <div>
-                            <label class="block font-medium text-gray-900 mb-2 text-[13px]">Minimum password length</label>
+                            <label class="block font-medium text-gray-900 dark:text-zinc-100 mb-2 text-[13px]">Minimum password length</label>
                             <div class="flex items-center gap-2">
-                                <input type="number" v-model="methods.email_password.min_length" class="w-16 px-3 py-1.5 border border-gray-300 rounded-md text-[13px] focus:ring-1 focus:ring-[#2563eb]" min="6" max="128" />
-                                <span class="text-gray-600">characters</span>
+                                <input type="number" v-model="methods.email_password.min_length" class="w-16 px-3 py-1.5 border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 rounded-md text-[13px] focus:ring-1 focus:ring-[#2563eb]" min="6" max="128" />
+                                <span class="text-gray-600 dark:text-zinc-400">characters</span>
                             </div>
                         </div>
 
                         <div>
-                            <label class="block font-medium text-gray-900 mb-2 text-[13px]">Minimum complexity <span class="font-normal text-gray-500">(zxcvbn)</span></label>
+                            <label class="block font-medium text-gray-900 dark:text-zinc-100 mb-2 text-[13px]">Minimum complexity <span class="font-normal text-gray-500 dark:text-zinc-400">(zxcvbn)</span></label>
                             <div class="flex items-center gap-2 mb-1.5">
                                 <button v-for="n in 4" :key="n" @click="methods.email_password.complexity = n"
-                                    :class="['w-8 h-8 rounded border text-[13px] font-medium flex items-center justify-center transition-colors', methods.email_password.complexity === n ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-gray-300 text-gray-700 hover:bg-gray-50']">
+                                    :class="['w-8 h-8 rounded border text-[13px] font-medium flex items-center justify-center transition-colors', methods.email_password.complexity === n ? 'border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20' : 'border-gray-300 dark:border-zinc-700 text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 bg-transparent']">
                                     {{ n }}
                                 </button>
                                 <span :class="['text-[11px] font-semibold px-1.5 py-0.5 rounded border ml-1', complexityColor, complexityBg]">{{ complexityLabel }}</span>
@@ -592,32 +592,32 @@ const isStrongPreset = computed(() => {
                         </div>
 
                         <div>
-                            <label class="block font-medium text-gray-900 mb-2 text-[13px]">Password rules</label>
+                            <label class="block font-medium text-gray-900 dark:text-zinc-100 mb-2 text-[13px]">Password rules</label>
                             <div class="space-y-1.5">
-                                <label class="flex items-center gap-2 text-gray-600 cursor-pointer"><input type="checkbox" v-model="methods.email_password.require_uppercase" class="rounded border-gray-300 text-blue-600" /> Uppercase letter</label>
-                                <label class="flex items-center gap-2 text-gray-600 cursor-pointer"><input type="checkbox" v-model="methods.email_password.require_lowercase" class="rounded border-gray-300 text-blue-600" /> Lowercase letter</label>
-                                <label class="flex items-center gap-2 text-gray-600 cursor-pointer"><input type="checkbox" v-model="methods.email_password.require_number" class="rounded border-gray-300 text-blue-600" /> Number</label>
-                                <label class="flex items-center gap-2 text-gray-600 cursor-pointer"><input type="checkbox" v-model="methods.email_password.require_special" class="rounded border-gray-300 text-blue-600" /> Special character</label>
+                                <label class="flex items-center gap-2 text-gray-600 dark:text-zinc-400 cursor-pointer"><input type="checkbox" v-model="methods.email_password.require_uppercase" class="rounded border-gray-300 dark:border-zinc-700 text-blue-600 dark:bg-zinc-950" /> Uppercase letter</label>
+                                <label class="flex items-center gap-2 text-gray-600 dark:text-zinc-400 cursor-pointer"><input type="checkbox" v-model="methods.email_password.require_lowercase" class="rounded border-gray-300 dark:border-zinc-700 text-blue-600 dark:bg-zinc-950" /> Lowercase letter</label>
+                                <label class="flex items-center gap-2 text-gray-600 dark:text-zinc-400 cursor-pointer"><input type="checkbox" v-model="methods.email_password.require_number" class="rounded border-gray-300 dark:border-zinc-700 text-blue-600 dark:bg-zinc-950" /> Number</label>
+                                <label class="flex items-center gap-2 text-gray-600 dark:text-zinc-400 cursor-pointer"><input type="checkbox" v-model="methods.email_password.require_special" class="rounded border-gray-300 dark:border-zinc-700 text-blue-600 dark:bg-zinc-950" /> Special character</label>
                             </div>
                         </div>
 
                         <label class="flex items-start gap-2 cursor-pointer">
-                            <input type="checkbox" v-model="password.reject_breached" class="mt-0.5 rounded border-gray-300 text-blue-600" />
-                            <span class="text-[13px] text-gray-700">Reject breached passwords (<a href="https://haveibeenpwned.com" target="_blank" class="text-blue-600 hover:underline">haveibeenpwned</a>)</span>
+                            <input type="checkbox" v-model="password.reject_breached" class="mt-0.5 rounded border-gray-300 dark:border-zinc-700 text-blue-600 dark:bg-zinc-950" />
+                            <span class="text-[13px] text-gray-700 dark:text-zinc-300">Reject breached passwords (<a href="https://haveibeenpwned.com" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">haveibeenpwned</a>)</span>
                         </label>
 
                         <label class="flex items-center gap-2 cursor-pointer flex-wrap">
-                            <input type="checkbox" v-model="historyEnabled" class="rounded border-gray-300 text-blue-600" />
-                            <span class="text-[13px] text-gray-700">Reject last</span>
-                            <input type="number" v-model="password.history_count" :disabled="!historyEnabled" class="w-12 px-2 py-1 border border-gray-300 rounded text-center text-[13px] disabled:opacity-50" min="1" max="20" />
-                            <span class="text-[13px] text-gray-700">previously used passwords</span>
+                            <input type="checkbox" v-model="historyEnabled" class="rounded border-gray-300 dark:border-zinc-700 text-blue-600 dark:bg-zinc-950" />
+                            <span class="text-[13px] text-gray-700 dark:text-zinc-300">Reject last</span>
+                            <input type="number" v-model="password.history_count" :disabled="!historyEnabled" class="w-12 px-2 py-1 border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 rounded text-center text-[13px] disabled:opacity-50" min="1" max="20" />
+                            <span class="text-[13px] text-gray-700 dark:text-zinc-300">previously used passwords</span>
                         </label>
                     </div>
                 </div>
             </div>
             <template #footer>
-                <button @click="activeModal = null" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-                <button @click="saveEmailPasswordSettings" :disabled="saving === 'email_password'" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-semibold hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60 transition-colors">
+                <button @click="activeModal = null" class="px-4 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg text-[13px] font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">Cancel</button>
+                <button @click="saveEmailPasswordSettings" :disabled="saving === 'email_password'" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-semibold hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60 transition-colors cursor-pointer border-0">
                     <Loader2 v-if="saving === 'email_password'" class="w-4 h-4 animate-spin" />
                     Save changes
                 </button>
@@ -634,28 +634,28 @@ const isStrongPreset = computed(() => {
             @close="activeModal = null"
         >
             <div class="space-y-6 text-[13px]">
-                <div class="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span class="font-medium text-gray-900 text-[14px]">Enable</span>
+                <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-zinc-800">
+                    <span class="font-medium text-gray-900 dark:text-zinc-100 text-[14px]">Enable</span>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" v-model="methods.passkeys.enabled" class="sr-only peer" />
-                        <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:border-gray-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                        <div class="w-9 h-5 bg-gray-200 dark:bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white dark:after:bg-zinc-300 after:border after:border-gray-300 dark:border-zinc-700 dark:after:border-zinc-600 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                 </div>
                 
                 <div>
-                    <h4 class="font-semibold text-gray-900 text-[14px] mb-3">Options</h4>
+                    <h4 class="font-semibold text-gray-900 dark:text-zinc-100 text-[14px] mb-3">Options</h4>
                     <label class="flex items-start gap-3 cursor-pointer">
-                        <input type="checkbox" class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-[#2563eb]" checked />
+                        <input type="checkbox" class="mt-1 rounded border-gray-300 dark:border-zinc-700 text-blue-600 focus:ring-[#2563eb] dark:bg-zinc-950" checked />
                         <div>
-                            <span class="block font-medium text-gray-900">Prompt existing users to add a passkey</span>
-                            <span class="block text-gray-500 mt-0.5 leading-relaxed">Ask users with a password to create a passkey on their next sign-in. The notice can be dismissed permanently or will show every <strong>2 weeks</strong>.</span>
+                            <span class="block font-medium text-gray-900 dark:text-zinc-100">Prompt existing users to add a passkey</span>
+                            <span class="block text-gray-500 dark:text-zinc-400 mt-0.5 leading-relaxed">Ask users with a password to create a passkey on their next sign-in. The notice can be dismissed permanently or will show every <strong>2 weeks</strong>.</span>
                         </div>
                     </label>
                 </div>
             </div>
             <template #footer>
-                <button @click="activeModal = null" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button @click="savePasskeysSettings" :disabled="saving === 'passkeys'" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60">
+                <button @click="activeModal = null" class="px-4 py-2 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-lg text-[13px] font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 cursor-pointer">Cancel</button>
+                <button @click="savePasskeysSettings" :disabled="saving === 'passkeys'" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60 cursor-pointer border-0">
                     <Loader2 v-if="saving === 'passkeys'" class="w-4 h-4 animate-spin" />
                     Save changes
                 </button>
@@ -671,30 +671,30 @@ const isStrongPreset = computed(() => {
             @close="activeModal = null"
         >
             <div class="space-y-6 text-[13px]">
-                <div class="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span class="font-medium text-gray-900 text-[14px]">Enable</span>
+                <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-zinc-800">
+                    <span class="font-medium text-gray-900 dark:text-zinc-100 text-[14px]">Enable</span>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" v-model="methods.magic_links.enabled" class="sr-only peer" />
-                        <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:border-gray-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                        <div class="w-9 h-5 bg-gray-200 dark:bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white dark:after:bg-zinc-300 after:border after:border-gray-300 dark:border-zinc-700 dark:after:border-zinc-600 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                 </div>
 
                 <div>
-                    <h4 class="font-semibold text-gray-900 text-[14px] mb-3">Code settings</h4>
+                    <h4 class="font-semibold text-gray-900 dark:text-zinc-100 text-[14px] mb-3">Code settings</h4>
                     <div class="space-y-3">
-                        <div class="flex items-center justify-between py-2 border border-gray-100 rounded-lg px-3">
+                        <div class="flex items-center justify-between py-2 border border-gray-100 dark:border-zinc-800 rounded-lg px-3">
                             <div>
-                                <span class="block font-medium text-gray-900">Six-digit code</span>
-                                <span class="block text-gray-500 text-[12px]">Send a one-time code via email for passwordless login.</span>
+                                <span class="block font-medium text-gray-900 dark:text-zinc-100">Six-digit code</span>
+                                <span class="block text-gray-500 dark:text-zinc-400 text-[12px]">Send a one-time code via email for passwordless login.</span>
                             </div>
-                            <span class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">Active</span>
+                            <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 px-2 py-0.5 rounded-full">Active</span>
                         </div>
                     </div>
                 </div>
             </div>
             <template #footer>
-                <button @click="activeModal = null" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button @click="saveMagicLinksSettings" :disabled="saving === 'magic_links'" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60">
+                <button @click="activeModal = null" class="px-4 py-2 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-lg text-[13px] font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 cursor-pointer">Cancel</button>
+                <button @click="saveMagicLinksSettings" :disabled="saving === 'magic_links'" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60 cursor-pointer border-0">
                     <Loader2 v-if="saving === 'magic_links'" class="w-4 h-4 animate-spin" />
                     Save changes
                 </button>

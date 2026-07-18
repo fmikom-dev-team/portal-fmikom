@@ -24,6 +24,8 @@ const emit = defineEmits<{
 	(e: "save-draft"): void;
 	(e: "preview"): void;
 	(e: "update-settings"): void;
+	(e: "cancel"): void;
+	(e: "discard-draft"): void;
 }>();
 
 const selectPreset = (bg: string, text: string) => {
@@ -119,7 +121,7 @@ const updateText = (c: string) => {
 							@click="selectPreset(preset.bg, preset.text)"
 							:class="[
 								'flex items-center justify-between p-3 rounded-xl border text-xs font-semibold text-left transition-all cursor-pointer hover:scale-[1.01]',
-								canvasBgColor === preset.bg ? 'border-blue-600 bg-blue-50/20 dark:bg-blue-955/20 ring-1 ring-blue-500/20' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300'
+								canvasBgColor === preset.bg ? 'border-blue-600 bg-blue-50/20 dark:bg-blue-950/20 ring-1 ring-blue-500/20' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300'
 							]">
 							<div class="flex flex-col gap-0.5">
 								<span>{{ preset.name }}</span>
@@ -175,6 +177,8 @@ const updateText = (c: string) => {
 			@continue="emit('show-publish-modal')"
 			@save-draft="emit('save-draft')"
 			@preview="emit('preview')"
+			@cancel="emit('cancel')"
+			@discard-draft="emit('discard-draft')"
 		/>
 	</aside>
 </template>

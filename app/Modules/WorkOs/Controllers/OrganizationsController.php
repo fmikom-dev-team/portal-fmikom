@@ -230,4 +230,61 @@ class OrganizationsController extends Controller
             'message' => 'Invitation removed successfully.',
         ]);
     }
+
+    public function updateSettingsData(Request $request, Module $module)
+    {
+        $settings = $module->settings_data ?? [];
+
+        // Validate incoming settings keys with strict regex and rules
+        $request->validate([
+            'domains' => ['nullable', 'array'],
+            'domains.*.name' => ['required_with:domains', 'string', 'regex:/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/'],
+            'domains.*.status' => ['required_with:domains', 'string', 'in:Verified,Pending verification'],
+
+            'it_contacts' => ['nullable', 'array'],
+            'it_contacts.*.name' => ['required_with:it_contacts', 'string', 'max:100'],
+            'it_contacts.*.email' => ['required_with:it_contacts', 'email'],
+
+            'metadata' => ['nullable', 'array'],
+            'metadata.*.key' => ['required_with:metadata', 'string', 'regex:/^[a-zA-Z0-9_-]+$/', 'max:50'],
+            'metadata.*.value' => ['required_with:metadata', 'string', 'max:255'],
+
+            'role_mappings' => ['nullable', 'array'],
+            'role_mappings.*.group' => ['required_with:role_mappings', 'string', 'max:100'],
+            'role_mappings.*.role' => ['required_with:role_mappings', 'string', 'max:50'],
+
+            'role_priorities' => ['nullable', 'array'],
+            'role_priorities.*' => ['integer'],
+
+            'attribute_mappings' => ['nullable', 'array'],
+            'attribute_mappings.*.target' => ['required_with:attribute_mappings', 'string', 'regex:/^[a-zA-Z0-9_-]+$/', 'max:100'],
+            'attribute_mappings.*.source' => ['required_with:attribute_mappings', 'string', 'regex:/^[a-zA-Z0-9_.-]+$/', 'max:100'],
+            'attribute_mappings.*.isCustom' => ['required_with:attribute_mappings', 'boolean'],
+
+            'attribute_visibility' => ['nullable', 'array'],
+            'attribute_visibility.directorySync' => ['boolean'],
+            'attribute_visibility.sso' => ['boolean'],
+
+            'features' => ['nullable', 'array'],
+        ]);
+
+        // Merge incoming payload into the existing JSON settings
+        $newSettings = array_merge($settings, $request->only([
+            'domains',
+            'it_contacts',
+            'metadata',
+            'role_mappings',
+            'role_priorities',
+            'attribute_mappings',
+            'attribute_visibility',
+            'features',
+        ]));
+
+        $module->settings_data = $newSettings;
+        $module->save();
+
+        AuditLogger::log('organization.settings.updated', 'info', ['name' => $module->name], $module);
+
+        return back()->with('success', 'Konfigurasi organisasi berhasil diperbarui.');
+    }
 }

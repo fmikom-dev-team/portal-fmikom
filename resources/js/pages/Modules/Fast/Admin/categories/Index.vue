@@ -2,6 +2,7 @@
 // resources/js/pages/Modules/Fast/Admin/categories/Index.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue';
 import {
     Plus,
     Pencil,
@@ -107,9 +108,23 @@ function toggleActive(cat: Category) {
         { preserveScroll: true },
     );
 }
+const isDeleteCatModalOpen = ref(false);
+const deleteCatTarget = ref<Category | null>(null);
+
 function destroy(cat: Category) {
-    if (confirm(`Hapus kategori "${cat.nama}"?`)) {
-        router.delete(`/admin/categories/${cat.id}`, { preserveScroll: true });
+    deleteCatTarget.value = cat;
+    isDeleteCatModalOpen.value = true;
+}
+
+function handleDeleteCat() {
+    if (deleteCatTarget.value) {
+        router.delete(`/admin/categories/${deleteCatTarget.value.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                isDeleteCatModalOpen.value = false;
+                deleteCatTarget.value = null;
+            },
+        });
     }
 }
 </script>
@@ -415,3 +430,11 @@ function destroy(cat: Category) {
     opacity: 0;
 }
 </style>
+
+<DeleteConfirmModal
+    :show="isDeleteCatModalOpen"
+    :title="`Hapus Kategori: ${deleteCatTarget?.nama}`"
+    message="Apakah Anda yakin ingin menghapus kategori ini? Tindakan ini tidak dapat dibatalkan."
+    @confirm="handleDeleteCat"
+    @cancel="isDeleteCatModalOpen = false"
+/>

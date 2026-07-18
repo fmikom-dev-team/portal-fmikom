@@ -137,7 +137,7 @@ const loginWithPasskey = async () => {
         <form @submit.prevent="submit" class="flex flex-col gap-4" autocomplete="on">
             <div class="grid gap-4">
                 <div class="grid gap-2">
-                    <Label for="email" class="font-semibold text-slate-800">Email / NIM / NIP / NIB</Label>
+                    <Label for="email" class="font-semibold text-slate-800 dark:text-slate-200">Email / NIM / NIP / NIB</Label>
                     <Input
                         id="email"
                         type="text"
@@ -147,14 +147,14 @@ const loginWithPasskey = async () => {
                         :tabindex="1"
                         autocomplete="email"
                         placeholder="email@example.com / 192801..."
-                        class="rounded-xl h-11 border-slate-200 focus-visible:ring-0 focus-visible:border-[#2563eb] transition-colors"
+                        class="rounded-xl h-11 border-slate-200 dark:border-slate-800 dark:bg-slate-950 focus-visible:ring-0 focus-visible:border-[#2563eb] transition-colors"
                     />
                     <InputError :message="form.errors.email" />
                 </div>
 
                 <div class="grid gap-2">
                     <div class="flex items-center justify-between">
-                        <Label for="password" class="font-semibold text-slate-800">Password</Label>
+                        <Label for="password" class="font-semibold text-slate-800 dark:text-slate-200">Password</Label>
                         <TextLink
                             v-if="canResetPassword !== false"
                             href="/forgot-password"
@@ -172,7 +172,7 @@ const loginWithPasskey = async () => {
                         :tabindex="2"
                         :autocomplete="'current-password'"
                         placeholder="Password"
-                        class="rounded-xl h-11 border-slate-200 focus-visible:ring-0 focus-visible:border-[#2563eb] transition-colors"
+                        class="rounded-xl h-11 border-slate-200 dark:border-slate-800 dark:bg-slate-950 focus-visible:ring-0 focus-visible:border-[#2563eb] transition-colors"
                     />
                     <InputError :message="form.errors.password" />
                 </div>
@@ -185,7 +185,7 @@ const loginWithPasskey = async () => {
                             @update:checked="(val: boolean) => form.remember = val"
                             :tabindex="3"
                         />
-                        <span>Remember me</span>
+                        <span class="text-slate-600 dark:text-slate-400 text-sm">Remember me</span>
                     </Label>
                 </div>
 
@@ -222,16 +222,16 @@ const loginWithPasskey = async () => {
 
             <div v-if="oauthProviders && oauthProviders.length > 0" class="mt-2 flex flex-col gap-3">
                 <div class="relative flex items-center py-2">
-                    <div class="grow border-t border-gray-200"></div>
-                    <span class="shrink-0 mx-4 text-gray-400 text-sm font-medium">Or continue with</span>
-                    <div class="grow border-t border-gray-200"></div>
+                    <div class="grow border-t border-gray-200 dark:border-slate-800"></div>
+                    <span class="shrink-0 mx-4 text-gray-400 dark:text-slate-500 text-sm font-medium">Or continue with</span>
+                    <div class="grow border-t border-gray-200 dark:border-slate-800"></div>
                 </div>
                 
                 <a
                     v-for="provider in oauthProviders"
                     :key="provider.slug"
                     :href="`/auth/oauth/${provider.slug}/redirect`"
-                    class="flex items-center justify-center w-full px-4 py-2.5 border border-gray-300 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    class="flex items-center justify-center w-full px-4 py-2.5 border border-gray-300 dark:border-slate-800 rounded-xl shadow-sm bg-white dark:bg-slate-900 text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
                 >
                     <!-- Google -->
                     <svg v-if="provider.slug === 'google'" class="w-5 h-5 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -252,7 +252,7 @@ const loginWithPasskey = async () => {
                         <path d="M24 11.4H12.6V0H24v11.4z" fill="#FFB900"/>
                     </svg>
                     <!-- Apple -->
-                    <svg v-else-if="provider.slug === 'apple'" class="w-5 h-5 mr-2 shrink-0" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg">
+                    <svg v-else-if="provider.slug === 'apple'" class="w-5 h-5 mr-2 shrink-0 fill-current text-black dark:text-white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701z"/>
                     </svg>
                     <!-- Fallback -->
@@ -271,6 +271,15 @@ const loginWithPasskey = async () => {
                     class="underline underline-offset-4"
                     :tabindex="5"
                 >Sign up</TextLink>
+            </div>
+
+            <div class="text-center text-sm text-slate-500 dark:text-slate-400 mt-3">
+                Mahasiswa / Dosen / Staff?
+                <TextLink
+                    href="/activate"
+                    class="underline underline-offset-4 font-semibold text-blue-600 dark:text-blue-400 ml-1"
+                    :tabindex="6"
+                >Aktivasi Akun</TextLink>
             </div>
         </form>
     </div>

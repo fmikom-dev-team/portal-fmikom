@@ -85,7 +85,15 @@ trait UserHelpers
             $this->normalizeRoleSlug(session('active_role')),
         ]));
 
+        $activeModule = strtoupper((string) session('active_module', ''));
+
         foreach ($this->moduleRoles as $moduleRole) {
+            if ($activeModule !== '') {
+                $moduleRole->loadMissing('module');
+                if (strtoupper($moduleRole->module?->code ?? '') !== $activeModule) {
+                    continue;
+                }
+            }
             $candidateRoles[] = $this->normalizeRoleSlug($moduleRole->role?->slug ?? null);
         }
 

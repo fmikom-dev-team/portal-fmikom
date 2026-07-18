@@ -2,11 +2,15 @@
 import { computed } from "vue";
 import VueApexCharts from "vue3-apexcharts";
 import type { ApexOptions } from "apexcharts";
+import { useAppearance } from "@/composables/useAppearance";
 import DashboardCard from "../../components/ui/DashboardCard.vue";
 
 const props = defineProps<{
     stats: Record<string, any>;
 }>();
+
+const { resolvedAppearance } = useAppearance();
+const isDark = computed(() => resolvedAppearance.value === "dark");
 
 // ── 1. Weekly Logins Chart ───────────────────────────────────────
 const weeklyLoginsSeries = computed(() => {
@@ -37,7 +41,7 @@ const weeklyLoginsOptions = computed((): ApexOptions => ({
     fill: {
         type: "gradient",
         gradient: {
-            shade: "light",
+            shade: isDark.value ? "dark" : "light",
             type: "vertical",
             opacityFrom: [0.15, 0.05],
             opacityTo: [0.0, 0.0],
@@ -46,21 +50,21 @@ const weeklyLoginsOptions = computed((): ApexOptions => ({
     dataLabels: { enabled: false },
     xaxis: {
         categories: (props.stats?.weekly_logins ?? []).map((d: any) => d.label ?? ""),
-        labels: { style: { colors: "#6b7280", fontSize: "11px" } },
+        labels: { style: { colors: isDark.value ? "#a1a1aa" : "#6b7280", fontSize: "11px" } },
         axisBorder: { show: false },
         axisTicks: { show: false },
     },
     yaxis: { 
-        labels: { style: { colors: "#6b7280", fontSize: "11px" } } 
+        labels: { style: { colors: isDark.value ? "#a1a1aa" : "#6b7280", fontSize: "11px" } } 
     },
     grid: { 
-        borderColor: "#f3f4f6", 
+        borderColor: isDark.value ? "#27272a" : "#f3f4f6", 
         strokeDashArray: 4 
     },
     legend: { 
         position: "top", 
         fontSize: "12px",
-        labels: { colors: "#374151" }
+        labels: { colors: isDark.value ? "#e4e4e7" : "#374151" }
     },
     tooltip: { x: { show: true } },
 }));
@@ -92,17 +96,17 @@ const hourlyLoginsOptions = computed((): ApexOptions => ({
     xaxis: {
         categories: (props.stats?.hourly_logins ?? []).map((d: any) => d.hour ?? ""),
         labels: { 
-            style: { colors: "#6b7280", fontSize: "10px" },
+            style: { colors: isDark.value ? "#a1a1aa" : "#6b7280", fontSize: "10px" },
             hideOverlappingLabels: true
         },
         axisBorder: { show: false },
         axisTicks: { show: false },
     },
     yaxis: { 
-        labels: { style: { colors: "#6b7280", fontSize: "11px" } } 
+        labels: { style: { colors: isDark.value ? "#a1a1aa" : "#6b7280", fontSize: "11px" } } 
     },
     grid: { 
-        borderColor: "#f3f4f6", 
+        borderColor: isDark.value ? "#27272a" : "#f3f4f6", 
         strokeDashArray: 4 
     },
     tooltip: { x: { show: true } },
@@ -136,7 +140,7 @@ const roleLoginsOptions = computed((): ApexOptions => {
         legend: { 
             position: "bottom", 
             fontSize: "12px",
-            labels: { colors: "#374151" }
+            labels: { colors: isDark.value ? "#e4e4e7" : "#374151" }
         },
         plotOptions: { 
             pie: { 
@@ -179,7 +183,7 @@ const prodiOptions = computed((): ApexOptions => {
         legend: { 
             position: "bottom", 
             fontSize: "11px",
-            labels: { colors: "#374151" }
+            labels: { colors: isDark.value ? "#e4e4e7" : "#374151" }
         },
         plotOptions: { 
             pie: { 
@@ -244,7 +248,7 @@ const prodiOptions = computed((): ApexOptions => {
                         class="w-full"
                         height="230"
                     />
-                    <div v-else class="text-[13px] text-gray-400 text-center py-12">
+                    <div v-else class="text-[13px] text-gray-400 dark:text-zinc-500 text-center py-12">
                         Belum ada aktivitas login yang tercatat.
                     </div>
                 </div>
@@ -260,7 +264,7 @@ const prodiOptions = computed((): ApexOptions => {
                         class="w-full"
                         height="230"
                     />
-                    <div v-else class="text-[13px] text-gray-400 text-center py-12">
+                    <div v-else class="text-[13px] text-gray-400 dark:text-zinc-500 text-center py-12">
                         Belum ada data program studi mahasiswa yang aktif.
                     </div>
                 </div>

@@ -9,12 +9,14 @@ const props = withDefaults(
 		fetchpriority?: "high" | "low" | "auto";
 		loading?: "lazy" | "eager";
 		className?: string;
+		masonry?: boolean;
 	}>(),
 	{
 		sizes: "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw",
 		fetchpriority: "auto",
 		loading: "lazy",
 		className: "w-full h-full object-cover",
+		masonry: false,
 	},
 );
 
@@ -46,10 +48,21 @@ const srcset = computed(() => {
 	// Case 1: Unsplash URL
 	if (props.src.includes("images.unsplash.com")) {
 		const baseUrl = props.src.split("?")[0];
+		let arParam = "";
+		let fit = "crop";
+		try {
+			const urlObj = new URL(props.src);
+			const ar = urlObj.searchParams.get("ar");
+			if (ar) arParam = `&ar=${ar}`;
+			const f = urlObj.searchParams.get("fit");
+			if (f) fit = f;
+		} catch (e) {
+			// Ignore invalid URLs
+		}
 		return `
-			${baseUrl}?auto=format&fit=crop&w=480&q=80 480w,
-			${baseUrl}?auto=format&fit=crop&w=768&q=80 768w,
-			${baseUrl}?auto=format&fit=crop&w=1200&q=80 1200w
+			${baseUrl}?auto=format&fit=${fit}${arParam}&w=480&q=80 480w,
+			${baseUrl}?auto=format&fit=${fit}${arParam}&w=768&q=80 768w,
+			${baseUrl}?auto=format&fit=${fit}${arParam}&w=1200&q=80 1200w
 		`.trim();
 	}
 
@@ -84,9 +97,14 @@ const wrapperClass = computed(() => {
 	if (isSmall.value) {
 		return "inline-flex h-fit w-fit";
 	}
-	return isHFull.value
-		? "h-full w-full"
-		: "h-auto w-full min-h-[180px] bg-slate-100 dark:bg-zinc-800/80 rounded-xl";
+	if (isHFull.value) {
+		return "h-full w-full";
+	}
+	// Masonry mode: no min-height so images determine natural heights for Pinterest-style layouts
+	if (props.masonry) {
+		return "h-auto w-full";
+	}
+	return "h-auto w-full min-h-[180px] bg-slate-100 dark:bg-zinc-800/80 rounded-xl";
 });
 </script>
 

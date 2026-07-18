@@ -12,6 +12,7 @@ import {
 	typeLabel,
 } from "../../composables/useWorkOs";
 import Progress from "../../ui/Progress.vue";
+import MotionTabs from "@/components/ui/tabs/MotionTabs.vue";
 
 const props = defineProps<{
 	users: Array<any> | Record<string, any>;
@@ -40,6 +41,21 @@ watch(() => props.searchQuery, (newVal) => {
 const filterRole = ref("all");
 const filterAuth = ref("all");
 const filterMembership = ref("all");
+
+const subTab = ref<'all' | 'pending_approval' | 'admin_created' | 'active'>('all');
+
+const pendingApprovalCount = computed(() => {
+	return usersArray.value.filter((u: any) => {
+		return u.registration_type === 'self_registered' && u.status_approval === 'pending';
+	}).length;
+});
+
+const subTabs = computed(() => [
+	{ id: 'all', label: 'Semua' },
+	{ id: 'pending_approval', label: 'Butuh Persetujuan', badge: pendingApprovalCount.value },
+	{ id: 'admin_created', label: 'Dibuat Admin' },
+	{ id: 'active', label: 'Aktif' }
+]);
 
 const authDropdownOpen = ref(false);
 const membershipDropdownOpen = ref(false);
@@ -143,6 +159,16 @@ const availableRoles = computed(() => {
 const filteredUsers = computed(() => {
 	let r = usersArray.value;
 
+	if (subTab.value !== "all") {
+		if (subTab.value === "pending_approval") {
+			r = r.filter((u) => u.registration_type === 'self_registered' && u.status_approval === 'pending');
+		} else if (subTab.value === "admin_created") {
+			r = r.filter((u) => u.registration_type === 'admin_created');
+		} else if (subTab.value === "active") {
+			r = r.filter((u) => u.status_approval === 'approved' || u.status_approval === 'activated');
+		}
+	}
+
 	if (filterStatus.value !== "all") {
 		if (filterStatus.value === "deletion_requested") {
 			r = r.filter((u) => u.deletion_requested_at !== null);
@@ -162,6 +188,54 @@ const filteredUsers = computed(() => {
 	}
 
 	return r;
+});
+
+const currentPage = ref(1);
+const perPage = 50;
+
+watch([subTab, userSearch, filterStatus, filterRole, filterAuth], () => {
+	currentPage.value = 1;
+});
+
+const paginatedUsers = computed(() => {
+	const start = (currentPage.value - 1) * perPage;
+	return filteredUsers.value.slice(start, start + perPage);
+});
+
+const totalPages = computed(() => Math.ceil(filteredUsers.value.length / perPage));
+
+const paginationLinks = computed(() => {
+	const links = [];
+	const max = totalPages.value;
+	const current = currentPage.value;
+
+	// Previous
+	links.push({
+		label: "&laquo; Previous",
+		active: false,
+		disabled: current === 1,
+		page: current - 1
+	});
+
+	// Page numbers
+	for (let i = 1; i <= max; i++) {
+		links.push({
+			label: i.toString(),
+			active: current === i,
+			disabled: current === i,
+			page: i
+		});
+	}
+
+	// Next
+	links.push({
+		label: "Next &raquo;",
+		active: false,
+		disabled: current === max || max === 0,
+		page: current + 1
+	});
+
+	return links;
 });
 
 function closeAllDropdowns(e: MouseEvent) {
@@ -201,6 +275,61 @@ onUnmounted(() => document.removeEventListener("click", closeAllDropdowns));
 
 // ─── MODALS ───────────────────────────────────────────────────────────────────
 const modal = reactive({ createUser: false, uploadUsers: false });
+
+const toggleStatusModal = reactive({
+	show: false,
+	user: null as any,
+	targetStatus: false,
+	isLoading: false
+});
+
+function openToggleStatus(u: any, event: Event) {
+	event.stopPropagation();
+	toggleStatusModal.user = u;
+	toggleStatusModal.targetStatus = !!u.is_active;
+	toggleStatusModal.show = true;
+	toggleStatusModal.isLoading = false;
+}
+
+function handleToggleStatusSubmit() {
+	if (!toggleStatusModal.user) return;
+	toggleStatusModal.isLoading = true;
+
+	if (toggleStatusModal.user.status_approval === 'pending') {
+		router.post(`/workos/users/${toggleStatusModal.user.id}/approve`, {}, {
+			preserveState: true,
+			preserveScroll: true,
+			onSuccess: () => {
+				toggleStatusModal.show = false;
+				toast('Pendaftaran user berhasil disetujui.', 'success');
+			},
+			onError: (errors: any) => {
+				toast(errors.error || 'Gagal menyetujui pendaftaran.', 'error');
+			},
+			onFinish: () => {
+				toggleStatusModal.isLoading = false;
+			}
+		});
+		return;
+	}
+
+	router.patch(`/workos/users/${toggleStatusModal.user.id}`, {
+		is_active: toggleStatusModal.targetStatus
+	}, {
+		preserveState: true,
+		preserveScroll: true,
+		onSuccess: () => {
+			toggleStatusModal.show = false;
+			toast('Status akun user berhasil diperbarui.', 'success');
+		},
+		onError: (errors: any) => {
+			toast(errors.error || 'Gagal memperbarui status user.', 'error');
+		},
+		onFinish: () => {
+			toggleStatusModal.isLoading = false;
+		}
+	});
+}
 
 // ─── UPLOAD MASSAL ────────────────────────────────────────────────────────────
 const page = usePage();
@@ -378,32 +507,95 @@ const GITHUB_SVG = `<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 inline-block" fi
 const MICROSOFT_SVG = `<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 inline-block" xmlns="http://www.w3.org/2000/svg"><path d="M11.4 24H0V12.6h11.4V24z" fill="#F25022"/><path d="M24 24H12.6V12.6H24V24z" fill="#00A4EF"/><path d="M11.4 11.4H0V0h11.4v11.4z" fill="#7FBA00"/><path d="M24 11.4H12.6V0H24v11.4z" fill="#FFB900"/></svg>`;
 const APPLE_SVG = `<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 inline-block" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701z"/></svg>`;
 
+import AppModal from "../../components/ui/AppModal.vue";
+
+const confirmModal = reactive({
+	show: false,
+	title: "",
+	description: "",
+	message: "",
+	confirmText: "Oke",
+	confirmBgClass: "bg-[#2563EB] hover:bg-[#1d4ed8]",
+	isLoading: false,
+	onConfirm: () => {},
+});
+
+const rejectModal = reactive({
+	show: false,
+	user: null as any,
+	reason: "",
+	isLoading: false,
+});
+
 function handleUserAction(action: string, user: any) {
 	activeUserMenuId.value = null;
 	if (action === "view") {
 		emit("openDetail", user);
 	} else if (action === "approve") {
-		if (confirm(`Approve user ${user.email}?`)) {
+		confirmModal.title = "Setujui Pengguna";
+		confirmModal.description = "Apakah Anda yakin ingin menyetujui akun ini?";
+		confirmModal.message = `Menyetujui pendaftaran user ${user.email} akan langsung membuat tautan aktivasi unik dan mengirimkannya secara otomatis via email ke pengguna.`;
+		confirmModal.confirmText = "Ya, Setujui";
+		confirmModal.confirmBgClass = "bg-green-600 hover:bg-green-700";
+		confirmModal.onConfirm = () => {
+			confirmModal.isLoading = true;
 			router.post(`/workos/users/${user.id}/approve`, {}, {
 				preserveScroll: true,
-				onSuccess: () => toast("User approved successfully.", "success")
+				onSuccess: () => {
+					confirmModal.show = false;
+					confirmModal.isLoading = false;
+					toast("User approved successfully.", "success");
+				},
+				onError: () => {
+					confirmModal.isLoading = false;
+				}
 			});
-		}
+		};
+		confirmModal.show = true;
 	} else if (action === "reject") {
-		if (confirm(`Reject user ${user.email}?`)) {
-			router.post(`/workos/users/${user.id}/reject`, {}, {
-				preserveScroll: true,
-				onSuccess: () => toast("User rejected.", "success")
-			});
-		}
+		rejectModal.user = user;
+		rejectModal.reason = "";
+		rejectModal.show = true;
 	} else if (action === "delete") {
-		if (confirm(`Are you sure you want to delete user ${user.email}? This action cannot be undone.`)) {
+		confirmModal.title = "Hapus Pengguna";
+		confirmModal.description = "Apakah Anda yakin ingin menghapus akun ini?";
+		confirmModal.message = `Tindakan ini permanen dan tidak dapat dibatalkan. Akun ${user.email} akan dihapus dari sistem.`;
+		confirmModal.confirmText = "Ya, Hapus";
+		confirmModal.confirmBgClass = "bg-red-600 hover:bg-red-700";
+		confirmModal.onConfirm = () => {
+			confirmModal.isLoading = true;
 			router.delete(`/workos/users/${user.id}`, {
 				preserveScroll: true,
-				onSuccess: () => toast("User deleted successfully.", "success")
+				onSuccess: () => {
+					confirmModal.show = false;
+					confirmModal.isLoading = false;
+					toast("User deleted successfully.", "success");
+				},
+				onError: () => {
+					confirmModal.isLoading = false;
+				}
 			});
-		}
+		};
+		confirmModal.show = true;
 	}
+}
+
+function executeRejectAction() {
+	if (!rejectModal.user) return;
+	rejectModal.isLoading = true;
+	router.post(`/workos/users/${rejectModal.user.id}/reject`, {
+		reason: rejectModal.reason
+	}, {
+		preserveScroll: true,
+		onSuccess: () => {
+			rejectModal.show = false;
+			rejectModal.isLoading = false;
+			toast("User rejected.", "success");
+		},
+		onError: () => {
+			rejectModal.isLoading = false;
+		}
+	});
 }
 </script>
 
@@ -412,22 +604,22 @@ function handleUserAction(action: string, user: any) {
         <!-- Page header -->
         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
             <div>
-                <h1 class="text-[22px] font-semibold text-[#111827] tracking-tight mb-1">Users</h1>
-                <p class="text-[13px] text-[#6b7280]">Manage users and invitations authenticated or invited through AuthKit.</p>
+                <h1 class="text-[22px] font-semibold text-[#111827] dark:text-zinc-100 tracking-tight mb-1">Users</h1>
+                <p class="text-[13px] text-[#6b7280] dark:text-zinc-400">Manage users and invitations authenticated or invited through AuthKit.</p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
                 <button
                     v-if="userTab === 'users'"
-                    class="h-[34px] px-4 border border-[#d1d5db] text-[#374151] rounded-md text-[13px] font-semibold hover:bg-[#f9fafb] transition-colors bg-white shadow-sm flex items-center gap-1.5 cursor-pointer"
+                    class="h-[34px] px-4 border border-[#d1d5db] dark:border-zinc-700 text-[#374151] dark:text-zinc-300 rounded-md text-[13px] font-semibold hover:bg-[#f9fafb] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer dark:shadow-none flex-1 sm:flex-none"
                     @click="openUploadModal"
                 >
-                    <svg class="w-4 h-4 text-[#4b5563]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <svg class="w-4 h-4 text-[#4b5563] dark:text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
                     Upload users
                 </button>
                 <button
-                    class="h-[34px] px-4 bg-[#2563eb] text-white rounded-md text-[13px] font-semibold hover:bg-[#1d4ed8] transition-colors shadow-sm cursor-pointer"
+                    class="h-[34px] px-4 bg-[#2563eb] dark:bg-blue-600 text-white rounded-md text-[13px] font-semibold hover:bg-[#1d4ed8] dark:hover:bg-blue-700 transition-colors shadow-sm cursor-pointer border-0 dark:shadow-none flex-1 sm:flex-none text-center justify-center inline-flex items-center"
                     @click="modal.createUser = true"
                 >
                     {{ userTab === 'users' ? 'Create user' : 'Invite user' }}
@@ -435,24 +627,26 @@ function handleUserAction(action: string, user: any) {
             </div>
         </div>
 
+
         <!-- Tabs -->
-        <div class="flex items-end border-b border-[#e5e7eb] mb-5 overflow-x-auto wos-scroll" role="tablist">
-            <button
-                v-for="tab in [{ id: 'users', l: 'Users' }, { id: 'invitations', l: 'Invitations' }]"
-                :key="tab.id"
-                role="tab"
-                :aria-selected="userTab === tab.id"
-                :class="[
-                    'flex items-center gap-1.5 px-1 pb-3 mr-6 text-[13px] font-medium border-b-2 -mb-px transition-all duration-150 whitespace-nowrap shrink-0',
-                    userTab === tab.id
-                        ? 'border-[#2563EB] text-[#111827]'
-                        : 'border-transparent text-[#6b7280] hover:text-[#374151] hover:border-[#d1d5db]',
-                ]"
-                @click="userTab = tab.id as 'users' | 'invitations'"
-            >
-                {{ tab.l }}
-            </button>
-        </div>
+        <MotionTabs
+            v-model="userTab"
+            variant="underline"
+            :tabs="[
+                { id: 'users', label: 'Users' },
+                { id: 'invitations', label: 'Invitations' }
+            ]"
+            container-class="mb-5"
+        />
+
+        <!-- Sub-tabs for User Category (Self-Registration vs Admin-Driven) -->
+        <MotionTabs
+            v-if="userTab === 'users'"
+            v-model="subTab"
+            variant="pill"
+            :tabs="subTabs"
+            container-class="mb-5"
+        />
 
         <!-- Toolbar -->
         <div v-if="userTab === 'users'" class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
@@ -460,7 +654,7 @@ function handleUserAction(action: string, user: any) {
                 <!-- Search -->
                 <div class="relative w-full sm:w-auto">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <svg class="w-4 h-4 text-gray-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </span>
@@ -468,7 +662,7 @@ function handleUserAction(action: string, user: any) {
                         v-model="userSearch"
                         type="search"
                         placeholder="Search"
-                        class="w-full sm:w-[280px] h-[34px] pl-9 pr-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] text-[#111827] shadow-sm bg-white"
+                        class="w-full sm:w-[280px] h-[34px] pl-9 pr-3 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] dark:placeholder:text-zinc-500 text-[#111827] dark:text-zinc-100 shadow-sm bg-white dark:bg-zinc-900 dark:shadow-none"
                     />
                 </div>
 
@@ -476,20 +670,20 @@ function handleUserAction(action: string, user: any) {
                 <div class="relative inline-block text-left" data-dropdown>
                     <button 
                         @click.stop="authDropdownOpen = !authDropdownOpen; roleDropdownOpen = false; membershipDropdownOpen = false"
-                        class="flex items-center gap-1.5 h-[34px] px-3 border border-[#d1d5db] rounded-md text-[13px] text-[#4b5563] hover:bg-[#f9fafb] transition-colors bg-white shadow-sm font-medium cursor-pointer"
+                        class="flex items-center gap-1.5 h-[34px] px-3 border border-[#d1d5db] dark:border-zinc-700 rounded-md text-[13px] text-[#4b5563] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm font-medium cursor-pointer dark:shadow-none"
                     >
                         <span v-html="GENERIC_KEY_SVG" />
                         <span>{{ filterAuth === 'all' ? '+ Authentication' : 'Authentication: ' + filterAuthLabel }}</span>
                     </button>
                     <div 
                         v-show="authDropdownOpen" 
-                        class="absolute left-0 mt-1 w-48 bg-white border border-[#e5e7eb] rounded-lg shadow-lg py-1 z-50"
+                        class="absolute left-0 mt-1 w-48 bg-white dark:bg-zinc-900 border border-[#e5e7eb] dark:border-zinc-800 rounded-lg shadow-lg py-1 z-50 dark:shadow-none"
                     >
                         <button 
                             v-for="authOpt in ['all', 'email', 'google', 'github', 'microsoft', 'apple']" 
                             :key="authOpt"
                             @click="filterAuth = authOpt; authDropdownOpen = false"
-                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] hover:bg-[#f9fafb] text-left transition-colors font-medium cursor-pointer"
+                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:bg-zinc-900 dark:hover:bg-zinc-800 text-left transition-colors font-medium cursor-pointer bg-transparent border-0"
                         >
                             <span>{{ authOpt === 'all' ? 'All Authentications' : (authOpt === 'email' ? 'Email + Password' : authOpt.charAt(0).toUpperCase() + authOpt.slice(1)) }}</span>
                             <svg v-if="filterAuth === authOpt" class="w-3 h-3 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -503,20 +697,20 @@ function handleUserAction(action: string, user: any) {
                 <div class="relative inline-block text-left" data-dropdown>
                     <button 
                         @click.stop="roleDropdownOpen = !roleDropdownOpen; authDropdownOpen = false; membershipDropdownOpen = false"
-                        class="flex items-center gap-1.5 h-[34px] px-3 border border-[#d1d5db] rounded-md text-[13px] text-[#4b5563] hover:bg-[#f9fafb] transition-colors bg-white shadow-sm font-medium cursor-pointer"
+                        class="flex items-center gap-1.5 h-[34px] px-3 border border-[#d1d5db] dark:border-zinc-700 rounded-md text-[13px] text-[#4b5563] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm font-medium cursor-pointer dark:shadow-none"
                     >
-                        <svg class="w-3.5 h-3.5 text-[#9ca3af]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <svg class="w-3.5 h-3.5 text-[#9ca3af] dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.333 0 4 .667 4 2v1H3v-1c0-1.333 2.667-2 4-2z" />
                         </svg>
                         <span>{{ filterRole === 'all' ? 'Roles' : 'Role: ' + filterRoleLabel }}</span>
                     </button>
                     <div 
                         v-show="roleDropdownOpen" 
-                        class="absolute left-0 mt-1 w-52 bg-white border border-[#e5e7eb] rounded-lg shadow-lg py-1 z-50 max-h-60 overflow-y-auto wos-scroll"
+                        class="absolute left-0 mt-1 w-52 bg-white dark:bg-zinc-900 border border-[#e5e7eb] dark:border-zinc-800 rounded-lg shadow-lg py-1 z-50 max-h-60 overflow-y-auto wos-scroll dark:shadow-none"
                     >
                         <button 
                             @click="filterRole = 'all'; roleDropdownOpen = false"
-                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] hover:bg-[#f9fafb] text-left transition-colors font-medium cursor-pointer"
+                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:bg-zinc-900 dark:hover:bg-zinc-800 text-left transition-colors font-medium cursor-pointer bg-transparent border-0"
                         >
                             <span>All Roles</span>
                             <svg v-if="filterRole === 'all'" class="w-3 h-3 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -527,7 +721,7 @@ function handleUserAction(action: string, user: any) {
                             v-for="role in availableRoles" 
                             :key="role.value"
                             @click="filterRole = role.value; roleDropdownOpen = false"
-                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] hover:bg-[#f9fafb] text-left transition-colors font-medium cursor-pointer"
+                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:bg-zinc-900 dark:hover:bg-zinc-800 text-left transition-colors font-medium cursor-pointer bg-transparent border-0"
                         >
                             <span>{{ role.label }}</span>
                             <svg v-if="filterRole === role.value" class="w-3 h-3 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -541,20 +735,20 @@ function handleUserAction(action: string, user: any) {
                 <div class="relative inline-block text-left" data-dropdown>
                     <button 
                         @click.stop="membershipDropdownOpen = !membershipDropdownOpen; authDropdownOpen = false; roleDropdownOpen = false"
-                        class="flex items-center gap-1.5 h-[34px] px-3 border border-[#d1d5db] rounded-md text-[13px] text-[#4b5563] hover:bg-[#f9fafb] transition-colors bg-white shadow-sm font-medium cursor-pointer"
+                        class="flex items-center gap-1.5 h-[34px] px-3 border border-[#d1d5db] dark:border-zinc-700 rounded-md text-[13px] text-[#4b5563] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm font-medium cursor-pointer dark:shadow-none"
                     >
                         <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                         <span>{{ filterMembership === 'all' ? '+ Membership' : 'Membership: ' + filterMembershipLabel }}</span>
                     </button>
                     <div 
                         v-show="membershipDropdownOpen" 
-                        class="absolute left-0 mt-1 w-48 bg-white border border-[#e5e7eb] rounded-lg shadow-lg py-1 z-50"
+                        class="absolute left-0 mt-1 w-48 bg-white dark:bg-zinc-900 border border-[#e5e7eb] dark:border-zinc-800 rounded-lg shadow-lg py-1 z-50 dark:shadow-none"
                     >
                         <button 
                             v-for="membOpt in ['all', 'active', 'pending', 'rejected', 'deletion_requested']" 
                             :key="membOpt"
                             @click="filterMembership = membOpt; membershipDropdownOpen = false"
-                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] hover:bg-[#f9fafb] text-left transition-colors font-medium cursor-pointer"
+                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:bg-zinc-900 dark:hover:bg-zinc-800 text-left transition-colors font-medium cursor-pointer bg-transparent border-0"
                         >
                             <span>{{ membOpt === 'all' ? 'All Memberships' : (membOpt === 'active' ? 'Active' : (membOpt === 'pending' ? 'Pending' : (membOpt === 'rejected' ? 'Inactive' : 'Pending Deletion'))) }}</span>
                             <svg v-if="filterMembership === membOpt" class="w-3 h-3 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -566,19 +760,19 @@ function handleUserAction(action: string, user: any) {
             </div>
 
             <!-- Create / Add user button -->
-            <div class="flex items-center gap-2">
+            <div class="hidden md:flex items-center gap-2">
                 <button
                     v-if="userTab === 'users'"
-                    class="h-[34px] px-4 border border-[#d1d5db] text-[#374151] rounded-md text-[13px] font-semibold hover:bg-[#f9fafb] transition-colors bg-white shadow-sm flex items-center gap-1.5 cursor-pointer"
+                    class="h-[34px] px-4 border border-[#d1d5db] dark:border-zinc-700 text-[#374151] dark:text-zinc-300 rounded-md text-[13px] font-semibold hover:bg-[#f9fafb] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm flex items-center gap-1.5 cursor-pointer dark:shadow-none"
                     @click="openUploadModal"
                 >
-                    <svg class="w-4 h-4 text-[#4b5563]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <svg class="w-4 h-4 text-[#4b5563] dark:text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
                     Upload users
                 </button>
                 <button
-                    class="h-[34px] px-4 bg-[#2563eb] text-white rounded-md text-[13px] font-semibold hover:bg-[#1d4ed8] transition-colors shadow-sm cursor-pointer"
+                    class="h-[34px] px-4 bg-[#2563eb] dark:bg-blue-600 text-white rounded-md text-[13px] font-semibold hover:bg-[#1d4ed8] dark:hover:bg-blue-700 transition-colors shadow-sm cursor-pointer border-0 dark:shadow-none"
                     @click="modal.createUser = true"
                 >
                     {{ userTab === 'users' ? 'Create user' : 'Invite user' }}
@@ -590,223 +784,240 @@ function handleUserAction(action: string, user: any) {
         <div v-if="userTab === 'invitations'" class="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
             <!-- Search -->
             <div class="relative w-full sm:w-auto">
-                <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af] dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z" />
                 </svg>
                 <input
                     type="search"
                     placeholder="Search"
-                    class="w-full sm:w-[280px] h-[34px] pl-8 pr-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] text-[#111827] shadow-sm"
+                    class="w-full sm:w-[280px] h-[34px] pl-8 pr-3 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] dark:placeholder:text-zinc-500 text-[#111827] dark:text-zinc-100 shadow-sm bg-white dark:bg-zinc-900 dark:shadow-none"
                 />
             </div>
         </div>
 
-        <!-- Invitations Empty State -->
-        <div v-if="userTab === 'invitations'" class="border border-[#e5e7eb] rounded-lg bg-white p-12 flex flex-col items-center justify-center text-center mt-4">
-            <div class="w-12 h-12 flex items-center justify-center mb-4">
-                <svg class="w-8 h-8 text-[#9ca3af]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-            </div>
-            <h3 class="text-[15px] font-semibold text-[#111827] mb-3">No invitations have been created in this environment</h3>
-            <button
-                class="h-[34px] px-4 border border-[#d1d5db] rounded-md text-[13px] font-semibold text-[#374151] hover:bg-[#f9fafb] transition-colors bg-white shadow-sm"
-                @click="modal.createUser = true"
-            >
-                Invite user
-            </button>
-        </div>
-
-        <!-- Users Table -->
-        <div v-if="userTab === 'users'" class="border border-[#e5e7eb] rounded-lg overflow-x-auto bg-white shadow-sm">
-            <table class="w-full text-left whitespace-nowrap">
-                <caption class="sr-only">Users</caption>
-                <thead>
-                    <tr class="bg-[#f9fafb] border-b border-[#e5e7eb]">
-                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">User</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">Authentication</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">Roles</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">Membership</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">Sign-in count</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">Last sign-in</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] flex items-center gap-1">
-                            Created
-                            <svg class="w-3.5 h-3.5 text-[#111827]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                            </svg>
-                        </th>
-                        <th class="px-4 py-3 w-12" />
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-[#e5e7eb]">
-                    <tr v-if="filteredUsers.length === 0">
-                        <td colspan="8" class="py-12 text-center text-[13px] text-[#6b7280]">
-                            No users found.
-                        </td>
-                    </tr>
-                    <tr
-                        v-for="u in filteredUsers"
-                        :key="u.id"
-                        class="hover:bg-[#f9fafb] transition-colors cursor-pointer group"
-                        @click="emit('openDetail', u)"
-                    >
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-full bg-[#f3f4f6] border border-[#e5e7eb] flex items-center justify-center text-[#111827] text-[12px] font-bold shrink-0 overflow-hidden">
-                                    <img v-if="u.foto_path" :src="u.foto_path" :alt="u.name" class="w-full h-full object-cover" />
-                                    <span v-else>{{ u.name?.charAt(0)?.toUpperCase() }}</span>
-                                </div>
-                                <div>
-                                    <p class="text-[13px] font-medium text-[#111827] leading-tight">{{ u.email }}</p>
-                                    <p class="text-[12px] text-[#6b7280] leading-tight mt-0.5">{{ u.name }}</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-1.5 text-[13px] text-gray-700 font-medium">
-                                <template v-if="u.oauth_credentials && u.oauth_credentials.length > 0">
-                                    <span v-for="oc in u.oauth_credentials" :key="oc.id" class="inline-flex items-center gap-1">
-                                        <span v-if="oc.provider_slug === 'google'" v-html="GOOGLE_SVG" />
-                                        <span v-else-if="oc.provider_slug === 'github'" v-html="GITHUB_SVG" />
-                                        <span v-else-if="oc.provider_slug === 'microsoft'" v-html="MICROSOFT_SVG" />
-                                        <span v-else-if="oc.provider_slug === 'apple'" v-html="APPLE_SVG" />
-                                        <span v-else v-html="GENERIC_KEY_SVG" />
-                                        {{ oc.provider_name || (oc.provider_slug.charAt(0).toUpperCase() + oc.provider_slug.slice(1)) }}
-                                    </span>
-                                </template>
-                                <template v-else>
-                                    <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                                        <rect x="3" y="4" width="18" height="16" rx="2" />
-                                        <circle cx="8" cy="10" r="2" />
-                                        <line x1="13" y1="9" x2="18" y2="9" />
-                                        <line x1="13" y1="13" x2="18" y2="13" />
-                                        <line x1="7" y1="16" x2="17" y2="16" />
-                                    </svg>
-                                    Email + Password
-                                </template>
-                            </div>
-                        </td>
-                        <td class="px-4 py-3 text-[13px] text-[#111827] font-medium">
-                            {{ u.role ? u.role.nama : (u.user_type ? u.user_type.charAt(0).toUpperCase() + u.user_type.slice(1) : 'User') }}
-                        </td>
-                        <td class="px-4 py-3">
-                            <span class="inline-flex items-center gap-1.5 text-[13px] font-medium">
-                                <template v-if="u.deletion_requested_at">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                    <span class="text-amber-600">Pending Deletion</span>
-                                </template>
-                                <template v-else-if="u.status_approval === 'approved' && u.is_active">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                    <span class="text-emerald-600">Active</span>
-                                </template>
-                                <template v-else-if="u.status_approval === 'pending'">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                    <span class="text-amber-500">Pending</span>
-                                </template>
-                                <template v-else>
-                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500" />
-                                    <span class="text-red-500">Inactive</span>
-                                </template>
-                            </span>
-                        </td>
-                        <td class="px-4 py-3 text-[13px] text-[#111827]">
-                            {{ u.sign_in_count || 0 }}
-                        </td>
-                        <td class="px-4 py-3 text-[13px] text-[#111827]">
-                            <template v-if="u.last_sign_in_at">
-                                <p class="leading-tight font-medium">{{ u.last_sign_in_at.split(', ')[0] + ', ' + u.last_sign_in_at.split(', ')[1] }}</p>
-                                <p class="text-[12px] text-[#6b7280] leading-tight mt-0.5">{{ u.last_sign_in_at.split(', ')[2] }}</p>
-                            </template>
-                            <span v-else class="text-gray-400">—</span>
-                        </td>
-                        <td class="px-4 py-3 text-[13px] text-[#111827]">
-                            <template v-if="u.created_at">
-                                <p class="leading-tight font-medium">{{ u.created_at.split(', ')[0] + ', ' + u.created_at.split(', ')[1] }}</p>
-                                <p class="text-[12px] text-[#6b7280] leading-tight mt-0.5">{{ u.created_at.split(', ')[2] }}</p>
-                            </template>
-                            <span v-else class="text-gray-400">—</span>
-                        </td>
-                        <td class="px-4 py-3 text-right" @click.stop>
-                            <div class="relative inline-block text-left" data-dropdown>
-                                <button 
-                                    @click="toggleUserMenu(u.id, $event)"
-                                    class="p-1.5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
-                                >
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
-                                    </svg>
-                                </button>
-                                <div 
-                                    v-show="activeUserMenuId === u.id" 
-                                    class="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1"
-                                >
-                                    <button 
-                                        @click="handleUserAction('view', u)"
-                                        class="w-full flex items-center gap-2 px-3.5 py-2 text-[12.5px] text-gray-700 hover:bg-gray-50 text-left transition-colors font-medium cursor-pointer"
-                                    >
-                                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                        </svg>
-                                        View details
-                                    </button>
-                                    <template v-if="u.status_approval === 'pending'">
-                                        <button 
-                                            @click="handleUserAction('approve', u)"
-                                            class="w-full flex items-center gap-2 px-3.5 py-2 text-[12.5px] text-emerald-600 hover:bg-gray-50 text-left transition-colors font-medium cursor-pointer"
-                                        >
-                                            <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            Approve
-                                        </button>
-                                        <button 
-                                            @click="handleUserAction('reject', u)"
-                                            class="w-full flex items-center gap-2 px-3.5 py-2 text-[12.5px] text-red-600 hover:bg-gray-50 text-left transition-colors font-medium cursor-pointer"
-                                        >
-                                            <svg class="w-3.5 h-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                            Reject
-                                        </button>
-                                    </template>
-                                    <button 
-                                        @click="handleUserAction('delete', u)"
-                                        class="w-full flex items-center gap-2 px-3.5 py-2 text-[12.5px] text-red-600 hover:bg-gray-50 text-left transition-colors font-medium border-t border-gray-100 cursor-pointer"
-                                    >
-                                        <svg class="w-3.5 h-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                        Delete user
-                                    </button>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Pagination Controls -->
-        <div v-if="userTab === 'users' && props.users && !Array.isArray(props.users) && props.users.links && props.users.total > props.users.per_page" class="mt-4 flex items-center justify-between border-t border-[#e5e7eb] pt-4 px-2">
-            <span class="text-[12.5px] text-[#4b5563]">
-                Showing {{ props.users.from }} to {{ props.users.to }} of {{ props.users.total }} entries
-            </span>
-            <div class="flex items-center gap-1.5">
+        <!-- Main Tab Content Transition -->
+        <Transition name="fade" mode="out-in">
+            <!-- Invitations Empty State -->
+            <div v-if="userTab === 'invitations'" key="invitations" class="border border-[#e5e7eb] dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 p-12 flex flex-col items-center justify-center text-center mt-4">
+                <div class="w-12 h-12 flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-[#9ca3af] dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                </div>
+                <h3 class="text-[15px] font-semibold text-[#111827] dark:text-zinc-100 mb-3">No invitations have been created in this environment</h3>
                 <button
-                    v-for="link in props.users.links"
-                    :key="link.label"
-                    :disabled="!link.url || link.active"
-                    @click="router.visit(link.url, { preserveState: true, only: ['users'] })"
-                    v-html="link.label"
-                    :class="[
-                        'h-[30px] px-3 rounded text-[12.5px] flex items-center justify-center transition-colors border cursor-pointer',
-                        link.active 
-                            ? 'bg-[#2563eb] text-white border-[#2563eb] font-semibold' 
-                            : 'bg-white text-[#374151] border-[#d1d5db] hover:bg-[#f9fafb] disabled:opacity-50 disabled:cursor-not-allowed'
-                    ]"
-                />
+                    class="h-[34px] px-4 border border-[#d1d5db] dark:border-zinc-700 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm cursor-pointer dark:shadow-none"
+                    @click="modal.createUser = true"
+                >
+                    Invite user
+                </button>
             </div>
-        </div>
+
+
+            <!-- Users Section (Table + Pagination) -->
+            <div v-else-if="userTab === 'users'" :key="'users_' + userTab" class="space-y-4">
+                <!-- Users Table -->
+                <div class="border border-[#e5e7eb] dark:border-zinc-800 rounded-lg overflow-x-auto bg-white dark:bg-zinc-900 shadow-sm dark:shadow-none min-h-[400px]">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <caption class="sr-only">Users</caption>
+                        <thead>
+                            <tr class="bg-[#f9fafb] dark:bg-zinc-800/40 border-b border-[#e5e7eb] dark:border-zinc-800">
+                                <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-200">User</th>
+                                <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-200">Authentication</th>
+                                <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-200">Roles</th>
+                                <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-200">Membership</th>
+                                <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-200">Sign-in count</th>
+                                <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-200">Last sign-in</th>
+                                <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-100 flex items-center gap-1">
+                                    Created
+                                    <svg class="w-3.5 h-3.5 text-[#111827] dark:text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                    </svg>
+                                </th>
+                                <th class="px-4 py-3 w-12" />
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#e5e7eb] dark:divide-zinc-800">
+                            <tr v-if="filteredUsers.length === 0" key="empty">
+                                <td colspan="8" class="py-12 text-center text-[13px] text-[#6b7280] dark:text-zinc-400">
+                                    No users found.
+                                </td>
+                            </tr>
+                            <tr
+                                v-for="u in paginatedUsers"
+                                :key="u.id"
+                                class="hover:bg-[#f9fafb] dark:bg-zinc-900 dark:hover:bg-zinc-800/20 transition-colors cursor-pointer group"
+                                @click="emit('openDetail', u)"
+                            >
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-[#f3f4f6] dark:bg-zinc-800 border border-[#e5e7eb] dark:border-zinc-700 flex items-center justify-center text-[#111827] dark:text-zinc-200 text-[12px] font-bold shrink-0 overflow-hidden">
+                                            <img v-if="u.foto_path" :src="u.foto_path" :alt="u.name" class="w-full h-full object-cover" />
+                                            <span v-else>{{ u.name?.charAt(0)?.toUpperCase() }}</span>
+                                        </div>
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <p class="text-[13px] font-medium text-[#111827] dark:text-zinc-200 leading-tight">{{ u.email }}</p>
+                                                <span 
+                                                    v-if="u.registration_type === 'self_registered'"
+                                                    class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400 select-none shrink-0"
+                                                >
+                                                    Registrasi Mandiri
+                                                </span>
+                                                <span 
+                                                    v-else
+                                                    class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400 select-none shrink-0"
+                                                >
+                                                    Dibuat Admin
+                                                </span>
+                                            </div>
+                                            <p class="text-[12px] text-[#6b7280] dark:text-zinc-400 leading-tight mt-0.5">{{ u.name }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center gap-1.5 text-[13px] text-gray-700 dark:text-zinc-300 font-medium">
+                                        <template v-if="u.oauth_credentials && u.oauth_credentials.length > 0">
+                                            <span v-for="oc in u.oauth_credentials" :key="oc.id" class="inline-flex items-center gap-1">
+                                                <span v-if="oc.provider_slug === 'google'" v-html="GOOGLE_SVG" />
+                                                <span v-else-if="oc.provider_slug === 'github'" v-html="GITHUB_SVG" />
+                                                <span v-else-if="oc.provider_slug === 'microsoft'" v-html="MICROSOFT_SVG" />
+                                                <span v-else-if="oc.provider_slug === 'apple'" v-html="APPLE_SVG" />
+                                                <span v-else v-html="GENERIC_KEY_SVG" />
+                                                {{ oc.provider_name || (oc.provider_slug.charAt(0).toUpperCase() + oc.provider_slug.slice(1)) }}
+                                            </span>
+                                        </template>
+                                        <template v-else>
+                                            <span v-html="GENERIC_KEY_SVG" />
+                                            <span>Email + Password</span>
+                                        </template>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-[13px] text-[#111827] dark:text-zinc-200">
+                                    <span v-if="u.role" class="px-2 py-0.5 rounded text-[11.5px] font-medium bg-[#f3f4f6] dark:bg-zinc-800 text-gray-800 dark:text-zinc-350">
+                                        {{ u.role.nama }}
+                                    </span>
+                                    <span v-else class="text-gray-400 dark:text-zinc-500">—</span>
+                                </td>
+                                <td class="px-4 py-3" @click.stop>
+                                    <button 
+                                        @click="openToggleStatus(u, $event)"
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#f9fafb] hover:bg-[#f3f4f6] dark:bg-zinc-800 dark:hover:bg-zinc-700/80 border border-[#e5e7eb] dark:border-zinc-700 hover:border-gray-300 dark:hover:border-zinc-600 transition-all cursor-pointer shadow-sm active:scale-95 text-left"
+                                    >
+                                        <template v-if="u.is_active || u.status_approval === 'approved'">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                            <span class="text-emerald-500">Active</span>
+                                        </template>
+                                        <template v-else-if="u.status_approval === 'pending'">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                            <span class="text-amber-500">Pending</span>
+                                        </template>
+                                        <template v-else>
+                                            <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                            <span class="text-red-500">Inactive</span>
+                                        </template>
+                                    </button>
+                                </td>
+                                <td class="px-4 py-3 text-[13px] text-[#111827] dark:text-zinc-200">
+                                    {{ u.sign_in_count || 0 }}
+                                </td>
+                                <td class="px-4 py-3 text-[13px] text-[#111827] dark:text-zinc-200">
+                                    <template v-if="u.last_sign_in_at">
+                                        <p class="leading-tight font-medium">{{ u.last_sign_in_at.split(', ')[0] + ', ' + u.last_sign_in_at.split(', ')[1] }}</p>
+                                        <p class="text-[12px] text-[#6b7280] dark:text-zinc-400 leading-tight mt-0.5">{{ u.last_sign_in_at.split(', ')[2] }}</p>
+                                    </template>
+                                    <span v-else class="text-gray-400 dark:text-zinc-500">—</span>
+                                </td>
+                                <td class="px-4 py-3 text-[13px] text-[#111827] dark:text-zinc-200">
+                                    <template v-if="u.created_at">
+                                        <p class="leading-tight font-medium">{{ u.created_at.split(', ')[0] + ', ' + u.created_at.split(', ')[1] }}</p>
+                                        <p class="text-[12px] text-[#6b7280] dark:text-zinc-400 leading-tight mt-0.5">{{ u.created_at.split(', ')[2] }}</p>
+                                    </template>
+                                    <span v-else class="text-gray-400 dark:text-zinc-500">—</span>
+                                </td>
+                                <td class="px-4 py-3 text-right" @click.stop>
+                                    <div class="relative inline-block text-left" data-dropdown>
+                                        <button 
+                                            @click="toggleUserMenu(u.id, $event)"
+                                            class="p-1.5 rounded text-gray-400 hover:text-gray-600 dark:text-zinc-400 dark:hover:text-zinc-300 hover:bg-gray-100 dark:bg-zinc-800 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                                            </svg>
+                                        </button>
+                                        <div 
+                                            v-show="activeUserMenuId === u.id" 
+                                            class="absolute right-0 mt-1 w-40 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg shadow-lg z-50 py-1 dark:shadow-none"
+                                        >
+                                            <button 
+                                                @click="handleUserAction('view', u)"
+                                                class="w-full flex items-center gap-2 px-3.5 py-2 text-[12.5px] text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-left transition-colors font-medium cursor-pointer bg-transparent border-0"
+                                            >
+                                                <svg class="w-3.5 h-3.5 text-gray-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                                View details
+                                            </button>
+                                            <template v-if="u.status_approval === 'pending' && u.registration_type === 'self_registered'">
+                                                <button 
+                                                    @click="handleUserAction('approve', u)"
+                                                    class="w-full flex items-center gap-2 px-3.5 py-2 text-[12.5px] text-emerald-600 hover:bg-gray-50 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-left transition-colors font-medium cursor-pointer bg-transparent border-0"
+                                                >
+                                                    <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    Approve
+                                                </button>
+                                                <button 
+                                                    @click="handleUserAction('reject', u)"
+                                                    class="w-full flex items-center gap-2 px-3.5 py-2 text-[12.5px] text-red-600 hover:bg-gray-50 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-left transition-colors font-medium cursor-pointer bg-transparent border-0"
+                                                >
+                                                    <svg class="w-3.5 h-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                    Reject
+                                                </button>
+                                            </template>
+                                            <button 
+                                                @click="handleUserAction('delete', u)"
+                                                class="w-full flex items-center gap-2 px-3.5 py-2 text-[12.5px] text-red-600 hover:bg-gray-50 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-left transition-colors font-medium border-t border-gray-100 dark:border-zinc-800 cursor-pointer bg-transparent border-t-0"
+                                            >
+                                                <svg class="w-3.5 h-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                                Delete user
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Controls -->
+                <div v-if="filteredUsers.length > perPage" class="mt-4 flex items-center justify-between border-t border-[#e5e7eb] dark:border-zinc-800 pt-4 px-2">
+                    <span class="text-[12.5px] text-[#4b5563] dark:text-zinc-400">
+                        Showing {{ (currentPage - 1) * perPage + 1 }} to {{ Math.min(currentPage * perPage, filteredUsers.length) }} of {{ filteredUsers.length }} entries
+                    </span>
+                    <div class="flex items-center gap-1.5">
+                        <button
+                            v-for="link in paginationLinks"
+                            :key="link.label"
+                            :disabled="link.disabled"
+                            @click="currentPage = link.page"
+                            v-html="link.label"
+                            :class="[
+                                'h-[30px] px-3 rounded text-[12.5px] flex items-center justify-center transition-colors border cursor-pointer',
+                                link.active 
+                                    ? 'bg-[#2563eb] text-white border-[#2563eb] font-semibold' 
+                                    : 'bg-white dark:bg-zinc-900 text-[#374151] dark:text-zinc-300 border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-transparent'
+                            ]"
+                        />
+                    </div>
+                </div>
+            </div>
+        </Transition>
 
         <!-- ─── CREATE USER MODAL ─── -->
         <Teleport to="body">
@@ -823,10 +1034,10 @@ function handleUserAction(action: string, user: any) {
                         leave-to-class="opacity-0 scale-95"
                         leave-active-class="transition-all duration-150"
                     >
-                        <div v-if="modal.createUser" class="bg-white rounded-xl shadow-2xl border border-[#e5e7eb] w-full max-w-[480px]">
+                        <div v-if="modal.createUser" class="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-[#e5e7eb] dark:border-zinc-800 w-full max-w-[480px] dark:shadow-none">
                             <!-- Modal Header -->
                             <div class="px-6 pt-6 pb-4">
-                                <h2 class="text-[18px] font-semibold text-[#111827] tracking-tight">{{ userTab === 'users' ? 'Create user' : 'Invite user' }}</h2>
+                                <h2 class="text-[18px] font-semibold text-[#111827] dark:text-zinc-100 tracking-tight">{{ userTab === 'users' ? 'Create user' : 'Invite user' }}</h2>
                             </div>
 
                             <!-- Modal Body -->
@@ -834,50 +1045,50 @@ function handleUserAction(action: string, user: any) {
                                 <!-- Names -->
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block text-[13px] font-semibold text-[#374151] mb-1.5">First name</label>
+                                        <label class="block text-[13px] font-semibold text-[#374151] dark:text-zinc-300 mb-1.5">First name</label>
                                         <input
                                             v-model="createForm.first_name"
                                             type="text"
                                             placeholder="Jane (optional)"
-                                            class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] text-[#111827]"
+                                            class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] dark:placeholder:text-zinc-500 text-[#111827] dark:text-zinc-100 bg-white dark:bg-zinc-950"
                                         />
                                     </div>
                                     <div>
-                                        <label class="block text-[13px] font-semibold text-[#374151] mb-1.5">Last name</label>
+                                        <label class="block text-[13px] font-semibold text-[#374151] dark:text-zinc-300 mb-1.5">Last name</label>
                                         <input
                                             v-model="createForm.last_name"
                                             type="text"
                                             placeholder="Doe (optional)"
-                                            class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] text-[#111827]"
+                                            class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] dark:placeholder:text-zinc-500 text-[#111827] dark:text-zinc-100 bg-white dark:bg-zinc-950"
                                         />
                                     </div>
                                 </div>
                                 
                                 <!-- Email -->
                                 <div>
-                                    <label class="block text-[13px] font-semibold text-[#374151] mb-1.5">Email address</label>
+                                    <label class="block text-[13px] font-semibold text-[#374151] dark:text-zinc-300 mb-1.5">Email address</label>
                                     <input
                                         v-model="createForm.email"
                                         type="email"
                                         placeholder="jane.doe@example.com"
-                                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] text-[#111827]"
+                                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] dark:placeholder:text-zinc-500 text-[#111827] dark:text-zinc-100 bg-white dark:bg-zinc-950"
                                     />
                                 </div>
 
                                 <!-- Password -->
                                 <div v-if="userTab === 'users'">
-                                    <label class="block text-[13px] font-semibold text-[#374151] mb-1.5">Password</label>
+                                    <label class="block text-[13px] font-semibold text-[#374151] dark:text-zinc-300 mb-1.5">Password</label>
                                     <div class="flex gap-2">
                                         <div class="relative flex-1">
                                             <input
                                                 v-model="createForm.password"
                                                 :type="showPw ? 'text' : 'password'"
                                                 placeholder="At least 10 characters"
-                                                class="w-full h-9 px-3 pr-9 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] text-[#111827]"
+                                                class="w-full h-9 px-3 pr-9 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] text-[#111827] dark:text-zinc-100"
                                             />
                                             <button
                                                 type="button"
-                                                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#4b5563] transition-colors"
+                                                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9ca3af] dark:text-zinc-500 hover:text-[#4b5563] dark:hover:text-zinc-300 transition-colors bg-transparent border-0 cursor-pointer"
                                                 @click="showPw = !showPw"
                                             >
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -888,7 +1099,7 @@ function handleUserAction(action: string, user: any) {
                                         </div>
                                         <button
                                             type="button"
-                                            class="h-9 px-3 rounded-md text-[13px] font-semibold border border-[#d1d5db] text-[#374151] hover:bg-[#f9fafb] transition-colors whitespace-nowrap bg-white shadow-sm"
+                                            class="h-9 px-3 rounded-md text-[13px] font-semibold border border-[#d1d5db] dark:border-zinc-700 text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 transition-colors whitespace-nowrap bg-white dark:bg-zinc-900 shadow-sm cursor-pointer dark:shadow-none"
                                             @click="genPw"
                                         >
                                             Generate
@@ -898,16 +1109,16 @@ function handleUserAction(action: string, user: any) {
 
                                 <!-- External ID -->
                                 <div>
-                                    <label class="block text-[13px] font-semibold text-[#374151] mb-1.5">External ID</label>
+                                    <label class="block text-[13px] font-semibold text-[#374151] dark:text-zinc-300 mb-1.5">External ID</label>
                                     <input
                                         v-model="createForm.nomor_induk"
                                         type="text"
                                         placeholder="User ID"
-                                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] text-[#111827]"
+                                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] dark:placeholder:text-zinc-500 text-[#111827] dark:text-zinc-100 bg-white dark:bg-zinc-950"
                                     />
-                                    <p class="text-[12.5px] text-[#6b7280] mt-1.5 leading-relaxed">
+                                    <p class="text-[12.5px] text-[#6b7280] dark:text-zinc-400 mt-1.5 leading-relaxed">
                                         Optional identifier that can be used to link this user to your system.
-                                        <a href="#" class="text-[#2563EB] hover:underline inline-flex items-center gap-1">
+                                        <a href="#" class="text-[#2563EB] dark:text-blue-400 hover:underline inline-flex items-center gap-1">
                                             Learn more
                                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -918,16 +1129,16 @@ function handleUserAction(action: string, user: any) {
                             </div>
 
                             <!-- Modal Footer -->
-                            <div class="px-6 py-4 flex justify-end gap-2 border-t border-[#e5e7eb] rounded-b-xl">
+                            <div class="px-6 py-4 flex justify-end gap-2 border-t border-[#e5e7eb] dark:border-zinc-800 rounded-b-xl bg-[#f9fafb] dark:bg-zinc-800/20">
                                 <button
-                                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] border border-[#d1d5db] hover:bg-[#f3f4f6] transition-colors bg-white shadow-sm"
+                                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-300 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f3f4f6] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm cursor-pointer dark:shadow-none"
                                     @click="modal.createUser = false; resetForm()"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     :disabled="loading || !createForm.email"
-                                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#2563eb] dark:bg-blue-600 hover:bg-[#1d4ed8] dark:hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2 border-0 cursor-pointer dark:shadow-none"
                                     @click="submitCreateUser"
                                 >
                                     <svg v-if="loading" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -957,13 +1168,13 @@ function handleUserAction(action: string, user: any) {
                         leave-to-class="opacity-0 scale-95"
                         leave-active-class="transition-all duration-150"
                     >
-                        <div v-if="modal.uploadUsers" class="bg-white rounded-xl shadow-2xl border border-[#e5e7eb] w-full max-w-[560px]">
+                        <div v-if="modal.uploadUsers" class="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-[#e5e7eb] dark:border-zinc-800 w-full max-w-[560px] dark:shadow-none">
                             <!-- Modal Header -->
-                            <div class="px-6 pt-6 pb-4 flex items-center justify-between border-b border-[#e5e7eb]">
-                                <h2 class="text-[16px] font-semibold text-[#111827] tracking-tight flex items-center gap-2">
+                            <div class="px-6 pt-6 pb-4 flex items-center justify-between border-b border-[#e5e7eb] dark:border-zinc-800">
+                                <h2 class="text-[16px] font-semibold text-[#111827] dark:text-zinc-100 tracking-tight flex items-center gap-2">
                                     <span v-if="uploadStep === 1">Upload User Data</span>
                                     <span v-else class="flex items-center gap-1.5">
-                                        <button :disabled="isUploading" @click="uploadStep = 1; localErrors = []" class="text-[#6b7280] hover:text-[#111827] transition-colors cursor-pointer disabled:opacity-30">
+                                        <button :disabled="isUploading" @click="uploadStep = 1; localErrors = []" class="text-[#6b7280] dark:text-zinc-400 hover:text-[#111827] dark:hover:text-zinc-200 transition-colors cursor-pointer disabled:opacity-30 bg-transparent border-0">
                                             <svg class="w-4 h-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
                                             </svg>
@@ -971,7 +1182,7 @@ function handleUserAction(action: string, user: any) {
                                         Upload {{ typeLabel(selectedType) }}
                                     </span>
                                 </h2>
-                                <button :disabled="isUploading" @click="modal.uploadUsers = false" class="text-[#9ca3af] hover:text-[#4b5563] transition-colors cursor-pointer disabled:opacity-30">
+                                <button :disabled="isUploading" @click="modal.uploadUsers = false" class="text-[#9ca3af] hover:text-[#4b5563] dark:text-zinc-400 transition-colors cursor-pointer disabled:opacity-30 bg-transparent border-0">
                                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
@@ -981,63 +1192,63 @@ function handleUserAction(action: string, user: any) {
                             <!-- Modal Body -->
                             <!-- STEP 1: Pilih Tipe User -->
                             <div v-if="uploadStep === 1" class="p-6 space-y-4">
-                                <p class="text-[13px] text-[#4b5563] mb-4">Pilih jenis data pengguna yang ingin Anda unggah secara massal:</p>
+                                <p class="text-[13px] text-[#4b5563] dark:text-zinc-300 mb-4">Pilih jenis data pengguna yang ingin Anda unggah secara massal:</p>
                                 <div class="grid grid-cols-2 gap-4">
                                     <!-- Mahasiswa -->
                                     <button 
                                         @click="selectUserType('mahasiswa')"
-                                        class="flex flex-col items-start text-left p-5 rounded-xl border border-[#e5e7eb] hover:border-[#475569] hover:bg-slate-50 transition-all duration-200 group cursor-pointer shadow-sm"
+                                        class="flex flex-col items-start text-left p-5 rounded-xl border border-[#e5e7eb] dark:border-zinc-800 hover:border-[#475569] dark:hover:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all duration-200 group cursor-pointer shadow-sm bg-transparent dark:shadow-none"
                                     >
-                                        <div class="w-9 h-9 rounded-lg bg-[#f8fafc] text-[#475569] border border-[#e2e8f0] flex items-center justify-center mb-3 group-hover:bg-[#f1f5f9] group-hover:text-[#0f172a] group-hover:border-[#cbd5e1] transition-colors">
+                                        <div class="w-9 h-9 rounded-lg bg-[#f8fafc] dark:bg-zinc-800 text-[#475569] dark:text-zinc-400 border border-[#e2e8f0] dark:border-zinc-700 flex items-center justify-center mb-3 group-hover:bg-[#f1f5f9] dark:group-hover:bg-zinc-800 group-hover:text-[#0f172a] dark:group-hover:text-zinc-200 group-hover:border-[#cbd5e1] dark:group-hover:border-zinc-600 transition-colors">
                                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
                                             </svg>
                                         </div>
-                                        <h3 class="text-[14px] font-semibold text-[#111827]">Mahasiswa</h3>
-                                        <p class="text-[12px] text-[#6b7280] mt-1">Impor mahasiswa aktif beserta prodi dan NIM.</p>
+                                        <h3 class="text-[14px] font-semibold text-[#111827] dark:text-zinc-100">Mahasiswa</h3>
+                                        <p class="text-[12px] text-[#6b7280] dark:text-zinc-400 mt-1">Impor mahasiswa aktif beserta prodi dan NIM.</p>
                                     </button>
 
                                     <!-- Alumni -->
                                     <button 
                                         @click="selectUserType('alumni')"
-                                        class="flex flex-col items-start text-left p-5 rounded-xl border border-[#e5e7eb] hover:border-[#475569] hover:bg-slate-50 transition-all duration-200 group cursor-pointer shadow-sm"
+                                        class="flex flex-col items-start text-left p-5 rounded-xl border border-[#e5e7eb] dark:border-zinc-800 hover:border-[#475569] dark:hover:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all duration-200 group cursor-pointer shadow-sm bg-transparent dark:shadow-none"
                                     >
-                                        <div class="w-9 h-9 rounded-lg bg-[#f8fafc] text-[#475569] border border-[#e2e8f0] flex items-center justify-center mb-3 group-hover:bg-[#f1f5f9] group-hover:text-[#0f172a] group-hover:border-[#cbd5e1] transition-colors">
+                                        <div class="w-9 h-9 rounded-lg bg-[#f8fafc] dark:bg-zinc-800 text-[#475569] dark:text-zinc-400 border border-[#e2e8f0] dark:border-zinc-700 flex items-center justify-center mb-3 group-hover:bg-[#f1f5f9] dark:group-hover:bg-zinc-800 group-hover:text-[#0f172a] dark:group-hover:text-zinc-200 group-hover:border-[#cbd5e1] dark:group-hover:border-zinc-600 transition-colors">
                                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
                                             </svg>
                                         </div>
-                                        <h3 class="text-[14px] font-semibold text-[#111827]">Alumni</h3>
-                                        <p class="text-[12px] text-[#6b7280] mt-1">Impor data alumni lengkap dengan tahun kelulusan.</p>
+                                        <h3 class="text-[14px] font-semibold text-[#111827] dark:text-zinc-100">Alumni</h3>
+                                        <p class="text-[12px] text-[#6b7280] dark:text-zinc-400 mt-1">Impor data alumni lengkap dengan tahun kelulusan.</p>
                                     </button>
 
                                     <!-- Dosen -->
                                     <button 
                                         @click="selectUserType('dosen')"
-                                        class="flex flex-col items-start text-left p-5 rounded-xl border border-[#e5e7eb] hover:border-[#475569] hover:bg-slate-50 transition-all duration-200 group cursor-pointer shadow-sm"
+                                        class="flex flex-col items-start text-left p-5 rounded-xl border border-[#e5e7eb] dark:border-zinc-800 hover:border-[#475569] dark:hover:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all duration-200 group cursor-pointer shadow-sm bg-transparent dark:shadow-none"
                                     >
-                                        <div class="w-9 h-9 rounded-lg bg-[#f8fafc] text-[#475569] border border-[#e2e8f0] flex items-center justify-center mb-3 group-hover:bg-[#f1f5f9] group-hover:text-[#0f172a] group-hover:border-[#cbd5e1] transition-colors">
+                                        <div class="w-9 h-9 rounded-lg bg-[#f8fafc] dark:bg-zinc-800 text-[#475569] dark:text-zinc-400 border border-[#e2e8f0] dark:border-zinc-700 flex items-center justify-center mb-3 group-hover:bg-[#f1f5f9] dark:group-hover:bg-zinc-800 group-hover:text-[#0f172a] dark:group-hover:text-zinc-200 group-hover:border-[#cbd5e1] dark:group-hover:border-zinc-600 transition-colors">
                                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                             </svg>
                                         </div>
-                                        <h3 class="text-[14px] font-semibold text-[#111827]">Dosen</h3>
-                                        <p class="text-[12px] text-[#6b7280] mt-1">Impor dosen / struktural menggunakan NIP / NIDN.</p>
+                                        <h3 class="text-[14px] font-semibold text-[#111827] dark:text-zinc-100">Dosen</h3>
+                                        <p class="text-[12px] text-[#6b7280] dark:text-zinc-400 mt-1">Impor dosen / struktural menggunakan NIP / NIDN.</p>
                                     </button>
 
                                     <!-- Mitra -->
                                     <button 
                                         @click="selectUserType('mitra')"
-                                        class="flex flex-col items-start text-left p-5 rounded-xl border border-[#e5e7eb] hover:border-[#475569] hover:bg-slate-50 transition-all duration-200 group cursor-pointer shadow-sm"
+                                        class="flex flex-col items-start text-left p-5 rounded-xl border border-[#e5e7eb] dark:border-zinc-800 hover:border-[#475569] dark:hover:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all duration-200 group cursor-pointer shadow-sm bg-transparent dark:shadow-none"
                                     >
-                                        <div class="w-9 h-9 rounded-lg bg-[#f8fafc] text-[#475569] border border-[#e2e8f0] flex items-center justify-center mb-3 group-hover:bg-[#f1f5f9] group-hover:text-[#0f172a] group-hover:border-[#cbd5e1] transition-colors">
+                                        <div class="w-9 h-9 rounded-lg bg-[#f8fafc] dark:bg-zinc-800 text-[#475569] dark:text-zinc-400 border border-[#e2e8f0] dark:border-zinc-700 flex items-center justify-center mb-3 group-hover:bg-[#f1f5f9] dark:group-hover:bg-zinc-800 group-hover:text-[#0f172a] dark:group-hover:text-zinc-200 group-hover:border-[#cbd5e1] dark:group-hover:border-zinc-600 transition-colors">
                                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                             </svg>
                                         </div>
-                                        <h3 class="text-[14px] font-semibold text-[#111827]">Mitra</h3>
-                                        <p class="text-[12px] text-[#6b7280] mt-1">Impor mitra eksternal lengkap dengan nama perusahaan.</p>
+                                        <h3 class="text-[14px] font-semibold text-[#111827] dark:text-zinc-100">Mitra</h3>
+                                        <p class="text-[12px] text-[#6b7280] dark:text-zinc-400 mt-1">Impor mitra eksternal lengkap dengan nama perusahaan.</p>
                                     </button>
                                 </div>
                             </div>
@@ -1045,9 +1256,9 @@ function handleUserAction(action: string, user: any) {
                             <!-- STEP 2: Unduh Template & Unggah File -->
                             <div v-else class="p-6 space-y-5">
                                 <!-- Real-time uploading state animation -->
-                                <div v-if="isUploading" class="border border-[#e2e8f0] rounded-xl p-6 bg-slate-50/50 space-y-4 shadow-sm flex flex-col justify-center">
+                                <div v-if="isUploading" class="border border-[#e2e8f0] dark:border-zinc-800 rounded-xl p-6 bg-slate-50/50 dark:bg-zinc-800/20 space-y-4 shadow-sm flex flex-col justify-center dark:shadow-none">
                                     <div class="flex items-center justify-between text-[13px]">
-                                        <span class="font-medium text-[#0f172a] flex items-center gap-2">
+                                        <span class="font-medium text-[#0f172a] dark:text-zinc-200 flex items-center gap-2">
                                             <svg class="w-4 h-4 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                             </svg>
@@ -1055,29 +1266,29 @@ function handleUserAction(action: string, user: any) {
                                         </span>
                                         <span class="font-bold text-blue-600">{{ Math.round(uploadProgress) }}%</span>
                                     </div>
-                                    <Progress :value="uploadProgress" variant="line" className="h-2 bg-slate-100" indicatorClassName="bg-blue-600 rounded-full" />
-                                    <p class="text-[11.5px] text-[#6b7280]">Mohon jangan menutup atau memuat ulang halaman ini sampai proses pengunggahan selesai.</p>
+                                    <Progress :value="uploadProgress" variant="line" className="h-2 bg-slate-100 dark:bg-zinc-800" indicatorClassName="bg-blue-600 rounded-full" />
+                                    <p class="text-[11.5px] text-[#6b7280] dark:text-zinc-400">Mohon jangan menutup atau memuat ulang halaman ini sampai proses pengunggahan selesai.</p>
                                 </div>
 
                                 <template v-else>
                                     <!-- Bagian Unduh Template -->
-                                    <div class="bg-[#f9fafb] rounded-xl p-4 border border-[#e5e7eb] flex items-center justify-between">
+                                    <div class="bg-[#f9fafb] dark:bg-zinc-800/40 rounded-xl p-4 border border-[#e5e7eb] dark:border-zinc-800 flex items-center justify-between">
                                         <div>
-                                            <h4 class="text-[13px] font-semibold text-[#111827]">Unduh Template Pengguna</h4>
-                                            <p class="text-[11.5px] text-[#6b7280] mt-0.5">Format template disesuaikan dengan tipe {{ typeLabel(selectedType) }}.</p>
+                                            <h4 class="text-[13px] font-semibold text-[#111827] dark:text-zinc-200">Unduh Template Pengguna</h4>
+                                            <p class="text-[11.5px] text-[#6b7280] dark:text-zinc-400 mt-0.5">Format template disesuaikan dengan tipe {{ typeLabel(selectedType) }}.</p>
                                         </div>
                                         <div class="flex items-center gap-1.5">
                                             <a 
                                                 :href="getTemplateUrl('csv')" 
                                                 download 
-                                                class="h-[30px] px-2.5 bg-white border border-[#d1d5db] text-[#374151] rounded-md text-[12px] font-semibold hover:bg-[#f3f4f6] transition-colors flex items-center gap-1 shadow-sm cursor-pointer"
+                                                class="h-[30px] px-2.5 bg-white dark:bg-zinc-900 border border-[#d1d5db] dark:border-zinc-700 text-[#374151] dark:text-zinc-300 rounded-md text-[12px] font-semibold hover:bg-[#f3f4f6] dark:hover:bg-zinc-800 transition-colors flex items-center gap-1 shadow-sm cursor-pointer dark:shadow-none"
                                             >
                                                 .CSV
                                             </a>
                                             <a 
                                                 :href="getTemplateUrl('xlsx')" 
                                                 download 
-                                                class="h-[30px] px-2.5 bg-emerald-600 text-white rounded-md text-[12px] font-semibold hover:bg-emerald-700 transition-colors flex items-center gap-1 shadow-sm cursor-pointer"
+                                                class="h-[30px] px-2.5 bg-emerald-600 text-white rounded-md text-[12px] font-semibold hover:bg-emerald-700 transition-colors flex items-center gap-1 shadow-sm cursor-pointer dark:shadow-none"
                                             >
                                                 Excel (.xlsx)
                                             </a>
@@ -1091,7 +1302,7 @@ function handleUserAction(action: string, user: any) {
                                         @drop.prevent="handleDrop"
                                         :class="[
                                             'border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-150',
-                                            isDragOver ? 'border-[#2563eb] bg-[#2563eb]/5' : 'border-[#d1d5db] hover:border-[#9ca3af] bg-white'
+                                            isDragOver ? 'border-[#2563eb] bg-[#2563eb]/5 dark:bg-blue-650/5' : 'border-[#d1d5db] dark:border-zinc-700 hover:border-[#9ca3af] dark:hover:border-zinc-500 bg-white dark:bg-zinc-950'
                                         ]"
                                         @click="fileInput?.click()"
                                     >
@@ -1102,21 +1313,21 @@ function handleUserAction(action: string, user: any) {
                                             class="hidden"
                                             @change="handleFileChange"
                                         />
-                                        <div class="w-10 h-10 rounded-full bg-[#f3f4f6] flex items-center justify-center mb-3">
-                                            <svg class="w-5 h-5 text-[#6b7280]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <div class="w-10 h-10 rounded-full bg-[#f3f4f6] dark:bg-zinc-800 flex items-center justify-center mb-3">
+                                            <svg class="w-5 h-5 text-[#6b7280] dark:text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                             </svg>
                                         </div>
-                                        <p class="text-[13px] text-[#111827] font-medium">
+                                        <p class="text-[13px] text-[#111827] dark:text-zinc-100 font-medium">
                                             {{ uploadFile ? uploadFile.name : 'Pilih atau seret file ke sini' }}
                                         </p>
-                                        <p class="text-[11.5px] text-[#6b7280] mt-1">
+                                        <p class="text-[11.5px] text-[#6b7280] dark:text-zinc-400 mt-1">
                                             {{ uploadFile ? `${(uploadFile.size / 1024 / 1024).toFixed(2)} MB` : 'Mendukung CSV dan Excel (.xlsx) hingga 1 GB' }}
                                         </p>
                                     </div>
 
                                     <!-- General Error Message -->
-                                    <div v-if="generalError" class="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-[12.5px] flex items-start gap-2">
+                                    <div v-if="generalError" class="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 text-red-700 dark:text-red-400 rounded-lg text-[12.5px] flex items-start gap-2">
                                         <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                         </svg>
@@ -1124,14 +1335,14 @@ function handleUserAction(action: string, user: any) {
                                     </div>
 
                                     <!-- Row-level errors list -->
-                                    <div v-if="localErrors.length > 0" class="border border-red-200 rounded-lg max-h-48 overflow-y-auto wos-scroll bg-red-50/50">
-                                        <div class="px-3.5 py-2.5 border-b border-red-200 bg-red-50 flex items-center justify-between sticky top-0">
+                                    <div v-if="localErrors.length > 0" class="border border-red-200 dark:border-zinc-800 rounded-lg max-h-48 overflow-y-auto wos-scroll bg-red-50/50 dark:bg-red-950/20">
+                                        <div class="px-3.5 py-2.5 border-b border-red-200 dark:border-zinc-800 bg-red-50 dark:bg-red-950/20 flex items-center justify-between sticky top-0">
                                             <span class="text-[12px] font-semibold text-red-800">Terdapat {{ localErrors.length }} baris data yang gagal divalidasi:</span>
                                         </div>
                                         <div class="p-3 space-y-3.5">
                                             <div v-for="err in localErrors" :key="err.row" class="text-[12px] flex flex-col items-start">
-                                                <span class="font-bold text-[#111827]">Baris {{ err.row }} ({{ err.email }}):</span>
-                                                <ul class="list-disc pl-4 mt-0.5 space-y-0.5 text-[#e11d48]">
+                                                <span class="font-bold text-[#111827] dark:text-zinc-200">Baris {{ err.row }} ({{ err.email }}):</span>
+                                                <ul class="list-disc pl-4 mt-0.5 space-y-0.5 text-[#e11d48] dark:text-red-400">
                                                     <li v-for="msg in err.errors" :key="msg">{{ msg }}</li>
                                                 </ul>
                                             </div>
@@ -1141,10 +1352,10 @@ function handleUserAction(action: string, user: any) {
                             </div>
 
                             <!-- Modal Footer -->
-                            <div class="px-6 py-4 flex justify-end gap-2 border-t border-[#e5e7eb] rounded-b-xl bg-[#f9fafb]">
+                            <div class="px-6 py-4 flex justify-end gap-2 border-t border-[#e5e7eb] dark:border-zinc-800 rounded-b-xl bg-[#f9fafb] dark:bg-zinc-800/40">
                                 <button
                                     :disabled="isUploading"
-                                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] border border-[#d1d5db] hover:bg-[#f3f4f6] transition-colors bg-white shadow-sm cursor-pointer disabled:opacity-50"
+                                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-300 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f3f4f6] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm cursor-pointer disabled:opacity-50 dark:shadow-none"
                                     @click="modal.uploadUsers = false; localErrors = []"
                                 >
                                     Batal
@@ -1152,7 +1363,7 @@ function handleUserAction(action: string, user: any) {
                                 <button
                                     v-if="uploadStep === 2"
                                     :disabled="loading || !uploadFile || isUploading"
-                                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#2563eb] dark:bg-blue-600 hover:bg-[#1d4ed8] dark:hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer border-0 dark:shadow-none"
                                     @click="submitUpload"
                                 >
                                     <svg v-if="loading && !isUploading" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -1166,5 +1377,159 @@ function handleUserAction(action: string, user: any) {
                 </div>
             </Transition>
         </Teleport>
+
+        <!-- Modern AppModal Confirm Dialog -->
+        <AppModal :show="confirmModal.show" :title="confirmModal.title" :description="confirmModal.description" @close="confirmModal.show = false">
+            <div class="text-[13px] text-[#4b5563] dark:text-zinc-400 font-medium">
+                {{ confirmModal.message }}
+            </div>
+            <template #footer>
+                <div class="flex justify-end gap-2">
+                    <button class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-350 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f3f4f6] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm cursor-pointer dark:shadow-none" @click="confirmModal.show = false">Batal</button>
+                    <button
+                        :disabled="confirmModal.isLoading"
+                        class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer border-0 dark:shadow-none"
+                        :class="confirmModal.confirmBgClass"
+                        @click="confirmModal.onConfirm"
+                    >
+                        <svg v-if="confirmModal.isLoading" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                        {{ confirmModal.isLoading ? 'Memproses...' : confirmModal.confirmText }}
+                    </button>
+                </div>
+            </template>
+        </AppModal>
+
+        <!-- Modern AppModal Reject Dialog with Input Reason -->
+        <AppModal :show="rejectModal.show" title="Tolak Pendaftaran User" description="Masukkan alasan penolakan untuk dikirimkan melalui email ke pendaftar." @close="rejectModal.show = false">
+            <div class="space-y-4">
+                <div class="text-[13px] text-[#4b5563] dark:text-zinc-400 font-medium">
+                    Apakah Anda yakin ingin menolak akun <span class="font-bold text-slate-805 dark:text-white">{{ rejectModal.user?.email }}</span>?
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Alasan Penolakan (Opsional)</label>
+                    <textarea
+                        v-model="rejectModal.reason"
+                        placeholder="Tuliskan catatan mengapa pendaftaran ini ditolak..."
+                        class="w-full h-24 p-3 rounded-lg border border-[#e5e7eb] dark:border-zinc-800 bg-white dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-red-500 text-xs resize-none"
+                    ></textarea>
+                </div>
+            </div>
+            <template #footer>
+                <div class="flex justify-end gap-2">
+                    <button class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-350 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f3f4f6] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm cursor-pointer dark:shadow-none" @click="rejectModal.show = false">Batal</button>
+                    <button
+                        :disabled="rejectModal.isLoading"
+                        class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer border-0 dark:shadow-none"
+                        @click="executeRejectAction"
+                    >
+                        <svg v-if="rejectModal.isLoading" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                        {{ rejectModal.isLoading ? 'Memproses...' : 'Tolak' }}
+                    </button>
+                </div>
+            </template>
+        </AppModal>
+
+        <!-- Modern AppModal Toggle Status Dialog -->
+        <AppModal :show="toggleStatusModal.show" title="Ubah Status Akun User" description="Konfirmasi status aktif atau nonaktif untuk akun user." @close="toggleStatusModal.show = false">
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-800/40 rounded-xl border border-slate-100 dark:border-zinc-800 gap-4">
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                        <div class="w-10 h-10 rounded-full bg-[#f3f4f6] dark:bg-zinc-800 border border-[#e5e7eb] dark:border-zinc-700 flex items-center justify-center text-[#111827] dark:text-zinc-200 text-sm font-bold shrink-0 overflow-hidden">
+                            <img v-if="toggleStatusModal.user?.foto_path" :src="toggleStatusModal.user.foto_path" :alt="toggleStatusModal.user.name" class="w-full h-full object-cover" />
+                            <span v-else>{{ toggleStatusModal.user?.name?.charAt(0)?.toUpperCase() }}</span>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-[13px] font-semibold text-slate-800 dark:text-zinc-200 leading-tight truncate" :title="toggleStatusModal.user?.email">{{ toggleStatusModal.user?.email }}</p>
+                            <p class="text-[11.5px] text-slate-500 dark:text-zinc-400 leading-tight mt-0.5 truncate">{{ toggleStatusModal.user?.name }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Modern Toggle Switch (Simulated) -->
+                    <button 
+                        @click="toggleStatusModal.targetStatus = !toggleStatusModal.targetStatus"
+                        class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-0 ml-4"
+                        :class="toggleStatusModal.targetStatus ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-zinc-700'"
+                    >
+                        <span 
+                            class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                            :class="toggleStatusModal.targetStatus ? 'translate-x-5' : 'translate-x-0'"
+                        />
+                    </button>
+                </div>
+
+                <div class="text-[13px] text-[#4b5563] dark:text-zinc-400 font-medium leading-relaxed">
+                    <template v-if="toggleStatusModal.user?.status_approval === 'pending'">
+                        Akun user ini sedang menunggu persetujuan (Pending). Menyetujui akun ini akan memicu pengiriman email aktivasi ke user. Apakah Anda yakin ingin menyetujui akun ini?
+                    </template>
+                    <template v-else-if="toggleStatusModal.targetStatus !== !!toggleStatusModal.user?.is_active">
+                        <template v-if="toggleStatusModal.targetStatus">
+                            Apakah Anda yakin ingin <span class="font-semibold text-emerald-600 dark:text-emerald-400">mengaktifkan kembali</span> akun user ini? Pengguna akan dapat masuk kembali ke sistem.
+                        </template>
+                        <template v-else>
+                            Apakah Anda yakin ingin <span class="font-semibold text-red-600 dark:text-red-400">menonaktifkan</span> akun user ini? Pengguna tidak akan dapat mengakses sistem sampai diaktifkan kembali.
+                        </template>
+                    </template>
+                    <template v-else>
+                        <span v-if="toggleStatusModal.targetStatus">
+                            Akun user ini saat ini <span class="font-semibold text-emerald-600 dark:text-emerald-400">Aktif</span>. Geser sakelar ke kiri jika Anda ingin menonaktifkan akun.
+                        </span>
+                        <span v-else>
+                            Akun user ini saat ini <span class="font-semibold text-red-600 dark:text-red-400">Nonaktif</span>. Geser sakelar ke kanan jika Anda ingin mengaktifkan kembali akun.
+                        </span>
+                    </template>
+                </div>
+            </div>
+            <template #footer>
+                <div class="flex justify-end gap-2">
+                    <button class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-350 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f3f4f6] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm cursor-pointer dark:shadow-none" @click="toggleStatusModal.show = false">Batal</button>
+                    <button
+                        :disabled="toggleStatusModal.isLoading || (toggleStatusModal.user?.status_approval !== 'pending' && toggleStatusModal.targetStatus === !!toggleStatusModal.user?.is_active)"
+                        class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer border-0 dark:shadow-none"
+                        :class="[
+                            toggleStatusModal.user?.status_approval === 'pending'
+                                ? 'bg-emerald-600 hover:bg-emerald-700'
+                                : (toggleStatusModal.targetStatus === !!toggleStatusModal.user?.is_active
+                                    ? 'bg-slate-400 dark:bg-zinc-700'
+                                    : (toggleStatusModal.targetStatus ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'))
+                        ]"
+                        @click="handleToggleStatusSubmit"
+                    >
+                        <svg v-if="toggleStatusModal.isLoading" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                        {{ toggleStatusModal.isLoading ? 'Memproses...' : (toggleStatusModal.user?.status_approval === 'pending' ? 'Setujui' : (toggleStatusModal.targetStatus === !!toggleStatusModal.user?.is_active ? 'Simpan' : (toggleStatusModal.targetStatus ? 'Aktifkan Akun' : 'Nonaktifkan Akun'))) }}
+                    </button>
+                </div>
+            </template>
+        </AppModal>
     </div>
 </template>
+
+<style scoped>
+/* Fade transition for main tab contents */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+/* List transition for table rows */
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.3s ease;
+}
+
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* Smooth layout move when list items change */
+.list-move {
+  transition: transform 0.3s ease;
+}
+</style>

@@ -15,6 +15,7 @@ use App\Http\Middleware\EnsureModuleAccess;
 use App\Http\Middleware\EnsureTraceAlumniPreviewIsReadOnly;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\LogWebUserActions;
 use App\Http\Middleware\Radar\RadarSecurityShield;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\StaticAssetCacheHeaders;
@@ -137,6 +138,16 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->prefix('workos')
                 ->name('workos.')
                 ->group(base_path('routes/workos/dashboard.php'));
+
+            // ──────────────────────────────────────────────────────────────
+            // Testing Routes — Only in local/testing environments
+            // Used by Playwright for programmatic login, seeding, and state
+            // management. NEVER available in production.
+            // ──────────────────────────────────────────────────────────────
+            if (app()->environment(['local', 'testing'])) {
+                Route::middleware(['web'])
+                    ->group(base_path('routes/testing.php'));
+            }
         }
     )
     ->withMiddleware(function (Middleware $middleware): void {
@@ -199,6 +210,12 @@ return Application::configure(basePath: dirname(__DIR__))
                 HandleAppearance::class,
                 HandleInertiaRequests::class,
                 CheckMaintenanceMode::class,
+                LogWebUserActions::class,
+                // [FIX HIGH-02] SecureSession validates the enterprise AuthSession record on
+                // every authenticated request — checks idle timeout, absolute timeout, and
+                // revocation status. Previously only ran on /auth/sessions/* routes.
+                // Cached (30s) to prevent per-request DB queries.
+                SecureSession::class,
             ],
             replace: [
                 ValidateCsrfToken::class => CustomCsrfMiddleware::class,
@@ -244,5 +261,13 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return redirect()->route('login')
                 ->with('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
+        });
+
+        $exceptions->render(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e, $request) {
+            if ($request->inertia() || $request->wantsJson()) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'email' => __('auth.throttle', ['seconds' => $e->getHeaders()['Retry-After'] ?? 60]),
+                ]);
+            }
         });
     })->create();

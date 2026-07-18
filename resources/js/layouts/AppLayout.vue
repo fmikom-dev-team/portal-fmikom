@@ -19,3 +19,4 @@ const props = withDefaults(
         <IdleTimeout />
     </AppLayout>
 </template>
+

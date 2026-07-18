@@ -1,6 +1,6 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../wayfinder'
 /**
-* @see routes/web.php:141
+* @see routes/web.php:245
 * @route '/login'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -14,7 +14,7 @@ store.definition = {
 } satisfies RouteDefinition<["post"]>
 
 /**
-* @see routes/web.php:141
+* @see routes/web.php:245
 * @route '/login'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -22,7 +22,7 @@ store.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:141
+* @see routes/web.php:245
 * @route '/login'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({

@@ -2,9 +2,11 @@
 
 namespace App\Modules\Trace\Services;
 
+use App\Services\VirusScannerService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
 
@@ -29,6 +31,15 @@ class ImageService
         ?int $maxWidth = null,
         ?int $maxHeight = null,
     ): string {
+        $scanner = app(VirusScannerService::class);
+        $scanResult = $scanner->scan($file);
+        if (! $scanResult['safe']) {
+            throw ValidationException::withMessages([
+                'logo' => $scanResult['reason'],
+                'poster' => $scanResult['reason'],
+            ]);
+        }
+
         try {
             $manager = new ImageManager(new Driver);
             $image = $manager->read($file->getPathname());

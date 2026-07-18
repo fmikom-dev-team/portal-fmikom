@@ -20,6 +20,7 @@ import ModerationTable from "@/components/Admin/ModerationTable.vue";
 import StatsCard from "@/components/Admin/StatsCard.vue";
 import ModerationModal from "@/components/Admin/ui/ModerationModal.vue";
 import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
+import MotionTabs from "@/components/ui/tabs/MotionTabs.vue";
 
 // === Types ===
 interface StatsChange {
@@ -243,6 +244,13 @@ const statsCards = computed(() => {
 // === Moderation tabs ===
 const activeTab = ref<"all" | "report" | "new" | "comment">("all");
 
+const moderationTabs = computed(() => [
+	{ id: 'all', label: 'Semua', badge: allModerationItems.value.length, badgeClass: activeTab.value === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400' },
+	{ id: 'report', label: 'Laporan', badge: allModerationItems.value.filter(i => i.type === 'Laporan').length, badgeClass: activeTab.value === 'report' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400' },
+	{ id: 'new', label: 'Karya Baru', badge: allModerationItems.value.filter(i => i.type === 'Karya Baru').length, badgeClass: activeTab.value === 'new' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400' },
+	{ id: 'comment', label: 'Komentar', badge: allModerationItems.value.filter(i => i.type === 'Komentar').length, badgeClass: activeTab.value === 'comment' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400' },
+]);
+
 const filteredModerationItems = computed(() => {
 	if (activeTab.value === "all") return allModerationItems.value;
 	if (activeTab.value === "report")
@@ -381,36 +389,16 @@ const handleReview = (id: number) => {
                         </button>
                     </div>
 
-                    <!-- Tabs -->
-                    <div class="flex items-center gap-1 px-5 py-3 border-b border-slate-100 dark:border-zinc-800 overflow-x-auto">
-                        <button
-                            v-for="tab in [
-                                { key: 'all', label: 'Semua', count: allModerationItems.length },
-                                { key: 'report', label: 'Laporan', count: allModerationItems.filter(i => i.type === 'Laporan').length },
-                                { key: 'new', label: 'Karya Baru', count: allModerationItems.filter(i => i.type === 'Karya Baru').length },
-                                { key: 'comment', label: 'Komentar', count: allModerationItems.filter(i => i.type === 'Komentar').length },
-                            ]"
-                            :key="tab.key"
-                            @click="activeTab = tab.key as any"
-                            :class="[
-                                'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-all whitespace-nowrap shrink-0',
-                                activeTab === tab.key
-                                    ? 'bg-indigo-600 text-white shadow-sm'
-                                    : 'text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800',
-                            ]"
-                        >
-                            {{ tab.label }}
-                            <span
-                                v-if="tab.count > 0"
-                                :class="[
-                                    'rounded-full px-1.5 py-0.5 text-[9px] font-black leading-none',
-                                    activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400'
-                                ]"
-                            >
-                                {{ tab.count }}
-                            </span>
-                        </button>
-                    </div>
+                    <!-- Tabs with motion transition -->
+                    <MotionTabs
+                        v-model="activeTab"
+                        :tabs="moderationTabs"
+                        variant="pill"
+                        container-class="flex items-center gap-1 px-5 py-3 border-b border-slate-100 dark:border-zinc-800 overflow-x-auto bg-transparent rounded-none"
+                        pill-class="bg-indigo-600 rounded-lg shadow-sm"
+                        active-class="text-white font-semibold flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] whitespace-nowrap shrink-0"
+                        inactive-class="text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] whitespace-nowrap shrink-0"
+                    />
 
                     <!-- Moderation Table -->
                     <ModerationTable

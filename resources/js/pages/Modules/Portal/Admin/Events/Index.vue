@@ -18,6 +18,7 @@ import {
 } from "lucide-vue-next";
 import { computed, ref, watch } from "vue";
 import PortalAdminLayout from "@/layouts/PortalAdminLayout.vue";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal.vue";
 
 const props = defineProps({
 	events: {
@@ -59,7 +60,10 @@ const isEditing = ref(false);
 const editingId = ref<number | null>(null);
 
 const form = useForm({
+	_method: "POST",
 	title: "",
+	organizer: "FMIKOM",
+	organizer_logo: null as any,
 	slug: "",
 	description: "",
 	location: "",
@@ -67,17 +71,32 @@ const form = useForm({
 	end_time: "",
 	registration_link: "",
 	status: "draft",
+	published_at: "",
 	thumbnail: null as any,
+	is_paid: false,
+	price: 0,
+	audience_type: "umum",
+	is_quota_limited: false,
+	quota: null as number | null,
 });
 
 // Thumbnail preview state
 const thumbnailPreview = ref<string | null>(null);
+const organizerLogoPreview = ref<string | null>(null);
 
 const onFileChange = (e: Event) => {
 	const file = (e.target as HTMLInputElement).files?.[0];
 	if (file) {
 		form.thumbnail = file;
 		thumbnailPreview.value = URL.createObjectURL(file);
+	}
+};
+
+const onOrganizerLogoChange = (e: Event) => {
+	const file = (e.target as HTMLInputElement).files?.[0];
+	if (file) {
+		form.organizer_logo = file;
+		organizerLogoPreview.value = URL.createObjectURL(file);
 	}
 };
 
@@ -101,6 +120,7 @@ const openCreateModal = () => {
 	isEditing.value = false;
 	editingId.value = null;
 	thumbnailPreview.value = null;
+	organizerLogoPreview.value = null;
 
 	// Default dates
 	const now = new Date();
@@ -116,6 +136,7 @@ const openEditModal = (event: any) => {
 	isEditing.value = true;
 	editingId.value = event.id;
 	form.title = event.title;
+	form.organizer = event.organizer || "FMIKOM";
 	form.slug = event.slug;
 	form.description = event.description;
 	form.location = event.location || "";
@@ -130,33 +151,52 @@ const openEditModal = (event: any) => {
 
 	form.registration_link = event.registration_link || "";
 	form.status = event.status;
+	form.published_at = event.published_at
+		? event.published_at.replace(" ", "T").slice(0, 16)
+		: "";
 	form.thumbnail = null;
 	thumbnailPreview.value = event.thumbnail || null;
+	form.organizer_logo = null;
+	organizerLogoPreview.value = event.organizer_logo || null;
+	form.is_paid = event.is_paid !== undefined ? !!event.is_paid : false;
+	form.price = event.price || 0;
+	form.audience_type = event.audience_type || "umum";
+	form.is_quota_limited = event.is_quota_limited !== undefined ? !!event.is_quota_limited : false;
+	form.quota = event.quota || null;
 
 	isModalOpen.value = true;
 };
 
 const submitForm = () => {
-	// We send multipart form data (necessary because of file upload)
 	if (isEditing.value && editingId.value) {
-		// Laravel doesn't support file upload inside PUT request natively, so we spoof it with POST + _method: 'PUT'
+		form._method = "PUT";
 		form.post(`/portal-admin/events/${editingId.value}`, {
-			headers: {
-				"X-HTTP-Method-Override": "PUT",
-			},
 			onSuccess: () => closeModal(),
 		});
 	} else {
+		form._method = "POST";
 		form.post("/portal-admin/events", {
 			onSuccess: () => closeModal(),
 		});
 	}
 };
 
+const isDeleteEventModalOpen = ref(false);
+const deleteEventId = ref<number | null>(null);
+
 const deleteEvent = (id: number) => {
-	if (confirm("Apakah Anda yakin ingin menghapus event ini?")) {
-		router.delete(`/portal-admin/events/${id}`, {
-			onSuccess: () => closeModal(),
+	deleteEventId.value = id;
+	isDeleteEventModalOpen.value = true;
+};
+
+const handleDeleteEvent = () => {
+	if (deleteEventId.value !== null) {
+		router.delete(`/portal-admin/events/${deleteEventId.value}`, {
+			onSuccess: () => {
+				isDeleteEventModalOpen.value = false;
+				deleteEventId.value = null;
+				closeModal();
+			},
 		});
 	}
 };
@@ -268,11 +308,13 @@ const getFormattedDate = (dateStr: string) => {
                                 :class="[
                                     event.status === 'published' 
                                         ? 'bg-emerald-500 text-white shadow-sm' 
-                                        : 'bg-amber-500 text-white shadow-sm', 
+                                        : event.status === 'scheduled'
+                                            ? 'bg-blue-500 text-white shadow-sm'
+                                            : 'bg-amber-500 text-white shadow-sm', 
                                     'text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider'
                                 ]"
                             >
-                                {{ event.status === 'published' ? 'Publik' : 'Draft' }}
+                                {{ event.status === 'published' ? 'Publik' : event.status === 'scheduled' ? 'Dijadwalkan' : 'Draft' }}
                             </span>
                         </div>
                     </div>
@@ -284,6 +326,14 @@ const getFormattedDate = (dateStr: string) => {
                         </h3>
 
                         <div class="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                            <!-- Organizer -->
+                            <div class="flex items-center gap-1.5 text-[11px] font-bold text-slate-500">
+                                <div class="w-4 h-4 rounded bg-blue-500/10 text-blue-600 border border-blue-500/25 flex items-center justify-center text-[9px] font-black uppercase shrink-0">
+                                    {{ (event.organizer || 'FMIKOM').substring(0, 1) }}
+                                </div>
+                                <span class="truncate">Oleh {{ event.organizer || 'FMIKOM' }}</span>
+                            </div>
+
                             <!-- Time -->
                             <div class="flex items-center gap-2">
                                 <Calendar class="w-4 h-4 text-slate-400 shrink-0" />
@@ -298,6 +348,24 @@ const getFormattedDate = (dateStr: string) => {
                             <div class="flex items-center gap-2" v-if="event.registration_link">
                                 <Link2 class="w-4 h-4 text-slate-400 shrink-0" />
                                 <a :href="event.registration_link" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline truncate">Link Registrasi</a>
+                            </div>
+
+                            <!-- Badges -->
+                            <div class="flex flex-wrap gap-1.5 pt-1.5">
+                                <span :class="[
+                                    'text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border',
+                                    event.is_paid 
+                                        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' 
+                                        : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                                ]">
+                                    {{ event.is_paid ? 'Berbayar (Rp ' + event.price.toLocaleString('id-ID') + ')' : 'Gratis' }}
+                                </span>
+                                <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20">
+                                    {{ event.audience_type === 'khusus' ? 'Khusus' : 'Umum' }}
+                                </span>
+                                <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20">
+                                    {{ event.is_quota_limited ? 'Kuota: ' + event.quota : 'Unlimited' }}
+                                </span>
                             </div>
                         </div>
 
@@ -395,16 +463,45 @@ const getFormattedDate = (dateStr: string) => {
                             </div>
                         </div>
 
-                        <!-- Title -->
-                        <div>
-                            <label class="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1.5">Nama / Judul Event</label>
-                            <input 
-                                v-model="form.title" 
-                                type="text" 
-                                required
-                                placeholder="Contoh: Seminar Nasional AI & Generative Coding"
-                                class="w-full px-4 py-3 rounded-2xl text-xs font-semibold bg-slate-50 dark:bg-slate-900 border border-slate-150 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
-                            />
+                        <!-- Title, Penyelenggara & Logo Penyelenggara -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1.5">Nama / Judul Event</label>
+                                <input 
+                                    v-model="form.title" 
+                                    type="text" 
+                                    required
+                                    placeholder="Contoh: Seminar Nasional AI"
+                                    class="w-full px-4 py-3 rounded-2xl text-xs font-semibold bg-slate-50 dark:bg-slate-900 border border-slate-150 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
+                                />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1.5">Penyelenggara</label>
+                                <input 
+                                    v-model="form.organizer" 
+                                    type="text" 
+                                    required
+                                    placeholder="Contoh: FMIKOM"
+                                    class="w-full px-4 py-3 rounded-2xl text-xs font-semibold bg-slate-50 dark:bg-slate-900 border border-slate-150 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
+                                />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1.5">Logo Penyelenggara</label>
+                                <div class="flex items-center gap-3">
+                                    <div v-if="organizerLogoPreview" class="w-11 h-11 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-50 flex items-center justify-center">
+                                        <img :src="organizerLogoPreview" class="w-full h-full object-cover" />
+                                    </div>
+                                    <div v-else class="w-11 h-11 rounded-lg border border-dashed border-slate-350 dark:border-slate-750 flex items-center justify-center shrink-0 text-slate-400 dark:text-slate-600 font-bold text-[9px] uppercase bg-slate-50 dark:bg-slate-950">
+                                        No Logo
+                                    </div>
+                                    <label class="flex-1 cursor-pointer">
+                                        <span class="inline-block w-full text-center px-3 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-850 text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 transition-colors">
+                                            Pilih Logo
+                                        </span>
+                                        <input type="file" @change="onOrganizerLogoChange" accept="image/*" class="hidden" />
+                                    </label>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Slug -->
@@ -462,28 +559,145 @@ const getFormattedDate = (dateStr: string) => {
                             </div>
                         </div>
 
-                        <!-- Status & Publish controls -->
+                        <!-- Event Payment Type & Price -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1.5">Tipe Event & Biaya</label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-150 dark:border-slate-700">
+                                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Event Berbayar?</span>
+                                    <button 
+                                        type="button" 
+                                        @click="form.is_paid = !form.is_paid" 
+                                        :class="[
+                                            'w-11 h-6 rounded-full transition-all duration-300 relative',
+                                            form.is_paid ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'
+                                        ]"
+                                    >
+                                        <span :class="['w-4 h-4 rounded-full bg-white absolute top-1 transition-all duration-300 shadow-sm', form.is_paid ? 'left-6' : 'left-1']"></span>
+                                    </button>
+                                </div>
+                                <div v-if="form.is_paid" class="animate-fade-in">
+                                    <input 
+                                        v-model="form.price" 
+                                        type="number" 
+                                        min="0"
+                                        placeholder="Nominal Pembayaran (Rp)"
+                                        class="w-full px-4 py-3 rounded-2xl text-xs font-semibold bg-slate-50 dark:bg-slate-900 border border-slate-150 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Target Audience -->
                         <div>
+                            <label class="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1.5">Target Peserta / Sasaran</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button 
+                                    type="button"
+                                    @click="form.audience_type = 'umum'"
+                                    :class="[
+                                        'px-4 py-3 rounded-2xl text-xs font-bold border transition-all',
+                                        form.audience_type === 'umum' 
+                                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 border-blue-500 dark:border-blue-400 shadow-sm' 
+                                            : 'bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-350 border-slate-150 dark:border-slate-700 hover:bg-slate-100'
+                                    ]"
+                                >
+                                    Umum / Publik
+                                </button>
+                                <button 
+                                    type="button"
+                                    @click="form.audience_type = 'khusus'"
+                                    :class="[
+                                        'px-4 py-3 rounded-2xl text-xs font-bold border transition-all',
+                                        form.audience_type === 'khusus' 
+                                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 border-blue-500 dark:border-blue-400 shadow-sm' 
+                                            : 'bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-350 border-slate-150 dark:border-slate-700 hover:bg-slate-100'
+                                    ]"
+                                >
+                                    Khusus (Civitas FMIKOM)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Quota limitation -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1.5">Kuota Peserta</label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-150 dark:border-slate-700">
+                                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Batasi Kuota?</span>
+                                    <button 
+                                        type="button" 
+                                        @click="form.is_quota_limited = !form.is_quota_limited" 
+                                        :class="[
+                                            'w-11 h-6 rounded-full transition-all duration-300 relative',
+                                            form.is_quota_limited ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'
+                                        ]"
+                                    >
+                                        <span :class="['w-4 h-4 rounded-full bg-white absolute top-1 transition-all duration-300 shadow-sm', form.is_quota_limited ? 'left-6' : 'left-1']"></span>
+                                    </button>
+                                </div>
+                                <div v-if="form.is_quota_limited" class="animate-fade-in">
+                                    <input 
+                                        v-model="form.quota" 
+                                        type="number" 
+                                        min="1"
+                                        placeholder="Jumlah Kuota"
+                                        class="w-full px-4 py-3 rounded-2xl text-xs font-semibold bg-slate-50 dark:bg-slate-900 border border-slate-150 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status & Publish controls -->
+                        <div class="space-y-2">
                             <label class="block text-xs font-black uppercase text-slate-400 tracking-wider mb-1.5">Status Publikasi</label>
-                            <div class="flex items-center gap-4">
-                                <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300">
-                                    <input 
-                                        type="radio" 
-                                        v-model="form.status" 
-                                        value="draft" 
-                                        class="w-4 h-4 text-blue-600"
-                                    />
-                                    Simpan sebagai Draft
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300">
-                                    <input 
-                                        type="radio" 
-                                        v-model="form.status" 
-                                        value="published" 
-                                        class="w-4 h-4 text-blue-600"
-                                    />
-                                    Terbitkan Langsung
-                                </label>
+                            <div class="grid grid-cols-3 gap-2.5">
+                                <button 
+                                    type="button"
+                                    @click="form.status = 'draft'"
+                                    :class="[
+                                        'px-2 py-3 rounded-2xl text-[10px] sm:text-xs font-bold border transition-all',
+                                        form.status === 'draft' 
+                                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 border-blue-500 dark:border-blue-400 shadow-sm' 
+                                            : 'bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-350 border-slate-150 dark:border-slate-700 hover:bg-slate-100'
+                                    ]"
+                                >
+                                    Draft
+                                </button>
+                                <button 
+                                    type="button"
+                                    @click="form.status = 'published'"
+                                    :class="[
+                                        'px-2 py-3 rounded-2xl text-[10px] sm:text-xs font-bold border transition-all',
+                                        form.status === 'published' 
+                                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 border-blue-500 dark:border-blue-400 shadow-sm' 
+                                            : 'bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-350 border-slate-150 dark:border-slate-700 hover:bg-slate-100'
+                                    ]"
+                                >
+                                    Terbitkan
+                                </button>
+                                <button 
+                                    type="button"
+                                    @click="form.status = 'scheduled'"
+                                    :class="[
+                                        'px-2 py-3 rounded-2xl text-[10px] sm:text-xs font-bold border transition-all',
+                                        form.status === 'scheduled' 
+                                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 border-blue-500 dark:border-blue-400 shadow-sm' 
+                                            : 'bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-350 border-slate-150 dark:border-slate-700 hover:bg-slate-100'
+                                    ]"
+                                >
+                                    Dijadwalkan
+                                </button>
+                            </div>
+                            
+                            <div v-if="form.status === 'scheduled'" class="pt-1 animate-fade-in">
+                                <label class="block text-[10px] font-black uppercase text-slate-450 tracking-wider mb-1.5">Waktu Publikasi Otomatis</label>
+                                <input 
+                                    v-model="form.published_at" 
+                                    type="datetime-local" 
+                                    required
+                                    class="w-full px-4 py-3 rounded-2xl text-xs font-semibold bg-slate-50 dark:bg-slate-900 border border-slate-150 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
+                                />
                             </div>
                         </div>
 
@@ -532,6 +746,13 @@ const getFormattedDate = (dateStr: string) => {
                 </div>
             </div>
         </transition>
+        <DeleteConfirmModal
+            :show="isDeleteEventModalOpen"
+            title="Hapus Event"
+            message="Apakah Anda yakin ingin menghapus event ini? Semua data termasuk gambar yang terkait akan dihapus secara permanen."
+            @confirm="handleDeleteEvent"
+            @cancel="isDeleteEventModalOpen = false"
+        />
     </PortalAdminLayout>
 </template>
 
