@@ -69,7 +69,7 @@
 		"@ffmpeg/ffmpeg": "^0.12.15",
 		"@ffmpeg/util": "^0.12.2",
 		"@inertiajs/core": "^3.4.0",
-		"@inertiajs/vue3": "^2.3.26",
+		"@inertiajs/vue3": "^3.6.1",
 		"@lucide/vue": "^1.22.0",
 		"@sotaproject/strikethrough": "^1.0.1",
 		"@tailwindcss/typography": "^0.5.19",
