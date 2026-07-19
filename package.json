@@ -137,7 +137,7 @@
 		"reka-ui": "^2.10.0",
 		"tailwind-merge": "^3.2.0",
 		"tailwindcss": "^4.1.1",
-		"thesvg": "^3.0.10",
+		"thesvg": "^3.2.10",
 		"tippy.js": "^6.3.7",
 		"tiptap-extension-global-drag-handle": "^0.1.18",
 		"tiptap-extension-resize-image": "^1.4.0",
