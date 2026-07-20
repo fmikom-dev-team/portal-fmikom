@@ -42,7 +42,7 @@
 		"rollup-plugin-visualizer": "^7.0.1",
 		"typescript": "^6.0.3",
 		"vite": "^7.0.4",
-		"vue-tsc": "^2.2.4",
+		"vue-tsc": "^3.3.7",
 		"vuedraggable": "^4.1.0"
 	},
 	"dependencies": {
@@ -69,8 +69,8 @@
 		"@ffmpeg/ffmpeg": "^0.12.15",
 		"@ffmpeg/util": "^0.12.2",
 		"@inertiajs/core": "^3.4.0",
-		"@inertiajs/vue3": "^2.3.26",
-		"@lucide/vue": "^1.22.0",
+		"@inertiajs/vue3": "^3.6.1",
+		"@lucide/vue": "^1.25.0",
 		"@sotaproject/strikethrough": "^1.0.1",
 		"@tailwindcss/typography": "^0.5.19",
 		"@tiptap/extension-blockquote": "^3.28.0",
@@ -137,7 +137,7 @@
 		"reka-ui": "^2.10.0",
 		"tailwind-merge": "^3.2.0",
 		"tailwindcss": "^4.1.1",
-		"thesvg": "^3.0.10",
+		"thesvg": "^3.2.10",
 		"tippy.js": "^6.3.7",
 		"tiptap-extension-global-drag-handle": "^0.1.18",
 		"tiptap-extension-resize-image": "^1.4.0",
@@ -150,7 +150,7 @@
 	},
 	"optionalDependencies": {
 		"@rollup/rollup-linux-x64-gnu": "4.9.5",
-		"@rollup/rollup-win32-x64-msvc": "4.9.5",
+		"@rollup/rollup-win32-x64-msvc": "^4.62.2",
 		"@tailwindcss/oxide-linux-x64-gnu": "^4.3.1",
 		"@tailwindcss/oxide-win32-x64-msvc": "^4.3.1",
 		"lightningcss-linux-x64-gnu": "^1.29.1",
