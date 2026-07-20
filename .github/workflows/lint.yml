@@ -42,7 +42,7 @@ jobs:
             ${{ runner.os }}-composer-
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: 'npm' # <-- Enable npm caching to speed up CI
