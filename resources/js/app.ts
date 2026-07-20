@@ -159,9 +159,37 @@ createInertiaApp({
 			import.meta.glob<DefineComponent>("./pages/**/*.vue"),
 		),
 	setup({ el, App, props, plugin }) {
-		createApp({ render: () => [h(App, props), h(Teleport, { to: 'body' }, [h(Toaster, { position: 'bottom-right', offset: 28, mobileOffset: 16, duration: 3200, richColors: true, theme: 'light', closeButton: true, gap: 10, visibleToasts: 3, toastOptions: { class: 'w-[min(92vw,26rem)] rounded-3xl border px-4 py-3.5 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.28)] backdrop-blur-2xl', descriptionClass: 'text-sm leading-5 text-slate-500', classes: { toast: 'rounded-3xl border border-slate-200/80 bg-white/80 text-slate-800 ring-1 ring-white/50', title: 'text-[13px] font-semibold tracking-tight', description: 'text-[12px] leading-5 text-slate-500', success: 'border-emerald-400/95 bg-emerald-50 text-emerald-700 shadow-emerald-900/12', error: 'border-rose-400/95 bg-rose-50 text-rose-700 shadow-rose-900/12', info: 'border-sky-200/80 bg-sky-50/80 text-sky-900 shadow-sky-950/5', warning: 'border-amber-200/80 bg-amber-50/80 text-amber-900 shadow-amber-950/5' } } })])] })
+		createApp({ render: () => h(App, props) })
 			.use(plugin)
 			.mount(el);
+
+		const toasterEl = document.createElement('div');
+		toasterEl.id = 'toaster-root';
+		document.body.appendChild(toasterEl);
+		createApp(Toaster, {
+			position: 'bottom-right',
+			offset: 28,
+			mobileOffset: 16,
+			duration: 3200,
+			richColors: true,
+			theme: 'light',
+			closeButton: true,
+			gap: 10,
+			visibleToasts: 3,
+			toastOptions: {
+				class: 'w-[min(92vw,26rem)] rounded-3xl border px-4 py-3.5 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.28)] backdrop-blur-2xl',
+				descriptionClass: 'text-sm leading-5 text-slate-500',
+				classes: {
+					toast: 'rounded-3xl border border-slate-200/80 bg-white/80 text-slate-800 ring-1 ring-white/50',
+					title: 'text-[13px] font-semibold tracking-tight',
+					description: 'text-[12px] leading-5 text-slate-500',
+					success: 'border-emerald-400/95 bg-emerald-50 text-emerald-700 shadow-emerald-900/12',
+					error: 'border-rose-400/95 bg-rose-50 text-rose-700 shadow-rose-900/12',
+					info: 'border-sky-200/80 bg-sky-50/80 text-sky-900 shadow-sky-950/5',
+					warning: 'border-amber-200/80 bg-amber-50/80 text-amber-900 shadow-amber-950/5',
+				},
+			},
+		}).mount(toasterEl);
 
 		if ((props.initialPage.props as any).auth?.user) {
 			initEcho((props.initialPage.props as any).reverb);
