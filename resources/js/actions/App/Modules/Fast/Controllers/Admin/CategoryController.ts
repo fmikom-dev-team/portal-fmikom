@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::index
  * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
@@ -45,41 +45,6 @@ index377c0d45be70873e0ecaf350cc14e1cf.head = (options?: RouteQueryOptions): Rout
     /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::index
  * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
- * @route '/admin/categories'
- */
-    const index377c0d45be70873e0ecaf350cc14e1cfForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index377c0d45be70873e0ecaf350cc14e1cf.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::index
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
- * @route '/admin/categories'
- */
-        index377c0d45be70873e0ecaf350cc14e1cfForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index377c0d45be70873e0ecaf350cc14e1cf.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::index
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
- * @route '/admin/categories'
- */
-        index377c0d45be70873e0ecaf350cc14e1cfForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index377c0d45be70873e0ecaf350cc14e1cf.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index377c0d45be70873e0ecaf350cc14e1cf.form = index377c0d45be70873e0ecaf350cc14e1cfForm
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::index
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
  * @route '/kaprodi/admin/categories'
  */
 const index8b07aa3b1c2796b83a14462ab0656d15 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -123,41 +88,6 @@ index8b07aa3b1c2796b83a14462ab0656d15.head = (options?: RouteQueryOptions): Rout
     /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::index
  * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
- * @route '/kaprodi/admin/categories'
- */
-    const index8b07aa3b1c2796b83a14462ab0656d15Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index8b07aa3b1c2796b83a14462ab0656d15.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::index
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
- * @route '/kaprodi/admin/categories'
- */
-        index8b07aa3b1c2796b83a14462ab0656d15Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index8b07aa3b1c2796b83a14462ab0656d15.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::index
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
- * @route '/kaprodi/admin/categories'
- */
-        index8b07aa3b1c2796b83a14462ab0656d15Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index8b07aa3b1c2796b83a14462ab0656d15.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index8b07aa3b1c2796b83a14462ab0656d15.form = index8b07aa3b1c2796b83a14462ab0656d15Form
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::index
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
  * @route '/dekan/admin/categories'
  */
 const indexab103ac7bafaf67a1bab6c43d4f96ad8 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -197,42 +127,6 @@ indexab103ac7bafaf67a1bab6c43d4f96ad8.head = (options?: RouteQueryOptions): Rout
     url: indexab103ac7bafaf67a1bab6c43d4f96ad8.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::index
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
- * @route '/dekan/admin/categories'
- */
-    const indexab103ac7bafaf67a1bab6c43d4f96ad8Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: indexab103ac7bafaf67a1bab6c43d4f96ad8.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::index
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
- * @route '/dekan/admin/categories'
- */
-        indexab103ac7bafaf67a1bab6c43d4f96ad8Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: indexab103ac7bafaf67a1bab6c43d4f96ad8.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::index
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:16
- * @route '/dekan/admin/categories'
- */
-        indexab103ac7bafaf67a1bab6c43d4f96ad8Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: indexab103ac7bafaf67a1bab6c43d4f96ad8.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    indexab103ac7bafaf67a1bab6c43d4f96ad8.form = indexab103ac7bafaf67a1bab6c43d4f96ad8Form
 
 /**
 * Multiple routes resolve to \App\Modules\Fast\Controllers\Admin\CategoryController::index, so this export is a
@@ -282,27 +176,6 @@ store377c0d45be70873e0ecaf350cc14e1cf.post = (options?: RouteQueryOptions): Rout
     /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::store
  * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:25
- * @route '/admin/categories'
- */
-    const store377c0d45be70873e0ecaf350cc14e1cfForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store377c0d45be70873e0ecaf350cc14e1cf.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::store
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:25
- * @route '/admin/categories'
- */
-        store377c0d45be70873e0ecaf350cc14e1cfForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store377c0d45be70873e0ecaf350cc14e1cf.url(options),
-            method: 'post',
-        })
-    
-    store377c0d45be70873e0ecaf350cc14e1cf.form = store377c0d45be70873e0ecaf350cc14e1cfForm
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::store
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:25
  * @route '/kaprodi/admin/categories'
  */
 const store8b07aa3b1c2796b83a14462ab0656d15 = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -337,27 +210,6 @@ store8b07aa3b1c2796b83a14462ab0656d15.post = (options?: RouteQueryOptions): Rout
     /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::store
  * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:25
- * @route '/kaprodi/admin/categories'
- */
-    const store8b07aa3b1c2796b83a14462ab0656d15Form = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store8b07aa3b1c2796b83a14462ab0656d15.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::store
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:25
- * @route '/kaprodi/admin/categories'
- */
-        store8b07aa3b1c2796b83a14462ab0656d15Form.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store8b07aa3b1c2796b83a14462ab0656d15.url(options),
-            method: 'post',
-        })
-    
-    store8b07aa3b1c2796b83a14462ab0656d15.form = store8b07aa3b1c2796b83a14462ab0656d15Form
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::store
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:25
  * @route '/dekan/admin/categories'
  */
 const storeab103ac7bafaf67a1bab6c43d4f96ad8 = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -388,28 +240,6 @@ storeab103ac7bafaf67a1bab6c43d4f96ad8.post = (options?: RouteQueryOptions): Rout
     url: storeab103ac7bafaf67a1bab6c43d4f96ad8.url(options),
     method: 'post',
 })
-
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::store
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:25
- * @route '/dekan/admin/categories'
- */
-    const storeab103ac7bafaf67a1bab6c43d4f96ad8Form = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: storeab103ac7bafaf67a1bab6c43d4f96ad8.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::store
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:25
- * @route '/dekan/admin/categories'
- */
-        storeab103ac7bafaf67a1bab6c43d4f96ad8Form.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: storeab103ac7bafaf67a1bab6c43d4f96ad8.url(options),
-            method: 'post',
-        })
-    
-    storeab103ac7bafaf67a1bab6c43d4f96ad8.form = storeab103ac7bafaf67a1bab6c43d4f96ad8Form
 
 /**
 * Multiple routes resolve to \App\Modules\Fast\Controllers\Admin\CategoryController::store, so this export is a
@@ -483,37 +313,6 @@ updated3574d41649b4dd208d031db42e0efd4.put = (args: { category: number | { id: n
     /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::update
  * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:43
- * @route '/admin/categories/{category}'
- */
-    const updated3574d41649b4dd208d031db42e0efd4Form = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: updated3574d41649b4dd208d031db42e0efd4.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::update
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:43
- * @route '/admin/categories/{category}'
- */
-        updated3574d41649b4dd208d031db42e0efd4Form.put = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: updated3574d41649b4dd208d031db42e0efd4.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    updated3574d41649b4dd208d031db42e0efd4.form = updated3574d41649b4dd208d031db42e0efd4Form
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::update
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:43
  * @route '/kaprodi/admin/categories/{category}'
  */
 const update017c645f2893a21c57fb24ddf26dbd68 = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -572,37 +371,6 @@ update017c645f2893a21c57fb24ddf26dbd68.put = (args: { category: number | { id: n
     /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::update
  * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:43
- * @route '/kaprodi/admin/categories/{category}'
- */
-    const update017c645f2893a21c57fb24ddf26dbd68Form = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: update017c645f2893a21c57fb24ddf26dbd68.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::update
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:43
- * @route '/kaprodi/admin/categories/{category}'
- */
-        update017c645f2893a21c57fb24ddf26dbd68Form.put = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update017c645f2893a21c57fb24ddf26dbd68.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    update017c645f2893a21c57fb24ddf26dbd68.form = update017c645f2893a21c57fb24ddf26dbd68Form
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::update
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:43
  * @route '/dekan/admin/categories/{category}'
  */
 const update77b15b03af456df615b1604b47e0af3b = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -657,38 +425,6 @@ update77b15b03af456df615b1604b47e0af3b.put = (args: { category: number | { id: n
     url: update77b15b03af456df615b1604b47e0af3b.url(args, options),
     method: 'put',
 })
-
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::update
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:43
- * @route '/dekan/admin/categories/{category}'
- */
-    const update77b15b03af456df615b1604b47e0af3bForm = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: update77b15b03af456df615b1604b47e0af3b.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::update
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:43
- * @route '/dekan/admin/categories/{category}'
- */
-        update77b15b03af456df615b1604b47e0af3bForm.put = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update77b15b03af456df615b1604b47e0af3b.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    update77b15b03af456df615b1604b47e0af3b.form = update77b15b03af456df615b1604b47e0af3bForm
 
 /**
 * Multiple routes resolve to \App\Modules\Fast\Controllers\Admin\CategoryController::update, so this export is a
@@ -762,37 +498,6 @@ destroyd3574d41649b4dd208d031db42e0efd4.delete = (args: { category: number | { i
     /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::destroy
  * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:60
- * @route '/admin/categories/{category}'
- */
-    const destroyd3574d41649b4dd208d031db42e0efd4Form = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: destroyd3574d41649b4dd208d031db42e0efd4.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::destroy
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:60
- * @route '/admin/categories/{category}'
- */
-        destroyd3574d41649b4dd208d031db42e0efd4Form.delete = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: destroyd3574d41649b4dd208d031db42e0efd4.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    destroyd3574d41649b4dd208d031db42e0efd4.form = destroyd3574d41649b4dd208d031db42e0efd4Form
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::destroy
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:60
  * @route '/kaprodi/admin/categories/{category}'
  */
 const destroy017c645f2893a21c57fb24ddf26dbd68 = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -851,37 +556,6 @@ destroy017c645f2893a21c57fb24ddf26dbd68.delete = (args: { category: number | { i
     /**
 * @see \App\Modules\Fast\Controllers\Admin\CategoryController::destroy
  * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:60
- * @route '/kaprodi/admin/categories/{category}'
- */
-    const destroy017c645f2893a21c57fb24ddf26dbd68Form = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: destroy017c645f2893a21c57fb24ddf26dbd68.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::destroy
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:60
- * @route '/kaprodi/admin/categories/{category}'
- */
-        destroy017c645f2893a21c57fb24ddf26dbd68Form.delete = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: destroy017c645f2893a21c57fb24ddf26dbd68.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    destroy017c645f2893a21c57fb24ddf26dbd68.form = destroy017c645f2893a21c57fb24ddf26dbd68Form
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::destroy
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:60
  * @route '/dekan/admin/categories/{category}'
  */
 const destroy77b15b03af456df615b1604b47e0af3b = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -936,38 +610,6 @@ destroy77b15b03af456df615b1604b47e0af3b.delete = (args: { category: number | { i
     url: destroy77b15b03af456df615b1604b47e0af3b.url(args, options),
     method: 'delete',
 })
-
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::destroy
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:60
- * @route '/dekan/admin/categories/{category}'
- */
-    const destroy77b15b03af456df615b1604b47e0af3bForm = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: destroy77b15b03af456df615b1604b47e0af3b.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\CategoryController::destroy
- * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:60
- * @route '/dekan/admin/categories/{category}'
- */
-        destroy77b15b03af456df615b1604b47e0af3bForm.delete = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: destroy77b15b03af456df615b1604b47e0af3b.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    destroy77b15b03af456df615b1604b47e0af3b.form = destroy77b15b03af456df615b1604b47e0af3bForm
 
 /**
 * Multiple routes resolve to \App\Modules\Fast\Controllers\Admin\CategoryController::destroy, so this export is a

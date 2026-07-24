@@ -22,6 +22,7 @@ class AdminMonitoringPageService
     {
         $status = (string) $request->string('status', 'all');
         $search = trim((string) $request->string('search', ''));
+        $period = trim((string) $request->string('period', ''));
         $companyId = $request->integer('company_id') ?: null;
         $dosenId = $request->integer('dosen_id') ?: null;
 
@@ -51,18 +52,29 @@ class AdminMonitoringPageService
         }
 
         if ($search !== '') {
-            $query->where(function ($builder) use ($search): void {
-                $builder->whereHas('mahasiswa', function ($mahasiswaQuery) use ($search): void {
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
+            $query->where(function ($builder) use ($escaped): void {
+                $builder->whereHas('mahasiswa', function ($mahasiswaQuery) use ($escaped): void {
                     $mahasiswaQuery
-                        ->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('nomor_induk', 'like', "%{$search}%");
-                })->orWhereHas('perusahaan', function ($companyQuery) use ($search): void {
-                    $companyQuery->where('nama', 'like', "%{$search}%");
-                })->orWhereHas('dosenPembimbing', function ($dosenQuery) use ($search): void {
-                    $dosenQuery->where('name', 'like', "%{$search}%");
+                        ->where('name', 'like', "%{$escaped}%")
+                        ->orWhere('email', 'like', "%{$escaped}%")
+                        ->orWhere('nomor_induk', 'like', "%{$escaped}%");
+                })->orWhereHas('perusahaan', function ($companyQuery) use ($escaped): void {
+                    $companyQuery->where('nama', 'like', "%{$escaped}%");
+                })->orWhereHas('dosenPembimbing', function ($dosenQuery) use ($escaped): void {
+                    $dosenQuery->where('name', 'like', "%{$escaped}%");
                 });
             });
+        }
+
+        if ($period !== '') {
+            [$start, $end] = array_pad(explode('__', $period, 2), 2, null);
+
+            if (filled($start) && filled($end)) {
+                $query
+                    ->whereDate('tanggal_mulai', $start)
+                    ->whereDate('tanggal_selesai', $end);
+            }
         }
 
         if ($companyId) {
@@ -143,6 +155,7 @@ class AdminMonitoringPageService
             'filters' => [
                 'status' => $status,
                 'search' => $search,
+                'period' => $period,
                 'company_id' => $companyId,
                 'dosen_id' => $dosenId,
             ],
@@ -176,6 +189,32 @@ class AdminMonitoringPageService
                         'id' => $dosen->id,
                         'label' => $dosen->name,
                     ])
+                    ->values()
+                    ->all(),
+                'periods' => PendaftaranMagang::query()
+                    ->whereIn('status', ['approved', 'aktif', 'selesai'])
+                    ->whereNotNull('tanggal_mulai')
+                    ->whereNotNull('tanggal_selesai')
+                    ->orderByDesc('tanggal_selesai')
+                    ->get(['tanggal_mulai', 'tanggal_selesai'])
+                    ->unique(fn (PendaftaranMagang $pendaftaran) => sprintf(
+                        '%s__%s',
+                        optional($pendaftaran->tanggal_mulai)->toDateString(),
+                        optional($pendaftaran->tanggal_selesai)->toDateString(),
+                    ))
+                    ->map(function (PendaftaranMagang $pendaftaran): array {
+                        $start = $pendaftaran->tanggal_mulai->toDateString();
+                        $end = $pendaftaran->tanggal_selesai->toDateString();
+
+                        return [
+                            'value' => sprintf('%s__%s', $start, $end),
+                            'label' => sprintf(
+                                '%s - %s',
+                                $this->formatDate($pendaftaran->tanggal_mulai),
+                                $this->formatDate($pendaftaran->tanggal_selesai),
+                            ),
+                        ];
+                    })
                     ->values()
                     ->all(),
             ],

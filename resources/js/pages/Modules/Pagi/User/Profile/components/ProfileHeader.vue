@@ -87,9 +87,9 @@ const isVideoUrl = (url: string | null): boolean => {
 					:aria-label="isOwnProfile ? 'Ubah Foto Profil' : undefined"
 				>
 					<!-- Tooltip Bubble -->
-					<div v-if="isOwnProfile" class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3.5 opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0 bg-slate-955 text-white text-[11px] font-black tracking-wide px-3.5 py-2 rounded-xl whitespace-nowrap shadow-lg z-30">
+					<div v-if="isOwnProfile" class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3.5 opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0 bg-slate-950 text-white text-[11px] font-black tracking-wide px-3.5 py-2 rounded-xl whitespace-nowrap shadow-lg z-30">
 						Change photo
-						<div class="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-955"></div>
+						<div class="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-950"></div>
 					</div>
 
 					<div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 shadow-2xs flex items-center justify-center overflow-hidden transition-transform duration-300">
@@ -324,7 +324,7 @@ const isVideoUrl = (url: string | null): boolean => {
 			<!-- Tooltip Bubble -->
 			<div v-if="isOwnProfile" class="absolute bottom-full right-4 mb-3.5 opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0 bg-slate-950 text-white text-[11px] font-black tracking-wide px-3.5 py-2 rounded-xl whitespace-nowrap shadow-lg z-30">
 				Edit banner
-				<div class="absolute top-full right-6 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-955"></div>
+				<div class="absolute top-full right-6 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-950"></div>
 			</div>
 
 			<!-- Hover Edit Pencil Button -->
@@ -588,7 +588,7 @@ const isVideoUrl = (url: string | null): boolean => {
 							<a v-if="user.github" :href="user.github" target="_blank" class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors" title="GitHub">
 								<Github class="w-4 h-4" />
 							</a>
-							<a v-if="user.website" :href="user.website" target="_blank" class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors" title="Website">
+							<a v-if="user.website" :href="user.website.startsWith('http') ? user.website : 'https://' + user.website" target="_blank" class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors" title="Website">
 								<Globe class="w-4 h-4" />
 							</a>
 							<a v-if="user.twitter" :href="user.twitter" target="_blank" class="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors" title="Twitter">

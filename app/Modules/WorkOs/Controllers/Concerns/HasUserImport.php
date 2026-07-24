@@ -4,9 +4,11 @@ namespace App\Modules\WorkOs\Controllers\Concerns;
 
 use App\Models\ProgramStudi;
 use App\Models\User;
+use App\Services\VirusScannerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -80,6 +82,14 @@ trait HasUserImport
 
         $file = $request->file('file');
         $userType = $request->user_type;
+
+        $scanner = app(VirusScannerService::class);
+        $scanResult = $scanner->scan($file);
+        if (! $scanResult['safe']) {
+            throw ValidationException::withMessages([
+                'file' => $scanResult['reason'],
+            ]);
+        }
 
         $rows = $this->loadSpreadsheetRows($file);
         if ($rows === null) {
@@ -246,21 +256,24 @@ trait HasUserImport
             foreach ($validRows as $row) {
                 $metadata = $row['nama_perusahaan'] ? ['nama_perusahaan' => $row['nama_perusahaan']] : null;
 
-                $user = User::create([
+                $user = new User([
                     'name' => $row['name'],
                     'email' => $row['email'],
                     'password' => Hash::make($row['password']),
-                    'user_type' => $userType,
                     'nomor_induk' => $row['nomor_induk'] ?: null,
                     'program_studi_id' => $row['program_studi_id'],
                     'tahun_lulus' => $row['tahun_lulus'],
                     'no_telepon' => $row['no_telepon'],
-                    'status_approval' => 'approved',
-                    'is_active' => false,
                     'email_verified_at' => null,
                     'password_changed_at' => null,
                     'metadata' => $metadata,
                 ]);
+
+                $user->forceFill([
+                    'user_type' => $userType,
+                    'status_approval' => 'approved',
+                    'is_active' => false,
+                ])->save();
 
                 // Assign module roles
                 $user->assignDefaultModuleRoles();

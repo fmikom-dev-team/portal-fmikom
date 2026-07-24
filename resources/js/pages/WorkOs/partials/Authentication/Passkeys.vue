@@ -79,21 +79,21 @@ const registerPasskey = async () => {
 
 <template>
     <div class="space-y-6 animate-fade-in max-w-[800px]">
-        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-gray-200 pb-5">
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-gray-200 dark:border-zinc-700 pb-5">
             <div>
-                <h1 class="text-2xl font-semibold text-gray-900 tracking-tight">Passkeys (WebAuthn)</h1>
-                <p class="text-[14px] text-gray-500 mt-1">Experience passwordless authentication using biometrics.</p>
+                <h1 class="text-2xl font-semibold text-gray-900 dark:text-zinc-100 tracking-tight">Passkeys (WebAuthn)</h1>
+                <p class="text-[14px] text-gray-500 dark:text-zinc-400 mt-1">Experience passwordless authentication using biometrics.</p>
             </div>
         </div>
 
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 text-center">
+        <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl shadow-sm p-6 text-center dark:shadow-none">
             
             <div class="w-16 h-16 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center mx-auto mb-4 border border-purple-100">
                 <Fingerprint class="w-8 h-8" />
             </div>
             
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Register a Passkey</h3>
-            <p class="text-[14px] text-gray-500 mb-6 max-w-md mx-auto">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-zinc-100 mb-2">Register a Passkey</h3>
+            <p class="text-[14px] text-gray-500 dark:text-zinc-400 mb-6 max-w-md mx-auto">
                 Passkeys provide the highest level of security against phishing by storing cryptographic keys directly in your device's hardware (Face ID, Touch ID, or Windows Hello).
             </p>
 
@@ -110,7 +110,7 @@ const registerPasskey = async () => {
             <button 
                 @click="registerPasskey" 
                 :disabled="isRegistering"
-                class="px-5 py-2.5 bg-gray-900 border border-transparent rounded-lg text-[14px] font-medium text-white hover:bg-gray-800 transition-colors shadow-sm disabled:opacity-50 inline-flex items-center gap-2"
+                class="px-5 py-2.5 bg-gray-900 border border-transparent rounded-lg text-[14px] font-medium text-white hover:bg-gray-800 transition-colors shadow-sm disabled:opacity-50 inline-flex items-center gap-2 dark:shadow-none"
             >
                 <span v-if="isRegistering" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                 <Fingerprint v-else class="w-4 h-4" />

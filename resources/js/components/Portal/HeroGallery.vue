@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import { Layers } from "lucide-vue-next";
+import { Layers, X, Eye } from "lucide-vue-next";
 
 const props = defineProps<{
     gallery: string[];
@@ -9,6 +9,18 @@ const props = defineProps<{
 const activeCardIndex = ref(0);
 const isAnimating = ref(false);
 const swipeDirection = ref<"left" | "right" | null>(null);
+
+const isPreviewOpen = ref(false);
+const previewImage = ref("");
+
+const openLightbox = (img: string) => {
+    previewImage.value = img;
+    isPreviewOpen.value = true;
+};
+
+const closeLightbox = () => {
+    isPreviewOpen.value = false;
+};
 
 const optimizeImageUrl = (url: string, width = 800) => {
 	if (!url) return "";
@@ -119,7 +131,7 @@ onUnmounted(() => {
     <div v-if="gallery.length > 0" class="relative w-full max-w-[560px] mx-auto select-none">
         <!-- Card Stack Container -->
         <div
-            class="relative aspect-16/11 cursor-grab active:cursor-grabbing"
+            class="relative aspect-square cursor-grab active:cursor-grabbing"
             @touchstart="onTouchStart"
             @touchend="onTouchEnd"
         >
@@ -149,6 +161,19 @@ onUnmounted(() => {
                 <!-- Card number badge -->
                 <div class="absolute top-3 right-3 bg-black/40 backdrop-blur-sm text-white text-[11px] font-bold px-2.5 py-1 rounded-full">
                     {{ i + 1 }} / {{ gallery.length }}
+                </div>
+                <!-- Click-to-preview overlay on the active card -->
+                <div 
+                    v-if="(i - activeCardIndex + gallery.length) % gallery.length === 0"
+                    @click="openLightbox(img)"
+                    class="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all duration-300 flex flex-col items-center justify-center cursor-pointer group/overlay"
+                >
+                    <div class="w-12 h-12 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-md flex items-center justify-center opacity-0 group-hover/overlay:opacity-100 scale-90 group-hover/overlay:scale-100 transition-all duration-300 shadow-lg border border-white/20">
+                        <Eye class="w-5 h-5 text-white" />
+                    </div>
+                    <span class="text-white text-[11px] font-black mt-2 opacity-0 group-hover/overlay:opacity-100 transition-all duration-300 drop-shadow-md">
+                        Klik untuk perbesar
+                    </span>
                 </div>
             </div>
         </div>
@@ -196,10 +221,37 @@ onUnmounted(() => {
 
     <!-- Fallback Graphic if no gallery images -->
     <div v-else class="relative z-10 rotate-1 transform rounded-2xl bg-white p-2 shadow-2xl ring-1 ring-gray-900/5 transition-all duration-700 hover:scale-105 hover:rotate-0 hover:shadow-[0_20px_50px_rgba(37,99,235,0.15)] md:p-4">
-        <div class="flex h-[350px] w-full items-center justify-center rounded-xl border border-gray-100 bg-gray-50 shadow-inner flex-col gap-4 text-gray-400">
+        <div class="flex aspect-square w-full items-center justify-center rounded-xl border border-gray-100 bg-gray-50 shadow-inner flex-col gap-4 text-gray-400">
             <Layers class="w-16 h-16 opacity-50" />
             <span class="text-sm font-bold opacity-50">Upload Galeri Karya di Portal Admin</span>
             <span class="text-xs opacity-40">Tata Letak → Hero Section → Galeri</span>
         </div>
     </div>
+
+    <!-- Lightbox Modal -->
+    <Teleport to="body">
+        <div 
+            v-if="isPreviewOpen" 
+            class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[999] flex items-center justify-center p-4 transition-all duration-300 cursor-zoom-out"
+            @click="closeLightbox"
+        >
+            <button 
+                @click="closeLightbox" 
+                class="absolute top-6 right-6 text-white/80 hover:text-white p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 cursor-pointer shadow-lg hover:scale-110"
+                aria-label="Close preview"
+            >
+                <X class="w-6 h-6" />
+            </button>
+            <div class="relative max-w-4xl max-h-[85vh] flex items-center justify-center cursor-default" @click.stop>
+                <img 
+                    :src="optimizeImageUrl(previewImage, 1200)" 
+                    alt="Preview Gambar" 
+                    class="max-w-full max-h-[80vh] rounded-2xl object-contain shadow-2xl border-4 border-white dark:border-slate-800"
+                >
+                <p class="absolute -bottom-8 left-1/2 -translate-x-1/2 text-white/90 text-xs font-bold tracking-widest uppercase">
+                    {{ activeCardIndex + 1 }} dari {{ gallery.length }}
+                </p>
+            </div>
+        </div>
+    </Teleport>
 </template>

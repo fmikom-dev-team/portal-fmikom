@@ -13,6 +13,18 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useInitials } from "@/composables/useInitials";
 import { edit as editProfile } from "@/routes/profile";
 
+import { useAppearance } from "@/composables/useAppearance";
+import { ThemeTogglerButton } from "@/components/animate-ui/components/buttons/theme-toggler";
+
+const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
+
+const activeTheme = computed({
+	get: () => appearance.value === "system" ? resolvedAppearance.value : appearance.value,
+	set: (val) => {
+		updateAppearance(val);
+	}
+});
+
 const props = withDefaults(
 	defineProps<{
 		isScrolled?: boolean;
@@ -61,7 +73,8 @@ const isHeaderScrolled = computed(() => {
     <header class="w-full shrink-0">
         <!-- MOBILE HEADER: Blue gradient or flat #2563eb, fixed with premium shadow -->
         <div 
-            class="flex md:hidden w-full items-center justify-between px-4 py-3 h-[68px] shrink-0 fixed top-0 left-0 right-0 transition-all duration-300"
+            class="flex md:hidden w-full items-center justify-between px-4 pb-3 shrink-0 fixed top-0 left-0 right-0 transition-all duration-300"
+            style="padding-top: calc(env(safe-area-inset-top) + 0.75rem); height: calc(68px + env(safe-area-inset-top));"
             :class="isPortalDashboard 
                 ? [
                     'bg-[#2563eb] border-b border-blue-500/20 z-[45]',
@@ -115,6 +128,16 @@ const isHeaderScrolled = computed(() => {
 
             <!-- Right Side: Settings + Logout -->
             <div class="flex items-center gap-3 text-white shrink-0">
+                <!-- Theme Toggler -->
+                <ThemeTogglerButton
+                    v-model="activeTheme"
+                    variant="ghost"
+                    size="sm"
+                    direction="ltr"
+                    :modes="['light', 'dark']"
+                    class="text-white hover:text-blue-100"
+                />
+
                 <!-- Settings Icon -->
                 <Link
                     :href="editProfile().url"
@@ -166,6 +189,15 @@ const isHeaderScrolled = computed(() => {
             </div>
             <!-- Right side dropdown -->
             <div v-else class="flex items-center gap-2 shrink-0">
+                <!-- Theme Toggler -->
+                <ThemeTogglerButton
+                    v-model="activeTheme"
+                    variant="ghost"
+                    size="sm"
+                    direction="ltr"
+                    :modes="['light', 'dark']"
+                />
+
                 <DropdownMenu>
                     <DropdownMenuTrigger
                         class="flex items-center gap-3 py-1 pl-2 pr-3 rounded-xl outline-none hover:bg-slate-50 dark:hover:bg-zinc-900/60 border border-transparent hover:border-slate-100 dark:hover:border-zinc-850 transition-all duration-300 group"

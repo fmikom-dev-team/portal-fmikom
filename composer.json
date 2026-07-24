@@ -38,6 +38,7 @@
 		"php": "^8.2",
 		"bacon/bacon-qr-code": "^3.1",
 		"barryvdh/laravel-dompdf": "^3.1",
+		"http-interop/http-factory-guzzle": "^1.2",
 		"inertiajs/inertia-laravel": "^2.0",
 		"intervention/image": "^3.0",
 		"jenssegers/agent": "^2.6",
@@ -52,8 +53,10 @@
 		"laravel/socialite": "^5.27",
 		"laravel/tinker": "^2.10.1",
 		"laravel/wayfinder": "^0.1.9",
-		"mpdf/mpdf": "^8.1.1",
+		"meilisearch/meilisearch-php": "^1.0",
 		"mews/purifier": "^3.4",
+		"minishlink/web-push": "^10.1",
+		"mpdf/mpdf": "^8.1.1",
 		"pbmedia/laravel-ffmpeg": "^8.9",
 		"phpoffice/phpspreadsheet": "^5.7",
 		"pragmarx/google2fa": "^9.0"
@@ -142,6 +145,7 @@
 		"optimize-autoloader": true,
 		"preferred-install": "dist",
 		"sort-packages": true,
+		"platform-check": false,
 		"allow-plugins": {
 			"pestphp/pest-plugin": true,
 			"php-http/discovery": true

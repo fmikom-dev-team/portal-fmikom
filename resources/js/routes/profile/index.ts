@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../wayfinder'
 /**
 * @see \App\Modules\Settings\Controllers\ProfileController::edit
  * @see app/Modules/Settings/Controllers/ProfileController.php:22
@@ -42,41 +42,6 @@ edit.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Modules\Settings\Controllers\ProfileController::edit
- * @see app/Modules/Settings/Controllers/ProfileController.php:22
- * @route '/settings/profile'
- */
-    const editForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: edit.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Settings\Controllers\ProfileController::edit
- * @see app/Modules/Settings/Controllers/ProfileController.php:22
- * @route '/settings/profile'
- */
-        editForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Settings\Controllers\ProfileController::edit
- * @see app/Modules/Settings/Controllers/ProfileController.php:22
- * @route '/settings/profile'
- */
-        editForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: edit.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    edit.form = editForm
 /**
 * @see \App\Modules\Settings\Controllers\ProfileController::update
  * @see app/Modules/Settings/Controllers/ProfileController.php:35
@@ -111,37 +76,6 @@ update.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
     method: 'patch',
 })
 
-    /**
-* @see \App\Modules\Settings\Controllers\ProfileController::update
- * @see app/Modules/Settings/Controllers/ProfileController.php:35
- * @route '/settings/profile'
- */
-    const updateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: update.url({
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PATCH',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Settings\Controllers\ProfileController::update
- * @see app/Modules/Settings/Controllers/ProfileController.php:35
- * @route '/settings/profile'
- */
-        updateForm.patch = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    update.form = updateForm
 /**
 * @see \App\Modules\Settings\Controllers\ProfileController::destroy
  * @see app/Modules/Settings/Controllers/ProfileController.php:86
@@ -176,37 +110,6 @@ destroy.delete = (options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     method: 'delete',
 })
 
-    /**
-* @see \App\Modules\Settings\Controllers\ProfileController::destroy
- * @see app/Modules/Settings/Controllers/ProfileController.php:86
- * @route '/settings/profile'
- */
-    const destroyForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: destroy.url({
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Settings\Controllers\ProfileController::destroy
- * @see app/Modules/Settings/Controllers/ProfileController.php:86
- * @route '/settings/profile'
- */
-        destroyForm.delete = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: destroy.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    destroy.form = destroyForm
 /**
 * @see \App\Modules\Settings\Controllers\ProfileController::requestDeletion
  * @see app/Modules/Settings/Controllers/ProfileController.php:111
@@ -241,27 +144,6 @@ requestDeletion.post = (options?: RouteQueryOptions): RouteDefinition<'post'> =>
     method: 'post',
 })
 
-    /**
-* @see \App\Modules\Settings\Controllers\ProfileController::requestDeletion
- * @see app/Modules/Settings/Controllers/ProfileController.php:111
- * @route '/settings/profile/deletion-request'
- */
-    const requestDeletionForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: requestDeletion.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Settings\Controllers\ProfileController::requestDeletion
- * @see app/Modules/Settings/Controllers/ProfileController.php:111
- * @route '/settings/profile/deletion-request'
- */
-        requestDeletionForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: requestDeletion.url(options),
-            method: 'post',
-        })
-    
-    requestDeletion.form = requestDeletionForm
 /**
 * @see \App\Modules\Settings\Controllers\ProfileController::cancelDeletion
  * @see app/Modules/Settings/Controllers/ProfileController.php:129
@@ -295,28 +177,6 @@ cancelDeletion.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => 
     url: cancelDeletion.url(options),
     method: 'post',
 })
-
-    /**
-* @see \App\Modules\Settings\Controllers\ProfileController::cancelDeletion
- * @see app/Modules/Settings/Controllers/ProfileController.php:129
- * @route '/settings/profile/deletion-request/cancel'
- */
-    const cancelDeletionForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: cancelDeletion.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Settings\Controllers\ProfileController::cancelDeletion
- * @see app/Modules/Settings/Controllers/ProfileController.php:129
- * @route '/settings/profile/deletion-request/cancel'
- */
-        cancelDeletionForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: cancelDeletion.url(options),
-            method: 'post',
-        })
-    
-    cancelDeletion.form = cancelDeletionForm
 const profile = {
     edit: Object.assign(edit, edit),
 update: Object.assign(update, update),

@@ -239,7 +239,7 @@ const handleReorder = (newSubOrderIds: number[]) => {
 				<div class="flex items-center gap-3 w-full sm:w-auto">
 					<button 
 						@click.prevent="emit('open-add-work')" 
-						class="flex-1 sm:flex-none rounded-full bg-[#18181b] hover:bg-zinc-800 dark:bg-white dark:text-zinc-955 dark:hover:bg-zinc-100 text-white px-6 py-2.5 text-xs font-semibold shadow-xs text-center transition-colors cursor-pointer border-none"
+						class="flex-1 sm:flex-none rounded-full bg-[#18181b] hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-white px-6 py-2.5 text-xs font-semibold shadow-xs text-center transition-colors cursor-pointer border-none"
 					>
 						Add work
 					</button>
@@ -269,7 +269,7 @@ const handleReorder = (newSubOrderIds: number[]) => {
 				<div class="flex items-center justify-center gap-3 w-full sm:w-auto">
 					<Link 
 						href="/pagi" 
-						class="flex-1 sm:flex-none rounded-full bg-[#18181b] hover:bg-zinc-800 dark:bg-white dark:text-zinc-955 dark:hover:bg-zinc-100 text-white px-6 py-2.5 text-xs font-semibold shadow-xs text-center transition-colors"
+						class="flex-1 sm:flex-none rounded-full bg-[#18181b] hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-white px-6 py-2.5 text-xs font-semibold shadow-xs text-center transition-colors"
 					>
 						Explore Works
 					</Link>
@@ -285,7 +285,7 @@ const handleReorder = (newSubOrderIds: number[]) => {
 				<div class="flex items-center justify-center gap-3 w-full sm:w-auto">
 					<Link 
 						href="/pagi" 
-						class="flex-1 sm:flex-none rounded-full bg-[#18181b] hover:bg-zinc-800 dark:bg-white dark:text-zinc-955 dark:hover:bg-zinc-100 text-white px-6 py-2.5 text-xs font-semibold shadow-xs text-center transition-colors"
+						class="flex-1 sm:flex-none rounded-full bg-[#18181b] hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-white px-6 py-2.5 text-xs font-semibold shadow-xs text-center transition-colors"
 					>
 						Explore Works
 					</Link>

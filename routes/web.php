@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\PwaController;
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\EnsureFirstTimeLoginComplete;
 use App\Models\Portal\PortalDocument;
+use App\Models\Portal\PortalEvent;
 use App\Models\Portal\PortalPost;
 use App\Models\Portal\PortalSetting;
 use App\Models\Role;
@@ -21,13 +23,17 @@ use App\Modules\Portal\Controllers\PortalMenuController;
 use App\Modules\Portal\Controllers\PortalPageController;
 use App\Modules\Portal\Controllers\PortalPostController;
 use App\Modules\Portal\Controllers\PublicDocumentController;
+use App\Modules\Portal\Controllers\PublicEventController;
 use App\Modules\Portal\Controllers\PublicPageController;
 use App\Modules\Portal\Controllers\PublicPostController;
+use App\Modules\WorkOs\Controllers\Auth\ActivationConfirmController;
+use App\Modules\WorkOs\Controllers\Auth\ActivationController;
 use App\Modules\WorkOs\Controllers\Auth\FirstTimeLoginController;
 use App\Modules\WorkOs\Controllers\Auth\TwoFactorChallengeController;
 use App\Modules\WorkOs\Controllers\ImageProxyController;
 use App\Modules\WorkOs\Controllers\InvitationAcceptController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
@@ -56,7 +62,7 @@ use Laravel\Fortify\Http\Requests\LoginRequest;
 // ─── Public Pages ────────────────────────────────────────────────────────────
 
 Route::get('/', function () {
-    if (auth()->check()) {
+    if (Auth::check()) {
         return redirect()->route('dashboard');
     }
 
@@ -79,14 +85,14 @@ Route::get('/', function () {
     }));
 
     $pinned_announcement = Cache::remember('portal_pinned_announcement', 3600, function () {
-        return PortalDocument::where('is_pinned', true)
+        return PortalDocument::where('is_pinned', '=', true, 'and')
             ->latest()
             ->first();
     });
 
     $total_alumni = Cache::remember('portal_total_alumni', 600, function () {
         try {
-            return ProfilAlumni::count();
+            return ProfilAlumni::count('*');
         } catch (Throwable $e) {
             return 0;
         }
@@ -161,10 +167,10 @@ Route::get('/', function () {
 
     $alumni_stats = Cache::remember('portal_welcome_alumni_stats', 600, function () {
         try {
-            $alumni = ProfilAlumni::count();
-            $provinsi = ProfilAlumni::distinct('provinsi_id')->whereNotNull('provinsi_id')->count();
-            $perusahaan = Employment::distinct('nama_perusahaan')->whereNotNull('nama_perusahaan')->count();
-            $luarNegeri = ProfilAlumni::whereNull('provinsi_id')->whereNotNull('alamat_rumah')->count();
+            $alumni = ProfilAlumni::count('*');
+            $provinsi = ProfilAlumni::select('provinsi_id')->distinct()->whereNotNull('provinsi_id', 'and', true)->count('*');
+            $perusahaan = Employment::select('nama_perusahaan')->distinct()->whereNotNull('nama_perusahaan', 'and', true)->count('*');
+            $luarNegeri = ProfilAlumni::whereNull('provinsi_id', 'and', false)->whereNotNull('alamat_rumah', 'and', true)->count('*');
 
             return [
                 'alumni' => $alumni,
@@ -182,6 +188,33 @@ Route::get('/', function () {
         }
     });
 
+    $events = Cache::remember('portal_welcome_events', 600, function () {
+        try {
+            $now = now();
+
+            return PortalEvent::where(function ($q) use ($now) {
+                $q->where('status', 'published')
+                    ->orWhere(function ($sq) use ($now) {
+                        $sq->where('status', 'scheduled')
+                            ->where('published_at', '<=', $now);
+                    });
+            })
+                ->where(function ($q) use ($now) {
+                    $q->where(function ($inner) use ($now) {
+                        $inner->whereNull('end_time')->where('start_time', '>=', $now);
+                    })->orWhere(function ($inner) use ($now) {
+                        $inner->whereNotNull('end_time')->where('end_time', '>=', $now);
+                    });
+                })
+                ->orderBy('start_time', 'asc')
+                ->take(3)
+                ->get()
+                ->toArray();
+        } catch (Throwable $e) {
+            return [];
+        }
+    });
+
     return Inertia::render('Welcome', [
         'canRegister' => Features::enabled(Features::registration()),
         'settings' => $settings,
@@ -190,6 +223,7 @@ Route::get('/', function () {
         'total_alumni' => $total_alumni,
         'alumni_data' => $alumni_data,
         'alumni_stats' => $alumni_stats,
+        'events' => $events,
     ]);
 })->name('home');
 
@@ -199,6 +233,8 @@ Route::post('/berita/{slug}/comments', [PublicPostController::class, 'storeComme
 Route::get('/halaman/{slug}', [PublicPageController::class, 'show'])->name('portal.pages.show');
 Route::get('/dokumen', [PublicDocumentController::class, 'index'])->name('portal.documents.index');
 Route::get('/dokumen/download/{document}', [PublicDocumentController::class, 'download'])->name('portal.documents.download');
+Route::get('/event', [PublicEventController::class, 'index'])->name('portal.events.index');
+Route::get('/event/{slug}', [PublicEventController::class, 'show'])->name('portal.events.show');
 
 // Sitemap Routes
 Route::get('/sitemap.xml', [PublicPageController::class, 'sitemapXml'])->name('portal.sitemap.xml');
@@ -215,22 +251,50 @@ Route::get('/cookie-policy', function () {
 })->name('cookie-policy');
 
 // API: Unique check for registration (throttled)
+// SEC-FIX: Returns GENERIC response — does not confirm whether email/NIM exists.
+// This prevents email/NIM enumeration attacks.
 Route::post('/api/check-user-exists', function (Request $request) {
     $request->validate([
         'email' => ['nullable', 'email', 'max:255'],
         'nomor_induk' => ['nullable', 'string', 'max:50'],
     ]);
 
+    // ⚠️ SECURITY: Always return same structure regardless of existence.
+    // Returning true/false directly would allow enumeration.
+    // The frontend can use this for basic format validation only.
     return response()->json([
-        'email_exists' => $request->email
-            ? User::where('email', $request->email)->exists() : false,
-        'nomor_induk_exists' => $request->nomor_induk
-            ? User::where('nomor_induk', $request->nomor_induk)->exists() : false,
+        'email_exists' => false, // Always false — form-level check disabled for security
+        'nomor_induk_exists' => false,
+        '_note' => 'Server-side uniqueness is enforced at submission.',
     ]);
-    // SEC-010: 1 request/minute to prevent email/NIM enumeration attacks
 })->middleware('throttle:1,1');
 
 // ─── Authenticated Routes ────────────────────────────────────────────────────
+
+// ─── Case A: Admin-Driven Account Activation (Public — no auth) ─────────────
+// Users with pre-existing identities (mahasiswa, dosen, staff) claim their account
+// by verifying NIM/NIDN + tanggal lahir → OTP → password creation.
+Route::middleware(['guest'])->prefix('activate')->name('activation.')->group(function () {
+    Route::get('/', [ActivationController::class, 'showIdentityForm'])->name('show');
+    Route::post('/', [ActivationController::class, 'verifyIdentity'])->middleware('throttle:10,5');
+    Route::get('/verify-otp', [ActivationController::class, 'showOtpForm'])->name('verify-otp');
+    Route::post('/verify-otp', [ActivationController::class, 'verifyOtp'])->middleware('throttle:5,1');
+    Route::post('/resend-otp', [ActivationController::class, 'resendOtp'])->middleware('throttle:3,5')->name('resend-otp');
+    Route::get('/set-password', [ActivationController::class, 'showPasswordForm'])->name('set-password');
+    Route::post('/set-password', [ActivationController::class, 'setPassword'])->middleware('throttle:5,1');
+});
+
+// ─── Case B: Self-Registration Activation (Signed URL — no auth) ─────────────
+// After admin approves a RegistrationRequest, user receives a signed email link.
+// Clicking the link → validates token → password creation → activated.
+Route::get('/activate/confirm', [ActivationConfirmController::class, 'confirm'])
+    ->middleware('signed')
+    ->name('activation.confirm');
+Route::get('/activate/confirm/otp', [ActivationConfirmController::class, 'showOtpForm'])->name('activation.confirm.otp');
+Route::post('/activate/confirm/otp', [ActivationConfirmController::class, 'verifyOtp'])->middleware('throttle:5,1');
+Route::post('/activate/confirm/resend-otp', [ActivationConfirmController::class, 'resendOtp'])->middleware('throttle:3,5')->name('activation.confirm.resend-otp');
+Route::get('/activate/complete', [ActivationConfirmController::class, 'showCompleteForm'])->name('activation.complete');
+Route::post('/activate/complete', [ActivationConfirmController::class, 'complete'])->middleware('throttle:5,1');
 
 // ─── MFA Login Intercept (Overrides Fortify) ───────────────────────────────
 Route::post('/two-factor-challenge', [TwoFactorChallengeController::class, 'store'])
@@ -257,12 +321,21 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/force-change-password', [FirstTimeLoginController::class, 'showPasswordForm'])->name('password.force.change');
     Route::post('/force-change-password', [FirstTimeLoginController::class, 'updatePassword'])->middleware('throttle:10,1');
 
+    // Waiting Room routes (accessed by pending/rejected users)
+    Route::get('/waiting-room', [FirstTimeLoginController::class, 'showWaitingRoom'])->name('waiting-room');
+    Route::get('/api/check-approval-status', [FirstTimeLoginController::class, 'checkApprovalStatus'])->name('approval.status');
+    Route::post('/waiting-room/resign', [FirstTimeLoginController::class, 'resign'])->name('waiting-room.resign');
+
     // Core Application (post-OTP verification)
     Route::middleware([EnsureFirstTimeLoginComplete::class])->group(function () {
         Route::get('/dashboard', [PortalController::class, 'index'])->name('dashboard');
         Route::post('/select-module', [PortalController::class, 'selectModule'])->name('module.select');
         Route::post('/portal/switch-role', [PortalController::class, 'switchRole'])->name('portal.switch-role');
         Route::inertia('/portal', 'Portal')->name('portal');
+
+        // PWA Subscription Routes
+        Route::post('/pwa/subscribe', [PwaController::class, 'subscribe'])->name('pwa.subscribe');
+        Route::post('/pwa/send-test', [PwaController::class, 'sendTest'])->name('pwa.send-test');
     });
 });
 
@@ -281,7 +354,9 @@ Route::middleware(['auth', CheckRole::class.':super-admin'])
     ->name('portal-admin.')
     ->group(function () {
         Route::get('/', [PortalAdminController::class, 'index'])->name('dashboard');
+        Route::get('instant-search', [PortalAdminController::class, 'instantSearch'])->name('instant-search');
         Route::resource('posts', PortalPostController::class);
+
         Route::post('posts/upload-image', [PortalPostController::class, 'uploadImage'])->name('posts.upload-image');
         Route::get('fetchUrl', [PortalPostController::class, 'fetchUrl'])->name('posts.fetch-url');
         Route::post('posts/upload-file', [PortalPostController::class, 'uploadFile'])->name('posts.upload-file');
@@ -325,10 +400,25 @@ if (app()->isLocal() || app()->environment('testing')) {
 // ─── Invitation Accept (Public) ───────────────────────────────────────────────
 Route::get('/invitations/accept/{token}', [InvitationAcceptController::class, 'show'])
     ->name('invitations.accept');
+Route::post('/invitations/accept/{token}', [InvitationAcceptController::class, 'accept'])
+    ->name('invitations.accept.post');
 
 // ─── Image Proxy Obfuscated Streaming ──────────────────────────────────────────
 Route::get('/images/v1/{encrypted_path}', [ImageProxyController::class, 'serve'])
     ->middleware('signed')
     ->name('images.proxy');
+
+// ─── SEC-FIX: /dev-login-temp guarded to local environment only ──────────────
+if (app()->isLocal()) {
+    Route::get('/dev-login-temp', function () {
+        $user = User::where('email', '=', 'muchlisinmaruf@gmail.com', 'and')->first();
+        if (! $user) {
+            abort(404, 'Dev user not found.');
+        }
+        Auth::login($user);
+
+        return redirect('/portal-admin/appearance');
+    })->name('dev.login.temp');
+}
 
 require __DIR__.'/settings.php';

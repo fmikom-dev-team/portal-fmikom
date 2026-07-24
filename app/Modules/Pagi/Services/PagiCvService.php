@@ -64,7 +64,7 @@ class PagiCvService
             'title' => $finalTitle,
             'template_id' => $templateId,
             'personal_info' => $profileData['personal_info'],
-            'education' => [],
+            'education' => $profileData['education'] ?? [],
             'experience' => [],
             'organizations' => [],
             'skills' => $profileData['skills'],
@@ -206,11 +206,28 @@ class PagiCvService
             }
         }
 
+        $education = [];
+        $profileEducation = $user->metadata['educations'] ?? [];
+        if (is_array($profileEducation)) {
+            foreach ($profileEducation as $index => $edu) {
+                $education[] = [
+                    'id' => $index + 1,
+                    'school' => $edu['institution'] ?? '',
+                    'degree' => $edu['level'] ?? '',
+                    'field_of_study' => $edu['major'] ?? '',
+                    'start_date' => $edu['start_date'] ?? '',
+                    'end_date' => $edu['end_date'] ?? '',
+                    'description' => $edu['description'] ?? '',
+                ];
+            }
+        }
+
         return [
             'personal_info' => $personalInfo,
             'skills' => $skills,
             'certifications' => $certificates,
             'languages' => $languages,
+            'education' => $education,
         ];
     }
 

@@ -22,12 +22,13 @@ class AdminCompanyPageService
             ->orderBy('nama');
 
         if ($search !== '') {
-            $query->where(function ($builder) use ($search): void {
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
+            $query->where(function ($builder) use ($escaped): void {
                 $builder
-                    ->where('nama', 'like', "%{$search}%")
-                    ->orWhere('kota', 'like', "%{$search}%")
-                    ->orWhere('alamat', 'like', "%{$search}%")
-                    ->orWhere('bidang_industri', 'like', "%{$search}%");
+                    ->where('nama', 'like', "%{$escaped}%")
+                    ->orWhere('kota', 'like', "%{$escaped}%")
+                    ->orWhere('alamat', 'like', "%{$escaped}%")
+                    ->orWhere('bidang_industri', 'like', "%{$escaped}%");
             });
         }
 

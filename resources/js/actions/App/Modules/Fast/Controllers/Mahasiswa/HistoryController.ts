@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::index
  * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:17
@@ -45,41 +45,6 @@ index87b8947623c11a8e049797a3d2d0f9be.head = (options?: RouteQueryOptions): Rout
     /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::index
  * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:17
- * @route '/fast/user/history'
- */
-    const index87b8947623c11a8e049797a3d2d0f9beForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index87b8947623c11a8e049797a3d2d0f9be.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::index
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:17
- * @route '/fast/user/history'
- */
-        index87b8947623c11a8e049797a3d2d0f9beForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index87b8947623c11a8e049797a3d2d0f9be.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::index
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:17
- * @route '/fast/user/history'
- */
-        index87b8947623c11a8e049797a3d2d0f9beForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index87b8947623c11a8e049797a3d2d0f9be.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index87b8947623c11a8e049797a3d2d0f9be.form = index87b8947623c11a8e049797a3d2d0f9beForm
-    /**
-* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::index
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:17
  * @route '/mahasiswa/history'
  */
 const index5a4c493418e0df1b409be4699ee669dc = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -119,42 +84,6 @@ index5a4c493418e0df1b409be4699ee669dc.head = (options?: RouteQueryOptions): Rout
     url: index5a4c493418e0df1b409be4699ee669dc.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::index
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:17
- * @route '/mahasiswa/history'
- */
-    const index5a4c493418e0df1b409be4699ee669dcForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index5a4c493418e0df1b409be4699ee669dc.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::index
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:17
- * @route '/mahasiswa/history'
- */
-        index5a4c493418e0df1b409be4699ee669dcForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index5a4c493418e0df1b409be4699ee669dc.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::index
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:17
- * @route '/mahasiswa/history'
- */
-        index5a4c493418e0df1b409be4699ee669dcForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index5a4c493418e0df1b409be4699ee669dc.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index5a4c493418e0df1b409be4699ee669dc.form = index5a4c493418e0df1b409be4699ee669dcForm
 
 /**
 * Multiple routes resolve to \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::index, so this export is a
@@ -231,41 +160,6 @@ show9da74bc9fc8d8ed90070357bf01c09d8.head = (args: { id: string | number } | [id
     /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::show
  * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:75
- * @route '/fast/user/history/{id}'
- */
-    const show9da74bc9fc8d8ed90070357bf01c09d8Form = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show9da74bc9fc8d8ed90070357bf01c09d8.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::show
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:75
- * @route '/fast/user/history/{id}'
- */
-        show9da74bc9fc8d8ed90070357bf01c09d8Form.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show9da74bc9fc8d8ed90070357bf01c09d8.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::show
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:75
- * @route '/fast/user/history/{id}'
- */
-        show9da74bc9fc8d8ed90070357bf01c09d8Form.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show9da74bc9fc8d8ed90070357bf01c09d8.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show9da74bc9fc8d8ed90070357bf01c09d8.form = show9da74bc9fc8d8ed90070357bf01c09d8Form
-    /**
-* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::show
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:75
  * @route '/mahasiswa/history/{id}'
  */
 const show26c38b6c2e007262af1ec1ea4b164d97 = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -324,42 +218,6 @@ show26c38b6c2e007262af1ec1ea4b164d97.head = (args: { id: string | number } | [id
     url: show26c38b6c2e007262af1ec1ea4b164d97.url(args, options),
     method: 'head',
 })
-
-    /**
-* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::show
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:75
- * @route '/mahasiswa/history/{id}'
- */
-    const show26c38b6c2e007262af1ec1ea4b164d97Form = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show26c38b6c2e007262af1ec1ea4b164d97.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::show
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:75
- * @route '/mahasiswa/history/{id}'
- */
-        show26c38b6c2e007262af1ec1ea4b164d97Form.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show26c38b6c2e007262af1ec1ea4b164d97.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::show
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:75
- * @route '/mahasiswa/history/{id}'
- */
-        show26c38b6c2e007262af1ec1ea4b164d97Form.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show26c38b6c2e007262af1ec1ea4b164d97.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show26c38b6c2e007262af1ec1ea4b164d97.form = show26c38b6c2e007262af1ec1ea4b164d97Form
 
 /**
 * Multiple routes resolve to \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::show, so this export is a
@@ -427,27 +285,6 @@ cancel74bd7e97928c58b44e953de9068b8404.post = (args: { id: string | number } | [
     /**
 * @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::cancel
  * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:217
- * @route '/fast/user/surat/{id}/cancel'
- */
-    const cancel74bd7e97928c58b44e953de9068b8404Form = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: cancel74bd7e97928c58b44e953de9068b8404.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::cancel
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:217
- * @route '/fast/user/surat/{id}/cancel'
- */
-        cancel74bd7e97928c58b44e953de9068b8404Form.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: cancel74bd7e97928c58b44e953de9068b8404.url(args, options),
-            method: 'post',
-        })
-    
-    cancel74bd7e97928c58b44e953de9068b8404.form = cancel74bd7e97928c58b44e953de9068b8404Form
-    /**
-* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::cancel
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:217
  * @route '/mahasiswa/surat/{id}/cancel'
  */
 const canceldf32884bde61aadf9b6523269bf53f90 = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -497,28 +334,6 @@ canceldf32884bde61aadf9b6523269bf53f90.post = (args: { id: string | number } | [
     url: canceldf32884bde61aadf9b6523269bf53f90.url(args, options),
     method: 'post',
 })
-
-    /**
-* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::cancel
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:217
- * @route '/mahasiswa/surat/{id}/cancel'
- */
-    const canceldf32884bde61aadf9b6523269bf53f90Form = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: canceldf32884bde61aadf9b6523269bf53f90.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::cancel
- * @see app/Modules/Fast/Controllers/Mahasiswa/HistoryController.php:217
- * @route '/mahasiswa/surat/{id}/cancel'
- */
-        canceldf32884bde61aadf9b6523269bf53f90Form.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: canceldf32884bde61aadf9b6523269bf53f90.url(args, options),
-            method: 'post',
-        })
-    
-    canceldf32884bde61aadf9b6523269bf53f90.form = canceldf32884bde61aadf9b6523269bf53f90Form
 
 /**
 * Multiple routes resolve to \App\Modules\Fast\Controllers\Mahasiswa\HistoryController::cancel, so this export is a

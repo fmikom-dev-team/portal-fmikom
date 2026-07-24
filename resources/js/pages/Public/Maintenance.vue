@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Head, usePage } from "@inertiajs/vue3";
-import { ArrowDown, Globe, Mail, RefreshCw } from "lucide-vue-next";
+import { Head, router, usePage } from "@inertiajs/vue3";
+import { ArrowDown, Globe, LogOut, Mail, RefreshCw } from "lucide-vue-next";
 import { computed, onMounted, onUnmounted, ref } from "vue";
 
 defineProps<{
@@ -101,6 +101,10 @@ const websiteUrl = computed(() => {
 const refreshPage = () => {
 	window.location.reload();
 };
+
+const handleLogout = () => {
+	router.post("/logout");
+};
 </script>
 
 <template>
@@ -181,6 +185,14 @@ const refreshPage = () => {
 					>
 						Segarkan Halaman
 						<RefreshCw class="h-4 w-4 animate-spin-hover" />
+					</button>
+					<button 
+						v-if="(page.props as any).auth?.user"
+						@click="handleLogout"
+						class="inline-flex items-center justify-center gap-2 border border-red-200 hover:border-red-300 bg-red-50 hover:bg-red-100 text-red-700 font-extrabold text-xs tracking-wider uppercase px-6 py-3.5 rounded-xl transition-all active:scale-[0.98] shadow-xs cursor-pointer"
+					>
+						Keluar / Log Out
+						<LogOut class="h-4 w-4" />
 					</button>
 				</div>
 

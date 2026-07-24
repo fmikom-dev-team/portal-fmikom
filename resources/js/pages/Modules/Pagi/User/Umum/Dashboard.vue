@@ -34,6 +34,7 @@ import {
 	watch,
 } from "vue";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getInitialsAvatar } from "@/composables/useInitials";
 import OptimizedImage from "../ui/OptimizedImage.vue";
 
 const Preview = defineAsyncComponent(() => import("../ui/Preview.vue"));
@@ -410,7 +411,7 @@ const handleLikeProject = async (p: any) => {
 
 						<!-- Right: Sort options -->
 						<div class="relative shrink-0 flex items-center gap-2">
-							<button @click="showSortDropdown = !showSortDropdown" aria-label="Urutkan karya" class="inline-flex items-center gap-1.5 rounded-full border border-slate-200/85 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 bg-white dark:bg-zinc-955 px-4 py-2.5 text-xs font-bold text-slate-800 dark:text-zinc-200 shadow-xs transition-all cursor-pointer">
+							<button @click="showSortDropdown = !showSortDropdown" aria-label="Urutkan karya" class="inline-flex items-center gap-1.5 rounded-full border border-slate-200/85 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 bg-white dark:bg-zinc-900 px-4 py-2.5 text-xs font-bold text-slate-800 dark:text-zinc-200 shadow-xs transition-all cursor-pointer">
 								<ListFilter class="h-3.5 w-3.5 text-slate-500" />
 								<span>{{ selectedSort }}</span>
 								<ChevronDown class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': showSortDropdown }" />
@@ -421,7 +422,7 @@ const handleLikeProject = async (p: any) => {
 								<button v-for="sortOpt in ['Recommended', 'Most Popular', 'Most Viewed']" :key="sortOpt"
 									@click="selectedSort = sortOpt; showSortDropdown = false"
 									:class="['w-full text-left px-4 py-2 text-xs font-semibold rounded-xl transition-all border-none bg-transparent cursor-pointer',
-										selectedSort === sortOpt ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-955 font-bold' : 'text-slate-600 hover:bg-slate-50 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-white']"
+										selectedSort === sortOpt ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-950 font-bold' : 'text-slate-600 hover:bg-slate-50 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-white']"
 								>
 									{{ sortOpt }}
 								</button>
@@ -441,7 +442,7 @@ const handleLikeProject = async (p: any) => {
 					</div>
 				</div>
 
-				<Deferred data="['feedProjects', 'followingFeedProjects', 'stats']">
+				<Deferred :data="['feedProjects', 'followingFeedProjects', 'stats']">
 					<template #fallback>
 						<!-- SKELETON LOADER -->
 						<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 select-none">
@@ -501,7 +502,7 @@ const handleLikeProject = async (p: any) => {
 										<button @click.stop="openShareModal(p, $event)" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors text-left border-none bg-transparent cursor-pointer">
 											<Share2 class="h-3.5 w-3.5 text-indigo-500" /> Bagikan
 										</button>
-										<button v-if="!$page.props.auth?.user || $page.props.auth?.user?.id !== p.user?.id" @click.stop="openReportModal(p, $event)" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-955/20 transition-colors text-left border-none bg-transparent cursor-pointer" :class="{ 'opacity-50 cursor-not-allowed': p.reported_by_me }">
+										<button v-if="!$page.props.auth?.user || $page.props.auth?.user?.id !== p.user?.id" @click.stop="openReportModal(p, $event)" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors text-left border-none bg-transparent cursor-pointer" :class="{ 'opacity-50 cursor-not-allowed': p.reported_by_me }">
 											<Flag class="h-3.5 w-3.5" /> {{ p.reported_by_me ? 'Sudah Dilaporkan' : 'Laporkan' }}
 										</button>
 									</div>
@@ -534,7 +535,7 @@ const handleLikeProject = async (p: any) => {
 								
 								<template v-for="(collab, idx) in getAcceptedCollaborators(p).slice(0, 2)" :key="collab.id">
 									<Link :href="collab.pagi_username ? '/pagi/' + collab.pagi_username : '/pagi/profile/' + collab.id" class="shrink-0" :style="{ zIndex: 9 - Number(idx) }" @click.stop>
-										<img :src="collab.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(collab.name)}&background=random`" :alt="collab.name" :title="collab.name" class="h-6 w-6 rounded-full object-cover border-2 border-white dark:border-slate-900 shadow-sm" />
+										<img :src="collab.avatar || getInitialsAvatar(collab.name)" :alt="collab.name" :title="collab.name" class="h-6 w-6 rounded-full object-cover border-2 border-white dark:border-slate-900 shadow-sm" />
 									</Link>
 								</template>
 								<div v-if="getAcceptedCollaborators(p).length > 2" class="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[8px] font-black text-slate-600 dark:text-slate-400 shrink-0 z-0 shadow-sm">

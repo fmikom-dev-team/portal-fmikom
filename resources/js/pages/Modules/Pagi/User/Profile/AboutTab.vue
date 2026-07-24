@@ -11,6 +11,7 @@ import {
 	X,
 } from "lucide-vue-next";
 import { computed, onMounted, onUnmounted, ref } from "vue";
+import { getInitialsAvatar } from "@/composables/useInitials";
 import OptimizedImage from "../ui/OptimizedImage.vue";
 
 const props = withDefaults(
@@ -305,7 +306,7 @@ onUnmounted(() => {
 					<div v-if="profileUser?.followed_by_user" class="flex items-center gap-2 mb-3 text-xs text-slate-550 dark:text-slate-400 font-semibold">
 						<Link :href="profileUser.followed_by_user.pagi_username ? '/pagi/' + profileUser.followed_by_user.pagi_username : '/pagi/profile/' + profileUser.followed_by_user.id">
 							<img 
-								:src="profileUser.followed_by_user.foto_path || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileUser.followed_by_user.name)}&background=random`" 
+								:src="profileUser.followed_by_user.foto_path || getInitialsAvatar(profileUser.followed_by_user.name)" 
 								class="w-5 h-5 rounded-full border border-slate-200 dark:border-slate-800 object-cover cursor-pointer" 
 								alt="Follower Avatar" 
 							/>
@@ -332,7 +333,7 @@ onUnmounted(() => {
 						<button 
 							v-if="isMessageEnabled"
 							@click="emit('open-chat')" 
-							class="h-[36px] px-6 rounded-full bg-[#18181b] hover:bg-zinc-800 dark:bg-white dark:text-zinc-955 dark:hover:bg-zinc-100 text-white font-semibold text-xs transition-all duration-200 cursor-pointer shadow-3xs active:scale-98 flex items-center justify-center"
+							class="h-[36px] px-6 rounded-full bg-[#18181b] hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-white font-semibold text-xs transition-all duration-200 cursor-pointer shadow-3xs active:scale-98 flex items-center justify-center"
 						>
 							Message
 						</button>

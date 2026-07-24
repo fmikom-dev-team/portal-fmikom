@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Admin\HistoryController::index
  * @see app/Modules/Fast/Controllers/Admin/HistoryController.php:15
@@ -45,41 +45,6 @@ index712511a254a7dfe7f3332db4142a47d9.head = (options?: RouteQueryOptions): Rout
     /**
 * @see \App\Modules\Fast\Controllers\Admin\HistoryController::index
  * @see app/Modules/Fast/Controllers/Admin/HistoryController.php:15
- * @route '/admin/history'
- */
-    const index712511a254a7dfe7f3332db4142a47d9Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index712511a254a7dfe7f3332db4142a47d9.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\HistoryController::index
- * @see app/Modules/Fast/Controllers/Admin/HistoryController.php:15
- * @route '/admin/history'
- */
-        index712511a254a7dfe7f3332db4142a47d9Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index712511a254a7dfe7f3332db4142a47d9.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\HistoryController::index
- * @see app/Modules/Fast/Controllers/Admin/HistoryController.php:15
- * @route '/admin/history'
- */
-        index712511a254a7dfe7f3332db4142a47d9Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index712511a254a7dfe7f3332db4142a47d9.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index712511a254a7dfe7f3332db4142a47d9.form = index712511a254a7dfe7f3332db4142a47d9Form
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\HistoryController::index
- * @see app/Modules/Fast/Controllers/Admin/HistoryController.php:15
  * @route '/kaprodi/admin/history'
  */
 const index53f298859ccc2f4dcada3a2e3ebc0d43 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -123,41 +88,6 @@ index53f298859ccc2f4dcada3a2e3ebc0d43.head = (options?: RouteQueryOptions): Rout
     /**
 * @see \App\Modules\Fast\Controllers\Admin\HistoryController::index
  * @see app/Modules/Fast/Controllers/Admin/HistoryController.php:15
- * @route '/kaprodi/admin/history'
- */
-    const index53f298859ccc2f4dcada3a2e3ebc0d43Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index53f298859ccc2f4dcada3a2e3ebc0d43.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\HistoryController::index
- * @see app/Modules/Fast/Controllers/Admin/HistoryController.php:15
- * @route '/kaprodi/admin/history'
- */
-        index53f298859ccc2f4dcada3a2e3ebc0d43Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index53f298859ccc2f4dcada3a2e3ebc0d43.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\HistoryController::index
- * @see app/Modules/Fast/Controllers/Admin/HistoryController.php:15
- * @route '/kaprodi/admin/history'
- */
-        index53f298859ccc2f4dcada3a2e3ebc0d43Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index53f298859ccc2f4dcada3a2e3ebc0d43.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index53f298859ccc2f4dcada3a2e3ebc0d43.form = index53f298859ccc2f4dcada3a2e3ebc0d43Form
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\HistoryController::index
- * @see app/Modules/Fast/Controllers/Admin/HistoryController.php:15
  * @route '/dekan/admin/history'
  */
 const indexb09fcad8e23f39d34728cc5e24fd4377 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -197,42 +127,6 @@ indexb09fcad8e23f39d34728cc5e24fd4377.head = (options?: RouteQueryOptions): Rout
     url: indexb09fcad8e23f39d34728cc5e24fd4377.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\HistoryController::index
- * @see app/Modules/Fast/Controllers/Admin/HistoryController.php:15
- * @route '/dekan/admin/history'
- */
-    const indexb09fcad8e23f39d34728cc5e24fd4377Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: indexb09fcad8e23f39d34728cc5e24fd4377.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\HistoryController::index
- * @see app/Modules/Fast/Controllers/Admin/HistoryController.php:15
- * @route '/dekan/admin/history'
- */
-        indexb09fcad8e23f39d34728cc5e24fd4377Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: indexb09fcad8e23f39d34728cc5e24fd4377.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\HistoryController::index
- * @see app/Modules/Fast/Controllers/Admin/HistoryController.php:15
- * @route '/dekan/admin/history'
- */
-        indexb09fcad8e23f39d34728cc5e24fd4377Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: indexb09fcad8e23f39d34728cc5e24fd4377.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    indexb09fcad8e23f39d34728cc5e24fd4377.form = indexb09fcad8e23f39d34728cc5e24fd4377Form
 
 /**
 * Multiple routes resolve to \App\Modules\Fast\Controllers\Admin\HistoryController::index, so this export is a

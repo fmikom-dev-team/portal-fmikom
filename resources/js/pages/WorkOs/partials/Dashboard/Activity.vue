@@ -54,23 +54,23 @@ function getIcon(type: string) {
                 <div v-if="activities.length > 0" class="space-y-4 max-h-[360px] overflow-y-auto wos-scroll pr-2">
                     <div v-for="(act, idx) in activities" :key="idx" class="flex gap-3 relative pb-4 last:pb-0">
                         <!-- Left timeline line connector -->
-                        <div v-if="idx < activities.length - 1" class="absolute left-4 top-8 bottom-0 w-0.5 bg-gray-100"></div>
+                        <div v-if="idx < activities.length - 1" class="absolute left-4 top-8 bottom-0 w-0.5 bg-gray-100 dark:bg-zinc-800"></div>
                         
                         <!-- Icon bubble -->
-                        <div class="w-8 h-8 rounded-full border border-gray-100 bg-white flex items-center justify-center shrink-0 z-10 shadow-sm" v-html="getIcon(act.type)"></div>
+                        <div class="w-8 h-8 rounded-full border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-800 flex items-center justify-center shrink-0 z-10 shadow-sm dark:shadow-none" v-html="getIcon(act.type)"></div>
                         
                         <!-- Description content -->
                         <div class="min-w-0 flex-1 pt-1">
-                            <p class="text-[13px] text-[#111827] font-medium leading-snug">
+                            <p class="text-[13px] text-[#111827] dark:text-zinc-200 font-medium leading-snug">
                                 {{ act.description }}
                             </p>
-                            <p class="text-[11px] text-[#9ca3af] mt-0.5">
+                            <p class="text-[11px] text-[#9ca3af] dark:text-zinc-600 mt-0.5">
                                 {{ formatRelativeTime(act.time) }}
                             </p>
                         </div>
                     </div>
                 </div>
-                <div v-else class="py-12 text-center text-[13px] text-gray-400">
+                <div v-else class="py-12 text-center text-[13px] text-gray-400 dark:text-zinc-500">
                     Belum ada aktivitas audit log yang tercatat.
                 </div>
             </DashboardCard>
@@ -81,39 +81,39 @@ function getIcon(type: string) {
             <DashboardCard title="Audit & Compliance" subtitle="Ringkasan rekapitulasi audit log sistem" class="h-full flex flex-col">
                 <div class="space-y-3.5 mb-5">
                     <!-- Login Events -->
-                    <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700">
                         <div class="flex items-center gap-2">
                             <span class="text-xs">🔐</span>
-                            <span class="text-[12px] font-semibold text-[#374151]">Login Events</span>
+                            <span class="text-[12px] font-semibold text-[#374151] dark:text-zinc-300">Login Events</span>
                         </div>
-                        <span class="text-[13px] font-bold text-[#111827] tabular-nums">{{ Number(auditCompliance.login_events).toLocaleString() }}</span>
+                        <span class="text-[13px] font-bold text-[#111827] dark:text-zinc-100 tabular-nums">{{ Number(auditCompliance.login_events).toLocaleString() }}</span>
                     </div>
 
                     <!-- Permission Changes -->
-                    <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700">
                         <div class="flex items-center gap-2">
                             <span class="text-xs">⚙️</span>
-                            <span class="text-[12px] font-semibold text-[#374151]">Permission Changes</span>
+                            <span class="text-[12px] font-semibold text-[#374151] dark:text-zinc-300">Permission Changes</span>
                         </div>
-                        <span class="text-[13px] font-bold text-[#111827] tabular-nums">{{ Number(auditCompliance.permission_changes).toLocaleString() }}</span>
+                        <span class="text-[13px] font-bold text-[#111827] dark:text-zinc-100 tabular-nums">{{ Number(auditCompliance.permission_changes).toLocaleString() }}</span>
                     </div>
 
                     <!-- Role Updates -->
-                    <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700">
                         <div class="flex items-center gap-2">
                             <span class="text-xs">🔑</span>
-                            <span class="text-[12px] font-semibold text-[#374151]">Role Updates</span>
+                            <span class="text-[12px] font-semibold text-[#374151] dark:text-zinc-300">Role Updates</span>
                         </div>
-                        <span class="text-[13px] font-bold text-[#111827] tabular-nums">{{ Number(auditCompliance.role_updates).toLocaleString() }}</span>
+                        <span class="text-[13px] font-bold text-[#111827] dark:text-zinc-100 tabular-nums">{{ Number(auditCompliance.role_updates).toLocaleString() }}</span>
                     </div>
 
                     <!-- Security Alerts -->
-                    <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700">
                         <div class="flex items-center gap-2">
                             <span class="text-xs">🚨</span>
-                            <span class="text-[12px] font-semibold text-[#374151]">Security Alerts</span>
+                            <span class="text-[12px] font-semibold text-[#374151] dark:text-zinc-300">Security Alerts</span>
                         </div>
-                        <span class="text-[13px] font-bold text-[#111827] tabular-nums">{{ Number(auditCompliance.security_alerts).toLocaleString() }}</span>
+                        <span class="text-[13px] font-bold text-[#111827] dark:text-zinc-100 tabular-nums">{{ Number(auditCompliance.security_alerts).toLocaleString() }}</span>
                     </div>
                 </div>
 

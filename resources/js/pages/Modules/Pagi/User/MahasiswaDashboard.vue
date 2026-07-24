@@ -27,13 +27,16 @@ import {
 	watch,
 } from "vue";
 import LazyWrapper from "@/components/Portal/LazyWrapper.vue";
-import PortfolioSkeleton from "@/components/skeletons/PortfolioSkeleton.vue";
+import ShadcnSearch from "@/components/ui/ShadcnSearch.vue";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getInitialsAvatar } from "@/composables/useInitials";
 import { useLoadingState } from "@/composables/useLoadingState";
 import Navbar from "./ui/Navbar.vue";
 import OptimizedImage from "./ui/OptimizedImage.vue";
 
 const Preview = defineAsyncComponent(() => import("./ui/Preview.vue"));
 
+import PagiShareModal from "./ui/PagiShareModal.vue";
 import VideoLazy from "./ui/VideoLazy.vue";
 
 const { isLoading } = useLoadingState();
@@ -230,6 +233,16 @@ const closeMenu = () => {
 // Share modal
 const shareModalProject = ref<any>(null);
 const shareCopied = ref(false);
+const shareModalUser = computed(() => {
+	if (!shareModalProject.value)
+		return { name: "", foto_path: null, pagi_username: null };
+	return {
+		name: shareModalProject.value.user?.name || shareModalProject.value.author,
+		foto_path:
+			shareModalProject.value.user?.foto_path || shareModalProject.value.avatar,
+		pagi_username: shareModalProject.value.user?.pagi_username,
+	};
+});
 const openShareModal = (p: any, e: Event) => {
 	e.stopPropagation();
 	closeMenu();
@@ -445,41 +458,19 @@ const handleSearchBlur = () => {
             <div class="mx-auto max-w-[1400px] px-3 sm:px-4 flex items-center gap-2 sm:gap-3">
 
                 <!-- Left: Filter Toggle Button (icon-only on mobile) -->
-                <button @click="showFilters = !showFilters" aria-label="Filter kategori" class="inline-flex items-center gap-1.5 rounded-full border border-slate-200/85 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 bg-white dark:bg-zinc-955 px-2.5 sm:px-5 py-2 text-xs font-bold text-slate-800 dark:text-zinc-200 shadow-xs transition-all shrink-0">
+                <button @click="showFilters = !showFilters" aria-label="Filter kategori" class="inline-flex items-center gap-1.5 rounded-full border border-slate-200/85 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 bg-white dark:bg-zinc-900 px-2.5 sm:px-5 py-2 text-xs font-bold text-slate-800 dark:text-zinc-200 shadow-xs transition-all shrink-0">
                     <SlidersHorizontal class="h-3.5 w-3.5" />
                     <span class="hidden sm:inline">Filter</span>
                 </button>
 
-                <!-- Center: Search Input -->
-                <div class="flex-1 relative rounded-full border border-slate-200/85 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/40 hover:border-slate-300 dark:hover:border-zinc-700 flex items-center pl-3.5 pr-1.5 py-1 transition-all min-w-0">
-                    <Search class="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400 dark:text-zinc-500 shrink-0" />
-                    <input
-                        type="text"
+                <!-- Center: Search Input & Navigation Tabs -->
+                <div class="flex-1 flex items-center gap-2 min-w-0">
+                    <ShadcnSearch 
                         v-model="searchQuery"
-                        @focus="showSuggestions = true"
-                        @blur="handleSearchBlur"
+                        endpoint="/pagi/instant-search"
                         placeholder="Search PAGI..."
-                        aria-label="Cari karya atau kreator"
-                        class="flex-1 bg-transparent border-none outline-none text-xs font-semibold text-slate-800 dark:text-zinc-150 placeholder-slate-400 pl-2 py-1.5 w-0 min-w-0"
+                        widthClass="flex-1"
                     />
-
-                    <!-- REALTIME SEARCH SUGGESTIONS DROPDOWN -->
-                    <div v-show="showSuggestions && searchSuggestions.length > 0" class="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-2xl shadow-xl z-50 overflow-hidden p-1.5">
-                        <div class="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-550 border-b border-slate-100 dark:border-zinc-800/80 mb-1">
-                            Pencarian Terkini & Saran
-                        </div>
-                        <button v-for="(sug, idx) in searchSuggestions" :key="idx"
-                            @mousedown="searchQuery = sug.text; showSuggestions = false"
-                            class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/60 flex items-center gap-2.5 transition-colors"
-                        >
-                            <Folder v-if="sug.type === 'title'" class="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                            <User v-else-if="sug.type === 'author'" class="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                            <Search v-else class="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                            <span class="truncate">{{ sug.text }}</span>
-                            <span v-if="sug.type === 'title'" class="ml-auto text-[9px] font-bold uppercase tracking-wide text-indigo-450 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-md">Judul</span>
-                            <span v-else-if="sug.type === 'author'" class="ml-auto text-[9px] font-bold uppercase tracking-wide text-emerald-450 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md">Kreator</span>
-                        </button>
-                    </div>
 
                     <!-- Search Internal Navigation Tabs (desktop only) -->
                     <div class="hidden md:flex items-center gap-0.5 bg-white dark:bg-zinc-900 rounded-full p-0.5 border border-slate-100 dark:border-zinc-800 shadow-xs shrink-0">
@@ -493,8 +484,8 @@ const handleSearchBlur = () => {
                             People
                         </Link>
                     </div>
-
                 </div>
+
 
                 <!-- Right: Sorting Dropdown (icon-only on mobile) -->
                 <div class="relative shrink-0">
@@ -526,7 +517,7 @@ const handleSearchBlur = () => {
                 <div class="flex items-center gap-1.5 sm:gap-2 py-3 sm:py-4 overflow-x-auto" style="scrollbar-width:none;">
                     <button v-for="cat in categories" :key="cat" @click="activeCategory = cat"
                         :class="['shrink-0 rounded-xl px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium transition-all whitespace-nowrap',
-                            activeCategory === cat ? 'bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-950 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-150 dark:hover:bg-slate-900']">
+                            activeCategory === cat ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-150 dark:hover:bg-slate-900']">
                         {{ cat }}
                     </button>
                     <button aria-label="Next categories" class="shrink-0 p-2 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-450 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
@@ -538,10 +529,20 @@ const handleSearchBlur = () => {
 
         <!-- MAIN -->
         <main class="mx-auto max-w-[1400px] px-4 pt-10 pb-24 md:pb-16 transition-all duration-300">
-            <Deferred data="['feedProjects', 'followingFeedProjects']">
+            <Deferred :data="['feedProjects', 'followingFeedProjects']">
                 <template #fallback>
-                    <div class="space-y-8 select-none">
-                        <PortfolioSkeleton />
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-8 select-none">
+                        <div v-for="n in 8" :key="n" class="flex flex-col gap-2 p-1.5">
+                            <Skeleton class="aspect-4/3 rounded-md w-full" />
+                            <div class="flex items-center gap-2">
+                                <Skeleton class="h-6 w-6 rounded-full shrink-0" />
+                                <div class="flex-1 space-y-1.5 min-w-0">
+                                    <Skeleton class="h-3 w-3/4 rounded" />
+                                    <Skeleton class="h-2 w-1/2 rounded" />
+                                </div>
+                                <Skeleton class="h-3.5 w-6 rounded shrink-0" />
+                            </div>
+                        </div>
                     </div>
                 </template>
                 <template #default>
@@ -591,7 +592,7 @@ const handleSearchBlur = () => {
                                     <button @click.stop="openShareModal(p, $event)" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors text-left border-none bg-transparent cursor-pointer">
                                         <Share2 class="h-3.5 w-3.5 text-indigo-500" /> Bagikan
                                     </button>
-                                    <button v-if="!$page.props.auth?.user || $page.props.auth?.user?.id !== p.user?.id" @click.stop="openReportModal(p, $event)" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-955/20 transition-colors text-left border-none bg-transparent cursor-pointer" :class="{ 'opacity-50 cursor-not-allowed': p.reported_by_me }">
+                                    <button v-if="!$page.props.auth?.user || $page.props.auth?.user?.id !== p.user?.id" @click.stop="openReportModal(p, $event)" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors text-left border-none bg-transparent cursor-pointer" :class="{ 'opacity-50 cursor-not-allowed': p.reported_by_me }">
                                         <Flag class="h-3.5 w-3.5" /> {{ p.reported_by_me ? 'Sudah Dilaporkan' : 'Laporkan' }}
                                     </button>
                                 </div>
@@ -613,7 +614,7 @@ const handleSearchBlur = () => {
                             </div>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-start gap-2">
                         <div v-if="getAcceptedCollaborators(p).length > 0" class="flex -space-x-2 shrink-0">
                             <Link v-if="p.user" :href="p.user.pagi_username ? '/pagi/' + p.user.pagi_username : '/pagi/profile/' + p.user.id" class="relative z-10 shrink-0">
                                 <OptimizedImage :src="p.avatar" :alt="p.author" className="h-6 w-6 rounded-full object-cover border-2 border-white dark:border-slate-900 shadow-sm" />
@@ -622,7 +623,7 @@ const handleSearchBlur = () => {
                             
                             <template v-for="(collab, idx) in getAcceptedCollaborators(p).slice(0, 2)" :key="collab.id">
                                 <Link :href="collab.pagi_username ? '/pagi/' + collab.pagi_username : '/pagi/profile/' + collab.id" class="shrink-0" :style="{ zIndex: 9 - Number(idx) }">
-                                    <img :src="collab.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(collab.name)}&background=random`" :alt="collab.name" :title="collab.name" class="h-6 w-6 rounded-full object-cover border-2 border-white dark:border-slate-900 shadow-sm" />
+                                    <img :src="collab.avatar || getInitialsAvatar(collab.name)" :alt="collab.name" :title="collab.name" class="h-6 w-6 rounded-full object-cover border-2 border-white dark:border-slate-900 shadow-sm" />
                                 </Link>
                             </template>
                             <div v-if="getAcceptedCollaborators(p).length > 2" class="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[8px] font-black text-slate-600 dark:text-slate-400 shrink-0 z-0 shadow-sm">
@@ -644,7 +645,7 @@ const handleSearchBlur = () => {
                                 <span v-if="getAcceptedCollaborators(p).length > 0" class="shrink-0 px-1 py-0.25 rounded-xs bg-indigo-50 dark:bg-indigo-950/45 text-indigo-600 dark:text-indigo-400 text-[8px] font-black tracking-wider uppercase border border-indigo-100/10">Collab</span>
                             </div>
                         </div>
-                        <div class="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-zinc-400 shrink-0 select-none">
+                        <div class="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-zinc-400 shrink-0 select-none pt-0.5">
                             <button @click.stop="handleLikeProject(p)" aria-label="Sukai karya" class="flex items-center gap-0.5 transition-all duration-200 focus:outline-none hover:scale-110 active:scale-90 cursor-pointer" :class="p.liked ? 'text-red-500 dark:text-red-400 font-bold' : 'text-slate-500 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-455'">
                                 <Heart class="h-3 w-3 transition-colors" :class="{ 'fill-red-500 text-red-500 dark:text-red-400': p.liked }" /> 
                                 <span>{{ p.likes }}</span>
@@ -678,7 +679,7 @@ const handleSearchBlur = () => {
                                     <button @click.stop="openShareModal(p, $event)" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors text-left border-none bg-transparent cursor-pointer">
                                         <Share2 class="h-3.5 w-3.5 text-indigo-500" /> Bagikan
                                     </button>
-                                    <button v-if="!$page.props.auth?.user || $page.props.auth?.user?.id !== p.user?.id" @click.stop="openReportModal(p, $event)" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-955/20 transition-colors text-left border-none bg-transparent cursor-pointer" :class="{ 'opacity-50 cursor-not-allowed': p.reported_by_me }">
+                                    <button v-if="!$page.props.auth?.user || $page.props.auth?.user?.id !== p.user?.id" @click.stop="openReportModal(p, $event)" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors text-left border-none bg-transparent cursor-pointer" :class="{ 'opacity-50 cursor-not-allowed': p.reported_by_me }">
                                         <Flag class="h-3.5 w-3.5" /> {{ p.reported_by_me ? 'Sudah Dilaporkan' : 'Laporkan' }}
                                     </button>
                                 </div>
@@ -696,7 +697,7 @@ const handleSearchBlur = () => {
                             </div>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-start gap-2">
                         <div v-if="getAcceptedCollaborators(p).length > 0" class="flex -space-x-2 shrink-0">
                             <Link v-if="p.user" :href="p.user.pagi_username ? '/pagi/' + p.user.pagi_username : '/pagi/profile/' + p.user.id" class="relative z-10 shrink-0">
                                 <OptimizedImage :src="p.avatar" :alt="p.author" className="h-6 w-6 rounded-full object-cover border-2 border-white dark:border-slate-900 shadow-sm" />
@@ -705,7 +706,7 @@ const handleSearchBlur = () => {
                             
                             <template v-for="(collab, idx) in getAcceptedCollaborators(p).slice(0, 2)" :key="collab.id">
                                 <Link :href="collab.pagi_username ? '/pagi/' + collab.pagi_username : '/pagi/profile/' + collab.id" class="shrink-0" :style="{ zIndex: 9 - Number(idx) }">
-                                    <img :src="collab.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(collab.name)}&background=random`" :alt="collab.name" :title="collab.name" class="h-6 w-6 rounded-full object-cover border-2 border-white dark:border-slate-900 shadow-sm" />
+                                    <img :src="collab.avatar || getInitialsAvatar(collab.name)" :alt="collab.name" :title="collab.name" class="h-6 w-6 rounded-full object-cover border-2 border-white dark:border-slate-900 shadow-sm" />
                                 </Link>
                             </template>
                             <div v-if="getAcceptedCollaborators(p).length > 2" class="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[8px] font-black text-slate-600 dark:text-slate-400 shrink-0 z-0 shadow-sm">
@@ -727,7 +728,7 @@ const handleSearchBlur = () => {
                                 <span v-if="getAcceptedCollaborators(p).length > 0" class="shrink-0 px-1 py-0.25 rounded-xs bg-indigo-50 dark:bg-indigo-950/45 text-indigo-600 dark:text-indigo-400 text-[8px] font-black tracking-wider uppercase border border-indigo-100/10">Collab</span>
                             </div>
                         </div>
-                        <div class="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-zinc-400 shrink-0 select-none">
+                        <div class="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-zinc-400 shrink-0 select-none pt-0.5">
                             <button @click.stop="handleLikeProject(p)" aria-label="Sukai karya" class="flex items-center gap-0.5 transition-all duration-200 focus:outline-none hover:scale-110 active:scale-90 cursor-pointer" :class="p.liked ? 'text-red-500 dark:text-red-400 font-bold' : 'text-slate-500 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-455'">
                                 <Heart class="h-3 w-3 transition-colors" :class="{ 'fill-red-500 text-red-500 dark:text-red-400': p.liked }" /> 
                                 <span>{{ p.likes }}</span>
@@ -816,31 +817,16 @@ const handleSearchBlur = () => {
         </div>
     </div>
 
-    <!-- SHARE MODAL -->
-    <Teleport to="body">
-        <div v-if="shareModalProject" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-9999 p-4" @click.self="shareModalProject = null">
-            <div class="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-100 dark:border-zinc-800 shadow-2xl overflow-hidden">
-                <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-zinc-800">
-                    <div class="flex items-center gap-2">
-                        <Share2 class="h-4 w-4 text-indigo-500" />
-                        <h3 class="text-sm font-bold text-slate-800 dark:text-zinc-100">Bagikan Karya</h3>
-                    </div>
-                    <button @click="shareModalProject = null" class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors">
-                        <X class="h-4 w-4" />
-                    </button>
-                </div>
-                <div class="p-5 space-y-4">
-                    <p class="text-xs text-slate-500 dark:text-zinc-400">Salin tautan di bawah untuk berbagi karya ini:</p>
-                    <div class="flex items-center gap-2">
-                        <input :value="getShareUrl(shareModalProject)" readonly class="flex-1 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 px-3 py-2 text-xs font-medium text-slate-700 dark:text-zinc-200 outline-none truncate" />
-                        <button @click="copyShareLink(shareModalProject)" class="shrink-0 rounded-lg px-3 py-2 text-xs font-bold transition-all" :class="shareCopied ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400' : 'bg-indigo-600 text-white hover:bg-indigo-700'">
-                            {{ shareCopied ? 'Tersalin!' : 'Salin' }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </Teleport>
+    <!-- SHARE MODAL (Modern QR Code Share Component) -->
+    <PagiShareModal
+        v-if="shareModalProject"
+        :show="!!shareModalProject"
+        :user="shareModalUser"
+        :project="shareModalProject"
+        :activeShareUrl="getShareUrl(shareModalProject)"
+        @close="shareModalProject = null"
+        @toast="addToast"
+    />
 
     <!-- REPORT MODAL -->
     <Teleport to="body">

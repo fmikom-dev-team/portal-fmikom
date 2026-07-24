@@ -12,6 +12,7 @@ Route::prefix('modules')->name('modules.')->group(function () {
     Route::post('/', [OrganizationsController::class, 'store'])->name('store');
     Route::patch('/{module}', [OrganizationsController::class, 'update'])->name('update');
     Route::delete('/{module}', [OrganizationsController::class, 'destroy'])->name('destroy');
+    Route::post('/{module}/settings-data', [OrganizationsController::class, 'updateSettingsData'])->name('settings-data.update');
 
     Route::post('/{module}/roles', [OrganizationsController::class, 'addRole'])->name('roles.add');
     Route::delete('/{module}/roles/{role}', [OrganizationsController::class, 'removeRole'])->name('roles.remove');

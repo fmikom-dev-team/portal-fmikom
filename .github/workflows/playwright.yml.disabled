@@ -1,0 +1,158 @@
+name: Playwright E2E Tests
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+      - master
+      - workos
+  pull_request:
+    branches:
+      - develop
+      - main
+      - master
+
+jobs:
+  playwright:
+    name: Playwright E2E — ${{ matrix.browser }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ''
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_DATABASE: portal_fmikom_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+
+    steps:
+      # ── Checkout ─────────────────────────────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── Node.js ──────────────────────────────────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      # ── PHP ───────────────────────────────────────────────────────────────────
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          extensions: pdo, pdo_mysql, mbstring, openssl, redis
+
+      # ── Composer Cache ────────────────────────────────────────────────────────
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      # ── Install Dependencies ──────────────────────────────────────────────────
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Install Node dependencies
+        run: npm install --no-audit --no-fund
+
+      # ── Environment Setup ─────────────────────────────────────────────────────
+      - name: Copy Playwright environment file
+        run: cp .env.playwright.example .env
+
+      - name: Generate application key
+        run: php artisan key:generate
+
+      # ── Database Setup ────────────────────────────────────────────────────────
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in {1..30}; do
+            mysqladmin ping -h 127.0.0.1 --silent && break
+            echo "Waiting for MySQL... attempt $i"
+            sleep 2
+          done
+
+      - name: Run migrations
+        run: php artisan migrate --force
+
+      # ── Build Assets ──────────────────────────────────────────────────────────
+      - name: Generate Wayfinder routes
+        run: php artisan wayfinder:generate
+        continue-on-error: true
+
+      - name: Build frontend assets
+        env:
+          ENABLE_WAYFINDER: "1"
+        run: npm run build
+
+      # ── Optimize Laravel ──────────────────────────────────────────────────────
+      - name: Optimize Laravel
+        run: php artisan optimize
+
+      # ── Start Laravel Server ──────────────────────────────────────────────────
+      - name: Start Laravel test server
+        run: |
+          php artisan serve --port=8001 --host=127.0.0.1 &
+          echo "Waiting for server to start..."
+          for i in {1..20}; do
+            curl -s http://127.0.0.1:8001/__testing/ping > /dev/null && break
+            sleep 2
+          done
+          echo "Server started."
+
+      # ── Playwright ────────────────────────────────────────────────────────────
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Run Playwright tests
+        run: npx playwright test --project=${{ matrix.browser }}
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:8001
+          CI: true
+
+      # ── Upload Artifacts ──────────────────────────────────────────────────────
+      - name: Upload Playwright HTML report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-${{ matrix.browser }}
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload Playwright test results (screenshots, videos, traces)
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-artifacts-${{ matrix.browser }}
+          path: test-results/
+          retention-days: 14
+
+      - name: Upload JUnit report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-junit-${{ matrix.browser }}
+          path: test-results/junit.xml
+          retention-days: 30

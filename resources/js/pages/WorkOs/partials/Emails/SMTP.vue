@@ -172,47 +172,47 @@ function clearLogsTerminal() {
   <div class="space-y-5">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
         <!-- SMTP Settings Info -->
-        <div class="md:col-span-2 bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4">
-            <h3 class="text-sm font-bold text-gray-900">Custom SMTP Configuration</h3>
-            <p class="text-[12.5px] text-gray-500 leading-relaxed">Specify the server configuration that handles all transactional alerts, notification triggers, and user verification links.</p>
+        <div class="md:col-span-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl p-5 shadow-sm space-y-4 dark:shadow-none">
+            <h3 class="text-sm font-bold text-gray-900 dark:text-zinc-100">Custom SMTP Configuration</h3>
+            <p class="text-[12.5px] text-gray-500 dark:text-zinc-400 leading-relaxed">Specify the server configuration that handles all transactional alerts, notification triggers, and user verification links.</p>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label for="smtp_host" class="block text-xs font-semibold text-gray-700 mb-1.5">SMTP Host</label>
+                    <label for="smtp_host" class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">SMTP Host</label>
                     <input
                         id="smtp_host"
                         v-model="configForm.host"
                         type="text"
                         placeholder="smtp.example.com"
-                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 bg-white"
+                        class="w-full h-9 px-3 text-sm border border-gray-200 dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 dark:text-zinc-100 bg-white dark:bg-zinc-900"
                     />
                 </div>
                 <div>
-                    <label for="smtp_port" class="block text-xs font-semibold text-gray-700 mb-1.5">Port</label>
+                    <label for="smtp_port" class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Port</label>
                     <input
                         id="smtp_port"
                         v-model.number="configForm.port"
                         type="number"
                         placeholder="587"
-                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 bg-white"
+                        class="w-full h-9 px-3 text-sm border border-gray-200 dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 dark:text-zinc-100 bg-white dark:bg-zinc-900"
                     />
                 </div>
                 <div>
-                    <label for="smtp_sender" class="block text-xs font-semibold text-gray-700 mb-1.5">Default Sender Address</label>
+                    <label for="smtp_sender" class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Default Sender Address</label>
                     <input
                         id="smtp_sender"
                         v-model="configForm.sender"
                         type="email"
                         placeholder="sender@example.com"
-                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 bg-white"
+                        class="w-full h-9 px-3 text-sm border border-gray-200 dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 dark:text-zinc-100 bg-white dark:bg-zinc-900"
                     />
                 </div>
                 <div>
-                    <label for="smtp_encryption" class="block text-xs font-semibold text-gray-700 mb-1.5">Encryption Protocol</label>
+                    <label for="smtp_encryption" class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Encryption Protocol</label>
                     <select
                         id="smtp_encryption"
                         v-model="configForm.encryption"
-                        class="w-full h-9 px-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] text-gray-900 bg-white"
+                        class="w-full h-9 px-2 text-sm border border-gray-200 dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] text-gray-900 dark:text-zinc-100 bg-white dark:bg-zinc-900"
                     >
                         <option value="tls">TLS (STARTTLS)</option>
                         <option value="ssl">SSL Implicit</option>
@@ -220,30 +220,30 @@ function clearLogsTerminal() {
                     </select>
                 </div>
                 <div>
-                    <label for="smtp_username" class="block text-xs font-semibold text-gray-700 mb-1.5">SMTP Username</label>
+                    <label for="smtp_username" class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">SMTP Username</label>
                     <input
                         id="smtp_username"
                         v-model="configForm.username"
                         type="text"
                         placeholder="username"
-                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 bg-white"
+                        class="w-full h-9 px-3 text-sm border border-gray-200 dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 dark:text-zinc-100 bg-white dark:bg-zinc-900"
                     />
                 </div>
                 <div>
-                    <label for="smtp_password" class="block text-xs font-semibold text-gray-700 mb-1.5">SMTP Password</label>
+                    <label for="smtp_password" class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">SMTP Password</label>
                     <input
                         id="smtp_password"
                         v-model="configForm.password"
                         type="password"
                         placeholder="••••••••"
-                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 bg-white"
+                        class="w-full h-9 px-3 text-sm border border-gray-200 dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 dark:text-zinc-100 bg-white dark:bg-zinc-900"
                     />
                 </div>
             </div>
 
             <div class="flex justify-end pt-2">
                 <button
-                    class="h-9 px-5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-60"
+                    class="h-9 px-5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-60 dark:shadow-none"
                     :disabled="isSaving"
                     @click="saveSmtpConfig"
                 >
@@ -257,25 +257,25 @@ function clearLogsTerminal() {
         </div>
 
         <!-- Testing Module -->
-        <div class="md:col-span-1 bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4 flex flex-col justify-between">
+        <div class="md:col-span-1 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl p-5 shadow-sm space-y-4 flex flex-col justify-between dark:shadow-none">
             <div class="space-y-3">
-                <h3 class="text-sm font-bold text-gray-900">SMTP Connection Test</h3>
-                <p class="text-[12px] text-gray-500 leading-normal">Send a diagnostic email packet to ensure your SMTP credentials and certificate pathways resolve successfully.</p>
+                <h3 class="text-sm font-bold text-gray-900 dark:text-zinc-100">SMTP Connection Test</h3>
+                <p class="text-[12px] text-gray-500 dark:text-zinc-400 leading-normal">Send a diagnostic email packet to ensure your SMTP credentials and certificate pathways resolve successfully.</p>
                 
                 <div>
-                    <label for="test_recipient" class="block text-xs font-semibold text-gray-700 mb-1.5">Recipient Address</label>
+                    <label for="test_recipient" class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">Recipient Address</label>
                     <input
                         id="test_recipient"
                         v-model="testRecipient"
                         type="email"
                         placeholder="recipient@example.com"
-                        class="w-full h-9 px-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 bg-white"
+                        class="w-full h-9 px-3 text-sm border border-gray-200 dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 dark:text-zinc-100 bg-white dark:bg-zinc-900"
                     />
                 </div>
             </div>
 
             <button
-                class="w-full h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-60 mt-4"
+                class="w-full h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-60 mt-4 dark:shadow-none"
                 :disabled="isSendingTest || !testRecipient"
                 @click="sendTestEmail"
             >
@@ -289,13 +289,13 @@ function clearLogsTerminal() {
     </div>
 
     <!-- Terminal Diagnostic logs -->
-    <div v-if="showTestLogs" class="bg-gray-950 rounded-xl overflow-hidden border border-gray-800 shadow-lg animate-fade-in">
+    <div v-if="showTestLogs" class="bg-gray-950 dark:bg-zinc-950 rounded-xl overflow-hidden border border-gray-800 shadow-lg animate-fade-in dark:shadow-none">
         <div class="bg-gray-900 px-4 py-2 border-b border-gray-800 flex items-center justify-between">
-            <span class="font-mono text-[10.5px] font-semibold text-gray-400">Diagnostic SMTP Log Trace</span>
-            <button @click="clearLogsTerminal" class="text-[10px] text-gray-500 hover:text-gray-300 font-semibold transition-colors">Clear Output</button>
+            <span class="font-mono text-[10.5px] font-semibold text-gray-400 dark:text-zinc-500">Diagnostic SMTP Log Trace</span>
+            <button @click="clearLogsTerminal" class="text-[10px] text-gray-500 dark:text-zinc-400 hover:text-gray-300 font-semibold transition-colors">Clear Output</button>
         </div>
         <div class="p-4 font-mono text-[11.5px] text-emerald-400 space-y-1 max-h-60 overflow-y-auto leading-relaxed scroll-mt-2 font-semibold">
-            <div v-for="(log, idx) in testLogsText" :key="idx" :class="[log.startsWith('[SUCCESS]') ? 'text-blue-400 font-bold' : log.startsWith('[SYSTEM]') ? 'text-gray-400 italic' : log.startsWith('[ERROR]') || log.startsWith('[FATAL]') ? 'text-red-500' : 'text-emerald-400']">
+            <div v-for="(log, idx) in testLogsText" :key="idx" :class="[log.startsWith('[SUCCESS]') ? 'text-blue-400 font-bold' : log.startsWith('[SYSTEM]') ? 'text-gray-400 dark:text-zinc-500 italic' : log.startsWith('[ERROR]') || log.startsWith('[FATAL]') ? 'text-red-500' : 'text-emerald-400']">
                 {{ log }}
             </div>
         </div>

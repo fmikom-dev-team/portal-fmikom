@@ -2,10 +2,12 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use App\Models\UserModuleRole;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\Response;
 
 class AdminAccess
@@ -19,6 +21,7 @@ class AdminAccess
      */
     public function handle(Request $request, Closure $next): Response
     {
+        /** @var User|null $user */
         $user = Auth::user();
 
         if (! $user) {
@@ -45,13 +48,32 @@ class AdminAccess
     /**
      * @param  array<int, string>  $allowedRoles
      */
-    protected function resolveAllowedRole($user, array $allowedRoles): ?string
+    protected function resolveAllowedRole(User $user, array $allowedRoles): ?string
     {
         $sessionModule = strtoupper((string) session('active_module', ''));
         $sessionRole = strtolower((string) session('active_role', ''));
 
         if ($sessionModule === 'FAST' && in_array($sessionRole, $allowedRoles, true)) {
-            return $sessionRole;
+            $cacheKey = "module_access_{$user->id}_{$sessionModule}_{$sessionRole}";
+            $isValid = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($user, $sessionModule, $sessionRole) {
+                $hasAssignment = UserModuleRole::where('user_id', '=', $user->id, 'and')
+                    ->where('is_active', '=', true, 'and')
+                    ->whereHas('module', fn ($q) => $q->where('code', '=', $sessionModule, 'and')->where('is_active', '=', true, 'and'))
+                    ->whereHas('role', fn ($q) => $q->where('slug', '=', $sessionRole, 'and'))
+                    ->exists();
+
+                if ($hasAssignment) {
+                    return true;
+                }
+
+                $userType = $user->getGlobalRoleSlug();
+
+                return $sessionRole === $userType;
+            });
+
+            if ($isValid) {
+                return $sessionRole;
+            }
         }
 
         $globalRole = $user->getGlobalRoleSlug();
@@ -60,10 +82,10 @@ class AdminAccess
         }
 
         $assignedRole = UserModuleRole::query()
-            ->where('user_id', $user->id)
-            ->where('is_active', true)
-            ->whereHas('module', fn ($query) => $query->where('code', 'FAST')->where('is_active', true))
-            ->whereHas('role', fn ($query) => $query->whereIn('slug', $allowedRoles))
+            ->where('user_id', '=', $user->id, 'and')
+            ->where('is_active', '=', true, 'and')
+            ->whereHas('module', fn ($query) => $query->where('code', '=', 'FAST', 'and')->where('is_active', '=', true, 'and'))
+            ->whereHas('role', fn ($query) => $query->whereIn('slug', $allowedRoles, 'and', false))
             ->with('role')
             ->first();
 

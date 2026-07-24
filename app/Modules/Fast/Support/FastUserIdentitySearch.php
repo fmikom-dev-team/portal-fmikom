@@ -12,13 +12,14 @@ class FastUserIdentitySearch
 
     public static function apply(Builder $query, string $search): void
     {
-        $query->where('name', 'like', "%{$search}%");
+        $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
+        $query->where('name', 'like', "%{$escaped}%");
 
         if (self::hasLegacyNimNipColumn()) {
-            $query->orWhere('nim_nip', 'like', "%{$search}%");
+            $query->orWhere('nim_nip', 'like', "%{$escaped}%");
         }
 
-        $query->orWhere('nomor_induk', 'like', "%{$search}%");
+        $query->orWhere('nomor_induk', 'like', "%{$escaped}%");
     }
 
     /**

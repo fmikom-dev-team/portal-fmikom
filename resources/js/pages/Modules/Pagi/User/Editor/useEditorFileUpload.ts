@@ -5,7 +5,12 @@ import { idbPut } from "./useEditorDraft";
 const getFileAspectRatio = (file: File): Promise<number> => {
 	return new Promise((resolve) => {
 		const img = new Image();
+		const timeout = setTimeout(() => {
+			resolve(1.5);
+		}, 3000);
+
 		img.onload = () => {
+			clearTimeout(timeout);
 			const ar =
 				img.naturalWidth && img.naturalHeight
 					? img.naturalWidth / img.naturalHeight
@@ -14,6 +19,7 @@ const getFileAspectRatio = (file: File): Promise<number> => {
 			URL.revokeObjectURL(img.src);
 		};
 		img.onerror = () => {
+			clearTimeout(timeout);
 			resolve(1.5);
 		};
 		img.src = URL.createObjectURL(file);
@@ -34,7 +40,14 @@ const compressImageToWebP = (
 		const img = new Image();
 		const objectUrl = URL.createObjectURL(file);
 
+		const timeout = setTimeout(() => {
+			URL.revokeObjectURL(objectUrl);
+			console.warn("Compression timed out, using original file");
+			resolve(file);
+		}, 6000);
+
 		img.onload = () => {
+			clearTimeout(timeout);
 			URL.revokeObjectURL(objectUrl);
 			const canvas = document.createElement("canvas");
 			let width = img.naturalWidth;
@@ -81,6 +94,7 @@ const compressImageToWebP = (
 			}
 		};
 		img.onerror = () => {
+			clearTimeout(timeout);
 			URL.revokeObjectURL(objectUrl);
 			resolve(file);
 		};
@@ -166,7 +180,22 @@ export function useEditorFileUpload(
 				if (isVideo) {
 					const video = document.createElement("video");
 					video.preload = "metadata";
+
+					let resolved = false;
+					const applyVideo = () => {
+						if (resolved) return;
+						resolved = true;
+						form.cover_image = file;
+						coverPreview.value = URL.createObjectURL(file);
+					};
+
+					const timeoutId = setTimeout(() => {
+						globalThis.URL.revokeObjectURL(video.src);
+						applyVideo();
+					}, 4000);
+
 					video.onloadedmetadata = () => {
+						clearTimeout(timeoutId);
 						globalThis.URL.revokeObjectURL(video.src);
 						if (video.duration > 60.5) {
 							addToast(
@@ -174,9 +203,13 @@ export function useEditorFileUpload(
 								"error",
 							);
 						} else {
-							form.cover_image = file;
-							coverPreview.value = URL.createObjectURL(file);
+							applyVideo();
 						}
+					};
+					video.onerror = () => {
+						clearTimeout(timeoutId);
+						globalThis.URL.revokeObjectURL(video.src);
+						applyVideo();
 					};
 					video.src = URL.createObjectURL(file);
 				} else {
@@ -291,7 +324,32 @@ export function useEditorFileUpload(
 					}
 					const video = document.createElement("video");
 					video.preload = "metadata";
+
+					let resolved = false;
+					const pushVideo = async () => {
+						if (resolved) return;
+						resolved = true;
+						const preview = URL.createObjectURL(file);
+						const fileKey = `pagi_${Date.now()}_${file.name}`;
+						await idbPut(fileKey, file);
+						form.content.push({
+							type,
+							file,
+							preview,
+							name: file.name,
+							mimeType: file.type,
+							fileKey,
+							isFullWidth: true,
+						});
+					};
+
+					const timeoutId = setTimeout(() => {
+						globalThis.URL.revokeObjectURL(video.src);
+						pushVideo();
+					}, 4000);
+
 					video.onloadedmetadata = async () => {
+						clearTimeout(timeoutId);
 						globalThis.URL.revokeObjectURL(video.src);
 						if (video.duration > 60.5) {
 							addToast(
@@ -299,20 +357,16 @@ export function useEditorFileUpload(
 								"error",
 							);
 						} else {
-							const preview = URL.createObjectURL(file);
-							const fileKey = `pagi_${Date.now()}_${file.name}`;
-							await idbPut(fileKey, file);
-							form.content.push({
-								type,
-								file,
-								preview,
-								name: file.name,
-								mimeType: file.type,
-								fileKey,
-								isFullWidth: true,
-							});
+							await pushVideo();
 						}
 					};
+
+					video.onerror = async () => {
+						clearTimeout(timeoutId);
+						globalThis.URL.revokeObjectURL(video.src);
+						await pushVideo();
+					};
+
 					video.src = URL.createObjectURL(file);
 					return;
 				}
@@ -469,7 +523,27 @@ export function useEditorFileUpload(
 					}
 					const video = document.createElement("video");
 					video.preload = "metadata";
+
+					let resolved = false;
+					const applyBlockVideo = async () => {
+						if (resolved) return;
+						resolved = true;
+						const fileKey = `pagi_${Date.now()}_${file.name}`;
+						await idbPut(fileKey, file);
+						block.file = file;
+						block.preview = URL.createObjectURL(file);
+						block.name = file.name;
+						block.mimeType = file.type;
+						block.fileKey = fileKey;
+					};
+
+					const timeoutId = setTimeout(() => {
+						globalThis.URL.revokeObjectURL(video.src);
+						applyBlockVideo();
+					}, 4000);
+
 					video.onloadedmetadata = async () => {
+						clearTimeout(timeoutId);
 						globalThis.URL.revokeObjectURL(video.src);
 						if (video.duration > 60.5) {
 							addToast(
@@ -477,15 +551,16 @@ export function useEditorFileUpload(
 								"error",
 							);
 						} else {
-							const fileKey = `pagi_${Date.now()}_${file.name}`;
-							await idbPut(fileKey, file);
-							block.file = file;
-							block.preview = URL.createObjectURL(file);
-							block.name = file.name;
-							block.mimeType = file.type;
-							block.fileKey = fileKey;
+							await applyBlockVideo();
 						}
 					};
+
+					video.onerror = async () => {
+						clearTimeout(timeoutId);
+						globalThis.URL.revokeObjectURL(video.src);
+						await applyBlockVideo();
+					};
+
 					video.src = URL.createObjectURL(file);
 					return;
 				}

@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::save
  * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:41
@@ -36,27 +36,6 @@ save2dfa4b2077acf3792e3877e8343031c0.post = (options?: RouteQueryOptions): Route
     /**
 * @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::save
  * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:41
- * @route '/admin/settings/template'
- */
-    const save2dfa4b2077acf3792e3877e8343031c0Form = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: save2dfa4b2077acf3792e3877e8343031c0.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::save
- * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:41
- * @route '/admin/settings/template'
- */
-        save2dfa4b2077acf3792e3877e8343031c0Form.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: save2dfa4b2077acf3792e3877e8343031c0.url(options),
-            method: 'post',
-        })
-    
-    save2dfa4b2077acf3792e3877e8343031c0.form = save2dfa4b2077acf3792e3877e8343031c0Form
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::save
- * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:41
  * @route '/kaprodi/admin/settings/template'
  */
 const save20dfbf2fa591d06e40e119b749465e84 = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -91,27 +70,6 @@ save20dfbf2fa591d06e40e119b749465e84.post = (options?: RouteQueryOptions): Route
     /**
 * @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::save
  * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:41
- * @route '/kaprodi/admin/settings/template'
- */
-    const save20dfbf2fa591d06e40e119b749465e84Form = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: save20dfbf2fa591d06e40e119b749465e84.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::save
- * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:41
- * @route '/kaprodi/admin/settings/template'
- */
-        save20dfbf2fa591d06e40e119b749465e84Form.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: save20dfbf2fa591d06e40e119b749465e84.url(options),
-            method: 'post',
-        })
-    
-    save20dfbf2fa591d06e40e119b749465e84.form = save20dfbf2fa591d06e40e119b749465e84Form
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::save
- * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:41
  * @route '/dekan/admin/settings/template'
  */
 const savefd82f972326d00b3e471ea88ea953ba5 = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -142,28 +100,6 @@ savefd82f972326d00b3e471ea88ea953ba5.post = (options?: RouteQueryOptions): Route
     url: savefd82f972326d00b3e471ea88ea953ba5.url(options),
     method: 'post',
 })
-
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::save
- * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:41
- * @route '/dekan/admin/settings/template'
- */
-    const savefd82f972326d00b3e471ea88ea953ba5Form = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: savefd82f972326d00b3e471ea88ea953ba5.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::save
- * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:41
- * @route '/dekan/admin/settings/template'
- */
-        savefd82f972326d00b3e471ea88ea953ba5Form.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: savefd82f972326d00b3e471ea88ea953ba5.url(options),
-            method: 'post',
-        })
-    
-    savefd82f972326d00b3e471ea88ea953ba5.form = savefd82f972326d00b3e471ea88ea953ba5Form
 
 /**
 * Multiple routes resolve to \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::save, so this export is a
@@ -222,41 +158,6 @@ previewLogoa939e3f916d454fe26eebc11dbbc60f2.head = (options?: RouteQueryOptions)
     /**
 * @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::previewLogo
  * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:15
- * @route '/admin/settings/template/logo-preview'
- */
-    const previewLogoa939e3f916d454fe26eebc11dbbc60f2Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: previewLogoa939e3f916d454fe26eebc11dbbc60f2.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::previewLogo
- * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:15
- * @route '/admin/settings/template/logo-preview'
- */
-        previewLogoa939e3f916d454fe26eebc11dbbc60f2Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: previewLogoa939e3f916d454fe26eebc11dbbc60f2.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::previewLogo
- * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:15
- * @route '/admin/settings/template/logo-preview'
- */
-        previewLogoa939e3f916d454fe26eebc11dbbc60f2Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: previewLogoa939e3f916d454fe26eebc11dbbc60f2.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    previewLogoa939e3f916d454fe26eebc11dbbc60f2.form = previewLogoa939e3f916d454fe26eebc11dbbc60f2Form
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::previewLogo
- * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:15
  * @route '/kaprodi/admin/settings/template/logo-preview'
  */
 const previewLogo7d354da9cfd70d8ec0ac103079938964 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -300,41 +201,6 @@ previewLogo7d354da9cfd70d8ec0ac103079938964.head = (options?: RouteQueryOptions)
     /**
 * @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::previewLogo
  * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:15
- * @route '/kaprodi/admin/settings/template/logo-preview'
- */
-    const previewLogo7d354da9cfd70d8ec0ac103079938964Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: previewLogo7d354da9cfd70d8ec0ac103079938964.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::previewLogo
- * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:15
- * @route '/kaprodi/admin/settings/template/logo-preview'
- */
-        previewLogo7d354da9cfd70d8ec0ac103079938964Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: previewLogo7d354da9cfd70d8ec0ac103079938964.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::previewLogo
- * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:15
- * @route '/kaprodi/admin/settings/template/logo-preview'
- */
-        previewLogo7d354da9cfd70d8ec0ac103079938964Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: previewLogo7d354da9cfd70d8ec0ac103079938964.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    previewLogo7d354da9cfd70d8ec0ac103079938964.form = previewLogo7d354da9cfd70d8ec0ac103079938964Form
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::previewLogo
- * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:15
  * @route '/dekan/admin/settings/template/logo-preview'
  */
 const previewLogo9eb4b7eb5c948d4a4bb5f17bf3704869 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -374,42 +240,6 @@ previewLogo9eb4b7eb5c948d4a4bb5f17bf3704869.head = (options?: RouteQueryOptions)
     url: previewLogo9eb4b7eb5c948d4a4bb5f17bf3704869.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::previewLogo
- * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:15
- * @route '/dekan/admin/settings/template/logo-preview'
- */
-    const previewLogo9eb4b7eb5c948d4a4bb5f17bf3704869Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: previewLogo9eb4b7eb5c948d4a4bb5f17bf3704869.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::previewLogo
- * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:15
- * @route '/dekan/admin/settings/template/logo-preview'
- */
-        previewLogo9eb4b7eb5c948d4a4bb5f17bf3704869Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: previewLogo9eb4b7eb5c948d4a4bb5f17bf3704869.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::previewLogo
- * @see app/Modules/Fast/Controllers/Admin/GlobalSettingsController.php:15
- * @route '/dekan/admin/settings/template/logo-preview'
- */
-        previewLogo9eb4b7eb5c948d4a4bb5f17bf3704869Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: previewLogo9eb4b7eb5c948d4a4bb5f17bf3704869.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    previewLogo9eb4b7eb5c948d4a4bb5f17bf3704869.form = previewLogo9eb4b7eb5c948d4a4bb5f17bf3704869Form
 
 /**
 * Multiple routes resolve to \App\Modules\Fast\Controllers\Admin\GlobalSettingsController::previewLogo, so this export is a

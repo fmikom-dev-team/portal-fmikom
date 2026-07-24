@@ -75,9 +75,9 @@ export default defineConfig(async () => {
 			target: "es2022",
 			modulePreload: {
 				polyfill: true,
-				resolveDependencies(_filename, deps) {
+				resolveDependencies(_filename: string, deps: string[]) {
 					return deps.filter(
-						(dep) =>
+						(dep: string) =>
 							!dep.includes("chart-vendor") &&
 							!dep.includes("editor-") &&
 							!dep.includes("ffmpeg"),
@@ -88,7 +88,7 @@ export default defineConfig(async () => {
 			chunkSizeWarningLimit: 1500,
 			rollupOptions: {
 				output: {
-					manualChunks(id) {
+					manualChunks(id: string) {
 						if (
 							id.includes("node_modules/vue/") ||
 							id.includes("node_modules/@vue/") ||

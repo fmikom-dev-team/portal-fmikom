@@ -144,7 +144,7 @@ test('UsersController reject delegation method works', function () {
     $response->assertRedirect();
 
     $user->refresh();
-    expect($user->status_approval)->toBe('rejected');
+    expect($user->status_approval->value)->toBe('rejected');
     expect($user->is_active)->toBeFalse();
 });
 

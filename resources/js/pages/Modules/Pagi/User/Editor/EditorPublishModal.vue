@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { X } from "lucide-vue-next";
+import { getInitialsAvatar } from "@/composables/useInitials";
 import { getToolSlug } from "./editorSuggestions";
 
 const props = defineProps<{
@@ -213,7 +214,7 @@ const delayBlur = (callback: () => void) => {
 						</div>
 						<div v-if="showCollaboratorDropdown && collaboratorSuggestions.length > 0 && form.collaborators.length < 3" class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl rounded-xl py-1 z-150 max-h-40 overflow-y-auto animate-fade-in">
 							<button v-for="u in collaboratorSuggestions" :key="u.id" type="button" @mousedown="emit('add-collaborator-chip', u.name)" class="w-full h-11 px-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800 text-left text-xs font-bold text-slate-700 dark:text-slate-200 border-none bg-transparent cursor-pointer">
-								<img :src="u.foto_path ? (u.foto_path.startsWith('http') ? u.foto_path : '/storage/' + u.foto_path) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(u.name)" class="w-6 h-6 rounded-full object-cover" alt="Collaborator avatar" />
+								<img :src="u.foto_path ? (u.foto_path.startsWith('http') ? u.foto_path : '/storage/' + u.foto_path) : getInitialsAvatar(u.name)" class="w-6 h-6 rounded-full object-cover" alt="Collaborator avatar" />
 								<div class="flex flex-col">
 									<span>{{ u.name }}</span>
 									<span class="text-[10px] text-slate-400 font-normal">@{{ u.pagi_username || u.email }}</span>

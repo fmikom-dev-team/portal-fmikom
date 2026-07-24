@@ -23,6 +23,9 @@ class AuthAnalyticsController extends Controller
     {
         $days = min((int) $request->get('days', 7), 365);
         $interval = $request->get('interval', 'daily'); // daily, weekly
+        if (! in_array($interval, ['daily', 'weekly'], true)) {
+            $interval = 'daily';
+        }
         $startDate = Carbon::now()->subDays($days)->startOfDay();
 
         // 1. User Stats

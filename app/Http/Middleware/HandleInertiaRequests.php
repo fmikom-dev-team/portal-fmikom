@@ -68,7 +68,7 @@ class HandleInertiaRequests extends Middleware
                 $raw['brand_name'] = $raw['brand_name'] ?? 'Portal FMIKOM';
                 $raw['brand_subtitle'] = $raw['brand_subtitle'] ?? 'Fakultas Matematika dan Ilmu Komputer';
                 $raw['brand_logo'] = $raw['brand_logo'] ?? '/asset/brand-logo.webp';
-                $raw['brand_favicon'] = $raw['brand_favicon'] ?? '/asset/favicon.ico';
+                $raw['brand_favicon'] = $raw['brand_favicon'] ?? '/asset/brand-logo.webp';
 
                 return $raw;
             }),

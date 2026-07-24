@@ -15,14 +15,46 @@ export function updateTheme(value: Appearance): void {
 		return;
 	}
 
-	if (value === "system") {
+	const path = window.location.pathname;
+	const isPublic =
+		path === "/" ||
+		path.indexOf("/login") === 0 ||
+		path.indexOf("/register") === 0 ||
+		path.indexOf("/signup") === 0 ||
+		path.indexOf("/two-factor") === 0 ||
+		path.indexOf("/forgot-password") === 0 ||
+		path.indexOf("/reset-password") === 0 ||
+		path.indexOf("/confirm-password") === 0 ||
+		path.indexOf("/verify-email") === 0 ||
+		path.indexOf("/activate") === 0;
+
+	let isDark = false;
+	if (isPublic) {
 		const mediaQueryList = window.matchMedia("(prefers-color-scheme: dark)");
 		const systemTheme = mediaQueryList.matches ? "dark" : "light";
-
 		document.documentElement.classList.toggle("dark", systemTheme === "dark");
+		isDark = systemTheme === "dark";
 	} else {
-		document.documentElement.classList.toggle("dark", value === "dark");
+		if (value === "system") {
+			const mediaQueryList = window.matchMedia("(prefers-color-scheme: dark)");
+			const systemTheme = mediaQueryList.matches ? "dark" : "light";
+			document.documentElement.classList.toggle("dark", systemTheme === "dark");
+			isDark = systemTheme === "dark";
+		} else {
+			document.documentElement.classList.toggle("dark", value === "dark");
+			isDark = value === "dark";
+		}
 	}
+
+	// Update status bar theme-color dynamically for PWA seamless fullscreen matching Image 2
+	const themeColor = isDark ? "#0f172a" : "#ffffff";
+	let meta = document.querySelector('meta[name="theme-color"]');
+	if (!meta) {
+		meta = document.createElement("meta");
+		meta.name = "theme-color";
+		document.head.appendChild(meta);
+	}
+	meta.setAttribute("content", themeColor);
 }
 
 const setCookie = (name: string, value: string, days = 365) => {

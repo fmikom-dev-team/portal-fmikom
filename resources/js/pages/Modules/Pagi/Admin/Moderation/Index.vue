@@ -3,6 +3,7 @@ import { router } from "@inertiajs/vue3";
 import { computed, ref } from "vue";
 import ModerationTable from "@/components/Admin/ModerationTable.vue";
 import ModerationModal from "@/components/Admin/ui/ModerationModal.vue";
+import MotionTabs from "@/components/ui/tabs/MotionTabs.vue";
 import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
 
 const props = defineProps<{
@@ -32,29 +33,72 @@ const props = defineProps<{
 }>();
 
 const activeTab = ref<"all" | "report" | "new" | "comment">("all");
+
+const allItems = computed(() => props.items ?? []);
+
+const moderationTabs = computed(() => [
+	{
+		id: "all",
+		label: "Semua",
+		badge: allItems.value.length,
+		badgeClass:
+			activeTab.value === "all"
+				? "bg-white/20 text-white"
+				: "bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400",
+	},
+	{
+		id: "report",
+		label: "Laporan",
+		badge: allItems.value.filter((i) => i.type === "Laporan").length,
+		badgeClass:
+			activeTab.value === "report"
+				? "bg-white/20 text-white"
+				: "bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400",
+	},
+	{
+		id: "new",
+		label: "Karya Baru",
+		badge: allItems.value.filter((i) => i.type === "Karya Baru").length,
+		badgeClass:
+			activeTab.value === "new"
+				? "bg-white/20 text-white"
+				: "bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400",
+	},
+	{
+		id: "comment",
+		label: "Komentar",
+		badge: allItems.value.filter((i) => i.type === "Komentar").length,
+		badgeClass:
+			activeTab.value === "comment"
+				? "bg-white/20 text-white"
+				: "bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400",
+	},
+]);
+
 const isLoading = ref(false);
 const isResetting = ref(false);
 
+const showConfirmResetModal = ref(false);
+
 const resetQueue = () => {
-	if (
-		confirm(
-			"Apakah Anda yakin ingin me-reset antrean moderasi dan peringatan ke data awal demo? Semua laporan dan warnings yang dibuat manual akan dihapus.",
-		)
-	) {
-		isResetting.value = true;
-		router.post(
-			"/pagi/admin/reset-moderation",
-			{},
-			{
-				onSuccess: () => {
-					isResetting.value = false;
-				},
-				onError: () => {
-					isResetting.value = false;
-				},
+	showConfirmResetModal.value = true;
+};
+
+const executeReset = () => {
+	showConfirmResetModal.value = false;
+	isResetting.value = true;
+	router.post(
+		"/pagi/admin/reset-moderation",
+		{},
+		{
+			onSuccess: () => {
+				isResetting.value = false;
 			},
-		);
-	}
+			onError: () => {
+				isResetting.value = false;
+			},
+		},
+	);
 };
 
 const computedItems = computed(() => props.items ?? []);
@@ -149,5 +193,44 @@ const handleReview = (id: number) => {
             @close="showModal = false"
         />
 
+        <!-- Modern Confirmation Modal for Reset Antrean -->
+        <div v-if="showConfirmResetModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/50 backdrop-blur-sm">
+            <div class="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-900 p-6 border border-slate-100 dark:border-zinc-800 shadow-xl animate-scale-in">
+                <h3 class="text-[15px] font-black text-slate-900 dark:text-white">Konfirmasi Reset Data</h3>
+                <p class="mt-2 text-[12px] text-slate-500 dark:text-zinc-400 leading-relaxed">
+                    Apakah Anda yakin ingin me-reset antrean moderasi dan peringatan ke data awal demo?
+                    <span class="block mt-1.5 text-rose-500 font-semibold">Semua laporan dan warnings yang dibuat secara manual akan dihapus secara permanen.</span>
+                </p>
+
+                <div class="mt-5 flex items-center justify-end gap-2">
+                    <button
+                        type="button"
+                        @click="showConfirmResetModal = false"
+                        class="rounded-xl border border-slate-200 dark:border-zinc-700 px-4 py-2 text-[12px] font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        type="button"
+                        @click="executeReset"
+                        class="rounded-xl bg-rose-600 hover:bg-rose-700 px-4 py-2 text-[12px] font-bold text-white transition-colors shadow-sm"
+                    >
+                        Ya, Reset Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </PagiAdminLayout>
 </template>
+
+<style scoped>
+.animate-scale-in {
+    animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+</style>

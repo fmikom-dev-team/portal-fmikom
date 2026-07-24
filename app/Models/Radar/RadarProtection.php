@@ -7,7 +7,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RadarProtection extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'name',
+        'code',
+        'description',
+        'threshold_config',
+        'auto_block',
+        'notify_admin',
+    ];
 
     protected $casts = [
         'threshold_config' => 'array',

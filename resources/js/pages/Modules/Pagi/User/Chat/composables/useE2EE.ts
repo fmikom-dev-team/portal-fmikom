@@ -58,7 +58,6 @@ export function useE2EE(authUser: AuthUser) {
 					} else {
 						await axios.post("/pagi/messages/pubkey", {
 							public_key: pubKeyJwk,
-							private_key: localPriv,
 						});
 						authUser.metadata = authUser.metadata || {};
 						authUser.metadata.pagi_e2e_privkey = localPriv;
@@ -88,7 +87,6 @@ export function useE2EE(authUser: AuthUser) {
 					localStorage.setItem("pagi_e2e_privkey", JSON.stringify(newPrivJwk));
 					await axios.post("/pagi/messages/pubkey", {
 						public_key: newPubJwk,
-						private_key: newPrivJwk,
 					});
 
 					authUser.metadata = authUser.metadata || {};

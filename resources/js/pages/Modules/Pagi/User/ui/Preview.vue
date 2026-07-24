@@ -3,6 +3,7 @@ import { Link, router, usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import { Link2, Paperclip, Plus, Share2, X } from "lucide-vue-next";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { getInitialsAvatar } from "@/composables/useInitials";
 import { sanitize } from "@/composables/useSanitize";
 import {
 	getJustifiedLayout as computeLayout,
@@ -92,7 +93,7 @@ const authorAvatar = computed(() => {
 	return (
 		props.portfolio?.user?.avatar ||
 		page.props.auth?.user?.avatar ||
-		`https://ui-avatars.com/api/?name=${encodeURIComponent(authorName.value)}&background=random`
+		getInitialsAvatar(authorName.value)
 	);
 });
 const authorLocation = computed(() => {
@@ -961,7 +962,7 @@ const getToolSlug = (toolName: string): string => {
 									>
 										<img
 											class="rounded-full ring-2 ring-white dark:ring-slate-900 w-8 h-8 object-cover shadow-xs"
-											:src="collab.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(collab.name)}&background=random`"
+											:src="collab.avatar || getInitialsAvatar(collab.name)"
 											:alt="collab.name"
 											:title="collab.name"
 										/>
@@ -1079,7 +1080,7 @@ const getToolSlug = (toolName: string): string => {
 								>
 									<img
 										class="rounded-full ring-2 ring-white dark:ring-slate-900 w-6 h-6 object-cover"
-										:src="collab.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(collab.name)}&background=random`"
+										:src="collab.avatar || getInitialsAvatar(collab.name)"
 										:alt="collab.name"
 										:title="collab.name"
 									/>
@@ -1258,7 +1259,7 @@ const getToolSlug = (toolName: string): string => {
 											>
 												<img
 													class="rounded-full ring-2 ring-white dark:ring-slate-900 w-8 h-8 object-cover shadow-xs"
-													:src="collab.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(collab.name)}&background=random`"
+													:src="collab.avatar || getInitialsAvatar(collab.name)"
 													:alt="collab.name"
 													:title="collab.name"
 												/>
@@ -1372,7 +1373,7 @@ const getToolSlug = (toolName: string): string => {
 										>
 											<img
 												class="rounded-full ring-2 ring-white dark:ring-slate-900 w-6 h-6 object-cover"
-												:src="collab.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(collab.name)}&background=random`"
+												:src="collab.avatar || getInitialsAvatar(collab.name)"
 												:alt="collab.name"
 												:title="collab.name"
 											/>

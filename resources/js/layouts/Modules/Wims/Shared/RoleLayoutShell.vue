@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { Bell, BriefcaseBusiness, CheckCheck, CircleAlert, GraduationCap, LogOut, Menu, RefreshCw, UserRound, X } from 'lucide-vue-next';
@@ -808,7 +808,7 @@ watch(currentPath, () => {
                 </div>
             </header>
 
-            <header class="sticky top-0 z-40 border-b border-wims-border/80 bg-wims-topbar backdrop-blur-xl transition-colors duration-300 lg:hidden">
+            <header class="sticky top-0 z-40 border-b border-wims-border/80 bg-wims-topbar backdrop-blur-xl transition-colors duration-300 lg:hidden" style="padding-top: env(safe-area-inset-top);">
                 <div class="mx-auto flex w-full max-w-[1320px] items-center justify-between gap-3 px-4 py-3 sm:px-6">
                     <div class="flex min-w-0 items-center gap-2">
                         <button

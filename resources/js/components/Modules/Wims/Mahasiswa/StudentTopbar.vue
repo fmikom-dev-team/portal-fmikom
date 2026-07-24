@@ -154,7 +154,7 @@ watch(currentPath, () => {
 
 <template>
     <!-- ======== MOBILE TOPBAR ======== -->
-    <header class="sticky top-0 z-30 border-b border-wims-border/80 bg-wims-topbar backdrop-blur-xl lg:hidden transition-colors duration-300">
+    <header class="sticky top-0 z-30 border-b border-wims-border/80 bg-wims-topbar backdrop-blur-xl lg:hidden transition-colors duration-300" style="padding-top: env(safe-area-inset-top);">
         <div class="flex items-center justify-between gap-3 px-4 py-3">
             <div class="min-w-0">
                 <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-500 dark:text-blue-400">WIMS</p>

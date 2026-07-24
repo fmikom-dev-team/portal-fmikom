@@ -2,18 +2,22 @@
 
 namespace App\Modules\WorkOs\Controllers;
 
+use App\Enums\UserAccountStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Auth\AuthOAuthCredential;
+use App\Models\Auth\RegistrationRequest;
 use App\Models\Module;
+use App\Models\ProgramStudi;
 use App\Models\User;
-use App\Models\UserModuleRole;
 /**
  * Dedicated UsersController — extracted from DashboardController
  */
+use App\Models\UserModuleRole;
 use App\Modules\WorkOs\Controllers\Concerns\HasUserDiagnostics;
 use App\Modules\WorkOs\Controllers\Concerns\HasUserImport;
 use App\Modules\WorkOs\Services\AuditLogger;
-use App\Notifications\UserApprovedNotification;
+use App\Notifications\RegistrationRejectedNotification;
+use App\Services\Auth\ActivationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +31,10 @@ class UsersController extends Controller
     use HasUserDiagnostics;
     use HasUserImport;
 
+    public function __construct(
+        private ActivationService $activationService,
+    ) {}
+
     public function store(Request $request)
     {
         $request->validate([
@@ -38,17 +46,19 @@ class UsersController extends Controller
             'nomor_induk' => ['nullable', 'string', 'max:50', 'unique:users,nomor_induk'],
         ]);
 
-        $user = User::create([
+        $user = new User([
             'name' => trim($request->first_name.' '.$request->last_name) ?: explode('@', $request->email)[0],
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'user_type' => $request->user_type,
             'nomor_induk' => $request->nomor_induk,
-            'status_approval' => 'approved',
-            'is_active' => true,
             'email_verified_at' => now(),
             'password_changed_at' => null,
         ]);
+        $user->forceFill([
+            'user_type' => $request->user_type,
+            'status_approval' => 'approved',
+            'is_active' => true,
+        ])->save();
 
         // Auto-assign default module access based on role/user_type
         $user->assignDefaultModuleRoles();
@@ -82,11 +92,17 @@ class UsersController extends Controller
             }
         }
 
-        $userData = $request->only('name', 'email', 'user_type', 'is_active', 'nomor_induk', 'location', 'metadata', 'tanggal_lahir');
+        $userData = $request->only('name', 'email', 'nomor_induk', 'location', 'metadata', 'tanggal_lahir');
         if ($request->has('nomor_induk') && str_contains((string) $request->nomor_induk, '*')) {
             unset($userData['nomor_induk']);
         }
         $user->fill($userData);
+
+        $privilegeData = $request->only('user_type', 'is_active');
+        if (! empty($privilegeData)) {
+            $user->forceFill($privilegeData);
+        }
+
         $user->save();
 
         AuditLogger::log('user.updated', 'info', ['email' => $user->email], $user);
@@ -128,25 +144,114 @@ class UsersController extends Controller
         return back()->with('success', 'Pengajuan penghapusan ditolak. Akun user telah dikembalikan ke status normal.');
     }
 
+    /**
+     * Approve a user — triggers the activation email flow.
+     * DOES NOT directly set is_active = true anymore.
+     * The user must complete the activation process (OTP + password).
+     */
     public function approve(User $user)
     {
-        $user->fill(['status_approval' => 'approved', 'is_active' => true]);
-        $user->save();
-        try {
-            $user->notify(new UserApprovedNotification);
-        } catch (\Throwable $e) {
-            report($e);
+        abort_if($user->id === Auth::id(), 403, 'Tidak dapat memproses akun sendiri.');
+
+        // Guard: only pending/inactive users can be approved
+        if ($user->isAccountActive()) {
+            return back()->withErrors(['error' => 'User sudah aktif.']);
         }
 
-        return back()->with('success', 'User berhasil disetujui.');
+        // Check if there's a pending registration request for this user
+        $regRequest = RegistrationRequest::where('created_user_id', '=', $user->id, 'and')
+            ->whereIn('status', ['pending', 'approved'], 'and', false)
+            ->first();
+
+        if ($regRequest) {
+            // Case B: Approve via RegistrationRequest flow
+            try {
+                $this->activationService->approveRegistrationRequest(
+                    request: $regRequest,
+                    approvedBy: Auth::id(),
+                );
+            } catch (\Throwable $e) {
+                report($e);
+
+                return back()->withErrors(['error' => 'Gagal mengirim email aktivasi: '.$e->getMessage()]);
+            }
+        } else {
+            // Case A / Direct admin-created: Trigger activation OTP directly
+            $user->forceFill([
+                'status_approval' => UserAccountStatus::OtpSent->value,
+            ])->save();
+
+            try {
+                $this->activationService->sendActivationOtp($user, request()->ip());
+            } catch (\Throwable $e) {
+                report($e);
+
+                return back()->withErrors(['error' => 'Gagal mengirim OTP aktivasi: '.$e->getMessage()]);
+            }
+        }
+
+        return back()->with('success', 'Email aktivasi telah dikirimkan ke '.$user->email.'. User perlu menyelesaikan proses aktivasi.');
     }
 
-    public function reject(User $user)
+    public function reject(Request $request, User $user)
     {
-        $user->fill(['status_approval' => 'rejected', 'is_active' => false]);
-        $user->save();
+        abort_if($user->id === Auth::id(), 403, 'Tidak dapat memproses akun sendiri.');
 
-        return back()->with('success', 'User telah ditolak.');
+        $rejectionReason = $request->input('reason') ?: 'Data pendaftaran tidak memenuhi kriteria.';
+
+        $user->forceFill([
+            'status_approval' => UserAccountStatus::Rejected->value,
+            'is_active' => false,
+        ])->save();
+
+        // Reject associated pending registration request if exists
+        RegistrationRequest::where('created_user_id', '=', $user->id, 'and')
+            ->whereIn('status', ['pending', 'approved'], 'and', false)
+            ->update([
+                'status' => 'rejected',
+                'rejected_by' => Auth::id(),
+                'rejected_at' => now(),
+                'rejection_reason' => $rejectionReason,
+            ]);
+
+        // Send rejection email notification
+        try {
+            $user->notify(new RegistrationRejectedNotification($rejectionReason));
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->withErrors(['error' => 'Gagal mengirim email penolakan: '.$e->getMessage()]);
+        }
+
+        return back()->with('success', 'User telah ditolak dan email pemberitahuan telah dikirim.');
+    }
+
+    public function getRegistrationDetails(RegistrationRequest $registrationRequest)
+    {
+        $extra = [];
+        if ($registrationRequest->role === 'alumni') {
+            $prodi = ProgramStudi::find($registrationRequest->program_studi_id);
+            $extra = [
+                'Program Studi' => $prodi?->label ?? '-',
+                'Tahun Lulus' => $registrationRequest->tahun_lulus ?? '-',
+            ];
+        } elseif ($registrationRequest->role === 'mitra') {
+            $extra = [
+                'Nama Perusahaan' => $registrationRequest->nama_perusahaan ?? '-',
+                'Nomor Telepon' => $registrationRequest->phone ?? '-',
+            ];
+        }
+
+        return response()->json([
+            'id' => $registrationRequest->id,
+            'user_id' => $registrationRequest->created_user_id,
+            'name' => $registrationRequest->full_name,
+            'email' => $registrationRequest->email,
+            'role' => $registrationRequest->role,
+            'identifier' => $registrationRequest->student_number ?? $registrationRequest->employee_number ?? '-',
+            'status' => $registrationRequest->status,
+            'extra' => $extra,
+        ]);
     }
 
     public function assignRole(Request $request, User $user)

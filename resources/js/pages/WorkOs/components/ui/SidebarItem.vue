@@ -22,8 +22,8 @@ const emit = defineEmits<(e: "navigate", id: string) => void>();
             :class="[
                 'relative w-full flex items-center rounded-md text-[13.5px] transition-all duration-300 select-none group h-9 pl-[11px] pr-2',
                 active
-                    ? 'bg-[#EFF6FF] text-[#2563EB] font-medium'
-                    : 'text-[#374151] hover:bg-[#f3f4f6] hover:text-[#111827] font-normal',
+                    ? 'bg-[#EFF6FF] dark:bg-blue-500/15 text-[#2563EB] dark:text-blue-400 font-medium'
+                    : 'text-[#374151] dark:text-zinc-300 font-normal',
             ]"
             @click="emit('navigate', id)"
         >
@@ -32,7 +32,7 @@ const emit = defineEmits<(e: "navigate", id: string) => void>();
                 v-if="icon"
                 :class="[
                     'w-[18px] h-[18px] shrink-0 transition-colors',
-                    active ? 'text-[#2563EB]' : 'text-[#6b7280] group-hover:text-[#374151]',
+                    active ? 'text-[#2563EB] dark:text-blue-400' : 'text-[#6b7280] dark:text-zinc-500 group-hover:text-[#374151] dark:group-hover:text-zinc-300',
                 ]"
                 fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"
                 aria-hidden="true"
@@ -64,7 +64,7 @@ const emit = defineEmits<(e: "navigate", id: string) => void>();
                 v-if="hasSubmenu"
                 :class="[
                     'w-[14px] h-[14px] shrink-0 transition-all duration-300',
-                    active ? 'text-[#2563EB]' : 'text-[#9ca3af] group-hover:text-[#6b7280]',
+                    active ? 'text-[#2563EB]' : 'text-[#9ca3af] group-hover:text-[#6b7280] dark:text-zinc-400',
                     collapsed ? 'opacity-0 w-0 scale-0 ml-0' : 'opacity-60 w-[14px] scale-100 ml-1.5'
                 ]"
             />

@@ -18,6 +18,7 @@ import {
 } from "lucide-vue-next";
 import { computed, type PropType, ref } from "vue";
 import PortalAdminLayout from "@/layouts/PortalAdminLayout.vue";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal.vue";
 
 interface CalendarEvent {
 	id: number;
@@ -263,10 +264,22 @@ const submitForm = () => {
 	}
 };
 
+const isDeleteCalendarModalOpen = ref(false);
+const deleteCalendarId = ref<number | null>(null);
+
 const deleteEvent = (id: number) => {
-	if (confirm("Apakah Anda yakin ingin menghapus jadwal ini?")) {
-		router.delete(`/portal-admin/academic-calendars/${id}`, {
-			onSuccess: () => closeModal(),
+	deleteCalendarId.value = id;
+	isDeleteCalendarModalOpen.value = true;
+};
+
+const handleDeleteCalendar = () => {
+	if (deleteCalendarId.value !== null) {
+		router.delete(`/portal-admin/academic-calendars/${deleteCalendarId.value}`, {
+			onSuccess: () => {
+				isDeleteCalendarModalOpen.value = false;
+				deleteCalendarId.value = null;
+				closeModal();
+			},
 		});
 	}
 };
@@ -591,6 +604,13 @@ const closeModal = () => {
                 </div>
             </div>
         </transition>
+        <DeleteConfirmModal
+            :show="isDeleteCalendarModalOpen"
+            title="Hapus Jadwal Akademik"
+            message="Apakah Anda yakin ingin menghapus jadwal akademik ini? Tindakan ini tidak dapat dibatalkan."
+            @confirm="handleDeleteCalendar"
+            @cancel="isDeleteCalendarModalOpen = false"
+        />
     </PortalAdminLayout>
 </template>
 

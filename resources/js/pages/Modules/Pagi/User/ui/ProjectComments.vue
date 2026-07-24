@@ -2,6 +2,7 @@
 import { usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import { computed, ref, watch } from "vue";
+import { getInitialsAvatar } from "@/composables/useInitials";
 import OptimizedImage from "./OptimizedImage.vue";
 
 interface Props {
@@ -145,9 +146,7 @@ const handleReplySubmit = async (commentId: string) => {
 			comment.replies.push({
 				id: Date.now().toString(),
 				name: authUser.value.name,
-				avatar:
-					authUser.value.avatar ||
-					`https://ui-avatars.com/api/?name=${encodeURIComponent(authUser.value.name)}&background=random`,
+				avatar: authUser.value.avatar || getInitialsAvatar(authUser.value.name),
 				body: state.text,
 				time: "baru saja",
 				likes: [],
@@ -210,9 +209,7 @@ const handleCommentSubmit = async () => {
 		const newComment = {
 			id: Date.now().toString(),
 			name: authUser.value.name,
-			avatar:
-				authUser.value.avatar ||
-				`https://ui-avatars.com/api/?name=${encodeURIComponent(authUser.value.name)}&background=random`,
+			avatar: authUser.value.avatar || getInitialsAvatar(authUser.value.name),
 			body: commentText.value,
 			time: "baru saja",
 			likes: [],
@@ -251,7 +248,7 @@ const handleCommentSubmit = async () => {
 		<!-- Comment Input (Flat, matching Behance style) -->
 		<div class="flex gap-4 items-start w-full">
 			<div class="w-10 h-10 shrink-0 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800">
-				<OptimizedImage :src="page.props.auth?.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(page.props.auth?.user?.name || 'User')}&background=random`" className="w-full h-full object-cover" alt="User Avatar" />
+				<OptimizedImage :src="page.props.auth?.user?.avatar || getInitialsAvatar(page.props.auth?.user?.name || 'User')" className="w-full h-full object-cover" alt="User Avatar" />
 			</div>
 			
 			<div class="flex-grow flex flex-col gap-3">
@@ -274,7 +271,7 @@ const handleCommentSubmit = async () => {
 				<div class="flex items-start gap-3 w-full">
 					<!-- Clickable avatar -->
 					<a :href="c.pagi_username ? `/pagi/${c.pagi_username}` : (c.user_id ? `/pagi/profile/${c.user_id}` : '#')" class="cursor-pointer block shrink-0 w-9 h-9 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-700">
-						<OptimizedImage :src="c.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=random`" className="w-full h-full object-cover" alt="Comment author avatar" />
+						<OptimizedImage :src="c.avatar || getInitialsAvatar(c.name)" className="w-full h-full object-cover" alt="Comment author avatar" />
 					</a>
 					<div class="flex-grow min-w-0">
 						<!-- Name + time + reply -->
@@ -308,7 +305,7 @@ const handleCommentSubmit = async () => {
 				<!-- Inline Reply Box -->
 				<div v-if="getReplyState(c.id).open" class="mt-3 ml-12 flex items-start gap-2.5">
 					<div class="w-7 h-7 rounded-full overflow-hidden shrink-0 border border-zinc-200 dark:border-zinc-700">
-						<OptimizedImage :src="page.props.auth?.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(page.props.auth?.user?.name || 'User')}&background=random`" className="w-full h-full object-cover" alt="You" />
+						<OptimizedImage :src="page.props.auth?.user?.avatar || getInitialsAvatar(page.props.auth?.user?.name || 'User')" className="w-full h-full object-cover" alt="You" />
 					</div>
 					<div class="flex-grow">
 						<textarea
@@ -331,7 +328,7 @@ const handleCommentSubmit = async () => {
 				<div v-if="c.replies && c.replies.length > 0 && getReplyState(c.id).showReplies" class="mt-3 ml-12 flex flex-col gap-4">
 					<div v-for="r in c.replies" :key="r.id" class="flex items-start gap-2.5">
 						<a :href="r.pagi_username ? `/pagi/${r.pagi_username}` : (r.user_id ? `/pagi/profile/${r.user_id}` : '#')" class="block shrink-0 w-7 h-7 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-700">
-							<OptimizedImage :src="r.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(r.name)}&background=random`" className="w-full h-full object-cover" alt="Reply author avatar" />
+							<OptimizedImage :src="r.avatar || getInitialsAvatar(r.name)" className="w-full h-full object-cover" alt="Reply author avatar" />
 						</a>
 						<div class="flex-grow min-w-0">
 							<div class="flex items-center flex-wrap gap-x-2 mb-0.5">

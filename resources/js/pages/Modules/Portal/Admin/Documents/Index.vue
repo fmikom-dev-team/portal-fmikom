@@ -12,6 +12,7 @@ import {
 	Loader2,
 	Download,
 	File,
+	AlertTriangle,
 } from "lucide-vue-next";
 import { ref, watch, computed } from "vue";
 import PortalAdminLayout from "@/layouts/PortalAdminLayout.vue";
@@ -97,9 +98,32 @@ const submit = () => {
 	}
 };
 
-const deleteDocument = (id: number) => {
-	if (confirm("Apakah Anda yakin ingin menghapus dokumen ini secara permanen dari server?")) {
-		router.delete(`/portal-admin/documents/${id}`);
+// Delete Confirmation Modal State
+const isConfirmDeleteOpen = ref(false);
+const documentIdToDelete = ref<number | null>(null);
+const isDeleting = ref(false);
+
+const confirmDeleteDocument = (id: number) => {
+	documentIdToDelete.value = id;
+	isConfirmDeleteOpen.value = true;
+};
+
+const cancelDelete = () => {
+	isConfirmDeleteOpen.value = false;
+	documentIdToDelete.value = null;
+};
+
+const executeDelete = () => {
+	if (documentIdToDelete.value !== null) {
+		isDeleting.value = true;
+		router.delete(`/portal-admin/documents/${documentIdToDelete.value}`, {
+			onSuccess: () => {
+				cancelDelete();
+			},
+			onFinish: () => {
+				isDeleting.value = false;
+			}
+		});
 	}
 };
 
@@ -244,7 +268,7 @@ const formatSize = (bytes: number) => {
                         <Edit class="w-4 h-4" />
                     </button>
                     <button 
-                        @click="deleteDocument(doc.id)"
+                        @click="confirmDeleteDocument(doc.id)"
                         class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-all"
                         title="Hapus Dokumen"
                     >
@@ -365,6 +389,49 @@ const formatSize = (bytes: number) => {
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal (Modern UI) -->
+        <div v-if="isConfirmDeleteOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+            <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300" @click="cancelDelete"></div>
+            
+            <div class="relative bg-white dark:bg-slate-800 rounded-[2rem] w-full max-w-sm shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-700 animate-in zoom-in-95 duration-200 p-6 flex flex-col items-center text-center">
+                <!-- Close Button -->
+                <button @click="cancelDelete" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-350 transition-colors cursor-pointer">
+                    <X class="w-5 h-5" />
+                </button>
+
+                <!-- Warning Icon -->
+                <div class="w-16 h-16 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-550 dark:text-red-400 mb-4 animate-bounce duration-1000">
+                    <AlertTriangle class="w-8 h-8" />
+                </div>
+
+                <!-- Title & Description -->
+                <h3 class="text-lg font-black text-slate-900 dark:text-white mb-2">Hapus Dokumen?</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed px-2">
+                    Apakah Anda yakin ingin menghapus dokumen ini secara permanen dari server? Tindakan ini bersifat permanen dan tidak dapat dibatalkan.
+                </p>
+
+                <!-- Action Buttons -->
+                <div class="mt-6 flex gap-3 w-full">
+                    <button 
+                        type="button" 
+                        @click="cancelDelete" 
+                        class="flex-1 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                    >
+                        Batal
+                    </button>
+                    <button 
+                        type="button" 
+                        @click="executeDelete" 
+                        :disabled="isDeleting"
+                        class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black shadow-lg shadow-red-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                        <Loader2 v-if="isDeleting" class="w-4 h-4 animate-spin" />
+                        Ya, Hapus
+                    </button>
+                </div>
             </div>
         </div>
     </PortalAdminLayout>

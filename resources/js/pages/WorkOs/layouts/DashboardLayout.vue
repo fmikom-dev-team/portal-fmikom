@@ -24,11 +24,14 @@ defineProps<{
 	activePage: string;
 	activeLabel: string;
 	pendingCount?: number;
+	notifications?: any[];
+	unreadNotificationsCount?: number;
 }>();
 
 const emit = defineEmits<{
 	(e: "navigate", page: string): void;
 	(e: "search", query: string): void;
+	(e: "view-registration", requestId: string): void;
 }>();
 
 // Mobile sidebar open/close
@@ -48,7 +51,7 @@ function handleNavigate(id: string) {
 
 <template>
     <div
-        class="wos-app h-screen w-screen flex overflow-hidden bg-[#f9fafb]"
+        class="wos-app h-screen w-screen flex overflow-hidden bg-[#f9fafb] dark:bg-zinc-900"
         style="font-family: var(--wos-font)"
     >
         <!-- Mobile overlay -->
@@ -82,13 +85,19 @@ function handleNavigate(id: string) {
         <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
             <AppHeader
                 :active-label="activeLabel"
+                :notifications="notifications"
+                :unread-notifications-count="unreadNotificationsCount"
                 @toggle-sidebar="sidebarOpen = !sidebarOpen"
                 @search="emit('search', $event)"
+                @view-registration="emit('view-registration', $event)"
             />
 
             <main
                 id="wos-main"
-                class="flex-1 overflow-y-auto wos-scroll bg-[#f9fafb]"
+                :class="[
+                    'flex-1 wos-scroll bg-[#f9fafb] dark:bg-zinc-900',
+                    (activePage.startsWith('auth') || activePage.startsWith('authz')) ? 'overflow-hidden' : 'overflow-y-auto'
+                ]"
                 style="scroll-behavior: smooth"
             >
                 <slot />

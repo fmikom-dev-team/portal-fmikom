@@ -588,7 +588,7 @@ watch(
 	<Modal :show="show" :title="isEditingQuickWork ? 'Edit featured work on profile' : 'Feature work on profile'" maxWidth="3xl" @close="emit('close')">
 		<div class="relative grid grid-cols-1 lg:grid-cols-12 gap-8 my-2 text-left">
 			<!-- Left Column: Cover photo (col-span-6) - Stationary -->
-			<div class="lg:col-span-6 flex flex-col gap-4 sticky top-0 self-start">
+			<div class="lg:col-span-6 flex flex-col gap-4 lg:sticky lg:top-0 self-start">
 				<h3 class="text-xs font-black text-slate-404 dark:text-slate-505 uppercase tracking-wider flex items-center">
 					Cover photo
 					<span class="text-rose-500 ml-1 text-xs font-bold leading-none select-none">*</span>
@@ -708,12 +708,12 @@ watch(
 					<!-- Action confirm crop buttons -->
 					<div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800/60 pt-3">
 						<button type="button" @click="cancelCrop" class="text-[10px] font-black text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 uppercase tracking-wider cursor-pointer bg-transparent border-none">Cancel</button>
-						<button type="button" @click="saveCrop" class="px-4 py-1.5 rounded-full bg-[#18181b] hover:bg-zinc-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-zinc-955 font-bold text-xs shadow-sm transition-colors cursor-pointer border-none">Save & Apply</button>
+						<button type="button" @click="saveCrop" class="px-4 py-1.5 rounded-full bg-[#18181b] hover:bg-zinc-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-zinc-900 font-bold text-xs shadow-sm transition-colors cursor-pointer border-none">Save & Apply</button>
 					</div>
 				</div>
 
 				<!-- Image quality warning card -->
-				<div v-if="coverPreviewUrl && imageQualityWarning" class="flex gap-3 p-3.5 rounded-2xl border border-amber-250/60 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-955/20 text-amber-700 dark:text-amber-300 leading-normal text-[11px] font-semibold">
+				<div v-if="coverPreviewUrl && imageQualityWarning" class="flex gap-3 p-3.5 rounded-2xl border border-amber-250/60 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-300 leading-normal text-[11px] font-semibold">
 					<Info class="w-4.5 h-4.5 shrink-0 text-amber-600 dark:text-amber-400" />
 					<p>
 						The selected image is low quality. Images at least 1600 x 1200 (4:3 aspect ratio) in PNG, JPG, or GIF formats work best.
@@ -722,7 +722,7 @@ watch(
 			</div>
 
 			<!-- Right Column: Fields (col-span-6) - Scrollable -->
-			<div class="lg:col-span-6 flex flex-col gap-5 overflow-y-auto max-h-[68vh] px-2 -mx-2 scrollbar-thin">
+			<div class="lg:col-span-6 flex flex-col gap-5 lg:overflow-y-auto lg:max-h-[68vh] px-2 -mx-2 scrollbar-thin">
 				<!-- Project title input -->
 				<div class="flex flex-col gap-1.5">
 					<label class="text-[10px] font-black text-slate-404 dark:text-slate-505 uppercase tracking-wider flex items-center">

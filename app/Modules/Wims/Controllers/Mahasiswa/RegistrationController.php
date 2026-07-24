@@ -7,8 +7,10 @@ use App\Modules\Wims\Requests\Mahasiswa\StoreRegistrationRequest;
 use App\Modules\Wims\Services\Mahasiswa\Registration\StudentRegistrationActionService;
 use App\Modules\Wims\Services\Mahasiswa\Registration\StudentRegistrationPageService;
 use App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportTemplateService;
+use App\Services\VirusScannerService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -36,6 +38,16 @@ class RegistrationController extends Controller
         $user = $request->user();
         $latestRegistration = $this->studentRegistrationPageService->latestRegistration($user->id);
         $proposalFile = $request->file('proposal_pkl');
+
+        if ($proposalFile) {
+            $scanner = app(VirusScannerService::class);
+            $scanResult = $scanner->scan($proposalFile);
+            if (! $scanResult['safe']) {
+                throw ValidationException::withMessages([
+                    'proposal_pkl' => $scanResult['reason'],
+                ]);
+            }
+        }
 
         if (! $this->studentRegistrationPageService->canSubmitRegistration($latestRegistration)) {
             return back()->withErrors([

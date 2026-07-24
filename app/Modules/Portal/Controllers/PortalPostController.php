@@ -26,18 +26,39 @@ class PortalPostController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
-
         $settings = PortalSetting::pluck('value', 'key')->toArray();
-        $perPage = isset($settings['posts_per_page']) && is_numeric($settings['posts_per_page']) ? (int) $settings['posts_per_page'] : 15;
+        $perPage = isset($settings['posts_per_page']) && is_numeric($settings['posts_per_page'])
+            ? (int) $settings['posts_per_page']
+            : 15;
 
-        $posts = PortalPost::with('category')
-            ->when($search, function ($query, $search) {
-                $query->where('title', 'like', "%{$search}%")
-                    ->orWhere('content', 'like', "%{$search}%");
-            })
-            ->latest()
-            ->paginate($perPage)
-            ->withQueryString();
+        if ($search) {
+            try {
+                // Meilisearch: fast full-text search with typo-tolerance
+                $matchIds = PortalPost::search($search)->keys();
+
+                $posts = PortalPost::with('category')
+                    ->whereIn('id', $matchIds)
+                    ->latest()
+                    ->paginate($perPage)
+                    ->withQueryString();
+            } catch (\Throwable $e) {
+                // Fallback to SQL LIKE if Meilisearch is unavailable
+                Log::warning('Meilisearch unavailable (PortalPost admin), falling back to SQL.', ['error' => $e->getMessage()]);
+                $posts = PortalPost::with('category')
+                    ->where(function ($q) use ($search) {
+                        $q->where('title', 'like', "%{$search}%")
+                            ->orWhere('excerpt', 'like', "%{$search}%");
+                    })
+                    ->latest()
+                    ->paginate($perPage)
+                    ->withQueryString();
+            }
+        } else {
+            $posts = PortalPost::with('category')
+                ->latest()
+                ->paginate($perPage)
+                ->withQueryString();
+        }
 
         return Inertia::render('Modules/Portal/Admin/Posts/Index', [
             'posts' => $posts,
@@ -358,7 +379,8 @@ class PortalPostController extends Controller
                 ], 422);
             }
 
-            $filename = Str::random(30).'.'.$file->getClientOriginalExtension();
+            $extension = strtolower($file->guessExtension() ?: $file->getClientOriginalExtension() ?: 'bin');
+            $filename = Str::random(30).'.'.$extension;
             $path = 'portal/posts/files/'.$filename;
 
             Storage::disk('public')->put($path, file_get_contents($file->getRealPath()));

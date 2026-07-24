@@ -26,13 +26,13 @@ const uid = computed(
 
 const inputCls = computed(() => {
 	const base =
-		"w-full h-8 px-3 text-[13px] rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0";
+		"w-full h-8 px-3 text-[13px] rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500";
 	const state = props.error
-		? "border-[#fca5a5] bg-white focus:ring-[#ef4444]/20 focus:border-[#ef4444]"
-		: "border-[#d1d5db] bg-white focus:ring-[#2563eb]/15 focus:border-[#2563eb]";
+		? "border-[#fca5a5] dark:border-red-800 bg-white focus:ring-[#ef4444]/20 focus:border-[#ef4444]"
+		: "border-[#d1d5db] dark:border-zinc-700 bg-white focus:ring-[#2563eb]/15 focus:border-[#2563eb] dark:focus:border-blue-500";
 	const dis = props.disabled
-		? "bg-[#f9fafb] text-[#9ca3af] cursor-not-allowed"
-		: "text-[#111827]";
+		? "bg-[#f9fafb] dark:bg-zinc-800 text-[#9ca3af] dark:text-zinc-600 cursor-not-allowed"
+		: "text-[#111827] dark:text-zinc-100";
 	return `${base} ${state} ${dis}`;
 });
 </script>
@@ -42,14 +42,14 @@ const inputCls = computed(() => {
         <label
             v-if="label"
             :for="uid"
-            class="text-[12.5px] font-semibold text-[#374151]"
+            class="text-[12.5px] font-semibold text-[#374151] dark:text-zinc-300"
         >
             {{ label }}
             <span v-if="required" class="text-[#ef4444] ml-0.5" aria-hidden="true">*</span>
         </label>
 
         <div class="relative">
-            <div v-if="$slots.left" class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af]">
+            <div v-if="$slots.left" class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] dark:text-zinc-500">
                 <slot name="left" />
             </div>
             <input
@@ -64,15 +64,15 @@ const inputCls = computed(() => {
                 :class="[inputCls, $slots.left ? 'pl-9' : '', $slots.right ? 'pr-9' : '']"
                 @input="e => emit('update:modelValue', (e.target as HTMLInputElement).value)"
             />
-            <div v-if="$slots.right" class="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af]">
+            <div v-if="$slots.right" class="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] dark:text-zinc-500">
                 <slot name="right" />
             </div>
         </div>
 
-        <p v-if="error" :id="`${uid}-error`" class="text-[11.5px] text-[#dc2626] font-medium" role="alert">
+        <p v-if="error" :id="`${uid}-error`" class="text-[11.5px] text-[#dc2626] dark:text-red-400 font-medium" role="alert">
             {{ error }}
         </p>
-        <p v-else-if="hint" :id="`${uid}-hint`" class="text-[11.5px] text-[#6b7280]">
+        <p v-else-if="hint" :id="`${uid}-hint`" class="text-[11.5px] text-[#6b7280] dark:text-zinc-500">
             {{ hint }}
         </p>
     </div>

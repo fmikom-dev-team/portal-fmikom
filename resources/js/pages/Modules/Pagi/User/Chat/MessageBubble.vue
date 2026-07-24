@@ -289,7 +289,7 @@ function handleReactAction(emoji: string) {
                             <!-- Hapus Pesan -->
                             <button
                                 @click="$emit('delete', msg.id, msg.sender_id === authUser.id)"
-                                class="w-full text-left px-4 py-2.5 text-[13px] font-medium text-red-650 dark:text-red-400 hover:bg-red-50/50 dark:hover:bg-red-955/10 flex items-center gap-3 transition-colors"
+                                class="w-full text-left px-4 py-2.5 text-[13px] font-medium text-red-650 dark:text-red-400 hover:bg-red-50/50 dark:hover:bg-red-950/10 flex items-center gap-3 transition-colors"
                             >
                                 <Trash2 class="w-4 h-4 text-red-500 dark:text-red-400 shrink-0" stroke-width="2" />
                                 <span>Hapus Pesan</span>
@@ -412,7 +412,7 @@ function handleReactAction(emoji: string) {
                     :class="[
                         'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border shadow-2xs transition-all active:scale-90',
                         userIds.includes(authUser.id)
-                            ? 'bg-indigo-50 dark:bg-indigo-955/40 border-indigo-200 dark:border-indigo-850 text-indigo-600 dark:text-indigo-400'
+                            ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-850 text-indigo-600 dark:text-indigo-400'
                             : 'bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-400'
                     ]"
                 >

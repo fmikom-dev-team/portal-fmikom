@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm } from "@inertiajs/vue3";
+import { Head, router, useForm } from "@inertiajs/vue3";
 import {
 	AlertCircle,
 	CheckCircle2,
@@ -165,6 +165,36 @@ const addAssetLinkBlock = () => {
 // Form Helper Functions
 const deleteBlock = (index: number) => {
 	form.content.splice(index, 1);
+};
+
+const handleCancel = () => {
+	goToPagiDashboard();
+};
+
+const handleDiscardDraft = async () => {
+	const confirmDiscard = confirm(
+		"Apakah Anda yakin ingin membuang draf pekerjaan ini?\n\nSemua perubahan yang belum disimpan akan dihapus secara permanen.",
+	);
+	if (confirmDiscard) {
+		if (globalThis.window !== undefined) {
+			globalThis.localStorage.removeItem("pagi_work_draft");
+			await idbClear();
+		}
+		addToast("Draf pekerjaan berhasil dibuang.", "success");
+		goToPagiDashboard();
+	}
+};
+
+const goToPagiDashboard = () => {
+	if (globalThis.window !== undefined) {
+		if (props.editor?.id) {
+			router.visit(`/pagi/profile/${props.editor.user_id}`);
+		} else if (globalThis.window.history.length > 1) {
+			globalThis.window.history.back();
+		} else {
+			router.visit("/pagi");
+		}
+	}
 };
 
 const handleAddClick = (type: string) => {
@@ -541,6 +571,8 @@ onUnmounted(() => {
 					@save-draft="saveAsDraft" 
 					@preview="isPreviewMode = true" 
 					@update-settings="updateGlobalSettingsBlock" 
+					@cancel="handleCancel"
+					@discard-draft="handleDiscardDraft"
 				/>
 			</div>
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Portal\PortalDocument;
 use App\Services\VirusScannerService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -25,19 +26,32 @@ class PortalDocumentController extends Controller
         $search = $request->input('search');
         $category = $request->input('category');
 
-        $documents = PortalDocument::query()
-            ->when($search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
+        if ($search) {
+            try {
+                $matchIds = PortalDocument::search($search)->keys();
+                $documents = PortalDocument::whereIn('id', $matchIds)
+                    ->when($category, fn ($q) => $q->where('category', $category))
+                    ->latest()
+                    ->paginate(15)
+                    ->withQueryString();
+            } catch (\Throwable $e) {
+                Log::warning('Meilisearch unavailable (Document), falling back to SQL.', ['error' => $e->getMessage()]);
+                $documents = PortalDocument::where(function ($q) use ($search) {
                     $q->where('title', 'like', "%{$search}%")
                         ->orWhere('description', 'like', "%{$search}%");
-                });
-            })
-            ->when($category, function ($query, $category) {
-                $query->where('category', $category);
-            })
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
+                })
+                    ->when($category, fn ($q) => $q->where('category', $category))
+                    ->latest()
+                    ->paginate(15)
+                    ->withQueryString();
+            }
+        } else {
+            $documents = PortalDocument::query()
+                ->when($category, fn ($q) => $q->where('category', $category))
+                ->latest()
+                ->paginate(15)
+                ->withQueryString();
+        }
 
         $categories = PortalDocument::whereNotNull('category')
             ->where('category', '!=', '')

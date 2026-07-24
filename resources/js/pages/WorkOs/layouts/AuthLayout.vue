@@ -18,13 +18,13 @@ defineProps<{
     >
         <div class="sm:mx-auto sm:w-full sm:max-w-md">
             <div class="flex justify-center">
-                <div class="w-12 h-12 rounded-xl bg-gray-900 flex items-center justify-center shadow-lg">
+                <div class="w-12 h-12 rounded-xl bg-gray-900 flex items-center justify-center shadow-lg dark:shadow-none">
                     <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                 </div>
             </div>
-            <h2 class="mt-6 text-center text-[24px] font-bold tracking-tight text-gray-900">
+            <h2 class="mt-6 text-center text-[24px] font-bold tracking-tight text-gray-900 dark:text-zinc-100">
                 <slot name="title">Sign in to your account</slot>
             </h2>
             <p class="mt-2 text-center text-sm text-gray-600">
@@ -33,7 +33,7 @@ defineProps<{
         </div>
 
         <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-            <div class="bg-white py-8 px-4 shadow-sm border border-gray-100 sm:rounded-2xl sm:px-10">
+            <div class="bg-white dark:bg-zinc-900 py-8 px-4 shadow-sm border border-gray-100 dark:border-zinc-800 sm:rounded-2xl sm:px-10 dark:shadow-none">
                 <slot />
             </div>
         </div>
@@ -56,7 +56,7 @@ defineProps<{
                                 ? 'bg-amber-50 border-amber-200 text-amber-800'
                                 : toastState.type === 'info'
                                     ? 'bg-blue-50 border-blue-200 text-blue-800'
-                                    : 'bg-white border-gray-200 text-gray-900',
+                                    : 'bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100',
                     ]"
                 >
                     <div

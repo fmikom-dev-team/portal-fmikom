@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from "vue";
 import L from "leaflet";
-import AlumniStats from "@/components/Portal/AlumniStats.vue";
 import { useLeafletMap } from "@/composables/useLeafletMap";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
@@ -391,45 +390,6 @@ watch(
                 </div>
             </div>
 
-            <div class="text-center mb-10 hide-animate slide-up">
-                <p
-                    class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-6"
-                >
-                    Dipercaya oleh berbagai institusi dan perusahaan
-                </p>
-                <div
-                    class="flex flex-wrap justify-center gap-8 sm:gap-12 opacity-50 grayscale hover:grayscale-0 transition-all duration-500"
-                >
-                    <div
-                        class="h-8 flex items-center font-black text-xl text-slate-800 tracking-tighter"
-                    >
-                        <span class="text-blue-600">GO</span>JEK
-                    </div>
-                    <div
-                        class="h-8 flex items-center font-black text-xl text-slate-800 tracking-tighter"
-                    >
-                        tokopedia
-                    </div>
-                    <div
-                        class="h-8 flex items-center font-black text-xl text-slate-800 tracking-tighter"
-                    >
-                        traveloka<span class="text-blue-400">.</span>
-                    </div>
-                    <div
-                        class="h-8 flex items-center font-black text-xl text-slate-800 tracking-tighter"
-                    >
-                        <span class="text-orange-500">Shopee</span>
-                    </div>
-                    <div
-                        class="h-8 flex items-center font-black text-xl text-slate-800 tracking-tighter"
-                    >
-                        Ruang<span class="text-blue-500">guru</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 4 Stat Boxes -->
-            <AlumniStats :stats="alumniStats" />
         </div>
     </section>
 </template>

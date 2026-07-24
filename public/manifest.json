@@ -23,5 +23,27 @@
       "sizes": "180x180",
       "type": "image/png"
     }
+  ],
+  "screenshots": [
+    {
+      "src": "/asset/screenshots/pwa-desktop-v2.png",
+      "sizes": "2988x1716",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Portal FMIKOM - Tampilan Desktop"
+    },
+    {
+      "src": "/asset/screenshots/pwa-tablet-v2.png",
+      "sizes": "1240x1902",
+      "type": "image/png",
+      "label": "Portal FMIKOM - Tampilan Tablet"
+    },
+    {
+      "src": "/asset/screenshots/pwa-mobile-v2.png",
+      "sizes": "942x1920",
+      "type": "image/png",
+      "label": "Portal FMIKOM - Tampilan Smartphone"
+    }
   ]
 }
+

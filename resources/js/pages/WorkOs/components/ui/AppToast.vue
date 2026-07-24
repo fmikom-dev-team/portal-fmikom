@@ -16,10 +16,10 @@ import { toastState } from "../../composables/useWorkOs";
                 aria-live="polite"
                 :class="[
                     'fixed bottom-5 right-5 z-[9999] flex items-center gap-2.5 px-4 py-3 rounded-xl border text-[13px] font-medium max-w-sm shadow-lg',
-                    toastState.type === 'error'   ? 'bg-white border-[#fecaca] text-[#991b1b]' :
-                    toastState.type === 'warning' ? 'bg-white border-[#fde68a] text-[#92400e]' :
-                    toastState.type === 'info'    ? 'bg-white border-[#bfdbfe] text-[#1e40af]' :
-                                                   'bg-white border-[#e5e7eb] text-[#111827]',
+                    toastState.type === 'error'   ? 'bg-white dark:bg-zinc-900 border-[#fecaca] text-[#991b1b]' :
+                    toastState.type === 'warning' ? 'bg-white dark:bg-zinc-900 border-[#fde68a] text-[#92400e]' :
+                    toastState.type === 'info'    ? 'bg-white dark:bg-zinc-900 border-[#bfdbfe] text-[#1e40af]' :
+                                                   'bg-white dark:bg-zinc-900 border-[#e5e7eb] dark:border-zinc-800 text-[#111827] dark:text-zinc-100',
                 ]"
                 style="font-family: var(--wos-font)"
             >

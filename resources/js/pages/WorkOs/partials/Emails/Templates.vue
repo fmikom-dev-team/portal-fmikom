@@ -51,6 +51,34 @@ const templates = {
     </div>
 </div>`,
 	},
+	security_alert: {
+		name: "Security Warning Alert",
+		description: "Sent to notify users of security anomalies, blocked threat events, or unrecognized logins.",
+		subject: "Security Alert: Unrecognized Activity Detected - Portal FMIKOM",
+		vars: ["name", "device", "ip_address", "time"],
+		code: `<div style="font-family: sans-serif; padding: 24px; max-width: 600px; margin: auto; background-color: #fcfcfc; border: 1px solid #fee2e2; border-radius: 8px;">
+    <h2 style="color: #b91c1c; font-size: 20px; font-weight: 700; margin-bottom: 16px; display: flex; items-center: center;">⚠️ Security Alert</h2>
+    <p style="color: #374151; font-size: 14px; line-height: 1.5; margin-bottom: 16px;">Hello {{ name }},</p>
+    <p style="color: #4b5563; font-size: 14px; line-height: 1.5; margin-bottom: 20px;">We detected some unusual activity or threat block associate with your credentials on Portal FMIKOM. Below are the details:</p>
+    <div style="background-color: #fef2f2; border: 1px solid #fca5a5; border-radius: 6px; padding: 16px; margin-bottom: 24px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13.5px; color: #4b5563;">
+            <tr>
+                <td style="padding: 4px 0; font-weight: bold; width: 120px;">Device / Browser:</td>
+                <td style="padding: 4px 0; color: #1f2937;">{{ device }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 4px 0; font-weight: bold;">IP Address:</td>
+                <td style="padding: 4px 0; color: #1f2937; font-family: monospace;">{{ ip_address }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 4px 0; font-weight: bold;">Timestamp:</td>
+                <td style="padding: 4px 0; color: #1f2937;">{{ time }}</td>
+            </tr>
+        </table>
+    </div>
+    <p style="color: #4b5563; font-size: 13px; line-height: 1.5; margin-bottom: 16px;">If this was you, no action is required. However, if this was unrecognized, we strongly recommend changing your password immediately and enabling Multi-Factor Authentication (MFA).</p>
+</div>`,
+	},
 };
 
 const variables = reactive<Record<string, string>>({
@@ -61,6 +89,9 @@ const variables = reactive<Record<string, string>>({
 	orgName: "Web Dev",
 	inviter: "Ma'ruf Muchlisin",
 	role: "Developer",
+	device: "MacBook Air (Chrome)",
+	ip_address: "182.253.155.8",
+	time: "2026-07-13 23:45:00",
 });
 
 const renderedCode = computed(() => {
@@ -95,21 +126,21 @@ const renderedSubject = computed(() => {
         <button
             v-for="(t, key) in templates"
             :key="key"
-            :class="['w-full text-left p-4 rounded-xl border transition-all flex flex-col gap-1', selectedTemplate === key ? 'bg-blue-50/50 border-blue-200 ring-1 ring-blue-500/20' : 'bg-white border-gray-200 hover:bg-gray-50']"
+            :class="['w-full text-left p-4 rounded-xl border transition-all flex flex-col gap-1', selectedTemplate === key ? 'bg-blue-50/50 border-blue-200 ring-1 ring-blue-500/20' : 'bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800']"
             @click="selectedTemplate = key"
         >
-            <span class="text-[13px] font-bold text-gray-900">{{ t.name }}</span>
-            <span class="text-[11.5px] text-gray-500 leading-normal">{{ t.description }}</span>
+            <span class="text-[13px] font-bold text-gray-900 dark:text-zinc-100">{{ t.name }}</span>
+            <span class="text-[11.5px] text-gray-500 dark:text-zinc-400 leading-normal">{{ t.description }}</span>
         </button>
     </div>
 
     <!-- Template Editor/Viewer -->
-    <div class="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-5">
-        <div class="border-b border-gray-100 pb-3 flex flex-col gap-1.5">
-            <h3 class="text-sm font-bold text-gray-900">{{ (templates as any)[selectedTemplate].name }}</h3>
-            <p class="text-[12px] text-gray-500">
+    <div class="lg:col-span-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl p-5 shadow-sm space-y-5 dark:shadow-none">
+        <div class="border-b border-gray-100 dark:border-zinc-800 pb-3 flex flex-col gap-1.5">
+            <h3 class="text-sm font-bold text-gray-900 dark:text-zinc-100">{{ (templates as any)[selectedTemplate].name }}</h3>
+            <p class="text-[12px] text-gray-500 dark:text-zinc-400">
                 Email Subject: 
-                <span class="font-mono bg-gray-50 border border-gray-150 px-2 py-0.5 rounded text-[11px] text-gray-700 font-semibold select-all">
+                <span class="font-mono bg-gray-50 dark:bg-zinc-900 border border-gray-150 px-2 py-0.5 rounded text-[11px] text-gray-700 dark:text-zinc-300 font-semibold select-all">
                     {{ renderedSubject }}
                 </span>
             </p>
@@ -117,7 +148,7 @@ const renderedSubject = computed(() => {
 
         <!-- Variable Editor Panel -->
         <div class="bg-slate-50/50 border border-slate-150 rounded-xl p-4 space-y-3">
-            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Live Variables Payload Editor</span>
+            <span class="text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider block">Live Variables Payload Editor</span>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div v-for="v in (templates as any)[selectedTemplate].vars" :key="v" class="space-y-1">
                     <label :for="'var_' + v" class="block text-[11px] font-bold text-blue-600 font-mono">{{ v }}</label>
@@ -125,7 +156,7 @@ const renderedSubject = computed(() => {
                         :id="'var_' + v"
                         v-model="variables[v]"
                         type="text"
-                        class="w-full h-8 px-2.5 text-[12px] border border-gray-200 rounded-md focus:outline-none focus:border-[#2563eb] text-gray-900 bg-white"
+                        class="w-full h-8 px-2.5 text-[12px] border border-gray-200 dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] text-gray-900 dark:text-zinc-100 bg-white dark:bg-zinc-900"
                     />
                 </div>
             </div>
@@ -133,16 +164,16 @@ const renderedSubject = computed(() => {
 
         <!-- Rendered Code vs Live Preview Tabs -->
         <div class="space-y-3">
-            <div class="flex items-center justify-between border-b border-gray-100 pb-1">
+            <div class="flex items-center justify-between border-b border-gray-100 dark:border-zinc-800 pb-1">
                 <div class="flex items-center gap-4">
                     <button
-                        :class="['pb-2 text-[12px] font-semibold border-b-2 transition-colors', previewMode === 'preview' ? 'border-blue-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900']"
+                        :class="['pb-2 text-[12px] font-semibold border-b-2 transition-colors', previewMode === 'preview' ? 'border-blue-600 text-gray-900 dark:text-zinc-100' : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-900']"
                         @click="previewMode = 'preview'"
                     >
                         Live Rendered Preview
                     </button>
                     <button
-                        :class="['pb-2 text-[12px] font-semibold border-b-2 transition-colors', previewMode === 'code' ? 'border-blue-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900']"
+                        :class="['pb-2 text-[12px] font-semibold border-b-2 transition-colors', previewMode === 'code' ? 'border-blue-600 text-gray-900 dark:text-zinc-100' : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-900']"
                         @click="previewMode = 'code'"
                     >
                         HTML Code Source
@@ -157,19 +188,19 @@ const renderedSubject = computed(() => {
 
             <div v-else class="space-y-2 animate-fade-in">
                 <!-- Mock Browser Shell -->
-                <div class="border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white">
-                    <div class="bg-gray-50 border-b border-gray-150 px-4 py-2.5 flex items-center justify-between gap-3 select-none">
+                <div class="border border-gray-200 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm bg-white dark:bg-zinc-900 dark:shadow-none">
+                    <div class="bg-gray-50 dark:bg-zinc-900 border-b border-gray-150 px-4 py-2.5 flex items-center justify-between gap-3 select-none">
                         <div class="flex items-center gap-1.5 shrink-0">
                             <span class="w-3 h-3 rounded-full bg-red-400 inline-block"></span>
                             <span class="w-3 h-3 rounded-full bg-yellow-400 inline-block"></span>
                             <span class="w-3 h-3 rounded-full bg-green-400 inline-block"></span>
                         </div>
-                        <div class="flex-1 max-w-md bg-gray-200/60 border border-gray-300/40 rounded px-3 py-0.5 text-[10.5px] text-gray-500 text-center font-mono truncate select-all">
+                        <div class="flex-1 max-w-md bg-gray-200/60 border border-gray-300 dark:border-zinc-700/40 rounded px-3 py-0.5 text-[10.5px] text-gray-500 dark:text-zinc-400 text-center font-mono truncate select-all">
                             http://fmikom.org/emails/preview/{{ selectedTemplate }}
                         </div>
                         <button
                             id="fullscreen_preview_button"
-                            class="flex items-center gap-1.5 h-[26px] px-2 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 hover:text-blue-600 transition-colors shadow-sm cursor-pointer shrink-0"
+                            class="flex items-center gap-1.5 h-[26px] px-2 text-[11px] font-semibold text-gray-600 dark:text-zinc-400 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-blue-600 transition-colors shadow-sm cursor-pointer shrink-0 dark:shadow-none"
                             @click="showFullscreenModal = true"
                         >
                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -179,7 +210,7 @@ const renderedSubject = computed(() => {
                         </button>
                     </div>
                     <div class="p-6 bg-slate-100 max-h-[400px] overflow-y-auto wos-scroll flex justify-center">
-                        <div class="w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden" v-html="renderedCode"></div>
+                        <div class="w-full bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-200 dark:border-zinc-700 overflow-hidden dark:shadow-none" v-html="renderedCode"></div>
                     </div>
                 </div>
             </div>
@@ -197,26 +228,26 @@ const renderedSubject = computed(() => {
             Full viewport preview of the live rendered email markup with active variables payload.
         </template>
 
-        <div class="border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white">
-            <div class="bg-gray-50 border-b border-gray-150 px-4 py-2.5 flex items-center justify-between gap-3 select-none">
+        <div class="border border-gray-200 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm bg-white dark:bg-zinc-900 dark:shadow-none">
+            <div class="bg-gray-50 dark:bg-zinc-900 border-b border-gray-150 px-4 py-2.5 flex items-center justify-between gap-3 select-none">
                 <div class="flex items-center gap-1.5 shrink-0">
                     <span class="w-3 h-3 rounded-full bg-red-400 inline-block"></span>
                     <span class="w-3 h-3 rounded-full bg-yellow-400 inline-block"></span>
                     <span class="w-3 h-3 rounded-full bg-green-400 inline-block"></span>
                 </div>
-                <div class="flex-1 max-w-lg bg-gray-200/60 border border-gray-300/40 rounded px-3 py-0.5 text-[11px] text-gray-500 text-center font-mono truncate select-all">
+                <div class="flex-1 max-w-lg bg-gray-200/60 border border-gray-300 dark:border-zinc-700/40 rounded px-3 py-0.5 text-[11px] text-gray-500 dark:text-zinc-400 text-center font-mono truncate select-all">
                     http://fmikom.org/emails/preview/{{ selectedTemplate }}?fullscreen=true
                 </div>
                 <div class="w-16"></div>
             </div>
             <div class="p-8 bg-slate-100 min-h-[500px] max-h-[calc(100vh-250px)] overflow-y-auto wos-scroll flex justify-center">
-                <div class="w-full max-w-2xl bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden" v-html="renderedCode"></div>
+                <div class="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-gray-200 dark:border-zinc-700 overflow-hidden dark:shadow-none" v-html="renderedCode"></div>
             </div>
         </div>
 
         <template #footer>
             <button
-                class="h-[34px] px-5 rounded-md text-[13px] font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors bg-white shadow-sm"
+                class="h-[34px] px-5 rounded-md text-[13px] font-semibold text-gray-700 dark:text-zinc-300 border border-gray-300 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm dark:shadow-none"
                 @click="showFullscreenModal = false"
             >
                 Close Preview

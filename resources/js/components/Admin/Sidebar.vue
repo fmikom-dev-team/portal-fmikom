@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // biome-ignore-all lint/correctness/noUnusedImports: used in template
 import { Link, usePage } from "@inertiajs/vue3";
-import { useDark } from "@vueuse/core";
+import { useAppearance } from "@/composables/useAppearance";
 import {
 	AlertTriangle,
 	BarChart3,
@@ -23,6 +23,7 @@ import {
 	X,
 } from "lucide-vue-next";
 import { computed } from "vue";
+import { ThemeTogglerButton } from "@/components/animate-ui/components/buttons/theme-toggler";
 
 defineProps<{
 	collapsed: boolean;
@@ -35,11 +36,13 @@ const emit = defineEmits<{
 }>();
 
 const page = usePage();
-const isDark = useDark({
-	selector: "html",
-	attribute: "class",
-	valueDark: "dark",
-	valueLight: "",
+const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
+
+const activeTheme = computed({
+	get: () => appearance.value === "system" ? resolvedAppearance.value : appearance.value,
+	set: (val) => {
+		updateAppearance(val);
+	}
 });
 
 const isActive = (path: string) => page.url.startsWith(path);
@@ -106,12 +109,6 @@ const navGroups = computed(() => [
 				active: isActive("/pagi/admin/works"),
 			},
 			{
-				label: "Galeri Karya",
-				icon: Layers,
-				href: "/pagi/admin/gallery",
-				active: isActive("/pagi/admin/gallery"),
-			},
-			{
 				label: "Tags & Kategori",
 				icon: Globe,
 				href: "/pagi/admin/tags",
@@ -123,22 +120,10 @@ const navGroups = computed(() => [
 		label: "Pengguna",
 		items: [
 			{
-				label: "Mahasiswa",
+				label: "Daftar Pengguna",
 				icon: Users,
-				href: "/pagi/admin/users/mahasiswa",
-				active: isActive("/pagi/admin/users/mahasiswa"),
-			},
-			{
-				label: "Mitra Perusahaan",
-				icon: Users,
-				href: "/pagi/admin/users/mitra",
-				active: isActive("/pagi/admin/users/mitra"),
-			},
-			{
-				label: "Roles & Permissions",
-				icon: ShieldAlert,
-				href: "/pagi/admin/roles",
-				active: isActive("/pagi/admin/roles"),
+				href: "/pagi/admin/users",
+				active: isActive("/pagi/admin/users"),
 			},
 		],
 	},
@@ -150,12 +135,6 @@ const navGroups = computed(() => [
 				icon: Settings,
 				href: "/pagi/admin/settings",
 				active: isActive("/pagi/admin/settings"),
-			},
-			{
-				label: "Log Aktivitas",
-				icon: BarChart3,
-				href: "/pagi/admin/logs",
-				active: isActive("/pagi/admin/logs"),
 			},
 		],
 	},
@@ -290,34 +269,24 @@ const badgeClasses: Record<string, string> = {
         <!-- Footer -->
         <div class="shrink-0 border-t border-slate-100 dark:border-zinc-800 p-3">
             <!-- Theme Toggle -->
-            <div v-if="!collapsed" class="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 rounded-xl p-1 mb-2.5">
-                <button
-                    @click="isDark = false"
-                    :class="[
-                        'flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-[11px] font-bold transition-all',
-                        !isDark ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200'
-                    ]"
-                >
-                    <Sun class="h-3 w-3" /> Light
-                </button>
-                <button
-                    @click="isDark = true"
-                    :class="[
-                        'flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-[11px] font-bold transition-all',
-                        isDark ? 'bg-zinc-700 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                    ]"
-                >
-                    <Moon class="h-3 w-3" /> Dark
-                </button>
+            <div v-if="!collapsed" class="flex items-center justify-between px-1.5 mb-2.5">
+                <span class="text-[12px] font-semibold text-slate-500 dark:text-zinc-400">Mode Tampilan</span>
+                <ThemeTogglerButton
+                    v-model="activeTheme"
+                    variant="ghost"
+                    size="default"
+                    direction="ltr"
+                    :modes="['light', 'dark']"
+                />
             </div>
             <div v-else class="flex justify-center mb-2">
-                <button
-                    @click="isDark = !isDark"
-                    class="h-9 w-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 hover:text-indigo-600 transition-colors"
-                >
-                    <Sun v-if="isDark" class="h-4 w-4" />
-                    <Moon v-else class="h-4 w-4" />
-                </button>
+                <ThemeTogglerButton
+                    v-model="activeTheme"
+                    variant="ghost"
+                    size="default"
+                    direction="ltr"
+                    :modes="['light', 'dark']"
+                />
             </div>
 
             <!-- Back to portal SSO (clear module session) -->

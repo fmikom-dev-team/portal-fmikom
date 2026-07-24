@@ -192,7 +192,7 @@ const onDrop = (index: number) => {
 						</button>
 						<button 
 							@click.stop="emit('delete-project', p.id, p.title); closeProjectMenu()" 
-							class="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-red-650 hover:bg-red-50 dark:hover:bg-red-955/20 border-t border-slate-100 dark:border-slate-800 mt-1 pt-2.5 transition-colors cursor-pointer text-left bg-transparent"
+							class="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-red-650 hover:bg-red-50 dark:hover:bg-red-950/20 border-t border-slate-100 dark:border-slate-800 mt-1 pt-2.5 transition-colors cursor-pointer text-left bg-transparent"
 						>
 							<X class="w-3.5 h-3.5 text-red-500" />
 							<span>Remove from profile</span>

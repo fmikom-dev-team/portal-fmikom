@@ -22,18 +22,19 @@ import PublicFooter from "@/components/Portal/PublicFooter.vue";
 import PublicNavbar from "@/components/Portal/PublicNavbar.vue";
 import LazyWrapper from "@/components/Portal/LazyWrapper.vue";
 import { register } from "@/routes";
+import TextReveal from "@/components/forgeui/TextReveal.vue";
 
 const HeroGallery = defineAsyncComponent(
     () => import("@/components/Portal/HeroGallery.vue"),
-);
-const MasonryGallery = defineAsyncComponent(
-    () => import("@/components/Portal/MasonryGallery.vue"),
 );
 const Testimonials = defineAsyncComponent(
     () => import("@/components/Portal/Testimonials.vue"),
 );
 const AlumniMap = defineAsyncComponent(
     () => import("@/components/Portal/AlumniMap.vue"),
+);
+const EventTimeline = defineAsyncComponent(
+    () => import("@/components/Portal/EventTimeline.vue"),
 );
 
 const optimizeImageUrl = (url: string, width = 800) => {
@@ -81,6 +82,8 @@ const props = withDefaults(
         alumni_data?: Array<any>;
         total_alumni?: number;
         alumni_stats?: any;
+        // biome-ignore lint/suspicious/noExplicitAny: library config
+        events?: Array<any>;
     }>(),
     {
         canRegister: true,
@@ -90,6 +93,7 @@ const props = withDefaults(
         alumni_data: () => [],
         total_alumni: 0,
         alumni_stats: () => ({}),
+        events: () => [],
     },
 );
 
@@ -550,12 +554,15 @@ const currentYear = new Date().getFullYear();
                                 }}
                             </div>
                             <h1
-                                class="text-4xl leading-tight font-extrabold tracking-tight text-[#111827] drop-shadow-sm sm:text-5xl lg:text-6xl whitespace-pre-line"
+                                class="text-4xl leading-tight font-extrabold tracking-tight text-[#111827] drop-shadow-sm sm:text-5xl lg:text-6xl"
                             >
-                                {{
-                                    settings?.hero_title ||
-                                    "Satu Portal untuk \nSemua Layanan \nFMIKOM"
-                                }}
+                                <TextReveal
+                                    :text="
+                                        settings?.hero_title ||
+                                        'Satu Portal untuk \nSemua Layanan \nFMIKOM'
+                                    "
+                                    :stagger-delay="0.08"
+                                />
                             </h1>
                             <p
                                 class="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-slate-600 sm:text-xl lg:mx-0"
@@ -649,7 +656,7 @@ const currentYear = new Date().getFullYear();
                     <template #fallback>
                         <div class="w-full">
                             <div
-                                class="flex gap-6 overflow-x-auto hide-scrollbar px-4 md:pl-[max(1rem,calc((100vw-1216px)/2+1rem))] md:pr-[max(1rem,calc((100vw-1216px)/2+1rem))]"
+                                class="flex gap-6 overflow-x-auto hide-scrollbar px-4 scroll-px-4 md:px-0 md:scroll-px-0 md:pl-[max(1rem,calc((100vw-1216px)/2+1rem))] md:pr-[max(1rem,calc((100vw-1216px)/2+1rem))]"
                             >
                                 <div
                                     v-for="i in 3"
@@ -690,7 +697,7 @@ const currentYear = new Date().getFullYear();
                         <div v-else class="w-full">
                             <!-- Navigation Buttons (rendered dynamically if we have posts) -->
                             <div
-                                class="mx-auto max-w-[1216px] px-4 flex justify-end gap-2.5 -mt-20 mb-10 relative z-20"
+                                class="mx-auto max-w-[1216px] px-4 flex justify-end gap-2.5 mt-6 md:-mt-20 mb-10 relative z-20"
                             >
                                 <button
                                     @click="scrollNews('prev')"
@@ -715,7 +722,7 @@ const currentYear = new Date().getFullYear();
                             <div
                                 ref="newsScrollContainer"
                                 @scroll="updateNewsScrollState"
-                                class="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth hide-scrollbar px-4 md:pl-[max(1rem,calc((100vw-1216px)/2+1rem))] md:pr-[max(1rem,calc((100vw-1216px)/2+1rem))]"
+                                class="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth hide-scrollbar px-4 scroll-px-4 md:px-0 md:scroll-px-0 md:pl-[max(1rem,calc((100vw-1216px)/2+1rem))] md:pr-[max(1rem,calc((100vw-1216px)/2+1rem))]"
                             >
                                 <div
                                     v-for="(post, index) in latest_posts"
@@ -807,6 +814,15 @@ const currentYear = new Date().getFullYear();
                         </div>
                     </template>
                 </Deferred>
+            </section>
+
+            <!-- EVENT TIMELINE SECTION -->
+            <section
+                class="bg-white border-t border-gray-100 py-12 lg:py-16 overflow-hidden"
+            >
+                <div class="mx-auto max-w-[1216px] px-4">
+                    <EventTimeline :events="events" show-all-link="/event" />
+                </div>
             </section>
 
             <!-- PARTNERS SECTION -->
@@ -1006,11 +1022,6 @@ const currentYear = new Date().getFullYear();
                 <Testimonials />
             </LazyWrapper>
 
-            <!-- SHOWCASE GALLERY (TAILWIND STYLE MASONRY) -->
-            <LazyWrapper placeholderClass="h-96">
-                <MasonryGallery />
-            </LazyWrapper>
-
             <!-- ALUMNI MAP TRACKING SECTION -->
             <LazyWrapper>
                 <AlumniMap
@@ -1121,19 +1132,6 @@ html {
     animation-play-state: paused;
 }
 
-/* Scroll animations disabled for stability; content renders immediately */
-.hide-animate,
-.hide-animate.slide-up,
-.hide-animate.slide-left,
-.hide-animate.slide-right,
-.hide-animate.scale-in,
-.show-animate {
-    opacity: 1 !important;
-    transform: none !important;
-    transition: none !important;
-    will-change: auto;
-}
-
 /* Progressive Blur Layers with Bottom-to-Top Masking */
 .progressive-blur div {
     position: absolute;
@@ -1203,15 +1201,6 @@ html {
         rgba(0, 0, 0, 1) 0%,
         rgba(0, 0, 0, 0) 100%
     );
-}
-
-/* Override and disable scroll animations on mobile viewports */
-@media (max-width: 639px) {
-    .hide-animate {
-        opacity: 1 !important;
-        transform: none !important;
-        transition: none !important;
-    }
 }
 
 /* Data Flow Animation (Electric Flow Vertical) */

@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Admin\QrManageController::index
  * @see app/Modules/Fast/Controllers/Admin/QrManageController.php:17
@@ -45,41 +45,6 @@ index4c30f5087ac3163e9a371a2d63a361c7.head = (options?: RouteQueryOptions): Rout
     /**
 * @see \App\Modules\Fast\Controllers\Admin\QrManageController::index
  * @see app/Modules/Fast/Controllers/Admin/QrManageController.php:17
- * @route '/admin/qr'
- */
-    const index4c30f5087ac3163e9a371a2d63a361c7Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index4c30f5087ac3163e9a371a2d63a361c7.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\QrManageController::index
- * @see app/Modules/Fast/Controllers/Admin/QrManageController.php:17
- * @route '/admin/qr'
- */
-        index4c30f5087ac3163e9a371a2d63a361c7Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index4c30f5087ac3163e9a371a2d63a361c7.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\QrManageController::index
- * @see app/Modules/Fast/Controllers/Admin/QrManageController.php:17
- * @route '/admin/qr'
- */
-        index4c30f5087ac3163e9a371a2d63a361c7Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index4c30f5087ac3163e9a371a2d63a361c7.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index4c30f5087ac3163e9a371a2d63a361c7.form = index4c30f5087ac3163e9a371a2d63a361c7Form
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\QrManageController::index
- * @see app/Modules/Fast/Controllers/Admin/QrManageController.php:17
  * @route '/kaprodi/admin/qr'
  */
 const indexf01271985537308e0e3d76108f698bb1 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -123,41 +88,6 @@ indexf01271985537308e0e3d76108f698bb1.head = (options?: RouteQueryOptions): Rout
     /**
 * @see \App\Modules\Fast\Controllers\Admin\QrManageController::index
  * @see app/Modules/Fast/Controllers/Admin/QrManageController.php:17
- * @route '/kaprodi/admin/qr'
- */
-    const indexf01271985537308e0e3d76108f698bb1Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: indexf01271985537308e0e3d76108f698bb1.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\QrManageController::index
- * @see app/Modules/Fast/Controllers/Admin/QrManageController.php:17
- * @route '/kaprodi/admin/qr'
- */
-        indexf01271985537308e0e3d76108f698bb1Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: indexf01271985537308e0e3d76108f698bb1.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\QrManageController::index
- * @see app/Modules/Fast/Controllers/Admin/QrManageController.php:17
- * @route '/kaprodi/admin/qr'
- */
-        indexf01271985537308e0e3d76108f698bb1Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: indexf01271985537308e0e3d76108f698bb1.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    indexf01271985537308e0e3d76108f698bb1.form = indexf01271985537308e0e3d76108f698bb1Form
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\QrManageController::index
- * @see app/Modules/Fast/Controllers/Admin/QrManageController.php:17
  * @route '/dekan/admin/qr'
  */
 const indexd9576a753905748ddd0358631b11248a = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -197,42 +127,6 @@ indexd9576a753905748ddd0358631b11248a.head = (options?: RouteQueryOptions): Rout
     url: indexd9576a753905748ddd0358631b11248a.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\QrManageController::index
- * @see app/Modules/Fast/Controllers/Admin/QrManageController.php:17
- * @route '/dekan/admin/qr'
- */
-    const indexd9576a753905748ddd0358631b11248aForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: indexd9576a753905748ddd0358631b11248a.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\QrManageController::index
- * @see app/Modules/Fast/Controllers/Admin/QrManageController.php:17
- * @route '/dekan/admin/qr'
- */
-        indexd9576a753905748ddd0358631b11248aForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: indexd9576a753905748ddd0358631b11248a.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\QrManageController::index
- * @see app/Modules/Fast/Controllers/Admin/QrManageController.php:17
- * @route '/dekan/admin/qr'
- */
-        indexd9576a753905748ddd0358631b11248aForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: indexd9576a753905748ddd0358631b11248a.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    indexd9576a753905748ddd0358631b11248a.form = indexd9576a753905748ddd0358631b11248aForm
 
 /**
 * Multiple routes resolve to \App\Modules\Fast\Controllers\Admin\QrManageController::index, so this export is a

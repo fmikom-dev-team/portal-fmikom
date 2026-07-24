@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\RegistrationStatus;
+use App\Enums\UserAccountStatus;
 use App\Models\Auth\AuthOAuthCredential;
 use App\Models\Auth\AuthOAuthProvider;
 use App\Models\Fakultas;
@@ -49,7 +51,7 @@ test('oauth register screen can be rendered with valid session data', function (
         'external_id' => 'google-id-123',
         'name' => GOOGLE_USER_NAME,
         'email' => GOOGLE_USER_EMAIL,
-        'access_token' => Crypt::encryptString('mock-token'),
+        'access_token' => 'mock-token',
     ];
 
     $response = $this->withSession(['oauth_register_data' => $oauthData])
@@ -72,7 +74,7 @@ test('oauth registration stores user and links provider successfully', function 
         'external_id' => 'google-id-123',
         'name' => GOOGLE_USER_NAME,
         'email' => GOOGLE_USER_EMAIL,
-        'access_token' => Crypt::encryptString('mock-token'),
+        'access_token' => 'mock-token',
     ];
 
     $response = $this->withSession(['oauth_register_data' => $oauthData])
@@ -82,31 +84,29 @@ test('oauth registration stores user and links provider successfully', function 
             'program_studi_id' => ProgramStudi::where('kode', 'IF')->first()->id,
         ]);
 
-    $this->assertAuthenticated();
+    $this->assertGuest();
 
     $user = User::where('email', GOOGLE_USER_EMAIL)->first();
     expect($user)->not->toBeNull();
     expect($user->user_type)->toBe('mahasiswa');
-    expect($user->nomor_induk)->toBe('12345678');
-    expect($user->email_verified_at)->not->toBeNull(); // Auto-verified!
+    expect($user->status_approval)->toBe(UserAccountStatus::Pending);
+    expect($user->is_active)->toBeFalse();
 
-    // Check linked credential
-    $this->assertDatabaseHas('auth_oauth_credentials', [
-        'user_id' => $user->id,
-        'provider_id' => $provider->id,
-        'external_id' => 'google-id-123',
-    ]);
-
-    // Check assigned modules for mahasiswa
-    $this->assertDatabaseHas('user_module_roles', [
-        'user_id' => $user->id,
-        'module_id' => Module::where('code', 'FAST')->first()->id,
+    // Check RegistrationRequest created
+    $this->assertDatabaseHas('registration_requests', [
+        'email' => GOOGLE_USER_EMAIL,
+        'role' => 'mahasiswa',
+        'status' => RegistrationStatus::Pending->value,
+        'created_user_id' => $user->id,
     ]);
 
     // Check session data is cleared
     expect(session()->has('oauth_register_data'))->toBeFalse();
 
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect(route('login'));
+    $response->assertSessionHas('status', function ($val) {
+        return str_contains($val, 'sedang diproses oleh admin');
+    });
 });
 
 test('oauth registration stores alumni and links provider successfully', function () {
@@ -117,7 +117,7 @@ test('oauth registration stores alumni and links provider successfully', functio
         'external_id' => 'google-id-456',
         'name' => 'Google Alumni',
         'email' => 'googlealumni@example.com',
-        'access_token' => Crypt::encryptString('mock-token'),
+        'access_token' => 'mock-token',
     ];
 
     $response = $this->withSession(['oauth_register_data' => $oauthData])
@@ -128,26 +128,26 @@ test('oauth registration stores alumni and links provider successfully', functio
             'tahun_lulus' => '2024',
         ]);
 
-    $this->assertAuthenticated();
+    $this->assertGuest();
 
     $user = User::where('email', 'googlealumni@example.com')->first();
     expect($user)->not->toBeNull();
     expect($user->user_type)->toBe('alumni');
-    expect($user->nomor_induk)->toBe('87654321');
-    expect($user->tahun_lulus)->toBe(2024);
-    expect($user->email_verified_at)->not->toBeNull();
+    expect($user->status_approval)->toBe(UserAccountStatus::Pending);
+    expect($user->is_active)->toBeFalse();
 
-    // Check assigned modules for alumni
-    $this->assertDatabaseHas('user_module_roles', [
-        'user_id' => $user->id,
-        'module_id' => Module::where('code', 'TRACE')->first()->id,
-    ]);
-    $this->assertDatabaseHas('user_module_roles', [
-        'user_id' => $user->id,
-        'module_id' => Module::where('code', 'PAGI')->first()->id,
+    // Check RegistrationRequest created
+    $this->assertDatabaseHas('registration_requests', [
+        'email' => 'googlealumni@example.com',
+        'role' => 'alumni',
+        'status' => RegistrationStatus::Pending->value,
+        'created_user_id' => $user->id,
     ]);
 
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect(route('login'));
+    $response->assertSessionHas('status', function ($val) {
+        return str_contains($val, 'sedang diproses oleh admin');
+    });
 });
 
 test('oauth registration stores mitra and links provider successfully', function () {
@@ -158,7 +158,7 @@ test('oauth registration stores mitra and links provider successfully', function
         'external_id' => 'google-id-789',
         'name' => 'Google Partner',
         'email' => 'googlepartner@example.com',
-        'access_token' => Crypt::encryptString('mock-token'),
+        'access_token' => 'mock-token',
     ];
 
     $response = $this->withSession(['oauth_register_data' => $oauthData])
@@ -169,26 +169,26 @@ test('oauth registration stores mitra and links provider successfully', function
             'no_telepon' => '08987654321',
         ]);
 
-    $this->assertAuthenticated();
+    $this->assertGuest();
 
     $user = User::where('email', 'googlepartner@example.com')->first();
     expect($user)->not->toBeNull();
     expect($user->user_type)->toBe('mitra');
-    expect($user->nomor_induk)->toBe('NIB-999');
-    expect($user->no_telepon)->toBe('08987654321');
-    expect($user->email_verified_at)->not->toBeNull();
+    expect($user->status_approval)->toBe(UserAccountStatus::Pending);
+    expect($user->is_active)->toBeFalse();
 
-    // Check assigned modules for mitra
-    $this->assertDatabaseHas('user_module_roles', [
-        'user_id' => $user->id,
-        'module_id' => Module::where('code', 'WIMS')->first()->id,
-    ]);
-    $this->assertDatabaseHas('user_module_roles', [
-        'user_id' => $user->id,
-        'module_id' => Module::where('code', 'TRACE')->first()->id,
+    // Check RegistrationRequest created
+    $this->assertDatabaseHas('registration_requests', [
+        'email' => 'googlepartner@example.com',
+        'role' => 'mitra',
+        'status' => RegistrationStatus::Pending->value,
+        'created_user_id' => $user->id,
     ]);
 
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect(route('login'));
+    $response->assertSessionHas('status', function ($val) {
+        return str_contains($val, 'sedang diproses oleh admin');
+    });
 });
 
 test('oauth registration handles existing/orphaned oauth credentials gracefully without unique violation', function () {
@@ -199,7 +199,7 @@ test('oauth registration handles existing/orphaned oauth credentials gracefully 
         'external_id' => 'google-id-duplicate-123',
         'name' => 'Google New User',
         'email' => GOOGLE_NEW_EMAIL,
-        'access_token' => Crypt::encryptString('mock-token'),
+        'access_token' => 'mock-token',
     ];
 
     // Create an orphaned credential in the database (linked to a non-existent or deleted user ID)
@@ -208,7 +208,7 @@ test('oauth registration handles existing/orphaned oauth credentials gracefully 
         'provider_id' => $provider->id,
         'external_id' => 'google-id-duplicate-123',
         'email' => 'googleold@example.com',
-        'access_token' => Crypt::encryptString('old-token'),
+        'access_token' => 'old-token',
     ]);
 
     $response = $this->withSession(['oauth_register_data' => $oauthData])
@@ -218,35 +218,37 @@ test('oauth registration handles existing/orphaned oauth credentials gracefully 
             'program_studi_id' => ProgramStudi::where('kode', 'IF')->first()->id,
         ]);
 
-    $this->assertAuthenticated();
+    $this->assertGuest();
 
     $user = User::where('email', GOOGLE_NEW_EMAIL)->first();
     expect($user)->not->toBeNull();
+    expect($user->status_approval)->toBe(UserAccountStatus::Pending);
 
-    // Check that the existing oauth credential was updated to the new user ID instead of throwing a unique constraint violation
-    $this->assertDatabaseHas('auth_oauth_credentials', [
-        'user_id' => $user->id,
-        'provider_id' => $provider->id,
-        'external_id' => 'google-id-duplicate-123',
+    // Check RegistrationRequest created
+    $this->assertDatabaseHas('registration_requests', [
         'email' => GOOGLE_NEW_EMAIL,
+        'role' => 'mahasiswa',
+        'status' => RegistrationStatus::Pending->value,
+        'created_user_id' => $user->id,
     ]);
 
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect(route('login'));
 });
 
 test('oauth registration handles verified existing users with same email gracefully by linking and logging in', function () {
     $provider = AuthOAuthProvider::where('slug', 'google')->first();
 
     // Create an existing user with the same email
-    $existingUser = User::create([
+    $existingUser = new User([
         'name' => 'Existing User',
         'email' => GOOGLE_NEW_EMAIL,
         'password' => Hash::make('password'),
-        'user_type' => 'mahasiswa',
         'nomor_induk' => '88887777',
-        'status_approval' => 'approved',
     ]);
-    $existingUser->email_verified_at = now(); // Set manually because it is not fillable
+    $existingUser->user_type = 'mahasiswa';
+    $existingUser->status_approval = UserAccountStatus::Activated;
+    $existingUser->is_active = true;
+    $existingUser->email_verified_at = now();
     $existingUser->save();
 
     $oauthData = [
@@ -255,7 +257,7 @@ test('oauth registration handles verified existing users with same email gracefu
         'external_id' => 'google-id-duplicate-email-123',
         'name' => 'Google New User Name',
         'email' => GOOGLE_NEW_EMAIL,
-        'access_token' => Crypt::encryptString('mock-token'),
+        'access_token' => 'mock-token',
     ];
 
     $response = $this->withSession(['oauth_register_data' => $oauthData])
@@ -288,7 +290,7 @@ test('oauth registration rejects linking to unverified existing users with same 
         'password' => Hash::make('password'),
         'user_type' => 'mahasiswa',
         'nomor_induk' => '88887777',
-        'status_approval' => 'approved',
+        'status_approval' => 'activated',
         'email_verified_at' => null, // unverified email!
     ]);
 
@@ -298,7 +300,7 @@ test('oauth registration rejects linking to unverified existing users with same 
         'external_id' => 'google-id-duplicate-email-123',
         'name' => 'Google New User Name',
         'email' => GOOGLE_NEW_EMAIL,
-        'access_token' => Crypt::encryptString('mock-token'),
+        'access_token' => 'mock-token',
     ];
 
     $response = $this->withSession(['oauth_register_data' => $oauthData])
@@ -323,7 +325,7 @@ test('oauth registration rejects linking to inactive existing users', function (
         'password' => Hash::make('password'),
         'user_type' => 'mahasiswa',
         'nomor_induk' => '88887777',
-        'status_approval' => 'approved',
+        'status_approval' => 'activated',
         'email_verified_at' => now(),
         'is_active' => false,
     ]);
@@ -334,7 +336,7 @@ test('oauth registration rejects linking to inactive existing users', function (
         'external_id' => 'google-id-duplicate-email-123',
         'name' => 'Google New User Name',
         'email' => GOOGLE_NEW_EMAIL,
-        'access_token' => Crypt::encryptString('mock-token'),
+        'access_token' => 'mock-token',
     ];
 
     $response = $this->withSession(['oauth_register_data' => $oauthData])
@@ -368,7 +370,7 @@ test('oauth registration rejects linking to unapproved existing users', function
         'external_id' => 'google-id-duplicate-email-123',
         'name' => 'Google New User Name',
         'email' => GOOGLE_NEW_EMAIL,
-        'access_token' => Crypt::encryptString('mock-token'),
+        'access_token' => 'mock-token',
     ];
 
     $response = $this->withSession(['oauth_register_data' => $oauthData])

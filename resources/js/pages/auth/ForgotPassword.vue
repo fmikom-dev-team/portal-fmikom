@@ -40,7 +40,7 @@ const submit = () => {
         <div class="space-y-6">
             <form @submit.prevent="submit">
                 <div class="grid gap-2">
-                    <Label for="email" class="font-semibold text-slate-800">Email address</Label>
+                    <Label for="email" class="font-semibold text-slate-800 dark:text-slate-200">Email address</Label>
                     <Input
                         id="email"
                         type="email"
@@ -49,7 +49,7 @@ const submit = () => {
                         autofocus
                         autocomplete="email"
                         placeholder="email@example.com"
-                        class="rounded-xl h-11 border-slate-200 focus-visible:ring-0 focus-visible:border-[#2563eb] transition-colors"
+                        class="rounded-xl h-11 border-slate-200 dark:border-slate-800 dark:bg-slate-950 focus-visible:ring-0 focus-visible:border-[#2563eb] transition-colors"
                     />
                     <InputError :message="form.errors.email" />
                 </div>
@@ -67,7 +67,7 @@ const submit = () => {
                 </div>
             </form>
 
-            <div class="space-x-1 text-center text-sm text-muted-foreground">
+            <div class="space-x-1 text-center text-sm text-muted-foreground dark:text-slate-400">
                 <span>Or, return to</span>
                 <TextLink href="/login">log in</TextLink>
             </div>

@@ -37,6 +37,19 @@ const PagiProgressOverlay = defineAsyncComponent(
 	() => import("./PagiProgressOverlay.vue"),
 );
 
+import { ThemeTogglerButton } from "@/components/animate-ui/components/buttons/theme-toggler";
+import { useAppearance } from "@/composables/useAppearance";
+
+const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
+
+const activeTheme = computed({
+	get: () =>
+		appearance.value === "system" ? resolvedAppearance.value : appearance.value,
+	set: (val) => {
+		updateAppearance(val);
+	},
+});
+
 const props = defineProps<{
 	roleName?: string;
 }>();
@@ -508,10 +521,21 @@ onUnmounted(() => {
 						</span>
 					</button>
 
+					<!-- Theme Toggler -->
+					<div class="flex items-center shrink-0">
+						<ThemeTogglerButton
+							v-model="activeTheme"
+							variant="ghost"
+							size="sm"
+							direction="ltr"
+							:modes="['light', 'dark']"
+						/>
+					</div>
+
 					<!-- Profile Card Dropdown Desktop -->
 					<div v-if="$page.props.auth?.user" class="hidden md:block relative shrink-0" @click.stop="isProfileModalOpen = !isProfileModalOpen">
 						<div class="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-all duration-300 group">
-							<div class="h-9 w-9 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0 ring-offset-white dark:ring-offset-zinc-955 group-hover:ring-2 ring-indigo-500/50 transition-all duration-300 shadow-xs">
+							<div class="h-9 w-9 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0 ring-offset-white dark:ring-offset-zinc-900 group-hover:ring-2 ring-indigo-500/50 transition-all duration-300 shadow-xs">
 								<img v-if="user.foto_path" :src="'/storage/' + user.foto_path" :alt="user.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-355" />
 								<img v-else-if="user.avatar" :src="user.avatar" :alt="user.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-355" />
 								<span v-else class="text-slate-700 dark:text-slate-200 text-xs font-black">{{ user.name.charAt(0) }}</span>
@@ -578,29 +602,31 @@ onUnmounted(() => {
 		</header>
 
 		<!-- Bottom Navbar Mobile -->
-		<div v-if="$page.props.auth?.user && !$page.url.startsWith('/pagi/messages')" class="fixed bottom-0 inset-x-0 h-16 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-xl border-t border-slate-200/80 dark:border-zinc-850 flex items-center justify-around px-4 z-50 md:hidden shadow-[0_-4px_24px_rgba(0,0,0,0.04)] select-none" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
-			<Link href="/pagi" class="flex flex-col items-center gap-1 transition-colors" :class="[ $page.url === '/pagi' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
+		<div v-if="$page.props.auth?.user && !$page.url.startsWith('/pagi/messages')" class="fixed bottom-0 inset-x-0 h-16 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-xl border-t border-slate-200/80 dark:border-zinc-850 flex items-center justify-between px-2 z-50 md:hidden shadow-[0_-4px_24px_rgba(0,0,0,0.04)] select-none" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
+			<Link href="/pagi" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url === '/pagi' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
 				<LayoutGrid class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">Explore</span>
 			</Link>
 
-			<Link href="/pagi/gallery" class="flex flex-col items-center gap-1 transition-colors" :class="[ $page.url.startsWith('/pagi/gallery') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
+			<Link href="/pagi/gallery" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url.startsWith('/pagi/gallery') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
 				<Image class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">Gallery</span>
 			</Link>
 
-			<Link href="/pagi/people" class="flex flex-col items-center gap-1 transition-colors" :class="[ $page.url.startsWith('/pagi/people') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
+			<Link href="/pagi/people" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url.startsWith('/pagi/people') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
 				<Users class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">People</span>
 			</Link>
 
-			<Link v-if="currentRoleSlug === 'alumni'" href="/pagi/cv" class="flex flex-col items-center gap-1 transition-colors" :class="[ $page.url.startsWith('/pagi/cv') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
+			<Link v-if="currentRoleSlug === 'alumni'" href="/pagi/cv" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url.startsWith('/pagi/cv') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
 				<FileText class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">CV</span>
 			</Link>
+			<!-- Fallback placeholder if not alumni to keep centering layout -->
+			<div v-else class="flex-1"></div>
 
-			<Link href="/pagi/messages" class="flex flex-col items-center gap-1 transition-colors" :class="[ $page.url.startsWith('/pagi/messages') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
-				<div class="relative">
+			<Link href="/pagi/messages" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url.startsWith('/pagi/messages') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
+				<div class="relative flex flex-col items-center justify-center">
 					<MessageSquare class="w-5 h-5 transition-transform active:scale-90" />
 					<span v-if="unreadMessagesCount > 0" class="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-indigo-600 px-1 text-[8px] font-black text-white ring-2 ring-white dark:ring-zinc-950">
 						{{ unreadMessagesCount }}

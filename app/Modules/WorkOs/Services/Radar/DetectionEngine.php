@@ -3,6 +3,7 @@
 namespace App\Modules\WorkOs\Services\Radar;
 
 use App\Events\Radar\ThreatDetected;
+use App\Jobs\DispatchWorkOsWebhookJob;
 use App\Models\Radar\RadarBlockedItem;
 use App\Models\Radar\RadarDetection;
 use App\Models\Radar\RadarDevice;
@@ -318,6 +319,20 @@ class DetectionEngine
         } catch (\Throwable $e) {
             // Broadcast failure should not break the request
             \Log::warning('Radar broadcast failed: '.$e->getMessage());
+        }
+
+        // Dispatch Webhook Event
+        try {
+            dispatch(new DispatchWorkOsWebhookJob('radar.threat_blocked', [
+                'ip_address' => $ip,
+                'threat_type' => $type,
+                'severity' => $severity,
+                'action_taken' => $action,
+                'device' => $device ? ['os' => $device->os, 'browser' => $device->browser] : null,
+                'timestamp' => now()->toIso8601String(),
+            ]));
+        } catch (\Throwable $e) {
+            \Log::warning('Radar webhook dispatch failed: '.$e->getMessage());
         }
 
         // Send a WorkOS notification to all active Super Admins

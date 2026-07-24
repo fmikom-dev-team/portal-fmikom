@@ -35,7 +35,7 @@ const GOOGLE_SVG = `<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 inline-block" fi
 const GITHUB_SVG = `<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 inline-block" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>`;
 const MICROSOFT_SVG = `<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 inline-block" xmlns="http://www.w3.org/2000/svg"><path d="M11.4 24H0V12.6h11.4V24z" fill="#F25022"/><path d="M24 24H12.6V12.6H24V24z" fill="#00A4EF"/><path d="M11.4 11.4H0V0h11.4v11.4z" fill="#7FBA00"/><path d="M24 11.4H12.6V0H24v11.4z" fill="#FFB900"/></svg>`;
 const APPLE_SVG = `<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 inline-block" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701z"/></svg>`;
-const GENERIC_KEY_SVG = `<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 inline-block text-gray-400" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m-5-4a5 5 0 015 5c0 2.071-.84 3.946-2.197 5.303L10 18H8v-2l.707-.707A5.002 5.002 0 0112 5z"/></svg>`;
+const GENERIC_KEY_SVG = `<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 inline-block text-gray-400 dark:text-zinc-500" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m-5-4a5 5 0 015 5c0 2.071-.84 3.946-2.197 5.303L10 18H8v-2l.707-.707A5.002 5.002 0 0112 5z"/></svg>`;
 
 const filterAuthLabel = computed(() => {
 	if (selectedAuth.value === "email") return "Email + Password";
@@ -208,7 +208,7 @@ function submitRemoveRole() {
                 <!-- Search -->
                 <div class="relative w-full sm:w-auto">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <svg class="w-4 h-4 text-gray-400 dark:text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </span>
@@ -216,7 +216,7 @@ function submitRemoveRole() {
                         v-model="search"
                         type="search"
                         placeholder="Search"
-                        class="w-full sm:w-[280px] h-[34px] pl-9 pr-3 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] text-[#111827] shadow-sm bg-white"
+                        class="w-full sm:w-[280px] h-[34px] pl-9 pr-3 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] dark:placeholder:text-zinc-600 text-[#111827] dark:text-zinc-100 shadow-sm bg-white dark:bg-zinc-900 dark:shadow-none"
                     />
                 </div>
 
@@ -224,20 +224,20 @@ function submitRemoveRole() {
                 <div class="relative inline-block text-left" data-dropdown>
                     <button 
                         @click.stop="authDropdownOpen = !authDropdownOpen; roleDropdownOpen = false; membershipDropdownOpen = false"
-                        class="flex items-center gap-1.5 h-[34px] px-3 border border-[#d1d5db] rounded-md text-[13px] text-[#4b5563] hover:bg-[#f9fafb] transition-colors bg-white shadow-sm font-medium cursor-pointer"
+                        class="flex items-center gap-1.5 h-[34px] px-3 border border-[#d1d5db] dark:border-zinc-700 rounded-md text-[13px] text-[#4b5563] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800/40 transition-colors bg-white dark:bg-zinc-900 shadow-sm font-medium cursor-pointer dark:shadow-none"
                     >
                         <span v-html="GENERIC_KEY_SVG" />
                         <span>{{ selectedAuth === 'all' ? '+ Authentication' : 'Authentication: ' + filterAuthLabel }}</span>
                     </button>
                     <div 
                         v-show="authDropdownOpen" 
-                        class="absolute left-0 mt-1 w-48 bg-white border border-[#e5e7eb] rounded-lg shadow-lg py-1 z-50"
+                        class="absolute left-0 mt-1 w-48 bg-white dark:bg-zinc-900 border border-[#e5e7eb] dark:border-zinc-800 rounded-lg shadow-lg dark:shadow-black/40 py-1 z-50 dark:shadow-none"
                     >
                         <button 
                             v-for="authOpt in ['all', 'email', 'google', 'github', 'microsoft', 'apple']" 
                             :key="authOpt"
                             @click="selectedAuth = authOpt; authDropdownOpen = false"
-                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] hover:bg-[#f9fafb] text-left transition-colors font-medium cursor-pointer"
+                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:bg-zinc-900 dark:hover:bg-zinc-800/40 text-left transition-colors font-medium cursor-pointer"
                         >
                             <span>{{ authOpt === 'all' ? 'All Authentications' : (authOpt === 'email' ? 'Email + Password' : authOpt.charAt(0).toUpperCase() + authOpt.slice(1)) }}</span>
                             <svg v-if="selectedAuth === authOpt" class="w-3 h-3 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -251,20 +251,20 @@ function submitRemoveRole() {
                 <div class="relative inline-block text-left" data-dropdown>
                     <button 
                         @click.stop="roleDropdownOpen = !roleDropdownOpen; authDropdownOpen = false; membershipDropdownOpen = false"
-                        class="flex items-center gap-1.5 h-[34px] px-3 border border-[#d1d5db] rounded-md text-[13px] text-[#4b5563] hover:bg-[#f9fafb] transition-colors bg-white shadow-sm font-medium cursor-pointer"
+                        class="flex items-center gap-1.5 h-[34px] px-3 border border-[#d1d5db] dark:border-zinc-700 rounded-md text-[13px] text-[#4b5563] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800/40 transition-colors bg-white dark:bg-zinc-900 shadow-sm font-medium cursor-pointer dark:shadow-none"
                     >
-                        <svg class="w-3.5 h-3.5 text-[#9ca3af]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <svg class="w-3.5 h-3.5 text-[#9ca3af] dark:text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.333 0 4 .667 4 2v1H3v-1c0-1.333 2.667-2 4-2z" />
                         </svg>
                         <span>{{ !selectedRole ? 'Roles' : 'Role: ' + filterRoleLabel }}</span>
                     </button>
                     <div 
                         v-show="roleDropdownOpen" 
-                        class="absolute left-0 mt-1 w-52 bg-white border border-[#e5e7eb] rounded-lg shadow-lg py-1 z-50 max-h-60 overflow-y-auto wos-scroll"
+                        class="absolute left-0 mt-1 w-52 bg-white dark:bg-zinc-900 border border-[#e5e7eb] dark:border-zinc-800 rounded-lg shadow-lg dark:shadow-black/40 py-1 z-50 max-h-60 overflow-y-auto wos-scroll dark:shadow-none"
                     >
                         <button 
                             @click="selectedRole = ''; roleDropdownOpen = false"
-                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] hover:bg-[#f9fafb] text-left transition-colors font-medium cursor-pointer"
+                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:bg-zinc-900 dark:hover:bg-zinc-800/40 text-left transition-colors font-medium cursor-pointer"
                         >
                             <span>All Roles</span>
                             <svg v-if="!selectedRole" class="w-3 h-3 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -275,7 +275,7 @@ function submitRemoveRole() {
                             v-for="role in organization?.roles || []" 
                             :key="role.id"
                             @click="selectedRole = String(role.id); roleDropdownOpen = false"
-                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] hover:bg-[#f9fafb] text-left transition-colors font-medium cursor-pointer"
+                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:bg-zinc-900 dark:hover:bg-zinc-800/40 text-left transition-colors font-medium cursor-pointer"
                         >
                             <span>{{ role.nama || role.name }}</span>
                             <svg v-if="selectedRole === String(role.id)" class="w-3 h-3 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -289,18 +289,18 @@ function submitRemoveRole() {
                 <div class="relative inline-block text-left" data-dropdown>
                     <button 
                         @click.stop="membershipDropdownOpen = !membershipDropdownOpen; authDropdownOpen = false; roleDropdownOpen = false"
-                        class="flex items-center gap-1.5 h-[34px] px-3 border border-[#d1d5db] rounded-md text-[13px] text-[#4b5563] hover:bg-[#f9fafb] transition-colors bg-white shadow-sm font-medium cursor-pointer"
+                        class="flex items-center gap-1.5 h-[34px] px-3 border border-[#d1d5db] dark:border-zinc-700 rounded-md text-[13px] text-[#4b5563] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800/40 transition-colors bg-white dark:bg-zinc-900 shadow-sm font-medium cursor-pointer dark:shadow-none"
                     >
                         <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                         <span>{{ !selectedStatus ? '+ Membership' : 'Membership: ' + filterMembershipLabel }}</span>
                     </button>
                     <div 
                         v-show="membershipDropdownOpen" 
-                        class="absolute left-0 mt-1 w-48 bg-white border border-[#e5e7eb] rounded-lg shadow-lg py-1 z-50"
+                        class="absolute left-0 mt-1 w-48 bg-white dark:bg-zinc-900 border border-[#e5e7eb] dark:border-zinc-800 rounded-lg shadow-lg dark:shadow-black/40 py-1 z-50 dark:shadow-none"
                     >
                         <button 
                             @click="selectedStatus = ''; membershipDropdownOpen = false"
-                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] hover:bg-[#f9fafb] text-left transition-colors font-medium cursor-pointer"
+                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:bg-zinc-900 dark:hover:bg-zinc-800/40 text-left transition-colors font-medium cursor-pointer"
                         >
                             <span>All Memberships</span>
                             <svg v-if="!selectedStatus" class="w-3 h-3 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -311,7 +311,7 @@ function submitRemoveRole() {
                             v-for="membOpt in ['active', 'inactive']" 
                             :key="membOpt"
                             @click="selectedStatus = membOpt; membershipDropdownOpen = false"
-                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] hover:bg-[#f9fafb] text-left transition-colors font-medium cursor-pointer"
+                            class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:bg-zinc-900 dark:hover:bg-zinc-800/40 text-left transition-colors font-medium cursor-pointer"
                         >
                             <span>{{ membOpt === 'active' ? 'Active' : 'Inactive' }}</span>
                             <svg v-if="selectedStatus === membOpt" class="w-3 h-3 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -323,7 +323,7 @@ function submitRemoveRole() {
             </div>
             
             <button
-                class="h-[34px] px-4 bg-[#2563eb] text-white rounded-md text-[13px] font-semibold hover:bg-[#1d4ed8] transition-colors shadow-sm cursor-pointer"
+                class="h-[34px] px-4 bg-[#2563eb] text-white rounded-md text-[13px] font-semibold hover:bg-[#1d4ed8] transition-colors shadow-sm cursor-pointer dark:shadow-none"
                 @click="openInviteModal"
             >
                 Invite user
@@ -331,60 +331,60 @@ function submitRemoveRole() {
         </div>
 
         <!-- Empty State -->
-        <div v-if="!orgUsers.length" class="rounded-xl bg-[#f9fafb] p-12 flex flex-col items-center justify-center text-center gap-2 ring-1 ring-gray-900/[0.04]">
+        <div v-if="!orgUsers.length" class="rounded-xl bg-[#f9fafb] dark:bg-zinc-900 p-12 flex flex-col items-center justify-center text-center gap-2 ring-1 ring-gray-900/[0.04] dark:ring-white/[0.06] border dark:border-zinc-800">
             <template v-if="orgRoleIds.length === 0">
-                <svg class="w-8 h-8 text-[#d1d5db] mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <svg class="w-8 h-8 text-[#d1d5db] dark:text-zinc-600 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
                 </svg>
-                <p class="text-[13px] font-medium text-[#374151]">No roles assigned to this organization</p>
-                <p class="text-[12px] text-[#6b7280]">Go to the <strong>Roles</strong> tab and add at least one role before inviting users.</p>
+                <p class="text-[13px] font-medium text-[#374151] dark:text-zinc-300">No roles assigned to this organization</p>
+                <p class="text-[12px] text-[#6b7280] dark:text-zinc-500">Go to the <strong>Roles</strong> tab and add at least one role before inviting users.</p>
             </template>
             <template v-else>
-                <p class="text-[13px] text-[#6b7280]">No users found in this organization.</p>
+                <p class="text-[13px] text-[#6b7280] dark:text-zinc-500">No users found in this organization.</p>
             </template>
         </div>
 
         <!-- Users Table -->
-        <div v-else class="rounded-xl overflow-x-auto bg-white ring-1 ring-gray-900/[0.04]">
+        <div v-else class="rounded-xl overflow-x-auto bg-white dark:bg-zinc-900 ring-1 ring-gray-900/[0.04] dark:ring-white/[0.06] border dark:border-zinc-800">
             <table class="w-full text-left whitespace-nowrap">
                 <caption class="sr-only">Organization Users</caption>
                 <thead>
-                    <tr class="bg-[#f9fafb] border-b border-[#e5e7eb]">
-                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">User</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">Authentication</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">Roles</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">Membership</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">Sign-in count</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827]">Last sign-in</th>
-                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] flex items-center gap-1">
+                    <tr class="bg-[#f9fafb] dark:bg-zinc-800/60 border-b border-[#e5e7eb] dark:border-zinc-800">
+                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-300">User</th>
+                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-300">Authentication</th>
+                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-300">Roles</th>
+                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-300">Membership</th>
+                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-300">Sign-in count</th>
+                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-300">Last sign-in</th>
+                        <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-300 flex items-center gap-1">
                             Created
-                            <svg class="w-3.5 h-3.5 text-[#111827]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <svg class="w-3.5 h-3.5 text-[#111827] dark:text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                             </svg>
                         </th>
                         <th class="px-4 py-3 w-12" />
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-[#e5e7eb]">
+                <tbody class="divide-y divide-[#e5e7eb] dark:divide-zinc-800">
                     <tr
                         v-for="u in orgUsers"
                         :key="u.id"
-                        class="hover:bg-[#f9fafb] transition-colors group"
+                        class="hover:bg-[#f9fafb] dark:bg-zinc-900 dark:hover:bg-zinc-800/40 transition-colors group"
                     >
                         <td class="px-4 py-3 align-top">
                             <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-full bg-[#f3f4f6] border border-[#e5e7eb] flex items-center justify-center text-[#111827] text-[12px] font-bold shrink-0 overflow-hidden">
+                                <div class="w-8 h-8 rounded-full bg-[#f3f4f6] dark:bg-zinc-800 border border-[#e5e7eb] dark:border-zinc-700 flex items-center justify-center text-[#111827] dark:text-zinc-200 text-[12px] font-bold shrink-0 overflow-hidden">
                                     <img v-if="u.foto_path" :src="u.foto_path" :alt="u.name" class="w-full h-full object-cover" />
                                     <span v-else>{{ u.name?.charAt(0)?.toUpperCase() }}</span>
                                 </div>
                                 <div>
-                                    <p class="text-[13px] font-medium text-[#111827] leading-tight">{{ u.email }}</p>
-                                    <p class="text-[12px] text-[#6b7280] leading-tight mt-0.5">{{ u.name }}</p>
+                                    <p class="text-[13px] font-medium text-[#111827] dark:text-zinc-100 leading-tight">{{ u.email }}</p>
+                                    <p class="text-[12px] text-[#6b7280] dark:text-zinc-400 leading-tight mt-0.5">{{ u.name }}</p>
                                 </div>
                             </div>
                         </td>
                         <td class="px-4 py-3 align-top">
-                            <div class="flex items-center gap-1.5 text-[13px] text-gray-700 font-medium">
+                            <div class="flex items-center gap-1.5 text-[13px] text-gray-700 dark:text-zinc-300 font-medium">
                                 <template v-if="u.oauth_credentials && u.oauth_credentials.length > 0">
                                     <span v-for="oc in u.oauth_credentials" :key="oc.id" class="inline-flex items-center gap-1">
                                         <span v-if="oc.provider_slug === 'google'" v-html="GOOGLE_SVG" />
@@ -396,7 +396,7 @@ function submitRemoveRole() {
                                     </span>
                                 </template>
                                 <template v-else>
-                                    <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                    <svg class="w-4 h-4 text-gray-400 dark:text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                         <rect x="3" y="4" width="18" height="16" rx="2" />
                                         <circle cx="8" cy="10" r="2" />
                                         <line x1="13" y1="9" x2="18" y2="9" />
@@ -409,11 +409,11 @@ function submitRemoveRole() {
                         </td>
                         <td class="px-4 py-3 align-top">
                             <div class="tooltip-container">
-                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-[11.5px] font-semibold bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 hover:text-blue-700 transition-colors cursor-help">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-[11.5px] font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/60 hover:bg-blue-100 hover:text-blue-700 transition-colors cursor-help">
                                     {{ u.org_roles.length }}
                                 </span>
-                                <div class="tooltip-content shadow-lg">
-                                    <div class="text-[#94a3b8] font-bold text-[9px] tracking-wider uppercase mb-1.5 border-b border-[#334155] pb-1">Assigned Roles</div>
+                                <div class="tooltip-content shadow-lg dark:shadow-none">
+                                    <div class="text-[#94a3b8] font-bold text-[9px] tracking-wider uppercase mb-1.5 border-b border-[#334155] dark:border-zinc-800 pb-1">Assigned Roles</div>
                                     <div class="space-y-1">
                                         <div v-for="r in u.org_roles" :key="r.id" class="flex items-center gap-1.5 text-white text-[12px] font-medium py-0.5">
                                             <span class="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0"></span>
@@ -432,34 +432,34 @@ function submitRemoveRole() {
                                 </span>
                             </span>
                         </td>
-                        <td class="px-4 py-3 align-top text-[13px] text-[#111827]">
+                        <td class="px-4 py-3 align-top text-[13px] text-[#111827] dark:text-zinc-300">
                             {{ u.sign_in_count || 0 }}
                         </td>
-                        <td class="px-4 py-3 align-top text-[13px] text-[#111827]">
+                        <td class="px-4 py-3 align-top text-[13px] text-[#111827] dark:text-zinc-300">
                             <template v-if="u.last_sign_in_at">
                                 <p class="leading-tight font-medium">{{ u.last_sign_in_at.split(', ')[0] + ', ' + u.last_sign_in_at.split(', ')[1] }}</p>
-                                <p class="text-[12px] text-[#6b7280] leading-tight mt-0.5">{{ u.last_sign_in_at.split(', ')[2] }}</p>
+                                <p class="text-[12px] text-[#6b7280] dark:text-zinc-500 leading-tight mt-0.5">{{ u.last_sign_in_at.split(', ')[2] }}</p>
                             </template>
-                            <span v-else class="text-gray-400">—</span>
+                            <span v-else class="text-gray-400 dark:text-zinc-500">—</span>
                         </td>
-                        <td class="px-4 py-3 align-top text-[13px] text-[#111827]">
+                        <td class="px-4 py-3 align-top text-[13px] text-[#111827] dark:text-zinc-300">
                             <template v-if="u.created_at">
                                 <p class="leading-tight font-medium">{{ u.created_at.split(', ')[0] + ', ' + u.created_at.split(', ')[1] }}</p>
-                                <p class="text-[12px] text-[#6b7280] leading-tight mt-0.5">{{ u.created_at.split(', ')[2] }}</p>
+                                <p class="text-[12px] text-[#6b7280] dark:text-zinc-500 leading-tight mt-0.5">{{ u.created_at.split(', ')[2] }}</p>
                             </template>
-                            <span v-else class="text-gray-400">—</span>
+                            <span v-else class="text-gray-400 dark:text-zinc-500">—</span>
                         </td>
                         <td class="px-4 py-3 text-right align-top" @click.stop>
                             <div class="relative inline-block text-left" data-dropdown>
-                                <button class="p-1 rounded text-[#9ca3af] hover:text-[#374151] hover:bg-[#e5e7eb] transition-all cursor-pointer" @click.stop="toggleMenu(u.id, $event)">
+                                <button class="p-1 rounded text-[#9ca3af] hover:text-[#374151] dark:hover:text-zinc-200 dark:text-zinc-200 hover:bg-[#e5e7eb] transition-all cursor-pointer" @click.stop="toggleMenu(u.id, $event)">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
                                     </svg>
                                 </button>
                                 
-                                <div v-if="activeMenu === u.id" class="absolute right-0 mt-1 w-40 bg-white border border-[#e5e7eb] rounded-lg shadow-lg z-50 py-1 text-left">
-                                    <button class="w-full flex items-center gap-2 px-3 py-1.5 text-[13px] text-[#374151] hover:bg-[#f9fafb] text-left transition-colors cursor-pointer" @click="openManageRoles(u)">
-                                        <svg class="w-3.5 h-3.5 text-[#9ca3af]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                                <div v-if="activeMenu === u.id" class="absolute right-0 mt-1 w-40 bg-white dark:bg-zinc-900 border border-[#e5e7eb] dark:border-zinc-800 rounded-lg shadow-lg z-50 py-1 text-left dark:shadow-none">
+                                    <button class="w-full flex items-center gap-2 px-3 py-1.5 text-[13px] text-[#374151] dark:text-zinc-200 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 dark:bg-zinc-900 text-left transition-colors cursor-pointer" @click="openManageRoles(u)">
+                                        <svg class="w-3.5 h-3.5 text-[#9ca3af] dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                                         Manage roles
                                     </button>
                                 </div>
@@ -482,18 +482,18 @@ function submitRemoveRole() {
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-[13px] font-semibold text-[#374151] mb-1.5">User</label>
+                    <label class="block text-[13px] font-semibold text-[#374151] dark:text-zinc-200 mb-1.5">User</label>
                     <div class="relative">
                         <select
                             v-model="assignForm.user_id"
-                            class="w-full h-9 pl-3 pr-8 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] appearance-none bg-white text-[#111827]"
+                            class="w-full h-9 pl-3 pr-8 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] appearance-none bg-white dark:bg-zinc-900 text-[#111827] dark:text-zinc-100"
                         >
                             <option value="" disabled selected>Select a user to invite...</option>
                             <option v-for="u in availableUsers" :key="u.id" :value="u.id">
                                 {{ u.email }} ({{ u.name }})
                             </option>
                         </select>
-                        <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af] pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af] dark:text-zinc-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                         </svg>
                     </div>
@@ -501,28 +501,28 @@ function submitRemoveRole() {
                 </div>
                 
                 <div>
-                    <label class="block text-[13px] font-semibold text-[#374151] mb-1.5">Organization</label>
+                    <label class="block text-[13px] font-semibold text-[#374151] dark:text-zinc-200 mb-1.5">Organization</label>
                     <input
                         type="text"
                         :value="organization?.name || 'Organization'"
                         readonly
-                        class="w-full h-9 px-3 text-[13px] border border-[#e5e7eb] rounded-md bg-[#f9fafb] text-[#6b7280] cursor-not-allowed"
+                        class="w-full h-9 px-3 text-[13px] border border-[#e5e7eb] dark:border-zinc-800 rounded-md bg-[#f9fafb] dark:bg-zinc-900 text-[#6b7280] dark:text-zinc-400 cursor-not-allowed"
                     />
                 </div>
 
                 <div>
-                    <label class="block text-[13px] font-semibold text-[#374151] mb-1.5">Role</label>
+                    <label class="block text-[13px] font-semibold text-[#374151] dark:text-zinc-200 mb-1.5">Role</label>
                     <div class="relative">
                         <select
                             v-model="assignForm.role_id"
-                            class="w-full h-9 pl-3 pr-8 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] appearance-none bg-white text-[#111827]"
+                            class="w-full h-9 pl-3 pr-8 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] appearance-none bg-white dark:bg-zinc-900 text-[#111827] dark:text-zinc-100"
                         >
                             <option value="" disabled selected>Select a role...</option>
                             <option v-for="r in organization?.roles || []" :key="r.id" :value="r.id">
                                 {{ r.nama || r.name }}
                             </option>
                         </select>
-                        <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af] pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af] dark:text-zinc-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                         </svg>
                     </div>
@@ -531,13 +531,13 @@ function submitRemoveRole() {
 
             <template #footer>
                 <button
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] border border-[#d1d5db] hover:bg-[#f9fafb] transition-colors shadow-sm"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-200 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 dark:bg-zinc-900 transition-colors shadow-sm dark:shadow-none"
                     @click="showInviteModal = false"
                 >
                     Cancel
                 </button>
                 <button
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white transition-colors shadow-sm relative overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white transition-colors shadow-sm relative overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed dark:shadow-none"
                     :class="[isSubmitting ? 'bg-[#1d4ed8]' : 'bg-[#2563eb] hover:bg-[#1d4ed8]']"
                     @click="submitInvite"
                     :disabled="isSubmitting || !assignForm.user_id || !assignForm.role_id"
@@ -560,22 +560,22 @@ function submitRemoveRole() {
             @close="showManageModal = false"
         >
             <template #description>
-                Manage organization roles for <strong class="text-[#111827]">{{ selectedUser?.name }}</strong>.
+                Manage organization roles for <strong class="text-[#111827] dark:text-zinc-100">{{ selectedUser?.name }}</strong>.
             </template>
             
             <div class="space-y-5">
                 <!-- Current Roles -->
                 <div>
-                    <h3 class="text-[12px] font-semibold text-[#6b7280] uppercase tracking-wider mb-2">Current Roles</h3>
-                    <div class="rounded-xl divide-y divide-gray-100 ring-1 ring-gray-900/[0.04]">
-                        <div v-for="role in selectedUser?.org_roles" :key="role.id" class="flex items-center justify-between p-3 bg-white">
+                    <h3 class="text-[12px] font-semibold text-[#6b7280] dark:text-zinc-400 uppercase tracking-wider mb-2">Current Roles</h3>
+                    <div class="rounded-xl divide-y divide-gray-100 dark:divide-zinc-800 ring-1 ring-gray-900 dark:ring-zinc-700/[0.04]">
+                        <div v-for="role in selectedUser?.org_roles" :key="role.id" class="flex items-center justify-between p-3 bg-white dark:bg-zinc-900">
                             <div class="flex items-center gap-2.5">
-                                <div class="w-6 h-6 rounded-md bg-[#f3f4f6] flex items-center justify-center border border-[#e5e7eb]">
-                                    <svg class="w-3.5 h-3.5 text-[#6b7280]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <div class="w-6 h-6 rounded-md bg-[#f3f4f6] dark:bg-zinc-800 flex items-center justify-center border border-[#e5e7eb] dark:border-zinc-800">
+                                    <svg class="w-3.5 h-3.5 text-[#6b7280] dark:text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                     </svg>
                                 </div>
-                                <span class="text-[13px] font-medium text-[#374151]">{{ role.role_name }}</span>
+                                <span class="text-[13px] font-medium text-[#374151] dark:text-zinc-200">{{ role.role_name }}</span>
                             </div>
                             <button
                                 class="text-[13px] font-medium text-[#ef4444] hover:text-[#dc2626] transition-colors"
@@ -589,24 +589,24 @@ function submitRemoveRole() {
 
                 <!-- Add Role -->
                 <div>
-                    <h3 class="text-[12px] font-semibold text-[#6b7280] uppercase tracking-wider mb-2">Add Role</h3>
+                    <h3 class="text-[12px] font-semibold text-[#6b7280] dark:text-zinc-400 uppercase tracking-wider mb-2">Add Role</h3>
                     <div class="flex gap-2">
                         <div class="relative flex-1">
                             <select
                                 v-model="assignForm.role_id"
-                                class="w-full h-[34px] pl-3 pr-8 text-[13px] border border-[#d1d5db] rounded-md focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] appearance-none bg-white text-[#111827]"
+                                class="w-full h-[34px] pl-3 pr-8 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] appearance-none bg-white dark:bg-zinc-900 text-[#111827] dark:text-zinc-100"
                             >
                                 <option value="" disabled selected>Select a role to add...</option>
                                 <option v-for="r in organization?.roles || []" :key="r.id" :value="r.id">
                                     {{ r.nama || r.name }}
                                 </option>
                             </select>
-                            <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af] pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af] dark:text-zinc-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                             </svg>
                         </div>
                         <button
-                            class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors shadow-sm disabled:opacity-50"
+                            class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors shadow-sm disabled:opacity-50 dark:shadow-none"
                             :disabled="isSubmitting || !assignForm.role_id"
                             @click="submitInvite"
                         >
@@ -619,7 +619,7 @@ function submitRemoveRole() {
             <template #footer>
                 <div class="flex justify-end">
                     <button
-                        class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] border border-[#d1d5db] hover:bg-[#f9fafb] transition-colors shadow-sm"
+                        class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-200 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 dark:bg-zinc-900 transition-colors shadow-sm dark:shadow-none"
                         @click="showManageModal = false"
                     >
                         Done
@@ -636,7 +636,7 @@ function submitRemoveRole() {
             @close="showRemoveModal = false"
         >
             <template #description>
-                Are you sure you want to remove the <strong class="text-[#111827]">{{ selectedRoleToRemove?.role_name }}</strong> role from <strong class="text-[#111827]">{{ selectedUser?.name }}</strong>?
+                Are you sure you want to remove the <strong class="text-[#111827] dark:text-zinc-100">{{ selectedRoleToRemove?.role_name }}</strong> role from <strong class="text-[#111827] dark:text-zinc-100">{{ selectedUser?.name }}</strong>?
                 <span v-if="selectedUser?.org_roles.length === 1" class="block mt-1 text-[#ef4444]">
                     This is their last role. They will be removed from the organization entirely.
                 </span>
@@ -644,13 +644,13 @@ function submitRemoveRole() {
 
             <template #footer>
                 <button
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] border border-[#d1d5db] hover:bg-[#f9fafb] transition-colors shadow-sm"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-200 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 dark:bg-zinc-900 transition-colors shadow-sm dark:shadow-none"
                     @click="showRemoveModal = false"
                 >
                     Cancel
                 </button>
                 <button
-                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#ef4444] hover:bg-[#dc2626] transition-colors shadow-sm disabled:opacity-50"
+                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#ef4444] hover:bg-[#dc2626] transition-colors shadow-sm disabled:opacity-50 dark:shadow-none"
                     :disabled="isSubmitting"
                     @click="submitRemoveRole"
                 >

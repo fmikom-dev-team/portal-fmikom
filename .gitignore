@@ -44,3 +44,10 @@ frankenphp
 frankenphp-worker.php
 /testing
 .env.testing
+
+# Local test environments, logs, and screenshots
+.env.playwright
+/playwright-report
+/test-results
+/public/asset/screenshots
+/storage/meilisearch

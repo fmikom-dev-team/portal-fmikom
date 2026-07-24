@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Shared\NotificationController::read
  * @see app/Modules/Fast/Controllers/Shared/NotificationController.php:22
@@ -52,27 +52,6 @@ read.post = (args: { notificationId: string | number } | [notificationId: string
     method: 'post',
 })
 
-    /**
-* @see \App\Modules\Fast\Controllers\Shared\NotificationController::read
- * @see app/Modules/Fast/Controllers/Shared/NotificationController.php:22
- * @route '/notifications/{notificationId}/read'
- */
-    const readForm = (args: { notificationId: string | number } | [notificationId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: read.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Shared\NotificationController::read
- * @see app/Modules/Fast/Controllers/Shared/NotificationController.php:22
- * @route '/notifications/{notificationId}/read'
- */
-        readForm.post = (args: { notificationId: string | number } | [notificationId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: read.url(args, options),
-            method: 'post',
-        })
-    
-    read.form = readForm
 /**
 * @see \App\Modules\Fast\Controllers\Shared\NotificationController::readAll
  * @see app/Modules/Fast/Controllers/Shared/NotificationController.php:50
@@ -106,28 +85,6 @@ readAll.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: readAll.url(options),
     method: 'post',
 })
-
-    /**
-* @see \App\Modules\Fast\Controllers\Shared\NotificationController::readAll
- * @see app/Modules/Fast/Controllers/Shared/NotificationController.php:50
- * @route '/notifications/read-all'
- */
-    const readAllForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: readAll.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Shared\NotificationController::readAll
- * @see app/Modules/Fast/Controllers/Shared/NotificationController.php:50
- * @route '/notifications/read-all'
- */
-        readAllForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: readAll.url(options),
-            method: 'post',
-        })
-    
-    readAll.form = readAllForm
 const NotificationController = { read, readAll }
 
 export default NotificationController

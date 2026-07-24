@@ -6,6 +6,7 @@ use App\Jobs\OptimizeVideoJob;
 use App\Services\VirusScannerService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 trait HandlesImageCompression
@@ -22,12 +23,19 @@ trait HandlesImageCompression
 
         // Validate actual mime type and extension
         $realMime = $file->getMimeType();
+        $clientExt = strtolower($file->getClientOriginalExtension());
         $realExt = $file->guessExtension();
+        if (! $realExt || $realExt === 'bin') {
+            $realExt = $clientExt;
+        }
 
-        $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/octet-stream'];
         $allowedExts = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
 
-        if (! in_array($realMime, $allowedMimes) || ! in_array($realExt, $allowedExts)) {
+        $isValidImage = (in_array($realMime, $allowedMimes) || str_starts_with($realMime, 'image/')) && in_array($realExt, $allowedExts);
+
+        if (! $isValidImage) {
+            Log::warning("[HandlesImageCompression] Image type rejected. MIME: {$realMime}, Ext: {$realExt}, ClientExt: {$clientExt}");
             $key = $this->getUploadedFileKey($file);
             throw ValidationException::withMessages([
                 $key => 'Unggah berkas gagal: Tipe berkas gambar tidak valid atau terindikasi berbahaya.',
@@ -161,18 +169,23 @@ trait HandlesImageCompression
         }
 
         $realMime = $file->getMimeType();
+        $clientExt = strtolower($file->getClientOriginalExtension());
         $realExt = $file->guessExtension();
+        if (! $realExt || $realExt === 'bin') {
+            $realExt = $clientExt;
+        }
 
-        $allowedVideoMimes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 'video/3gpp'];
+        $allowedVideoMimes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 'video/3gpp', 'application/octet-stream'];
         $allowedVideoExts = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', '3gp'];
 
-        $allowedImageMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $allowedImageMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/octet-stream'];
         $allowedImageExts = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
 
-        $isImage = in_array($realMime, $allowedImageMimes) && in_array($realExt, $allowedImageExts);
-        $isVideo = in_array($realMime, $allowedVideoMimes) && in_array($realExt, $allowedVideoExts);
+        $isImage = (in_array($realMime, $allowedImageMimes) || str_starts_with($realMime, 'image/')) && in_array($realExt, $allowedImageExts);
+        $isVideo = (in_array($realMime, $allowedVideoMimes) || str_starts_with($realMime, 'video/')) && in_array($realExt, $allowedVideoExts);
 
         if (! $isImage && ! $isVideo) {
+            Log::warning("[HandlesImageCompression] File type rejected. MIME: {$realMime}, Ext: {$realExt}, ClientExt: {$clientExt}");
             $key = $this->getUploadedFileKey($file);
             throw ValidationException::withMessages([
                 $key => 'Unggah berkas gagal: Tipe berkas tidak didukung atau terindikasi berbahaya.',

@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../../../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Admin\LetterIndexController::index
  * @see app/Modules/Fast/Controllers/Admin/LetterIndexController.php:17
@@ -45,41 +45,6 @@ indexb6e06a6546a9d86589b4a3bd0d762019.head = (options?: RouteQueryOptions): Rout
     /**
 * @see \App\Modules\Fast\Controllers\Admin\LetterIndexController::index
  * @see app/Modules/Fast/Controllers/Admin/LetterIndexController.php:17
- * @route '/admin/surat'
- */
-    const indexb6e06a6546a9d86589b4a3bd0d762019Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: indexb6e06a6546a9d86589b4a3bd0d762019.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\LetterIndexController::index
- * @see app/Modules/Fast/Controllers/Admin/LetterIndexController.php:17
- * @route '/admin/surat'
- */
-        indexb6e06a6546a9d86589b4a3bd0d762019Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: indexb6e06a6546a9d86589b4a3bd0d762019.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\LetterIndexController::index
- * @see app/Modules/Fast/Controllers/Admin/LetterIndexController.php:17
- * @route '/admin/surat'
- */
-        indexb6e06a6546a9d86589b4a3bd0d762019Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: indexb6e06a6546a9d86589b4a3bd0d762019.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    indexb6e06a6546a9d86589b4a3bd0d762019.form = indexb6e06a6546a9d86589b4a3bd0d762019Form
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\LetterIndexController::index
- * @see app/Modules/Fast/Controllers/Admin/LetterIndexController.php:17
  * @route '/kaprodi/admin/surat'
  */
 const indexa7b3ecf96d6799e3f82b703d51393ef2 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -123,41 +88,6 @@ indexa7b3ecf96d6799e3f82b703d51393ef2.head = (options?: RouteQueryOptions): Rout
     /**
 * @see \App\Modules\Fast\Controllers\Admin\LetterIndexController::index
  * @see app/Modules/Fast/Controllers/Admin/LetterIndexController.php:17
- * @route '/kaprodi/admin/surat'
- */
-    const indexa7b3ecf96d6799e3f82b703d51393ef2Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: indexa7b3ecf96d6799e3f82b703d51393ef2.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\LetterIndexController::index
- * @see app/Modules/Fast/Controllers/Admin/LetterIndexController.php:17
- * @route '/kaprodi/admin/surat'
- */
-        indexa7b3ecf96d6799e3f82b703d51393ef2Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: indexa7b3ecf96d6799e3f82b703d51393ef2.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\LetterIndexController::index
- * @see app/Modules/Fast/Controllers/Admin/LetterIndexController.php:17
- * @route '/kaprodi/admin/surat'
- */
-        indexa7b3ecf96d6799e3f82b703d51393ef2Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: indexa7b3ecf96d6799e3f82b703d51393ef2.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    indexa7b3ecf96d6799e3f82b703d51393ef2.form = indexa7b3ecf96d6799e3f82b703d51393ef2Form
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\LetterIndexController::index
- * @see app/Modules/Fast/Controllers/Admin/LetterIndexController.php:17
  * @route '/dekan/admin/surat'
  */
 const indexd1d46f125ca85668855e663ec8e12f75 = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -197,42 +127,6 @@ indexd1d46f125ca85668855e663ec8e12f75.head = (options?: RouteQueryOptions): Rout
     url: indexd1d46f125ca85668855e663ec8e12f75.url(options),
     method: 'head',
 })
-
-    /**
-* @see \App\Modules\Fast\Controllers\Admin\LetterIndexController::index
- * @see app/Modules/Fast/Controllers/Admin/LetterIndexController.php:17
- * @route '/dekan/admin/surat'
- */
-    const indexd1d46f125ca85668855e663ec8e12f75Form = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: indexd1d46f125ca85668855e663ec8e12f75.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\LetterIndexController::index
- * @see app/Modules/Fast/Controllers/Admin/LetterIndexController.php:17
- * @route '/dekan/admin/surat'
- */
-        indexd1d46f125ca85668855e663ec8e12f75Form.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: indexd1d46f125ca85668855e663ec8e12f75.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Admin\LetterIndexController::index
- * @see app/Modules/Fast/Controllers/Admin/LetterIndexController.php:17
- * @route '/dekan/admin/surat'
- */
-        indexd1d46f125ca85668855e663ec8e12f75Form.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: indexd1d46f125ca85668855e663ec8e12f75.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    indexd1d46f125ca85668855e663ec8e12f75.form = indexd1d46f125ca85668855e663ec8e12f75Form
 
 /**
 * Multiple routes resolve to \App\Modules\Fast\Controllers\Admin\LetterIndexController::index, so this export is a

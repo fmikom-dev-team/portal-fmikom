@@ -10,12 +10,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->admin = User::create([
+    $this->admin = User::forceCreate([
         'name' => 'Super Admin',
         'email' => 'admin@fmikom.org',
         'password' => bcrypt('password123'),
         'user_type' => 'super-admin',
         'is_active' => true,
+        'status_approval' => 'activated',
         'email_verified_at' => now(),
     ]);
 });
@@ -84,7 +85,7 @@ test('it records radar detection and sends notification to active super admins',
         'sensitivity_level' => 50,
     ]);
 
-    $device = RadarDevice::create([
+    $device = RadarDevice::forceCreate([
         'device_fingerprint' => 'test_fingerprint',
         'ip_address' => '127.0.0.1',
         'is_trusted' => false,

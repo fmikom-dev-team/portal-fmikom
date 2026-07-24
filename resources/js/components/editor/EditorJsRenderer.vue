@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import DOMPurify from 'dompurify';
 
 const props = defineProps({
     content: { type: [String, Object, null], default: null },
@@ -18,21 +19,30 @@ const blocks = computed(() => {
     }
     return data?.blocks ?? [];
 });
+
+// Clean and sanitize HTML to prevent XSS while keeping safe formatting/links
+const clean = (val) => {
+    if (!val) return '';
+    return DOMPurify.sanitize(val, {
+        USE_PROFILES: { html: true },
+        ADD_ATTR: ['target', 'class', 'rel'],
+    });
+};
 </script>
 
 <template>
     <div class="editorjs-renderer prose prose-sm dark:prose-invert max-w-none" style="overflow-wrap: break-word; word-break: break-word;">
         <template v-for="(block, i) in blocks" :key="i">
             <!-- Paragraph -->
-            <p v-if="block.type === 'paragraph'" v-html="block.data.text" />
+            <p v-if="block.type === 'paragraph'" v-html="clean(block.data.text)" />
 
             <!-- Header -->
-            <h1 v-else-if="block.type === 'header' && Number(block.data.level) === 1" v-html="block.data.text" />
-            <h2 v-else-if="block.type === 'header' && Number(block.data.level) === 2" v-html="block.data.text" />
-            <h3 v-else-if="block.type === 'header' && Number(block.data.level) === 3" v-html="block.data.text" />
-            <h4 v-else-if="block.type === 'header' && Number(block.data.level) === 4" v-html="block.data.text" />
-            <h5 v-else-if="block.type === 'header' && Number(block.data.level) === 5" v-html="block.data.text" />
-            <h6 v-else-if="block.type === 'header' && (Number(block.data.level) === 6 || !block.data.level)" v-html="block.data.text" />
+            <h1 v-else-if="block.type === 'header' && Number(block.data.level) === 1" v-html="clean(block.data.text)" />
+            <h2 v-else-if="block.type === 'header' && Number(block.data.level) === 2" v-html="clean(block.data.text)" />
+            <h3 v-else-if="block.type === 'header' && Number(block.data.level) === 3" v-html="clean(block.data.text)" />
+            <h4 v-else-if="block.type === 'header' && Number(block.data.level) === 4" v-html="clean(block.data.text)" />
+            <h5 v-else-if="block.type === 'header' && Number(block.data.level) === 5" v-html="clean(block.data.text)" />
+            <h6 v-else-if="block.type === 'header' && (Number(block.data.level) === 6 || !block.data.level)" v-html="clean(block.data.text)" />
 
             <!-- List (nested) -->
             <component
@@ -42,7 +52,7 @@ const blocks = computed(() => {
                 :class="block.data.style === 'ordered' ? 'list-decimal' : 'list-disc'"
             >
                 <li v-for="(item, j) in block.data.items" :key="j">
-                    <span v-html="typeof item === 'string' ? item : item.content" />
+                    <span v-html="clean(typeof item === 'string' ? item : item.content)" />
                 </li>
             </component>
 
@@ -50,14 +60,14 @@ const blocks = computed(() => {
             <div v-else-if="block.type === 'checklist'" class="space-y-1">
                 <label v-for="(item, j) in block.data.items" :key="j" class="flex items-center gap-2 text-sm">
                     <input type="checkbox" :checked="item.checked" disabled class="rounded" />
-                    <span v-html="item.text" :class="{ 'line-through opacity-60': item.checked }" />
+                    <span v-html="clean(item.text)" :class="{ 'line-through opacity-60': item.checked }" />
                 </label>
             </div>
 
             <!-- Quote -->
             <blockquote v-else-if="block.type === 'quote'" class="border-l-4 border-violet-300 pl-4 italic dark:border-violet-700">
-                <p v-html="block.data.text" />
-                <cite v-if="block.data.caption" class="mt-1 block text-xs not-italic text-slate-400" v-html="block.data.caption" />
+                <p v-html="clean(block.data.text)" />
+                <cite v-if="block.data.caption" class="mt-1 block text-xs not-italic text-slate-400" v-html="clean(block.data.caption)" />
             </blockquote>
 
             <!-- Delimiter -->
@@ -71,19 +81,19 @@ const blocks = computed(() => {
                 <table class="w-full text-sm">
                     <thead v-if="block.data.withHeadings && block.data.content.length > 0">
                         <tr>
-                            <th v-for="(cell, c) in block.data.content[0]" :key="c" class="border-b border-slate-200 p-2 text-left font-semibold dark:border-zinc-700" v-html="cell" />
+                            <th v-for="(cell, c) in block.data.content[0]" :key="c" class="border-b border-slate-200 p-2 text-left font-semibold dark:border-zinc-700" v-html="clean(cell)" />
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="(row, r) in block.data.withHeadings ? block.data.content.slice(1) : block.data.content" :key="r">
-                            <td v-for="(cell, c) in row" :key="c" class="border-b border-slate-100 p-2 dark:border-zinc-800" v-html="cell" />
+                            <td v-for="(cell, c) in row" :key="c" class="border-b border-slate-100 p-2 dark:border-zinc-800" v-html="clean(cell)" />
                         </tr>
                     </tbody>
                 </table>
             </div>
 
             <!-- Raw HTML -->
-            <div v-else-if="block.type === 'raw'" v-html="block.data.html" />
+            <div v-else-if="block.type === 'raw'" v-html="clean(block.data.html)" />
 
             <!-- Fallback: unknown block -->
             <p v-else class="text-sm text-slate-400 italic">[{{ block.type }}]</p>
@@ -93,3 +103,4 @@ const blocks = computed(() => {
         <p v-if="blocks.length === 0" class="text-sm text-slate-400 italic">Tidak ada deskripsi</p>
     </div>
 </template>
+

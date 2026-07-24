@@ -92,20 +92,20 @@ const saveCors = async () => {
         
         <!-- Toast -->
         <Transition enter-from-class="translate-y-2 opacity-0" enter-to-class="translate-y-0 opacity-100" leave-to-class="opacity-0" enter-active-class="transition duration-200" leave-active-class="transition duration-150">
-            <div v-if="toast" class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-[13px] font-medium bg-emerald-50 border-emerald-200 text-emerald-800">
+            <div v-if="toast" class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-[13px] font-medium bg-emerald-50 border-emerald-200 text-emerald-800 dark:shadow-none">
                 <Check class="w-4 h-4" />
                 {{ toast.message }}
             </div>
         </Transition>
 
         <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-semibold text-gray-900 tracking-tight">Sessions</h1>
+            <h1 class="text-2xl font-semibold text-gray-900 dark:text-zinc-100 tracking-tight">Sessions</h1>
         </div>
 
         <!-- Loading -->
         <div v-if="isLoading" class="space-y-4">
             <!-- Session lifetime skeleton -->
-            <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl p-5 shadow-sm dark:shadow-none">
                 <div class="flex items-start gap-4">
                     <div class="w-12 h-12 wos-shimmer rounded-xl shrink-0" />
                     <div class="flex-1 space-y-4">
@@ -125,7 +125,7 @@ const saveCors = async () => {
             </div>
 
             <!-- CORS skeleton -->
-            <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl p-5 shadow-sm dark:shadow-none">
                 <div class="flex items-start gap-4">
                     <div class="w-12 h-12 wos-shimmer rounded-xl shrink-0" />
                     <div class="flex-1 space-y-4">
@@ -145,31 +145,31 @@ const saveCors = async () => {
 
         <template v-else>
             <!-- ── Session lifetime ────────────────────────────────────────── -->
-            <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl p-5 shadow-sm dark:shadow-none">
                 <div class="flex items-start gap-4">
-                    <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center border border-gray-200 shrink-0">
-                        <Clock class="w-6 h-6 text-gray-700" />
+                    <div class="w-12 h-12 bg-gray-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center border border-gray-200 dark:border-zinc-700 shrink-0">
+                        <Clock class="w-6 h-6 text-gray-700 dark:text-zinc-300" />
                     </div>
                     <div class="flex-1">
-                        <h3 class="text-[14px] font-semibold text-gray-900">Session lifetime</h3>
-                        <p class="text-[13px] text-gray-500 mt-0.5">Configure maximum session length, inactivity timeout, and access token validation time.</p>
+                        <h3 class="text-[14px] font-semibold text-gray-900 dark:text-zinc-100">Session lifetime</h3>
+                        <p class="text-[13px] text-gray-500 dark:text-zinc-400 mt-0.5">Configure maximum session length, inactivity timeout, and access token validation time.</p>
                         
                         <div class="mt-5 space-y-3 text-[13px]">
                             <div class="grid grid-cols-[180px_1fr]">
-                                <span class="text-gray-500">Maximum session length</span>
-                                <span class="text-gray-900 font-medium">{{ lifetime.maxLength }} {{ lifetime.maxUnit.toLowerCase() }}</span>
+                                <span class="text-gray-500 dark:text-zinc-400">Maximum session length</span>
+                                <span class="text-gray-900 dark:text-zinc-100 font-medium">{{ lifetime.maxLength }} {{ lifetime.maxUnit.toLowerCase() }}</span>
                             </div>
                             <div class="grid grid-cols-[180px_1fr]">
-                                <span class="text-gray-500">Access token duration</span>
-                                <span class="text-gray-900 font-medium">{{ lifetime.tokenDuration }} {{ lifetime.tokenUnit.toLowerCase() }}</span>
+                                <span class="text-gray-500 dark:text-zinc-400">Access token duration</span>
+                                <span class="text-gray-900 dark:text-zinc-100 font-medium">{{ lifetime.tokenDuration }} {{ lifetime.tokenUnit.toLowerCase() }}</span>
                             </div>
                             <div class="grid grid-cols-[180px_1fr]">
-                                <span class="text-gray-500">Inactivity timeout</span>
-                                <span class="text-gray-900 font-medium">{{ lifetime.inactivityLength }} {{ lifetime.inactivityUnit.toLowerCase() }}</span>
+                                <span class="text-gray-500 dark:text-zinc-400">Inactivity timeout</span>
+                                <span class="text-gray-900 dark:text-zinc-100 font-medium">{{ lifetime.inactivityLength }} {{ lifetime.inactivityUnit.toLowerCase() }}</span>
                             </div>
                         </div>
                         
-                        <button @click="showLifetimeModal = true" class="mt-5 px-3 py-1.5 bg-white border border-gray-200 rounded-md text-[13px] font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+                        <button @click="showLifetimeModal = true" class="mt-5 px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-md text-[13px] font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-sm dark:shadow-none">
                             Manage
                         </button>
                     </div>
@@ -177,21 +177,21 @@ const saveCors = async () => {
             </div>
 
             <!-- ── CORS ────────────────────────────────────────────────────── -->
-            <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm mt-4">
+            <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl p-5 shadow-sm mt-4 dark:shadow-none">
                 <div class="flex items-start gap-4">
-                    <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center border border-gray-200 shrink-0">
-                        <Globe class="w-6 h-6 text-gray-700" />
+                    <div class="w-12 h-12 bg-gray-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center border border-gray-200 dark:border-zinc-700 shrink-0">
+                        <Globe class="w-6 h-6 text-gray-700 dark:text-zinc-300" />
                     </div>
                     <div class="flex-1">
-                        <h3 class="text-[14px] font-semibold text-gray-900">Cross-Origin Resource Sharing (CORS)</h3>
-                        <p class="text-[13px] text-gray-500 mt-0.5">Define which web origins can securely interact with the WorkOS API.</p>
+                        <h3 class="text-[14px] font-semibold text-gray-900 dark:text-zinc-100">Cross-Origin Resource Sharing (CORS)</h3>
+                        <p class="text-[13px] text-gray-500 dark:text-zinc-400 mt-0.5">Define which web origins can securely interact with the WorkOS API.</p>
                         
                         <div class="mt-5 text-[13px] grid grid-cols-[180px_1fr]">
-                            <span class="text-gray-500">Allowed web origins</span>
-                            <span class="text-gray-900 font-medium">{{ corsOrigins.length ? corsOrigins.join(', ') : 'None' }}</span>
+                            <span class="text-gray-500 dark:text-zinc-400">Allowed web origins</span>
+                            <span class="text-gray-900 dark:text-zinc-100 font-medium">{{ corsOrigins.length ? corsOrigins.join(', ') : 'None' }}</span>
                         </div>
                         
-                        <button @click="showCorsModal = true" class="mt-5 px-3 py-1.5 bg-white border border-gray-200 rounded-md text-[13px] font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+                        <button @click="showCorsModal = true" class="mt-5 px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-md text-[13px] font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-sm dark:shadow-none">
                             Manage
                         </button>
                     </div>
@@ -211,10 +211,10 @@ const saveCors = async () => {
         >
             <div class="space-y-4 text-[13px]">
                 <div>
-                    <label class="block font-medium text-gray-900 mb-1.5">Maximum session length</label>
+                    <label class="block font-medium text-gray-900 dark:text-zinc-100 mb-1.5">Maximum session length</label>
                     <div class="flex gap-2">
-                        <input type="number" v-model="lifetime.maxLength" class="w-24 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-[#2563eb]" />
-                        <select v-model="lifetime.maxUnit" class="w-32 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-[#2563eb] bg-white">
+                        <input type="number" v-model="lifetime.maxLength" class="w-24 px-3 py-1.5 border border-gray-300 dark:border-zinc-700 rounded-md focus:ring-1 focus:ring-[#2563eb]" />
+                        <select v-model="lifetime.maxUnit" class="w-32 px-3 py-1.5 border border-gray-300 dark:border-zinc-700 rounded-md focus:ring-1 focus:ring-[#2563eb] bg-white dark:bg-zinc-900">
                             <option>Days</option>
                             <option>Hours</option>
                             <option>Minutes</option>
@@ -222,10 +222,10 @@ const saveCors = async () => {
                     </div>
                 </div>
                 <div>
-                    <label class="block font-medium text-gray-900 mb-1.5">Access token duration</label>
+                    <label class="block font-medium text-gray-900 dark:text-zinc-100 mb-1.5">Access token duration</label>
                     <div class="flex gap-2">
-                        <input type="number" v-model="lifetime.tokenDuration" class="w-24 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-[#2563eb]" />
-                        <select v-model="lifetime.tokenUnit" class="w-32 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-[#2563eb] bg-white">
+                        <input type="number" v-model="lifetime.tokenDuration" class="w-24 px-3 py-1.5 border border-gray-300 dark:border-zinc-700 rounded-md focus:ring-1 focus:ring-[#2563eb]" />
+                        <select v-model="lifetime.tokenUnit" class="w-32 px-3 py-1.5 border border-gray-300 dark:border-zinc-700 rounded-md focus:ring-1 focus:ring-[#2563eb] bg-white dark:bg-zinc-900">
                             <option>Days</option>
                             <option>Hours</option>
                             <option>Minutes</option>
@@ -233,10 +233,10 @@ const saveCors = async () => {
                     </div>
                 </div>
                 <div>
-                    <label class="block font-medium text-gray-900 mb-1.5">Inactivity timeout <span class="text-gray-400 font-normal">(optional)</span></label>
+                    <label class="block font-medium text-gray-900 dark:text-zinc-100 mb-1.5">Inactivity timeout <span class="text-gray-400 dark:text-zinc-500 font-normal">(optional)</span></label>
                     <div class="flex gap-2">
-                        <input type="number" v-model="lifetime.inactivityLength" class="w-24 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-[#2563eb]" />
-                        <select v-model="lifetime.inactivityUnit" class="w-32 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-[#2563eb] bg-white">
+                        <input type="number" v-model="lifetime.inactivityLength" class="w-24 px-3 py-1.5 border border-gray-300 dark:border-zinc-700 rounded-md focus:ring-1 focus:ring-[#2563eb]" />
+                        <select v-model="lifetime.inactivityUnit" class="w-32 px-3 py-1.5 border border-gray-300 dark:border-zinc-700 rounded-md focus:ring-1 focus:ring-[#2563eb] bg-white dark:bg-zinc-900">
                             <option>Days</option>
                             <option>Hours</option>
                             <option>Minutes</option>
@@ -245,7 +245,7 @@ const saveCors = async () => {
                 </div>
             </div>
             <template #footer>
-                <button @click="showLifetimeModal = false" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button @click="showLifetimeModal = false" class="px-4 py-2 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-lg text-[13px] font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800">Cancel</button>
                 <button @click="saveLifetime" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 transition-colors">Save</button>
             </template>
         </AppModal>
@@ -258,32 +258,32 @@ const saveCors = async () => {
             @close="showCorsModal = false"
         >
             <div class="space-y-4 text-[13px]">
-                <p class="text-gray-600 leading-relaxed">
+                <p class="text-gray-600 dark:text-zinc-400 leading-relaxed">
                     Configuring CORS is required for client-side authentication APIs and the Widgets API, as they involve browser-based requests restricted by the same-origin policy. Unlisted origins will be rejected.
                 </p>
 
                 <div>
-                    <label class="flex items-center gap-1 font-medium text-gray-900 mb-1.5">
-                        Allowed web origins <AlertCircle class="w-3.5 h-3.5 text-gray-400" />
+                    <label class="flex items-center gap-1 font-medium text-gray-900 dark:text-zinc-100 mb-1.5">
+                        Allowed web origins <AlertCircle class="w-3.5 h-3.5 text-gray-400 dark:text-zinc-500" />
                     </label>
                     <div class="flex gap-2">
-                        <input type="text" v-model="newOrigin" @keyup.enter="addOrigin" placeholder="https://example.com" class="flex-1 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-[#2563eb]" />
-                        <button @click="addOrigin" class="px-4 py-1.5 bg-gray-100 border border-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-200 transition-colors">+ Add</button>
+                        <input type="text" v-model="newOrigin" @keyup.enter="addOrigin" placeholder="https://example.com" class="flex-1 px-3 py-1.5 border border-gray-300 dark:border-zinc-700 rounded-md focus:ring-1 focus:ring-[#2563eb]" />
+                        <button @click="addOrigin" class="px-4 py-1.5 bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-300 rounded-md font-medium hover:bg-gray-200 transition-colors">+ Add</button>
                     </div>
-                    <p class="text-gray-500 text-[12px] mt-2">
+                    <p class="text-gray-500 dark:text-zinc-400 text-[12px] mt-2">
                         Staging supports the usage of wildcards <code>*</code>, <code>localhost</code> origins and <code>http</code> protocol.
                     </p>
                 </div>
 
-                <div class="mt-4 border border-gray-200 rounded-xl overflow-hidden bg-gray-50/50 min-h-[150px] flex flex-col">
-                    <div v-if="corsOrigins.length === 0" class="flex-1 flex flex-col items-center justify-center text-gray-400">
+                <div class="mt-4 border border-gray-200 dark:border-zinc-700 rounded-xl overflow-hidden bg-gray-50 dark:bg-zinc-900/50 min-h-[150px] flex flex-col">
+                    <div v-if="corsOrigins.length === 0" class="flex-1 flex flex-col items-center justify-center text-gray-400 dark:text-zinc-500">
                         <Globe class="w-8 h-8 mb-2 opacity-50" />
                         <span class="text-[13px]">No web origins have been added</span>
                     </div>
-                    <ul v-else class="divide-y divide-gray-100 bg-white">
+                    <ul v-else class="divide-y divide-gray-100 dark:divide-zinc-800 bg-white dark:bg-zinc-900">
                         <li v-for="origin in corsOrigins" :key="origin" class="flex items-center justify-between px-4 py-3">
-                            <span class="font-medium text-gray-900">{{ origin }}</span>
-                            <button @click="removeOrigin(origin)" class="text-gray-400 hover:text-red-600 transition-colors">
+                            <span class="font-medium text-gray-900 dark:text-zinc-100">{{ origin }}</span>
+                            <button @click="removeOrigin(origin)" class="text-gray-400 dark:text-zinc-500 hover:text-red-600 transition-colors">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </li>
@@ -291,7 +291,7 @@ const saveCors = async () => {
                 </div>
             </div>
             <template #footer>
-                <button @click="showCorsModal = false" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button @click="showCorsModal = false" class="px-4 py-2 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-lg text-[13px] font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800">Cancel</button>
                 <button @click="saveCors" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 transition-colors">Save changes</button>
             </template>
         </AppModal>

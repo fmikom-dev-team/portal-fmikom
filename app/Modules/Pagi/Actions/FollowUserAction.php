@@ -6,6 +6,7 @@ use App\Models\Pagi\PagiFollow;
 use App\Models\User;
 use App\Notifications\PagiNotification;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class FollowUserAction
 {
@@ -21,21 +22,27 @@ class FollowUserAction
             throw new \InvalidArgumentException('Cannot follow yourself');
         }
 
-        // DB-002: Use relational pagi_follows table instead of user metadata JSON arrays to prevent race conditions.
-        $isNowFollowing = ! PagiFollow::query()->where('follower_id', '=', $authUser->id, 'and')
-            ->where('following_id', '=', $targetUser->id, 'and')
-            ->exists();
+        $isNowFollowing = false;
 
-        if ($isNowFollowing) {
-            PagiFollow::query()->firstOrCreate([
-                'follower_id' => $authUser->id,
-                'following_id' => $targetUser->id,
-            ]);
-        } else {
-            PagiFollow::query()->where('follower_id', '=', $authUser->id, 'and')
+        DB::transaction(function () use ($authUser, $targetUser, &$isNowFollowing) {
+            $exists = PagiFollow::query()->where('follower_id', '=', $authUser->id, 'and')
                 ->where('following_id', '=', $targetUser->id, 'and')
-                ->delete();
-        }
+                ->lockForUpdate()
+                ->exists();
+
+            if ($exists) {
+                PagiFollow::query()->where('follower_id', '=', $authUser->id, 'and')
+                    ->where('following_id', '=', $targetUser->id, 'and')
+                    ->delete();
+                $isNowFollowing = false;
+            } else {
+                PagiFollow::query()->firstOrCreate([
+                    'follower_id' => $authUser->id,
+                    'following_id' => $targetUser->id,
+                ]);
+                $isNowFollowing = true;
+            }
+        });
 
         $followersCount = count(PagiFollow::query()->where('following_id', '=', $targetUser->id, 'and')->get());
 

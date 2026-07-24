@@ -42,6 +42,19 @@ const UserProfileDropdownCard = defineAsyncComponent(
 	() => import("./UserProfileDropdownCard.vue"),
 );
 
+import { ThemeTogglerButton } from "@/components/animate-ui/components/buttons/theme-toggler";
+import { useAppearance } from "@/composables/useAppearance";
+
+const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
+
+const activeTheme = computed({
+	get: () =>
+		appearance.value === "system" ? resolvedAppearance.value : appearance.value,
+	set: (val) => {
+		updateAppearance(val);
+	},
+});
+
 function throttle<T extends (...args: any[]) => any>(
 	fn: T,
 	limit: number,
@@ -501,11 +514,18 @@ onUnmounted(() => {
 
 				<!-- Right Actions Area -->
 				<div class="flex items-center gap-3 ml-auto">
-					<!-- Share Work button -->
-					<Link v-if="$page.props.auth?.user && currentRoleSlug === 'mahasiswa'" href="/pagi/editor" class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-950 text-white hover:bg-indigo-600 p-2 sm:px-4 sm:py-2 text-xs font-bold transition-all shadow-md active:scale-95" aria-label="Share Work">
+					<!-- Share Work button (desktop only) -->
+					<Link v-if="$page.props.auth?.user && currentRoleSlug === 'mahasiswa'" href="/pagi/editor" class="hidden md:inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-950 text-white hover:bg-indigo-600 p-2 sm:px-4 sm:py-2 text-xs font-bold transition-all shadow-md active:scale-95" aria-label="Share Work">
 						<Plus class="h-3.5 w-3.5 shrink-0" /> <span class="hidden sm:inline">Share Work</span>
 					</Link>
 
+					<!-- Message Icon (mobile + desktop) -->
+					<Link v-if="$page.props.auth?.user" href="/pagi/messages" class="md:hidden flex relative p-2 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-600 dark:text-zinc-350 transition-colors items-center justify-center" aria-label="Pesan">
+						<MessageSquare class="h-4.5 w-4.5" />
+						<span v-if="unreadMessagesCount > 0" class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-indigo-600 px-1 text-[9px] font-black text-white ring-2 ring-white dark:ring-zinc-950">
+							{{ unreadMessagesCount }}
+						</span>
+					</Link>
 					<!-- Message Icon (desktop only) -->
 					<Link v-if="$page.props.auth?.user" href="/pagi/messages" class="hidden md:flex relative p-2 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-600 dark:text-zinc-350 transition-colors items-center justify-center" aria-label="Pesan">
 						<MessageSquare class="h-4.5 w-4.5" />
@@ -521,6 +541,17 @@ onUnmounted(() => {
 							{{ totalUnread }}
 						</span>
 					</button>
+
+					<!-- Theme Toggler -->
+					<div class="flex items-center shrink-0">
+						<ThemeTogglerButton
+							v-model="activeTheme"
+							variant="ghost"
+							size="sm"
+							direction="ltr"
+							:modes="['light', 'dark']"
+						/>
+					</div>
 
 					<!-- Profile (DESKTOP ONLY — shown on right side) -->
 					<div v-if="$page.props.auth?.user" class="hidden md:block relative shrink-0" @mouseenter="hasOpenedDesktopProfile = true; enterProfile()" @mouseleave="leaveProfile()" @click.stop="hasOpenedDesktopProfile = true; isProfileModalOpen = !isProfileModalOpen">
@@ -563,54 +594,50 @@ onUnmounted(() => {
 		</header>
 
 		<!-- Modern Premium Bottom Navbar for Mobile Features (Behance/Instagram style) -->
-		<div v-if="$page.props.auth?.user && !$page.url.startsWith('/pagi/messages')" class="fixed bottom-0 inset-x-0 h-16 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-xl border-t border-slate-200/80 dark:border-zinc-850 flex items-center justify-around px-4 z-50 md:hidden shadow-[0_-4px_24px_rgba(0,0,0,0.04)] select-none" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
+		<div v-if="$page.props.auth?.user && !$page.url.startsWith('/pagi/messages')" class="fixed bottom-0 inset-x-0 h-16 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-xl border-t border-slate-200/80 dark:border-zinc-850 flex items-center justify-between px-2 z-50 md:hidden shadow-[0_-4px_24px_rgba(0,0,0,0.04)] select-none" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
 			<!-- 1. Explore (main dashboard) -->
-			<Link href="/pagi" class="flex flex-col items-center gap-1 transition-colors"
+			<Link href="/pagi" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1"
 				:class="[ $page.url === '/pagi' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
 				<LayoutGrid class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">Explore</span>
 			</Link>
 
 			<!-- 2. Gallery -->
-			<Link href="/pagi/gallery" class="flex flex-col items-center gap-1 transition-colors"
+			<Link href="/pagi/gallery" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1"
 				:class="[ $page.url.startsWith('/pagi/gallery') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
 				<Image class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">Gallery</span>
 			</Link>
 
 			<!-- 3. Share Project (FAB in the middle!) -->
-			<Link v-if="currentRoleSlug === 'mahasiswa'" href="/pagi/editor" class="flex flex-col items-center justify-center -mt-5 shrink-0 transition-transform active:scale-95">
+			<Link v-if="currentRoleSlug === 'mahasiswa'" href="/pagi/editor" class="flex flex-col items-center justify-center -mt-5 shrink-0 transition-transform active:scale-95 flex-1">
 				<div class="h-11 w-11 rounded-full bg-slate-950 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center shadow-lg border-2 border-white dark:border-zinc-900 hover:bg-indigo-600 dark:hover:bg-indigo-500">
 					<Plus class="w-5 h-5 font-black" />
 				</div>
 				<span class="text-[8px] font-extrabold tracking-tight uppercase mt-0.5 text-slate-550 dark:text-zinc-400">Share</span>
 			</Link>
+			<!-- Fallback placeholder if not mahasiswa to keep centering layout -->
+			<div v-else class="flex-1"></div>
 
 			<!-- 2. People -->
-			<Link href="/pagi/people" class="flex flex-col items-center gap-1 transition-colors"
+			<Link href="/pagi/people" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1"
 				:class="[ $page.url.startsWith('/pagi/people') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
 				<Users class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">People</span>
 			</Link>
 
-			<!-- 4. Works -->
-			<Link v-if="false" href="/pagi/works" class="flex flex-col items-center gap-1 transition-colors"
-				:class="[ $page.url.startsWith('/pagi/works') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
-				<Folder class="w-5 h-5 transition-transform active:scale-90" />
-				<span class="text-[9px] font-extrabold tracking-tight uppercase">Works</span>
+			<!-- 5. CV Builder -->
+			<Link 
+				v-if="currentRoleSlug === 'mahasiswa' || currentRoleSlug === 'alumni'"
+				href="/pagi/cv" 
+				class="flex flex-col items-center justify-center gap-1 transition-colors flex-1"
+				:class="[ $page.url.startsWith('/pagi/cv') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]"
+			>
+				<FileText class="w-5 h-5 transition-transform active:scale-90" />
+				<span class="text-[9px] font-extrabold tracking-tight uppercase">CV</span>
 			</Link>
-
-			<!-- 5. Message -->
-			<Link href="/pagi/messages" class="flex flex-col items-center gap-1 transition-colors"
-				:class="[ $page.url.startsWith('/pagi/messages') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
-				<div class="relative">
-					<MessageSquare class="w-5 h-5 transition-transform active:scale-90" />
-					<span v-if="unreadMessagesCount > 0" class="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-indigo-600 px-1 text-[8px] font-black text-white ring-2 ring-white dark:ring-zinc-950">
-						{{ unreadMessagesCount }}
-					</span>
-				</div>
-				<span class="text-[9px] font-extrabold tracking-tight uppercase">Pesan</span>
-			</Link>
+			<!-- Fallback for roles without CV (show empty space with same flex proportion) -->
+			<div v-else class="flex-1"></div>
 		</div>
 	</div>
 

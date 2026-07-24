@@ -38,6 +38,14 @@ class TwoFactorChallengeController extends Controller
 
         $user = User::findOrFail($userId);
 
+        if (! $user->isAccountActive()) {
+            $request->session()->forget('login.id');
+            $msg = $user->getLoginBlockMessage() ?? 'Akun Anda tidak dapat diakses saat ini.';
+            throw ValidationException::withMessages([
+                'code' => $msg,
+            ]);
+        }
+
         // Try to verify using the submitted code or recovery code
         $code = $request->code ?? $request->recovery_code;
 

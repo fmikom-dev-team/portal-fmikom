@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\HistoryController::index
  * @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:17
@@ -42,41 +42,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Modules\Fast\Controllers\Dosen\HistoryController::index
- * @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:17
- * @route '/dosen/history'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Dosen\HistoryController::index
- * @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:17
- * @route '/dosen/history'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Dosen\HistoryController::index
- * @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:17
- * @route '/dosen/history'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\HistoryController::show
  * @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:75
@@ -139,41 +104,6 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
     method: 'head',
 })
 
-    /**
-* @see \App\Modules\Fast\Controllers\Dosen\HistoryController::show
- * @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:75
- * @route '/dosen/history/{id}'
- */
-    const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Dosen\HistoryController::show
- * @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:75
- * @route '/dosen/history/{id}'
- */
-        showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Modules\Fast\Controllers\Dosen\HistoryController::show
- * @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:75
- * @route '/dosen/history/{id}'
- */
-        showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 /**
 * @see \App\Modules\Fast\Controllers\Dosen\HistoryController::cancel
  * @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:217
@@ -226,28 +156,6 @@ cancel.post = (args: { id: string | number } | [id: string | number ] | string |
     url: cancel.url(args, options),
     method: 'post',
 })
-
-    /**
-* @see \App\Modules\Fast\Controllers\Dosen\HistoryController::cancel
- * @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:217
- * @route '/dosen/surat/{id}/cancel'
- */
-    const cancelForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: cancel.url(args, options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Modules\Fast\Controllers\Dosen\HistoryController::cancel
- * @see app/Modules/Fast/Controllers/Dosen/HistoryController.php:217
- * @route '/dosen/surat/{id}/cancel'
- */
-        cancelForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: cancel.url(args, options),
-            method: 'post',
-        })
-    
-    cancel.form = cancelForm
 const HistoryController = { index, show, cancel }
 
 export default HistoryController

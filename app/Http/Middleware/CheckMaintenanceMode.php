@@ -24,8 +24,8 @@ class CheckMaintenanceMode
         $maintenanceMode = $settings['maintenance_mode'] ?? '0';
 
         if ($maintenanceMode === '1') {
-            // Check if user is super-admin (using standard helper)
-            if (auth()->check() && auth()->user()->isSuperAdmin()) {
+            // Check if user is super-admin or admin (using standard helpers)
+            if (auth()->check() && (auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())) {
                 return $next($request);
             }
 

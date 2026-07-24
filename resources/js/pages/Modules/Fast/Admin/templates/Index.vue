@@ -4,6 +4,7 @@ import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue';
 import {
     Plus,
     Eye,
@@ -1387,39 +1388,58 @@ function saveGlobalSettings() {
     );
 }
 
+// Unified template action confirm modal
+const isTemplateModalOpen = ref(false);
+const templateModalTitle = ref('');
+const templateModalMessage = ref('');
+const templateModalVariant = ref<'danger' | 'warning' | 'info'>('warning');
+const templateModalConfirmText = ref('Konfirmasi');
+const pendingTemplateAction = ref<(() => void) | null>(null);
+
+function openTemplateModal(title: string, message: string, variant: 'danger' | 'warning' | 'info', confirmText: string, action: () => void) {
+    templateModalTitle.value = title;
+    templateModalMessage.value = message;
+    templateModalVariant.value = variant;
+    templateModalConfirmText.value = confirmText;
+    pendingTemplateAction.value = action;
+    isTemplateModalOpen.value = true;
+}
+
+function handleTemplateConfirm() {
+    if (pendingTemplateAction.value) pendingTemplateAction.value();
+    isTemplateModalOpen.value = false;
+}
+
 function toggleActive(id: number, nama: string, current: boolean) {
-    if (confirm(`${current ? 'Nonaktifkan' : 'Aktifkan'} "${nama}"?`)) {
-        router.patch(
+    openTemplateModal(
+        `${current ? 'Nonaktifkan' : 'Aktifkan'} Template`,
+        `Apakah Anda yakin ingin ${current ? 'menonaktifkan' : 'mengaktifkan'} template "${nama}"?`,
+        current ? 'warning' : 'info',
+        current ? 'Ya, Nonaktifkan' : 'Ya, Aktifkan',
+        () => router.patch(
             `/admin/templates/${id}/toggle-active`,
             {},
             {
                 preserveScroll: true,
-                onSuccess: () => {
-                    showToast(
-                        `${current ? 'Template dinonaktifkan.' : 'Template diaktifkan.'}`,
-                        'success',
-                    );
-                },
-                onError: () => {
-                    showToast('Gagal memperbarui status template.', 'error');
-                },
+                onSuccess: () => showToast(`${current ? 'Template dinonaktifkan.' : 'Template diaktifkan.'}`, 'success'),
+                onError: () => showToast('Gagal memperbarui status template.', 'error'),
             },
-        );
-    }
+        )
+    );
 }
 
 function duplicate(id: number) {
-    if (confirm('Duplikat jenis surat ini beserta semua isinya?')) {
-        router.post(`/admin/templates/${id}/duplicate`, {}, {
+    openTemplateModal(
+        'Duplikat Template',
+        'Apakah Anda yakin ingin menduplikasi jenis surat ini beserta semua isinya?',
+        'info',
+        'Ya, Duplikat',
+        () => router.post(`/admin/templates/${id}/duplicate`, {}, {
             preserveScroll: true,
-            onSuccess: () => {
-                showToast('Template berhasil diduplikasi.', 'success');
-            },
-            onError: () => {
-                showToast('Gagal menduplikasi template.', 'error');
-            },
-        });
-    }
+            onSuccess: () => showToast('Template berhasil diduplikasi.', 'success'),
+            onError: () => showToast('Gagal menduplikasi template.', 'error'),
+        })
+    );
 }
 
 // Keys per kelompok di dialog pengaturan
@@ -4072,3 +4092,13 @@ function settingLabel(key: string): string {
         </Dialog>
     </AdminLayout>
 </template>
+
+<DeleteConfirmModal
+    :show="isTemplateModalOpen"
+    :title="templateModalTitle"
+    :message="templateModalMessage"
+    :variant="templateModalVariant"
+    :confirm-text="templateModalConfirmText"
+    @confirm="handleTemplateConfirm"
+    @cancel="isTemplateModalOpen = false"
+/>

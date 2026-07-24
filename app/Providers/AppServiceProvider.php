@@ -20,6 +20,9 @@ use App\Policies\FastJenisSuratPolicy;
 use App\Policies\FastSuratCategoryPolicy;
 use App\Policies\FastSuratPolicy;
 use App\Policies\FastTemplateGlobalSettingPolicy;
+use App\Services\Auth\ActivationService;
+use App\Services\Auth\MagicLinkService;
+use App\Services\Auth\OtpService;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
@@ -33,6 +36,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
@@ -53,6 +57,15 @@ class AppServiceProvider extends ServiceProvider
         if (class_exists(TelescopeApplicationServiceProvider::class)) {
             $this->app->register(TelescopeServiceProvider::class);
         }
+
+        // ─── Auth Services ─────────────────────────────────────────────────
+        $this->app->singleton(OtpService::class);
+        $this->app->singleton(MagicLinkService::class);
+        $this->app->singleton(ActivationService::class, function ($app) {
+            return new ActivationService(
+                $app->make(OtpService::class),
+            );
+        });
     }
 
     /**
@@ -67,7 +80,7 @@ class AppServiceProvider extends ServiceProvider
             $email = $event->user->email;
             $ip = request()->ip();
 
-            $exists = AuthLoginAttempt::where('email', $email)
+            $exists = AuthLoginAttempt::query()->where('email', $email)
                 ->where('ip_address', $ip)
                 ->where('is_successful', true)
                 ->where('created_at', '>=', now()->subSeconds(2))
@@ -112,7 +125,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Logout::class, function ($event) {
             $token = session('auth_session_token');
             if ($token) {
-                AuthSession::where('id', $token)->update(['is_revoked' => true]);
+                AuthSession::query()->where('id', $token)->update(['is_revoked' => true]);
             }
         });
 
@@ -125,25 +138,24 @@ class AppServiceProvider extends ServiceProvider
                 $email = $address->getAddress();
 
                 // Find user by email (case-insensitive) to associate log correctly
-                $user = User::whereRaw('LOWER(email) = ?', [strtolower($email)])->first();
-                if ($user) {
-                    $body = '';
-                    if (method_exists($message, 'getHtmlBody') && $message->getHtmlBody()) {
-                        $body = $message->getHtmlBody();
-                    } elseif (method_exists($message, 'getTextBody') && $message->getTextBody()) {
-                        $body = $message->getTextBody();
-                    } elseif (method_exists($message, 'getBody') && $message->getBody()) {
-                        $body = $message->getBody()->toString();
-                    }
+                $user = User::query()->whereRaw('LOWER(email) = ?', [strtolower($email)])->first();
 
-                    AuthEmailLog::create([
-                        'user_id' => $user->id,
-                        'email' => $email,
-                        'subject' => $message->getSubject() ?? '(No Subject)',
-                        'body' => $body,
-                        'status' => 'Delivered',
-                    ]);
+                $body = '';
+                if (method_exists($message, 'getHtmlBody') && $message->getHtmlBody()) {
+                    $body = $message->getHtmlBody();
+                } elseif (method_exists($message, 'getTextBody') && $message->getTextBody()) {
+                    $body = $message->getTextBody();
+                } elseif (method_exists($message, 'getBody') && $message->getBody()) {
+                    $body = $message->getBody()->toString();
                 }
+
+                AuthEmailLog::create([
+                    'user_id' => $user ? $user->id : null,
+                    'email' => $email,
+                    'subject' => $message->getSubject() ?? '(No Subject)',
+                    'body' => $body,
+                    'status' => 'Delivered',
+                ]);
             }
         });
 
@@ -189,8 +201,8 @@ class AppServiceProvider extends ServiceProvider
             ], $event->user);
         });
 
-        // Force HTTPS in non-local environments to avoid mixed content issues
-        if (config('app.env') !== 'local') {
+        // Force HTTPS in non-local and non-testing environments to avoid mixed content issues
+        if (! in_array(config('app.env'), ['local', 'testing'])) {
             URL::forceScheme('https');
         }
 
@@ -236,7 +248,7 @@ class AppServiceProvider extends ServiceProvider
                 $decrypted = Crypt::decryptString(substr($mailPassword, 7));
                 config(['mail.mailers.smtp.password' => $decrypted]);
             } catch (\Throwable $e) {
-                \Log::error('SMTP password decryption failed: '.$e->getMessage());
+                Log::error('SMTP password decryption failed: '.$e->getMessage());
             }
         }
 
