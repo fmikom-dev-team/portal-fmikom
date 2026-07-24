@@ -1,9 +1,9 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition } from './../../wayfinder'
 /**
 * @see \Inertia\Controller::__invoke
-* @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
-* @route '/settings/appearance'
-*/
+ * @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
+ * @route '/settings/appearance'
+ */
 export const edit = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: edit.url(options),
     method: 'get',
@@ -16,33 +16,31 @@ edit.definition = {
 
 /**
 * @see \Inertia\Controller::__invoke
-* @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
-* @route '/settings/appearance'
-*/
+ * @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
+ * @route '/settings/appearance'
+ */
 edit.url = (options?: RouteQueryOptions) => {
     return edit.definition.url + queryParams(options)
 }
 
 /**
 * @see \Inertia\Controller::__invoke
-* @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
-* @route '/settings/appearance'
-*/
+ * @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
+ * @route '/settings/appearance'
+ */
 edit.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: edit.url(options),
     method: 'get',
 })
-
 /**
 * @see \Inertia\Controller::__invoke
-* @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
-* @route '/settings/appearance'
-*/
+ * @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
+ * @route '/settings/appearance'
+ */
 edit.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: edit.url(options),
     method: 'head',
 })
-
 const appearance = {
     edit: Object.assign(edit, edit),
 }

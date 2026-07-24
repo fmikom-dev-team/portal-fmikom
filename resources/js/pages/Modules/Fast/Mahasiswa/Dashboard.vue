@@ -506,6 +506,17 @@ function openViewer(item: LatestSubmission, mode: 'preview' | 'pdf') {
     viewerOpen.value = true;
 }
 
+function downloadPdf(item: LatestSubmission) {
+    const url = `/documents/surat/${item.id}/pdf`;
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${item.jenisSurat} - ${item.reference}.pdf`;
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+}
+
 function closeViewer() {
     viewerOpen.value = false;
     setTimeout(() => {
@@ -1188,7 +1199,7 @@ function fieldError(name: string): string | undefined {
                                         type="button"
                                         title="Download PDF"
                                         class="fast-btn fast-btn-primary px-3 py-1.5 text-[10px] font-medium"
-                                        @click="openViewer(item, 'pdf')"
+                                        @click="downloadPdf(item)"
                                     >
                                         <Download class="size-3" /> PDF
                                     </button>

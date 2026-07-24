@@ -132,7 +132,7 @@ class DashboardController extends Controller
 
     protected function pageName(): string
     {
-        return 'fast/user/Dashboard';
+        return 'mahasiswa/Dashboard';
     }
 
     protected function submissionRouteName(): string
@@ -142,7 +142,7 @@ class DashboardController extends Controller
 
     protected function basePath(): string
     {
-        return '/fast/user';
+        return '/mahasiswa';
     }
 
     protected function visibleSubmissionJenisSuratQuery($user): Builder

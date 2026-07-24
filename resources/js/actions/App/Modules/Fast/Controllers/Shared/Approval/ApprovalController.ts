@@ -1,9 +1,9 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../../../wayfinder'
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::index
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:24
-* @route '/approval/dashboard'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:24
+ * @route '/approval/dashboard'
+ */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index.url(options),
     method: 'get',
@@ -16,28 +16,27 @@ index.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::index
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:24
-* @route '/approval/dashboard'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:24
+ * @route '/approval/dashboard'
+ */
 index.url = (options?: RouteQueryOptions) => {
     return index.definition.url + queryParams(options)
 }
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::index
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:24
-* @route '/approval/dashboard'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:24
+ * @route '/approval/dashboard'
+ */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index.url(options),
     method: 'get',
 })
-
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::index
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:24
-* @route '/approval/dashboard'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:24
+ * @route '/approval/dashboard'
+ */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: index.url(options),
     method: 'head',
@@ -45,9 +44,9 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::queue
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:31
-* @route '/approval/antrian'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:31
+ * @route '/approval/antrian'
+ */
 export const queue = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: queue.url(options),
     method: 'get',
@@ -60,28 +59,27 @@ queue.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::queue
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:31
-* @route '/approval/antrian'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:31
+ * @route '/approval/antrian'
+ */
 queue.url = (options?: RouteQueryOptions) => {
     return queue.definition.url + queryParams(options)
 }
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::queue
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:31
-* @route '/approval/antrian'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:31
+ * @route '/approval/antrian'
+ */
 queue.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: queue.url(options),
     method: 'get',
 })
-
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::queue
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:31
-* @route '/approval/antrian'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:31
+ * @route '/approval/antrian'
+ */
 queue.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: queue.url(options),
     method: 'head',
@@ -89,9 +87,9 @@ queue.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::archive
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:38
-* @route '/approval/arsip'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:38
+ * @route '/approval/arsip'
+ */
 export const archive = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: archive.url(options),
     method: 'get',
@@ -104,28 +102,27 @@ archive.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::archive
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:38
-* @route '/approval/arsip'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:38
+ * @route '/approval/arsip'
+ */
 archive.url = (options?: RouteQueryOptions) => {
     return archive.definition.url + queryParams(options)
 }
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::archive
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:38
-* @route '/approval/arsip'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:38
+ * @route '/approval/arsip'
+ */
 archive.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: archive.url(options),
     method: 'get',
 })
-
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::archive
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:38
-* @route '/approval/arsip'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:38
+ * @route '/approval/arsip'
+ */
 archive.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: archive.url(options),
     method: 'head',
@@ -133,9 +130,9 @@ archive.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::detail
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:52
-* @route '/approval/surat/{id}/detail'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:52
+ * @route '/approval/surat/{id}/detail'
+ */
 export const detail = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: detail.url(args, options),
     method: 'get',
@@ -148,25 +145,26 @@ detail.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::detail
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:52
-* @route '/approval/surat/{id}/detail'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:52
+ * @route '/approval/surat/{id}/detail'
+ */
 detail.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { id: args }
     }
 
+    
     if (Array.isArray(args)) {
         args = {
-            id: args[0],
-        }
+                    id: args[0],
+                }
     }
 
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-        id: args.id,
-    }
+                        id: args.id,
+                }
 
     return detail.definition.url
             .replace('{id}', parsedArgs.id.toString())
@@ -175,19 +173,18 @@ detail.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::detail
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:52
-* @route '/approval/surat/{id}/detail'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:52
+ * @route '/approval/surat/{id}/detail'
+ */
 detail.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: detail.url(args, options),
     method: 'get',
 })
-
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::detail
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:52
-* @route '/approval/surat/{id}/detail'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:52
+ * @route '/approval/surat/{id}/detail'
+ */
 detail.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: detail.url(args, options),
     method: 'head',
@@ -195,9 +192,9 @@ detail.head = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::show
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:60
-* @route '/approval/surat/{id}'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:60
+ * @route '/approval/surat/{id}'
+ */
 export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show.url(args, options),
     method: 'get',
@@ -210,25 +207,26 @@ show.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::show
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:60
-* @route '/approval/surat/{id}'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:60
+ * @route '/approval/surat/{id}'
+ */
 show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { id: args }
     }
 
+    
     if (Array.isArray(args)) {
         args = {
-            id: args[0],
-        }
+                    id: args[0],
+                }
     }
 
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-        id: args.id,
-    }
+                        id: args.id,
+                }
 
     return show.definition.url
             .replace('{id}', parsedArgs.id.toString())
@@ -237,19 +235,18 @@ show.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::show
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:60
-* @route '/approval/surat/{id}'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:60
+ * @route '/approval/surat/{id}'
+ */
 show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: show.url(args, options),
     method: 'get',
 })
-
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::show
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:60
-* @route '/approval/surat/{id}'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:60
+ * @route '/approval/surat/{id}'
+ */
 show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: show.url(args, options),
     method: 'head',
@@ -257,9 +254,9 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::previewAttachment
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:68
-* @route '/approval/lampiran/{id}/preview'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:68
+ * @route '/approval/lampiran/{id}/preview'
+ */
 export const previewAttachment = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: previewAttachment.url(args, options),
     method: 'get',
@@ -272,25 +269,26 @@ previewAttachment.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::previewAttachment
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:68
-* @route '/approval/lampiran/{id}/preview'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:68
+ * @route '/approval/lampiran/{id}/preview'
+ */
 previewAttachment.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { id: args }
     }
 
+    
     if (Array.isArray(args)) {
         args = {
-            id: args[0],
-        }
+                    id: args[0],
+                }
     }
 
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-        id: args.id,
-    }
+                        id: args.id,
+                }
 
     return previewAttachment.definition.url
             .replace('{id}', parsedArgs.id.toString())
@@ -299,19 +297,18 @@ previewAttachment.url = (args: { id: string | number } | [id: string | number ] 
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::previewAttachment
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:68
-* @route '/approval/lampiran/{id}/preview'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:68
+ * @route '/approval/lampiran/{id}/preview'
+ */
 previewAttachment.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: previewAttachment.url(args, options),
     method: 'get',
 })
-
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::previewAttachment
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:68
-* @route '/approval/lampiran/{id}/preview'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:68
+ * @route '/approval/lampiran/{id}/preview'
+ */
 previewAttachment.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: previewAttachment.url(args, options),
     method: 'head',
@@ -319,9 +316,9 @@ previewAttachment.head = (args: { id: string | number } | [id: string | number ]
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::approve
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:82
-* @route '/approval/surat/{id}/approve'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:82
+ * @route '/approval/surat/{id}/approve'
+ */
 export const approve = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: approve.url(args, options),
     method: 'post',
@@ -334,25 +331,26 @@ approve.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::approve
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:82
-* @route '/approval/surat/{id}/approve'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:82
+ * @route '/approval/surat/{id}/approve'
+ */
 approve.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { id: args }
     }
 
+    
     if (Array.isArray(args)) {
         args = {
-            id: args[0],
-        }
+                    id: args[0],
+                }
     }
 
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-        id: args.id,
-    }
+                        id: args.id,
+                }
 
     return approve.definition.url
             .replace('{id}', parsedArgs.id.toString())
@@ -361,9 +359,9 @@ approve.url = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::approve
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:82
-* @route '/approval/surat/{id}/approve'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:82
+ * @route '/approval/surat/{id}/approve'
+ */
 approve.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: approve.url(args, options),
     method: 'post',
@@ -371,9 +369,9 @@ approve.post = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::bulkApprove
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:90
-* @route '/approval/surat/bulk-approve'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:90
+ * @route '/approval/surat/bulk-approve'
+ */
 export const bulkApprove = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: bulkApprove.url(options),
     method: 'post',
@@ -386,18 +384,18 @@ bulkApprove.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::bulkApprove
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:90
-* @route '/approval/surat/bulk-approve'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:90
+ * @route '/approval/surat/bulk-approve'
+ */
 bulkApprove.url = (options?: RouteQueryOptions) => {
     return bulkApprove.definition.url + queryParams(options)
 }
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::bulkApprove
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:90
-* @route '/approval/surat/bulk-approve'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:90
+ * @route '/approval/surat/bulk-approve'
+ */
 bulkApprove.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: bulkApprove.url(options),
     method: 'post',
@@ -405,9 +403,9 @@ bulkApprove.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::reject
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:120
-* @route '/approval/surat/{id}/reject'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:120
+ * @route '/approval/surat/{id}/reject'
+ */
 export const reject = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: reject.url(args, options),
     method: 'post',
@@ -420,25 +418,26 @@ reject.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::reject
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:120
-* @route '/approval/surat/{id}/reject'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:120
+ * @route '/approval/surat/{id}/reject'
+ */
 reject.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { id: args }
     }
 
+    
     if (Array.isArray(args)) {
         args = {
-            id: args[0],
-        }
+                    id: args[0],
+                }
     }
 
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-        id: args.id,
-    }
+                        id: args.id,
+                }
 
     return reject.definition.url
             .replace('{id}', parsedArgs.id.toString())
@@ -447,9 +446,9 @@ reject.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::reject
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:120
-* @route '/approval/surat/{id}/reject'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:120
+ * @route '/approval/surat/{id}/reject'
+ */
 reject.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: reject.url(args, options),
     method: 'post',
@@ -457,9 +456,9 @@ reject.post = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::finalReject
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:128
-* @route '/approval/surat/{id}/final-reject'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:128
+ * @route '/approval/surat/{id}/final-reject'
+ */
 export const finalReject = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: finalReject.url(args, options),
     method: 'post',
@@ -472,25 +471,26 @@ finalReject.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::finalReject
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:128
-* @route '/approval/surat/{id}/final-reject'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:128
+ * @route '/approval/surat/{id}/final-reject'
+ */
 finalReject.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { id: args }
     }
 
+    
     if (Array.isArray(args)) {
         args = {
-            id: args[0],
-        }
+                    id: args[0],
+                }
     }
 
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-        id: args.id,
-    }
+                        id: args.id,
+                }
 
     return finalReject.definition.url
             .replace('{id}', parsedArgs.id.toString())
@@ -499,9 +499,9 @@ finalReject.url = (args: { id: string | number } | [id: string | number ] | stri
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::finalReject
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:128
-* @route '/approval/surat/{id}/final-reject'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:128
+ * @route '/approval/surat/{id}/final-reject'
+ */
 finalReject.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: finalReject.url(args, options),
     method: 'post',
@@ -509,9 +509,9 @@ finalReject.post = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::saveNote
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:112
-* @route '/approval/surat/{id}/note'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:112
+ * @route '/approval/surat/{id}/note'
+ */
 export const saveNote = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: saveNote.url(args, options),
     method: 'post',
@@ -524,25 +524,26 @@ saveNote.definition = {
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::saveNote
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:112
-* @route '/approval/surat/{id}/note'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:112
+ * @route '/approval/surat/{id}/note'
+ */
 saveNote.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { id: args }
     }
 
+    
     if (Array.isArray(args)) {
         args = {
-            id: args[0],
-        }
+                    id: args[0],
+                }
     }
 
     args = applyUrlDefaults(args)
 
     const parsedArgs = {
-        id: args.id,
-    }
+                        id: args.id,
+                }
 
     return saveNote.definition.url
             .replace('{id}', parsedArgs.id.toString())
@@ -551,14 +552,13 @@ saveNote.url = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Modules\Fast\Controllers\Shared\Approval\ApprovalController::saveNote
-* @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:112
-* @route '/approval/surat/{id}/note'
-*/
+ * @see app/Modules/Fast/Controllers/Shared/Approval/ApprovalController.php:112
+ * @route '/approval/surat/{id}/note'
+ */
 saveNote.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: saveNote.url(args, options),
     method: 'post',
 })
-
 const ApprovalController = { index, queue, archive, detail, show, previewAttachment, approve, bulkApprove, reject, finalReject, saveNote }
 
 export default ApprovalController
