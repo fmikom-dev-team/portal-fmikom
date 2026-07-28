@@ -235,7 +235,7 @@ class SubmissionController extends Controller
 
         return redirect()
             ->route($this->dashboardRouteName())
-            ->with('success', 'Pengajuan surat berhasil dikirim.');
+            ->with('fast_success', 'Pengajuan surat berhasil dikirim.');
     }
 
     protected function pageName(): string

@@ -75,7 +75,6 @@ const props = withDefaults(
 const search = ref(props.filters.search ?? '');
 const status = ref(props.filters.status ?? '');
 const categoryId = ref(props.filters.category_id ?? '');
-const toastMessage = ref('');
 const normalizedRole = computed(() =>
     String(props.role.slug ?? props.role.name ?? '')
         .toLowerCase()
@@ -471,24 +470,5 @@ async function openDetail(id: number) {
                 v-html="link.label"
             />
         </div>
-        <!-- Toast -->
-        <Transition
-            enter-active-class="transition duration-300 ease-out"
-            enter-from-class="translate-y-3 opacity-0"
-            enter-to-class="translate-y-0 opacity-100"
-            leave-active-class="transition duration-200 ease-in"
-            leave-from-class="translate-y-0 opacity-100"
-            leave-to-class="translate-y-3 opacity-0"
-        >
-            <div
-                v-if="toastMessage"
-                class="fixed top-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800 shadow-lg"
-            >
-                <div class="flex items-center gap-2.5">
-                    <BadgeCheck class="size-5 shrink-0 text-blue-500" />
-                    <p class="text-sm font-medium">{{ toastMessage }}</p>
-                </div>
-            </div>
-        </Transition>
     </AdminLayout>
 </template>

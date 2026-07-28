@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { computed, reactive, ref, watch } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { computed, reactive, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -74,10 +74,6 @@ type PaginatedSurats = {
 type FilterState = {
     status?: string;
 };
-type PageProps = {
-    auth: { user?: { name?: string } };
-    flash?: { success?: string };
-};
 const props = withDefaults(
     defineProps<{
         role?: { name?: string | null; slug?: string | null };
@@ -98,13 +94,11 @@ const props = withDefaults(
     },
 );
 
-const page = usePage<PageProps>();
 const filters = reactive({
     status: props.filters.status ?? 'validated_admin',
 });
 const attachmentPreviewOpen = ref(false);
 const activeAttachment = ref<DetailLampiran | null>(null);
-const toastMessage = ref('');
 const normalizedRole = computed(() =>
     String(props.role.slug ?? props.role.name ?? '')
         .toLowerCase()
@@ -160,18 +154,6 @@ const summaryCards = computed(() => [
     },
 ]);
 
-watch(
-    () => page.props.flash?.success,
-    (message) => {
-        if (typeof message === 'string' && message.length > 0) {
-            toastMessage.value = message;
-            window.setTimeout(() => {
-                if (toastMessage.value === message) toastMessage.value = '';
-            }, 2800);
-        }
-    },
-    { immediate: true },
-);
 const ns = (s?: string | null) =>
     String(s ?? '')
         .trim()
@@ -579,24 +561,5 @@ function isWordAttachment(f?: DetailLampiran | null) {
                 </div>
             </DialogContent>
         </Dialog>
-        <!-- Toast -->
-        <Transition
-            enter-active-class="transition duration-300 ease-out"
-            enter-from-class="translate-y-3 opacity-0"
-            enter-to-class="translate-y-0 opacity-100"
-            leave-active-class="transition duration-200 ease-in"
-            leave-from-class="translate-y-0 opacity-100"
-            leave-to-class="translate-y-3 opacity-0"
-        >
-            <div
-                v-if="toastMessage"
-                class="fixed top-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800 shadow-lg"
-            >
-                <div class="flex items-center gap-2.5">
-                    <BadgeCheck class="size-5 shrink-0 text-blue-500" />
-                    <p class="text-sm font-medium">{{ toastMessage }}</p>
-                </div>
-            </div>
-        </Transition>
     </AdminLayout>
 </template>

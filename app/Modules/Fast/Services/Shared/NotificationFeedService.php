@@ -72,7 +72,7 @@ class NotificationFeedService
                 return [
                     'id' => $notification->id,
                     'notification_key' => $data['notification_key'] ?? $notification->type,
-                    'title' => $data['title'] ?? 'Notifikasi FAST',
+                    'title' => $data['title'] ?? 'Notifikasi FASt',
                     'message' => $data['message'] ?? '',
                     'href' => $data['href'] ?? '#',
                     'time' => isset($notification->updated_at) ? Carbon::parse($notification->updated_at)->toISOString() : null,

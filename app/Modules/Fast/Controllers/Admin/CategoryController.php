@@ -37,7 +37,7 @@ class CategoryController extends Controller
 
         SuratCategory::create($data);
 
-        return back()->with('success', 'Kategori berhasil ditambahkan.');
+        return back()->with('fast_success', 'Kategori berhasil ditambahkan.');
     }
 
     public function update(Request $request, SuratCategory $category)
@@ -54,7 +54,7 @@ class CategoryController extends Controller
 
         $category->update($data);
 
-        return back()->with('success', 'Kategori berhasil diperbarui.');
+        return back()->with('fast_success', 'Kategori berhasil diperbarui.');
     }
 
     public function destroy(SuratCategory $category)
@@ -62,11 +62,11 @@ class CategoryController extends Controller
         $this->authorize('delete', $category);
 
         if ($category->jenisSurats()->exists()) {
-            return back()->with('error', 'Kategori tidak bisa dihapus karena masih memiliki jenis surat.');
+            return back()->with('fast_error', 'Kategori tidak bisa dihapus karena masih memiliki jenis surat.');
         }
 
         $category->delete();
 
-        return back()->with('success', 'Kategori berhasil dihapus.');
+        return back()->with('fast_success', 'Kategori berhasil dihapus.');
     }
 }

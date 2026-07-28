@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // resources/js/pages/Modules/Fast/Admin/templates/Index.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
-import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue';
@@ -232,13 +232,6 @@ type GlobalSetting = {
     value?: string | null;
     tipe: string;
 };
-type PageProps = {
-    flash?: {
-        success?: string;
-        error?: string;
-    };
-    errors?: Record<string, string | string[]>;
-};
 const props = withDefaults(
     defineProps<{
         jenisSurats?: JenisSuratItem[];
@@ -257,7 +250,6 @@ const props = withDefaults(
         globalSettings: () => [],
     },
 );
-const page = usePage<PageProps>();
 const { can } = useFastPermissions();
 const sidebarSearch = ref('');
 const categoryFilter = ref<'all' | string>('all');
@@ -287,19 +279,6 @@ function showToast(message: string, variant: 'success' | 'error' = 'success') {
     }, 0);
 }
 
-watch(
-    () => [page.props.flash?.success, page.props.flash?.error],
-    ([success, error]) => {
-        if (typeof success === 'string' && success.trim()) {
-            showToast(success, 'success');
-            return;
-        }
-        if (typeof error === 'string' && error.trim()) {
-            showToast(error, 'error');
-        }
-    },
-    { immediate: true },
-);
 function openAddDialog() {
     showAddDialog.value = true;
 }

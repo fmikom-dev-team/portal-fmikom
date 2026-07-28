@@ -1,8 +1,8 @@
 <script setup lang="ts">
 // File: resources/js/pages/admin/dashboard/Index.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import {
     CheckCircle2,
     AlertCircle,
@@ -53,13 +53,6 @@ type AdminActivitySummary = {
     recent: AdminActivityItem[];
 };
 
-type PageProps = {
-    flash?: {
-        success?: string;
-        error?: string;
-    };
-};
-
 const props = defineProps<{
     auth?: { user?: { name?: string | null } | null };
     surats: PaginatedSurats;
@@ -69,32 +62,6 @@ const props = defineProps<{
     };
 }>();
 
-const page = usePage<PageProps>();
-const toastMessage = ref('');
-const toastVariant = ref<'success' | 'error'>('success');
-
-function showToast(message: string, variant: 'success' | 'error' = 'success') {
-    toastMessage.value = message;
-    toastVariant.value = variant;
-    window.setTimeout(() => {
-        if (toastMessage.value === message) {
-            toastMessage.value = '';
-        }
-    }, 2800);
-}
-watch(
-    () => [page.props.flash?.success, page.props.flash?.error],
-    ([success, error]) => {
-        if (typeof success === 'string' && success.length > 0) {
-            showToast(success, 'success');
-            return;
-        }
-        if (typeof error === 'string' && error.length > 0) {
-            showToast(error, 'error');
-        }
-    },
-    { immediate: true },
-);
 const quickSubmissions = computed(() => props.surats.data.slice(0, 4));
 const statCards = computed(() => [
     {
@@ -400,36 +367,6 @@ function activityBadgeClass(action?: string | null) {
 
             </div>
         </div>
-        <Transition
-            enter-active-class="transition duration-300 ease-out"
-            enter-from-class="translate-y-3 opacity-0"
-            enter-to-class="translate-y-0 opacity-100"
-            leave-active-class="transition duration-200 ease-in"
-            leave-from-class="translate-y-0 opacity-100"
-            leave-to-class="translate-y-3 opacity-0"
-        >
-            <div
-                v-if="toastMessage"
-                class="fixed top-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border px-4 py-3 shadow-lg"
-                :class="
-                    toastVariant === 'success'
-                        ? 'border-blue-200 bg-blue-50 text-blue-800'
-                        : 'border-red-200 bg-red-50 text-red-800'
-                "
-            >
-                <div class="flex items-center gap-2.5">
-                    <CheckCircle2
-                        v-if="toastVariant === 'success'"
-                        class="size-5 shrink-0 text-blue-500"
-                    />
-                    <AlertCircle
-                        v-else
-                        class="size-5 shrink-0 text-red-500"
-                    />
-                    <p class="text-sm font-medium">{{ toastMessage }}</p>
-                </div>
-            </div>
-        </Transition>
     </AdminLayout>
 </template>
 

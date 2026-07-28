@@ -31,7 +31,7 @@ class FastDashboardController extends Controller
         }
 
         return Inertia::render($componentName, [
-            'moduleName' => 'FAST',
+            'moduleName' => 'FASt',
             'roleName' => $role,
         ]);
     }

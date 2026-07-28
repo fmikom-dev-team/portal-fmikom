@@ -230,7 +230,7 @@ class HistoryController extends Controller
 
         $surat->update(['status' => Surat::STATUS_CANCELLED]);
 
-        return back()->with('success', 'Pengajuan surat berhasil dibatalkan.');
+        return back()->with('fast_success', 'Pengajuan surat berhasil dibatalkan.');
     }
 
     /**

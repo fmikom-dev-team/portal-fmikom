@@ -11,7 +11,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from '@/components/ui/dialog';
-import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import {
     AlertCircle,
@@ -89,10 +89,6 @@ type Surat = {
     canDownloadPdf?: boolean;
 };
 
-type PageProps = {
-    flash?: { success?: string };
-};
-
 const props = withDefaults(
     defineProps<
         {
@@ -108,13 +104,11 @@ const props = withDefaults(
     },
 );
 
-const page = usePage<PageProps>();
 const viewerOpen = ref(false);
 const viewerUrl = ref<string | null>(null);
 const viewerTitle = ref('');
 const viewerType = ref<'html' | 'pdf'>('html');
 const copiedNumber = ref(false);
-const toastMessage = ref('');
 const attachmentPreviewOpen = ref(false);
 const activeAttachment = ref<Lampiran | null>(null);
 
@@ -146,19 +140,6 @@ const documentTitle = computed(() =>
     props.nomor_surat
         ? `${props.jenis_surat} - ${props.nomor_surat}`
         : props.jenis_surat,
-);
-
-watch(
-    () => page.props.flash?.success,
-    (message) => {
-        if (typeof message === 'string' && message.length > 0) {
-            toastMessage.value = message;
-            window.setTimeout(() => {
-                if (toastMessage.value === message) toastMessage.value = '';
-            }, 2800);
-        }
-    },
-    { immediate: true },
 );
 
 const hiddenFields = new Set(['created_by', 'jenis_surat_id', 'jenis_surat', 'keperluan']);
@@ -1104,23 +1085,5 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
             </DialogContent>
         </Dialog>
 
-        <Transition
-            enter-active-class="transition duration-300 ease-out"
-            enter-from-class="translate-y-3 opacity-0"
-            enter-to-class="translate-y-0 opacity-100"
-            leave-active-class="transition duration-200 ease-in"
-            leave-from-class="translate-y-0 opacity-100"
-            leave-to-class="translate-y-3 opacity-0"
-        >
-            <div
-                v-if="toastMessage"
-                class="fixed top-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800 shadow-lg"
-            >
-                <div class="flex items-center gap-2.5">
-                    <CheckCircle class="size-5 shrink-0 text-blue-500" />
-                    <p class="text-sm font-medium">{{ toastMessage }}</p>
-                </div>
-            </div>
-        </Transition>
     </AdminLayout>
 </template>

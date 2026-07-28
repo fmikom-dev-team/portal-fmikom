@@ -495,7 +495,7 @@ function fieldError(name: string): string | undefined {
             { label: 'Ajukan Surat' },
         ]"
     >
-        <Head title="Ajukan Surat - FAST" />
+        <Head title="Ajukan Surat - FASt" />
         <div class="mx-auto max-w-7xl space-y-6">
             <!-- Summary -->
             <section class="grid gap-3 sm:grid-cols-2">
@@ -946,7 +946,7 @@ function fieldError(name: string): string | undefined {
                                     Kirim pengajuan setelah memastikan data benar
                                 </p>
                                 <p class="text-xs text-slate-400">
-                                    Pengajuan akan diproses sesuai alur FAST.
+                                    Pengajuan akan diproses sesuai alur FASt.
                                 </p>
                             </div>
                             <div class="flex flex-col gap-2 sm:flex-row">

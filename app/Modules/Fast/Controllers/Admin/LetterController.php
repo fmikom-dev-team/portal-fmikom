@@ -233,13 +233,13 @@ class LetterController extends Controller
         if ($surat->status === Surat::STATUS_FINISHED) {
             return redirect()
                 ->route('admin.dashboard')
-                ->with('success', 'Surat berhasil dibuat dan PDF langsung digenerate.')
+                ->with('fast_success', 'Surat berhasil dibuat dan PDF langsung digenerate.')
                 ->with('generated_surat_id', $surat->id);
         }
 
         return redirect()
             ->route('admin.dashboard')
-            ->with('success', 'Surat berhasil dibuat dan diteruskan ke '.($surat->finalApprovalRoleSlug() === 'dekan' ? 'Dekan' : 'Kaprodi').' untuk persetujuan.');
+            ->with('fast_success', 'Surat berhasil dibuat dan diteruskan ke '.($surat->finalApprovalRoleSlug() === 'dekan' ? 'Dekan' : 'Kaprodi').' untuk persetujuan.');
     }
 
     public function generate(Request $request, int $id): RedirectResponse
@@ -257,7 +257,7 @@ class LetterController extends Controller
 
         return redirect()
             ->route('admin.surat.generated-document', $generated->id)
-            ->with('success', 'PDF surat berhasil digenerate.');
+            ->with('fast_success', 'PDF surat berhasil digenerate.');
     }
 
     public function edit(Request $request, int $id): Response
@@ -330,7 +330,7 @@ class LetterController extends Controller
 
         return redirect()
             ->to($returnTo)
-            ->with('success', $surat->status === Surat::STATUS_PENDING
+            ->with('fast_success', $surat->status === Surat::STATUS_PENDING
                 ? 'Surat berhasil diperbarui dan divalidasi admin.'
                 : 'Surat berhasil diperbarui dan diteruskan kembali untuk persetujuan.');
     }

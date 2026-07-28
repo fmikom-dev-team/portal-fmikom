@@ -77,6 +77,12 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
                 'import_errors' => fn () => $request->session()->get('import_errors'),
             ],
+            'fast_flash' => [
+                'success' => fn () => $request->session()->get('fast_success'),
+                'error' => fn () => $request->session()->get('fast_error'),
+                'warning' => fn () => $request->session()->get('fast_warning'),
+                'info' => fn () => $request->session()->get('fast_info'),
+            ],
             'auth' => [
                 // SECURITY: Only UI-safe fields are shared to the frontend.
                 // Field sensitif (password, two_factor_secret, otp_code, dll) DILARANG di sini.
