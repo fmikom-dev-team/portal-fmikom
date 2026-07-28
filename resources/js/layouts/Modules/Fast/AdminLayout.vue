@@ -3,6 +3,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import FastFlashToast from '@/components/Modules/Fast/FastFlashToast.vue';
 import NotificationBell from '@/components/Modules/Fast/NotificationBell.vue';
 import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import {
@@ -41,7 +42,6 @@ type PageProps = {
         active_module?: string | null;
         active_role?: string | null;
     } | null;
-    flash?: { success?: string; error?: string; warning?: string };
     notif_count?: number;
     unread_notifications_count?: number;
     notif_count_revision_admin?: number;
@@ -136,7 +136,7 @@ const notifItems = computed(() => {
 
     return (page.props.recent_notifications ?? []).map((item) => ({
         id: item.id,
-        title: item.title ?? 'Notifikasi FAST',
+        title: item.title ?? 'Notifikasi FASt',
         message: item.message ?? '',
         href: item.href ?? '#',
         time: item.created_at ?? item.time ?? null,
@@ -519,6 +519,7 @@ function batteryIcon() {
 
 <template>
     <Head :title="title" />
+    <FastFlashToast />
 
     <div class="fast-shell flex h-screen overflow-hidden bg-slate-50 font-sans">
         <!-- Mobile overlay -->
@@ -771,7 +772,7 @@ function batteryIcon() {
 
                     <!-- Breadcrumb -->
                     <nav class="hidden items-center gap-1 text-sm md:flex">
-                        <span class="text-slate-400">FAST</span>
+                        <span class="text-slate-400">FASt</span>
                         <ChevronRight class="size-3.5 text-slate-300" />
                         <span class="font-medium text-slate-800">{{
                             headerLabel

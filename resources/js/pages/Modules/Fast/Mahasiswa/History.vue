@@ -262,7 +262,7 @@ function goToPage(page: number) {
             { label: 'Riwayat Surat' },
         ]"
     >
-        <Head title="Riwayat Surat - FAST" />
+        <Head title="Riwayat Surat - FASt" />
         <section class="mb-5 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div class="max-w-2xl">

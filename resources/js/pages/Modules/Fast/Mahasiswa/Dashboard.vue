@@ -5,7 +5,7 @@ import DocumentPreviewModal from '@/components/DocumentPreviewModal.vue';
 import LetterFlowCard from '@/components/Modules/Fast/LetterFlowCard.vue';
 import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import {
     FileText,
     CheckCircle2,
@@ -157,10 +157,8 @@ const safeEndpoints = computed(
 const showFormModal = ref(false);
 const selectedJenis = ref<JenisSuratOption | null>(null);
 const formStep = ref<'form' | 'preview'>('form');
-const toastMessage = ref('');
 const expandedReasonId = ref<number | null>(null);
 const expandedNotesId = ref<number | null>(null);
-let toastTimeoutId: number | null = null;
 const applicantFieldRefs = ref<Record<string, HTMLElement | null>>({});
 
 const visibleJenis = computed(() => safeJenisSurats.value.slice(0, 5));
@@ -761,29 +759,6 @@ function dashboardProgressDescription(item: LatestSubmission): string {
         : `Saat ini berada pada tahap ${current}.`;
 }
 
-async function showToast(message: string) {
-    if (toastTimeoutId !== null) {
-        window.clearTimeout(toastTimeoutId);
-        toastTimeoutId = null;
-    }
-    toastMessage.value = '';
-    await nextTick();
-    toastMessage.value = message;
-    toastTimeoutId = window.setTimeout(() => {
-        toastMessage.value = '';
-        toastTimeoutId = null;
-    }, 3200);
-}
-
-watch(
-    () => page.props.flash?.success,
-    (message) => {
-        if (typeof message === 'string' && message.length > 0)
-            showToast(message);
-    },
-    { immediate: true },
-);
-
 function openForm(jenis: JenisSuratOption) {
     router.get(
         `${safeEndpoints.value.basePath}/ajukan`,
@@ -828,7 +803,7 @@ function fieldError(name: string): string | undefined {
         active-menu="dashboard"
         :breadcrumbs="[{ label: 'Dashboard' }]"
     >
-        <Head title="Dashboard - FAST" />
+        <Head title="Dashboard - FASt" />
 
         <!-- Greeting -->
         <section class="relative mb-6 overflow-hidden rounded-[2rem] border border-slate-200/80 bg-[var(--primary)] text-white shadow-[0_18px_50px_rgba(15,23,42,0.14)]">
@@ -1758,16 +1733,6 @@ function fieldError(name: string): string | undefined {
             </div>
         </Transition>
 
-        <!-- Toast -->
-        <Transition name="toast">
-            <div
-                v-if="toastMessage"
-                class="fixed top-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800 shadow-lg"
-            >
-                {{ toastMessage }}
-            </div>
-        </Transition>
-
         <DocumentPreviewModal
             :open="viewerOpen"
             :mode="viewerMode"
@@ -1792,15 +1757,6 @@ function fieldError(name: string): string | undefined {
 .modal-enter-from,
 .modal-leave-to {
     opacity: 0;
-}
-.toast-enter-active,
-.toast-leave-active {
-    transition: all 0.2s;
-}
-.toast-enter-from,
-.toast-leave-to {
-    opacity: 0;
-    transform: translateX(-50%) translateY(8px);
 }
 .fade-enter-active,
 .fade-leave-active {

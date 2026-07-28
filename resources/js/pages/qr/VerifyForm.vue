@@ -18,8 +18,8 @@ function submit(): void {
     <div class="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50/40 px-4 py-10">
         <div class="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-7 shadow-xl shadow-slate-200/40">
             <div class="mb-6 flex flex-col items-center gap-3 text-center">
-                <div class="grid size-14 place-items-center rounded-2xl bg-primary shadow-md shadow-blue-200">
-                    <ShieldCheck class="size-7 text-white" stroke-width="2.5" />
+                <div class="grid size-14 place-items-center rounded-2xl bg-blue-600 ring-8 ring-blue-100/70 shadow-[0_16px_30px_-12px_rgba(37,99,235,0.45)]">
+                    <ShieldCheck class="size-7 text-white drop-shadow-[0_1px_1px_rgba(15,23,42,0.18)]" stroke-width="2.5" />
                 </div>
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.15em] text-blue-600">Verifikasi QR</p>
@@ -45,7 +45,7 @@ function submit(): void {
 
                 <button
                     type="submit"
-                    class="fast-btn fast-btn-primary h-12 w-full px-4 text-sm"
+                    class="fast-btn fast-btn-primary h-11 w-full px-5 text-sm font-semibold shadow-[0_8px_18px_rgba(37,99,235,0.22)]"
                     :disabled="token.trim().length === 0"
                 >
                     Verifikasi Dokumen

@@ -9,7 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import {
@@ -51,12 +51,6 @@ type Paginated = {
     total: number;
     links: Array<{ url: string | null; label: string; active: boolean }>;
 };
-type PageProps = {
-    flash?: {
-        success?: string;
-        error?: string;
-    };
-};
 type Summary = {
     total: number;
     pending: number;
@@ -69,7 +63,6 @@ const props = defineProps<{
     filters: { status?: string; search?: string; category_id?: string };
     categories: Array<{ id: number; nama: string }>;
 }>();
-const page = usePage<PageProps>();
 const { can } = useFastPermissions();
 const summary = props.summary;
 const defaultStatus = 'pending';
@@ -117,19 +110,6 @@ function showToast(message: string, variant: 'success' | 'error' = 'success') {
         }
     }, 2800);
 }
-watch(
-    () => [page.props.flash?.success, page.props.flash?.error],
-    ([success, error]) => {
-        if (typeof success === 'string' && success.length > 0) {
-            showToast(success, 'success');
-            return;
-        }
-        if (typeof error === 'string' && error.length > 0) {
-            showToast(error, 'error');
-        }
-    },
-    { immediate: true },
-);
 watch(
     () => props.surats.data.map((item) => item.id).join(','),
     () => {

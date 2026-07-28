@@ -29,7 +29,7 @@ class ApprovalActionService
             $user,
         );
 
-        return back()->with('success', 'Pengajuan berhasil disetujui.');
+        return back()->with('fast_success', 'Pengajuan berhasil disetujui.');
     }
 
     /**
@@ -67,7 +67,7 @@ class ApprovalActionService
 
         $this->workflow->approve($surat, FastApprovalWorkflowService::ROLE_ADMIN, $user);
 
-        return back()->with('success', 'Pengajuan berhasil divalidasi.');
+        return back()->with('fast_success', 'Pengajuan berhasil divalidasi.');
     }
 
     /**
@@ -114,7 +114,7 @@ class ApprovalActionService
             'tanggal_aksi' => now(),
         ]);
 
-        return back()->with('success', 'Catatan berhasil ditambahkan.');
+        return back()->with('fast_success', 'Catatan berhasil ditambahkan.');
     }
 
     public function reject(Request $request, int $id): RedirectResponse
@@ -135,7 +135,7 @@ class ApprovalActionService
             $request->string('reason')->toString(),
         );
 
-        return back()->with('success', 'Pengajuan berhasil dikembalikan untuk revisi.');
+        return back()->with('fast_success', 'Pengajuan berhasil dikembalikan untuk revisi.');
     }
 
     public function rejectAdmin(Request $request, int $id): RedirectResponse
@@ -155,7 +155,7 @@ class ApprovalActionService
             $request->string('reason')->toString(),
         );
 
-        return back()->with('success', 'Pengajuan berhasil ditolak.');
+        return back()->with('fast_success', 'Pengajuan berhasil ditolak.');
     }
 
     public function finalReject(Request $request, int $id): RedirectResponse
@@ -177,7 +177,7 @@ class ApprovalActionService
             $request->string('reason')->toString(),
         );
 
-        return back()->with('success', 'Pengajuan berhasil ditolak.');
+        return back()->with('fast_success', 'Pengajuan berhasil ditolak.');
     }
 
     protected function normalizeRole(?string $slug, ?string $name): string

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import { Button } from '@/components/ui/button';
@@ -77,9 +77,6 @@ type PaginatedSurats = {
     to?: number | null;
     total: number;
 };
-type PageProps = {
-    flash?: { success?: string };
-};
 const props = withDefaults(
     defineProps<{
         role?: { name?: string | null; slug?: string | null };
@@ -94,12 +91,10 @@ const props = withDefaults(
         categories: () => [],
     },
 );
-const page = usePage<PageProps>();
 const { can } = useFastPermissions();
 const search = ref(props.filters.search ?? '');
 const categoryId = ref(props.filters.category_id ?? '');
 const status = ref(props.filters.status ?? 'pending');
-const toastMessage = ref('');
 const selectedSurat = ref<SuratItem | null>(null);
 const selectedSuratIds = ref<number[]>([]);
 const actionConfirmOpen = ref(false);
@@ -131,18 +126,6 @@ const selectedSuratCount = computed(() => selectedSuratIds.value.length);
 const allProcessableSelected = computed(() =>
     processableSuratIds.value.length > 0 &&
     processableSuratIds.value.every((id) => selectedSuratIds.value.includes(id)),
-);
-watch(
-    () => page.props.flash?.success,
-    (message) => {
-        if (typeof message === 'string' && message.length > 0) {
-            toastMessage.value = message;
-            window.setTimeout(() => {
-                if (toastMessage.value === message) toastMessage.value = '';
-            }, 2800);
-        }
-    },
-    { immediate: true },
 );
 watch(
     () => props.surats.data.map((item) => item.id).join(','),
@@ -944,24 +927,5 @@ function submitFinalReject() {
                 </div>
             </DialogContent>
         </Dialog>
-        <!-- Toast -->
-        <Transition
-            enter-active-class="transition duration-300 ease-out"
-            enter-from-class="translate-y-3 opacity-0"
-            enter-to-class="translate-y-0 opacity-100"
-            leave-active-class="transition duration-200 ease-in"
-            leave-from-class="translate-y-0 opacity-100"
-            leave-to-class="translate-y-3 opacity-0"
-        >
-            <div
-                v-if="toastMessage"
-                class="fixed top-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800 shadow-lg"
-            >
-                <div class="flex items-center gap-2.5">
-                    <BadgeCheck class="size-5 shrink-0 text-blue-500" />
-                    <p class="text-sm font-medium">{{ toastMessage }}</p>
-                </div>
-            </div>
-        </Transition>
     </AdminLayout>
 </template>
