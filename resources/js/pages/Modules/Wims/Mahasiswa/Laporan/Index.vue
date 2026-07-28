@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import StudentLayout from '@/layouts/Modules/Wims/Mahasiswa/Layout.vue';
 import wimsRoutes from '@/routes/wims';
@@ -184,6 +184,15 @@ currentPeriodHistoryDownloadUrl?: string | null;
 
 const page = usePage<PageProps>();
 const selectedPeriodId = computed(() => (props.selected_period_id != null ? String(props.selected_period_id) : ''));
+const selectedRegistrationId = computed(() => {
+    if (props.selected_period_id == null || props.selected_period_id === '') {
+        return null;
+    }
+
+    const parsedId = Number(props.selected_period_id);
+
+    return Number.isFinite(parsedId) && parsedId > 0 ? parsedId : null;
+});
 
 const withSelectedPeriod = (href: string) => {
     if (!selectedPeriodId.value) {
@@ -196,8 +205,19 @@ const withSelectedPeriod = (href: string) => {
 };
 
 const reportForm = useForm({
+    pendaftaran_id: null as number | null,
     laporan_akhir: null as File | null,
 });
+
+const reportUploadConfig = {
+    accept: '.pdf,.doc,.docx',
+    maxSizeBytes: 10 * 1024 * 1024,
+    allowedMimeTypes: [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ],
+};
 
 // Fitur 3: State untuk drag & drop dan preview file
 const isDragging = ref(false);
@@ -398,47 +418,67 @@ const formatFileSize = (bytes: number): string => {
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
 };
 
-const handleReportChange = (event: Event) => {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    reportForm.laporan_akhir = file;
-    if (file) {
-        filePreview.value = {
-            name: file.name,
-            size: formatFileSize(file.size),
-            type: file.type || 'application/octet-stream',
-        };
-    } else {
-        filePreview.value = null;
-    }
-};
+const applyReportFile = (file: File | null) => {
+    reportForm.clearErrors('laporan_akhir');
 
-const handleDrop = (event: DragEvent) => {
-    isDragging.value = false;
-    const file = event.dataTransfer?.files?.[0] ?? null;
-    if (!file) return;
-    const allowed = [
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    ];
-    if (!allowed.includes(file.type)) return;
+    if (!file) {
+        reportForm.laporan_akhir = null;
+        filePreview.value = null;
+        return;
+    }
+
+    const hasAllowedExtension = /\.(pdf|doc|docx)$/i.test(file.name);
+    const hasAllowedMimeType = file.type === '' || reportUploadConfig.allowedMimeTypes.includes(file.type);
+
+    if (!hasAllowedExtension || !hasAllowedMimeType) {
+        reportForm.laporan_akhir = null;
+        filePreview.value = null;
+        reportForm.setError('laporan_akhir', 'Laporan akhir harus berformat PDF, DOC, atau DOCX.');
+        return;
+    }
+
+    if (file.size > reportUploadConfig.maxSizeBytes) {
+        reportForm.laporan_akhir = null;
+        filePreview.value = null;
+        reportForm.setError('laporan_akhir', 'Ukuran laporan akhir maksimal 10 MB.');
+        return;
+    }
+
     reportForm.laporan_akhir = file;
     filePreview.value = {
         name: file.name,
         size: formatFileSize(file.size),
-        type: file.type,
+        type: file.type || 'application/octet-stream',
     };
 };
 
+const handleReportChange = (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    applyReportFile(input.files?.[0] ?? null);
+};
+
+const handleDrop = (event: DragEvent) => {
+    isDragging.value = false;
+    applyReportFile(event.dataTransfer?.files?.[0] ?? null);
+};
+
 const clearFilePreview = () => {
+    reportForm.clearErrors('laporan_akhir');
     reportForm.laporan_akhir = null;
     filePreview.value = null;
 };
 
+watch(
+    selectedRegistrationId,
+    (registrationId) => {
+        reportForm.pendaftaran_id = registrationId;
+    },
+    { immediate: true },
+);
+
 const submitReport = () => {
-    if (!canUploadFinalReport.value || !reportForm.laporan_akhir) return;
-    reportForm.post('/wims/laporan', {
+    if (!canUploadFinalReport.value || !reportForm.laporan_akhir || !reportForm.pendaftaran_id) return;
+    reportForm.post(withSelectedPeriod(wimsRoutes.laporan().url), {
         forceFormData: true,
         preserveScroll: true,
         onSuccess: () => {
@@ -940,7 +980,7 @@ const completionScore = computed(() => {
                                         </div>
                                         <input
                                             type="file"
-                                            accept=".pdf,.doc,.docx"
+                                            :accept="reportUploadConfig.accept"
                                             class="sr-only"
                                             @change="handleReportChange"
                                         />
@@ -1272,4 +1312,5 @@ const completionScore = computed(() => {
         </div>
     </div>
 </template>
+
 

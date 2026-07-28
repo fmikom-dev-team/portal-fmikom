@@ -137,6 +137,7 @@ class MitraMonitoringOverviewService
                     'check_in_time' => $student['check_in_time'],
                     'check_out_time' => $student['check_out_time'],
                 ])
+                ->take(6)
                 ->values()
                 ->all(),
             'reviewBoard' => $students

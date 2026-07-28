@@ -46,7 +46,10 @@ class LaporanController extends Controller
         }
 
         $validated = $request->validate([
-            'laporan_akhir' => ['required', 'file', 'mimes:pdf', 'max:5120'],
+            'laporan_akhir' => ['required', 'file', 'mimes:pdf,doc,docx', 'max:10240'],
+        ], [
+            'laporan_akhir.mimes' => 'Laporan akhir harus berformat PDF, DOC, atau DOCX.',
+            'laporan_akhir.max' => 'Ukuran laporan akhir maksimal 10 MB.',
         ]);
 
         $scanner = app(VirusScannerService::class);

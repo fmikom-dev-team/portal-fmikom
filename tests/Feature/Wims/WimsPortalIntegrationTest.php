@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureFirstTimeLoginComplete;
+use App\Models\Magang\KetidakhadiranMagang;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PerusahaanMitra;
 use App\Models\Module;
@@ -11,9 +12,13 @@ use App\Modules\Wims\Services\Dosen\LecturerAssessmentWorkflowService;
 use App\Modules\Wims\Services\Mitra\MitraAccessService;
 use App\Modules\Wims\Services\Shared\Placement\PlacementIndexService;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
+use App\Support\WimsStorage;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     $this->wimsModule = Module::query()->create([
@@ -505,7 +510,317 @@ it('requires active WIMS dosen assignment in addition to business relation for l
     expect($workflowService->isAuthorized($inactiveLecturer, $registration->fresh()))->toBeFalse();
 });
 
-it('allows admin recap and assessor pages during post-internship phase even if registration status is still aktif', function () {
+it('accepts docx final reports up to 10 MB for WIMS students', function () {
+    Storage::fake('local');
+
+    $student = portalReadyUser(['name' => 'Mahasiswa Upload']);
+    assignModuleRole($student, $this->wimsModule, 'mahasiswa');
+
+    $registration = PendaftaranMagang::query()->create([
+        'mahasiswa_id' => $student->id,
+        'status' => 'selesai',
+        'tanggal_mulai' => '2026-07-01',
+        'tanggal_selesai' => '2026-07-10',
+    ]);
+
+    $this->actingAs($student)
+        ->withSession(['active_module' => 'WIMS', 'active_role' => 'mahasiswa'])
+        ->from(route('wims.laporan', ['pendaftaran' => $registration->id]))
+        ->post(route('wims.laporan.store'), [
+            'pendaftaran_id' => $registration->id,
+            'laporan_akhir' => UploadedFile::fake()->create(
+                'laporan-akhir.docx',
+                10240,
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ),
+        ])
+        ->assertRedirect(route('wims.laporan', ['pendaftaran' => $registration->id]))
+        ->assertSessionHasNoErrors();
+
+    $registration = $registration->fresh();
+
+    expect($registration->laporan_akhir_original_name)->toBe('laporan-akhir.docx')
+        ->and($registration->laporan_akhir_path)->not->toBeNull()
+        ->and(Storage::disk('local')->exists($registration->laporan_akhir_path))->toBeTrue();
+});
+
+it('uploads final reports to the explicitly selected WIMS period even when another period is stored in session', function () {
+    Storage::fake('local');
+
+    $student = portalReadyUser(['name' => 'Mahasiswa Upload Ulang']);
+    assignModuleRole($student, $this->wimsModule, 'mahasiswa');
+
+    $targetRegistration = PendaftaranMagang::query()->create([
+        'mahasiswa_id' => $student->id,
+        'status' => 'selesai',
+        'tanggal_mulai' => '2026-07-01',
+        'tanggal_selesai' => '2026-07-10',
+    ]);
+
+    $otherRegistration = PendaftaranMagang::query()->create([
+        'mahasiswa_id' => $student->id,
+        'status' => 'selesai',
+        'tanggal_mulai' => '2026-07-11',
+        'tanggal_selesai' => '2026-07-20',
+    ]);
+
+    app(\App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportActionService::class)
+        ->upload(
+            $targetRegistration,
+            UploadedFile::fake()->createWithContent('laporan-awal.pdf', 'first-final-report-content'),
+        );
+
+    $initialPath = $targetRegistration->fresh()->laporan_akhir_path;
+
+    $this->actingAs($student)
+        ->withSession([
+            'active_module' => 'WIMS',
+            'active_role' => 'mahasiswa',
+            'wims.selected_pendaftaran_id' => $otherRegistration->id,
+        ])
+        ->from(route('wims.laporan', ['pendaftaran' => $targetRegistration->id]))
+        ->post(route('wims.laporan.store', ['pendaftaran' => $targetRegistration->id]), [
+            'pendaftaran_id' => $targetRegistration->id,
+            'laporan_akhir' => UploadedFile::fake()->createWithContent(
+                'laporan-revisi.docx',
+                'second-final-report-content',
+            ),
+        ])
+        ->assertRedirect(route('wims.laporan', ['pendaftaran' => $targetRegistration->id]))
+        ->assertSessionHasNoErrors();
+
+    $targetRegistration = $targetRegistration->fresh();
+    $otherRegistration = $otherRegistration->fresh();
+
+    expect($targetRegistration->laporan_akhir_original_name)->toBe('laporan-revisi.docx')
+        ->and($targetRegistration->laporan_akhir_path)->not->toBe($initialPath)
+        ->and(Storage::disk('local')->exists($targetRegistration->laporan_akhir_path))->toBeTrue()
+        ->and(Storage::disk('local')->exists($initialPath))->toBeFalse()
+        ->and(Storage::disk('local')->get($targetRegistration->laporan_akhir_path))->toBe('second-final-report-content')
+        ->and($otherRegistration->laporan_akhir_path)->toBeNull();
+});
+
+it('rejects final reports larger than 10 MB for WIMS students', function () {
+    Storage::fake('local');
+
+    $student = portalReadyUser(['name' => 'Mahasiswa Upload']);
+    assignModuleRole($student, $this->wimsModule, 'mahasiswa');
+
+    $registration = PendaftaranMagang::query()->create([
+        'mahasiswa_id' => $student->id,
+        'status' => 'selesai',
+        'tanggal_mulai' => '2026-07-01',
+        'tanggal_selesai' => '2026-07-10',
+    ]);
+
+    $this->actingAs($student)
+        ->withSession(['active_module' => 'WIMS', 'active_role' => 'mahasiswa'])
+        ->from(route('wims.laporan', ['pendaftaran' => $registration->id]))
+        ->post(route('wims.laporan.store'), [
+            'pendaftaran_id' => $registration->id,
+            'laporan_akhir' => UploadedFile::fake()->create(
+                'laporan-akhir.docx',
+                10241,
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ),
+        ])
+        ->assertRedirect(route('wims.laporan', ['pendaftaran' => $registration->id]))
+        ->assertSessionHasErrors(['laporan_akhir']);
+
+    expect($registration->fresh()->laporan_akhir_path)->toBeNull();
+});
+
+it('keeps the selected student period across WIMS pages until the user switches it again', function () {
+    $student = portalReadyUser(['name' => 'Killian Mbadog']);
+    assignModuleRole($student, $this->wimsModule, 'mahasiswa');
+
+    $olderRegistration = PendaftaranMagang::query()->create([
+        'mahasiswa_id' => $student->id,
+        'status' => 'selesai',
+        'tanggal_mulai' => '2026-07-02',
+        'tanggal_selesai' => '2026-07-02',
+    ]);
+
+    $latestRegistration = PendaftaranMagang::query()->create([
+        'mahasiswa_id' => $student->id,
+        'status' => 'selesai',
+        'tanggal_mulai' => '2026-07-05',
+        'tanggal_selesai' => '2026-07-05',
+    ]);
+
+    $this->actingAs($student)
+        ->withSession(['active_module' => 'WIMS', 'active_role' => 'mahasiswa'])
+        ->get(route('wims.registration', ['pendaftaran' => $olderRegistration->id]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Modules/Wims/Mahasiswa/Pendaftaran/Index')
+            ->where('selected_period_id', $olderRegistration->id)
+            ->where('registration.id', $olderRegistration->id)
+        );
+
+    $this->actingAs($student)
+        ->get(route('wims.profile'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Modules/Wims/Mahasiswa/Profile/Index')
+            ->where('selected_period_id', $olderRegistration->id)
+            ->where('registration.id', $olderRegistration->id)
+        );
+
+    $this->actingAs($student)
+        ->get(route('wims.registration'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Modules/Wims/Mahasiswa/Pendaftaran/Index')
+            ->where('selected_period_id', $olderRegistration->id)
+            ->where('registration.id', $olderRegistration->id)
+            ->where('pageState.can_submit', true)
+        );
+
+    expect($latestRegistration->id)->toBeGreaterThan($olderRegistration->id);
+});
+
+
+it('limits the mitra attendance board on the dashboard to six active students', function () {
+    $partner = portalReadyUser(['name' => 'Mitra Dashboard']);
+    assignModuleRole($partner, $this->wimsModule, 'mitra');
+
+    $company = PerusahaanMitra::query()->create([
+        'nama' => 'PT Dashboard Mitra',
+        'user_id' => $partner->id,
+        'is_active' => true,
+    ]);
+
+    $registrations = collect(range(1, 7))->map(function (int $index) use ($company) {
+        $student = portalReadyUser(['name' => "Mahasiswa Aktif {$index}"]);
+        assignModuleRole($student, $this->wimsModule, 'mahasiswa');
+
+        return PendaftaranMagang::query()->create([
+            'mahasiswa_id' => $student->id,
+            'perusahaan_id' => $company->id,
+            'status' => 'aktif',
+            'tanggal_mulai' => '2026-07-01',
+            'tanggal_selesai' => '2026-07-31',
+        ]);
+    });
+
+    $expectedRegistrationIds = $registrations
+        ->sortByDesc('id')
+        ->take(6)
+        ->pluck('id')
+        ->values()
+        ->all();
+
+    $this->actingAs($partner)
+        ->withSession(['active_module' => 'WIMS', 'active_role' => 'mitra'])
+        ->get(route('wims.mitra.dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Modules/Wims/Mitra/Dashboard')
+            ->has('attendanceBoard', 6)
+            ->where('attendanceBoard.0.registration_id', $expectedRegistrationIds[0])
+            ->where('attendanceBoard.5.registration_id', $expectedRegistrationIds[5])
+        );
+});
+it('shows downloadable absence proof to the assigned mitra and accepts docx proof up to 10 MB', function () {
+    Storage::fake('local');
+
+    $student = portalReadyUser(['name' => 'Mahasiswa Bukti']);
+    $partner = portalReadyUser(['name' => 'Mitra Bukti']);
+    assignModuleRole($student, $this->wimsModule, 'mahasiswa');
+    assignModuleRole($partner, $this->wimsModule, 'mitra');
+
+    $company = PerusahaanMitra::query()->create([
+        'nama' => 'PT Bukti Mitra',
+        'user_id' => $partner->id,
+        'is_active' => true,
+    ]);
+
+    $registration = PendaftaranMagang::query()->create([
+        'mahasiswa_id' => $student->id,
+        'perusahaan_id' => $company->id,
+        'status' => 'aktif',
+        'tanggal_mulai' => '2026-07-01',
+        'tanggal_selesai' => '2026-07-31',
+    ]);
+
+    $this->actingAs($student)
+        ->withSession(['active_module' => 'WIMS', 'active_role' => 'mahasiswa'])
+        ->from(route('wims.attendance', ['pendaftaran' => $registration->id]))
+        ->post(route('wims.absence.store'), [
+            'pendaftaran_id' => $registration->id,
+            'tanggal_mulai' => '2026-07-15',
+            'tanggal_selesai' => '2026-07-15',
+            'jenis' => 'sakit',
+            'alasan' => 'Kontrol kesehatan',
+            'bukti' => UploadedFile::fake()->create(
+                'surat-dokter.docx',
+                10240,
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ),
+        ])
+        ->assertRedirect(route('wims.attendance', ['pendaftaran' => $registration->id]))
+        ->assertSessionHasNoErrors();
+
+    $absence = KetidakhadiranMagang::query()->latest('id')->firstOrFail();
+
+    expect($absence->bukti_path)->not->toBeNull()
+        ->and(WimsStorage::exists($absence->bukti_path))->toBeTrue();
+
+    $downloadUrl = route('wims.mitra.absence.proof.download', $absence);
+
+    $this->actingAs($partner)
+        ->withSession(['active_module' => 'WIMS', 'active_role' => 'mitra'])
+        ->get(route('wims.mitra.dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Modules/Wims/Mitra/Dashboard')
+            ->where('pendingAbsenceRequests.0.id', $absence->id)
+            ->where('pendingAbsenceRequests.0.proof.exists', true)
+            ->where('pendingAbsenceRequests.0.proof.download_url', $downloadUrl)
+        );
+
+    $this->actingAs($partner)
+        ->withSession(['active_module' => 'WIMS', 'active_role' => 'mitra'])
+        ->get($downloadUrl)
+        ->assertOk();
+});
+
+it('rejects absence proof larger than 10 MB for WIMS students', function () {
+    Storage::fake('local');
+
+    $student = portalReadyUser(['name' => 'Mahasiswa Bukti Besar']);
+    assignModuleRole($student, $this->wimsModule, 'mahasiswa');
+
+    $registration = PendaftaranMagang::query()->create([
+        'mahasiswa_id' => $student->id,
+        'status' => 'aktif',
+        'tanggal_mulai' => '2026-07-01',
+        'tanggal_selesai' => '2026-07-31',
+    ]);
+
+    $this->actingAs($student)
+        ->withSession(['active_module' => 'WIMS', 'active_role' => 'mahasiswa'])
+        ->from(route('wims.attendance', ['pendaftaran' => $registration->id]))
+        ->post(route('wims.absence.store'), [
+            'pendaftaran_id' => $registration->id,
+            'tanggal_mulai' => '2026-07-20',
+            'tanggal_selesai' => '2026-07-20',
+            'jenis' => 'izin',
+            'alasan' => 'Ada urusan keluarga',
+            'bukti' => UploadedFile::fake()->create(
+                'bukti-izin.docx',
+                10241,
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ),
+        ])
+        ->assertRedirect(route('wims.attendance', ['pendaftaran' => $registration->id]))
+        ->assertSessionHasErrors(['bukti']);
+
+    expect(KetidakhadiranMagang::query()->count())->toBe(0);
+});
+
+it('requires completed status and final report before admin recap and assessor pages become available', function () {
     Carbon::setTestNow('2026-07-05 09:00:00');
 
     $admin = portalReadyUser(['name' => 'Admin WIMS']);
@@ -524,7 +839,7 @@ it('allows admin recap and assessor pages during post-internship phase even if r
         'is_active' => true,
     ]);
 
-    $registration = PendaftaranMagang::query()->create([
+    $activeRegistration = PendaftaranMagang::query()->create([
         'mahasiswa_id' => $student->id,
         'perusahaan_id' => $company->id,
         'dosen_pembimbing_id' => $lecturer->id,
@@ -534,19 +849,56 @@ it('allows admin recap and assessor pages during post-internship phase even if r
         'laporan_akhir_path' => 'laporan-final/penilaian-aktif.pdf',
     ]);
 
+    $completedWithoutReportRegistration = PendaftaranMagang::query()->create([
+        'mahasiswa_id' => $student->id,
+        'perusahaan_id' => $company->id,
+        'dosen_pembimbing_id' => $lecturer->id,
+        'status' => 'selesai',
+        'tanggal_mulai' => '2026-05-01',
+        'tanggal_selesai' => '2026-05-31',
+    ]);
+
+    $completedRegistration = PendaftaranMagang::query()->create([
+        'mahasiswa_id' => $student->id,
+        'perusahaan_id' => $company->id,
+        'dosen_pembimbing_id' => $lecturer->id,
+        'status' => 'selesai',
+        'tanggal_mulai' => '2026-04-01',
+        'tanggal_selesai' => '2026-04-30',
+        'laporan_akhir_path' => 'laporan-final/penilaian-selesai.pdf',
+    ]);
+
     $this->actingAs($admin)
         ->withSession(['active_module' => 'WIMS', 'active_role' => 'admin'])
         ->get(route('wims.admin.assessment-recap.index'))
-        ->assertOk();
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Modules/Wims/Admin/RekapNilai/Index')
+            ->where('summary.total_students', 1)
+            ->has('registrations.data', 1)
+            ->where('registrations.data.0.id', $completedRegistration->id)
+        );
+
+    foreach ([$activeRegistration, $completedWithoutReportRegistration] as $blockedRegistration) {
+        $this->actingAs($lecturer)
+            ->withSession(['active_module' => 'WIMS', 'active_role' => 'dosen'])
+            ->get(route('wims.dosen.assessments.show', $blockedRegistration))
+            ->assertForbidden();
+
+        $this->actingAs($partner)
+            ->withSession(['active_module' => 'WIMS', 'active_role' => 'mitra'])
+            ->get(route('wims.mitra.assessments.show', $blockedRegistration))
+            ->assertForbidden();
+    }
 
     $this->actingAs($lecturer)
         ->withSession(['active_module' => 'WIMS', 'active_role' => 'dosen'])
-        ->get(route('wims.dosen.assessments.show', $registration))
+        ->get(route('wims.dosen.assessments.show', $completedRegistration))
         ->assertOk();
 
     $this->actingAs($partner)
         ->withSession(['active_module' => 'WIMS', 'active_role' => 'mitra'])
-        ->get(route('wims.mitra.assessments.show', $registration))
+        ->get(route('wims.mitra.assessments.show', $completedRegistration))
         ->assertOk();
 
     Carbon::setTestNow();
@@ -609,3 +961,15 @@ function syncModuleRoles(Module $module, array $roleSlugs): void
 
     $module->roles()->syncWithoutDetaching($roleIds);
 }
+
+
+
+
+
+
+
+
+
+
+
+

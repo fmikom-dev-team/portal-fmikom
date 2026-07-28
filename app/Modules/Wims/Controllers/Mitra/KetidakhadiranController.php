@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Magang\KetidakhadiranMagang;
 use App\Modules\Wims\Services\Mitra\MitraAccessService;
 use App\Modules\Wims\Services\Mitra\MitraKetidakhadiranReviewService;
+use App\Support\WimsStorage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class KetidakhadiranController extends Controller
 {
@@ -15,6 +17,18 @@ class KetidakhadiranController extends Controller
         private readonly MitraAccessService $mitraAccessService,
         private readonly MitraKetidakhadiranReviewService $mitraKetidakhadiranReviewService,
     ) {}
+
+    public function downloadProof(Request $request, KetidakhadiranMagang $ketidakhadiran): BinaryFileResponse
+    {
+        abort_unless($this->mitraAccessService->canReviewAbsence($request->user(), $ketidakhadiran), 403);
+
+        $location = WimsStorage::locate($ketidakhadiran->bukti_path);
+        $absolutePath = $location['absolute_path'] ?? null;
+
+        abort_unless(filled($ketidakhadiran->bukti_path) && $absolutePath && is_file($absolutePath), 404, 'File bukti ketidakhadiran tidak ditemukan.');
+
+        return response()->download($absolutePath, $ketidakhadiran->proofDownloadName());
+    }
 
     public function approve(Request $request, KetidakhadiranMagang $ketidakhadiran): RedirectResponse
     {
