@@ -59,4 +59,3 @@ class KetidakhadiranController extends Controller
         return back()->with('success', 'Pengajuan ketidakhadiran berhasil dibatalkan.');
     }
 }
-

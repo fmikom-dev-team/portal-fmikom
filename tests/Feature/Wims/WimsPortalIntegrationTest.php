@@ -9,6 +9,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\UserModuleRole;
 use App\Modules\Wims\Services\Dosen\LecturerAssessmentWorkflowService;
+use App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportActionService;
 use App\Modules\Wims\Services\Mitra\MitraAccessService;
 use App\Modules\Wims\Services\Shared\Placement\PlacementIndexService;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
@@ -564,7 +565,7 @@ it('uploads final reports to the explicitly selected WIMS period even when anoth
         'tanggal_selesai' => '2026-07-20',
     ]);
 
-    app(\App\Modules\Wims\Services\Mahasiswa\Report\StudentFinalReportActionService::class)
+    app(StudentFinalReportActionService::class)
         ->upload(
             $targetRegistration,
             UploadedFile::fake()->createWithContent('laporan-awal.pdf', 'first-final-report-content'),
@@ -679,7 +680,6 @@ it('keeps the selected student period across WIMS pages until the user switches 
 
     expect($latestRegistration->id)->toBeGreaterThan($olderRegistration->id);
 });
-
 
 it('limits the mitra attendance board on the dashboard to six active students', function () {
     $partner = portalReadyUser(['name' => 'Mitra Dashboard']);
@@ -961,15 +961,3 @@ function syncModuleRoles(Module $module, array $roleSlugs): void
 
     $module->roles()->syncWithoutDetaching($roleIds);
 }
-
-
-
-
-
-
-
-
-
-
-
-

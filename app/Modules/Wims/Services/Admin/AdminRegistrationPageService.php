@@ -118,4 +118,3 @@ class AdminRegistrationPageService
         return Carbon::parse($date)->translatedFormat('d M Y');
     }
 }
-

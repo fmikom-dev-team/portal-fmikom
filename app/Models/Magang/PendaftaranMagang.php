@@ -288,5 +288,3 @@ class PendaftaranMagang extends Model
         return $this->status === 'approved' && $now->between($this->tanggal_mulai, $this->tanggal_selesai);
     }
 }
-
-
