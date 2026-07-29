@@ -32,10 +32,12 @@ export function useLeafletMap(options?: {
 			try {
 				const oldMap = (el as any)._leaflet;
 				if (oldMap && typeof oldMap.remove === "function") oldMap.remove();
-			} catch (e) {}
+			} catch {
+				// Ignore cleanup error on HMR
+			}
 			delete (el as any)._leaflet_id;
 			// Clear child nodes left by old map
-			while (el.firstChild) el.removeChild(el.firstChild);
+			el.replaceChildren();
 		}
 
 		isDarkMap.value = document.documentElement.classList.contains("dark");
@@ -81,7 +83,9 @@ export function useLeafletMap(options?: {
 						isReady.value = true;
 						isMapLoading.value = false;
 					}
-				} catch (e) {}
+				} catch {
+					// Ignore invalidation error
+				}
 			}, ms);
 			invalidateTimers.push(t);
 		});
@@ -89,7 +93,9 @@ export function useLeafletMap(options?: {
 		resizeObserver = new ResizeObserver(() => {
 			try {
 				leafletMap.invalidateSize();
-			} catch (e) {}
+			} catch {
+				// Ignore resize error
+			}
 		});
 		resizeObserver.observe(el);
 	};
@@ -108,7 +114,7 @@ export function useLeafletMap(options?: {
 				});
 				// Fallback: if rAF didn't fire (e.g., tab not visible)
 				setTimeout(() => {
-					if (!map.value && el) createMap(el);
+					if (el && !map.value) createMap(el);
 				}, 200);
 			}
 		},
@@ -138,7 +144,9 @@ export function useLeafletMap(options?: {
 		if (map.value) {
 			try {
 				map.value.remove();
-			} catch (e) {}
+			} catch {
+				// Ignore map removal error
+			}
 			map.value = null;
 		}
 		tileLayer = null;

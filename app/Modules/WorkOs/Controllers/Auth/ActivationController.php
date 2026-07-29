@@ -103,7 +103,7 @@ class ActivationController extends Controller
         RateLimiter::hit($rateLimitKey, decaySeconds: 900); // 15 menit
 
         // Check if identifier belongs to Dosen or Staff
-        $staffUser = User::where('nomor_induk', '=', $request->identifier, 'and')
+        $staffUser = User::where('nomor_induk', $request->identifier)
             ->whereIn('user_type', ['dosen', 'staff'])
             ->first();
 
@@ -114,7 +114,7 @@ class ActivationController extends Controller
         }
 
         // Look up Mahasiswa / Alumni user by NIM
-        $user = User::where('nomor_induk', '=', $request->identifier, 'and')
+        $user = User::where('nomor_induk', $request->identifier)
             ->whereIn('user_type', ['mahasiswa', 'alumni'])
             ->first();
 
