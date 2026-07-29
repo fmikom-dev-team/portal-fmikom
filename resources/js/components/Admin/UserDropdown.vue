@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Link } from "@inertiajs/vue3";
-import { Bell, LogOut, Settings, Shield, User } from "lucide-vue-next";
-import { ref } from "vue";
+import { Link, usePage } from "@inertiajs/vue3";
+import { LayoutGrid, LogOut, Settings, Shield } from "lucide-vue-next";
+import { computed, ref } from "vue";
 
 defineProps<{
 	user: {
@@ -16,15 +16,24 @@ const avatarError = ref(false);
 const emit = defineEmits<{ close: [] }>();
 
 const menuItems = [
-	{ label: "Profil Saya", icon: User, href: "/settings/profile" },
-	{ label: "Pengaturan", icon: Settings, href: "/pagi/admin/settings" },
-	{
-		label: "Notifikasi",
-		icon: Bell,
-		href: "/pagi/admin/settings/notifications",
-	},
-	{ label: "Keamanan", icon: Shield, href: "/settings/password" },
+	{ label: "Modul Portal", icon: LayoutGrid, href: "/dashboard" },
+	{ label: "Pengaturan Modul", icon: Settings, href: "/pagi/admin/settings" },
 ];
+const page = usePage();
+const displayRoleName = computed(() => {
+	const role = page.props.context?.active_role || "super-admin";
+	const r = role.toLowerCase();
+	if (r === "super-admin" || r === "super_admin") return "Super Admin";
+	if (r === "admin") return "Admin Struktural";
+	if (r === "admin-universitas" || r === "admin_universitas") return "Admin Universitas";
+	if (r === "admin-akademik" || r === "admin_akademik") return "Admin Akademik";
+	if (r === "prodi") return "Koordinator Prodi";
+	if (r === "dosen") return "Dosen";
+	if (r === "mahasiswa") return "Mahasiswa";
+	if (r === "alumni") return "Alumni";
+	if (r === "mitra") return "Mitra Perusahaan";
+	return role.charAt(0).toUpperCase() + role.slice(1);
+});
 </script>
 
 <template>
@@ -50,7 +59,7 @@ const menuItems = [
             </div>
             <div class="mt-2.5 flex items-center gap-1.5">
                 <span class="inline-flex items-center gap-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 text-[10px] font-black text-indigo-700 dark:text-indigo-400">
-                    <Shield class="h-2.5 w-2.5" /> Super Admin
+                    <Shield class="h-2.5 w-2.5" /> {{ displayRoleName }}
                 </span>
             </div>
         </div>

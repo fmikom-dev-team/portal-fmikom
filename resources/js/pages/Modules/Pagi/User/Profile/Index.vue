@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { AlertCircle, CheckCircle2, X } from "lucide-vue-next";
-import { computed, defineAsyncComponent, onMounted, ref, watch } from "vue";
+import {
+	computed,
+	defineAsyncComponent,
+	onBeforeUnmount,
+	onMounted,
+	ref,
+	watch,
+} from "vue";
 import Navbar from "../ui/Navbar.vue";
 import UmumNavbar from "../ui/UmumNavbar.vue";
 
@@ -192,6 +199,7 @@ const {
 	getProjectShareUrl,
 	deleteProject,
 	viewingProject,
+	isLoadingModal,
 	activeProjectSettings,
 	openProjectModal,
 	closeProjectModal,
@@ -218,6 +226,97 @@ const selectWorkTab = () => {
 		el.scrollIntoView({ behavior: "smooth" });
 	}
 };
+
+const handleRealtimeWorkCreated = (e: any) => {
+	const exists = localProjects.value.some((p) => p.id === e.id);
+	if (!exists) {
+		localProjects.value = [
+			{
+				id: e.id,
+				title: e.title,
+				image: e.image,
+				likes: e.likes || 0,
+				views: e.views || 0,
+				content: e.content || [],
+				is_published: e.is_published,
+				created_at: e.created_at,
+			},
+			...localProjects.value,
+		];
+		addToast("Karya baru ditambahkan ke profil!", "success");
+	}
+	router.reload({ preserveScroll: true, only: ["projects"] });
+};
+
+const handleRealtimeWorkUpdated = (e: any) => {
+	const idx = localProjects.value.findIndex((p) => p.id === e.id);
+	if (idx !== -1) {
+		localProjects.value[idx] = {
+			...localProjects.value[idx],
+			title: e.title ?? localProjects.value[idx].title,
+			image: e.image ?? localProjects.value[idx].image,
+			content: e.content ?? localProjects.value[idx].content,
+			is_published: e.is_published ?? localProjects.value[idx].is_published,
+		};
+	}
+	router.reload({ preserveScroll: true, only: ["projects"] });
+};
+
+const handleRealtimeWorkDeleted = (e: any) => {
+	localProjects.value = localProjects.value.filter((p) => p.id !== e.id);
+	router.reload({ preserveScroll: true, only: ["projects"] });
+};
+
+onMounted(() => {
+	if (window.Broadcaster) {
+		const targetUserId = user.value?.id || page.props.auth?.user?.id;
+		if (targetUserId) {
+			window.Broadcaster.private(`App.Models.User.${targetUserId}`)
+				.listen(".PagiWorkCreated", (e: any) => {
+					handleRealtimeWorkCreated(e);
+				})
+				.listen(".PagiWorkUpdated", (e: any) => {
+					handleRealtimeWorkUpdated(e);
+				})
+				.listen(".PagiWorkDeleted", (e: any) => {
+					handleRealtimeWorkDeleted(e);
+				})
+				.listen(".PagiProfileUpdated", () => {
+					router.reload({ preserveScroll: true });
+				});
+		}
+
+		window.Broadcaster.channel("pagi.works")
+			.listen(".PagiWorkCreated", (e: any) => {
+				const uId = user.value?.id;
+				if (uId && Number(e.user_id) === Number(uId)) {
+					handleRealtimeWorkCreated(e);
+				}
+			})
+			.listen(".PagiWorkUpdated", (e: any) => {
+				const uId = user.value?.id;
+				if (uId && Number(e.user_id) === Number(uId)) {
+					handleRealtimeWorkUpdated(e);
+				}
+			})
+			.listen(".PagiWorkDeleted", (e: any) => {
+				const uId = user.value?.id;
+				if (uId && Number(e.user_id) === Number(uId)) {
+					handleRealtimeWorkDeleted(e);
+				}
+			});
+	}
+});
+
+onBeforeUnmount(() => {
+	const targetUserId = user.value?.id || page.props.auth?.user?.id;
+	if (targetUserId && window.Broadcaster) {
+		try {
+			window.Broadcaster.leave(`App.Models.User.${targetUserId}`);
+			window.Broadcaster.leave("pagi.works");
+		} catch (_) {}
+	}
+});
 
 const certificates = ref<any[]>([...(props.profileUser?.certificates || [])]);
 watch(
@@ -817,6 +916,7 @@ const headUrl = computed(() => {
             :category="viewingProject.category"
             :tools-used="viewingProject.tools_used"
             :tags="viewingProject.tags"
+            :is-loading="isLoadingModal"
             @close="closeProjectModal"
             @select-portfolio="viewingProject = $event"
         />

@@ -113,7 +113,11 @@ const flash        = computed(() => page.props.flash ?? {});
 const pageErrors   = computed(() => page.props.errors ?? {});
 const registration = computed(() => props.registration ?? null);
 const proposalAttachment = computed(() => registration.value?.proposal_attachment ?? null);
-const proposalExistingFlag = computed(() => proposalAttachment.value?.exists ? '1' : '');
+const proposalMarkedForRemoval = ref(false);
+const hasStoredProposalAttachment = computed(() => Boolean(proposalAttachment.value?.exists) && !proposalMarkedForRemoval.value);
+const proposalExistingFlag = computed(() => hasStoredProposalAttachment.value ? '1' : '');
+const proposalDisplayName = computed(() => form.proposal_pkl?.name || (hasStoredProposalAttachment.value ? (proposalAttachment.value?.name || 'Dokumen tersimpan') : null));
+const proposalDisplayUploadedAt = computed(() => form.proposal_pkl ? 'File baru siap dikirim.' : (hasStoredProposalAttachment.value ? (proposalAttachment.value?.uploaded_at || 'Waktu upload belum tersedia') : null));
 const proposalInputRef = ref<HTMLInputElement | null>(null);
 const isLocked     = computed(() => Boolean(props.pageState.is_locked));
 const isRevision   = computed(() => Boolean(props.pageState.is_revision));
@@ -266,16 +270,28 @@ const activityLog = computed(() => {
 const actionLabel = computed(() =>
     isRevision.value ? 'Kirim Ulang Pendaftaran' : 'Ajukan Pendaftaran',
 );
+const formIncomplete = computed(
+    () => !form.tanggal_mulai || !form.tanggal_selesai || (!form.proposal_pkl && !proposalExistingFlag.value),
+);
 const submitDisabled = computed(
-    () => !canSubmit.value || !form.tanggal_mulai || !form.tanggal_selesai || (!form.proposal_pkl && !proposalExistingFlag.value) || form.processing,
+    () => !canSubmit.value || formIncomplete.value || form.processing,
 );
 const handleProposalFileChange = (event: Event) => {
     const target = event.target as HTMLInputElement | null;
+    form.clearErrors('proposal_pkl');
     form.proposal_pkl = target?.files?.[0] ?? null;
 };
 
 const clearProposalFile = () => {
+    const hadSelectedProposalFile = Boolean(form.proposal_pkl);
+
+    form.clearErrors('proposal_pkl');
     form.proposal_pkl = null;
+
+    if (!hadSelectedProposalFile && hasStoredProposalAttachment.value) {
+        proposalMarkedForRemoval.value = true;
+    }
+
     if (proposalInputRef.value) {
         proposalInputRef.value.value = '';
     }
@@ -295,6 +311,7 @@ const submit = () => {
                     ? 'Perbaikan pendaftaran berhasil dikirim ulang dan menunggu review kampus.'
                     : 'Pendaftaran PKL/magang berhasil dikirim dan menunggu review kampus.');
 
+            proposalMarkedForRemoval.value = false;
             form.proposal_pkl = null;
             if (proposalInputRef.value) {
                 proposalInputRef.value.value = '';
@@ -318,6 +335,13 @@ const submit = () => {
         },
     });
 };
+
+watch(
+    () => registration.value?.id,
+    () => {
+        proposalMarkedForRemoval.value = false;
+    },
+);
 
 watch(
     () => flash.value.success,
@@ -777,7 +801,7 @@ watch(
                                 <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Dokumen Proposal PKL</p>
 
                                 <div
-                                    v-if="form.proposal_pkl || proposalAttachment?.name"
+                                    v-if="proposalDisplayName"
                                     class="mt-3 rounded-xl border border-wims-border/50 bg-wims-card px-4 py-3.5"
                                 >
                                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -786,10 +810,10 @@ watch(
                                         </div>
                                         <div class="min-w-0 flex-1">
                                             <p class="break-all text-sm font-bold leading-5 text-wims-text">
-                                                {{ form.proposal_pkl?.name || proposalAttachment?.name || 'Dokumen tersimpan' }}
+                                                {{ proposalDisplayName }}
                                             </p>
                                             <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                                                {{ proposalAttachment?.uploaded_at || 'Waktu upload belum tersedia' }}
+                                                {{ proposalDisplayUploadedAt }}
                                             </p>
                                         </div>
                                         <div class="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:items-center">
@@ -797,7 +821,7 @@ watch(
                                                 <Upload class="mr-2 size-4" />
                                                 {{ form.proposal_pkl ? 'Ganti File' : 'Pilih File' }}
                                             </Button>
-                                            <Button v-if="form.proposal_pkl || proposalAttachment?.name" type="button" variant="ghost" class="h-9 rounded-xl px-3.5 text-xs font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200" @click="clearProposalFile">
+                                            <Button v-if="proposalDisplayName" type="button" variant="ghost" class="h-9 rounded-xl px-3.5 text-xs font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200" @click="clearProposalFile">
                                                 Hapus File
                                             </Button>
                                         </div>
@@ -830,7 +854,7 @@ watch(
                                     <LoaderCircle v-if="form.processing" class="mr-2 size-4 animate-spin" />
                                     <span>{{ actionLabel }}</span>
                                 </Button>
-                                <p v-if="!canSubmit && !isLocked" class="mt-2 text-center text-[11px] text-slate-400 dark:text-slate-500">Lengkapi tanggal mulai dan selesai untuk mengajukan</p>
+                                <p v-if="canSubmit && !isLocked && formIncomplete" class="mt-2 text-center text-[11px] text-slate-400 dark:text-slate-500">Lengkapi periode dan lampiran proposal untuk mengajukan</p>
                             </div>
                         </form>
                     </div>
@@ -839,4 +863,5 @@ watch(
         </div>
     </div>
 </template>
+
 

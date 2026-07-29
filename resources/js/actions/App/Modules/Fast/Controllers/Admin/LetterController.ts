@@ -394,7 +394,7 @@ export const selectType = {
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:86
 * @route '/admin/surat/form/{jenisSurat}'
 */
-const form8a79520a8d6806df604bfe52baf7f53c = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+const form8a79520a8d6806df604bfe52baf7f53c = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: form8a79520a8d6806df604bfe52baf7f53c.url(args, options),
     method: 'get',
 })
@@ -409,7 +409,7 @@ form8a79520a8d6806df604bfe52baf7f53c.definition = {
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:86
 * @route '/admin/surat/form/{jenisSurat}'
 */
-form8a79520a8d6806df604bfe52baf7f53c.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+form8a79520a8d6806df604bfe52baf7f53c.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -442,7 +442,7 @@ form8a79520a8d6806df604bfe52baf7f53c.url = (args: { jenisSurat: string | number 
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:86
 * @route '/admin/surat/form/{jenisSurat}'
 */
-form8a79520a8d6806df604bfe52baf7f53c.get = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+form8a79520a8d6806df604bfe52baf7f53c.get = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: form8a79520a8d6806df604bfe52baf7f53c.url(args, options),
     method: 'get',
 })
@@ -452,7 +452,7 @@ form8a79520a8d6806df604bfe52baf7f53c.get = (args: { jenisSurat: string | number 
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:86
 * @route '/admin/surat/form/{jenisSurat}'
 */
-form8a79520a8d6806df604bfe52baf7f53c.head = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+form8a79520a8d6806df604bfe52baf7f53c.head = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: form8a79520a8d6806df604bfe52baf7f53c.url(args, options),
     method: 'head',
 })
@@ -462,7 +462,7 @@ form8a79520a8d6806df604bfe52baf7f53c.head = (args: { jenisSurat: string | number
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:86
 * @route '/kaprodi/admin/surat/form/{jenisSurat}'
 */
-const formc2b51663df625bc828b8904c869e68d8 = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+const formc2b51663df625bc828b8904c869e68d8 = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: formc2b51663df625bc828b8904c869e68d8.url(args, options),
     method: 'get',
 })
@@ -477,7 +477,7 @@ formc2b51663df625bc828b8904c869e68d8.definition = {
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:86
 * @route '/kaprodi/admin/surat/form/{jenisSurat}'
 */
-formc2b51663df625bc828b8904c869e68d8.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+formc2b51663df625bc828b8904c869e68d8.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -510,7 +510,7 @@ formc2b51663df625bc828b8904c869e68d8.url = (args: { jenisSurat: string | number 
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:86
 * @route '/kaprodi/admin/surat/form/{jenisSurat}'
 */
-formc2b51663df625bc828b8904c869e68d8.get = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+formc2b51663df625bc828b8904c869e68d8.get = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: formc2b51663df625bc828b8904c869e68d8.url(args, options),
     method: 'get',
 })
@@ -520,7 +520,7 @@ formc2b51663df625bc828b8904c869e68d8.get = (args: { jenisSurat: string | number 
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:86
 * @route '/kaprodi/admin/surat/form/{jenisSurat}'
 */
-formc2b51663df625bc828b8904c869e68d8.head = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+formc2b51663df625bc828b8904c869e68d8.head = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: formc2b51663df625bc828b8904c869e68d8.url(args, options),
     method: 'head',
 })
@@ -530,7 +530,7 @@ formc2b51663df625bc828b8904c869e68d8.head = (args: { jenisSurat: string | number
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:86
 * @route '/dekan/admin/surat/form/{jenisSurat}'
 */
-const form4f3b4e5881682e7e9b354ec2e13e3e37 = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+const form4f3b4e5881682e7e9b354ec2e13e3e37 = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: form4f3b4e5881682e7e9b354ec2e13e3e37.url(args, options),
     method: 'get',
 })
@@ -545,7 +545,7 @@ form4f3b4e5881682e7e9b354ec2e13e3e37.definition = {
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:86
 * @route '/dekan/admin/surat/form/{jenisSurat}'
 */
-form4f3b4e5881682e7e9b354ec2e13e3e37.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+form4f3b4e5881682e7e9b354ec2e13e3e37.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -578,7 +578,7 @@ form4f3b4e5881682e7e9b354ec2e13e3e37.url = (args: { jenisSurat: string | number 
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:86
 * @route '/dekan/admin/surat/form/{jenisSurat}'
 */
-form4f3b4e5881682e7e9b354ec2e13e3e37.get = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+form4f3b4e5881682e7e9b354ec2e13e3e37.get = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: form4f3b4e5881682e7e9b354ec2e13e3e37.url(args, options),
     method: 'get',
 })
@@ -588,7 +588,7 @@ form4f3b4e5881682e7e9b354ec2e13e3e37.get = (args: { jenisSurat: string | number 
 * @see app/Modules/Fast/Controllers/Admin/LetterController.php:86
 * @route '/dekan/admin/surat/form/{jenisSurat}'
 */
-form4f3b4e5881682e7e9b354ec2e13e3e37.head = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+form4f3b4e5881682e7e9b354ec2e13e3e37.head = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: form4f3b4e5881682e7e9b354ec2e13e3e37.url(args, options),
     method: 'head',
 })

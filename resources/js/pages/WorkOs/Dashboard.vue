@@ -68,6 +68,12 @@ const toggleNotificationRead = (n: any) => {
 	});
 };
 
+const deleteNotification = (n: any) => {
+	router.delete(`/workos/notifications/${n.id}`, {
+		preserveScroll: true,
+	});
+};
+
 const unreadNotificationsCount = computed(() => {
 	return props.unreadNotificationsCount ?? 0;
 });
@@ -426,7 +432,7 @@ function openUser(user: any) {
 }
 
 // ── Navigation — mirrors WorkOS sidebar exactly ────────────────────
-const navGroups = [
+const navGroups = computed(() => [
 	{
 		// No label (top group)
 		items: [
@@ -485,7 +491,7 @@ const navGroups = [
 			},
 		],
 	},
-];
+]);
 
 // ── Bottom nav items (Notifications + Settings) pinned ─────────────
 const bottomNavItems = computed(() => [
@@ -504,7 +510,7 @@ const bottomNavItems = computed(() => [
 
 // ── Computed ────────────────────────────────────────────────────────
 const allNavItems = computed(() => [
-	...navGroups.flatMap((g) => g.items),
+	...navGroups.value.flatMap((g) => g.items),
 	...bottomNavItems.value,
 ]);
 
@@ -798,6 +804,7 @@ const activeLabel = computed(() => {
                         @mark-all-read="markAllNotificationsAsRead"
                         @clear-feed="clearNotifications"
                         @toggle-read="toggleNotificationRead"
+                        @delete-log="deleteNotification"
                     />
                     <SystemSettings
                         v-else-if="activePage === 'settings'"

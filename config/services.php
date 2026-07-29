@@ -53,4 +53,8 @@ return [
         'redirect' => env('MICROSOFT_REDIRECT_URI'),
     ],
 
+    'helpdesk' => [
+        'wa_number' => env('HELPDESK_WA_NUMBER', '628123456789'),
+    ],
+
 ];

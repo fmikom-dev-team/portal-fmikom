@@ -368,7 +368,7 @@ const locationAccuracyThreshold = computed(() => {
 const locationAccuracyLabel = computed(() =>
     locationAccuracy.value === null
         ? '-'
-        : `±${Math.round(locationAccuracy.value)} m`,
+        : `Â±${Math.round(locationAccuracy.value)} m`,
 );
 
 const locationStatusLabel = computed(() =>
@@ -1578,8 +1578,8 @@ onBeforeUnmount(() => {
 
                                     <label class="block space-y-1.5">
                                         <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Bukti Pendukung</span>
-                                        <input type="file" accept=".jpg,.jpeg,.png,.pdf" class="block w-full rounded-xl border border-wims-border/60 bg-wims-card px-3 py-2 text-xs text-slate-700 dark:text-slate-300 file:mr-3 file:rounded-full file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-blue-700 dark:file:bg-blue-500/15 dark:file:text-blue-400" @change="handleAbsenceProofChange" />
-                                        <p class="text-[10px] text-slate-400 dark:text-slate-500">Opsional. Format: JPG, PNG, atau PDF maks 5 MB.</p>
+                                        <input type="file" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" class="block w-full rounded-xl border border-wims-border/60 bg-wims-card px-3 py-2 text-xs text-slate-700 dark:text-slate-300 file:mr-3 file:rounded-full file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-blue-700 dark:file:bg-blue-500/15 dark:file:text-blue-400" @change="handleAbsenceProofChange" />
+                                        <p class="text-[10px] text-slate-400 dark:text-slate-500">Opsional. Format: JPG, PNG, PDF, DOC, atau DOCX maks 10 MB.</p>
                                     </label>
 
                                     <div v-if="absenceForm.errors.tanggal_mulai || absenceForm.errors.tanggal_selesai || absenceForm.errors.jenis || absenceForm.errors.alasan || absenceForm.errors.bukti" class="rounded-xl border border-rose-200/60 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/10 px-3 py-2 text-xs text-rose-700 dark:text-rose-300">
@@ -1643,4 +1643,5 @@ onBeforeUnmount(() => {
         </div>
     </div>
 </template>
+
 

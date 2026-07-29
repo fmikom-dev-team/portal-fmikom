@@ -22,7 +22,7 @@ const props = withDefaults(
 	}>(),
 	{
 		size: "md",
-		zIndexClass: "z-60",
+		zIndexClass: "z-[9999]",
 	},
 );
 
@@ -61,12 +61,13 @@ onUnmounted(() => document.removeEventListener("keydown", handleKeydown));
             <dialog
                 v-if="show"
                 open
-                :class="['fixed inset-0 flex items-center justify-center bg-transparent border-0 w-screen h-screen max-w-none max-h-none p-0', zIndexClass]"
+                :class="['fixed inset-0 flex items-center justify-center bg-transparent border-0 w-screen h-screen max-w-none max-h-none p-0 z-[9999]', zIndexClass]"
+                :style="{ zIndex: 9999 }"
                 :aria-label="title"
                 @click.self="emit('close')"
             >
                 <!-- Backdrop -->
-                <div class="absolute inset-0 bg-black/25 backdrop-blur-[2px]" aria-hidden="true" @click="emit('close')" />
+                <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-[9999]" aria-hidden="true" @click="emit('close')" />
 
                 <!-- Modal panel -->
                 <Transition
@@ -77,7 +78,7 @@ onUnmounted(() => document.removeEventListener("keydown", handleKeydown));
                 >
                     <div
                         v-if="show"
-                        :class="['relative bg-white dark:bg-zinc-900 rounded-lg shadow-xl w-full overflow-hidden transition-all', sizes[size]]"
+                        :class="['relative bg-white dark:bg-zinc-900 rounded-lg shadow-xl w-full overflow-hidden transition-all z-[10000] pointer-events-auto', sizes[size]]"
                         style="font-family: var(--wos-font)"
                     >
                         <!-- Header -->

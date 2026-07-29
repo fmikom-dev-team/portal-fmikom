@@ -10,7 +10,8 @@ export function useEditorCollaborators(form: any) {
 
 	const handleCollaboratorSearch = () => {
 		if (searchTimeout) clearTimeout(searchTimeout);
-		const q = collaboratorInput.value.trim();
+		const rawQ = collaboratorInput.value.trim();
+		const q = rawQ.replace(/^@/, "").trim();
 		if (q.length < 1) {
 			collaboratorSuggestions.value = [];
 			showCollaboratorDropdown.value = false;
@@ -32,12 +33,21 @@ export function useEditorCollaborators(form: any) {
 		}, 300);
 	};
 
-	const addCollaboratorChip = (username: string) => {
+	const addCollaboratorChip = (collaborator: any) => {
+		let item: any = collaborator;
+		if (typeof collaborator === "string") {
+			const clean = collaborator.replace(/^@/, "");
+			item = { pagi_username: clean, name: clean };
+		}
+		const handle = item.pagi_username || item.name;
 		if (
 			form.collaborators.length < 3 &&
-			!form.collaborators.includes(username)
+			!form.collaborators.some(
+				(c: any) =>
+					(typeof c === "string" ? c : c.pagi_username || c.name) === handle,
+			)
 		) {
-			form.collaborators.push(username);
+			form.collaborators.push(item);
 		}
 		collaboratorInput.value = "";
 		collaboratorSuggestions.value = [];

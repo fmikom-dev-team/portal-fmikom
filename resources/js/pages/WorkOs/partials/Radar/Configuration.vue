@@ -241,12 +241,12 @@ function initProtections() {
 	protections.splice(
 		0,
 		protections.length,
-		...structuredClone(defaultProtections),
+		...JSON.parse(JSON.stringify(defaultProtections)),
 	);
 	managedLists.splice(
 		0,
 		managedLists.length,
-		...structuredClone(defaultManagedLists),
+		...JSON.parse(JSON.stringify(defaultManagedLists)),
 	);
 
 	if (props.radarConfig?.length) {
@@ -294,7 +294,11 @@ watch(
 const initialProtectionState = ref<string>("");
 
 function handleManage(p: any) {
-	editingProtection.value = structuredClone(p);
+	editingProtection.value = JSON.parse(JSON.stringify(p));
+
+	if (editingProtection.value.status !== "Enabled") {
+		editingProtection.value.status = "Enabled";
+	}
 
 	if (
 		!editingProtection.value.threshold_config ||
@@ -313,6 +317,65 @@ function handleManage(p: any) {
 	}
 	initialProtectionState.value = JSON.stringify(editingProtection.value);
 	showManageModal.value = true;
+}
+
+function quickToggleStatus(item: any) {
+	const currentStatus = item.status;
+	if (currentStatus === "Enabled") {
+		const code = item.code;
+		item.status =
+			code === "domain_protections" || code === "sanctioned_countries"
+				? "Disabled"
+				: "Logging";
+	} else {
+		item.status = "Enabled";
+		item.auto_block = true;
+	}
+
+	saveAllConfigsSilently(
+		`${item.name} berhasil diubah ke status ${item.status}.`,
+	);
+}
+
+function saveAllConfigsSilently(successMsg = "Radar configuration saved.") {
+	isSaving.value = true;
+	const allConfigs = [
+		...protections.map((p) => ({
+			id: p.id,
+			name: p.name,
+			status: p.status,
+			auto_block: p.auto_block,
+			notify_admin: p.notify_admin,
+			sensitivity_level: p.sensitivity_level,
+			threshold_config: p.threshold_config || {},
+		})),
+		...managedLists.map((m) => ({
+			id: m.id,
+			name: m.name,
+			status: m.status,
+			auto_block: m.auto_block,
+			notify_admin: m.notify_admin,
+			sensitivity_level: 50,
+			threshold_config: m.threshold_config || {},
+		})),
+	];
+
+	router.patch(
+		"/workos/radar/config",
+		{
+			protections: allConfigs,
+		},
+		{
+			preserveScroll: true,
+			onSuccess: () => {
+				toast(successMsg, "success");
+			},
+			onError: () => toast("Gagal menyimpan konfigurasi.", "error"),
+			onFinish: () => {
+				isSaving.value = false;
+			},
+		},
+	);
 }
 
 const hasChanges = computed(() => {
@@ -704,16 +767,23 @@ function disableAllProtection() {
                             <p class="text-[11px] text-gray-400 dark:text-zinc-400 mt-0.5 leading-tight">{{ p.desc }}</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-4 sm:justify-end ml-11 sm:ml-0">
+                    <div class="flex items-center gap-2 sm:justify-end ml-11 sm:ml-0">
                         <span :class="['text-[11px] font-medium flex items-center gap-1.5 w-20', statusColor(p.status)]">
                             <span class="w-1.5 h-1.5 rounded-full" :class="statusDot(p.status)"/>
                             {{ p.status }}
                         </span>
                         <button
-                            :class="['h-7 px-3 text-[12px] border rounded-md transition-colors w-[76px] font-medium shadow-sm cursor-pointer', p.status === 'Enabled' ? 'border-[#d1d5db] dark:border-zinc-700 text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 bg-white dark:bg-zinc-900' : 'border-[#d1d5db] dark:border-zinc-700 text-[#111827] dark:text-zinc-100 bg-[#f9fafb] dark:bg-zinc-800 hover:bg-[#f3f4f6] dark:hover:bg-zinc-700/60']"
+                            v-if="p.status !== 'Enabled'"
+                            class="h-7 px-3 text-[12px] border border-blue-600 rounded-md transition-colors font-semibold shadow-sm cursor-pointer bg-blue-600 hover:bg-blue-700 text-white"
+                            @click="quickToggleStatus(p)"
+                        >
+                            Enable
+                        </button>
+                        <button
+                            class="h-7 px-3 text-[12px] border border-[#d1d5db] dark:border-zinc-700 rounded-md transition-colors font-medium shadow-sm cursor-pointer text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 bg-white dark:bg-zinc-900"
                             @click="handleManage(p)"
                         >
-                            {{ p.status === 'Enabled' ? 'Manage' : 'Enable' }}
+                            Manage
                         </button>
                     </div>
                 </div>
@@ -734,16 +804,23 @@ function disableAllProtection() {
                         <p class="text-[13px] font-medium text-gray-800 dark:text-zinc-200">{{ r.name }}</p>
                         <p class="text-[11px] text-gray-400 dark:text-zinc-400">{{ r.desc }}</p>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2">
                         <span :class="['text-[11px] font-medium flex items-center gap-1.5 w-20', statusColor(r.status)]">
                             <span class="w-1.5 h-1.5 rounded-full" :class="statusDot(r.status)"/>
                             {{ r.status }}
                         </span>
                         <button 
-                            :class="['h-7 px-3 text-[12px] border rounded-md transition-colors w-[76px] font-medium shadow-sm cursor-pointer', r.status === 'Enabled' ? 'border-[#d1d5db] dark:border-zinc-700 text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 bg-white dark:bg-zinc-900' : 'border-[#d1d5db] dark:border-zinc-700 text-[#111827] dark:text-zinc-100 bg-[#f9fafb] dark:bg-zinc-800 hover:bg-[#f3f4f6] dark:hover:bg-zinc-700/60']"
+                            v-if="r.status !== 'Enabled'"
+                            class="h-7 px-3 text-[12px] border border-blue-600 rounded-md transition-colors font-semibold shadow-sm cursor-pointer bg-blue-600 hover:bg-blue-700 text-white"
+                            @click="quickToggleStatus(r)"
+                        >
+                            Enable
+                        </button>
+                        <button 
+                            class="h-7 px-3 text-[12px] border border-[#d1d5db] dark:border-zinc-700 rounded-md transition-colors font-medium shadow-sm cursor-pointer text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 bg-white dark:bg-zinc-900"
                             @click="handleManage(r)"
                         >
-                            {{ r.status === 'Enabled' ? 'Manage' : 'Enable' }}
+                            Manage
                         </button>
                     </div>
                 </div>
@@ -886,17 +963,12 @@ function disableAllProtection() {
                     </button>
                     <button 
                         @click="saveManage" 
-                        :disabled="!hasChanges || isSaving"
-                        :class="[
-                            'h-[34px] px-4 text-[13px] font-semibold rounded-md transition-colors relative flex items-center justify-center min-w-[100px]',
-                            (hasChanges && !isSaving) 
-                                ? 'text-white bg-[#111827] dark:bg-zinc-100 dark:text-zinc-900 hover:bg-black dark:hover:bg-white cursor-pointer shadow-sm' 
-                                : 'text-[#9ca3af] bg-[#f3f4f6] dark:bg-zinc-800 dark:text-zinc-500 cursor-not-allowed'
-                        ]"
+                        :disabled="isSaving"
+                        class="h-[34px] px-4 text-[13px] font-semibold rounded-md transition-colors relative flex items-center justify-center min-w-[100px] text-white bg-[#111827] dark:bg-zinc-100 dark:text-zinc-900 hover:bg-black dark:hover:bg-white cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <span :class="{ 'opacity-0': isSaving }">Save changes</span>
                         <div v-if="isSaving" class="absolute inset-0 flex items-center justify-center">
-                            <svg class="animate-spin h-4 w-4 text-[#9ca3af] dark:text-zinc-500" fill="none" viewBox="0 0 24 24">
+                            <svg class="animate-spin h-4 w-4 text-white dark:text-zinc-900" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>

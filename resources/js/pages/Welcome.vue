@@ -21,8 +21,11 @@ import {
 import PublicFooter from "@/components/Portal/PublicFooter.vue";
 import PublicNavbar from "@/components/Portal/PublicNavbar.vue";
 import LazyWrapper from "@/components/Portal/LazyWrapper.vue";
-import { register } from "@/routes";
+import OnboardingModal from "@/components/Portal/OnboardingModal.vue";
+import { login } from "@/routes";
 import TextReveal from "@/components/forgeui/TextReveal.vue";
+
+const showOnboarding = ref(false);
 
 const HeroGallery = defineAsyncComponent(
     () => import("@/components/Portal/HeroGallery.vue"),
@@ -35,6 +38,9 @@ const AlumniMap = defineAsyncComponent(
 );
 const EventTimeline = defineAsyncComponent(
     () => import("@/components/Portal/EventTimeline.vue"),
+);
+const FeatureShowcase = defineAsyncComponent(
+    () => import("@/components/ui/FeatureShowcase.vue"),
 );
 
 const optimizeImageUrl = (url: string, width = 800) => {
@@ -67,7 +73,7 @@ const _templateComponents = [
     X,
     PublicFooter,
     PublicNavbar,
-    register,
+    login,
     Megaphone,
 ];
 
@@ -84,6 +90,12 @@ const props = withDefaults(
         alumni_stats?: any;
         // biome-ignore lint/suspicious/noExplicitAny: library config
         events?: Array<any>;
+        showcase_data?: {
+            eyebrow?: string;
+            title: string;
+            description?: string;
+            tabs: Array<any>;
+        } | null;
     }>(),
     {
         canRegister: true,
@@ -94,6 +106,7 @@ const props = withDefaults(
         total_alumni: 0,
         alumni_stats: () => ({}),
         events: () => [],
+        showcase_data: null,
     },
 );
 
@@ -254,6 +267,18 @@ const testimonials = [
         avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=a04258a2462d826712d",
     },
 ];
+
+const parsedTestimonials = computed(() => {
+    if (!props.settings?.testimonials) return [];
+    try {
+        const v = typeof props.settings.testimonials === 'string'
+            ? JSON.parse(props.settings.testimonials)
+            : props.settings.testimonials;
+        return Array.isArray(v) ? v : [];
+    } catch {
+        return [];
+    }
+});
 
 onMounted(() => {
     if (props.pinned_announcement) {
@@ -576,18 +601,19 @@ const currentYear = new Date().getFullYear();
                                 class="mt-10 flex flex-col justify-center gap-4 sm:flex-row lg:justify-start"
                             >
                                 <Link
-                                    :href="register()"
+                                    :href="login()"
                                     class="inline-flex h-12 items-center justify-center rounded-xl bg-[#2563eb] px-8 text-base font-semibold text-white shadow-lg transition-all hover:-translate-y-1 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30 focus:ring-4 focus:ring-[#b6ff00]/50 focus:outline-none"
                                 >
                                     Mulai Sekarang
                                     <ArrowRight class="ml-2 h-5 w-5" />
                                 </Link>
-                                <a
-                                    href="#modules"
-                                    class="inline-flex h-12 items-center justify-center rounded-xl border-2 border-gray-200 bg-white px-8 text-base font-semibold text-[#111827] shadow-sm transition-all hover:-translate-y-1 hover:border-[#2563eb] hover:text-[#2563eb] focus:ring-4 focus:ring-blue-500/20 focus:outline-none"
+                                <button
+                                    type="button"
+                                    @click="showOnboarding = true"
+                                    class="inline-flex h-12 items-center justify-center rounded-xl border-2 border-gray-200 bg-white px-8 text-base font-semibold text-[#111827] shadow-sm transition-all hover:-translate-y-1 hover:border-[#2563eb] hover:text-[#2563eb] focus:ring-4 focus:ring-blue-500/20 focus:outline-none cursor-pointer"
                                 >
                                     Pelajari Lebih Lanjut
-                                </a>
+                                </button>
                             </div>
                             <div
                                 class="mt-10 flex items-center justify-center gap-4 text-sm font-medium text-[#4b5563] lg:justify-start"
@@ -816,8 +842,24 @@ const currentYear = new Date().getFullYear();
                 </Deferred>
             </section>
 
-            <!-- EVENT TIMELINE SECTION -->
+            <!-- FEATURE SHOWCASE SECTION (Only show if showcase works are selected) -->
             <section
+                v-if="showcase_data && showcase_data.tabs && showcase_data.tabs.length > 0"
+                class="bg-white dark:bg-slate-950 py-10 lg:py-16 overflow-hidden border-t border-slate-100 dark:border-slate-800"
+            >
+                <div class="mx-auto max-w-7xl px-4">
+                    <FeatureShowcase
+                        :eyebrow="showcase_data.eyebrow"
+                        :title="showcase_data.title"
+                        :description="showcase_data.description"
+                        :tabs="showcase_data.tabs"
+                    />
+                </div>
+            </section>
+
+            <!-- EVENT TIMELINE SECTION (Only show if there are active events to avoid blank section) -->
+            <section
+                v-if="events && events.length > 0"
                 class="bg-white border-t border-gray-100 py-12 lg:py-16 overflow-hidden"
             >
                 <div class="mx-auto max-w-[1216px] px-4">
@@ -1018,8 +1060,12 @@ const currentYear = new Date().getFullYear();
             </section>
 
             <!-- APA KATA MEREKA (TESTIMONIALS) -->
-            <LazyWrapper>
-                <Testimonials />
+            <LazyWrapper v-if="settings?.show_testimonials !== '0'">
+                <Testimonials
+                    :title="settings?.testimonials_title"
+                    :subtitle="settings?.testimonials_subtitle"
+                    :items="parsedTestimonials"
+                />
             </LazyWrapper>
 
             <!-- ALUMNI MAP TRACKING SECTION -->
@@ -1045,6 +1091,9 @@ const currentYear = new Date().getFullYear();
             <div></div>
             <div></div>
         </div>
+
+        <!-- Onboarding Modal -->
+        <OnboardingModal v-model:open="showOnboarding" />
     </div>
 </template>
 <style>

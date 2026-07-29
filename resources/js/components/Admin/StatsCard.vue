@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Link } from "@inertiajs/vue3";
+
 defineProps<{
 	title: string;
 	value: string | number;
@@ -7,12 +9,18 @@ defineProps<{
 	icon: string;
 	iconColor: string;
 	loading?: boolean;
+	href?: string; // ← Optional: jika diisi, card bisa diklik sebagai link navigasi
 }>();
 </script>
 
 <template>
-    <div
-        class="group relative overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-4 sm:p-5 transition-all duration-200 hover:shadow-md hover:shadow-slate-200/50 dark:hover:shadow-zinc-900 hover:-translate-y-0.5"
+    <component
+        :is="href ? Link : 'div'"
+        :href="href"
+        :class="[
+            'group relative overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-4 sm:p-5 transition-all duration-200 hover:shadow-md hover:shadow-slate-200/50 dark:hover:shadow-zinc-900 hover:-translate-y-0.5',
+            href ? 'cursor-pointer hover:border-indigo-200 dark:hover:border-indigo-900/60' : ''
+        ]"
     >
         <!-- ── Skeleton Loading (modern shimmer) ──────────────────────────── -->
         <template v-if="loading">
@@ -79,6 +87,13 @@ defineProps<{
                 />
             </div>
 
+            <!-- Chevron hint if clickable -->
+            <div v-if="href" class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <svg class="h-3 w-3 text-slate-300 dark:text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+            </div>
+
             <!-- Bottom gradient accent on hover -->
             <div
                 :class="[
@@ -89,5 +104,5 @@ defineProps<{
                 ]"
             />
         </template>
-    </div>
+    </component>
 </template>

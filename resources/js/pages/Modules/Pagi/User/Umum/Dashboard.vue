@@ -301,20 +301,46 @@ const activeProjectSettings = computed(() => {
 	};
 });
 
+const isLoadingModal = ref(false);
+
 const openProjectModal = async (p: any) => {
-	viewingProject.value = p;
+	viewingProject.value = { ...p };
 	document.body.style.overflow = "hidden";
 
-	if (p.id) {
+	if (!p.id) return;
+
+	if (p.content === undefined || p.comments === undefined) {
+		isLoadingModal.value = true;
 		try {
-			const res = await axios.post(`/pagi/preview/${p.id}/view`);
-			p.views = res.data.views;
-			if (p.views_count !== undefined) {
-				p.views_count = res.data.views;
-			}
+			const [detailRes] = await Promise.all([
+				axios.get(`/pagi/preview/${p.id}/data`),
+				axios
+					.post(`/pagi/preview/${p.id}/view`)
+					.then((res) => {
+						p.views = res.data.views;
+						if (p.views_count !== undefined) {
+							p.views_count = res.data.views;
+						}
+					})
+					.catch(() => {}),
+			]);
+			Object.assign(p, detailRes.data);
+			viewingProject.value = { ...p };
 		} catch (e) {
-			console.error("Failed to increment portfolio views", e);
+			console.error("Failed to load project detail", e);
+		} finally {
+			isLoadingModal.value = false;
 		}
+	} else {
+		axios
+			.post(`/pagi/preview/${p.id}/view`)
+			.then((res) => {
+				p.views = res.data.views;
+				if (p.views_count !== undefined) {
+					p.views_count = res.data.views;
+				}
+			})
+			.catch(() => {});
 	}
 };
 
@@ -490,7 +516,7 @@ const handleLikeProject = async (p: any) => {
 					<div v-for="(p, pIdx) in visibleProjects" :key="p.id" class="group cursor-pointer" @click="openProjectModal(p)">
 						<div class="relative rounded-md overflow-hidden aspect-4/3 bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 mb-2">
 							<VideoLazy v-if="isVideoUrl(p.image)" :src="p.image" :autoplay="true" :loop="true" :muted="true" :playsinline="true" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
-							<OptimizedImage v-else :src="p.image" :alt="p.title" :fetchpriority="pIdx < 8 ? 'high' : 'auto'" :loading="pIdx < 8 ? 'eager' : 'lazy'" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+							<OptimizedImage v-else :src="p.image" :alt="p.title" :is-sensitive="Boolean(p.status === 'review' || p.status === 'hidden')" :fetchpriority="pIdx < 8 ? 'high' : 'auto'" :loading="pIdx < 8 ? 'eager' : 'lazy'" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
 
 							<!-- Three-dot menu -->
 							<div class="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -593,7 +619,6 @@ const handleLikeProject = async (p: any) => {
 
 
 
-		<!-- PREVIEW PORTFOLIO MODAL -->
 		<Preview 
 			v-if="viewingProject" 
 			:title="viewingProject.title" 
@@ -608,6 +633,7 @@ const handleLikeProject = async (p: any) => {
 			:category="viewingProject.category"
 			:tools-used="viewingProject.tools_used"
 			:tags="viewingProject.tags"
+			:is-loading="isLoadingModal"
 			@close="closeProjectModal" 
 			@select-portfolio="viewingProject = $event"
 		/>		<!-- TOAST ALERTS CONTAINER -->

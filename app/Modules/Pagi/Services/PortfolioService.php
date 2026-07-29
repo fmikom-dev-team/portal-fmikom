@@ -195,8 +195,8 @@ class PortfolioService
         $allowedVideoMimes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 'video/3gpp'];
         $allowedVideoExts = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', '3gp'];
 
-        $allowedImageMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        $allowedImageExts = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
+        $allowedImageMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif', 'image/heic', 'image/heif', 'image/svg+xml', 'image/bmp'];
+        $allowedImageExts = ['jpeg', 'jpg', 'png', 'gif', 'webp', 'avif', 'heic', 'heif', 'svg', 'bmp'];
 
         $allowedOtherMimes = [
             'audio/mpeg', 'audio/ogg', 'audio/wav', 'audio/x-wav',
@@ -246,10 +246,10 @@ class PortfolioService
             $realExt = $file->guessExtension();
 
             $allowedVideoMimes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 'video/3gpp'];
-            $allowedVideoExts = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', '3gp'];
+            $allowedVideoExts = ['mp4', 'webm', 'ogg', 'mov', 'qt', 'avi', 'mkv', '3gp'];
 
-            $allowedImageMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-            $allowedImageExts = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
+            $allowedImageMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif', 'image/heic', 'image/heif', 'image/svg+xml', 'image/bmp'];
+            $allowedImageExts = ['jpeg', 'jpg', 'png', 'gif', 'webp', 'avif', 'heic', 'heif', 'svg', 'bmp'];
 
             $isImage = in_array($mime, $allowedImageMimes) && in_array($realExt, $allowedImageExts);
             $isVideo = in_array($mime, $allowedVideoMimes) && in_array($realExt, $allowedVideoExts);
@@ -274,12 +274,20 @@ class PortfolioService
         $existingMap = [];
         foreach ($existingCollabs as $ec) {
             if (is_array($ec)) {
-                $existingMap[$ec['name']] = $ec['status'] ?? 'pending';
+                $name = $ec['name'] ?? '';
+                $clean = ltrim($name, '@');
+                $existingMap[$name] = $ec['status'] ?? 'pending';
+                $existingMap[$clean] = $ec['status'] ?? 'pending';
+                $existingMap['@'.$clean] = $ec['status'] ?? 'pending';
                 if (isset($ec['user_id'])) {
                     $existingMap['id_'.$ec['user_id']] = $ec['status'] ?? 'pending';
                 }
             } else {
-                $existingMap[$ec] = 'accepted';
+                $name = (string) $ec;
+                $clean = ltrim($name, '@');
+                $existingMap[$name] = 'accepted';
+                $existingMap[$clean] = 'accepted';
+                $existingMap['@'.$clean] = 'accepted';
             }
         }
 
@@ -294,44 +302,37 @@ class PortfolioService
         if (is_array($c) && isset($c['id'])) {
             $resolvedUser = User::query()->find((int) $c['id']);
             if ($resolvedUser) {
-                $status = $existingMap['id_'.$resolvedUser->id] ?? $existingMap[$resolvedUser->name] ?? 'pending';
+                $status = $existingMap['id_'.$resolvedUser->id] ?? $existingMap[$resolvedUser->pagi_username] ?? $existingMap[$resolvedUser->name] ?? 'pending';
                 $newCollaborators[] = [
                     'user_id' => $resolvedUser->id,
-                    'name' => strip_tags($resolvedUser->name),
+                    'name' => strip_tags($resolvedUser->pagi_username ?: $resolvedUser->name),
                     'status' => $status,
                 ];
 
-                if ($status === 'pending' && ! isset($existingMap['id_'.$resolvedUser->id]) && ! isset($existingMap[$resolvedUser->name])) {
+                if ($status === 'pending') {
                     $notifiedCollaborators[] = $resolvedUser;
                 }
             }
-        } elseif (is_array($c) && isset($c['name'])) {
-            $cName = strip_tags($c['name']);
-            $status = $existingMap[$cName] ?? 'pending';
+        } else {
+            $rawName = is_array($c) ? ($c['name'] ?? '') : (string) $c;
+            $cName = strip_tags($rawName);
+            $cleanHandle = ltrim($cName, '@');
+
+            $resolvedUser = User::query()
+                ->where('pagi_username', $cleanHandle)
+                ->orWhere('name', $cName)
+                ->first();
+
+            $status = $existingMap[$cName] ?? $existingMap[$cleanHandle] ?? ($resolvedUser ? ($existingMap['id_'.$resolvedUser->id] ?? 'pending') : 'pending');
+
             $newCollaborators[] = [
-                'name' => $cName,
+                'user_id' => $resolvedUser?->id,
+                'name' => $resolvedUser?->pagi_username ? '@'.$resolvedUser->pagi_username : $cName,
                 'status' => $status,
             ];
 
-            if ($status === 'pending' && ! isset($existingMap[$cName])) {
-                $resolvedUser = User::query()->where('name', $cName)->first();
-                if ($resolvedUser) {
-                    $notifiedCollaborators[] = $resolvedUser;
-                }
-            }
-        } elseif (is_string($c)) {
-            $cName = strip_tags($c);
-            $status = $existingMap[$cName] ?? 'pending';
-            $newCollaborators[] = [
-                'name' => $cName,
-                'status' => $status,
-            ];
-
-            if ($status === 'pending' && ! isset($existingMap[$cName])) {
-                $resolvedUser = User::query()->where('name', $cName)->first();
-                if ($resolvedUser) {
-                    $notifiedCollaborators[] = $resolvedUser;
-                }
+            if ($status === 'pending' && $resolvedUser) {
+                $notifiedCollaborators[] = $resolvedUser;
             }
         }
     }
@@ -351,7 +352,7 @@ class PortfolioService
         foreach ($notifiedCollaborators as $targetUser) {
             if ($targetUser->id !== $inviter->id) {
                 $targetUser->notify(new PagiNotification(
-                    'collaboration',
+                    'collaboration_invite',
                     $inviter->name,
                     'mengajak Anda berkolaborasi pada proyek: "'.$portfolio->title.'"',
                     $avatar,
@@ -360,6 +361,7 @@ class PortfolioService
                         'portfolio_id' => $portfolio->id,
                         'portfolio_title' => $portfolio->title,
                         'inviter_name' => $inviter->name,
+                        'is_invite' => true,
                     ]
                 ));
             }

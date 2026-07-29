@@ -40,6 +40,14 @@ Schedule::command('pagi:chat:archive --days=90')
     ->withoutOverlapping()
     ->name('pagi:chat-archive');
 
+// Notifications Pruner — daily at 02:30
+// Deletes notifications older than 90 days (3 months)
+Schedule::command('notifications:prune --days=90')
+    ->dailyAt('02:30')
+    ->onOneServer()
+    ->withoutOverlapping()
+    ->name('notifications:prune');
+
 // Telescope Database Pruner — daily at 03:00
 // Deletes Telescope entries older than 24 hours
 Schedule::command('telescope:prune --hours=24')

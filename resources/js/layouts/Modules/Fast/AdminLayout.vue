@@ -545,7 +545,7 @@ function batteryIcon() {
                     class="flex shrink-0 items-center justify-center overflow-hidden transition-all duration-300 select-none"
                     :class="
                         hasBrandLogo
-                            ? 'bg-transparent border border-slate-200'
+                            ? 'bg-transparent border-0 p-0 shadow-none'
                             : 'bg-gradient-to-br from-[#6366f1] to-[#4f46e5] text-white shadow-lg shadow-indigo-100'
                     "
                     :style="{

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Pagi\PagiReport;
 use App\Models\Pagi\PagiWarning;
 use App\Models\Pagi\PagiWork;
+use App\Models\Portal\PortalSetting;
 use App\Modules\Pagi\Controllers\Concerns\HasAdminDashboardHelpers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -125,32 +126,42 @@ class AdminWorkController extends Controller
     /**
      * Works
      */
+    /**
+     * Works (Galeri Karya Publik - Published & Active Only)
+     */
     public function works(Request $request): Response
     {
         if (PagiWork::query()->count('*') === 0) {
             $this->seedPagiDemoData();
         }
 
+        // Only fetch active published works for Public Gallery management
         $works = PagiWork::query()->with('user')
+            ->where('is_published', '=', true, 'and')
+            ->where('status', '=', 'active', 'and')
             ->latest('created_at')
             ->get()
             ->map(function ($w) {
                 return [
                     'id' => $w->id,
                     'title' => $w->title,
-                    'author' => $w->user->name ?? 'Student',
+                    'author' => $w->user->name ?? 'Mahasiswa',
                     'authorHandle' => '@'.strstr($w->user->email ?? self::$DEFAULT_STUDENT_EMAIL, '@', true),
                     'views' => $w->views_count,
                     'category' => $w->category ?? 'Design & UI/UX',
-                    'status' => $w->status, // active, warning, hidden, removed, review
+                    'status' => $w->status,
                     'isPublished' => $w->is_published,
                     'time' => $w->created_at->diffForHumans(),
                     'thumbnail' => $this->getStorageUrl($w->cover_image),
                 ];
             });
 
+        $showcaseRaw = PortalSetting::where('key', 'pagi_showcase_work_ids')->value('value');
+        $showcaseWorkIds = json_decode($showcaseRaw ?? '[]', true) ?? [];
+
         return Inertia::render('Modules/Pagi/Admin/Works/Index', [
             'works' => $works,
+            'showcaseWorkIds' => $showcaseWorkIds,
         ]);
     }
 }

@@ -27,6 +27,11 @@ class LikeWorkAction
                     ? (str_starts_with($authUser->foto_path, 'http') ? $authUser->foto_path : asset('storage/'.$authUser->foto_path))
                     : null;
 
+                $workImage = null;
+                if ($portfolio->cover_image) {
+                    $workImage = str_starts_with($portfolio->cover_image, 'http') ? $portfolio->cover_image : asset('storage/'.$portfolio->cover_image);
+                }
+
                 try {
                     $owner->notify(new PagiNotification(
                         type: 'like',
@@ -37,8 +42,12 @@ class LikeWorkAction
                         extra: [
                             'sender_id' => $authUser->id,
                             'portfolio_id' => $portfolio->id,
+                            'work_image' => $workImage,
                         ],
                     ));
+                    Cache::forget("recent_notifs_{$owner->id}_mahasiswa");
+                    Cache::forget("recent_notifs_{$owner->id}_dosen");
+                    Cache::forget("recent_notifs_{$owner->id}_alumni");
                 } catch (\Throwable $e) {
                     report($e);
                 }

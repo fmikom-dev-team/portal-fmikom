@@ -49,6 +49,29 @@ const user = computed(() => page.props.auth?.user);
 const firstName = computed(() => user.value?.name || "Admin");
 const siteSettings = computed(() => (page.props as any).siteSettings || {});
 
+const flashSuccess = computed(() => (page.props as any).flash?.success);
+const flashError = computed(() => (page.props as any).flash?.error);
+const showFlashToast = ref(false);
+
+watch([flashSuccess, flashError], ([s, e]) => {
+	if (s || e) {
+		showFlashToast.value = true;
+		setTimeout(() => {
+			showFlashToast.value = false;
+		}, 4000);
+	}
+}, { immediate: true });
+
+const isSuperAdmin = computed(() => {
+	if (!user.value) return false;
+	if (user.value.is_super_admin) return true;
+	const ut = String(user.value.user_type || "").toLowerCase();
+	if (ut === "super_admin" || ut === "super-admin") return true;
+	const role = String(user.value.role || "").toLowerCase();
+	if (role === "super_admin" || role === "super-admin") return true;
+	return false;
+});
+
 const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
 
 const activeTheme = computed({
@@ -145,8 +168,8 @@ onUnmounted(() => {
         <!-- ===================== SIDEBAR (Fixed) ===================== -->
         <aside
             :class="[
-                'fixed inset-y-0 left-0 z-40 flex flex-col bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 transition-all duration-300 overflow-hidden',
-                sidebarCollapsed ? 'w-[72px]' : 'w-[260px]',
+                'fixed inset-y-0 left-0 z-40 flex flex-col bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 transition-all duration-300',
+                sidebarCollapsed ? 'w-[72px] overflow-visible' : 'w-[260px] overflow-hidden',
                 mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
             ]"
         >
@@ -160,11 +183,10 @@ onUnmounted(() => {
                     v-if="sidebarCollapsed"
                     @click="sidebarCollapsed = false"
                     class="hidden lg:flex w-10 h-10 rounded-xl items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                    title="Expand Sidebar"
                 >
                     <div 
                         class="w-[30px] h-[30px] rounded-[7px] flex items-center justify-center shrink-0 overflow-hidden"
-                        :style="{ backgroundColor: siteSettings.brand_logo ? 'transparent' : '#2563EB' }"
+                        :class="siteSettings.brand_logo ? 'bg-transparent border-0 p-0 shadow-none' : 'bg-[#2563EB]'"
                     >
                         <img v-if="siteSettings.brand_logo" :src="siteSettings.brand_logo" alt="Brand Logo" class="w-full h-full object-contain" />
                         <div v-else class="grid grid-cols-3 gap-0.5 w-[22px] h-[22px] shrink-0">
@@ -186,7 +208,7 @@ onUnmounted(() => {
                     <div class="flex items-center gap-2 overflow-hidden min-w-0">
                         <div 
                             class="w-[30px] h-[30px] rounded-[7px] flex items-center justify-center shrink-0 overflow-hidden"
-                            :style="{ backgroundColor: siteSettings.brand_logo ? 'transparent' : '#2563EB' }"
+                            :class="siteSettings.brand_logo ? 'bg-transparent border-0 p-0 shadow-none' : 'bg-[#2563EB]'"
                         >
                             <img v-if="siteSettings.brand_logo" :src="siteSettings.brand_logo" alt="Brand Logo" class="w-full h-full object-contain" />
                             <div v-else class="grid grid-cols-3 gap-0.5 w-[22px] h-[22px] shrink-0">
@@ -201,9 +223,14 @@ onUnmounted(() => {
                                 <div class="bg-indigo-300 rounded-full w-[6px] h-[6px]"></div>
                             </div>
                         </div>
-                        <span class="font-black text-[17px] tracking-wide text-slate-900 dark:text-white whitespace-nowrap truncate">
-                            {{ siteSettings.brand_name || 'Portal FMIKOM' }}
-                        </span>
+                        <div class="flex flex-col text-left min-w-0">
+                            <span class="font-black text-[15px] leading-tight tracking-wide text-slate-900 dark:text-white whitespace-nowrap truncate">
+                                {{ siteSettings.brand_name || 'Portal FMIKOM' }}
+                            </span>
+                            <span v-if="siteSettings.brand_subtitle" class="text-[8.5px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-tight truncate">
+                                {{ siteSettings.brand_subtitle }}
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Desktop: Collapse Toggle -->
@@ -225,7 +252,7 @@ onUnmounted(() => {
             </div>
 
             <!-- Scrollable Nav -->
-            <div class="flex-1 overflow-y-auto overflow-x-hidden py-4">
+            <div class="flex-1 overflow-y-auto py-4 space-y-1" :class="sidebarCollapsed ? 'overflow-x-visible' : 'overflow-x-hidden'">
 
                 <!-- MENU UTAMA label -->
                 <div
@@ -235,9 +262,10 @@ onUnmounted(() => {
                     <span class="text-[10px] font-black text-slate-400 tracking-widest uppercase">MENU UTAMA</span>
                 </div>
 
-                <nav class="px-3 flex flex-col gap-0.5 relative" @mouseleave="handleMouseLeaveMain">
-                    <!-- Floating Highlighter -->
+                <nav :class="sidebarCollapsed ? 'px-0 flex flex-col items-center gap-1.5' : 'px-3 flex flex-col gap-0.5 relative'" @mouseleave="handleMouseLeaveMain">
+                    <!-- Floating Highlighter (Only when expanded) -->
                     <div
+                        v-if="!sidebarCollapsed"
                         class="absolute left-3 right-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/60 transition-all duration-200 ease-out pointer-events-none z-0"
                         :style="{
                             top: hoverStyleMain.top,
@@ -250,81 +278,97 @@ onUnmounted(() => {
                     <Link
                         href="/portal-admin"
                         :class="[
+                            'group relative flex items-center text-[13px] transition-all duration-150 h-10 z-10 rounded-xl',
                             $page.url === '/portal-admin'
                                 ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
                                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
-                            sidebarCollapsed ? 'justify-center px-0' : 'px-4'
+                            sidebarCollapsed ? 'w-10 h-10 justify-center px-0' : 'w-full gap-3 px-4'
                         ]"
-                        :title="sidebarCollapsed ? 'Dashboard' : undefined"
                         @mouseenter="handleMouseEnterMain"
                     >
                         <LayoutGrid class="w-[18px] h-[18px] shrink-0" />
                         <span v-if="!sidebarCollapsed" class="truncate">Dashboard</span>
+                        <!-- Collapsed Tooltip -->
+                        <div v-if="sidebarCollapsed" class="pointer-events-none fixed left-[84px] z-[99999] rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold px-3 py-1.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-2xl flex items-center gap-1.5 transform translate-x-1 group-hover:translate-x-0">
+                            <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 dark:bg-slate-100 rotate-45"></div>
+                            <span class="relative z-10">Dashboard</span>
+                        </div>
                     </Link>
 
                     <!-- Posts -->
                     <Link
                         href="/portal-admin/posts"
                         :class="[
+                            'group relative flex items-center text-[13px] transition-all duration-150 h-10 z-10 rounded-xl',
                             $page.url.startsWith('/portal-admin/posts')
                                 ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
                                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
-                            sidebarCollapsed ? 'justify-center px-0' : 'px-4'
+                            sidebarCollapsed ? 'w-10 h-10 justify-center px-0' : 'w-full gap-3 px-4'
                         ]"
-                        :title="sidebarCollapsed ? 'Posts' : undefined"
                         @mouseenter="handleMouseEnterMain"
                     >
                         <FileText class="w-[18px] h-[18px] shrink-0" />
                         <span v-if="!sidebarCollapsed" class="truncate">Posts</span>
+                        <!-- Collapsed Tooltip -->
+                        <div v-if="sidebarCollapsed" class="pointer-events-none fixed left-[84px] z-[99999] rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold px-3 py-1.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-2xl flex items-center gap-1.5 transform translate-x-1 group-hover:translate-x-0">
+                            <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 dark:bg-slate-100 rotate-45"></div>
+                            <span class="relative z-10">Posts</span>
+                        </div>
                     </Link>
 
                     <!-- Media -->
                     <Link
                         href="/portal-admin/media"
                         :class="[
+                            'group relative flex items-center text-[13px] transition-all duration-150 h-10 z-10 rounded-xl',
                             $page.url.startsWith('/portal-admin/media')
                                 ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
                                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
-                            sidebarCollapsed ? 'justify-center px-0' : 'px-4'
+                            sidebarCollapsed ? 'w-10 h-10 justify-center px-0' : 'w-full gap-3 px-4'
                         ]"
-                        :title="sidebarCollapsed ? 'Media' : undefined"
                         @mouseenter="handleMouseEnterMain"
                     >
                         <ImageIcon class="w-[18px] h-[18px] shrink-0" />
                         <span v-if="!sidebarCollapsed" class="truncate">Media</span>
+                        <!-- Collapsed Tooltip -->
+                        <div v-if="sidebarCollapsed" class="pointer-events-none fixed left-[84px] z-[99999] rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold px-3 py-1.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-2xl flex items-center gap-1.5 transform translate-x-1 group-hover:translate-x-0">
+                            <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 dark:bg-slate-100 rotate-45"></div>
+                            <span class="relative z-10">Media</span>
+                        </div>
                     </Link>
 
-                    <!-- Pages -->
+                    <!-- Pages (SuperAdmin Only) -->
                     <Link
+                        v-if="isSuperAdmin"
                         href="/portal-admin/pages"
                         :class="[
+                            'group relative flex items-center text-[13px] transition-all duration-150 h-10 z-10 rounded-xl',
                             $page.url.startsWith('/portal-admin/pages')
                                 ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
                                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
-                            sidebarCollapsed ? 'justify-center px-0' : 'px-4'
+                            sidebarCollapsed ? 'w-10 h-10 justify-center px-0' : 'w-full gap-3 px-4'
                         ]"
-                        :title="sidebarCollapsed ? 'Pages' : undefined"
                         @mouseenter="handleMouseEnterMain"
                     >
                         <PenTool class="w-[18px] h-[18px] shrink-0" />
                         <span v-if="!sidebarCollapsed" class="truncate">Pages</span>
+                        <!-- Collapsed Tooltip -->
+                        <div v-if="sidebarCollapsed" class="pointer-events-none fixed left-[84px] z-[99999] rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold px-3 py-1.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-2xl flex items-center gap-1.5 transform translate-x-1 group-hover:translate-x-0">
+                            <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 dark:bg-slate-100 rotate-45"></div>
+                            <span class="relative z-10">Pages</span>
+                        </div>
                     </Link>
 
                     <!-- Comments -->
                     <Link
                         href="/portal-admin/comments"
                         :class="[
+                            'group relative flex items-center text-[13px] transition-all duration-150 h-10 z-10 rounded-xl',
                             $page.url.startsWith('/portal-admin/comments')
                                 ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
                                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
-                            sidebarCollapsed ? 'justify-center px-0' : 'px-4'
+                            sidebarCollapsed ? 'w-10 h-10 justify-center px-0' : 'w-full gap-3 px-4'
                         ]"
-                        :title="sidebarCollapsed ? 'Comments' : undefined"
                         @mouseenter="handleMouseEnterMain"
                     >
                         <MessageCircle class="w-[18px] h-[18px] shrink-0" />
@@ -333,62 +377,82 @@ onUnmounted(() => {
                             v-if="!sidebarCollapsed && (page.props.pending_comments_count ?? 0) > 0"
                             class="ml-auto bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-800"
                         >{{ page.props.pending_comments_count }}</span>
+                        <!-- Collapsed Tooltip -->
+                        <div v-if="sidebarCollapsed" class="pointer-events-none fixed left-[84px] z-[99999] rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold px-3 py-1.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-2xl flex items-center gap-1.5 transform translate-x-1 group-hover:translate-x-0">
+                            <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 dark:bg-slate-100 rotate-45"></div>
+                            <span class="relative z-10">Comments</span>
+                            <span v-if="(page.props.pending_comments_count ?? 0) > 0" class="ml-1 px-1.5 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-black">
+                                {{ page.props.pending_comments_count }}
+                            </span>
+                        </div>
                     </Link>
 
                     <!-- Academic Calendar -->
                     <Link
                         href="/portal-admin/academic-calendars"
                         :class="[
+                            'group relative flex items-center text-[13px] transition-all duration-150 h-10 z-10 rounded-xl',
                             $page.url.startsWith('/portal-admin/academic-calendars')
                                 ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
                                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
-                            sidebarCollapsed ? 'justify-center px-0' : 'px-4'
+                            sidebarCollapsed ? 'w-10 h-10 justify-center px-0' : 'w-full gap-3 px-4'
                         ]"
-                        :title="sidebarCollapsed ? 'Kalender Akademik' : undefined"
                         @mouseenter="handleMouseEnterMain"
                     >
                         <CalendarDays class="w-[18px] h-[18px] shrink-0" />
                         <span v-if="!sidebarCollapsed" class="truncate">Kalender Akademik</span>
+                        <!-- Collapsed Tooltip -->
+                        <div v-if="sidebarCollapsed" class="pointer-events-none fixed left-[84px] z-[99999] rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold px-3 py-1.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-2xl flex items-center gap-1.5 transform translate-x-1 group-hover:translate-x-0">
+                            <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 dark:bg-slate-100 rotate-45"></div>
+                            <span class="relative z-10">Kalender Akademik</span>
+                        </div>
                     </Link>
 
                     <!-- Events -->
                     <Link
                         href="/portal-admin/events"
                         :class="[
+                            'group relative flex items-center text-[13px] transition-all duration-150 h-10 z-10 rounded-xl',
                             $page.url.startsWith('/portal-admin/events')
                                 ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
                                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
-                            sidebarCollapsed ? 'justify-center px-0' : 'px-4'
+                            sidebarCollapsed ? 'w-10 h-10 justify-center px-0' : 'w-full gap-3 px-4'
                         ]"
-                        :title="sidebarCollapsed ? 'Event / Kegiatan' : undefined"
                         @mouseenter="handleMouseEnterMain"
                     >
                         <Calendar class="w-[18px] h-[18px] shrink-0" />
                         <span v-if="!sidebarCollapsed" class="truncate">Event & Kegiatan</span>
+                        <!-- Collapsed Tooltip -->
+                        <div v-if="sidebarCollapsed" class="pointer-events-none fixed left-[84px] z-[99999] rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold px-3 py-1.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-2xl flex items-center gap-1.5 transform translate-x-1 group-hover:translate-x-0">
+                            <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 dark:bg-slate-100 rotate-45"></div>
+                            <span class="relative z-10">Event & Kegiatan</span>
+                        </div>
                     </Link>
 
                     <!-- Arsip Dokumen -->
                     <Link
                         href="/portal-admin/documents"
                         :class="[
+                            'group relative flex items-center text-[13px] transition-all duration-150 h-10 z-10 rounded-xl',
                             $page.url.startsWith('/portal-admin/documents')
                                 ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
                                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                            'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
-                            sidebarCollapsed ? 'justify-center px-0' : 'px-4'
+                            sidebarCollapsed ? 'w-10 h-10 justify-center px-0' : 'w-full gap-3 px-4'
                         ]"
-                        :title="sidebarCollapsed ? 'Arsip Dokumen' : undefined"
                         @mouseenter="handleMouseEnterMain"
                     >
                         <Archive class="w-[18px] h-[18px] shrink-0" />
                         <span v-if="!sidebarCollapsed" class="truncate">Arsip Dokumen</span>
+                        <!-- Collapsed Tooltip -->
+                        <div v-if="sidebarCollapsed" class="pointer-events-none fixed left-[84px] z-[99999] rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold px-3 py-1.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-2xl flex items-center gap-1.5 transform translate-x-1 group-hover:translate-x-0">
+                            <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 dark:bg-slate-100 rotate-45"></div>
+                            <span class="relative z-10">Arsip Dokumen</span>
+                        </div>
                     </Link>
                 </nav>
 
-                <!-- SYSTEM Section -->
-                <div class="mt-5">
+                <!-- SYSTEM Section (SuperAdmin Only) -->
+                <div v-if="isSuperAdmin" class="mt-4">
                     <div
                         class="px-4 mb-2 overflow-hidden transition-all duration-200"
                         :class="sidebarCollapsed ? 'h-0 opacity-0 mb-0' : 'h-auto opacity-100'"
@@ -396,9 +460,10 @@ onUnmounted(() => {
                         <span class="text-[10px] font-black text-slate-400 tracking-widest uppercase">SYSTEM</span>
                     </div>
 
-                    <nav class="px-3 flex flex-col gap-0.5 relative" @mouseleave="handleMouseLeaveSystem">
-                        <!-- Floating Highlighter -->
+                    <nav :class="sidebarCollapsed ? 'px-0 flex flex-col items-center gap-1.5' : 'px-3 flex flex-col gap-0.5 relative'" @mouseleave="handleMouseLeaveSystem">
+                        <!-- Floating Highlighter (Only when expanded) -->
                         <div
+                            v-if="!sidebarCollapsed"
                             class="absolute left-3 right-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/60 transition-all duration-200 ease-out pointer-events-none z-0"
                             :style="{
                                 top: hoverStyleSystem.top,
@@ -411,50 +476,63 @@ onUnmounted(() => {
                         <Link
                             href="/portal-admin/menus"
                             :class="[
+                                'group relative flex items-center text-[13px] transition-all duration-150 h-10 z-10 rounded-xl',
                                 $page.url.startsWith('/portal-admin/menus')
                                     ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
                                     : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                                'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
-                                sidebarCollapsed ? 'justify-center px-0' : 'px-4'
+                                sidebarCollapsed ? 'w-10 h-10 justify-center px-0' : 'w-full gap-3 px-4'
                             ]"
-                            :title="sidebarCollapsed ? 'Menu Navigation' : undefined"
                             @mouseenter="handleMouseEnterSystem"
                         >
                             <List class="w-[18px] h-[18px] shrink-0" />
                             <span v-if="!sidebarCollapsed" class="truncate">Menu Navigation</span>
+                            <!-- Collapsed Tooltip -->
+                            <div v-if="sidebarCollapsed" class="pointer-events-none fixed left-[84px] z-[99999] rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold px-3 py-1.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-2xl flex items-center gap-1.5 transform translate-x-1 group-hover:translate-x-0">
+                                <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 dark:bg-slate-100 rotate-45"></div>
+                                <span class="relative z-10">Menu Navigation</span>
+                            </div>
                         </Link>
+
                         <!-- Tata Letak -->
                         <Link
                             href="/portal-admin/appearance"
                             :class="[
+                                'group relative flex items-center text-[13px] transition-all duration-150 h-10 z-10 rounded-xl',
                                 $page.url.startsWith('/portal-admin/appearance')
                                     ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
                                     : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                                'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
-                                sidebarCollapsed ? 'justify-center px-0' : 'px-4'
+                                sidebarCollapsed ? 'w-10 h-10 justify-center px-0' : 'w-full gap-3 px-4'
                             ]"
-                            :title="sidebarCollapsed ? 'Tata Letak' : undefined"
                             @mouseenter="handleMouseEnterSystem"
                         >
                             <LayoutGrid class="w-[18px] h-[18px] shrink-0" />
                             <span v-if="!sidebarCollapsed" class="truncate">Tata Letak</span>
+                            <!-- Collapsed Tooltip -->
+                            <div v-if="sidebarCollapsed" class="pointer-events-none absolute left-full ml-3 z-50 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold px-3 py-1.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-xl flex items-center gap-1.5 transform translate-x-1 group-hover:translate-x-0">
+                                <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 dark:bg-slate-100 rotate-45"></div>
+                                <span class="relative z-10">Tata Letak</span>
+                            </div>
                         </Link>
 
                         <!-- Settings -->
                         <Link
                             href="/portal-admin/settings"
                             :class="[
+                                'group relative flex items-center text-[13px] transition-all duration-150 h-10 z-10 rounded-xl',
                                 $page.url.startsWith('/portal-admin/settings')
                                     ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100 font-bold'
                                     : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-medium',
-                                'flex items-center gap-3 rounded-xl text-[13px] transition-all duration-150 h-10 px-4 relative z-10',
-                                sidebarCollapsed ? 'justify-center px-0' : 'px-4'
+                                sidebarCollapsed ? 'w-10 h-10 justify-center px-0' : 'w-full gap-3 px-4'
                             ]"
-                            :title="sidebarCollapsed ? 'Settings' : undefined"
                             @mouseenter="handleMouseEnterSystem"
                         >
                             <Settings class="w-[18px] h-[18px] shrink-0 opacity-70" />
                             <span v-if="!sidebarCollapsed" class="truncate">Settings</span>
+                            <!-- Collapsed Tooltip -->
+                            <div v-if="sidebarCollapsed" class="pointer-events-none absolute left-full ml-3 z-50 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold px-3 py-1.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-xl flex items-center gap-1.5 transform translate-x-1 group-hover:translate-x-0">
+                                <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 dark:bg-slate-100 rotate-45"></div>
+                                <span class="relative z-10">Settings</span>
+                            </div>
                         </Link>
                     </nav>
                 </div>
@@ -487,10 +565,15 @@ onUnmounted(() => {
 
                 <Link
                     href="/dashboard"
-                    class="w-full text-center text-slate-400 hover:text-[#2563EB] text-[12px] font-bold transition-colors block truncate"
+                    class="group relative w-full text-center text-slate-400 hover:text-[#2563EB] text-[12px] font-bold transition-colors block truncate"
                 >
                     <span v-if="!sidebarCollapsed">← Back to User Portal</span>
-                    <span v-else title="Back to User Portal" class="text-base">←</span>
+                    <span v-else class="text-base flex items-center justify-center w-10 h-10 mx-auto rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">←</span>
+                    <!-- Collapsed Tooltip -->
+                    <div v-if="sidebarCollapsed" class="pointer-events-none absolute left-full ml-3 z-50 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold px-3 py-1.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-xl flex items-center gap-1.5 transform translate-x-1 group-hover:translate-x-0">
+                        <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 dark:bg-slate-100 rotate-45"></div>
+                        <span class="relative z-10">Kembali ke Portal Utama</span>
+                    </div>
                 </Link>
             </div>
         </aside>
@@ -625,6 +708,27 @@ onUnmounted(() => {
             </main>
         </div>
 
+        <!-- Global Flash Toast Notification (Teleported to Body) -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition duration-300 ease-out"
+                enter-from-class="opacity-0 translate-y-3 scale-95"
+                enter-to-class="opacity-100 translate-y-0 scale-100"
+                leave-active-class="transition duration-200 ease-in"
+                leave-from-class="opacity-100 translate-y-0 scale-100"
+                leave-to-class="opacity-0 translate-y-3 scale-95"
+            >
+                <div
+                    v-if="showFlashToast && (flashSuccess || flashError)"
+                    class="fixed bottom-6 right-6 z-[999999] flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl max-w-sm cursor-pointer select-none"
+                    @click="showFlashToast = false"
+                >
+                    <div :class="['w-2.5 h-2.5 rounded-full shrink-0', flashError ? 'bg-red-500' : 'bg-emerald-500']"></div>
+                    <span class="text-xs font-bold leading-snug text-slate-800 dark:text-slate-100 flex-1">{{ flashSuccess || flashError }}</span>
+                    <button @click.stop="showFlashToast = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold p-1">✕</button>
+                </div>
+            </Transition>
+        </Teleport>
     </div>
 </template>
 

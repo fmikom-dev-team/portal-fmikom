@@ -46,18 +46,20 @@ class UsersController extends Controller
             'nomor_induk' => ['nullable', 'string', 'max:50', 'unique:users,nomor_induk'],
         ]);
 
+        $isSuperAdmin = $request->user_type === 'super_admin';
+
         $user = new User([
             'name' => trim($request->first_name.' '.$request->last_name) ?: explode('@', $request->email)[0],
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'nomor_induk' => $request->nomor_induk,
             'email_verified_at' => now(),
-            'password_changed_at' => null,
+            'password_changed_at' => $isSuperAdmin ? now() : null,
         ]);
         $user->forceFill([
             'user_type' => $request->user_type,
-            'status_approval' => 'approved',
-            'is_active' => true,
+            'status_approval' => $isSuperAdmin ? UserAccountStatus::Activated->value : UserAccountStatus::Approved->value,
+            'is_active' => $isSuperAdmin,
         ])->save();
 
         // Auto-assign default module access based on role/user_type

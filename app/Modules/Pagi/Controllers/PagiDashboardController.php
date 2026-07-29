@@ -2,11 +2,13 @@
 
 namespace App\Modules\Pagi\Controllers;
 
+use App\Events\PagiProfileUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Module;
 use App\Models\Pagi\PagiFollow;
 use App\Models\Pagi\PagiReport;
 use App\Models\Pagi\PagiWork;
+use App\Models\Portal\PortalSetting;
 use App\Models\ProgramStudi;
 use App\Models\User;
 use App\Modules\Pagi\Actions\CreateCommentAction;
@@ -173,6 +175,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
                 'likesRelation',
             ])
                 ->where('is_published', true)
+                ->whereIn('status', ['active', 'warning'])
                 ->where(function ($q) {
                     $q->whereNull('visibility')
                         ->orWhere('visibility', 'Everyone');
@@ -361,13 +364,21 @@ class PagiDashboardController extends Controller implements HasMiddleware
 
     private function resolveProfileComponentName(string $role): string
     {
-        return in_array(strtolower($role), ['dosen', 'alumni', 'mitra'])
+        $nonStudentRoles = ['dosen', 'alumni', 'mitra', 'super-admin', 'admin', 'admin-universitas', 'admin-akademik', 'prodi'];
+
+        return in_array(strtolower($role), $nonStudentRoles)
             ? 'Modules/Pagi/User/Umum/Profile'
             : 'Modules/Pagi/User/Profile/Index';
     }
 
     public function publicProfile(Request $request, User $user, $tab = null)
     {
+        // Enforce pagi_allow_public_work setting for guests
+        $allowPublicWork = filter_var(PortalSetting::query()->where('key', 'pagi_allow_public_work')->value('value') ?? 'true', FILTER_VALIDATE_BOOLEAN);
+        if (! Auth::check() && ! $allowPublicWork) {
+            return redirect()->route('login')->with('error', 'Akses ke galeri/portofolio publik sementara dibatasi oleh admin.');
+        }
+
         $redirect = $this->checkProfileRedirects($request, $user, $tab);
         if ($redirect) {
             return $redirect;
@@ -422,7 +433,9 @@ class PagiDashboardController extends Controller implements HasMiddleware
             return 'Modules/Pagi/User/Works/Show';
         }
 
-        return in_array(strtolower($user->user_type), ['dosen', 'alumni', 'mitra'])
+        $nonStudentRoles = ['dosen', 'alumni', 'mitra', 'super-admin', 'admin', 'admin-universitas', 'admin-akademik', 'prodi'];
+
+        return in_array(strtolower($user->user_type), $nonStudentRoles)
             ? 'Modules/Pagi/User/Umum/Profile'
             : 'Modules/Pagi/User/Profile/Index';
     }
@@ -479,8 +492,17 @@ class PagiDashboardController extends Controller implements HasMiddleware
     public function userWorks(Request $request, User $user)
     {
         $isOwner = Auth::check() && Auth::id() === $user->id;
+        $username = $user->pagi_username ? ltrim($user->pagi_username, '@') : null;
+
         $query = PagiWork::query()->with(['tags', 'user'])
-            ->where('user_id', $user->id);
+            ->where('status', '=', 'active', 'and')
+            ->where(function ($q) use ($user, $username) {
+                $q->where('user_id', $user->id)
+                    ->orWhereJsonContains('content', [['type' => 'featured_details', 'collaborators' => [['user_id' => $user->id]]]])
+                    ->orWhereJsonContains('content', [['type' => 'featured_details', 'collaborators' => [['name' => $user->name]]]])
+                    ->orWhereJsonContains('content', [['type' => 'featured_details', 'collaborators' => [['name' => $username]]]])
+                    ->orWhereJsonContains('content', [['type' => 'featured_details', 'collaborators' => [['name' => '@'.$username]]]]);
+            });
 
         if (! $isOwner) {
             $query->where('is_published', true)
@@ -525,6 +547,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
             'comments' => $this->profileService->formatComments($p->comments ?? []),
             'views' => $p->views_count ?? 0,
             'is_published' => (bool) $p->is_published,
+            'status' => $p->status ?? 'active',
             'tools_used' => $p->tools_used,
             'description' => $p->description,
             'category' => $p->category,
@@ -578,6 +601,8 @@ class PagiDashboardController extends Controller implements HasMiddleware
         }
 
         $this->profileService->updateProfile($user, $request->validated(), $request);
+
+        PagiProfileUpdated::dispatch($user);
 
         return redirect()->route('module.pagi.profile')->with('success', 'Profile updated successfully.');
     }
@@ -815,6 +840,35 @@ class PagiDashboardController extends Controller implements HasMiddleware
 
     public function commentPreview(Request $request, int $previewId)
     {
+        // Feature gate: reject if comments globally disabled
+        $commentsEnabled = filter_var(
+            PortalSetting::where('key', 'pagi_enable_comments')->value('value') ?? 'true',
+            FILTER_VALIDATE_BOOLEAN
+        );
+
+        if (! $commentsEnabled) {
+            return response()->json([
+                'message' => 'Fitur komentar sedang dinonaktifkan oleh administrator.',
+            ], 403);
+        }
+
+        // Audience gate: check if user_type is allowed to comment
+        $audience = PortalSetting::where('key', 'pagi_comment_audience')->value('value') ?? 'mahasiswa_mitra';
+        $userType = strtolower(Auth::user()->user_type ?? '');
+
+        $allowed = match ($audience) {
+            'mahasiswa_only' => in_array($userType, ['mahasiswa'], true),
+            'mahasiswa_mitra' => in_array($userType, ['mahasiswa', 'mitra'], true),
+            'all' => true,
+            default => true,
+        };
+
+        if (! $allowed) {
+            return response()->json([
+                'message' => 'Anda tidak memiliki izin untuk berkomentar pada karya ini.',
+            ], 403);
+        }
+
         $request->validate([
             'body' => 'required|string|max:1000',
         ]);
@@ -880,6 +934,35 @@ class PagiDashboardController extends Controller implements HasMiddleware
 
     public function replyComment(Request $request, int $previewId, string $commentId)
     {
+        // Feature gate: reject if comments globally disabled
+        $commentsEnabled = filter_var(
+            PortalSetting::where('key', 'pagi_enable_comments')->value('value') ?? 'true',
+            FILTER_VALIDATE_BOOLEAN
+        );
+
+        if (! $commentsEnabled) {
+            return response()->json([
+                'message' => 'Fitur komentar sedang dinonaktifkan oleh administrator.',
+            ], 403);
+        }
+
+        // Audience gate: check if user_type is allowed to comment
+        $audience = PortalSetting::where('key', 'pagi_comment_audience')->value('value') ?? 'mahasiswa_mitra';
+        $userType = strtolower(Auth::user()->user_type ?? '');
+
+        $allowed = match ($audience) {
+            'mahasiswa_only' => in_array($userType, ['mahasiswa'], true),
+            'mahasiswa_mitra' => in_array($userType, ['mahasiswa', 'mitra'], true),
+            'all' => true,
+            default => true,
+        };
+
+        if (! $allowed) {
+            return response()->json([
+                'message' => 'Anda tidak memiliki izin untuk berkomentar pada karya ini.',
+            ], 403);
+        }
+
         $request->validate([
             'body' => 'required|string|max:1000',
             'reply_to_user_id' => 'nullable|integer|exists:users,id',
@@ -1150,6 +1233,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
                 'description' => $portfolio->description,
                 'category' => $portfolio->category,
                 'tags' => $portfolio->tags->map(fn ($t) => $t->name)->toArray(),
+                'status' => $portfolio->status,
                 'created_at' => $portfolio->created_at->toISOString(),
                 'resolved_collaborators' => $this->profileService->resolveCollaborators($portfolio, $preloadedUsers),
                 'reported_by_me' => $reportedWorkIds->has($portfolio->id),

@@ -7,6 +7,7 @@ use App\Enums\OtpPurpose;
 use App\Enums\UserAccountStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Auth\AuthOtpToken;
+use App\Models\Auth\AuthSession;
 use App\Models\Auth\RegistrationRequest;
 use App\Models\ProgramStudi;
 use App\Models\UserModuleRole;
@@ -93,15 +94,9 @@ class FirstTimeLoginController extends Controller
             'status_approval' => UserAccountStatus::OtpVerified->value,
         ])->save();
 
-        // For pending self-registered users: OTP verification alone is not activation.
-        // They need admin approval first (which should have already happened before they can login).
-        if ($user->status_approval === UserAccountStatus::Pending) {
-            // This state means they logged in but admin hasn't approved yet.
-            // Redirect them to a waiting state.
-            return redirect()->route('dashboard')->with('status',
-                'Email berhasil diverifikasi! Pendaftaran Anda sedang diproses oleh admin.'
-            );
-        }
+        // [FIX FLAW-004] Dead code dihapus: kondisi status Pending tidak pernah tercapai karena
+        // forceFill() di atas sudah mengubah status menjadi OtpVerified.
+        // Admin-created users selalu dalam status OtpSent/Approved ketika masuk alur ini.
 
         // Lanjut ke step berikutnya (force change password)
         return redirect()->route('password.force.change');
@@ -226,6 +221,13 @@ class FirstTimeLoginController extends Controller
 
     /**
      * Let rejected users resign (delete their temporary account & request so they can re-register).
+     *
+     * [FIX M-8] Sebelumnya: hanya logout dari sesi saat ini. Jika user memiliki
+     * tab/device lain yang masih login, sesi tersebut tetap aktif padahal akun
+     * sudah dihapus dari database. Ini bisa menyebabkan error atau akses ghost.
+     *
+     * Sekarang: revoke semua AuthSession di DB sebelum menghapus akun,
+     * sehingga semua device otomatis ter-kick saat request berikutnya.
      */
     public function resign(Request $request)
     {
@@ -235,13 +237,17 @@ class FirstTimeLoginController extends Controller
             return back()->withErrors(['error' => 'Hanya pendaftaran yang ditolak yang dapat dibatalkan.']);
         }
 
+        // [FIX M-8] Revoke semua AuthSession milik user ini sebelum hapus akun
+        // Ini memastikan semua device lain ter-kick saat request berikutnya
+        AuthSession::where('user_id', $user->id)->update(['is_revoked' => true]);
+
         // Delete RegistrationRequest linked to this user
         RegistrationRequest::where('created_user_id', '=', $user->id, 'and')->delete();
 
         // Delete user
         $user->delete();
 
-        // Log out
+        // Log out dari sesi saat ini
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

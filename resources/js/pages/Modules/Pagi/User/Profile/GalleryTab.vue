@@ -555,7 +555,7 @@ onUnmounted(() => {
 				@click="emit('open-project', item.project)"
 			>
 				<VideoLazy v-if="item.type === 'video'" :src="item.url" :muted="true" className="w-full h-auto object-cover rounded-xl group-hover:scale-[1.02] transition-transform duration-500" />
-				<OptimizedImage v-else :src="item.url" :alt="item.title" :masonry="true" className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-500" />
+				<OptimizedImage v-else :src="item.url" :alt="item.title" :is-sensitive="Boolean(item.project?.status === 'review' || item.project?.status === 'hidden')" :masonry="true" className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-500" />
 				
 				<!-- Pinterest style gradient overlay -->
 				<div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-between p-4 z-10">

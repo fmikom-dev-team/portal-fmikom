@@ -24,6 +24,7 @@ const props = defineProps<{
 	roleName: string;
 	conversations: Array<any>;
 	authUser: AuthUser;
+	moderationCustomWords?: string[];
 }>();
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -230,6 +231,110 @@ function sanitizeInput(text: string): string {
 	let clean = text.replace(scriptRegex, "");
 	clean = clean.replace(/<[^>]*>/g, "");
 	return clean;
+}
+
+// ── Client-side Content Moderation (pre-encrypt scan) ────────────────────────
+// Harus sinkron dengan DEFAULT_DICTIONARY di ContentModerationService.php
+const CLIENT_BANNED_WORDS: Record<string, string> = {
+	// judi_online
+	slot: "judi_online",
+	slot88: "judi_online",
+	gacor: "judi_online",
+	maxwin: "judi_online",
+	pragmatic: "judi_online",
+	zeus: "judi_online",
+	rtp: "judi_online",
+	depo: "judi_online",
+	scatter: "judi_online",
+	judol: "judi_online",
+	judi: "judi_online",
+	judionline: "judi_online",
+	pragmaticplay: "judi_online",
+	// profanity
+	anjing: "profanity",
+	babi: "profanity",
+	bangsat: "profanity",
+	kontol: "profanity",
+	memek: "profanity",
+	ngentot: "profanity",
+	jancok: "profanity",
+	asu: "profanity",
+	dancok: "profanity",
+	taik: "profanity",
+	tai: "profanity",
+	tolol: "profanity",
+	goblok: "profanity",
+	bajingan: "profanity",
+	kampang: "profanity",
+	itil: "profanity",
+	pantek: "profanity",
+	peler: "profanity",
+	biadab: "profanity",
+	pepek: "profanity",
+	kimak: "profanity",
+	// harassment
+	cacat: "harassment",
+	autis: "harassment",
+	banci: "harassment",
+	bencong: "harassment",
+	// sexual
+	bokep: "sexual",
+	sange: "sexual",
+	vcs: "sexual",
+	porno: "sexual",
+	nude: "sexual",
+	telanjang: "sexual",
+	mesum: "sexual",
+	openbo: "sexual",
+	// threat
+	"mati aja": "threat",
+	"mati lu": "threat",
+	// phishing
+	spambot: "phishing",
+	hack_account: "phishing",
+	klaim_saldo: "phishing",
+};
+
+// Normalisasi sederhana: huruf kecil + ganti karakter leetspeak umum
+function normalizeForScan(text: string): string {
+	return text
+		.toLowerCase()
+		.replace(/4/g, "a")
+		.replace(/3/g, "e")
+		.replace(/1/g, "i")
+		.replace(/0/g, "o")
+		.replace(/5/g, "s")
+		.replace(/@/g, "a")
+		.replace(/[^a-z0-9\s]/g, "");
+}
+
+function clientSideScan(text: string): {
+	isFlagged: boolean;
+	word?: string;
+	category?: string;
+} {
+	// Gabungkan kata default + kata kustom dari admin (dari Inertia props)
+	const allBannedWords: Record<string, string> = { ...CLIENT_BANNED_WORDS };
+	if (props.moderationCustomWords) {
+		for (const cw of props.moderationCustomWords) {
+			if (cw) allBannedWords[cw.toLowerCase()] = "custom_admin";
+		}
+	}
+	const normalized = normalizeForScan(text);
+	for (const [word, category] of Object.entries(allBannedWords)) {
+		const pattern = new RegExp(
+			"\\b" + word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b",
+			"iu",
+		);
+		if (
+			pattern.test(text) ||
+			pattern.test(normalized) ||
+			normalized.includes(word)
+		) {
+			return { isFlagged: true, word, category };
+		}
+	}
+	return { isFlagged: false };
 }
 
 let typingTimeout: any = null;
@@ -649,6 +754,43 @@ async function sendMessage() {
 	const body = sanitizeInput(rawBody);
 	if (!body || !activePartnerId.value || isSending.value) return;
 
+	// ── Pre-scan sebelum enkripsi E2EE (backend tidak bisa scan teks terenkripsi) ──
+	const scanResult = clientSideScan(body);
+	if (scanResult.isFlagged) {
+		// Tampilkan pesan sebentar lalu ganti jadi bubble pelanggaran (tidak dikirim ke server)
+		const violationId = Date.now();
+		const violationMsg = {
+			id: violationId,
+			sender_id: props.authUser.id,
+			body,
+			parent_id: replyingToMessage.value ? replyingToMessage.value.id : null,
+			parent: replyingToMessage.value ?? null,
+			read_at: null,
+			created_at: new Date().toISOString(),
+			sender: props.authUser,
+			sending: true,
+			is_moderated: false,
+		};
+		messages.value.push(violationMsg);
+		newMessageText.value = "";
+		replyingToMessage.value = null;
+		await nextTick();
+		chatWindowRef.value?.scrollToBottom();
+		// Setelah 500ms: ubah bubble jadi pelanggaran
+		setTimeout(() => {
+			const idx = messages.value.findIndex((m) => m.id === violationId);
+			if (idx !== -1) {
+				messages.value[idx] = {
+					...messages.value[idx],
+					body: "",
+					sending: false,
+					is_moderated: true,
+				};
+			}
+		}, 500);
+		return;
+	}
+
 	isSending.value = true;
 	const optimisticId = Date.now();
 	const repliedMsg = replyingToMessage.value;
@@ -756,7 +898,7 @@ async function sendMessage() {
 				conversationsList.value[convIdx] = { ...conv };
 			}
 		}
-	} catch (err) {
+	} catch (err: any) {
 		messages.value = messages.value.filter((m) => m.id !== optimisticId);
 		const conv = conversationsList.value.find(
 			(c) => c.id === activePartnerId.value,
@@ -770,7 +912,10 @@ async function sendMessage() {
 				conversationsList.value[convIdx] = { ...conv };
 			}
 		}
-		console.error("Failed to send message", err);
+		// Tampilkan pesan error dari server (misal 422 dari moderasi backend) ke user
+		const serverMsg = err?.response?.data?.message;
+		triggerToast(serverMsg || "⚠️ Pesan gagal terkirim. Coba lagi.", "error");
+		if (import.meta.env.DEV) console.error("Failed to send message", err);
 	} finally {
 		isSending.value = false;
 	}

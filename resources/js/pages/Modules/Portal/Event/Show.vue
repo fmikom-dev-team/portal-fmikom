@@ -48,6 +48,37 @@ const isShareModalOpen = ref(false);
 const isImagePreviewOpen = ref(false);
 const previewImageUrl = ref("");
 
+const getLogos = (eventItem: any): string[] => {
+	if (eventItem?.organizer_logos && Array.isArray(eventItem.organizer_logos) && eventItem.organizer_logos.length > 0) {
+		return eventItem.organizer_logos;
+	}
+	if (!eventItem?.organizer_logo) return [];
+	if (Array.isArray(eventItem.organizer_logo)) return eventItem.organizer_logo;
+	if (typeof eventItem.organizer_logo === "string" && eventItem.organizer_logo.startsWith("[")) {
+		try {
+			const parsed = JSON.parse(eventItem.organizer_logo);
+			if (Array.isArray(parsed)) return parsed;
+		} catch (e) {}
+	}
+	return [eventItem.organizer_logo];
+};
+
+const getOrganizersList = (eventItem: any): string[] => {
+	const val = eventItem?.organizer;
+	if (!val) return ["FMIKOM"];
+	if (Array.isArray(val)) return val.filter(Boolean);
+	if (typeof val === "string" && val.startsWith("[")) {
+		try {
+			const parsed = JSON.parse(val);
+			if (Array.isArray(parsed)) return parsed.filter(Boolean);
+		} catch (e) {}
+	}
+	if (typeof val === "string") {
+		return val.split(",").map((s) => s.trim()).filter(Boolean);
+	}
+	return ["FMIKOM"];
+};
+
 const openImagePreview = (url: string) => {
   previewImageUrl.value = url;
   isImagePreviewOpen.value = true;
@@ -153,15 +184,21 @@ const formatNumber = (num: number) => {
             <div class="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-xl p-5 space-y-3.5 shadow-xs">
               <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-wider">Diselenggarakan Oleh</h4>
               <div class="flex items-center gap-3">
-                <div v-if="event.organizer_logo" class="w-9 h-9 rounded-lg overflow-hidden border border-slate-200/60 dark:border-slate-800 shrink-0 bg-slate-50 flex items-center justify-center">
-                  <img :src="event.organizer_logo" class="w-full h-full object-cover" />
+                <div v-if="getLogos(event).length > 0" class="flex items-center gap-2 shrink-0">
+                  <div 
+                    v-for="(logo, idx) in getLogos(event)" 
+                    :key="idx" 
+                    class="w-9 h-9 rounded-lg overflow-hidden border border-slate-200/60 dark:border-slate-800 shrink-0 bg-white flex items-center justify-center shadow-xs"
+                  >
+                    <img :src="logo" class="w-full h-full object-cover" :alt="event.organizer" />
+                  </div>
                 </div>
                 <div v-else class="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center text-sm font-black uppercase shrink-0">
                   {{ (event.organizer || 'FMIKOM').substring(0, 1) }}
                 </div>
-                <div>
-                  <h5 class="text-sm font-extrabold text-slate-800 dark:text-slate-200 leading-none">
-                    {{ event.organizer || 'FMIKOM' }}
+                <div class="min-w-0 flex-1">
+                  <h5 class="text-sm font-extrabold text-slate-800 dark:text-slate-200 leading-snug break-words">
+                    {{ getOrganizersList(event).join(', ') }}
                   </h5>
                   <p class="text-[10px] text-slate-450 font-bold uppercase tracking-wider mt-1">Penyelenggara Acara</p>
                 </div>

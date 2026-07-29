@@ -3,6 +3,7 @@
 namespace App\Modules\WorkOs\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Auth\AuthAuditLog;
 use App\Models\Auth\AuthSession;
 use App\Modules\WorkOs\Services\AuthPlatform\SessionEngine;
 use Illuminate\Http\Request;
@@ -74,13 +75,37 @@ class SessionController extends Controller
 
     /**
      * Revoke ALL sessions — full logout from everywhere.
+     *
+     * [FIX H-7] Sebelumnya: urutan operasi kurang lengkap. Session invalidate
+     * dilakukan setelah Auth::logout(), padahal seharusnya:
+     * 1. Catat user ID sebelum logout
+     * 2. Hapus auth_session_token dari session
+     * 3. Revoke semua session di DB
+     * 4. Auth::logout() — hapus state auth dari session saat ini
+     * 5. invalidate() + regenerateToken() — hancurkan session & buat CSRF baru
      */
     public function revokeAll(Request $request)
     {
-        AuthSession::where('user_id', $request->user()->id)
+        $userId = $request->user()?->id;
+
+        // [FIX H-7] Hapus token session auth sebelum logout
+        $request->session()->forget('auth_session_token');
+
+        // Revoke semua session di DB
+        AuthSession::where('user_id', $userId)
             ->update(['is_revoked' => true]);
 
+        // Audit log sebelum session dihancurkan
+        if ($userId) {
+            AuthAuditLog::log('auth.sessions.revoke_all', $userId, [
+                'ip' => $request->ip(),
+            ]);
+        }
+
+        // Logout dari Laravel auth (hapus guard state)
         Auth::logout();
+
+        // Hancurkan session dan buat CSRF token baru
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

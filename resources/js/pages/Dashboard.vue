@@ -261,14 +261,6 @@ const onAlumniProofChange = (event: Event) => {
                     What are your plans <br class="hidden sm:block" />
                     for today?
                 </h2>
-
-                <!-- Subtle Description text -->
-                <p
-                    class="text-sm sm:text-base font-medium sm:font-bold text-[#64748b] dark:text-gray-400 lg:text-lg max-w-2xl leading-relaxed"
-                >
-                    This platform is designed to revolutionize the way you
-                    organize and access your university modules.
-                </p>
             </div>
 
             <!-- Pesan Info/Error Controller -->

@@ -4,8 +4,11 @@ import {
     AlertTriangle,
     Bell,
     ClipboardList,
+    Download,
     FileClock,
+    MoreHorizontal,
     Users,
+    X,
 } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { Badge } from '@/components/ui/badge';
@@ -100,6 +103,10 @@ type PendingAbsenceRequestItem = {
     jenis?: string | null;
     alasan?: string | null;
     tanggal_label?: string | null;
+    proof?: {
+        exists?: boolean | null;
+        download_url?: string | null;
+    } | null;
 };
 
 type WarningItem = {
@@ -147,6 +154,7 @@ const activeFilter = ref<
 const absenceReviewForm = useForm({
     catatan_mitra: '',
 });
+const selectedAbsenceRequest = ref<PendingAbsenceRequestItem | null>(null);
 
 const summaryCards = computed(() => [
     {
@@ -392,15 +400,25 @@ const absenceKindLabel = (value?: string | null) => {
     return 'Izin';
 };
 
+const openAbsenceDetail = (item: PendingAbsenceRequestItem) => {
+    selectedAbsenceRequest.value = { ...item };
+};
+
+const closeAbsenceDetail = () => {
+    selectedAbsenceRequest.value = null;
+};
+
 const approveAbsenceRequest = (id: number) => {
     absenceReviewForm.post(`/wims/mitra/ketidakhadiran/${id}/approve`, {
         preserveScroll: true,
+        onSuccess: () => closeAbsenceDetail(),
     });
 };
 
 const rejectAbsenceRequest = (id: number) => {
     absenceReviewForm.post(`/wims/mitra/ketidakhadiran/${id}/reject`, {
         preserveScroll: true,
+        onSuccess: () => closeAbsenceDetail(),
     });
 };
 
@@ -706,7 +724,7 @@ onBeforeUnmount(() => {
                                     {{ warning.name || 'Mahasiswa' }}
                                 </p>
                                 <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                                    {{ warning.nim || '-' }} • {{ warning.company?.name || 'Perusahaan belum tersedia' }}
+                                    {{ warning.nim || '-' }} &bull; {{ warning.company?.name || 'Perusahaan belum tersedia' }}
                                 </p>
                                 <div class="mt-3 flex flex-wrap gap-2">
                                     <span
@@ -761,50 +779,29 @@ onBeforeUnmount(() => {
                             <div
                                 v-for="item in props.pendingAbsenceRequests"
                                 :key="item.id"
-                                class="rounded-xl border border-orange-200/80 bg-orange-50/70 px-3.5 py-3 transition-all duration-300 hover:border-orange-300 dark:bg-orange-500/10"
+                                class="flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-orange-200/80 bg-orange-50/70 px-3.5 py-3 transition-all duration-300 hover:border-orange-300 dark:bg-orange-500/10"
+                                role="button"
+                                tabindex="0"
+                                @click="openAbsenceDetail(item)"
                             >
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="min-w-0">
-                                        <p class="text-[12px] font-bold text-wims-text">
-                                            {{ item.name || 'Mahasiswa' }}
-                                        </p>
-                                        <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                                            {{ item.nim || '-' }} • {{ item.company?.name || 'Perusahaan belum tersedia' }}
-                                        </p>
-                                    </div>
-                                    <Badge
-                                        variant="outline"
-                                        class="rounded-full border-orange-200 bg-white px-2.5 py-0.5 text-[11px] font-bold text-orange-700 dark:bg-orange-500/10 dark:text-orange-300"
-                                    >
-                                        {{ absenceKindLabel(item.jenis) }}
-                                    </Badge>
+                                <div class="min-w-0">
+                                    <p class="truncate text-[12px] font-bold text-wims-text">
+                                        {{ item.name || 'Mahasiswa' }}
+                                    </p>
+                                    <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                                        {{ item.nim || '-' }}
+                                    </p>
                                 </div>
 
-                                <p class="mt-2 text-[11px] font-medium text-orange-700 dark:text-orange-300">
-                                    {{ formatDateUi(item.tanggal_label) }}
-                                </p>
-                                <p class="mt-1.5 text-[11px] leading-5 text-slate-700 dark:text-slate-300">
-                                    {{ item.alasan || '-' }}
-                                </p>
-
-                                <div class="mt-2.5 grid gap-2 sm:grid-cols-2">
-                                    <button
-                                        type="button"
-                                        class="h-9 rounded-lg bg-emerald-600 px-3 text-[13px] font-bold text-white transition hover:bg-emerald-700 disabled:bg-slate-300 disabled:text-slate-600"
-                                        :disabled="absenceReviewForm.processing"
-                                        @click="approveAbsenceRequest(item.id)"
-                                    >
-                                        Setujui
-                                    </button>
-                                    <button
-                                        type="button"
-                                        class="h-9 rounded-lg bg-rose-600 px-3 text-[13px] font-bold text-white transition hover:bg-rose-700 disabled:bg-slate-300 disabled:text-slate-600"
-                                        :disabled="absenceReviewForm.processing"
-                                        @click="rejectAbsenceRequest(item.id)"
-                                    >
-                                        Tolak
-                                    </button>
-                                </div>
+                                <button
+                                    type="button"
+                                    class="relative z-10 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-orange-200 bg-white text-orange-700 transition hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-orange-300 dark:hover:bg-orange-500/20"
+                                    :disabled="absenceReviewForm.processing"
+                                    @click.stop="openAbsenceDetail(item)"
+                                >
+                                    <MoreHorizontal class="h-4 w-4" />
+                                    <span class="sr-only">Lihat detail pengajuan</span>
+                                </button>
                             </div>
 
                             <p
@@ -909,7 +906,7 @@ onBeforeUnmount(() => {
                                                 {{ student.name || 'Mahasiswa' }}
                                             </p>
                                             <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                                                {{ student.nim || '-' }} • {{ student.company?.name || 'Perusahaan belum tersedia' }}
+                                                {{ student.nim || '-' }} &bull; {{ student.company?.name || 'Perusahaan belum tersedia' }}
                                             </p>
                                         </div>
                                         <Badge
@@ -1001,9 +998,9 @@ onBeforeUnmount(() => {
                                         </p>
                                         <div class="mt-1 flex flex-col gap-1 text-[11px] text-slate-500 dark:text-slate-400 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1">
                                             <span>{{ student.nim || '-' }}</span>
-                                            <span class="hidden text-slate-300 sm:inline">•</span>
+                                            <span class="hidden text-slate-300 sm:inline">&bull;</span>
                                             <span>{{ student.company?.name || '-' }}</span>
-                                            <span class="hidden text-slate-300 sm:inline">•</span>
+                                            <span class="hidden text-slate-300 sm:inline">&bull;</span>
                                             <span>Periode {{ periodLabel(student) }}</span>
                                         </div>
                                     </div>
@@ -1136,9 +1133,100 @@ onBeforeUnmount(() => {
                 </p>
             </section>
         </div>
+    </div>    <div
+        v-if="selectedAbsenceRequest"
+        class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
+        @click.self="closeAbsenceDetail"
+    >
+        <div class="w-full max-w-lg rounded-2xl border border-wims-border bg-wims-card p-5 shadow-[0_24px_48px_-30px_rgba(15,23,42,0.35)]">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h3 class="text-[16px] font-bold text-wims-text">
+                        Detail Pengajuan Ketidakhadiran
+                    </h3>
+                    <p class="mt-1 text-[12px] text-slate-500 dark:text-slate-400">
+                        {{ selectedAbsenceRequest.name || 'Mahasiswa' }} &bull;
+                        {{ selectedAbsenceRequest.nim || '-' }}
+                    </p>
+                </div>
+                <button
+                    type="button"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-wims-border text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 dark:hover:bg-slate-800"
+                    :disabled="absenceReviewForm.processing"
+                    @click="closeAbsenceDetail"
+                >
+                    <X class="h-4 w-4" />
+                    <span class="sr-only">Tutup</span>
+                </button>
+            </div>
+
+            <div class="mt-4 space-y-4">
+                <div class="flex flex-wrap items-center gap-2">
+                    <Badge
+                        variant="outline"
+                        class="rounded-full border-orange-200 bg-orange-50 px-2.5 py-1 text-[11px] font-bold text-orange-700 dark:bg-orange-500/15 dark:text-orange-300"
+                    >
+                        {{ absenceKindLabel(selectedAbsenceRequest.jenis) }}
+                    </Badge>
+                    <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                        {{ formatDateUi(selectedAbsenceRequest.tanggal_label) }}
+                    </span>
+                </div>
+
+                <div class="rounded-xl border border-wims-border bg-slate-50/80 px-4 py-3 dark:bg-slate-900/40">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                        Alasan
+                    </p>
+                    <p class="mt-2 text-[13px] leading-6 text-slate-700 dark:text-slate-200">
+                        {{ selectedAbsenceRequest.alasan || '-' }}
+                    </p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <a
+                        v-if="selectedAbsenceRequest.proof?.download_url"
+                        :href="selectedAbsenceRequest.proof.download_url"
+                        class="inline-flex h-9 items-center gap-2 rounded-full border border-blue-200 bg-white px-4 text-[12px] font-bold text-blue-700 transition hover:bg-blue-50 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20"
+                    >
+                        <Download class="h-4 w-4" />
+                        Unduh Bukti
+                    </a>
+                    <span
+                        v-else
+                        class="rounded-full border border-dashed border-slate-300 px-3 py-1.5 text-[11px] font-medium text-slate-500 dark:border-slate-600 dark:text-slate-400"
+                    >
+                        Tidak ada bukti file
+                    </span>
+                </div>
+            </div>
+
+            <div class="mt-5 flex flex-wrap justify-end gap-2">
+                <Button
+                    type="button"
+                    variant="outline"
+                    class="border-wims-border"
+                    :disabled="absenceReviewForm.processing"
+                    @click="closeAbsenceDetail"
+                >
+                    Tutup
+                </Button>
+                <Button
+                    type="button"
+                    class="bg-rose-600 text-white hover:bg-rose-700"
+                    :disabled="absenceReviewForm.processing"
+                    @click="rejectAbsenceRequest(selectedAbsenceRequest.id)"
+                >
+                    Tolak
+                </Button>
+                <Button
+                    type="button"
+                    class="bg-emerald-600 text-white hover:bg-emerald-700"
+                    :disabled="absenceReviewForm.processing"
+                    @click="approveAbsenceRequest(selectedAbsenceRequest.id)"
+                >
+                    Setujui
+                </Button>
+            </div>
+        </div>
     </div>
 </template>
-
-
-
-

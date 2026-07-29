@@ -3,12 +3,14 @@ import { router, useForm } from "@inertiajs/vue3";
 import {
 	AlertCircle,
 	CheckCircle2,
+	ChevronLeft,
+	ChevronRight,
 	Eye,
 	Filter,
 	Search,
 	ShieldAlert,
 } from "lucide-vue-next";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
 
 interface WorkItem {
@@ -26,9 +28,23 @@ interface WorkItem {
 
 const props = defineProps<{
 	works?: WorkItem[];
+	showcaseWorkIds?: number[];
 }>();
 
 const computedWorks = computed(() => props.works ?? []);
+const showcaseIds = computed(() => props.showcaseWorkIds ?? []);
+
+const isSelectedInShowcase = (id: number) => showcaseIds.value.includes(id);
+
+const toggleShowcase = (workId: number) => {
+	router.post(
+		`/pagi/admin/showcase/toggle/${workId}`,
+		{},
+		{
+			preserveScroll: true,
+		},
+	);
+};
 
 // Search and Filter states
 const searchQuery = ref("");
@@ -36,6 +52,10 @@ const selectedCategory = ref("all");
 const selectedStatus = ref("all");
 const isLoading = ref(false);
 const brokenImages = ref<Record<number | string, boolean>>({});
+
+// Pagination state
+const currentPage = ref(1);
+const perPage = ref(10);
 
 // Categories from items
 const categories = computed(() => {
@@ -57,6 +77,31 @@ const filteredWorks = computed(() => {
 		return matchSearch && matchCategory && matchStatus;
 	});
 });
+
+watch([searchQuery, selectedCategory, selectedStatus, perPage], () => {
+	currentPage.value = 1;
+});
+
+const totalPages = computed(() => {
+	return Math.ceil(filteredWorks.value.length / perPage.value) || 1;
+});
+
+const paginatedWorks = computed(() => {
+	const start = (currentPage.value - 1) * perPage.value;
+	return filteredWorks.value.slice(start, start + perPage.value);
+});
+
+const nextPage = () => {
+	if (currentPage.value < totalPages.value) {
+		currentPage.value++;
+	}
+};
+
+const prevPage = () => {
+	if (currentPage.value > 1) {
+		currentPage.value--;
+	}
+};
 
 // Status Badge Config
 const statusConfig = {
@@ -184,7 +229,7 @@ const submitQuickModeration = () => {
             <!-- ── Mobile Card View (block md:hidden) ── -->
             <div class="block md:hidden space-y-4">
                 <div 
-                    v-for="work in filteredWorks" 
+                    v-for="work in paginatedWorks" 
                     :key="work.id"
                     class="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-4 flex flex-col gap-3.5 shadow-sm"
                 >
@@ -268,7 +313,7 @@ const submitQuickModeration = () => {
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50 dark:divide-zinc-800/50">
-                        <tr v-for="work in filteredWorks" :key="work.id" class="hover:bg-slate-50 dark:hover:bg-zinc-800/20 transition-colors">
+                        <tr v-for="work in paginatedWorks" :key="work.id" class="hover:bg-slate-50 dark:hover:bg-zinc-800/20 transition-colors">
                             <!-- Title + Author -->
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
@@ -331,24 +376,86 @@ const submitQuickModeration = () => {
                                     <a 
                                         :href="`/pagi/works/v/${work.authorHandle.replace('@', '')}`"
                                         target="_blank"
-                                        class="rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 text-[11px] font-bold text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center gap-1 shrink-0"
+                                        class="rounded-lg border border-slate-200 dark:border-zinc-900 px-2 py-1.5 text-[11px] font-bold text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors flex items-center gap-1 shrink-0"
+                                        title="Lihat Publik"
                                     >
-                                        <Eye class="h-3 w-3" /> Lihat Publik
+                                        <Eye class="h-3.5 w-3.5" />
+                                        <span>Lihat Publik</span>
                                     </a>
                                     <button
-                                        @click="openModeration(work)"
-                                        class="rounded-lg border px-3 py-1.5 text-[11px] font-bold transition-all shrink-0"
-                                        :class="work.status === 'active' 
-                                            ? 'border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-900/30 dark:bg-rose-950/20 dark:text-rose-400' 
-                                            : 'border-emerald-100 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:border-emerald-900/30 dark:bg-emerald-950/20 dark:text-emerald-400'"
+                                        @click="toggleShowcase(work.id)"
+                                        class="rounded-lg border px-3 py-1.5 text-[11px] font-bold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer"
+                                        :class="isSelectedInShowcase(work.id)
+                                            ? 'border-indigo-200 bg-indigo-50 text-indigo-600 dark:border-indigo-900/40 dark:bg-indigo-950/40 dark:text-indigo-400 font-extrabold shadow-xs'
+                                            : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'"
                                     >
-                                        {{ work.status === "active" ? "Takedown" : "Pulihkan" }}
+                                        <span>{{ isSelectedInShowcase(work.id) ? '⭐ Terpilih di Karya Terbaik' : '+ Pilih ke Karya Terbaik' }}</span>
                                     </button>
                                 </div>
                             </td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- ── Pagination Controls ── -->
+            <div v-if="filteredWorks.length > 0" class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 px-2">
+                <div class="flex items-center gap-3 text-[12px] text-slate-500 dark:text-zinc-400">
+                    <span>
+                        Menampilkan <strong>{{ (currentPage - 1) * perPage + 1 }}</strong> - <strong>{{ Math.min(currentPage * perPage, filteredWorks.length) }}</strong> dari <strong>{{ filteredWorks.length }}</strong> karya
+                    </span>
+                    <span class="text-slate-300 dark:text-zinc-700">|</span>
+                    <div class="flex items-center gap-1.5">
+                        <label for="perPageSelect" class="sr-only">Karya per halaman</label>
+                        <span>Per halaman:</span>
+                        <select
+                            id="perPageSelect"
+                            v-model="perPage"
+                            class="rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-[11.5px] font-bold text-slate-700 dark:text-zinc-300 focus:outline-none"
+                        >
+                            <option :value="5">5</option>
+                            <option :value="10">10</option>
+                            <option :value="25">25</option>
+                            <option :value="50">50</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <button
+                        @click="prevPage"
+                        :disabled="currentPage === 1"
+                        class="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-[12px] font-bold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1"
+                    >
+                        <ChevronLeft class="h-4 w-4" />
+                        <span>Sebelumnya</span>
+                    </button>
+
+                    <div class="flex items-center gap-1 px-1">
+                        <button
+                            v-for="p in totalPages"
+                            :key="p"
+                            @click="currentPage = p"
+                            :class="[
+                                'w-8 h-8 rounded-xl text-[12px] font-bold transition-all flex items-center justify-center cursor-pointer',
+                                currentPage === p
+                                    ? 'bg-indigo-600 text-white shadow-xs'
+                                    : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800'
+                            ]"
+                        >
+                            {{ p }}
+                        </button>
+                    </div>
+
+                    <button
+                        @click="nextPage"
+                        :disabled="currentPage >= totalPages"
+                        class="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-[12px] font-bold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1"
+                    >
+                        <span>Selanjutnya</span>
+                        <ChevronRight class="h-4 w-4" />
+                    </button>
+                </div>
             </div>
 
             <!-- Empty State -->

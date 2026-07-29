@@ -4,8 +4,11 @@ namespace App\Modules\Pagi\Actions;
 
 use App\Models\Pagi\PagiWork;
 use App\Models\Pagi\PagiWorkComment;
+use App\Models\Portal\PortalSetting;
 use App\Models\User;
+use App\Modules\Pagi\Services\ContentModerationService;
 use App\Notifications\PagiNotification;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class CreateCommentAction
@@ -24,19 +27,37 @@ class CreateCommentAction
                 : asset('storage/'.$authUser->foto_path);
         }
 
+        $moderationService = app(ContentModerationService::class);
+        $moderationMode = PortalSetting::query()->where('key', 'pagi_comment_censor_mode')->value('value') ?? 'reject';
+
+        $scanResult = $moderationService->scan($body);
+
+        if ($scanResult['is_flagged'] && $moderationMode === 'reject') {
+            abort(response()->json([
+                'message' => 'Komentar Anda ditolak otomatis oleh sistem karena terdeteksi memuat kata kasar, pelecehan, atau konten terlarang.',
+            ], 422));
+        }
+
+        $finalBody = $scanResult['is_flagged'] ? $scanResult['censored_text'] : strip_tags($body);
+
         // Create comment in normalized table
         PagiWorkComment::create([
             'uuid' => (string) Str::uuid(),
             'work_id' => $portfolio->id,
             'user_id' => $authUser->id,
             'parent_id' => null,
-            'body' => strip_tags($body),
+            'body' => $finalBody,
         ]);
 
         // Send real-time notification to the owner if commented & is not own project
         if ($portfolio->user_id !== $authUser->id) {
             $owner = $portfolio->user;
             if ($owner) {
+                $workImage = null;
+                if ($portfolio->cover_image) {
+                    $workImage = str_starts_with($portfolio->cover_image, 'http') ? $portfolio->cover_image : asset('storage/'.$portfolio->cover_image);
+                }
+
                 try {
                     $owner->notify(new PagiNotification(
                         type: 'comment',
@@ -47,8 +68,12 @@ class CreateCommentAction
                         extra: [
                             'sender_id' => $authUser->id,
                             'portfolio_id' => $portfolio->id,
+                            'work_image' => $workImage,
                         ],
                     ));
+                    Cache::forget("recent_notifs_{$owner->id}_mahasiswa");
+                    Cache::forget("recent_notifs_{$owner->id}_dosen");
+                    Cache::forget("recent_notifs_{$owner->id}_alumni");
                 } catch (\Throwable $e) {
                     report($e);
                 }

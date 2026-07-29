@@ -2,7 +2,11 @@
 
 namespace App\Modules\Pagi\Controllers;
 
+use App\Events\PagiWorkCreated;
+use App\Events\PagiWorkDeleted;
+use App\Events\PagiWorkUpdated;
 use App\Http\Controllers\Controller;
+use App\Models\Pagi\PagiReport;
 use App\Models\Pagi\PagiWork;
 use App\Models\User;
 use App\Modules\Pagi\Requests\QuickStorePortfolioRequest;
@@ -10,6 +14,7 @@ use App\Modules\Pagi\Requests\QuickUpdatePortfolioRequest;
 use App\Modules\Pagi\Requests\StoreGalleryItemRequest;
 use App\Modules\Pagi\Requests\StorePortfolioRequest;
 use App\Modules\Pagi\Requests\UpdatePortfolioRequest;
+use App\Modules\Pagi\Services\ContentModerationService;
 use App\Modules\Pagi\Services\PortfolioService;
 use App\Notifications\PagiNotification;
 use Illuminate\Http\JsonResponse;
@@ -17,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 
 class PagiEditorController extends Controller implements HasMiddleware
@@ -48,6 +54,17 @@ class PagiEditorController extends Controller implements HasMiddleware
 
                     return redirect()->route('module.pagi.dashboard')
                         ->with('error', self::ERROR_ACCESS_DENIED);
+                }
+
+                // Check Restricted Access Mode for suspended users
+                $user = Auth::user();
+                if ($user && ! $user->is_active && ! $request->isMethod('get')) {
+                    $restrictedMsg = 'Akses Anda dibatasi (Restricted Mode). Akun Anda sedang dalam penangguhan. Silakan ajukan banding melalui halaman notifikasi.';
+                    if ($request->wantsJson()) {
+                        return response()->json(['message' => $restrictedMsg], 403);
+                    }
+
+                    return redirect()->route('module.pagi.dashboard')->with('error', $restrictedMsg);
                 }
 
                 return $next($request);
@@ -150,12 +167,19 @@ class PagiEditorController extends Controller implements HasMiddleware
         // Update featured details collaborator block in content
         $portfolio->update(['content' => $this->updateFeaturedDetailsCollaborators($portfolio->content, $newCollaborators)]);
 
-        // Parse and sync tags
-        $this->portfolioService->syncTags($portfolio, $sanitizedTags);
+        // Check Auto Moderasi AI jika aktif
+        $this->checkAutoModeration($portfolio);
 
         // Notify followers about new published work
-        if ($portfolio->is_published) {
+        if ($portfolio->is_published && $portfolio->status !== 'review') {
             $this->portfolioService->notifyFollowers($portfolio);
+        }
+
+        // Dispatch realtime event to update subscriber profiles & feeds
+        PagiWorkCreated::dispatch($portfolio);
+
+        if ($portfolio->status === 'review') {
+            return redirect()->route('module.pagi.dashboard')->with('warning', 'Karya berhasil dibuat namun sedang dalam peninjauan moderasi otomatis.');
         }
 
         return redirect()->route('module.pagi.dashboard')->with('success', 'Portfolio created successfully!');
@@ -202,6 +226,9 @@ class PagiEditorController extends Controller implements HasMiddleware
 
         $portfolio->update(['content' => $contentData]);
 
+        // Check Auto Moderasi AI jika aktif (termasuk deteksi gambar darah/gore/NSFW)
+        $this->checkAutoModeration($portfolio);
+
         $mappedProject = [
             'id' => $portfolio->id,
             'title' => $portfolio->title ?? 'Untitled Project',
@@ -212,15 +239,25 @@ class PagiEditorController extends Controller implements HasMiddleware
             'liked' => false,
             'comments' => [],
             'views' => 0,
+            'status' => $portfolio->status ?? 'active',
         ];
 
-        // Notify followers that a new work has been published
-        $this->portfolioService->notifyFollowers($portfolio);
+        // Notify followers only if not flagged for review
+        if ($portfolio->status !== 'review') {
+            $this->portfolioService->notifyFollowers($portfolio);
+        }
+
+        // Dispatch realtime event to update subscriber profiles & feeds
+        PagiWorkCreated::dispatch($portfolio);
+
+        $message = $portfolio->status === 'review'
+            ? 'Karya berhasil ditambahkan namun sedang dalam peninjauan moderasi otomatis.'
+            : 'Karya berhasil ditambahkan!';
 
         return response()->json([
             'success' => true,
             'project' => $mappedProject,
-            'message' => 'Karya berhasil ditambahkan!',
+            'message' => $message,
         ]);
     }
 
@@ -228,6 +265,10 @@ class PagiEditorController extends Controller implements HasMiddleware
     {
         if ($editor->user_id !== Auth::id()) {
             abort(403, self::ERROR_UNAUTHORIZED);
+        }
+
+        if (in_array($editor->status, ['hidden', 'removed'], true)) {
+            return redirect()->back()->with('warning', 'Karya ini sedang dalam sanksi Takedown. Anda tidak dapat mengedit karya ini, namun Anda dapat mengajukan banding.');
         }
 
         if ($this->isGalleryItem($editor)) {
@@ -241,6 +282,10 @@ class PagiEditorController extends Controller implements HasMiddleware
     {
         if ($editor->user_id !== Auth::id()) {
             abort(403, self::ERROR_UNAUTHORIZED);
+        }
+
+        if (in_array($editor->status, ['hidden', 'removed'], true)) {
+            return redirect()->back()->with('warning', 'Karya ini sedang dalam sanksi Takedown. Anda tidak dapat mengedit karya ini, namun Anda dapat mengajukan banding.');
         }
 
         $sanitizedTitle = strip_tags($request->title);
@@ -271,6 +316,8 @@ class PagiEditorController extends Controller implements HasMiddleware
             $coverPath = $this->portfolioService->saveCoverImage($request->file('cover_image'));
         }
 
+        $wasWarningOrHidden = in_array($editor->status, ['warning', 'hidden'], true);
+
         $editor->update([
             'title' => $sanitizedTitle,
             'content' => $contentData,
@@ -280,21 +327,54 @@ class PagiEditorController extends Controller implements HasMiddleware
             'description' => $sanitizedDescription,
             'visibility' => $request->visibility ?: 'Everyone',
             'is_published' => $request->is_published ?? false,
+            // Jika karya sebelumnya ber-warning atau hidden, ubah status ke pending untuk Re-Review Admin
+            'status' => $wasWarningOrHidden ? 'pending' : ($editor->status ?? 'active'),
         ]);
 
         // Parse and sync tags
         $this->portfolioService->syncTags($editor, $sanitizedTags);
+
+        // Jika karya sebelumnya bermasalah dan diperbarui user, buat laporan/flag Re-Review untuk Admin
+        if ($wasWarningOrHidden) {
+            PagiReport::create([
+                'work_id' => $editor->id,
+                'reporter_id' => Auth::id(),
+                'reason' => 'other',
+                'description' => '[Re-Review User] Pengguna telah memperbarui karya yang sebelumnya mendapat peringatan/takedown.',
+                'status' => 'pending',
+            ]);
+        }
+
+        PagiWorkUpdated::dispatch($editor);
 
         return redirect()->route('module.pagi.profile')->with('success', 'Portfolio updated successfully!');
     }
 
     public function destroy(PagiWork $editor)
     {
-        if ($editor->user_id !== Auth::id()) {
+        $userId = $editor->user_id;
+        if ($userId !== Auth::id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
+        $workId = $editor->id;
+
+        // Tandai laporan pending yang terkait dengan karya ini sebagai 'actioned' (Dihapus oleh pemilik karya)
+        PagiReport::query()
+            ->where('work_id', '=', $editor->id, 'and')
+            ->where('status', '=', 'pending', 'and')
+            ->update([
+                'status' => 'actioned',
+                'admin_note' => 'Karya dihapus sendiri oleh pemilik karya.',
+                'reviewed_at' => now(),
+            ]);
+
         $editor->delete();
+
+        PagiWorkDeleted::dispatch($workId, $userId);
+
+        Cache::forget("pagi_public_profile_{$userId}");
+        Cache::forget("recent_notifs_{$userId}");
 
         return response()->json(['success' => true]);
     }
@@ -342,18 +422,37 @@ class PagiEditorController extends Controller implements HasMiddleware
         if ($updated) {
             $editor->update(['content' => $content]);
 
+            Cache::forget("pagi_public_profile_{$user->id}");
+            if ($editor->user_id) {
+                Cache::forget("pagi_public_profile_{$editor->user_id}");
+            }
+
+            // Mark notification as handled in DB for the user
+            $userNotifs = $user->notifications()
+                ->whereIn('data->type', ['collaboration', 'collaboration_invite'])
+                ->where('data->portfolio_id', $editor->id)
+                ->get();
+            foreach ($userNotifs as $userNotif) {
+                $nData = $userNotif->data;
+                $nData['collaboration_status'] = 'accept';
+                $nData['collaboration_handled'] = true;
+                $userNotif->data = $nData;
+                $userNotif->save();
+            }
+
             // Notify the owner (inviter) that the collaborator accepted
             $owner = $editor->user;
             if ($owner && $owner->id !== $user->id) {
                 $owner->notify(new PagiNotification(
-                    'collaboration',
+                    'collaboration_accepted',
                     $user->pagi_username ?: $user->name,
                     'menerima ajakan kolaborasi pada proyek: "'.$editor->title.'"',
                     $user->foto_path ? (str_starts_with($user->foto_path, 'http') ? $user->foto_path : asset(self::STORAGE_PREFIX.$user->foto_path)) : null,
-                    '/pagi/profile',
+                    '/pagi/preview/'.$editor->id,
                     [
                         'portfolio_id' => $editor->id,
                         'sender_id' => $user->id,
+                        'is_invite' => false,
                     ]
                 ));
             }
@@ -400,9 +499,32 @@ class PagiEditorController extends Controller implements HasMiddleware
 
         if ($updated) {
             $editor->update(['content' => $content]);
+
+            Cache::forget("pagi_public_profile_{$user->id}");
+            if ($editor->user_id) {
+                Cache::forget("pagi_public_profile_{$editor->user_id}");
+            }
+
+            // Mark notification as declined in DB for the user
+            $userNotifs = $user->notifications()
+                ->whereIn('data->type', ['collaboration', 'collaboration_invite'])
+                ->where('data->portfolio_id', $editor->id)
+                ->get();
+            foreach ($userNotifs as $userNotif) {
+                $nData = $userNotif->data;
+                $nData['collaboration_status'] = 'decline';
+                $nData['collaboration_handled'] = true;
+                $userNotif->data = $nData;
+                $userNotif->save();
+            }
         }
 
         return response()->json(['success' => true]);
+    }
+
+    public function leaveCollaboration(Request $request, PagiWork $editor)
+    {
+        return $this->declineCollaboration($request, $editor);
     }
 
     public function storeGalleryItem(StoreGalleryItemRequest $request)
@@ -461,8 +583,11 @@ class PagiEditorController extends Controller implements HasMiddleware
     /**
      * Map block file preview URLs for frontend.
      */
-    private function populateContentPreviews(?array $content): array
+    private function populateContentPreviews(mixed $content): array
     {
+        if (is_string($content)) {
+            $content = json_decode($content, true);
+        }
         if (! is_array($content)) {
             return [];
         }
@@ -531,14 +656,30 @@ class PagiEditorController extends Controller implements HasMiddleware
     private function isCollaboratorMatch(mixed $collab, User $user): bool
     {
         if (is_array($collab)) {
-            if (isset($collab['user_id'])) {
-                return (int) $collab['user_id'] === (int) $user->id;
+            if (isset($collab['user_id']) && $collab['user_id']) {
+                if ((int) $collab['user_id'] === (int) $user->id) {
+                    return true;
+                }
             }
 
-            return ($collab['name'] ?? '') === $user->name;
+            $cName = $collab['name'] ?? '';
+            $clean = ltrim($cName, '@');
+
+            if ($user->pagi_username && strcasecmp($clean, ltrim($user->pagi_username, '@')) === 0) {
+                return true;
+            }
+
+            return strcasecmp($cName, $user->name) === 0 || strcasecmp($clean, $user->name) === 0;
         }
 
-        return $collab === $user->name;
+        $cName = (string) $collab;
+        $clean = ltrim($cName, '@');
+
+        if ($user->pagi_username && strcasecmp($clean, ltrim($user->pagi_username, '@')) === 0) {
+            return true;
+        }
+
+        return strcasecmp($cName, $user->name) === 0 || strcasecmp($clean, $user->name) === 0;
     }
 
     /**
@@ -647,5 +788,44 @@ class PagiEditorController extends Controller implements HasMiddleware
             'project' => $mappedProject,
             'message' => 'Karya berhasil diperbarui!',
         ]);
+    }
+
+    /**
+     * Memeriksa dan mengeksekusi Auto Moderasi Konten (Teks & Gambar Cover via Google Vision AI)
+     */
+    private function checkAutoModeration(PagiWork $work): void
+    {
+        $moderationService = app(ContentModerationService::class);
+        $textToScan = trim(($work->title ?? '').' '.($work->description ?? ''));
+
+        // Scan teks (judul + deskripsi)
+        $textScan = $moderationService->scan($textToScan);
+        $imageScan = ['is_flagged' => false];
+
+        // Scan gambar cover jika ada
+        if (! empty($work->cover_image)) {
+            $imagePath = storage_path('app/public/'.ltrim($work->cover_image, '/'));
+            if (file_exists($imagePath)) {
+                $imageScan = $moderationService->scanImage($imagePath, $textToScan);
+            }
+        }
+
+        if ($textScan['is_flagged'] || $imageScan['is_flagged']) {
+            $work->fill([
+                'status' => 'review',
+                'is_published' => false,
+            ])->save();
+
+            $reasons = array_merge($textScan['matched_words'] ?? [], $imageScan['matched_words'] ?? []);
+            $reasonText = implode(', ', array_unique($reasons));
+
+            PagiReport::create([
+                'work_id' => $work->id,
+                'reporter_id' => $work->user_id,
+                'reason' => 'inappropriate_content',
+                'description' => '[Auto Moderasi AI] Terdeteksi konten berisiko: '.($reasonText ?: 'Gambar / Teks Sensitif'),
+                'status' => 'pending',
+            ]);
+        }
     }
 }

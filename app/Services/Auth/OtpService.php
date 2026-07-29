@@ -6,6 +6,7 @@ use App\Enums\OtpPurpose;
 use App\Mail\SendOtpEmail;
 use App\Models\Auth\AuthOtpToken;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
@@ -107,19 +108,38 @@ class OtpService
     /**
      * Check if OTP resend is allowed (not too recently sent).
      * Returns true if resend is allowed, false if too early.
+     *
+     * [FIX M-6] Sebelumnya: tidak atomik. Dua request bersamaan (mis. user klik
+     * resend dua kali) bisa sama-sama membaca "existing OTP berumur > 2 menit"
+     * dan keduanya lolos pengecekan, mengakibatkan dua OTP dikirim hampir bersamaan.
+     *
+     * Sekarang: menggunakan DB::transaction() + lockForUpdate() untuk memastikan
+     * hanya satu request yang bisa mengevaluasi cooldown pada satu waktu.
+     *
+     * Catatan: Pemanggil HARUS memanggil generate() segera setelah canResend()
+     * mengembalikan true — keduanya dijalankan dalam alur yang sama tanpa jeda
+     * panjang untuk meminimalkan window race condition residual.
      */
     public function canResend(string $email, OtpPurpose $purpose): bool
     {
-        $existing = AuthOtpToken::findActive($email, $purpose);
+        return DB::transaction(function () use ($email, $purpose) {
+            $existing = AuthOtpToken::where('email', '=', $email, 'and')
+                ->where('purpose', '=', $purpose->value, 'and')
+                ->where('is_used', '=', false, 'and')
+                ->where('expires_at', '>', now(), 'and')
+                ->lockForUpdate()
+                ->latest()
+                ->first();
 
-        if (! $existing) {
-            return true; // No active OTP → allow send
-        }
+            if (! $existing) {
+                return true; // No active OTP → allow send
+            }
 
-        // Block if OTP was created less than 2 minutes ago
-        $ageInSeconds = $existing->created_at->diffInSeconds(now());
+            // Block if OTP was created less than 2 minutes ago
+            $ageInSeconds = $existing->created_at->diffInSeconds(now());
 
-        return $ageInSeconds >= 120; // 2 minutes
+            return $ageInSeconds >= 120; // 2 minutes
+        });
     }
 
     /**

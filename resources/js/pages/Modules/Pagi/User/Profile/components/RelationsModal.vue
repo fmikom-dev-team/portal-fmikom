@@ -3,6 +3,7 @@ import { Link, usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import { Loader2 } from "lucide-vue-next";
 import { computed, ref, watch } from "vue";
+import { formatStorageUrl } from "@/composables/useInitials";
 import Modal from "../../ui/Modal.vue";
 import OptimizedImage from "../../ui/OptimizedImage.vue";
 
@@ -152,7 +153,7 @@ const toggleFollowRelation = async (rel: any) => {
 							@click="emit('close')"
 							class="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 overflow-hidden flex items-center justify-center shrink-0 shadow-3xs cursor-pointer hover:scale-102 transition-transform"
 						>
-							<OptimizedImage v-if="rel.foto_path" :src="rel.foto_path.startsWith('http') ? rel.foto_path : '/storage/' + rel.foto_path" alt="Avatar" className="w-full h-full object-cover" />
+							<OptimizedImage v-if="rel.foto_path" :src="formatStorageUrl(rel.foto_path)!" alt="Avatar" className="w-full h-full object-cover" />
 							<div v-else class="w-full h-full bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
 								<span class="text-xs font-bold text-indigo-500 dark:text-indigo-400">{{ rel.name.charAt(0).toUpperCase() }}</span>
 							</div>

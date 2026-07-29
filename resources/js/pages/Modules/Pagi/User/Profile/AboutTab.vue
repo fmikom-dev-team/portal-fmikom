@@ -11,6 +11,7 @@ import {
 	X,
 } from "lucide-vue-next";
 import { computed, onMounted, onUnmounted, ref } from "vue";
+import AvatarGroup, { type AvatarItem } from "@/components/ui/AvatarGroup.vue";
 import { getInitialsAvatar } from "@/composables/useInitials";
 import OptimizedImage from "../ui/OptimizedImage.vue";
 
@@ -61,6 +62,45 @@ const emit = defineEmits<{
 	(e: "toggle-follow"): void;
 	(e: "open-chat"): void;
 }>();
+
+const formatAvatarUrl = (url: string | null | undefined) => {
+	if (!url || url === "null" || url === "undefined") return null;
+	if (
+		url.startsWith("http://") ||
+		url.startsWith("https://") ||
+		url.startsWith("data:")
+	)
+		return url;
+	const clean = url.replace(/^\/?(storage\/)+/, "");
+	return "/storage/" + clean;
+};
+
+const followerAvatars = computed<AvatarItem[]>(() => {
+	if (
+		props.profileUser?.recent_followers &&
+		Array.isArray(props.profileUser.recent_followers) &&
+		props.profileUser.recent_followers.length > 0
+	) {
+		return props.profileUser.recent_followers.map((f: any) => ({
+			id: f.id,
+			name: f.name,
+			pagi_username: f.pagi_username,
+			src: formatAvatarUrl(f.src || f.foto_path || f.avatar),
+		}));
+	}
+	if (props.profileUser?.followed_by_user) {
+		const f = props.profileUser.followed_by_user;
+		return [
+			{
+				id: f.id,
+				name: f.name,
+				pagi_username: f.pagi_username,
+				src: formatAvatarUrl(f.foto_path || f.avatar),
+			},
+		];
+	}
+	return [];
+});
 
 // Inline Bio Editor
 const isEditingBio = ref(false);
@@ -285,7 +325,7 @@ onUnmounted(() => {
 							:class="{ 'cursor-pointer': isOwnProfile }"
 							@click="isOwnProfile ? emit('open-avatar-modal') : null"
 						>
-							<OptimizedImage v-if="user.foto_path" :src="user.foto_path.startsWith('http') ? user.foto_path : '/storage/' + user.foto_path" className="w-full h-full object-cover" alt="User avatar" />
+							<OptimizedImage v-if="user.foto_path" :src="formatAvatarUrl(user.foto_path) || ''" className="w-full h-full object-cover" alt="User avatar" />
 							<div v-else class="w-full h-full bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-xl sm:text-2xl font-bold text-indigo-500">
 								{{ user.name.charAt(0) }}
 							</div>
@@ -295,30 +335,28 @@ onUnmounted(() => {
 								<span class="text-[8px] text-white font-bold uppercase tracking-wider mt-1">Update</span>
 							</div>
 						</div>
-						<!-- Name -->
-						<h2 class="text-2xl sm:text-[32px] font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2 leading-tight">
-							Meet {{ user.name }}
-							<img src="/premium.svg" class="w-5 h-5 sm:w-6 sm:h-6 shrink-0 select-none" title="Premium Account" alt="Verified Badge" />
+						<!-- Name with Verified Badge -->
+						<h2 class="text-2xl sm:text-[32px] font-bold text-slate-900 dark:text-white tracking-tight inline-flex flex-wrap items-center gap-1.5 sm:gap-2 leading-tight">
+							<span>Meet {{ user.name }}</span>
+							<img src="/premium.svg" class="w-5 h-5 sm:w-6 sm:h-6 shrink-0 select-none inline-block" title="Premium Account" alt="Verified Badge" />
 						</h2>
 					</div>
 
-					<!-- Follower Row -->
-					<div v-if="profileUser?.followed_by_user" class="flex items-center gap-2 mb-3 text-xs text-slate-550 dark:text-slate-400 font-semibold">
-						<Link :href="profileUser.followed_by_user.pagi_username ? '/pagi/' + profileUser.followed_by_user.pagi_username : '/pagi/profile/' + profileUser.followed_by_user.id">
-							<img 
-								:src="profileUser.followed_by_user.foto_path || getInitialsAvatar(profileUser.followed_by_user.name)" 
-								class="w-5 h-5 rounded-full border border-slate-200 dark:border-slate-800 object-cover cursor-pointer" 
-								alt="Follower Avatar" 
-							/>
-						</Link>
-						<span>
+					<!-- Follower Row with AvatarGroup (Instagram Style) -->
+					<div v-if="followerAvatars.length > 0" class="flex items-center gap-2.5 mb-3 text-xs text-slate-600 dark:text-slate-400 font-semibold select-none">
+						<AvatarGroup :avatars="followerAvatars" :size="22" :overlap="7" :maxVisible="3" />
+						<span class="leading-tight">
 							Followed by 
-							<Link 
-								:href="profileUser.followed_by_user.pagi_username ? '/pagi/' + profileUser.followed_by_user.pagi_username : '/pagi/profile/' + profileUser.followed_by_user.id" 
-								class="hover:text-indigo-600 font-bold transition-colors cursor-pointer"
-							>
-								{{ profileUser.followed_by_user.name }}
-							</Link>
+							<template v-for="(f, i) in followerAvatars.slice(0, 2)" :key="f.id || i">
+								<Link 
+									:href="f.pagi_username ? '/pagi/' + f.pagi_username : '/pagi/profile/' + f.id" 
+									class="hover:text-indigo-600 font-bold text-slate-800 dark:text-slate-200 transition-colors cursor-pointer"
+								>
+									{{ f.name }}
+								</Link>
+								<span v-if="i === 0 && followerAvatars.length > 1">, </span>
+							</template>
+							<span v-if="dynamicFollowersCount > followerAvatars.slice(0, 2).length" class="text-slate-500 font-medium"> and {{ dynamicFollowersCount - followerAvatars.slice(0, 2).length }} others</span>
 						</span>
 					</div>
 

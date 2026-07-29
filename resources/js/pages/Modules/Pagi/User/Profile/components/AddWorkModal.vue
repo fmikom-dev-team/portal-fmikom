@@ -209,7 +209,8 @@ const removeToolTag = (idx: number) => {
 let searchTimeout: any = null;
 const handleCollaboratorSearch = () => {
 	if (searchTimeout) clearTimeout(searchTimeout);
-	const q = addWorkCollaboratorsInput.value.trim();
+	const rawQ = addWorkCollaboratorsInput.value.trim();
+	const q = rawQ.replace(/^@/, "").trim();
 	if (q.length < 1) {
 		collaboratorsSuggestions.value = [];
 		showCollaboratorsDropdown.value = false;
@@ -874,40 +875,61 @@ watch(
 							</div>
 							<div class="w-full min-h-11 p-1.5 flex flex-wrap items-center gap-2 rounded-xl border border-slate-205 dark:border-slate-800 bg-transparent shadow-2xs focus-within:ring-1 focus-within:ring-slate-800">
 								<!-- Tags list -->
-								<span v-for="(tag, idx) in addWorkCollaboratorsTags" :key="idx" class="h-7 px-3 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 border border-slate-200/40 dark:border-slate-700/40 shadow-3xs">
-									{{ tag }}
-									<X class="w-3.5 h-3.5 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer shrink-0" @click="removeCollaboratorTag(idx)" />
+								<span v-for="(tag, idx) in addWorkCollaboratorsTags" :key="idx" class="h-7 px-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-xs font-black inline-flex items-center gap-1.5 border border-indigo-200/60 dark:border-indigo-800/40 shadow-3xs" :title="'Username: @' + tag">
+									<span>@{{ tag.replace(/^@/, '') }}</span>
+									<X class="w-3.5 h-3.5 text-indigo-400 hover:text-indigo-700 dark:hover:text-white cursor-pointer shrink-0" @click="removeCollaboratorTag(idx)" />
 								</span>
 								<!-- Input element -->
 								<input 
 									v-model="addWorkCollaboratorsInput" 
 									type="text" 
 									:disabled="addWorkCollaboratorsTags.length >= 3"
-									placeholder="Who else worked on this project?"
+									placeholder="Cari username kolaborator (@username)..."
 									@keydown.enter.prevent="addCollaboratorTag"
 									@input="handleCollaboratorSearch"
+									@focus="showCollaboratorsDropdown = true"
 									class="flex-1 h-8 px-2 bg-transparent text-xs font-semibold text-slate-800 dark:text-white placeholder-slate-400 focus:outline-hidden disabled:opacity-50 border-none min-w-[100px]"
 								/>
 							</div>
 							
 							<!-- Autocomplete Suggestions Dropdown for Collaborators -->
-							<div v-if="showCollaboratorsDropdown && collaboratorsSuggestions.length > 0 && addWorkCollaboratorsTags.length < 3" class="absolute bottom-full left-0 right-0 mb-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl rounded-2xl py-1.5 z-40 overflow-hidden max-h-[160px] overflow-y-auto">
-								<button 
-									type="button"
-									@click="addCollaboratorSuggestion(u.name)"
-									v-for="u in collaboratorsSuggestions" 
-									:key="u.id"
-									class="w-full px-4 py-2 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer border-none bg-transparent"
-								>
-									<div class="w-7 h-7 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0">
-										<img v-if="u.foto_path" :src="u.foto_path" alt="Avatar" class="w-full h-full object-cover" />
-										<span v-else class="text-slate-800 dark:text-slate-200 font-bold text-[10px]">{{ u.name.charAt(0).toUpperCase() }}</span>
-									</div>
-									<div class="min-w-0 flex-1">
-										<p class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate leading-none mb-0.5">{{ u.name }}</p>
-										<p class="text-[9px] text-slate-400 dark:text-slate-505 truncate leading-none">{{ u.role_title }}</p>
-									</div>
-								</button>
+							<div v-if="showCollaboratorsDropdown && addWorkCollaboratorsTags.length < 3 && addWorkCollaboratorsInput.trim().length >= 1" class="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl py-1.5 z-50 overflow-hidden max-h-[220px] overflow-y-auto animate-fade-in">
+								<!-- Loading State -->
+								<div v-if="isLoadingCollaborators" class="px-4 py-3 flex items-center justify-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 select-none">
+									<span class="inline-block w-4 h-4 border-2 border-slate-300 dark:border-slate-600 border-t-indigo-600 rounded-full animate-spin"></span>
+									<span>Mencari username...</span>
+								</div>
+
+								<!-- Suggestions List -->
+								<template v-else-if="collaboratorsSuggestions.length > 0">
+									<button 
+										type="button"
+										@mousedown.prevent="addCollaboratorSuggestion(u.pagi_username || u.name)"
+										v-for="u in collaboratorsSuggestions" 
+										:key="u.id"
+										class="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer border-none bg-transparent border-b border-slate-100 dark:border-slate-800/60 last:border-none"
+									>
+										<div class="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0">
+											<img v-if="u.foto_path" :src="u.foto_path" alt="Avatar" class="w-full h-full object-cover" />
+											<span v-else class="text-slate-800 dark:text-slate-200 font-bold text-xs">{{ (u.pagi_username || u.name).charAt(0).toUpperCase() }}</span>
+										</div>
+										<div class="min-w-0 flex-1">
+											<div class="flex items-center gap-1.5">
+												<p class="text-xs font-black text-indigo-600 dark:text-indigo-400 truncate leading-none">@{{ u.pagi_username || u.name }}</p>
+												<span v-if="u.is_self" class="px-1.5 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-[9px] font-bold">Anda</span>
+											</div>
+											<p class="text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate mt-1 leading-none">
+												Nama: <span class="font-normal text-slate-600 dark:text-slate-400">{{ u.name }}</span>
+											</p>
+											<p class="text-[9px] text-slate-400 dark:text-slate-500 truncate mt-0.5 leading-none font-medium">{{ u.role_title || 'PAGI Creator' }}</p>
+										</div>
+									</button>
+								</template>
+
+								<!-- No Results Empty State -->
+								<div v-else class="px-4 py-3 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 select-none">
+									Tidak ada pengguna ditemukan untuk "<span class="font-bold text-slate-800 dark:text-slate-200">{{ addWorkCollaboratorsInput.trim() }}</span>"
+								</div>
 							</div>
 							<span class="text-[10px] font-bold text-slate-404 dark:text-slate-550">Optional</span>
 						</div>

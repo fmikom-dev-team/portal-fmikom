@@ -29,13 +29,14 @@ import {
 import LazyWrapper from "@/components/Portal/LazyWrapper.vue";
 import ShadcnSearch from "@/components/ui/ShadcnSearch.vue";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getInitialsAvatar } from "@/composables/useInitials";
+import { formatStorageUrl, getInitialsAvatar } from "@/composables/useInitials";
 import { useLoadingState } from "@/composables/useLoadingState";
 import Navbar from "./ui/Navbar.vue";
 import OptimizedImage from "./ui/OptimizedImage.vue";
 
 const Preview = defineAsyncComponent(() => import("./ui/Preview.vue"));
 
+import AvatarGroup, { type AvatarItem } from "@/components/ui/AvatarGroup.vue";
 import PagiShareModal from "./ui/PagiShareModal.vue";
 import VideoLazy from "./ui/VideoLazy.vue";
 
@@ -313,6 +314,33 @@ const getAcceptedCollaborators = (project: any) => {
 	);
 };
 
+const getCollaborationAvatarsForCard = (project: any): AvatarItem[] => {
+	const accepted = (project.resolved_collaborators || []).filter(
+		(c: any) => c.status === "accepted",
+	);
+	if (accepted.length === 0) return [];
+	const list: AvatarItem[] = [];
+	if (project.user || project.author) {
+		list.push({
+			id: project.user?.id,
+			name: project.user?.name || project.author,
+			pagi_username: project.user?.pagi_username,
+			src: project.avatar || project.user?.avatar,
+		});
+	}
+	for (const c of accepted) {
+		if (!list.some((item) => item.id === c.id)) {
+			list.push({
+				id: c.id,
+				name: c.name,
+				pagi_username: c.pagi_username,
+				src: formatStorageUrl(c.avatar || c.foto_path),
+			});
+		}
+	}
+	return list;
+};
+
 // Interactive Like Handler
 const updateProjectInList = (id: number, updates: Partial<any>) => {
 	const updateItem = (item: any) =>
@@ -449,7 +477,7 @@ const handleSearchBlur = () => {
 		<title>PAGI — Explore</title>
 	</Head>
 
-    <div class="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-slate-200 dark:selection:bg-slate-800">
+    <div class="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-slate-200 dark:selection:bg-slate-800 overflow-x-hidden">
 
         <Navbar />
 
@@ -512,15 +540,15 @@ const handleSearchBlur = () => {
         </div>
 
         <!-- CATEGORY TABS -->
-        <div v-show="showFilters" class="sticky top-[100px] sm:top-[124px] z-30 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
+        <div v-show="showFilters" class="sticky top-[108px] sm:top-[116px] md:top-[120px] z-30 border-b border-slate-200/80 dark:border-zinc-800/80 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md shadow-2xs transition-all duration-200">
             <div class="mx-auto max-w-[1400px] px-3 sm:px-4">
-                <div class="flex items-center gap-1.5 sm:gap-2 py-3 sm:py-4 overflow-x-auto" style="scrollbar-width:none;">
+                <div class="flex items-center gap-1.5 sm:gap-2 py-2 sm:py-3 overflow-x-auto" style="scrollbar-width:none;">
                     <button v-for="cat in categories" :key="cat" @click="activeCategory = cat"
-                        :class="['shrink-0 rounded-xl px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium transition-all whitespace-nowrap',
-                            activeCategory === cat ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-150 dark:hover:bg-slate-900']">
+                        :class="['shrink-0 rounded-xl px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer border-none',
+                            activeCategory === cat ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-xs' : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-900']">
                         {{ cat }}
                     </button>
-                    <button aria-label="Next categories" class="shrink-0 p-2 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-450 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+                    <button aria-label="Next categories" class="shrink-0 p-2 rounded-xl bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors border-none cursor-pointer">
                         <ChevronRight class="h-3.5 w-3.5" />
                     </button>
                 </div>
@@ -528,10 +556,10 @@ const handleSearchBlur = () => {
         </div>
 
         <!-- MAIN -->
-        <main class="mx-auto max-w-[1400px] px-4 pt-10 pb-24 md:pb-16 transition-all duration-300">
+        <main class="mx-auto max-w-[1400px] px-3 sm:px-4 pt-4 sm:pt-8 pb-24 md:pb-16 transition-all duration-300">
             <Deferred :data="['feedProjects', 'followingFeedProjects']">
                 <template #fallback>
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-8 select-none">
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mb-8 select-none">
                         <div v-for="n in 8" :key="n" class="flex flex-col gap-2 p-1.5">
                             <Skeleton class="aspect-4/3 rounded-md w-full" />
                             <div class="flex items-center gap-2">
@@ -573,16 +601,16 @@ const handleSearchBlur = () => {
 
             <!-- Featured Grid -->
             <template v-else>
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-8">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mb-8">
 
                 <div v-for="(p, pIdx) in featuredProjects" :key="p.id" class="group" @click.self="closeMenu">
                     <div @click="openProjectModal(p)" class="relative rounded-md overflow-hidden aspect-4/3 bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 mb-2 cursor-pointer">
                         <VideoLazy v-if="isVideoUrl(p.image)" :src="p.image" :autoplay="true" :loop="true" :muted="true" :playsinline="true" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         <!-- First 2 images get fetchpriority=high (LCP candidates above the fold) -->
-                        <OptimizedImage v-else :src="p.image" :alt="p.title" :fetchpriority="'high'" :loading="'eager'" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <OptimizedImage v-else :src="p.image" :alt="p.title" :is-sensitive="Boolean(p.status === 'review' || p.status === 'hidden')" :fetchpriority="'high'" :loading="'eager'" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         
-                        <!-- Three-dot menu button at top right -->
-                        <div class="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <!-- Three-dot menu button at top right (Always visible on mobile/touch, hover on desktop) -->
+                        <div class="absolute top-3 right-3 z-20 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                             <div class="relative">
                                 <button @click.stop="toggleMenu(p.id, $event)" aria-label="Opsi karya" class="w-7 h-7 rounded-full bg-black/60 backdrop-blur-md hover:bg-black/80 flex items-center justify-center transition-all shadow-md cursor-pointer border-none" title="Opsi">
                                     <MoreHorizontal class="h-3.5 w-3.5 text-white" />
@@ -615,20 +643,8 @@ const handleSearchBlur = () => {
                         </div>
                     </div>
                     <div class="flex items-start gap-2">
-                        <div v-if="getAcceptedCollaborators(p).length > 0" class="flex -space-x-2 shrink-0">
-                            <Link v-if="p.user" :href="p.user.pagi_username ? '/pagi/' + p.user.pagi_username : '/pagi/profile/' + p.user.id" class="relative z-10 shrink-0">
-                                <OptimizedImage :src="p.avatar" :alt="p.author" className="h-6 w-6 rounded-full object-cover border-2 border-white dark:border-slate-900 shadow-sm" />
-                            </Link>
-                            <OptimizedImage v-else :src="p.avatar" :alt="p.author" className="h-6 w-6 rounded-full object-cover shrink-0 border-2 border-white dark:border-slate-900 shadow-sm" />
-                            
-                            <template v-for="(collab, idx) in getAcceptedCollaborators(p).slice(0, 2)" :key="collab.id">
-                                <Link :href="collab.pagi_username ? '/pagi/' + collab.pagi_username : '/pagi/profile/' + collab.id" class="shrink-0" :style="{ zIndex: 9 - Number(idx) }">
-                                    <img :src="collab.avatar || getInitialsAvatar(collab.name)" :alt="collab.name" :title="collab.name" class="h-6 w-6 rounded-full object-cover border-2 border-white dark:border-slate-900 shadow-sm" />
-                                </Link>
-                            </template>
-                            <div v-if="getAcceptedCollaborators(p).length > 2" class="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[8px] font-black text-slate-600 dark:text-slate-400 shrink-0 z-0 shadow-sm">
-                                +{{ getAcceptedCollaborators(p).length - 2 }}
-                            </div>
+                        <div v-if="getAcceptedCollaborators(p).length > 0" class="shrink-0">
+                            <AvatarGroup :avatars="getCollaborationAvatarsForCard(p)" :size="24" :overlap="8" :maxVisible="3" />
                         </div>
                         <template v-else>
                             <Link v-if="p.user" :href="p.user.pagi_username ? '/pagi/' + p.user.pagi_username : '/pagi/profile/' + p.user.id" class="shrink-0">
@@ -657,7 +673,7 @@ const handleSearchBlur = () => {
             </div>
 
             <!-- Feed Grid -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                 <LazyWrapper
                     v-for="p in regularProjects"
                     :key="p.id"
@@ -666,7 +682,7 @@ const handleSearchBlur = () => {
                     <div class="group" @click.self="closeMenu">
                     <div @click="openProjectModal(p)" class="relative rounded-md overflow-hidden aspect-4/3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 mb-2 cursor-pointer">
                         <VideoLazy v-if="isVideoUrl(p.image)" :src="p.image" :autoplay="true" :loop="true" :muted="true" :playsinline="true" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        <OptimizedImage v-else :src="p.image" :alt="p.title" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <OptimizedImage v-else :src="p.image" :alt="p.title" :is-sensitive="Boolean(p.status === 'review' || p.status === 'hidden')" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         
                         <!-- Three-dot menu button at top right -->
                         <div class="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -765,22 +781,10 @@ const handleSearchBlur = () => {
             :category="viewingProject.category"
             :tools-used="viewingProject.tools_used"
             :tags="viewingProject.tags"
+            :is-loading="isLoadingModal"
             @close="closeProjectModal" 
             @select-portfolio="openProjectModal($event)"
         />
-
-        <!-- Modal Loading Overlay (shown while lazy-loading project detail) -->
-        <Teleport to="body">
-            <div v-if="isLoadingModal" class="fixed inset-0 z-[10010] flex items-center justify-center bg-black/70 backdrop-blur-xs">
-                <div class="flex flex-col items-center gap-3">
-                    <svg class="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                    </svg>
-                    <span class="text-white/70 text-xs font-semibold">Memuat karya...</span>
-                </div>
-            </div>
-        </Teleport>
 
         <!-- TOAST ALERTS CONTAINER -->
         <div class="fixed top-6 right-6 z-10010 flex flex-col gap-3 max-w-xs pointer-events-none">

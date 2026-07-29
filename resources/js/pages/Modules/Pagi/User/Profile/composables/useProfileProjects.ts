@@ -1,3 +1,5 @@
+import { router } from "@inertiajs/vue3";
+import axios from "axios";
 import { computed, onUnmounted, ref, watch } from "vue";
 
 export function useProfileProjects(
@@ -68,6 +70,8 @@ export function useProfileProjects(
 			});
 			const data = await res.json();
 			if (!res.ok) throw new Error(data.error || "Failed");
+
+			router.reload({ preserveScroll: true });
 		} catch (e) {
 			localProjects.value = prevProjects;
 			addToast("Gagal menghapus project. Coba lagi.", "error");
@@ -75,6 +79,7 @@ export function useProfileProjects(
 	};
 
 	const viewingProject = ref<any>(null);
+	const isLoadingModal = ref(false);
 
 	const activeProjectSettings = computed(() => {
 		if (!viewingProject.value?.content) {
@@ -89,7 +94,7 @@ export function useProfileProjects(
 		);
 	});
 
-	const openProjectModal = (p: any) => {
+	const openProjectModal = async (p: any) => {
 		if (!page.props.auth?.user) {
 			addToast(
 				"Anda belum login. Silakan login terlebih dahulu untuk melihat karya.",
@@ -97,8 +102,52 @@ export function useProfileProjects(
 			);
 			return;
 		}
-		viewingProject.value = p;
+		viewingProject.value = { ...p };
 		document.body.style.overflow = "hidden";
+
+		if (!p.id) return;
+
+		if (p.content === undefined || p.comments === undefined) {
+			isLoadingModal.value = true;
+			try {
+				const [detailRes] = await Promise.all([
+					axios.get(`/pagi/preview/${p.id}/data`),
+					axios
+						.post(`/pagi/preview/${p.id}/view`)
+						.then((res) => {
+							p.views = res.data.views;
+							if (p.views_count !== undefined) {
+								p.views_count = res.data.views;
+							}
+						})
+						.catch(() => {}),
+				]);
+				Object.assign(p, detailRes.data);
+				viewingProject.value = { ...p };
+
+				const idx = localProjects.value.findIndex((item) => item.id === p.id);
+				if (idx !== -1) {
+					localProjects.value[idx] = {
+						...localProjects.value[idx],
+						...detailRes.data,
+					};
+				}
+			} catch (e) {
+				console.error("Failed to load project detail", e);
+			} finally {
+				isLoadingModal.value = false;
+			}
+		} else {
+			axios
+				.post(`/pagi/preview/${p.id}/view`)
+				.then((res) => {
+					p.views = res.data.views;
+					if (p.views_count !== undefined) {
+						p.views_count = res.data.views;
+					}
+				})
+				.catch(() => {});
+		}
 	};
 
 	const closeProjectModal = () => {
@@ -227,6 +276,7 @@ export function useProfileProjects(
 		isEditingQuickWork.value = false;
 		editingQuickWorkId.value = null;
 		editingProject.value = null;
+		router.reload({ preserveScroll: true });
 	};
 
 	const handleLikeUpdated = (data: {
@@ -308,6 +358,7 @@ export function useProfileProjects(
 		getProjectShareUrl,
 		deleteProject,
 		viewingProject,
+		isLoadingModal,
 		activeProjectSettings,
 		openProjectModal,
 		closeProjectModal,

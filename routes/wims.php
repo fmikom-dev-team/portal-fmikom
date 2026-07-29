@@ -212,6 +212,8 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
         Route::get('/penilaian-mahasiswa/{pendaftaran}/final-report/download', [MitraPenilaianMahasiswaController::class, 'downloadFinalReport'])
             ->name('assessments.final-report.download');
 
+        Route::get('/ketidakhadiran/{ketidakhadiran}/bukti/download', [MitraKetidakhadiranController::class, 'downloadProof'])
+            ->name('absence.proof.download');
         Route::post('/ketidakhadiran/{ketidakhadiran}/approve', [MitraKetidakhadiranController::class, 'approve'])
             ->name('absence.approve');
         Route::post('/ketidakhadiran/{ketidakhadiran}/reject', [MitraKetidakhadiranController::class, 'reject'])

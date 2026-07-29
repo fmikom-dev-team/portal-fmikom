@@ -198,21 +198,24 @@ const toggleNotifPanel = () => {
 	isNotifPanelOpen.value = !isNotifPanelOpen.value;
 };
 
-const handleNotifClick = (notif: any) => {
+const handleNotifClick = async (notif: any) => {
 	if (notif.unread) {
 		// Optimistic update
 		notif.unread = false;
-		// Persist to server
-		fetch(`/pagi/notifications/${notif.id}/mark-read`, {
-			method: "POST",
-			headers: {
-				"X-CSRF-TOKEN": (document.querySelector("meta[name=csrf-token]") as any)
-					?.content,
-				Accept: "application/json",
-			},
-		}).catch(() => {
+		// Persist to server before navigating
+		try {
+			await fetch(`/pagi/notifications/${notif.id}/mark-read`, {
+				method: "POST",
+				headers: {
+					"X-CSRF-TOKEN": (
+						document.querySelector("meta[name=csrf-token]") as any
+					)?.content,
+					Accept: "application/json",
+				},
+			});
+		} catch {
 			notif.unread = true;
-		});
+		}
 	}
 	isNotifPanelOpen.value = false;
 
@@ -245,17 +248,36 @@ const markAllNotifsAsRead = () => {
 // Push a new real-time notification to the top of the list
 const pushRealtimeNotif = (notification: any) => {
 	const payload = notification?.data ? notification.data : notification;
+	const id = notification?.id ?? String(Date.now());
+	const type = payload?.type ?? "system";
+	const message = payload?.message ?? "";
+	const senderId = payload?.sender_id ?? null;
+	const portfolioId = payload?.portfolio_id ?? payload?.work_id ?? null;
+
+	// Deduplication check: Avoid inserting duplicate notifications
+	const exists = rawNotifs.value.some(
+		(n) =>
+			(notification?.id && n.id === notification.id) ||
+			(n.type === type &&
+				n.message === message &&
+				n.sender_id === senderId &&
+				n.portfolio_id === portfolioId),
+	);
+	if (exists) return;
 
 	const mappedNotif = {
-		id: notification?.id ?? String(Date.now()),
-		type: payload?.type ?? "system",
+		id: id,
+		type: type,
 		title: payload?.title ?? "PAGI",
-		message: payload?.message ?? "",
+		message: message,
 		avatar: payload?.avatar ?? null,
 		href: payload?.href ?? "/pagi",
 		unread: true,
 		time: "baru saja",
 		created_at: new Date().toISOString(),
+		sender_id: senderId,
+		portfolio_id: portfolioId,
+		work_image: payload?.work_image ?? null,
 		extra: payload,
 	};
 
@@ -328,9 +350,6 @@ function subscribeUserChannel(userId: number | string) {
 		.listen(".unread.count.updated", (data: any) => {
 			unreadMessagesCount.value = Number(data.unread_messages_count);
 		})
-		.listen(".pagi.notification", (data: any) => {
-			pushRealtimeNotif(data);
-		})
 		.notification((data: any) => {
 			pushRealtimeNotif(data);
 		});
@@ -402,14 +421,14 @@ onUnmounted(() => {
 					<Link href="/pagi" class="hidden md:flex items-center gap-2.5 shrink-0 group">
 						<div 
 							class="h-8 w-8 rounded-xl flex items-center justify-center overflow-hidden transition-all duration-300"
-							:class="siteSettings.brand_logo ? 'bg-transparent border border-slate-200 dark:border-zinc-800' : 'bg-gradient-to-br from-indigo-650 to-purple-650 shadow-md group-hover:shadow-indigo-200 dark:group-hover:shadow-indigo-900'"
+							:class="siteSettings.brand_logo ? 'bg-transparent border-0 p-0 shadow-none' : 'bg-gradient-to-br from-indigo-650 to-purple-650 shadow-md group-hover:shadow-indigo-200 dark:group-hover:shadow-indigo-900'"
 						>
 							<img v-if="siteSettings.brand_logo" :src="siteSettings.brand_logo" class="h-full w-full object-contain" alt="Logo" />
 							<span v-else class="text-white text-xs font-black tracking-tight">P</span>
 						</div>
 						<div class="flex flex-col">
 							<span class="text-sm font-black text-slate-900 dark:text-zinc-100 leading-none tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">PAGI</span>
-							<span class="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest leading-none mt-0.5">FMIKOM UNUGHA</span>
+							<span class="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest leading-none mt-0.5">{{ siteSettings.brand_subtitle || 'Fakultas Matematika dan Ilmu Komputer' }}</span>
 						</div>
 					</Link>
 

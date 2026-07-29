@@ -72,7 +72,11 @@ export const useEditorCanvas = (form: any) => {
 	);
 
 	const spacingInPx = computed(() => {
-		return (globalSpacing.value / 100) * 80;
+		const base = (globalSpacing.value / 100) * 80;
+		if (windowWidth.value < 768) {
+			return Math.max(8, Math.round(base * 0.45));
+		}
+		return base;
 	});
 
 	// Compute dynamic container width based on viewport

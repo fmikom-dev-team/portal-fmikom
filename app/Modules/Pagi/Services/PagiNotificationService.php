@@ -2,8 +2,10 @@
 
 namespace App\Modules\Pagi\Services;
 
+use App\Models\Pagi\PagiWork;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class PagiNotificationService
 {
@@ -26,8 +28,62 @@ class PagiNotificationService
             });
         }
 
-        $rawNotifs = $notifs->map(function ($notif) {
+        // Batch resolve portfolio work cover images
+        $portfolioIds = $notifs->map(fn ($n) => $n->data['portfolio_id'] ?? $n->data['work_id'] ?? null)->filter()->unique()->values();
+        $worksMap = [];
+        if ($portfolioIds->isNotEmpty()) {
+            $works = PagiWork::query()->whereIn('id', $portfolioIds)->select('id', 'cover_image', 'content')->get();
+            foreach ($works as $w) {
+                $img = null;
+                if ($w->cover_image) {
+                    $img = str_starts_with($w->cover_image, 'http') ? $w->cover_image : asset('storage/'.$w->cover_image);
+                } elseif (is_array($w->content)) {
+                    foreach ($w->content as $b) {
+                        if (isset($b['preview']) && is_string($b['preview']) && ! str_starts_with($b['preview'], 'blob:')) {
+                            $img = str_starts_with($b['preview'], 'http') ? $b['preview'] : asset('storage/'.$b['preview']);
+                            break;
+                        }
+                        if (isset($b['file_path']) && is_string($b['file_path'])) {
+                            $img = asset('storage/'.$b['file_path']);
+                            break;
+                        }
+                    }
+                }
+                $worksMap[$w->id] = $img;
+            }
+        }
+
+        $user = Auth::user();
+
+        $rawNotifs = $notifs->map(function ($notif) use ($worksMap, $user) {
             $data = $notif->data;
+            $pId = $data['portfolio_id'] ?? $data['work_id'] ?? null;
+            $workImage = $data['work_image'] ?? ($pId ? ($worksMap[$pId] ?? null) : null);
+
+            $isHandled = isset($data['collaboration_handled']) ? (bool) $data['collaboration_handled'] : false;
+            $collabStatus = $data['collaboration_status'] ?? null;
+
+            // Fallback check if user has already accepted or declined collaboration on the work
+            if (! $isHandled && $pId && $user) {
+                $work = PagiWork::query()->find($pId);
+                if ($work && is_array($work->content)) {
+                    foreach ($work->content as $block) {
+                        if (isset($block['type']) && $block['type'] === 'featured_details' && isset($block['collaborators']) && is_array($block['collaborators'])) {
+                            foreach ($block['collaborators'] as $c) {
+                                $cName = is_array($c) ? ($c['name'] ?? '') : (string) $c;
+                                $cStatus = is_array($c) ? ($c['status'] ?? 'pending') : 'accepted';
+                                $cUserId = is_array($c) ? ($c['user_id'] ?? null) : null;
+                                if (($cUserId && $cUserId == $user->id) || ltrim($cName, '@') === $user->pagi_username || $cName === $user->name) {
+                                    if ($cStatus === 'accepted') {
+                                        $isHandled = true;
+                                        $collabStatus = 'accept';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             return [
                 'id' => $notif->id,
@@ -40,30 +96,39 @@ class PagiNotificationService
                 'time' => $notif->created_at->diffForHumans(),
                 'created_at' => $notif->created_at->toISOString(),
                 'sender_id' => $data['sender_id'] ?? null,
-                'portfolio_id' => $data['portfolio_id'] ?? null,
+                'portfolio_id' => $pId,
+                'work_image' => $workImage,
+                'is_invite' => isset($data['is_invite']) ? (bool) $data['is_invite'] : (! str_contains($data['message'] ?? '', 'menerima') && ! str_contains($data['message'] ?? '', 'ditolak')),
+                'collaboration_handled' => $isHandled,
+                'collaboration_status' => $collabStatus,
             ];
         });
 
         $now = now();
         $todayStart = $now->copy()->startOfDay();
+        $yesterdayStart = $now->copy()->subDay()->startOfDay();
         $weekStart = $now->copy()->subDays(7)->startOfDay();
         $monthStart = $now->copy()->subDays(30)->startOfDay();
 
         $groups = [];
 
         $today = $rawNotifs->filter(fn ($n) => Carbon::parse($n['created_at'])->gte($todayStart));
-        $week = $rawNotifs->filter(fn ($n) => Carbon::parse($n['created_at'])->lt($todayStart) && Carbon::parse($n['created_at'])->gte($weekStart));
+        $yesterday = $rawNotifs->filter(fn ($n) => Carbon::parse($n['created_at'])->lt($todayStart) && Carbon::parse($n['created_at'])->gte($yesterdayStart));
+        $week = $rawNotifs->filter(fn ($n) => Carbon::parse($n['created_at'])->lt($yesterdayStart) && Carbon::parse($n['created_at'])->gte($weekStart));
         $month = $rawNotifs->filter(fn ($n) => Carbon::parse($n['created_at'])->lt($weekStart) && Carbon::parse($n['created_at'])->gte($monthStart));
         $older = $rawNotifs->filter(fn ($n) => Carbon::parse($n['created_at'])->lt($monthStart));
 
         if ($today->isNotEmpty()) {
-            $groups[] = ['group' => 'Hari Ini',  'items' => $today->values()];
+            $groups[] = ['group' => 'Hari Ini', 'items' => $today->values()];
+        }
+        if ($yesterday->isNotEmpty()) {
+            $groups[] = ['group' => 'Kemarin', 'items' => $yesterday->values()];
         }
         if ($week->isNotEmpty()) {
-            $groups[] = ['group' => 'Minggu Ini', 'items' => $week->values()];
+            $groups[] = ['group' => '7 Hari Terakhir', 'items' => $week->values()];
         }
         if ($month->isNotEmpty()) {
-            $groups[] = ['group' => 'Bulan Ini', 'items' => $month->values()];
+            $groups[] = ['group' => '30 Hari Terakhir', 'items' => $month->values()];
         }
         if ($older->isNotEmpty()) {
             $groups[] = ['group' => 'Sebelumnya', 'items' => $older->values()];

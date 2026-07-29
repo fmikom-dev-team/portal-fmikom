@@ -202,8 +202,8 @@ class PortalController extends Controller
                 'admin', 'super-admin', 'super_admin', 'admin-universitas', 'admin-akademik', 'prodi' => 'admin.dashboard',
                 'kaprodi', 'dekan' => 'approval.dashboard',
                 'dosen' => 'dosen.dashboard',
-                'mahasiswa', 'alumni' => 'fast.user.dashboard',
-                default => 'fast.user.dashboard',
+                'mahasiswa', 'alumni' => 'mahasiswa.dashboard',
+                default => 'mahasiswa.dashboard',
             };
         }
 
