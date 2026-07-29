@@ -328,8 +328,6 @@ trait FormatsPortfolioData
             }
         }
 
-        $names = array_values(array_filter($names, fn ($n) => is_string($n) && $n !== ''));
-
         return [$names, $statusMap];
     }
 }

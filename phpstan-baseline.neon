@@ -25,12 +25,6 @@ parameters:
 			path: app/Console/Commands/MigrateFastFilesToPrivate.php
 
 		-
-			message: '#^Ternary operator condition is always true\.$#'
-			identifier: ternary.alwaysTrue
-			count: 1
-			path: app/Console/Commands/MigrateFastFilesToPrivate.php
-
-		-
 			message: '#^Strict comparison using \=\=\= between string\|null and false will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
 			count: 1
@@ -1339,12 +1333,6 @@ parameters:
 			path: app/Modules/Pagi/Requests/StorePortfolioRequest.php
 
 		-
-			message: '#^Result of && is always false\.$#'
-			identifier: booleanAnd.alwaysFalse
-			count: 1
-			path: app/Modules/Pagi/Requests/StorePortfolioRequest.php
-
-		-
 			message: '#^Call to function is_array\(\) with \*NEVER\* will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
@@ -1365,12 +1353,6 @@ parameters:
 		-
 			message: '#^Offset ''files'' on \*NEVER\* in isset\(\) always exists and is not nullable\.$#'
 			identifier: isset.offset
-			count: 1
-			path: app/Modules/Pagi/Requests/UpdatePortfolioRequest.php
-
-		-
-			message: '#^Result of && is always false\.$#'
-			identifier: booleanAnd.alwaysFalse
 			count: 1
 			path: app/Modules/Pagi/Requests/UpdatePortfolioRequest.php
 
@@ -1477,6 +1459,12 @@ parameters:
 			path: app/Modules/Pagi/Services/PagiProfileService.php
 
 		-
+			message: '#^Strict comparison using \!\=\= between non\-empty\-string and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Modules/Pagi/Services/PagiProfileService.php
+
+		-
 			message: '#^Using nullsafe property access on non\-nullable type stdClass\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
@@ -1549,12 +1537,6 @@ parameters:
 			path: app/Modules/Pagi/Services/PagiSocialService.php
 
 		-
-			message: '#^Call to function is_string\(\) with non\-empty\-string will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: app/Modules/Pagi/Services/PagiSocialService.php
-
-		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\UserModuleRole\>\:\:map\(\) contains unresolvable type\.$#'
 			identifier: argument.unresolvableType
 			count: 2
@@ -1582,12 +1564,6 @@ parameters:
 			message: '#^Relation ''user'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
 			identifier: larastan.relationExistence
 			count: 2
-			path: app/Modules/Pagi/Services/PagiSocialService.php
-
-		-
-			message: '#^Strict comparison using \!\=\= between non\-empty\-string and '''' will always evaluate to true\.$#'
-			identifier: notIdentical.alwaysTrue
-			count: 1
 			path: app/Modules/Pagi/Services/PagiSocialService.php
 
 		-
@@ -2044,18 +2020,6 @@ parameters:
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
 			count: 2
-			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$periode_mulai\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$periode_selesai\.$#'
-			identifier: property.notFound
-			count: 1
 			path: app/Modules/Wims/Services/Admin/AdminAssessmentRecapExportService.php
 
 		-
@@ -2953,18 +2917,6 @@ parameters:
 			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
 
 		-
-			message: '#^Relation ''device'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Modules/WorkOs/Controllers/Auth/AuditController.php
-
-		-
-			message: '#^Relation ''user'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Modules/WorkOs/Controllers/Auth/AuditController.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\ProgramStudi\:\:\$label\.$#'
 			identifier: property.notFound
 			count: 1
@@ -3007,10 +2959,22 @@ parameters:
 			path: app/Modules/WorkOs/Controllers/Auth/MFAController.php
 
 		-
-			message: '#^Relation ''device'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
-			identifier: larastan.relationExistence
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$browser\.$#'
+			identifier: property.notFound
 			count: 1
-			path: app/Modules/WorkOs/Controllers/Auth/SessionController.php
+			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
 
 		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'
@@ -3019,14 +2983,8 @@ parameters:
 			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
 
 		-
-			message: '#^Relation ''device'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
-
-		-
-			message: '#^Relation ''user'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
-			identifier: larastan.relationExistence
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Auth\\AuthSession\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
 			count: 1
 			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
 
@@ -3253,12 +3211,6 @@ parameters:
 			path: app/Modules/WorkOs/Controllers/UsersController.php
 
 		-
-			message: '#^Relation ''device'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Modules/WorkOs/Controllers/UsersController.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>label" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
@@ -3379,32 +3331,20 @@ parameters:
 			path: app/Modules/WorkOs/Services/Radar/DetectionEngine.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Auth\\AuthSession\:\:\$device\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/WorkOs/Services/Sessions/AuthSessionService.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Auth\\AuthSession\:\:\$user\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/WorkOs/Services/Sessions/AuthSessionService.php
-
-		-
 			message: '#^Argument of an invalid type Illuminate\\Contracts\\Pagination\\LengthAwarePaginator supplied for foreach, only iterables are supported\.$#'
 			identifier: foreach.nonIterable
 			count: 1
 			path: app/Modules/WorkOs/Services/Sessions/AuthSessionService.php
 
 		-
-			message: '#^Relation ''device'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
-			identifier: larastan.relationExistence
+			message: '#^Parameter \#1 \$user of method App\\Modules\\WorkOs\\Services\\Sessions\\AuthSessionService\:\:resolveAuthenticationMethod\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
 			count: 1
 			path: app/Modules/WorkOs/Services/Sessions/AuthSessionService.php
 
 		-
-			message: '#^Relation ''user'' is not found in App\\Models\\Auth\\AuthSession model\.$#'
-			identifier: larastan.relationExistence
+			message: '#^Parameter \#1 \$user of method App\\Modules\\WorkOs\\Services\\Sessions\\AuthSessionService\:\:resolveUserOrganization\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
 			count: 1
 			path: app/Modules/WorkOs/Services/Sessions/AuthSessionService.php
 
