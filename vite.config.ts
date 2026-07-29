@@ -100,7 +100,9 @@ export default defineConfig(async () => {
 						},
 						readFile: (file: string) => {
 							try {
-								return statSync(file).isFile() ? readFileSync(file, "utf-8") : "";
+								return statSync(file).isFile()
+									? readFileSync(file, "utf-8")
+									: "";
 							} catch {
 								return "";
 							}
