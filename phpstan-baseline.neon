@@ -169,6 +169,18 @@ parameters:
 			path: app/Http/Middleware/Auth/SecureSession.php
 
 		-
+			message: '#^Call to function method_exists\(\) with App\\Models\\User and ''isAdmin'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Http/Middleware/CheckMaintenanceMode.php
+
+		-
+			message: '#^Call to function method_exists\(\) with App\\Models\\User and ''isSuperAdmin'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Http/Middleware/CheckMaintenanceMode.php
+
+		-
 			message: '#^Cannot call method addMinutes\(\) on string\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -461,6 +473,30 @@ parameters:
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Models/Pagi/PagiWork.php
+
+		-
+			message: '#^Call to function is_array\(\) with non\-falsy\-string will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: app/Models/Portal/PortalEvent.php
+
+		-
+			message: '#^Call to function is_string\(\) with non\-falsy\-string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Models/Portal/PortalEvent.php
+
+		-
+			message: '#^Parameter \#1 \$array \(\*NEVER\*\) to function array_filter contains falsy values only, the result will always be an empty array\.$#'
+			identifier: arrayFilter.alwaysEmpty
+			count: 1
+			path: app/Models/Portal/PortalEvent.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{\}\) to function array_values is empty, call has no effect\.$#'
+			identifier: arrayValues.empty
+			count: 1
+			path: app/Models/Portal/PortalEvent.php
 
 		-
 			message: '#^Using nullsafe property access on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
@@ -1081,12 +1117,6 @@ parameters:
 			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
 
 		-
-			message: '#^Offset ''cover_image'' on array\{title\: ''3D Visualisasi…'', user_email\: ''johan@student…'', description\: ''Rendering interior…'', category\: ''3D Modeling'', views_count\: 870, is_published\: true, status\: ''review'', cover_image\: ''https\://images…''\}\|array\{title\: ''Desain Poster Event…'', user_email\: ''naufal@student…'', description\: ''Poster promosi…'', category\: ''Graphic Design'', views_count\: 120, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Eksplorasi…'', user_email\: ''dimas@student…'', description\: ''Konsep tipografi…'', category\: ''Graphic Design'', views_count\: 980, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Perancangan UI…'', user_email\: ''sarah@student…'', description\: ''Eksplorasi UI/UX…'', category\: ''Design & UI/UX'', views_count\: 1200, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Prototype Aplikasi…'', user_email\: ''rizki@student…'', description\: ''Aplikasi pencarian…'', category\: ''Product Design'', views_count\: 320, is_published\: true, status\: ''hidden'', cover_image\: ''https\://images…''\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Modules/Pagi/Controllers/AdminDashboardController.php
-
-		-
 			message: '#^Relation ''user'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
 			identifier: larastan.relationExistence
 			count: 3
@@ -1095,20 +1125,110 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Models\\Pagi\\PagiWork\:\:\$user\.$#'
 			identifier: property.notFound
+			count: 3
+			path: app/Modules/Pagi/Controllers/AdminModerationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$cover_image\.$#'
+			identifier: property.notFound
 			count: 1
 			path: app/Modules/Pagi/Controllers/AdminModerationController.php
 
 		-
-			message: '#^Offset ''cover_image'' on array\{title\: ''3D Visualisasi…'', user_email\: ''johan@student…'', description\: ''Rendering interior…'', category\: ''3D Modeling'', views_count\: 870, is_published\: true, status\: ''review'', cover_image\: ''https\://images…''\}\|array\{title\: ''Desain Poster Event…'', user_email\: ''naufal@student…'', description\: ''Poster promosi…'', category\: ''Graphic Design'', views_count\: 120, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Eksplorasi…'', user_email\: ''dimas@student…'', description\: ''Konsep tipografi…'', category\: ''Graphic Design'', views_count\: 980, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Perancangan UI…'', user_email\: ''sarah@student…'', description\: ''Eksplorasi UI/UX…'', category\: ''Design & UI/UX'', views_count\: 1200, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Prototype Aplikasi…'', user_email\: ''rizki@student…'', description\: ''Aplikasi pencarian…'', category\: ''Product Design'', views_count\: 320, is_published\: true, status\: ''hidden'', cover_image\: ''https\://images…''\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminModerationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminModerationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Pagi/Controllers/AdminModerationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminModerationController.php
+
+		-
+			message: '#^Match arm comparison between ''actioned''\|''dismissed''\|''reviewed'' and ''report'' is always false\.$#'
+			identifier: match.alwaysFalse
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminModerationController.php
+
+		-
+			message: '#^Match arm comparison between ''actioned''\|''dismissed''\|''reviewed'' and ''review'' is always false\.$#'
+			identifier: match.alwaysFalse
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminModerationController.php
+
+		-
+			message: '#^Match arm comparison between ''actioned''\|''dismissed''\|''reviewed'' and ''tinjauan'' is always false\.$#'
+			identifier: match.alwaysFalse
 			count: 1
 			path: app/Modules/Pagi/Controllers/AdminModerationController.php
 
 		-
 			message: '#^Relation ''user'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
 			identifier: larastan.relationExistence
+			count: 2
+			path: app/Modules/Pagi/Controllers/AdminModerationController.php
+
+		-
+			message: '#^Result of \|\| is always false\.$#'
+			identifier: booleanOr.alwaysFalse
 			count: 1
 			path: app/Modules/Pagi/Controllers/AdminModerationController.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminModerationController.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between ''actioned''\|''dismissed''\|''pending''\|''reviewed'' and ''review'' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminModerationController.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between ''actioned''\|''dismissed''\|''pending''\|''reviewed'' and ''tinjauan'' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 2
+			path: app/Modules/Pagi/Controllers/AdminModerationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Pagi\\PagiWork\:\:\$tags\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminShowcaseController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Pagi\\PagiWork\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/Pagi/Controllers/AdminShowcaseController.php
+
+		-
+			message: '#^Relation ''tags'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminShowcaseController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Pagi\\PagiWork model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminShowcaseController.php
 
 		-
 			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:notify\(\)\.$#'
@@ -1117,26 +1237,20 @@ parameters:
 			path: app/Modules/Pagi/Controllers/AdminUserController.php
 
 		-
-			message: '#^Offset ''cover_image'' on array\{title\: ''3D Visualisasi…'', user_email\: ''johan@student…'', description\: ''Rendering interior…'', category\: ''3D Modeling'', views_count\: 870, is_published\: true, status\: ''review'', cover_image\: ''https\://images…''\}\|array\{title\: ''Desain Poster Event…'', user_email\: ''naufal@student…'', description\: ''Poster promosi…'', category\: ''Graphic Design'', views_count\: 120, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Eksplorasi…'', user_email\: ''dimas@student…'', description\: ''Konsep tipografi…'', category\: ''Graphic Design'', views_count\: 980, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Perancangan UI…'', user_email\: ''sarah@student…'', description\: ''Eksplorasi UI/UX…'', category\: ''Design & UI/UX'', views_count\: 1200, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Prototype Aplikasi…'', user_email\: ''rizki@student…'', description\: ''Aplikasi pencarian…'', category\: ''Product Design'', views_count\: 320, is_published\: true, status\: ''hidden'', cover_image\: ''https\://images…''\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
+			message: '#^Call to function is_object\(\) with App\\Enums\\UserAccountStatus will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Modules/Pagi/Controllers/AdminUserController.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
 			count: 1
 			path: app/Modules/Pagi/Controllers/AdminUserController.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$cover_image\.$#'
 			identifier: property.notFound
-			count: 1
-			path: app/Modules/Pagi/Controllers/AdminWorkController.php
-
-		-
-			message: '#^Comparison operation "\>\=" between 6 and 3 is always true\.$#'
-			identifier: greaterOrEqual.alwaysTrue
-			count: 1
-			path: app/Modules/Pagi/Controllers/AdminWorkController.php
-
-		-
-			message: '#^Offset ''cover_image'' on array\{title\: ''3D Visualisasi…'', user_email\: ''johan@student…'', description\: ''Rendering interior…'', category\: ''3D Modeling'', views_count\: 870, is_published\: true, status\: ''review'', cover_image\: ''https\://images…''\}\|array\{title\: ''Desain Poster Event…'', user_email\: ''naufal@student…'', description\: ''Poster promosi…'', category\: ''Graphic Design'', views_count\: 120, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Eksplorasi…'', user_email\: ''dimas@student…'', description\: ''Konsep tipografi…'', category\: ''Graphic Design'', views_count\: 980, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Perancangan UI…'', user_email\: ''sarah@student…'', description\: ''Eksplorasi UI/UX…'', category\: ''Design & UI/UX'', views_count\: 1200, is_published\: true, status\: ''active'', cover_image\: ''https\://images…''\}\|array\{title\: ''Prototype Aplikasi…'', user_email\: ''rizki@student…'', description\: ''Aplikasi pencarian…'', category\: ''Product Design'', views_count\: 320, is_published\: true, status\: ''hidden'', cover_image\: ''https\://images…''\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
 			count: 1
 			path: app/Modules/Pagi/Controllers/AdminWorkController.php
 
@@ -1201,6 +1315,72 @@ parameters:
 			path: app/Modules/Pagi/Controllers/PagiEditorController.php
 
 		-
+			message: '#^Call to function is_array\(\) with \*NEVER\* will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Modules/Pagi/Requests/StorePortfolioRequest.php
+
+		-
+			message: '#^Call to function is_array\(\) with resource\|string\|false\|null will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: app/Modules/Pagi/Requests/StorePortfolioRequest.php
+
+		-
+			message: '#^Offset ''file'' on \*NEVER\* in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: app/Modules/Pagi/Requests/StorePortfolioRequest.php
+
+		-
+			message: '#^Offset ''files'' on \*NEVER\* in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: app/Modules/Pagi/Requests/StorePortfolioRequest.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: app/Modules/Pagi/Requests/StorePortfolioRequest.php
+
+		-
+			message: '#^Call to function is_array\(\) with \*NEVER\* will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Modules/Pagi/Requests/UpdatePortfolioRequest.php
+
+		-
+			message: '#^Call to function is_array\(\) with resource\|string\|false\|null will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: app/Modules/Pagi/Requests/UpdatePortfolioRequest.php
+
+		-
+			message: '#^Offset ''file'' on \*NEVER\* in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: app/Modules/Pagi/Requests/UpdatePortfolioRequest.php
+
+		-
+			message: '#^Offset ''files'' on \*NEVER\* in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: app/Modules/Pagi/Requests/UpdatePortfolioRequest.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: app/Modules/Pagi/Requests/UpdatePortfolioRequest.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<72, 255\> and 60 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: app/Modules/Pagi/Services/ContentModerationService.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$body\.$#'
 			identifier: property.notFound
 			count: 1
@@ -1263,6 +1443,36 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model&object\{pivot\: Illuminate\\Database\\Eloquent\\Relations\\Pivot\}\:\:\$pagi_username\.$#'
 			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Services/PagiProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$foto_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Services/PagiProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Services/PagiProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Services/PagiProfileService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$pagi_username\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/Pagi/Services/PagiProfileService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
 			count: 1
 			path: app/Modules/Pagi/Services/PagiProfileService.php
 
@@ -1379,6 +1589,12 @@ parameters:
 			identifier: notIdentical.alwaysTrue
 			count: 1
 			path: app/Modules/Pagi/Services/PagiSocialService.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 2
+			path: app/Modules/Portal/Controllers/PortalEventController.php
 
 		-
 			message: '#^Relation ''children'' is not found in App\\Models\\Portal\\PortalMenu model\.$#'
@@ -2679,24 +2895,36 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
 			identifier: property.notFound
+			count: 6
+			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nomor_induk\.$#'
+			identifier: property.notFound
 			count: 3
 			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status_approval\.$#'
 			identifier: property.notFound
-			count: 2
+			count: 1
 			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
 
 		-
 			message: '#^Method App\\Modules\\WorkOs\\Controllers\\Auth\\ActivationController\:\:passwordRules\(\) should return array\<int, array\<mixed\>\|Illuminate\\Contracts\\Validation\\Rule\|string\> but returns list\<int, App\\Rules\\NotUsedPassword\|App\\Rules\\PasswordComplexityRule\|Illuminate\\Validation\\Rules\\Password\|string\>\.$#'
 			identifier: return.type
-			count: 1
-			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Services\\Auth\\ActivationService\:\:completeActivation\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
 			count: 1
 			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
 
@@ -2713,8 +2941,14 @@ parameters:
 			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
 
 		-
-			message: '#^Parameter \#1 \$user of static method Illuminate\\Support\\Facades\\Auth\:\:login\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>expires_at" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
 
@@ -2839,12 +3073,6 @@ parameters:
 			path: app/Modules/WorkOs/Controllers/DashboardController.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Module\:\:\$roles\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/WorkOs/Controllers/DashboardController.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$browser\.$#'
 			identifier: property.notFound
 			count: 1
@@ -2863,6 +3091,12 @@ parameters:
 			path: app/Modules/WorkOs/Controllers/DashboardController.php
 
 		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$deskripsi\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$group\.$#'
 			identifier: property.notFound
 			count: 1
@@ -2870,6 +3104,12 @@ parameters:
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Modules/WorkOs/Controllers/DashboardController.php
@@ -2887,8 +3127,26 @@ parameters:
 			path: app/Modules/WorkOs/Controllers/DashboardController.php
 
 		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$permissions_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$pivot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
 			identifier: property.notFound
+			count: 2
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Anonymous function should return array\{id\: int, code\: string, name\: string, description\: string\|null, users_count\: mixed, is_active\: bool, roles\: Illuminate\\Support\\Collection\<int, array\{id\: mixed, nama\: mixed, slug\: mixed, deskripsi\: mixed, is_default\: mixed, permissions_count\: mixed\}\>, created_at\: non\-falsy\-string\|null\} but returns array\{id\: int, code\: string, name\: string, description\: string\|null, users_count\: mixed, is_active\: bool, roles\: Illuminate\\Support\\Collection\<int, array\{id\: int, nama\: mixed, slug\: mixed, deskripsi\: mixed, is_default\: mixed, permissions_count\: mixed\}\>, created_at\: non\-falsy\-string\|null\}\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Modules/WorkOs/Controllers/DashboardController.php
 
@@ -2919,13 +3177,7 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
 			identifier: argument.unresolvableType
-			count: 1
-			path: app/Modules/WorkOs/Controllers/DashboardController.php
-
-		-
-			message: '#^Relation ''roles'' is not found in App\\Models\\Module model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
+			count: 2
 			path: app/Modules/WorkOs/Controllers/DashboardController.php
 
 		-

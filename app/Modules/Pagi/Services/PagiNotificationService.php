@@ -5,6 +5,7 @@ namespace App\Modules\Pagi\Services;
 use App\Models\Pagi\PagiWork;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class PagiNotificationService
 {

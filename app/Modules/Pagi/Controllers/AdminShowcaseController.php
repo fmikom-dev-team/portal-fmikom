@@ -3,9 +3,9 @@
 namespace App\Modules\Pagi\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\Pagi\PagiNotification;
 use App\Models\Pagi\PagiWork;
 use App\Models\Portal\PortalSetting;
+use App\Notifications\PagiNotification;
 use App\Modules\Pagi\Controllers\Concerns\HasAdminDashboardHelpers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -156,13 +156,15 @@ class AdminShowcaseController extends Controller
             $missingText = ! empty($missing) ? implode(' & ', $missing) : 'kelengkapan data';
 
             // Send notification to user
-            PagiNotification::create([
-                'user_id' => $work->user_id,
-                'type' => 'system',
-                'title' => '🌟 Karya Anda Terpilih Kandidat Karya Terbaik!',
-                'message' => 'Selamat! Karya Anda "'.$work->title.'" terpilih untuk ditayangkan di Halaman Utama Portal FMIKOM. Harap lengkapi '.$missingText.' karya Anda agar dapat ditayangkan secara maksimal.',
-                'is_read' => false,
-            ]);
+            if ($work->user) {
+                $work->user->notify(new PagiNotification(
+                    type: 'system',
+                    title: '🌟 Karya Anda Terpilih Kandidat Karya Terbaik!',
+                    message: 'Selamat! Karya Anda "'.$work->title.'" terpilih untuk ditayangkan di Halaman Utama Portal FMIKOM. Harap lengkapi '.$missingText.' karya Anda agar dapat ditayangkan secara maksimal.',
+                    avatar: null,
+                    href: '/pagi/works/'.$work->id
+                ));
+            }
         }
 
         return redirect()->back()->with('success', 'Notifikasi permintaan kelengkapan karya berhasil dikirimkan ke mahasiswa!');

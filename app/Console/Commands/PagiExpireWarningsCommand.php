@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Pagi\PagiNotification;
 use App\Models\Pagi\PagiWarning;
 use App\Models\Portal\PortalSetting;
 use App\Models\User;
+use App\Notifications\PagiNotification;
 use Illuminate\Console\Command;
 
 class PagiExpireWarningsCommand extends Command
