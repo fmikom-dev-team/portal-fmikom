@@ -15,12 +15,10 @@ class StudentRegistrationPageService
         private readonly StudentPeriodResolverService $studentPeriodResolverService,
     ) {}
 
-    public function build(User $user, ?int $selectedRegistrationId = null): array
+    public function build(User $user): array
     {
         $registrations = $this->studentPeriodResolverService->resolveRegistrations($user->id);
-        $selectedRegistration = $this->studentPeriodResolverService->resolveSelectedRegistrationFromCollection($registrations, $selectedRegistrationId);
-        $latestRegistration = $this->latestRegistration($user->id);
-        $hasCompletedHistory = $this->hasCompletedInternshipHistory($user->id);
+        $selectedRegistration = $this->studentPeriodResolverService->resolveSelectedRegistrationFromCollection($registrations);
         $formSource = $selectedRegistration?->status === 'revisi' ? $selectedRegistration : null;
         $periods = $this->studentPeriodResolverService->buildPeriodOptions($registrations, $selectedRegistration?->id);
 
@@ -29,8 +27,7 @@ class StudentRegistrationPageService
             'selected_period_id' => $selectedRegistration?->id,
             'periods' => $periods,
             'pageState' => [
-                'completed_once' => $hasCompletedHistory,
-                'can_submit' => $this->canSubmitRegistration($selectedRegistration, $hasCompletedHistory),
+                'can_submit' => $this->canSubmitRegistration($selectedRegistration),
                 'is_revision' => $selectedRegistration?->status === 'revisi',
                 'is_locked' => in_array($selectedRegistration?->status, ['pending', 'approved', 'aktif'], true),
             ],
@@ -62,10 +59,6 @@ class StudentRegistrationPageService
 
     public function canSubmitRegistration(?PendaftaranMagang $registration, bool $hasCompletedHistory = false): bool
     {
-        if ($hasCompletedHistory) {
-            return false;
-        }
-
         if (! $registration) {
             return true;
         }

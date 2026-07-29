@@ -7,6 +7,7 @@ use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
 use App\Modules\Wims\Services\Shared\Monitoring\MonitoringAlertService;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
+use App\Support\WimsStorage;
 
 class MitraDashboardPageService
 {
@@ -62,6 +63,12 @@ class MitraDashboardPageService
                         ? $item->tanggal_mulai->translatedFormat('d M Y')
                         : $item->tanggal_mulai->translatedFormat('d M Y').' - '.$item->tanggal_selesai->translatedFormat('d M Y'))
                     : '-',
+                'proof' => [
+                    'exists' => WimsStorage::exists($item->bukti_path),
+                    'download_url' => filled($item->bukti_path)
+                        ? route('wims.mitra.absence.proof.download', $item)
+                        : null,
+                ],
             ])
             ->values()
             ->all();

@@ -80,6 +80,7 @@ class AdminRegistrationPageService
                 'exists' => true,
                 'name' => $pendaftaran->proposal_pkl_original_name,
                 'uploaded_at' => $pendaftaran->proposal_pkl_uploaded_at?->translatedFormat('d M Y H:i'),
+                'download_url' => route('wims.admin.registrations.proposal.download', $pendaftaran),
             ] : null,
             'tanggal_mulai' => $this->formatDate($pendaftaran->tanggal_mulai),
             'tanggal_selesai' => $this->formatDate($pendaftaran->tanggal_selesai),

@@ -4,6 +4,8 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import {
     BriefcaseBusiness,
     CheckCheck,
+    Download,
+    FileText,
     RotateCcw,
     Search,
     SlidersHorizontal,
@@ -56,6 +58,12 @@ type RegistrationItem = {
     tanggal_selesai?: string | null;
     status?: string | null;
     dosen_pembimbing_id?: number | null;
+    proposal_attachment?: {
+        exists?: boolean | null;
+        name?: string | null;
+        uploaded_at?: string | null;
+        download_url?: string | null;
+    } | null;
     student?: {
         id?: number | null;
         name?: string | null;
@@ -613,6 +621,37 @@ const placementLink = (item: RegistrationItem) =>
                                                     }}
                                                 </p>
                                             </div>
+                                            <div
+                                                v-if="item.proposal_attachment?.exists"
+                                                class="rounded-lg border border-zinc-200 bg-zinc-50/80 px-3 py-3"
+                                            >
+                                                <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                                                    Proposal PKL
+                                                </p>
+                                                <div class="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                    <div class="min-w-0 flex items-start gap-3">
+                                                        <div class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                                                            <FileText class="size-4" />
+                                                        </div>
+                                                        <div class="min-w-0">
+                                                            <p class="truncate text-sm font-bold text-zinc-900">
+                                                                {{ item.proposal_attachment?.name || 'Proposal PKL terlampir' }}
+                                                            </p>
+                                                            <p class="mt-1 text-xs text-zinc-500">
+                                                                {{ item.proposal_attachment?.uploaded_at || 'Waktu upload belum tersedia' }}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <a
+                                                        v-if="item.proposal_attachment?.download_url"
+                                                        :href="item.proposal_attachment.download_url"
+                                                        class="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-3.5 text-sm font-bold text-blue-600 transition-colors hover:bg-blue-50"
+                                                    >
+                                                        <Download class="size-4" />
+                                                        Unduh
+                                                    </a>
+                                                </div>
+                                            </div>
                                             <div>
                                                 <p
                                                     class="text-[11px] font-bold uppercase tracking-[0.16em]"
@@ -895,3 +934,5 @@ const placementLink = (item: RegistrationItem) =>
         </Dialog>
     </div>
 </template>
+
+

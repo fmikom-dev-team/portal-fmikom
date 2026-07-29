@@ -113,7 +113,9 @@ class PendaftaranMagang extends Model
 
     public function scopeReadyForAssessment(Builder $query, ?CarbonInterface $date = null): Builder
     {
-        return $query->whereNotNull('laporan_akhir_path');
+        return $query
+            ->where('status', 'selesai')
+            ->whereNotNull('laporan_akhir_path');
     }
 
     public function isWithinActivePeriod(?CarbonInterface $date = null): bool
@@ -177,7 +179,7 @@ class PendaftaranMagang extends Model
 
     public function isReadyForAssessment(?CarbonInterface $date = null): bool
     {
-        return filled($this->laporan_akhir_path);
+        return $this->status === 'selesai' && filled($this->laporan_akhir_path);
     }
 
     public function proposalAttachmentDownloadName(): string

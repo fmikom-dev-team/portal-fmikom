@@ -28,9 +28,10 @@ class KetidakhadiranController extends Controller
             'tanggal_selesai' => ['required', 'date'],
             'jenis' => ['required', Rule::in(['izin', 'sakit'])],
             'alasan' => ['required', 'string', 'max:2000'],
-            'bukti' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+            'bukti' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf,doc,docx', 'max:10240'],
         ], [
             'tanggal_mulai.required' => 'Tanggal mulai ketidakhadiran wajib diisi.',
+            'bukti.max' => 'Ukuran bukti ketidakhadiran maksimal 10 MB.',
         ]);
 
         $pendaftaran = $this->studentAbsenceActionService->resolveActiveRegistration((int) $validated['pendaftaran_id']);

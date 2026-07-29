@@ -33,7 +33,7 @@ function makeRegistrationRuleRegistration(
     ], $overrides));
 }
 
-it('blocks student re-registration based on completed internship history instead of user legacy flags', function () {
+it('allows student re-registration after completed internship history', function () {
     $student = User::factory()->create();
 
     makeRegistrationRuleRegistration($student, overrides: [
@@ -43,7 +43,7 @@ it('blocks student re-registration based on completed internship history instead
     ]);
 
     makeRegistrationRuleRegistration($student, overrides: [
-        'status' => 'rejected',
+        'status' => 'selesai',
         'tanggal_mulai' => '2026-05-01',
         'tanggal_selesai' => '2026-05-31',
     ]);
@@ -53,10 +53,10 @@ it('blocks student re-registration based on completed internship history instead
     $latestRegistration = $service->latestRegistration($student->id);
 
     expect($service->hasCompletedInternshipHistory($student->id))->toBeTrue()
-        ->and($payload['pageState']['completed_once'])->toBeTrue()
-        ->and($payload['pageState']['can_submit'])->toBeFalse()
-        ->and($latestRegistration?->status)->toBe('rejected')
-        ->and($service->canSubmitRegistration($latestRegistration, true))->toBeFalse();
+        ->and($latestRegistration?->status)->toBe('selesai')
+        ->and($payload['selected_period_id'])->toBe($latestRegistration?->id)
+        ->and($payload['pageState']['can_submit'])->toBeTrue()
+        ->and($service->canSubmitRegistration($latestRegistration, true))->toBeTrue();
 });
 
 it('marks placement complete by updating registration history without touching legacy user completion columns', function () {

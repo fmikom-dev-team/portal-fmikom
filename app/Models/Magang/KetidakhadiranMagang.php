@@ -3,8 +3,10 @@
 namespace App\Models\Magang;
 
 use App\Models\User;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class KetidakhadiranMagang extends Model
 {
@@ -51,5 +53,29 @@ class KetidakhadiranMagang extends Model
     public function reviewedByMitra(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by_mitra_user_id');
+    }
+
+    public function proofDownloadName(): string
+    {
+        $mahasiswa = $this->mahasiswa;
+        $studentName = Str::slug((string) data_get($mahasiswa, 'name', 'mahasiswa')) ?: 'mahasiswa';
+        $studentId = data_get($mahasiswa, 'nim_nip') ?: data_get($mahasiswa, 'nomor_induk') ?: 'tanpa-identitas';
+
+        $tanggalMulai = data_get($this, 'tanggal_mulai');
+        $periodStart = $tanggalMulai instanceof CarbonInterface ? $tanggalMulai->format('Ymd') : 'mulai';
+
+        $tanggalSelesai = data_get($this, 'tanggal_selesai');
+        $periodEnd = $tanggalSelesai instanceof CarbonInterface ? $tanggalSelesai->format('Ymd') : 'selesai';
+
+        $extension = pathinfo((string) $this->bukti_path, PATHINFO_EXTENSION) ?: 'pdf';
+
+        return sprintf(
+            'bukti-ketidakhadiran-%s-%s-%s-%s.%s',
+            $studentName,
+            Str::slug((string) $studentId) ?: 'tanpa-identitas',
+            $periodStart,
+            $periodEnd,
+            strtolower((string) $extension),
+        );
     }
 }
