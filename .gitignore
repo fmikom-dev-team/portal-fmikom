@@ -51,3 +51,5 @@ frankenphp-worker.php
 /test-results
 /public/asset/screenshots
 /storage/meilisearch
+/data.ms
+data.ms/

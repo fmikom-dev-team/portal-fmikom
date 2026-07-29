@@ -143,14 +143,14 @@ onUnmounted(() => {
                     </span>
                 </button>
 
-                <!-- Notifications Dropdown Panel -->
+                <!-- Desktop Dropdown Panel -->
                 <div
                     v-show="notifOpen"
-                    class="absolute top-full right-0 mt-1 w-80 bg-white dark:bg-zinc-900 border border-[#e5e7eb] dark:border-zinc-800 rounded-xl shadow-lg py-2 z-50 dark:shadow-none animate-in fade-in slide-in-from-top-2 duration-200"
+                    class="hidden md:block absolute top-full right-0 mt-1 w-80 bg-white dark:bg-zinc-900 border border-[#e5e7eb] dark:border-zinc-800 rounded-xl shadow-lg py-2 z-50 dark:shadow-none animate-in fade-in slide-in-from-top-2 duration-200"
                 >
                     <!-- Header -->
                     <div class="px-4 py-2 border-b border-[#f3f4f6] dark:border-zinc-800 flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-805 dark:text-white uppercase tracking-wider">Notifikasi</span>
+                        <span class="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider">Notifikasi</span>
                         <button
                             v-if="unreadCount > 0"
                             @click="markAllAsRead"
@@ -174,7 +174,6 @@ onUnmounted(() => {
                                 n.read_at === null ? 'bg-blue-50/20 dark:bg-blue-900/10' : ''
                             ]"
                         >
-                            <!-- Dot indicators -->
                             <div class="w-1.5 h-1.5 rounded-full bg-blue-600 mt-1.5 shrink-0" :class="n.read_at === null ? 'opacity-100' : 'opacity-0'"></div>
                             
                             <div class="flex-1 min-w-0">
@@ -184,6 +183,92 @@ onUnmounted(() => {
                         </button>
                     </div>
                 </div>
+
+                <!-- Instagram-Style Mobile Full-Page Notification Drawer -->
+                <Teleport to="body">
+                    <Transition
+                        enter-active-class="transition duration-250 ease-out"
+                        enter-from-class="opacity-0 translate-y-4"
+                        enter-to-class="opacity-100 translate-y-0"
+                        leave-active-class="transition duration-200 ease-in"
+                        leave-from-class="opacity-100 translate-y-0"
+                        leave-to-class="opacity-0 translate-y-4"
+                    >
+                        <div
+                            v-if="notifOpen"
+                            class="md:hidden fixed inset-0 z-[99999] bg-white dark:bg-zinc-950 flex flex-col w-screen h-screen overflow-hidden font-sans"
+                        >
+                            <!-- Instagram Header Bar -->
+                            <div class="px-4 h-14 border-b border-slate-100 dark:border-zinc-850 flex items-center justify-between shrink-0 bg-white dark:bg-zinc-950 pt-safe">
+                                <div class="flex items-center gap-3">
+                                    <button 
+                                        @click="notifOpen = false"
+                                        class="p-2 -ml-2 rounded-full text-slate-800 dark:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors"
+                                        aria-label="Kembali"
+                                    >
+                                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                    </button>
+                                    <h1 class="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">Notifikasi</h1>
+                                </div>
+                                <button
+                                    v-if="unreadCount > 0"
+                                    @click="markAllAsRead"
+                                    class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline"
+                                >
+                                    Tandai Dibaca
+                                </button>
+                            </div>
+
+                            <!-- Instagram Style Mobile Content -->
+                            <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+                                <div v-if="notificationsList.length === 0" class="flex flex-col items-center justify-center my-auto py-24 text-center">
+                                    <div class="w-16 h-16 rounded-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center mb-4 text-slate-700 dark:text-zinc-200 shadow-xs">
+                                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                    <p class="text-base font-bold text-slate-900 dark:text-white">Anda sudah mengikuti semua kabar terbaru</p>
+                                    <p class="text-xs text-slate-500 dark:text-zinc-400 mt-1 max-w-xs leading-relaxed">Tidak ada notifikasi atau aktivitas baru untuk akun Anda saat ini.</p>
+                                </div>
+
+                                <template v-else>
+                                    <div class="text-[11px] font-extrabold text-slate-400 dark:text-zinc-500 uppercase tracking-widest px-1">
+                                        Terbaru
+                                    </div>
+                                    <div class="space-y-2">
+                                        <button
+                                            v-for="n in notificationsList"
+                                            :key="n.id"
+                                            @click="clickNotification(n)"
+                                            :class="[
+                                                'w-full text-left p-4 rounded-2xl transition-all flex items-start gap-3.5 border',
+                                                n.read_at === null 
+                                                    ? 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-200/80 dark:border-blue-900/40 shadow-xs' 
+                                                    : 'bg-white dark:bg-zinc-900/80 border-slate-100 dark:border-zinc-800/80'
+                                            ]"
+                                        >
+                                            <div class="w-10 h-10 rounded-full bg-blue-500/10 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5 border border-blue-200/50 dark:border-blue-900/50">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                                </svg>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center justify-between gap-2">
+                                                    <p class="text-sm font-bold text-slate-900 dark:text-white leading-tight truncate">{{ n.data?.title || 'Notifikasi System' }}</p>
+                                                    <span v-if="n.read_at === null" class="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0 ring-4 ring-blue-100 dark:ring-blue-900/40"></span>
+                                                </div>
+                                                <p class="text-xs text-slate-600 dark:text-zinc-300 mt-1 leading-relaxed">{{ n.data?.description }}</p>
+                                                <span class="text-[11px] text-slate-400 dark:text-zinc-500 font-medium mt-2 block">{{ n.created_at ? new Date(n.created_at).toLocaleString('id-ID') : 'Baru saja' }}</span>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </Transition>
+                </Teleport>
             </div>
 
             <!-- Theme Toggler -->

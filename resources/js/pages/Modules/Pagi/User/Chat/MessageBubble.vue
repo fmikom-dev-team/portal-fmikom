@@ -265,7 +265,7 @@ function handleReactAction(emoji: string) {
                         leave-to-class="transform opacity-0 scale-95"
                     >
                         <div 
-                            v-if="openMenuMessageId === msg.id && !msg.is_deleted && !msg.is_deleted_for_me" 
+                            v-if="openMenuMessageId === msg.id && !msg.is_deleted && !msg.is_deleted_for_me && !msg.is_moderated" 
                             class="absolute z-50 w-48 bg-white dark:bg-[#233138] rounded-xl shadow-[0_4px_20px_rgba(11,20,26,0.12),_0_2px_8px_rgba(11,20,26,0.12)] py-1.5 flex flex-col border border-slate-100/50 dark:border-zinc-800/20"
                             :class="[
                                 msg.sender_id === authUser.id ? 'right-0' : 'left-0',
@@ -376,6 +376,23 @@ function handleReactAction(emoji: string) {
                     <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
                     {{ msg.sender_id === authUser.id ? 'Anda menghapus pesan ini' : 'Pesan ini telah dihapus' }}
                 </div>
+                <!-- MODERATED / VIOLATION PLACEHOLDER -->
+                <div
+                    v-else-if="msg.is_moderated"
+                    class="flex items-center gap-2 py-0.5 break-words"
+                    :class="[
+                        msg.parent 
+                            ? (msg.sender_id === authUser.id ? 'pl-2.5 pr-16 pb-0.5 pt-1' : 'pl-2.5 pr-12 pb-0.5 pt-1')
+                            : '',
+                    ]"
+                >
+                    <!-- Shield icon -->
+                    <svg class="w-3.5 h-3.5 shrink-0 text-amber-500 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.955 11.955 0 003 10c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286z" />
+                    </svg>
+                    <span class="italic text-amber-600 dark:text-amber-400 text-[13px]">Pesan ini melanggar kebijakan komunitas</span>
+                </div>
+
                 <!-- NORMAL BODY (with reply context) -->
                 <div
                     v-else-if="msg.parent"

@@ -212,24 +212,25 @@ const activeTheme = computed({
             // Mobile: fixed drawer
             'fixed inset-y-0 left-0 z-50 md:relative md:translate-x-0',
             sidebarOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full',
+            collapsed ? 'overflow-visible' : 'overflow-hidden',
         ]"
         :style="{
-            width: collapsed ? '56px' : '224px',
+            width: collapsed ? '72px' : '224px',
             fontFamily: 'var(--wos-font)'
         }"
         aria-label="Main navigation"
     >
         <!-- ── Brand / Logo ── -->
         <div
-            class="flex items-center border-b border-[#e5e7eb] dark:border-zinc-800 shrink-0 overflow-hidden transition-all duration-300 pl-[13px] pr-3"
+            class="flex items-center border-b border-[#e5e7eb] dark:border-zinc-800 shrink-0 overflow-hidden transition-all duration-300"
+            :class="collapsed ? 'justify-center px-0' : 'pl-[13px] pr-3'"
             style="height: 52px"
         >
             <!-- Logo mark -->
             <div
                 class="w-[30px] h-[30px] rounded-[7px] flex items-center justify-center shrink-0 cursor-pointer overflow-hidden transition-all duration-300"
-                :style="{ backgroundColor: siteSettings.brand_logo ? 'transparent' : '#2563EB' }"
+                :class="siteSettings.brand_logo ? 'bg-transparent border-0 p-0 shadow-none' : 'bg-[#2563EB]'"
                 @click="collapsed ? emit('toggle-collapse') : null"
-                :title="collapsed ? 'Expand sidebar' : ''"
             >
                 <img v-if="siteSettings.brand_logo" :src="siteSettings.brand_logo" alt="Brand Logo" class="w-full h-full object-contain" />
                 <svg v-else class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="color: #B6FF00">
@@ -242,9 +243,14 @@ const activeTheme = computed({
                 class="flex-1 flex items-center justify-between min-w-0 transition-all duration-300 overflow-hidden"
                 :class="collapsed ? 'opacity-0 max-w-0 ml-0 pointer-events-none' : 'opacity-100 max-w-[180px] ml-2.5'"
             >
-                <span class="text-[15px] font-semibold text-[#111827] dark:text-zinc-100 tracking-tight flex-1 truncate">
-                    {{ siteSettings.brand_name || 'WorkOS' }}
-                </span>
+                <div class="flex-1 flex flex-col justify-center min-w-0 pr-1">
+                    <span class="text-[14px] font-bold text-[#111827] dark:text-zinc-100 tracking-tight leading-tight truncate">
+                        {{ siteSettings.brand_name || 'Portal FMIKOM' }}
+                    </span>
+                    <span v-if="siteSettings.brand_subtitle" class="text-[8.5px] font-semibold text-[#6b7280] dark:text-zinc-400 leading-tight truncate uppercase tracking-wider">
+                        {{ siteSettings.brand_subtitle }}
+                    </span>
+                </div>
 
                 <!-- Desktop collapse toggle -->
                 <button
@@ -272,8 +278,8 @@ const activeTheme = computed({
 
         <!-- ── Scrollable navigation ── -->
         <nav
-            class="flex-1 overflow-y-auto wos-scroll py-2 overflow-x-hidden transition-all duration-300 px-2 relative"
-            :class="collapsed ? 'space-y-2' : 'space-y-4'"
+            class="flex-1 overflow-y-auto wos-scroll py-2 transition-all duration-300 px-2 relative"
+            :class="collapsed ? 'space-y-2 overflow-x-visible' : 'space-y-4 overflow-x-hidden'"
             role="navigation"
             @mouseleave="handleMouseLeave"
         >
@@ -290,7 +296,7 @@ const activeTheme = computed({
             <!-- Desktop: Unified Sidebar list (Smooth collapsed/expanded state) -->
             <div 
                 class="hidden md:block transition-all duration-300 relative z-10"
-                :class="collapsed ? 'space-y-2' : 'space-y-4'"
+                :class="collapsed ? 'space-y-1.5' : 'space-y-4'"
             >
                 <div v-for="(group, gi) in navGroups" :key="gi" class="transition-all duration-300">
                     <SidebarGroup :label="group.label" :collapsed="collapsed">
@@ -428,7 +434,10 @@ const activeTheme = computed({
                 <li>
                     <Link
                         href="/dashboard"
-                        class="relative w-full flex items-center rounded-md transition-all duration-300 select-none group text-[#374151] dark:text-zinc-300 hover:text-[#111827] dark:hover:text-zinc-100 font-normal h-9 pl-[11px] pr-2 z-10"
+                        :class="[
+                            'group relative flex items-center rounded-xl text-[13.5px] transition-all duration-200 select-none h-9 text-[#374151] dark:text-zinc-300 hover:text-[#111827] dark:hover:text-zinc-100 font-normal',
+                            collapsed ? 'w-9 h-9 mx-auto justify-center px-0' : 'w-full pl-[11px] pr-2'
+                        ]"
                         @mouseenter="handleMouseEnterBottom"
                     >
                         <LayoutGrid class="w-[18px] h-[18px] shrink-0 text-[#6b7280] dark:text-zinc-500 group-hover:text-[#374151] dark:group-hover:text-zinc-300" />
@@ -436,6 +445,14 @@ const activeTheme = computed({
                             class="transition-all duration-300 ease-in-out text-left truncate leading-none py-px overflow-hidden"
                             :class="collapsed ? 'opacity-0 max-w-0 ml-0 pointer-events-none' : 'opacity-100 max-w-[180px] ml-2.5'"
                         >Portal Modules</span>
+                        <!-- Floating Tooltip when Collapsed -->
+                        <div 
+                            v-if="collapsed" 
+                            class="pointer-events-none fixed left-[84px] z-[99999] rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-bold px-3 py-1.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-2xl flex items-center gap-1.5 transform translate-x-1 group-hover:translate-x-0"
+                        >
+                            <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 dark:bg-zinc-100 rotate-45"></div>
+                            <span class="relative z-10">Portal Modules</span>
+                        </div>
                     </Link>
                 </li>
             </ul>
@@ -469,11 +486,14 @@ const activeTheme = computed({
         <!-- ── User footer ── -->
         <div class="shrink-0 border-t border-[#e5e7eb] dark:border-zinc-800 p-2">
             <button
-                class="w-full flex items-center rounded-md hover:bg-[#f9fafb] dark:hover:bg-zinc-800 dark:bg-zinc-900 transition-all duration-300 text-left group pl-[6px] pr-2 py-2"
+                :class="[
+                    'flex items-center rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all duration-200 text-left group',
+                    collapsed ? 'w-10 h-10 mx-auto justify-center px-0' : 'w-full pl-[6px] pr-2 py-2'
+                ]"
                 aria-label="User menu"
             >
                 <div
-                    class="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 overflow-hidden animate-none"
+                    class="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 overflow-hidden animate-none"
                     style="background-color: #2563EB"
                     aria-hidden="true"
                 >

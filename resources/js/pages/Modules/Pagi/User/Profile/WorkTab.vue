@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { Link, router } from "@inertiajs/vue3";
-import { ChevronRight, Plus } from "lucide-vue-next";
-import { computed, ref, watch } from "vue";
+import {
+	BookOpen,
+	ChevronDown,
+	ChevronRight,
+	Plus,
+	Zap,
+} from "lucide-vue-next";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { Skeleton } from "@/components/ui/skeleton";
 import CaseStudyTab from "./CaseStudyTab.vue";
 import CollaboratedTab from "./CollaboratedTab.vue";
@@ -37,6 +43,7 @@ const emit = defineEmits<{
 	(e: "clone-project", title: string): void;
 	(e: "share-project", project: any): void;
 	(e: "delete-project", id: number, title: string): void;
+	(e: "report-project", project: any): void;
 	(e: "open-add-work"): void;
 	(e: "edit-quick-work", project: any): void;
 	(
@@ -45,7 +52,26 @@ const emit = defineEmits<{
 	): void;
 }>();
 
-const activeWorkFilter = ref("Created"); // "Created", "Case Study", or "Collaborated"
+const activeWorkFilter = ref<"Created" | "Case Study" | "Collaborated">(
+	"Created",
+);
+const showCreateDropdown = ref(false);
+
+const closeDropdownOnOutsideClick = () => {
+	showCreateDropdown.value = false;
+};
+
+onMounted(() => {
+	if (globalThis.window !== undefined) {
+		globalThis.window.addEventListener("click", closeDropdownOnOutsideClick);
+	}
+});
+
+onUnmounted(() => {
+	if (globalThis.window !== undefined) {
+		globalThis.window.removeEventListener("click", closeDropdownOnOutsideClick);
+	}
+});
 const localProjects = ref<any[]>([]);
 
 watch(
@@ -72,8 +98,7 @@ const isGalleryItem = (project: any) => {
 
 const createdProjects = computed(() => {
 	return localProjects.value.filter(
-		(p) =>
-			isQuickAddProject(p) && !isGalleryItem(p) && p.user_id === props.user.id,
+		(p) => !isGalleryItem(p) && p.user_id === props.user.id,
 	);
 });
 
@@ -91,31 +116,32 @@ const collaboratedProjects = computed(() => {
 			p.content?.find((b: any) => b && b.type === "featured_details") || {};
 		const collaborators = details.collaborators || [];
 
-		const hasAcceptedCollaborators =
-			Array.isArray(collaborators) &&
-			collaborators.some((c) => {
-				const cStatus =
-					typeof c === "object" ? (c.status ?? "pending") : "accepted";
-				return cStatus === "accepted";
-			});
+		const hasCollaborators =
+			Array.isArray(collaborators) && collaborators.length > 0;
+
+		const cleanUserName = props.user.name.toLowerCase();
+		const cleanUserHandle = (props.user.pagi_username || "")
+			.toLowerCase()
+			.replace(/^@/, "");
 
 		const isUserCollaborator =
 			Array.isArray(collaborators) &&
 			collaborators.some((c) => {
-				const cName = typeof c === "object" ? c.name : c;
-				const cStatus =
-					typeof c === "object" ? (c.status ?? "pending") : "accepted";
+				const cName = String(typeof c === "object" ? c.name || "" : c)
+					.toLowerCase()
+					.replace(/^@/, "");
+				const cUserId = typeof c === "object" ? (c.user_id ?? c.id) : null;
 
-				if (cStatus !== "accepted") return false;
+				if (cUserId && Number(cUserId) === Number(props.user.id)) return true;
 
 				return (
-					cName === props.user.name ||
-					(props.user.pagi_username && cName === props.user.pagi_username)
+					cName === cleanUserName ||
+					(cleanUserHandle && cName === cleanUserHandle)
 				);
 			});
 
 		const isUserOwnerWithCollaborators =
-			p.user_id === props.user.id && hasAcceptedCollaborators;
+			p.user_id === props.user.id && hasCollaborators;
 
 		return isUserCollaborator || isUserOwnerWithCollaborators;
 	});
@@ -190,21 +216,74 @@ const handleReorder = (newSubOrderIds: number[]) => {
 				</button>
 			</div>
 
-			<!-- Action Buttons on the right (Only for own profile) -->
-			<div v-if="isOwnProfile && isStudent" class="flex items-center gap-5 sm:ml-auto">
-				<Link 
-					href="/pagi/editor" 
-					class="text-xs font-semibold text-slate-700 hover:text-slate-950 dark:text-slate-355 dark:hover:text-white hover:underline transition-colors"
+			<!-- Unified Action Button with Dropdown (Only for own profile) -->
+			<div v-if="isOwnProfile && isStudent" class="relative sm:ml-auto" @click.stop>
+				<div class="inline-flex items-center rounded-full bg-indigo-600 dark:bg-indigo-600 text-white shadow-sm overflow-hidden p-0.5 select-none">
+					<button 
+						v-if="activeWorkFilter === 'Case Study'"
+						@click.prevent="router.visit('/pagi/editor')"
+						class="inline-flex items-center gap-1.5 px-4 py-2 hover:bg-indigo-700 dark:hover:bg-indigo-500 text-white text-xs font-bold transition-all cursor-pointer border-none bg-transparent"
+					>
+						<Plus class="w-4 h-4 text-white" />
+						<span>Create Case Study</span>
+					</button>
+					<button 
+						v-else
+						@click.prevent="emit('open-add-work')"
+						class="inline-flex items-center gap-1.5 px-4 py-2 hover:bg-indigo-700 dark:hover:bg-indigo-500 text-white text-xs font-bold transition-all cursor-pointer border-none bg-transparent"
+					>
+						<Plus class="w-4 h-4 text-white" />
+						<span>Create Work</span>
+					</button>
+					<button 
+						@click.stop="showCreateDropdown = !showCreateDropdown" 
+						class="px-2.5 py-2 hover:bg-indigo-700 dark:hover:bg-indigo-500 text-white transition-all cursor-pointer border-none bg-transparent border-l border-white/20"
+						title="Options"
+					>
+						<ChevronDown class="w-3.5 h-3.5 text-white/90 transition-transform duration-200" :class="{ 'rotate-180': showCreateDropdown }" />
+					</button>
+				</div>
+
+				<!-- Dropdown Menu -->
+				<div 
+					v-if="showCreateDropdown" 
+					class="absolute left-0 sm:left-auto sm:right-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl p-2 z-50 space-y-1 select-none"
 				>
-					Create case study
-				</Link>
-				<button 
-					@click.prevent="emit('open-add-work')" 
-					class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#f1f5f9] hover:bg-[#e2e8f0] dark:bg-slate-800 dark:hover:bg-slate-755 text-xs font-semibold text-slate-800 dark:text-slate-100 transition-colors shadow-2xs cursor-pointer border-none"
-				>
-					<Plus class="w-3.5 h-3.5 text-slate-500" />
-					<span>Add work</span>
-				</button>
+					<!-- Option 1: Create Case Study -->
+					<Link 
+						href="/pagi/editor" 
+						@click="showCreateDropdown = false"
+						class="w-full p-3 flex items-start gap-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors group text-left no-underline"
+					>
+						<div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0 group-hover:scale-105 transition-transform mt-0.5">
+							<BookOpen class="w-4.5 h-4.5" />
+						</div>
+						<div class="min-w-0 flex-1">
+							<div class="flex items-center justify-between gap-2">
+								<span class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">Create Case Study</span>
+								<span class="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 text-[9px] font-black uppercase tracking-wider shrink-0">Full Editor</span>
+							</div>
+							<p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">Rich story with text, images, videos & custom layouts.</p>
+						</div>
+					</Link>
+
+					<!-- Option 2: Quick Work / Shot -->
+					<button 
+						@click.prevent="emit('open-add-work'); showCreateDropdown = false"
+						class="w-full p-3 flex items-start gap-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors group text-left bg-transparent border-none cursor-pointer"
+					>
+						<div class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 group-hover:scale-105 transition-transform mt-0.5">
+							<Zap class="w-4.5 h-4.5" />
+						</div>
+						<div class="min-w-0 flex-1">
+							<div class="flex items-center justify-between gap-2">
+								<span class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">Quick Work / Shot</span>
+								<span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 text-[9px] font-black uppercase tracking-wider shrink-0">Instant</span>
+							</div>
+							<p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">Fast upload for single image or quick portfolio shot.</p>
+						</div>
+					</button>
+				</div>
 			</div>
 		</div>
 
@@ -309,8 +388,12 @@ const handleReorder = (newSubOrderIds: number[]) => {
 					@reorder="handleReorder"
 					@like-updated="emit('like-updated', $event)"
 				/>
-				<div v-if="createdProjects.length === 0" class="text-center py-16 bg-slate-50/30 dark:bg-slate-900/10 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+				<div v-if="createdProjects.length === 0" class="text-center py-14 px-4 bg-slate-50/30 dark:bg-slate-900/10 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center space-y-3">
 					<p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Belum ada karya cepat (Created).</p>
+					<button v-if="isOwnProfile && isStudent" @click.prevent="emit('open-add-work')" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer border-none">
+						<Zap class="w-3.5 h-3.5" />
+						<span>Tambah Karya Cepat</span>
+					</button>
 				</div>
 			</div>
 
@@ -327,8 +410,12 @@ const handleReorder = (newSubOrderIds: number[]) => {
 					@reorder="handleReorder"
 					@like-updated="emit('like-updated', $event)"
 				/>
-				<div v-if="caseStudyProjects.length === 0" class="text-center py-16 bg-slate-50/30 dark:bg-slate-900/10 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+				<div v-if="caseStudyProjects.length === 0" class="text-center py-14 px-4 bg-slate-50/30 dark:bg-slate-900/10 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center space-y-3">
 					<p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Belum ada case study yang dipublikasikan.</p>
+					<Link v-if="isOwnProfile && isStudent" href="/pagi/editor" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-xs no-underline">
+						<BookOpen class="w-3.5 h-3.5 text-white" />
+						<span>Buat Case Study Sekarang</span>
+					</Link>
 				</div>
 			</div>
 
@@ -343,6 +430,7 @@ const handleReorder = (newSubOrderIds: number[]) => {
 					@edit-quick-work="emit('edit-quick-work', $event)"
 					@share-project="emit('share-project', $event)"
 					@delete-project="(id, title) => emit('delete-project', id, title)"
+					@report-project="emit('report-project', $event)"
 					@reorder="handleReorder"
 					@like-updated="emit('like-updated', $event)"
 				/>

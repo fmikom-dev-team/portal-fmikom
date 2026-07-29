@@ -14,6 +14,7 @@ const emit = defineEmits<{
 	(e: "mark-all-read"): void;
 	(e: "clear-feed"): void;
 	(e: "toggle-read", notif: any): void;
+	(e: "delete-log", notif: any): void;
 }>();
 
 const activeTab = ref("feed");
@@ -51,6 +52,11 @@ function clearAllFeed() {
 
 function toggleRead(notif: any) {
 	emit("toggle-read", notif);
+}
+
+function deleteItem(notif: any) {
+	emit("delete-log", notif);
+	toast("Item log berhasil dihapus", "success");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -168,10 +174,13 @@ async function triggerRedeliver(delivery: any) {
                     Mark all read
                 </button>
                 <button
-                    class="h-[32px] px-3 border border-red-200 rounded-md text-[12.5px] font-semibold text-red-600 bg-white dark:bg-zinc-900 hover:bg-red-50 transition-colors shadow-sm dark:shadow-none"
+                    class="h-[32px] px-3 border border-red-200 dark:border-red-900/40 rounded-md text-[12.5px] font-semibold text-red-600 dark:text-red-400 bg-white dark:bg-zinc-900 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors shadow-sm dark:shadow-none flex items-center gap-1.5 cursor-pointer"
                     @click="clearAllFeed"
                 >
-                    Clear log
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Hapus Semua Log
                 </button>
             </div>
         </div>
@@ -179,39 +188,53 @@ async function triggerRedeliver(delivery: any) {
         <!-- Feed List -->
         <div class="space-y-2.5">
             <div v-if="filteredNotifications.length === 0" class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl p-12 text-center text-gray-500 dark:text-zinc-400 shadow-sm dark:shadow-none">
-                No activity notifications found.
+                Tidak ada log aktivitas / notifikasi error.
             </div>
             <div
                 v-for="notif in filteredNotifications"
                 :key="notif.id"
-                :class="['p-4 rounded-xl border transition-all flex items-start gap-3 bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-700', !notif.read ? 'ring-1 ring-blue-500/10 bg-blue-50/5 border-blue-100 shadow-sm' : '']"
+                :class="['p-4 rounded-xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-700', !notif.read ? 'ring-1 ring-blue-500/10 bg-blue-50/5 border-blue-100 shadow-sm' : '']"
             >
-                <!-- Severity Dot -->
-                <span
-                    :class="[
-                        'w-2.5 h-2.5 rounded-full shrink-0 mt-1.5',
-                        notif.severity === 'error' ? 'bg-red-500' :
-                        notif.severity === 'warning' ? 'bg-yellow-500' :
-                        notif.severity === 'success' ? 'bg-emerald-500' : 'bg-blue-500'
-                    ]"
-                />
-                
-                <!-- Details -->
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center justify-between gap-2">
-                        <span class="text-[13px] font-bold text-gray-900 dark:text-zinc-100 leading-tight">{{ notif.title }}</span>
-                        <span class="text-[11px] text-gray-400 dark:text-zinc-500 font-medium shrink-0">{{ notif.time }}</span>
+                <div class="flex items-start gap-3 min-w-0 flex-1">
+                    <!-- Severity Dot -->
+                    <span
+                        :class="[
+                            'w-2.5 h-2.5 rounded-full shrink-0 mt-1.5',
+                            notif.severity === 'error' ? 'bg-red-500' :
+                            notif.severity === 'warning' ? 'bg-yellow-500' :
+                            notif.severity === 'success' ? 'bg-emerald-500' : 'bg-blue-500'
+                        ]"
+                    />
+                    
+                    <!-- Details -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[13px] font-bold text-gray-900 dark:text-zinc-100 leading-tight">{{ notif.title }}</span>
+                            <span class="text-[11px] text-gray-400 dark:text-zinc-500 font-medium shrink-0">{{ notif.time }}</span>
+                        </div>
+                        <p class="text-[12.5px] text-gray-600 dark:text-zinc-400 mt-1 leading-normal">{{ notif.description }}</p>
                     </div>
-                    <p class="text-[12.5px] text-gray-600 dark:text-zinc-400 mt-1 leading-normal">{{ notif.description }}</p>
                 </div>
 
-                <!-- Read Toggle Button -->
-                <button
-                    @click="toggleRead(notif)"
-                    class="text-[11px] font-semibold text-blue-600 hover:text-blue-800 transition-colors shrink-0 px-2 py-0.5 hover:bg-blue-50/60 rounded"
-                >
-                    {{ notif.read ? 'Mark unread' : 'Mark read' }}
-                </button>
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                    <button
+                        @click="toggleRead(notif)"
+                        class="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 transition-colors px-2 py-1 hover:bg-blue-50/60 dark:hover:bg-blue-950/30 rounded cursor-pointer"
+                    >
+                        {{ notif.read ? 'Mark unread' : 'Mark read' }}
+                    </button>
+                    <button
+                        @click="deleteItem(notif)"
+                        class="text-[11px] font-semibold text-red-600 dark:text-red-400 hover:text-red-800 transition-colors px-2 py-1 hover:bg-red-50/60 dark:hover:bg-red-950/30 rounded flex items-center gap-1 cursor-pointer"
+                        title="Hapus Log Ini"
+                    >
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Hapus Log
+                    </button>
+                </div>
             </div>
         </div>
     </div>

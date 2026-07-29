@@ -1,4 +1,10 @@
-import { copyFileSync, existsSync, mkdirSync } from "node:fs";
+import {
+	copyFileSync,
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	writeFileSync,
+} from "node:fs";
 import { resolve } from "node:path";
 import { wayfinder } from "@laravel/vite-plugin-wayfinder";
 import tailwindcss from "@tailwindcss/vite";
@@ -6,8 +12,34 @@ import vue from "@vitejs/plugin-vue";
 import laravel from "laravel-vite-plugin";
 import { defineConfig, type Plugin } from "vite";
 
-/** Copies ffmpeg-core.{js,wasm} from node_modules to public/ so they can be
- * served at the same origin and loaded without COOP/COEP headers. */
+/**
+ * Plugin: Otomatis perbarui CACHE_VERSION di public/sw-pwa.js setiap build.
+ * Ini WAJIB agar browser user mendeteksi Service Worker baru dan menampilkan
+ * banner update. Tanpa ini, sw-pwa.js tidak pernah berubah = banner tidak muncul.
+ */
+function updateSwCacheVersion(): Plugin {
+	return {
+		name: "update-sw-cache-version",
+		// Jalankan di buildStart (saat build dimulai) dan juga di configureServer (saat dev)
+		buildStart() {
+			const swPath = resolve("public/sw-pwa.js");
+			if (!existsSync(swPath)) return;
+
+			const newVersion = `v${Date.now()}`;
+			const content = readFileSync(swPath, "utf-8");
+			const updated = content.replace(
+				/const CACHE_VERSION = '[^']*';/,
+				`const CACHE_VERSION = '${newVersion}';`,
+			);
+
+			if (updated !== content) {
+				writeFileSync(swPath, updated, "utf-8");
+				console.log(`[PWA] sw-pwa.js CACHE_VERSION updated to ${newVersion}`);
+			}
+		},
+	};
+}
+
 function copyFFmpegCore(): Plugin {
 	return {
 		name: "copy-ffmpeg-core",
@@ -28,6 +60,8 @@ function copyFFmpegCore(): Plugin {
 }
 
 async function loadVisualizerPlugin(): Promise<Plugin | null> {
+	if (process.env.ANALYZE !== "1") return null;
+
 	try {
 		const { visualizer } = await import("rollup-plugin-visualizer");
 
@@ -35,7 +69,7 @@ async function loadVisualizerPlugin(): Promise<Plugin | null> {
 			filename: "stats.html",
 			open: false,
 			gzipSize: true,
-			brotliSize: true,
+			brotliSize: false,
 		}) as Plugin;
 	} catch {
 		return null;
@@ -65,6 +99,7 @@ export default defineConfig(async () => {
 				? [wayfinder({ formVariants: true })]
 				: []),
 			copyFFmpegCore(),
+			updateSwCacheVersion(),
 			...(visualizerPlugin ? [visualizerPlugin] : []),
 		],
 		server: {
@@ -147,6 +182,17 @@ export default defineConfig(async () => {
 					},
 				},
 			},
+		},
+		// Inject build-time constants yang dapat dibaca di semua komponen
+		// __APP_BUILD_TIME__ digunakan oleh AppUpdateBanner untuk menampilkan versi realtime
+		define: {
+			__APP_BUILD_TIME__: JSON.stringify(
+				new Date().toLocaleDateString("id-ID", {
+					day: "2-digit",
+					month: "short",
+					year: "numeric",
+				}),
+			),
 		},
 	};
 });

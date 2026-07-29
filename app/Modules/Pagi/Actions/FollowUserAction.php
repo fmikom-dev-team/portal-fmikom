@@ -52,6 +52,14 @@ class FollowUserAction
 
         // Send real-time notification if following
         if ($isNowFollowing) {
+            // Deduplicate: Delete previous follow notifications from this sender to prevent notification spam
+            DB::table('notifications')
+                ->where('notifiable_id', $targetUser->id)
+                ->where('notifiable_type', get_class($targetUser))
+                ->where('data->type', 'follow')
+                ->where('data->sender_id', $authUser->id)
+                ->delete();
+
             $avatar = null;
             if ($authUser->foto_path) {
                 $avatar = str_starts_with($authUser->foto_path, 'http') ? $authUser->foto_path : asset('storage/'.$authUser->foto_path);
@@ -69,6 +77,14 @@ class FollowUserAction
             } catch (\Throwable $e) {
                 report($e);
             }
+        } else {
+            // Remove follow notification if user unfollows
+            DB::table('notifications')
+                ->where('notifiable_id', $targetUser->id)
+                ->where('notifiable_type', get_class($targetUser))
+                ->where('data->type', 'follow')
+                ->where('data->sender_id', $authUser->id)
+                ->delete();
         }
 
         return [

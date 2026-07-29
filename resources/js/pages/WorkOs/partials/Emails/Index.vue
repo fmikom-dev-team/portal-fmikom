@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { router } from "@inertiajs/vue3";
+import HelpdeskConfig from "./HelpdeskConfig.vue";
 import Logs from "./Logs.vue";
 import SMTP from "./SMTP.vue";
 import Templates from "./Templates.vue";
@@ -14,6 +15,7 @@ const activeTab = ref("smtp");
 
 const tabs = [
 	{ id: "smtp", label: "SMTP & Providers" },
+	{ id: "helpdesk", label: "Helpdesk WhatsApp CS" },
 	{ id: "templates", label: "Templates" },
 	{ id: "logs", label: "Logs" },
 ];
@@ -51,7 +53,7 @@ function handleEmailSent() {
             <button
                 v-for="tab in tabs"
                 :key="tab.id"
-                :class="['h-[38px] px-3 pb-3 text-[13px] font-semibold border-b-2 transition-colors whitespace-nowrap', activeTab === tab.id ? 'border-blue-600 text-gray-900 dark:text-zinc-100' : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-900']"
+                :class="['h-[38px] px-3 pb-3 text-[13px] font-semibold border-b-2 transition-colors whitespace-nowrap cursor-pointer', activeTab === tab.id ? 'border-blue-600 text-gray-900 dark:text-zinc-100' : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-gray-900']"
                 @click="activeTab = tab.id"
             >
                 {{ tab.label }}
@@ -66,6 +68,7 @@ function handleEmailSent() {
     <!-- Tab Contents -->
     <div class="mt-4">
         <SMTP v-if="activeTab === 'smtp'" :smtp-config="smtpConfig" @email-sent="handleEmailSent" />
+        <HelpdeskConfig v-else-if="activeTab === 'helpdesk'" />
         <Templates v-else-if="activeTab === 'templates'" />
         <Logs v-else-if="activeTab === 'logs'" :logs="mockLogs" @clear-logs="clearLogs" />
     </div>

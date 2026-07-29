@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Pagi\PagiReport;
 use App\Models\Pagi\PagiWarning;
 use App\Models\Pagi\PagiWork;
+use App\Models\Portal\PortalSetting;
 use App\Models\User;
 use App\Modules\Pagi\Controllers\Concerns\HasAdminDashboardHelpers;
 use App\Notifications\PagiNotification;
@@ -27,32 +28,91 @@ class AdminUserController extends Controller
      */
     public function index(Request $request): Response
     {
-        if (PagiWork::query()->count('*') === 0) {
-            $this->seedPagiDemoData();
+        $role = $request->attributes->get('resolved_role', session('active_role'));
+
+        $query = User::query();
+
+        // Abaikan akun test/dummy internal
+        $query->where('email', 'not like', '%@test.com')
+            ->where('email', 'not like', '%@fmikom.test');
+
+        // Filter Default: Hanya tampilkan pengguna yang sudah aktif (activated) di WorkOS
+        $statusFilter = $request->input('status');
+        if ($statusFilter === 'suspended') {
+            $query->where('status_approval', '=', 'suspended');
+        } elseif ($statusFilter === 'pending') {
+            $query->where('status_approval', '!=', 'activated')
+                ->where('status_approval', '!=', 'suspended');
+        } elseif ($statusFilter === 'warning' || $statusFilter === 'active') {
+            $query->where('status_approval', '=', 'activated')
+                ->where('is_active', '=', true);
+        } else {
+            // Default (termasuk 'all' atau tanpa parameter status):
+            // Hanya tampilkan akun yang sudah aktif & diaktivasi di WorkOS
+            $query->where('status_approval', '=', 'activated')
+                ->where('is_active', '=', true);
         }
 
-        $users = User::query()->whereIn('user_type', ['mahasiswa', 'mitra'])
-            ->withCount('pagiWorks')
-            ->get();
+        $query->where(function ($q) {
+            $q->whereIn('user_type', ['mahasiswa', 'mitra', 'dosen', 'alumni'], 'and', false)
+                ->orWhereHas('moduleRoles');
+        });
+
+        // Security Scope: Restrict Prodi Role to their own department's students
+        if (strtolower($role) === 'prodi') {
+            /** @var User $adminUser */
+            $adminUser = Auth::user();
+            if ($adminUser && $adminUser->program_studi_id) {
+                $query->where('program_studi_id', '=', $adminUser->program_studi_id, 'and');
+            }
+        }
+
+        // Server-Side Search Filter
+        if ($search = trim((string) $request->input('search'))) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('nomor_induk', 'like', "%{$search}%");
+            });
+        }
+
+        // Server-Side Type Filter
+        if ($type = $request->input('type')) {
+            if (in_array($type, ['mahasiswa', 'mitra', 'dosen', 'alumni'], true)) {
+                $query->where('user_type', '=', $type, 'and');
+            }
+        }
+
+        $paginator = $query->withCount('pagiWorks')
+            ->latest('created_at')
+            ->paginate(15)
+            ->withQueryString();
+
+        $pageItems = collect($paginator->items());
 
         // Pre-load warned user IDs in one query to avoid N+1 inside map()
         $warnedUserIds = PagiWarning::query()->where('is_active', '=', true, 'and')
-            ->whereIn('user_id', $users->pluck('id'), 'and', false)
+            ->whereIn('user_id', $pageItems->pluck('id'), 'and', false)
             ->pluck('user_id')
             ->flip();
 
-        $formattedUsers = $users->map(function ($u) use ($warnedUserIds) {
-            $status = 'suspended';
-            if ($warnedUserIds->has($u->id)) {
+        $formattedUsers = $pageItems->map(function ($u) use ($warnedUserIds) {
+            $statusApprovalStr = is_object($u->status_approval) ? $u->status_approval->value : (string) $u->status_approval;
+
+            if ($statusApprovalStr === 'suspended') {
+                $status = 'suspended';
+            } elseif (! $u->is_active || $statusApprovalStr !== 'activated') {
+                $status = 'pending';
+            } elseif ($warnedUserIds->has($u->id)) {
                 $status = 'warning';
-            } elseif ($u->is_active) {
+            } else {
                 $status = 'active';
             }
 
             return [
                 'id' => $u->id,
                 'name' => $u->name,
-                'type' => $u->user_type, // 'mahasiswa' | 'mitra'
+                'type' => $u->user_type, // 'mahasiswa' | 'mitra' | 'dosen' | 'alumni'
                 'handle' => $u->user_type === 'mahasiswa' ? '@'.strstr($u->email, '@', true) : null,
                 'email' => $u->email,
                 'nim' => $u->user_type === 'mahasiswa' ? ($u->nomor_induk ?: '-') : null,
@@ -68,68 +128,104 @@ class AdminUserController extends Controller
             ];
         });
 
-        // Add fallback partners if database contains no partners
-        if ($users->where('user_type', 'mitra')->isEmpty()) {
-            $fallbackMitra = collect([
-                [
-                    'id' => 101,
-                    'name' => 'PT Telkom Indonesia',
-                    'type' => 'mitra',
-                    'handle' => null,
-                    'email' => 'hr@telkom.co.id',
-                    'nim' => null,
-                    'prodi' => null,
-                    'pic' => 'Budi Santoso',
-                    'status' => 'active',
-                    'karyaCount' => 5,
-                    'joinDate' => '12 Sep 2021',
-                ],
-                [
-                    'id' => 102,
-                    'name' => 'Gojek Tokopedia (GoTo)',
-                    'type' => 'mitra',
-                    'handle' => null,
-                    'email' => 'partners@goto.com',
-                    'nim' => null,
-                    'prodi' => null,
-                    'pic' => 'Andi Wijaya',
-                    'status' => 'active',
-                    'karyaCount' => 10,
-                    'joinDate' => '15 Oct 2022',
-                ],
-                [
-                    'id' => 103,
-                    'name' => 'Shopee Indonesia',
-                    'type' => 'mitra',
-                    'handle' => null,
-                    'email' => 'career@shopee.co.id',
-                    'nim' => null,
-                    'prodi' => null,
-                    'pic' => 'Sinta',
-                    'status' => 'warning',
-                    'karyaCount' => 2,
-                    'joinDate' => '20 Nov 2022',
-                ],
-                [
-                    'id' => 104,
-                    'name' => 'Ruangguru',
-                    'type' => 'mitra',
-                    'handle' => null,
-                    'email' => 'info@ruangguru.com',
-                    'nim' => null,
-                    'prodi' => null,
-                    'pic' => 'Deni',
-                    'status' => 'active',
-                    'karyaCount' => 8,
-                    'joinDate' => '10 Jan 2023',
-                ],
-            ]);
-            $formattedUsers = $formattedUsers->concat($fallbackMitra);
+        // Filter status locally on formatted collection if filterStatus is requested
+        $filterStatus = $request->input('status');
+        if ($filterStatus && in_array($filterStatus, ['active', 'warning', 'suspended'], true)) {
+            $formattedUsers = $formattedUsers->filter(fn ($u) => $u['status'] === $filterStatus)->values();
         }
 
         return Inertia::render('Modules/Pagi/Admin/Users/Index', [
-            'users' => $formattedUsers,
+            'users' => [
+                'data' => $formattedUsers,
+                'links' => $paginator->linkCollection()->toArray(),
+                'meta' => [
+                    'current_page' => $paginator->currentPage(),
+                    'from' => $paginator->firstItem(),
+                    'last_page' => $paginator->lastPage(),
+                    'per_page' => $paginator->perPage(),
+                    'to' => $paginator->lastItem(),
+                    'total' => $paginator->total(),
+                ],
+            ],
+            'filters' => [
+                'search' => $request->input('search', ''),
+                'type' => $request->input('type', 'all'),
+                'status' => $request->input('status', 'all'),
+            ],
         ]);
+    }
+
+    /**
+     * Admin update user status (active / warning / suspended)
+     */
+    public function updateUserStatus(Request $request, int $userId)
+    {
+        $targetUser = User::query()->findOrFail($userId);
+        $role = $request->attributes->get('resolved_role', session('active_role'));
+
+        // Otorisasi program studi untuk peran prodi
+        $this->authorizeProdiRole($role, $targetUser, 'Akses Ditolak: Anda hanya dapat mengubah status mahasiswa program studi Anda sendiri.');
+
+        $request->validate([
+            'status' => 'required|in:active,warning,suspended',
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        $newStatus = $request->status;
+        $reason = $request->reason ?: 'Perubahan status oleh administrator.';
+
+        if ($newStatus === 'active') {
+            // Restore account active status & revoke active warnings
+            $targetUser->forceFill(['is_active' => true])->save();
+            PagiWarning::query()->where('user_id', '=', $userId, 'and')
+                ->where('is_active', '=', true, 'and')
+                ->update(['is_active' => false]);
+
+            $targetUser->notify(new PagiNotification(
+                type: 'system',
+                title: 'Status Akun Aktif',
+                message: 'Akun Anda telah diaktifkan kembali oleh administrator.',
+                avatar: null,
+                href: '/pagi'
+            ));
+        } elseif ($newStatus === 'suspended') {
+            // Suspend account
+            $targetUser->forceFill(['is_active' => false])->save();
+
+            $targetUser->notify(new PagiNotification(
+                type: 'admin_warning',
+                title: 'Akun Ditangguhkan',
+                message: 'Akun Anda telah ditangguhkan oleh admin. Alasan: '.$reason,
+                avatar: null,
+                href: '/pagi/notifications',
+                extra: ['reason' => $reason]
+            ));
+        } elseif ($newStatus === 'warning') {
+            // Ensure account is active so it displays as warning
+            $targetUser->forceFill(['is_active' => true])->save();
+
+            // Issue warning
+            PagiWarning::create([
+                'user_id' => $userId,
+                'issued_by' => Auth::id() ?: 1,
+                'severity' => 'medium',
+                'type' => 'inappropriate_content',
+                'reason' => $reason,
+                'is_active' => true,
+                'expires_at' => now()->addDays(30),
+            ]);
+
+            $targetUser->notify(new PagiNotification(
+                type: 'admin_warning',
+                title: 'Peringatan Akun',
+                message: 'Akun Anda menerima peringatan dari admin: '.$reason,
+                avatar: null,
+                href: '/pagi/notifications',
+                extra: ['reason' => $reason]
+            ));
+        }
+
+        return back()->with('success', 'Status pengguna berhasil diperbarui.');
     }
 
     /**
@@ -182,6 +278,9 @@ class AdminUserController extends Controller
             $this->resolvePendingReportsAndNotify((int) $request->content_id, $request->reason, $work);
         }
 
+        // Cek apakah total warning melebihi batas pagi_max_warnings_before_suspend untuk auto-suspend
+        $this->checkAutoSuspendUser($user);
+
         return back()->with('success', 'Peringatan berhasil dikirim.');
     }
 
@@ -199,6 +298,27 @@ class AdminUserController extends Controller
             $this->authorizeProdiRole($role, $targetUser, 'Akses Ditolak: Anda hanya dapat mencabut peringatan mahasiswa program studi Anda sendiri.');
         }
         $warning->fill(['is_active' => false])->save();
+
+        // Automatic account restoration check if user was suspended
+        if ($targetUser && ! $targetUser->is_active) {
+            $maxAllowed = (int) (PortalSetting::query()->where('key', 'pagi_max_warnings_before_suspend')->value('value') ?? 3);
+            $remainingActiveCount = PagiWarning::query()
+                ->where('user_id', $targetUser->id)
+                ->where('is_active', true)
+                ->count();
+
+            if ($remainingActiveCount < $maxAllowed) {
+                $targetUser->forceFill(['is_active' => true])->save();
+
+                $targetUser->notify(new PagiNotification(
+                    type: 'system',
+                    title: 'Status Akun Dipulihkan',
+                    message: 'Akun Anda telah diaktifkan kembali karena Surat Peringatan (SP) Anda telah dicabut.',
+                    avatar: null,
+                    href: '/pagi'
+                ));
+            }
+        }
 
         return back()->with('success', 'Peringatan berhasil dicabut.');
     }
@@ -345,6 +465,83 @@ class AdminUserController extends Controller
                 'is_active' => true,
                 'expires_at' => now()->addDays(30),
             ]);
+        }
+    }
+
+    /**
+     * PAGI Admin Instant Search Endpoint (JSON)
+     */
+    public function instantSearch(Request $request)
+    {
+        $q = trim((string) $request->input('q'));
+        if (strlen($q) < 2) {
+            return response()->json(['results' => []]);
+        }
+
+        $results = [];
+
+        // 1. Search Works
+        $works = PagiWork::query()
+            ->where('title', 'like', "%{$q}%")
+            ->limit(5)
+            ->get();
+
+        foreach ($works as $w) {
+            $results[] = [
+                'title' => $w->title,
+                'subtitle' => 'Karya oleh '.($w->user->name ?? 'Mahasiswa'),
+                'category' => 'Karya PAGI',
+                'href' => '/pagi/admin/moderation',
+                'avatar' => $this->getStorageUrl($w->cover_image),
+            ];
+        }
+
+        // 2. Search Users
+        $users = User::query()
+            ->whereIn('user_type', ['mahasiswa', 'mitra'], 'and', false)
+            ->where(function ($query) use ($q) {
+                $query->where('name', 'like', "%{$q}%")
+                    ->orWhere('email', 'like', "%{$q}%")
+                    ->orWhere('nomor_induk', 'like', "%{$q}%");
+            })
+            ->limit(5)
+            ->get();
+
+        foreach ($users as $u) {
+            $results[] = [
+                'title' => $u->name,
+                'subtitle' => $u->user_type === 'mahasiswa' ? $u->email.' (NIM: '.($u->nomor_induk ?: '-').')' : $u->email,
+                'category' => $u->user_type === 'mahasiswa' ? 'Mahasiswa' : 'Mitra Industri',
+                'href' => '/pagi/admin/users?search='.urlencode($u->name),
+                'avatar' => null,
+            ];
+        }
+
+        return response()->json($results);
+    }
+
+    /**
+     * Otomatis menangguhkan akun jika total warning aktif melampaui batas pagi_max_warnings_before_suspend
+     */
+    private function checkAutoSuspendUser(User $targetUser): void
+    {
+        $maxAllowed = (int) (PortalSetting::query()->where('key', 'pagi_max_warnings_before_suspend')->value('value') ?? 3);
+        $activeWarningsCount = PagiWarning::query()
+            ->where('user_id', $targetUser->id)
+            ->where('is_active', true)
+            ->count();
+
+        if ($activeWarningsCount >= $maxAllowed) {
+            $targetUser->forceFill(['is_active' => false])->save();
+
+            $targetUser->notify(new PagiNotification(
+                type: 'admin_warning',
+                title: 'Akun Otomatis Ditangguhkan',
+                message: "Akun Anda otomatis ditangguhkan karena telah mencapai batas maksimal ({$maxAllowed}) peringatan aktif.",
+                avatar: null,
+                href: '/pagi/notifications',
+                extra: ['auto_suspended' => true, 'warning_count' => $activeWarningsCount]
+            ));
         }
     }
 }

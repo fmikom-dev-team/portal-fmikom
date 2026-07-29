@@ -47,7 +47,9 @@ class PortalEventController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'organizer' => 'nullable|string|max:255',
-            'organizer_logo' => 'nullable|image|max:2048',
+            'organizer_logo' => 'nullable',
+            'organizer_logos' => 'nullable|array',
+            'organizer_logos.*' => 'image|max:2048',
             'slug' => 'required|string|unique:portal_events,slug',
             'description' => 'required|string',
             'location' => 'nullable|string|max:255',
@@ -68,8 +70,21 @@ class PortalEventController extends Controller
             $validated['thumbnail'] = $this->processAndStoreImage($request->file('thumbnail'), 'portal/events/thumbnails');
         }
 
-        if ($request->hasFile('organizer_logo')) {
-            $validated['organizer_logo'] = $this->processAndStoreImage($request->file('organizer_logo'), 'portal/events/logos');
+        $logos = [];
+        if ($request->hasFile('organizer_logos')) {
+            foreach ($request->file('organizer_logos') as $file) {
+                if ($file) {
+                    $logos[] = $this->processAndStoreImage($file, 'portal/events/logos');
+                }
+            }
+        } elseif ($request->hasFile('organizer_logo')) {
+            $logos[] = $this->processAndStoreImage($request->file('organizer_logo'), 'portal/events/logos');
+        }
+
+        if (count($logos) > 0) {
+            $validated['organizer_logo'] = count($logos) === 1 ? $logos[0] : json_encode($logos);
+        } else {
+            $validated['organizer_logo'] = null;
         }
 
         PortalEvent::create($validated);
@@ -82,7 +97,11 @@ class PortalEventController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'organizer' => 'nullable|string|max:255',
-            'organizer_logo' => 'nullable|image|max:2048',
+            'organizer_logo' => 'nullable',
+            'organizer_logos' => 'nullable|array',
+            'organizer_logos.*' => 'image|max:2048',
+            'existing_organizer_logos' => 'nullable|array',
+            'existing_organizer_logos.*' => 'string',
             'slug' => 'required|string|unique:portal_events,slug,'.$event->id,
             'description' => 'required|string',
             'location' => 'nullable|string|max:255',
@@ -108,11 +127,27 @@ class PortalEventController extends Controller
             unset($validated['thumbnail']);
         }
 
-        if ($request->hasFile('organizer_logo')) {
-            if ($event->organizer_logo) {
-                Storage::disk('public')->delete(str_replace('/storage/', '', $event->organizer_logo));
+        $logos = $request->input('existing_organizer_logos', []);
+        if (! is_array($logos)) {
+            $logos = [];
+        }
+
+        if ($request->hasFile('organizer_logos')) {
+            foreach ($request->file('organizer_logos') as $file) {
+                if ($file) {
+                    $logos[] = $this->processAndStoreImage($file, 'portal/events/logos');
+                }
             }
-            $validated['organizer_logo'] = $this->processAndStoreImage($request->file('organizer_logo'), 'portal/events/logos');
+        } elseif ($request->hasFile('organizer_logo')) {
+            $logos[] = $this->processAndStoreImage($request->file('organizer_logo'), 'portal/events/logos');
+        }
+
+        if ($request->hasFile('organizer_logos') || $request->hasFile('organizer_logo') || $request->has('existing_organizer_logos')) {
+            if (count($logos) > 0) {
+                $validated['organizer_logo'] = count($logos) === 1 ? $logos[0] : json_encode($logos);
+            } else {
+                $validated['organizer_logo'] = null;
+            }
         } else {
             unset($validated['organizer_logo']);
         }

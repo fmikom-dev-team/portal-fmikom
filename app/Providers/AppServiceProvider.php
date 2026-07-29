@@ -7,6 +7,7 @@ use App\Models\Auth\AuthLoginAttempt;
 use App\Models\Auth\AuthSession;
 use App\Models\Auth\AuthSetting;
 use App\Models\JenisSurat;
+use App\Models\Portal\PortalSetting;
 use App\Models\Surat;
 use App\Models\SuratCategory;
 use App\Models\TemplateGlobalSetting;
@@ -190,6 +191,19 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Event::listen(PasswordReset::class, function ($event) {
+            // [FIX FIND-007] Revoke semua AuthSession aktif setelah password reset.
+            // OWASP mewajibkan semua session diinvalidasi setelah password change/reset.
+            // Mencegah attacker mempertahankan akses via session lama.
+            try {
+                AuthSession::where('user_id', $event->user->id)
+                    ->where('is_revoked', false)
+                    ->update(['is_revoked' => true]);
+            } catch (\Throwable $e) {
+                Log::error('[PasswordReset] Gagal merevoke AuthSession: '.$e->getMessage(), [
+                    'user_id' => $event->user->id,
+                ]);
+            }
+
             AuditLogger::log('user.password_reset', 'info', [
                 'device' => request()->userAgent(),
             ], $event->user);
@@ -226,6 +240,13 @@ class AppServiceProvider extends ServiceProvider
         // -- Pagi Chat Rate Limiting (Flood Prevention) -------------------------
         RateLimiter::for('pagi-chat-send', function ($request) {
             return Limit::perMinute(30)->by($request->user()->id);
+        });
+
+        // -- Pagi API Dynamic Rate Limiting (Admin Configured) -----------------
+        RateLimiter::for('pagi-api', function ($request) {
+            $rateLimit = (int) (PortalSetting::query()->where('key', 'pagi_rate_limit_per_minute')->value('value') ?? 60);
+
+            return Limit::perMinute($rateLimit)->by($request->user()?->id ?: $request->ip());
         });
 
         // -- File Upload Rate Limiting (Flood & DoS Prevention) -----------------

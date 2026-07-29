@@ -42,6 +42,7 @@ class PagiProfileService
 
         // ── FIX #1: Removed `orWhere('content', 'like', '%name%')` full-table scan.
         // Collaborators are resolved separately via preloaded user map—no DB scan needed.
+        $username = $user->pagi_username ? ltrim($user->pagi_username, '@') : null;
         $projectsQuery = PagiWork::with([
             'tags',
             'user:id,name,pagi_username,foto_path,location',
@@ -52,7 +53,22 @@ class PagiProfileService
             'commentsRelation.likesRelation',
             'commentsRelation.replies.user:id,name,pagi_username,foto_path',
             'commentsRelation.replies.likesRelation',
-        ])->where('user_id', $user->id);
+        ])->where(function ($q) use ($user, $username) {
+            $q->where('user_id', $user->id)
+                ->orWhere('content', 'like', '%"id":'.$user->id.'%')
+                ->orWhere('content', 'like', '%"user_id":'.$user->id.'%')
+                ->orWhere('content', 'like', '%"id": "'.$user->id.'"%')
+                ->orWhere('content', 'like', '%"user_id": "'.$user->id.'"%');
+
+            if ($user->name) {
+                $q->orWhere('content', 'like', '%"name":"'.$user->name.'"%')
+                    ->orWhere('content', 'like', '%"name": "'.$user->name.'"%');
+            }
+            if ($username) {
+                $q->orWhere('content', 'like', '%"name":"'.$username.'"%')
+                    ->orWhere('content', 'like', '%"name":"@'.$username.'"%');
+            }
+        });
 
         if (! $isOwner) {
             $projectsQuery->where('is_published', true)
@@ -115,6 +131,7 @@ class PagiProfileService
                 'comments' => $this->formatComments($p->comments),
                 'views' => $p->views_count ?? 0,
                 'is_published' => (bool) $p->is_published,
+                'status' => $p->status ?? 'active',
                 'tools_used' => $p->tools_used,
                 'description' => $p->description,
                 'category' => $p->category,
@@ -170,6 +187,12 @@ class PagiProfileService
             // ── FIX #3: Use single COUNT query from DB instead of reading JSON metadata
             'followers_count' => $user->pagiFollowers()->count(),
             'following_count' => $user->pagiFollowing()->count(),
+            'recent_followers' => $user->pagiFollowers()->limit(4)->get()->map(fn ($f) => [
+                'id' => $f->id,
+                'name' => $this->formatName($f->name),
+                'pagi_username' => $f->pagi_username,
+                'src' => $this->resolveAssetPath($f->foto_path),
+            ])->values()->toArray(),
             'followed_by_user' => ($firstFollower = $user->pagiFollowers()->first()) ? [
                 'id' => $firstFollower->id,
                 'name' => $this->formatName($firstFollower->name),

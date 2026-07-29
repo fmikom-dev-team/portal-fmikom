@@ -274,12 +274,12 @@ const loginWithPasskey = async () => {
             </div>
 
             <div class="text-center text-sm text-slate-500 dark:text-slate-400 mt-3">
-                Mahasiswa / Dosen / Staff?
+                Belum aktivasi akun?
                 <TextLink
                     href="/activate"
                     class="underline underline-offset-4 font-semibold text-blue-600 dark:text-blue-400 ml-1"
                     :tabindex="6"
-                >Aktivasi Akun</TextLink>
+                >Aktivasi Akun Mahasiswa</TextLink>
             </div>
         </form>
     </div>

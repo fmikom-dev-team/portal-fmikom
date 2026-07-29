@@ -261,10 +261,10 @@ const handleCollaborationResponse = async (
 					v-model="activeTab"
 					:tabs="notificationTabs"
 					variant="pill"
-					container-class="w-full flex rounded-2xl border border-slate-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 shadow-2xs p-1 gap-1"
-					pill-class="bg-slate-950 dark:bg-white rounded-xl shadow-2xs"
-					active-class="text-white dark:text-zinc-950 font-black flex-1 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider justify-center"
-					inactive-class="text-slate-500 hover:text-slate-900 hover:bg-slate-50 dark:hover:bg-zinc-850 dark:text-zinc-450 dark:hover:text-zinc-200 flex-1 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider justify-center"
+					container-class="w-full flex rounded-2xl border border-slate-200/80 dark:border-zinc-800 bg-slate-100/70 dark:bg-zinc-900/60 p-1 gap-1"
+					pill-class="bg-white dark:bg-zinc-800 rounded-xl shadow-xs border border-slate-200/50 dark:border-zinc-700/50"
+					active-class="text-slate-900 dark:text-white font-black flex-1 py-2 text-[10px] sm:text-xs tracking-wider justify-center"
+					inactive-class="text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 flex-1 py-2 text-[10px] sm:text-xs font-bold tracking-wider justify-center"
 				/>
 
 				<!-- Empty State -->
@@ -278,9 +278,9 @@ const handleCollaborationResponse = async (
 				</div>
 
 				<!-- Grouped Notification Stream -->
-				<div v-for="group in filteredGroups" :key="group.group" class="space-y-2 sm:space-y-3">
-					<!-- Group Label -->
-					<h2 class="text-xs font-black text-slate-500 dark:text-zinc-500 uppercase tracking-widest px-1">
+				<div v-for="group in filteredGroups" :key="group.group" class="space-y-2.5 sm:space-y-3.5">
+					<!-- Group Label (Instagram Style) -->
+					<h2 class="text-xs sm:text-[13px] font-extrabold text-slate-900 dark:text-zinc-100 px-1 pt-2">
 						{{ group.group }}
 					</h2>
 
@@ -289,19 +289,19 @@ const handleCollaborationResponse = async (
 						v-for="notif in group.items"
 						:key="notif.id"
 						@click="handleItemClick(notif)"
-						class="w-full flex items-center justify-between gap-3 rounded-2xl border p-3 sm:p-4 transition-all duration-200 cursor-pointer hover:border-indigo-300 dark:hover:border-zinc-700"
+						class="w-full flex items-center justify-between gap-3.5 rounded-2xl border p-3 sm:p-3.5 transition-all duration-200 cursor-pointer group"
 						:class="[
 							notif.unread
-								? 'bg-white dark:bg-zinc-900 border-indigo-200/80 dark:border-indigo-950/60 shadow-xs'
-								: 'bg-white/70 dark:bg-zinc-900/30 border-slate-200/60 dark:border-zinc-800/80 hover:bg-white dark:hover:bg-zinc-900'
+								? 'bg-slate-100/90 dark:bg-zinc-900/90 border-slate-200/90 dark:border-zinc-800 shadow-3xs'
+								: 'bg-white/80 dark:bg-zinc-950/60 border-slate-100/70 dark:border-zinc-900/50 hover:bg-slate-50 dark:hover:bg-zinc-900/60'
 						]"
 					>
-						<!-- Left: Avatar + Content -->
-						<div class="flex items-center gap-3 min-w-0 flex-1">
+						<!-- Left: Avatar + Text Content -->
+						<div class="flex items-center gap-3.5 min-w-0 flex-1">
 							<!-- Avatar with type badge -->
 							<div class="relative shrink-0">
-								<img v-if="notif.avatar" :src="notif.avatar" alt="Avatar" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border border-slate-100 dark:border-zinc-800 bg-slate-50" />
-								<div v-else class="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center border shrink-0"
+								<img v-if="notif.avatar" :src="notif.avatar" alt="Avatar" class="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-slate-200/80 dark:border-zinc-800 bg-slate-50 shadow-3xs" />
+								<div v-else class="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border shrink-0 shadow-3xs"
 									:class="notif.type === 'system'
 										? 'bg-indigo-50 border-indigo-100 dark:bg-indigo-950/30 dark:border-indigo-900 text-indigo-600 dark:text-indigo-400'
 										: 'bg-slate-100 border-slate-200 dark:bg-zinc-850 dark:border-zinc-800 text-slate-500'"
@@ -311,68 +311,78 @@ const handleCollaborationResponse = async (
 
 								<!-- Type indicator badge -->
 								<span
-									class="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 sm:h-5 sm:w-5 rounded-full items-center justify-center border-2 border-white dark:border-zinc-900 text-white shadow-xs"
+									class="absolute -bottom-0.5 -right-0.5 flex h-4.5 w-4.5 sm:h-5 sm:w-5 rounded-full items-center justify-center border-2 border-white dark:border-zinc-950 text-white shadow-xs"
 									:class="typeBg(notif.type)"
 								>
-									<Heart v-if="notif.type === 'like'" class="w-2 h-2 fill-white" />
-									<Users v-else-if="notif.type === 'follow'" class="w-2 h-2" />
-									<MessageSquare v-else-if="notif.type === 'comment' || notif.type === 'reply'" class="w-2 h-2" />
-									<Bell v-else class="w-2 h-2" />
+									<Heart v-if="notif.type === 'like'" class="w-2.5 h-2.5 fill-white" />
+									<Users v-else-if="notif.type === 'follow'" class="w-2.5 h-2.5" />
+									<MessageSquare v-else-if="notif.type === 'comment' || notif.type === 'reply'" class="w-2.5 h-2.5 fill-white" />
+									<Bell v-else class="w-2.5 h-2.5" />
 								</span>
 							</div>
 
-							<!-- Content -->
+							<!-- Content text (Instagram style: bold username + text + inline timestamp) -->
 							<div class="min-w-0 flex-1">
-								<p class="text-xs sm:text-[13px] font-semibold text-slate-800 dark:text-zinc-200 leading-snug line-clamp-2">
-									<span class="font-black text-slate-900 dark:text-white">{{ notif.title }}</span>
+								<p class="text-xs sm:text-[13px] font-normal text-slate-800 dark:text-zinc-200 leading-snug">
+									<span class="font-bold text-slate-950 dark:text-white hover:underline cursor-pointer">{{ notif.title }}</span>
 									{{ ' ' + notif.message }}
-								</p>
-								<div class="flex items-center gap-3 mt-1.5 flex-wrap">
-									<span class="text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wide">
+									<span class="text-[11px] font-medium text-slate-400 dark:text-zinc-500 ml-1 whitespace-nowrap">
 										{{ notif.time }}
 									</span>
-									<span v-if="notif.unread" class="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0"></span>
+								</p>
 
-									<!-- Follback Button -->
-									<button
-										v-if="notif.type === 'follow' && notif.sender_id"
-										@click.stop="toggleFollback(notif)"
-										:disabled="FollbackInProgress[notif.sender_id]"
-										class="inline-flex items-center gap-1 px-3 py-1 text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded-lg transition-all active:scale-97 cursor-pointer"
-										:class="isFollowingBack(notif.sender_id)
-											? 'bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-700'
-											: 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-xs'"
-									>
-										{{ FollbackInProgress[notif.sender_id] ? 'Proses...' : (isFollowingBack(notif.sender_id) ? 'Mengikuti' : 'Follback') }}
-									</button>
+								<!-- Unread indicator & Collaboration actions -->
+								<div v-if="notif.unread || ((notif.type === 'collaboration_invite' || (notif.type === 'collaboration' && notif.is_invite !== false && !notif.message.includes('menerima'))) && notif.portfolio_id)" class="flex items-center gap-2 mt-1 flex-wrap">
+									<span v-if="notif.unread" class="inline-block w-2 h-2 rounded-full bg-blue-600 shrink-0"></span>
 
 									<!-- Collaboration invite buttons -->
-									<div v-if="notif.type === 'collaboration' && notif.portfolio_id" class="flex items-center gap-2 mt-2">
-										<button
-											@click.stop="handleCollaborationResponse(notif, 'accept')"
-											:disabled="collaborationActionInProgress[notif.id] !== undefined && collaborationActionInProgress[notif.id] !== null"
-											class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded-lg shadow-xs transition-all active:scale-97 cursor-pointer border-none"
-										>
-											{{ collaborationActionInProgress[notif.id] === 'accept' ? 'Proses...' : 'Terima' }}
-										</button>
-										<button
-											@click.stop="handleCollaborationResponse(notif, 'decline')"
-											:disabled="collaborationActionInProgress[notif.id] !== undefined && collaborationActionInProgress[notif.id] !== null"
-											class="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 text-[9px] sm:text-[10px] font-black uppercase tracking-wider rounded-lg transition-all active:scale-97 cursor-pointer border-none"
-										>
-											{{ collaborationActionInProgress[notif.id] === 'decline' ? 'Proses...' : 'Tolak' }}
-										</button>
+									<div v-if="(notif.type === 'collaboration_invite' || (notif.type === 'collaboration' && notif.is_invite !== false && !notif.message.includes('menerima'))) && notif.portfolio_id" class="flex items-center gap-2 mt-1">
+										<template v-if="!notif.collaboration_handled">
+											<button
+												@click.stop="handleCollaborationResponse(notif, 'accept')"
+												:disabled="collaborationActionInProgress[notif.id] !== undefined && collaborationActionInProgress[notif.id] !== null"
+												class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold rounded-lg shadow-2xs transition-all active:scale-97 cursor-pointer border-none"
+											>
+												{{ collaborationActionInProgress[notif.id] === 'accept' ? 'Proses...' : 'Terima' }}
+											</button>
+											<button
+												@click.stop="handleCollaborationResponse(notif, 'decline')"
+												:disabled="collaborationActionInProgress[notif.id] !== undefined && collaborationActionInProgress[notif.id] !== null"
+												class="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 text-[10px] font-bold rounded-lg transition-all active:scale-97 cursor-pointer border-none"
+											>
+												{{ collaborationActionInProgress[notif.id] === 'decline' ? 'Proses...' : 'Tolak' }}
+											</button>
+										</template>
+										<span v-else class="text-xs font-semibold" :class="notif.collaboration_status === 'accept' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'">
+											{{ notif.collaboration_status === 'accept' ? 'Undangan diterima' : 'Undangan ditolak' }}
+										</span>
 									</div>
 								</div>
 							</div>
 						</div>
 
-						<!-- Right: Actions -->
-						<div class="flex items-center gap-0.5 shrink-0">
-							<Link :href="notif.href || '/pagi'" @click.stop class="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all">
-								<ChevronRight class="w-4 h-4" />
-							</Link>
-							<button @click.stop="deleteNotif(notif.id)" class="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all cursor-pointer">
+						<!-- Right: Instagram Action / Thumbnail -->
+						<div class="flex items-center gap-2 shrink-0">
+							<!-- Follow / Follback Button -->
+							<button
+								v-if="notif.type === 'follow' && notif.sender_id"
+								@click.stop="toggleFollback(notif)"
+								:disabled="FollbackInProgress[notif.sender_id]"
+								class="inline-flex items-center justify-center px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all active:scale-97 cursor-pointer shadow-3xs"
+								:class="isFollowingBack(notif.sender_id)
+									? 'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700'
+									: 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs'"
+							>
+								{{ FollbackInProgress[notif.sender_id] ? '...' : (isFollowingBack(notif.sender_id) ? 'Mengikuti' : 'Follback') }}
+							</button>
+
+							<!-- Work Thumbnail Preview (Instagram Style) -->
+							<div v-else-if="notif.work_image" class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden border border-slate-200/80 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-900 shadow-3xs shrink-0">
+								<img :src="notif.work_image" alt="Work thumbnail" class="w-full h-full object-cover" />
+							</div>
+
+							<!-- Delete button (visible on hover or focus) -->
+							<button @click.stop="deleteNotif(notif.id)" title="Hapus" class="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all cursor-pointer">
 								<X class="w-4 h-4" />
 							</button>
 						</div>

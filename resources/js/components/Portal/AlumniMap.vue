@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from "vue";
+import { Link } from "@inertiajs/vue3";
 import L from "leaflet";
 import { useLeafletMap } from "@/composables/useLeafletMap";
 import "leaflet.markercluster";
@@ -44,7 +45,30 @@ const displayTotalAlumni = computed(() => {
 const { mapContainer, map, isReady } = useLeafletMap({
     center: [-2.5, 118],
     zoom: 4,
+    scrollWheelZoom: false,
 });
+
+const showGestureHint = ref(false);
+let hintTimeout: ReturnType<typeof setTimeout> | null = null;
+
+const triggerGestureHint = () => {
+    showGestureHint.value = true;
+    if (hintTimeout) clearTimeout(hintTimeout);
+    hintTimeout = setTimeout(() => {
+        showGestureHint.value = false;
+    }, 2200);
+};
+
+const handleWheelOnMap = (e: WheelEvent) => {
+    const m = map.value;
+    if (!m) return;
+    if (e.ctrlKey || e.metaKey) {
+        m.scrollWheelZoom.enable();
+    } else {
+        m.scrollWheelZoom.disable();
+        triggerGestureHint();
+    }
+};
 
 const colors = {
     bekerja: "#3b82f6",
@@ -295,11 +319,12 @@ watch(
                     <div
                         class="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start"
                     >
-                        <button
+                        <Link
+                            href="/login"
                             class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-blue-600 text-white font-semibold shadow-lg shadow-blue-600/30 hover:bg-blue-700 hover:shadow-blue-600/40 transition-all flex items-center justify-center gap-2 group"
-                            aria-label="Jelajahi Peta Alumni"
+                            aria-label="Jelajahi Alumni"
                         >
-                            Jelajahi Peta Alumni
+                            Jelajahi Alumni
                             <svg
                                 class="w-4 h-4 transition-transform group-hover:translate-x-1"
                                 fill="none"
@@ -313,43 +338,40 @@ watch(
                                     d="M14 5l7 7m0 0l-7 7m7-7H3"
                                 />
                             </svg>
-                        </button>
-                        <button
-                            class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white text-slate-700 font-semibold border border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-center gap-3"
-                            aria-label="Lihat video cara kerja"
-                        >
-                            <div
-                                class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center"
-                            >
-                                <svg
-                                    class="w-4 h-4 ml-0.5"
-                                    fill="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path d="M8 5v14l11-7z" />
-                                </svg>
-                            </div>
-                            <div class="text-left">
-                                <div class="text-sm">Lihat Video</div>
-                                <div
-                                    class="text-[10px] text-slate-400 font-normal -mt-0.5"
-                                >
-                                    Cara kerjanya
-                                </div>
-                            </div>
-                        </button>
+                        </Link>
                     </div>
                 </div>
 
                 <!-- Right Map Visualization (Leaflet Map) -->
                 <div
                     class="lg:col-span-7 relative min-h-[550px] z-10 hide-animate slide-left flex items-center justify-center"
+                    @wheel="handleWheelOnMap"
                 >
                     <!-- Leaflet map container -->
                     <div
                         ref="mapContainer"
                         class="absolute inset-0 w-full h-full rounded-[2rem] overflow-hidden border border-slate-100 shadow-2xl z-10 bg-slate-50"
                     ></div>
+
+                    <!-- Floating Gesture Hint Banner (Google Maps Style UX) -->
+                    <Transition
+                        enter-active-class="transition duration-200 ease-out"
+                        enter-from-class="opacity-0 -translate-y-2 scale-95"
+                        enter-to-class="opacity-100 translate-y-0 scale-100"
+                        leave-active-class="transition duration-150 ease-in"
+                        leave-from-class="opacity-100 translate-y-0 scale-100"
+                        leave-to-class="opacity-0 -translate-y-2 scale-95"
+                    >
+                        <div
+                            v-if="showGestureHint"
+                            class="absolute top-4 right-4 z-30 bg-slate-900/90 text-white text-xs font-medium px-4 py-2.5 rounded-xl shadow-xl backdrop-blur-md border border-slate-700/60 flex items-center gap-2 pointer-events-none"
+                        >
+                            <svg class="w-4 h-4 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Gunakan <strong>Ctrl + Scroll</strong> atau tombol (+/-) untuk zoom</span>
+                        </div>
+                    </Transition>
 
                     <!-- Floating Total Alumni Card -->
                     <div

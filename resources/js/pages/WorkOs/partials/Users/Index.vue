@@ -81,9 +81,9 @@ const filterRoleLabel = computed(() => {
 const filterMembershipLabel = computed(() => {
 	if (filterMembership.value === "all") return "All";
 	if (filterMembership.value === "active") return "Active";
-	if (filterMembership.value === "pending") return "Pending";
+	if (filterMembership.value === "pending_activation") return "Pending Activation";
+	if (filterMembership.value === "pending") return "Pending Review";
 	if (filterMembership.value === "rejected") return "Inactive";
-	if (filterMembership.value === "deletion_requested") return "Pending Deletion";
 	return filterMembership.value;
 });
 
@@ -286,7 +286,7 @@ const toggleStatusModal = reactive({
 function openToggleStatus(u: any, event: Event) {
 	event.stopPropagation();
 	toggleStatusModal.user = u;
-	toggleStatusModal.targetStatus = !!u.is_active;
+	toggleStatusModal.targetStatus = u.status_approval === 'pending' ? false : (u.status_approval === 'activated' || u.user_type === 'super_admin' ? !!u.is_active : false);
 	toggleStatusModal.show = true;
 	toggleStatusModal.isLoading = false;
 }
@@ -745,12 +745,12 @@ function executeRejectAction() {
                         class="absolute left-0 mt-1 w-48 bg-white dark:bg-zinc-900 border border-[#e5e7eb] dark:border-zinc-800 rounded-lg shadow-lg py-1 z-50 dark:shadow-none"
                     >
                         <button 
-                            v-for="membOpt in ['all', 'active', 'pending', 'rejected', 'deletion_requested']" 
+                            v-for="membOpt in ['all', 'active', 'pending_activation', 'pending', 'rejected']" 
                             :key="membOpt"
                             @click="filterMembership = membOpt; membershipDropdownOpen = false"
                             class="w-full flex items-center justify-between px-3.5 py-2 text-[12.5px] text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:bg-zinc-900 dark:hover:bg-zinc-800 text-left transition-colors font-medium cursor-pointer bg-transparent border-0"
                         >
-                            <span>{{ membOpt === 'all' ? 'All Memberships' : (membOpt === 'active' ? 'Active' : (membOpt === 'pending' ? 'Pending' : (membOpt === 'rejected' ? 'Inactive' : 'Pending Deletion'))) }}</span>
+                            <span>{{ membOpt === 'all' ? 'All Memberships' : (membOpt === 'active' ? 'Active' : (membOpt === 'pending_activation' ? 'Pending Activation' : (membOpt === 'pending' ? 'Pending Review' : 'Inactive'))) }}</span>
                             <svg v-if="filterMembership === membOpt" class="w-3 h-3 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
@@ -904,13 +904,17 @@ function executeRejectAction() {
                                         @click="openToggleStatus(u, $event)"
                                         class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#f9fafb] hover:bg-[#f3f4f6] dark:bg-zinc-800 dark:hover:bg-zinc-700/80 border border-[#e5e7eb] dark:border-zinc-700 hover:border-gray-300 dark:hover:border-zinc-600 transition-all cursor-pointer shadow-sm active:scale-95 text-left"
                                     >
-                                        <template v-if="u.is_active || u.status_approval === 'approved'">
+                                        <template v-if="u.is_active && (u.status_approval === 'activated' || u.user_type === 'super_admin')">
                                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                             <span class="text-emerald-500">Active</span>
                                         </template>
+                                        <template v-else-if="['approved', 'otp_sent', 'otp_verified'].includes(u.status_approval)">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                                            <span class="text-indigo-500 font-semibold">Pending Activation</span>
+                                        </template>
                                         <template v-else-if="u.status_approval === 'pending'">
                                             <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                            <span class="text-amber-500">Pending</span>
+                                            <span class="text-amber-500">Pending Review</span>
                                         </template>
                                         <template v-else>
                                             <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
@@ -1444,8 +1448,17 @@ function executeRejectAction() {
                         </div>
                     </div>
                     
-                    <!-- Modern Toggle Switch (Simulated) -->
+                    <!-- Modern Status Toggle / Pending Badge -->
+                    <span v-if="toggleStatusModal.user?.status_approval === 'pending'" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60 shrink-0">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                        Pending Review
+                    </span>
+                    <span v-else-if="['approved', 'otp_sent', 'otp_verified'].includes(toggleStatusModal.user?.status_approval)" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900/60 shrink-0">
+                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                        Pending Activation
+                    </span>
                     <button 
+                        v-else
                         @click="toggleStatusModal.targetStatus = !toggleStatusModal.targetStatus"
                         class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-0 ml-4"
                         :class="toggleStatusModal.targetStatus ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-zinc-700'"
@@ -1459,7 +1472,10 @@ function executeRejectAction() {
 
                 <div class="text-[13px] text-[#4b5563] dark:text-zinc-400 font-medium leading-relaxed">
                     <template v-if="toggleStatusModal.user?.status_approval === 'pending'">
-                        Akun user ini sedang menunggu persetujuan (Pending). Menyetujui akun ini akan memicu pengiriman email aktivasi ke user. Apakah Anda yakin ingin menyetujui akun ini?
+                        Akun user ini sedang menunggu persetujuan (Pending Review). Menyetujui akun ini akan memicu pengiriman email aktivasi ke user. Apakah Anda yakin ingin menyetujui akun ini?
+                    </template>
+                    <template v-else-if="['approved', 'otp_sent', 'otp_verified'].includes(toggleStatusModal.user?.status_approval)">
+                        Akun user ini telah disetujui dan sedang dalam proses aktivasi mandiri oleh pengguna (Pending Activation).
                     </template>
                     <template v-else-if="toggleStatusModal.targetStatus !== !!toggleStatusModal.user?.is_active">
                         <template v-if="toggleStatusModal.targetStatus">
@@ -1483,19 +1499,21 @@ function executeRejectAction() {
                 <div class="flex justify-end gap-2">
                     <button class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-350 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f3f4f6] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm cursor-pointer dark:shadow-none" @click="toggleStatusModal.show = false">Batal</button>
                     <button
-                        :disabled="toggleStatusModal.isLoading || (toggleStatusModal.user?.status_approval !== 'pending' && toggleStatusModal.targetStatus === !!toggleStatusModal.user?.is_active)"
+                        :disabled="toggleStatusModal.isLoading || (['pending', 'approved', 'otp_sent', 'otp_verified'].indexOf(toggleStatusModal.user?.status_approval) === -1 && toggleStatusModal.targetStatus === !!toggleStatusModal.user?.is_active)"
                         class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer border-0 dark:shadow-none"
                         :class="[
                             toggleStatusModal.user?.status_approval === 'pending'
                                 ? 'bg-emerald-600 hover:bg-emerald-700'
-                                : (toggleStatusModal.targetStatus === !!toggleStatusModal.user?.is_active
-                                    ? 'bg-slate-400 dark:bg-zinc-700'
-                                    : (toggleStatusModal.targetStatus ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'))
+                                : (['approved', 'otp_sent', 'otp_verified'].includes(toggleStatusModal.user?.status_approval)
+                                    ? 'bg-indigo-600 hover:bg-indigo-700'
+                                    : (toggleStatusModal.targetStatus === !!toggleStatusModal.user?.is_active
+                                        ? 'bg-slate-400 dark:bg-zinc-700'
+                                        : (toggleStatusModal.targetStatus ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700')))
                         ]"
                         @click="handleToggleStatusSubmit"
                     >
                         <svg v-if="toggleStatusModal.isLoading" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                        {{ toggleStatusModal.isLoading ? 'Memproses...' : (toggleStatusModal.user?.status_approval === 'pending' ? 'Setujui' : (toggleStatusModal.targetStatus === !!toggleStatusModal.user?.is_active ? 'Simpan' : (toggleStatusModal.targetStatus ? 'Aktifkan Akun' : 'Nonaktifkan Akun'))) }}
+                        {{ toggleStatusModal.isLoading ? 'Memproses...' : (toggleStatusModal.user?.status_approval === 'pending' ? 'Setujui' : (['approved', 'otp_sent', 'otp_verified'].includes(toggleStatusModal.user?.status_approval) ? 'Kirim Ulang Link Aktivasi' : (toggleStatusModal.targetStatus === !!toggleStatusModal.user?.is_active ? 'Simpan' : (toggleStatusModal.targetStatus ? 'Aktifkan Akun' : 'Nonaktifkan Akun')))) }}
                     </button>
                 </div>
             </template>

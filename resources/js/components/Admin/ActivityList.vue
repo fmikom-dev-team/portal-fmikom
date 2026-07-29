@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { Link } from "@inertiajs/vue3";
 
 interface Activity {
 	id: number | string;
@@ -54,9 +55,9 @@ const typeConfig = {
     <div class="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 overflow-hidden">
         <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-zinc-800">
             <h3 class="text-[13px] font-bold text-slate-800 dark:text-zinc-100">Aktivitas Terbaru</h3>
-            <button class="text-[12px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition-colors">
+            <Link href="/pagi/admin/moderation" class="text-[12px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition-colors">
                 Lihat Semua
-            </button>
+            </Link>
         </div>
 
         <!-- ── Skeleton shimmer ──────────────────────────────────────────── -->

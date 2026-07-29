@@ -1,4 +1,5 @@
 import { computed, ref } from "vue";
+import { toast as sonnerToast } from "vue-sonner";
 import { usePagiProgress } from "../../shared/composables/usePagiProgress";
 import { idbPut } from "./useEditorDraft";
 
@@ -28,7 +29,7 @@ const getFileAspectRatio = (file: File): Promise<number> => {
 
 const compressImageToWebP = (
 	file: File,
-	quality = 0.8,
+	quality = 0.95,
 	maxDimension = 1920,
 ): Promise<File> => {
 	return new Promise((resolve) => {
@@ -104,19 +105,30 @@ const compressImageToWebP = (
 
 export function useEditorFileUpload(
 	form: any,
-	addToast: (message: string, type?: string) => void,
+	addToastParam: (message: string, type?: string) => void,
 ) {
+	const addToast = (message: string, type = "success") => {
+		if (addToastParam) addToastParam(message, type);
+		if (type === "error") sonnerToast.error(message);
+		else if (type === "warning") sonnerToast.warning(message);
+		else if (type === "info") sonnerToast.info(message);
+		else sonnerToast.success(message);
+	};
 	const { startProgress, updateProgress, finishProgress } = usePagiProgress();
 	const coverPreview = ref<string | null>(null);
 
 	const isCoverVideo = computed(() => {
-		if (!form.cover_image) return false;
-		if (form.cover_image instanceof File) {
-			return form.cover_image.type.startsWith("video/");
+		const src = form.cover_image || coverPreview.value;
+		if (!src) return false;
+		if (src instanceof File) {
+			return src.type.startsWith("video/");
 		}
-		if (typeof form.cover_image === "string") {
-			const ext = form.cover_image.split(".").pop()?.toLowerCase();
-			return ["mp4", "webm", "ogg", "mov", "m4v", "3gp"].includes(ext || "");
+		if (typeof src === "string") {
+			const cleanUrl = src.split("?")[0].split("#")[0];
+			const ext = cleanUrl.split(".").pop()?.toLowerCase();
+			return ["mp4", "webm", "ogg", "mov", "m4v", "3gp", "qt"].includes(
+				ext || "",
+			);
 		}
 		return false;
 	});
@@ -295,6 +307,11 @@ export function useEditorFileUpload(
 					"image/jpg",
 					"image/gif",
 					"image/webp",
+					"image/avif",
+					"image/heic",
+					"image/heif",
+					"image/svg+xml",
+					"image/bmp",
 					"video/mp4",
 					"video/webm",
 					"video/ogg",
@@ -494,6 +511,11 @@ export function useEditorFileUpload(
 					"image/jpg",
 					"image/gif",
 					"image/webp",
+					"image/avif",
+					"image/heic",
+					"image/heif",
+					"image/svg+xml",
+					"image/bmp",
 					"video/mp4",
 					"video/webm",
 					"video/ogg",

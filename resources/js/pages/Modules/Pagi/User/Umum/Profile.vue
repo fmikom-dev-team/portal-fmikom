@@ -190,6 +190,7 @@ const {
 	getProjectShareUrl,
 	deleteProject,
 	viewingProject,
+	isLoadingModal,
 	activeProjectSettings,
 	openProjectModal,
 	closeProjectModal,
@@ -906,6 +907,7 @@ const headUrl = computed(() => {
 			:category="viewingProject.category"
 			:tools-used="viewingProject.tools_used"
 			:tags="viewingProject.tags"
+			:is-loading="isLoadingModal"
 			@close="closeProjectModal"
 			@select-portfolio="viewingProject = $event"
 		/>

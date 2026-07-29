@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import { Head, router } from "@inertiajs/vue3";
 import {
+	ArrowDown,
+	ArrowUp,
 	CheckCircle2,
 	Edit2,
 	Eye,
 	EyeOff,
 	Move,
+	Plus,
 	Save,
+	Sparkles,
+	Trash2,
 	Upload,
+	UserCheck,
 	X,
 } from "lucide-vue-next";
 import { reactive, ref, computed, watch } from "vue";
@@ -23,6 +29,65 @@ const props = defineProps({
 		default: () => ({}),
 	},
 });
+
+const defaultTestimonialsList = [
+	{
+		id: "1",
+		quote: "Sistem FAST benar-benar mengubah cara saya mengajukan persuratan. Dulu butuh 3 hari, sekarang hanya hitungan jam sudah disetujui Kaprodi!",
+		name: "Andi Saputra",
+		role: "Mahasiswa Semester 6",
+		avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=a042581f4e29026024d",
+		theme: "dark",
+	},
+	{
+		id: "2",
+		quote: "Sistem administrasi menjadi sangat transparan. Saya bisa melacak setiap proses dokumen dengan mudah tanpa harus bolak-balik ke tata usaha.",
+		name: "Rizky Pratama",
+		role: "Ketua BEM FMIKOM",
+		avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=a042581f4e29026011d",
+		theme: "light",
+	},
+	{
+		id: "3",
+		quote: "Sebagai dosen pembimbing, memantau logbook magang mahasiswa via WIMS sangat menghemat waktu. Semua terpusat, real-time, dan mudah diakses dari mana saja.",
+		name: "Dr. Budi Santoso, M.Kom",
+		role: "Dosen Pembimbing",
+		avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=a042581f4e29026704d",
+		theme: "light",
+	},
+	{
+		id: "4",
+		quote: "Pengajuan judul skripsi dan pencarian dosen pembimbing jadi lebih terstruktur berkat modul bimbingan akademik di portal ini.",
+		name: "Dina Aulia",
+		role: "Mahasiswa Tingkat Akhir",
+		avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=a042581f4e29026715d",
+		theme: "light",
+	},
+	{
+		id: "5",
+		quote: "Birokrasi kampus yang selama ini kompleks, kini dapat diselesaikan hanya dengan beberapa kali klik. Transformasi digital yang luar biasa.",
+		name: "Prof. Herman",
+		role: "Dekan FMIKOM",
+		avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=a042581f4e29026725d",
+		theme: "light",
+	},
+	{
+		id: "6",
+		quote: "Sangat mudah memonitor mahasiswa magang dari perusahaan kami. Form penilaian langsung tersedia online dan sistemnya sangat responsif.",
+		name: "Anton Setiawan",
+		role: "HR Director, TechNesia",
+		avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=a04258a2462d826729d",
+		theme: "light",
+	},
+	{
+		id: "7",
+		quote: "Saya mendapat pekerjaan pertama saya karena profil portofolio yang saya bangun dan tracer study terhubung langsung oleh mitra kerja sama fakultas FMIKOM.",
+		name: "Siti Rahmawati",
+		role: "Alumni Angkatan 2022",
+		avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=a04258a2462d826712d",
+		theme: "dark",
+	},
+];
 
 const hasGalleryError = computed(() => {
 	if (!props.errors) return false;
@@ -55,6 +120,7 @@ const form = reactive({
 	show_features: props.settings.show_features !== "0",
 	show_partners: props.settings.show_partners !== "0",
 	show_benefits: props.settings.show_benefits !== "0",
+	show_testimonials: props.settings.show_testimonials !== "0",
 
 	// Content
 	hero_title:
@@ -64,6 +130,19 @@ const form = reactive({
 		props.settings.hero_description ||
 		"Kelola administrasi, magang, alumni, dan portofolio dalam satu sistem terintegrasi.",
 	primary_color: props.settings.primary_color || "#2563eb",
+
+	testimonials_title: props.settings.testimonials_title || "Apa Kata Mereka",
+	testimonials_subtitle: props.settings.testimonials_subtitle || "Pengalaman & Testimoni Civitas Akademika FMIKOM",
+	testimonials: (() => {
+		const v = props.settings.testimonials;
+		if (Array.isArray(v)) return [...v];
+		try {
+			const parsed = JSON.parse(v || "[]");
+			return Array.isArray(parsed) && parsed.length > 0 ? parsed : [...defaultTestimonialsList];
+		} catch {
+			return [...defaultTestimonialsList];
+		}
+	})(),
 
 	// hero_gallery & partners come as JSON strings from DB via pluck()
 	hero_gallery: (() => {
@@ -120,6 +199,9 @@ watch(() => props.settings, (newSettings) => {
 	form.show_features = newSettings.show_features !== "0";
 	form.show_partners = newSettings.show_partners !== "0";
 	form.show_benefits = newSettings.show_benefits !== "0";
+	form.show_testimonials = newSettings.show_testimonials !== "0";
+	form.testimonials_title = newSettings.testimonials_title || "Apa Kata Mereka";
+	form.testimonials_subtitle = newSettings.testimonials_subtitle || "Pengalaman & Testimoni Civitas Akademika FMIKOM";
 	form.primary_color = newSettings.primary_color || "#2563eb";
 
 	form.benefits_title = newSettings.benefits_title || "Mengapa Memilih Portal FMIKOM?";
@@ -254,9 +336,107 @@ const toggleVisibility = (
 		| "show_hero"
 		| "show_features"
 		| "show_partners"
-		| "show_benefits",
+		| "show_benefits"
+		| "show_testimonials",
 ) => {
 	form[key] = !form[key];
+};
+
+// Testimonial Item Form State & Helper Functions
+const isEditingTestimonialItem = ref(false);
+const editingTestimonialIndex = ref<number | null>(null);
+const avatarInput = ref<HTMLInputElement | null>(null);
+const testimonialItemForm = reactive({
+	name: "",
+	role: "",
+	quote: "",
+	avatar: "",
+	theme: "light" as "light" | "dark",
+});
+
+const resetTestimonialItemForm = () => {
+	testimonialItemForm.name = "";
+	testimonialItemForm.role = "";
+	testimonialItemForm.quote = "";
+	testimonialItemForm.avatar = "";
+	testimonialItemForm.theme = "light";
+	isEditingTestimonialItem.value = false;
+	editingTestimonialIndex.value = null;
+};
+
+const startAddTestimonialItem = () => {
+	resetTestimonialItemForm();
+	isEditingTestimonialItem.value = true;
+	editingTestimonialIndex.value = null;
+};
+
+const startEditTestimonialItem = (index: number) => {
+	const item = form.testimonials[index];
+	if (!item) return;
+	testimonialItemForm.name = item.name || "";
+	testimonialItemForm.role = item.role || "";
+	testimonialItemForm.quote = item.quote || "";
+	testimonialItemForm.avatar = item.avatar || "";
+	testimonialItemForm.theme = item.theme === "dark" ? "dark" : "light";
+	isEditingTestimonialItem.value = true;
+	editingTestimonialIndex.value = index;
+};
+
+const saveTestimonialItem = () => {
+	if (!testimonialItemForm.name.trim() || !testimonialItemForm.quote.trim()) {
+		alert("Mohon isi Nama dan Teks Kutipan Testimoni.");
+		return;
+	}
+
+	const newItem = {
+		id: editingTestimonialIndex.value !== null && form.testimonials[editingTestimonialIndex.value]?.id
+			? form.testimonials[editingTestimonialIndex.value].id
+			: String(Date.now()),
+		name: testimonialItemForm.name.trim(),
+		role: testimonialItemForm.role.trim() || "Mahasiswa / Alumni",
+		quote: testimonialItemForm.quote.trim(),
+		avatar: testimonialItemForm.avatar.trim() || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(testimonialItemForm.name.trim())}`,
+		theme: testimonialItemForm.theme,
+	};
+
+	if (editingTestimonialIndex.value !== null) {
+		form.testimonials[editingTestimonialIndex.value] = newItem;
+	} else {
+		form.testimonials.push(newItem);
+	}
+
+	resetTestimonialItemForm();
+};
+
+const deleteTestimonialItem = (index: number) => {
+	if (confirm(`Apakah Anda yakin ingin menghapus testimoni dari "${form.testimonials[index]?.name}"?`)) {
+		form.testimonials.splice(index, 1);
+		if (editingTestimonialIndex.value === index) {
+			resetTestimonialItemForm();
+		}
+	}
+};
+
+const moveTestimonialItem = (index: number, direction: "up" | "down") => {
+	const newIndex = direction === "up" ? index - 1 : index + 1;
+	if (newIndex < 0 || newIndex >= form.testimonials.length) return;
+	const temp = form.testimonials[index];
+	form.testimonials[index] = form.testimonials[newIndex];
+	form.testimonials[newIndex] = temp;
+};
+
+const handleAvatarUpload = (event: Event) => {
+	const target = event.target as HTMLInputElement;
+	if (target.files && target.files[0]) {
+		const file = target.files[0];
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			if (e.target?.result) {
+				testimonialItemForm.avatar = e.target.result as string;
+			}
+		};
+		reader.readAsDataURL(file);
+	}
 };
 
 const submit = () => {
@@ -272,6 +452,10 @@ const submit = () => {
 	formData.append("show_features", form.show_features ? "1" : "0");
 	formData.append("show_partners", form.show_partners ? "1" : "0");
 	formData.append("show_benefits", form.show_benefits ? "1" : "0");
+	formData.append("show_testimonials", form.show_testimonials ? "1" : "0");
+	formData.append("testimonials_title", form.testimonials_title);
+	formData.append("testimonials_subtitle", form.testimonials_subtitle);
+	formData.append("testimonials", JSON.stringify(form.testimonials));
 	formData.append("benefits_title", form.benefits_title);
 	formData.append("benefits_subtitle", form.benefits_subtitle);
 	formData.append("benefit_1_title", form.benefit_1_title);
@@ -340,29 +524,6 @@ const submit = () => {
             
             <div class="max-w-4xl mx-auto flex flex-col gap-6">
                 
-                <!-- SECTION: NAVBAR -->
-                <div class="bg-[#f8fafc] dark:bg-slate-900/50 rounded-2xl p-4 border border-dashed border-slate-300 dark:border-slate-700">
-                    <div class="text-[11px] font-black tracking-widest text-slate-400 uppercase mb-3 ml-2">Header / Navigasi</div>
-                    
-                    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
-                        <div class="flex items-center gap-4">
-                            <button @click="toggleVisibility('show_navbar')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" title="Sembunyikan/Tampilkan">
-                                <Eye v-if="form.show_navbar" class="w-5 h-5"/>
-                                <EyeOff v-else class="w-5 h-5 text-rose-500"/>
-                            </button>
-                            <div>
-                                <h4 :class="['text-[14px] font-bold', form.show_navbar ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Menu Navigasi Utama</h4>
-                                <p class="text-[12px] font-bold text-slate-500 mt-0.5">Gadget HTML/Navigasi Header</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button @click="openEditModal('navbar')" class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-[#2563EB] hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors border border-slate-200 dark:border-slate-600">
-                                <Edit2 class="w-3.5 h-3.5"/>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- SECTION: HERO -->
                 <div class="bg-[#f8fafc] dark:bg-slate-900/50 rounded-2xl p-4 border border-dashed border-slate-300 dark:border-slate-700">
                     <div class="text-[11px] font-black tracking-widest text-slate-400 uppercase mb-3 ml-2">Hero Section (Atas)</div>
@@ -532,6 +693,25 @@ const submit = () => {
                             </div>
                         </div>
 
+                        <!-- WIDGET: TESTIMONIALS (Apa Kata Mereka) -->
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
+                            <div class="flex items-center gap-4">
+                                <button @click="toggleVisibility('show_testimonials')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" title="Sembunyikan/Tampilkan">
+                                    <Eye v-if="form.show_testimonials" class="w-5 h-5"/>
+                                    <EyeOff v-else class="w-5 h-5 text-rose-500"/>
+                                </button>
+                                <div>
+                                    <h4 :class="['text-[14px] font-bold', form.show_testimonials ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Apa Kata Mereka (Testimoni)</h4>
+                                    <p class="text-[12px] font-bold text-slate-500 mt-0.5">Gadget Testimoni Civitas Akademika & Alumni</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button @click="openEditModal('testimonials')" class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-[#2563EB] hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors border border-slate-200 dark:border-slate-600">
+                                    <Edit2 class="w-3.5 h-3.5"/>
+                                </button>
+                            </div>
+                        </div>
+
                     </div>
 
                     <!-- RIGHT COLUMN (SIDEBAR EQUIVALENT / SETTINGS) -->
@@ -575,6 +755,7 @@ const submit = () => {
                         <span v-if="editingWidget === 'gallery'">Galeri dan Event</span>
                         <span v-if="editingWidget === 'theme'">Warna Tema Utama</span>
                         <span v-if="editingWidget === 'benefits'">Seksi Keunggulan</span>
+                        <span v-if="editingWidget === 'testimonials'">Apa Kata Mereka (Testimoni)</span>
                     </h3>
                     <button @click="closeEditModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                         <X class="w-5 h-5"/>
@@ -653,6 +834,147 @@ const submit = () => {
                                 <span class="text-[12px] font-bold text-slate-700 dark:text-zinc-300">Klik untuk unggah logo mitra</span>
                                 <span class="text-[10px] text-slate-400 dark:text-zinc-500 mt-1">Rekomendasi rasio: <strong>Lanskap (16:9 / 4:3)</strong>, resolusi <strong>600x300 px</strong></span>
                                 <span class="text-[9px] text-slate-400 dark:text-zinc-600 mt-0.5">Mendukung format PNG, JPG, JPEG, WEBP, SVG (maks. 5MB)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="editingWidget === 'testimonials'" class="space-y-6">
+                        <!-- HEADER SETTINGS -->
+                        <div class="grid grid-cols-1 gap-4 p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <h4 class="text-[13px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                <Sparkles class="w-4 h-4 text-blue-500"/>
+                                Pengaturan Header Seksi
+                            </h4>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Judul Seksi Utama</label>
+                                <input v-model="form.testimonials_title" type="text" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-[13px] font-bold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-[#2563EB] outline-none" placeholder="Contoh: Apa Kata Mereka" />
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Sub-Judul / Deskripsi</label>
+                                <textarea v-model="form.testimonials_subtitle" rows="2" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-[13px] font-bold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-[#2563EB] outline-none resize-none" placeholder="Contoh: Pengalaman dan testimoni nyata dari mahasiswa, dosen, dan alumni."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- TESTIMONIAL ITEM FORM (ADD / EDIT INLINE PANEL) -->
+                        <div v-if="isEditingTestimonialItem" class="p-4 bg-blue-50/60 dark:bg-blue-950/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl space-y-4 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-[13px] font-black text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                                    <UserCheck class="w-4 h-4"/>
+                                    {{ editingTestimonialIndex !== null ? 'Edit Testimoni' : 'Tambah Testimoni Baru' }}
+                                </h4>
+                                <button @click="resetTestimonialItemForm" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                                    <X class="w-4 h-4"/>
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">Nama Pemberi Testimoni *</label>
+                                    <input v-model="testimonialItemForm.name" type="text" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-[12px] font-bold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-[#2563EB] outline-none" placeholder="Contoh: Andi Saputra" />
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">Jabatan / Peran *</label>
+                                    <input v-model="testimonialItemForm.role" type="text" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-[12px] font-bold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-[#2563EB] outline-none" placeholder="Contoh: Mahasiswa Semester 6" />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">Gaya Kartu (Tampilan)</label>
+                                <div class="flex items-center gap-4">
+                                    <label class="flex items-center gap-2 cursor-pointer text-[12px] font-bold text-slate-700 dark:text-slate-300">
+                                        <input type="radio" v-model="testimonialItemForm.theme" value="light" class="text-blue-600 focus:ring-blue-500" />
+                                        <span>Kartu Terang (Standard)</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer text-[12px] font-bold text-slate-700 dark:text-slate-300">
+                                        <input type="radio" v-model="testimonialItemForm.theme" value="dark" class="text-blue-600 focus:ring-blue-500" />
+                                        <span class="bg-slate-900 text-white px-2 py-0.5 rounded text-[10px]">Kartu Gelap (Highlight)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">Teks Kutipan Testimoni *</label>
+                                <textarea v-model="testimonialItemForm.quote" rows="3" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-[12px] font-bold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-[#2563EB] outline-none resize-none" placeholder="Tuliskan pengalaman atau pendapat..."></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">Foto Avatar (Upload atau URL)</label>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-slate-200 bg-slate-100 flex items-center justify-center">
+                                        <img v-if="testimonialItemForm.avatar" :src="testimonialItemForm.avatar" class="w-full h-full object-cover" />
+                                        <UserCheck v-else class="w-5 h-5 text-slate-400" />
+                                    </div>
+                                    <input v-model="testimonialItemForm.avatar" type="text" class="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-[11px] font-medium text-slate-800 dark:text-slate-200 outline-none" placeholder="URL Foto Avatar (https://...)" />
+                                    <input type="file" ref="avatarInput" accept="image/*" class="hidden" @change="handleAvatarUpload" />
+                                    <button @click="avatarInput?.click()" type="button" class="px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1 shrink-0">
+                                        <Upload class="w-3.5 h-3.5" />
+                                        Unggah
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-end gap-2 pt-2 border-t border-blue-200 dark:border-blue-800">
+                                <button @click="resetTestimonialItemForm" type="button" class="px-3 py-1.5 text-[12px] font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+                                    Batal
+                                </button>
+                                <button @click="saveTestimonialItem" type="button" class="px-4 py-1.5 bg-[#2563EB] hover:bg-blue-600 text-white text-[12px] font-bold rounded-lg shadow-sm transition-all">
+                                    {{ editingTestimonialIndex !== null ? 'Perbarui Testimoni' : 'Tambah Testimoni' }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- TESTIMONIALS LIST (CRUD MANAGER) -->
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-[13px] font-bold text-slate-800 dark:text-slate-200">
+                                    Daftar Testimoni ({{ form.testimonials.length }} Kartu)
+                                </h4>
+                                <button v-if="!isEditingTestimonialItem" @click="startAddTestimonialItem" type="button" class="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 text-[#2563EB] dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-lg text-[12px] font-bold transition-all flex items-center gap-1.5">
+                                    <Plus class="w-3.5 h-3.5" />
+                                    Tambah Testimoni Baru
+                                </button>
+                            </div>
+
+                            <div v-if="form.testimonials.length === 0" class="p-6 text-center border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl text-slate-400 text-[12px]">
+                                Belum ada testimoni. Klik <strong>"Tambah Testimoni Baru"</strong> untuk menambahkan.
+                            </div>
+
+                            <div class="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                                <div
+                                    v-for="(item, index) in form.testimonials"
+                                    :key="item.id || index"
+                                    class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 flex items-center justify-between gap-3 shadow-xs hover:border-slate-300 dark:hover:border-slate-600 transition-all"
+                                >
+                                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                                        <div class="w-9 h-9 rounded-full overflow-hidden shrink-0 bg-slate-100 border border-slate-200 flex items-center justify-center">
+                                            <img v-if="item.avatar" :src="item.avatar" :alt="item.name" class="w-full h-full object-cover" />
+                                            <span v-else class="text-xs font-bold text-slate-600">{{ item.name?.charAt(0) }}</span>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-2">
+                                                <h5 class="text-[13px] font-bold text-slate-800 dark:text-slate-200 truncate">{{ item.name }}</h5>
+                                                <span v-if="item.theme === 'dark'" class="bg-slate-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0">Kartu Gelap</span>
+                                                <span v-else class="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 border border-slate-200 dark:border-slate-700">Kartu Terang</span>
+                                            </div>
+                                            <p class="text-[11px] font-medium text-slate-400 truncate">{{ item.role }} — "{{ item.quote }}"</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-1 shrink-0">
+                                        <button @click="moveTestimonialItem(index, 'up')" :disabled="index === 0" class="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30">
+                                            <ArrowUp class="w-3.5 h-3.5" />
+                                        </button>
+                                        <button @click="moveTestimonialItem(index, 'down')" :disabled="index === form.testimonials.length - 1" class="p-1 text-slate-400 hover:text-slate-600 disabled:opacity-30">
+                                            <ArrowDown class="w-3.5 h-3.5" />
+                                        </button>
+                                        <button @click="startEditTestimonialItem(index)" class="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors" title="Edit Testimoni">
+                                            <Edit2 class="w-3.5 h-3.5" />
+                                        </button>
+                                        <button @click="deleteTestimonialItem(index)" class="p-1.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-md transition-colors" title="Hapus Testimoni">
+                                            <Trash2 class="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

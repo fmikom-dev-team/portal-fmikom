@@ -16,11 +16,97 @@ const emit = defineEmits<(e: "update-comments", comments: any[]) => void>();
 
 const page = usePage();
 const authUser = computed(() => page.props.auth?.user);
+const siteSettings = computed<Record<string, any>>(
+	() => (page.props as any).siteSettings || {},
+);
+
+// Feature & Audience Gates
+const commentsEnabled = computed(() => {
+	const val = siteSettings.value.pagi_enable_comments;
+	if (val === false || val === "false") return false;
+	return true;
+});
+
+const commentAudience = computed(() => {
+	return siteSettings.value.pagi_comment_audience || "mahasiswa_mitra";
+});
+
+const userType = computed(() => {
+	return (authUser.value?.user_type || "").toLowerCase();
+});
+
+const canUserComment = computed(() => {
+	if (!authUser.value) return false;
+	if (!commentsEnabled.value) return false;
+
+	const audience = commentAudience.value;
+	if (audience === "mahasiswa_only") {
+		return userType.value === "mahasiswa";
+	} else if (audience === "mahasiswa_mitra") {
+		return ["mahasiswa", "mitra"].includes(userType.value);
+	}
+	return true;
+});
+
+const audienceRestrictionNotice = computed(() => {
+	if (!commentsEnabled.value) {
+		return "Fitur komentar pada karya sedang dinonaktifkan oleh administrator.";
+	}
+	if (!authUser.value) {
+		return "Silakan login untuk memberikan komentar pada karya ini.";
+	}
+	if (commentAudience.value === "mahasiswa_only") {
+		return "Hanya mahasiswa aktif yang diizinkan untuk memberikan komentar pada karya di modul PAGI.";
+	}
+	if (commentAudience.value === "mahasiswa_mitra") {
+		return "Hanya mahasiswa dan mitra terverifikasi yang diizinkan untuk memberikan komentar.";
+	}
+	return "";
+});
+
+// Role Badge Helper
+const getRoleBadge = (commentUserType?: string) => {
+	const type = (commentUserType || "").toLowerCase();
+	if (type === "mahasiswa") {
+		return {
+			label: "Mahasiswa",
+			class:
+				"bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 border-blue-100 dark:border-blue-900/30",
+		};
+	}
+	if (type === "mitra") {
+		return {
+			label: "Mitra",
+			class:
+				"bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400 border-purple-100 dark:border-purple-900/30",
+		};
+	}
+	if (type === "dosen") {
+		return {
+			label: "Dosen",
+			class:
+				"bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/30",
+		};
+	}
+	if (
+		["super-admin", "admin", "admin-universitas", "admin-akademik"].includes(
+			type,
+		)
+	) {
+		return {
+			label: "Admin",
+			class:
+				"bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border-amber-100 dark:border-amber-900/30",
+		};
+	}
+	return null;
+};
 
 // Comments System State & Actions
 const commentsList = ref<any[]>([]);
 const commentText = ref("");
 const isSubmittingComment = ref(false);
+const commentErrorMessage = ref("");
 const commentTextareaRef = ref<HTMLTextAreaElement | null>(null);
 
 // Pagination
@@ -34,7 +120,7 @@ const hasMoreComments = computed(() => {
 	return commentsList.value.length > 10 && !showAllComments.value;
 });
 
-// Per-comment reply state: { [commentId]: { open: boolean, text: string, submitting: boolean, showReplies: boolean, replyToUserId?: number } }
+// Per-comment reply state
 const replyStates = ref<
 	Record<
 		string,
@@ -44,6 +130,7 @@ const replyStates = ref<
 			submitting: boolean;
 			showReplies: boolean;
 			replyToUserId?: number;
+			error?: string;
 		}
 	>
 >({});
@@ -56,6 +143,7 @@ const getReplyState = (commentId: string) => {
 			submitting: false,
 			showReplies: true,
 			replyToUserId: undefined,
+			error: "",
 		};
 	}
 	return replyStates.value[commentId];
@@ -67,6 +155,7 @@ const toggleReplyBox = (
 	replyToUserId?: number,
 ) => {
 	const state = getReplyState(commentId);
+	state.error = "";
 	if (prefillName) {
 		state.open = true;
 		state.text = `@${prefillName} `;
@@ -91,7 +180,8 @@ const getCommentLikesCount = (c: any) => {
 
 const handleLikeComment = async (commentId: string) => {
 	if (!authUser.value) {
-		alert("Please login to like comments.");
+		commentErrorMessage.value =
+			"Silakan login terlebih dahulu untuk menyukai komentar.";
 		return;
 	}
 	if (!props.checkUsername()) return;
@@ -104,14 +194,15 @@ const handleLikeComment = async (commentId: string) => {
 			props.portfolio.comments = res.data.comments;
 		}
 		emit("update-comments", res.data.comments);
-	} catch (e) {
+	} catch (e: any) {
 		console.error("Like comment error", e);
 	}
 };
 
 const handleLikeReply = async (commentId: string, replyId: string) => {
 	if (!authUser.value) {
-		alert("Please login to like replies.");
+		commentErrorMessage.value =
+			"Silakan login terlebih dahulu untuk menyukai balasan.";
 		return;
 	}
 	if (!props.checkUsername()) return;
@@ -124,28 +215,34 @@ const handleLikeReply = async (commentId: string, replyId: string) => {
 			props.portfolio.comments = res.data.comments;
 		}
 		emit("update-comments", res.data.comments);
-	} catch (e) {
+	} catch (e: any) {
 		console.error("Like reply error", e);
 	}
 };
 
 const handleReplySubmit = async (commentId: string) => {
 	const state = getReplyState(commentId);
+	state.error = "";
+
 	if (!authUser.value) {
-		alert("Please login to reply.");
+		state.error = "Silakan login terlebih dahulu untuk membalas.";
+		return;
+	}
+	if (!canUserComment.value) {
+		state.error = audienceRestrictionNotice.value;
 		return;
 	}
 	if (!props.checkUsername()) return;
 	if (!state.text.trim()) return;
 
 	if (!props.portfolio?.id) {
-		// Mock in editor preview mode
 		const comment = commentsList.value.find((c) => c.id === commentId);
 		if (comment) {
 			if (!comment.replies) comment.replies = [];
 			comment.replies.push({
 				id: Date.now().toString(),
 				name: authUser.value.name,
+				user_type: authUser.value.user_type,
 				avatar: authUser.value.avatar || getInitialsAvatar(authUser.value.name),
 				body: state.text,
 				time: "baru saja",
@@ -177,8 +274,9 @@ const handleReplySubmit = async (commentId: string) => {
 		state.replyToUserId = undefined;
 		state.showReplies = true;
 		emit("update-comments", res.data.comments);
-	} catch (e) {
+	} catch (e: any) {
 		console.error("Reply error", e);
+		state.error = e.response?.data?.message || "Gagal mempublikasikan balasan.";
 	} finally {
 		state.submitting = false;
 	}
@@ -197,18 +295,25 @@ watch(
 );
 
 const handleCommentSubmit = async () => {
+	commentErrorMessage.value = "";
+
 	if (!authUser.value) {
-		alert("Please login to comment.");
+		commentErrorMessage.value =
+			"Silakan login terlebih dahulu untuk memberikan komentar.";
+		return;
+	}
+	if (!canUserComment.value) {
+		commentErrorMessage.value = audienceRestrictionNotice.value;
 		return;
 	}
 	if (!props.checkUsername()) return;
 	if (!commentText.value.trim()) return;
 
 	if (!props.portfolio?.id) {
-		// Mock local behavior inside Editor preview mode
 		const newComment = {
 			id: Date.now().toString(),
 			name: authUser.value.name,
+			user_type: authUser.value.user_type,
 			avatar: authUser.value.avatar || getInitialsAvatar(authUser.value.name),
 			body: commentText.value,
 			time: "baru saja",
@@ -235,8 +340,10 @@ const handleCommentSubmit = async () => {
 			props.portfolio.comments = res.data.comments;
 		}
 		emit("update-comments", res.data.comments);
-	} catch (e) {
+	} catch (e: any) {
 		console.error("Comment error", e);
+		commentErrorMessage.value =
+			e.response?.data?.message || "Gagal mengirimkan komentar.";
 	} finally {
 		isSubmittingComment.value = false;
 	}
@@ -245,20 +352,43 @@ const handleCommentSubmit = async () => {
 
 <template>
 	<div class="lg:col-span-2 flex flex-col">
-		<!-- Comment Input (Flat, matching Behance style) -->
-		<div class="flex gap-4 items-start w-full">
+		
+		<!-- Comment Input Box / Restriction Banner -->
+		<div v-if="canUserComment" class="flex gap-4 items-start w-full">
 			<div class="w-10 h-10 shrink-0 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800">
 				<OptimizedImage :src="page.props.auth?.user?.avatar || getInitialsAvatar(page.props.auth?.user?.name || 'User')" className="w-full h-full object-cover" alt="User Avatar" />
 			</div>
 			
-			<div class="flex-grow flex flex-col gap-3">
-				<textarea ref="commentTextareaRef" v-model="commentText" rows="3" class="w-full border border-zinc-200 dark:border-zinc-800 rounded-md p-3 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400 bg-white dark:bg-slate-900 placeholder-zinc-400 text-zinc-800 dark:text-zinc-100 resize-none font-medium" placeholder="What are your thoughts on this project?"></textarea>
-				<div class="flex justify-end">
+			<div class="flex-grow flex flex-col gap-2">
+				<div v-if="commentErrorMessage" class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/40 text-xs font-semibold text-rose-600 dark:text-rose-400">
+					{{ commentErrorMessage }}
+				</div>
+				<textarea ref="commentTextareaRef" v-model="commentText" maxlength="1000" rows="3" class="w-full border border-zinc-200 dark:border-zinc-800 rounded-md p-3 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400 bg-white dark:bg-slate-900 placeholder-zinc-400 text-zinc-800 dark:text-zinc-100 resize-none font-medium" placeholder="Tuliskan apresiasi atau tanggapan Anda tentang karya ini..."></textarea>
+				<div class="flex items-center justify-between">
+					<span class="text-[11px] font-medium text-zinc-400">
+						{{ commentText.length }}/1000 karakter
+					</span>
 					<button type="button" @click="handleCommentSubmit" :disabled="isSubmittingComment || !commentText.trim()" class="px-5 py-2 rounded-full bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-950 text-xs font-bold shadow-xs transition-colors disabled:opacity-30 disabled:cursor-not-allowed border-none cursor-pointer">
-						{{ isSubmittingComment ? 'Posting...' : 'Post a Comment' }}
+						{{ isSubmittingComment ? 'Mengirim...' : 'Kirim Komentar' }}
 					</button>
 				</div>
 			</div>
+		</div>
+
+		<!-- Restriction Banner (when user cannot comment) -->
+		<div v-else class="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-700/60 flex items-center justify-between gap-3">
+			<div class="flex items-center gap-3">
+				<div class="h-9 w-9 rounded-xl bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center shrink-0 text-amber-600 dark:text-amber-400 font-bold text-base">
+					💬
+				</div>
+				<div>
+					<p class="text-xs font-bold text-slate-800 dark:text-zinc-200">Komentar Dibatasi</p>
+					<p class="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">{{ audienceRestrictionNotice }}</p>
+				</div>
+			</div>
+			<a v-if="!authUser" href="/login" class="shrink-0 px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors no-underline">
+				Login Sekarang
+			</a>
 		</div>
 
 		<!-- Divider Line -->
@@ -274,21 +404,27 @@ const handleCommentSubmit = async () => {
 						<OptimizedImage :src="c.avatar || getInitialsAvatar(c.name)" className="w-full h-full object-cover" alt="Comment author avatar" />
 					</a>
 					<div class="flex-grow min-w-0">
-						<!-- Name + time + reply -->
-						<div class="flex items-center flex-wrap gap-x-2 gap-y-0.5 mb-1">
+						<!-- Name + Role Badge + time -->
+						<div class="flex items-center flex-wrap gap-x-2 gap-y-1 mb-1">
 							<a :href="c.pagi_username ? `/pagi/${c.pagi_username}` : (c.user_id ? `/pagi/profile/${c.user_id}` : '#')" class="text-sm font-black text-zinc-900 dark:text-zinc-100 hover:underline cursor-pointer leading-none">{{ c.pagi_username ? c.pagi_username : c.name }}</a>
+							
+							<!-- Role badge -->
+							<span v-if="getRoleBadge(c.user_type)" :class="['inline-flex items-center rounded-full px-1.5 py-0.2 text-[9px] font-bold border', getRoleBadge(c.user_type)?.class]">
+								{{ getRoleBadge(c.user_type)?.label }}
+							</span>
+
 							<span class="text-zinc-300 dark:border-zinc-600 text-xs">·</span>
 							<span class="text-xs text-zinc-400">{{ c.time }}</span>
 						</div>
 						<p class="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap leading-relaxed mb-2">{{ c.body }}</p>
 						<!-- Action row: Reply + show replies count -->
 						<div class="flex items-center gap-3">
-							<button type="button" @click="toggleReplyBox(c.id, c.pagi_username || c.name)" class="text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer bg-transparent border-none p-0">
+							<button v-if="canUserComment" type="button" @click="toggleReplyBox(c.id, c.pagi_username || c.name)" class="text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer bg-transparent border-none p-0">
 								{{ getReplyState(c.id).open ? 'Batal' : 'Balas' }}
 							</button>
 							<button v-if="c.replies && c.replies.length > 0" type="button" @click="getReplyState(c.id).showReplies = !getReplyState(c.id).showReplies" class="text-xs font-bold text-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer bg-transparent border-none p-0 flex items-center gap-1">
 								<svg class="w-3 h-3 transition-transform" :class="getReplyState(c.id).showReplies ? 'rotate-90' : 'rotate-0'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-								{{ c.replies.length }} {{ c.replies.length === 1 ? 'balasan' : 'balasan' }}
+								{{ c.replies.length }} balasan
 							</button>
 						</div>
 					</div>
@@ -308,18 +444,25 @@ const handleCommentSubmit = async () => {
 						<OptimizedImage :src="page.props.auth?.user?.avatar || getInitialsAvatar(page.props.auth?.user?.name || 'User')" className="w-full h-full object-cover" alt="You" />
 					</div>
 					<div class="flex-grow">
+						<div v-if="getReplyState(c.id).error" class="mb-2 p-2 rounded-lg bg-rose-50 dark:bg-rose-950/30 text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+							{{ getReplyState(c.id).error }}
+						</div>
 						<textarea
 							v-model="getReplyState(c.id).text"
+							maxlength="1000"
 							rows="2"
 							class="w-full border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white dark:bg-slate-900 placeholder-zinc-400 text-zinc-800 dark:text-zinc-100 resize-none font-medium"
 							:placeholder="`Balas @${c.pagi_username || c.name}…`"
 							@keydown.enter.exact.prevent="handleReplySubmit(c.id)"
 						></textarea>
-						<div class="flex items-center justify-end gap-2 mt-1.5">
-							<button type="button" @click="getReplyState(c.id).open = false" class="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 font-semibold cursor-pointer bg-transparent border-none p-0">Batal</button>
-							<button type="button" @click="handleReplySubmit(c.id)" :disabled="getReplyState(c.id).submitting || !getReplyState(c.id).text.trim()" class="px-4 py-1.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed border-none cursor-pointer hover:bg-zinc-700 dark:hover:bg-zinc-100">
-								{{ getReplyState(c.id).submitting ? 'Mengirim…' : 'Kirim' }}
-							</button>
+						<div class="flex items-center justify-between mt-1.5">
+							<span class="text-[10px] text-zinc-400">{{ getReplyState(c.id).text.length }}/1000</span>
+							<div class="flex items-center gap-2">
+								<button type="button" @click="getReplyState(c.id).open = false" class="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 font-semibold cursor-pointer bg-transparent border-none p-0">Batal</button>
+								<button type="button" @click="handleReplySubmit(c.id)" :disabled="getReplyState(c.id).submitting || !getReplyState(c.id).text.trim()" class="px-4 py-1.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed border-none cursor-pointer hover:bg-zinc-700 dark:hover:bg-zinc-100">
+									{{ getReplyState(c.id).submitting ? 'Mengirim…' : 'Kirim' }}
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -331,14 +474,20 @@ const handleCommentSubmit = async () => {
 							<OptimizedImage :src="r.avatar || getInitialsAvatar(r.name)" className="w-full h-full object-cover" alt="Reply author avatar" />
 						</a>
 						<div class="flex-grow min-w-0">
-							<div class="flex items-center flex-wrap gap-x-2 mb-0.5">
+							<div class="flex items-center flex-wrap gap-x-2 gap-y-1 mb-0.5">
 								<a :href="r.pagi_username ? `/pagi/${r.pagi_username}` : (r.user_id ? `/pagi/profile/${r.user_id}` : '#')" class="text-xs font-black text-zinc-900 dark:text-zinc-100 hover:underline cursor-pointer leading-none">{{ r.pagi_username ? r.pagi_username : r.name }}</a>
+								
+								<!-- Role badge -->
+								<span v-if="getRoleBadge(r.user_type)" :class="['inline-flex items-center rounded-full px-1.5 py-0.2 text-[8.5px] font-bold border', getRoleBadge(r.user_type)?.class]">
+									{{ getRoleBadge(r.user_type)?.label }}
+								</span>
+
 								<span class="text-zinc-300 dark:text-zinc-600 text-[10px]">·</span>
 								<span class="text-[10px] text-zinc-400">{{ r.time }}</span>
 							</div>
 							<p class="text-xs text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap leading-relaxed mb-1">{{ r.body }}</p>
 							<div class="flex items-center gap-3">
-								<button type="button" @click="toggleReplyBox(c.id, r.pagi_username || r.name, r.user_id)" class="text-[10px] font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer bg-transparent border-none p-0">
+								<button v-if="canUserComment" type="button" @click="toggleReplyBox(c.id, r.pagi_username || r.name, r.user_id)" class="text-[10px] font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer bg-transparent border-none p-0">
 									Balas
 								</button>
 							</div>
@@ -356,11 +505,11 @@ const handleCommentSubmit = async () => {
 			</div>
 		</div>
 		<div v-else class="text-center py-6">
-			<p class="text-sm text-zinc-455 dark:text-zinc-550 font-medium">Belum ada komentar. Jadilah yang pertama!</p>
+			<p class="text-sm text-zinc-400 font-medium">Belum ada komentar. Jadilah yang pertama!</p>
 		</div>
 
 		<!-- Show More Comments -->
-		<button v-if="hasMoreComments" @click="showAllComments = true" type="button" class="w-full py-2.5 mt-4 rounded-full border border-zinc-200 dark:border-zinc-800 text-zinc-950 dark:text-zinc-50 hover:bg-zinc-50 dark:hover:bg-zinc-855 text-xs font-bold transition-all cursor-pointer bg-white dark:bg-slate-900">
+		<button v-if="hasMoreComments" @click="showAllComments = true" type="button" class="w-full py-2.5 mt-4 rounded-full border border-zinc-200 dark:border-zinc-800 text-zinc-950 dark:text-zinc-50 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-xs font-bold transition-all cursor-pointer bg-white dark:bg-slate-900">
 			Tampilkan lebih banyak komentar
 		</button>
 	</div>

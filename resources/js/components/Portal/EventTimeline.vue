@@ -44,6 +44,22 @@ const props = defineProps<{
   showAllLink?: string;
 }>();
 
+const getOrganizersList = (eventItem: any): string[] => {
+	const val = eventItem?.organizer;
+	if (!val) return ["FMIKOM"];
+	if (Array.isArray(val)) return val.filter(Boolean);
+	if (typeof val === "string" && val.startsWith("[")) {
+		try {
+			const parsed = JSON.parse(val);
+			if (Array.isArray(parsed)) return parsed.filter(Boolean);
+		} catch (e) {}
+	}
+	if (typeof val === "string") {
+		return val.split(",").map((s) => s.trim()).filter(Boolean);
+	}
+	return ["FMIKOM"];
+};
+
 const selectedEvent = ref<EventEntry | null>(null);
 const copied = ref(false);
 const isShareModalOpen = ref(false);
@@ -207,14 +223,20 @@ const formatNumber = (num: number) => {
               </h3>
 
               <!-- Host / Organization -->
-              <div class="flex items-center gap-1.5 text-xs text-slate-550 dark:text-slate-400 font-bold">
-                <div v-if="event.organizer_logo" class="w-4.5 h-4.5 rounded-md overflow-hidden border border-slate-200/60 dark:border-slate-800 shrink-0 bg-slate-50 flex items-center justify-center">
-                  <img :src="event.organizer_logo" class="w-full h-full object-cover" />
+              <div class="flex items-center gap-1.5 text-xs text-slate-550 dark:text-slate-400 font-bold max-w-full overflow-hidden">
+                <div v-if="getLogos(event).length > 0" class="flex items-center -space-x-1 shrink-0">
+                  <div 
+                    v-for="(logo, idx) in getLogos(event)" 
+                    :key="idx" 
+                    class="w-4.5 h-4.5 rounded-full overflow-hidden border border-white dark:border-slate-800 shrink-0 bg-white flex items-center justify-center shadow-xs"
+                  >
+                    <img :src="logo" class="w-full h-full object-cover" :alt="event.organizer" />
+                  </div>
                 </div>
                 <div v-else class="w-4.5 h-4.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center text-[9px] font-black shrink-0 uppercase">
-                  {{ (event.organizer || 'FMIKOM').substring(0, 1) }}
+                  {{ (getOrganizersList(event)[0] || 'F').substring(0, 1) }}
                 </div>
-                <span class="truncate">Oleh {{ event.organizer || 'FMIKOM' }}</span>
+                <span class="truncate max-w-full">Oleh {{ getOrganizersList(event).join(', ') }}</span>
               </div>
 
               <!-- Location -->
@@ -340,14 +362,20 @@ const formatNumber = (num: number) => {
             {{ selectedEvent.title }}
           </h2>
           
-          <div class="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
-            <div v-if="selectedEvent.organizer_logo" class="w-5 h-5 rounded-md overflow-hidden border border-slate-200/60 dark:border-slate-800 shrink-0 bg-slate-50 flex items-center justify-center">
-              <img :src="selectedEvent.organizer_logo" class="w-full h-full object-cover" />
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 max-w-full overflow-hidden">
+            <div v-if="getLogos(selectedEvent).length > 0" class="flex items-center -space-x-1 shrink-0">
+              <div 
+                v-for="(logo, idx) in getLogos(selectedEvent)" 
+                :key="idx" 
+                class="w-5 h-5 rounded-full overflow-hidden border border-white dark:border-slate-800 shrink-0 bg-white flex items-center justify-center shadow-xs"
+              >
+                <img :src="logo" class="w-full h-full object-cover" :alt="selectedEvent.organizer" />
+              </div>
             </div>
             <div v-else class="w-5 h-5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center text-[9px] font-black uppercase shrink-0">
-              {{ (selectedEvent.organizer || 'FMIKOM').substring(0, 1) }}
+              {{ (getOrganizersList(selectedEvent)[0] || 'F').substring(0, 1) }}
             </div>
-            <span>Diselenggarakan oleh {{ selectedEvent.organizer || 'FMIKOM' }}</span>
+            <span class="truncate max-w-full">Diselenggarakan oleh {{ getOrganizersList(selectedEvent).join(', ') }}</span>
           </div>
         </div>
 

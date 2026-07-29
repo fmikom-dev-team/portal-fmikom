@@ -17,6 +17,7 @@ import {
 	UploadCloud,
 } from "lucide-vue-next";
 import { computed } from "vue";
+import { formatStorageUrl } from "@/composables/useInitials";
 import OptimizedImage from "../../ui/OptimizedImage.vue";
 import VideoLazy from "../../ui/VideoLazy.vue";
 import ProfileStats from "./ProfileStats.vue";
@@ -70,7 +71,7 @@ const isVideoUrl = (url: string | null): boolean => {
 </script>
 
 <template>
-	<!-- DESKTOP HEADER -->
+	<!-- DESKTOP HEADER (>= lg: 1024px) -->
 	<div class="hidden lg:flex lg:flex-row justify-between items-start gap-10 mb-12 transition-all duration-300">
 		<!-- Left Column: Avatar & Text Details (Public vs Owner layout) -->
 		<div class="flex-1 w-full">
@@ -80,6 +81,7 @@ const isVideoUrl = (url: string | null): boolean => {
 				<div v-if="isLoading" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse shrink-0"></div>
 				<div 
 					v-else
+					data-onboard="profile-avatar"
 					class="relative group select-none shrink-0" 
 					:class="{ 'cursor-pointer': isOwnProfile }"
 					@click="isOwnProfile ? emit('open-avatar-modal') : null"
@@ -93,7 +95,7 @@ const isVideoUrl = (url: string | null): boolean => {
 					</div>
 
 					<div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 shadow-2xs flex items-center justify-center overflow-hidden transition-transform duration-300">
-						<OptimizedImage v-if="user.foto_path" :src="user.foto_path.startsWith('http') ? user.foto_path : '/storage/' + user.foto_path" alt="Avatar" fetchpriority="high" className="w-full h-full object-cover" />
+						<OptimizedImage v-if="user.foto_path" :src="formatStorageUrl(user.foto_path)!" alt="Avatar" fetchpriority="high" className="w-full h-full object-cover" />
 						<div v-else class="w-full h-full bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
 							<span class="text-xl sm:text-2xl font-bold text-indigo-500 dark:text-indigo-400">{{ user.name?.charAt(0) || 'U' }}</span>
 						</div>
@@ -105,13 +107,13 @@ const isVideoUrl = (url: string | null): boolean => {
 						</div>
 					</div>
 					<!-- Available Dot -->
-					<div class="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full"></div>
+					<div class="absolute bottom-1 right-1 sm:bottom-1.5 sm:right-1.5 w-4 h-4 sm:w-4.5 sm:h-4.5 bg-emerald-500 ring-2 ring-white dark:ring-slate-900 rounded-full z-20 shadow-xs pointer-events-none"></div>
 				</div>
 
 				<!-- Details Stack on the right of Avatar -->
 				<div class="flex-1 min-w-0 flex flex-col items-start gap-3.5">
 					<!-- Name & Role (read-only) -->
-					<div class="space-y-1 w-full">
+					<div class="space-y-1 w-full" data-onboard="profile-bio">
 						<template v-if="isLoading">
 							<div class="h-8 w-56 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
 							<div class="h-4 w-36 bg-slate-200 dark:bg-slate-800 rounded animate-pulse mt-2"></div>
@@ -230,7 +232,7 @@ const isVideoUrl = (url: string | null): boolean => {
 				<!-- Avatar -->
 				<div v-if="isLoading" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse shrink-0"></div>
 				<div v-else class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 shadow-xs flex items-center justify-center overflow-hidden shrink-0">
-					<OptimizedImage v-if="user.foto_path" :src="user.foto_path.startsWith('http') ? user.foto_path : '/storage/' + user.foto_path" alt="Avatar" fetchpriority="high" className="w-full h-full object-cover" />
+					<OptimizedImage v-if="user.foto_path" :src="formatStorageUrl(user.foto_path)!" alt="Avatar" fetchpriority="high" className="w-full h-full object-cover" />
 					<div v-else class="w-full h-full bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
 						<span class="text-xl sm:text-2xl font-bold text-indigo-500 dark:text-indigo-400">{{ user.name?.charAt(0) || 'U' }}</span>
 					</div>
@@ -312,10 +314,11 @@ const isVideoUrl = (url: string | null): boolean => {
 		</div>
 
 		<!-- Right Column: Featured Media Container -->
-		<div v-if="isLoading" class="w-full lg:w-[620px] aspect-[16/10] rounded-[24px] bg-slate-200 dark:bg-slate-800 animate-pulse shrink-0"></div>
+		<div v-if="isLoading" class="w-full lg:w-[480px] xl:w-[620px] aspect-[16/10] rounded-[24px] bg-slate-200 dark:bg-slate-800 animate-pulse shrink-0"></div>
 		<div 
 			v-else
-			class="w-full lg:w-[620px] shrink-0 group relative"
+			data-onboard="profile-banner"
+			class="w-full lg:w-[480px] xl:w-[620px] shrink-0 group relative"
 			:class="{ 'cursor-pointer': isOwnProfile }"
 			@click="isOwnProfile ? emit('open-banner-modal') : null"
 			:role="isOwnProfile ? 'button' : undefined"
@@ -385,10 +388,10 @@ const isVideoUrl = (url: string | null): boolean => {
 		</div>
 	</div>
 
-	<!-- MOBILE HEADER -->
+	<!-- MOBILE & TABLET HEADER (< lg: 1024px) -->
 	<div class="lg:hidden flex flex-col w-full mb-6 relative select-none">
 		<!-- Banner / Featured Media -->
-		<div class="relative w-full aspect-[16/7] sm:aspect-[16/10] mb-2">
+		<div class="relative w-full aspect-[16/7] sm:aspect-[16/9] md:aspect-[21/9] mb-2">
 			<div v-if="isLoading" class="w-full h-full rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
 			<div 
 				v-else
@@ -424,16 +427,16 @@ const isVideoUrl = (url: string | null): boolean => {
 			</div>
 
 			<!-- Circular Avatar Overlapping (bottom-left) -->
-			<div v-if="isLoading" class="absolute -bottom-8 left-4 z-20 w-18 h-18 sm:w-20 sm:h-20 rounded-full border-[3px] border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
+			<div v-if="isLoading" class="absolute -bottom-8 left-4 md:left-8 z-20 w-18 h-18 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full border-[3px] border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
 			<div 
 				v-else
-				class="absolute -bottom-8 left-4 z-20"
+				class="absolute -bottom-8 left-4 md:left-8 md:-bottom-10 z-20"
 				@click.stop="isOwnProfile ? emit('open-avatar-modal') : null"
 				:role="isOwnProfile ? 'button' : undefined"
 				:aria-label="isOwnProfile ? 'Ubah Foto Profil' : undefined"
 			>
-				<div class="w-18 h-18 sm:w-20 sm:h-20 rounded-full border-[3px] border-white dark:border-slate-900 bg-slate-100 dark:bg-slate-800 overflow-hidden shadow-md flex items-center justify-center relative">
-					<OptimizedImage v-if="user.foto_path" :src="user.foto_path.startsWith('http') ? user.foto_path : '/storage/' + user.foto_path" alt="Avatar" fetchpriority="high" className="w-full h-full object-cover" />
+				<div class="w-18 h-18 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full border-[3px] border-white dark:border-slate-900 bg-slate-100 dark:bg-slate-800 overflow-hidden shadow-md flex items-center justify-center relative">
+					<OptimizedImage v-if="user.foto_path" :src="formatStorageUrl(user.foto_path)!" alt="Avatar" fetchpriority="high" className="w-full h-full object-cover" />
 					<span v-else class="text-lg font-black text-indigo-500">{{ user.name?.charAt(0) || 'U' }}</span>
 					
 					<!-- Photo Edit Overlay -->
@@ -442,12 +445,12 @@ const isVideoUrl = (url: string | null): boolean => {
 					</div>
 				</div>
 				<!-- Online dot indicator -->
-				<div class="absolute bottom-0.5 right-0.5 w-4 h-4 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full"></div>
+				<div class="absolute bottom-1 right-1 sm:bottom-1.5 sm:right-1.5 w-4 h-4 sm:w-4.5 sm:h-4.5 bg-emerald-500 ring-2 ring-white dark:ring-slate-900 rounded-full z-20 shadow-xs pointer-events-none"></div>
 			</div>
 		</div>
 
 		<!-- Details Section -->
-		<div class="mt-8 flex flex-col items-start w-full px-1">
+		<div class="mt-8 md:mt-12 flex flex-col items-start w-full px-1 md:px-8">
 			<!-- Name & Role -->
 			<div class="space-y-1.5 w-full">
 				<template v-if="isLoading">
@@ -456,7 +459,7 @@ const isVideoUrl = (url: string | null): boolean => {
 					<div class="h-3.5 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse mt-1.5"></div>
 				</template>
 				<template v-else>
-					<h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none flex items-center gap-2">
+					<h2 class="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-none flex items-center gap-2">
 						{{ user.name }}
 						<img src="/premium.svg" class="w-5.5 h-5.5 shrink-0" title="Premium Account" alt="Verified Badge" />
 					</h2>

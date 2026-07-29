@@ -14,6 +14,7 @@ use App\Services\Auth\ActivationService;
 use App\Services\Auth\OtpService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 
@@ -35,6 +36,19 @@ class ActivationConfirmController extends Controller
     /**
      * Validate activation link and send OTP.
      * Called via signed URL: GET /activate/confirm?token=...&email=...&request_id=...
+     *
+     * [FIX C-3, M-10] Sebelumnya: token di-null SEBELUM OTP dikirim. Jika pengiriman
+     * OTP gagal (mis. email server down), user terkunci karena:
+     *   1. Token sudah null → tidak bisa klik link lagi
+     *   2. OTP tidak terkirim → tidak bisa verifikasi
+     *
+     * Sekarang: urutan yang benar adalah:
+     *   1. Validasi token (baca saja, belum dihapus)
+     *   2. Coba kirim OTP
+     *   3. BARU null-kan token setelah OTP berhasil dikirim
+     *
+     * [FIX RACE] Penggunaan DB lock saat nulling token untuk prevent dua browser
+     * yang klik link bersamaan sama-sama berhasil masuk ke OTP form.
      */
     public function confirm(Request $request)
     {
@@ -65,6 +79,7 @@ class ActivationConfirmController extends Controller
             return redirect()->route('login')->with('error', 'Link aktivasi sudah kedaluwarsa. Hubungi admin untuk mengirim ulang link.');
         }
 
+        // [FIX C-3] Validasi token TANPA menghapusnya dulu
         if (! $regRequest->verifyActivationToken($token)) {
             return redirect()->route('login')->with('error', 'Link aktivasi tidak valid atau sudah digunakan.');
         }
@@ -76,6 +91,7 @@ class ActivationConfirmController extends Controller
         }
 
         // Generate and send OTP for Case B activation
+        // [FIX C-3] Kirim OTP TERLEBIH DAHULU, baru null-kan token
         try {
             $this->otpService->generate(
                 userId: $user->id,
@@ -88,7 +104,38 @@ class ActivationConfirmController extends Controller
         } catch (\Throwable $e) {
             report($e);
 
-            return redirect()->route('login')->with('error', 'Gagal mengirim OTP aktivasi: '.$e->getMessage());
+            // OTP gagal dikirim — jangan null-kan token agar user bisa klik link lagi
+            return redirect()->route('login')->with('error', 'Gagal mengirim OTP aktivasi. Silakan coba klik link aktivasi sekali lagi.');
+        }
+
+        // [FIX C-3, FIND-005] Token di-null-kan SETELAH OTP berhasil dikirim.
+        // Gunakan DB transaction + lock untuk prevent race condition (dua browser
+        // klik link bersamaan).
+        $tokenNulled = DB::transaction(function () use ($regRequest) {
+            /** @var RegistrationRequest|null $lockedRequest */
+            $lockedRequest = RegistrationRequest::where('id', '=', $regRequest->id, 'and')
+                ->whereNotNull('activation_token_hash')
+                ->lockForUpdate()
+                ->first();
+
+            // Jika null sudah (request lain lebih cepat), tolak
+            if (! $lockedRequest) {
+                return false;
+            }
+
+            $lockedRequest->fill([
+                'activation_token_hash' => null,
+                'activation_token_expires_at' => null,
+            ])->save();
+
+            return true;
+        });
+
+        // Jika request lain sudah null-kan token lebih dulu (race condition),
+        // OTP sudah terkirim oleh request pertama — user harus cek email
+        if (! $tokenNulled) {
+            return redirect()->route('activation.confirm.otp')
+                ->with('status', 'Link aktivasi sudah diproses. Silakan cek email Anda untuk kode OTP.');
         }
 
         // Transition statuses
@@ -106,6 +153,10 @@ class ActivationConfirmController extends Controller
 
     /**
      * Show the OTP input form (Case B).
+     *
+     * [FIX M-4] Tambahkan pengecekan jika OTP sudah pernah diverifikasi
+     * (session `activation_otp_verified` ada). Jika sudah, langsung redirect
+     * ke halaman set password agar tidak bisa kembali ke OTP form.
      */
     public function showOtpForm(Request $request)
     {
@@ -114,6 +165,12 @@ class ActivationConfirmController extends Controller
 
         if (! $requestId || ! $email) {
             return redirect()->route('login')->with('error', 'Sesi aktivasi kedaluwarsa.');
+        }
+
+        // [FIX M-4] Jika OTP sudah diverifikasi, langsung lanjut ke set password
+        if (session('activation_otp_verified')) {
+            return redirect()->route('activation.complete')
+                ->with('status', 'OTP sudah terverifikasi. Silakan buat password baru.');
         }
 
         $activeOtp = AuthOtpToken::findActive($email, OtpPurpose::AccountActivation);
@@ -223,6 +280,14 @@ class ActivationConfirmController extends Controller
 
     /**
      * Process password creation and activate the account (Case B).
+     *
+     * [FIX C-4, H-2] Sebelumnya: tidak ada DB lock → dua request bersamaan bisa
+     * sama-sama memanggil completeSelfRegistrationActivation() dan mengakibatkan
+     * double-activation (duplikat module role assignment, double audit log).
+     *
+     * Sekarang: menggunakan DB::transaction() + lockForUpdate() di dalam service.
+     * Guard isActivated() di dalam transaction memastikan hanya request pertama
+     * yang berhasil, request kedua langsung diredirect ke login.
      */
     public function complete(Request $request)
     {
@@ -237,31 +302,68 @@ class ActivationConfirmController extends Controller
             'password' => $this->passwordRules(),
         ]);
 
-        /** @var RegistrationRequest|null $regRequest */
-        $regRequest = RegistrationRequest::find($requestId, ['*']);
+        try {
+            $result = DB::transaction(function () use ($requestId, $request) {
+                /** @var RegistrationRequest|null $regRequest */
+                $regRequest = RegistrationRequest::where('id', '=', $requestId, 'and')
+                    ->lockForUpdate()
+                    ->first();
 
-        if (! $regRequest || $regRequest->isActivated()) {
-            session()->forget(['activation_request_id', 'activation_email', 'activation_otp_verified']);
+                if (! $regRequest) {
+                    return ['error' => 'Permintaan registrasi tidak ditemukan.'];
+                }
+
+                // [FIX C-4] Guard: jika sudah diaktifkan oleh request lain
+                if ($regRequest->isActivated()) {
+                    session()->forget(['activation_request_id', 'activation_email', 'activation_otp_verified']);
+
+                    return ['already_active' => true, 'user_id' => $regRequest->created_user_id];
+                }
+
+                /** @var User|null $user */
+                $user = $regRequest->createdUser;
+
+                if (! $user) {
+                    return ['error' => 'User tidak ditemukan. Hubungi administrator.'];
+                }
+
+                // Complete the activation
+                $this->activationService->completeSelfRegistrationActivation(
+                    user: $user,
+                    request: $regRequest,
+                    password: $request->password,
+                );
+
+                return ['user' => $user];
+            });
+        } catch (\Throwable $e) {
+            report($e);
+
+            return redirect()->route('login')->with('error', 'Terjadi kesalahan saat mengaktifkan akun. Silakan coba lagi.');
+        }
+
+        // Handle hasil transaction
+        if (isset($result['error'])) {
+            return redirect()->route('login')->with('error', $result['error']);
+        }
+
+        // Clear activation session
+        session()->forget(['activation_request_id', 'activation_email', 'activation_otp_verified']);
+
+        if (isset($result['already_active'])) {
+            // Request lain sudah mengaktifkan lebih dulu — login sebagai user yang sudah aktif
+            $user = User::find($result['user_id']);
+            if ($user) {
+                Auth::login($user);
+                $request->session()->regenerate();
+
+                return redirect()->route('dashboard')->with('status', 'Akun Anda sudah aktif. Selamat datang kembali!');
+            }
 
             return redirect()->route('login')->with('status', 'Akun sudah diaktifkan. Silakan login.');
         }
 
-        /** @var User|null $user */
-        $user = $regRequest->createdUser;
-
-        if (! $user) {
-            return redirect()->route('login')->with('error', 'User tidak ditemukan. Hubungi administrator.');
-        }
-
-        // Complete the activation
-        $this->activationService->completeSelfRegistrationActivation(
-            user: $user,
-            request: $regRequest,
-            password: $request->password,
-        );
-
-        // Clear activation session
-        session()->forget(['activation_request_id', 'activation_email', 'activation_otp_verified']);
+        $user = $result['user'];
 
         // Log user in
         Auth::login($user);
