@@ -3,6 +3,7 @@ import {
 	existsSync,
 	mkdirSync,
 	readFileSync,
+	statSync,
 	writeFileSync,
 } from "node:fs";
 import { resolve } from "node:path";
@@ -88,6 +89,24 @@ export default defineConfig(async () => {
 			}),
 			tailwindcss(),
 			vue({
+				script: {
+					fs: {
+						fileExists: (file: string) => {
+							try {
+								return existsSync(file) && statSync(file).isFile();
+							} catch {
+								return false;
+							}
+						},
+						readFile: (file: string) => {
+							try {
+								return statSync(file).isFile() ? readFileSync(file, "utf-8") : "";
+							} catch {
+								return "";
+							}
+						},
+					},
+				},
 				template: {
 					transformAssetUrls: {
 						base: null,
