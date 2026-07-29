@@ -251,22 +251,32 @@ const typeIcon = (type: string) => {
 };
 
 const typeBadgeClass = (type: string) => {
-	if (type === "like") return "bg-rose-500 text-white shadow-xs shadow-rose-500/30";
-	if (type === "follow") return "bg-blue-600 text-white shadow-xs shadow-blue-500/30";
-	if (type === "collaboration") return "bg-indigo-600 text-white shadow-xs shadow-indigo-500/30";
-	if (type === "comment" || type === "reply") return "bg-emerald-600 text-white shadow-xs shadow-emerald-500/30";
+	if (type === "like")
+		return "bg-rose-500 text-white shadow-xs shadow-rose-500/30";
+	if (type === "follow")
+		return "bg-blue-600 text-white shadow-xs shadow-blue-500/30";
+	if (type === "collaboration")
+		return "bg-indigo-600 text-white shadow-xs shadow-indigo-500/30";
+	if (type === "comment" || type === "reply")
+		return "bg-emerald-600 text-white shadow-xs shadow-emerald-500/30";
 	return "bg-slate-700 text-white";
 };
 
 const typeIconClass = (type: string) => {
-	if (type === "like") return "text-rose-500 bg-rose-50 dark:bg-rose-950/50 border border-rose-200/50 dark:border-rose-900/50";
-	if (type === "follow") return "text-blue-500 bg-blue-50 dark:bg-blue-950/50 border border-blue-200/50 dark:border-blue-900/50";
-	if (type === "collaboration") return "text-indigo-500 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200/50 dark:border-indigo-900/50";
-	if (type === "comment" || type === "reply") return "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/50 dark:border-emerald-900/50";
+	if (type === "like")
+		return "text-rose-500 bg-rose-50 dark:bg-rose-950/50 border border-rose-200/50 dark:border-rose-900/50";
+	if (type === "follow")
+		return "text-blue-500 bg-blue-50 dark:bg-blue-950/50 border border-blue-200/50 dark:border-blue-900/50";
+	if (type === "collaboration")
+		return "text-indigo-500 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200/50 dark:border-indigo-900/50";
+	if (type === "comment" || type === "reply")
+		return "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/50 dark:border-emerald-900/50";
 	return "text-slate-500 bg-slate-100 dark:bg-zinc-800";
 };
 
-const collaborationActionInProgress = ref<Record<string, "accept" | "decline" | null>>({});
+const collaborationActionInProgress = ref<
+	Record<string, "accept" | "decline" | null>
+>({});
 
 const handleCollaborationResponse = async (
 	notif: any,

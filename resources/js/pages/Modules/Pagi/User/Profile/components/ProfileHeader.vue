@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { formatStorageUrl } from "@/composables/useInitials";
 import { Head, Link } from "@inertiajs/vue3";
 import {
 	Camera,
@@ -18,6 +17,7 @@ import {
 	UploadCloud,
 } from "lucide-vue-next";
 import { computed } from "vue";
+import { formatStorageUrl } from "@/composables/useInitials";
 import OptimizedImage from "../../ui/OptimizedImage.vue";
 import VideoLazy from "../../ui/VideoLazy.vue";
 import ProfileStats from "./ProfileStats.vue";

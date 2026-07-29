@@ -41,7 +41,13 @@ export function getInitialsAvatar(fullName?: string): string {
 
 export function formatStorageUrl(path?: string | null): string | null {
 	if (!path || path === "null" || path === "undefined") return null;
-	if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:") || path.startsWith("blob:")) return path;
+	if (
+		path.startsWith("http://") ||
+		path.startsWith("https://") ||
+		path.startsWith("data:") ||
+		path.startsWith("blob:")
+	)
+		return path;
 	const clean = path.replace(/^\/?(storage\/)+/, "");
 	if (!clean.includes("/") && !clean.includes(".")) return null;
 	return "/storage/" + clean;

@@ -16,7 +16,9 @@ const emit = defineEmits<(e: "update-comments", comments: any[]) => void>();
 
 const page = usePage();
 const authUser = computed(() => page.props.auth?.user);
-const siteSettings = computed<Record<string, any>>(() => (page.props as any).siteSettings || {});
+const siteSettings = computed<Record<string, any>>(
+	() => (page.props as any).siteSettings || {},
+);
 
 // Feature & Audience Gates
 const commentsEnabled = computed(() => {
@@ -66,16 +68,36 @@ const audienceRestrictionNotice = computed(() => {
 const getRoleBadge = (commentUserType?: string) => {
 	const type = (commentUserType || "").toLowerCase();
 	if (type === "mahasiswa") {
-		return { label: "Mahasiswa", class: "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 border-blue-100 dark:border-blue-900/30" };
+		return {
+			label: "Mahasiswa",
+			class:
+				"bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 border-blue-100 dark:border-blue-900/30",
+		};
 	}
 	if (type === "mitra") {
-		return { label: "Mitra", class: "bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400 border-purple-100 dark:border-purple-900/30" };
+		return {
+			label: "Mitra",
+			class:
+				"bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400 border-purple-100 dark:border-purple-900/30",
+		};
 	}
 	if (type === "dosen") {
-		return { label: "Dosen", class: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/30" };
+		return {
+			label: "Dosen",
+			class:
+				"bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/30",
+		};
 	}
-	if (["super-admin", "admin", "admin-universitas", "admin-akademik"].includes(type)) {
-		return { label: "Admin", class: "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border-amber-100 dark:border-amber-900/30" };
+	if (
+		["super-admin", "admin", "admin-universitas", "admin-akademik"].includes(
+			type,
+		)
+	) {
+		return {
+			label: "Admin",
+			class:
+				"bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border-amber-100 dark:border-amber-900/30",
+		};
 	}
 	return null;
 };
@@ -158,7 +180,8 @@ const getCommentLikesCount = (c: any) => {
 
 const handleLikeComment = async (commentId: string) => {
 	if (!authUser.value) {
-		commentErrorMessage.value = "Silakan login terlebih dahulu untuk menyukai komentar.";
+		commentErrorMessage.value =
+			"Silakan login terlebih dahulu untuk menyukai komentar.";
 		return;
 	}
 	if (!props.checkUsername()) return;
@@ -178,7 +201,8 @@ const handleLikeComment = async (commentId: string) => {
 
 const handleLikeReply = async (commentId: string, replyId: string) => {
 	if (!authUser.value) {
-		commentErrorMessage.value = "Silakan login terlebih dahulu untuk menyukai balasan.";
+		commentErrorMessage.value =
+			"Silakan login terlebih dahulu untuk menyukai balasan.";
 		return;
 	}
 	if (!props.checkUsername()) return;
@@ -274,7 +298,8 @@ const handleCommentSubmit = async () => {
 	commentErrorMessage.value = "";
 
 	if (!authUser.value) {
-		commentErrorMessage.value = "Silakan login terlebih dahulu untuk memberikan komentar.";
+		commentErrorMessage.value =
+			"Silakan login terlebih dahulu untuk memberikan komentar.";
 		return;
 	}
 	if (!canUserComment.value) {
@@ -317,7 +342,8 @@ const handleCommentSubmit = async () => {
 		emit("update-comments", res.data.comments);
 	} catch (e: any) {
 		console.error("Comment error", e);
-		commentErrorMessage.value = e.response?.data?.message || "Gagal mengirimkan komentar.";
+		commentErrorMessage.value =
+			e.response?.data?.message || "Gagal mengirimkan komentar.";
 	} finally {
 		isSubmittingComment.value = false;
 	}

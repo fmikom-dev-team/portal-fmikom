@@ -36,9 +36,9 @@ import OptimizedImage from "./ui/OptimizedImage.vue";
 
 const Preview = defineAsyncComponent(() => import("./ui/Preview.vue"));
 
+import AvatarGroup, { type AvatarItem } from "@/components/ui/AvatarGroup.vue";
 import PagiShareModal from "./ui/PagiShareModal.vue";
 import VideoLazy from "./ui/VideoLazy.vue";
-import AvatarGroup, { type AvatarItem } from "@/components/ui/AvatarGroup.vue";
 
 const { isLoading } = useLoadingState();
 

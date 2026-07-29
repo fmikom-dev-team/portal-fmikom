@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { Eye, Plus, Search, Tag, Trash2 } from "lucide-vue-next";
 import { computed, ref } from "vue";
 import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
-import { Plus, Search, Tag, Eye, Trash2 } from "lucide-vue-next";
 
 const props = defineProps<{
 	tags?: Array<{
@@ -21,7 +21,7 @@ const allTags = computed(() => props.tags ?? []);
 const filteredTags = computed(() => {
 	const q = searchQuery.value.toLowerCase();
 	return allTags.value.filter(
-		(t) => t.name.toLowerCase().includes(q) || t.slug.toLowerCase().includes(q)
+		(t) => t.name.toLowerCase().includes(q) || t.slug.toLowerCase().includes(q),
 	);
 });
 </script>

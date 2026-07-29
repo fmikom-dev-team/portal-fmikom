@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { formatStorageUrl } from "@/composables/useInitials";
 import { Link, usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import { Loader2 } from "lucide-vue-next";
 import { computed, ref, watch } from "vue";
+import { formatStorageUrl } from "@/composables/useInitials";
 import Modal from "../../ui/Modal.vue";
 import OptimizedImage from "../../ui/OptimizedImage.vue";
 

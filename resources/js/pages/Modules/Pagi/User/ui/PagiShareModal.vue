@@ -5,8 +5,8 @@ import linkedinIcon from "thesvg/linkedin";
 import telegramIcon from "thesvg/telegram";
 import whatsappIcon from "thesvg/whatsapp";
 import xIcon from "thesvg/x";
-import { formatStorageUrl } from "@/composables/useInitials";
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
+import { formatStorageUrl } from "@/composables/useInitials";
 import OptimizedImage from "./OptimizedImage.vue";
 
 export interface ShareProject {

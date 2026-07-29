@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm, Link, router, usePage } from "@inertiajs/vue3";
+import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch } from "vue";
 import { toast } from "vue-sonner";
 import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
@@ -35,22 +35,24 @@ interface UserItem {
 }
 
 const props = defineProps<{
-	users?: {
-		data: UserItem[];
-		links: Array<{
-			url: string | null;
-			label: string;
-			active: boolean;
-		}>;
-		meta: {
-			current_page: number;
-			from: number | null;
-			last_page: number;
-			per_page: number;
-			to: number | null;
-			total: number;
-		};
-	} | UserItem[];
+	users?:
+		| {
+				data: UserItem[];
+				links: Array<{
+					url: string | null;
+					label: string;
+					active: boolean;
+				}>;
+				meta: {
+					current_page: number;
+					from: number | null;
+					last_page: number;
+					per_page: number;
+					to: number | null;
+					total: number;
+				};
+		  }
+		| UserItem[];
 	filters?: {
 		search?: string;
 		type?: string;
@@ -96,7 +98,9 @@ watch([filterType, filterStatus], () => {
 	applyFilters();
 });
 
-const isPaginated = computed(() => props.users && typeof props.users === "object" && "data" in props.users);
+const isPaginated = computed(
+	() => props.users && typeof props.users === "object" && "data" in props.users,
+);
 
 const userList = computed<UserItem[]>(() => {
 	if (!props.users) return [];
@@ -140,10 +144,14 @@ const statusLabel: Record<string, string> = {
 };
 
 const typeConfig: Record<string, string> = {
-	mahasiswa: "bg-purple-50 text-purple-600 border border-purple-100 dark:bg-purple-950/20 dark:text-purple-400 dark:border-none",
-	mitra: "bg-blue-50 text-blue-600 border border-blue-100 dark:bg-blue-950/20 dark:text-blue-400 dark:border-none",
-	dosen: "bg-emerald-50 text-emerald-600 border border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-none",
-	alumni: "bg-amber-50 text-amber-600 border border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-none",
+	mahasiswa:
+		"bg-purple-50 text-purple-600 border border-purple-100 dark:bg-purple-950/20 dark:text-purple-400 dark:border-none",
+	mitra:
+		"bg-blue-50 text-blue-600 border border-blue-100 dark:bg-blue-950/20 dark:text-blue-400 dark:border-none",
+	dosen:
+		"bg-emerald-50 text-emerald-600 border border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-none",
+	alumni:
+		"bg-amber-50 text-amber-600 border border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-none",
 };
 
 const typeLabel: Record<string, string> = {
@@ -172,7 +180,9 @@ const submitWarning = () => {
 	warningForm.post(`/pagi/admin/users/${activeUser.value.id}/warn`, {
 		onSuccess: () => {
 			showWarnModal.value = false;
-			toast.success(`Peringatan berhasil dikirim ke ${activeUser.value?.name}.`);
+			toast.success(
+				`Peringatan berhasil dikirim ke ${activeUser.value?.name}.`,
+			);
 			warningForm.reset();
 		},
 		onError: () => {
@@ -189,7 +199,10 @@ const statusForm = useForm({
 	reason: "",
 });
 
-const openStatusModal = (user: UserItem, targetStatus?: "active" | "warning" | "suspended") => {
+const openStatusModal = (
+	user: UserItem,
+	targetStatus?: "active" | "warning" | "suspended",
+) => {
 	statusTargetUser.value = user;
 	statusForm.status = targetStatus || user.status;
 	statusForm.reason = "";
@@ -210,7 +223,11 @@ const submitStatusChange = () => {
 		},
 		onError: (errors) => {
 			const firstErr = Object.values(errors)[0];
-			toast.error(typeof firstErr === "string" ? firstErr : "Gagal memperbarui status pengguna.");
+			toast.error(
+				typeof firstErr === "string"
+					? firstErr
+					: "Gagal memperbarui status pengguna.",
+			);
 		},
 	});
 };

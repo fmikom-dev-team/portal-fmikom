@@ -11,9 +11,9 @@ import {
 	X,
 } from "lucide-vue-next";
 import { computed, onMounted, onUnmounted, ref } from "vue";
+import AvatarGroup, { type AvatarItem } from "@/components/ui/AvatarGroup.vue";
 import { getInitialsAvatar } from "@/composables/useInitials";
 import OptimizedImage from "../ui/OptimizedImage.vue";
-import AvatarGroup, { type AvatarItem } from "@/components/ui/AvatarGroup.vue";
 
 const props = withDefaults(
 	defineProps<{
@@ -65,13 +65,22 @@ const emit = defineEmits<{
 
 const formatAvatarUrl = (url: string | null | undefined) => {
 	if (!url || url === "null" || url === "undefined") return null;
-	if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) return url;
+	if (
+		url.startsWith("http://") ||
+		url.startsWith("https://") ||
+		url.startsWith("data:")
+	)
+		return url;
 	const clean = url.replace(/^\/?(storage\/)+/, "");
 	return "/storage/" + clean;
 };
 
 const followerAvatars = computed<AvatarItem[]>(() => {
-	if (props.profileUser?.recent_followers && Array.isArray(props.profileUser.recent_followers) && props.profileUser.recent_followers.length > 0) {
+	if (
+		props.profileUser?.recent_followers &&
+		Array.isArray(props.profileUser.recent_followers) &&
+		props.profileUser.recent_followers.length > 0
+	) {
 		return props.profileUser.recent_followers.map((f: any) => ({
 			id: f.id,
 			name: f.name,
@@ -81,12 +90,14 @@ const followerAvatars = computed<AvatarItem[]>(() => {
 	}
 	if (props.profileUser?.followed_by_user) {
 		const f = props.profileUser.followed_by_user;
-		return [{
-			id: f.id,
-			name: f.name,
-			pagi_username: f.pagi_username,
-			src: formatAvatarUrl(f.foto_path || f.avatar),
-		}];
+		return [
+			{
+				id: f.id,
+				name: f.name,
+				pagi_username: f.pagi_username,
+				src: formatAvatarUrl(f.foto_path || f.avatar),
+			},
+		];
 	}
 	return [];
 });

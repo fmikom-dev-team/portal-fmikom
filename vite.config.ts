@@ -1,4 +1,10 @@
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+	copyFileSync,
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	writeFileSync,
+} from "node:fs";
 import { resolve } from "node:path";
 import { wayfinder } from "@laravel/vite-plugin-wayfinder";
 import tailwindcss from "@tailwindcss/vite";
@@ -181,11 +187,11 @@ export default defineConfig(async () => {
 		// __APP_BUILD_TIME__ digunakan oleh AppUpdateBanner untuk menampilkan versi realtime
 		define: {
 			__APP_BUILD_TIME__: JSON.stringify(
-				new Date().toLocaleDateString('id-ID', {
-					day: '2-digit',
-					month: 'short',
-					year: 'numeric',
-				})
+				new Date().toLocaleDateString("id-ID", {
+					day: "2-digit",
+					month: "short",
+					year: "numeric",
+				}),
 			),
 		},
 	};

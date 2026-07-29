@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { Link, router } from "@inertiajs/vue3";
-import { BookOpen, ChevronDown, ChevronRight, Plus, Zap } from "lucide-vue-next";
+import {
+	BookOpen,
+	ChevronDown,
+	ChevronRight,
+	Plus,
+	Zap,
+} from "lucide-vue-next";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { Skeleton } from "@/components/ui/skeleton";
 import CaseStudyTab from "./CaseStudyTab.vue";
@@ -46,7 +52,9 @@ const emit = defineEmits<{
 	): void;
 }>();
 
-const activeWorkFilter = ref<"Created" | "Case Study" | "Collaborated">("Created");
+const activeWorkFilter = ref<"Created" | "Case Study" | "Collaborated">(
+	"Created",
+);
 const showCreateDropdown = ref(false);
 
 const closeDropdownOnOutsideClick = () => {
@@ -108,15 +116,20 @@ const collaboratedProjects = computed(() => {
 			p.content?.find((b: any) => b && b.type === "featured_details") || {};
 		const collaborators = details.collaborators || [];
 
-		const hasCollaborators = Array.isArray(collaborators) && collaborators.length > 0;
+		const hasCollaborators =
+			Array.isArray(collaborators) && collaborators.length > 0;
 
 		const cleanUserName = props.user.name.toLowerCase();
-		const cleanUserHandle = (props.user.pagi_username || "").toLowerCase().replace(/^@/, "");
+		const cleanUserHandle = (props.user.pagi_username || "")
+			.toLowerCase()
+			.replace(/^@/, "");
 
 		const isUserCollaborator =
 			Array.isArray(collaborators) &&
 			collaborators.some((c) => {
-				const cName = String(typeof c === "object" ? (c.name || "") : c).toLowerCase().replace(/^@/, "");
+				const cName = String(typeof c === "object" ? c.name || "" : c)
+					.toLowerCase()
+					.replace(/^@/, "");
 				const cUserId = typeof c === "object" ? (c.user_id ?? c.id) : null;
 
 				if (cUserId && Number(cUserId) === Number(props.user.id)) return true;

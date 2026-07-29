@@ -16,7 +16,11 @@ import { computed } from "vue";
 const props = defineProps<{
 	show: boolean;
 	completenessPercentage: number;
-	completenessItems: Array<{ name: string; completed: boolean; weight: number }>;
+	completenessItems: Array<{
+		name: string;
+		completed: boolean;
+		weight: number;
+	}>;
 }>();
 
 const emit = defineEmits<{

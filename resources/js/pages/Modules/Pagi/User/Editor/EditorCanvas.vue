@@ -40,10 +40,13 @@ const emit = defineEmits<{
 
 const getGridImages = (block: any): string[] => {
 	if (!block) return [];
-	if (Array.isArray(block.previews) && block.previews.length > 0) return block.previews;
-	if (Array.isArray(block.file_paths) && block.file_paths.length > 0) return block.file_paths;
+	if (Array.isArray(block.previews) && block.previews.length > 0)
+		return block.previews;
+	if (Array.isArray(block.file_paths) && block.file_paths.length > 0)
+		return block.file_paths;
 	if (Array.isArray(block.urls) && block.urls.length > 0) return block.urls;
-	if (Array.isArray(block.fileKeys) && block.fileKeys.length > 0) return block.fileKeys;
+	if (Array.isArray(block.fileKeys) && block.fileKeys.length > 0)
+		return block.fileKeys;
 	return [];
 };
 

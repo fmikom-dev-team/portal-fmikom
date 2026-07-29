@@ -124,10 +124,13 @@ export function useProfileProjects(
 				]);
 				Object.assign(p, detailRes.data);
 				viewingProject.value = { ...p };
-				
+
 				const idx = localProjects.value.findIndex((item) => item.id === p.id);
 				if (idx !== -1) {
-					localProjects.value[idx] = { ...localProjects.value[idx], ...detailRes.data };
+					localProjects.value[idx] = {
+						...localProjects.value[idx],
+						...detailRes.data,
+					};
 				}
 			} catch (e) {
 				console.error("Failed to load project detail", e);

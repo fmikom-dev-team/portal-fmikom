@@ -1,27 +1,27 @@
 <script setup lang="ts">
 import { Head, router } from "@inertiajs/vue3";
-import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
-import ConfirmDialogModal from "@/components/Admin/ui/ConfirmDialogModal.vue";
 import {
 	AlertTriangle,
 	Archive,
+	Calendar,
 	CheckCircle,
 	Clock,
-	Search,
-	UserCheck,
 	Eye,
-	ShieldAlert,
-	Info,
-	Calendar,
-	X,
 	FileText,
-	UserX,
-	ThumbsUp,
-	ThumbsDown,
 	History,
+	Info,
+	Search,
+	ShieldAlert,
 	Sparkles,
+	ThumbsDown,
+	ThumbsUp,
+	UserCheck,
+	UserX,
+	X,
 } from "lucide-vue-next";
 import { computed, ref } from "vue";
+import ConfirmDialogModal from "@/components/Admin/ui/ConfirmDialogModal.vue";
+import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
 
 interface WarningHistoryItem {
 	id: number;
@@ -72,7 +72,9 @@ const props = defineProps<{
 }>();
 
 const searchQuery = ref("");
-const statusFilter = ref<"active_sp" | "suspended" | "appeals" | "archived">("active_sp");
+const statusFilter = ref<"active_sp" | "suspended" | "appeals" | "archived">(
+	"active_sp",
+);
 
 const selectedUser = ref<UserWarningGroup | null>(null);
 const isTimelineModalOpen = ref(false);
@@ -96,7 +98,9 @@ const filteredUsers = computed(() => {
 	} else if (statusFilter.value === "appeals") {
 		list = list.filter((u) => u.hasPendingAppeal);
 	} else if (statusFilter.value === "archived") {
-		list = list.filter((u) => u.activeWarningsCount === 0 && u.totalWarningsCount > 0);
+		list = list.filter(
+			(u) => u.activeWarningsCount === 0 && u.totalWarningsCount > 0,
+		);
 	}
 
 	if (searchQuery.value.trim()) {
@@ -106,7 +110,11 @@ const filteredUsers = computed(() => {
 				u.user.toLowerCase().includes(q) ||
 				u.userHandle.toLowerCase().includes(q) ||
 				(u.userNim && u.userNim.toLowerCase().includes(q)) ||
-				u.warningsHistory.some((w) => w.reason.toLowerCase().includes(q) || (w.workTitle && w.workTitle.toLowerCase().includes(q)))
+				u.warningsHistory.some(
+					(w) =>
+						w.reason.toLowerCase().includes(q) ||
+						(w.workTitle && w.workTitle.toLowerCase().includes(q)),
+				),
 		);
 	}
 
@@ -143,19 +151,28 @@ const handleConfirmRevoke = () => {
 
 				// Update local reactive state if detail modal is open
 				if (selectedUser.value) {
-					const item = selectedUser.value.warningsHistory.find((w) => w.id === selectedRevokeWarningId.value);
+					const item = selectedUser.value.warningsHistory.find(
+						(w) => w.id === selectedRevokeWarningId.value,
+					);
 					if (item) {
 						item.isActive = false;
 					}
-					selectedUser.value.activeWarningsCount = Math.max(0, selectedUser.value.activeWarningsCount - 1);
-					if (selectedUser.value.activeWarningsCount < selectedUser.value.maxAllowedWarnings) {
+					selectedUser.value.activeWarningsCount = Math.max(
+						0,
+						selectedUser.value.activeWarningsCount - 1,
+					);
+					if (
+						selectedUser.value.activeWarningsCount <
+						selectedUser.value.maxAllowedWarnings
+					) {
 						selectedUser.value.isSuspended = false;
-						selectedUser.value.accountStatus = selectedUser.value.activeWarningsCount > 0 ? "warning" : "active";
+						selectedUser.value.accountStatus =
+							selectedUser.value.activeWarningsCount > 0 ? "warning" : "active";
 					}
 				}
 				selectedRevokeWarningId.value = null;
 			},
-		}
+		},
 	);
 };
 
@@ -173,7 +190,7 @@ const handleApproveAppeal = (appealId: number | null | undefined) => {
 				isAppealModalOpen.value = false;
 				selectedAppealUser.value = null;
 			},
-		}
+		},
 	);
 };
 
@@ -191,7 +208,7 @@ const handleRejectAppeal = (appealId: number | null | undefined) => {
 				isAppealModalOpen.value = false;
 				selectedAppealUser.value = null;
 			},
-		}
+		},
 	);
 };
 </script>

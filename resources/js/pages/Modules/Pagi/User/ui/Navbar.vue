@@ -115,9 +115,7 @@ const handleMessageClick = (e: Event) => {
 	if (currentRoleSlug.value === "mahasiswa") {
 		// Progressive Feature-Gating: Check basic profile details
 		const hasBasicInfo =
-			!!user.value.foto_path &&
-			!!user.value.pagi_username &&
-			!!user.value.bio;
+			!!user.value.foto_path && !!user.value.pagi_username && !!user.value.bio;
 		if (!hasBasicInfo) {
 			e.preventDefault();
 			isCompletenessExpanded.value = true;

@@ -126,7 +126,9 @@ export function useEditorFileUpload(
 		if (typeof src === "string") {
 			const cleanUrl = src.split("?")[0].split("#")[0];
 			const ext = cleanUrl.split(".").pop()?.toLowerCase();
-			return ["mp4", "webm", "ogg", "mov", "m4v", "3gp", "qt"].includes(ext || "");
+			return ["mp4", "webm", "ogg", "mov", "m4v", "3gp", "qt"].includes(
+				ext || "",
+			);
 		}
 		return false;
 	});

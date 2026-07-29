@@ -17,13 +17,13 @@ import {
 	X,
 } from "lucide-vue-next";
 import { computed, onUnmounted, ref, watch } from "vue";
+import AvatarGroup, { type AvatarItem } from "@/components/ui/AvatarGroup.vue";
 import { formatStorageUrl, getInitialsAvatar } from "@/composables/useInitials";
 import Navbar from "./ui/Navbar.vue";
 import OptimizedImage from "./ui/OptimizedImage.vue";
 import PagiShareModal from "./ui/PagiShareModal.vue";
 import Preview from "./ui/Preview.vue";
 import VideoLazy from "./ui/VideoLazy.vue";
-import AvatarGroup, { type AvatarItem } from "@/components/ui/AvatarGroup.vue";
 
 const props = defineProps<{
 	moduleName: string;

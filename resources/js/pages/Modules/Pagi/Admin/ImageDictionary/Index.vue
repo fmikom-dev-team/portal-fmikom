@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { useForm } from "@inertiajs/vue3";
-import { Image as ImageIcon, Plus, ShieldCheck, Sparkles } from "lucide-vue-next";
+import {
+	Image as ImageIcon,
+	Plus,
+	ShieldCheck,
+	Sparkles,
+} from "lucide-vue-next";
 import { ref } from "vue";
 import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
 

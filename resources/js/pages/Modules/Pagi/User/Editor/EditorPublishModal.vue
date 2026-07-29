@@ -55,9 +55,14 @@ const getCollabUsername = (c: any) => {
 
 const getCollabAvatar = (c: any) => {
 	if (!c) return null;
-	const path = typeof c === "string" ? c : (c.foto_path || c.avatar);
+	const path = typeof c === "string" ? c : c.foto_path || c.avatar;
 	if (!path || path === "null" || path === "undefined") return null;
-	if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) return path;
+	if (
+		path.startsWith("http://") ||
+		path.startsWith("https://") ||
+		path.startsWith("data:")
+	)
+		return path;
 	const clean = path.replace(/^\/?(storage\/)+/, "");
 	return "/storage/" + clean;
 };

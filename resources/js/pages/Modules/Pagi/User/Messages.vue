@@ -237,49 +237,100 @@ function sanitizeInput(text: string): string {
 // Harus sinkron dengan DEFAULT_DICTIONARY di ContentModerationService.php
 const CLIENT_BANNED_WORDS: Record<string, string> = {
 	// judi_online
-	'slot': 'judi_online', 'slot88': 'judi_online', 'gacor': 'judi_online', 'maxwin': 'judi_online',
-	'pragmatic': 'judi_online', 'zeus': 'judi_online', 'rtp': 'judi_online',
-	'depo': 'judi_online', 'scatter': 'judi_online', 'judol': 'judi_online',
-	'judi': 'judi_online', 'judionline': 'judi_online', 'pragmaticplay': 'judi_online',
+	slot: "judi_online",
+	slot88: "judi_online",
+	gacor: "judi_online",
+	maxwin: "judi_online",
+	pragmatic: "judi_online",
+	zeus: "judi_online",
+	rtp: "judi_online",
+	depo: "judi_online",
+	scatter: "judi_online",
+	judol: "judi_online",
+	judi: "judi_online",
+	judionline: "judi_online",
+	pragmaticplay: "judi_online",
 	// profanity
-	'anjing': 'profanity', 'babi': 'profanity', 'bangsat': 'profanity', 'kontol': 'profanity',
-	'memek': 'profanity', 'ngentot': 'profanity', 'jancok': 'profanity', 'asu': 'profanity',
-	'dancok': 'profanity', 'taik': 'profanity', 'tai': 'profanity', 'tolol': 'profanity',
-	'goblok': 'profanity', 'bajingan': 'profanity', 'kampang': 'profanity', 'itil': 'profanity',
-	'pantek': 'profanity', 'peler': 'profanity', 'biadab': 'profanity', 'pepek': 'profanity',
-	'kimak': 'profanity',
+	anjing: "profanity",
+	babi: "profanity",
+	bangsat: "profanity",
+	kontol: "profanity",
+	memek: "profanity",
+	ngentot: "profanity",
+	jancok: "profanity",
+	asu: "profanity",
+	dancok: "profanity",
+	taik: "profanity",
+	tai: "profanity",
+	tolol: "profanity",
+	goblok: "profanity",
+	bajingan: "profanity",
+	kampang: "profanity",
+	itil: "profanity",
+	pantek: "profanity",
+	peler: "profanity",
+	biadab: "profanity",
+	pepek: "profanity",
+	kimak: "profanity",
 	// harassment
-	'cacat': 'harassment', 'autis': 'harassment', 'banci': 'harassment', 'bencong': 'harassment',
+	cacat: "harassment",
+	autis: "harassment",
+	banci: "harassment",
+	bencong: "harassment",
 	// sexual
-	'bokep': 'sexual', 'sange': 'sexual', 'vcs': 'sexual', 'porno': 'sexual',
-	'nude': 'sexual', 'telanjang': 'sexual', 'mesum': 'sexual', 'openbo': 'sexual',
+	bokep: "sexual",
+	sange: "sexual",
+	vcs: "sexual",
+	porno: "sexual",
+	nude: "sexual",
+	telanjang: "sexual",
+	mesum: "sexual",
+	openbo: "sexual",
 	// threat
-	'mati aja': 'threat', 'mati lu': 'threat',
+	"mati aja": "threat",
+	"mati lu": "threat",
 	// phishing
-	'spambot': 'phishing', 'hack_account': 'phishing', 'klaim_saldo': 'phishing',
+	spambot: "phishing",
+	hack_account: "phishing",
+	klaim_saldo: "phishing",
 };
 
 // Normalisasi sederhana: huruf kecil + ganti karakter leetspeak umum
 function normalizeForScan(text: string): string {
 	return text
 		.toLowerCase()
-		.replace(/4/g, 'a').replace(/3/g, 'e').replace(/1/g, 'i')
-		.replace(/0/g, 'o').replace(/5/g, 's').replace(/@/g, 'a')
-		.replace(/[^a-z0-9\s]/g, '');
+		.replace(/4/g, "a")
+		.replace(/3/g, "e")
+		.replace(/1/g, "i")
+		.replace(/0/g, "o")
+		.replace(/5/g, "s")
+		.replace(/@/g, "a")
+		.replace(/[^a-z0-9\s]/g, "");
 }
 
-function clientSideScan(text: string): { isFlagged: boolean; word?: string; category?: string } {
+function clientSideScan(text: string): {
+	isFlagged: boolean;
+	word?: string;
+	category?: string;
+} {
 	// Gabungkan kata default + kata kustom dari admin (dari Inertia props)
 	const allBannedWords: Record<string, string> = { ...CLIENT_BANNED_WORDS };
 	if (props.moderationCustomWords) {
 		for (const cw of props.moderationCustomWords) {
-			if (cw) allBannedWords[cw.toLowerCase()] = 'custom_admin';
+			if (cw) allBannedWords[cw.toLowerCase()] = "custom_admin";
 		}
 	}
 	const normalized = normalizeForScan(text);
 	for (const [word, category] of Object.entries(allBannedWords)) {
-		const pattern = new RegExp('\\b' + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'iu');
-		if (pattern.test(text) || pattern.test(normalized) || normalized.includes(word)) {
+		const pattern = new RegExp(
+			"\\b" + word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b",
+			"iu",
+		);
+		if (
+			pattern.test(text) ||
+			pattern.test(normalized) ||
+			normalized.includes(word)
+		) {
 			return { isFlagged: true, word, category };
 		}
 	}
@@ -721,7 +772,7 @@ async function sendMessage() {
 			is_moderated: false,
 		};
 		messages.value.push(violationMsg);
-		newMessageText.value = '';
+		newMessageText.value = "";
 		replyingToMessage.value = null;
 		await nextTick();
 		chatWindowRef.value?.scrollToBottom();
@@ -731,7 +782,7 @@ async function sendMessage() {
 			if (idx !== -1) {
 				messages.value[idx] = {
 					...messages.value[idx],
-					body: '',
+					body: "",
 					sending: false,
 					is_moderated: true,
 				};
@@ -863,11 +914,8 @@ async function sendMessage() {
 		}
 		// Tampilkan pesan error dari server (misal 422 dari moderasi backend) ke user
 		const serverMsg = err?.response?.data?.message;
-		triggerToast(
-			serverMsg || '⚠️ Pesan gagal terkirim. Coba lagi.',
-			'error',
-		);
-		if (import.meta.env.DEV) console.error('Failed to send message', err);
+		triggerToast(serverMsg || "⚠️ Pesan gagal terkirim. Coba lagi.", "error");
+		if (import.meta.env.DEV) console.error("Failed to send message", err);
 	} finally {
 		isSending.value = false;
 	}

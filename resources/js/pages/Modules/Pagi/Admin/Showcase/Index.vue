@@ -2,7 +2,9 @@
 import { router, useForm } from "@inertiajs/vue3";
 import { Bell, Check, Sparkles, Star } from "lucide-vue-next";
 import { computed, ref } from "vue";
-import FeatureShowcase, { type TabMedia } from "@/components/ui/FeatureShowcase.vue";
+import FeatureShowcase, {
+	type TabMedia,
+} from "@/components/ui/FeatureShowcase.vue";
 import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
 
 interface WorkItem {
@@ -49,7 +51,11 @@ const toggleWorkSelection = (id: number) => {
 };
 
 const sendCompletenessRequest = (work: WorkItem) => {
-	router.post(`/pagi/admin/showcase/request-completeness/${work.id}`, {}, { preserveScroll: true });
+	router.post(
+		`/pagi/admin/showcase/request-completeness/${work.id}`,
+		{},
+		{ preserveScroll: true },
+	);
 };
 
 // Preview tabs generated dynamically from selected works
@@ -60,7 +66,9 @@ const previewTabs = computed<TabMedia[]>(() => {
 		.map((w) => ({
 			value: `work-${w.id}`,
 			label: w.title.length > 18 ? `${w.title.slice(0, 18)}...` : w.title,
-			src: w.thumbnail || "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=800&q=80",
+			src:
+				w.thumbnail ||
+				"https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=800&q=80",
 			alt: w.title,
 			title: w.title,
 			author: w.author,
@@ -69,7 +77,9 @@ const previewTabs = computed<TabMedia[]>(() => {
 				{
 					id: "step-1",
 					title: "💡 Konsep & Deskripsi Karya",
-					text: w.description || "Portofolio inovasi digital karya mahasiswa FMIKOM dengan standar antarmuka modern.",
+					text:
+						w.description ||
+						"Portofolio inovasi digital karya mahasiswa FMIKOM dengan standar antarmuka modern.",
 				},
 				{
 					id: "step-2",

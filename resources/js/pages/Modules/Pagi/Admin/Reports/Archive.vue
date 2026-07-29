@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { Head, router } from "@inertiajs/vue3";
-import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
-import ModerationModal from "@/components/Admin/ui/ModerationModal.vue";
 import {
 	Archive,
 	CheckCircle,
@@ -10,6 +8,8 @@ import {
 	ShieldCheck,
 } from "lucide-vue-next";
 import { computed, ref } from "vue";
+import ModerationModal from "@/components/Admin/ui/ModerationModal.vue";
+import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
 
 interface ReportItem {
 	id: number;
@@ -45,13 +45,17 @@ const searchQuery = ref("");
 const selectedItem = ref<any>(null);
 const isModalOpen = ref(false);
 
-const reportsList = computed(() => props.reportsList ?? []);
+const allReportsList = computed(() => props.reportsList ?? []);
 
 // Filter resolved / archived items only
 const archivedReports = computed(() => {
-	return reportsList.value.filter((r) => {
+	return allReportsList.value.filter((r) => {
 		const s = (r.status || "").toLowerCase();
-		return ["actioned", "reviewed", "dismissed", "resolved", "archive"].includes(s) || r.stage === "archive";
+		return (
+			["actioned", "reviewed", "dismissed", "resolved", "archive"].includes(
+				s,
+			) || r.stage === "archive"
+		);
 	});
 });
 
@@ -66,7 +70,7 @@ const filteredReports = computed(() => {
 				r.author.toLowerCase().includes(q) ||
 				r.reporter.toLowerCase().includes(q) ||
 				r.reason.toLowerCase().includes(q) ||
-				r.description.toLowerCase().includes(q)
+				r.description.toLowerCase().includes(q),
 		);
 	}
 
@@ -102,11 +106,23 @@ const getStatusBadge = (status: string) => {
 		case "actioned":
 		case "reviewed":
 		case "resolved":
-			return { label: "✓ Telah Ditindak", class: "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300" };
+			return {
+				label: "✓ Telah Ditindak",
+				class:
+					"bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300",
+			};
 		case "dismissed":
-			return { label: "⚪ Dikesampingkan", class: "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400" };
+			return {
+				label: "⚪ Dikesampingkan",
+				class:
+					"bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400",
+			};
 		default:
-			return { label: status, class: "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400" };
+			return {
+				label: status,
+				class:
+					"bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400",
+			};
 	}
 };
 </script>

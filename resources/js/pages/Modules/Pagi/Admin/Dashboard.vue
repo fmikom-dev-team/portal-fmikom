@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { usePage, Link } from "@inertiajs/vue3";
+import { Link, usePage } from "@inertiajs/vue3";
 import {
 	computed,
 	defineAsyncComponent,
@@ -307,7 +307,10 @@ const showModal = ref(false);
 const brokenImages = ref<Record<number | string, boolean>>({});
 
 const handleReview = (param: any) => {
-	const item = typeof param === "object" && param !== null ? param : allModerationItems.value.find((i) => i.id === param);
+	const item =
+		typeof param === "object" && param !== null
+			? param
+			: allModerationItems.value.find((i) => i.id === param);
 	if (item) {
 		activeItem.value = item;
 		showModal.value = true;

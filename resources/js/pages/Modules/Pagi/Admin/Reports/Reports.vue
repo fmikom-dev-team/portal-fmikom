@@ -1,8 +1,5 @@
 <script setup lang="ts">
 import { Head, router } from "@inertiajs/vue3";
-import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
-import ModerationModal from "@/components/Admin/ui/ModerationModal.vue";
-import ConfirmDialogModal from "@/components/Admin/ui/ConfirmDialogModal.vue";
 import {
 	AlertTriangle,
 	Archive,
@@ -15,6 +12,9 @@ import {
 	UserCheck,
 } from "lucide-vue-next";
 import { computed, ref } from "vue";
+import ConfirmDialogModal from "@/components/Admin/ui/ConfirmDialogModal.vue";
+import ModerationModal from "@/components/Admin/ui/ModerationModal.vue";
+import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
 
 interface ReportItem {
 	id: number;
@@ -59,11 +59,17 @@ const isModalOpen = ref(false);
 const isConfirmResetOpen = ref(false);
 const isResetting = ref(false);
 
-const reportsList = computed(() => props.reportsList ?? []);
+const allReportsList = computed(() => props.reportsList ?? []);
 
 const activeList = computed(() => {
-	return reportsList.value.filter((r) => {
-		const stage = r.stage || (r.status === "tinjauan" ? "tinjauan" : r.status === "review" ? "review" : "report");
+	return allReportsList.value.filter((r) => {
+		const stage =
+			r.stage ||
+			(r.status === "tinjauan"
+				? "tinjauan"
+				: r.status === "review"
+					? "review"
+					: "report");
 		return stage === activeTab.value;
 	});
 });
@@ -79,7 +85,7 @@ const filteredReports = computed(() => {
 				r.author.toLowerCase().includes(q) ||
 				r.reporter.toLowerCase().includes(q) ||
 				r.reason.toLowerCase().includes(q) ||
-				r.description.toLowerCase().includes(q)
+				r.description.toLowerCase().includes(q),
 		);
 	}
 
@@ -121,18 +127,30 @@ const handleConfirmReset = () => {
 				isResetting.value = false;
 				isConfirmResetOpen.value = false;
 			},
-		}
+		},
 	);
 };
 
 const getPriorityBadge = (priority?: string) => {
 	switch (priority) {
 		case "high":
-			return { label: "🔴 Tinggi", class: "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-900/60" };
+			return {
+				label: "🔴 Tinggi",
+				class:
+					"bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-900/60",
+			};
 		case "medium":
-			return { label: "🟡 Sedang", class: "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/60" };
+			return {
+				label: "🟡 Sedang",
+				class:
+					"bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/60",
+			};
 		default:
-			return { label: "🔵 Rendah", class: "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700" };
+			return {
+				label: "🔵 Rendah",
+				class:
+					"bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700",
+			};
 	}
 };
 </script>

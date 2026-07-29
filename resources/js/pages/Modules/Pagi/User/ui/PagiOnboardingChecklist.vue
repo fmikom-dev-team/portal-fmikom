@@ -8,14 +8,7 @@ import {
 	Circle,
 	X,
 } from "lucide-vue-next";
-import {
-	computed,
-	nextTick,
-	onMounted,
-	onUnmounted,
-	ref,
-	watch,
-} from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
 export type Step = {
 	id: string;
@@ -41,17 +34,32 @@ const siteSettings = computed(() => (page.props as any).siteSettings || {});
 // Route detection for Profile vs Main Pagi
 const isProfilePage = computed(() => {
 	const component = (page.component as string) || "";
-	const url = page.url || (typeof window !== "undefined" ? window.location.pathname : "");
-	if (component.includes("Profile") || url.startsWith("/pagi/profile")) return true;
+	const url =
+		page.url || (typeof window !== "undefined" ? window.location.pathname : "");
+	if (component.includes("Profile") || url.startsWith("/pagi/profile"))
+		return true;
 	// Detect custom profile URLs like /pagi/suntree
-	if (url.startsWith("/pagi/") && !["/pagi", "/pagi/people", "/pagi/gallery", "/pagi/cv", "/pagi/messages", "/pagi/notifications", "/pagi/settings", "/pagi/editor"].includes(url)) {
+	if (
+		url.startsWith("/pagi/") &&
+		![
+			"/pagi",
+			"/pagi/people",
+			"/pagi/gallery",
+			"/pagi/cv",
+			"/pagi/messages",
+			"/pagi/notifications",
+			"/pagi/settings",
+			"/pagi/editor",
+		].includes(url)
+	) {
 		return true;
 	}
 	return false;
 });
 
 const STORAGE_KEY = computed(
-	() => `${isProfilePage.value ? "pagi_onboarding_profile_v1" : "pagi_onboarding_v1"}_${props.userId || "guest"}`,
+	() =>
+		`${isProfilePage.value ? "pagi_onboarding_profile_v1" : "pagi_onboarding_v1"}_${props.userId || "guest"}`,
 );
 
 const tourTitle = computed(() =>
@@ -183,22 +191,19 @@ const steps = computed<Step[]>(() => {
 		{
 			id: "people",
 			title: "Direktori Talenta",
-			description:
-				"Temukan talenta dan lulusan terbaik di platform PAGI.",
+			description: "Temukan talenta dan lulusan terbaik di platform PAGI.",
 			targetSelector: "[data-onboard='pagi-people']",
 		},
 		{
 			id: "messages",
 			title: "Pesan & Diskusi",
-			description:
-				"Kirim pesan langsung ke talenta atau civitas akademik.",
+			description: "Kirim pesan langsung ke talenta atau civitas akademik.",
 			targetSelector: "[data-onboard='pagi-messages']",
 		},
 		{
 			id: "notifications",
 			title: "Notifikasi Sistem & Aktivitas",
-			description:
-				"Terima pemberitahuan langsung terkait pembaruan platform.",
+			description: "Terima pemberitahuan langsung terkait pembaruan platform.",
 			targetSelector: "[data-onboard='pagi-notifications']",
 		},
 		{
@@ -240,16 +245,13 @@ watch(STORAGE_KEY, () => {
 });
 
 const completedCount = computed(
-	() =>
-		steps.value.filter((step) => completedSteps.value.has(step.id)).length,
+	() => steps.value.filter((step) => completedSteps.value.has(step.id)).length,
 );
 const totalSteps = computed(() => steps.value.length);
 const progressPercent = computed(() =>
 	totalSteps.value > 0 ? (completedCount.value / totalSteps.value) * 100 : 0,
 );
-const allCompleted = computed(
-	() => completedCount.value === totalSteps.value,
-);
+const allCompleted = computed(() => completedCount.value === totalSteps.value);
 
 const activeStep = computed(() =>
 	activeCoachmarkId.value

@@ -207,8 +207,9 @@ const handleNotifClick = async (notif: any) => {
 			await fetch(`/pagi/notifications/${notif.id}/mark-read`, {
 				method: "POST",
 				headers: {
-					"X-CSRF-TOKEN": (document.querySelector("meta[name=csrf-token]") as any)
-						?.content,
+					"X-CSRF-TOKEN": (
+						document.querySelector("meta[name=csrf-token]") as any
+					)?.content,
 					Accept: "application/json",
 				},
 			});

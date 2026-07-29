@@ -1,11 +1,20 @@
 <script setup lang="ts">
 import { Link, usePage } from "@inertiajs/vue3";
 import axios from "axios";
-import { Eye, Flag, Heart, Pencil, Share2, Trash2, UserMinus, X } from "lucide-vue-next";
+import {
+	Eye,
+	Flag,
+	Heart,
+	Pencil,
+	Share2,
+	Trash2,
+	UserMinus,
+	X,
+} from "lucide-vue-next";
 import { ref } from "vue";
+import AvatarGroup, { type AvatarItem } from "@/components/ui/AvatarGroup.vue";
 import OptimizedImage from "../ui/OptimizedImage.vue";
 import VideoLazy from "../ui/VideoLazy.vue";
-import AvatarGroup, { type AvatarItem } from "@/components/ui/AvatarGroup.vue";
 
 const props = defineProps<{
 	projects: any[];
@@ -101,7 +110,12 @@ const canManageProject = (project: any) =>
 
 const formatAvatarUrl = (url: string | null | undefined) => {
 	if (!url || url === "null" || url === "undefined") return null;
-	if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) return url;
+	if (
+		url.startsWith("http://") ||
+		url.startsWith("https://") ||
+		url.startsWith("data:")
+	)
+		return url;
 	const clean = url.replace(/^\/?(storage\/)+/, "");
 	return "/storage/" + clean;
 };
@@ -147,8 +161,12 @@ const handleLeaveCollaboration = async () => {
 	if (!leaveModalProject.value) return;
 	isLeaving.value = true;
 	try {
-		await axios.post(`/pagi/editor/${leaveModalProject.value.id}/collaboration/leave`);
-		const idx = props.projects.findIndex((item) => item.id === leaveModalProject.value.id);
+		await axios.post(
+			`/pagi/editor/${leaveModalProject.value.id}/collaboration/leave`,
+		);
+		const idx = props.projects.findIndex(
+			(item) => item.id === leaveModalProject.value.id,
+		);
 		if (idx !== -1) {
 			props.projects.splice(idx, 1);
 		}

@@ -3,9 +3,9 @@ import { Link, usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import { Eye, Heart, Pencil, Share2, Trash2, X } from "lucide-vue-next";
 import { ref } from "vue";
+import AvatarGroup, { type AvatarItem } from "@/components/ui/AvatarGroup.vue";
 import OptimizedImage from "../ui/OptimizedImage.vue";
 import VideoLazy from "../ui/VideoLazy.vue";
-import AvatarGroup, { type AvatarItem } from "@/components/ui/AvatarGroup.vue";
 
 const props = defineProps<{
 	projects: any[];
@@ -84,7 +84,11 @@ const confirmDeleteProject = (p: any) => {
 
 const handleConfirmDelete = () => {
 	if (!deleteModalProject.value) return;
-	emit("delete-project", deleteModalProject.value.id, deleteModalProject.value.title);
+	emit(
+		"delete-project",
+		deleteModalProject.value.id,
+		deleteModalProject.value.title,
+	);
 	deleteModalProject.value = null;
 };
 
@@ -128,7 +132,12 @@ const onDrop = (index: number) => {
 
 const formatAvatarUrl = (url: string | null | undefined) => {
 	if (!url || url === "null" || url === "undefined") return null;
-	if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) return url;
+	if (
+		url.startsWith("http://") ||
+		url.startsWith("https://") ||
+		url.startsWith("data:")
+	)
+		return url;
 	const clean = url.replace(/^\/?(storage\/)+/, "");
 	return "/storage/" + clean;
 };

@@ -11,6 +11,7 @@ import {
 	X,
 } from "lucide-vue-next";
 import { onMounted, onUnmounted, ref } from "vue";
+import { formatStorageUrl } from "@/composables/useInitials";
 import { sanitize } from "@/composables/useSanitize";
 import { usePagiProgress } from "../../shared/composables/usePagiProgress";
 import { useToast } from "../../shared/composables/useToast";
@@ -24,7 +25,6 @@ import { useEditorCanvas } from "./useEditorCanvas";
 import { useEditorCollaborators } from "./useEditorCollaborators";
 import { idbClear, idbGet, useEditorDraft } from "./useEditorDraft";
 import { useEditorFileUpload } from "./useEditorFileUpload";
-import { formatStorageUrl } from "@/composables/useInitials";
 import { useEditorTags } from "./useEditorTags";
 
 const { trackInertiaForm } = usePagiProgress();

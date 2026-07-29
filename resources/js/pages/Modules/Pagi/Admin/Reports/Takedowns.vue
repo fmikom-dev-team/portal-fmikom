@@ -1,8 +1,5 @@
 <script setup lang="ts">
 import { Head, router } from "@inertiajs/vue3";
-import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
-import ModerationModal from "@/components/Admin/ui/ModerationModal.vue";
-import ConfirmDialogModal from "@/components/Admin/ui/ConfirmDialogModal.vue";
 import {
 	AlertTriangle,
 	Archive,
@@ -15,6 +12,9 @@ import {
 	ShieldAlert,
 } from "lucide-vue-next";
 import { computed, ref } from "vue";
+import ConfirmDialogModal from "@/components/Admin/ui/ConfirmDialogModal.vue";
+import ModerationModal from "@/components/Admin/ui/ModerationModal.vue";
+import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
 
 interface TakedownItem {
 	id: number;
@@ -52,10 +52,10 @@ const isProcessing = ref(false);
 const selectedItem = ref<any>(null);
 const isModalOpen = ref(false);
 
-const takedownsList = computed(() => props.takedownsList ?? []);
+const allTakedownsList = computed(() => props.takedownsList ?? []);
 
 const activeList = computed(() => {
-	return takedownsList.value.filter((t) => {
+	return allTakedownsList.value.filter((t) => {
 		const stage = t.stage || (t.appealReason ? "banding" : "takedown");
 		return stage === activeTab.value;
 	});
@@ -72,7 +72,7 @@ const filteredTakedowns = computed(() => {
 				t.author.toLowerCase().includes(q) ||
 				t.category.toLowerCase().includes(q) ||
 				t.reason.toLowerCase().includes(q) ||
-				(t.appealReason && t.appealReason.toLowerCase().includes(q))
+				(t.appealReason && t.appealReason.toLowerCase().includes(q)),
 		);
 	}
 
@@ -98,7 +98,7 @@ const handleConfirmRestore = () => {
 				isConfirmRestoreOpen.value = false;
 				selectedWorkId.value = null;
 			},
-		}
+		},
 	);
 };
 

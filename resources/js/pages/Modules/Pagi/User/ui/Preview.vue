@@ -145,7 +145,9 @@ const computedUser = computed(() => {
 	};
 });
 
-const previewWindowWidth = ref(typeof window !== "undefined" ? window.innerWidth : 1200);
+const previewWindowWidth = ref(
+	typeof window !== "undefined" ? window.innerWidth : 1200,
+);
 if (typeof window !== "undefined") {
 	window.addEventListener("resize", () => {
 		previewWindowWidth.value = window.innerWidth;
@@ -311,10 +313,13 @@ let resizeObserver: ResizeObserver | null = null;
 
 const getGridImages = (block: any): string[] => {
 	if (!block) return [];
-	if (Array.isArray(block.previews) && block.previews.length > 0) return block.previews;
-	if (Array.isArray(block.file_paths) && block.file_paths.length > 0) return block.file_paths;
+	if (Array.isArray(block.previews) && block.previews.length > 0)
+		return block.previews;
+	if (Array.isArray(block.file_paths) && block.file_paths.length > 0)
+		return block.file_paths;
 	if (Array.isArray(block.urls) && block.urls.length > 0) return block.urls;
-	if (Array.isArray(block.fileKeys) && block.fileKeys.length > 0) return block.fileKeys;
+	if (Array.isArray(block.fileKeys) && block.fileKeys.length > 0)
+		return block.fileKeys;
 	return [];
 };
 

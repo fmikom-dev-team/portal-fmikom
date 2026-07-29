@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { useForm, router } from "@inertiajs/vue3";
-import { toast } from "vue-sonner";
-import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
+import { router, useForm } from "@inertiajs/vue3";
 import {
+	Activity,
+	AlertTriangle,
+	Bell,
+	Globe,
 	MessageCircle,
 	MessageSquare,
-	Globe,
-	Shield,
-	Bell,
 	Settings2,
-	Upload,
-	AlertTriangle,
-	Activity,
+	Shield,
 	Trash2,
+	Upload,
 } from "lucide-vue-next";
+import { computed, ref } from "vue";
+import { toast } from "vue-sonner";
+import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
 
 const props = defineProps<{
 	settings: {
@@ -43,7 +43,7 @@ const props = defineProps<{
 	adminRole?: string;
 }>();
 
-const isSuperAdmin = computed(() => props.adminRole === 'super-admin');
+const isSuperAdmin = computed(() => props.adminRole === "super-admin");
 
 const activeSection = ref<
 	"general" | "moderation" | "security" | "notifications"
@@ -70,15 +70,15 @@ const form = useForm({
 	notifyOnTakedown: props.settings?.notifyOnTakedown ?? true,
 	enableChat: props.settings?.enableChat ?? true,
 	enableComments: props.settings?.enableComments ?? true,
-	commentAudience: props.settings?.commentAudience ?? 'mahasiswa_mitra',
-	commentCensorMode: props.settings?.commentCensorMode ?? 'reject',
+	commentAudience: props.settings?.commentAudience ?? "mahasiswa_mitra",
+	commentCensorMode: props.settings?.commentCensorMode ?? "reject",
 	customBannedWords: props.settings?.customBannedWords ?? [],
 	customImageRules: props.settings?.customImageRules ?? [],
 	enableLocalEngine: props.settings?.enableLocalEngine ?? true,
 	enableGoogleAi: props.settings?.enableGoogleAi ?? false,
 	enableVisionAi: props.settings?.enableVisionAi ?? true,
-	googleAiApiKey: props.settings?.googleAiApiKey ?? '',
-	googleAiModel: props.settings?.googleAiModel ?? 'gemini-flash-latest',
+	googleAiApiKey: props.settings?.googleAiApiKey ?? "",
+	googleAiModel: props.settings?.googleAiModel ?? "gemini-flash-latest",
 });
 
 const newSettingsBannedWord = ref("");
@@ -110,43 +110,68 @@ const isFetchingModels = ref(false);
 const aiTestResult = ref<{ success?: boolean; message?: string } | null>(null);
 
 const availableGeminiModels = ref<Array<{ id: string; name: string }>>([
-	{ id: 'gemini-flash-latest', name: 'gemini-flash-latest ⭐ (Dokploy Default - Otomatis Best Flash)' },
-	{ id: 'gemini-pro-latest', name: 'gemini-pro-latest (Dokploy Default - Otomatis Best Pro)' },
-	{ id: 'gemini-2.0-flash', name: 'gemini-2.0-flash (Model Terbaru)' },
-	{ id: 'gemini-1.5-flash', name: 'gemini-1.5-flash (Stabil)' },
+	{
+		id: "gemini-flash-latest",
+		name: "gemini-flash-latest ⭐ (Dokploy Default - Otomatis Best Flash)",
+	},
+	{
+		id: "gemini-pro-latest",
+		name: "gemini-pro-latest (Dokploy Default - Otomatis Best Pro)",
+	},
+	{ id: "gemini-2.0-flash", name: "gemini-2.0-flash (Model Terbaru)" },
+	{ id: "gemini-1.5-flash", name: "gemini-1.5-flash (Stabil)" },
 ]);
 
 const handleFetchGoogleModels = async () => {
 	if (!form.googleAiApiKey) {
-		aiTestResult.value = { success: false, message: "Harap masukkan Google Gemini API Key terlebih dahulu." };
+		aiTestResult.value = {
+			success: false,
+			message: "Harap masukkan Google Gemini API Key terlebih dahulu.",
+		};
 		return;
 	}
 
 	isFetchingModels.value = true;
 	try {
-		const response = await fetch("/pagi/admin/settings/fetch-google-ai-models", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				"X-CSRF-TOKEN": (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || "",
+		const response = await fetch(
+			"/pagi/admin/settings/fetch-google-ai-models",
+			{
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRF-TOKEN":
+						(
+							document.querySelector(
+								'meta[name="csrf-token"]',
+							) as HTMLMetaElement
+						)?.content || "",
+				},
+				body: JSON.stringify({
+					apiKey: form.googleAiApiKey,
+				}),
 			},
-			body: JSON.stringify({
-				apiKey: form.googleAiApiKey,
-			}),
-		});
+		);
 
 		const data = await response.json();
 		if (response.ok && data.models && data.models.length > 0) {
 			availableGeminiModels.value = data.models;
 			aiTestResult.value = {
 				success: true,
-				message: data.message || `${data.models.length} model resmi berhasil dimuat dari Google AI Studio!`,
+				message:
+					data.message ||
+					`${data.models.length} model resmi berhasil dimuat dari Google AI Studio!`,
 			};
 		} else {
-			aiTestResult.value = { success: false, message: data.message || "Gagal memuat model dari Google." };
+			aiTestResult.value = {
+				success: false,
+				message: data.message || "Gagal memuat model dari Google.",
+			};
 		}
 	} catch (e: any) {
-		aiTestResult.value = { success: false, message: "Kesalahan jaringan: " + e.message };
+		aiTestResult.value = {
+			success: false,
+			message: "Kesalahan jaringan: " + e.message,
+		};
 	} finally {
 		isFetchingModels.value = false;
 	}
@@ -154,7 +179,10 @@ const handleFetchGoogleModels = async () => {
 
 const handleTestGoogleAi = async () => {
 	if (!form.googleAiApiKey) {
-		aiTestResult.value = { success: false, message: "Harap masukkan Google Gemini API Key terlebih dahulu." };
+		aiTestResult.value = {
+			success: false,
+			message: "Harap masukkan Google Gemini API Key terlebih dahulu.",
+		};
 		return;
 	}
 
@@ -166,7 +194,9 @@ const handleTestGoogleAi = async () => {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				"X-CSRF-TOKEN": (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || "",
+				"X-CSRF-TOKEN":
+					(document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)
+						?.content || "",
 			},
 			body: JSON.stringify({
 				apiKey: form.googleAiApiKey,
@@ -177,10 +207,15 @@ const handleTestGoogleAi = async () => {
 		const data = await response.json();
 		aiTestResult.value = {
 			success: response.ok,
-			message: data.message || (response.ok ? "Koneksi API Berhasil!" : "Gagal terhubung ke API."),
+			message:
+				data.message ||
+				(response.ok ? "Koneksi API Berhasil!" : "Gagal terhubung ke API."),
 		};
 	} catch (e: any) {
-		aiTestResult.value = { success: false, message: "Kesalahan jaringan: " + e.message };
+		aiTestResult.value = {
+			success: false,
+			message: "Kesalahan jaringan: " + e.message,
+		};
 	} finally {
 		isTestingAi.value = false;
 	}
@@ -201,8 +236,12 @@ const dangerPasswordError = ref("");
 const dangerConfirmationError = ref("");
 
 const confirmationText = "HAPUS SEMUA KARYA";
-const isConfirmationValid = computed(() => dangerConfirmation.value === confirmationText);
-const isFormComplete = computed(() => dangerPassword.value.length >= 1 && isConfirmationValid.value);
+const isConfirmationValid = computed(
+	() => dangerConfirmation.value === confirmationText,
+);
+const isFormComplete = computed(
+	() => dangerPassword.value.length >= 1 && isConfirmationValid.value,
+);
 
 const openDangerModal = () => {
 	dangerPassword.value = "";
@@ -232,12 +271,17 @@ const submitDangerReset = () => {
 			showDangerModal.value = false;
 			dangerPassword.value = "";
 			dangerConfirmation.value = "";
-			toast.success("Seluruh karya portofolio berhasil dihapus. Database kini bersih!");
+			toast.success(
+				"Seluruh karya portofolio berhasil dihapus. Database kini bersih!",
+			);
 		},
 		onError: (errors) => {
 			if (errors.password) dangerPasswordError.value = errors.password;
-			if (errors.confirmation) dangerConfirmationError.value = errors.confirmation;
-			toast.error("Verifikasi gagal. Periksa kembali password dan teks konfirmasi Anda.");
+			if (errors.confirmation)
+				dangerConfirmationError.value = errors.confirmation;
+			toast.error(
+				"Verifikasi gagal. Periksa kembali password dan teks konfirmasi Anda.",
+			);
 		},
 		onFinish: () => {
 			dangerProcessing.value = false;
