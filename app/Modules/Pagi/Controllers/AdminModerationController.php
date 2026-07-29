@@ -11,10 +11,13 @@ use App\Models\Portal\PortalSetting;
 use App\Models\User;
 use App\Models\UserModuleRole;
 use App\Modules\Pagi\Controllers\Concerns\HasAdminDashboardHelpers;
+use App\Modules\Pagi\Services\ContentModerationService;
 use App\Notifications\PagiNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -413,7 +416,7 @@ class AdminModerationController extends Controller
             'model' => 'nullable|string|max:50',
         ]);
 
-        $service = app(\App\Modules\Pagi\Services\ContentModerationService::class);
+        $service = app(ContentModerationService::class);
         $result = $service->testGoogleAiConnection($validated['apiKey'], $validated['model'] ?? 'gemini-flash-latest');
 
         return response()->json($result, $result['success'] ? 200 : 422);
@@ -428,7 +431,7 @@ class AdminModerationController extends Controller
             'apiKey' => 'required|string|max:255',
         ]);
 
-        $service = app(\App\Modules\Pagi\Services\ContentModerationService::class);
+        $service = app(ContentModerationService::class);
         $result = $service->fetchAvailableGeminiModels($validated['apiKey']);
 
         return response()->json($result, $result['success'] ? 200 : 422);
@@ -678,7 +681,7 @@ class AdminModerationController extends Controller
      */
     public function resetAllWorks(Request $request)
     {
-        /** @var \App\Models\User $adminUser */
+        /** @var User $adminUser */
         $adminUser = Auth::user();
         $role = $request->attributes->get('resolved_role', session('active_role'));
 
@@ -689,12 +692,12 @@ class AdminModerationController extends Controller
 
         // Lapis 2 & 3: Validasi password + teks konfirmasi
         $request->validate([
-            'password'     => 'required|string',
+            'password' => 'required|string',
             'confirmation' => 'required|string',
         ]);
 
         // Verifikasi password admin yang sedang login
-        if (! \Illuminate\Support\Facades\Hash::check($request->password, $adminUser->password)) {
+        if (! Hash::check($request->password, $adminUser->password)) {
             return back()->withErrors(['password' => 'Password yang Anda masukkan salah. Silakan coba lagi.']);
         }
 
@@ -740,13 +743,13 @@ class AdminModerationController extends Controller
             PagiWarning::query()->delete();
 
             // Audit Trail: Log aksi berbahaya ini
-            \Illuminate\Support\Facades\Log::channel('stack')->warning('[DANGER ZONE] Reset Semua Karya dieksekusi', [
-                'admin_id'   => $adminUser->id,
+            Log::channel('stack')->warning('[DANGER ZONE] Reset Semua Karya dieksekusi', [
+                'admin_id' => $adminUser->id,
                 'admin_name' => $adminUser->name,
-                'admin_email'=> $adminUser->email,
+                'admin_email' => $adminUser->email,
                 'ip_address' => request()->ip(),
                 'user_agent' => request()->userAgent(),
-                'timestamp'  => now()->toIso8601String(),
+                'timestamp' => now()->toIso8601String(),
                 'works_deleted' => count($allWorkIds),
             ]);
         });

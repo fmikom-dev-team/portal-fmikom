@@ -2,8 +2,10 @@
 
 namespace App\Modules\Pagi\Requests;
 
+use App\Models\Portal\PortalSetting;
 use App\Rules\VideoDurationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
 
 class StorePortfolioRequest extends FormRequest
 {
@@ -29,12 +31,12 @@ class StorePortfolioRequest extends FormRequest
             $content = $this->content;
             foreach ($content as $i => &$block) {
                 if (is_array($block)) {
-                    if (isset($block['file']) && ! ($block['file'] instanceof \Illuminate\Http\UploadedFile)) {
+                    if (isset($block['file']) && ! ($block['file'] instanceof UploadedFile)) {
                         unset($block['file']);
                     }
                     if (isset($block['files']) && is_array($block['files'])) {
                         foreach ($block['files'] as $j => $f) {
-                            if (! ($f instanceof \Illuminate\Http\UploadedFile)) {
+                            if (! ($f instanceof UploadedFile)) {
                                 unset($block['files'][$j]);
                             }
                         }
@@ -56,11 +58,11 @@ class StorePortfolioRequest extends FormRequest
     {
         $isPublished = filter_var($this->is_published, FILTER_VALIDATE_BOOLEAN);
 
-        $maxUploadMb = (int) (\App\Models\Portal\PortalSetting::query()->where('key', 'pagi_max_upload_size_mb')->value('value') ?? 10);
+        $maxUploadMb = (int) (PortalSetting::query()->where('key', 'pagi_max_upload_size_mb')->value('value') ?? 10);
         $maxKb = max(1024, $maxUploadMb * 1024);
 
         $coverRule = [$isPublished ? 'required' : 'nullable'];
-        if ($this->hasFile('cover_image') || $this->cover_image instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->hasFile('cover_image') || $this->cover_image instanceof UploadedFile) {
             $coverRule = [$isPublished ? 'required' : 'nullable', 'file', 'extensions:jpeg,jpg,png,gif,webp,avif,heic,heif,svg,bmp,mp4,mov,qt,avi,webm,mkv,3gp', 'max:'.$maxKb, new VideoDurationRule];
         } elseif (is_string($this->cover_image) && ! empty($this->cover_image)) {
             $coverRule = [$isPublished ? 'required' : 'nullable', 'string'];

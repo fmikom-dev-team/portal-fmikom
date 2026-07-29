@@ -38,9 +38,9 @@ trait HandlesImageCompression
         if (! $isValidImage) {
             Log::warning("[HandlesImageCompression] Image type rejected. MIME: {$realMime}, Ext: {$realExt}, ClientExt: {$clientExt}");
             SystemAlertService::log(
-                "Gagal Unggah Gambar: Tipe Berkas Tidak Valid",
+                'Gagal Unggah Gambar: Tipe Berkas Tidak Valid',
                 "Percobaan mengunggah berkas '{$file->getClientOriginalName()}' ditolak. MIME: {$realMime}, Ekstensi: {$clientExt}.",
-                "warning"
+                'warning'
             );
             $key = $this->getUploadedFileKey($file);
             throw ValidationException::withMessages([
@@ -53,9 +53,9 @@ trait HandlesImageCompression
         $scanResult = $scanner->scan($file);
         if (! $scanResult['safe']) {
             SystemAlertService::log(
-                "Peringatan Keamanan: Indikasi Berkas Berbahaya",
+                'Peringatan Keamanan: Indikasi Berkas Berbahaya',
                 "Pemindaian ClamAV mendeteksi anomali pada berkas '{$file->getClientOriginalName()}': ".$scanResult['reason'],
-                "error"
+                'error'
             );
             $key = $this->getUploadedFileKey($file);
             throw ValidationException::withMessages([
@@ -94,9 +94,9 @@ trait HandlesImageCompression
 
         if (! $sourceImage) {
             SystemAlertService::log(
-                "Gagal Unggah Gambar: Berkas Rusak",
+                'Gagal Unggah Gambar: Berkas Rusak',
                 "Proses pemrosesan gambar '{$file->getClientOriginalName()}' gagal akibat kerusakan struktur berkas gambar (corrupted file).",
-                "error"
+                'error'
             );
             $key = $this->getUploadedFileKey($file);
             throw ValidationException::withMessages([

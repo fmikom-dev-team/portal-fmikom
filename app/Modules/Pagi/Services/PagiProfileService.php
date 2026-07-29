@@ -187,7 +187,7 @@ class PagiProfileService
             // ── FIX #3: Use single COUNT query from DB instead of reading JSON metadata
             'followers_count' => $user->pagiFollowers()->count(),
             'following_count' => $user->pagiFollowing()->count(),
-            'recent_followers' => $user->pagiFollowers()->limit(4)->get()->map(fn($f) => [
+            'recent_followers' => $user->pagiFollowers()->limit(4)->get()->map(fn ($f) => [
                 'id' => $f->id,
                 'name' => $this->formatName($f->name),
                 'pagi_username' => $f->pagi_username,

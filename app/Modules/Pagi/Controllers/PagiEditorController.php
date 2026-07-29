@@ -2,20 +2,20 @@
 
 namespace App\Modules\Pagi\Controllers;
 
+use App\Events\PagiWorkCreated;
+use App\Events\PagiWorkDeleted;
+use App\Events\PagiWorkUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Pagi\PagiReport;
 use App\Models\Pagi\PagiWork;
-use App\Models\Portal\PortalSetting;
 use App\Models\User;
 use App\Modules\Pagi\Requests\QuickStorePortfolioRequest;
 use App\Modules\Pagi\Requests\QuickUpdatePortfolioRequest;
 use App\Modules\Pagi\Requests\StoreGalleryItemRequest;
 use App\Modules\Pagi\Requests\StorePortfolioRequest;
 use App\Modules\Pagi\Requests\UpdatePortfolioRequest;
+use App\Modules\Pagi\Services\ContentModerationService;
 use App\Modules\Pagi\Services\PortfolioService;
-use App\Events\PagiWorkCreated;
-use App\Events\PagiWorkDeleted;
-use App\Events\PagiWorkUpdated;
 use App\Notifications\PagiNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -336,7 +336,7 @@ class PagiEditorController extends Controller implements HasMiddleware
 
         // Jika karya sebelumnya bermasalah dan diperbarui user, buat laporan/flag Re-Review untuk Admin
         if ($wasWarningOrHidden) {
-            \App\Models\Pagi\PagiReport::create([
+            PagiReport::create([
                 'work_id' => $editor->id,
                 'reporter_id' => Auth::id(),
                 'reason' => 'other',
@@ -360,7 +360,7 @@ class PagiEditorController extends Controller implements HasMiddleware
         $workId = $editor->id;
 
         // Tandai laporan pending yang terkait dengan karya ini sebagai 'actioned' (Dihapus oleh pemilik karya)
-        \App\Models\Pagi\PagiReport::query()
+        PagiReport::query()
             ->where('work_id', '=', $editor->id, 'and')
             ->where('status', '=', 'pending', 'and')
             ->update([
@@ -795,8 +795,8 @@ class PagiEditorController extends Controller implements HasMiddleware
      */
     private function checkAutoModeration(PagiWork $work): void
     {
-        $moderationService = app(\App\Modules\Pagi\Services\ContentModerationService::class);
-        $textToScan = trim(($work->title ?? '') . ' ' . ($work->description ?? ''));
+        $moderationService = app(ContentModerationService::class);
+        $textToScan = trim(($work->title ?? '').' '.($work->description ?? ''));
 
         // Scan teks (judul + deskripsi)
         $textScan = $moderationService->scan($textToScan);
@@ -804,7 +804,7 @@ class PagiEditorController extends Controller implements HasMiddleware
 
         // Scan gambar cover jika ada
         if (! empty($work->cover_image)) {
-            $imagePath = storage_path('app/public/' . ltrim($work->cover_image, '/'));
+            $imagePath = storage_path('app/public/'.ltrim($work->cover_image, '/'));
             if (file_exists($imagePath)) {
                 $imageScan = $moderationService->scanImage($imagePath, $textToScan);
             }
@@ -823,7 +823,7 @@ class PagiEditorController extends Controller implements HasMiddleware
                 'work_id' => $work->id,
                 'reporter_id' => $work->user_id,
                 'reason' => 'inappropriate_content',
-                'description' => '[Auto Moderasi AI] Terdeteksi konten berisiko: ' . ($reasonText ?: 'Gambar / Teks Sensitif'),
+                'description' => '[Auto Moderasi AI] Terdeteksi konten berisiko: '.($reasonText ?: 'Gambar / Teks Sensitif'),
                 'status' => 'pending',
             ]);
         }

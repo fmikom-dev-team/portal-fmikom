@@ -37,6 +37,7 @@ class PagiExpireWarningsCommand extends Command
 
         if ($expiredWarnings->isEmpty()) {
             $this->info('Tidak ada Surat Peringatan (SP) kedaluwarsa yang perlu diproses.');
+
             return Command::SUCCESS;
         }
 
@@ -77,6 +78,7 @@ class PagiExpireWarningsCommand extends Command
         }
 
         $this->info("Berhasil menonaktifkan {$expiredCount} SP kedaluwarsa dan memulihkan {$restoredUsersCount} akun pengguna.");
+
         return Command::SUCCESS;
     }
 }

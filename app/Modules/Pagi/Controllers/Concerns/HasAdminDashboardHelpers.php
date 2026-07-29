@@ -2,12 +2,7 @@
 
 namespace App\Modules\Pagi\Controllers\Concerns;
 
-use App\Models\Pagi\PagiReport;
-use App\Models\Pagi\PagiWarning;
-use App\Models\Pagi\PagiWork;
-use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Hash;
 
 trait HasAdminDashboardHelpers
 {

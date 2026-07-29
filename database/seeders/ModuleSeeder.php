@@ -76,8 +76,8 @@ class ModuleSeeder extends Seeder
     /**
      * Sync module-role permissions map.
      *
-     * @param array<string, int> $modulesMap
-     * @param array<string, int> $rolesMap
+     * @param  array<string, int>  $modulesMap
+     * @param  array<string, int>  $rolesMap
      */
     private function syncModuleRoles(array $modulesMap, array $rolesMap): void
     {
@@ -109,8 +109,8 @@ class ModuleSeeder extends Seeder
     /**
      * Seed sample testing accounts and assign user module roles.
      *
-     * @param array<string, int> $modulesMap
-     * @param array<string, int> $rolesMap
+     * @param  array<string, int>  $modulesMap
+     * @param  array<string, int>  $rolesMap
      */
     private function seedTestUsers(array $modulesMap, array $rolesMap): void
     {

@@ -34,7 +34,7 @@ class AdminUserController extends Controller
 
         // Abaikan akun test/dummy internal
         $query->where('email', 'not like', '%@test.com')
-              ->where('email', 'not like', '%@fmikom.test');
+            ->where('email', 'not like', '%@fmikom.test');
 
         // Filter Default: Hanya tampilkan pengguna yang sudah aktif (activated) di WorkOS
         $statusFilter = $request->input('status');
@@ -42,20 +42,20 @@ class AdminUserController extends Controller
             $query->where('status_approval', '=', 'suspended');
         } elseif ($statusFilter === 'pending') {
             $query->where('status_approval', '!=', 'activated')
-                  ->where('status_approval', '!=', 'suspended');
+                ->where('status_approval', '!=', 'suspended');
         } elseif ($statusFilter === 'warning' || $statusFilter === 'active') {
             $query->where('status_approval', '=', 'activated')
-                  ->where('is_active', '=', true);
+                ->where('is_active', '=', true);
         } else {
             // Default (termasuk 'all' atau tanpa parameter status):
             // Hanya tampilkan akun yang sudah aktif & diaktivasi di WorkOS
             $query->where('status_approval', '=', 'activated')
-                  ->where('is_active', '=', true);
+                ->where('is_active', '=', true);
         }
 
         $query->where(function ($q) {
             $q->whereIn('user_type', ['mahasiswa', 'mitra', 'dosen', 'alumni'], 'and', false)
-              ->orWhereHas('moduleRoles');
+                ->orWhereHas('moduleRoles');
         });
 
         // Security Scope: Restrict Prodi Role to their own department's students
@@ -71,8 +71,8 @@ class AdminUserController extends Controller
         if ($search = trim((string) $request->input('search'))) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('nomor_induk', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('nomor_induk', 'like', "%{$search}%");
             });
         }
 

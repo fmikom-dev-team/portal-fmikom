@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Pagi\PagiReport;
 use App\Models\Pagi\PagiWarning;
 use App\Models\Pagi\PagiWork;
+use App\Models\Portal\PortalSetting;
 use App\Modules\Pagi\Controllers\Concerns\HasAdminDashboardHelpers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -155,7 +156,7 @@ class AdminWorkController extends Controller
                 ];
             });
 
-        $showcaseRaw = \App\Models\Portal\PortalSetting::where('key', 'pagi_showcase_work_ids')->value('value');
+        $showcaseRaw = PortalSetting::where('key', 'pagi_showcase_work_ids')->value('value');
         $showcaseWorkIds = json_decode($showcaseRaw ?? '[]', true) ?? [];
 
         return Inertia::render('Modules/Pagi/Admin/Works/Index', [

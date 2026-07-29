@@ -3,6 +3,7 @@
 namespace App\Modules\Pagi\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Pagi\PagiNotification;
 use App\Models\Pagi\PagiWork;
 use App\Models\Portal\PortalSetting;
 use App\Modules\Pagi\Controllers\Concerns\HasAdminDashboardHelpers;
@@ -73,7 +74,7 @@ class AdminShowcaseController extends Controller
         $eyebrow = $settings->get('pagi_showcase_eyebrow', 'Inovasi Mahasiswa FMIKOM');
         $title = $settings->get('pagi_showcase_title', 'Portofolio Unggulan Berstandar Industri');
         $description = $settings->get('pagi_showcase_description', 'Jelajahi karya teknologi, desain antarmuka, dan aplikasi buatan mahasiswa FMIKOM yang telah dikurasi secara ketat.');
-        
+
         $selectedIdsRaw = $settings->get('pagi_showcase_work_ids', '[]');
         $selectedWorkIds = json_decode($selectedIdsRaw, true) ?? [];
 
@@ -155,7 +156,7 @@ class AdminShowcaseController extends Controller
             $missingText = ! empty($missing) ? implode(' & ', $missing) : 'kelengkapan data';
 
             // Send notification to user
-            \App\Models\Pagi\PagiNotification::create([
+            PagiNotification::create([
                 'user_id' => $work->user_id,
                 'type' => 'system',
                 'title' => '🌟 Karya Anda Terpilih Kandidat Karya Terbaik!',

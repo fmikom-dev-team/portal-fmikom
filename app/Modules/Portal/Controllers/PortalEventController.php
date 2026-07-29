@@ -128,7 +128,7 @@ class PortalEventController extends Controller
         }
 
         $logos = $request->input('existing_organizer_logos', []);
-        if (!is_array($logos)) {
+        if (! is_array($logos)) {
             $logos = [];
         }
 

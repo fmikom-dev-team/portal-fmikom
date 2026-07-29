@@ -365,6 +365,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
     private function resolveProfileComponentName(string $role): string
     {
         $nonStudentRoles = ['dosen', 'alumni', 'mitra', 'super-admin', 'admin', 'admin-universitas', 'admin-akademik', 'prodi'];
+
         return in_array(strtolower($role), $nonStudentRoles)
             ? 'Modules/Pagi/User/Umum/Profile'
             : 'Modules/Pagi/User/Profile/Index';
@@ -433,6 +434,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
         }
 
         $nonStudentRoles = ['dosen', 'alumni', 'mitra', 'super-admin', 'admin', 'admin-universitas', 'admin-akademik', 'prodi'];
+
         return in_array(strtolower($user->user_type), $nonStudentRoles)
             ? 'Modules/Pagi/User/Umum/Profile'
             : 'Modules/Pagi/User/Profile/Index';

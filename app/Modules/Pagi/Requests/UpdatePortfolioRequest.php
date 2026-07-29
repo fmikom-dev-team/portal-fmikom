@@ -4,6 +4,7 @@ namespace App\Modules\Pagi\Requests;
 
 use App\Rules\VideoDurationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
 
 class UpdatePortfolioRequest extends FormRequest
 {
@@ -29,12 +30,12 @@ class UpdatePortfolioRequest extends FormRequest
             $content = $this->content;
             foreach ($content as $i => &$block) {
                 if (is_array($block)) {
-                    if (isset($block['file']) && ! ($block['file'] instanceof \Illuminate\Http\UploadedFile)) {
+                    if (isset($block['file']) && ! ($block['file'] instanceof UploadedFile)) {
                         unset($block['file']);
                     }
                     if (isset($block['files']) && is_array($block['files'])) {
                         foreach ($block['files'] as $j => $f) {
-                            if (! ($f instanceof \Illuminate\Http\UploadedFile)) {
+                            if (! ($f instanceof UploadedFile)) {
                                 unset($block['files'][$j]);
                             }
                         }
@@ -57,7 +58,7 @@ class UpdatePortfolioRequest extends FormRequest
         $isPublished = filter_var($this->is_published, FILTER_VALIDATE_BOOLEAN);
 
         $coverRule = ['nullable'];
-        if ($this->hasFile('cover_image') || $this->cover_image instanceof \Illuminate\Http\UploadedFile) {
+        if ($this->hasFile('cover_image') || $this->cover_image instanceof UploadedFile) {
             $coverRule = ['nullable', 'file', 'extensions:jpeg,jpg,png,gif,webp,avif,heic,heif,svg,bmp,mp4,mov,qt,avi,webm,mkv,3gp', 'max:102400', new VideoDurationRule];
         } elseif (is_string($this->cover_image)) {
             $coverRule = ['nullable', 'string'];

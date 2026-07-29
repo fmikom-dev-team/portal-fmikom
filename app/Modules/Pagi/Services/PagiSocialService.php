@@ -34,7 +34,7 @@ class PagiSocialService
                 ->orWhere('name', 'like', '%'.$query.'%')
                 ->orWhere('email', 'like', '%'.$query.'%');
         })
-            ->orderByRaw("CASE WHEN pagi_username LIKE ? THEN 1 WHEN pagi_username LIKE ? THEN 2 ELSE 3 END", [$query, '%'.$query.'%'])
+            ->orderByRaw('CASE WHEN pagi_username LIKE ? THEN 1 WHEN pagi_username LIKE ? THEN 2 ELSE 3 END', [$query, '%'.$query.'%'])
             ->limit(10)
             ->get();
 
@@ -139,7 +139,7 @@ class PagiSocialService
                 }
 
                 $covers = collect($latestWorkIds->get($u->id, []))
-                    ->filter(fn ($w) => !in_array($w->status ?? 'active', ['review', 'hidden', 'removed']))
+                    ->filter(fn ($w) => ! in_array($w->status ?? 'active', ['review', 'hidden', 'removed']))
                     ->map(fn ($w) => $this->resolveAssetPath($w->cover_image))
                     ->filter()
                     ->values()
@@ -211,7 +211,7 @@ class PagiSocialService
             }
             $authorData = $this->buildAuthorData($p->user);
             $portfolioData = $this->buildPortfolioData($p, $p->user, $preloadedUsers);
-            
+
             $content = is_array($p->content) ? $p->content : json_decode($p->content, true);
             if (! is_array($content)) {
                 $content = [];

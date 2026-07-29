@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Portal\PortalSetting;
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -24,7 +25,7 @@ class CheckMaintenanceMode
         $maintenanceMode = $settings['maintenance_mode'] ?? '0';
 
         if ($maintenanceMode === '1') {
-            /** @var \App\Models\User|null $user */
+            /** @var User|null $user */
             $user = $request->user();
             if ($user && (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin() || method_exists($user, 'isAdmin') && $user->isAdmin())) {
                 return $next($request);

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Pagi\PagiMessage;
 use App\Models\Portal\PortalSetting;
 use App\Models\User;
+use App\Modules\Pagi\Services\ContentModerationService;
 use App\Modules\Pagi\Services\PagiChatService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -101,7 +102,7 @@ class PagiChatController extends Controller
 
         $user = Auth::user();
 
-        $moderationService = app(\App\Modules\Pagi\Services\ContentModerationService::class);
+        $moderationService = app(ContentModerationService::class);
         $moderationMode = PortalSetting::query()->where('key', 'pagi_comment_censor_mode')->value('value') ?? 'reject';
 
         $scanResult = $moderationService->scan($request->body);

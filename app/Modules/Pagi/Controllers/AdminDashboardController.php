@@ -4,8 +4,10 @@ namespace App\Modules\Pagi\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pagi\PagiReport;
+use App\Models\Pagi\PagiTag;
 use App\Models\Pagi\PagiWarning;
 use App\Models\Pagi\PagiWork;
+use App\Models\Portal\PortalSetting;
 use App\Models\User;
 use App\Modules\Pagi\Controllers\Concerns\HasAdminDashboardHelpers;
 use Carbon\Carbon;
@@ -13,6 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -141,7 +144,7 @@ class AdminDashboardController extends Controller
         ];
 
         $settings = [];
-        $dbSettings = \App\Models\Portal\PortalSetting::whereIn('key', $keys)->pluck('value', 'key');
+        $dbSettings = PortalSetting::whereIn('key', $keys)->pluck('value', 'key');
 
         $settings['siteName'] = $dbSettings->get('pagi_site_name', 'PAGI – Works & Gallery');
         $settings['maxUploadSizeMb'] = (int) $dbSettings->get('pagi_max_upload_size_mb', 10);
@@ -235,7 +238,7 @@ class AdminDashboardController extends Controller
         ];
 
         foreach ($mappings as $key => $value) {
-            \App\Models\Portal\PortalSetting::updateOrCreate(
+            PortalSetting::updateOrCreate(
                 ['key' => $key],
                 ['value' => (string) $value]
             );
@@ -244,8 +247,8 @@ class AdminDashboardController extends Controller
         Cache::forget('portal_settings');
 
         if ($validated['enableActivityLog']) {
-            \Illuminate\Support\Facades\Log::info('[PAGI Activity Log] Admin updated module settings', [
-                'user_id' => \Illuminate\Support\Facades\Auth::id(),
+            Log::info('[PAGI Activity Log] Admin updated module settings', [
+                'user_id' => Auth::id(),
                 'ip' => $request->ip(),
                 'timestamp' => now()->toIso8601String(),
             ]);
@@ -259,7 +262,8 @@ class AdminDashboardController extends Controller
      */
     public function tags(Request $request): Response
     {
-        $tags = \App\Models\Pagi\PagiTag::query()->orderBy('name')->get();
+        $tags = PagiTag::query()->orderBy('name')->get();
+
         return Inertia::render('Modules/Pagi/Admin/Tags/Index', [
             'tags' => $tags,
         ]);
@@ -359,7 +363,7 @@ class AdminDashboardController extends Controller
         if ($totalViews === 0) {
             $totalViews = 3492; // default fallback matching user screenshot
         }
-        
+
         $baseDailyView = (int) ($totalViews / $days);
 
         for ($i = $days - 1; $i >= 0; $i--) {
@@ -367,7 +371,7 @@ class AdminDashboardController extends Controller
             $dateStr = $carbonDate->toDateString();
 
             $labels[] = $this->formatChartLabel($carbonDate, $i, $days);
-            
+
             // Karya + Laporan + Warnings counts for the day
             $k = $karyaCounts[$dateStr] ?? 0;
             $l = $laporanCounts[$dateStr] ?? 0;
@@ -387,18 +391,18 @@ class AdminDashboardController extends Controller
                 'series' => [
                     [
                         'name' => 'Views (Kunjungan)',
-                        'data' => $viewsData
-                    ]
-                ]
+                        'data' => $viewsData,
+                    ],
+                ],
             ],
             'activity' => [
                 'categories' => $labels,
                 'series' => [
                     [
                         'name' => 'User Activity (Aksi)',
-                        'data' => $activityData
-                    ]
-                ]
+                        'data' => $activityData,
+                    ],
+                ],
             ],
             'range' => $range,
         ]);

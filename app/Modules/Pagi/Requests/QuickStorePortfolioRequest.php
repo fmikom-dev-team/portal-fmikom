@@ -2,6 +2,7 @@
 
 namespace App\Modules\Pagi\Requests;
 
+use App\Models\Portal\PortalSetting;
 use App\Rules\VideoDurationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -22,7 +23,7 @@ class QuickStorePortfolioRequest extends FormRequest
      */
     public function rules(): array
     {
-        $maxUploadMb = (int) (\App\Models\Portal\PortalSetting::query()->where('key', 'pagi_max_upload_size_mb')->value('value') ?? 10);
+        $maxUploadMb = (int) (PortalSetting::query()->where('key', 'pagi_max_upload_size_mb')->value('value') ?? 10);
         $maxKb = max(1024, $maxUploadMb * 1024);
 
         return [

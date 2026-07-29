@@ -196,7 +196,7 @@ trait FormatsPortfolioData
                     }
                     if (! empty($handlesAndNames)) {
                         $q->orWhereIn('pagi_username', $handlesAndNames)
-                          ->orWhereIn('name', $handlesAndNames);
+                            ->orWhereIn('name', $handlesAndNames);
                     }
                 })
                 ->select(['id', 'name', 'pagi_username', 'foto_path'])

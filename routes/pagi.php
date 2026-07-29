@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureFirstTimeLoginComplete;
 use App\Modules\Pagi\Controllers\AdminDashboardController;
 use App\Modules\Pagi\Controllers\AdminModerationController;
+use App\Modules\Pagi\Controllers\AdminShowcaseController;
 use App\Modules\Pagi\Controllers\AdminUserController;
 use App\Modules\Pagi\Controllers\AdminWorkController;
 use App\Modules\Pagi\Controllers\PagiChatController;
@@ -275,13 +276,13 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
         // Works & Exhibition Showcase
         Route::get('/works', [AdminWorkController::class, 'works'])
             ->name('works');
-        Route::get('/showcase', [\App\Modules\Pagi\Controllers\AdminShowcaseController::class, 'index'])
+        Route::get('/showcase', [AdminShowcaseController::class, 'index'])
             ->name('showcase');
-        Route::post('/showcase', [\App\Modules\Pagi\Controllers\AdminShowcaseController::class, 'update'])
+        Route::post('/showcase', [AdminShowcaseController::class, 'update'])
             ->name('showcase.update');
-        Route::post('/showcase/toggle/{work}', [\App\Modules\Pagi\Controllers\AdminShowcaseController::class, 'toggleShowcase'])
+        Route::post('/showcase/toggle/{work}', [AdminShowcaseController::class, 'toggleShowcase'])
             ->name('showcase.toggle');
-        Route::post('/showcase/request-completeness/{work}', [\App\Modules\Pagi\Controllers\AdminShowcaseController::class, 'requestCompleteness'])
+        Route::post('/showcase/request-completeness/{work}', [AdminShowcaseController::class, 'requestCompleteness'])
             ->name('showcase.request-completeness');
 
         // Moderation Actions — POST only for CSRF protection

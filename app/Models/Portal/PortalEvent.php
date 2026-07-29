@@ -44,7 +44,7 @@ class PortalEvent extends Model
     public function getOrganizerLogosAttribute(): array
     {
         $val = $this->organizer_logo;
-        if (!$val) {
+        if (! $val) {
             return [];
         }
         if (is_array($val)) {
@@ -56,6 +56,7 @@ class PortalEvent extends Model
                 return array_values(array_filter($decoded));
             }
         }
+
         return [$val];
     }
 

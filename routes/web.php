@@ -3,6 +3,7 @@
 use App\Http\Controllers\PwaController;
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\EnsureFirstTimeLoginComplete;
+use App\Models\Pagi\PagiWork;
 use App\Models\Portal\PortalDocument;
 use App\Models\Portal\PortalEvent;
 use App\Models\Portal\PortalPost;
@@ -225,14 +226,14 @@ Route::get('/', function () {
                 'pagi_showcase_description',
                 'pagi_showcase_work_ids',
             ];
-            $settings = \App\Models\Portal\PortalSetting::whereIn('key', $keys)->pluck('value', 'key');
+            $settings = PortalSetting::whereIn('key', $keys)->pluck('value', 'key');
             $selectedWorkIds = json_decode($settings->get('pagi_showcase_work_ids', '[]'), true) ?? [];
 
             if (empty($selectedWorkIds)) {
                 return null;
             }
 
-            $works = \App\Models\Pagi\PagiWork::query()
+            $works = PagiWork::query()
                 ->whereIn('id', $selectedWorkIds)
                 ->where('is_published', '=', true, 'and')
                 ->where('status', '=', 'active', 'and')

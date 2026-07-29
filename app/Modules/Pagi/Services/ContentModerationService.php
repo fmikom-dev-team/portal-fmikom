@@ -3,6 +3,9 @@
 namespace App\Modules\Pagi\Services;
 
 use App\Models\Portal\PortalSetting;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class ContentModerationService
 {
@@ -117,7 +120,7 @@ class ContentModerationService
         if ($enableLocalEngine) {
             $dictionary = $this->getBannedWords();
             foreach ($dictionary as $word => $category) {
-                $pattern = '/\b' . preg_quote($word, '/') . '\b/iu';
+                $pattern = '/\b'.preg_quote($word, '/').'\b/iu';
                 if (preg_match($pattern, $text) || preg_match($pattern, $normalized) || str_contains($normalized, $word)) {
                     $matchedWords[] = $word;
                     $matchedCategories[] = $category;
@@ -178,7 +181,7 @@ class ContentModerationService
     public function evaluateWithGoogleGeminiApi(string $text, string $apiKey, string $model = 'gemini-1.5-flash'): array
     {
         try {
-            $response = \Illuminate\Support\Facades\Http::timeout(4)
+            $response = Http::timeout(4)
                 ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
                     'contents' => [
                         [
@@ -194,7 +197,7 @@ class ContentModerationService
             if ($response->successful()) {
                 $data = $response->json();
                 $candidatesText = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
-                
+
                 $parsed = null;
                 if (preg_match('/\{[\s\S]*\}/', $candidatesText, $matches)) {
                     $parsed = json_decode($matches[0], true);
@@ -209,7 +212,7 @@ class ContentModerationService
                 }
             }
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Google Gemini API Moderation Call failed: ' . $e->getMessage());
+            Log::warning('Google Gemini API Moderation Call failed: '.$e->getMessage());
         }
 
         return ['is_flagged' => false, 'matched_words' => [], 'categories' => []];
@@ -254,7 +257,7 @@ class ContentModerationService
                 $mimeType = str_replace('data:', '', $parts[0]);
                 $imageData = $parts[1];
             }
-        } elseif ($imageInput instanceof \Illuminate\Http\UploadedFile) {
+        } elseif ($imageInput instanceof UploadedFile) {
             $realPath = $imageInput->getRealPath();
             $imageData = base64_encode(file_get_contents($imageInput->getRealPath()));
             $mimeType = $imageInput->getMimeType() ?: 'image/jpeg';
@@ -369,21 +372,21 @@ class ContentModerationService
             if ($customRulesJson) {
                 $rulesArray = json_decode($customRulesJson, true);
                 if (is_array($rulesArray) && ! empty($rulesArray)) {
-                    $customRulesStr = "\n5. Indikator/aturan khusus terlarang dari admin kampus: " . implode(', ', $rulesArray) . ".";
+                    $customRulesStr = "\n5. Indikator/aturan khusus terlarang dari admin kampus: ".implode(', ', $rulesArray).'.';
                 }
             }
 
-            $prompt = "Anda adalah sistem moderasi gambar otomatis kampus. Analisis gambar ini" . ($caption ? " dan deskripsinya: \"{$caption}\"" : "") . ".
+            $prompt = 'Anda adalah sistem moderasi gambar otomatis kampus. Analisis gambar ini'.($caption ? " dan deskripsinya: \"{$caption}\"" : '').'.
 Apakah gambar/deskripsi mengandung:
 1. Ketelanjangan, pornografi, atau konten vulgar (sexual)?
 2. Flyer/poster/banner judi online, slot, gacor, maxwin (judi_online)?
 3. Kekerasan parah, darah, atau luka parah (threat)?
-4. Penipuan/scam/phishing (phishing)?" . $customRulesStr . "
+4. Penipuan/scam/phishing (phishing)?'.$customRulesStr.'
 
 Jawab HANYA dalam format JSON valid berikut (tanpa markdown backtick):
-{\"is_flagged\": true/false, \"severity\": \"clean/medium/high/critical\", \"category\": \"sexual/judi_online/threat/phishing/none\", \"reason\": \"alasan singkat bahasa indonesia\"}";
+{"is_flagged": true/false, "severity": "clean/medium/high/critical", "category": "sexual/judi_online/threat/phishing/none", "reason": "alasan singkat bahasa indonesia"}';
 
-            $response = \Illuminate\Support\Facades\Http::timeout(30)
+            $response = Http::timeout(30)
                 ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
                     'contents' => [
                         [
@@ -405,7 +408,7 @@ Jawab HANYA dalam format JSON valid berikut (tanpa markdown backtick):
             if ($response->successful()) {
                 $data = $response->json();
                 $candidatesText = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
-                
+
                 $parsed = null;
                 if (preg_match('/\{[\s\S]*\}/', $candidatesText, $matches)) {
                     $parsed = json_decode($matches[0], true);
@@ -422,7 +425,7 @@ Jawab HANYA dalam format JSON valid berikut (tanpa markdown backtick):
                 }
             }
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Google Gemini Vision API Call failed: ' . $e->getMessage());
+            Log::warning('Google Gemini Vision API Call failed: '.$e->getMessage());
         }
 
         return [
@@ -440,7 +443,7 @@ Jawab HANYA dalam format JSON valid berikut (tanpa markdown backtick):
     public function testGoogleAiConnection(string $apiKey, string $model = 'gemini-flash-latest'): array
     {
         try {
-            $response = \Illuminate\Support\Facades\Http::timeout(5)
+            $response = Http::timeout(5)
                 ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
                     'contents' => [
                         [
@@ -452,13 +455,14 @@ Jawab HANYA dalam format JSON valid berikut (tanpa markdown backtick):
                 ]);
 
             if ($response->successful()) {
-                return ['success' => true, 'message' => 'Koneksi ke Google Gemini AI API Berhasil! (Model: ' . $model . ')'];
+                return ['success' => true, 'message' => 'Koneksi ke Google Gemini AI API Berhasil! (Model: '.$model.')'];
             }
 
-            $errorMsg = $response->json('error.message') ?? 'HTTP status ' . $response->status();
-            return ['success' => false, 'message' => 'Gagal terhubung ke Google Gemini: ' . $errorMsg];
+            $errorMsg = $response->json('error.message') ?? 'HTTP status '.$response->status();
+
+            return ['success' => false, 'message' => 'Gagal terhubung ke Google Gemini: '.$errorMsg];
         } catch (\Throwable $e) {
-            return ['success' => false, 'message' => 'Kesalahan koneksi: ' . $e->getMessage()];
+            return ['success' => false, 'message' => 'Kesalahan koneksi: '.$e->getMessage()];
         }
     }
 
@@ -468,7 +472,7 @@ Jawab HANYA dalam format JSON valid berikut (tanpa markdown backtick):
     public function fetchAvailableGeminiModels(string $apiKey): array
     {
         try {
-            $response = \Illuminate\Support\Facades\Http::timeout(6)
+            $response = Http::timeout(6)
                 ->get("https://generativelanguage.googleapis.com/v1beta/models?key={$apiKey}");
 
             if ($response->successful()) {
@@ -493,7 +497,7 @@ Jawab HANYA dalam format JSON valid berikut (tanpa markdown backtick):
                     $methods = $m['supportedGenerationMethods'] ?? [];
 
                     // Filter model yang mendukung generateContent & belum ada di daftar alias
-                    if (in_array('generateContent', $methods) && !in_array($cleanId, $addedIds)) {
+                    if (in_array('generateContent', $methods) && ! in_array($cleanId, $addedIds)) {
                         $displayName = $cleanId;
                         if (isset($m['displayName'])) {
                             $displayName .= " ({$m['displayName']})";
@@ -509,14 +513,15 @@ Jawab HANYA dalam format JSON valid berikut (tanpa markdown backtick):
                 return [
                     'success' => true,
                     'models' => $formattedModels,
-                    'message' => count($formattedModels) . ' model berhasil dimuat dari Google AI Studio!',
+                    'message' => count($formattedModels).' model berhasil dimuat dari Google AI Studio!',
                 ];
             }
 
-            $errorMsg = $response->json('error.message') ?? 'HTTP status ' . $response->status();
-            return ['success' => false, 'models' => [], 'message' => 'Gagal memuat model dari Google: ' . $errorMsg];
+            $errorMsg = $response->json('error.message') ?? 'HTTP status '.$response->status();
+
+            return ['success' => false, 'models' => [], 'message' => 'Gagal memuat model dari Google: '.$errorMsg];
         } catch (\Throwable $e) {
-            return ['success' => false, 'models' => [], 'message' => 'Kesalahan koneksi: ' . $e->getMessage()];
+            return ['success' => false, 'models' => [], 'message' => 'Kesalahan koneksi: '.$e->getMessage()];
         }
     }
 
@@ -574,10 +579,10 @@ Jawab HANYA dalam format JSON valid berikut (tanpa markdown backtick):
                 $first = mb_substr($word, 0, 1);
                 $last = mb_substr($word, -1);
                 $middle = str_repeat('*', mb_strlen($word) - 2);
-                $mask = $first . $middle . $last;
+                $mask = $first.$middle.$last;
             }
 
-            $pattern = '/\b' . preg_quote($word, '/') . '\b/iu';
+            $pattern = '/\b'.preg_quote($word, '/').'\b/iu';
             $censored = preg_replace($pattern, $mask, $censored);
         }
 

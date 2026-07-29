@@ -4,7 +4,9 @@ namespace App\Modules\Pagi\Actions;
 
 use App\Models\Pagi\PagiWork;
 use App\Models\Pagi\PagiWorkComment;
+use App\Models\Portal\PortalSetting;
 use App\Models\User;
+use App\Modules\Pagi\Services\ContentModerationService;
 use App\Notifications\PagiNotification;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -25,8 +27,8 @@ class CreateCommentAction
                 : asset('storage/'.$authUser->foto_path);
         }
 
-        $moderationService = app(\App\Modules\Pagi\Services\ContentModerationService::class);
-        $moderationMode = \App\Models\Portal\PortalSetting::query()->where('key', 'pagi_comment_censor_mode')->value('value') ?? 'reject';
+        $moderationService = app(ContentModerationService::class);
+        $moderationMode = PortalSetting::query()->where('key', 'pagi_comment_censor_mode')->value('value') ?? 'reject';
 
         $scanResult = $moderationService->scan($body);
 

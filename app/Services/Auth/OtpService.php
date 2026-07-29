@@ -6,6 +6,7 @@ use App\Enums\OtpPurpose;
 use App\Mail\SendOtpEmail;
 use App\Models\Auth\AuthOtpToken;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
@@ -121,7 +122,7 @@ class OtpService
      */
     public function canResend(string $email, OtpPurpose $purpose): bool
     {
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($email, $purpose) {
+        return DB::transaction(function () use ($email, $purpose) {
             $existing = AuthOtpToken::where('email', '=', $email, 'and')
                 ->where('purpose', '=', $purpose->value, 'and')
                 ->where('is_used', '=', false, 'and')

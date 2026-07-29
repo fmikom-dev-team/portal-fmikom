@@ -24,7 +24,7 @@ class SystemAlertService
                 $admin->notify(new WorkOsAlert($title, $description, $severity, $extra));
             }
         } catch (\Throwable $e) {
-            Log::error("Failed to record SystemAlert: ".$e->getMessage());
+            Log::error('Failed to record SystemAlert: '.$e->getMessage());
         }
     }
 }

@@ -140,7 +140,7 @@ class HandleInertiaRequests extends Middleware
                 $portfolioIds = $notifs->map(fn ($n) => $n->data['portfolio_id'] ?? $n->data['work_id'] ?? null)->filter()->unique()->values();
                 $worksMap = [];
                 if ($portfolioIds->isNotEmpty()) {
-                    $works = \App\Models\Pagi\PagiWork::query()->whereIn('id', $portfolioIds)->select('id', 'cover_image', 'content')->get();
+                    $works = PagiWork::query()->whereIn('id', $portfolioIds)->select('id', 'cover_image', 'content')->get();
                     foreach ($works as $w) {
                         $img = null;
                         if ($w->cover_image) {
