@@ -85,6 +85,8 @@ const editor = useEditor({
 			heading: {
 				levels: [1, 2],
 			},
+			link: false,
+			underline: false,
 		}),
 		Underline,
 		Link.configure({

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Link, usePage } from "@inertiajs/vue3";
 import axios from "axios";
-import { Eye, Heart, Pencil, X } from "lucide-vue-next";
+import { Eye, Heart, Pencil, Share2, Trash2, X } from "lucide-vue-next";
 import { ref } from "vue";
 import OptimizedImage from "../ui/OptimizedImage.vue";
 import VideoLazy from "../ui/VideoLazy.vue";
+import AvatarGroup, { type AvatarItem } from "@/components/ui/AvatarGroup.vue";
 
 const props = defineProps<{
 	projects: any[];
@@ -74,6 +75,19 @@ const closeProjectMenu = () => {
 	activeProjectMenu.value = null;
 };
 
+const deleteModalProject = ref<any>(null);
+
+const confirmDeleteProject = (p: any) => {
+	closeProjectMenu();
+	deleteModalProject.value = p;
+};
+
+const handleConfirmDelete = () => {
+	if (!deleteModalProject.value) return;
+	emit("delete-project", deleteModalProject.value.id, deleteModalProject.value.title);
+	deleteModalProject.value = null;
+};
+
 const isVideoUrl = (url: string) => {
 	if (!url) return false;
 	const ext = url.split(".").pop()?.toLowerCase();
@@ -111,6 +125,37 @@ const onDrop = (index: number) => {
 	const orderIds = items.map((p) => p.id);
 	emit("reorder", orderIds);
 };
+
+const formatAvatarUrl = (url: string | null | undefined) => {
+	if (!url || url === "null" || url === "undefined") return null;
+	if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) return url;
+	const clean = url.replace(/^\/?(storage\/)+/, "");
+	return "/storage/" + clean;
+};
+
+const getCollaborationAvatars = (project: any): AvatarItem[] => {
+	const list: AvatarItem[] = [];
+	if (project.user) {
+		list.push({
+			id: project.user.id,
+			name: project.user.name,
+			pagi_username: project.user.pagi_username,
+			src: formatAvatarUrl(project.user.avatar || project.user.foto_path),
+		});
+	}
+	const collabs = project.resolved_collaborators || [];
+	for (const c of collabs) {
+		if (!list.some((item) => item.id === c.id)) {
+			list.push({
+				id: c.id,
+				name: c.name,
+				pagi_username: c.pagi_username,
+				src: formatAvatarUrl(c.avatar || c.foto_path),
+			});
+		}
+	}
+	return list;
+};
 </script>
 
 <template>
@@ -141,16 +186,23 @@ const onDrop = (index: number) => {
 
 					<!-- Foreground image/video -->
 					<VideoLazy v-if="isVideoUrl(p.image)" :src="p.image" :autoplay="true" :loop="true" :muted="true" :playsinline="true" :className="getCoverFit(p) === 'contain' ? 'max-w-full max-h-full object-contain z-10 relative transition-transform duration-500 group-hover:scale-102' : 'h-full w-full object-cover group-hover:scale-105 z-10 relative transition-transform duration-500 group-hover:scale-102'" />
-					<OptimizedImage v-else :src="p.image" :alt="p.title" :fetchpriority="idx < 8 ? 'high' : 'auto'" :loading="idx < 8 ? 'eager' : 'lazy'" :className="getCoverFit(p) === 'contain' ? 'max-w-full max-h-full object-contain z-10 relative transition-transform duration-500 group-hover:scale-102' : 'h-full w-full object-cover group-hover:scale-105 z-10 relative transition-transform duration-500 group-hover:scale-102'" />
+					<OptimizedImage v-else :src="p.image" :alt="p.title" :is-sensitive="Boolean(p.status === 'review' || p.status === 'hidden')" :fetchpriority="idx < 8 ? 'high' : 'auto'" :loading="idx < 8 ? 'eager' : 'lazy'" :className="getCoverFit(p) === 'contain' ? 'max-w-full max-h-full object-contain z-10 relative transition-transform duration-500 group-hover:scale-102' : 'h-full w-full object-cover group-hover:scale-105 z-10 relative transition-transform duration-500 group-hover:scale-102'" />
 				</div>
 
-				<!-- Draft badge inside thumbnail -->
-				<div v-if="p.is_published === false" class="absolute top-3 left-3 px-2 py-0.5 rounded-md bg-zinc-950/85 backdrop-blur-xs text-white text-[9px] font-black uppercase tracking-wider shadow-md border border-zinc-800 z-10">
-					Draft
+				<!-- Top-left badges: Draft + Collaboration stacked -->
+				<div class="absolute top-3 left-3 z-10 flex flex-col items-start gap-1.5">
+					<div v-if="p.is_published === false" class="px-2 py-0.5 rounded-md bg-zinc-950/85 backdrop-blur-xs text-white text-[9px] font-black uppercase tracking-wider shadow-md border border-zinc-800">
+						Draft
+					</div>
+					<!-- Collaboration badge with AvatarGroup -->
+					<div v-if="getCollaborationAvatars(p).length > 0" class="flex items-center gap-1.5 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full border border-white/10 select-none">
+						<AvatarGroup :avatars="getCollaborationAvatars(p)" :size="20" :overlap="6" :maxVisible="4" />
+						<span class="text-[9px] font-bold text-white/90 leading-none tracking-wide">Collaboration</span>
+					</div>
 				</div>
 				
-				<!-- Hover Actions Pill (Owner Only) -->
-				<div v-if="isOwnProfile" class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex items-center bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs border border-slate-200 dark:border-slate-800 rounded-full p-1 shadow-md gap-0.5 select-none">
+				<!-- Hover / Mobile Actions Pill (Owner Only) -->
+				<div v-if="isOwnProfile" class="absolute top-3 right-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-20 flex items-center bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs border border-slate-200 dark:border-slate-800 rounded-full p-1 shadow-md gap-0.5 select-none">
 					<!-- 3-Dots Menu Button -->
 					<button 
 						@click.stop="toggleProjectMenu(p.id)" 
@@ -185,16 +237,14 @@ const onDrop = (index: number) => {
 							@click.stop="emit('share-project', p); closeProjectMenu()" 
 							class="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer text-left border-none bg-transparent"
 						>
-							<svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" d="M8.684 10.742L12.02 12.2a2.003 2.003 0 11-.868 1.983L7.816 12.72a2.003 2.003 0 110-1.44l3.336-1.464a2.003 2.003 0 11.868 1.983L8.684 10.742z" />
-							</svg>
+							<Share2 class="w-3.5 h-3.5 text-slate-500 shrink-0" />
 							<span>Share link</span>
 						</button>
 						<button 
-							@click.stop="emit('delete-project', p.id, p.title); closeProjectMenu()" 
-							class="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-red-650 hover:bg-red-50 dark:hover:bg-red-950/20 border-t border-slate-100 dark:border-slate-800 mt-1 pt-2.5 transition-colors cursor-pointer text-left bg-transparent"
+							@click.stop="confirmDeleteProject(p)" 
+							class="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 border-t border-slate-100 dark:border-slate-800 mt-1 pt-2.5 transition-colors cursor-pointer text-left bg-transparent"
 						>
-							<X class="w-3.5 h-3.5 text-red-500" />
+							<Trash2 class="w-3.5 h-3.5 text-rose-500 shrink-0" />
 							<span>Remove from profile</span>
 						</button>
 					</div>
@@ -214,6 +264,29 @@ const onDrop = (index: number) => {
 						</button>
 						<span class="flex items-center gap-1 pointer-events-none"><Eye class="w-3.5 h-3.5 stroke-[2]" /> {{ p.views }}</span>
 					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Modern Delete Project Confirmation Modal -->
+		<div v-if="deleteModalProject" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 select-none" @click.self="deleteModalProject = null">
+			<div class="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-6 shadow-2xl space-y-4">
+				<div class="w-10 h-10 rounded-full bg-rose-100 dark:bg-rose-950/50 flex items-center justify-center text-rose-600 dark:text-rose-400">
+					<Trash2 class="w-5 h-5" />
+				</div>
+				<div>
+					<h3 class="text-base font-bold text-slate-900 dark:text-white">Hapus Karya Ini?</h3>
+					<p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-1">
+						Apakah Anda yakin ingin menghapus karya <strong>"{{ deleteModalProject.title }}"</strong>? Karya ini akan dihapus secara permanen dari profil Anda.
+					</p>
+				</div>
+				<div class="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-zinc-800">
+					<button @click="deleteModalProject = null" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-zinc-800 transition-colors border-none bg-transparent cursor-pointer">
+						Batal
+					</button>
+					<button @click="handleConfirmDelete" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all cursor-pointer border-none flex items-center gap-1.5">
+						<span>Ya, Hapus Karya</span>
+					</button>
 				</div>
 			</div>
 		</div>

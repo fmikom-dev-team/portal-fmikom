@@ -227,7 +227,7 @@ const handleBlur = () => {
     <Head title="PAGI — People">
         <title>PAGI — People</title>
     </Head>
-    <div class="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-slate-200 dark:selection:bg-slate-800">
+    <div class="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-slate-200 dark:selection:bg-slate-800 overflow-x-hidden">
 
         <Navbar v-if="isMahasiswa" />
         <UmumNavbar v-else :roleName="props.roleName" />
@@ -346,7 +346,7 @@ const handleBlur = () => {
             <Deferred data="peopleYouMayKnow">
                 <template #fallback>
                     <!-- SKELETON LOADER -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 select-none">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 select-none">
                         <div v-for="n in 8" :key="n" class="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden p-5 flex flex-col gap-4">
                             <div class="relative grid grid-cols-3 gap-0.5 h-36 bg-slate-100 dark:bg-zinc-850 overflow-hidden rounded-lg">
                                 <div class="h-36 bg-slate-200/50 dark:bg-zinc-900/40"></div>
@@ -381,7 +381,7 @@ const handleBlur = () => {
                     </div>
                 </template>
                 <template #default>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                         <LazyWrapper
                             v-for="p in visiblePeople"
                             :key="p.id"

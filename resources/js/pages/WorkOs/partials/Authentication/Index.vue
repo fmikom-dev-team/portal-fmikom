@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import MotionTabs from "@/components/ui/tabs/MotionTabs.vue";
-import Audit from "./Audit.vue";
 import Features from "./Features.vue";
 import LoginMethods from "./LoginMethods.vue";
-import MagicLinks from "./MagicLinks.vue";
 import OAuthProviders from "./OAuthProviders.vue";
 import Overview from "./Overview.vue";
-import PasswordPolicies from "./PasswordPolicies.vue";
 import Sessions from "./Sessions.vue";
 import SSO from "./SSO.vue";
 

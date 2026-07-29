@@ -22,9 +22,12 @@ class QuickStorePortfolioRequest extends FormRequest
      */
     public function rules(): array
     {
+        $maxUploadMb = (int) (\App\Models\Portal\PortalSetting::query()->where('key', 'pagi_max_upload_size_mb')->value('value') ?? 10);
+        $maxKb = max(1024, $maxUploadMb * 1024);
+
         return [
             'title' => 'required|string|max:255',
-            'cover_image' => ['required', 'file', 'extensions:jpeg,jpg,png,gif,webp,mp4,mov,avi,webm,mkv,3gp', 'max:102400', new VideoDurationRule],
+            'cover_image' => ['required', 'file', 'extensions:jpeg,jpg,png,gif,webp,mp4,mov,avi,webm,mkv,3gp', 'max:'.$maxKb, new VideoDurationRule],
             'skills' => ['required', 'string', function ($attribute, $value, $fail) {
                 $array = json_decode($value, true);
                 if (! is_array($array) || count($array) < 1) {

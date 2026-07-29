@@ -26,7 +26,7 @@ enum OtpPurpose: string
     {
         return match ($this) {
             self::EmailVerification => 15,
-            self::AccountActivation => 60,    // 1 jam untuk email aktivasi
+            self::AccountActivation => 15, // 15 menit standar OTP aktivasi
             self::PasswordReset => 15,
             self::MagicLink => 15,
         };

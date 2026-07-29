@@ -17,12 +17,13 @@ import {
 	X,
 } from "lucide-vue-next";
 import { computed, onUnmounted, ref, watch } from "vue";
-import { getInitialsAvatar } from "@/composables/useInitials";
+import { formatStorageUrl, getInitialsAvatar } from "@/composables/useInitials";
 import Navbar from "./ui/Navbar.vue";
 import OptimizedImage from "./ui/OptimizedImage.vue";
 import PagiShareModal from "./ui/PagiShareModal.vue";
 import Preview from "./ui/Preview.vue";
 import VideoLazy from "./ui/VideoLazy.vue";
+import AvatarGroup, { type AvatarItem } from "@/components/ui/AvatarGroup.vue";
 
 const props = defineProps<{
 	moduleName: string;
@@ -182,7 +183,15 @@ const activeProjectSettings = computed(() => {
 });
 
 const openProjectModal = async (p: any) => {
-	viewingProject.value = p;
+	const pId = p.portfolio_id || p.portfolio?.id || p.id;
+	viewingProject.value = {
+		...p,
+		id: pId,
+		title: p.title || p.portfolio?.title,
+		image: p.image || p.url || p.portfolio?.cover_image,
+		content: p.content || p.portfolio?.content || [],
+		portfolio: p.portfolio || p,
+	};
 	document.body.style.overflow = "hidden";
 
 	if (p.id) {
@@ -210,6 +219,32 @@ onUnmounted(() => {
 const getAcceptedCollaborators = (item: any) => {
 	const collabs = item.portfolio?.resolved_collaborators || [];
 	return collabs.filter((c: any) => c.status === "accepted");
+};
+
+const getCollaborationAvatarsForGallery = (item: any): AvatarItem[] => {
+	const accepted = getAcceptedCollaborators(item);
+	if (accepted.length === 0) return [];
+
+	const list: AvatarItem[] = [];
+	if (item.author) {
+		list.push({
+			id: item.author.id,
+			name: item.authorName || item.author.name,
+			pagi_username: item.author.pagi_username,
+			src: item.author.avatar,
+		});
+	}
+	for (const c of accepted) {
+		if (!list.some((it) => it.id === c.id)) {
+			list.push({
+				id: c.id,
+				name: c.name,
+				pagi_username: c.pagi_username,
+				src: formatStorageUrl(c.avatar || c.foto_path),
+			});
+		}
+	}
+	return list;
 };
 
 // Three-dot menu
@@ -312,11 +347,11 @@ const submitReport = async () => {
         <title>PAGI — Student Visual Gallery</title>
     </Head>
 
-	<div class="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-slate-200 dark:selection:bg-slate-800">
+	<div class="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-slate-200 dark:selection:bg-slate-800 overflow-x-hidden">
 		<Navbar />
 
 		<!-- HERO BANNER -->
-		<div class="relative overflow-hidden bg-linear-to-br from-[#030712] via-[#0b0f19] to-[#1e1b4b] border-b border-slate-900 py-16 px-6 text-center select-none">
+		<div class="relative overflow-hidden bg-linear-to-br from-[#030712] via-[#0b0f19] to-[#1e1b4b] border-b border-slate-900 py-12 md:py-16 px-4 sm:px-8 text-center select-none">
 			<!-- Background Dot Grid -->
 			<div class="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(rgba(255,255,255,0.15)_1px,transparent_1px)] bg-size-[20px_20px]"></div>
 			
@@ -338,7 +373,7 @@ const submitReport = async () => {
 
 		<!-- FILTER & SEARCH SUBNAVBAR -->
 		<div class="border-b border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-950 py-3 select-none sticky top-14 z-40 shadow-2xs">
-			<div class="mx-auto max-w-[1400px] px-4 flex items-center gap-3">
+			<div class="mx-auto max-w-[1400px] px-3 sm:px-4 flex items-center gap-2 sm:gap-3">
 				<!-- Left: Filter indicator/toggle -->
 				<button @click="showFilters = !showFilters" class="inline-flex items-center gap-1.5 rounded-full border border-slate-200/85 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 bg-white dark:bg-zinc-950 px-4 py-2.5 text-xs font-bold text-slate-800 dark:text-zinc-200 shadow-3xs transition-all shrink-0">
 					<SlidersHorizontal class="h-3.5 w-3.5" />
@@ -393,7 +428,7 @@ const submitReport = async () => {
 		</div>
 
 		<!-- MAIN CONTAINER -->
-		<main class="mx-auto max-w-[1400px] px-4 py-8 pb-24 md:pb-12">
+		<main class="mx-auto max-w-[1400px] px-3 sm:px-4 py-6 sm:py-8 pb-24 md:pb-12">
 			<!-- Loading Skeletons -->
 			<div v-if="isPageLoading" class="columns-2 sm:columns-2 md:columns-3 lg:columns-4 gap-2.5 space-y-2.5 select-none">
 				<div 
@@ -415,10 +450,10 @@ const submitReport = async () => {
 					@click="openProjectModal(item.portfolio)"
 				>
 					<VideoLazy v-if="item.type === 'video'" :src="item.url" className="w-full h-auto object-cover rounded-2xl group-hover:scale-[1.015] transition-transform duration-500" />
-					<OptimizedImage v-else :src="item.url" :alt="item.title" :fetchpriority="idx < 8 ? 'high' : 'auto'" :loading="idx < 8 ? 'eager' : 'lazy'" :masonry="true" className="w-full h-auto object-cover group-hover:scale-[1.015] transition-transform duration-500" />
+					<OptimizedImage v-else :src="item.url" :alt="item.title" :is-sensitive="Boolean(item.portfolio?.status === 'review' || item.portfolio?.status === 'hidden')" :fetchpriority="idx < 8 ? 'high' : 'auto'" :loading="idx < 8 ? 'eager' : 'lazy'" :masonry="true" className="w-full h-auto object-cover group-hover:scale-[1.015] transition-transform duration-500" />
 					
-					<!-- Three-dot menu button at top right -->
-					<div class="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity" @click.stop>
+					<!-- Three-dot menu button at top right (Always visible on mobile/touch, hover on desktop) -->
+					<div class="absolute top-3 right-3 z-20 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity" @click.stop>
 						<div class="relative">
 							<button @click.stop="toggleMenu(item.id, $event)" class="w-7 h-7 rounded-full bg-black/60 backdrop-blur-md hover:bg-black/80 flex items-center justify-center transition-all shadow-md cursor-pointer border-none" title="Opsi">
 								<MoreHorizontal class="h-3.5 w-3.5 text-white" />
@@ -441,22 +476,8 @@ const submitReport = async () => {
 							
 							<!-- Author info -->
 							<div class="flex items-center gap-2 border-t border-white/10 pt-2.5">
-								<div v-if="getAcceptedCollaborators(item).length > 0" class="flex -space-x-2 shrink-0">
-									<!-- Owner Avatar -->
-									<div class="h-6 w-6 rounded-full overflow-hidden border border-white/20 shrink-0 relative z-10">
-										<img v-if="item.author.avatar" :src="item.author.avatar" :alt="item.authorName" class="w-full h-full object-cover" />
-										<div v-else class="w-full h-full bg-indigo-600 flex items-center justify-center text-[10px] text-white font-bold">{{ item.authorName.charAt(0) }}</div>
-									</div>
-									<!-- Collaborators Avatars -->
-									<template v-for="(collab, idx) in getAcceptedCollaborators(item).slice(0, 2)" :key="collab.id">
-										<div class="h-6 w-6 rounded-full overflow-hidden border border-white/20 shrink-0" :style="{ zIndex: 9 - Number(idx) }">
-											<img :src="collab.avatar || getInitialsAvatar(collab.name)" :alt="collab.name" :title="collab.name" class="w-full h-full object-cover" />
-										</div>
-									</template>
-									<!-- Overflow count -->
-									<div v-if="getAcceptedCollaborators(item).length > 2" class="h-6 w-6 rounded-full bg-zinc-800 border border-white/20 flex items-center justify-center text-[8px] font-black text-white shrink-0 z-0 shadow-sm">
-										+{{ getAcceptedCollaborators(item).length - 2 }}
-									</div>
+								<div v-if="getAcceptedCollaborators(item).length > 0" class="shrink-0">
+									<AvatarGroup :avatars="getCollaborationAvatarsForGallery(item)" :size="24" :overlap="8" :maxVisible="3" />
 								</div>
 								
 								<!-- Single Owner Avatar -->

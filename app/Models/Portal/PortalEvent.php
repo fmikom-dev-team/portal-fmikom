@@ -31,6 +31,8 @@ class PortalEvent extends Model
         'quota',
     ];
 
+    protected $appends = ['organizer_logos'];
+
     protected $casts = [
         'start_time' => 'datetime:Y-m-d H:i:s',
         'end_time' => 'datetime:Y-m-d H:i:s',
@@ -38,6 +40,24 @@ class PortalEvent extends Model
         'is_paid' => 'boolean',
         'is_quota_limited' => 'boolean',
     ];
+
+    public function getOrganizerLogosAttribute(): array
+    {
+        $val = $this->organizer_logo;
+        if (!$val) {
+            return [];
+        }
+        if (is_array($val)) {
+            return array_values(array_filter($val));
+        }
+        if (is_string($val) && str_starts_with(trim($val), '[')) {
+            $decoded = json_decode($val, true);
+            if (is_array($decoded)) {
+                return array_values(array_filter($decoded));
+            }
+        }
+        return [$val];
+    }
 
     /**
      * Get the indexable data array for the model.

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatStorageUrl } from "@/composables/useInitials";
 import { Link } from "@inertiajs/vue3";
 import {
 	ExternalLink,
@@ -63,7 +64,7 @@ const handleLogout = () => {
 			<!-- Profile Info Area -->
 			<div class="relative z-10 flex flex-col items-center -mt-10 mb-3 px-2">
 				<div class="h-20 w-20 rounded-full border-[3px] border-white dark:border-zinc-950 bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shadow-md mb-2 relative z-20">
-					<img v-if="user.foto_path" :src="'/storage/' + user.foto_path" :alt="user.name" class="w-full h-full object-cover" />
+					<img v-if="user.foto_path" :src="formatStorageUrl(user.foto_path)!" :alt="user.name" class="w-full h-full object-cover" />
 					<img v-else-if="user.avatar" :src="user.avatar" :alt="user.name" class="w-full h-full object-cover" />
 					<span v-else class="text-slate-700 dark:text-slate-200 text-xl font-bold">{{ user.name.charAt(0) }}</span>
 				</div>

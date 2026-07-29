@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1783056340183';
+const CACHE_VERSION = 'v1785349155081';
 const CACHE_NAME = `fmikom-portal-${CACHE_VERSION}`;
 const FONT_CACHE_NAME = `fmikom-fonts-${CACHE_VERSION}`;
 // ASSET_CACHE_NAME dihapus — tidak lagi digunakan untuk CacheFirst
@@ -52,15 +52,11 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[Service Worker] Pre-caching offline assets...');
       return cache.addAll(PRECACHE_ASSETS);
-    }).then(() => {
-      // Langsung aktifkan Service Worker baru tanpa menunggu tab ditutup/SKIP_WAITING dari client
-      // Ini memecahkan deadlock di mana SW lama mengintersepsi /build/ assets sebelum app.js baru sempat berjalan
-      return self.skipWaiting();
     })
   );
 });
 
-// Terima perintah dari app Vue untuk aktivasi SW baru (dipicu setelah user setuju update)
+// Terima perintah dari app Vue untuk aktivasi SW baru (dipicu setelah user klik tombol "Install")
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
@@ -82,14 +78,6 @@ self.addEventListener('activate', (event) => {
       );
     })
     .then(() => self.clients.claim())
-    .then(() => {
-      // Beritahu semua tab yang terbuka bahwa versi baru sudah aktif → trigger reload
-      return self.clients.matchAll({ type: 'window' }).then((clients) => {
-        clients.forEach((client) => {
-          client.postMessage({ type: 'APP_UPDATED', version: CACHE_VERSION });
-        });
-      });
-    })
   );
 });
 

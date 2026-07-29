@@ -69,6 +69,10 @@ class PortalAdminController extends Controller
             'show_features' => 'nullable|string',
             'show_partners' => 'nullable|string',
             'show_benefits' => 'nullable|string',
+            'show_testimonials' => 'nullable|string',
+            'testimonials_title' => 'nullable|string',
+            'testimonials_subtitle' => 'nullable|string',
+            'testimonials' => 'nullable|string',
             'primary_color' => 'nullable|string',
             'benefits_title' => 'nullable|string',
             'benefits_subtitle' => 'nullable|string',
@@ -82,10 +86,12 @@ class PortalAdminController extends Controller
             'hero_gallery_files.*' => 'file|image|mimes:png,jpeg,jpg,webp|max:5120',
             'partner_files' => 'nullable|array',
             'partner_files.*' => 'file|image|mimes:png,jpeg,jpg,webp,svg|max:5120',
+            'testimonial_avatar_files' => 'nullable|array',
+            'testimonial_avatar_files.*' => 'file|image|mimes:png,jpeg,jpg,webp,svg|max:5120',
         ]);
 
         foreach ($validated as $key => $value) {
-            if ($key !== 'hero_gallery_files' && $key !== 'partner_files') {
+            if ($key !== 'hero_gallery_files' && $key !== 'partner_files' && $key !== 'testimonial_avatar_files') {
                 PortalSetting::updateOrCreate(['key' => $key], ['value' => $value]);
             }
         }

@@ -4,6 +4,7 @@ namespace App\Modules\Pagi\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pagi\PagiMessage;
+use App\Models\Portal\PortalSetting;
 use App\Models\User;
 use App\Modules\Pagi\Services\PagiChatService;
 use Illuminate\Http\Request;
@@ -24,10 +25,31 @@ class PagiChatController extends Controller
      */
     public function index(Request $request)
     {
+        // Feature gate: check if chat is enabled
+        $chatEnabled = filter_var(
+            PortalSetting::query()->where('key', '=', 'pagi_enable_chat')->value('value') ?? 'true',
+            FILTER_VALIDATE_BOOLEAN
+        );
+
+        if (! $chatEnabled) {
+            return redirect()->route('module.pagi.dashboard')
+                ->with('error', 'Fitur pesan langsung sedang dinonaktifkan oleh administrator.');
+        }
+
         $user = Auth::user();
         $chatPartnerId = $request->query('chat') ? (int) $request->query('chat') : null;
 
         $formattedConversations = $this->chatService->getConversations($user, $chatPartnerId);
+
+        // Baca kamus kata terlarang kustom dari DB untuk dikirim ke frontend (pre-scan E2EE)
+        $customWordsJson = PortalSetting::query()->where('key', 'pagi_banned_words')->value('value');
+        $customWords = [];
+        if ($customWordsJson) {
+            $decoded = json_decode($customWordsJson, true);
+            if (is_array($decoded)) {
+                $customWords = array_values(array_filter(array_map('strtolower', array_map('trim', $decoded))));
+            }
+        }
 
         return Inertia::render('Modules/Pagi/User/Messages', [
             'conversations' => $formattedConversations,
@@ -37,6 +59,7 @@ class PagiChatController extends Controller
                 'foto_path' => $user->foto_path ?? null,
                 'metadata' => $user->metadata,
             ],
+            'moderationCustomWords' => $customWords,
         ]);
     }
 
@@ -58,6 +81,18 @@ class PagiChatController extends Controller
      */
     public function store(Request $request)
     {
+        // Feature gate: reject message send if chat is disabled
+        $chatEnabled = filter_var(
+            PortalSetting::query()->where('key', '=', 'pagi_enable_chat')->value('value') ?? 'true',
+            FILTER_VALIDATE_BOOLEAN
+        );
+
+        if (! $chatEnabled) {
+            return response()->json([
+                'message' => 'Fitur pesan langsung sedang dinonaktifkan oleh administrator.',
+            ], 403);
+        }
+
         $request->validate([
             'receiver_id' => ['required', 'integer', 'exists:users,id', 'different:'.Auth::id()],
             'parent_id' => ['nullable', 'integer', 'exists:pagi_messages,id'],
@@ -65,11 +100,25 @@ class PagiChatController extends Controller
         ]);
 
         $user = Auth::user();
+
+        $moderationService = app(\App\Modules\Pagi\Services\ContentModerationService::class);
+        $moderationMode = PortalSetting::query()->where('key', 'pagi_comment_censor_mode')->value('value') ?? 'reject';
+
+        $scanResult = $moderationService->scan($request->body);
+
+        if ($scanResult['is_flagged'] && $moderationMode === 'reject') {
+            return response()->json([
+                'message' => 'Pesan chat Anda ditolak otomatis oleh sistem karena terdeteksi memuat kata kasar, pelecehan, atau konten terlarang.',
+            ], 422);
+        }
+
+        $finalBody = $scanResult['is_flagged'] ? $scanResult['censored_text'] : $request->body;
+
         $payload = $this->chatService->sendMessage(
             $user,
             (int) $request->receiver_id,
             $request->parent_id ? (int) $request->parent_id : null,
-            $request->body
+            $finalBody
         );
 
         return response()->json($payload, 201);

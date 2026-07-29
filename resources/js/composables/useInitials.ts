@@ -39,6 +39,14 @@ export function getInitialsAvatar(fullName?: string): string {
 	return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
+export function formatStorageUrl(path?: string | null): string | null {
+	if (!path || path === "null" || path === "undefined") return null;
+	if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:") || path.startsWith("blob:")) return path;
+	const clean = path.replace(/^\/?(storage\/)+/, "");
+	if (!clean.includes("/") && !clean.includes(".")) return null;
+	return "/storage/" + clean;
+}
+
 export function useInitials(): UseInitialsReturn {
 	return { getInitials, getInitialsAvatar };
 }

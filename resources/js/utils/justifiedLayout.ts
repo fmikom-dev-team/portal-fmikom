@@ -7,8 +7,11 @@ export interface JustifiedRow<T> {
 }
 
 export const normalizeSrc = (src: string): string => {
-	if (src.startsWith("http") || src.startsWith("blob:")) return src;
-	return `/storage/${src}`;
+	if (!src || src === "null" || src === "undefined") return "";
+	if (src.startsWith("http://") || src.startsWith("https://") || src.startsWith("data:") || src.startsWith("blob:")) return src;
+	const clean = src.replace(/^\/?(storage\/)+/, "");
+	if (!clean.includes("/") && !clean.includes(".")) return "";
+	return "/storage/" + clean;
 };
 
 export const loadImageAspectRatios = (

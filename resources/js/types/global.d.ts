@@ -1,5 +1,8 @@
 import type { Auth } from "@/types/auth";
 
+// Build-time constant yang diinjeksi oleh Vite define
+declare const __APP_BUILD_TIME__: string;
+
 // Extend ImportMeta interface for Vite...
 declare module "vite/client" {
 	interface ImportMetaEnv {

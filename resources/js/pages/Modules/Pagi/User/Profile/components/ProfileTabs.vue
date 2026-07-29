@@ -31,7 +31,7 @@ const mappedTabs = computed(() => props.tabs.map((t) => ({ id: t, label: t })));
 </script>
 
 <template>
-	<nav id="profile_tabs_navigation" class="border-b border-slate-200 dark:border-slate-800 pb-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8" aria-label="Profile tabs">
+	<nav id="profile_tabs_navigation" data-onboard="profile-tabs" class="border-b border-slate-200 dark:border-slate-800 pb-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8" aria-label="Profile tabs">
 		<!-- Tabs list with motion transition -->
 		<MotionTabs
 			:model-value="activeTab"
@@ -50,7 +50,7 @@ const mappedTabs = computed(() => props.tabs.map((t) => ({ id: t, label: t })));
 			<div class="w-px h-4 bg-slate-200 dark:bg-slate-800"></div>
 			<div class="h-8 w-24 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse"></div>
 		</div>
-		<div v-else class="hidden lg:flex items-center justify-between w-full sm:w-auto gap-6 sm:shrink-0">
+		<div v-else data-onboard="profile-socials" class="hidden lg:flex items-center justify-between w-full sm:w-auto gap-6 sm:shrink-0">
 			<!-- Location indicator -->
 			<div class="relative group flex justify-center">
 				<div 

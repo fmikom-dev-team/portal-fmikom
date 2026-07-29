@@ -5,6 +5,7 @@ import linkedinIcon from "thesvg/linkedin";
 import telegramIcon from "thesvg/telegram";
 import whatsappIcon from "thesvg/whatsapp";
 import xIcon from "thesvg/x";
+import { formatStorageUrl } from "@/composables/useInitials";
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 import OptimizedImage from "./OptimizedImage.vue";
 
@@ -213,7 +214,7 @@ const twitterUrl = computed(() => {
 							<div class="w-10 h-10 rounded-full overflow-hidden bg-slate-100 dark:bg-zinc-900 shrink-0 border border-slate-200/60 dark:border-zinc-800 flex items-center justify-center shadow-xs">
 								<img
 									v-if="user.foto_path"
-									:src="user.foto_path.startsWith('http') ? user.foto_path : '/storage/' + user.foto_path"
+									:src="formatStorageUrl(user.foto_path)!"
 									class="w-full h-full object-cover"
 									alt="Avatar"
 								/>
@@ -267,7 +268,7 @@ const twitterUrl = computed(() => {
 							<div class="w-16 h-16 rounded-full border-4 border-white dark:border-zinc-950 bg-slate-100 dark:bg-zinc-900 overflow-hidden flex items-center justify-center shrink-0 shadow-xs relative z-10">
 								<img
 									v-if="user.foto_path"
-									:src="user.foto_path.startsWith('http') ? user.foto_path : '/storage/' + user.foto_path"
+									:src="formatStorageUrl(user.foto_path)!"
 									class="w-full h-full object-cover"
 									alt="Avatar"
 								/>

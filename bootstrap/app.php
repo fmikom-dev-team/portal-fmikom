@@ -253,6 +253,16 @@ return Application::configure(basePath: dirname(__DIR__))
         // but registering here works in Laravel 12's bootstrap-first pattern.
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->reportable(function (\Throwable $e) {
+            if (! ($e instanceof ValidationException) && ! ($e instanceof TokenMismatchException) && ! ($e instanceof ThrottleRequestsException)) {
+                \App\Services\SystemAlertService::log(
+                    'System Exception: '.class_basename($e),
+                    $e->getMessage().' ('.$e->getFile().':'.$e->getLine().')',
+                    'error'
+                );
+            }
+        });
+
         // Handle CSRF token mismatch (session expired) for Inertia
         $exceptions->render(function (TokenMismatchException $e, $request) {
             if ($e && $request->inertia()) {

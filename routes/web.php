@@ -71,9 +71,11 @@ Route::get('/', function () {
     });
 
     $settings['hero_gallery'] = isset($settings['hero_gallery'])
-        ? json_decode($settings['hero_gallery'], true) : [];
+        ? (is_string($settings['hero_gallery']) ? json_decode($settings['hero_gallery'], true) : $settings['hero_gallery'])
+        : [];
     $settings['partners'] = isset($settings['partners'])
-        ? json_decode($settings['partners'], true) : [];
+        ? (is_string($settings['partners']) ? json_decode($settings['partners'], true) : $settings['partners'])
+        : [];
 
     $latest_posts = Inertia::defer(fn () => Cache::remember('portal_latest_posts', 3600, function () {
         return PortalPost::with('user:id,name')
@@ -215,6 +217,80 @@ Route::get('/', function () {
         }
     });
 
+    $showcase_data = Cache::remember('portal_home_showcase', 300, function () {
+        try {
+            $keys = [
+                'pagi_showcase_eyebrow',
+                'pagi_showcase_title',
+                'pagi_showcase_description',
+                'pagi_showcase_work_ids',
+            ];
+            $settings = \App\Models\Portal\PortalSetting::whereIn('key', $keys)->pluck('value', 'key');
+            $selectedWorkIds = json_decode($settings->get('pagi_showcase_work_ids', '[]'), true) ?? [];
+
+            if (empty($selectedWorkIds)) {
+                return null;
+            }
+
+            $works = \App\Models\Pagi\PagiWork::query()
+                ->whereIn('id', $selectedWorkIds)
+                ->where('is_published', '=', true, 'and')
+                ->where('status', '=', 'active', 'and')
+                ->with(['user', 'tags'])
+                ->get()
+                ->map(function ($w) {
+                    $coverUrl = $w->cover_image ? (str_starts_with($w->cover_image, 'http') ? $w->cover_image : asset('storage/'.$w->cover_image)) : null;
+                    $avatarUrl = $w->user && $w->user->foto_path ? (str_starts_with($w->user->foto_path, 'http') ? $w->user->foto_path : asset('storage/'.$w->user->foto_path)) : null;
+
+                    $techList = $w->tags && $w->tags->count() > 0 ? $w->tags->pluck('name')->implode(', ') : ($w->category ?: 'Teknologi Digital & UI/UX');
+                    $dateStr = $w->created_at ? $w->created_at->format('d M Y') : 'Terverifikasi';
+
+                    return [
+                        'value' => 'work-'.$w->id,
+                        'label' => mb_strlen($w->title) > 18 ? mb_substr($w->title, 0, 18).'...' : $w->title,
+                        'src' => $coverUrl ?: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=800&q=80',
+                        'alt' => $w->title,
+                        'title' => $w->title,
+                        'author' => $w->user->name ?? 'Mahasiswa FMIKOM',
+                        'authorAvatar' => $avatarUrl,
+                        'category' => $w->category ?? 'Design & UI/UX',
+                        'steps' => [
+                            [
+                                'id' => 'step-1',
+                                'title' => '💡 Konsep & Deskripsi Karya',
+                                'text' => ! empty($w->description) ? $w->description : 'Karya digital buatan mahasiswa FMIKOM dengan pendekatan rancang bangun modern.',
+                            ],
+                            [
+                                'id' => 'step-2',
+                                'title' => '⚡ Teknologi & Tooling',
+                                'text' => 'Diimplementasikan menggunakan stack: '.$techList,
+                            ],
+                            [
+                                'id' => 'step-3',
+                                'title' => '👥 Kreator & Kolaborator Karya',
+                                'text' => 'Dirancang oleh '.($w->user->name ?? 'Mahasiswa').' (Dipublikasikan pada '.$dateStr.')',
+                                'authorName' => $w->user->name ?? 'Mahasiswa FMIKOM',
+                                'authorAvatar' => $avatarUrl,
+                            ],
+                        ],
+                    ];
+                });
+
+            if ($works->isEmpty()) {
+                return null;
+            }
+
+            return [
+                'eyebrow' => $settings->get('pagi_showcase_eyebrow', 'Inovasi Mahasiswa FMIKOM'),
+                'title' => $settings->get('pagi_showcase_title', 'Portofolio Unggulan Berstandar Industri'),
+                'description' => $settings->get('pagi_showcase_description', 'Jelajahi inovasi teknologi dan aplikasi buatan mahasiswa FMIKOM.'),
+                'tabs' => $works->toArray(),
+            ];
+        } catch (Throwable $e) {
+            return null;
+        }
+    });
+
     return Inertia::render('Welcome', [
         'canRegister' => Features::enabled(Features::registration()),
         'settings' => $settings,
@@ -224,6 +300,7 @@ Route::get('/', function () {
         'alumni_data' => $alumni_data,
         'alumni_stats' => $alumni_stats,
         'events' => $events,
+        'showcase_data' => $showcase_data,
     ]);
 })->name('home');
 
@@ -280,6 +357,7 @@ Route::middleware(['guest'])->prefix('activate')->name('activation.')->group(fun
     Route::get('/verify-otp', [ActivationController::class, 'showOtpForm'])->name('verify-otp');
     Route::post('/verify-otp', [ActivationController::class, 'verifyOtp'])->middleware('throttle:5,1');
     Route::post('/resend-otp', [ActivationController::class, 'resendOtp'])->middleware('throttle:3,5')->name('resend-otp');
+    Route::post('/helpdesk-request', [ActivationController::class, 'submitHelpdeskRequest'])->middleware('throttle:3,5')->name('helpdesk-request');
     Route::get('/set-password', [ActivationController::class, 'showPasswordForm'])->name('set-password');
     Route::post('/set-password', [ActivationController::class, 'setPassword'])->middleware('throttle:5,1');
 });
@@ -349,7 +427,7 @@ require __DIR__.'/trace.php';
 
 // ─── Portal Admin ────────────────────────────────────────────────────────────
 
-Route::middleware(['auth', CheckRole::class.':super-admin'])
+Route::middleware(['auth', CheckRole::class.':super-admin,admin,dosen,akademik'])
     ->prefix('portal-admin')
     ->name('portal-admin.')
     ->group(function () {
@@ -362,18 +440,22 @@ Route::middleware(['auth', CheckRole::class.':super-admin'])
         Route::post('posts/upload-file', [PortalPostController::class, 'uploadFile'])->name('posts.upload-file');
         Route::resource('categories', PortalCategoryController::class);
         Route::resource('media', PortalMediaController::class);
-        Route::resource('pages', PortalPageController::class);
         Route::resource('academic-calendars', PortalAcademicCalendarController::class);
         Route::resource('events', PortalEventController::class);
         Route::resource('comments', PortalCommentController::class)->only(['index', 'update', 'destroy']);
-        Route::post('menus/reorder', [PortalMenuController::class, 'reorder'])->name('menus.reorder');
-        Route::resource('menus', PortalMenuController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::post('documents/{document}/toggle-pin', [PortalDocumentController::class, 'togglePin'])->name('documents.toggle-pin');
         Route::resource('documents', PortalDocumentController::class);
-        Route::get('/appearance', [PortalAdminController::class, 'appearance'])->name('appearance');
-        Route::post('/appearance', [PortalAdminController::class, 'updateAppearance'])->name('appearance.update');
-        Route::get('/settings', [PortalAdminController::class, 'settings'])->name('settings');
-        Route::post('/settings', [PortalAdminController::class, 'updateSettings'])->name('settings.update');
+
+        // SuperAdmin ONLY Routes (Protected from Dosen, Akademik, Admin biasa)
+        Route::middleware([CheckRole::class.':super-admin'])->group(function () {
+            Route::resource('pages', PortalPageController::class);
+            Route::post('menus/reorder', [PortalMenuController::class, 'reorder'])->name('menus.reorder');
+            Route::resource('menus', PortalMenuController::class)->only(['index', 'store', 'update', 'destroy']);
+            Route::get('/appearance', [PortalAdminController::class, 'appearance'])->name('appearance');
+            Route::post('/appearance', [PortalAdminController::class, 'updateAppearance'])->name('appearance.update');
+            Route::get('/settings', [PortalAdminController::class, 'settings'])->name('settings');
+            Route::post('/settings', [PortalAdminController::class, 'updateSettings'])->name('settings.update');
+        });
     });
 
 // ─── Dev-only Seed Route ─────────────────────────────────────────────────────

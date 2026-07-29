@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { usePage } from "@inertiajs/vue3";
+import { usePage, Link } from "@inertiajs/vue3";
 import {
 	computed,
 	defineAsyncComponent,
@@ -82,6 +82,7 @@ const props = defineProps<{
 	}>;
 	popularWorks?: Array<{
 		id: number;
+		userId: number;
 		rank: number;
 		title: string;
 		author: string;
@@ -204,6 +205,7 @@ const statsCards = computed(() => {
 			change: ch?.mahasiswaAktif.value ?? "–",
 			trend: ch?.mahasiswaAktif.trend ?? ("neutral" as const),
 			iconColor: "bg-indigo-500",
+			href: "/pagi/admin/users",
 			icon: `<svg class="h-4.5 w-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>`,
 		},
 		{
@@ -212,6 +214,7 @@ const statsCards = computed(() => {
 			change: ch?.karyaPublish.value ?? "–",
 			trend: ch?.karyaPublish.trend ?? ("neutral" as const),
 			iconColor: "bg-emerald-500",
+			href: "/pagi/admin/works",
 			icon: `<svg class="h-4.5 w-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 21l6.75-6.75 1.5 1.5L3 21zM16.5 3.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>`,
 		},
 		{
@@ -220,6 +223,7 @@ const statsCards = computed(() => {
 			change: ch?.laporanMasuk.value ?? "–",
 			trend: ch?.laporanMasuk.trend ?? ("neutral" as const),
 			iconColor: "bg-amber-500",
+			href: "/pagi/admin/reports",
 			icon: `<svg class="h-4.5 w-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" /></svg>`,
 		},
 		{
@@ -228,6 +232,7 @@ const statsCards = computed(() => {
 			change: ch?.warningAktif.value ?? "–",
 			trend: ch?.warningAktif.trend ?? ("neutral" as const),
 			iconColor: "bg-rose-500",
+			href: "/pagi/admin/warnings",
 			icon: `<svg class="h-4.5 w-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>`,
 		},
 		{
@@ -236,6 +241,7 @@ const statsCards = computed(() => {
 			change: ch?.karyaDitinjau.value ?? "–",
 			trend: "neutral" as const,
 			iconColor: "bg-slate-500",
+			href: "/pagi/admin/moderation",
 			icon: `<svg class="h-4.5 w-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`,
 		},
 	];
@@ -300,12 +306,15 @@ const activeItem = ref<any>(null);
 const showModal = ref(false);
 const brokenImages = ref<Record<number | string, boolean>>({});
 
-const handleReview = (id: number) => {
-	const item = allModerationItems.value.find((i) => i.id === id);
+const handleReview = (param: any) => {
+	const item = typeof param === "object" && param !== null ? param : allModerationItems.value.find((i) => i.id === param);
 	if (item) {
 		activeItem.value = item;
 		showModal.value = true;
 	}
+};
+const printReport = () => {
+	window.print();
 };
 </script>
 
@@ -329,18 +338,10 @@ const handleReview = (id: number) => {
                     <div class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     <span class="text-[11px] font-bold text-slate-500 dark:text-zinc-400">Sistem Aktif</span>
                 </div>
-                <!-- Refresh manual button -->
-                <button
-                    @click="fetchStats"
-                    class="hidden sm:flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-[11px] font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
-                    title="Refresh data"
+                 <button 
+                    @click="printReport"
+                    class="rounded-xl bg-indigo-600 px-4 py-2 text-[12px] font-bold text-white hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200 dark:shadow-none"
                 >
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Refresh
-                </button>
-                <button class="rounded-xl bg-indigo-600 px-4 py-2 text-[12px] font-bold text-white hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200 dark:shadow-none">
                     + Buat Laporan
                 </button>
             </div>
@@ -375,17 +376,19 @@ const handleReview = (id: number) => {
                     :trend="card.trend"
                     :icon="card.icon"
                     :icon-color="card.iconColor"
+                    :href="card.href"
                     :loading="false"
                 />
             </template>
         </div>
 
         <!-- Main Grid: Chart + Moderation Summary -->
-        <div class="mb-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <div class="mb-5 grid grid-cols-1 gap-5 lg:grid-cols-3 items-stretch">
             <!-- Activity Chart (2/3 width) -->
             <div class="lg:col-span-2">
                 <ChartCard
                     title="Statistik Aktivitas"
+                    class="h-full"
                     :loading="isLoading"
                     :loading-chart="isLoadingChart"
                     :chart-data="liveChartData ?? undefined"
@@ -396,6 +399,7 @@ const handleReview = (id: number) => {
             <!-- Moderation Summary (1/3 width) -->
             <div>
                 <ModerationSummary
+                    class="h-full"
                     :total="modSummary.total"
                     :pending="modSummary.pending"
                     :warning="modSummary.warning"
@@ -417,9 +421,9 @@ const handleReview = (id: number) => {
                     <!-- Header -->
                     <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-zinc-800">
                         <h3 class="text-[13px] font-bold text-slate-800 dark:text-zinc-100">Konten Menunggu Tinjauan</h3>
-                        <button class="text-[12px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition-colors">
+                        <Link href="/pagi/admin/moderation" class="text-[12px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition-colors">
                             Lihat Semua
-                        </button>
+                        </Link>
                     </div>
 
                     <!-- Tabs with motion transition -->
@@ -452,9 +456,9 @@ const handleReview = (id: number) => {
                 <div class="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 overflow-hidden">
                     <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-zinc-800">
                         <h3 class="text-[13px] font-bold text-slate-800 dark:text-zinc-100">Karya Populer Minggu Ini</h3>
-                        <button class="text-[12px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition-colors">
+                        <Link href="/pagi/admin/works" class="text-[12px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition-colors">
                             Lihat Semua
-                        </button>
+                        </Link>
                     </div>
 
                     <!-- Skeleton -->
@@ -473,9 +477,10 @@ const handleReview = (id: number) => {
 
                     <!-- Data -->
                     <div v-else-if="computedPopularWorks.length > 0" class="divide-y divide-slate-50 dark:divide-zinc-800/50">
-                        <div
+                        <Link
                             v-for="work in computedPopularWorks"
                             :key="work.id"
+                            :href="`/pagi/profile/${work.userId}`"
                             class="flex items-center gap-3.5 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-zinc-800/40 transition-colors group cursor-pointer"
                         >
                             <!-- Rank -->
@@ -492,10 +497,16 @@ const handleReview = (id: number) => {
                             </span>
 
                             <!-- Thumbnail -->
-                            <div class="h-9 w-9 shrink-0 rounded-xl bg-slate-100 dark:bg-zinc-800 overflow-hidden border border-slate-100 dark:border-zinc-700">
-                                <img v-if="work.thumbnail" :src="work.thumbnail" :alt="work.title" class="h-full w-full object-cover" />
-                                <div v-else class="h-full w-full flex items-center justify-center">
-                                    <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div class="h-9 w-9 shrink-0 rounded-xl bg-slate-100 dark:bg-zinc-800 overflow-hidden border border-slate-100 dark:border-zinc-700 flex items-center justify-center">
+                                <img
+                                    v-if="work.thumbnail && !brokenImages[work.id]"
+                                    :src="work.thumbnail"
+                                    :alt="work.title"
+                                    @error="brokenImages[work.id] = true"
+                                    class="h-full w-full object-cover"
+                                />
+                                <div v-else class="h-full w-full flex items-center justify-center bg-slate-100 dark:bg-zinc-800">
+                                    <svg class="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159" />
                                     </svg>
                                 </div>
@@ -517,7 +528,7 @@ const handleReview = (id: number) => {
                                 </svg>
                                 <span class="font-semibold">{{ work.views >= 1000 ? (work.views / 1000).toFixed(1) + 'K' : work.views }}</span>
                             </div>
-                        </div>
+                        </Link>
                     </div>
 
                     <!-- Empty state -->

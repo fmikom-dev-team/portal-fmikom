@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { usePage } from "@inertiajs/vue3";
 
 const { title, description } = defineProps<{
@@ -7,6 +8,18 @@ const { title, description } = defineProps<{
 }>();
 
 const page = usePage();
+
+const partners = computed(() => {
+    const siteSettings = (page.props as any).siteSettings;
+    const raw = siteSettings?.partners;
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw;
+    try {
+        return JSON.parse(raw);
+    } catch {
+        return [];
+    }
+});
 </script>
 
 <template>
@@ -107,61 +120,80 @@ const page = usePage();
                         </div>
                     </div>
 
-                    <!-- Bottom Logos Layer -->
-                    <div class="mt-auto pb-2 overflow-hidden mask-edges max-w-[400px] mx-auto w-full relative shrink-0">
-                        <div class="flex animate-marquee hover:pause whitespace-nowrap pt-2">
+                    <!-- Bottom Logos Layer (Dynamic from Admin Portal Mitra & Partner) -->
+                    <div class="mt-auto pb-2 overflow-hidden mask-edges max-w-[420px] mx-auto w-full relative shrink-0">
+                        <!-- If Admin configured partners -->
+                        <div v-if="partners && partners.length > 0" class="flex animate-marquee hover:pause whitespace-nowrap pt-2">
+                            <!-- First Set -->
+                            <div class="flex gap-8 items-center px-4 shrink-0 opacity-85 text-white">
+                                <div
+                                    v-for="(partner, i) in partners"
+                                    :key="'auth-p1-' + i"
+                                    class="flex items-center gap-2 h-7"
+                                >
+                                    <img
+                                        :src="typeof partner === 'object' ? partner.logo : partner"
+                                        :alt="typeof partner === 'object' && partner.name ? partner.name : 'Mitra Logo'"
+                                        class="h-6 max-w-[110px] w-auto object-contain brightness-0 invert opacity-90 transition-opacity hover:opacity-100"
+                                    />
+                                    <span
+                                        v-if="typeof partner === 'object' && partner.name"
+                                        class="font-semibold text-xs tracking-tight text-white/90"
+                                    >
+                                        {{ partner.name }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Second Set (Duplicate for seamless loop) -->
+                            <div class="flex gap-8 items-center px-4 shrink-0 opacity-85 text-white">
+                                <div
+                                    v-for="(partner, i) in partners"
+                                    :key="'auth-p2-' + i"
+                                    class="flex items-center gap-2 h-7"
+                                >
+                                    <img
+                                        :src="typeof partner === 'object' ? partner.logo : partner"
+                                        :alt="typeof partner === 'object' && partner.name ? partner.name : 'Mitra Logo'"
+                                        class="h-6 max-w-[110px] w-auto object-contain brightness-0 invert opacity-90 transition-opacity hover:opacity-100"
+                                    />
+                                    <span
+                                        v-if="typeof partner === 'object' && partner.name"
+                                        class="font-semibold text-xs tracking-tight text-white/90"
+                                    >
+                                        {{ partner.name }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Default Fallback Logos if none uploaded yet -->
+                        <div v-else class="flex animate-marquee hover:pause whitespace-nowrap pt-2">
                             <!-- First Set -->
                             <div class="flex gap-10 items-center px-6 shrink-0 opacity-75 text-white/90">
-                                <!-- Google -->
                                 <div class="flex items-center gap-2">
                                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/></svg>
                                     <span class="font-semibold text-sm tracking-tight">Google</span>
                                 </div>
-                                <!-- Spotify -->
                                 <div class="flex items-center gap-2">
                                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
                                     <span class="font-semibold text-sm tracking-tight">Spotify</span>
                                 </div>
-                                <!-- Stripe -->
-                                <div class="flex items-center gap-2">
-                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/></svg>
-                                    <span class="font-semibold text-sm tracking-tight">Stripe</span>
-                                </div>
-                                <!-- YouTube -->
-                                <div class="flex items-center gap-2">
-                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                                    <span class="font-semibold text-sm tracking-tight">YouTube</span>
-                                </div>
-                                <!-- GitHub -->
                                 <div class="flex items-center gap-2">
                                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
                                     <span class="font-semibold text-sm tracking-tight">GitHub</span>
                                 </div>
                             </div>
-
-                            <!-- Second Set (Duplicate for seamless loop) -->
+                            <!-- Second Set (Duplicate) -->
                             <div class="flex gap-10 items-center px-6 shrink-0 opacity-75 text-white/90">
-                                <!-- Google -->
                                 <div class="flex items-center gap-2">
                                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/></svg>
                                     <span class="font-semibold text-sm tracking-tight">Google</span>
                                 </div>
-                                <!-- Spotify -->
                                 <div class="flex items-center gap-2">
                                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
                                     <span class="font-semibold text-sm tracking-tight">Spotify</span>
                                 </div>
-                                <!-- Stripe -->
-                                <div class="flex items-center gap-2">
-                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/></svg>
-                                    <span class="font-semibold text-sm tracking-tight">Stripe</span>
-                                </div>
-                                <!-- YouTube -->
-                                <div class="flex items-center gap-2">
-                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                                    <span class="font-semibold text-sm tracking-tight">YouTube</span>
-                                </div>
-                                <!-- GitHub -->
                                 <div class="flex items-center gap-2">
                                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
                                     <span class="font-semibold text-sm tracking-tight">GitHub</span>

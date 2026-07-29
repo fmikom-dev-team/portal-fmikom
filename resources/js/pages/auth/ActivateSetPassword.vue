@@ -8,12 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import AuthLayout from "@/layouts/AuthLayout.vue";
 
-const props = defineProps<{
-	session: string;
-}>();
-
 const form = useForm({
-	session: props.session,
 	password: "",
 	password_confirmation: "",
 });

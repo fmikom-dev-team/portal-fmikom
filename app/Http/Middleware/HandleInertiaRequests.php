@@ -4,6 +4,9 @@ namespace App\Http\Middleware;
 
 use App\Http\Resources\UserResource;
 use App\Models\Pagi\PagiMessage;
+use App\Models\Pagi\PagiReport;
+use App\Models\Pagi\PagiWarning;
+use App\Models\Pagi\PagiWork;
 use App\Models\Portal\PortalComment;
 use App\Models\Portal\PortalMenu;
 use App\Models\Portal\PortalPost;
@@ -70,6 +73,20 @@ class HandleInertiaRequests extends Middleware
                 $raw['brand_logo'] = $raw['brand_logo'] ?? '/asset/brand-logo.webp';
                 $raw['brand_favicon'] = $raw['brand_favicon'] ?? '/asset/brand-logo.webp';
 
+                if (isset($raw['partners']) && is_string($raw['partners'])) {
+                    $decoded = json_decode($raw['partners'], true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $raw['partners'] = $decoded;
+                    }
+                }
+
+                if (isset($raw['hero_gallery']) && is_string($raw['hero_gallery'])) {
+                    $decoded = json_decode($raw['hero_gallery'], true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $raw['hero_gallery'] = $decoded;
+                    }
+                }
+
                 return $raw;
             }),
             'flash' => [
@@ -84,6 +101,8 @@ class HandleInertiaRequests extends Middleware
                 'session_lifetime' => (int) config('session.lifetime') * 60 * 1000,
             ],
             'fast_permissions' => $user ? $this->fastPermissions($request) : [],
+            // Digunakan oleh AppUpdateBanner untuk membatasi ?test_update=1 hanya untuk admin
+            'is_pagi_admin' => $user && in_array($activeRole, ['super-admin', 'admin', 'prodi'], true),
             'unread_messages_count' => $user
                 // BUG-013: Cache per-user unread count to avoid a query on every Inertia request.
                 // 30-second TTL is short enough for near-real-time feel, eliminates 90% of queries.
@@ -117,19 +136,54 @@ class HandleInertiaRequests extends Middleware
 
                 $notifs = $query->limit(30)->get();
 
-                return $notifs->map(fn ($n) => [
-                    'id' => $n->id,
-                    'type' => $n->data['type'] ?? 'system',
-                    'title' => $n->data['title'] ?? 'PAGI System',
-                    'message' => $n->data['message'] ?? '',
-                    'avatar' => $n->data['avatar'] ?? null,
-                    'href' => $n->data['href'] ?? '/pagi',
-                    'unread' => is_null($n->read_at),
-                    'time' => $n->created_at->diffForHumans(),
-                    'created_at' => $n->created_at->toISOString(),
-                    'sender_id' => $n->data['sender_id'] ?? null,
-                    'portfolio_id' => $n->data['portfolio_id'] ?? null,
-                ])->values()->toArray();
+                // Batch resolve portfolio work cover images
+                $portfolioIds = $notifs->map(fn ($n) => $n->data['portfolio_id'] ?? $n->data['work_id'] ?? null)->filter()->unique()->values();
+                $worksMap = [];
+                if ($portfolioIds->isNotEmpty()) {
+                    $works = \App\Models\Pagi\PagiWork::query()->whereIn('id', $portfolioIds)->select('id', 'cover_image', 'content')->get();
+                    foreach ($works as $w) {
+                        $img = null;
+                        if ($w->cover_image) {
+                            $img = str_starts_with($w->cover_image, 'http') ? $w->cover_image : asset('storage/'.$w->cover_image);
+                        } elseif (is_array($w->content)) {
+                            foreach ($w->content as $b) {
+                                if (isset($b['preview']) && is_string($b['preview']) && ! str_starts_with($b['preview'], 'blob:')) {
+                                    $img = str_starts_with($b['preview'], 'http') ? $b['preview'] : asset('storage/'.$b['preview']);
+                                    break;
+                                }
+                                if (isset($b['file_path']) && is_string($b['file_path'])) {
+                                    $img = asset('storage/'.$b['file_path']);
+                                    break;
+                                }
+                            }
+                        }
+                        $worksMap[$w->id] = $img;
+                    }
+                }
+
+                return $notifs->map(function ($n) use ($worksMap) {
+                    $data = $n->data;
+                    $pId = $data['portfolio_id'] ?? $data['work_id'] ?? null;
+                    $workImage = $data['work_image'] ?? ($pId ? ($worksMap[$pId] ?? null) : null);
+
+                    return [
+                        'id' => $n->id,
+                        'type' => $data['type'] ?? 'system',
+                        'title' => $data['title'] ?? 'PAGI System',
+                        'message' => $data['message'] ?? '',
+                        'avatar' => $data['avatar'] ?? null,
+                        'href' => $data['href'] ?? '/pagi',
+                        'unread' => is_null($n->read_at),
+                        'time' => $n->created_at->diffForHumans(),
+                        'created_at' => $n->created_at->toISOString(),
+                        'sender_id' => $data['sender_id'] ?? null,
+                        'portfolio_id' => $pId,
+                        'work_image' => $workImage,
+                        'is_invite' => isset($data['is_invite']) ? (bool) $data['is_invite'] : (! str_contains($data['message'] ?? '', 'menerima') && ! str_contains($data['message'] ?? '', 'ditolak')),
+                        'collaboration_handled' => isset($data['collaboration_handled']) ? (bool) $data['collaboration_handled'] : false,
+                        'collaboration_status' => $data['collaboration_status'] ?? null,
+                    ];
+                })->values()->toArray();
             }) : [],
             'notifications' => $user ? fn () => $this->fastNotifications($request, $user) : null,
 
@@ -144,6 +198,18 @@ class HandleInertiaRequests extends Middleware
             'pending_comments_count' => fn () => ($user && ($user->isAdmin() || $user->isSuperAdmin()))
                 ? Cache::remember('pending_comments_count', 30, fn () => PortalComment::where('status', 'pending')->count())
                 : 0,
+            // Pagi Admin sidebar badge counts (Realtime evaluation)
+            'pagi_moderation_counts' => fn () => ($user && $request->is('pagi/admin*'))
+                ? [
+                    'moderation' => PagiReport::query()->whereIn('status', ['pending', 'report', 'review'])->count(),
+                    'reports' => PagiReport::query()->whereIn('status', ['pending', 'report', 'review'])->count(),
+                    'warnings' => PagiWarning::query()->where('is_active', true)->count(),
+                    'takedowns' => PagiReport::query()->where(function ($q) {
+                        $q->where('status', 'appeal')->orWhere('reason', 'like', '%banding%');
+                    })->count(),
+                    'resolved' => PagiReport::query()->whereIn('status', ['reviewed', 'dismissed', 'actioned', 'resolved'])->count(),
+                ]
+                : null,
             'notif_count_pending_admin' => $user ? $this->fastPendingAdminCount() : 0,
             'notif_count_revision_admin' => $user ? $this->fastRevisionAdminCount() : 0,
             'nav_counts' => $user ? $this->fastNavCounts($request) : [

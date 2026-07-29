@@ -11,7 +11,7 @@ use App\Modules\Pagi\Controllers\PagiDashboardController;
 use App\Modules\Pagi\Controllers\PagiEditorController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:pagi'])
+Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:pagi', 'throttle:pagi-api'])
     ->prefix('pagi')
     ->name('module.pagi.')
     ->group(function () {
@@ -141,6 +141,8 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('editor.collaboration.accept');
         Route::post('/editor/{editor}/collaboration/decline', [PagiEditorController::class, 'declineCollaboration'])
             ->name('editor.collaboration.decline');
+        Route::post('/editor/{editor}/collaboration/leave', [PagiEditorController::class, 'leaveCollaboration'])
+            ->name('editor.collaboration.leave');
 
         // User Profile
         Route::get('/profile', [PagiDashboardController::class, 'profile'])
@@ -230,48 +232,57 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
         Route::get('/', [AdminDashboardController::class, 'index'])
             ->name('dashboard');
 
-        // Moderasi Konten
-        Route::get('/moderation', [AdminModerationController::class, 'moderation'])
+        // Moderasi & Kamus Route Terpisah (Pusat Moderasi Tunggal di /reports)
+        Route::get('/queue', fn () => redirect()->route('module.pagi.admin.reports'))
+            ->name('queue');
+        Route::get('/reports', [AdminModerationController::class, 'reports'])
+            ->name('reports');
+        Route::get('/reports/archive', [AdminModerationController::class, 'archive'])
+            ->name('reports.archive');
+        Route::get('/warnings', [AdminModerationController::class, 'warnings'])
+            ->name('warnings');
+        Route::get('/takedowns', [AdminModerationController::class, 'takedowns'])
+            ->name('takedowns');
+        Route::post('/content/work/{work}/appeal', [AdminModerationController::class, 'submitAppeal'])
+            ->name('content.work.appeal');
+        Route::post('/content/work/{work}/reject-appeal', [AdminModerationController::class, 'rejectAppeal'])
+            ->name('content.work.reject-appeal');
+        Route::post('/appeals/{report}/approve', [AdminModerationController::class, 'approveUserAppeal'])
+            ->name('appeals.approve');
+        Route::post('/appeals/{report}/reject', [AdminModerationController::class, 'rejectUserAppeal'])
+            ->name('appeals.reject');
+        Route::get('/text-dictionary', [AdminModerationController::class, 'textDictionary'])
+            ->name('text-dictionary');
+        Route::get('/image-dictionary', [AdminModerationController::class, 'imageDictionary'])
+            ->name('image-dictionary');
+        Route::get('/moderation', fn () => redirect()->route('module.pagi.admin.reports'))
             ->name('moderation');
 
-        // Users Management
+        // Users Management & Analytics
         Route::get('/users', [AdminUserController::class, 'index'])
             ->name('users.index');
-
-        // Redirects untuk rute lama agar mencegah error 404/500
-        Route::redirect('/users/mahasiswa', '/pagi/admin/users');
-        Route::redirect('/users/mitra', '/pagi/admin/users');
-        Route::redirect('/gallery', '/pagi/admin');
-        Route::redirect('/logs', '/pagi/admin');
-        Route::redirect('/roles', '/pagi/admin');
-
-        // Analytics
         Route::get('/analytics', [AdminDashboardController::class, 'analytics'])
             ->name('analytics');
-
-        // Reports
-        Route::get('/reports', [AdminWorkController::class, 'reports'])
-            ->name('reports');
 
         // Settings
         Route::get('/settings', [AdminDashboardController::class, 'settings'])
             ->name('settings');
+        Route::post('/settings', [AdminDashboardController::class, 'updateSettings'])
+            ->name('settings.update');
+        Route::post('/settings/fetch-google-ai-models', [AdminModerationController::class, 'fetchGoogleAiModels'])
+            ->name('settings.fetch-google-ai-models');
 
-        // Warnings
-        Route::get('/warnings', [AdminWorkController::class, 'warnings'])
-            ->name('warnings');
-
-        // Takedowns
-        Route::get('/takedowns', [AdminWorkController::class, 'takedowns'])
-            ->name('takedowns');
-
-        // Works
+        // Works & Exhibition Showcase
         Route::get('/works', [AdminWorkController::class, 'works'])
             ->name('works');
-
-        // Tags
-        Route::get('/tags', [AdminDashboardController::class, 'tags'])
-            ->name('tags');
+        Route::get('/showcase', [\App\Modules\Pagi\Controllers\AdminShowcaseController::class, 'index'])
+            ->name('showcase');
+        Route::post('/showcase', [\App\Modules\Pagi\Controllers\AdminShowcaseController::class, 'update'])
+            ->name('showcase.update');
+        Route::post('/showcase/toggle/{work}', [\App\Modules\Pagi\Controllers\AdminShowcaseController::class, 'toggleShowcase'])
+            ->name('showcase.toggle');
+        Route::post('/showcase/request-completeness/{work}', [\App\Modules\Pagi\Controllers\AdminShowcaseController::class, 'requestCompleteness'])
+            ->name('showcase.request-completeness');
 
         // Moderation Actions — POST only for CSRF protection
         Route::post('/users/{user}/warn', [AdminUserController::class, 'warnUser'])
@@ -284,9 +295,25 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
         Route::post('/users/{user}/notify', [AdminUserController::class, 'sendNotificationToUser'])
             ->name('users.notify');
 
+        // Admin update user status (active / warning / suspended)
+        Route::post('/users/{user}/status', [AdminUserController::class, 'updateUserStatus'])
+            ->name('users.update-status');
+
         // Reset moderation & warnings data
         Route::post('/reset-moderation', [AdminModerationController::class, 'resetModeration'])
             ->name('reset-moderation');
+
+        // Update moderation settings & custom banned words
+        Route::post('/moderation/settings', [AdminModerationController::class, 'updateModerationSettings'])
+            ->name('moderation.update-settings');
+
+        // Test Google Gemini AI API connection
+        Route::post('/test-google-ai', [AdminModerationController::class, 'testGoogleAiApi'])
+            ->name('test-google-ai');
+
+        // Danger Zone: Reset all works with double verification (password + text confirm)
+        Route::delete('/reset-all-works', [AdminModerationController::class, 'resetAllWorks'])
+            ->name('reset-all-works');
 
         // Revoke user warning
         Route::post('/warnings/{warning}/revoke', [AdminUserController::class, 'revokeWarning'])
@@ -300,13 +327,24 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
         Route::get('/api/stats', [AdminDashboardController::class, 'apiStats'])
             ->name('api.stats');
 
+        // Analytics dynamic stats endpoint
+        Route::get('/api/analytics-stats', [AdminDashboardController::class, 'apiAnalyticsStats'])
+            ->name('api.analytics-stats');
+
         // Realtime chart data endpoint (JSON)
         Route::get('/api/chart', [AdminDashboardController::class, 'apiChart'])
             ->name('api.chart');
 
+        Route::get('/api/analytics-charts', [AdminDashboardController::class, 'apiAnalyticsCharts'])
+            ->name('api.analytics-charts');
+
         // Fetch admin notifications endpoint (JSON)
         Route::get('/api/notifications', [AdminDashboardController::class, 'apiAdminNotifications'])
             ->name('api.notifications');
+
+        // Instant search endpoint (JSON) - PAGI scope
+        Route::get('/api/instant-search', [AdminUserController::class, 'instantSearch'])
+            ->name('api.instant-search');
     });
 
 // Public / Guest Profile Route

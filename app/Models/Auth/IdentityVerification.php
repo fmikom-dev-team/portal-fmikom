@@ -80,7 +80,7 @@ class IdentityVerification extends Model
     public static function start(
         string $userType,
         string $identifier,
-        string $tanggalLahir,
+        ?string $tanggalLahir = null,
         ?string $ipAddress = null,
         ?string $userAgent = null,
     ): static {
@@ -88,7 +88,7 @@ class IdentityVerification extends Model
             'session_token' => Str::random(64),
             'user_type' => $userType,
             'identifier' => $identifier,
-            'tanggal_lahir' => $tanggalLahir,
+            'tanggal_lahir' => $tanggalLahir ?? '2000-01-01',
             'status' => 'pending',
             'attempt_count' => 0,
             'max_attempts' => 5,
@@ -134,8 +134,11 @@ class IdentityVerification extends Model
     public function markFailed(): void
     {
         $this->increment('attempt_count', 1);
+        $this->refresh(); // Ambil nilai terbaru dari DB setelah increment
 
-        if ($this->attempt_count + 1 >= $this->max_attempts) {
+        // [FIX FLAW-005] Sebelumnya ada off-by-one: +1 ekstra setelah increment().
+        // Sekarang langsung cek nilai actual setelah refresh.
+        if ($this->attempt_count >= $this->max_attempts) {
             $this->fill(['status' => 'failed'])->save();
         }
     }

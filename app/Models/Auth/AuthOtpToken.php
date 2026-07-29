@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -80,28 +81,34 @@ class AuthOtpToken extends Model
         ?string $ipAddress = null,
         ?string $userAgent = null,
     ): array {
-        static::where('email', '=', $email, 'and')
-            ->where('purpose', '=', $purpose->value, 'and')
-            ->where('is_used', '=', false, 'and')
-            ->where('expires_at', '>', now(), 'and')
-            ->update(['is_used' => true, 'used_at' => now()]);
+        // [FIX FIND-006] Bungkus invalidasi + pembuatan dalam satu transaction + lockForUpdate()
+        // untuk mencegah race condition di mana dua request bersamaan menghasilkan dua OTP aktif.
+        return DB::transaction(function () use ($userId, $email, $purpose, $ipAddress, $userAgent) {
+            // Invalidate existing active OTPs (with lock to prevent concurrent reads)
+            static::where('email', '=', $email, 'and')
+                ->where('purpose', '=', $purpose->value, 'and')
+                ->where('is_used', '=', false, 'and')
+                ->where('expires_at', '>', now(), 'and')
+                ->lockForUpdate()
+                ->update(['is_used' => true, 'used_at' => now()]);
 
-        $plaintext = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $plaintext = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        $model = static::create([
-            'user_id' => $userId,
-            'email' => $email,
-            'purpose' => $purpose->value,
-            'token_hash' => Hash::make($plaintext),
-            'attempt_count' => 0,
-            'max_attempts' => $purpose->maxAttempts(),
-            'is_used' => false,
-            'expires_at' => now()->addMinutes($purpose->ttlMinutes()),
-            'ip_address' => $ipAddress,
-            'user_agent' => $userAgent,
-        ]);
+            $model = static::create([
+                'user_id' => $userId,
+                'email' => $email,
+                'purpose' => $purpose->value,
+                'token_hash' => Hash::make($plaintext),
+                'attempt_count' => 0,
+                'max_attempts' => $purpose->maxAttempts(),
+                'is_used' => false,
+                'expires_at' => now()->addMinutes($purpose->ttlMinutes()),
+                'ip_address' => $ipAddress,
+                'user_agent' => $userAgent,
+            ]);
 
-        return ['model' => $model, 'plaintext' => $plaintext];
+            return ['model' => $model, 'plaintext' => $plaintext];
+        });
     }
 
     /**
@@ -124,35 +131,63 @@ class AuthOtpToken extends Model
      * Increments attempt_count on failure.
      * Marks as used on success.
      *
+     * [FIX H-9, M-7] Dibungkus dalam DB::transaction() + lockForUpdate() untuk mencegah
+     * race condition di mana dua request concurrent (mis. double-click atau multi-tab)
+     * keduanya membaca status is_used=false, keduanya lolos Hash::check(), dan keduanya
+     * mendapat return 'ok' sehingga OTP terpakai dua kali.
+     *
+     * Dengan lock, hanya satu request yang bisa memproses token pada satu waktu.
+     * Request kedua akan membaca is_used=true dan mendapat return 'used'.
+     *
      * @return 'ok'|'invalid'|'expired'|'used'|'locked'
      */
     public function verify(string $plaintext): string
     {
-        if ($this->is_used) {
-            return 'used';
-        }
+        return DB::transaction(function () use ($plaintext) {
+            // Re-fetch dengan lock di dalam transaction untuk prevent race condition
+            /** @var static|null $fresh */
+            $fresh = static::where('id', '=', $this->id, 'and')
+                ->lockForUpdate()
+                ->first();
 
-        if ($this->isExpired()) {
-            return 'expired';
-        }
+            // Jika token tidak ditemukan (sangat jarang, tapi defensif)
+            if (! $fresh) {
+                return 'used';
+            }
 
-        if ($this->isLocked()) {
-            return 'locked';
-        }
+            if ($fresh->is_used) {
+                return 'used';
+            }
 
-        if (! Hash::check($plaintext, $this->token_hash)) {
-            $this->increment('attempt_count', 1);
+            if ($fresh->isExpired()) {
+                return 'expired';
+            }
 
-            return 'invalid';
-        }
+            if ($fresh->isLocked()) {
+                return 'locked';
+            }
 
-        // Success — mark as used
-        $this->fill([
-            'is_used' => true,
-            'used_at' => now(),
-        ])->save();
+            if (! Hash::check($plaintext, $fresh->token_hash)) {
+                $fresh->increment('attempt_count', 1);
 
-        return 'ok';
+                // Sync model state
+                $this->attempt_count = $fresh->attempt_count;
+
+                return 'invalid';
+            }
+
+            // Success — mark as used
+            $fresh->fill([
+                'is_used' => true,
+                'used_at' => now(),
+            ])->save();
+
+            // Sync model state agar caller punya data terkini
+            $this->is_used = true;
+            $this->used_at = $fresh->used_at;
+
+            return 'ok';
+        });
     }
 
     // ─── State Checks ─────────────────────────────────────────────────────────

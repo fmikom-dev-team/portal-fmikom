@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { useAppearance } from "@/composables/useAppearance";
 import type { ApexOptions } from "apexcharts";
 import { computed, ref } from "vue";
+import VueApexCharts from "vue3-apexcharts";
 
 // ─── Props: Real data from parent (DB) ───────────────────────────────────────
 interface ChartDataShape {
@@ -15,6 +17,7 @@ const props = defineProps<{
 	loading?: boolean;
 	chartData?: ChartDataShape; // Real data from DB
 	loadingChart?: boolean; // Spinner while fetching new range
+	customSeries?: Array<{ name: string; data: number[] }>;
 }>();
 
 const emit = defineEmits<{
@@ -28,6 +31,10 @@ const onRangeChange = (range: "7d" | "30d" | "90d") => {
 	emit("rangeChange", range);
 };
 
+const { resolvedAppearance } = useAppearance();
+
+const isDark = computed(() => resolvedAppearance.value === "dark");
+
 // Fallback to empty arrays if data not loaded yet
 const data = computed<ChartDataShape>(
 	() =>
@@ -39,12 +46,8 @@ const data = computed<ChartDataShape>(
 		},
 );
 
-const isDark = computed(() =>
-	document.documentElement.classList.contains("dark"),
-);
-
 const gridColor = computed(() => (isDark.value ? "#27272a" : "#f1f5f9"));
-const labelColor = "#94a3b8";
+const labelColor = computed(() => (isDark.value ? "#a1a1aa" : "#64748b"));
 
 const chartOptions = computed<ApexOptions>(() => ({
 	chart: {
@@ -75,7 +78,7 @@ const chartOptions = computed<ApexOptions>(() => ({
 		show: true,
 		position: "top",
 		horizontalAlign: "left",
-		labels: { colors: labelColor },
+		labels: { colors: labelColor.value },
 		markers: { size: 5 },
 		itemMargin: { horizontal: 14 },
 		fontSize: "11px",
@@ -84,7 +87,7 @@ const chartOptions = computed<ApexOptions>(() => ({
 	xaxis: {
 		categories: data.value.categories,
 		labels: {
-			style: { colors: labelColor, fontSize: "10px", fontWeight: 500 },
+			style: { colors: labelColor.value, fontSize: "10px", fontWeight: 500 },
 			rotate: -15,
 			rotateAlways: false,
 			hideOverlappingLabels: true,
@@ -96,7 +99,7 @@ const chartOptions = computed<ApexOptions>(() => ({
 		min: 0,
 		forceNiceScale: true,
 		labels: {
-			style: { colors: labelColor, fontSize: "11px" },
+			style: { colors: labelColor.value, fontSize: "11px" },
 			formatter: (val: number) => Math.round(val).toString(),
 		},
 	},
@@ -107,7 +110,7 @@ const chartOptions = computed<ApexOptions>(() => ({
 		padding: { left: 0, right: 0 },
 	},
 	tooltip: {
-		theme: "light",
+		theme: isDark.value ? "dark" : "light",
 		x: { show: true },
 		style: { fontSize: "12px", fontFamily: "Inter, sans-serif" },
 		y: {
@@ -118,15 +121,20 @@ const chartOptions = computed<ApexOptions>(() => ({
 		text: "Belum ada data untuk periode ini",
 		align: "center",
 		verticalAlign: "middle",
-		style: { fontSize: "13px", color: "#94a3b8" },
+		style: { fontSize: "13px", color: labelColor.value },
 	},
 }));
 
-const series = computed(() => [
-	{ name: "Karya Dibuat", data: data.value.karya },
-	{ name: "Laporan Masuk", data: data.value.laporan },
-	{ name: "Peringatan", data: data.value.warnings },
-]);
+const series = computed(() => {
+	if (props.customSeries) {
+		return props.customSeries;
+	}
+	return [
+		{ name: "Karya Dibuat", data: data.value.karya },
+		{ name: "Laporan Masuk", data: data.value.laporan },
+		{ name: "Peringatan", data: data.value.warnings },
+	];
+});
 
 const rangeLabels = {
 	"7d": "7 Hari",
@@ -136,7 +144,7 @@ const rangeLabels = {
 </script>
 
 <template>
-    <div class="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-5">
+    <div class="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-5 h-full flex flex-col justify-between">
         <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div class="flex items-center gap-2">
                 <h3 class="text-[13px] font-bold text-slate-800 dark:text-zinc-100">{{ title }}</h3>
@@ -146,16 +154,16 @@ const rangeLabels = {
                     Live
                 </span>
             </div>
-            <div class="flex items-center rounded-lg border border-slate-200 dark:border-zinc-700 overflow-hidden shrink-0">
+            <div class="p-1 bg-slate-100/80 dark:bg-zinc-950 rounded-xl flex items-center border border-slate-200/60 dark:border-zinc-800 shrink-0">
                 <button
                     v-for="range in (['7d', '30d', '90d'] as const)"
                     :key="range"
                     @click="onRangeChange(range)"
                     :class="[
-                        'px-3 py-1.5 text-[11px] font-bold transition-colors',
+                        'px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all duration-200 focus:outline-none',
                         selectedRange === range
-                            ? 'bg-indigo-600 text-white'
-                            : 'text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 bg-white dark:bg-zinc-900'
+                            ? 'bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/60 dark:border-zinc-700/60'
+                            : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'
                     ]"
                 >
                     {{ rangeLabels[range] }}
@@ -189,7 +197,7 @@ const rangeLabels = {
 
         <!-- Empty state: no data returned at all -->
         <div
-            v-else-if="data.karya.length === 0"
+            v-else-if="(!customSeries && data.karya.length === 0) || (customSeries && customSeries.every(s => s.data.length === 0))"
             class="h-[230px] flex flex-col items-center justify-center text-center gap-2"
         >
             <div class="h-12 w-12 rounded-2xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center">

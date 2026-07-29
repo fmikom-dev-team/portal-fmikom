@@ -1,3 +1,4 @@
+import { router } from "@inertiajs/vue3";
 import { ref, watch } from "vue";
 
 // Singletons defined outside the hook so they are shared globally across components
@@ -7,6 +8,14 @@ const percent = ref(0);
 const mode = ref<"upload" | "download" | "publish">("upload");
 const statusText = ref("");
 const isProcessing = ref(false);
+
+if (typeof window !== "undefined") {
+	router.on("finish", () => {
+		show.value = false;
+		percent.value = 0;
+		isProcessing.value = false;
+	});
+}
 
 export function usePagiProgress() {
 	const startProgress = (

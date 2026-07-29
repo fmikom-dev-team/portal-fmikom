@@ -46,6 +46,7 @@ const props = withDefaults(
 		category?: string;
 		toolsUsed?: string;
 		tags?: string | string[];
+		isLoading?: boolean;
 	}>(),
 	{
 		canvasBgColor: "#ffffff",
@@ -56,6 +57,7 @@ const props = withDefaults(
 		category: "",
 		toolsUsed: "",
 		tags: "",
+		isLoading: false,
 	},
 );
 
@@ -63,6 +65,15 @@ const emit = defineEmits<{
 	(e: "close"): void;
 	(e: "select-portfolio", project: any): void;
 }>();
+
+const activeLightboxImage = ref<string | null>(null);
+const openLightbox = (src: string) => {
+	if (!src) return;
+	activeLightboxImage.value = src;
+};
+const closeLightbox = () => {
+	activeLightboxImage.value = null;
+};
 
 const getCoverFit = () => {
 	const content = props.content || props.portfolio?.content;
@@ -134,8 +145,19 @@ const computedUser = computed(() => {
 	};
 });
 
+const previewWindowWidth = ref(typeof window !== "undefined" ? window.innerWidth : 1200);
+if (typeof window !== "undefined") {
+	window.addEventListener("resize", () => {
+		previewWindowWidth.value = window.innerWidth;
+	});
+}
+
 const spacingInPx = computed(() => {
-	return (props.globalSpacing / 100) * 80;
+	const base = (props.globalSpacing / 100) * 80;
+	if (previewWindowWidth.value < 768) {
+		return Math.max(8, Math.round(base * 0.45));
+	}
+	return base;
 });
 
 const projectDescription = computed(() => {
@@ -287,21 +309,31 @@ const getBlockContainerWidth = (block: any) => {
 
 let resizeObserver: ResizeObserver | null = null;
 
+const getGridImages = (block: any): string[] => {
+	if (!block) return [];
+	if (Array.isArray(block.previews) && block.previews.length > 0) return block.previews;
+	if (Array.isArray(block.file_paths) && block.file_paths.length > 0) return block.file_paths;
+	if (Array.isArray(block.urls) && block.urls.length > 0) return block.urls;
+	if (Array.isArray(block.fileKeys) && block.fileKeys.length > 0) return block.fileKeys;
+	return [];
+};
+
 watch(
 	() => props.content,
 	(newContent) => {
 		if (!newContent) return;
 		newContent.forEach((block) => {
-			if (block.type === "photo_grid" && block.previews) {
+			const images = getGridImages(block);
+			if (block.type === "photo_grid" && images.length > 0) {
 				if (block.aspectRatios && Array.isArray(block.aspectRatios)) {
-					block.previews.forEach((src: string, idx: number) => {
+					images.forEach((src: string, idx: number) => {
 						const ar = block.aspectRatios[idx];
 						if (ar) {
-							aspectRatios.value[normalizeSrc(src)] = ar;
+							aspectRatios.value[normalizeSrc(src)] = Number(ar);
 						}
 					});
 				}
-				loadImageAspectRatios(block.previews);
+				loadImageAspectRatios(images);
 			}
 		});
 	},
@@ -769,7 +801,7 @@ const getToolSlug = (toolName: string): string => {
 		<div class="flex items-center gap-2 min-w-0">
 			<div class="w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-md overflow-hidden border border-zinc-700">
 				<VideoLazy v-if="coverImage && isVideoUrl(coverImage)" :src="coverImage" :muted="true" className="w-full h-full object-cover" />
-				<OptimizedImage v-else :src="coverImage || authorAvatar" className="w-full h-full object-cover" alt="Cover" />
+				<OptimizedImage v-else :src="coverImage || authorAvatar" :is-sensitive="Boolean(portfolio?.status === 'review' || portfolio?.status === 'hidden')" className="w-full h-full object-cover" alt="Cover" />
 			</div>
 			<div class="flex flex-col min-w-0">
 				<span class="text-[10px] sm:text-xs font-bold text-white truncate max-w-[85px] sm:max-w-[120px]">{{ title || 'Untitled Project' }}</span>
@@ -841,7 +873,35 @@ const getToolSlug = (toolName: string): string => {
 
 		<div ref="canvasContainer" class="w-full mx-auto flex flex-col shrink-0 overflow-hidden transition-colors duration-300 max-w-7xl min-h-screen shadow-2xl border-none rounded-none pt-0" :style="{ backgroundColor: canvasBgColor }">
 			
-			<template v-for="(block, index) in content" :key="index">
+			<template v-if="isLoading">
+				<!-- Pulsing Skeleton list -->
+				<div class="w-full max-w-4xl mx-auto px-6 py-12 flex flex-col gap-8 select-none">
+					<!-- Text block skeleton -->
+					<div class="space-y-3">
+						<div class="h-4 bg-slate-200 dark:bg-zinc-800 rounded-lg animate-pulse w-full"></div>
+						<div class="h-4 bg-slate-200 dark:bg-zinc-800 rounded-lg animate-pulse w-5/6"></div>
+						<div class="h-4 bg-slate-200 dark:bg-zinc-800 rounded-lg animate-pulse w-2/3"></div>
+					</div>
+
+					<!-- Image block skeleton -->
+					<div class="w-full h-[400px] bg-slate-200 dark:bg-zinc-800 rounded-2xl animate-pulse"></div>
+
+					<!-- Text block skeleton 2 -->
+					<div class="space-y-3">
+						<div class="h-4 bg-slate-200 dark:bg-zinc-800 rounded-lg animate-pulse w-11/12"></div>
+						<div class="h-4 bg-slate-200 dark:bg-zinc-800 rounded-lg animate-pulse w-4/5"></div>
+					</div>
+
+					<!-- Grid layout skeleton -->
+					<div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+						<div class="h-64 bg-slate-200 dark:bg-zinc-800 rounded-2xl animate-pulse"></div>
+						<div class="h-64 bg-slate-200 dark:bg-zinc-800 rounded-2xl animate-pulse"></div>
+						<div class="h-64 bg-slate-200 dark:bg-zinc-800 rounded-2xl animate-pulse"></div>
+					</div>
+				</div>
+			</template>
+			<template v-else-if="content && content.length > 0">
+				<template v-for="(block, index) in content" :key="index">
 				<div v-if="block.type !== 'settings'" class="w-full relative group transition-all rounded-none" :style="{ marginBottom: spacingInPx + 'px' }">
 					
 					<!-- If type is Text -->
@@ -859,7 +919,9 @@ const getToolSlug = (toolName: string): string => {
 						<div v-if="!block.preview" class="w-full max-w-4xl mx-auto px-6 py-12 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center text-center bg-slate-50/50 dark:bg-slate-900/50">
 							<p class="text-xs text-slate-450 mb-4">No preview available for this image.</p>
 						</div>
-						<OptimizedImage v-else :src="block.preview" alt="Portfolio Image" className="h-auto w-full object-cover select-none border-none pointer-events-none rounded-none shadow-none" />
+						<div class="cursor-zoom-in hover:opacity-95 transition-all duration-200" @click="openLightbox(block.preview)">
+							<OptimizedImage :src="block.preview" alt="Portfolio Image" className="h-auto w-full object-contain select-none border-none rounded-none shadow-none pointer-events-none" />
+						</div>
 					</div>
 
 					<!-- If type is Photo Grid -->
@@ -869,19 +931,19 @@ const getToolSlug = (toolName: string): string => {
 							 block.isFullWidth === false ? 'max-w-4xl mx-auto px-6' : 'w-full',
 							 block.hasPadding ? 'px-8 md:px-16' : ''
 						 ]">
-						<div v-if="!block.previews || block.previews.length === 0" class="w-full max-w-4xl mx-auto px-6 py-12 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center text-center bg-slate-50/50 dark:bg-slate-900/50">
+						<div v-if="getGridImages(block).length === 0" class="w-full max-w-4xl mx-auto px-6 py-12 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center text-center bg-slate-50/50 dark:bg-slate-900/50">
 							<p class="text-xs text-slate-450 mb-4">This grid is empty.</p>
 						</div>
 						<div v-else class="w-full flex flex-col" :style="{ gap: (block.hasGap !== false ? 4 : 0) + 'px' }">
-							<div v-for="(row, rIdx) in getJustifiedLayout(block.previews, getBlockContainerWidth(block), 380, block.hasGap !== false ? 4 : 0)" :key="rIdx" class="w-full flex justify-start" :style="{ gap: (block.hasGap !== false ? 4 : 0) + 'px' }">
-								<div v-for="p in row.items" :key="p" class="relative overflow-hidden cursor-pointer transition-transform duration-300 hover:scale-[1.01]" :style="{
+							<div v-for="(row, rIdx) in getJustifiedLayout(getGridImages(block), getBlockContainerWidth(block), 380, block.hasGap !== false ? 4 : 0)" :key="rIdx" class="w-full flex justify-start" :style="{ gap: (block.hasGap !== false ? 4 : 0) + 'px' }">
+								<div v-for="p in row.items" :key="p" class="relative overflow-hidden cursor-zoom-in transition-transform duration-300 hover:scale-[1.015] hover:opacity-95" :style="{
 									width: (row.height * getAspectRatio(p)) + 'px',
 									flexGrow: row.isLast ? 0 : getAspectRatio(p),
 									flexShrink: row.isLast ? 0 : 1,
 									flexBasis: 'auto',
 									height: row.height + 'px'
-								}">
-									<OptimizedImage :src="p" @load="handleImageLoad(p, $event)" className="w-full h-full object-cover border-none shadow-none" loading="lazy" alt="Grid Image" />
+								}" @click="openLightbox(p)">
+									<OptimizedImage :src="p" @load="handleImageLoad(p, $event)" className="w-full h-full object-cover border-none shadow-none pointer-events-none" loading="lazy" alt="Grid Image" />
 								</div>
 							</div>
 						</div>
@@ -924,13 +986,28 @@ const getToolSlug = (toolName: string): string => {
 					<div v-else-if="block.type === 'gallery_item'" class="w-full max-w-4xl mx-auto px-6 flex flex-col items-center">
 						<div class="relative overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 shadow-md">
 							<VideoLazy v-if="coverImage && isVideoUrl(coverImage)" :src="coverImage" :controls="true" className="max-h-[75vh] w-auto object-contain rounded-2xl" />
-							<OptimizedImage v-else :src="coverImage || ''" alt="Gallery Image" className="max-h-[75vh] w-auto object-contain select-none" />
+							<OptimizedImage v-else :src="coverImage || ''" alt="Gallery Image" :is-sensitive="Boolean(portfolio?.status === 'review' || portfolio?.status === 'hidden')" className="max-h-[75vh] w-auto object-contain select-none" />
 						</div>
 						<div v-if="block.description" class="mt-8 text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium text-center max-w-2xl px-4">
 							{{ block.description }}
 						</div>
 					</div>
-
+				</div>
+				</template>
+			</template>
+			<template v-else>
+				<!-- Fallback view when content array is empty/null but single media or coverImage exists -->
+				<div class="w-full max-w-4xl mx-auto px-6 py-12 flex flex-col items-center justify-center">
+					<div v-if="coverImage" class="relative overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 shadow-md max-w-full">
+						<VideoLazy v-if="isVideoUrl(coverImage)" :src="coverImage" :controls="true" className="max-h-[75vh] w-auto object-contain rounded-2xl" />
+						<OptimizedImage v-else :src="coverImage" alt="Gallery Image" className="max-h-[75vh] w-auto object-contain select-none" />
+					</div>
+					<div v-else class="py-16 text-center text-slate-400">
+						<p class="text-sm font-semibold">Tidak ada konten visual tambahan untuk karya ini.</p>
+					</div>
+					<div v-if="description" class="mt-8 text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium text-center max-w-2xl px-4">
+						{{ description }}
+					</div>
 				</div>
 			</template>
 
@@ -1193,7 +1270,7 @@ const getToolSlug = (toolName: string): string => {
 								<!-- Cover Image Container -->
 								<div class="aspect-16/10 rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800/80 group-hover:border-zinc-700 transition-all duration-300 relative shadow-2xs group-hover:scale-[1.02]">
 									<VideoLazy v-if="isVideoUrl(p.image)" :src="p.image" className="w-full h-full object-cover select-none pointer-events-none" />
-									<OptimizedImage v-else :src="p.image" :alt="p.title" className="w-full h-full object-cover select-none pointer-events-none" />
+									<OptimizedImage v-else :src="p.image" :alt="p.title" :is-sensitive="Boolean(p.status === 'review' || p.status === 'hidden')" className="w-full h-full object-cover select-none pointer-events-none" />
 									
 									<!-- Quick stats on hover overlay -->
 									<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-xs font-bold text-white">
@@ -1539,6 +1616,40 @@ const getToolSlug = (toolName: string): string => {
 					</div>
 				</div>
 			</Transition>
+		</div>
+	</Transition>
+
+	<!-- Fullscreen Image Lightbox Overlay -->
+	<Transition
+		enter-active-class="transition duration-300 ease-out"
+		enter-from-class="opacity-0 scale-95"
+		enter-to-class="opacity-100 scale-100"
+		leave-active-class="transition duration-200 ease-in"
+		leave-from-class="opacity-100 scale-100"
+		leave-to-class="opacity-0 scale-95"
+	>
+		<div
+			v-if="activeLightboxImage"
+			class="fixed inset-0 z-[100050] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out select-none"
+			@click="closeLightbox"
+		>
+			<!-- Large Close Button -->
+			<button
+				type="button"
+				class="absolute top-6 right-6 z-[100060] bg-white/10 hover:bg-white/20 text-white rounded-full p-3 transition-all hover:scale-105 border-none cursor-pointer"
+				@click.stop="closeLightbox"
+			>
+				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+				</svg>
+			</button>
+			<!-- Premium Centered Image -->
+			<img
+				:src="normalizeSrc(activeLightboxImage)"
+				class="max-w-[95vw] max-h-[92vh] object-contain rounded-lg shadow-2xl transition-all duration-300 pointer-events-auto"
+				alt="Fullscreen lightbox preview"
+				@click.stop
+			/>
 		</div>
 	</Transition>
 </template>

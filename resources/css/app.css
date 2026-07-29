@@ -695,20 +695,26 @@ body.wims-role-body.dark {
   z-index: 9999;
 }
 
-/* Prevent vue-sonner toaster wrapper section/ol elements from taking up layout flow space */
-section[aria-label^="Notifications"],
-ol[data-sonner-toaster] {
+/* Fix vue-sonner toaster wrapper & toast popup positioning */
+[data-sonner-toaster] {
 	position: fixed !important;
-	top: 0 !important;
-	left: 0 !important;
-	width: 0 !important;
-	height: 0 !important;
-	overflow: visible !important;
-	margin: 0 !important;
-	padding: 0 !important;
-	border: none !important;
+	top: 16px !important;
+	right: 16px !important;
+	left: auto !important;
+	bottom: auto !important;
+	width: auto !important;
+	max-width: calc(100vw - 32px) !important;
 	pointer-events: none !important;
-	z-index: 99999 !important;
+	z-index: 999999 !important;
+}
+
+[data-sonner-toast] {
+	pointer-events: auto !important;
+	width: max-content !important;
+	max-width: 380px !important;
+	border-radius: 12px !important;
+	font-family: var(--font-sans) !important;
+	box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08) !important;
 }
 
 /* PWA Page Slide Transitions */

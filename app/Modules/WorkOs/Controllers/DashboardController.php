@@ -119,11 +119,13 @@ class DashboardController extends Controller // NOSONAR
             'brand_description' => ['nullable', 'string', 'max:500'],
             'primary_color' => ['nullable', 'string', 'max:20'],
             'public_registration' => ['nullable', 'in:0,1'],
+            'helpdesk_wa_number' => ['nullable', 'string', 'max:30'],
+            'helpdesk_wa_template' => ['nullable', 'string', 'max:2000'],
             'brand_logo_file' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
             'brand_favicon_file' => ['nullable', 'file', 'mimes:ico,png', 'max:512'],
         ]);
 
-        $allowed = ['maintenance_mode', 'maintenance_message', 'brand_name', 'brand_subtitle', 'brand_description', 'primary_color', 'public_registration'];
+        $allowed = ['maintenance_mode', 'maintenance_message', 'brand_name', 'brand_subtitle', 'brand_description', 'primary_color', 'public_registration', 'helpdesk_wa_number', 'helpdesk_wa_template'];
 
         foreach ($allowed as $key) {
             if ($request->has($key)) {
@@ -614,13 +616,21 @@ class DashboardController extends Controller // NOSONAR
             if ($request->filled('membership')) {
                 $membership = $request->input('membership');
                 if ($membership === 'active') {
-                    $query->where('status_approval', 'approved')->where('is_active', true);
+                    $query->where('is_active', true)
+                        ->where(function ($q) {
+                            $q->where('status_approval', 'activated')
+                                ->orWhere('user_type', 'super_admin');
+                        });
+                } elseif ($membership === 'pending_activation') {
+                    $query->where('is_active', false)
+                        ->whereIn('status_approval', ['approved', 'otp_sent', 'otp_verified']);
                 } elseif ($membership === 'pending') {
                     $query->where('status_approval', 'pending');
                 } elseif ($membership === 'rejected') {
                     $query->where(function ($q) {
-                        $q->where('is_active', false)
-                            ->orWhere('status_approval', 'rejected');
+                        $q->where('status_approval', 'rejected')
+                            ->orWhere('status_approval', 'suspended')
+                            ->orWhere('status_approval', 'expired');
                     });
                 }
             }
@@ -1327,11 +1337,18 @@ class DashboardController extends Controller // NOSONAR
 
     public function clearNotifications(Request $request)
     {
-        $request->user()->notifications()
-            ->where('type', WorkOsAlert::class)
-            ->delete();
+        $user = $request->user();
+        $user->notifications()->delete();
+        cache()->put('user_notifications_cleared_'.$user->id, true, now()->addDays(30));
 
         return back()->with('success', 'Log aktivitas berhasil dikosongkan.');
+    }
+
+    public function destroyNotification(Request $request, $id)
+    {
+        $request->user()->notifications()->where('id', $id)->delete();
+
+        return back()->with('success', 'Item log berhasil dihapus.');
     }
 
     public function toggleNotificationRead(Request $request, $id)
@@ -1349,9 +1366,10 @@ class DashboardController extends Controller // NOSONAR
 
     private function getNotificationsForUser(User $user): array
     {
+        $cleared = cache()->get('user_notifications_cleared_'.$user->id, false);
         $hasAlerts = $user->notifications()->exists();
 
-        if (! $hasAlerts) {
+        if (! $hasAlerts && ! $cleared) {
             $this->seedDefaultNotificationsForUser($user);
         }
 
@@ -1492,9 +1510,24 @@ class DashboardController extends Controller // NOSONAR
             'maintenance_mode' => $settings['maintenance_mode'] ?? '0',
             'maintenance_message' => $settings['maintenance_message'] ?? 'Sistem sedang dalam pemeliharaan. Silakan kembali beberapa saat lagi.',
             'public_registration' => $settings['public_registration'] ?? '1',
+            'helpdesk_wa_number' => $settings['helpdesk_wa_number'] ?? config('services.helpdesk.wa_number', '628123456789'),
+            'helpdesk_wa_template' => $settings['helpdesk_wa_template'] ?? "Halo Admin FMIKOM, saya bermaksud mengajukan pembaruan email aktivasi akun:\n\n• Nama Mahasiswa : {nama}\n• NIM            : {nim}\n• Email Lama     : {email_lama}\n• Email Baru     : {email_baru}\n\nSaya siap melampirkan foto KTM/KTP sebagai verifikasi fisik. Mohon bantuannya.",
             'brand_logo' => $settings['brand_logo'] ?? '/asset/brand-logo.webp',
             'brand_favicon' => $settings['brand_favicon'] ?? '/asset/brand-logo.webp',
         ];
+    }
+
+    public function getHelpdeskSetting()
+    {
+        $waNumber = PortalSetting::where('key', 'helpdesk_wa_number')->value('value')
+            ?: config('services.helpdesk.wa_number', '628123456789');
+        $defaultTemplate = "Halo Admin FMIKOM, saya bermaksud mengajukan pembaruan email aktivasi akun:\n\n• Nama Mahasiswa : {nama}\n• NIM            : {nim}\n• Email Lama     : {email_lama}\n• Email Baru     : {email_baru}\n\nSaya siap melampirkan foto KTM/KTP sebagai verifikasi fisik. Mohon bantuannya.";
+        $waTemplate = PortalSetting::where('key', 'helpdesk_wa_template')->value('value') ?: $defaultTemplate;
+
+        return response()->json([
+            'wa_number' => $waNumber,
+            'wa_template' => $waTemplate,
+        ]);
     }
 
     public function flushSystemCache(Request $request)

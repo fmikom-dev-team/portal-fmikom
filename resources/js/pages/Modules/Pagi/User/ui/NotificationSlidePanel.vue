@@ -87,25 +87,27 @@ const notifGroups = computed(() => {
 
 const filteredNotifGroups = computed(() => notifGroups.value);
 
-const handleNotifClick = (notif: any) => {
+const handleNotifClick = async (notif: any) => {
 	if (notif.unread) {
 		// Optimistic update
 		notif.unread = false;
-		// Persist to server
-		fetch(`/pagi/notifications/${notif.id}/mark-read`, {
-			method: "POST",
-			headers: {
-				"X-CSRF-TOKEN":
-					(
-						document.querySelector(
-							"meta[name=csrf-token]",
-						) as HTMLMetaElement | null
-					)?.content || "",
-				Accept: "application/json",
-			},
-		}).catch(() => {
+		// Persist to server before navigating
+		try {
+			await fetch(`/pagi/notifications/${notif.id}/mark-read`, {
+				method: "POST",
+				headers: {
+					"X-CSRF-TOKEN":
+						(
+							document.querySelector(
+								"meta[name=csrf-token]",
+							) as HTMLMetaElement | null
+						)?.content || "",
+					Accept: "application/json",
+				},
+			});
+		} catch {
 			notif.unread = true;
-		});
+		}
 	}
 	emit("update:isOpen", false);
 
@@ -248,6 +250,56 @@ const typeIcon = (type: string) => {
 	return Bell;
 };
 
+const typeBadgeClass = (type: string) => {
+	if (type === "like") return "bg-rose-500 text-white shadow-xs shadow-rose-500/30";
+	if (type === "follow") return "bg-blue-600 text-white shadow-xs shadow-blue-500/30";
+	if (type === "collaboration") return "bg-indigo-600 text-white shadow-xs shadow-indigo-500/30";
+	if (type === "comment" || type === "reply") return "bg-emerald-600 text-white shadow-xs shadow-emerald-500/30";
+	return "bg-slate-700 text-white";
+};
+
+const typeIconClass = (type: string) => {
+	if (type === "like") return "text-rose-500 bg-rose-50 dark:bg-rose-950/50 border border-rose-200/50 dark:border-rose-900/50";
+	if (type === "follow") return "text-blue-500 bg-blue-50 dark:bg-blue-950/50 border border-blue-200/50 dark:border-blue-900/50";
+	if (type === "collaboration") return "text-indigo-500 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200/50 dark:border-indigo-900/50";
+	if (type === "comment" || type === "reply") return "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/50 dark:border-emerald-900/50";
+	return "text-slate-500 bg-slate-100 dark:bg-zinc-800";
+};
+
+const collaborationActionInProgress = ref<Record<string, "accept" | "decline" | null>>({});
+
+const handleCollaborationResponse = async (
+	notif: any,
+	action: "accept" | "decline",
+	e: Event,
+) => {
+	e.stopPropagation();
+	if (!notif.portfolio_id) return;
+	collaborationActionInProgress.value[notif.id] = action;
+	try {
+		await fetch(`/pagi/editor/${notif.portfolio_id}/collaboration/${action}`, {
+			method: "POST",
+			headers: {
+				"X-CSRF-TOKEN":
+					(
+						document.querySelector(
+							"meta[name=csrf-token]",
+						) as HTMLMetaElement | null
+					)?.content || "",
+				Accept: "application/json",
+				"Content-Type": "application/json",
+			},
+		});
+		notif.unread = false;
+		notif.collaboration_handled = true;
+		notif.collaboration_status = action;
+	} catch (err) {
+		console.error("Collaboration response failed:", err);
+	} finally {
+		collaborationActionInProgress.value[notif.id] = null;
+	}
+};
+
 // Date formatter to "Friday 3:12 PM"
 const formatAbsoluteTime = (dateStr: string) => {
 	if (!dateStr) return "";
@@ -314,15 +366,18 @@ const formatNotificationMessage = (notif: any) => {
 		<div v-if="isOpen" @click="emit('update:isOpen', false)" class="fixed inset-0 bg-black/30 backdrop-blur-sm z-[9998]" />
 	</Transition>
 
-	<!-- Right-Side Fixed Slide Panel Drawer (Floating Inset Variant per Mockup) -->
+	<!-- Right-Side Fixed Slide Panel Drawer (Instagram-style Full Page on Mobile, Floating Drawer on Desktop) -->
 	<Transition name="drawer-transition">
-		<div v-if="isOpen" class="fixed top-4 right-4 bottom-4 left-4 sm:left-auto sm:w-[400px] md:w-[450px] bg-white/95 dark:bg-zinc-950/95 border border-slate-200/80 dark:border-zinc-800/85 rounded-3xl shadow-[0_10px_50px_-12px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] backdrop-blur-md z-[9999] flex flex-col overflow-hidden text-slate-900 dark:text-zinc-100 font-sans">
+		<div v-if="isOpen" class="fixed inset-0 sm:top-4 sm:right-4 sm:bottom-4 sm:left-auto w-full h-full sm:h-auto sm:w-[400px] md:w-[450px] bg-white dark:bg-zinc-950 sm:bg-white/95 sm:dark:bg-zinc-950/95 border-0 sm:border border-slate-200/80 dark:border-zinc-800/85 rounded-none sm:rounded-3xl shadow-none sm:shadow-[0_10px_50px_-12px_rgba(0,0,0,0.15)] dark:sm:shadow-[0_20px_50px_rgba(0,0,0,0.4)] backdrop-blur-md z-[9999] flex flex-col overflow-hidden text-slate-900 dark:text-zinc-100 font-sans pt-safe pb-safe">
 			
 			<!-- Drawer Sticky Header -->
-			<div class="px-6 pt-7 pb-4 border-b border-slate-100/80 dark:border-zinc-900/80 flex flex-col gap-4 shrink-0">
+			<div class="px-5 sm:px-6 pt-5 sm:pt-7 pb-4 border-b border-slate-100/80 dark:border-zinc-900/80 flex flex-col gap-4 shrink-0">
 				<div class="flex items-center justify-between">
 					<div class="flex items-center gap-2">
-						<h2 class="text-sm font-black text-slate-800 dark:text-zinc-200 uppercase tracking-widest leading-none mt-0.5">Notifikasi</h2>
+						<button @click="emit('update:isOpen', false)" class="sm:hidden p-1.5 -ml-2 rounded-full text-slate-800 dark:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors border-none bg-transparent">
+							<ChevronRight class="w-6 h-6 rotate-180" />
+						</button>
+						<h2 class="text-base sm:text-sm font-extrabold sm:font-black text-slate-900 dark:text-zinc-100 tracking-tight uppercase sm:tracking-widest leading-none">Notifikasi</h2>
 						<span v-if="totalUnread > 0" class="px-2 py-0.5 rounded-full bg-blue-600/10 text-blue-650 dark:text-blue-400 text-[9px] font-black leading-none">
 							{{ totalUnread }} baru
 						</span>
@@ -376,7 +431,7 @@ const formatNotificationMessage = (notif: any) => {
 			</div>
 
 			<!-- Scrollable Notification List -->
-			<div class="flex-1 overflow-y-auto px-6 py-2 custom-scrollbar" style="scrollbar-width: thin;">
+			<div class="flex-1 overflow-y-auto px-4 sm:px-5 py-2 custom-scrollbar" style="scrollbar-width: thin;">
 				
 				<!-- Empty State -->
 				<div
@@ -393,9 +448,9 @@ const formatNotificationMessage = (notif: any) => {
 				</div>
 
 				<!-- Groups -->
-				<div v-for="group in filteredNotifGroups" :key="group.group" class="py-3">
+				<div v-for="group in filteredNotifGroups" :key="group.group" class="py-2">
 					<!-- Group Label -->
-					<h3 class="text-[9px] font-black text-slate-400 dark:text-zinc-555 uppercase tracking-widest mb-1">
+					<h3 class="text-[9px] font-black text-slate-400 dark:text-zinc-555 uppercase tracking-widest mb-1.5 px-2">
 						{{ group.group }}
 					</h3>
 
@@ -403,24 +458,32 @@ const formatNotificationMessage = (notif: any) => {
 					<div
 						v-for="(notif, idx) in group.items"
 						:key="notif.id"
+						@click="handleNotifClick(notif)"
 						:style="{ transitionDelay: `${idx * 20}ms` }"
-						class="w-full flex items-start gap-3.5 py-4 border-b border-dashed border-slate-100 dark:border-zinc-800/80 last:border-b-0 transition-all duration-150 ease-out item-stagger"
+						class="w-full flex items-start gap-3 p-3.5 my-1.5 rounded-2xl transition-all duration-200 ease-out cursor-pointer group select-none border item-stagger"
 						:class="[
-							animateItems ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+							animateItems ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2',
+							notif.unread
+								? 'bg-slate-100/80 dark:bg-zinc-900/90 border-slate-200/80 dark:border-zinc-800 shadow-2xs'
+								: 'bg-white/60 dark:bg-zinc-950/40 border-slate-100/60 dark:border-zinc-900/40 hover:bg-slate-50 dark:hover:bg-zinc-900/50'
 						]"
 					>
-						<!-- Left: Avatar (Clean, no overlap indicators per mockup) -->
-						<div class="relative shrink-0">
-							<img v-if="notif.avatar" :src="notif.avatar" alt="Avatar" class="w-9 h-9 rounded-full object-cover border border-slate-100 dark:border-zinc-800 bg-slate-50 shadow-3xs" />
-							<div v-else class="w-9 h-9 rounded-full flex items-center justify-center bg-slate-100 border border-slate-200 dark:bg-zinc-900 dark:border-zinc-800 text-slate-500 shrink-0">
-								<component :is="typeIcon(notif.type)" class="w-4 h-4" />
+						<!-- Left: Avatar + Colorful Badge -->
+						<div class="relative shrink-0 mt-0.5">
+							<img v-if="notif.avatar" :src="notif.avatar" alt="Avatar" class="w-10 h-10 rounded-full object-cover border border-slate-100 dark:border-zinc-800 bg-slate-50 shadow-3xs" />
+							<div v-else class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-bold" :class="typeIconClass(notif.type)">
+								<component :is="typeIcon(notif.type)" class="w-5 h-5" />
+							</div>
+							<!-- Badge Overlay -->
+							<div v-if="notif.avatar" class="absolute -bottom-0.5 -right-0.5 w-4.5 h-4.5 rounded-full flex items-center justify-center ring-2 ring-white dark:ring-zinc-950" :class="typeBadgeClass(notif.type)">
+								<component :is="typeIcon(notif.type)" class="w-2.5 h-2.5" />
 							</div>
 						</div>
 
 						<!-- Middle: Content and metadata column -->
 						<div class="min-w-0 flex-1">
 							<!-- Name + Action + Target & Relative Time Row -->
-							<div class="flex items-start justify-between gap-3">
+							<div class="flex items-start justify-between gap-2">
 								<p class="text-xs text-slate-600 dark:text-zinc-350 font-medium leading-snug">
 									<span class="font-bold text-slate-900 dark:text-white">{{ notif.title }}</span>
 									{{ ' ' + formatNotificationMessage(notif).action }}
@@ -428,35 +491,63 @@ const formatNotificationMessage = (notif: any) => {
 								</p>
 								<div class="flex items-center gap-1.5 shrink-0 mt-0.5">
 									<span class="text-[10px] text-slate-400 dark:text-zinc-500 font-bold shrink-0">{{ notif.time }}</span>
-									<span v-if="notif.unread" class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="Belum dibaca"></span>
+									<span v-if="notif.unread" class="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400 shrink-0 shadow-xs" title="Belum dibaca"></span>
 								</div>
 							</div>
 
-							<!-- Absolute Time underneath -->
-							<p class="text-[10px] text-slate-400 dark:text-zinc-555 mt-0.5 font-bold">
-								{{ formatAbsoluteTime(notif.created_at) }}
-							</p>
-
 							<!-- Quote / Message Content Block -->
-							<div v-if="formatNotificationMessage(notif).quote" class="mt-2.5 bg-slate-50/80 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800/60 p-3 rounded-xl text-xs text-slate-600 dark:text-zinc-350 font-medium leading-relaxed shadow-3xs">
+							<div v-if="formatNotificationMessage(notif).quote" class="mt-2 bg-slate-100/60 dark:bg-zinc-900/60 border border-slate-200/50 dark:border-zinc-800/60 p-2.5 rounded-xl text-xs text-slate-700 dark:text-zinc-300 font-medium leading-relaxed shadow-3xs">
 								{{ formatNotificationMessage(notif).quote }}
 							</div>
 
-							<!-- Follback Button -->
-							<div v-if="notif.type === 'follow' && notif.sender_id" class="mt-2.5">
+							<!-- Instagram-Style Collaboration Action Buttons (Only for Invitations) -->
+							<div v-if="(notif.type === 'collaboration_invite' || (notif.type === 'collaboration' && notif.is_invite !== false && !notif.message.includes('menerima')))" class="mt-2.5 flex items-center gap-2">
+								<template v-if="!notif.collaboration_handled">
+									<button
+										@click.stop="handleCollaborationResponse(notif, 'accept', $event)"
+										:disabled="collaborationActionInProgress[notif.id] === 'accept'"
+										class="inline-flex items-center px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer border-none"
+									>
+										{{ collaborationActionInProgress[notif.id] === 'accept' ? 'Memproses...' : 'Terima' }}
+									</button>
+									<button
+										@click.stop="handleCollaborationResponse(notif, 'decline', $event)"
+										:disabled="collaborationActionInProgress[notif.id] === 'decline'"
+										class="inline-flex items-center px-4 py-1.5 bg-slate-200 dark:bg-zinc-800 hover:bg-slate-300 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 text-xs font-bold rounded-xl transition-all active:scale-95 cursor-pointer border-none"
+									>
+										{{ collaborationActionInProgress[notif.id] === 'decline' ? 'Memproses...' : 'Tolak' }}
+									</button>
+								</template>
+								<span v-else class="text-xs font-bold" :class="notif.collaboration_status === 'accept' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'">
+									{{ notif.collaboration_status === 'accept' ? 'Undangan diterima' : 'Undangan ditolak' }}
+								</span>
+							</div>
+
+							<!-- Follback / Work Thumbnail / Right Action -->
+							<div v-if="notif.type === 'follow' && notif.sender_id" class="mt-2">
 								<button
 									@click.stop="toggleFollback(notif)"
 									:disabled="FollbackInProgress[notif.sender_id]"
-									class="inline-flex items-center px-3 py-1 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-800 dark:text-zinc-200 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-slate-200 dark:border-zinc-800 transition-all active:scale-97 cursor-pointer"
+									class="inline-flex items-center px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all active:scale-95 cursor-pointer border-none shadow-3xs"
+									:class="
+										isFollowingBack(notif.sender_id)
+											? 'bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300'
+											: 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs'
+									"
 								>
-									{{ FollbackInProgress[notif.sender_id] ? 'Proses...' : (isFollowingBack(notif.sender_id) ? 'Following' : 'Follback') }}
+									{{ FollbackInProgress[notif.sender_id] ? 'Proses...' : (isFollowingBack(notif.sender_id) ? 'Mengikuti' : 'Follback') }}
 								</button>
 							</div>
 						</div>
 
+						<!-- Right Work Thumbnail Preview (Instagram Style) -->
+						<div v-if="notif.work_image && notif.type !== 'follow'" class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden border border-slate-200/80 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-900 shadow-3xs shrink-0 mt-0.5">
+							<img :src="notif.work_image" alt="" @error="($event.target as HTMLElement).style.display = 'none'" class="w-full h-full object-cover" />
+						</div>
+
 						<!-- Right hover chevron -->
-						<div class="flex items-center shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-							<ChevronRight class="w-3.5 h-3.5 text-slate-450" />
+						<div v-else class="flex items-center shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+							<ChevronRight class="w-4 h-4 text-slate-400 dark:text-zinc-500" />
 						</div>
 
 					</div>

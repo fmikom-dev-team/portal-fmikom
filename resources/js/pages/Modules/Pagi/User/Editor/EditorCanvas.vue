@@ -9,7 +9,7 @@ import {
 	PlusCircle,
 	X,
 } from "lucide-vue-next";
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { sanitize } from "@/composables/useSanitize";
 import {
 	getJustifiedLayout as computeLayout,
@@ -38,9 +38,24 @@ const emit = defineEmits<{
 	(e: "delete-block", index: number): void;
 }>();
 
+const getGridImages = (block: any): string[] => {
+	if (!block) return [];
+	if (Array.isArray(block.previews) && block.previews.length > 0) return block.previews;
+	if (Array.isArray(block.file_paths) && block.file_paths.length > 0) return block.file_paths;
+	if (Array.isArray(block.urls) && block.urls.length > 0) return block.urls;
+	if (Array.isArray(block.fileKeys) && block.fileKeys.length > 0) return block.fileKeys;
+	return [];
+};
+
 const activeEditMenu = ref<number | null>(null);
 const editingGridIndex = ref<number | null>(null);
 const focusedTextIndex = ref<number | null>(null);
+
+const actualContentBlocks = computed(() => {
+	return (props.form.content || []).filter(
+		(b: any) => b && b.type !== "settings" && b.type !== "featured_details",
+	);
+});
 
 // flickr justified layout engine aspect ratios ref
 const aspectRatios = ref<Record<string, number>>({});
@@ -106,16 +121,17 @@ watch(
 	(newContent) => {
 		if (!newContent) return;
 		newContent.forEach((block: any) => {
-			if (block.type === "photo_grid" && block.previews) {
+			const images = getGridImages(block);
+			if (block.type === "photo_grid" && images.length > 0) {
 				if (block.aspectRatios && Array.isArray(block.aspectRatios)) {
-					block.previews.forEach((src: string, idx: number) => {
+					images.forEach((src: string, idx: number) => {
 						const ar = block.aspectRatios[idx];
 						if (ar) {
-							aspectRatios.value[normalizeSrc(src)] = ar;
+							aspectRatios.value[normalizeSrc(src)] = Number(ar);
 						}
 					});
 				}
-				loadImageAspectRatios(block.previews);
+				loadImageAspectRatios(images);
 			}
 		});
 	},
@@ -159,24 +175,24 @@ const isAudioBlock = (block: any) => {
 		<div class="w-full border-none rounded-none min-h-[calc(100vh-64px)] flex flex-col items-center justify-start relative transition-colors duration-300" :style="{ backgroundColor: canvasBgColor, color: canvasTextColor }" @click="focusedTextIndex = null; activeEditMenu = null">
 
 			<!-- Center Empty State centered vertically and horizontally -->
-			<div v-if="form.content.filter((b: any) => b.type !== 'settings').length === 0" class="text-center w-full flex-1 flex flex-col items-center justify-center p-10 select-none">
-				<h2 class="text-xl font-medium mb-10" :style="{ color: canvasTextColor }">Start building your project:</h2>
-				<div class="flex flex-wrap justify-center gap-6">
+			<div v-if="actualContentBlocks.length === 0" class="text-center w-full flex-1 flex flex-col items-center justify-center p-6 md:p-10 select-none">
+				<h2 class="text-base md:text-xl font-medium mb-6 md:mb-10 text-center max-w-xs md:max-w-none" :style="{ color: canvasTextColor }">Start building your project:</h2>
+				<div class="flex flex-wrap justify-center gap-3 md:gap-6">
 					<button v-for="item in contentOptions" :key="'center-'+item.id" @click="emit('add-block', item.id)"
-						class="flex flex-col items-center justify-center group w-24 gap-3 cursor-pointer">
-						<div class="h-16 w-16 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:border-slate-300 dark:group-hover:border-slate-700 transition-all duration-200">
-							<component :is="item.icon" class="h-6 w-6 text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" stroke-width="1.5" />
+						class="flex flex-col items-center justify-center group w-18 md:w-24 gap-2 md:gap-3 cursor-pointer">
+						<div class="h-12 w-12 md:h-16 md:w-16 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:border-slate-300 dark:group-hover:border-slate-700 transition-all duration-200">
+							<component :is="item.icon" class="h-5 w-5 md:h-6 md:w-6 text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" stroke-width="1.5" />
 						</div>
-						<span class="text-xs font-semibold transition-colors" :style="{ color: canvasTextColor }">{{ item.label }}</span>
+						<span class="text-[10px] md:text-xs font-semibold transition-colors" :style="{ color: canvasTextColor }">{{ item.label }}</span>
 					</button>
 				</div>
 			</div>
 
 			<!-- Full-Width Content Canvas -->
-			<div v-else :ref="canvasContainerRef" class="w-full max-w-7xl border-x border-t border-slate-200 dark:border-slate-800 rounded-t-3xl min-h-[calc(100vh-64px)] mt-10 shadow-2xl flex flex-col overflow-hidden transition-colors duration-300" :style="{ backgroundColor: canvasBgColor }">
+			<div v-else :ref="canvasContainerRef" class="w-full max-w-7xl border-none md:border-x md:border-t border-slate-200 dark:border-slate-800 rounded-none md:rounded-t-3xl min-h-[calc(100vh-64px)] mt-0 md:mt-10 shadow-none md:shadow-2xl flex flex-col overflow-hidden transition-colors duration-300" :style="{ backgroundColor: canvasBgColor }">
 
 				<template v-for="(block, index) in form.content" :key="index">
-					<div v-if="block.type !== 'settings'"
+					<div v-if="block.type !== 'settings' && block.type !== 'featured_details'"
 						 class="w-full relative group transition-all rounded-none"
 						 :style="{ marginBottom: spacingInPx + 'px' }">
 
@@ -273,15 +289,15 @@ const isAudioBlock = (block: any) => {
 									 block.isFullWidth ? 'max-w-none' : 'max-w-4xl px-6 rounded-xl',
 									 block.hasPadding ? 'px-8 md:px-16' : ''
 								 ]">
-								<OptimizedImage v-if="block.preview" :src="normalizeSrc(block.preview)"
-									class="w-full h-auto object-cover max-h-[85vh] select-none pointer-events-none rounded-none shadow-sm"
+								<img v-if="block.preview" :src="normalizeSrc(block.preview)"
+									class="w-full h-auto object-contain select-none pointer-events-none rounded-none shadow-sm"
 									alt="Uploaded content image" />
 							</div>
 							<p v-if="block.caption" class="text-xs font-semibold text-slate-500 mt-2 px-6 text-center leading-normal max-w-lg">{{ block.caption }}</p>
 						</div>
 
 						<!-- If type is Photo Grid justified using advanced layout -->
-						<div v-else-if="block.type === 'photo_grid' && block.previews && block.previews.length > 0"
+						<div v-else-if="block.type === 'photo_grid' && getGridImages(block).length > 0"
 							 class="w-full flex flex-col items-center select-none">
 							<div class="w-full flex flex-col overflow-hidden"
 								 :class="[ 
@@ -289,7 +305,7 @@ const isAudioBlock = (block: any) => {
 									 block.hasPadding ? 'px-8 md:px-16' : ''
 								 ]"
 								 :style="{ gap: (block.hasGap !== false ? 4 : 0) + 'px' }">
-								<div v-for="(row, rIdx) in getJustifiedLayout(block.previews, getBlockContainerWidth(block), 380, block.hasGap !== false ? 4 : 0)" :key="rIdx"
+								<div v-for="(row, rIdx) in getJustifiedLayout(getGridImages(block), getBlockContainerWidth(block), 380, block.hasGap !== false ? 4 : 0)" :key="rIdx"
 									 class="w-full flex justify-start animate-fade-in"
 									 :style="{ gap: (block.hasGap !== false ? 4 : 0) + 'px' }">
 									<div v-for="p in row.items" :key="p"

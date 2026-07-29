@@ -6,6 +6,7 @@ import {
 	Image as ImageIcon,
 	LayoutGrid,
 	PlaySquare,
+	Trash2,
 	Type,
 	X,
 } from "lucide-vue-next";
@@ -16,12 +17,14 @@ import { useToast } from "../../shared/composables/useToast";
 import Navbar from "../ui/Navbar.vue";
 import Preview from "../ui/Preview.vue";
 import EditorCanvas from "./EditorCanvas.vue";
+import EditorMobileBar from "./EditorMobileBar.vue";
 import EditorPublishModal from "./EditorPublishModal.vue";
 import EditorSidebar from "./EditorSidebar.vue";
 import { useEditorCanvas } from "./useEditorCanvas";
 import { useEditorCollaborators } from "./useEditorCollaborators";
 import { idbClear, idbGet, useEditorDraft } from "./useEditorDraft";
 import { useEditorFileUpload } from "./useEditorFileUpload";
+import { formatStorageUrl } from "@/composables/useInitials";
 import { useEditorTags } from "./useEditorTags";
 
 const { trackInertiaForm } = usePagiProgress();
@@ -171,18 +174,20 @@ const handleCancel = () => {
 	goToPagiDashboard();
 };
 
-const handleDiscardDraft = async () => {
-	const confirmDiscard = confirm(
-		"Apakah Anda yakin ingin membuang draf pekerjaan ini?\n\nSemua perubahan yang belum disimpan akan dihapus secara permanen.",
-	);
-	if (confirmDiscard) {
-		if (globalThis.window !== undefined) {
-			globalThis.localStorage.removeItem("pagi_work_draft");
-			await idbClear();
-		}
-		addToast("Draf pekerjaan berhasil dibuang.", "success");
-		goToPagiDashboard();
+const showDiscardModal = ref(false);
+
+const handleDiscardDraft = () => {
+	showDiscardModal.value = true;
+};
+
+const confirmDiscardDraft = async () => {
+	showDiscardModal.value = false;
+	if (globalThis.window !== undefined) {
+		globalThis.localStorage.removeItem("pagi_work_draft");
+		await idbClear();
 	}
+	addToast("Draf pekerjaan berhasil dibuang.", "success");
+	goToPagiDashboard();
 };
 
 const goToPagiDashboard = () => {
@@ -380,9 +385,7 @@ onMounted(async () => {
 		form.is_published = !!props.editor.is_published;
 
 		if (props.editor.cover_image) {
-			coverPreview.value = props.editor.cover_image.startsWith("http")
-				? props.editor.cover_image
-				: `/storage/${props.editor.cover_image}`;
+			coverPreview.value = formatStorageUrl(props.editor.cover_image);
 		}
 
 		if (props.editor.content && Array.isArray(props.editor.content)) {
@@ -537,8 +540,28 @@ onUnmounted(() => {
 		<template v-else>
 			<Navbar />
 
+			<!-- MOBILE TOP & BOTTOM BARS (< lg) -->
+			<EditorMobileBar
+				v-if="!isPreviewMode"
+				v-model:globalSpacing="globalSpacing"
+				v-model:canvasBgColor="canvasBgColor"
+				v-model:canvasTextColor="canvasTextColor"
+				:style-presets="stylePresets"
+				:content-options="contentOptions"
+				:processing="form.processing"
+				:disable-save="form.content.filter(b => b.type !== 'settings').length === 0"
+				@add-block="handleAddClick"
+				@open-asset-modal="openAssetLinkModal"
+				@show-publish-modal="showPublishModal = true"
+				@save-draft="saveAsDraft"
+				@preview="isPreviewMode = true"
+				@update-settings="updateGlobalSettingsBlock"
+				@cancel="handleCancel"
+				@discard-draft="handleDiscardDraft"
+			/>
+
 			<!-- MAIN LAYOUT -->
-			<div class="flex flex-1 overflow-hidden">
+			<div class="flex flex-1 overflow-hidden relative">
 				<EditorCanvas
 					:form="form"
 					:canvas-bg-color="canvasBgColor"
@@ -554,7 +577,7 @@ onUnmounted(() => {
 					@delete-block="deleteBlock"
 				/>
 
-				<!-- RIGHT SIDEBAR (RESTYLED WITH TABS, STICKY FOOTER, STYLE PANELS) -->
+				<!-- RIGHT SIDEBAR (DESKTOP ONLY lg:flex) -->
 				<EditorSidebar 
 					v-if="!isPreviewMode" 
 					v-model:activeSidebarTab="activeSidebarTab" 
@@ -672,6 +695,29 @@ onUnmounted(() => {
 					</button>
 				</div>
 			</TransitionGroup>
+		</div>
+
+		<!-- Modern Discard Draft Confirmation Modal -->
+		<div v-if="showDiscardModal" class="fixed inset-0 z-150 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 select-none" @click.self="showDiscardModal = false">
+			<div class="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-6 shadow-2xl space-y-4">
+				<div class="w-10 h-10 rounded-full bg-rose-100 dark:bg-rose-950/50 flex items-center justify-center text-rose-600 dark:text-rose-400">
+					<Trash2 class="w-5 h-5" />
+				</div>
+				<div>
+					<h3 class="text-base font-bold text-slate-900 dark:text-white">Membuang Draf Pekerjaan?</h3>
+					<p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-1">
+						Apakah Anda yakin ingin membuang draf pekerjaan ini? Semua perubahan yang belum disimpan akan dihapus secara permanen.
+					</p>
+				</div>
+				<div class="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-zinc-800">
+					<button @click="showDiscardModal = false" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-zinc-800 transition-colors border-none bg-transparent cursor-pointer">
+						Batal
+					</button>
+					<button @click="confirmDiscardDraft" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all cursor-pointer border-none flex items-center gap-1.5">
+						<span>Ya, Buang Draf</span>
+					</button>
+				</div>
+			</div>
 		</div>
 
 	</div>

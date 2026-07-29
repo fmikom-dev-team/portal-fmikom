@@ -1,7 +1,8 @@
 import { createInertiaApp, router } from "@inertiajs/vue3";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import type { DefineComponent } from "vue";
-import { createApp, h, Teleport } from "vue";
+import { createApp, h } from "vue";
+declare const __APP_BUILD_TIME__: string;
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
 import { Toaster } from 'vue-sonner';
@@ -11,7 +12,7 @@ import axios from "axios";
 import { initializeTheme } from "@/composables/useAppearance";
 import { useLoadingState } from "@/composables/useLoadingState";
 import { initFlashToast } from "@/composables/useFlashToast";
-import { initServiceWorkerUpdater } from "@/composables/useServiceWorker";
+import { initServiceWorkerUpdater, triggerSWCheck } from "@/composables/useServiceWorker";
 
 (globalThis as any).axios = axios;
 (globalThis as any).axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
@@ -125,7 +126,10 @@ function initEcho(reverbProps?: { key?: string; host?: string; port?: string | n
 				},
 			);
 			pusherConn.bind("error", (err: unknown) => {
-				console.error("[Echo Connection] Error details:", err);
+				// Non-critical WebSocket debug log (UI uses REST API fallback seamlessly)
+				if (import.meta.env.DEV) {
+					console.debug("[Echo Connection] Transport info:", err);
+				}
 			});
 		}
 	} catch (error) {
@@ -167,8 +171,8 @@ createInertiaApp({
 		toasterEl.id = 'toaster-root';
 		document.body.appendChild(toasterEl);
 		createApp(Toaster, {
-			position: 'bottom-right',
-			offset: 28,
+			position: 'bottom-center',
+			offset: 24,
 			mobileOffset: 16,
 			duration: 3200,
 			richColors: true,
@@ -196,10 +200,30 @@ createInertiaApp({
 		}
 
 		// Mount AppUpdateBanner sebagai app Vue mandiri di luar Inertia
-		// sehingga muncul di SEMUA halaman, tanpa peduli layout yang dipakai
+		// sehingga muncul di SEMUA halaman, tanpa peduli layout yang dipakai.
+		// is_pagi_admin berasal dari PHP middleware dan tersedia di semua halaman.
 		import('@/components/AppUpdateBanner.vue').then(({ default: AppUpdateBanner }) => {
+			const initialProps = (props.initialPage.props as any);
+			const isAdmin = Boolean(initialProps.is_pagi_admin);
+			const siteSettings = initialProps.siteSettings || {};
+
 			const bannerEl = document.createElement('div');
 			bannerEl.id = 'app-update-banner-root';
+			bannerEl.dataset.isAdmin = isAdmin ? '1' : '0';
+			bannerEl.dataset.appVersion = (typeof __APP_BUILD_TIME__ !== 'undefined')
+				? __APP_BUILD_TIME__
+				: String(Date.now());
+			if (siteSettings.brand_name) {
+				bannerEl.dataset.brandName = siteSettings.brand_name;
+			}
+			if (siteSettings.brand_logo) {
+				bannerEl.dataset.brandLogo = siteSettings.brand_logo;
+			}
+			if (siteSettings.app_update_items) {
+				bannerEl.dataset.updateItems = typeof siteSettings.app_update_items === 'string'
+					? siteSettings.app_update_items
+					: JSON.stringify(siteSettings.app_update_items);
+			}
 			document.body.appendChild(bannerEl);
 			createApp(AppUpdateBanner).mount(bannerEl);
 		});
@@ -256,6 +280,27 @@ router.on("success", (event) => {
 			document.documentElement.style.setProperty("--wos-primary", settings.primary_color);
 		}
 	}
+
+	if (props.is_pagi_admin !== undefined || props.siteSettings) {
+		const bannerEl = document.getElementById('app-update-banner-root');
+		if (bannerEl) {
+			if (props.is_pagi_admin !== undefined) {
+				bannerEl.dataset.isAdmin = props.is_pagi_admin ? '1' : '0';
+			}
+			if (props.siteSettings) {
+				if (props.siteSettings.brand_name) bannerEl.dataset.brandName = props.siteSettings.brand_name;
+				if (props.siteSettings.brand_logo) bannerEl.dataset.brandLogo = props.siteSettings.brand_logo;
+				if (props.siteSettings.app_update_items) {
+					bannerEl.dataset.updateItems = typeof props.siteSettings.app_update_items === 'string'
+						? props.siteSettings.app_update_items
+						: JSON.stringify(props.siteSettings.app_update_items);
+				}
+			}
+		}
+	}
+
+	// Trigger SW check pada setiap navigasi halaman Inertia
+	triggerSWCheck();
 });
 
 router.on("invalid", (event) => {
@@ -304,5 +349,5 @@ if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
 	initServiceWorkerUpdater();
 }
 
-// Global flash ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ toast handler (fires once per Inertia navigation)
+// Global flash toast handler (fires once per Inertia navigation)
 initFlashToast();

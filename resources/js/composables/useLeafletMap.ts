@@ -10,6 +10,7 @@ const TILE_URLS = {
 export function useLeafletMap(options?: {
 	center?: [number, number];
 	zoom?: number;
+	scrollWheelZoom?: boolean;
 }) {
 	const mapContainer = ref<HTMLElement | null>(null);
 	const map = shallowRef<L.Map | null>(null);
@@ -44,6 +45,7 @@ export function useLeafletMap(options?: {
 			zoom: options?.zoom ?? 5,
 			zoomControl: false,
 			preferCanvas: true,
+			scrollWheelZoom: options?.scrollWheelZoom ?? false,
 		});
 
 		tileLayer = L.tileLayer(

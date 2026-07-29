@@ -23,34 +23,33 @@ class PagiSocialService
      */
     public function searchUsers(string $query, int $authId): array
     {
+        $query = ltrim(trim($query), '@');
         if (strlen($query) < 1) {
             return [];
         }
 
-        try {
-            $matchIds = User::search($query)->keys();
-            $users = User::whereIn('id', $matchIds)
-                ->where('id', '!=', $authId)
-                ->limit(10)
-                ->get();
-        } catch (\Throwable $e) {
-            Log::warning('Meilisearch unavailable (PagiSocialService::searchUsers), falling back to SQL.', ['error' => $e->getMessage()]);
-            $users = User::where(function ($q) use ($query) {
-                $q->where('name', 'like', '%'.$query.'%')
-                    ->orWhere('email', 'like', '%'.$query.'%');
-            })
-                ->where('id', '!=', $authId)
-                ->limit(10)
-                ->get();
-        }
+        // Direct live MySQL query to ensure newly updated usernames/accounts are fetched instantly
+        $users = User::query()->where(function ($q) use ($query) {
+            $q->where('pagi_username', 'like', '%'.$query.'%')
+                ->orWhere('name', 'like', '%'.$query.'%')
+                ->orWhere('email', 'like', '%'.$query.'%');
+        })
+            ->orderByRaw("CASE WHEN pagi_username LIKE ? THEN 1 WHEN pagi_username LIKE ? THEN 2 ELSE 3 END", [$query, '%'.$query.'%'])
+            ->limit(10)
+            ->get();
 
-        return $users->map(function ($u) {
+        return $users->map(function ($u) use ($authId) {
+            $isSelf = $u->id === $authId;
+            $baseTitle = $u->role_title ?: 'PAGI Creator';
+            $roleTitle = $isSelf ? "{$baseTitle} (Anda)" : $baseTitle;
+
             return [
                 'id' => $u->id,
                 'name' => $u->name,
                 'pagi_username' => $u->pagi_username,
                 'foto_path' => $this->resolveAssetPath($u->foto_path),
-                'role_title' => $u->role_title ?: 'PAGI Creator',
+                'role_title' => $roleTitle,
+                'is_self' => $isSelf,
             ];
         })->toArray();
     }
@@ -62,8 +61,9 @@ class PagiSocialService
     public function explorePeople(int $pagiModuleId): array
     {
         return Cache::remember("pagi_explore_people_{$pagiModuleId}", 600, function () use ($pagiModuleId) {
-            $userModuleRoles = UserModuleRole::where('module_id', $pagiModuleId)
-                ->where('is_active', true)
+            $userModuleRoles = UserModuleRole::query()
+                ->where('module_id', '=', $pagiModuleId)
+                ->where('is_active', '=', true)
                 ->with(['user.programStudi', 'role'])
                 ->latest('id')
                 ->limit(80)
@@ -139,6 +139,7 @@ class PagiSocialService
                 }
 
                 $covers = collect($latestWorkIds->get($u->id, []))
+                    ->filter(fn ($w) => !in_array($w->status ?? 'active', ['review', 'hidden', 'removed']))
                     ->map(fn ($w) => $this->resolveAssetPath($w->cover_image))
                     ->filter()
                     ->values()
@@ -196,7 +197,7 @@ class PagiSocialService
         $names = $this->extractCollaboratorNames($works);
         $preloadedUsers = [];
         if (! empty($names)) {
-            $preloadedUsers = User::whereIn('name', $names)
+            $preloadedUsers = User::query()->whereIn('name', $names, 'and', false)
                 ->select(['id', 'name', 'pagi_username', 'foto_path'])
                 ->get()
                 ->keyBy('name')
@@ -209,8 +210,12 @@ class PagiSocialService
                 continue;
             }
             $authorData = $this->buildAuthorData($p->user);
-            $portfolioData = $this->buildPortfolioData($p, $p->user, $authorData, $preloadedUsers);
-            $content = is_array($p->content) ? $p->content : (json_decode($p->content, true) ?: []);
+            $portfolioData = $this->buildPortfolioData($p, $p->user, $preloadedUsers);
+            
+            $content = is_array($p->content) ? $p->content : json_decode($p->content, true);
+            if (! is_array($content)) {
+                $content = [];
+            }
 
             $isManual = $this->isManualGallery($content);
             $items = $isManual
@@ -242,6 +247,7 @@ class PagiSocialService
         ])
             ->withCount('commentsRelation')
             ->where('is_published', true)
+            ->whereIn('status', ['active', 'warning'])
             ->where(function ($q) {
                 $q->whereNull('visibility')->orWhere('visibility', 'Everyone');
             });
@@ -282,7 +288,7 @@ class PagiSocialService
         ];
     }
 
-    private function buildPortfolioData(PagiWork $p, User $u, array $authorData, ?array $preloadedUsers = null): array
+    private function buildPortfolioData(PagiWork $p, User $u, ?array $preloadedUsers = null): array
     {
         $defaultPlaceholder = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop';
 
@@ -293,6 +299,7 @@ class PagiSocialService
             'id' => $p->id,
             'title' => $p->title ?? 'Untitled Project',
             'image' => $this->resolveAssetPath($p->cover_image) ?? $defaultPlaceholder,
+            'status' => $p->status,
             'author' => $this->formatName($u->name),
             'avatar' => $this->resolveAssetPath($u->foto_path),
             'likes' => count($likes),
@@ -356,40 +363,48 @@ class PagiSocialService
         return [$this->buildGalleryEntry('manual-'.$p->id, $p, $imgUrl, $type, true, $authorData, $portfolioData)];
     }
 
+    private function resolveStoragePath(string $path): string
+    {
+        return asset('storage/'.$path);
+    }
+
     private function extractAutoItems(PagiWork $p, array $content, array $authorData, array $portfolioData): array
     {
         $defaultPlaceholder = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop';
         $items = [];
         $seenUrls = [];
         $maxItems = 2;
-        $count = 0;
 
         if ($p->cover_image && $p->cover_image !== $defaultPlaceholder) {
-            $imgUrl = str_starts_with($p->cover_image, 'http') ? $p->cover_image : asset('storage/'.$p->cover_image);
+            $imgUrl = str_starts_with($p->cover_image, 'http') ? $p->cover_image : $this->resolveStoragePath($p->cover_image);
             $seenUrls[] = $imgUrl;
             $items[] = $this->buildGalleryEntry('cover-'.$p->id, $p, $imgUrl, $this->isVideoUrlLocal($p->cover_image) ? 'video' : 'image', false, $authorData, $portfolioData);
-            $count++;
         }
 
         foreach ($content as $bIdx => $block) {
-            if ($count >= $maxItems) {
+            if (count($items) >= $maxItems) {
                 break;
             }
-            if (! $block || ! isset($block['type'])) {
-                continue;
-            }
-            $newItems = $this->processContentBlock($block, $bIdx, $p, $seenUrls, $authorData, $portfolioData);
-            foreach ($newItems as $item) {
-                if ($count >= $maxItems) {
-                    break;
-                }
-                $seenUrls[] = $item['url'];
-                $items[] = $item;
-                $count++;
-            }
+            $this->appendContentBlockItems($block, $bIdx, $p, $seenUrls, $authorData, $portfolioData, $items, $maxItems);
         }
 
         return $items;
+    }
+
+    private function appendContentBlockItems(mixed $block, int|string $bIdx, PagiWork $p, array &$seenUrls, array $authorData, array $portfolioData, array &$items, int $maxItems): void
+    {
+        if (! $block || ! is_array($block) || ! isset($block['type'])) {
+            return;
+        }
+
+        $newItems = $this->processContentBlock($block, $bIdx, $p, $seenUrls, $authorData, $portfolioData);
+        foreach ($newItems as $item) {
+            if (count($items) >= $maxItems) {
+                break;
+            }
+            $seenUrls[] = $item['url'];
+            $items[] = $item;
+        }
     }
 
     private function processContentBlock(array $block, int|string $bIdx, PagiWork $p, array $seenUrls, array $authorData, array $portfolioData): array
@@ -407,7 +422,7 @@ class PagiSocialService
         if (empty($block['file_path'])) {
             return [];
         }
-        $url = asset('storage/'.$block['file_path']);
+        $url = $this->resolveStoragePath($block['file_path']);
         if (in_array($url, $seenUrls)) {
             return [];
         }
@@ -420,7 +435,7 @@ class PagiSocialService
         if (empty($block['file_path']) || ! $this->isVideoPathLocal($block['file_path'])) {
             return [];
         }
-        $url = asset('storage/'.$block['file_path']);
+        $url = $this->resolveStoragePath($block['file_path']);
         if (in_array($url, $seenUrls)) {
             return [];
         }
@@ -438,7 +453,7 @@ class PagiSocialService
             if (empty($filePath)) {
                 continue;
             }
-            $url = asset('storage/'.$filePath);
+            $url = $this->resolveStoragePath($filePath);
             if (! in_array($url, $seenUrls)) {
                 $items[] = $this->buildGalleryEntry("block-grid-{$p->id}-{$bIdx}-{$gIdx}", $p, $url, 'image', false, $authorData, $portfolioData);
                 $seenUrls[] = $url;
@@ -458,10 +473,11 @@ class PagiSocialService
     {
         return Cache::remember("pagi_people_you_may_know_{$moduleId}_{$currentUserId}", 600, function () use ($moduleId, $currentUserId) {
             // Count total eligible users once
-            $total = UserModuleRole::where('module_id', $moduleId)
+            $total = UserModuleRole::query()
+                ->where('module_id', '=', $moduleId)
                 ->where('user_id', '!=', $currentUserId)
-                ->where('is_active', true)
-                ->count();
+                ->where('is_active', '=', true)
+                ->count('*');
 
             if ($total === 0) {
                 return collect();
@@ -472,10 +488,11 @@ class PagiSocialService
             $seed = ($currentUserId * 31 + (int) now()->format('GH')) % max(1, $total);
             $offset = max(0, $seed - 5);
 
-            return UserModuleRole::with(['user.programStudi', 'role'])
-                ->where('module_id', $moduleId)
+            return UserModuleRole::query()
+                ->with(['user.programStudi', 'role'])
+                ->where('module_id', '=', $moduleId)
                 ->where('user_id', '!=', $currentUserId)
-                ->where('is_active', true)
+                ->where('is_active', '=', true)
                 ->skip($offset)
                 ->limit(5)
                 ->get()
@@ -504,7 +521,8 @@ class PagiSocialService
 
         // Fetch all needed users in one query
         $allIds = array_unique(array_merge($followersIds, $followingIds));
-        $allUsers = User::whereIn('id', $allIds)
+        $allUsers = User::query()
+            ->whereIn('id', $allIds, 'and', false)
             ->select(['id', 'name', 'pagi_username', 'foto_path', 'role_title', 'user_type'])
             ->get()
             ->keyBy('id');

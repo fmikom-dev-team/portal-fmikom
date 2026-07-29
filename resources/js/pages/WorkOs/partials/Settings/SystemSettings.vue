@@ -42,6 +42,7 @@ const form = reactive({
 	maintenance_mode: props.settings.maintenance_mode === "1" ? "1" : "0",
 	maintenance_message: props.settings.maintenance_message || "Sistem sedang dalam pemeliharaan. Silakan kembali beberapa saat lagi.",
 	public_registration: props.settings.public_registration !== "0" ? "1" : "0",
+	helpdesk_wa_number: props.settings.helpdesk_wa_number || "628123456789",
 });
 
 // For previews
@@ -456,6 +457,18 @@ const flushCache = async () => {
 						<div class="p-4 bg-gray-50/80 dark:bg-zinc-800/20 border border-gray-100 dark:border-zinc-800 rounded-xl">
 							<p class="text-[12px] font-bold text-gray-800 dark:text-zinc-200">Kebijakan Registrasi</p>
 							<p class="text-[11.5px] text-gray-500 dark:text-zinc-400 mt-1">Jika pendaftaran dimatikan, pendaftaran hanya bisa dilakukan secara internal oleh administrator melalui tab <strong>Users Management</strong>.</p>
+						</div>
+
+						<!-- Input Helpdesk WA CS Number -->
+						<div class="space-y-2 pt-4 border-t border-gray-100 dark:border-zinc-800">
+							<label class="block text-[12px] font-bold text-gray-700 dark:text-zinc-300">Nomor WhatsApp Helpdesk CS FMIKOM</label>
+							<p class="text-[11px] text-gray-400 dark:text-zinc-400">Nomor WA resmi yang menerima pesan pengajuan ubah email aktivasi dari mahasiswa.</p>
+							<input
+								v-model="form.helpdesk_wa_number"
+								type="text"
+								placeholder="Contoh: 628123456789"
+								class="w-full bg-gray-50 dark:bg-zinc-800/40 border border-gray-200 dark:border-zinc-700 rounded-lg px-3.5 py-2.5 text-[13px] font-medium text-gray-800 dark:text-zinc-100 focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 focus:border-transparent outline-none transition-all"
+							/>
 						</div>
 					</div>
 

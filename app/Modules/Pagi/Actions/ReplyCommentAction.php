@@ -6,6 +6,7 @@ use App\Models\Pagi\PagiWork;
 use App\Models\Pagi\PagiWorkComment;
 use App\Models\User;
 use App\Notifications\PagiNotification;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class ReplyCommentAction
@@ -13,18 +14,32 @@ class ReplyCommentAction
     /**
      * Execute posting a reply to a comment.
      */
-    public function execute(User $authUser, int $previewId, string $commentId, string $body, ?int $replyToUserId): array
+    public function execute(User $authUser, int $previewId, string $commentId, string $body, ?int $replyToUserId = null): array
     {
         $portfolio = PagiWork::findOrFail($previewId);
 
         $parentCommentRecord = PagiWorkComment::where('uuid', $commentId)->firstOrFail();
 
+        $moderationService = app(\App\Modules\Pagi\Services\ContentModerationService::class);
+        $moderationMode = \App\Models\Portal\PortalSetting::query()->where('key', 'pagi_comment_censor_mode')->value('value') ?? 'reject';
+
+        $scanResult = $moderationService->scan($body);
+
+        if ($scanResult['is_flagged'] && $moderationMode === 'reject') {
+            abort(response()->json([
+                'message' => 'Balasan komentar Anda ditolak otomatis oleh sistem karena terdeteksi memuat kata kasar, pelecehan, atau konten terlarang.',
+            ], 422));
+        }
+
+        $finalBody = $scanResult['is_flagged'] ? $scanResult['censored_text'] : strip_tags($body);
+
+        // Save reply
         PagiWorkComment::create([
             'uuid' => (string) Str::uuid(),
             'work_id' => $portfolio->id,
             'user_id' => $authUser->id,
             'parent_id' => $parentCommentRecord->id,
-            'body' => strip_tags($body),
+            'body' => $finalBody,
         ]);
 
         // Notify target user (replied-to user) or original commenter
@@ -40,6 +55,10 @@ class ReplyCommentAction
                         ? $authUser->foto_path
                         : asset('storage/'.$authUser->foto_path);
                 }
+                $workImage = null;
+                if ($portfolio->cover_image) {
+                    $workImage = str_starts_with($portfolio->cover_image, 'http') ? $portfolio->cover_image : asset('storage/'.$portfolio->cover_image);
+                }
                 try {
                     $postOwnerName = 'owner';
                     if ($portfolio->user) {
@@ -54,8 +73,12 @@ class ReplyCommentAction
                         extra: [
                             'sender_id' => $authUser->id,
                             'portfolio_id' => $portfolio->id,
+                            'work_image' => $workImage,
                         ],
                     ));
+                    Cache::forget("recent_notifs_{$targetUser->id}_mahasiswa");
+                    Cache::forget("recent_notifs_{$targetUser->id}_dosen");
+                    Cache::forget("recent_notifs_{$targetUser->id}_alumni");
                 } catch (\Throwable $e) {
                     report($e);
                 }

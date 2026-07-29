@@ -1,12 +1,110 @@
 <script setup lang="ts">
+import { computed, ref, onMounted, onUnmounted } from "vue";
 import ChartCard from "@/components/Admin/ChartCard.vue";
 import StatsCard from "@/components/Admin/StatsCard.vue";
 import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
 
-const statsCards = [
+const props = defineProps<{
+	stats?: {
+		totalKunjungan: number;
+		penggunaUnik: number;
+	};
+}>();
+
+// === Realtime Stats Polling ===
+const liveStats = ref(
+	props.stats ?? {
+		totalKunjungan: 0,
+		penggunaUnik: 0,
+	},
+);
+
+let pollingInterval: ReturnType<typeof setInterval> | null = null;
+
+async function fetchAnalyticsStats() {
+	try {
+		const res = await fetch("/pagi/admin/api/analytics-stats", {
+			headers: {
+				Accept: "application/json",
+				"X-Requested-With": "XMLHttpRequest",
+			},
+			credentials: "same-origin",
+		});
+		if (!res.ok) return;
+		const data = await res.json();
+		if (data.stats) {
+			liveStats.value = data.stats;
+		}
+	} catch {
+		// silent fail
+	}
+}
+
+// === Realtime Dynamic Chart Loading ===
+const trafficChartData = ref<{ categories: string[] } | null>(null);
+const trafficSeries = ref<Array<{ name: string; data: number[] }>>([]);
+const isLoadingTraffic = ref(true);
+
+const activityChartData = ref<{ categories: string[] } | null>(null);
+const activitySeries = ref<Array<{ name: string; data: number[] }>>([]);
+const isLoadingActivity = ref(true);
+
+async function fetchTrafficChart(range: "7d" | "30d" | "90d") {
+	isLoadingTraffic.value = true;
+	try {
+		const res = await fetch(`/pagi/admin/api/analytics-charts?range=${range}`, {
+			headers: {
+				Accept: "application/json",
+				"X-Requested-With": "XMLHttpRequest",
+			},
+			credentials: "same-origin",
+		});
+		if (!res.ok) return;
+		const data = await res.json();
+		trafficChartData.value = { categories: data.traffic.categories };
+		trafficSeries.value = data.traffic.series;
+	} catch {
+		// silent fail
+	} finally {
+		isLoadingTraffic.value = false;
+	}
+}
+
+async function fetchActivityChart(range: "7d" | "30d" | "90d") {
+	isLoadingActivity.value = true;
+	try {
+		const res = await fetch(`/pagi/admin/api/analytics-charts?range=${range}`, {
+			headers: {
+				Accept: "application/json",
+				"X-Requested-With": "XMLHttpRequest",
+			},
+			credentials: "same-origin",
+		});
+		if (!res.ok) return;
+		const data = await res.json();
+		activityChartData.value = { categories: data.activity.categories };
+		activitySeries.value = data.activity.series;
+	} catch {
+		// silent fail
+	} finally {
+		isLoadingActivity.value = false;
+	}
+}
+
+onMounted(() => {
+	pollingInterval = setInterval(fetchAnalyticsStats, 30_000);
+	fetchTrafficChart("7d");
+	fetchActivityChart("7d");
+});
+
+onUnmounted(() => {
+	if (pollingInterval) clearInterval(pollingInterval);
+});
+
+const statsCards = computed(() => [
 	{
 		title: "Total Kunjungan",
-		value: 48200,
+		value: liveStats.value.totalKunjungan,
 		change: "+22.4%",
 		trend: "up" as const,
 		iconColor: "bg-indigo-500",
@@ -14,7 +112,7 @@ const statsCards = [
 	},
 	{
 		title: "Pengguna Unik",
-		value: 3840,
+		value: liveStats.value.penggunaUnik,
 		change: "+15.7%",
 		trend: "up" as const,
 		iconColor: "bg-emerald-500",
@@ -36,17 +134,17 @@ const statsCards = [
 		iconColor: "bg-rose-500",
 		icon: `<svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6L9 12.75l4.286-4.286a11.948 11.948 0 014.306 6.43l.776 2.898m0 0l3.182-5.511m-3.182 5.51l-5.511-3.181" /></svg>`,
 	},
-];
+]);
 </script>
 
 <template>
     <PagiAdminLayout title="Analitik">
         <div class="mb-6">
             <h1 class="text-xl font-black text-slate-900 dark:text-white tracking-tight">Analitik</h1>
-            <p class="mt-0.5 text-[13px] text-slate-400 dark:text-zinc-500">Pantau performa platform PAGI secara real-time</p>
+            <p class="mt-0.5 text-[13px] text-slate-400 dark:text-zinc-500 font-medium">Pantau performa platform PAGI secara real-time</p>
         </div>
 
-        <div class="mb-5 grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="mb-5 grid grid-cols-2 lg:grid-cols-4 gap-3 animate-fade-in">
             <StatsCard
                 v-for="card in statsCards"
                 :key="card.title"
@@ -59,9 +157,31 @@ const statsCards = [
             />
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <ChartCard title="Traffic Harian" />
-            <ChartCard title="Aktivitas Pengguna" />
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 animate-fade-in items-stretch">
+            <ChartCard 
+                title="Traffic Harian" 
+                :loading="isLoadingTraffic"
+                :chart-data="(trafficChartData as any)"
+                :custom-series="trafficSeries"
+                @range-change="fetchTrafficChart"
+            />
+            <ChartCard 
+                title="Aktivitas Pengguna" 
+                :loading="isLoadingActivity"
+                :chart-data="(activityChartData as any)"
+                :custom-series="activitySeries"
+                @range-change="fetchActivityChart"
+            />
         </div>
     </PagiAdminLayout>
 </template>
+
+<style scoped>
+.animate-fade-in {
+    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>

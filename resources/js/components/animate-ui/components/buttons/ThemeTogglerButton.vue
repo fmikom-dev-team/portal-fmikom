@@ -39,7 +39,7 @@ const activeIcon = computed(() => {
 
 // Cycling logic with View Transition animation
 const cycleTheme = () => {
-  const currentIdx = availableModes.value.indexOf(activeMode.value);
+  const currentIdx = availableModes.value.indexOf(activeMode.value as any);
   if (currentIdx === -1) return;
   
   const nextIdx = (currentIdx + 1) % availableModes.value.length;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
 const props = withDefaults(
 	defineProps<{
@@ -12,7 +12,7 @@ const props = withDefaults(
 			badgeClass?: string;
 		}>;
 		orientation?: "horizontal" | "vertical";
-		variant?: "pill" | "underline" | "segment";
+		variant?: "pill" | "underline" | "segment" | "sidebar";
 		containerClass?: string;
 		pillClass?: string;
 		activeClass?: string;
@@ -62,7 +62,7 @@ onMounted(() => {
 	nextTick(updatePill);
 	setTimeout(updatePill, 50);
 	setTimeout(updatePill, 150);
-	setTimeout(updatePill, 300); // layout settle helper
+	setTimeout(updatePill, 300);
 	window.addEventListener("resize", updatePill);
 });
 
@@ -84,6 +84,15 @@ watch(
 	},
 	{ deep: true },
 );
+
+// Jika pillClass menentukan background tersendiri (misal: bg-indigo-600),
+// jangan tambahkan default bg-white agar warna background tidak berbenturan
+const defaultPillBg = computed(() => {
+	if (props.pillClass.includes("bg-")) return "";
+	if (props.variant === "pill" || props.variant === "sidebar") return "bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 shadow-sm";
+	if (props.variant === "segment") return "bg-white dark:bg-zinc-800 shadow-sm";
+	return "";
+});
 </script>
 
 <template>
@@ -101,10 +110,9 @@ watch(
         <!-- Sliding background pill/underline indicator -->
         <div 
             :class="[
-                'absolute transition-all duration-350 cubic-bezier(0.16, 1, 0.3, 1) z-0',
-                variant === 'pill' ? 'bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-slate-200/40 dark:border-zinc-800/50' : '',
-                variant === 'segment' ? 'bg-white dark:bg-zinc-800 rounded-md shadow-sm' : '',
-                variant === 'underline' ? 'bg-[#2563eb] dark:bg-blue-500' : '',
+                'absolute transition-all duration-350 cubic-bezier(0.16, 1, 0.3, 1) z-0 rounded-lg',
+                defaultPillBg,
+                variant === 'underline' ? 'bg-indigo-600 dark:bg-indigo-400' : '',
                 pillStyle.width === '0px' ? 'opacity-0' : 'opacity-100',
                 pillClass
             ]"
@@ -128,8 +136,8 @@ watch(
                         ? 'px-3 py-1.5 rounded-md text-xs font-semibold' 
                         : 'px-3.5 py-1.5 rounded-lg text-xs font-semibold'),
                 modelValue === tab.id
-                    ? (activeClass || (variant === 'underline' ? 'text-[#2563eb] dark:text-blue-400 font-semibold' : 'text-[#111827] dark:text-zinc-100'))
-                    : (inactiveClass || (variant === 'underline' ? 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200' : 'text-slate-500 hover:text-slate-800 dark:text-zinc-450 dark:hover:text-zinc-300'))
+                    ? (activeClass || (variant === 'underline' ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-slate-900 dark:text-zinc-100 font-bold'))
+                    : (inactiveClass || (variant === 'underline' ? 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200' : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'))
             ]"
         >
             <component v-if="tab.icon" :is="tab.icon" class="w-4 h-4 shrink-0" />
@@ -138,10 +146,9 @@ watch(
                 v-if="tab.badge !== undefined" 
                 :class="[
                     'ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold transition-all duration-200 shrink-0',
-                    modelValue === tab.id 
-                        ? 'bg-red-500 text-white' 
-                        : 'bg-slate-200 dark:bg-zinc-700 text-slate-600 dark:text-zinc-350',
-                    tab.badgeClass
+                    tab.badgeClass ? tab.badgeClass : (modelValue === tab.id 
+                        ? 'bg-white/20 text-white' 
+                        : 'bg-slate-200 dark:bg-zinc-700 text-slate-600 dark:text-zinc-300')
                 ]"
             >
                 {{ tab.badge }}

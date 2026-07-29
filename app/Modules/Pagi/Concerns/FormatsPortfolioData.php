@@ -70,6 +70,8 @@ trait FormatsPortfolioData
                         'id' => $r->uuid,
                         'user_id' => $r->user_id,
                         'name' => $this->formatName($r->user->name ?? 'Anonymous'),
+                        'pagi_username' => $r->user?->pagi_username,
+                        'user_type' => $r->user->user_type ?? null,
                         'avatar' => $this->resolveAssetPath($r->user->foto_path ?? null),
                         'body' => $r->body,
                         'content' => $r->body,
@@ -84,6 +86,7 @@ trait FormatsPortfolioData
                     'user_id' => $c->user_id,
                     'name' => $this->formatName($c->user->name ?? 'Anonymous'),
                     'pagi_username' => $c->user?->pagi_username,
+                    'user_type' => $c->user->user_type ?? null,
                     'avatar' => $avatar,
                     'body' => $c->body,
                     'content' => $c->body,
@@ -157,31 +160,54 @@ trait FormatsPortfolioData
                 continue;
             }
 
-            [$names, $statusMap] = $this->parseCollaboratorList($collaborators);
+            $userIds = [];
+            $handlesAndNames = [];
+            $statusMap = [];
 
-            if (empty($names)) {
+            if (is_array($collaborators)) {
+                foreach ($collaborators as $c) {
+                    $uId = is_array($c) ? ($c['user_id'] ?? null) : null;
+                    $rawName = is_array($c) ? ($c['name'] ?? '') : (string) $c;
+                    $status = is_array($c) ? ($c['status'] ?? 'pending') : 'accepted';
+                    $cleanName = ltrim((string) $rawName, '@');
+
+                    if ($uId) {
+                        $userIds[] = (int) $uId;
+                        $statusMap['id_'.(int) $uId] = $status;
+                    }
+                    if ($cleanName !== '') {
+                        $handlesAndNames[] = $cleanName;
+                        $handlesAndNames[] = $rawName;
+                        $statusMap[$cleanName] = $status;
+                        $statusMap[$rawName] = $status;
+                        $statusMap['@'.$cleanName] = $status;
+                    }
+                }
+            }
+
+            if (empty($userIds) && empty($handlesAndNames)) {
                 return [];
             }
 
-            if ($preloadedUsers !== null) {
-                $users = collect();
-                foreach ($names as $name) {
-                    if (isset($preloadedUsers[$name])) {
-                        $users->push($preloadedUsers[$name]);
+            $users = User::query()
+                ->where(function ($q) use ($userIds, $handlesAndNames) {
+                    if (! empty($userIds)) {
+                        $q->whereIn('id', $userIds);
                     }
-                }
-            } else {
-                $users = User::whereIn('name', $names)
-                    ->select(['id', 'name', 'pagi_username', 'foto_path'])
-                    ->get();
-            }
+                    if (! empty($handlesAndNames)) {
+                        $q->orWhereIn('pagi_username', $handlesAndNames)
+                          ->orWhereIn('name', $handlesAndNames);
+                    }
+                })
+                ->select(['id', 'name', 'pagi_username', 'foto_path'])
+                ->get();
 
             return $users->map(fn ($u) => [
                 'id' => $u->id,
                 'name' => $this->formatName($u->name),
                 'pagi_username' => $u->pagi_username,
                 'avatar' => $this->resolveAssetPath($u->foto_path),
-                'status' => $statusMap[$u->name] ?? 'pending',
+                'status' => $statusMap['id_'.$u->id] ?? $statusMap[$u->pagi_username] ?? $statusMap['@'.$u->pagi_username] ?? $statusMap[$u->name] ?? 'accepted',
             ])->toArray();
         }
 
@@ -237,28 +263,30 @@ trait FormatsPortfolioData
      */
     public function resolveAssetPath(?string $path): ?string
     {
-        if (! $path) {
+        if (! $path || $path === 'null' || $path === 'undefined') {
             return null;
         }
 
-        if (str_starts_with($path, 'http')) {
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, 'data:')) {
             return $path;
         }
 
-        $extension = pathinfo($path, PATHINFO_EXTENSION);
+        $cleanPath = preg_replace('/^\/?(storage\/)+/', '', $path);
+
+        $extension = pathinfo($cleanPath, PATHINFO_EXTENSION);
         if (in_array(strtolower($extension), ['jpg', 'jpeg', 'png'])) {
-            $webpPath = preg_replace('/\.(jpg|jpeg|png)$/i', '.webp', $path);
+            $webpPath = preg_replace('/\.(jpg|jpeg|png)$/i', '.webp', $cleanPath);
             if (file_exists(public_path('storage/'.$webpPath))) {
-                $path = $webpPath;
+                $cleanPath = $webpPath;
             }
         } elseif (strtolower($extension) === 'mp4') {
-            $webmPath = preg_replace('/\.mp4$/i', '.webm', $path);
+            $webmPath = preg_replace('/\.mp4$/i', '.webm', $cleanPath);
             if (file_exists(public_path('storage/'.$webmPath))) {
-                $path = $webmPath;
+                $cleanPath = $webmPath;
             }
         }
 
-        return asset('storage/'.$path);
+        return asset('storage/'.$cleanPath);
     }
 
     // ──────────────────────────────────────────────────────────────────────────

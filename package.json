@@ -5,9 +5,10 @@
 	"scripts": {
 		"build": "vite build && node -e \"const fs=require('fs');const f='public/sw-pwa.js';fs.writeFileSync(f,fs.readFileSync(f,'utf8').replace('__BUILD_VERSION__','v'+Date.now()));\" && (php artisan octane:reload --quiet || true)",
 		"build:ssr": "vite build && vite build --ssr && node -e \"const fs=require('fs');const f='public/sw-pwa.js';fs.writeFileSync(f,fs.readFileSync(f,'utf8').replace('__BUILD_VERSION__','v'+Date.now()));\" && (php artisan octane:reload --quiet || true)",
+		"build:analyze": "ANALYZE=1 npm run build",
 		"dev": "vite",
-		"dev:full": "concurrently -n \"vite,laravel,queue\" -c \"blue,green,yellow\" \"npm run dev\" \"php artisan serve\" \"php artisan queue:listen\"",
-		"dev:tunnel": "export CLOUDFLARE_TUNNEL_TOKEN=$(grep -o '^CLOUDFLARE_TUNNEL_TOKEN=.*' .env | cut -d= -f2-) && concurrently -n \"laravel,queue,reverb,tunnel\" -c \"green,yellow,blue,magenta\" \"php artisan octane:start --port=8000 --caddyfile=Caddyfile\" \"php artisan queue:listen\" \"php artisan reverb:start\" \"cloudflared tunnel run --token $CLOUDFLARE_TUNNEL_TOKEN\"",
+		"dev:full": "concurrently -n \"vite,laravel,queue,meilisearch\" -c \"blue,green,yellow,cyan\" \"npm run dev\" \"php artisan serve\" \"php artisan queue:listen\" \"meilisearch\"",
+		"dev:tunnel": "export CLOUDFLARE_TUNNEL_TOKEN=$(grep -o '^CLOUDFLARE_TUNNEL_TOKEN=.*' .env | cut -d= -f2-) && concurrently -n \"laravel,queue,reverb,tunnel,meilisearch\" -c \"green,yellow,blue,magenta,cyan\" \"php artisan octane:start --port=8000 --caddyfile=Caddyfile\" \"php artisan queue:listen\" \"php artisan reverb:start\" \"cloudflared tunnel run --token $CLOUDFLARE_TUNNEL_TOKEN\" \"meilisearch\"",
 		"format": "biome format . --write",
 		"lint": "biome check .",
 		"lint:fix": "biome check . --write",

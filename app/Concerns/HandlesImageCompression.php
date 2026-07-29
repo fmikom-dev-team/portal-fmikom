@@ -3,6 +3,7 @@
 namespace App\Concerns;
 
 use App\Jobs\OptimizeVideoJob;
+use App\Services\SystemAlertService;
 use App\Services\VirusScannerService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
@@ -36,6 +37,11 @@ trait HandlesImageCompression
 
         if (! $isValidImage) {
             Log::warning("[HandlesImageCompression] Image type rejected. MIME: {$realMime}, Ext: {$realExt}, ClientExt: {$clientExt}");
+            SystemAlertService::log(
+                "Gagal Unggah Gambar: Tipe Berkas Tidak Valid",
+                "Percobaan mengunggah berkas '{$file->getClientOriginalName()}' ditolak. MIME: {$realMime}, Ekstensi: {$clientExt}.",
+                "warning"
+            );
             $key = $this->getUploadedFileKey($file);
             throw ValidationException::withMessages([
                 $key => 'Unggah berkas gagal: Tipe berkas gambar tidak valid atau terindikasi berbahaya.',
@@ -46,6 +52,11 @@ trait HandlesImageCompression
         $scanner = app(VirusScannerService::class);
         $scanResult = $scanner->scan($file);
         if (! $scanResult['safe']) {
+            SystemAlertService::log(
+                "Peringatan Keamanan: Indikasi Berkas Berbahaya",
+                "Pemindaian ClamAV mendeteksi anomali pada berkas '{$file->getClientOriginalName()}': ".$scanResult['reason'],
+                "error"
+            );
             $key = $this->getUploadedFileKey($file);
             throw ValidationException::withMessages([
                 $key => $scanResult['reason'],
@@ -82,7 +93,11 @@ trait HandlesImageCompression
         }
 
         if (! $sourceImage) {
-            // Throw exception to prevent storing raw fallback (neutralize fake/corrupted images)
+            SystemAlertService::log(
+                "Gagal Unggah Gambar: Berkas Rusak",
+                "Proses pemrosesan gambar '{$file->getClientOriginalName()}' gagal akibat kerusakan struktur berkas gambar (corrupted file).",
+                "error"
+            );
             $key = $this->getUploadedFileKey($file);
             throw ValidationException::withMessages([
                 $key => 'Unggah berkas gagal: Kerusakan berkas gambar terdeteksi.',
@@ -174,15 +189,18 @@ trait HandlesImageCompression
         if (! $realExt || $realExt === 'bin') {
             $realExt = $clientExt;
         }
+        if ($realExt === 'qt') {
+            $realExt = 'mov';
+        }
 
         $allowedVideoMimes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 'video/3gpp', 'application/octet-stream'];
-        $allowedVideoExts = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', '3gp'];
+        $allowedVideoExts = ['mp4', 'webm', 'ogg', 'mov', 'qt', 'avi', 'mkv', '3gp'];
 
         $allowedImageMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/octet-stream'];
         $allowedImageExts = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
 
-        $isImage = (in_array($realMime, $allowedImageMimes) || str_starts_with($realMime, 'image/')) && in_array($realExt, $allowedImageExts);
-        $isVideo = (in_array($realMime, $allowedVideoMimes) || str_starts_with($realMime, 'video/')) && in_array($realExt, $allowedVideoExts);
+        $isImage = (in_array($realMime, $allowedImageMimes) || str_starts_with($realMime, 'image/')) && (in_array($realExt, $allowedImageExts) || in_array($clientExt, $allowedImageExts));
+        $isVideo = (in_array($realMime, $allowedVideoMimes) || str_starts_with($realMime, 'video/')) && (in_array($realExt, $allowedVideoExts) || in_array($clientExt, $allowedVideoExts));
 
         if (! $isImage && ! $isVideo) {
             Log::warning("[HandlesImageCompression] File type rejected. MIME: {$realMime}, Ext: {$realExt}, ClientExt: {$clientExt}");

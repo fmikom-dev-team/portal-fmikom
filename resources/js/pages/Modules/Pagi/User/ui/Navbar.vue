@@ -31,6 +31,7 @@ import {
 	ref,
 	watch,
 } from "vue";
+import { formatStorageUrl } from "@/composables/useInitials";
 
 const NotificationSlidePanel = defineAsyncComponent(
 	() => import("./NotificationSlidePanel.vue"),
@@ -40,6 +41,12 @@ const PagiProgressOverlay = defineAsyncComponent(
 );
 const UserProfileDropdownCard = defineAsyncComponent(
 	() => import("./UserProfileDropdownCard.vue"),
+);
+const PublishChoiceModal = defineAsyncComponent(
+	() => import("./PublishChoiceModal.vue"),
+);
+const PagiOnboardingChecklist = defineAsyncComponent(
+	() => import("./PagiOnboardingChecklist.vue"),
 );
 
 import { ThemeTogglerButton } from "@/components/animate-ui/components/buttons/theme-toggler";
@@ -99,9 +106,24 @@ const AdminActionModal = defineAsyncComponent(
 
 const activeAdminNotification = ref<any>(null);
 const showAdminModal = ref(false);
+const showPublishModal = ref(false);
 
 const isCompletenessExpanded = ref(false);
 const showCompleteness = ref(true);
+
+const handleMessageClick = (e: Event) => {
+	if (currentRoleSlug.value === "mahasiswa") {
+		// Progressive Feature-Gating: Check basic profile details
+		const hasBasicInfo =
+			!!user.value.foto_path &&
+			!!user.value.pagi_username &&
+			!!user.value.bio;
+		if (!hasBasicInfo) {
+			e.preventDefault();
+			isCompletenessExpanded.value = true;
+		}
+	}
+};
 
 const completenessItems = computed(() => {
 	const items = [
@@ -277,17 +299,36 @@ const toggleNotifPanel = () => {
 const pushRealtimeNotif = (notification: any) => {
 	// Support both direct payload and nested .data payload from standard Laravel BroadcastNotificationCreated
 	const payload = notification?.data ? notification.data : notification;
+	const id = notification?.id ?? String(Date.now());
+	const type = payload?.type ?? "system";
+	const message = payload?.message ?? "";
+	const senderId = payload?.sender_id ?? null;
+	const portfolioId = payload?.portfolio_id ?? payload?.work_id ?? null;
+
+	// Deduplication check: Avoid inserting duplicate notifications
+	const exists = rawNotifs.value.some(
+		(n) =>
+			(notification?.id && n.id === notification.id) ||
+			(n.type === type &&
+				n.message === message &&
+				n.sender_id === senderId &&
+				n.portfolio_id === portfolioId),
+	);
+	if (exists) return;
 
 	const mappedNotif = {
-		id: notification?.id ?? String(Date.now()),
-		type: payload?.type ?? "system",
+		id: id,
+		type: type,
 		title: payload?.title ?? "PAGI",
-		message: payload?.message ?? "",
+		message: message,
 		avatar: payload?.avatar ?? null,
 		href: payload?.href ?? "/pagi",
 		unread: true,
 		time: "baru saja",
 		created_at: new Date().toISOString(),
+		sender_id: senderId,
+		portfolio_id: portfolioId,
+		work_image: payload?.work_image ?? null,
 		extra: payload,
 	};
 
@@ -338,10 +379,6 @@ function subscribeUserChannel(userId: number | string) {
 	userChannel = window.Broadcaster.private(channelName)
 		.listen(".unread.count.updated", (data: any) => {
 			unreadMessagesCount.value = Number(data.unread_messages_count);
-		})
-		// Real-time push notifications
-		.listen(".pagi.notification", (data: any) => {
-			pushRealtimeNotif(data);
 		})
 		.notification((data: any) => {
 			// Laravel broadcast notifications
@@ -418,14 +455,14 @@ onUnmounted(() => {
 					<Link href="/pagi" class="hidden md:flex items-center gap-2.5 shrink-0 group">
 						<div 
 							class="h-8 w-8 rounded-xl flex items-center justify-center overflow-hidden transition-all duration-300"
-							:class="siteSettings.brand_logo ? 'bg-transparent border border-slate-200 dark:border-zinc-800' : 'bg-gradient-to-br from-indigo-600 to-purple-600 shadow-md group-hover:shadow-indigo-200 dark:group-hover:shadow-indigo-900'"
+							:class="siteSettings.brand_logo ? 'bg-transparent border-0 p-0 shadow-none' : 'bg-gradient-to-br from-indigo-600 to-purple-600 shadow-md group-hover:shadow-indigo-200 dark:group-hover:shadow-indigo-900'"
 						>
 							<img v-if="siteSettings.brand_logo" :src="siteSettings.brand_logo" class="h-full w-full object-contain" alt="Logo" />
 							<span v-else class="text-white text-xs font-black tracking-tight">P</span>
 						</div>
 						<div class="flex flex-col">
 							<span class="text-sm font-black text-slate-900 dark:text-zinc-100 leading-none tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">PAGI</span>
-							<span class="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest leading-none mt-0.5">FMIKOM UNUGHA</span>
+							<span class="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest leading-none mt-0.5 truncate max-w-[180px]">{{ siteSettings.brand_subtitle || 'Fakultas Ilmu Komputer' }}</span>
 						</div>
 					</Link>
 
@@ -438,12 +475,12 @@ onUnmounted(() => {
 							class="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-all duration-300 group"
 						>
 							<div class="h-9 w-9 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0 ring-offset-white dark:ring-offset-zinc-950 group-hover:ring-2 ring-indigo-500/50 transition-all duration-300 shadow-xs">
-								<img v-if="user.foto_path" :src="'/storage/' + user.foto_path" :alt="user.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-350" />
+								<img v-if="user.foto_path" :src="formatStorageUrl(user.foto_path)!" :alt="user.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-350" />
 								<img v-else-if="user.avatar" :src="user.avatar" :alt="user.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-350" />
 								<span v-else class="text-slate-700 dark:text-slate-200 text-xs font-black">{{ user.name.charAt(0) }}</span>
 							</div>
 							<div class="flex flex-col text-left">
-								<span class="text-xs font-black text-slate-800 dark:text-zinc-200 leading-none tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase">{{ user.name }}</span>
+								<span class="text-xs font-black text-slate-800 dark:text-zinc-200 leading-none tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase truncate max-w-[120px]">{{ user.name }}</span>
 								<span class="text-[9px] font-extrabold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-0.5">{{ computedRoleName }}</span>
 							</div>
 							<ChevronDown class="h-3 w-3 text-slate-400 ml-0.5 shrink-0 group-hover:text-slate-600 transition-colors" />
@@ -470,6 +507,7 @@ onUnmounted(() => {
 						<!-- Explore = halaman utama dashboard -->
 						<Link
 							href="/pagi"
+							data-onboard="pagi-feed"
 							class="px-3 py-1.5 text-sm font-semibold transition-colors"
 							:class="[ $page.url === '/pagi' ? 'text-slate-900 dark:text-white active-nav-btn' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100' ]"
 						>
@@ -478,6 +516,7 @@ onUnmounted(() => {
 
 						<Link
 							href="/pagi/gallery"
+							data-onboard="pagi-gallery"
 							class="px-3 py-1.5 text-sm font-semibold transition-colors"
 							:class="[ $page.url.startsWith('/pagi/gallery') ? 'text-slate-900 dark:text-white active-nav-btn' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100' ]"
 						>
@@ -486,6 +525,7 @@ onUnmounted(() => {
 
 						<Link
 							href="/pagi/people"
+							data-onboard="pagi-people"
 							class="px-3 py-1.5 text-sm font-semibold transition-colors"
 							:class="[ $page.url.startsWith('/pagi/people') ? 'text-slate-900 dark:text-white active-nav-btn' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100' ]"
 						>
@@ -504,6 +544,7 @@ onUnmounted(() => {
 						<Link
 							v-if="currentRoleSlug === 'mahasiswa' || currentRoleSlug === 'alumni'"
 							href="/pagi/cv"
+							data-onboard="pagi-cv"
 							class="px-3 py-1.5 text-sm font-semibold transition-colors"
 							:class="[ $page.url.startsWith('/pagi/cv') ? 'text-slate-900 dark:text-white active-nav-btn' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100' ]"
 						>
@@ -514,20 +555,20 @@ onUnmounted(() => {
 
 				<!-- Right Actions Area -->
 				<div class="flex items-center gap-3 ml-auto">
-					<!-- Share Work button (desktop only) -->
-					<Link v-if="$page.props.auth?.user && currentRoleSlug === 'mahasiswa'" href="/pagi/editor" class="hidden md:inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-950 text-white hover:bg-indigo-600 p-2 sm:px-4 sm:py-2 text-xs font-bold transition-all shadow-md active:scale-95" aria-label="Share Work">
-						<Plus class="h-3.5 w-3.5 shrink-0" /> <span class="hidden sm:inline">Share Work</span>
-					</Link>
+					<!-- Work button (desktop only) -->
+					<button v-if="$page.props.auth?.user && currentRoleSlug === 'mahasiswa'" data-onboard="pagi-create-work" @click="showPublishModal = true" class="hidden md:inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-950 text-white hover:bg-indigo-600 p-2 sm:px-4 sm:py-2 text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer border-none" aria-label="Publish Work">
+						<Plus class="h-3.5 w-3.5 shrink-0" /> <span class="hidden sm:inline">Work</span>
+					</button>
 
 					<!-- Message Icon (mobile + desktop) -->
-					<Link v-if="$page.props.auth?.user" href="/pagi/messages" class="md:hidden flex relative p-2 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-600 dark:text-zinc-350 transition-colors items-center justify-center" aria-label="Pesan">
+					<Link v-if="$page.props.auth?.user" href="/pagi/messages" @click="handleMessageClick" class="md:hidden flex relative p-2 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-600 dark:text-zinc-350 transition-colors items-center justify-center" aria-label="Pesan">
 						<MessageSquare class="h-4.5 w-4.5" />
 						<span v-if="unreadMessagesCount > 0" class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-indigo-600 px-1 text-[9px] font-black text-white ring-2 ring-white dark:ring-zinc-950">
 							{{ unreadMessagesCount }}
 						</span>
 					</Link>
 					<!-- Message Icon (desktop only) -->
-					<Link v-if="$page.props.auth?.user" href="/pagi/messages" class="hidden md:flex relative p-2 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-600 dark:text-zinc-350 transition-colors items-center justify-center" aria-label="Pesan">
+					<Link v-if="$page.props.auth?.user" href="/pagi/messages" data-onboard="pagi-messages" @click="handleMessageClick" class="hidden md:flex relative p-2 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-600 dark:text-zinc-350 transition-colors items-center justify-center" aria-label="Pesan">
 						<MessageSquare class="h-4.5 w-4.5" />
 						<span v-if="unreadMessagesCount > 0" class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-indigo-600 px-1 text-[9px] font-black text-white ring-2 ring-white dark:ring-zinc-950">
 							{{ unreadMessagesCount }}
@@ -535,7 +576,7 @@ onUnmounted(() => {
 					</Link>
 
 					<!-- Notification Bell (click to open panel) -->
-					<button v-if="$page.props.auth?.user" @click="hasOpenedNotifPanel = true; toggleNotifPanel()" class="relative p-2 rounded-xl border border-slate-200/80 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-600 dark:text-zinc-350 transition-colors" aria-label="Notifikasi">
+					<button v-if="$page.props.auth?.user" data-onboard="pagi-notifications" @click="hasOpenedNotifPanel = true; toggleNotifPanel()" class="relative p-2 rounded-xl border border-slate-200/80 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-600 dark:text-zinc-350 transition-colors" aria-label="Notifikasi">
 						<Bell class="h-4.5 w-4.5" />
 						<span v-if="totalUnread > 0" class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white ring-2 ring-white dark:ring-zinc-950">
 							{{ totalUnread }}
@@ -554,12 +595,12 @@ onUnmounted(() => {
 					</div>
 
 					<!-- Profile (DESKTOP ONLY — shown on right side) -->
-					<div v-if="$page.props.auth?.user" class="hidden md:block relative shrink-0" @mouseenter="hasOpenedDesktopProfile = true; enterProfile()" @mouseleave="leaveProfile()" @click.stop="hasOpenedDesktopProfile = true; isProfileModalOpen = !isProfileModalOpen">
+					<div v-if="$page.props.auth?.user" data-onboard="pagi-profile" class="hidden md:block relative shrink-0" @mouseenter="hasOpenedDesktopProfile = true; enterProfile()" @mouseleave="leaveProfile()" @click.stop="hasOpenedDesktopProfile = true; isProfileModalOpen = !isProfileModalOpen">
 						<div
 							class="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-all duration-300 group"
 						>
 							<div class="h-9 w-9 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0 ring-offset-white dark:ring-offset-zinc-950 group-hover:ring-2 ring-indigo-500/50 transition-all duration-300 shadow-xs">
-								<img v-if="user.foto_path" :src="'/storage/' + user.foto_path" :alt="user.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-350" />
+								<img v-if="user.foto_path" :src="formatStorageUrl(user.foto_path)!" :alt="user.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-350" />
 								<img v-else-if="user.avatar" :src="user.avatar" :alt="user.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-350" />
 								<span v-else class="text-slate-700 dark:text-slate-200 text-xs font-black">{{ user.name.charAt(0) }}</span>
 							</div>
@@ -594,7 +635,7 @@ onUnmounted(() => {
 		</header>
 
 		<!-- Modern Premium Bottom Navbar for Mobile Features (Behance/Instagram style) -->
-		<div v-if="$page.props.auth?.user && !$page.url.startsWith('/pagi/messages')" class="fixed bottom-0 inset-x-0 h-16 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-xl border-t border-slate-200/80 dark:border-zinc-850 flex items-center justify-between px-2 z-50 md:hidden shadow-[0_-4px_24px_rgba(0,0,0,0.04)] select-none" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
+		<div v-if="$page.props.auth?.user && !$page.url.startsWith('/pagi/messages') && !$page.url.startsWith('/pagi/editor')" class="fixed bottom-0 inset-x-0 h-16 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-xl border-t border-slate-200/80 dark:border-zinc-850 flex items-center justify-between px-2 z-50 md:hidden shadow-[0_-4px_24px_rgba(0,0,0,0.04)] select-none" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
 			<!-- 1. Explore (main dashboard) -->
 			<Link href="/pagi" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1"
 				:class="[ $page.url === '/pagi' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
@@ -609,13 +650,13 @@ onUnmounted(() => {
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">Gallery</span>
 			</Link>
 
-			<!-- 3. Share Project (FAB in the middle!) -->
-			<Link v-if="currentRoleSlug === 'mahasiswa'" href="/pagi/editor" class="flex flex-col items-center justify-center -mt-5 shrink-0 transition-transform active:scale-95 flex-1">
+			<!-- 3. Work (FAB in the middle!) -->
+			<button v-if="currentRoleSlug === 'mahasiswa'" @click="showPublishModal = true" class="flex flex-col items-center justify-center -mt-5 shrink-0 transition-transform active:scale-95 flex-1 bg-transparent border-none cursor-pointer">
 				<div class="h-11 w-11 rounded-full bg-slate-950 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center shadow-lg border-2 border-white dark:border-zinc-900 hover:bg-indigo-600 dark:hover:bg-indigo-500">
 					<Plus class="w-5 h-5 font-black" />
 				</div>
-				<span class="text-[8px] font-extrabold tracking-tight uppercase mt-0.5 text-slate-550 dark:text-zinc-400">Share</span>
-			</Link>
+				<span class="text-[8px] font-extrabold tracking-tight uppercase mt-0.5 text-slate-550 dark:text-zinc-400">Work</span>
+			</button>
 			<!-- Fallback placeholder if not mahasiswa to keep centering layout -->
 			<div v-else class="flex-1"></div>
 
@@ -707,82 +748,114 @@ onUnmounted(() => {
 		</div>
 	</div>
 
-	<!-- FLOATING COMPLETENESS PROGRESS CARD (MOBILE) -->
+	<!-- FLOATING COMPLETENESS PROGRESS PILL (MOBILE) -->
 	<div 
-		v-if="user && user.user_type === 'mahasiswa' && completenessPercentage < 100 && showCompleteness"
-		class="md:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-40 bg-white/95 dark:bg-zinc-900/95 border border-slate-200/80 dark:border-zinc-800 shadow-xl transition-all duration-300 select-none backdrop-blur-xs flex items-center justify-between"
-		:class="isCompletenessExpanded ? 'w-[90vw] rounded-2xl flex-col p-4 gap-4' : 'rounded-full px-4 py-2 w-auto gap-3.5 h-11'"
+		v-if="user && user.user_type === 'mahasiswa' && completenessPercentage < 100 && showCompleteness && !isCompletenessExpanded"
+		class="md:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-40 bg-white/90 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800 shadow-xl rounded-full px-3.5 py-1.5 w-auto gap-3 h-10 backdrop-blur-md flex items-center justify-between select-none"
 	>
-		<!-- If closed, show as a simple pill with close button -->
-		<template v-if="!isCompletenessExpanded">
-			<div @click="isCompletenessExpanded = true" class="flex items-center gap-2.5 cursor-pointer">
-				<!-- Progress Ring -->
-				<div class="relative w-7 h-7 flex items-center justify-center shrink-0">
-					<svg class="w-full h-full transform -rotate-90">
-						<circle cx="14" cy="14" r="11" stroke="currentColor" class="text-slate-100 dark:text-zinc-800" stroke-width="2.2" fill="transparent" />
-						<circle cx="14" cy="14" r="11" stroke="currentColor" class="text-slate-900 dark:text-white" stroke-width="2.2" fill="transparent"
-							:stroke-dasharray="2 * Math.PI * 11"
-							:stroke-dashoffset="2 * Math.PI * 11 * (1 - completenessPercentage / 100)" />
-					</svg>
-					<span class="absolute text-[8px] font-black text-slate-900 dark:text-white">{{ completenessPercentage }}%</span>
-				</div>
-				<span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">Complete profile</span>
+		<div @click="isCompletenessExpanded = true" class="flex items-center gap-2 cursor-pointer">
+			<!-- Progress Ring -->
+			<div class="relative w-6 h-6 flex items-center justify-center shrink-0">
+				<svg class="w-full h-full transform -rotate-90">
+					<circle cx="12" cy="12" r="9.5" stroke="currentColor" class="text-slate-100 dark:text-zinc-800" stroke-width="2" fill="transparent" />
+					<circle cx="12" cy="12" r="9.5" stroke="currentColor" class="text-slate-900 dark:text-white" stroke-width="2" fill="transparent"
+						:stroke-dasharray="2 * Math.PI * 9.5"
+						:stroke-dashoffset="2 * Math.PI * 9.5 * (1 - completenessPercentage / 100)" />
+				</svg>
+				<span class="absolute text-[7px] font-black text-slate-900 dark:text-white">{{ completenessPercentage }}%</span>
 			</div>
-			<button @click.stop="showCompleteness = false" class="text-slate-450 hover:text-slate-600 p-0.5 bg-transparent border-none cursor-pointer flex items-center justify-center">
-				<X class="w-3.5 h-3.5" />
-			</button>
-		</template>
-
-		<!-- If expanded, show the full checklist card -->
-		<template v-else>
-			<div class="w-full flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-zinc-800">
-				<div class="flex items-center gap-2.5">
-					<!-- Progress Ring -->
-					<div class="relative w-7 h-7 flex items-center justify-center shrink-0">
-						<svg class="w-full h-full transform -rotate-90">
-							<circle cx="14" cy="14" r="11" stroke="currentColor" class="text-slate-100 dark:text-zinc-800" stroke-width="2.2" fill="transparent" />
-							<circle cx="14" cy="14" r="11" stroke="currentColor" class="text-slate-900 dark:text-white" stroke-width="2.2" fill="transparent"
-								:stroke-dasharray="2 * Math.PI * 11"
-								:stroke-dashoffset="2 * Math.PI * 11 * (1 - completenessPercentage / 100)" />
-						</svg>
-						<span class="absolute text-[8px] font-black text-slate-900 dark:text-white">{{ completenessPercentage }}%</span>
-					</div>
-					<span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">Complete profile</span>
-				</div>
-				<div class="flex items-center gap-2">
-					<button @click="isCompletenessExpanded = false" class="text-xs text-slate-400 hover:text-slate-600 font-bold bg-transparent border-none cursor-pointer">Minimize</button>
-					<button @click="showCompleteness = false" class="text-slate-450 hover:text-red-500 p-0.5 bg-transparent border-none cursor-pointer flex items-center justify-center">
-						<X class="w-4 h-4" />
-					</button>
-				</div>
-			</div>
-
-			<!-- Checklist details -->
-			<div class="w-full space-y-2.5">
-				<div 
-					v-for="item in completenessItems" 
-					:key="item.name" 
-					class="flex items-center justify-between text-xs"
-				>
-					<span class="flex items-center gap-2" :class="item.completed ? 'text-slate-500 dark:text-slate-400 line-through' : 'text-slate-800 dark:text-slate-200 font-bold'">
-						<CheckCircle v-if="item.completed" class="w-4 h-4 text-emerald-500 shrink-0" />
-						<Circle v-else class="w-4 h-4 text-slate-400 dark:text-zinc-550 shrink-0" />
-						<span>{{ item.name }}</span>
-					</span>
-					<span class="text-[10px] text-slate-400 font-extrabold">+{{ item.weight }}%</span>
-				</div>
-			</div>
-
-			<!-- Quick action -->
-			<button 
-				@click="handleCompleteSettingsClick"
-				class="w-full flex items-center justify-center gap-1 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-black text-xs rounded-xl shadow-xs hover:bg-slate-800 dark:hover:bg-slate-100 cursor-pointer border-none"
-			>
-				<span>Complete Settings</span>
-				<ChevronRight class="w-3.5 h-3.5" />
-			</button>
-		</template>
+			<span class="text-[11px] font-extrabold text-slate-800 dark:text-slate-200">Complete profile</span>
+		</div>
+		<button @click.stop="showCompleteness = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-0.5 bg-transparent border-none cursor-pointer flex items-center justify-center">
+			<X class="w-3.5 h-3.5" />
+		</button>
 	</div>
+
+	<!-- SLIDE-UP BOTTOM SHEET DRAWER (MOBILE) -->
+	<Teleport to="body">
+		<Transition
+			enter-active-class="transition-all duration-300 ease-out"
+			enter-from-class="opacity-0"
+			enter-to-class="opacity-100"
+			leave-active-class="transition-all duration-200 ease-in"
+			leave-from-class="opacity-100"
+			leave-to-class="opacity-0"
+		>
+			<div 
+				v-if="isCompletenessExpanded && user && user.user_type === 'mahasiswa'"
+				class="md:hidden fixed inset-0 z-50 flex items-end bg-slate-950/60 backdrop-blur-xs select-none"
+				@click.self="isCompletenessExpanded = false"
+			>
+				<Transition
+					enter-active-class="transition-all duration-300 ease-out"
+					enter-from-class="translate-y-full opacity-0"
+					enter-to-class="translate-y-0 opacity-100"
+					leave-active-class="transition-all duration-200 ease-in"
+					leave-from-class="translate-y-0 opacity-100"
+					leave-to-class="translate-y-full opacity-0"
+				>
+					<div class="w-full bg-white dark:bg-zinc-900 rounded-t-3xl border-t border-slate-200 dark:border-zinc-800 p-5 space-y-4 shadow-2xl">
+						<!-- Drawer Header -->
+						<div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-zinc-800">
+							<div class="flex items-center gap-3">
+								<div class="relative w-8 h-8 flex items-center justify-center shrink-0">
+									<svg class="w-full h-full transform -rotate-90">
+										<circle cx="16" cy="16" r="13" stroke="currentColor" class="text-slate-100 dark:text-zinc-800" stroke-width="2.5" fill="transparent" />
+										<circle cx="16" cy="16" r="13" stroke="currentColor" class="text-indigo-600 dark:text-indigo-400" stroke-width="2.5" fill="transparent"
+											:stroke-dasharray="2 * Math.PI * 13"
+											:stroke-dashoffset="2 * Math.PI * 13 * (1 - completenessPercentage / 100)" />
+									</svg>
+									<span class="absolute text-[8px] font-black text-slate-900 dark:text-white">{{ completenessPercentage }}%</span>
+								</div>
+								<div>
+									<h4 class="text-xs font-black text-slate-900 dark:text-white">Kelengkapan Profil Mahasiswa</h4>
+									<p class="text-[10px] font-bold text-slate-400">Lengkapi data untuk membuka semua fitur</p>
+								</div>
+							</div>
+							<button @click="isCompletenessExpanded = false" class="p-1.5 text-slate-450 hover:text-slate-600 dark:hover:text-white bg-transparent border-none cursor-pointer">
+								<X class="w-5 h-5" />
+							</button>
+						</div>
+
+						<!-- Checklist Items -->
+						<div class="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1">
+							<div 
+								v-for="item in completenessItems" 
+								:key="item.name" 
+								class="flex items-center justify-between text-xs p-2 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800/80"
+							>
+								<span class="flex items-center gap-2" :class="item.completed ? 'text-slate-400 dark:text-zinc-500 line-through' : 'text-slate-800 dark:text-zinc-200 font-bold'">
+									<CheckCircle v-if="item.completed" class="w-4 h-4 text-emerald-500 shrink-0" />
+									<Circle v-else class="w-4 h-4 text-slate-400 dark:text-zinc-550 shrink-0" />
+									<span>{{ item.name }}</span>
+								</span>
+								<span class="text-[10px] text-slate-400 font-extrabold">+{{ item.weight }}%</span>
+							</div>
+						</div>
+
+						<!-- CTA Button -->
+						<button 
+							@click="handleCompleteSettingsClick(); isCompletenessExpanded = false"
+							class="w-full flex items-center justify-center gap-1.5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-md cursor-pointer border-none active:scale-98 transition-all"
+						>
+							<span>Lengkapi Profil Sekarang</span>
+							<ChevronRight class="w-4 h-4" />
+						</button>
+					</div>
+				</Transition>
+			</div>
+		</Transition>
+	</Teleport>
+
+	<!-- PUBLISH CHOICE MODAL -->
+	<PublishChoiceModal
+		v-if="showPublishModal"
+		:show="showPublishModal"
+		:completenessPercentage="completenessPercentage"
+		:completenessItems="completenessItems"
+		@close="showPublishModal = false"
+		@completeSettings="handleCompleteSettingsClick"
+	/>
 
 	<!-- ADMIN ACTION MODAL -->
 	<AdminActionModal 
@@ -794,6 +867,13 @@ onUnmounted(() => {
 
 	<!-- Global Progress System Overlay -->
 	<PagiProgressOverlay />
+
+	<!-- Interactive Onboarding Checklist & Spotlight Tour (Exclusively for PAGI Module) -->
+	<PagiOnboardingChecklist
+		v-if="$page.props.auth?.user"
+		:role-name="currentRoleSlug"
+		:user-id="user?.id"
+	/>
 </template>
 
 <style scoped>

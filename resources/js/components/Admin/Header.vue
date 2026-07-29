@@ -21,6 +21,21 @@ const user = computed(
 	() => page.props.auth?.user || { name: "Admin", email: "" },
 );
 
+const displayRoleName = computed(() => {
+	const role = page.props.context?.active_role || "super-admin";
+	const r = role.toLowerCase();
+	if (r === "super-admin" || r === "super_admin") return "Super Admin";
+	if (r === "admin") return "Admin Struktural";
+	if (r === "admin-universitas" || r === "admin_universitas") return "Admin Universitas";
+	if (r === "admin-akademik" || r === "admin_akademik") return "Admin Akademik";
+	if (r === "prodi") return "Koordinator Prodi";
+	if (r === "dosen") return "Dosen";
+	if (r === "mahasiswa") return "Mahasiswa";
+	if (r === "alumni") return "Alumni";
+	if (r === "mitra") return "Mitra Perusahaan";
+	return role.charAt(0).toUpperCase() + role.slice(1);
+});
+
 const showNotifications = ref(false);
 
 const showUserMenu = ref(false);
@@ -134,8 +149,12 @@ const handleIncomingNotif = (payload: any) => {
 // Close dropdowns on outside click
 const handleOutsideClick = (e: MouseEvent) => {
 	const target = e.target as HTMLElement;
-	if (!target.closest("#notification-dropdown-wrapper"))
+	if (
+		!target.closest("#notification-dropdown-wrapper") &&
+		!target.closest("#notification-drawer-content")
+	) {
 		showNotifications.value = false;
+	}
 	if (!target.closest("#user-dropdown-wrapper")) showUserMenu.value = false;
 };
 
@@ -217,10 +236,10 @@ onBeforeUnmount(() => {
                 <Menu class="h-4 w-4" />
             </button>
 
-            <!-- Reusable ShadcnSearch configured for WorkOs scope -->
+            <!-- Reusable ShadcnSearch configured for PAGI Admin scope -->
             <ShadcnSearch 
-                endpoint="/workos/instant-search"
-                placeholder="Cari user, peran..."
+                endpoint="/pagi/admin/api/instant-search"
+                placeholder="Cari karya, user, prodi..."
                 class="hidden sm:block"
             />
 
@@ -233,33 +252,26 @@ onBeforeUnmount(() => {
             <div id="notification-dropdown-wrapper" class="relative">
                 <button
                     @click.stop="showNotifications = !showNotifications; showUserMenu = false"
-                    class="relative flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 hover:text-indigo-600 transition-all"
+                    class="relative flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-350 hover:bg-slate-200 dark:hover:bg-zinc-700 hover:text-indigo-600 transition-all cursor-pointer border-none"
                     aria-label="Notifikasi"
                 >
-                    <Bell class="h-4 w-4" />
+                    <Bell class="h-4.5 w-4.5" />
                     <span
                         v-if="notifCount > 0"
-                        class="absolute right-1.5 top-1.5 flex h-[7px] w-[7px] items-center justify-center rounded-full bg-rose-500 border-2 border-white dark:border-zinc-950"
-                    />
+                        class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 dark:bg-rose-600 px-1 text-[9px] font-black text-white ring-2 ring-white dark:ring-zinc-950 shadow-xs"
+                    >
+                        {{ notifCount > 99 ? '99+' : notifCount }}
+                    </span>
                 </button>
 
-                <Transition
-                    enter-active-class="transition duration-150 ease-out"
-                    enter-from-class="opacity-0 scale-95 translate-y-1"
-                    enter-to-class="opacity-100 scale-100 translate-y-0"
-                    leave-active-class="transition duration-100 ease-in"
-                    leave-from-class="opacity-100 scale-100 translate-y-0"
-                    leave-to-class="opacity-0 scale-95 translate-y-1"
-                >
-                    <NotificationDropdown
-                        v-if="showNotifications"
-                        :notifications="notificationsList"
-                        :unread-count="notifCount"
-                        @mark-read="markAsRead"
-                        @mark-all-read="markAllAsRead"
-                        @close="showNotifications = false"
-                    />
-                </Transition>
+                <NotificationDropdown
+                    :is-open="showNotifications"
+                    :notifications="notificationsList"
+                    :unread-count="notifCount"
+                    @mark-read="markAsRead"
+                    @mark-all-read="markAllAsRead"
+                    @close="showNotifications = false"
+                />
             </div>
 
             <!-- Divider -->
@@ -284,7 +296,7 @@ onBeforeUnmount(() => {
                     </div>
                     <div class="hidden md:block text-left">
                         <p class="text-[12px] font-bold text-slate-800 dark:text-zinc-100 leading-tight uppercase">{{ user.name }}</p>
-                        <p class="text-[10px] text-slate-400 dark:text-zinc-500 leading-none mt-0.5">Super Admin</p>
+                        <p class="text-[10px] text-slate-400 dark:text-zinc-500 leading-none mt-0.5">{{ displayRoleName }}</p>
                     </div>
                     <svg class="hidden md:block h-3 w-3 text-slate-400 group-hover:text-slate-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />

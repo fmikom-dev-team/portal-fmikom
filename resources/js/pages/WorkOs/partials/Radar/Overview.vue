@@ -889,6 +889,14 @@ function severityColor(s: string) {
             </div>
         </div>
 
+        <!-- CONFIGURATION TAB -->
+        <div v-else-if="radarTab === 'Configuration'">
+            <Configuration
+                :radar-config="props.radarConfig || []"
+                :radar-blocked-items="props.radarBlockedItems || []"
+            />
+        </div>
+
         <!-- Detection Details Modal -->
         <AppModal
             :show="!!selectedDetection"

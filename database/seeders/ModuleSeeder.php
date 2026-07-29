@@ -16,7 +16,19 @@ class ModuleSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Buat Dummy Role FMIKOM
+        $rolesMap = $this->seedRoles();
+        $modulesMap = $this->seedModules();
+        $this->syncModuleRoles($modulesMap, $rolesMap);
+        $this->seedTestUsers($modulesMap, $rolesMap);
+    }
+
+    /**
+     * Seed default roles.
+     *
+     * @return array<string, int> Map of role slug => role id
+     */
+    private function seedRoles(): array
+    {
         $roles = [
             ['nama' => 'Super Admin', 'slug' => 'super-admin', 'deskripsi' => 'Administrator Tertinggi'],
             ['nama' => 'Admin Struktural', 'slug' => 'admin', 'deskripsi' => 'Admin Operasional dan Struktural'],
@@ -29,11 +41,22 @@ class ModuleSeeder extends Seeder
             ['nama' => 'Mitra Perusahaan', 'slug' => 'mitra', 'deskripsi' => 'Mitra / Pihak Eksternal'],
         ];
 
+        $rolesMap = [];
         foreach ($roles as $r) {
-            Role::firstOrCreate(['slug' => $r['slug']], $r);
+            $role = Role::firstOrCreate(['slug' => $r['slug']], $r);
+            $rolesMap[$r['slug']] = $role->id;
         }
 
-        // 2. Buat Data Master Modules (Aplikasi Inti FMIKOM)
+        return $rolesMap;
+    }
+
+    /**
+     * Seed default modules.
+     *
+     * @return array<string, int> Map of module code => module id
+     */
+    private function seedModules(): array
+    {
         $modules = [
             ['code' => 'PAGI', 'name' => 'Works and Gallery for Interns', 'description' => 'Sistem galeri karya mahasiswa magang', 'is_active' => true],
             ['code' => 'WIMS', 'name' => 'Web-based Internship Management System', 'description' => 'Pengelolaan PKL dan magang FMIKOM: pendaftaran, penempatan, presensi, logbook, monitoring, penilaian, dan laporan akhir', 'is_active' => true],
@@ -41,34 +64,64 @@ class ModuleSeeder extends Seeder
             ['code' => 'TRACE', 'name' => 'Tracer Study System', 'description' => 'Sistem tracer study alumni', 'is_active' => true],
         ];
 
+        $modulesMap = [];
         foreach ($modules as $m) {
-            Module::firstOrCreate(['code' => $m['code']], $m);
+            $module = Module::firstOrCreate(['code' => $m['code']], $m);
+            $modulesMap[$m['code']] = $module->id;
         }
 
-        // Mapping role yang diizinkan untuk setiap modul (tabel module_roles)
+        return $modulesMap;
+    }
+
+    /**
+     * Sync module-role permissions map.
+     *
+     * @param array<string, int> $modulesMap
+     * @param array<string, int> $rolesMap
+     */
+    private function syncModuleRoles(array $modulesMap, array $rolesMap): void
+    {
         $moduleRolesMap = [
             'FAST' => ['super-admin', 'admin', 'dosen', 'mahasiswa', 'alumni'],
-            'PAGI' => ['super-admin', 'admin', 'dosen', 'mahasiswa', 'alumni', 'mitra'],
+            'PAGI' => ['super-admin', 'admin', 'admin-universitas', 'admin-akademik', 'prodi', 'dosen', 'mahasiswa', 'alumni', 'mitra'],
             'WIMS' => ['super-admin', 'admin', 'admin-universitas', 'admin-akademik', 'prodi', 'dosen', 'mahasiswa', 'mitra'],
             'TRACE' => ['super-admin', 'admin', 'alumni', 'mitra'],
         ];
 
         foreach ($moduleRolesMap as $modCode => $roleSlugs) {
-            $module = Module::where('code', $modCode)->first();
+            $moduleId = $modulesMap[$modCode] ?? null;
+            if (! $moduleId) {
+                continue;
+            }
+
+            $module = Module::find($moduleId, ['*']);
             if ($module) {
                 foreach ($roleSlugs as $slug) {
-                    $role = Role::where('slug', $slug)->first();
-                    if ($role) {
-                        $module->roles()->syncWithoutDetaching([$role->id => ['is_default' => false]]);
+                    $roleId = $rolesMap[$slug] ?? null;
+                    if ($roleId) {
+                        $module->roles()->syncWithoutDetaching([$roleId => ['is_default' => false]]);
                     }
                 }
             }
         }
+    }
 
-        // 3. SEEDING CONTOH: User dengan banyak role di berbagai Modul
-        // ========================================================
+    /**
+     * Seed sample testing accounts and assign user module roles.
+     *
+     * @param array<string, int> $modulesMap
+     * @param array<string, int> $rolesMap
+     */
+    private function seedTestUsers(array $modulesMap, array $rolesMap): void
+    {
+        $superAdminRoleId = $rolesMap['super-admin'];
+        $adminRoleId = $rolesMap['admin'];
+        $dosenRoleId = $rolesMap['dosen'];
+        $mahasiswaRoleId = $rolesMap['mahasiswa'];
+        $alumniRoleId = $rolesMap['alumni'];
+        $mitraRoleId = $rolesMap['mitra'];
 
-        // Contoh 1: Pak Muchlisin Maruf (Pemilik Berbagai Role)
+        // User 1: Muchlisin Maruf (Super Admin)
         $user1 = User::firstOrCreate(
             ['email' => 'muchlisinmaruf@gmail.com'],
             [
@@ -78,8 +131,6 @@ class ModuleSeeder extends Seeder
                 'user_type' => 'super-admin',
                 'email_verified_at' => now(),
                 'password_changed_at' => now(),
-                'otp_code' => null,
-                'otp_expires_at' => null,
             ]
         );
 
@@ -87,30 +138,20 @@ class ModuleSeeder extends Seeder
             $user1->update(['user_type' => 'super-admin']);
         }
 
-        // --- Role Super Admin (Akses Semua Modul) ---
-        $superAdminRole = Role::where('slug', 'super-admin')->first()->id;
         foreach (['FAST', 'WIMS', 'PAGI', 'TRACE'] as $modCode) {
             UserModuleRole::firstOrCreate([
                 'user_id' => $user1->id,
-                'module_id' => Module::where('code', $modCode)->first()->id,
-                'role_id' => $superAdminRole,
+                'module_id' => $modulesMap[$modCode],
+                'role_id' => $superAdminRoleId,
             ]);
         }
 
-        // --- Role Admin Struktural (Akses FAST & WIMS) ---
-        $adminRole = Role::where('slug', 'admin')->first()->id;
-        UserModuleRole::firstOrCreate(['user_id' => $user1->id, 'module_id' => Module::where('code', 'FAST')->first()->id, 'role_id' => $adminRole]);
-        UserModuleRole::firstOrCreate(['user_id' => $user1->id, 'module_id' => Module::where('code', 'WIMS')->first()->id, 'role_id' => $adminRole]);
+        UserModuleRole::firstOrCreate(['user_id' => $user1->id, 'module_id' => $modulesMap['FAST'], 'role_id' => $adminRoleId]);
+        UserModuleRole::firstOrCreate(['user_id' => $user1->id, 'module_id' => $modulesMap['WIMS'], 'role_id' => $adminRoleId]);
+        UserModuleRole::firstOrCreate(['user_id' => $user1->id, 'module_id' => $modulesMap['TRACE'], 'role_id' => $alumniRoleId]);
+        UserModuleRole::firstOrCreate(['user_id' => $user1->id, 'module_id' => $modulesMap['PAGI'], 'role_id' => $mitraRoleId]);
 
-        // --- Role Alumni (Akses TRACE) ---
-        UserModuleRole::firstOrCreate(['user_id' => $user1->id, 'module_id' => Module::where('code', 'TRACE')->first()->id, 'role_id' => Role::where('slug', 'alumni')->first()->id]);
-
-        // --- Role Mitra (Akses PAGI) ---
-        UserModuleRole::firstOrCreate(['user_id' => $user1->id, 'module_id' => Module::where('code', 'PAGI')->first()->id, 'role_id' => Role::where('slug', 'mitra')->first()->id]);
-
-        // ========================================================
-
-        // Testing accounts
+        // Testing account: superadmin@test.com
         $superAdmin = User::updateOrCreate(
             ['email' => 'superadmin@test.com'],
             [
@@ -120,25 +161,24 @@ class ModuleSeeder extends Seeder
                 'user_type' => 'super-admin',
                 'email_verified_at' => now(),
                 'password_changed_at' => now(),
-                'otp_code' => null,
-                'otp_expires_at' => null,
             ]
         );
 
         foreach (['FAST', 'WIMS', 'PAGI', 'TRACE'] as $modCode) {
             UserModuleRole::firstOrCreate([
                 'user_id' => $superAdmin->id,
-                'module_id' => Module::where('code', $modCode)->first()->id,
-                'role_id' => $superAdminRole,
+                'module_id' => $modulesMap[$modCode],
+                'role_id' => $superAdminRoleId,
             ]);
         }
 
         UserModuleRole::firstOrCreate([
             'user_id' => $superAdmin->id,
-            'module_id' => Module::where('code', 'WIMS')->first()->id,
-            'role_id' => $adminRole,
+            'module_id' => $modulesMap['WIMS'],
+            'role_id' => $adminRoleId,
         ]);
 
+        // Testing account: adminwims@test.com
         $adminWims = User::updateOrCreate(
             ['email' => 'adminwims@test.com'],
             [
@@ -148,17 +188,16 @@ class ModuleSeeder extends Seeder
                 'user_type' => 'admin',
                 'email_verified_at' => now(),
                 'password_changed_at' => now(),
-                'otp_code' => null,
-                'otp_expires_at' => null,
             ]
         );
 
         UserModuleRole::firstOrCreate([
             'user_id' => $adminWims->id,
-            'module_id' => Module::where('code', 'WIMS')->first()->id,
-            'role_id' => $adminRole,
+            'module_id' => $modulesMap['WIMS'],
+            'role_id' => $adminRoleId,
         ]);
 
+        // Testing account: dosenwims@test.com
         $dosenWims = User::updateOrCreate(
             ['email' => 'dosenwims@test.com'],
             [
@@ -168,17 +207,16 @@ class ModuleSeeder extends Seeder
                 'user_type' => 'dosen',
                 'email_verified_at' => now(),
                 'password_changed_at' => now(),
-                'otp_code' => null,
-                'otp_expires_at' => null,
             ]
         );
 
         UserModuleRole::firstOrCreate([
             'user_id' => $dosenWims->id,
-            'module_id' => Module::where('code', 'WIMS')->first()->id,
-            'role_id' => Role::where('slug', 'dosen')->first()->id,
+            'module_id' => $modulesMap['WIMS'],
+            'role_id' => $dosenRoleId,
         ]);
 
+        // Testing account: mitraunugha@test.com
         $mitraWims = User::updateOrCreate(
             ['email' => 'mitraunugha@test.com'],
             [
@@ -188,24 +226,22 @@ class ModuleSeeder extends Seeder
                 'user_type' => 'mitra',
                 'email_verified_at' => now(),
                 'password_changed_at' => now(),
-                'otp_code' => null,
-                'otp_expires_at' => null,
             ]
         );
 
         UserModuleRole::firstOrCreate([
             'user_id' => $mitraWims->id,
-            'module_id' => Module::where('code', 'WIMS')->first()->id,
-            'role_id' => Role::where('slug', 'mitra')->first()->id,
+            'module_id' => $modulesMap['WIMS'],
+            'role_id' => $mitraRoleId,
         ]);
 
         UserModuleRole::firstOrCreate([
             'user_id' => $mitraWims->id,
-            'module_id' => Module::where('code', 'PAGI')->first()->id,
-            'role_id' => Role::where('slug', 'mitra')->first()->id,
+            'module_id' => $modulesMap['PAGI'],
+            'role_id' => $mitraRoleId,
         ]);
 
-        // Contoh 2: Andi (Mahasiswa di FAST & PAGI)
+        // User 2: Andi (Mahasiswa di FAST & PAGI)
         $user2 = User::firstOrCreate(
             ['email' => 'andimahasiswa@example.com'],
             [
@@ -217,20 +253,17 @@ class ModuleSeeder extends Seeder
 
         UserModuleRole::firstOrCreate([
             'user_id' => $user2->id,
-            'module_id' => Module::where('code', 'PAGI')->first()->id,
-            'role_id' => Role::where('slug', 'mahasiswa')->first()->id,
+            'module_id' => $modulesMap['PAGI'],
+            'role_id' => $mahasiswaRoleId,
         ]);
 
         UserModuleRole::firstOrCreate([
             'user_id' => $user2->id,
-            'module_id' => Module::where('code', 'FAST')->first()->id,
-            'role_id' => Role::where('slug', 'mahasiswa')->first()->id,
+            'module_id' => $modulesMap['FAST'],
+            'role_id' => $mahasiswaRoleId,
         ]);
 
-        // ========================================================
-
-        // Contoh 3: Akun Alumni yang sedang Anda test untuk role pendaftar baru
-        // Supaya ketika Anda daftar baru/login bisa langsung di tes
+        // User 3: Joni (Alumni di TRACE & FAST)
         $user3 = User::firstOrCreate(
             ['email' => 'alumni@example.com'],
             [
@@ -242,15 +275,14 @@ class ModuleSeeder extends Seeder
 
         UserModuleRole::firstOrCreate([
             'user_id' => $user3->id,
-            'module_id' => Module::where('code', 'TRACE')->first()->id,
-            'role_id' => Role::where('slug', 'alumni')->first()->id,
+            'module_id' => $modulesMap['TRACE'],
+            'role_id' => $alumniRoleId,
         ]);
 
         UserModuleRole::firstOrCreate([
             'user_id' => $user3->id,
-            'module_id' => Module::where('code', 'FAST')->first()->id,
-            'role_id' => Role::where('slug', 'alumni')->first()->id, // Bisa ajukan surat legalisir dst
+            'module_id' => $modulesMap['FAST'],
+            'role_id' => $alumniRoleId,
         ]);
-
     }
 }

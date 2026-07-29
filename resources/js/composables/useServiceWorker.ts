@@ -1,19 +1,18 @@
 /**
  * useServiceWorker.ts
  *
- * Composable yang mengelola siklus hidup Service Worker secara otomatis.
- *
- * Behavior "selalu muncul hingga diinstall":
- * - Update terdeteksi → updateAvailable = true (persistent sampai user install)
- * - User klik "Nanti" → banner sembunyi selama SNOOZE_DURATION (default: 5 menit)
- * - Setiap navigasi Inertia / kembali ke tab: cek kembali, tampilkan lagi jika snooze habis
- * - User klik "Install" → SW aktif → reload → updateAvailable = false
+ * Composable yang mengelola siklus hidup Service Worker PWA secara otomatis
+ * dengan alur interaktif modern (User Confirmation + Animated Installing Modal).
  */
 
-import { onUnmounted, ref } from "vue";
+import { ref } from "vue";
 
 // ── Module-level state: di-share antar semua instance composable ──────────────
 const updateAvailable = ref(false);
+const isInstalling = ref(false);
+const installProgress = ref(0);
+const installStepText = ref("");
+
 let waitingWorker: ServiceWorker | null = null;
 let globalRegistration: ServiceWorkerRegistration | null = null;
 
@@ -59,25 +58,26 @@ export function initServiceWorkerUpdater(): void {
 		return;
 	initialized = true;
 
-	// Registrasi Service Worker PWA
+	// Registrasi Service Worker PWA dengan updateViaCache: 'none'
+	// agar browser selalu mengecek file sw-pwa.js terbaru di server (tanpa tertahan HTTP cache)
 	navigator.serviceWorker
-		.register("/sw-pwa.js", { scope: "/" })
+		.register("/sw-pwa.js", { scope: "/", updateViaCache: "none" })
 		.then((reg) => {
-			console.log(
-				"[PWA] Service Worker registered successfully with scope:",
-				reg.scope,
-			);
+			globalRegistration = reg;
+			// Paksa cek update pertama kali saat registrasi selesai
+			reg.update().catch(() => {});
 		})
 		.catch((err) => {
 			console.warn("[PWA] Service Worker registration failed:", err);
 		});
 
-	// Dengarkan pesan APP_UPDATED dari SW → reload seamless
-	navigator.serviceWorker.addEventListener("message", (event: MessageEvent) => {
-		if (event.data?.type === "APP_UPDATED") {
-			clearSnooze();
-			window.location.reload();
-		}
+	// Refreshes page ONCE when new Service Worker takes control after user clicks Install
+	let refreshing = false;
+	navigator.serviceWorker.addEventListener("controllerchange", () => {
+		if (refreshing) return;
+		refreshing = true;
+		clearSnooze();
+		window.location.reload();
 	});
 
 	navigator.serviceWorker.ready.then((reg) => {
@@ -113,10 +113,22 @@ export function initServiceWorkerUpdater(): void {
 		}
 	});
 
+	// Cek update secara berkala setiap 30 detik
+	setInterval(() => {
+		globalRegistration?.update().catch(() => {});
+	}, 30000);
+
 	// Cek update saat online kembali
 	window.addEventListener("online", () => {
 		globalRegistration?.update().catch(() => {});
 	});
+}
+
+/** Cek manual Service Worker update (misal dipicu saat navigasi halaman) */
+export function triggerSWCheck(): void {
+	if (globalRegistration) {
+		globalRegistration.update().catch(() => {});
+	}
 }
 
 // ── Composable untuk digunakan di komponen ───────────────────────────────────
@@ -130,9 +142,43 @@ export function useServiceWorker() {
 		}
 	}
 
+	function startInteractiveUpdate(): void {
+		if (isInstalling.value) return;
+
+		isInstalling.value = true;
+		installProgress.value = 0;
+		installStepText.value = "Menyiapkan aset terbaru...";
+
+		// Step 1: 0% -> 40%
+		setTimeout(() => {
+			installProgress.value = 40;
+			installStepText.value = "Memperbarui cache Service Worker...";
+		}, 300);
+
+		// Step 2: 40% -> 80%
+		setTimeout(() => {
+			installProgress.value = 85;
+			installStepText.value = "Membersihkan berkas lama & menyegarkan...";
+		}, 700);
+
+		// Step 3: 85% -> 100% & trigger reload
+		setTimeout(() => {
+			installProgress.value = 100;
+			installStepText.value = "Pembaruan selesai! Memuat ulang...";
+
+			setTimeout(() => {
+				applyUpdate();
+			}, 300);
+		}, 1100);
+	}
+
 	return {
 		updateAvailable,
+		isInstalling,
+		installProgress,
+		installStepText,
 		applyUpdate,
+		startInteractiveUpdate,
 		isSnoozed,
 		snoozeUpdate,
 	};
