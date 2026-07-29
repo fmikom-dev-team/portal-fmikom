@@ -260,7 +260,7 @@ export const store = {
 * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:43
 * @route '/admin/categories/{category}'
 */
-const updated3574d41649b4dd208d031db42e0efd4 = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+const updated3574d41649b4dd208d031db42e0efd4 = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: updated3574d41649b4dd208d031db42e0efd4.url(args, options),
     method: 'put',
 })
@@ -275,7 +275,7 @@ updated3574d41649b4dd208d031db42e0efd4.definition = {
 * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:43
 * @route '/admin/categories/{category}'
 */
-updated3574d41649b4dd208d031db42e0efd4.url = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+updated3574d41649b4dd208d031db42e0efd4.url = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { category: args }
     }
@@ -308,7 +308,7 @@ updated3574d41649b4dd208d031db42e0efd4.url = (args: { category: string | number 
 * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:43
 * @route '/admin/categories/{category}'
 */
-updated3574d41649b4dd208d031db42e0efd4.put = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+updated3574d41649b4dd208d031db42e0efd4.put = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: updated3574d41649b4dd208d031db42e0efd4.url(args, options),
     method: 'put',
 })
@@ -318,7 +318,7 @@ updated3574d41649b4dd208d031db42e0efd4.put = (args: { category: string | number 
 * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:43
 * @route '/kaprodi/admin/categories/{category}'
 */
-const update017c645f2893a21c57fb24ddf26dbd68 = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+const update017c645f2893a21c57fb24ddf26dbd68 = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update017c645f2893a21c57fb24ddf26dbd68.url(args, options),
     method: 'put',
 })
@@ -333,7 +333,7 @@ update017c645f2893a21c57fb24ddf26dbd68.definition = {
 * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:43
 * @route '/kaprodi/admin/categories/{category}'
 */
-update017c645f2893a21c57fb24ddf26dbd68.url = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+update017c645f2893a21c57fb24ddf26dbd68.url = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { category: args }
     }
@@ -366,7 +366,7 @@ update017c645f2893a21c57fb24ddf26dbd68.url = (args: { category: string | number 
 * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:43
 * @route '/kaprodi/admin/categories/{category}'
 */
-update017c645f2893a21c57fb24ddf26dbd68.put = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+update017c645f2893a21c57fb24ddf26dbd68.put = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update017c645f2893a21c57fb24ddf26dbd68.url(args, options),
     method: 'put',
 })
@@ -376,7 +376,7 @@ update017c645f2893a21c57fb24ddf26dbd68.put = (args: { category: string | number 
 * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:43
 * @route '/dekan/admin/categories/{category}'
 */
-const update77b15b03af456df615b1604b47e0af3b = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+const update77b15b03af456df615b1604b47e0af3b = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update77b15b03af456df615b1604b47e0af3b.url(args, options),
     method: 'put',
 })
@@ -391,7 +391,7 @@ update77b15b03af456df615b1604b47e0af3b.definition = {
 * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:43
 * @route '/dekan/admin/categories/{category}'
 */
-update77b15b03af456df615b1604b47e0af3b.url = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+update77b15b03af456df615b1604b47e0af3b.url = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { category: args }
     }
@@ -424,7 +424,7 @@ update77b15b03af456df615b1604b47e0af3b.url = (args: { category: string | number 
 * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:43
 * @route '/dekan/admin/categories/{category}'
 */
-update77b15b03af456df615b1604b47e0af3b.put = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+update77b15b03af456df615b1604b47e0af3b.put = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update77b15b03af456df615b1604b47e0af3b.url(args, options),
     method: 'put',
 })
@@ -445,7 +445,7 @@ export const update = {
 * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:60
 * @route '/admin/categories/{category}'
 */
-const destroyd3574d41649b4dd208d031db42e0efd4 = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+const destroyd3574d41649b4dd208d031db42e0efd4 = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroyd3574d41649b4dd208d031db42e0efd4.url(args, options),
     method: 'delete',
 })
@@ -460,7 +460,7 @@ destroyd3574d41649b4dd208d031db42e0efd4.definition = {
 * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:60
 * @route '/admin/categories/{category}'
 */
-destroyd3574d41649b4dd208d031db42e0efd4.url = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+destroyd3574d41649b4dd208d031db42e0efd4.url = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { category: args }
     }
@@ -493,7 +493,7 @@ destroyd3574d41649b4dd208d031db42e0efd4.url = (args: { category: string | number
 * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:60
 * @route '/admin/categories/{category}'
 */
-destroyd3574d41649b4dd208d031db42e0efd4.delete = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+destroyd3574d41649b4dd208d031db42e0efd4.delete = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroyd3574d41649b4dd208d031db42e0efd4.url(args, options),
     method: 'delete',
 })
@@ -503,7 +503,7 @@ destroyd3574d41649b4dd208d031db42e0efd4.delete = (args: { category: string | num
 * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:60
 * @route '/kaprodi/admin/categories/{category}'
 */
-const destroy017c645f2893a21c57fb24ddf26dbd68 = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+const destroy017c645f2893a21c57fb24ddf26dbd68 = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy017c645f2893a21c57fb24ddf26dbd68.url(args, options),
     method: 'delete',
 })
@@ -518,7 +518,7 @@ destroy017c645f2893a21c57fb24ddf26dbd68.definition = {
 * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:60
 * @route '/kaprodi/admin/categories/{category}'
 */
-destroy017c645f2893a21c57fb24ddf26dbd68.url = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+destroy017c645f2893a21c57fb24ddf26dbd68.url = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { category: args }
     }
@@ -551,7 +551,7 @@ destroy017c645f2893a21c57fb24ddf26dbd68.url = (args: { category: string | number
 * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:60
 * @route '/kaprodi/admin/categories/{category}'
 */
-destroy017c645f2893a21c57fb24ddf26dbd68.delete = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+destroy017c645f2893a21c57fb24ddf26dbd68.delete = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy017c645f2893a21c57fb24ddf26dbd68.url(args, options),
     method: 'delete',
 })
@@ -561,7 +561,7 @@ destroy017c645f2893a21c57fb24ddf26dbd68.delete = (args: { category: string | num
 * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:60
 * @route '/dekan/admin/categories/{category}'
 */
-const destroy77b15b03af456df615b1604b47e0af3b = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+const destroy77b15b03af456df615b1604b47e0af3b = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy77b15b03af456df615b1604b47e0af3b.url(args, options),
     method: 'delete',
 })
@@ -576,7 +576,7 @@ destroy77b15b03af456df615b1604b47e0af3b.definition = {
 * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:60
 * @route '/dekan/admin/categories/{category}'
 */
-destroy77b15b03af456df615b1604b47e0af3b.url = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+destroy77b15b03af456df615b1604b47e0af3b.url = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { category: args }
     }
@@ -609,7 +609,7 @@ destroy77b15b03af456df615b1604b47e0af3b.url = (args: { category: string | number
 * @see app/Modules/Fast/Controllers/Admin/CategoryController.php:60
 * @route '/dekan/admin/categories/{category}'
 */
-destroy77b15b03af456df615b1604b47e0af3b.delete = (args: { category: string | number | { id: string | number } } | [category: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+destroy77b15b03af456df615b1604b47e0af3b.delete = (args: { category: number | { id: number } } | [category: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy77b15b03af456df615b1604b47e0af3b.url(args, options),
     method: 'delete',
 })

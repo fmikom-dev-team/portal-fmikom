@@ -240,17 +240,17 @@ class SubmissionController extends Controller
 
     protected function pageName(): string
     {
-        return 'fast/user/Ajukan';
+        return 'mahasiswa/Ajukan';
     }
 
     protected function basePath(): string
     {
-        return '/fast/user';
+        return '/mahasiswa';
     }
 
     protected function dashboardRouteName(): string
     {
-        return 'fast.user.dashboard';
+        return 'mahasiswa.dashboard';
     }
 
     protected function visibleSubmissionJenisSuratQuery($user): Builder

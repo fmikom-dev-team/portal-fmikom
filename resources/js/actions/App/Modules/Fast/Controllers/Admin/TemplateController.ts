@@ -260,7 +260,7 @@ export const store = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:41
 * @route '/admin/templates/{jenisSurat}/preview'
 */
-const preview1458ea1a8e799b0a95dcddcf76bd62fd = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+const preview1458ea1a8e799b0a95dcddcf76bd62fd = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: preview1458ea1a8e799b0a95dcddcf76bd62fd.url(args, options),
     method: 'get',
 })
@@ -275,7 +275,7 @@ preview1458ea1a8e799b0a95dcddcf76bd62fd.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:41
 * @route '/admin/templates/{jenisSurat}/preview'
 */
-preview1458ea1a8e799b0a95dcddcf76bd62fd.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+preview1458ea1a8e799b0a95dcddcf76bd62fd.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -308,7 +308,7 @@ preview1458ea1a8e799b0a95dcddcf76bd62fd.url = (args: { jenisSurat: string | numb
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:41
 * @route '/admin/templates/{jenisSurat}/preview'
 */
-preview1458ea1a8e799b0a95dcddcf76bd62fd.get = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+preview1458ea1a8e799b0a95dcddcf76bd62fd.get = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: preview1458ea1a8e799b0a95dcddcf76bd62fd.url(args, options),
     method: 'get',
 })
@@ -318,7 +318,7 @@ preview1458ea1a8e799b0a95dcddcf76bd62fd.get = (args: { jenisSurat: string | numb
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:41
 * @route '/admin/templates/{jenisSurat}/preview'
 */
-preview1458ea1a8e799b0a95dcddcf76bd62fd.head = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+preview1458ea1a8e799b0a95dcddcf76bd62fd.head = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: preview1458ea1a8e799b0a95dcddcf76bd62fd.url(args, options),
     method: 'head',
 })
@@ -328,7 +328,7 @@ preview1458ea1a8e799b0a95dcddcf76bd62fd.head = (args: { jenisSurat: string | num
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:41
 * @route '/kaprodi/admin/templates/{jenisSurat}/preview'
 */
-const preview4fa55105ba4d0389070cc8883e48cbd7 = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+const preview4fa55105ba4d0389070cc8883e48cbd7 = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: preview4fa55105ba4d0389070cc8883e48cbd7.url(args, options),
     method: 'get',
 })
@@ -343,7 +343,7 @@ preview4fa55105ba4d0389070cc8883e48cbd7.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:41
 * @route '/kaprodi/admin/templates/{jenisSurat}/preview'
 */
-preview4fa55105ba4d0389070cc8883e48cbd7.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+preview4fa55105ba4d0389070cc8883e48cbd7.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -376,7 +376,7 @@ preview4fa55105ba4d0389070cc8883e48cbd7.url = (args: { jenisSurat: string | numb
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:41
 * @route '/kaprodi/admin/templates/{jenisSurat}/preview'
 */
-preview4fa55105ba4d0389070cc8883e48cbd7.get = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+preview4fa55105ba4d0389070cc8883e48cbd7.get = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: preview4fa55105ba4d0389070cc8883e48cbd7.url(args, options),
     method: 'get',
 })
@@ -386,7 +386,7 @@ preview4fa55105ba4d0389070cc8883e48cbd7.get = (args: { jenisSurat: string | numb
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:41
 * @route '/kaprodi/admin/templates/{jenisSurat}/preview'
 */
-preview4fa55105ba4d0389070cc8883e48cbd7.head = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+preview4fa55105ba4d0389070cc8883e48cbd7.head = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: preview4fa55105ba4d0389070cc8883e48cbd7.url(args, options),
     method: 'head',
 })
@@ -396,7 +396,7 @@ preview4fa55105ba4d0389070cc8883e48cbd7.head = (args: { jenisSurat: string | num
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:41
 * @route '/dekan/admin/templates/{jenisSurat}/preview'
 */
-const preview6966d51cd43ca6a22a8ec9319baf124f = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+const preview6966d51cd43ca6a22a8ec9319baf124f = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: preview6966d51cd43ca6a22a8ec9319baf124f.url(args, options),
     method: 'get',
 })
@@ -411,7 +411,7 @@ preview6966d51cd43ca6a22a8ec9319baf124f.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:41
 * @route '/dekan/admin/templates/{jenisSurat}/preview'
 */
-preview6966d51cd43ca6a22a8ec9319baf124f.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+preview6966d51cd43ca6a22a8ec9319baf124f.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -444,7 +444,7 @@ preview6966d51cd43ca6a22a8ec9319baf124f.url = (args: { jenisSurat: string | numb
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:41
 * @route '/dekan/admin/templates/{jenisSurat}/preview'
 */
-preview6966d51cd43ca6a22a8ec9319baf124f.get = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+preview6966d51cd43ca6a22a8ec9319baf124f.get = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: preview6966d51cd43ca6a22a8ec9319baf124f.url(args, options),
     method: 'get',
 })
@@ -454,7 +454,7 @@ preview6966d51cd43ca6a22a8ec9319baf124f.get = (args: { jenisSurat: string | numb
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:41
 * @route '/dekan/admin/templates/{jenisSurat}/preview'
 */
-preview6966d51cd43ca6a22a8ec9319baf124f.head = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+preview6966d51cd43ca6a22a8ec9319baf124f.head = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: preview6966d51cd43ca6a22a8ec9319baf124f.url(args, options),
     method: 'head',
 })
@@ -475,7 +475,7 @@ export const preview = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:62
 * @route '/admin/templates/{jenisSurat}/duplicate'
 */
-const duplicated7008cb62fc8bbec332e944dfd8460bd = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+const duplicated7008cb62fc8bbec332e944dfd8460bd = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: duplicated7008cb62fc8bbec332e944dfd8460bd.url(args, options),
     method: 'post',
 })
@@ -490,7 +490,7 @@ duplicated7008cb62fc8bbec332e944dfd8460bd.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:62
 * @route '/admin/templates/{jenisSurat}/duplicate'
 */
-duplicated7008cb62fc8bbec332e944dfd8460bd.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+duplicated7008cb62fc8bbec332e944dfd8460bd.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -523,7 +523,7 @@ duplicated7008cb62fc8bbec332e944dfd8460bd.url = (args: { jenisSurat: string | nu
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:62
 * @route '/admin/templates/{jenisSurat}/duplicate'
 */
-duplicated7008cb62fc8bbec332e944dfd8460bd.post = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+duplicated7008cb62fc8bbec332e944dfd8460bd.post = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: duplicated7008cb62fc8bbec332e944dfd8460bd.url(args, options),
     method: 'post',
 })
@@ -533,7 +533,7 @@ duplicated7008cb62fc8bbec332e944dfd8460bd.post = (args: { jenisSurat: string | n
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:62
 * @route '/kaprodi/admin/templates/{jenisSurat}/duplicate'
 */
-const duplicate1ccd8a00f5f6974c2de1e36645851e0c = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+const duplicate1ccd8a00f5f6974c2de1e36645851e0c = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: duplicate1ccd8a00f5f6974c2de1e36645851e0c.url(args, options),
     method: 'post',
 })
@@ -548,7 +548,7 @@ duplicate1ccd8a00f5f6974c2de1e36645851e0c.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:62
 * @route '/kaprodi/admin/templates/{jenisSurat}/duplicate'
 */
-duplicate1ccd8a00f5f6974c2de1e36645851e0c.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+duplicate1ccd8a00f5f6974c2de1e36645851e0c.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -581,7 +581,7 @@ duplicate1ccd8a00f5f6974c2de1e36645851e0c.url = (args: { jenisSurat: string | nu
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:62
 * @route '/kaprodi/admin/templates/{jenisSurat}/duplicate'
 */
-duplicate1ccd8a00f5f6974c2de1e36645851e0c.post = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+duplicate1ccd8a00f5f6974c2de1e36645851e0c.post = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: duplicate1ccd8a00f5f6974c2de1e36645851e0c.url(args, options),
     method: 'post',
 })
@@ -591,7 +591,7 @@ duplicate1ccd8a00f5f6974c2de1e36645851e0c.post = (args: { jenisSurat: string | n
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:62
 * @route '/dekan/admin/templates/{jenisSurat}/duplicate'
 */
-const duplicate578f79cf42c6bf57bff1b5009a62783c = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+const duplicate578f79cf42c6bf57bff1b5009a62783c = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: duplicate578f79cf42c6bf57bff1b5009a62783c.url(args, options),
     method: 'post',
 })
@@ -606,7 +606,7 @@ duplicate578f79cf42c6bf57bff1b5009a62783c.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:62
 * @route '/dekan/admin/templates/{jenisSurat}/duplicate'
 */
-duplicate578f79cf42c6bf57bff1b5009a62783c.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+duplicate578f79cf42c6bf57bff1b5009a62783c.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -639,7 +639,7 @@ duplicate578f79cf42c6bf57bff1b5009a62783c.url = (args: { jenisSurat: string | nu
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:62
 * @route '/dekan/admin/templates/{jenisSurat}/duplicate'
 */
-duplicate578f79cf42c6bf57bff1b5009a62783c.post = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+duplicate578f79cf42c6bf57bff1b5009a62783c.post = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     url: duplicate578f79cf42c6bf57bff1b5009a62783c.url(args, options),
     method: 'post',
 })
@@ -660,7 +660,7 @@ export const duplicate = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:55
 * @route '/admin/templates/{jenisSurat}/toggle-active'
 */
-const toggleActive24eb9428d4dc6193900a741f68e73a1a = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+const toggleActive24eb9428d4dc6193900a741f68e73a1a = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
     url: toggleActive24eb9428d4dc6193900a741f68e73a1a.url(args, options),
     method: 'patch',
 })
@@ -675,7 +675,7 @@ toggleActive24eb9428d4dc6193900a741f68e73a1a.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:55
 * @route '/admin/templates/{jenisSurat}/toggle-active'
 */
-toggleActive24eb9428d4dc6193900a741f68e73a1a.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+toggleActive24eb9428d4dc6193900a741f68e73a1a.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -708,7 +708,7 @@ toggleActive24eb9428d4dc6193900a741f68e73a1a.url = (args: { jenisSurat: string |
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:55
 * @route '/admin/templates/{jenisSurat}/toggle-active'
 */
-toggleActive24eb9428d4dc6193900a741f68e73a1a.patch = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+toggleActive24eb9428d4dc6193900a741f68e73a1a.patch = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
     url: toggleActive24eb9428d4dc6193900a741f68e73a1a.url(args, options),
     method: 'patch',
 })
@@ -718,7 +718,7 @@ toggleActive24eb9428d4dc6193900a741f68e73a1a.patch = (args: { jenisSurat: string
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:55
 * @route '/kaprodi/admin/templates/{jenisSurat}/toggle-active'
 */
-const toggleActiveefada02b3e0ad96868cf0f64f4e173a0 = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+const toggleActiveefada02b3e0ad96868cf0f64f4e173a0 = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
     url: toggleActiveefada02b3e0ad96868cf0f64f4e173a0.url(args, options),
     method: 'patch',
 })
@@ -733,7 +733,7 @@ toggleActiveefada02b3e0ad96868cf0f64f4e173a0.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:55
 * @route '/kaprodi/admin/templates/{jenisSurat}/toggle-active'
 */
-toggleActiveefada02b3e0ad96868cf0f64f4e173a0.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+toggleActiveefada02b3e0ad96868cf0f64f4e173a0.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -766,7 +766,7 @@ toggleActiveefada02b3e0ad96868cf0f64f4e173a0.url = (args: { jenisSurat: string |
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:55
 * @route '/kaprodi/admin/templates/{jenisSurat}/toggle-active'
 */
-toggleActiveefada02b3e0ad96868cf0f64f4e173a0.patch = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+toggleActiveefada02b3e0ad96868cf0f64f4e173a0.patch = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
     url: toggleActiveefada02b3e0ad96868cf0f64f4e173a0.url(args, options),
     method: 'patch',
 })
@@ -776,7 +776,7 @@ toggleActiveefada02b3e0ad96868cf0f64f4e173a0.patch = (args: { jenisSurat: string
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:55
 * @route '/dekan/admin/templates/{jenisSurat}/toggle-active'
 */
-const toggleActive05c38a44eb5f8a0851cf2c52a0b975ee = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+const toggleActive05c38a44eb5f8a0851cf2c52a0b975ee = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
     url: toggleActive05c38a44eb5f8a0851cf2c52a0b975ee.url(args, options),
     method: 'patch',
 })
@@ -791,7 +791,7 @@ toggleActive05c38a44eb5f8a0851cf2c52a0b975ee.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:55
 * @route '/dekan/admin/templates/{jenisSurat}/toggle-active'
 */
-toggleActive05c38a44eb5f8a0851cf2c52a0b975ee.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+toggleActive05c38a44eb5f8a0851cf2c52a0b975ee.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -824,7 +824,7 @@ toggleActive05c38a44eb5f8a0851cf2c52a0b975ee.url = (args: { jenisSurat: string |
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:55
 * @route '/dekan/admin/templates/{jenisSurat}/toggle-active'
 */
-toggleActive05c38a44eb5f8a0851cf2c52a0b975ee.patch = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+toggleActive05c38a44eb5f8a0851cf2c52a0b975ee.patch = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
     url: toggleActive05c38a44eb5f8a0851cf2c52a0b975ee.url(args, options),
     method: 'patch',
 })
@@ -845,7 +845,7 @@ export const toggleActive = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:34
 * @route '/admin/templates/{jenisSurat}'
 */
-const update01f505c1b215cb09c80c65f20012e257 = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+const update01f505c1b215cb09c80c65f20012e257 = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update01f505c1b215cb09c80c65f20012e257.url(args, options),
     method: 'put',
 })
@@ -860,7 +860,7 @@ update01f505c1b215cb09c80c65f20012e257.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:34
 * @route '/admin/templates/{jenisSurat}'
 */
-update01f505c1b215cb09c80c65f20012e257.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+update01f505c1b215cb09c80c65f20012e257.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -893,7 +893,7 @@ update01f505c1b215cb09c80c65f20012e257.url = (args: { jenisSurat: string | numbe
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:34
 * @route '/admin/templates/{jenisSurat}'
 */
-update01f505c1b215cb09c80c65f20012e257.put = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+update01f505c1b215cb09c80c65f20012e257.put = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: update01f505c1b215cb09c80c65f20012e257.url(args, options),
     method: 'put',
 })
@@ -903,7 +903,7 @@ update01f505c1b215cb09c80c65f20012e257.put = (args: { jenisSurat: string | numbe
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:34
 * @route '/kaprodi/admin/templates/{jenisSurat}'
 */
-const updateec4553acf41ea339119e762c715217a1 = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+const updateec4553acf41ea339119e762c715217a1 = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: updateec4553acf41ea339119e762c715217a1.url(args, options),
     method: 'put',
 })
@@ -918,7 +918,7 @@ updateec4553acf41ea339119e762c715217a1.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:34
 * @route '/kaprodi/admin/templates/{jenisSurat}'
 */
-updateec4553acf41ea339119e762c715217a1.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+updateec4553acf41ea339119e762c715217a1.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -951,7 +951,7 @@ updateec4553acf41ea339119e762c715217a1.url = (args: { jenisSurat: string | numbe
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:34
 * @route '/kaprodi/admin/templates/{jenisSurat}'
 */
-updateec4553acf41ea339119e762c715217a1.put = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+updateec4553acf41ea339119e762c715217a1.put = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: updateec4553acf41ea339119e762c715217a1.url(args, options),
     method: 'put',
 })
@@ -961,7 +961,7 @@ updateec4553acf41ea339119e762c715217a1.put = (args: { jenisSurat: string | numbe
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:34
 * @route '/dekan/admin/templates/{jenisSurat}'
 */
-const updatee90c4242e6221d90cc466e8c8b71bc81 = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+const updatee90c4242e6221d90cc466e8c8b71bc81 = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: updatee90c4242e6221d90cc466e8c8b71bc81.url(args, options),
     method: 'put',
 })
@@ -976,7 +976,7 @@ updatee90c4242e6221d90cc466e8c8b71bc81.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:34
 * @route '/dekan/admin/templates/{jenisSurat}'
 */
-updatee90c4242e6221d90cc466e8c8b71bc81.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+updatee90c4242e6221d90cc466e8c8b71bc81.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -1009,7 +1009,7 @@ updatee90c4242e6221d90cc466e8c8b71bc81.url = (args: { jenisSurat: string | numbe
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:34
 * @route '/dekan/admin/templates/{jenisSurat}'
 */
-updatee90c4242e6221d90cc466e8c8b71bc81.put = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+updatee90c4242e6221d90cc466e8c8b71bc81.put = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     url: updatee90c4242e6221d90cc466e8c8b71bc81.url(args, options),
     method: 'put',
 })
@@ -1030,7 +1030,7 @@ export const update = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:48
 * @route '/admin/templates/{jenisSurat}'
 */
-const destroy01f505c1b215cb09c80c65f20012e257 = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+const destroy01f505c1b215cb09c80c65f20012e257 = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy01f505c1b215cb09c80c65f20012e257.url(args, options),
     method: 'delete',
 })
@@ -1045,7 +1045,7 @@ destroy01f505c1b215cb09c80c65f20012e257.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:48
 * @route '/admin/templates/{jenisSurat}'
 */
-destroy01f505c1b215cb09c80c65f20012e257.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+destroy01f505c1b215cb09c80c65f20012e257.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -1078,7 +1078,7 @@ destroy01f505c1b215cb09c80c65f20012e257.url = (args: { jenisSurat: string | numb
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:48
 * @route '/admin/templates/{jenisSurat}'
 */
-destroy01f505c1b215cb09c80c65f20012e257.delete = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+destroy01f505c1b215cb09c80c65f20012e257.delete = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroy01f505c1b215cb09c80c65f20012e257.url(args, options),
     method: 'delete',
 })
@@ -1088,7 +1088,7 @@ destroy01f505c1b215cb09c80c65f20012e257.delete = (args: { jenisSurat: string | n
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:48
 * @route '/kaprodi/admin/templates/{jenisSurat}'
 */
-const destroyec4553acf41ea339119e762c715217a1 = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+const destroyec4553acf41ea339119e762c715217a1 = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroyec4553acf41ea339119e762c715217a1.url(args, options),
     method: 'delete',
 })
@@ -1103,7 +1103,7 @@ destroyec4553acf41ea339119e762c715217a1.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:48
 * @route '/kaprodi/admin/templates/{jenisSurat}'
 */
-destroyec4553acf41ea339119e762c715217a1.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+destroyec4553acf41ea339119e762c715217a1.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -1136,7 +1136,7 @@ destroyec4553acf41ea339119e762c715217a1.url = (args: { jenisSurat: string | numb
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:48
 * @route '/kaprodi/admin/templates/{jenisSurat}'
 */
-destroyec4553acf41ea339119e762c715217a1.delete = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+destroyec4553acf41ea339119e762c715217a1.delete = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroyec4553acf41ea339119e762c715217a1.url(args, options),
     method: 'delete',
 })
@@ -1146,7 +1146,7 @@ destroyec4553acf41ea339119e762c715217a1.delete = (args: { jenisSurat: string | n
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:48
 * @route '/dekan/admin/templates/{jenisSurat}'
 */
-const destroye90c4242e6221d90cc466e8c8b71bc81 = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+const destroye90c4242e6221d90cc466e8c8b71bc81 = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroye90c4242e6221d90cc466e8c8b71bc81.url(args, options),
     method: 'delete',
 })
@@ -1161,7 +1161,7 @@ destroye90c4242e6221d90cc466e8c8b71bc81.definition = {
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:48
 * @route '/dekan/admin/templates/{jenisSurat}'
 */
-destroye90c4242e6221d90cc466e8c8b71bc81.url = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions) => {
+destroye90c4242e6221d90cc466e8c8b71bc81.url = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
         args = { jenisSurat: args }
     }
@@ -1194,7 +1194,7 @@ destroye90c4242e6221d90cc466e8c8b71bc81.url = (args: { jenisSurat: string | numb
 * @see app/Modules/Fast/Controllers/Admin/TemplateController.php:48
 * @route '/dekan/admin/templates/{jenisSurat}'
 */
-destroye90c4242e6221d90cc466e8c8b71bc81.delete = (args: { jenisSurat: string | number | { id: string | number } } | [jenisSurat: string | number | { id: string | number } ] | string | number | { id: string | number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+destroye90c4242e6221d90cc466e8c8b71bc81.delete = (args: { jenisSurat: number | { id: number } } | [jenisSurat: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
     url: destroye90c4242e6221d90cc466e8c8b71bc81.url(args, options),
     method: 'delete',
 })

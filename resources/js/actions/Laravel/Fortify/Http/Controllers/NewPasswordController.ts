@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \Laravel\Fortify\Http\Controllers\NewPasswordController::create
-* @see vendor/laravel/fortify/src/Http/Controllers/NewPasswordController.php:44
+* @see vendor/laravel/fortify/src/Http/Controllers/NewPasswordController.php:45
 * @route '/reset-password/{token}'
 */
 export const create = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ create.definition = {
 
 /**
 * @see \Laravel\Fortify\Http\Controllers\NewPasswordController::create
-* @see vendor/laravel/fortify/src/Http/Controllers/NewPasswordController.php:44
+* @see vendor/laravel/fortify/src/Http/Controllers/NewPasswordController.php:45
 * @route '/reset-password/{token}'
 */
 create.url = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -43,7 +43,7 @@ create.url = (args: { token: string | number } | [token: string | number ] | str
 
 /**
 * @see \Laravel\Fortify\Http\Controllers\NewPasswordController::create
-* @see vendor/laravel/fortify/src/Http/Controllers/NewPasswordController.php:44
+* @see vendor/laravel/fortify/src/Http/Controllers/NewPasswordController.php:45
 * @route '/reset-password/{token}'
 */
 create.get = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +53,7 @@ create.get = (args: { token: string | number } | [token: string | number ] | str
 
 /**
 * @see \Laravel\Fortify\Http\Controllers\NewPasswordController::create
-* @see vendor/laravel/fortify/src/Http/Controllers/NewPasswordController.php:44
+* @see vendor/laravel/fortify/src/Http/Controllers/NewPasswordController.php:45
 * @route '/reset-password/{token}'
 */
 create.head = (args: { token: string | number } | [token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -63,7 +63,7 @@ create.head = (args: { token: string | number } | [token: string | number ] | st
 
 /**
 * @see \Laravel\Fortify\Http\Controllers\NewPasswordController::store
-* @see vendor/laravel/fortify/src/Http/Controllers/NewPasswordController.php:55
+* @see vendor/laravel/fortify/src/Http/Controllers/NewPasswordController.php:56
 * @route '/reset-password'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -78,7 +78,7 @@ store.definition = {
 
 /**
 * @see \Laravel\Fortify\Http\Controllers\NewPasswordController::store
-* @see vendor/laravel/fortify/src/Http/Controllers/NewPasswordController.php:55
+* @see vendor/laravel/fortify/src/Http/Controllers/NewPasswordController.php:56
 * @route '/reset-password'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -87,7 +87,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \Laravel\Fortify\Http\Controllers\NewPasswordController::store
-* @see vendor/laravel/fortify/src/Http/Controllers/NewPasswordController.php:55
+* @see vendor/laravel/fortify/src/Http/Controllers/NewPasswordController.php:56
 * @route '/reset-password'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
