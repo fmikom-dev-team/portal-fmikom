@@ -179,15 +179,14 @@ const currentSteps = computed(() => {
             <!-- Right column (Clean Showcase Media Container with rounded-2xl matching 21st.dev reference) -->
             <div class="md:col-span-6 flex items-center">
                 <div
-                    class="relative w-full h-[380px] sm:h-[480px] md:h-[var(--panel-height)] md:min-h-[var(--panel-height)] rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 overflow-hidden shadow-xs flex flex-col justify-between"
-                    :style="{ '--panel-height': `${panelMinHeight}px` }"
+                    class="relative w-full h-[380px] sm:h-[480px] md:h-[540px] lg:h-[600px] rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 overflow-hidden shadow-md flex flex-col justify-between"
                 >
                     <!-- Media Showcase Container (Clickable for HD Lightbox Preview) -->
                     <div class="relative w-full h-full flex-1 overflow-hidden group">
                         <template v-for="t in tabs" :key="t.value">
                             <div
                                 v-show="activeTab === t.value"
-                                class="absolute inset-0 w-full h-full transition-opacity duration-300 flex items-center justify-center bg-slate-950/90 cursor-zoom-in overflow-hidden p-2 sm:p-4"
+                                class="absolute inset-0 w-full h-full transition-opacity duration-300 flex items-center justify-center bg-slate-900/40 dark:bg-slate-950/60 cursor-zoom-in overflow-hidden p-0 sm:p-2 md:p-2"
                                 @click="openImagePreview(t.src, t.title || t.label)"
                                 title="Klik untuk Pratinjau Gambar Kualitas Tinggi HD"
                             >
@@ -197,14 +196,14 @@ const currentSteps = computed(() => {
                                         :src="t.src"
                                         alt=""
                                         aria-hidden="true"
-                                        class="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-110 pointer-events-none select-none"
+                                        class="absolute inset-0 w-full h-full object-cover blur-2xl opacity-50 scale-110 pointer-events-none select-none"
                                     />
                                     <!-- Foreground Fitted Image -->
                                     <img
                                         :src="t.src"
                                         :alt="t.alt || t.label"
                                         @error="brokenImages[t.value] = true"
-                                        class="relative z-10 max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-lg transition-transform duration-500 group-hover:scale-[1.01]"
+                                        class="relative z-10 w-full h-full object-cover md:object-cover object-top rounded-xl shadow-xl transition-transform duration-500 group-hover:scale-[1.015]"
                                     />
                                 </template>
                                 <div v-else class="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-slate-100 dark:bg-slate-900">

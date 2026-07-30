@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Portal\PortalEvent;
 use App\Services\VirusScannerService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -88,6 +89,7 @@ class PortalEventController extends Controller
         }
 
         PortalEvent::create($validated);
+        Cache::forget('portal_welcome_events');
 
         return redirect()->back()->with('success', 'Event berhasil ditambahkan!');
     }
@@ -153,6 +155,7 @@ class PortalEventController extends Controller
         }
 
         $event->update($validated);
+        Cache::forget('portal_welcome_events');
 
         return redirect()->back()->with('success', 'Event berhasil diperbarui!');
     }
@@ -164,6 +167,7 @@ class PortalEventController extends Controller
         }
 
         $event->delete();
+        Cache::forget('portal_welcome_events');
 
         return redirect()->back()->with('success', 'Event berhasil dihapus!');
     }

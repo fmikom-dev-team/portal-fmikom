@@ -12,6 +12,7 @@ use App\Models\Portal\PortalPage;
 use App\Models\Portal\PortalPost;
 use App\Models\Portal\PortalSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -70,6 +71,10 @@ class PortalAdminController extends Controller
             'show_partners' => 'nullable|string',
             'show_benefits' => 'nullable|string',
             'show_testimonials' => 'nullable|string',
+            'show_events' => 'nullable|string',
+            'show_posts' => 'nullable|string',
+            'show_showcase' => 'nullable|string',
+            'show_alumni' => 'nullable|string',
             'testimonials_title' => 'nullable|string',
             'testimonials_subtitle' => 'nullable|string',
             'testimonials' => 'nullable|string',
@@ -95,6 +100,9 @@ class PortalAdminController extends Controller
                 PortalSetting::updateOrCreate(['key' => $key], ['value' => $value]);
             }
         }
+
+        Cache::forget('portal_welcome_events');
+        Cache::forget('portal_home_showcase');
 
         // Handle Hero Gallery uploads — key is hero_gallery_files[]
         if ($request->hasFile('hero_gallery_files')) {

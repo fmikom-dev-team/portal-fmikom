@@ -121,6 +121,10 @@ const form = reactive({
 	show_partners: props.settings.show_partners !== "0",
 	show_benefits: props.settings.show_benefits !== "0",
 	show_testimonials: props.settings.show_testimonials !== "0",
+	show_events: props.settings.show_events !== "0",
+	show_posts: props.settings.show_posts !== "0",
+	show_showcase: props.settings.show_showcase !== "0",
+	show_alumni: props.settings.show_alumni !== "0",
 
 	// Content
 	hero_title:
@@ -337,7 +341,11 @@ const toggleVisibility = (
 		| "show_features"
 		| "show_partners"
 		| "show_benefits"
-		| "show_testimonials",
+		| "show_testimonials"
+		| "show_events"
+		| "show_posts"
+		| "show_showcase"
+		| "show_alumni",
 ) => {
 	form[key] = !form[key];
 };
@@ -453,6 +461,10 @@ const submit = () => {
 	formData.append("show_partners", form.show_partners ? "1" : "0");
 	formData.append("show_benefits", form.show_benefits ? "1" : "0");
 	formData.append("show_testimonials", form.show_testimonials ? "1" : "0");
+	formData.append("show_events", form.show_events ? "1" : "0");
+	formData.append("show_posts", form.show_posts ? "1" : "0");
+	formData.append("show_showcase", form.show_showcase ? "1" : "0");
+	formData.append("show_alumni", form.show_alumni ? "1" : "0");
 	formData.append("testimonials_title", form.testimonials_title);
 	formData.append("testimonials_subtitle", form.testimonials_subtitle);
 	formData.append("testimonials", JSON.stringify(form.testimonials));
@@ -620,6 +632,48 @@ const submit = () => {
                     <div class="md:col-span-2 bg-[#f8fafc] dark:bg-slate-900/50 rounded-2xl p-4 border border-dashed border-slate-300 dark:border-slate-700 flex flex-col gap-4">
                         <div class="text-[11px] font-black tracking-widest text-slate-400 uppercase ml-2">Badan Halaman</div>
                         
+                        <!-- WIDGET: EVENT TIMELINE -->
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
+                            <div class="flex items-center gap-4">
+                                <button @click="toggleVisibility('show_events')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" title="Sembunyikan/Tampilkan">
+                                    <Eye v-if="form.show_events" class="w-5 h-5"/>
+                                    <EyeOff v-else class="w-5 h-5 text-rose-500"/>
+                                </button>
+                                <div>
+                                    <h4 :class="['text-[14px] font-bold', form.show_events ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Event & Agenda Timeline</h4>
+                                    <p class="text-[12px] font-bold text-slate-500 mt-0.5">Otomatis dari Data Event FMIKOM</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- WIDGET: SHOWCASE PORTOFOLIO -->
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
+                            <div class="flex items-center gap-4">
+                                <button @click="toggleVisibility('show_showcase')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" title="Sembunyikan/Tampilkan">
+                                    <Eye v-if="form.show_showcase" class="w-5 h-5"/>
+                                    <EyeOff v-else class="w-5 h-5 text-rose-500"/>
+                                </button>
+                                <div>
+                                    <h4 :class="['text-[14px] font-bold', form.show_showcase ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Portofolio Showcase Mahasiswa</h4>
+                                    <p class="text-[12px] font-bold text-slate-500 mt-0.5">Pengaturan Karya Unggulan (Modul PAGI)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- WIDGET: PETA ALUMNI -->
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
+                            <div class="flex items-center gap-4">
+                                <button @click="toggleVisibility('show_alumni')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" title="Sembunyikan/Tampilkan">
+                                    <Eye v-if="form.show_alumni" class="w-5 h-5"/>
+                                    <EyeOff v-else class="w-5 h-5 text-rose-500"/>
+                                </button>
+                                <div>
+                                    <h4 :class="['text-[14px] font-bold', form.show_alumni ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Peta Sebaran Alumni & Statistik</h4>
+                                    <p class="text-[12px] font-bold text-slate-500 mt-0.5">Seksi Visual Peta & Statistik Tracer</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- WIDGET: POSTS / BERITA -->
                         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
                             <div class="flex items-center gap-4">
@@ -631,11 +685,6 @@ const submit = () => {
                                     <h4 :class="['text-[14px] font-bold', form.show_features ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Berita & Postingan</h4>
                                     <p class="text-[12px] font-bold text-slate-500 mt-0.5">Otomatis dari Portal Admin Posts</p>
                                 </div>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <button class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-400 cursor-not-allowed border border-slate-200 dark:border-slate-600">
-                                    <Edit2 class="w-3.5 h-3.5"/>
-                                </button>
                             </div>
                         </div>
 

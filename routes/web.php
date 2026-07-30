@@ -195,7 +195,7 @@ Route::get('/', function () {
         try {
             $now = now();
 
-            return PortalEvent::where(function ($q) use ($now) {
+            $upcomingEvents = PortalEvent::where(function ($q) use ($now) {
                 $q->where('status', 'published')
                     ->orWhere(function ($sq) use ($now) {
                         $sq->where('status', 'scheduled')
@@ -210,6 +210,22 @@ Route::get('/', function () {
                     });
                 })
                 ->orderBy('start_time', 'asc')
+                ->take(3)
+                ->get();
+
+            if ($upcomingEvents->isNotEmpty()) {
+                return $upcomingEvents->toArray();
+            }
+
+            // Fallback: If no upcoming events, return latest published events so section stays active
+            return PortalEvent::where(function ($q) use ($now) {
+                $q->where('status', 'published')
+                    ->orWhere(function ($sq) use ($now) {
+                        $sq->where('status', 'scheduled')
+                            ->where('published_at', '<=', $now);
+                    });
+            })
+                ->latest()
                 ->take(3)
                 ->get()
                 ->toArray();

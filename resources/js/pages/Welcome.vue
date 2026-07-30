@@ -651,7 +651,7 @@ const currentYear = new Date().getFullYear();
 
             <!-- DYNAMIC POSTS SECTION -->
             <section
-                v-if="settings?.show_features !== '0'"
+                v-if="settings?.show_features !== '0' && settings?.show_posts !== '0'"
                 id="news"
                 class="bg-white py-20 lg:py-28 overflow-hidden"
             >
@@ -844,7 +844,7 @@ const currentYear = new Date().getFullYear();
 
             <!-- FEATURE SHOWCASE SECTION (Only show if showcase works are selected) -->
             <section
-                v-if="showcase_data && showcase_data.tabs && showcase_data.tabs.length > 0"
+                v-if="settings?.show_showcase !== '0' && showcase_data && showcase_data.tabs && showcase_data.tabs.length > 0"
                 class="bg-white dark:bg-slate-950 py-10 lg:py-16 overflow-hidden border-t border-slate-100 dark:border-slate-800"
             >
                 <div class="mx-auto max-w-7xl px-4">
@@ -859,7 +859,7 @@ const currentYear = new Date().getFullYear();
 
             <!-- EVENT TIMELINE SECTION (Only show if there are active events to avoid blank section) -->
             <section
-                v-if="events && events.length > 0"
+                v-if="settings?.show_events !== '0' && events && events.length > 0"
                 class="bg-white border-t border-gray-100 py-12 lg:py-16 overflow-hidden"
             >
                 <div class="mx-auto max-w-[1216px] px-4">
@@ -1069,7 +1069,7 @@ const currentYear = new Date().getFullYear();
             </LazyWrapper>
 
             <!-- ALUMNI MAP TRACKING SECTION -->
-            <LazyWrapper>
+            <LazyWrapper v-if="settings?.show_alumni !== '0'">
                 <AlumniMap
                     :alumni-data="alumni_data"
                     :total-alumni="total_alumni"
