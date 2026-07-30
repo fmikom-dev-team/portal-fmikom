@@ -165,13 +165,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // can properly forward X-Forwarded-Proto: https to Laravel. Without these, Laravel
         // treats all requests as HTTP even when accessed via HTTPS, breaking signed URL
         // validation (403) and CSP nonce logic.
-        $middleware->trustProxies(at: implode(',', [
+        $middleware->trustProxies(at: env('TRUSTED_PROXIES', implode(',', [
             '127.0.0.1',
             '::1',
-            // Docker internal networks (Traefik / Dokploy reverse proxy)
-            // Default Docker bridge: 172.17.0.0/16
-            // Docker Compose default: 172.16.0.0/12 (covers 172.16–172.31)
+            // Docker & Dokploy internal networks (Traefik / Docker bridge & swarm)
             '172.16.0.0/12',
+            '172.0.0.0/8',
+            '192.168.0.0/16',
             '10.0.0.0/8',
             // Cloudflare IPv4
             '173.245.48.0/20',
@@ -197,7 +197,7 @@ return Application::configure(basePath: dirname(__DIR__))
             '2405:8100::/32',
             '2a06:98c0::/29',
             '2c0f:f248::/32',
-        ]));
+        ])));
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         // Global Middleware (Applies to all HTTP requests - Web, API, etc.)
@@ -274,6 +274,17 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return redirect()->route('login')
                 ->with('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
+        });
+
+        $exceptions->render(function (\Illuminate\Routing\Exceptions\InvalidSignatureException $e, $request) {
+            if ($request->inertia() || $request->wantsJson()) {
+                return response()->json([
+                    'message' => 'Link aktivasi tidak valid atau telah kedaluwarsa.',
+                ], 403);
+            }
+
+            return redirect()->route('login')
+                ->with('error', 'Link aktivasi tidak valid atau telah kedaluwarsa. Silakan hubungi administrator untuk meminta link baru.');
         });
 
         $exceptions->render(function (ThrottleRequestsException $e, $request) {
