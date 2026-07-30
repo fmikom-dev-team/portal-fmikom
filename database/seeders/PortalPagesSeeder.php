@@ -414,7 +414,7 @@ class PortalPagesSeeder extends Seeder
             );
 
             // Cari halaman-halaman yang masuk dalam kategori menu ini
-            $childPages = array_filter($pagesData, fn($p) => $p['category'] === $menuItem['category']);
+            $childPages = array_filter($pagesData, fn ($p) => $p['category'] === $menuItem['category']);
             $orderCount = 1;
             foreach ($childPages as $p) {
                 if (isset($createdPages[$p['slug']])) {
