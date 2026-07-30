@@ -83,17 +83,24 @@
 /* ── Shimmer animation ─────────────────────────────────────────── */
 @keyframes wos-shimmer {
 	0% {
-		background-position: -400px 0;
+		background-position: -1000px 0;
 	}
 	100% {
-		background-position: 400px 0;
+		background-position: 1000px 0;
 	}
 }
 
 .wos-shimmer {
-	background: linear-gradient(90deg, #f3f4f6 25%, #e9eaec 50%, #f3f4f6 75%);
-	background-size: 800px 100%;
-	animation: wos-shimmer 1.4s ease-in-out infinite;
+	background: linear-gradient(
+		90deg,
+		rgba(241, 245, 249, 0.8) 0%,
+		rgba(226, 232, 240, 0.95) 20%,
+		rgba(248, 250, 252, 1) 50%,
+		rgba(226, 232, 240, 0.95) 80%,
+		rgba(241, 245, 249, 0.8) 100%
+	);
+	background-size: 1000px 100%;
+	animation: wos-shimmer 1.8s ease-in-out infinite;
 }
 
 /* ── Focus ring ─────────────────────────────────────────────────── */
@@ -288,8 +295,15 @@
 
 /* ── Skeleton shimmer ── */
 .dark .wos-shimmer {
-	background: linear-gradient(90deg, #27272a 25%, #3f3f46 50%, #27272a 75%);
-	background-size: 800px 100%;
+	background: linear-gradient(
+		90deg,
+		rgba(24, 24, 27, 0.8) 0%,
+		rgba(39, 39, 42, 0.95) 20%,
+		rgba(52, 52, 58, 1) 50%,
+		rgba(39, 39, 42, 0.95) 80%,
+		rgba(24, 24, 27, 0.8) 100%
+	);
+	background-size: 1000px 100%;
 }
 
 /* ── Table row hover ── */

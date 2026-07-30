@@ -369,7 +369,6 @@ function pushUrl(page: string) {
 }
 
 function navigate(page: string) {
-	isPageLoading.value = true;
 	activePage.value = page;
 	if (page !== "organizations.show") selectedOrganization.value = null;
 	if (page !== "users.show") selectedUser.value = null;
@@ -390,29 +389,23 @@ function navigate(page: string) {
 		(p) => isPropEmpty(p) && !loadedProps.value[p],
 	);
 
-	const startTime = Date.now();
-	const MIN_LOAD_TIME = 350; // minimum skeleton show time for smooth transition
-
 	if (propsToLoad.length > 0) {
+		// Show modern shimmer skeleton while fetching new page data
+		isPageLoading.value = true;
 		router.reload({
 			only: propsToLoad,
 			onFinish: () => {
-				const elapsedTime = Date.now() - startTime;
-				const remainingTime = Math.max(0, MIN_LOAD_TIME - elapsedTime);
-				setTimeout(() => {
-					isPageLoading.value = false;
-					propsToLoad.forEach((p) => {
-						if (!isPropEmpty(p)) {
-							loadedProps.value[p] = true;
-						}
-					});
-				}, remainingTime);
+				isPageLoading.value = false;
+				propsToLoad.forEach((p) => {
+					if (!isPropEmpty(p)) {
+						loadedProps.value[p] = true;
+					}
+				});
 			}
 		});
 	} else {
-		setTimeout(() => {
-			isPageLoading.value = false;
-		}, MIN_LOAD_TIME);
+		// Data already in memory -> Instant switch without artificial skeleton delay
+		isPageLoading.value = false;
 	}
 
 	const main = document.getElementById("wos-main");
