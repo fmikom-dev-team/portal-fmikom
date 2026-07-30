@@ -35,8 +35,10 @@ const emit = defineEmits<{
 
 const tabRefs = ref<HTMLElement[]>([]);
 const pillStyle = ref({ top: "0px", height: "0px", left: "0px", width: "0px" });
+const isReady = ref(false);
 
 const updatePill = () => {
+	if (props.variant === "sidebar") return;
 	const activeIndex = props.tabs.findIndex((t) => t.id === props.modelValue);
 	const activeEl = tabRefs.value[activeIndex];
 	if (activeEl) {
@@ -55,14 +57,12 @@ const updatePill = () => {
 				width: `${activeEl.offsetWidth}px`,
 			};
 		}
+		isReady.value = true;
 	}
 };
 
 onMounted(() => {
 	nextTick(updatePill);
-	setTimeout(updatePill, 50);
-	setTimeout(updatePill, 150);
-	setTimeout(updatePill, 300);
 	window.addEventListener("resize", updatePill);
 });
 
@@ -80,13 +80,11 @@ watch(
 watch(
 	() => props.tabs,
 	() => {
-		nextTick(() => setTimeout(updatePill, 50));
+		nextTick(updatePill);
 	},
 	{ deep: true },
 );
 
-// Jika pillClass menentukan background tersendiri (misal: bg-indigo-600),
-// jangan tambahkan default bg-white agar warna background tidak berbenturan
 const defaultPillBg = computed(() => {
 	if (props.pillClass.includes("bg-")) return "";
 	if (props.variant === "pill" || props.variant === "sidebar") return "bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/80 shadow-sm";
@@ -107,13 +105,14 @@ const defaultPillBg = computed(() => {
             containerClass
         ]"
     >
-        <!-- Sliding background pill/underline indicator -->
+        <!-- Sliding background indicator for non-sidebar variants -->
         <div 
+            v-if="variant !== 'sidebar'"
             :class="[
-                'absolute transition-all duration-350 cubic-bezier(0.16, 1, 0.3, 1) z-0 rounded-lg',
+                'absolute z-0 rounded-lg',
+                isReady ? 'transition-all duration-200 ease-out opacity-100' : 'opacity-0',
                 defaultPillBg,
                 variant === 'underline' ? 'bg-indigo-600 dark:bg-indigo-400' : '',
-                pillStyle.width === '0px' ? 'opacity-0' : 'opacity-100',
                 pillClass
             ]"
             :style="pillStyle"
@@ -129,15 +128,21 @@ const defaultPillBg = computed(() => {
             role="tab"
             :aria-selected="modelValue === tab.id"
             :class="[
-                'relative z-10 text-left transition-colors border-0 cursor-pointer bg-transparent outline-none flex items-center gap-1.5 select-none transition-all duration-200 whitespace-nowrap',
-                variant === 'underline' 
-                    ? 'px-1 pb-3 text-[13px] font-medium -mb-px' 
-                    : (variant === 'segment' 
-                        ? 'px-3 py-1.5 rounded-md text-xs font-semibold' 
-                        : 'px-3.5 py-1.5 rounded-lg text-xs font-semibold'),
-                modelValue === tab.id
-                    ? (activeClass || (variant === 'underline' ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-slate-900 dark:text-zinc-100 font-bold'))
-                    : (inactiveClass || (variant === 'underline' ? 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200' : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200'))
+                'relative z-10 text-left transition-all duration-150 border-0 cursor-pointer outline-none flex items-center gap-1.5 select-none whitespace-nowrap',
+                variant === 'sidebar'
+                    ? 'px-3 py-2 rounded-xl text-xs font-semibold w-full'
+                    : (variant === 'underline' 
+                        ? 'px-1 pb-3 text-[13px] font-medium -mb-px' 
+                        : (variant === 'segment' 
+                            ? 'px-3 py-1.5 rounded-md text-xs font-semibold' 
+                            : 'px-3.5 py-1.5 rounded-lg text-xs font-semibold')),
+                variant === 'sidebar'
+                    ? (modelValue === tab.id
+                        ? (activeClass || 'bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 font-bold border border-gray-200/80 dark:border-zinc-700/60 shadow-xs')
+                        : (inactiveClass || 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-gray-100/60 dark:hover:bg-zinc-800/40 bg-transparent'))
+                    : (modelValue === tab.id
+                        ? (activeClass || (variant === 'underline' ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-slate-900 dark:text-zinc-100 font-bold'))
+                        : (inactiveClass || (variant === 'underline' ? 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200' : 'text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200')))
             ]"
         >
             <component v-if="tab.icon" :is="tab.icon" class="w-4 h-4 shrink-0" />
