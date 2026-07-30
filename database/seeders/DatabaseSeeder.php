@@ -33,6 +33,7 @@ class DatabaseSeeder extends Seeder
             SuratCategorySeeder::class,
             JenisSuratSeeder::class,
             SuratTemplateSeeder::class,
+            PortalPagesSeeder::class,
         ]);
     }
 }
