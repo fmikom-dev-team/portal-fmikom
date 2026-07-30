@@ -1257,5 +1257,9 @@ const submit = () => {
             </div>
         </div>
 
+        <!-- HIDDEN FILE INPUTS (Global) -->
+        <input type="file" multiple accept="image/*" class="hidden" ref="heroGalleryInput" @change="handleHeroUpload">
+        <input type="file" multiple accept="image/*" class="hidden" ref="partnerInput" @change="handlePartnerUpload">
+
     </PortalAdminLayout>
 </template>
