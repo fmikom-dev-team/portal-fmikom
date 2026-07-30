@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from "@inertiajs/vue3";
 import {
+	AlertTriangle,
 	ArrowDown,
 	ArrowUp,
 	CheckCircle2,
@@ -350,6 +351,28 @@ const toggleVisibility = (
 	form[key] = !form[key];
 };
 
+const confirmDisableModalOpen = ref(false);
+const targetDisableKey = ref<string | null>(null);
+const targetDisableLabel = ref<string>("");
+
+const requestToggle = (key: string, label: string) => {
+	if (form[key]) {
+		targetDisableKey.value = key;
+		targetDisableLabel.value = label;
+		confirmDisableModalOpen.value = true;
+	} else {
+		form[key] = true;
+	}
+};
+
+const confirmDisableSection = () => {
+	if (targetDisableKey.value) {
+		form[targetDisableKey.value] = false;
+	}
+	confirmDisableModalOpen.value = false;
+	targetDisableKey.value = null;
+};
+
 // Testimonial Item Form State & Helper Functions
 const isEditingTestimonialItem = ref(false);
 const editingTestimonialIndex = ref<number | null>(null);
@@ -635,12 +658,24 @@ const submit = () => {
                         <!-- WIDGET: EVENT TIMELINE -->
                         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
                             <div class="flex items-center gap-4">
-                                <button @click="toggleVisibility('show_events')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" title="Sembunyikan/Tampilkan">
-                                    <Eye v-if="form.show_events" class="w-5 h-5"/>
-                                    <EyeOff v-else class="w-5 h-5 text-rose-500"/>
+                                <button
+                                    type="button"
+                                    @click="requestToggle('show_events', 'Event & Agenda Timeline')"
+                                    :class="[
+                                        'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
+                                        form.show_events ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                                    ]"
+                                    title="Geser untuk Aktif/Nonaktifkan"
+                                >
+                                    <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_events ? 'translate-x-5.5' : 'translate-x-0']"></span>
                                 </button>
                                 <div>
-                                    <h4 :class="['text-[14px] font-bold', form.show_events ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Event & Agenda Timeline</h4>
+                                    <div class="flex items-center gap-2">
+                                        <h4 :class="['text-[14px] font-bold', form.show_events ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Event & Agenda Timeline</h4>
+                                        <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_events ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
+                                            {{ form.show_events ? 'Aktif' : 'Nonaktif' }}
+                                        </span>
+                                    </div>
                                     <p class="text-[12px] font-bold text-slate-500 mt-0.5">Otomatis dari Data Event FMIKOM</p>
                                 </div>
                             </div>
@@ -649,12 +684,24 @@ const submit = () => {
                         <!-- WIDGET: SHOWCASE PORTOFOLIO -->
                         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
                             <div class="flex items-center gap-4">
-                                <button @click="toggleVisibility('show_showcase')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" title="Sembunyikan/Tampilkan">
-                                    <Eye v-if="form.show_showcase" class="w-5 h-5"/>
-                                    <EyeOff v-else class="w-5 h-5 text-rose-500"/>
+                                <button
+                                    type="button"
+                                    @click="requestToggle('show_showcase', 'Portofolio Showcase Mahasiswa')"
+                                    :class="[
+                                        'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
+                                        form.show_showcase ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                                    ]"
+                                    title="Geser untuk Aktif/Nonaktifkan"
+                                >
+                                    <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_showcase ? 'translate-x-5.5' : 'translate-x-0']"></span>
                                 </button>
                                 <div>
-                                    <h4 :class="['text-[14px] font-bold', form.show_showcase ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Portofolio Showcase Mahasiswa</h4>
+                                    <div class="flex items-center gap-2">
+                                        <h4 :class="['text-[14px] font-bold', form.show_showcase ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Portofolio Showcase Mahasiswa</h4>
+                                        <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_showcase ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
+                                            {{ form.show_showcase ? 'Aktif' : 'Nonaktif' }}
+                                        </span>
+                                    </div>
                                     <p class="text-[12px] font-bold text-slate-500 mt-0.5">Pengaturan Karya Unggulan (Modul PAGI)</p>
                                 </div>
                             </div>
@@ -663,12 +710,24 @@ const submit = () => {
                         <!-- WIDGET: PETA ALUMNI -->
                         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
                             <div class="flex items-center gap-4">
-                                <button @click="toggleVisibility('show_alumni')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" title="Sembunyikan/Tampilkan">
-                                    <Eye v-if="form.show_alumni" class="w-5 h-5"/>
-                                    <EyeOff v-else class="w-5 h-5 text-rose-500"/>
+                                <button
+                                    type="button"
+                                    @click="requestToggle('show_alumni', 'Peta Sebaran Alumni & Statistik')"
+                                    :class="[
+                                        'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
+                                        form.show_alumni ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                                    ]"
+                                    title="Geser untuk Aktif/Nonaktifkan"
+                                >
+                                    <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_alumni ? 'translate-x-5.5' : 'translate-x-0']"></span>
                                 </button>
                                 <div>
-                                    <h4 :class="['text-[14px] font-bold', form.show_alumni ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Peta Sebaran Alumni & Statistik</h4>
+                                    <div class="flex items-center gap-2">
+                                        <h4 :class="['text-[14px] font-bold', form.show_alumni ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Peta Sebaran Alumni & Statistik</h4>
+                                        <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_alumni ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
+                                            {{ form.show_alumni ? 'Aktif' : 'Nonaktif' }}
+                                        </span>
+                                    </div>
                                     <p class="text-[12px] font-bold text-slate-500 mt-0.5">Seksi Visual Peta & Statistik Tracer</p>
                                 </div>
                             </div>
@@ -677,12 +736,24 @@ const submit = () => {
                         <!-- WIDGET: POSTS / BERITA -->
                         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
                             <div class="flex items-center gap-4">
-                                <button @click="toggleVisibility('show_features')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" title="Sembunyikan/Tampilkan">
-                                    <Eye v-if="form.show_features" class="w-5 h-5"/>
-                                    <EyeOff v-else class="w-5 h-5 text-rose-500"/>
+                                <button
+                                    type="button"
+                                    @click="requestToggle('show_features', 'Berita & Postingan')"
+                                    :class="[
+                                        'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
+                                        form.show_features ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                                    ]"
+                                    title="Geser untuk Aktif/Nonaktifkan"
+                                >
+                                    <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_features ? 'translate-x-5.5' : 'translate-x-0']"></span>
                                 </button>
                                 <div>
-                                    <h4 :class="['text-[14px] font-bold', form.show_features ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Berita & Postingan</h4>
+                                    <div class="flex items-center gap-2">
+                                        <h4 :class="['text-[14px] font-bold', form.show_features ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Berita & Postingan</h4>
+                                        <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_features ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
+                                            {{ form.show_features ? 'Aktif' : 'Nonaktif' }}
+                                        </span>
+                                    </div>
                                     <p class="text-[12px] font-bold text-slate-500 mt-0.5">Otomatis dari Portal Admin Posts</p>
                                 </div>
                             </div>
@@ -692,12 +763,24 @@ const submit = () => {
                         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-4">
-                                    <button @click="toggleVisibility('show_partners')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" title="Sembunyikan/Tampilkan">
-                                        <Eye v-if="form.show_partners" class="w-5 h-5"/>
-                                        <EyeOff v-else class="w-5 h-5 text-rose-500"/>
+                                    <button
+                                        type="button"
+                                        @click="requestToggle('show_partners', 'Mitra & Partner')"
+                                        :class="[
+                                            'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
+                                            form.show_partners ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                                        ]"
+                                        title="Geser untuk Aktif/Nonaktifkan"
+                                    >
+                                        <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_partners ? 'translate-x-5.5' : 'translate-x-0']"></span>
                                     </button>
                                     <div>
-                                        <h4 :class="['text-[14px] font-bold', form.show_partners ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Mitra & Partner</h4>
+                                        <div class="flex items-center gap-2">
+                                            <h4 :class="['text-[14px] font-bold', form.show_partners ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Mitra & Partner</h4>
+                                            <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_partners ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
+                                                {{ form.show_partners ? 'Aktif' : 'Nonaktif' }}
+                                            </span>
+                                        </div>
                                         <p class="text-[12px] font-bold text-slate-500 mt-0.5">
                                             {{ form.partners.length > 0 ? `${form.partners.length} logo mitra tersimpan` : 'Logo-logo partner / kerjasama' }}
                                         </p>
@@ -726,12 +809,24 @@ const submit = () => {
                         <!-- WIDGET: BENEFITS -->
                         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
                             <div class="flex items-center gap-4">
-                                <button @click="toggleVisibility('show_benefits')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" title="Sembunyikan/Tampilkan">
-                                    <Eye v-if="form.show_benefits" class="w-5 h-5"/>
-                                    <EyeOff v-else class="w-5 h-5 text-rose-500"/>
+                                <button
+                                    type="button"
+                                    @click="requestToggle('show_benefits', 'Seksi Keunggulan')"
+                                    :class="[
+                                        'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
+                                        form.show_benefits ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                                    ]"
+                                    title="Geser untuk Aktif/Nonaktifkan"
+                                >
+                                    <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_benefits ? 'translate-x-5.5' : 'translate-x-0']"></span>
                                 </button>
                                 <div>
-                                    <h4 :class="['text-[14px] font-bold', form.show_benefits ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Seksi Keunggulan</h4>
+                                    <div class="flex items-center gap-2">
+                                        <h4 :class="['text-[14px] font-bold', form.show_benefits ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Seksi Keunggulan</h4>
+                                        <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_benefits ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
+                                            {{ form.show_benefits ? 'Aktif' : 'Nonaktif' }}
+                                        </span>
+                                    </div>
                                     <p class="text-[12px] font-bold text-slate-500 mt-0.5">Gadget Teks & Ilustrasi</p>
                                 </div>
                             </div>
@@ -745,12 +840,24 @@ const submit = () => {
                         <!-- WIDGET: TESTIMONIALS (Apa Kata Mereka) -->
                         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 flex items-center justify-between shadow-sm transition-all hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500">
                             <div class="flex items-center gap-4">
-                                <button @click="toggleVisibility('show_testimonials')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" title="Sembunyikan/Tampilkan">
-                                    <Eye v-if="form.show_testimonials" class="w-5 h-5"/>
-                                    <EyeOff v-else class="w-5 h-5 text-rose-500"/>
+                                <button
+                                    type="button"
+                                    @click="requestToggle('show_testimonials', 'Apa Kata Mereka (Testimoni)')"
+                                    :class="[
+                                        'relative inline-flex h-6.5 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs',
+                                        form.show_testimonials ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                                    ]"
+                                    title="Geser untuk Aktif/Nonaktifkan"
+                                >
+                                    <span :class="['pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out', form.show_testimonials ? 'translate-x-5.5' : 'translate-x-0']"></span>
                                 </button>
                                 <div>
-                                    <h4 :class="['text-[14px] font-bold', form.show_testimonials ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Apa Kata Mereka (Testimoni)</h4>
+                                    <div class="flex items-center gap-2">
+                                        <h4 :class="['text-[14px] font-bold', form.show_testimonials ? 'text-slate-800 dark:text-slate-200' : 'text-slate-400 line-through']">Apa Kata Mereka (Testimoni)</h4>
+                                        <span :class="['px-2 py-0.5 rounded-full text-[10px] font-extrabold border', form.show_testimonials ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400']">
+                                            {{ form.show_testimonials ? 'Aktif' : 'Nonaktif' }}
+                                        </span>
+                                    </div>
                                     <p class="text-[12px] font-bold text-slate-500 mt-0.5">Gadget Testimoni Civitas Akademika & Alumni</p>
                                 </div>
                             </div>
@@ -1124,9 +1231,31 @@ const submit = () => {
             </div>
         </div>
 
-        <!-- HIDDEN FILE INPUTS (Global) -->
-        <input type="file" multiple accept="image/*" class="hidden" ref="heroGalleryInput" @change="handleHeroUpload">
-        <input type="file" multiple accept="image/*" class="hidden" ref="partnerInput" @change="handlePartnerUpload">
+        <!-- CONFIRMATION MODAL DISABLING SECTION -->
+        <div v-if="confirmDisableModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+            <div class="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-2xl border border-slate-100 dark:border-slate-700 animate-in fade-in zoom-in-95 duration-200">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                        <AlertTriangle class="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white">Nonaktifkan Seksi?</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Konfirmasi Perubahan Tampilan</p>
+                    </div>
+                </div>
+                <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
+                    Apakah Anda yakin ingin menyembunyikan seksi <strong class="text-slate-900 dark:text-white">"{{ targetDisableLabel }}"</strong> dari halaman utama publik? Pengunjung tidak akan dapat melihat seksi ini.
+                </p>
+                <div class="flex items-center justify-end gap-3">
+                    <button @click="confirmDisableModalOpen = false" type="button" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        Batal
+                    </button>
+                    <button @click="confirmDisableSection" type="button" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-md shadow-rose-600/20 transition-all">
+                        Ya, Sembunyikan Seksi
+                    </button>
+                </div>
+            </div>
+        </div>
 
     </PortalAdminLayout>
 </template>

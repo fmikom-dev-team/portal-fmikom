@@ -60,6 +60,22 @@ const getOrganizersList = (eventItem: any): string[] => {
 	return ["FMIKOM"];
 };
 
+const getLogos = (eventItem: any): string[] => {
+	const val = eventItem?.organizer_logo;
+	if (!val) return [];
+	if (Array.isArray(val)) return val.filter(Boolean);
+	if (typeof val === "string" && val.startsWith("[")) {
+		try {
+			const parsed = JSON.parse(val);
+			if (Array.isArray(parsed)) return parsed.filter(Boolean);
+		} catch (e) {}
+	}
+	if (typeof val === "string" && val.trim() !== "") {
+		return [val];
+	}
+	return [];
+};
+
 const selectedEvent = ref<EventEntry | null>(null);
 const copied = ref(false);
 const isShareModalOpen = ref(false);
