@@ -558,10 +558,10 @@ const activeLabel = computed(() => {
                             @click="navigate(t.id)"
                             type="button"
                             :class="[
-                                'w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 border-0 cursor-pointer outline-none flex items-center gap-2',
+                                'w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors duration-150 border cursor-pointer outline-none flex items-center gap-2',
                                 (activePage === t.id || (activePage === 'authorization' && t.id === 'authz.overview'))
-                                    ? 'bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 font-bold border border-gray-200/80 dark:border-zinc-700/60 shadow-xs'
-                                    : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-gray-100/60 dark:hover:bg-zinc-800/40 bg-transparent'
+                                    ? 'bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 font-bold border-gray-200/80 dark:border-zinc-700/60 shadow-xs'
+                                    : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-gray-100/60 dark:hover:bg-zinc-800/40 bg-transparent'
                             ]"
                         >
                             {{ t.label }}
@@ -574,10 +574,10 @@ const activeLabel = computed(() => {
                             @click="navigate('audit-logs')"
                             type="button"
                             :class="[
-                                'w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 border-0 cursor-pointer outline-none flex items-center gap-2',
+                                'w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors duration-150 border cursor-pointer outline-none flex items-center gap-2',
                                 activePage === 'audit-logs'
-                                    ? 'bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 font-bold border border-gray-200/80 dark:border-zinc-700/60 shadow-xs'
-                                    : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-gray-100/60 dark:hover:bg-zinc-800/40 bg-transparent'
+                                    ? 'bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 font-bold border-gray-200/80 dark:border-zinc-700/60 shadow-xs'
+                                    : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-gray-100/60 dark:hover:bg-zinc-800/40 bg-transparent'
                             ]"
                         >
                             Audit
@@ -601,10 +601,10 @@ const activeLabel = computed(() => {
                             @click="navigate(t.id)"
                             type="button"
                             :class="[
-                                'w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 border-0 cursor-pointer outline-none flex items-center gap-2',
+                                'w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors duration-150 border cursor-pointer outline-none flex items-center gap-2',
                                 (activePage === t.id || (activePage === 'authentication' && t.id === 'auth.analytics'))
-                                    ? 'bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 font-bold border border-gray-200/80 dark:border-zinc-700/60 shadow-xs'
-                                    : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-gray-100/60 dark:hover:bg-zinc-800/40 bg-transparent'
+                                    ? 'bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 font-bold border-gray-200/80 dark:border-zinc-700/60 shadow-xs'
+                                    : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-gray-100/60 dark:hover:bg-zinc-800/40 bg-transparent'
                             ]"
                         >
                             {{ t.label }}
