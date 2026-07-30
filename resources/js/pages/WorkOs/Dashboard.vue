@@ -536,7 +536,7 @@ const activeLabel = computed(() => {
         @search="searchQuery = $event"
         @view-registration="handleViewRegistration"
     >
-        <Transition name="fade-slide" mode="out-in">
+        <Transition name="fade-slide">
             <div :key="activePage + '_' + isPageLoading" class="w-full h-full">
                 <!-- Shimmer Skeleton Loading Page -->
                 <div v-if="isPageLoading" class="px-8 pt-8 pb-12 space-y-6 w-full max-w-[1200px]" style="font-family: var(--wos-font)">
