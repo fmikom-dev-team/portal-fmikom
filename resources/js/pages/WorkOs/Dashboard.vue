@@ -536,10 +536,89 @@ const activeLabel = computed(() => {
         @search="searchQuery = $event"
         @view-registration="handleViewRegistration"
     >
-        <Transition name="fade-slide">
-            <div :key="activePage + '_' + isPageLoading" class="w-full h-full">
-                <!-- Shimmer Skeleton Loading Page -->
-                <div v-if="isPageLoading" class="px-8 pt-8 pb-12 space-y-6 w-full max-w-[1200px]" style="font-family: var(--wos-font)">
+        <div class="flex h-full w-full overflow-hidden">
+            <!-- Persistent Sub-Sidebar for Authorization & Authentication -->
+            <div
+                v-if="activePage.startsWith('authz') || activePage === 'authorization' || activePage.startsWith('auth.') || activePage === 'authentication'"
+                class="hidden md:flex w-[240px] shrink-0 border-r border-gray-200 dark:border-zinc-800 bg-[#f9fafb] dark:bg-zinc-900 p-4 flex-col h-full overflow-y-auto wos-scroll select-none"
+            >
+                <!-- Authorization Header & Sub-Nav -->
+                <template v-if="activePage.startsWith('authz') || activePage === 'authorization'">
+                    <h2 class="text-base font-semibold text-gray-900 dark:text-zinc-100 mb-4 px-3">Authorization</h2>
+                    <div class="space-y-1 mb-6">
+                        <button
+                            v-for="t in [
+                                { id: 'authz.overview', label: 'Overview' },
+                                { id: 'authz.roles', label: 'Roles' },
+                                { id: 'authz.permissions', label: 'Permissions' },
+                                { id: 'authz.assignments', label: 'Role Assignments' },
+                                { id: 'authz.access-control', label: 'Access Control' },
+                            ]"
+                            :key="t.id"
+                            @click="navigate(t.id)"
+                            type="button"
+                            :class="[
+                                'w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 border-0 cursor-pointer outline-none flex items-center gap-2',
+                                (activePage === t.id || (activePage === 'authorization' && t.id === 'authz.overview'))
+                                    ? 'bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 font-bold border border-gray-200/80 dark:border-zinc-700/60 shadow-xs'
+                                    : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-gray-100/60 dark:hover:bg-zinc-800/40 bg-transparent'
+                            ]"
+                        >
+                            {{ t.label }}
+                        </button>
+                    </div>
+
+                    <h3 class="text-[11px] font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2 px-3">Related</h3>
+                    <div class="space-y-1">
+                        <button
+                            @click="navigate('audit-logs')"
+                            type="button"
+                            :class="[
+                                'w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 border-0 cursor-pointer outline-none flex items-center gap-2',
+                                activePage === 'audit-logs'
+                                    ? 'bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 font-bold border border-gray-200/80 dark:border-zinc-700/60 shadow-xs'
+                                    : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-gray-100/60 dark:hover:bg-zinc-800/40 bg-transparent'
+                            ]"
+                        >
+                            Audit
+                        </button>
+                    </div>
+                </template>
+
+                <!-- Authentication Header & Sub-Nav -->
+                <template v-else-if="activePage.startsWith('auth.') || activePage === 'authentication'">
+                    <h2 class="text-base font-semibold text-gray-900 dark:text-zinc-100 mb-4 px-3">Authentication</h2>
+                    <div class="space-y-1 mb-6">
+                        <button
+                            v-for="t in [
+                                { id: 'auth.analytics', label: 'Analytics' },
+                                { id: 'auth.methods', label: 'Methods' },
+                                { id: 'auth.providers', label: 'Providers' },
+                                { id: 'auth.features', label: 'Features' },
+                                { id: 'auth.sessions', label: 'Sessions' },
+                            ]"
+                            :key="t.id"
+                            @click="navigate(t.id)"
+                            type="button"
+                            :class="[
+                                'w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 border-0 cursor-pointer outline-none flex items-center gap-2',
+                                (activePage === t.id || (activePage === 'authentication' && t.id === 'auth.analytics'))
+                                    ? 'bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 font-bold border border-gray-200/80 dark:border-zinc-700/60 shadow-xs'
+                                    : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-gray-100/60 dark:hover:bg-zinc-800/40 bg-transparent'
+                            ]"
+                        >
+                            {{ t.label }}
+                        </button>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Content Area (Only this panel reloads / shows skeleton) -->
+            <div class="flex-1 h-full overflow-y-auto wos-scroll">
+                <Transition name="fade-slide">
+                    <div :key="activePage + '_' + isPageLoading" class="w-full h-full">
+                        <!-- Shimmer Skeleton Loading Page -->
+                        <div v-if="isPageLoading" class="px-8 pt-8 pb-12 space-y-6 w-full max-w-[1200px]" style="font-family: var(--wos-font)">
                     <!-- Title Skeleton -->
                     <div class="space-y-2">
                         <div class="h-6 w-48 wos-shimmer rounded-md" />
@@ -937,5 +1016,7 @@ const activeLabel = computed(() => {
                 </div>
             </div>
         </Transition>
+        </div>
+        </div>
     </DashboardLayout>
 </template>
