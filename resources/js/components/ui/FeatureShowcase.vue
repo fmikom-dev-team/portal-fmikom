@@ -179,7 +179,7 @@ const currentSteps = computed(() => {
             <!-- Right column (Clean Showcase Media Container with rounded-2xl matching 21st.dev reference) -->
             <div class="md:col-span-6 flex items-center">
                 <div
-                    class="relative w-full h-[380px] sm:h-[480px] md:h-[560px] lg:h-[620px] rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 overflow-hidden shadow-md flex flex-col justify-between"
+                    class="relative w-full h-[380px] sm:h-[480px] md:h-[718px] lg:h-[718px] rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 overflow-hidden shadow-md flex flex-col justify-between"
                 >
                     <!-- Media Showcase Container (Clickable for HD Lightbox Preview) -->
                     <div class="relative w-full h-full flex-1 overflow-hidden group">
