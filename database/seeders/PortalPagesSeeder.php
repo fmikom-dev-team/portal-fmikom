@@ -145,7 +145,7 @@ class PortalPagesSeeder extends Seeder
             ],
             [
                 'title' => 'Fasilitas & Laboratorium',
-                'slug' => 'fasilitas-laboratorium',
+                'slug' => 'fasilitas',
                 'category' => 'Profil',
                 'template' => 'full-width',
                 'is_published' => true,
@@ -181,7 +181,7 @@ class PortalPagesSeeder extends Seeder
                 ',
             ],
 
-            // ─── KATEGORI: AKADEMIK (6 Halaman) ────────────────────────────────
+            // ─── KATEGORI: AKADEMIK (9 Halaman dengan Icon Matching) ───────────
             [
                 'title' => 'Program Studi Informatika',
                 'slug' => 'informatika',
@@ -228,53 +228,92 @@ class PortalPagesSeeder extends Seeder
                 ',
             ],
             [
-                'title' => 'Kalender Akademik & Jadwal',
-                'slug' => 'kalender-akademik-info',
+                'title' => 'Kalender Akademik',
+                'slug' => 'kalender-akademik',
                 'category' => 'Akademik',
                 'template' => 'default',
                 'is_published' => true,
-                'excerpt' => 'Jadwal perkuliahan, periode KRS, UTS, UAS, dan libur semester.',
+                'excerpt' => 'Jadwal & agenda akademik resmi FMIKOM semester aktif.',
                 'meta_description' => 'Kalender akademik resmi FMIKOM tahun ajaran berjalan.',
                 'content' => '
                     <div class="prose max-w-none">
                         <h2>Kalender Akademik Semester Aktif</h2>
-                        <p>Unduh jadwal lengkap kegiatan perkuliahan, batas pengisian KRS, ujian tengah semester, dan ujian akhir semester melalui tautan berikut.</p>
+                        <p>Unduh jadwal lengkap kegiatan perkuliahan, batas pengisian KRS, ujian tengah semester, dan ujian akhir semester melalui portal akademik.</p>
                     </div>
                 ',
             ],
             [
-                'title' => 'Panduan Kurikulum & MBKM',
-                'slug' => 'panduan-kurikulum',
+                'title' => 'MBKM',
+                'slug' => 'mbkm',
                 'category' => 'Akademik',
                 'template' => 'default',
                 'is_published' => true,
-                'excerpt' => 'Informasi kurikulum berbasis Kerangka Kualifikasi Nasional Indonesia dan program MBKM.',
-                'meta_description' => 'Struktur mata kuliah dan skema Merdeka Belajar Kampus Merdeka.',
+                'excerpt' => 'Merdeka belajar kampus merdeka dan program magang industri bersertifikat.',
+                'meta_description' => 'Skema dan pendaftaran program MBKM FMIKOM UNUGHA.',
                 'content' => '
                     <div class="prose max-w-none">
-                        <h2>Kurikulum & Program MBKM</h2>
-                        <p>FMIKOM menerapkan kurikulum Outcome-Based Education (OBE) yang terintegrasi dengan Magang Industri, Pertukaran Mahasiswa, dan Studi Independen Bersertifikat (MBKM).</p>
+                        <h2>Program Merdeka Belajar Kampus Merdeka (MBKM)</h2>
+                        <p>FMIKOM memberikan kesempatan konversi hingga 20 SKS untuk program Magang Industri, Pertukaran Mahasiswa, Studi Independen, dan Proyek Kemanusiaan.</p>
                     </div>
                 ',
             ],
             [
-                'title' => 'Prosedur Skripsi & Tugas Akhir',
-                'slug' => 'prosedur-skripsi',
+                'title' => 'Magang & Praktik Industri',
+                'slug' => 'magang',
                 'category' => 'Akademik',
                 'template' => 'default',
                 'is_published' => true,
-                'excerpt' => 'Panduan pengajuan judul, sidang proposal, bimbingan, dan sidang munaqosyah.',
-                'meta_description' => 'Alur dan syarat pendaftaran Skripsi bagi mahasiswa FMIKOM.',
+                'excerpt' => 'Praktik kerja industri dan penempatan magang mahasiswa di perusahaan mitra.',
+                'meta_description' => 'Panduan dan alur magang praktik kerja industri FMIKOM.',
                 'content' => '
                     <div class="prose max-w-none">
-                        <h2>Alur Pengajuan & Ujian Skripsi</h2>
-                        <ol>
-                            <li>Pengajuan Proposal Skripsi via Portal Sistem WIMS.</li>
-                            <li>Penetapan Dosen Pembimbing I dan II.</li>
-                            <li>Pelaksanaan Seminar Proposal.</li>
-                            <li>Bimbingan & Penyusunan Laporan Akhir.</li>
-                            <li>Sidang Ujian Munaqosyah / Tugas Akhir.</li>
-                        </ol>
+                        <h2>Operasional & Penempatan Magang</h2>
+                        <p>Pelaksanaan magang dikelola secara terintegrasi melalui modul WIMS FMIKOM untuk pemantauan pembimbing lapangan dan penilaian akhir.</p>
+                    </div>
+                ',
+            ],
+            [
+                'title' => 'Pedoman Akademik',
+                'slug' => 'pedoman-akademik',
+                'category' => 'Akademik',
+                'template' => 'default',
+                'is_published' => true,
+                'excerpt' => 'Panduan & aturan akademik terstruktur bagi seluruh mahasiswa FMIKOM.',
+                'meta_description' => 'Buku pedoman peraturan akademik FMIKOM.',
+                'content' => '
+                    <div class="prose max-w-none">
+                        <h2>Buku Pedoman Akademik</h2>
+                        <p>Petunjuk teknis sistem kredit semester (SKS), syarat evaluasi studi, tata tertib perkuliahan, dan etika akademis mahasiswa.</p>
+                    </div>
+                ',
+            ],
+            [
+                'title' => 'Beasiswa & Pendanaan',
+                'slug' => 'beasiswa',
+                'category' => 'Akademik',
+                'template' => 'default',
+                'is_published' => true,
+                'excerpt' => 'Program bantuan & pendanaan pendidikan bagi mahasiswa berprestasi.',
+                'meta_description' => 'Informasi beasiswa KIP, Prestasi, dan Kemitraan FMIKOM.',
+                'content' => '
+                    <div class="prose max-w-none">
+                        <h2>Informasi Skema Beasiswa</h2>
+                        <p>FMIKOM memfasilitasi beasiswa KIP Kuliah, Beasiswa Yayasan Al Ghazali, Beasiswa Bank Indonesia, dan Beasiswa Industri Mitra.</p>
+                    </div>
+                ',
+            ],
+            [
+                'title' => 'Download Dokumen Akademik',
+                'slug' => 'download-dokumen',
+                'category' => 'Akademik',
+                'template' => 'default',
+                'is_published' => true,
+                'excerpt' => 'Unduh form & dokumen resmi fakultas (Form KRS, Surat Izin, Template Skripsi).',
+                'meta_description' => 'Pusat unduhan formulir dan template dokumen resmi FMIKOM.',
+                'content' => '
+                    <div class="prose max-w-none">
+                        <h2>Pusat Unduhan Formulir Resmi</h2>
+                        <p>Silakan unduh berkas template proposal skripsi, lembar pengesahan, form bebas lab, dan surat rujukan akademik di halaman ini.</p>
                     </div>
                 ',
             ],
@@ -282,7 +321,7 @@ class PortalPagesSeeder extends Seeder
             // ─── KATEGORI: BERITA & MEDIA (4 Halaman) ──────────────────────────
             [
                 'title' => 'Pusat Pengumuman Resmi',
-                'slug' => 'pusat-pengumuman',
+                'slug' => 'pengumuman',
                 'category' => 'Berita & Media',
                 'template' => 'default',
                 'is_published' => true,
@@ -312,7 +351,7 @@ class PortalPagesSeeder extends Seeder
             ],
             [
                 'title' => 'Galeri Kegiatan Kampus',
-                'slug' => 'galeri-kegiatan',
+                'slug' => 'galeri',
                 'category' => 'Berita & Media',
                 'template' => 'full-width',
                 'is_published' => true,
@@ -327,7 +366,7 @@ class PortalPagesSeeder extends Seeder
             ],
             [
                 'title' => 'Warta & Buletin FMIKOM',
-                'slug' => 'buletin-warta',
+                'slug' => 'berita',
                 'category' => 'Berita & Media',
                 'template' => 'default',
                 'is_published' => true,
@@ -344,7 +383,7 @@ class PortalPagesSeeder extends Seeder
             // ─── KATEGORI: LAYANAN (3 Halaman) ─────────────────────────────────
             [
                 'title' => 'Layanan Surat Mahasiswa',
-                'slug' => 'layanan-surat-mahasiswa',
+                'slug' => 'pengajuan-dokumen',
                 'category' => 'Layanan',
                 'template' => 'default',
                 'is_published' => true,
@@ -359,7 +398,7 @@ class PortalPagesSeeder extends Seeder
             ],
             [
                 'title' => 'Helpdesk IT & Siakad/SINTA',
-                'slug' => 'helpdesk-it',
+                'slug' => 'faq',
                 'category' => 'Layanan',
                 'template' => 'default',
                 'is_published' => true,
@@ -373,17 +412,17 @@ class PortalPagesSeeder extends Seeder
                 ',
             ],
             [
-                'title' => 'Informasi Beasiswa & Bantuan',
-                'slug' => 'informasi-beasiswa',
+                'title' => 'Konsultasi & Pengaduan Akademik',
+                'slug' => 'konsultasi-akademik',
                 'category' => 'Layanan',
                 'template' => 'default',
                 'is_published' => true,
-                'excerpt' => 'Informasi pendaftaran Beasiswa KIP Kuliah, Beasiswa Prestasi, dan Mitra Industri.',
-                'meta_description' => 'Informasi program beasiswa dan bantuan biaya pendidikan.',
+                'excerpt' => 'Layanan konseling akademik dan pengaduan layanan perkuliahan.',
+                'meta_description' => 'Pusat layanan konsultasi akademik dosen pembimbing.',
                 'content' => '
                     <div class="prose max-w-none">
-                        <h2>Program Beasiswa Berkelanjutan</h2>
-                        <p>FMIKOM menyediakan berbagai skema bantuan pendidikan dan beasiswa bagi mahasiswa berprestasi dan kurang mampu.</p>
+                        <h2>Konsultasi & Layanan Dosen Pembimbing</h2>
+                        <p>FMIKOM menyediakan ruang konsultasi tatap muka maupun daring bagi mahasiswa yang memerlukan pembimbingan studi.</p>
                     </div>
                 ',
             ],
