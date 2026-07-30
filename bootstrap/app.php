@@ -25,6 +25,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use Illuminate\Routing\Exceptions\InvalidSignatureException;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
@@ -276,7 +277,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->with('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
         });
 
-        $exceptions->render(function (\Illuminate\Routing\Exceptions\InvalidSignatureException $e, $request) {
+        $exceptions->render(function (InvalidSignatureException $e, $request) {
             if ($request->inertia() || $request->wantsJson()) {
                 return response()->json([
                     'message' => 'Link aktivasi tidak valid atau telah kedaluwarsa.',
