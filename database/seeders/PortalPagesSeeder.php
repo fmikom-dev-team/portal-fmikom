@@ -21,7 +21,7 @@ class PortalPagesSeeder extends Seeder
                 'category' => 'Profil',
                 'template' => 'full-width',
                 'is_published' => true,
-                'excerpt' => 'Gambaran umum Fakultas Matematika dan Ilmu Komputer (FMIKOM) UNUGHA.',
+                'excerpt' => 'Profil & gambaran umum Fakultas Matematika dan Ilmu Komputer.',
                 'meta_description' => 'Profil singkat dan pengenalan Fakultas Matematika dan Ilmu Komputer (FMIKOM).',
                 'content' => '
                     <div class="prose max-w-none">
@@ -38,11 +38,11 @@ class PortalPagesSeeder extends Seeder
             ],
             [
                 'title' => 'Visi, Misi & Tujuan',
-                'slug' => 'visi-misi-tujuan',
+                'slug' => 'visi-misi',
                 'category' => 'Profil',
                 'template' => 'default',
                 'is_published' => true,
-                'excerpt' => 'Visi, Misi, dan Nilai Utama Fakultas Matematika dan Ilmu Komputer.',
+                'excerpt' => 'Visi, misi & tujuan strategis Fakultas Matematika dan Ilmu Komputer.',
                 'meta_description' => 'Visi dan Misi Strategis FMIKOM UNUGHA.',
                 'content' => '
                     <div class="prose max-w-none">
@@ -62,11 +62,11 @@ class PortalPagesSeeder extends Seeder
             ],
             [
                 'title' => 'Sejarah Berdirinya FMIKOM',
-                'slug' => 'sejarah-fakultas',
+                'slug' => 'sejarah',
                 'category' => 'Profil',
                 'template' => 'default',
                 'is_published' => true,
-                'excerpt' => 'Perjalanan bersejarah pendirian dan perkembangan FMIKOM.',
+                'excerpt' => 'Perjalanan & latar belakang pendirian FMIKOM.',
                 'meta_description' => 'Sejarah lengkap berdirinya Fakultas Matematika dan Ilmu Komputer.',
                 'content' => '
                     <div class="prose max-w-none">
@@ -81,7 +81,7 @@ class PortalPagesSeeder extends Seeder
                 'category' => 'Profil',
                 'template' => 'full-width',
                 'is_published' => true,
-                'excerpt' => 'Bagan pimpinan dan struktur tata kelola FMIKOM.',
+                'excerpt' => 'Hierarki & divisi fakultas FMIKOM.',
                 'meta_description' => 'Struktur organisasi dan jajaran pimpinan FMIKOM.',
                 'content' => '
                     <div class="prose max-w-none">
@@ -99,11 +99,11 @@ class PortalPagesSeeder extends Seeder
             ],
             [
                 'title' => 'Sambutan Dekan',
-                'slug' => 'sambutan-dekan',
+                'slug' => 'dekan-kaprodi',
                 'category' => 'Profil',
                 'template' => 'default',
                 'is_published' => true,
-                'excerpt' => 'Pesan ucapan selamat datang dari Dekan FMIKOM.',
+                'excerpt' => 'Pimpinan & kepala program pimpinan fakultas.',
                 'meta_description' => 'Sambutan resmi dari Dekan Fakultas Matematika dan Ilmu Komputer.',
                 'content' => '
                     <div class="prose max-w-none">
@@ -115,11 +115,11 @@ class PortalPagesSeeder extends Seeder
             ],
             [
                 'title' => 'Dosen & Staf Pengajar',
-                'slug' => 'dosen-staf-pengajar',
+                'slug' => 'dosen-staff',
                 'category' => 'Profil',
                 'template' => 'full-width',
                 'is_published' => true,
-                'excerpt' => 'Profil akademisi dan tenaga pengajar profesional FMIKOM.',
+                'excerpt' => 'Tenaga pengajar & kependidikan profesional.',
                 'meta_description' => 'Daftar dosen dan staf pengajar berpengalaman FMIKOM.',
                 'content' => '
                     <div class="prose max-w-none">
@@ -130,11 +130,11 @@ class PortalPagesSeeder extends Seeder
             ],
             [
                 'title' => 'Akreditasi Program Studi',
-                'slug' => 'akreditasi-fakultas',
+                'slug' => 'akreditasi',
                 'category' => 'Profil',
                 'template' => 'default',
                 'is_published' => true,
-                'excerpt' => 'Status akreditasi resmi dari BAN-PT dan LAM INFOKOM.',
+                'excerpt' => 'Status & sertifikasi mutu BAN-PT dan LAM INFOKOM.',
                 'meta_description' => 'Informasi peringkat dan sertifikat akreditasi prodi di FMIKOM.',
                 'content' => '
                     <div class="prose max-w-none">
@@ -149,7 +149,7 @@ class PortalPagesSeeder extends Seeder
                 'category' => 'Profil',
                 'template' => 'full-width',
                 'is_published' => true,
-                'excerpt' => 'Sarana prasarana laboratorium komputer modern dan ruang kuliah ber-AC.',
+                'excerpt' => 'Sarana & prasarana kampus dan laboratorium komputer modern.',
                 'meta_description' => 'Fasilitas laboratorium komputer, AI, dan jaringan di FMIKOM.',
                 'content' => '
                     <div class="prose max-w-none">
@@ -165,11 +165,11 @@ class PortalPagesSeeder extends Seeder
             ],
             [
                 'title' => 'Kontak & Lokasi Kampus',
-                'slug' => 'kontak-lokasi',
+                'slug' => 'kontak',
                 'category' => 'Profil',
                 'template' => 'default',
                 'is_published' => true,
-                'excerpt' => 'Alamat lengkap gedung FMIKOM, email resmi, dan layanan telepon.',
+                'excerpt' => 'Lokasi & kontak resmi gedung FMIKOM.',
                 'meta_description' => 'Informasi kontak dan peta lokasi gedung FMIKOM UNUGHA.',
                 'content' => '
                     <div class="prose max-w-none">
@@ -181,14 +181,14 @@ class PortalPagesSeeder extends Seeder
                 ',
             ],
 
-            // ─── KATEGORI: AKADEMIK (9 Halaman dengan Icon Matching) ───────────
+            // ─── KATEGORI: AKADEMIK (9 Halaman) ────────────────────────────────
             [
                 'title' => 'Program Studi Informatika',
                 'slug' => 'informatika',
                 'category' => 'Akademik',
                 'template' => 'full-width',
                 'is_published' => true,
-                'excerpt' => 'Program Studi S1 Informatika fokus pada Software Development, AI, dan Cloud Engineering.',
+                'excerpt' => 'S1 Teknik Informatika',
                 'meta_description' => 'Kurikulum dan profil lulusan Program Studi Informatika S1.',
                 'content' => '
                     <div class="prose max-w-none">
@@ -203,7 +203,7 @@ class PortalPagesSeeder extends Seeder
                 'category' => 'Akademik',
                 'template' => 'full-width',
                 'is_published' => true,
-                'excerpt' => 'Program Studi S1 Sistem Informasi fokus pada Business Analytics dan Enterprise Architecture.',
+                'excerpt' => 'S1 Sistem Informasi',
                 'meta_description' => 'Kurikulum dan keunggulan Program Studi Sistem Informasi S1.',
                 'content' => '
                     <div class="prose max-w-none">
@@ -218,7 +218,7 @@ class PortalPagesSeeder extends Seeder
                 'category' => 'Akademik',
                 'template' => 'full-width',
                 'is_published' => true,
-                'excerpt' => 'Program Studi S1 Matematika fokus pada Actuarial Science, Computational Math, dan Data Modeling.',
+                'excerpt' => 'S1 Matematika',
                 'meta_description' => 'Profil lulusan dan spesialisasi Program Studi Matematika S1.',
                 'content' => '
                     <div class="prose max-w-none">
@@ -233,7 +233,7 @@ class PortalPagesSeeder extends Seeder
                 'category' => 'Akademik',
                 'template' => 'default',
                 'is_published' => true,
-                'excerpt' => 'Jadwal & agenda akademik resmi FMIKOM semester aktif.',
+                'excerpt' => 'Jadwal & agenda akademik',
                 'meta_description' => 'Kalender akademik resmi FMIKOM tahun ajaran berjalan.',
                 'content' => '
                     <div class="prose max-w-none">
@@ -248,7 +248,7 @@ class PortalPagesSeeder extends Seeder
                 'category' => 'Akademik',
                 'template' => 'default',
                 'is_published' => true,
-                'excerpt' => 'Merdeka belajar kampus merdeka dan program magang industri bersertifikat.',
+                'excerpt' => 'Merdeka belajar kampus merdeka',
                 'meta_description' => 'Skema dan pendaftaran program MBKM FMIKOM UNUGHA.',
                 'content' => '
                     <div class="prose max-w-none">
@@ -258,12 +258,12 @@ class PortalPagesSeeder extends Seeder
                 ',
             ],
             [
-                'title' => 'Magang & Praktik Industri',
+                'title' => 'Magang',
                 'slug' => 'magang',
                 'category' => 'Akademik',
                 'template' => 'default',
                 'is_published' => true,
-                'excerpt' => 'Praktik kerja industri dan penempatan magang mahasiswa di perusahaan mitra.',
+                'excerpt' => 'Praktik kerja industri',
                 'meta_description' => 'Panduan dan alur magang praktik kerja industri FMIKOM.',
                 'content' => '
                     <div class="prose max-w-none">
@@ -278,7 +278,7 @@ class PortalPagesSeeder extends Seeder
                 'category' => 'Akademik',
                 'template' => 'default',
                 'is_published' => true,
-                'excerpt' => 'Panduan & aturan akademik terstruktur bagi seluruh mahasiswa FMIKOM.',
+                'excerpt' => 'Panduan & aturan akademik',
                 'meta_description' => 'Buku pedoman peraturan akademik FMIKOM.',
                 'content' => '
                     <div class="prose max-w-none">
@@ -288,12 +288,12 @@ class PortalPagesSeeder extends Seeder
                 ',
             ],
             [
-                'title' => 'Beasiswa & Pendanaan',
+                'title' => 'Beasiswa',
                 'slug' => 'beasiswa',
                 'category' => 'Akademik',
                 'template' => 'default',
                 'is_published' => true,
-                'excerpt' => 'Program bantuan & pendanaan pendidikan bagi mahasiswa berprestasi.',
+                'excerpt' => 'Program bantuan & pendanaan',
                 'meta_description' => 'Informasi beasiswa KIP, Prestasi, dan Kemitraan FMIKOM.',
                 'content' => '
                     <div class="prose max-w-none">
@@ -303,12 +303,12 @@ class PortalPagesSeeder extends Seeder
                 ',
             ],
             [
-                'title' => 'Download Dokumen Akademik',
+                'title' => 'Download Dokumen',
                 'slug' => 'download-dokumen',
                 'category' => 'Akademik',
                 'template' => 'default',
                 'is_published' => true,
-                'excerpt' => 'Unduh form & dokumen resmi fakultas (Form KRS, Surat Izin, Template Skripsi).',
+                'excerpt' => 'Unduh form & dokumen resmi',
                 'meta_description' => 'Pusat unduhan formulir dan template dokumen resmi FMIKOM.',
                 'content' => '
                     <div class="prose max-w-none">
@@ -318,111 +318,126 @@ class PortalPagesSeeder extends Seeder
                 ',
             ],
 
-            // ─── KATEGORI: BERITA & MEDIA (4 Halaman) ──────────────────────────
+            // ─── KATEGORI: BERITA & MEDIA (5 Halaman) ──────────────────────────
             [
-                'title' => 'Pusat Pengumuman Resmi',
-                'slug' => 'pengumuman',
-                'category' => 'Berita & Media',
-                'template' => 'default',
-                'is_published' => true,
-                'excerpt' => 'Pengumuman resmi surat keputusan fakultas dan edaran Dekan.',
-                'meta_description' => 'Papan pengumuman informasi akademik dan kemahasiswaan FMIKOM.',
-                'content' => '
-                    <div class="prose max-w-none">
-                        <h2>Pengumuman Fakultas Terbaru</h2>
-                        <p>Dapatkan update informasi resmi terkait beasiswa, seminar nasional, pendaftaran ujian, dan kegiatan operasional fakultas.</p>
-                    </div>
-                ',
-            ],
-            [
-                'title' => 'Prestasi Mahasiswa & Dosen',
-                'slug' => 'prestasi-kemahasiswaan',
-                'category' => 'Berita & Media',
-                'template' => 'default',
-                'is_published' => true,
-                'excerpt' => 'Daftar kejuaraan kompetisi hackathon, gemastik, dan jurnal ilmiah terindeks.',
-                'meta_description' => 'Catatan prestasi gemilang sivitas akademika FMIKOM.',
-                'content' => '
-                    <div class="prose max-w-none">
-                        <h2>Galeri Prestasi & Penghargaan</h2>
-                        <p>Selamat kepada tim mahasiswa FMIKOM yang berhasil menjuarai berbagai kompetisi bidang teknologi informasi dan matematika tingkat nasional.</p>
-                    </div>
-                ',
-            ],
-            [
-                'title' => 'Galeri Kegiatan Kampus',
-                'slug' => 'galeri',
-                'category' => 'Berita & Media',
-                'template' => 'full-width',
-                'is_published' => true,
-                'excerpt' => 'Dokumentasi kebersamaan kegiatan organisasi, workshop, dan Dies Natalis.',
-                'meta_description' => 'Dokumentasi foto dan video kegiatan kampus FMIKOM.',
-                'content' => '
-                    <div class="prose max-w-none">
-                        <h2>Dokumentasi & Galeri Foto</h2>
-                        <p>Kumpulan momen berharga kegiatan akademik, makrab mahasiswa, pelatihan koding, dan pameran karya produk digital.</p>
-                    </div>
-                ',
-            ],
-            [
-                'title' => 'Warta & Buletin FMIKOM',
+                'title' => 'Berita',
                 'slug' => 'berita',
                 'category' => 'Berita & Media',
                 'template' => 'default',
                 'is_published' => true,
-                'excerpt' => 'Publikasi berkala buletin fakultas dan warta digital.',
-                'meta_description' => 'E-Magazine dan buletin seputar teknologi dan perkembangan FMIKOM.',
+                'excerpt' => 'Berita terbaru FMIKOM',
+                'meta_description' => 'Berita dan kabar terbaru kegiatan akademik FMIKOM.',
                 'content' => '
                     <div class="prose max-w-none">
-                        <h2>Buletin Digital Edisi Terbaru</h2>
-                        <p>Baca artikel populer, ulasan opini teknologi, serta wawancara eksklusif alumni FMIKOM di majalah buletin fakultas.</p>
+                        <h2>Berita Terbaru Fakultas</h2>
+                        <p>Informasi seputar agenda terkini, prestasi mahasiswa, dan liputan kegiatan di lingkungan FMIKOM.</p>
+                    </div>
+                ',
+            ],
+            [
+                'title' => 'Pengumuman',
+                'slug' => 'pengumuman',
+                'category' => 'Berita & Media',
+                'template' => 'default',
+                'is_published' => true,
+                'excerpt' => 'Info & pengumuman resmi',
+                'meta_description' => 'Papan pengumuman informasi akademik dan kemahasiswaan FMIKOM.',
+                'content' => '
+                    <div class="prose max-w-none">
+                        <h2>Pengumuman Resmi Fakultas</h2>
+                        <p>Dapatkan update informasi resmi terkait beasiswa, seminar nasional, pendaftaran ujian, dan edaran Dekan.</p>
+                    </div>
+                ',
+            ],
+            [
+                'title' => 'Agenda Event',
+                'slug' => 'agenda-event',
+                'category' => 'Berita & Media',
+                'template' => 'default',
+                'is_published' => true,
+                'excerpt' => 'Kegiatan & event kampus',
+                'meta_description' => 'Jadwal seminar, workshop, dan event FMIKOM.',
+                'content' => '
+                    <div class="prose max-w-none">
+                        <h2>Agenda & Event Mendatang</h2>
+                        <p>Ikuti berbagai kegiatan ilmiah, seminar teknologi, hackathon, dan workshop yang diselenggarakan oleh FMIKOM.</p>
+                    </div>
+                ',
+            ],
+            [
+                'title' => 'Galeri',
+                'slug' => 'galeri',
+                'category' => 'Berita & Media',
+                'template' => 'full-width',
+                'is_published' => true,
+                'excerpt' => 'Foto & dokumentasi kegiatan',
+                'meta_description' => 'Dokumentasi foto dan galeri kegiatan FMIKOM.',
+                'content' => '
+                    <div class="prose max-w-none">
+                        <h2>Galeri Foto Kegiatan</h2>
+                        <p>Kumpulan dokumentasi visual berbagai aktivitas perkuliahan, wisuda, pelatihan, dan lomba mahasiswa.</p>
+                    </div>
+                ',
+            ],
+            [
+                'title' => 'Video',
+                'slug' => 'video',
+                'category' => 'Berita & Media',
+                'template' => 'full-width',
+                'is_published' => true,
+                'excerpt' => 'Video & konten multimedia',
+                'meta_description' => 'Kumpulan video profil dan dokumentasi FMIKOM.',
+                'content' => '
+                    <div class="prose max-w-none">
+                        <h2>Video & Konten Multimedia</h2>
+                        <p>Tonton video profil fakultas, liputan event, serta rekaman kuliah umum di saluran video FMIKOM.</p>
                     </div>
                 ',
             ],
 
             // ─── KATEGORI: LAYANAN (3 Halaman) ─────────────────────────────────
             [
-                'title' => 'Layanan Surat Mahasiswa',
+                'title' => 'Pengajuan Dokumen',
                 'slug' => 'pengajuan-dokumen',
                 'category' => 'Layanan',
                 'template' => 'default',
                 'is_published' => true,
-                'excerpt' => 'Pengajuan Surat Keterangan Aktif Kuliah, Surat Izin Penelitian, dan Surat Magang.',
-                'meta_description' => 'Prosedur dan pembuatan surat menyurat akademik mahasiswa.',
+                'excerpt' => 'Ajukan surat & dokumen',
+                'meta_description' => 'Layanan pembuat dan pengajuan surat mahasiswa.',
                 'content' => '
                     <div class="prose max-w-none">
-                        <h2>Layanan Administrasi Surat Online</h2>
-                        <p>Mahasiswa dapat mengajukan berbagai jenis surat keterangan akademik secara cepat melalui integrasi modul Surat di Portal FMIKOM.</p>
+                        <h2>Layanan Pengajuan Dokumen Online</h2>
+                        <p>Mahasiswa dapat mengajukan Surat Keterangan Aktif, Surat Penelitian, dan rekomendasi akademik secara mudah.</p>
                     </div>
                 ',
             ],
             [
-                'title' => 'Helpdesk IT & Siakad/SINTA',
-                'slug' => 'faq',
-                'category' => 'Layanan',
-                'template' => 'default',
-                'is_published' => true,
-                'excerpt' => 'Bantuan reset password email kampus, Siakad UNUGHA, dan SINTA BIMA.',
-                'meta_description' => 'Pusat bantuan teknis akun dan sistem informasi FMIKOM.',
-                'content' => '
-                    <div class="prose max-w-none">
-                        <h2>Layanan Bantuan Layanan IT</h2>
-                        <p>Jika Anda mengalami kendala akses SSO, email instansi, atau sistem akademik Siakad, silakan hubungi tim Helpdesk IT FMIKOM.</p>
-                    </div>
-                ',
-            ],
-            [
-                'title' => 'Konsultasi & Pengaduan Akademik',
+                'title' => 'Konsultasi Akademik',
                 'slug' => 'konsultasi-akademik',
                 'category' => 'Layanan',
                 'template' => 'default',
                 'is_published' => true,
-                'excerpt' => 'Layanan konseling akademik dan pengaduan layanan perkuliahan.',
-                'meta_description' => 'Pusat layanan konsultasi akademik dosen pembimbing.',
+                'excerpt' => 'Tanya jawab dengan dosen',
+                'meta_description' => 'Layanan konseling dan konsultasi studi mahasiswa.',
                 'content' => '
                     <div class="prose max-w-none">
-                        <h2>Konsultasi & Layanan Dosen Pembimbing</h2>
-                        <p>FMIKOM menyediakan ruang konsultasi tatap muka maupun daring bagi mahasiswa yang memerlukan pembimbingan studi.</p>
+                        <h2>Layanan Bimbingan & Konsultasi Akademik</h2>
+                        <p>Fasilitas komunikasi dan konsultasi mengenai perencanaan studi dan kendala akademis bersama dosen wali.</p>
+                    </div>
+                ',
+            ],
+            [
+                'title' => 'FAQ',
+                'slug' => 'faq',
+                'category' => 'Layanan',
+                'template' => 'default',
+                'is_published' => true,
+                'excerpt' => 'Pertanyaan yang sering diajukan',
+                'meta_description' => 'Pusat jawaban pertanyaan populer mahasiswa FMIKOM.',
+                'content' => '
+                    <div class="prose max-w-none">
+                        <h2>Pertanyaan Sering Diajukan (FAQ)</h2>
+                        <p>Temukan jawaban cepat atas pertanyaan seputar pembayaran UKT, KRS, aktivasi SSO, dan layanan laboratorium.</p>
                     </div>
                 ',
             ],
@@ -431,7 +446,7 @@ class PortalPagesSeeder extends Seeder
         // 1. Inisialisasi Halaman
         $createdPages = [];
         foreach ($pagesData as $data) {
-            $page = PortalPage::firstOrCreate(
+            $page = PortalPage::updateOrCreate(
                 ['slug' => $data['slug']],
                 $data
             );
@@ -457,13 +472,13 @@ class PortalPagesSeeder extends Seeder
             $orderCount = 1;
             foreach ($childPages as $p) {
                 if (isset($createdPages[$p['slug']])) {
-                    PortalMenu::firstOrCreate(
+                    PortalMenu::updateOrCreate(
                         [
-                            'title' => $p['title'],
                             'parent_id' => $parentMenu->id,
+                            'portal_page_id' => $createdPages[$p['slug']]->id,
                         ],
                         [
-                            'portal_page_id' => $createdPages[$p['slug']]->id,
+                            'title' => $p['title'],
                             'order' => $orderCount++,
                         ]
                     );
