@@ -79,7 +79,6 @@ class ActivationConfirmController extends Controller
             return redirect()->route('login')->with('error', 'Link aktivasi sudah kedaluwarsa. Hubungi admin untuk mengirim ulang link.');
         }
 
-        // [FIX C-3] Validasi token TANPA menghapusnya dulu
         if (! $regRequest->verifyActivationToken($token)) {
             return redirect()->route('login')->with('error', 'Link aktivasi tidak valid atau sudah digunakan.');
         }
@@ -90,27 +89,7 @@ class ActivationConfirmController extends Controller
             return redirect()->route('login')->with('error', 'Data user tidak ditemukan.');
         }
 
-        // Generate and send OTP for Case B activation
-        // [FIX C-3] Kirim OTP TERLEBIH DAHULU, baru null-kan token
-        try {
-            $this->otpService->generate(
-                userId: $user->id,
-                email: $email,
-                purpose: OtpPurpose::AccountActivation,
-                userForDisplay: $user,
-                ipAddress: $request->ip(),
-                userAgent: $request->userAgent()
-            );
-        } catch (\Throwable $e) {
-            report($e);
-
-            // OTP gagal dikirim — jangan null-kan token agar user bisa klik link lagi
-            return redirect()->route('login')->with('error', 'Gagal mengirim OTP aktivasi. Silakan coba klik link aktivasi sekali lagi.');
-        }
-
-        // [FIX C-3, FIND-005] Token di-null-kan SETELAH OTP berhasil dikirim.
-        // Gunakan DB transaction + lock untuk prevent race condition (dua browser
-        // klik link bersamaan).
+        // Null-kan token di DB (DB transaction + lockForUpdate) untuk prevent link replay & race condition
         $tokenNulled = DB::transaction(function () use ($regRequest) {
             /** @var RegistrationRequest|null $lockedRequest */
             $lockedRequest = RegistrationRequest::where('id', '=', $regRequest->id, 'and')
@@ -118,7 +97,6 @@ class ActivationConfirmController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            // Jika null sudah (request lain lebih cepat), tolak
             if (! $lockedRequest) {
                 return false;
             }
@@ -131,24 +109,26 @@ class ActivationConfirmController extends Controller
             return true;
         });
 
-        // Jika request lain sudah null-kan token lebih dulu (race condition),
-        // OTP sudah terkirim oleh request pertama — user harus cek email
         if (! $tokenNulled) {
-            return redirect()->route('activation.confirm.otp')
-                ->with('status', 'Link aktivasi sudah diproses. Silakan cek email Anda untuk kode OTP.');
+            return redirect()->route('login')->with('error', 'Link aktivasi ini sudah pernah diproses. Silakan login atau hubungi administrator.');
         }
 
-        // Transition statuses
-        $user->forceFill(['status_approval' => UserAccountStatus::OtpSent->value])->save();
-        $regRequest->fill(['status' => RegistrationStatus::OtpSent->value])->save();
+        // Transition statuses & mark email verified
+        $user->forceFill([
+            'status_approval' => UserAccountStatus::OtpVerified->value,
+            'email_verified_at' => $user->email_verified_at ?? now(),
+        ])->save();
 
-        // Store request identifiers in session
+        $regRequest->fill(['status' => RegistrationStatus::OtpVerified->value])->save();
+
+        // Store request identifiers & verification flag in session for password creation
         session([
             'activation_request_id' => $requestId,
             'activation_email' => $email,
+            'activation_otp_verified' => true,
         ]);
 
-        return redirect()->route('activation.confirm.otp')->with('status', 'Kode OTP verifikasi telah dikirimkan ke email Anda.');
+        return redirect()->route('activation.complete')->with('status', 'Email berhasil diverifikasi! Silakan buat password baru Anda.');
     }
 
     /**

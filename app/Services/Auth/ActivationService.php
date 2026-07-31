@@ -198,7 +198,7 @@ class ActivationService
             );
 
             try {
-                Mail::to($request->email)->queue(new ActivationEmail($user, $activationUrl));
+                Mail::to($request->email)->send(new ActivationEmail($user, $activationUrl));
             } catch (\Throwable $e) {
                 Log::error('[ActivationService] Gagal mengirim email aktivasi: '.$e->getMessage(), [
                     'email' => $request->email,

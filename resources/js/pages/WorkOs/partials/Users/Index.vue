@@ -249,6 +249,8 @@ function closeAllDropdowns(e: MouseEvent) {
 	}
 }
 
+let realTimePollingTimer: ReturnType<typeof setInterval> | null = null;
+
 onMounted(() => {
 	document.addEventListener("click", closeAllDropdowns);
 	if (typeof window !== "undefined") {
@@ -269,9 +271,25 @@ onMounted(() => {
 		if (membershipParam) {
 			filterMembership.value = membershipParam;
 		}
+
+		// Background real-time polling (every 5s) for automatic user status updates
+		realTimePollingTimer = setInterval(() => {
+			if (!modal.createUser && !modal.uploadUsers && !toggleStatusModal.show) {
+				router.reload({
+					only: ["users"],
+					preserveScroll: true,
+					preserveState: true,
+				});
+			}
+		}, 5000);
 	}
 });
-onUnmounted(() => document.removeEventListener("click", closeAllDropdowns));
+onUnmounted(() => {
+	document.removeEventListener("click", closeAllDropdowns);
+	if (realTimePollingTimer) {
+		clearInterval(realTimePollingTimer);
+	}
+});
 
 // ─── MODALS ───────────────────────────────────────────────────────────────────
 const modal = reactive({ createUser: false, uploadUsers: false });

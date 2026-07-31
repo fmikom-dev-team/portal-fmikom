@@ -21,11 +21,11 @@ const startPolling = () => {
 			.then((res) => res.json())
 			.then((data) => {
 				if (
-					data.status_approval !== "pending" &&
-					data.status_approval !== "rejected"
+					["approved", "otp_sent", "otp_verified"].includes(data.status_approval) &&
+					props.status === "pending"
 				) {
-					// Berhasil disetujui / masuk alur aktivasi, reload agar middleware mengarahkan ke halaman yang sesuai
-					window.location.reload();
+					// Status berubah dari pending -> approved/otp_sent, reload state inertia agar UI menampilkan kartu persetujuan
+					router.reload({ only: ["status"] });
 				} else if (
 					data.status_approval === "rejected" &&
 					props.status !== "rejected"
@@ -132,8 +132,43 @@ const logout = () => {
                     </div>
                 </div>
 
+                <!-- Status: Approved / Pending Activation -->
+                <div v-else-if="['approved', 'otp_sent', 'otp_verified'].includes(status)" class="flex flex-col items-center">
+                    <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6 ring-8 ring-emerald-50/50">
+                        <svg class="w-10 h-10 text-emerald-600 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+
+                    <h1 class="text-2xl font-bold text-slate-800 tracking-tight mb-2">Pendaftaran Disetujui!</h1>
+
+                    <p class="text-slate-600 text-sm leading-relaxed mb-6">
+                        Selamat <span class="font-bold text-slate-800">{{ name }}</span>! Permohonan pendaftaran akun Anda telah disetujui oleh Administrator.
+                    </p>
+
+                    <div class="w-full bg-emerald-50/80 border border-emerald-200/80 rounded-2xl p-4 text-left text-xs mb-6 space-y-2 shadow-3xs">
+                        <div class="flex items-start gap-2.5">
+                            <svg class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            <div class="space-y-1">
+                                <p class="font-bold text-emerald-950 text-xs">Instruksi Aktivasi Akun:</p>
+                                <p class="text-emerald-800 leading-relaxed">
+                                    Kami telah mengirimkan link aktivasi ke email: <strong class="font-mono text-emerald-950 underline">{{ email }}</strong>. 
+                                    Silakan buka email Anda (cek folder Inbox & Spam) dan klik link aktivasi untuk membuat password akun.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 text-slate-600 text-xs font-medium px-4 py-3 rounded-2xl flex items-center gap-2 mb-6 border border-slate-200 text-left">
+                        <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Tidak menemukan email? Pastikan cek folder <strong>Spam / Junk</strong> Anda.</span>
+                    </div>
+                </div>
+
                 <!-- Status: Rejected -->
-                <div v-if="status === 'rejected'" class="flex flex-col items-center">
+                <div v-else-if="status === 'rejected'" class="flex flex-col items-center">
                     <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-6 shadow-inner ring-4 ring-red-50/50">
                         <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                     </div>

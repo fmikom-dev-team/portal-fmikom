@@ -4,14 +4,17 @@ namespace App\Modules\WorkOs\Controllers;
 
 use App\Enums\UserAccountStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Auth\AuthLoginAttempt;
+use App\Models\Auth\AuthMfa;
 use App\Models\Auth\AuthOAuthCredential;
+use App\Models\Auth\AuthOAuthProvider;
+use App\Models\Auth\AuthOtpToken;
 use App\Models\Auth\RegistrationRequest;
 use App\Models\Module;
 use App\Models\ProgramStudi;
+use App\Models\Tracer\MitraProfile;
+use App\Models\Tracer\ProfilAlumni;
 use App\Models\User;
-/**
- * Dedicated UsersController — extracted from DashboardController
- */
 use App\Models\UserModuleRole;
 use App\Modules\WorkOs\Controllers\Concerns\HasUserDiagnostics;
 use App\Modules\WorkOs\Controllers\Concerns\HasUserImport;
@@ -117,7 +120,7 @@ class UsersController extends Controller
         abort_if($user->id === Auth::id(), 403, 'Tidak dapat menghapus akun sendiri.');
         abort_if($user->user_type === 'super_admin', 403, 'Akun Super Admin dilindungi. Silakan ubah tipe/role user ini terlebih dahulu jika ingin menghapusnya.');
 
-        $user->{'delete'}();
+        $this->deleteUserWithCascade($user);
 
         AuditLogger::log('user.deleted', 'warning', ['email' => $user->email], $user);
 
@@ -129,9 +132,54 @@ class UsersController extends Controller
         abort_if($user->id === Auth::id(), 403, 'Tidak dapat menyetujui penghapusan akun sendiri.');
         abort_if($user->user_type === 'super_admin', 403, 'Akun Super Admin dilindungi.');
 
-        $user->{'delete'}();
+        $this->deleteUserWithCascade($user);
 
         return back()->with('success', 'Pengajuan penghapusan disetujui. Akun user berhasil dihapus secara permanen.');
+    }
+
+    /**
+     * Delete user and perform cascading cleanup on associated registration requests,
+     * profiles, and auth tokens to ensure emails can re-register cleanly.
+     */
+    private function deleteUserWithCascade(User $user): void
+    {
+        DB::transaction(function () use ($user) {
+            $userEmail = $user->email;
+            $userId = $user->id;
+
+            // 1. Force Delete registration requests so email & numbers can be re-registered cleanly
+            RegistrationRequest::where('created_user_id', '=', $userId, 'and')
+                ->orWhere('email', '=', $userEmail, 'and')
+                ->forceDelete();
+
+            // 2. Clean up associated profiles
+            ProfilAlumni::where('user_id', '=', $userId, 'and')->forceDelete();
+            MitraProfile::where('user_id', '=', $userId, 'and')->forceDelete();
+
+            // 3. Clean up OTP tokens, OAuth providers, and MFA
+            AuthOtpToken::where('email', '=', $userEmail, 'and')
+                ->orWhere('user_id', '=', $userId, 'and')
+                ->delete();
+
+            AuthOAuthCredential::where('user_id', '=', $userId, 'and')->delete();
+            AuthMfa::where('user_id', '=', $userId, 'and')->forceDelete();
+
+            // 4. Clean up auth sessions, login attempts, & auth devices so sign_in_count resets for new registrations
+            AuthLoginAttempt::where('email', '=', $userEmail, 'and')
+                ->orWhere('user_id', '=', $userId, 'and')
+                ->delete();
+
+            DB::table('auth_sessions')
+                ->where('user_id', '=', $userId, 'and')
+                ->delete();
+
+            DB::table('auth_devices')
+                ->where('user_id', '=', $userId, 'and')
+                ->delete();
+
+            // 5. Delete the User record
+            $user->delete();
+        });
     }
 
     public function rejectDeletion(User $user)

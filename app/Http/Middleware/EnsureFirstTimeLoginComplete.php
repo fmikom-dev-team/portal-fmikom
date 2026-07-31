@@ -60,7 +60,7 @@ class EnsureFirstTimeLoginComplete
                 || $request->routeIs('waiting-room.resign')
                 || $request->routeIs('approval.status');
 
-            if ($user->isPendingReview() || $user->isRejected()) {
+            if ($user->isPendingReview() || $user->isRejected() || in_array($user->status_approval, ['approved', 'otp_sent', 'otp_verified'])) {
                 if ($isWaitingRoomRoute || $isLogout) {
                     return $next($request);
                 }
