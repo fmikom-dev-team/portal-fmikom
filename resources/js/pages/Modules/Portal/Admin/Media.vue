@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { Head, useForm } from "@inertiajs/vue3";
+import { Head, router, useForm } from "@inertiajs/vue3";
 import {
+	Copy,
+	Check,
 	FileIcon,
 	Image as ImageIcon,
-	Loader2,
 	Search,
 	Trash2,
 	Upload,
-	X,
 } from "lucide-vue-next";
 import { computed, ref } from "vue";
 import PortalAdminLayout from "@/layouts/PortalAdminLayout.vue";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal.vue";
 
 const props = defineProps({
 	media: {
@@ -27,20 +28,18 @@ const filteredMedia = computed(() => {
 	);
 });
 
-const form = useForm({
+const uploadForm = useForm({
 	files: null as any,
 });
 
 const handleFileUpload = (e: any) => {
-	form.files = e.target.files;
-	form.post("/portal-admin/media", {
+	uploadForm.files = e.target.files;
+	uploadForm.post("/portal-admin/media", {
 		onSuccess: () => {
-			form.reset();
+			uploadForm.reset();
 		},
 	});
 };
-
-import DeleteConfirmModal from "@/components/DeleteConfirmModal.vue";
 
 const isDeleteModalOpen = ref(false);
 const deleteId = ref<number | null>(null);
@@ -52,13 +51,27 @@ const deleteMedia = (id: number) => {
 
 const handleDeleteConfirm = () => {
 	if (deleteId.value !== null) {
-		form.delete(`/portal-admin/media/${deleteId.value}`, {
+		router.delete(`/portal-admin/media/${deleteId.value}`, {
 			onSuccess: () => {
+				isDeleteModalOpen.value = false;
+				deleteId.value = null;
+			},
+			onFinish: () => {
 				isDeleteModalOpen.value = false;
 				deleteId.value = null;
 			}
 		});
 	}
+};
+
+const copiedId = ref<number | null>(null);
+const copyLink = (path: string, id: number) => {
+	const fullUrl = window.location.origin + path;
+	navigator.clipboard.writeText(fullUrl);
+	copiedId.value = id;
+	setTimeout(() => {
+		copiedId.value = null;
+	}, 2000);
 };
 
 const formatSize = (bytes: number) => {
@@ -98,19 +111,42 @@ const isImage = (mime: string) => mime?.startsWith("image/");
             <!-- Grid -->
             <div v-if="filteredMedia.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-6">
                 <div v-for="item in filteredMedia" :key="item.id" class="group relative bg-slate-50 dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800 transition-all hover:shadow-xl hover:-translate-y-1">
-                    <div class="aspect-square flex items-center justify-center overflow-hidden">
+                    <div class="aspect-square flex items-center justify-center overflow-hidden relative">
                         <img v-if="isImage(item.mime_type)" :src="item.path" :alt="item.filename" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                         <FileIcon v-else class="w-12 h-12 text-slate-300" />
-                    </div>
-                    <div class="p-3 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-800">
-                        <p class="text-[11px] font-black text-slate-800 dark:text-slate-200 truncate" :title="item.filename">{{ item.filename }}</p>
-                        <p class="text-[10px] font-bold text-slate-400 mt-0.5">{{ formatSize(item.size) }}</p>
+                        
+                        <!-- Overlay Actions for Desktop & Mobile -->
+                        <div class="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <button 
+                                @click.stop="copyLink(item.path, item.id)"
+                                :title="copiedId === item.id ? 'Tersalin!' : 'Salin URL'"
+                                class="p-2.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-700 dark:text-slate-200 rounded-xl hover:bg-white transition-colors shadow-lg active:scale-95"
+                            >
+                                <Check v-if="copiedId === item.id" class="w-4 h-4 text-emerald-600" />
+                                <Copy v-else class="w-4 h-4" />
+                            </button>
+                            <button 
+                                @click.stop="deleteMedia(item.id)"
+                                title="Hapus File Media"
+                                class="p-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors shadow-lg active:scale-95"
+                            >
+                                <Trash2 class="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- Overlay Actions -->
-                    <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <button @click="deleteMedia(item.id)" class="p-2 bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-red-500 transition-colors shadow-lg">
-                            <Trash2 class="w-4 h-4" />
+                    <div class="p-3 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-[11px] font-black text-slate-800 dark:text-slate-200 truncate" :title="item.filename">{{ item.filename }}</p>
+                            <p class="text-[10px] font-bold text-slate-400 mt-0.5">{{ formatSize(item.size) }}</p>
+                        </div>
+                        <!-- Delete Button Always Visible on Touch Devices -->
+                        <button 
+                            @click.stop="deleteMedia(item.id)" 
+                            title="Hapus" 
+                            class="sm:hidden p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors shrink-0"
+                        >
+                            <Trash2 class="w-3.5 h-3.5" />
                         </button>
                     </div>
                 </div>
