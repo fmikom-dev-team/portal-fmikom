@@ -27,16 +27,19 @@ if [ -n "$DB_HOST" ] && [ "$DB_CONNECTION" = "mysql" ]; then
     '
 fi
 
-# Ensure all storage directories exist and have proper permissions
+# System and framework storage directories
 mkdir -p /var/www/html/storage/framework/cache/data
 mkdir -p /var/www/html/storage/framework/app
 mkdir -p /var/www/html/storage/framework/sessions
 mkdir -p /var/www/html/storage/framework/views
+mkdir -p /var/www/html/storage/framework/testing
 mkdir -p /var/www/html/storage/logs
+mkdir -p /var/www/html/storage/fonts
 mkdir -p /var/www/html/bootstrap/cache
 mkdir -p /var/log/supervisor
+mkdir -p /var/www/html/public/images
 
-# Auto-create all public & private upload subfolders for all modules (Portal, WorkOS, PAGI, WIMS, FAST, Tracer)
+# Auto-create all PUBLIC upload subfolders for all modules (Portal, WorkOS, PAGI, WIMS, FAST, Tracer)
 mkdir -p /var/www/html/storage/app/public/portal/gallery
 mkdir -p /var/www/html/storage/app/public/portal/partners
 mkdir -p /var/www/html/storage/app/public/portal/posts/thumbnails
@@ -54,6 +57,7 @@ mkdir -p /var/www/html/storage/app/public/cv-photos
 mkdir -p /var/www/html/storage/app/public/avatars
 mkdir -p /var/www/html/storage/app/public/pagi/works
 mkdir -p /var/www/html/storage/app/public/pagi/gallery
+mkdir -p /var/www/html/storage/app/public/pagi/banners
 mkdir -p /var/www/html/storage/app/public/pagi/certificates
 mkdir -p /var/www/html/storage/app/public/pagi/certificates/thumbs
 mkdir -p /var/www/html/storage/app/public/org-logos
@@ -63,7 +67,14 @@ mkdir -p /var/www/html/storage/app/public/wims/proposals
 mkdir -p /var/www/html/storage/app/public/wims/reports
 mkdir -p /var/www/html/storage/app/public/fast/submissions
 
-# Private storage directories (WIMS, FAST, Portal, Tracer)
+# PRIVATE storage directories (Laravel 12 default local disk root storage/app/private & legacy storage/app)
+mkdir -p /var/www/html/storage/app/private/portal/documents
+mkdir -p /var/www/html/storage/app/private/wims/proposals
+mkdir -p /var/www/html/storage/app/private/wims/reports
+mkdir -p /var/www/html/storage/app/private/wims/templates
+mkdir -p /var/www/html/storage/app/private/fast/template
+mkdir -p /var/www/html/storage/app/private/surat-lampirans
+mkdir -p /var/www/html/storage/app/private/trace/alumni-role-change-proofs
 mkdir -p /var/www/html/storage/app/portal/documents
 mkdir -p /var/www/html/storage/app/wims/proposals
 mkdir -p /var/www/html/storage/app/wims/reports
@@ -73,8 +84,8 @@ mkdir -p /var/www/html/storage/app/surat-lampirans
 mkdir -p /var/www/html/storage/app/trace/alumni-role-change-proofs
 
 echo "Setting storage permissions..."
-chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/images
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/images
 
 echo "Creating storage symlink..."
 php artisan storage:link --force || true
