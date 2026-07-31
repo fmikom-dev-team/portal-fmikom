@@ -15,9 +15,7 @@ class SystemAlertService
     {
         try {
             $admins = User::query()
-                ->where('is_super_admin', true)
-                ->orWhere('is_admin', true)
-                ->orWhereIn('role', ['super_admin', 'admin'])
+                ->whereIn('user_type', ['super_admin', 'admin'], 'and', false)
                 ->get();
 
             foreach ($admins as $admin) {

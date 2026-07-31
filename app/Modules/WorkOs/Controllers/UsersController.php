@@ -164,9 +164,7 @@ class UsersController extends Controller
             AuthMfa::where('user_id', '=', $userId, 'and')->forceDelete();
 
             // 4. Clean up auth sessions, login attempts, & auth devices so sign_in_count resets for new registrations
-            AuthLoginAttempt::where('email', '=', $userEmail, 'and')
-                ->orWhere('user_id', '=', $userId, 'and')
-                ->delete();
+            AuthLoginAttempt::where('email', '=', $userEmail, 'and')->delete();
 
             DB::table('auth_sessions')
                 ->where('user_id', '=', $userId, 'and')
