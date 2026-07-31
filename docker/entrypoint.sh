@@ -48,7 +48,9 @@ mkdir -p /var/www/html/storage/app/public/portal/partners
 mkdir -p /var/www/html/storage/app/public/portal/posts/thumbnails
 mkdir -p /var/www/html/storage/app/public/portal/posts/seo
 mkdir -p /var/www/html/storage/app/public/portal/posts/content
-mkdir -p /var/www/html/storage/app/public/portal/events
+mkdir -p /var/www/html/storage/app/public/portal/posts/files
+mkdir -p /var/www/html/storage/app/public/portal/events/thumbnails
+mkdir -p /var/www/html/storage/app/public/portal/events/logos
 mkdir -p /var/www/html/storage/app/public/portal/media
 mkdir -p /var/www/html/storage/app/public/portal/author
 mkdir -p /var/www/html/storage/app/public/portal/categories
