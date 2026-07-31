@@ -121,7 +121,7 @@ class PortalPostController extends Controller
 
         if ($request->hasFile('thumbnail')) {
             $validated['thumbnail'] = $this->processAndStoreImage($request->file('thumbnail'), 'portal/posts/thumbnails');
-        } elseif ($request->filled('thumbnail')) {
+        } elseif ($request->has('thumbnail')) {
             $validated['thumbnail'] = $request->input('thumbnail');
         } else {
             unset($validated['thumbnail']);
@@ -129,10 +129,10 @@ class PortalPostController extends Controller
 
         if ($request->hasFile('og_image')) {
             $validated['og_image'] = $this->processAndStoreImage($request->file('og_image'), 'portal/posts/seo');
-        } elseif ($request->filled('og_image')) {
+        } elseif ($request->has('og_image')) {
             $validated['og_image'] = $request->input('og_image');
         } else {
-            unset($validated['og_image']);
+            $validated['og_image'] = $validated['thumbnail'] ?? null;
         }
 
         if (isset($validated['tags']) && is_array($validated['tags'])) {
@@ -216,7 +216,7 @@ class PortalPostController extends Controller
                 Storage::disk('public')->delete(str_replace('/storage/', '', $post->thumbnail));
             }
             $validated['thumbnail'] = $this->processAndStoreImage($request->file('thumbnail'), 'portal/posts/thumbnails');
-        } elseif ($request->filled('thumbnail') || $request->input('thumbnail') === null) {
+        } elseif ($request->has('thumbnail')) {
             $validated['thumbnail'] = $request->input('thumbnail');
         } else {
             unset($validated['thumbnail']);
@@ -228,10 +228,10 @@ class PortalPostController extends Controller
                 Storage::disk('public')->delete(str_replace('/storage/', '', $post->og_image));
             }
             $validated['og_image'] = $this->processAndStoreImage($request->file('og_image'), 'portal/posts/seo');
-        } elseif ($request->filled('og_image') || $request->input('og_image') === null) {
+        } elseif ($request->has('og_image')) {
             $validated['og_image'] = $request->input('og_image');
         } else {
-            unset($validated['og_image']);
+            $validated['og_image'] = ($validated['thumbnail'] ?? $post->thumbnail) ?: null;
         }
 
         if (isset($validated['tags']) && is_array($validated['tags'])) {

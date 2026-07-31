@@ -97,7 +97,7 @@ const toggleSection = (section) => {
 };
 
 const handleFileChange = (e, type) => {
-	const file = e.target.files[0];
+	const file = e?.target?.files ? e.target.files[0] : e;
 	if (file) {
 		if (type === "thumbnail") emit("update:thumbnail", file);
 		if (type === "ogImage") emit("update:ogImage", file);

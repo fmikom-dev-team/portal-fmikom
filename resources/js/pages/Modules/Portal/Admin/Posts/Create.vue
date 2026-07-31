@@ -88,8 +88,13 @@ const handleImageUpload = async (file, callback) => {
 /* ── Thumbnail / OG ── */
 const handleThumbnailUpdate = (file) => {
 	if (file) {
-		form.thumbnail = file;
-		form.thumbnail_preview = URL.createObjectURL(file);
+		if (typeof file === "string") {
+			form.thumbnail = file;
+			form.thumbnail_preview = file;
+		} else {
+			form.thumbnail = file;
+			form.thumbnail_preview = URL.createObjectURL(file);
+		}
 	} else {
 		form.thumbnail = null;
 		form.thumbnail_preview = null;
@@ -97,8 +102,13 @@ const handleThumbnailUpdate = (file) => {
 };
 const handleOgImageUpdate = (file) => {
 	if (file) {
-		form.og_image = file;
-		form.og_image_preview = URL.createObjectURL(file);
+		if (typeof file === "string") {
+			form.og_image = file;
+			form.og_image_preview = file;
+		} else {
+			form.og_image = file;
+			form.og_image_preview = URL.createObjectURL(file);
+		}
 	} else {
 		form.og_image = null;
 		form.og_image_preview = null;

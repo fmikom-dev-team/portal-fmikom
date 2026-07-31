@@ -113,18 +113,31 @@ const handleImageUpload = async (file, callback) => {
 
 const handleThumbnailUpdate = (file) => {
 	if (file) {
-		form.thumbnail = file;
-		form.thumbnail_preview = URL.createObjectURL(file);
+		if (typeof file === "string") {
+			form.thumbnail = file;
+			form.thumbnail_preview = file;
+			form.thumbnail_url = file;
+		} else {
+			form.thumbnail = file;
+			form.thumbnail_preview = URL.createObjectURL(file);
+		}
 	} else {
 		form.thumbnail = null;
 		form.thumbnail_preview = null;
 		form.thumbnail_url = null;
 	}
 };
+
 const handleOgImageUpdate = (file) => {
 	if (file) {
-		form.og_image = file;
-		form.og_image_preview = URL.createObjectURL(file);
+		if (typeof file === "string") {
+			form.og_image = file;
+			form.og_image_preview = file;
+			form.og_image_url = file;
+		} else {
+			form.og_image = file;
+			form.og_image_preview = URL.createObjectURL(file);
+		}
 	} else {
 		form.og_image = null;
 		form.og_image_preview = null;
@@ -153,7 +166,19 @@ const submit = async (status) => {
 	}
 
 	form.status = status;
-	form.post(`/portal-admin/posts/${props.post.id}`, { forceFormData: true });
+	form.transform((data) => {
+		const payload = {
+			...data,
+			_method: "PUT",
+		};
+		if (!data.thumbnail && data.thumbnail_url) {
+			payload.thumbnail = data.thumbnail_url;
+		}
+		if (!data.og_image && data.og_image_url) {
+			payload.og_image = data.og_image_url;
+		}
+		return payload;
+	}).post(`/portal-admin/posts/${props.post.id}`, { forceFormData: true });
 };
 
 /* ── Preview ── */
