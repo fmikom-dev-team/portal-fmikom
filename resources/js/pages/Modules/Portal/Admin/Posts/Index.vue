@@ -25,6 +25,11 @@ const props = defineProps({
 // Search and filter states
 const localSearch = ref(props.filters.search || "");
 const selectedStatus = ref("all");
+const failedImages = ref(new Set<number>());
+
+const handleImageError = (id: number) => {
+	failedImages.value.add(id);
+};
 
 // Map paginator list
 const postsList = computed(() => props.posts.data || []);
@@ -187,12 +192,13 @@ watch(localSearch, (newSearch) => {
                 <div class="shrink-0">
                     <div class="w-14 h-14 md:w-16 md:h-12 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center shrink-0">
                         <img 
-                            v-if="post.thumbnail" 
+                            v-if="post.thumbnail && !failedImages.has(post.id)" 
                             :src="post.thumbnail" 
                             class="w-full h-full object-cover" 
                             :alt="post.title"
+                            @error="handleImageError(post.id)"
                         >
-                        <div v-else class="w-full h-full flex items-center justify-center bg-blue-50 dark:bg-blue-900/10 text-blue-500/60 font-black text-sm uppercase">
+                        <div v-else class="w-full h-full flex items-center justify-center bg-blue-50 dark:bg-blue-900/10 text-blue-500/60 font-black text-sm uppercase select-none">
                             {{ post.title ? post.title.charAt(0) : 'P' }}
                         </div>
                     </div>

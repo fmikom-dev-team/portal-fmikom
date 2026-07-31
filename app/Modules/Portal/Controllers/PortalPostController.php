@@ -155,6 +155,7 @@ class PortalPostController extends Controller
 
         PortalPost::create($validated);
 
+        Cache::forget('portal_latest_posts');
         Cache::forget('portal_settings');
         Cache::forget('portal_home_showcase');
 
@@ -255,6 +256,10 @@ class PortalPostController extends Controller
 
         $post->update($validated);
 
+        Cache::forget('portal_latest_posts');
+        Cache::forget('portal_settings');
+        Cache::forget('portal_home_showcase');
+
         if ($request->expectsJson()) {
             return response()->json(['message' => 'Post saved successfully', 'post' => $post]);
         }
@@ -274,6 +279,7 @@ class PortalPostController extends Controller
 
         $post->delete();
 
+        Cache::forget('portal_latest_posts');
         Cache::forget('portal_home_showcase');
         Cache::forget('portal_settings');
 
