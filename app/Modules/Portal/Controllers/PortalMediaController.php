@@ -15,6 +15,15 @@ class PortalMediaController extends Controller
 {
     public function index(Request $request)
     {
+        // Auto-clean orphan media records whose physical file is missing from storage
+        $allMedia = PortalMedia::all();
+        foreach ($allMedia as $item) {
+            $relativePath = str_replace('/storage/', '', $item->path);
+            if (! Storage::disk('public')->exists($relativePath)) {
+                $item->delete();
+            }
+        }
+
         $media = PortalMedia::latest()->get();
 
         if ($request->expectsJson()) {
