@@ -123,7 +123,13 @@ class PortalDocumentController extends Controller
 
         unset($validated['file']);
 
-        PortalDocument::create($validated);
+        try {
+            PortalDocument::create($validated);
+        } catch (\Throwable $e) {
+            Log::error('PortalDocument DB create failed: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
+            return back()->withErrors(['title' => 'Gagal menyimpan data dokumen ke database. Silakan coba lagi.']);
+        }
 
         Cache::forget('portal_settings');
 

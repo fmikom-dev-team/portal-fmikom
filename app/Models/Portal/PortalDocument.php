@@ -14,6 +14,7 @@ class PortalDocument extends Model
         'description',
         'category',
         'file_path',
+        'file_name',
         'file_type',
         'file_size',
         'download_count',
