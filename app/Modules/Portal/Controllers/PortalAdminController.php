@@ -157,6 +157,10 @@ class PortalAdminController extends Controller
             PortalSetting::updateOrCreate(['key' => 'partners'], ['value' => json_encode($partners)]);
         }
 
+        Cache::forget('portal_settings');
+        Cache::forget('portal_welcome_events');
+        Cache::forget('portal_home_showcase');
+
         return redirect()->back()->with('success', 'Layout settings updated successfully!');
     }
 

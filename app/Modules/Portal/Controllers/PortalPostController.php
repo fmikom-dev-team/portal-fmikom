@@ -270,6 +270,9 @@ class PortalPostController extends Controller
 
         $post->delete();
 
+        Cache::forget('portal_home_showcase');
+        Cache::forget('portal_settings');
+
         return redirect()->route('portal-admin.posts.index')->with('success', 'Post deleted successfully!');
     }
 
