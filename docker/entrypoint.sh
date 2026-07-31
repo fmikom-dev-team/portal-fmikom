@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+# Set umask so all newly created files/directories get 775/664 permissions for www-data
+umask 002
+
 # Wait for DB connection if host is set
 if [ -n "$DB_HOST" ] && [ "$DB_CONNECTION" = "mysql" ]; then
     echo "Checking database availability on $DB_HOST:$DB_PORT..."
