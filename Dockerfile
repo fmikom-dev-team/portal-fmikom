@@ -1,8 +1,11 @@
+# syntax=docker/dockerfile:1.4
 # Stage 1: Install Composer Dependencies & Generate Wayfinder
 FROM composer:2 AS composer-builder
 WORKDIR /app
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignore-platform-reqs
+# Cache composer downloads between builds — speeds up subsequent deploys significantly
+RUN --mount=type=cache,target=/root/.composer/cache \
+    composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignore-platform-reqs
 COPY . .
 RUN composer dump-autoload --no-dev --classmap-authoritative
 # Generate wayfinder route files (requires php, available in this stage via composer image)
@@ -12,7 +15,9 @@ RUN php artisan wayfinder:generate || true
 FROM node:22-alpine AS frontend-builder
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --legacy-peer-deps
+# Cache npm downloads between builds — skips re-downloading unchanged packages
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --legacy-peer-deps
 COPY . .
 # Copy wayfinder-generated files from composer stage so vite plugin skips re-generating
 COPY --from=composer-builder /app/resources/js/wayfinder ./resources/js/wayfinder
@@ -26,7 +31,9 @@ RUN npm run build
 FROM php:8.4-fpm-alpine AS production-runtime
 
 # Install system dependencies (including ffmpeg for Pagi module video handling)
-RUN apk add --no-cache \
+# Cache apk package downloads between builds
+RUN --mount=type=cache,target=/var/cache/apk \
+    apk add --no-cache \
     nginx \
     supervisor \
     ffmpeg \
