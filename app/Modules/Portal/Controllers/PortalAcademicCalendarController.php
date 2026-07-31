@@ -32,7 +32,9 @@ class PortalAcademicCalendarController extends Controller
 
         PortalAcademicCalendar::create($validated);
 
-        return redirect()->back()->with('success', 'Jadwal akademik berhasil ditambahkan!');
+        Cache::forget('portal_settings');
+
+        return redirect()->route('portal-admin.academic-calendars.index')->with('success', 'Jadwal akademik berhasil ditambahkan!');
     }
 
     public function update(Request $request, PortalAcademicCalendar $academicCalendar)
@@ -48,7 +50,9 @@ class PortalAcademicCalendarController extends Controller
 
         $academicCalendar->update($validated);
 
-        return redirect()->back()->with('success', 'Jadwal akademik berhasil diperbarui!');
+        Cache::forget('portal_settings');
+
+        return redirect()->route('portal-admin.academic-calendars.index')->with('success', 'Jadwal akademik berhasil diperbarui!');
     }
 
     public function destroy(PortalAcademicCalendar $academicCalendar)
