@@ -14,6 +14,9 @@ import {
 import Progress from "../../ui/Progress.vue";
 import MotionTabs from "@/components/ui/tabs/MotionTabs.vue";
 
+// Key SVG icon used for authentication filter buttons (password-based auth)
+const GENERIC_KEY_SVG = `<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 inline-block text-gray-400 dark:text-zinc-500" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m-5-4a5 5 0 015 5c0 2.071-.84 3.946-2.197 5.303L10 18H8v-2l.707-.707A5.002 5.002 0 0112 5z"/></svg>`;
+
 const props = defineProps<{
 	users: Array<any> | Record<string, any>;
 	roles?: Array<any>;
@@ -277,11 +280,7 @@ onMounted(() => {
 		// SecureSession's session_token sync, causing unexpected logouts.
 		realTimePollingTimer = setInterval(() => {
 			if (!modal.createUser && !modal.uploadUsers && !toggleStatusModal.show) {
-				router.reload({
-					only: ["users"],
-					preserveScroll: true,
-					preserveState: true,
-				});
+				router.reload({ only: ["users"] });
 			}
 		}, 60000);
 	}
@@ -457,7 +456,7 @@ function submitUpload() {
 	router.post("/workos/users/upload", formData, {
 		preserveScroll: true,
 		onProgress: (event) => {
-			if (event.percentage) {
+			if (event?.percentage !== undefined) {
 				uploadProgress.value = event.percentage;
 			}
 		},
