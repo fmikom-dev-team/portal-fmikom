@@ -79,30 +79,41 @@ class PortalDocumentController extends Controller
         if ($request->hasFile('file')) {
             $file = $request->file('file');
 
-            // Scan for virus signature
-            $scanResult = $this->scanner->scan($file);
-            if (! $scanResult['safe']) {
-                throw ValidationException::withMessages([
-                    'file' => $scanResult['reason'],
-                ]);
-            }
-
             $originalName = $file->getClientOriginalName();
             $uuid = Str::uuid()->toString();
             $extension = $file->getClientOriginalExtension();
             $fileNameSecure = $uuid.($extension ? '.'.$extension : '');
 
-            // Ensure destination directory exists on local disk
-            if (! Storage::disk('local')->exists('portal/documents')) {
-                Storage::disk('local')->makeDirectory('portal/documents');
-            }
-
             try {
-                $path = $file->storeAs('portal/documents', $fileNameSecure, 'local');
-            } catch (\Throwable $e) {
-                Log::error('Document file upload failed: '.$e->getMessage());
+                // Scan for virus signature — wrapped so ClamAV outage does not cause uncaught 500
+                $scanResult = $this->scanner->scan($file);
+                if (! $scanResult['safe']) {
+                    throw ValidationException::withMessages([
+                        'file' => $scanResult['reason'],
+                    ]);
+                }
 
-                return back()->withErrors(['file' => 'Gagal menyimpan file dokumen ke server: '.$e->getMessage()]);
+                // Ensure destination directories exist via native mkdir (covers Laravel 12
+                // storage/app/private AND legacy storage/app paths simultaneously)
+                foreach ([
+                    storage_path('app/private/portal/documents'),
+                    storage_path('app/portal/documents'),
+                ] as $dir) {
+                    if (! is_dir($dir)) {
+                        mkdir($dir, 0775, true);
+                    }
+                }
+
+                $path = $file->storeAs('portal/documents', $fileNameSecure, 'local');
+            } catch (ValidationException $e) {
+                throw $e;
+            } catch (\Throwable $e) {
+                Log::error('Document file upload failed: '.$e->getMessage(), [
+                    'file' => $originalName,
+                    'trace' => $e->getTraceAsString(),
+                ]);
+
+                return back()->withErrors(['file' => 'Gagal menyimpan file dokumen ke server. Silakan coba lagi atau hubungi administrator.']);
             }
 
             $validated['file_path'] = $path;
@@ -132,43 +143,53 @@ class PortalDocumentController extends Controller
         if ($request->hasFile('file')) {
             $file = $request->file('file');
 
-            // Scan for virus signature
-            $scanResult = $this->scanner->scan($file);
-            if (! $scanResult['safe']) {
-                throw ValidationException::withMessages([
-                    'file' => $scanResult['reason'],
-                ]);
-            }
-
-            // Delete old file
-            $oldFilePath = $document->file_path;
-            if (str_starts_with($oldFilePath, '/storage/')) {
-                $publicPath = str_replace('/storage/', '', $oldFilePath);
-                if (Storage::disk('public')->exists($publicPath)) {
-                    Storage::disk('public')->delete($publicPath);
-                }
-            } else {
-                if (Storage::disk('local')->exists($oldFilePath)) {
-                    Storage::disk('local')->delete($oldFilePath);
-                }
-            }
-
             $originalName = $file->getClientOriginalName();
             $uuid = Str::uuid()->toString();
             $extension = $file->getClientOriginalExtension();
             $fileNameSecure = $uuid.($extension ? '.'.$extension : '');
 
-            // Ensure destination directory exists on local disk
-            if (! Storage::disk('local')->exists('portal/documents')) {
-                Storage::disk('local')->makeDirectory('portal/documents');
-            }
-
             try {
-                $path = $file->storeAs('portal/documents', $fileNameSecure, 'local');
-            } catch (\Throwable $e) {
-                Log::error('Document file update failed: '.$e->getMessage());
+                // Scan for virus signature — wrapped so ClamAV outage does not cause uncaught 500
+                $scanResult = $this->scanner->scan($file);
+                if (! $scanResult['safe']) {
+                    throw ValidationException::withMessages([
+                        'file' => $scanResult['reason'],
+                    ]);
+                }
 
-                return back()->withErrors(['file' => 'Gagal memperbarui file dokumen di server: '.$e->getMessage()]);
+                // Delete old file
+                $oldFilePath = $document->file_path;
+                if (str_starts_with((string) $oldFilePath, '/storage/')) {
+                    $publicPath = str_replace('/storage/', '', $oldFilePath);
+                    if (Storage::disk('public')->exists($publicPath)) {
+                        Storage::disk('public')->delete($publicPath);
+                    }
+                } else {
+                    if (Storage::disk('local')->exists((string) $oldFilePath)) {
+                        Storage::disk('local')->delete($oldFilePath);
+                    }
+                }
+
+                // Ensure destination directories exist via native mkdir
+                foreach ([
+                    storage_path('app/private/portal/documents'),
+                    storage_path('app/portal/documents'),
+                ] as $dir) {
+                    if (! is_dir($dir)) {
+                        mkdir($dir, 0775, true);
+                    }
+                }
+
+                $path = $file->storeAs('portal/documents', $fileNameSecure, 'local');
+            } catch (ValidationException $e) {
+                throw $e;
+            } catch (\Throwable $e) {
+                Log::error('Document file update failed: '.$e->getMessage(), [
+                    'file' => $originalName,
+                    'trace' => $e->getTraceAsString(),
+                ]);
+
+                return back()->withErrors(['file' => 'Gagal memperbarui file dokumen di server. Silakan coba lagi atau hubungi administrator.']);
             }
 
             $validated['file_path'] = $path;

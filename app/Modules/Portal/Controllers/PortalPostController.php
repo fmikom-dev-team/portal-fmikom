@@ -561,6 +561,12 @@ class PortalPostController extends Controller
         // Encode as WebP with 80% quality
         $encoded = $image->toWebp(80);
 
+        // Ensure the target directory exists on disk (mirrors HandlesImageCompression pattern)
+        $targetDir = storage_path('app/public/'.$path);
+        if (! is_dir($targetDir)) {
+            mkdir($targetDir, 0775, true);
+        }
+
         // Store in public disk
         Storage::disk('public')->put($fullPath, (string) $encoded);
 
