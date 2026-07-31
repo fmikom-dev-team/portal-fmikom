@@ -73,7 +73,7 @@ class PortalDocumentController extends Controller
             'description' => 'nullable|string',
             'category' => 'nullable|string|max:100',
             'is_pinned' => 'boolean',
-            'file' => 'required|file|mimes:pdf,docx,xlsx,pptx|max:10240', // Max 10MB
+            'file' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar,txt,csv|max:102400', // Max 100MB
         ]);
 
         if ($request->hasFile('file')) {
@@ -104,7 +104,9 @@ class PortalDocumentController extends Controller
 
         PortalDocument::create($validated);
 
-        return redirect()->back()->with('success', 'Dokumen berhasil diunggah!');
+        Cache::forget('portal_settings');
+
+        return redirect()->route('portal-admin.documents.index')->with('success', 'Dokumen berhasil diunggah!');
     }
 
     public function update(Request $request, PortalDocument $document)
@@ -114,7 +116,7 @@ class PortalDocumentController extends Controller
             'description' => 'nullable|string',
             'category' => 'nullable|string|max:100',
             'is_pinned' => 'boolean',
-            'file' => 'nullable|file|mimes:pdf,docx,xlsx,pptx|max:10240', // Max 10MB
+            'file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar,txt,csv|max:102400', // Max 100MB
         ]);
 
         if ($request->hasFile('file')) {
@@ -158,7 +160,9 @@ class PortalDocumentController extends Controller
 
         $document->update($validated);
 
-        return redirect()->back()->with('success', 'Dokumen berhasil diperbarui!');
+        Cache::forget('portal_settings');
+
+        return redirect()->route('portal-admin.documents.index')->with('success', 'Dokumen berhasil diperbarui!');
     }
 
     public function destroy(PortalDocument $document)
