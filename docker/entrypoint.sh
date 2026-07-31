@@ -27,16 +27,34 @@ if [ -n "$DB_HOST" ] && [ "$DB_CONNECTION" = "mysql" ]; then
     '
 fi
 
-# Ensure storage directories exist and have proper permissions
+# Ensure all storage directories exist and have proper permissions
 mkdir -p /var/www/html/storage/framework/cache/data
 mkdir -p /var/www/html/storage/framework/app
 mkdir -p /var/www/html/storage/framework/sessions
 mkdir -p /var/www/html/storage/framework/views
-mkdir -p /var/www/html/storage/app/public
-mkdir -p /var/www/html/storage/app/portal/documents
 mkdir -p /var/www/html/storage/logs
 mkdir -p /var/www/html/bootstrap/cache
 mkdir -p /var/log/supervisor
+
+# Auto-create all public & private upload subfolders for all modules
+mkdir -p /var/www/html/storage/app/public/portal/gallery
+mkdir -p /var/www/html/storage/app/public/portal/partners
+mkdir -p /var/www/html/storage/app/public/portal/posts/thumbnails
+mkdir -p /var/www/html/storage/app/public/portal/posts/seo
+mkdir -p /var/www/html/storage/app/public/portal/posts/content
+mkdir -p /var/www/html/storage/app/public/portal/events
+mkdir -p /var/www/html/storage/app/public/portal/media
+mkdir -p /var/www/html/storage/app/public/portal/author
+mkdir -p /var/www/html/storage/app/public/portal/categories
+mkdir -p /var/www/html/storage/app/portal/documents
+mkdir -p /var/www/html/storage/app/public/avatars
+mkdir -p /var/www/html/storage/app/public/pagi/works
+mkdir -p /var/www/html/storage/app/public/pagi/certificates
+mkdir -p /var/www/html/storage/app/public/tracer/events
+mkdir -p /var/www/html/storage/app/public/tracer/jobs
+mkdir -p /var/www/html/storage/app/public/wims/proposals
+mkdir -p /var/www/html/storage/app/public/wims/reports
+mkdir -p /var/www/html/storage/app/public/fast/submissions
 
 echo "Setting storage permissions..."
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
