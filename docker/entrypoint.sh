@@ -56,6 +56,7 @@ mkdir -p /var/www/html/storage/app/public/profile_photos
 mkdir -p /var/www/html/storage/app/public/cv-photos
 mkdir -p /var/www/html/storage/app/public/avatars
 mkdir -p /var/www/html/storage/app/public/pagi/works
+mkdir -p /var/www/html/storage/app/public/pagi/covers
 mkdir -p /var/www/html/storage/app/public/pagi/gallery
 mkdir -p /var/www/html/storage/app/public/pagi/banners
 mkdir -p /var/www/html/storage/app/public/pagi/certificates
