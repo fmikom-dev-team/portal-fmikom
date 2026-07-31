@@ -27,6 +27,7 @@ use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Routing\Exceptions\InvalidSignatureException;
 use Illuminate\Session\TokenMismatchException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 
@@ -266,7 +267,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         // Handle CSRF token mismatch (session expired) for Inertia
-        $exceptions->render(function (TokenMismatchException $e, $request) {
+        $exceptions->render(function (TokenMismatchException $_, $request) {
             if ($request->inertia()) {
                 return response()->json([
                     'message' => 'Sesi Anda telah berakhir. Silakan muat ulang halaman.',
@@ -277,7 +278,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->with('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
         });
 
-        $exceptions->render(function (InvalidSignatureException $e, $request) {
+        $exceptions->render(function (InvalidSignatureException $_, $request) {
             if (Auth::check()) {
                 Auth::logout();
                 $request->session()->invalidate();
