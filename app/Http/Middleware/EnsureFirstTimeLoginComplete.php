@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserAccountStatus;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -60,7 +61,7 @@ class EnsureFirstTimeLoginComplete
                 || $request->routeIs('waiting-room.resign')
                 || $request->routeIs('approval.status');
 
-            if ($user->isPendingReview() || $user->isRejected() || in_array($user->status_approval, ['approved', 'otp_sent', 'otp_verified'])) {
+            if ($user->isPendingReview() || $user->isRejected() || in_array($user->status_approval, [UserAccountStatus::Approved, UserAccountStatus::OtpSent, UserAccountStatus::OtpVerified], true)) {
                 if ($isWaitingRoomRoute || $isLogout) {
                     return $next($request);
                 }
