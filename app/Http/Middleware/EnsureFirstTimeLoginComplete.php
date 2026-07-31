@@ -37,17 +37,18 @@ class EnsureFirstTimeLoginComplete
         $isOtpRoute = $request->routeIs('verify.otp') || $request->routeIs('resend.otp');
         $isForcePass = $request->routeIs('password.force.*');
         $isLogout = $request->routeIs('logout');
+        $isActivationRoute = $request->routeIs('activation.*');
 
         // Update user's last_seen_at timestamp (throttled to once per minute)
         // Only touch the DB if not on excluded routes to minimize overhead
-        if (! $isOtpRoute && ! $isForcePass && ! $isLogout) {
+        if (! $isOtpRoute && ! $isForcePass && ! $isLogout && ! $isActivationRoute) {
             if (! $user->last_seen_at || $user->last_seen_at->addMinutes(1)->isPast()) {
                 $user->updateQuietly(['last_seen_at' => now()]);
             }
         }
 
-        // Izinkan akses ke route OTP, force change password, dan logout
-        if ($isOtpRoute || $isForcePass || $isLogout) {
+        // Izinkan akses ke route OTP, force change password, activation, dan logout
+        if ($isOtpRoute || $isForcePass || $isLogout || $isActivationRoute) {
             return $next($request);
         }
 
