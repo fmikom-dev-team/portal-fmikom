@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Auth\AuthLoginAttempt;
 use App\Models\Auth\AuthMfa;
 use App\Models\Auth\AuthOAuthCredential;
-use App\Models\Auth\AuthOAuthProvider;
 use App\Models\Auth\AuthOtpToken;
 use App\Models\Auth\RegistrationRequest;
 use App\Models\Module;
