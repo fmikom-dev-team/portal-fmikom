@@ -69,7 +69,7 @@ class SecurityHeaders
         // blob: is required for FFmpeg WASM: the bundled Worker does import(blob://...) for ffmpeg-core.js
         // script-src-elem only covers <script> tags; dynamic import() in Workers uses script-src
         $scriptSrcParts = [
-            "script-src 'self' 'nonce-{$nonce}' blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com",
+            "script-src 'self' 'unsafe-inline' 'nonce-{$nonce}' blob: https://static.cloudflareinsights.com https://cdnjs.cloudflare.com",
         ];
 
         if ($isLocalEnvironment) {
@@ -200,7 +200,8 @@ class SecurityHeaders
             // script-src blob: is needed for the Worker's internal dynamic import(blob://...) of ffmpeg-core.js
             'script-src-elem '.implode(' ', array_filter([
                 "'self'",
-                $isLocalEnvironment ? "'unsafe-inline'" : "'nonce-{$nonce}'",
+                "'unsafe-inline'",
+                "'nonce-{$nonce}'",
                 'blob:',
                 'https://static.cloudflareinsights.com',
                 'https://cdnjs.cloudflare.com',
