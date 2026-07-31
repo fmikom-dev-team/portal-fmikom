@@ -123,7 +123,7 @@ class UsersController extends Controller
 
         AuditLogger::log('user.deleted', 'warning', ['email' => $user->email], $user);
 
-        return back()->with('success', 'User berhasil dihapus.');
+        return redirect()->route('workos.dashboard')->with('success', 'User berhasil dihapus.');
     }
 
     public function approveDeletion(User $user)
@@ -133,7 +133,9 @@ class UsersController extends Controller
 
         $this->deleteUserWithCascade($user);
 
-        return back()->with('success', 'Pengajuan penghapusan disetujui. Akun user berhasil dihapus secara permanen.');
+        AuditLogger::log('user.deletion_approved', 'warning', ['email' => $user->email], $user);
+
+        return redirect()->route('workos.dashboard')->with('success', 'Pengajuan penghapusan disetujui. Akun user berhasil dihapus secara permanen.');
     }
 
     /**

@@ -272,7 +272,9 @@ onMounted(() => {
 			filterMembership.value = membershipParam;
 		}
 
-		// Background real-time polling (every 5s) for automatic user status updates
+		// Background polling (every 60s) for user status refresh.
+		// Kept at 60s to avoid concurrent requests that can race against
+		// SecureSession's session_token sync, causing unexpected logouts.
 		realTimePollingTimer = setInterval(() => {
 			if (!modal.createUser && !modal.uploadUsers && !toggleStatusModal.show) {
 				router.reload({
@@ -281,7 +283,7 @@ onMounted(() => {
 					preserveState: true,
 				});
 			}
-		}, 5000);
+		}, 60000);
 	}
 });
 onUnmounted(() => {

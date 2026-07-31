@@ -95,24 +95,41 @@ class SecureSession
                 }
             }
 
-            // Sync with current Laravel Session ID if it changed (e.g. after regeneration)
-            if ($request->hasSession() && $authSession->session_token !== $request->session()->getId()) {
-                $existing = AuthSession::where('session_token', $request->session()->getId())->first();
-                if ($existing) {
-                    $existing->update(['is_revoked' => true, 'session_token' => 'invalidated_'.Str::random(10)]);
-                }
+            // Sync with current Laravel Session ID if it changed (e.g. after regeneration).
+            // Wrapped in a cache lock to prevent race conditions when concurrent requests
+            // (e.g. from the admin panel's background polling) simultaneously try to
+            // update the same auth_session record, which could cause one request to
+            // not find the token and trigger an unexpected logout.
+            $lockKey = 'sec_sess_lock_'.$authSession->id;
+            $lock = Cache::lock($lockKey, 5);
+            if ($lock->get()) {
+                try {
+                    if ($request->hasSession() && $authSession->session_token !== $request->session()->getId()) {
+                        $existing = AuthSession::where('session_token', $request->session()->getId())->first();
+                        if ($existing) {
+                            $existing->update(['is_revoked' => true, 'session_token' => 'invalidated_'.Str::random(10)]);
+                        }
 
-                $authSession->update([
-                    'session_token' => $request->session()->getId(),
-                    'expires_at' => Carbon::now()->addMinutes(config('session.lifetime')),
-                    'last_activity_at' => Carbon::now(),
-                ]);
-                Cache::forget($cacheKey);
-            } else {
-                $authSession->update([
-                    'expires_at' => Carbon::now()->addMinutes(config('session.lifetime')),
-                    'last_activity_at' => Carbon::now(),
-                ]);
+                        $authSession->update([
+                            'session_token' => $request->session()->getId(),
+                            'expires_at' => Carbon::now()->addMinutes(config('session.lifetime')),
+                            'last_activity_at' => Carbon::now(),
+                        ]);
+                        Cache::forget($cacheKey);
+                    } else {
+                        // Throttle DB writes: only update last_activity_at at most once every 10s
+                        $activityKey = 'sess_act_'.$authSession->id;
+                        if (! Cache::has($activityKey)) {
+                            $authSession->update([
+                                'expires_at' => Carbon::now()->addMinutes(config('session.lifetime')),
+                                'last_activity_at' => Carbon::now(),
+                            ]);
+                            Cache::put($activityKey, true, 10);
+                        }
+                    }
+                } finally {
+                    $lock->release();
+                }
             }
 
             // Use request attributes (internal bag) instead of merge() to prevent
