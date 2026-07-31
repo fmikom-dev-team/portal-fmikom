@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Portal\PortalMedia;
 use App\Services\VirusScannerService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -67,6 +68,8 @@ class PortalMediaController extends Controller
         }
         $media->delete();
 
-        return redirect()->back()->with('success', 'Media deleted successfully!');
+        Cache::forget('portal_settings');
+
+        return redirect()->route('portal-admin.media.index')->with('success', 'Media deleted successfully!');
     }
 }

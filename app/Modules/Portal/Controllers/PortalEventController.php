@@ -167,9 +167,12 @@ class PortalEventController extends Controller
         }
 
         $event->delete();
-        Cache::forget('portal_welcome_events');
 
-        return redirect()->back()->with('success', 'Event berhasil dihapus!');
+        Cache::forget('portal_welcome_events');
+        Cache::forget('portal_home_showcase');
+        Cache::forget('portal_settings');
+
+        return redirect()->route('portal-admin.events.index')->with('success', 'Event berhasil dihapus!');
     }
 
     private function processAndStoreImage($file, $path)

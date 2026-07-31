@@ -5,6 +5,7 @@ namespace App\Modules\Portal\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Portal\PortalAcademicCalendar;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 
 class PortalAcademicCalendarController extends Controller
@@ -54,6 +55,8 @@ class PortalAcademicCalendarController extends Controller
     {
         $academicCalendar->delete();
 
-        return redirect()->back()->with('success', 'Jadwal akademik berhasil dihapus!');
+        Cache::forget('portal_settings');
+
+        return redirect()->route('portal-admin.academic-calendars.index')->with('success', 'Jadwal akademik berhasil dihapus!');
     }
 }

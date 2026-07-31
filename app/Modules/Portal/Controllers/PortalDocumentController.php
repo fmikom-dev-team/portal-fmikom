@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Portal\PortalDocument;
 use App\Services\VirusScannerService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -177,7 +178,9 @@ class PortalDocumentController extends Controller
 
         $document->delete();
 
-        return redirect()->back()->with('success', 'Dokumen berhasil dihapus!');
+        Cache::forget('portal_settings');
+
+        return redirect()->route('portal-admin.documents.index')->with('success', 'Dokumen berhasil dihapus!');
     }
 
     public function togglePin(PortalDocument $document)

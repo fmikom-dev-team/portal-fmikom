@@ -33,6 +33,6 @@ class PortalCommentController extends Controller
     {
         $comment->delete();
 
-        return redirect()->back()->with('success', 'Comment deleted!');
+        return redirect()->route('portal-admin.comments.index')->with('success', 'Comment deleted!');
     }
 }

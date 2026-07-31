@@ -5,6 +5,7 @@ namespace App\Modules\Portal\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Portal\PortalCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 
 class PortalCategoryController extends Controller
@@ -56,6 +57,9 @@ class PortalCategoryController extends Controller
     {
         $category->delete();
 
-        return redirect()->back()->with('success', 'Category deleted successfully!');
+        Cache::forget('portal_settings');
+        Cache::forget('portal_home_showcase');
+
+        return redirect()->route('portal-admin.categories.index')->with('success', 'Category deleted successfully!');
     }
 }

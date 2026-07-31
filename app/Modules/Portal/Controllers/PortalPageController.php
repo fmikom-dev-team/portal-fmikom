@@ -5,6 +5,7 @@ namespace App\Modules\Portal\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Portal\PortalPage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 
 class PortalPageController extends Controller
@@ -66,6 +67,8 @@ class PortalPageController extends Controller
     {
         $page->delete();
 
-        return redirect()->back()->with('success', 'Page deleted successfully!');
+        Cache::forget('portal_settings');
+
+        return redirect()->route('portal-admin.pages.index')->with('success', 'Page deleted successfully!');
     }
 }
