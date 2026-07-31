@@ -313,6 +313,24 @@ function handleToggleStatusSubmit() {
 		return;
 	}
 
+	if (['approved', 'otp_sent', 'otp_verified'].includes(toggleStatusModal.user.status_approval)) {
+		router.post(`/workos/users/${toggleStatusModal.user.id}/resend-activation`, {}, {
+			preserveState: true,
+			preserveScroll: true,
+			onSuccess: () => {
+				toggleStatusModal.show = false;
+				toast('Email link aktivasi baru berhasil dikirim ulang.', 'success');
+			},
+			onError: (errors: any) => {
+				toast(errors.error || 'Gagal mengirim ulang link aktivasi.', 'error');
+			},
+			onFinish: () => {
+				toggleStatusModal.isLoading = false;
+			}
+		});
+		return;
+	}
+
 	router.patch(`/workos/users/${toggleStatusModal.user.id}`, {
 		is_active: toggleStatusModal.targetStatus
 	}, {

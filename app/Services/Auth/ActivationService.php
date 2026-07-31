@@ -217,6 +217,52 @@ class ActivationService
     }
 
     /**
+     * Resend activation email / OTP to user.
+     */
+    public function resendActivation(User $user, ?int $adminId = null): void
+    {
+        if ($user->isAccountActive()) {
+            throw new \InvalidArgumentException('Akun user ini sudah aktif.');
+        }
+
+        $regRequest = RegistrationRequest::where('created_user_id', '=', $user->id, 'and')
+            ->whereIn('status', ['pending', 'approved', 'otp_sent'], 'and', false)
+            ->first();
+
+        if ($regRequest) {
+            $plainToken = $regRequest->generateActivationToken();
+
+            $regRequest->fill([
+                'status' => RegistrationStatus::OtpSent->value,
+                'created_user_id' => $user->id,
+            ])->save();
+
+            $user->forceFill(['status_approval' => UserAccountStatus::OtpSent->value])->save();
+
+            $activationUrl = URL::temporarySignedRoute(
+                'activation.confirm',
+                now()->addHours(24),
+                [
+                    'token' => $plainToken,
+                    'email' => $regRequest->email,
+                    'request_id' => $regRequest->id,
+                ]
+            );
+
+            Mail::to($user->email)->send(new ActivationEmail($user, $activationUrl));
+
+            AuthAuditLog::log('account.activation_link_resent', $adminId ?? $user->id, [
+                'registration_request_id' => $regRequest->id,
+                'created_user_id' => $user->id,
+                'email' => $user->email,
+            ]);
+        } else {
+            $user->forceFill(['status_approval' => UserAccountStatus::OtpSent->value])->save();
+            $this->sendActivationOtp($user, request()->ip());
+        }
+    }
+
+    /**
      * Reject a RegistrationRequest.
      */
     public function rejectRegistrationRequest(

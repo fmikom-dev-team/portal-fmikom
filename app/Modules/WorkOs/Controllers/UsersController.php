@@ -195,6 +195,27 @@ class UsersController extends Controller
         return back()->with('success', 'Email aktivasi telah dikirimkan ke '.$user->email.'. User perlu menyelesaikan proses aktivasi.');
     }
 
+    public function resendActivation(User $user)
+    {
+        abort_if($user->id === Auth::id(), 403, 'Tidak dapat memproses akun sendiri.');
+
+        if ($user->isAccountActive()) {
+            return back()->withErrors(['error' => 'User sudah aktif.']);
+        }
+
+        try {
+            $this->activationService->resendActivation($user, Auth::id());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->withErrors(['error' => 'Gagal mengirim ulang email aktivasi: '.$e->getMessage()]);
+        }
+
+        AuditLogger::log('user.resend_activation', 'info', ['email' => $user->email], $user);
+
+        return back()->with('success', 'Email link aktivasi baru berhasil dikirimkan ulang ke '.$user->email);
+    }
+
     public function reject(Request $request, User $user)
     {
         abort_if($user->id === Auth::id(), 403, 'Tidak dapat memproses akun sendiri.');

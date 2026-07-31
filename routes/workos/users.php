@@ -16,6 +16,7 @@ Route::middleware(['auth', 'role:super-admin', 'device.fingerprint'])->group(fun
         Route::patch('/{user}', [UsersController::class, 'update'])->name('update');
         Route::delete('/{user}', [UsersController::class, 'destroy'])->name('destroy');
         Route::post('/{user}/approve', [UsersController::class, 'approve'])->name('approve');
+        Route::post('/{user}/resend-activation', [UsersController::class, 'resendActivation'])->name('resend-activation');
         Route::post('/{user}/reject', [UsersController::class, 'reject'])->name('reject');
         Route::get('/registration-requests/{registrationRequest}', [UsersController::class, 'getRegistrationDetails'])->name('registration-requests.show');
         Route::post('/{user}/approve-deletion', [UsersController::class, 'approveDeletion'])->name('approve-deletion');
