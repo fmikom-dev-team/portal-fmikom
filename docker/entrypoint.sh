@@ -65,6 +65,11 @@ mkdir -p /var/www/html/storage/app/public/tracer/events
 mkdir -p /var/www/html/storage/app/public/tracer/jobs
 mkdir -p /var/www/html/storage/app/public/wims/proposals
 mkdir -p /var/www/html/storage/app/public/wims/reports
+mkdir -p /var/www/html/storage/app/public/logbook
+mkdir -p /var/www/html/storage/app/public/ketidakhadiran
+mkdir -p /var/www/html/storage/app/public/absensi
+mkdir -p /var/www/html/storage/app/public/proposals
+mkdir -p /var/www/html/storage/app/public/laporan_akhir
 mkdir -p /var/www/html/storage/app/public/fast/submissions
 
 # PRIVATE storage directories (Laravel 12 default local disk root storage/app/private & legacy storage/app)
@@ -72,6 +77,11 @@ mkdir -p /var/www/html/storage/app/private/portal/documents
 mkdir -p /var/www/html/storage/app/private/wims/proposals
 mkdir -p /var/www/html/storage/app/private/wims/reports
 mkdir -p /var/www/html/storage/app/private/wims/templates
+mkdir -p /var/www/html/storage/app/private/logbook
+mkdir -p /var/www/html/storage/app/private/ketidakhadiran
+mkdir -p /var/www/html/storage/app/private/absensi
+mkdir -p /var/www/html/storage/app/private/proposals
+mkdir -p /var/www/html/storage/app/private/laporan_akhir
 mkdir -p /var/www/html/storage/app/private/fast/template
 mkdir -p /var/www/html/storage/app/private/surat-lampirans
 mkdir -p /var/www/html/storage/app/private/trace/alumni-role-change-proofs
@@ -79,6 +89,11 @@ mkdir -p /var/www/html/storage/app/portal/documents
 mkdir -p /var/www/html/storage/app/wims/proposals
 mkdir -p /var/www/html/storage/app/wims/reports
 mkdir -p /var/www/html/storage/app/wims/templates
+mkdir -p /var/www/html/storage/app/logbook
+mkdir -p /var/www/html/storage/app/ketidakhadiran
+mkdir -p /var/www/html/storage/app/absensi
+mkdir -p /var/www/html/storage/app/proposals
+mkdir -p /var/www/html/storage/app/laporan_akhir
 mkdir -p /var/www/html/storage/app/fast/template
 mkdir -p /var/www/html/storage/app/surat-lampirans
 mkdir -p /var/www/html/storage/app/trace/alumni-role-change-proofs
