@@ -57,36 +57,36 @@ class ActivationConfirmController extends Controller
         $requestId = $request->query('request_id');
 
         if (! $email || ! $token || ! $requestId) {
-            return redirect()->route('login')->with('error', 'Link aktivasi tidak valid.');
+            return $this->redirectWithLogout($request, 'error', 'Link aktivasi tidak valid.');
         }
 
         /** @var RegistrationRequest|null $regRequest */
         $regRequest = RegistrationRequest::find($requestId, ['*']);
 
         if (! $regRequest) {
-            return redirect()->route('login')->with('error', 'Permintaan registrasi tidak ditemukan.');
+            return $this->redirectWithLogout($request, 'error', 'Permintaan registrasi tidak ditemukan.');
         }
 
         if ($regRequest->isActivated()) {
-            return redirect()->route('login')->with('status', 'Akun ini sudah aktif. Silakan login.');
+            return $this->redirectWithLogout($request, 'status', 'Akun ini sudah aktif. Silakan login.');
         }
 
         if ($regRequest->isRejected()) {
-            return redirect()->route('login')->with('error', 'Permintaan registrasi ini telah ditolak.');
+            return $this->redirectWithLogout($request, 'error', 'Permintaan registrasi ini telah ditolak.');
         }
 
         if ($regRequest->isActivationTokenExpired()) {
-            return redirect()->route('login')->with('error', 'Link aktivasi sudah kedaluwarsa. Hubungi admin untuk mengirim ulang link.');
+            return $this->redirectWithLogout($request, 'error', 'Link aktivasi sudah kedaluwarsa. Hubungi admin untuk mengirim ulang link.');
         }
 
         if (! $regRequest->verifyActivationToken($token)) {
-            return redirect()->route('login')->with('error', 'Link aktivasi tidak valid atau sudah digunakan.');
+            return $this->redirectWithLogout($request, 'error', 'Link aktivasi tidak valid atau sudah digunakan.');
         }
 
         /** @var User|null $user */
         $user = $regRequest->createdUser;
         if (! $user) {
-            return redirect()->route('login')->with('error', 'Data user tidak ditemukan.');
+            return $this->redirectWithLogout($request, 'error', 'Data user tidak ditemukan.');
         }
 
         // Null-kan token di DB (DB transaction + lockForUpdate) untuk prevent link replay & race condition
@@ -110,7 +110,7 @@ class ActivationConfirmController extends Controller
         });
 
         if (! $tokenNulled) {
-            return redirect()->route('login')->with('error', 'Link aktivasi ini sudah pernah diproses. Silakan login atau hubungi administrator.');
+            return $this->redirectWithLogout($request, 'error', 'Link aktivasi ini sudah pernah diproses. Silakan login atau hubungi administrator.');
         }
 
         // Transition statuses & mark email verified
@@ -350,5 +350,19 @@ class ActivationConfirmController extends Controller
         $request->session()->regenerate();
 
         return redirect()->route('dashboard')->with('success', 'Akun Anda berhasil diaktifkan! Selamat datang di Portal FMIKOM.');
+    }
+
+    /**
+     * Helper to log out existing unverified session and redirect to login with flash message.
+     */
+    private function redirectWithLogout(Request $request, string $flashKey, string $message)
+    {
+        if (Auth::check()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        return redirect()->route('login')->with($flashKey, $message);
     }
 }

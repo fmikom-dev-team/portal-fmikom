@@ -267,7 +267,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Handle CSRF token mismatch (session expired) for Inertia
         $exceptions->render(function (TokenMismatchException $e, $request) {
-            if ($e && $request->inertia()) {
+            if ($request->inertia()) {
                 return response()->json([
                     'message' => 'Sesi Anda telah berakhir. Silakan muat ulang halaman.',
                 ], 419);
@@ -278,6 +278,12 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (InvalidSignatureException $e, $request) {
+            if (Auth::check()) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
+
             if ($request->inertia() || $request->wantsJson()) {
                 return response()->json([
                     'message' => 'Link aktivasi tidak valid atau telah kedaluwarsa.',
