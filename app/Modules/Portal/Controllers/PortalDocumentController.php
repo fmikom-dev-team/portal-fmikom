@@ -92,8 +92,18 @@ class PortalDocumentController extends Controller
             $extension = $file->getClientOriginalExtension();
             $fileNameSecure = $uuid.($extension ? '.'.$extension : '');
 
-            // Store to private storage (local disk)
-            $path = $file->storeAs('portal/documents', $fileNameSecure, 'local');
+            // Ensure destination directory exists on local disk
+            if (! Storage::disk('local')->exists('portal/documents')) {
+                Storage::disk('local')->makeDirectory('portal/documents');
+            }
+
+            try {
+                $path = $file->storeAs('portal/documents', $fileNameSecure, 'local');
+            } catch (\Throwable $e) {
+                Log::error('Document file upload failed: '.$e->getMessage());
+
+                return back()->withErrors(['file' => 'Gagal menyimpan file dokumen ke server: '.$e->getMessage()]);
+            }
 
             $validated['file_path'] = $path;
             $validated['file_name'] = $originalName;
@@ -148,8 +158,18 @@ class PortalDocumentController extends Controller
             $extension = $file->getClientOriginalExtension();
             $fileNameSecure = $uuid.($extension ? '.'.$extension : '');
 
-            // Store to private storage
-            $path = $file->storeAs('portal/documents', $fileNameSecure, 'local');
+            // Ensure destination directory exists on local disk
+            if (! Storage::disk('local')->exists('portal/documents')) {
+                Storage::disk('local')->makeDirectory('portal/documents');
+            }
+
+            try {
+                $path = $file->storeAs('portal/documents', $fileNameSecure, 'local');
+            } catch (\Throwable $e) {
+                Log::error('Document file update failed: '.$e->getMessage());
+
+                return back()->withErrors(['file' => 'Gagal memperbarui file dokumen di server: '.$e->getMessage()]);
+            }
 
             $validated['file_path'] = $path;
             $validated['file_name'] = $originalName;
