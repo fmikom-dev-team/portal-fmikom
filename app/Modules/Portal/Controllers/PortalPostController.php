@@ -123,7 +123,7 @@ class PortalPostController extends Controller
         if ($request->hasFile('thumbnail')) {
             $validated['thumbnail'] = $this->processAndStoreImage($request->file('thumbnail'), 'portal/posts/thumbnails');
         } elseif ($request->has('thumbnail')) {
-            $validated['thumbnail'] = $request->input('thumbnail');
+            $validated['thumbnail'] = $this->sanitizeStorageUrl($request->input('thumbnail'));
         } else {
             unset($validated['thumbnail']);
         }
@@ -131,9 +131,9 @@ class PortalPostController extends Controller
         if ($request->hasFile('og_image')) {
             $validated['og_image'] = $this->processAndStoreImage($request->file('og_image'), 'portal/posts/seo');
         } elseif ($request->has('og_image')) {
-            $validated['og_image'] = $request->input('og_image');
+            $validated['og_image'] = $this->sanitizeStorageUrl($request->input('og_image'));
         } else {
-            $validated['og_image'] = $validated['thumbnail'] ?? null;
+            $validated['og_image'] = $this->sanitizeStorageUrl($validated['thumbnail'] ?? null);
         }
 
         if (isset($validated['tags']) && is_array($validated['tags'])) {
@@ -154,6 +154,9 @@ class PortalPostController extends Controller
         }
 
         PortalPost::create($validated);
+
+        Cache::forget('portal_settings');
+        Cache::forget('portal_home_showcase');
 
         return redirect()->route('portal-admin.posts.index')->with('success', 'Post created successfully!');
     }
@@ -218,7 +221,7 @@ class PortalPostController extends Controller
             }
             $validated['thumbnail'] = $this->processAndStoreImage($request->file('thumbnail'), 'portal/posts/thumbnails');
         } elseif ($request->has('thumbnail')) {
-            $validated['thumbnail'] = $request->input('thumbnail');
+            $validated['thumbnail'] = $this->sanitizeStorageUrl($request->input('thumbnail'));
         } else {
             unset($validated['thumbnail']);
         }
@@ -230,9 +233,9 @@ class PortalPostController extends Controller
             }
             $validated['og_image'] = $this->processAndStoreImage($request->file('og_image'), 'portal/posts/seo');
         } elseif ($request->has('og_image')) {
-            $validated['og_image'] = $request->input('og_image');
+            $validated['og_image'] = $this->sanitizeStorageUrl($request->input('og_image'));
         } else {
-            $validated['og_image'] = ($validated['thumbnail'] ?? $post->thumbnail) ?: null;
+            $validated['og_image'] = $this->sanitizeStorageUrl($validated['thumbnail'] ?? $post->thumbnail ?? null);
         }
 
         if (isset($validated['tags']) && is_array($validated['tags'])) {
@@ -576,5 +579,24 @@ class PortalPostController extends Controller
         }
 
         return $publicUrl;
+    }
+
+    /**
+     * Sanitize storage image URL — returns null if the physical file does not exist on disk.
+     */
+    private function sanitizeStorageUrl(?string $url): ?string
+    {
+        if (! $url) {
+            return null;
+        }
+
+        if (str_starts_with($url, '/storage/')) {
+            $relativePath = str_replace('/storage/', '', $url);
+            if (! Storage::disk('public')->exists($relativePath)) {
+                return null;
+            }
+        }
+
+        return $url;
     }
 }
