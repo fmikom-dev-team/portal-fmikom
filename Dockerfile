@@ -30,11 +30,15 @@ RUN npm run build
 # Stage 3: Production Runtime
 FROM php:8.4-fpm-alpine AS production-runtime
 
+# Set container timezone to Asia/Jakarta (WIB, UTC+7)
+ENV TZ=Asia/Jakarta
+
 # Install system dependencies (including ffmpeg for Pagi module video handling)
 # Cache apk package downloads between builds
 RUN --mount=type=cache,target=/var/cache/apk \
     (apk update || (sleep 2 && apk update)) && \
     apk add --no-cache \
+    tzdata \
     nginx \
     supervisor \
     ffmpeg \
@@ -43,7 +47,9 @@ RUN --mount=type=cache,target=/var/cache/apk \
     icu \
     zip \
     unzip \
-    git
+    git && \
+    cp /usr/share/zoneinfo/Asia/Jakarta /etc/localtime && \
+    echo "Asia/Jakarta" > /etc/timezone
 
 # Copy PHP extension installer to easily install PHP extensions
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
