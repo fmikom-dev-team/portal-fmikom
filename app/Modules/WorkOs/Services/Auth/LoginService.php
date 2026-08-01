@@ -107,11 +107,13 @@ class LoginService
      */
     public function completeLogin(User $user, Request $request): LoginResult
     {
-        // Laravel session-based auth
-        Auth::login($user, remember: $request->boolean('remember'));
-
-        // Prevent session fixation
+        // Prevent session fixation BEFORE Auth::login() fires the Login event.
+        // This guarantees the session ID is already final when createSession()
+        // captures it as session_token — eliminating the stale-token race condition.
         $request->session()->regenerate();
+
+        // Laravel session-based auth (fires Login event synchronously)
+        Auth::login($user, remember: $request->boolean('remember'));
 
         // Enterprise session record (device + geo + risk score)
         $authSession = $this->sessionEngine->createSession($user, $request);

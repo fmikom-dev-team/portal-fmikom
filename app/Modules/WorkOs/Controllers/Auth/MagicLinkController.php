@@ -62,9 +62,11 @@ class MagicLinkController extends Controller
             return redirect()->route('login')->with('error', $e->getMessage());
         }
 
-        // Log user in
+        // Prevent session fixation BEFORE Auth::login() fires the Login event
+        $request->session()->regenerate();
+
+        // Log user in (fires Login event synchronously)
         Auth::login($user, remember: false);
-        $request->session()->regenerate(); // Prevent session fixation
 
         // Create enterprise session record
         $session = $this->sessionEngine->createSession($user, $request);

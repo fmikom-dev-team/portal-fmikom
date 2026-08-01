@@ -15,7 +15,7 @@ use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\CareerHistory;
 use App\Models\User;
 use App\Modules\WorkOs\Services\AuditLogger;
-use App\Modules\WorkOs\Services\AuthPlatform\SessionEngine;
+
 use App\Policies\CareerHistoryPolicy;
 use App\Policies\FastJenisSuratPolicy;
 use App\Policies\FastSuratCategoryPolicy;
@@ -106,16 +106,6 @@ class AppServiceProvider extends ServiceProvider
                     'is_successful' => true,
                     'provider' => $provider,
                 ]);
-            }
-
-            // Create enterprise auth session for standard/credentials logins (other logins create this manually)
-            $isSpecialLogin = request()->is('auth/oauth/*') || request()->is('passkeys/*') || request()->is('sso/*');
-            if (! $isSpecialLogin) {
-                if (! session()->has('auth_session_token')) {
-                    $sessionEngine = app(SessionEngine::class);
-                    $authSession = $sessionEngine->createSession($event->user, request());
-                    session(['auth_session_token' => $authSession->id]);
-                }
             }
 
             AuditLogger::log('user.signed_in', 'info', [

@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Auth\AuthOtpToken;
 use App\Models\Auth\RegistrationRequest;
 use App\Models\User;
+use App\Modules\WorkOs\Services\AuthPlatform\SessionEngine;
 use App\Services\Auth\ActivationService;
 use App\Services\Auth\OtpService;
 use Illuminate\Http\Request;
@@ -311,8 +312,11 @@ class ActivationConfirmController extends Controller
             // Request lain sudah mengaktifkan lebih dulu — login sebagai user yang sudah aktif
             $user = User::find($result['user_id']);
             if ($user) {
+                $request->session()->regenerate(); // Prevent session fixation BEFORE Auth::login() fires
                 Auth::login($user);
-                $request->session()->regenerate();
+                $sessionEngine = app(SessionEngine::class);
+                $authSession = $sessionEngine->createSession($user, $request);
+                $request->session()->put('auth_session_token', $authSession->id);
 
                 return redirect()->route('dashboard')->with('status', 'Akun Anda sudah aktif. Selamat datang kembali!');
             }
@@ -323,8 +327,11 @@ class ActivationConfirmController extends Controller
         $user = $result['user'];
 
         // Log user in
+        $request->session()->regenerate(); // Prevent session fixation BEFORE Auth::login() fires
         Auth::login($user);
-        $request->session()->regenerate();
+        $sessionEngine = app(SessionEngine::class);
+        $authSession = $sessionEngine->createSession($user, $request);
+        $request->session()->put('auth_session_token', $authSession->id);
 
         return redirect()->route('dashboard')->with('success', 'Akun Anda berhasil diaktifkan! Selamat datang di Portal FMIKOM.');
     }

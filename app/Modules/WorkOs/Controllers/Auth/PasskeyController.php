@@ -5,6 +5,7 @@ namespace App\Modules\WorkOs\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Auth\AuthPasskey;
 use App\Modules\WorkOs\Services\AuthPlatform\PasskeyEngine;
+use App\Modules\WorkOs\Services\AuthPlatform\SessionEngine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,7 @@ class PasskeyController extends Controller
 {
     public function __construct(
         protected PasskeyEngine $passkeyEngine,
+        protected SessionEngine $sessionEngine,
     ) {}
 
     public function index(Request $request)
@@ -86,8 +88,12 @@ class PasskeyController extends Controller
                 return response()->json(['error' => $msg], 403);
             }
 
+            $request->session()->regenerate(); // Prevent session fixation BEFORE Auth::login() fires
             Auth::login($user);
-            $request->session()->regenerate(); // Prevent session fixation
+
+            // Create enterprise session record
+            $session = $this->sessionEngine->createSession($user, $request);
+            $request->session()->put('auth_session_token', $session->id);
 
             return response()->json(['message' => 'Authenticated via passkey.']);
         } catch (\Exception $e) {

@@ -9,7 +9,6 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 
 /**
  * SecureSession Middleware
@@ -18,10 +17,17 @@ use Illuminate\Support\Str;
  *  1. Checks that the stored auth_session_token is valid and not revoked
  *  2. Checks idle timeout (server-side, immune to browser "restore session" bypass)
  *  3. Checks absolute session lifetime (max 8 hours regardless of activity)
- *  4. Syncs session_token after Laravel session ID regeneration
+ *  4. Refreshes last_activity_at + extends expires_at on each request (throttled)
  *
  * FIX CRIT-01: Added server-side idle + absolute timeout tracking so that
  *              closing and restoring the browser cannot extend the session lifetime.
+ *
+ * FIX CRIT-02: Removed Cache::lock() that caused Octane concurrent-request deadlock.
+ *              Activity updates now use Cache::add() as a lightweight atomic flag.
+ *
+ * FIX CRIT-03: Session creation is now exclusively owned by each login controller /
+ *              LoginService. The AppServiceProvider Login event listener no longer
+ *              creates a duplicate session record.
  */
 class SecureSession
 {
@@ -34,20 +40,19 @@ class SecureSession
         $token = $request->session()->get('auth_session_token');
 
         if ($token) {
-            // Cache AuthSession lookup per-token (30s) to avoid a DB hit on every request.
-            // Cache is intentionally short-lived so revocations propagate within 30 seconds.
+            // ── Step 1: Resolve AuthSession record ───────────────────────────────
+            // Cache per-token (30 s) so we avoid a DB hit on every single request.
+            // Short TTL ensures revocations propagate within 30 seconds.
             $cacheKey = 'auth_sess_'.$token;
-            $authSession = Cache::remember($cacheKey, 30, fn () => AuthSession::where(function ($query) use ($token) {
-                $query->where('id', $token)
-                    ->orWhere('session_token', $token);
-            })
+            $authSession = Cache::remember($cacheKey, 30, fn () => AuthSession::where('id', $token)
                 ->where('user_id', $request->user()->id)
                 ->first());
 
+            // ── Step 2: Missing session record — graceful recovery ────────────────
+            // Only possible if the DB row was manually deleted or the token was
+            // written with a non-UUID value. Re-create rather than hard-logout.
             if (! $authSession) {
                 Cache::forget($cacheKey);
-
-                // Graceful self-healing: Re-create session record for valid authenticated user
                 try {
                     $sessionEngine = app(SessionEngine::class);
                     $authSession = $sessionEngine->createSession($request->user(), $request);
@@ -57,18 +62,17 @@ class SecureSession
                 }
             }
 
+            // ── Step 3: Revocation check ─────────────────────────────────────────
+            // A revoked session is always a hard reject. No "un-revoke" recovery here
+            // — if a session is revoked (admin action, logout, password reset), the
+            // user must log in again. This is intentional security behaviour.
             if ($authSession->is_revoked) {
-                // Self-healing recovery: If the session token matches current session ID and user is authenticated, un-revoke
-                if ($request->hasSession() && $authSession->session_token === $request->session()->getId() && Auth::check()) {
-                    $authSession->update(['is_revoked' => false]);
-                    Cache::forget($cacheKey);
-                } else {
-                    Cache::forget($cacheKey);
+                Cache::forget($cacheKey);
 
-                    return $this->reject($request, 'Session has been revoked.');
-                }
+                return $this->reject($request, 'Session has been revoked.');
             }
 
+            // ── Step 4: Expiry check ─────────────────────────────────────────────
             if ($authSession->expires_at && Carbon::now()->isAfter($authSession->expires_at)) {
                 $authSession->update(['is_revoked' => true]);
                 Cache::forget($cacheKey);
@@ -76,11 +80,9 @@ class SecureSession
                 return $this->reject($request, 'Session expired.');
             }
 
-            // ── [FIX CRIT-01 / MED-04] Absolute Session Timeout ─────────────────
+            // ── Step 5: Absolute session timeout ─────────────────────────────────
             // A session may NEVER exceed this hard limit, even if the user is active.
-            // Default: 8 hours. Set session.absolute_timeout_hours in config to override.
-            // This prevents the browser "restore previous session" bypass where the
-            // browser re-presents an old (supposedly expired) session cookie.
+            // Default: 8 hours. Prevents browser "restore previous session" bypass.
             $absoluteTimeoutHours = (int) config('session.absolute_timeout_hours', 8);
             if ($authSession->created_at) {
                 $sessionAgeHours = Carbon::now()->diffInHours($authSession->created_at);
@@ -92,12 +94,11 @@ class SecureSession
                 }
             }
 
-            // ── [FIX CRIT-01] Server-Side Idle Timeout ───────────────────────────
+            // ── Step 6: Idle timeout ─────────────────────────────────────────────
             // Uses last_activity_at from the AuthSession DB record — NOT the Redis TTL.
             // This is the key fix for the "browser restore" bypass:
-            //   - Browser restores session cookie → cookie still valid → Redis data still exists
+            //   - Browser restores session cookie → cookie still valid → Redis data exists
             //   - But last_activity_at is past the idle window → server rejects the session
-            // Idle timeout uses session.lifetime (minutes) from config.
             $idleTimeoutMinutes = (int) config('session.lifetime', 30);
             if ($authSession->last_activity_at) {
                 $idleSinceMinutes = Carbon::now()->diffInMinutes($authSession->last_activity_at);
@@ -109,46 +110,22 @@ class SecureSession
                 }
             }
 
-            // Sync with current Laravel Session ID if it changed (e.g. after regeneration).
-            // Wrapped in a cache lock to prevent race conditions when concurrent requests
-            // (e.g. from the admin panel's background polling) simultaneously try to
-            // update the same auth_session record, which could cause one request to
-            // not find the token and trigger an unexpected logout.
-            $lockKey = 'sec_sess_lock_'.$authSession->id;
-            $lock = Cache::lock($lockKey, 5);
-            if ($lock->get()) {
-                try {
-                    if ($request->hasSession() && $authSession->session_token !== $request->session()->getId()) {
-                        $existing = AuthSession::where('session_token', $request->session()->getId())
-                            ->where('id', '!=', $authSession->id)
-                            ->first();
-                        if ($existing) {
-                            $existing->update(['is_revoked' => true, 'session_token' => 'invalidated_'.Str::random(10)]);
-                        }
-
-                        $authSession->update([
-                            'session_token' => $request->session()->getId(),
-                            'expires_at' => Carbon::now()->addMinutes(config('session.lifetime')),
-                            'last_activity_at' => Carbon::now(),
-                            'is_revoked' => false,
-                        ]);
-                        Cache::forget($cacheKey);
-                    } else {
-                        // Throttle DB writes: only update last_activity_at at most once every 10s
-                        $activityKey = 'sess_act_'.$authSession->id;
-                        if (! Cache::has($activityKey)) {
-                            $authSession->update([
-                                'expires_at' => Carbon::now()->addMinutes(config('session.lifetime')),
-                                'last_activity_at' => Carbon::now(),
-                            ]);
-                            Cache::put($activityKey, true, 10);
-                        }
-                    }
-                } finally {
-                    $lock->release();
-                }
+            // ── Step 7: Throttled activity ping ──────────────────────────────────
+            // Update last_activity_at + slide expires_at at most once every 10 seconds.
+            // Using Cache::add() (atomic SET-IF-NOT-EXISTS) instead of a lock so that
+            // concurrent Octane requests don't deadlock each other.
+            $activityKey = 'sess_act_'.$authSession->id;
+            if (Cache::add($activityKey, true, 10)) {
+                $authSession->update([
+                    'expires_at'       => Carbon::now()->addMinutes(config('session.lifetime')),
+                    'last_activity_at' => Carbon::now(),
+                ]);
+                // Invalidate the cached copy so the fresh timestamps are picked up on
+                // the next lookup (after the 10-second throttle window expires).
+                Cache::forget($cacheKey);
             }
 
+            // ── Step 8: Share risk score with downstream middleware/controllers ───
             // Use request attributes (internal bag) instead of merge() to prevent
             // the risk score from leaking into URLs, browser history, and Referer headers.
             $request->attributes->set('_session_risk_score', $authSession->risk_score);

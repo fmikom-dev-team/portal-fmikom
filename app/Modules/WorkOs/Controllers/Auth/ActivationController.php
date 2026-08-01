@@ -10,6 +10,7 @@ use App\Models\Auth\AuthOtpToken;
 use App\Models\Auth\IdentityVerification;
 use App\Models\Portal\PortalSetting;
 use App\Models\User;
+use App\Modules\WorkOs\Services\AuthPlatform\SessionEngine;
 use App\Notifications\WorkOsAlert;
 use App\Services\Auth\ActivationService;
 use App\Services\Auth\OtpService;
@@ -465,11 +466,16 @@ class ActivationController extends Controller
             : $result['user'];
 
         // Log the user in
+        $request->session()->regenerate(); // Prevent session fixation BEFORE Auth::login() fires
         Auth::login($user);
-        $request->session()->regenerate();
 
         // [FIX FIND-004] Hapus activation session token dari server-side session setelah selesai.
         session()->forget('activation_session_token');
+
+        // Create enterprise session record
+        $sessionEngine = app(SessionEngine::class);
+        $authSession = $sessionEngine->createSession($user, $request);
+        $request->session()->put('auth_session_token', $authSession->id);
 
         if (isset($result['already_active'])) {
             return redirect()->route('dashboard')->with('status', 'Akun Anda sudah aktif sebelumnya. Selamat datang kembali!');

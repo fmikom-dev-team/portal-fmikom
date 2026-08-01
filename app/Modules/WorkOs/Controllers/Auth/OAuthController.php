@@ -85,11 +85,11 @@ class OAuthController extends Controller
                 return redirect()->route('login')->with('error', $msg);
             }
 
-            // 2. Authenticate the user (creates Laravel session)
-            Auth::login($user, remember: false);
-
-            // 3. Prevent session fixation — regenerate session ID post-login
+            // 2. Prevent session fixation BEFORE Auth::login() fires the Login event.
             $request->session()->regenerate();
+
+            // 3. Authenticate the user (fires Login event, writes user to session)
+            Auth::login($user, remember: false);
 
             // 4. Create enterprise session record with device fingerprint + risk score
             $session = $this->sessionEngine->createSession($user, $request);
@@ -299,8 +299,8 @@ class OAuthController extends Controller
                 }
 
                 session()->forget('oauth_register_data');
+                $request->session()->regenerate(); // Prevent session fixation before login event fires
                 Auth::login($existingUser, remember: false);
-                $request->session()->regenerate();
                 $session = $this->sessionEngine->createSession($existingUser, $request);
                 $request->session()->put('auth_session_token', $session->id);
 

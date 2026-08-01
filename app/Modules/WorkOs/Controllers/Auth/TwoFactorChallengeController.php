@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Auth\AuthAuditLog;
 use App\Models\User;
 use App\Modules\WorkOs\Services\AuthPlatform\MFAEngine;
+use App\Modules\WorkOs\Services\AuthPlatform\SessionEngine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -15,9 +16,12 @@ class TwoFactorChallengeController extends Controller
 {
     protected MFAEngine $mfaEngine;
 
-    public function __construct(MFAEngine $mfaEngine)
+    protected SessionEngine $sessionEngine;
+
+    public function __construct(MFAEngine $mfaEngine, SessionEngine $sessionEngine)
     {
         $this->mfaEngine = $mfaEngine;
+        $this->sessionEngine = $sessionEngine;
     }
 
     /**
@@ -59,16 +63,22 @@ class TwoFactorChallengeController extends Controller
             $valid = $this->mfaEngine->verifyLogin($user, $code);
 
             if ($valid) {
-                // Remove the session variable
-                $request->session()->forget('login.id');
+                // Remove the pending login session variables
+                $remember = $request->session()->get('login.remember', false);
+                $request->session()->forget(['login.id', 'login.remember']);
 
-                // Log the user in
-                Auth::login($user, $request->session()->get('login.remember', false));
+                // Prevent session fixation BEFORE Auth::login() fires the Login event
+                $request->session()->regenerate();
+
+                // Authenticate the user (fires Login event synchronously)
+                Auth::login($user, $remember);
+
+                // Create enterprise session record
+                $session = $this->sessionEngine->createSession($user, $request);
+                $request->session()->put('auth_session_token', $session->id);
 
                 // Log the success audit event
                 AuthAuditLog::log('auth.login.success', $user->id, ['mfa_used' => true]);
-
-                $request->session()->regenerate();
 
                 return app(TwoFactorLoginResponse::class);
             }
