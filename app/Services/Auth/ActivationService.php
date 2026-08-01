@@ -192,7 +192,6 @@ class ActivationService
                 now()->addHours(24),
                 [
                     'token' => $plainToken,
-                    'email' => $request->email,
                     'request_id' => $request->id,
                 ]
             );
@@ -244,7 +243,6 @@ class ActivationService
                 now()->addHours(24),
                 [
                     'token' => $plainToken,
-                    'email' => $regRequest->email,
                     'request_id' => $regRequest->id,
                 ]
             );

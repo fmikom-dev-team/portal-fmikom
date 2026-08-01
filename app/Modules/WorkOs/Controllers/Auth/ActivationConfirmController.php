@@ -52,11 +52,10 @@ class ActivationConfirmController extends Controller
      */
     public function confirm(Request $request)
     {
-        $email = $request->query('email');
         $token = $request->query('token');
         $requestId = $request->query('request_id');
 
-        if (! $email || ! $token || ! $requestId) {
+        if (! $token || ! $requestId) {
             return $this->redirectWithLogout($request, 'error', 'Link aktivasi tidak valid.');
         }
 
@@ -66,6 +65,8 @@ class ActivationConfirmController extends Controller
         if (! $regRequest) {
             return $this->redirectWithLogout($request, 'error', 'Permintaan registrasi tidak ditemukan.');
         }
+
+        $email = $regRequest->email;
 
         if ($regRequest->isActivated()) {
             return $this->redirectWithLogout($request, 'status', 'Akun ini sudah aktif. Silakan login.');
