@@ -11,7 +11,6 @@ import {
     Search,
     ChevronLeft,
     ChevronRight,
-    AlertCircle,
     X,
     CheckCircle2,
     XCircle,
@@ -68,7 +67,6 @@ const props = defineProps<{
 const basePath = computed(() => props.endpoints?.basePath ?? '/mahasiswa');
 const search = ref(props.filters.search ?? '');
 const status = ref(props.filters.status ?? '');
-const expandedReasonId = ref<number | null>(null);
 const cancelConfirmId = ref<number | null>(null);
 // PDF viewer state
 const viewerOpen = ref(false);
@@ -220,9 +218,6 @@ function applyFilter() {
 function detailHref(item: Surat) {
     return `${basePath.value}/history/${item.id}`;
 }
-function toggleReason(id: number) {
-    expandedReasonId.value = expandedReasonId.value === id ? null : id;
-}
 function confirmCancel(id: number) {
     cancelConfirmId.value = id;
 }
@@ -237,12 +232,6 @@ function cancelSurat(id: number) {
             },
         },
     );
-}
-function rejectionDetailLabel(item: Surat) {
-    if (item.needsRevision) {
-        return `Catatan revisi ${item.rejectedByRole === 'dekan' ? 'Dekan' : 'Kaprodi'}`;
-    }
-    return 'Alasan penolakan';
 }
 function goToPage(page: number) {
     router.get(
@@ -472,24 +461,6 @@ function goToPage(page: number) {
                                     {{ formatDate(item.neededAt) }}
                                 </span>
                             </div>
-                            <!-- Expanded reason -->
-                            <div
-                                v-if="
-                                    expandedReasonId === item.id &&
-                                    (item.rejectionReason ||
-                                        item.revisionReason)
-                                "
-                                class="mt-3 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700"
-                            >
-                                <span class="font-semibold"
-                                    >{{ rejectionDetailLabel(item) }}:</span
-                                >
-                                {{
-                                    item.needsRevision
-                                        ? item.revisionReason
-                                        : item.rejectionReason
-                                }}
-                            </div>
                             <!-- Cancel confirm -->
                             <div
                                 v-if="cancelConfirmId === item.id"
@@ -532,24 +503,6 @@ function goToPage(page: number) {
                                 @click="openViewer(item, 'download')"
                             >
                                 <Download class="size-3" /> PDF
-                            </button>
-                            <button
-                                v-if="
-                                    [
-                                        'revision_requested',
-                                        'rejected_admin',
-                                        'rejected_approver',
-                                    ].includes(item.status) &&
-                                    can('fast.submission.view') &&
-                                    (item.rejectionReason ||
-                                        item.revisionReason)
-                                "
-                                type="button"
-                                title="Catatan"
-                                class="flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-[10px] font-medium text-red-600 transition-colors hover:bg-red-100"
-                                @click="toggleReason(item.id)"
-                            >
-                                <AlertCircle class="size-3" /> Catatan
                             </button>
                             <button
                                 v-if="item.status === 'pending' && can('fast.submission.cancel')"

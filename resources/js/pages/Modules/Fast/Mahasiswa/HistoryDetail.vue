@@ -103,7 +103,6 @@ const viewerUrl = ref<string | null>(null);
 const viewerTitle = ref('');
 const viewerType = ref<'html' | 'pdf'>('html');
 const copiedNumber = ref(false);
-const expandedTimelineNoteId = ref<number | null>(null);
 const attachmentPreviewOpen = ref(false);
 const activeAttachment = ref<Lampiran | null>(null);
 
@@ -195,11 +194,6 @@ const nomorSuratStatusClass = computed(() => {
 
     return 'border-slate-200 bg-slate-50 text-slate-600';
 });
-
-function toggleTimelineNote(id: number) {
-    expandedTimelineNoteId.value =
-        expandedTimelineNoteId.value === id ? null : id;
-}
 
 function timelineStepState(index: number, timestamp?: string | null): 'done' | 'current' | 'pending' {
     const lastIndex = timeline.value.length - 1;
@@ -741,25 +735,7 @@ async function copyNomor() {
                                         <p class="text-xs font-medium text-slate-500">
                                             {{ formatDateTime(step.timestamp) }}
                                         </p>
-                                        <button
-                                            v-if="step.note"
-                                            type="button"
-                                            class="fast-btn fast-btn-danger shrink-0 px-2.5 py-1 text-xs"
-                                            :aria-expanded="expandedTimelineNoteId === step.id"
-                                            :aria-controls="`timeline-note-${step.id}`"
-                                            @click="toggleTimelineNote(step.id)"
-                                        >
-                                            <ShieldAlert class="size-3.5" />
-                                            Catatan
-                                        </button>
                                     </div>
-                                </div>
-                                <div
-                                    v-if="step.note && expandedTimelineNoteId === step.id"
-                                    :id="`timeline-note-${step.id}`"
-                                    class="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm leading-6 text-red-700"
-                                >
-                                    {{ step.note }}
                                 </div>
                             </div>
                         </div>
