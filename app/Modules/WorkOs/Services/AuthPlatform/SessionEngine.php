@@ -42,6 +42,10 @@ class SessionEngine
         $token = $request->hasSession() ? $request->session()->getId() : hash('sha256', Str::random(60).time());
 
         // 5. Persist Session
+        // CRITICAL: Always use UTC explicitly so SecureSession's UTC-based idle/expiry
+        // checks parse timestamps correctly regardless of app.timezone setting.
+        $nowUtc = Carbon::now('UTC');
+
         $session = AuthSession::create([
             'user_id' => $user->id,
             'device_id' => $device->id,
@@ -51,8 +55,8 @@ class SessionEngine
             'geolocation' => $geo,
             'is_revoked' => false,
             'risk_score' => $riskScore,
-            'expires_at' => Carbon::now()->addMinutes(config('session.lifetime')),
-            'last_activity_at' => Carbon::now(),
+            'expires_at' => $nowUtc->copy()->addMinutes(config('session.lifetime')),
+            'last_activity_at' => $nowUtc,
         ]);
 
         return $session;

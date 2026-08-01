@@ -39,7 +39,8 @@ class DeviceFingerprint
             $device->update(['last_active_at' => Carbon::now()]);
         }
 
-        // Update auth session last_activity_at using stored token
+        // Update auth session last_activity_at using stored token.
+        // CRITICAL: Use UTC explicitly — all session timestamps are stored as UTC.
         $sessionToken = $request->session()->get('auth_session_token');
         if ($sessionToken) {
             AuthSession::where(function ($query) use ($sessionToken) {
@@ -47,7 +48,7 @@ class DeviceFingerprint
                     ->orWhere('session_token', $sessionToken);
             })
                 ->where('is_revoked', false)
-                ->update(['last_activity_at' => Carbon::now()]);
+                ->update(['last_activity_at' => Carbon::now('UTC')]);
         }
 
         // Share fingerprint with the request for downstream use

@@ -57,9 +57,10 @@ class SessionCleanupService
      */
     public function revokeExpired(): int
     {
+        // CRITICAL: Compare against UTC now because expires_at is stored in UTC.
         return AuthSession::where('is_revoked', false)
             ->whereNotNull('expires_at')
-            ->where('expires_at', '<', Carbon::now())
+            ->where('expires_at', '<', Carbon::now('UTC'))
             ->update(['is_revoked' => true]);
     }
 
@@ -69,7 +70,7 @@ class SessionCleanupService
      */
     public function purgeOld(): int
     {
-        $threshold = Carbon::now()->subDays($this->purgeAfterDays);
+        $threshold = Carbon::now('UTC')->subDays($this->purgeAfterDays);
         $total = 0;
 
         do {
@@ -107,7 +108,8 @@ class SessionCleanupService
      */
     public function stats(): array
     {
-        $now = Carbon::now();
+        // Use UTC for consistent comparison with UTC-stored timestamps.
+        $now = Carbon::now('UTC');
 
         return [
             'total_active' => AuthSession::where('is_revoked', false)->where('expires_at', '>', $now)->count(),

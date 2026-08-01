@@ -118,11 +118,15 @@ class SecureSession
 
             // ── Step 7: Throttled activity ping ──────────────────────────────────
             // Update last_activity_at + slide expires_at at most once every 10 seconds.
+            // CRITICAL: Always use UTC explicitly — stored string is parsed as UTC in
+            // idle/expiry checks above. Using Carbon::now() (Asia/Jakarta) would write
+            // a timestamp that is 7 hours behind UTC, causing false idle timeouts.
             $activityKey = 'sess_act_'.$authSession->id;
             if (Cache::add($activityKey, true, 10)) {
+                $nowUtc = Carbon::now('UTC');
                 $authSession->update([
-                    'expires_at' => Carbon::now()->addMinutes(config('session.lifetime')),
-                    'last_activity_at' => Carbon::now(),
+                    'expires_at' => $nowUtc->copy()->addMinutes(config('session.lifetime')),
+                    'last_activity_at' => $nowUtc,
                 ]);
                 Cache::forget($cacheKey);
             }
@@ -144,6 +148,17 @@ class SecureSession
 
         if ($request->expectsJson()) {
             return response()->json(['error' => 'Session invalid: '.$reason], 401);
+        }
+
+        // INERTIA FIX: If this is an Inertia request (non-GET such as DELETE/POST/PATCH),
+        // a plain HTTP 302 redirect causes Inertia to re-send the request to /login with
+        // the same HTTP method (e.g. DELETE /login → 405 Method Not Allowed).
+        //
+        // Inertia::location() returns HTTP 409 Conflict + X-Inertia-Location header,
+        // which tells Inertia to perform a full browser GET navigation to the target URL.
+        // This is the only correct way to redirect Inertia non-GET requests server-side.
+        if ($request->header('X-Inertia')) {
+            return response('', 409)->header('X-Inertia-Location', route('login'));
         }
 
         return redirect()->route('login')->with('error', $reason);

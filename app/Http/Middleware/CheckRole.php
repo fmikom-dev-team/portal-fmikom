@@ -17,6 +17,13 @@ class CheckRole
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
         if (! Auth::check()) {
+            // INERTIA FIX: Plain HTTP 302 causes Inertia to re-send with the same method
+            // (e.g. DELETE /login → 405). Return HTTP 409 + X-Inertia-Location so that
+            // Inertia performs a proper full-page GET navigation to the login page.
+            if ($request->header('X-Inertia')) {
+                return response('', 409)->header('X-Inertia-Location', url('/login'));
+            }
+
             return redirect('/login');
         }
 
