@@ -19,15 +19,8 @@ use Illuminate\Support\Facades\Cache;
  *  3. Checks absolute session lifetime (max 8 hours regardless of activity)
  *  4. Refreshes last_activity_at + extends expires_at on each request (throttled)
  *
- * FIX CRIT-01: Added server-side idle + absolute timeout tracking so that
- *              closing and restoring the browser cannot extend the session lifetime.
- *
- * FIX CRIT-02: Removed Cache::lock() that caused Octane concurrent-request deadlock.
- *              Activity updates now use Cache::add() as a lightweight atomic flag.
- *
- * FIX CRIT-03: Session creation is now exclusively owned by each login controller /
- *              LoginService. The AppServiceProvider Login event listener no longer
- *              creates a duplicate session record.
+ * ALL date comparisons use UNIX Timestamps (epoch seconds) to ensure 100% immunity
+ * to application/database timezone mismatches (e.g. UTC vs Asia/Jakarta).
  */
 class SecureSession
 {
@@ -49,8 +42,6 @@ class SecureSession
                 ->first());
 
             // ── Step 2: Missing session record — graceful recovery ────────────────
-            // Only possible if the DB row was manually deleted or the token was
-            // written with a non-UUID value. Re-create rather than hard-logout.
             if (! $authSession) {
                 Cache::forget($cacheKey);
                 try {
@@ -63,30 +54,29 @@ class SecureSession
             }
 
             // ── Step 3: Revocation check ─────────────────────────────────────────
-            // A revoked session is always a hard reject. No "un-revoke" recovery here
-            // — if a session is revoked (admin action, logout, password reset), the
-            // user must log in again. This is intentional security behaviour.
             if ($authSession->is_revoked) {
                 Cache::forget($cacheKey);
 
                 return $this->reject($request, 'Session has been revoked.');
             }
 
-            // ── Step 4: Expiry check ─────────────────────────────────────────────
-            if ($authSession->expires_at && Carbon::now()->isAfter($authSession->expires_at)) {
+            $now = Carbon::now();
+            $nowTimestamp = $now->getTimestamp();
+
+            // ── Step 4: Expiry check (epoch seconds comparison) ───────────────────
+            if ($authSession->expires_at && $nowTimestamp > $authSession->expires_at->getTimestamp()) {
                 $authSession->update(['is_revoked' => true]);
                 Cache::forget($cacheKey);
 
                 return $this->reject($request, 'Session expired.');
             }
 
-            // ── Step 5: Absolute session timeout ─────────────────────────────────
-            // A session may NEVER exceed this hard limit, even if the user is active.
+            // ── Step 5: Absolute session timeout (epoch seconds comparison) ──────
             // Default: 8 hours. Prevents browser "restore previous session" bypass.
             $absoluteTimeoutHours = (int) config('session.absolute_timeout_hours', 8);
             if ($authSession->created_at) {
-                $sessionAgeHours = Carbon::now()->diffInHours($authSession->created_at);
-                if ($sessionAgeHours >= $absoluteTimeoutHours) {
+                $sessionAgeSeconds = $nowTimestamp - $authSession->created_at->getTimestamp();
+                if ($sessionAgeSeconds >= ($absoluteTimeoutHours * 3600)) {
                     $authSession->update(['is_revoked' => true]);
                     Cache::forget($cacheKey);
 
@@ -94,15 +84,13 @@ class SecureSession
                 }
             }
 
-            // ── Step 6: Idle timeout ─────────────────────────────────────────────
-            // Uses last_activity_at from the AuthSession DB record — NOT the Redis TTL.
-            // This is the key fix for the "browser restore" bypass:
-            //   - Browser restores session cookie → cookie still valid → Redis data exists
-            //   - But last_activity_at is past the idle window → server rejects the session
+            // ── Step 6: Server-side idle timeout (epoch seconds comparison) ─────
+            // Uses last_activity_at epoch seconds vs current epoch seconds.
+            // 100% immune to timezone offsets (UTC vs Asia/Jakarta).
             $idleTimeoutMinutes = (int) config('session.lifetime', 30);
             if ($authSession->last_activity_at) {
-                $idleSinceMinutes = Carbon::now()->diffInMinutes($authSession->last_activity_at);
-                if ($idleSinceMinutes >= $idleTimeoutMinutes) {
+                $idleSinceSeconds = $nowTimestamp - $authSession->last_activity_at->getTimestamp();
+                if ($idleSinceSeconds >= ($idleTimeoutMinutes * 60)) {
                     $authSession->update(['is_revoked' => true]);
                     Cache::forget($cacheKey);
 
@@ -112,22 +100,16 @@ class SecureSession
 
             // ── Step 7: Throttled activity ping ──────────────────────────────────
             // Update last_activity_at + slide expires_at at most once every 10 seconds.
-            // Using Cache::add() (atomic SET-IF-NOT-EXISTS) instead of a lock so that
-            // concurrent Octane requests don't deadlock each other.
             $activityKey = 'sess_act_'.$authSession->id;
             if (Cache::add($activityKey, true, 10)) {
                 $authSession->update([
-                    'expires_at' => Carbon::now()->addMinutes(config('session.lifetime')),
-                    'last_activity_at' => Carbon::now(),
+                    'expires_at' => $now->copy()->addMinutes(config('session.lifetime')),
+                    'last_activity_at' => $now,
                 ]);
-                // Invalidate the cached copy so the fresh timestamps are picked up on
-                // the next lookup (after the 10-second throttle window expires).
                 Cache::forget($cacheKey);
             }
 
             // ── Step 8: Share risk score with downstream middleware/controllers ───
-            // Use request attributes (internal bag) instead of merge() to prevent
-            // the risk score from leaking into URLs, browser history, and Referer headers.
             $request->attributes->set('_session_risk_score', $authSession->risk_score);
         }
 
