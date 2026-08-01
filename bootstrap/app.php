@@ -169,9 +169,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // validation (403) and CSP nonce logic.
         $trustedProxiesEnv = env('TRUSTED_PROXIES');
         $trustedProxies = match (true) {
-            $trustedProxiesEnv === '*' || $trustedProxiesEnv === 'at_star' => '*',
+            $trustedProxiesEnv === '*' || $trustedProxiesEnv === 'at_star' || $trustedProxiesEnv === '0.0.0.0/0' => ['0.0.0.0/0', '::/0'],
             is_string($trustedProxiesEnv) && trim($trustedProxiesEnv) !== '' => array_map('trim', explode(',', $trustedProxiesEnv)),
             default => [
+                '0.0.0.0/0',
+                '::/0',
                 '127.0.0.1',
                 '::1',
                 // Docker & Dokploy internal networks (Traefik / Docker bridge & swarm)
