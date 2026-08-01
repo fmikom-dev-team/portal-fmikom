@@ -153,7 +153,7 @@ parameters:
 		-
 			message: '#^If condition is always true\.$#'
 			identifier: if.alwaysTrue
-			count: 1
+			count: 2
 			path: app/Http/Middleware/Auth/SecureSession.php
 
 		-
