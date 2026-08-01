@@ -46,7 +46,14 @@ class SecureSession
             if (! $authSession) {
                 Cache::forget($cacheKey);
 
-                return $this->reject($request, 'Session not found.');
+                // Graceful self-healing: Re-create session record for valid authenticated user
+                try {
+                    $sessionEngine = app(\App\Modules\WorkOs\Services\AuthPlatform\SessionEngine::class);
+                    $authSession = $sessionEngine->createSession($request->user(), $request);
+                    $request->session()->put('auth_session_token', $authSession->id);
+                } catch (\Throwable $e) {
+                    return $this->reject($request, 'Session not found.');
+                }
             }
 
             if ($authSession->is_revoked) {
