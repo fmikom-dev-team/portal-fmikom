@@ -90,30 +90,6 @@ class ActivationConfirmController extends Controller
             return $this->redirectWithLogout($request, 'error', 'Data user tidak ditemukan.');
         }
 
-        // Null-kan token di DB (DB transaction + lockForUpdate) untuk prevent link replay & race condition
-        $tokenNulled = DB::transaction(function () use ($regRequest) {
-            /** @var RegistrationRequest|null $lockedRequest */
-            $lockedRequest = RegistrationRequest::where('id', '=', $regRequest->id, 'and')
-                ->whereNotNull('activation_token_hash')
-                ->lockForUpdate()
-                ->first();
-
-            if (! $lockedRequest) {
-                return false;
-            }
-
-            $lockedRequest->fill([
-                'activation_token_hash' => null,
-                'activation_token_expires_at' => null,
-            ])->save();
-
-            return true;
-        });
-
-        if (! $tokenNulled) {
-            return $this->redirectWithLogout($request, 'error', 'Link aktivasi ini sudah pernah diproses. Silakan login atau hubungi administrator.');
-        }
-
         // Transition statuses & mark email verified
         $user->forceFill([
             'status_approval' => UserAccountStatus::OtpVerified->value,
