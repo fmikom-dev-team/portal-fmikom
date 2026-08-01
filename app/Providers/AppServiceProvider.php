@@ -15,7 +15,6 @@ use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\CareerHistory;
 use App\Models\User;
 use App\Modules\WorkOs\Services\AuditLogger;
-
 use App\Policies\CareerHistoryPolicy;
 use App\Policies\FastJenisSuratPolicy;
 use App\Policies\FastSuratCategoryPolicy;

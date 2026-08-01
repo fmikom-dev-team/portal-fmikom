@@ -117,7 +117,7 @@ class SecureSession
             $activityKey = 'sess_act_'.$authSession->id;
             if (Cache::add($activityKey, true, 10)) {
                 $authSession->update([
-                    'expires_at'       => Carbon::now()->addMinutes(config('session.lifetime')),
+                    'expires_at' => Carbon::now()->addMinutes(config('session.lifetime')),
                     'last_activity_at' => Carbon::now(),
                 ]);
                 // Invalidate the cached copy so the fresh timestamps are picked up on
