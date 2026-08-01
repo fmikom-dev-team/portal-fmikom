@@ -33,6 +33,7 @@ FROM php:8.4-fpm-alpine AS production-runtime
 # Install system dependencies (including ffmpeg for Pagi module video handling)
 # Cache apk package downloads between builds
 RUN --mount=type=cache,target=/var/cache/apk \
+    (apk update || (sleep 2 && apk update)) && \
     apk add --no-cache \
     nginx \
     supervisor \
