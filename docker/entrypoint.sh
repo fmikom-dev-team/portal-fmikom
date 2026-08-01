@@ -111,12 +111,24 @@ chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/p
 echo "Creating storage symlink..."
 php artisan storage:link --force || true
 
+# Clear stale caches to guarantee a 100% fresh application state on every container deploy
+echo "Clearing stale application caches..."
+php artisan config:clear || true
+php artisan route:clear || true
+php artisan view:clear || true
+php artisan cache:clear || true
+php artisan event:clear || true
+
 # Caching Laravel configuration, routes, and views for production optimization
 echo "Caching Laravel assets and configurations..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 php artisan event:cache
+
+# Restart queue workers so background processes reload latest code
+echo "Restarting background queue workers..."
+php artisan queue:restart || true
 
 # Run database migrations
 if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
