@@ -627,7 +627,7 @@ function formatDate(date?: string | null) {
 function statusLabel(status: string) {
     const map: Record<string, string> = {
         pending: 'Menunggu Validasi',
-        revision_requested: 'Sedang Direvisi Admin',
+        revision_requested: 'Diproses',
         validated_admin: 'Diteruskan untuk disetujui',
         approved_kaprodi: 'Disetujui',
         approved_dekan: 'Disetujui',
@@ -641,7 +641,7 @@ function statusLabel(status: string) {
 
 function submissionStatusLabel(item: LatestSubmission) {
     if (item.status === 'revision_requested' && item.needsRevision) {
-        return 'Perlu Revisi';
+        return 'Diproses';
     }
 
     if (
@@ -730,7 +730,7 @@ function dashboardProgressLabel(item: LatestSubmission): string {
     const status = item.status;
     if (status === 'rejected_admin') return 'Ditolak Admin';
     if (status === 'rejected_approver') return 'Ditolak Final';
-    if (status === 'revision_requested') return 'Perlu Revisi';
+    if (status === 'revision_requested') return 'Diproses';
     if (status === 'cancelled') return 'Dibatalkan';
     if (status === 'approved_kaprodi' || status === 'approved_dekan') {
         return `Disetujui ${approvalRoleLabel(item)}`;
@@ -745,7 +745,7 @@ function dashboardProgressDescription(item: LatestSubmission): string {
         return 'Pengajuan berhenti pada tahap penolakan dan tidak melanjut ke proses berikutnya.';
     }
     if (item.status === 'revision_requested') {
-        return 'Pengajuan masih menunggu perbaikan sebelum diproses kembali.';
+        return 'Pengajuan masih diproses.';
     }
     if (item.status === 'finished') {
         return 'Seluruh tahap selesai dan dokumen akhir dapat diproses.';
@@ -769,7 +769,7 @@ function openForm(jenis: JenisSuratOption) {
 
 function rejectionHeadline(item: LatestSubmission) {
     if (item.needsRevision) {
-        return `Sedang direvisi admin setelah catatan ${item.rejectedByRole === 'dekan' ? 'Dekan' : 'Kaprodi'}`;
+        return 'Pengajuan masih diproses';
     }
 
     return item.rejectedByRole === 'admin'
@@ -1149,7 +1149,7 @@ function fieldError(name: string): string | undefined {
                             </div>
 
                             <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
-                                <div class="flex flex-wrap items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
                                     <Link
                                         v-if="can('fast.submission.view')"
                                         :href="`${safeEndpoints.basePath}/history/${item.id}`"
@@ -1175,15 +1175,6 @@ function fieldError(name: string): string | undefined {
                                         @click="toggleNotes(item.id)"
                                     >
                                         <Info class="size-3.5" /> Catatan
-                                    </button>
-                                    <button
-                                        v-if="item.rejectionReason || item.revisionReason"
-                                        type="button"
-                                        title="Catatan"
-                                        class="fast-btn fast-btn-soft px-3 py-1.5 text-[11px] font-medium text-red-600"
-                                        @click="toggleReason(item.id)"
-                                    >
-                                        <AlertCircle class="size-3.5" /> Detail
                                     </button>
                                 </div>
                             </div>

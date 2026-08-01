@@ -115,14 +115,7 @@ const notifItems = computed(() => {
         return page.props.notifications.items ?? [];
     }
 
-    return (page.props.recent_notifications ?? []).map((item) => ({
-        id: item.id,
-        title: item.title ?? 'Notifikasi FASt',
-        message: item.message ?? '',
-        href: item.href ?? '#',
-        time: item.created_at ?? item.time ?? null,
-        readAt: item.unread === false ? item.created_at ?? item.time ?? null : null,
-    }));
+    return [];
 });
 function checkMobile() {
     isMobile.value = window.innerWidth < 1024;

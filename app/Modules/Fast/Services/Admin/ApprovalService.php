@@ -422,6 +422,7 @@ class ApprovalService
                 'type' => $lampiran->tipe,
             ])->values(),
             'tanggal_pengajuan' => optional($surat->tanggal_pengajuan ?? $surat->created_at)?->toISOString(),
+            'tanggal_kebutuhan' => optional($surat->tanggal_kebutuhan)?->toDateString(),
             'status' => $surat->status,
             'pdfUrl' => $surat->canViewFinalDocumentPreview()
                 ? route('documents.surat.pdf', $surat->id, absolute: false)

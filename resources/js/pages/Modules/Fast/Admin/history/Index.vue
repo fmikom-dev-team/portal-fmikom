@@ -7,7 +7,6 @@ import { computed, ref } from 'vue';
 import {
     Search,
     Eye,
-    Download,
     CheckCircle2,
     XCircle,
     Clock3,
@@ -365,22 +364,6 @@ function isInstitutionLetter(item: SuratItem) {
                             >
                                 <Eye class="size-3" /> Lihat
                             </Link>
-                            <a
-                                v-if="item.status === 'finished' && can('fast.document.download')"
-                                :href="`/admin/surat/${item.id}/pdf`"
-                                download
-                                class="fast-btn fast-btn-primary flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-medium"
-                                title="Unduh PDF"
-                            >
-                                <Download class="size-3" /> PDF
-                            </a>
-                            <div
-                                v-else-if="can('fast.document.download')"
-                                class="fast-btn fast-btn-soft flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-medium text-slate-400"
-                                title="PDF belum tersedia"
-                            >
-                                <Download class="size-3" /> PDF Belum Tersedia
-                            </div>
                         </div>
                     </div>
                 </div>

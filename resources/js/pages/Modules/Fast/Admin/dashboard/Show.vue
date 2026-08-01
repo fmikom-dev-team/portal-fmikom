@@ -58,6 +58,7 @@ type Surat = {
     detail_data?: Record<string, any>;
     lampiran: Lampiran[];
     tanggal_pengajuan: string | null;
+    tanggal_kebutuhan?: string | null;
     status: string;
     latest_rejection?: {
         role?: string | null;
@@ -220,10 +221,6 @@ function formatDate(iso: string | null): string {
     );
 }
 
-function formatDateTime(iso: string | null): string {
-    return formatDate(iso);
-}
-
 function formatDateOnly(iso: string | null): string {
     if (!iso) return '-';
 
@@ -232,6 +229,10 @@ function formatDateOnly(iso: string | null): string {
         month: 'long',
         year: 'numeric',
     });
+}
+
+function formatDateTime(iso: string | null): string {
+    return formatDate(iso);
 }
 
 function timelineBadgeClass(status?: string | null, action?: string | null): string {
@@ -515,6 +516,20 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                         </div>
 
                         <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
+                            <p class="text-slate-500">Tanggal Dibutuhkan</p>
+                            <p class="min-w-0 break-words font-medium leading-6 text-slate-900">
+                                {{ tanggal_kebutuhan ? formatDateOnly(tanggal_kebutuhan) : '-' }}
+                            </p>
+                        </div>
+
+                        <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
+                            <p class="text-slate-500">Keperluan</p>
+                            <p class="min-w-0 break-words font-medium leading-6 text-slate-900">
+                                {{ keperluan || '-' }}
+                            </p>
+                        </div>
+
+                        <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
                             <p class="text-slate-500">Nomor Surat</p>
                             <div class="min-w-0">
                                 <button
@@ -535,13 +550,6 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                                     Nomor surat disalin.
                                 </p>
                             </div>
-                        </div>
-
-                        <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
-                            <p class="text-slate-500">Keperluan</p>
-                            <p class="min-w-0 break-words font-medium leading-6 text-slate-900">
-                                {{ keperluan || '-' }}
-                            </p>
                         </div>
 
                         <div

@@ -3,7 +3,6 @@
 namespace App\Modules\Fast\Services\Shared;
 
 use App\Models\Surat;
-use App\Models\SuratApprovalFlow;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -135,11 +134,18 @@ class NotificationFeedService
     protected function requesterItems(User $user, string $roleSlug): array
     {
         $basePath = $this->requesterBasePath($roleSlug);
+        $finalStatuses = [
+            Surat::STATUS_FINISHED,
+            Surat::STATUS_REJECTED_ADMIN,
+            Surat::STATUS_REJECTED_APPROVER,
+            Surat::STATUS_CANCELLED,
+        ];
 
         return Surat::query()
             ->with(['jenisSurat:id,nama'])
             ->where('pemohon_id', $user->id)
             ->where('updated_at', '>=', now()->subDays(30))
+            ->whereIn('status', $finalStatuses)
             ->latest('updated_at')
             ->latest('id')
             ->limit(6)
@@ -218,51 +224,38 @@ class NotificationFeedService
         return Surat::query()
             ->with([
                 'jenisSurat:id,nama',
-                'approvalFlows' => function ($query): void {
-                    $query
-                        ->with('approver:id,name')
-                        ->where('status', SuratApprovalFlow::STATUS_APPROVED)
-                        ->whereIn('role', ['kaprodi', 'dekan'])
-                        ->latest('tanggal_aksi')
-                        ->latest('id');
-                },
+                'creator:id,name,user_type',
             ])
-            ->where('type', 'surat_keluar')
-            ->whereIn('status', [
-                Surat::STATUS_APPROVED_KAPRODI,
-                Surat::STATUS_APPROVED_DEKAN,
-                Surat::STATUS_FINISHED,
-            ])
-            ->whereHas('approvalFlows', function ($query): void {
-                $query
-                    ->where('status', SuratApprovalFlow::STATUS_APPROVED)
-                    ->whereIn('role', ['kaprodi', 'dekan']);
+            ->whereNotNull('created_by')
+            ->whereHas('creator', function ($query): void {
+                $query->where('user_type', 'admin');
             })
+            ->latest('created_at')
             ->latest('updated_at')
             ->latest('id')
             ->limit(6)
             ->get()
             ->map(function (Surat $surat): array {
-                $approvalFlow = $surat->approvalFlows->first();
-                $approvalRole = $approvalFlow?->role === 'kaprodi' ? 'Kaprodi' : 'Dekan';
-                $actedAt = $approvalFlow?->tanggal_aksi ?? $approvalFlow?->created_at ?? $surat->updated_at;
+                $creatorName = $surat->creator?->name ?? 'Admin';
+                $actedAt = $surat->created_at ?? $surat->updated_at;
 
                 return [
                     'scope' => 'admin',
                     'notification_key' => sprintf(
-                        'admin:approval:%d:%s',
+                        'admin:created:%d:%s',
                         $surat->id,
-                        (string) ($approvalFlow?->id ?? $surat->updated_at?->timestamp ?? $surat->id),
+                        (string) ($surat->created_at?->timestamp ?? $surat->updated_at?->timestamp ?? $surat->id),
                     ),
                     'title' => $surat->jenisSurat?->nama ?? 'Surat Akademik',
-                    'message' => "Surat telah disetujui {$approvalRole}",
-                    'tone' => 'green',
+                    'message' => "Surat dibuat oleh {$creatorName}",
+                    'tone' => 'blue',
                     'href' => sprintf('/admin/surat/%d', $surat->id),
                     'meta' => [
                         'surat_id' => $surat->id,
                         'status' => $surat->status,
-                        'approval_role' => $approvalFlow?->role,
-                        'approval_flow_id' => $approvalFlow?->id,
+                        'creator_id' => $surat->created_by,
+                        'creator_name' => $creatorName,
+                        'creator_role' => $surat->creator?->user_type,
                     ],
                     'time' => $actedAt?->toISOString(),
                 ];

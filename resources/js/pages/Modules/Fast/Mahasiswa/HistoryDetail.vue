@@ -256,7 +256,7 @@ function isTimelineNoteVisible(status?: string | null, action?: string | null): 
 const statusMap: Record<string, string> = {
     pending: 'Menunggu Validasi',
     validated_admin: 'Diteruskan untuk disetujui',
-    revision_requested: 'Menunggu Revisi Admin',
+    revision_requested: 'Diproses',
     approved_kaprodi: 'Disetujui Kaprodi',
     approved_dekan: 'Disetujui Dekan',
     finished: 'Selesai',

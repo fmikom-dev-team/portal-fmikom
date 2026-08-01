@@ -123,7 +123,7 @@ function markAllAsRead() {
         {
             preserveScroll: true,
             preserveState: true,
-            only: ['notifications', 'unread_notifications_count', 'recent_notifications'],
+            only: ['notifications', 'unread_notifications_count'],
             onError: () => {
                 localItems.value = previousItems;
                 localCount.value = previousCount;

@@ -172,6 +172,7 @@ class DashboardService
                 'type' => $lampiran->tipe,
             ])->values(),
             'tanggal_pengajuan' => optional($surat->tanggal_pengajuan ?? $surat->created_at)?->toISOString(),
+            'tanggal_kebutuhan' => optional($surat->tanggal_kebutuhan)?->toDateString(),
             'status' => $surat->status,
             'hasAttachmentDocument' => $this->outgoingAttachmentService->hasStudentAttachment($surat),
             'latest_rejection' => (function () use ($surat): ?array {

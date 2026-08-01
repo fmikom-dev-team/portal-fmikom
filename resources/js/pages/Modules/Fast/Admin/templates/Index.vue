@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // resources/js/pages/Modules/Fast/Admin/templates/Index.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
-import { Head, Link, useForm, router } from '@inertiajs/vue3';
+import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue';
@@ -232,6 +232,9 @@ type GlobalSetting = {
     value?: string | null;
     tipe: string;
 };
+type PageProps = {
+    errors?: Record<string, string | string[]>;
+};
 const props = withDefaults(
     defineProps<{
         jenisSurats?: JenisSuratItem[];
@@ -250,6 +253,7 @@ const props = withDefaults(
         globalSettings: () => [],
     },
 );
+const page = usePage<PageProps>();
 const { can } = useFastPermissions();
 const sidebarSearch = ref('');
 const categoryFilter = ref<'all' | string>('all');

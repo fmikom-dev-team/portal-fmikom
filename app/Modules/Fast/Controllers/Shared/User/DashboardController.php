@@ -31,8 +31,7 @@ class DashboardController extends Controller
                 'approvalFlows' => fn ($q) => $q->with('approver:id,name')->latest('tanggal_aksi')->latest('id'),
                 'histories' => fn ($q) => $q->latest('created_at')->latest('id')->limit(6),
             ])
-            ->where('pemohon_id', $user->id)
-            ->where('status', '!=', Surat::STATUS_REVISION_REQUESTED);
+            ->where('pemohon_id', $user->id);
 
         $jenisSurats = $this->visibleSubmissionJenisSuratQuery($user)
             ->with('category')
@@ -168,6 +167,8 @@ class DashboardController extends Controller
         $latestAdminRejectionFlow = $surat->latestAdminRejectionFlow();
         $latestApproverFinalRejectionFlow = $surat->latestApproverFinalRejectionFlow();
         $latestFinalRejectionFlow = $latestAdminRejectionFlow ?? $latestApproverFinalRejectionFlow;
+        $visibleRevisionFlow = $latestRevisionFlow?->role === 'admin' ? $latestRevisionFlow : null;
+        $visibleFinalRejectionFlow = $latestFinalRejectionFlow?->role === 'admin' ? $latestFinalRejectionFlow : null;
 
         return [
             'id' => $surat->id,
@@ -183,13 +184,14 @@ class DashboardController extends Controller
             'requiresFinalApproval' => $surat->requiresFinalApproval(),
             'status' => $surat->status,
             'keperluan' => $surat->keperluan,
-            'rejectionReason' => $latestFinalRejectionFlow?->catatan,
-            'revisionReason' => $latestRevisionFlow?->catatan ?? $surat->catatan_revisi,
-            'rejectedByRole' => $latestRevisionFlow?->role ?? $latestFinalRejectionFlow?->role,
+            'rejectionReason' => $visibleFinalRejectionFlow?->catatan,
+            'revisionReason' => $visibleRevisionFlow?->catatan ?? ($visibleRevisionFlow ? $surat->catatan_revisi : null),
+            'rejectedByRole' => $visibleRevisionFlow?->role ?? $visibleFinalRejectionFlow?->role,
             'needsRevision' => $surat->status === Surat::STATUS_REVISION_REQUESTED,
             'revisionCount' => (int) $surat->revisi_ke,
             'notes' => $surat->approvalFlows
                 ->where('status', SuratApprovalFlow::STATUS_NOTE)
+                ->where('role', 'admin')
                 ->map(fn ($flow) => [
                     'catatan' => $flow->catatan,
                     'oleh' => $flow->approver?->name,

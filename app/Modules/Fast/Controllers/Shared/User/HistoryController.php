@@ -30,7 +30,6 @@ class HistoryController extends Controller
                 'histories' => fn ($q) => $q->latest('created_at')->latest('id')->limit(8),
             ])
             ->where('pemohon_id', $user->id)
-            ->where('status', '!=', Surat::STATUS_REVISION_REQUESTED)
             ->when($search, function ($q) use ($search): void {
                 $q->where(function ($searchQuery) use ($search): void {
                     $searchQuery
@@ -84,7 +83,7 @@ class HistoryController extends Controller
                 'dataEntries',
                 'lampirans',
                 'approvalFlows' => fn ($q) => $q->latest('tanggal_aksi')->latest('id'),
-                'histories' => fn ($q) => $q->latest('created_at')->latest('id')->limit(8),
+                'histories' => fn ($q) => $q->with('user:id,name,user_type')->latest('created_at')->latest('id')->limit(8),
             ])
             ->where('pemohon_id', $user->id)
             ->findOrFail($id);
@@ -130,7 +129,9 @@ class HistoryController extends Controller
                 'approval_timeline' => $surat->approvalFlows->map(fn ($flow): array => [
                     'id' => $flow->id,
                     'label' => $this->approvalFlowLabel($flow),
-                    'note' => $flow->catatan ?? $flow->note ?? null,
+                    'note' => strtolower((string) $flow->role) === 'admin'
+                        ? ($flow->catatan ?? $flow->note ?? null)
+                        : null,
                     'description' => $flow->keterangan ?? null,
                     'acted_at' => optional($flow->tanggal_aksi)?->toISOString(),
                     'status' => $flow->status,
@@ -142,9 +143,11 @@ class HistoryController extends Controller
                     'id' => $history->id,
                     'label' => $this->historyActionLabel($history),
                     'description' => $history->keterangan,
+                    'note' => strtolower((string) $history->user?->user_type) === 'admin' ? $history->keterangan : null,
                     'created_at' => $history->created_at?->toISOString(),
                     'action' => $history->action,
                     'actor' => $history->user?->name ?? null,
+                    'role' => $history->user?->user_type ?? null,
                 ])->values(),
                 'previewTemplateUrl' => $surat->canViewFinalDocumentPreview()
                     ? $this->signedDocumentRoute('surat.template-preview', $surat->id)
@@ -242,6 +245,8 @@ class HistoryController extends Controller
         $latestAdminRejectionFlow = $surat->latestAdminRejectionFlow();
         $latestApproverFinalRejectionFlow = $surat->latestApproverFinalRejectionFlow();
         $latestFinalRejectionFlow = $latestAdminRejectionFlow ?? $latestApproverFinalRejectionFlow;
+        $visibleRevisionFlow = $latestRevisionFlow?->role === 'admin' ? $latestRevisionFlow : null;
+        $visibleFinalRejectionFlow = $latestFinalRejectionFlow?->role === 'admin' ? $latestFinalRejectionFlow : null;
 
         return [
             'id' => $surat->id,
@@ -260,9 +265,9 @@ class HistoryController extends Controller
             'requiresFinalApproval' => $surat->requiresFinalApproval(),
             'status' => $surat->status,
             'keperluan' => $surat->keperluan,
-            'rejectionReason' => $latestFinalRejectionFlow?->catatan,
-            'revisionReason' => $latestRevisionFlow?->catatan ?? $surat->catatan_revisi,
-            'rejectedByRole' => $latestRevisionFlow?->role ?? $latestFinalRejectionFlow?->role,
+            'rejectionReason' => $visibleFinalRejectionFlow?->catatan,
+            'revisionReason' => $visibleRevisionFlow?->catatan ?? ($visibleRevisionFlow ? $surat->catatan_revisi : null),
+            'rejectedByRole' => $visibleRevisionFlow?->role ?? $visibleFinalRejectionFlow?->role,
             'needsRevision' => $surat->status === Surat::STATUS_REVISION_REQUESTED,
             'revisionCount' => (int) $surat->revisi_ke,
             'submittedAt' => optional($surat->tanggal_pengajuan ?? $surat->created_at)?->toISOString(),
@@ -288,19 +293,21 @@ class HistoryController extends Controller
         $latestAdminRejectionFlow = $surat->latestAdminRejectionFlow();
         $latestApproverFinalRejectionFlow = $surat->latestApproverFinalRejectionFlow();
         $latestFinalRejectionFlow = $latestAdminRejectionFlow ?? $latestApproverFinalRejectionFlow;
+        $visibleRevisionFlow = $latestRevisionFlow?->role === 'admin' ? $latestRevisionFlow : null;
+        $visibleFinalRejectionFlow = $latestFinalRejectionFlow?->role === 'admin' ? $latestFinalRejectionFlow : null;
 
-        if (! $latestRevisionFlow && ! $latestFinalRejectionFlow) {
+        if (! $visibleRevisionFlow && ! $visibleFinalRejectionFlow) {
             return null;
         }
 
         return [
-            'role' => $latestRevisionFlow?->role ?? $latestFinalRejectionFlow?->role,
-            'label' => $latestRevisionFlow?->role
-                ? ('Catatan revisi '.ucfirst((string) $latestRevisionFlow->role))
+            'role' => $visibleRevisionFlow?->role ?? $visibleFinalRejectionFlow?->role,
+            'label' => $visibleRevisionFlow?->role
+                ? ('Catatan revisi '.ucfirst((string) $visibleRevisionFlow->role))
                 : 'Ditolak Final',
-            'type' => $latestRevisionFlow ? 'revision' : 'final_reject',
-            'note' => $latestRevisionFlow?->catatan ?? $latestFinalRejectionFlow?->catatan,
-            'acted_at' => optional($latestRevisionFlow?->tanggal_aksi ?? $latestFinalRejectionFlow?->tanggal_aksi)?->toISOString(),
+            'type' => $visibleRevisionFlow ? 'revision' : 'final_reject',
+            'note' => $visibleRevisionFlow?->catatan ?? $visibleFinalRejectionFlow?->catatan,
+            'acted_at' => optional($visibleRevisionFlow?->tanggal_aksi ?? $visibleFinalRejectionFlow?->tanggal_aksi)?->toISOString(),
         ];
     }
 
@@ -387,45 +394,78 @@ class HistoryController extends Controller
     protected function isTechnicalDetailKey(string $key): bool
     {
         $technical = [
+            // Identitas record
             'id',
             'surat_id',
             'jenis_surat_id',
             'pemohon_id',
+            'subject_user_id',
+            'created_by',
             'type',
             'status',
+            'nomor_surat_status',
+            'revisi_ke',
+
+            // Timestamp / lifecycle
             'created_at',
             'updated_at',
             'deleted_at',
             'generated_at',
-            'generated_file_path',
-            'generated_file_type',
-            'rendered_snapshot',
-            'template_version',
-            'qr_token',
-            'qr_validated_at',
             'validated_by_admin_id',
             'validated_by_admin_at',
             'approved_by_id',
             'approved_at',
+
+            // File / rendering / output
+            'generated_file_path',
+            'generated_file_type',
+            'rendered_snapshot',
+            'template_version',
             'file_path',
             'path',
             'url',
-            'token',
-            'slug',
             'nama_file',
             'nama_asli',
             'mime_type',
-            'field_name',
-            'field_value',
+
+            // Token / security
+            'qr_token',
+            'qr_validated_at',
+            'token',
+            'slug',
+
+            // Workflow internal
             'approval_role',
             'approval_role_id',
             'approvalrole',
             'approval',
+            'generated_by',
+
+            // Payload / metadata internal
+            'field_name',
+            'field_value',
             'meta',
             'metadata',
+
+            // Catatan internal
             'catatan_revisi',
             'rejection_reason',
             'admin_note',
+
+            // Konfigurasi lampiran
+            'lampiran_keterangan',
+            'lampiran_judul',
+            'lampiran_judul_align',
+            'lampiran_judul_bold',
+            'lampiran_orientation',
+            'lampiran_mode',
+            'lampiran_label_no',
+            'lampiran_label_nama',
+            'lampiran_label_nim',
+            'lampiran_label_prodi',
+            'lampiran_mahasiswa',
+            'lampiran_columns',
+            'lampiran_rows',
         ];
 
         if (in_array($key, $technical, true)) {

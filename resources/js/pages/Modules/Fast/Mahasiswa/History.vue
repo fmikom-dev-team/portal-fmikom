@@ -108,7 +108,7 @@ function statusLabel(status: string) {
     const map: Record<string, string> = {
         pending: 'Menunggu Validasi',
         validated_admin: 'Diteruskan untuk disetujui',
-        revision_requested: 'Menunggu Revisi Admin',
+        revision_requested: 'Diproses',
         approved_kaprodi: 'Disetujui Kaprodi',
         approved_dekan: 'Disetujui Dekan',
         finished: 'Selesai',
@@ -120,7 +120,7 @@ function statusLabel(status: string) {
 }
 function submissionStatusLabel(item: Surat) {
     if (item.status === 'revision_requested' && item.needsRevision) {
-        return 'Perlu Revisi';
+        return 'Diproses';
     }
     return statusLabel(item.status);
 }
