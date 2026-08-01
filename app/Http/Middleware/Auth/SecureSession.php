@@ -58,9 +58,15 @@ class SecureSession
             }
 
             if ($authSession->is_revoked) {
-                Cache::forget($cacheKey);
+                // Self-healing recovery: If the session token matches current session ID and user is authenticated, un-revoke
+                if ($request->hasSession() && $authSession->session_token === $request->session()->getId() && Auth::check()) {
+                    $authSession->update(['is_revoked' => false]);
+                    Cache::forget($cacheKey);
+                } else {
+                    Cache::forget($cacheKey);
 
-                return $this->reject($request, 'Session has been revoked.');
+                    return $this->reject($request, 'Session has been revoked.');
+                }
             }
 
             if ($authSession->expires_at && Carbon::now()->isAfter($authSession->expires_at)) {
@@ -113,7 +119,9 @@ class SecureSession
             if ($lock->get()) {
                 try {
                     if ($request->hasSession() && $authSession->session_token !== $request->session()->getId()) {
-                        $existing = AuthSession::where('session_token', $request->session()->getId())->first();
+                        $existing = AuthSession::where('session_token', $request->session()->getId())
+                            ->where('id', '!=', $authSession->id)
+                            ->first();
                         if ($existing) {
                             $existing->update(['is_revoked' => true, 'session_token' => 'invalidated_'.Str::random(10)]);
                         }
@@ -122,6 +130,7 @@ class SecureSession
                             'session_token' => $request->session()->getId(),
                             'expires_at' => Carbon::now()->addMinutes(config('session.lifetime')),
                             'last_activity_at' => Carbon::now(),
+                            'is_revoked' => false,
                         ]);
                         Cache::forget($cacheKey);
                     } else {
