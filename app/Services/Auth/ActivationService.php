@@ -199,7 +199,7 @@ class ActivationService
             $activationUrl = rtrim((string) config('app.url'), '/').$relativeUrl;
 
             try {
-                Mail::to($request->email)->send(new ActivationEmail($user, $activationUrl));
+                Mail::to($request->email)->queue(new ActivationEmail($user, $activationUrl));
             } catch (\Throwable $e) {
                 Log::error('[ActivationService] Gagal mengirim email aktivasi: '.$e->getMessage(), [
                     'email' => $request->email,
@@ -251,7 +251,7 @@ class ActivationService
             );
             $activationUrl = rtrim((string) config('app.url'), '/').$relativeUrl;
 
-            Mail::to($user->email)->send(new ActivationEmail($user, $activationUrl));
+            Mail::to($user->email)->queue(new ActivationEmail($user, $activationUrl));
 
             AuthAuditLog::log('account.activation_link_resent', $adminId ?? $user->id, [
                 'registration_request_id' => $regRequest->id,
