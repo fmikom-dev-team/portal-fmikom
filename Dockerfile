@@ -71,8 +71,10 @@ COPY --from=composer-builder /app/vendor ./vendor
 # Copy compiled frontend assets from Node stage
 COPY --from=frontend-builder /app/public/build ./public/build
 
-# Set permissions for entrypoint
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# Set permissions for entrypoint and frankenphp binary if present
+RUN chmod +x /usr/local/bin/entrypoint.sh && \
+    if [ -f /var/www/html/frankenphp ]; then chmod +x /var/www/html/frankenphp && cp /var/www/html/frankenphp /usr/local/bin/frankenphp; fi
+
 
 # Expose HTTP port
 EXPOSE 80
