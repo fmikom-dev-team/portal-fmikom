@@ -187,14 +187,16 @@ class ActivationService
             $user->forceFill(['status_approval' => UserAccountStatus::OtpSent->value])->save();
 
             // 6. Send activation email with signed URL (queued)
-            $activationUrl = URL::temporarySignedRoute(
+            $relativeUrl = URL::temporarySignedRoute(
                 'activation.confirm',
                 now()->addHours(24),
                 [
                     'token' => $plainToken,
                     'request_id' => $request->id,
-                ]
+                ],
+                absolute: false
             );
+            $activationUrl = rtrim((string) config('app.url'), '/').$relativeUrl;
 
             try {
                 Mail::to($request->email)->send(new ActivationEmail($user, $activationUrl));
@@ -238,14 +240,16 @@ class ActivationService
 
             $user->forceFill(['status_approval' => UserAccountStatus::OtpSent->value])->save();
 
-            $activationUrl = URL::temporarySignedRoute(
+            $relativeUrl = URL::temporarySignedRoute(
                 'activation.confirm',
                 now()->addHours(24),
                 [
                     'token' => $plainToken,
                     'request_id' => $regRequest->id,
-                ]
+                ],
+                absolute: false
             );
+            $activationUrl = rtrim((string) config('app.url'), '/').$relativeUrl;
 
             Mail::to($user->email)->send(new ActivationEmail($user, $activationUrl));
 

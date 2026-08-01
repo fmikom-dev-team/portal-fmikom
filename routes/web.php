@@ -383,7 +383,7 @@ Route::middleware(['guest'])->prefix('activate')->name('activation.')->group(fun
 // After admin approves a RegistrationRequest, user receives a signed email link.
 // Clicking the link → validates token → password creation → activated.
 Route::get('/activate/confirm', [ActivationConfirmController::class, 'confirm'])
-    ->middleware('signed')
+    ->middleware('signed:relative')
     ->name('activation.confirm');
 Route::get('/activate/confirm/otp', [ActivationConfirmController::class, 'showOtpForm'])->name('activation.confirm.otp');
 Route::post('/activate/confirm/otp', [ActivationConfirmController::class, 'verifyOtp'])->middleware('throttle:5,1');
