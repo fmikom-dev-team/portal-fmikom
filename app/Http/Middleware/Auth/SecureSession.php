@@ -3,6 +3,7 @@
 namespace App\Http\Middleware\Auth;
 
 use App\Models\Auth\AuthSession;
+use App\Modules\WorkOs\Services\AuthPlatform\SessionEngine;
 use Carbon\Carbon;
 use Closure;
 use Illuminate\Http\Request;
@@ -48,7 +49,7 @@ class SecureSession
 
                 // Graceful self-healing: Re-create session record for valid authenticated user
                 try {
-                    $sessionEngine = app(\App\Modules\WorkOs\Services\AuthPlatform\SessionEngine::class);
+                    $sessionEngine = app(SessionEngine::class);
                     $authSession = $sessionEngine->createSession($request->user(), $request);
                     $request->session()->put('auth_session_token', $authSession->id);
                 } catch (\Throwable $e) {
