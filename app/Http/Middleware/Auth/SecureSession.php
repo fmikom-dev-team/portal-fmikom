@@ -19,8 +19,8 @@ use Illuminate\Support\Facades\Cache;
  *  3. Checks absolute session lifetime (max 8 hours regardless of activity)
  *  4. Refreshes last_activity_at + extends expires_at on each request (throttled)
  *
- * ALL date comparisons use UNIX Timestamps (epoch seconds) to ensure 100% immunity
- * to application/database timezone mismatches (e.g. UTC vs Asia/Jakarta).
+ * ALL date comparisons parse the raw database timestamp string explicitly as UTC,
+ * ensuring 100% immunity to application/database timezone mismatches (e.g. UTC vs Asia/Jakarta).
  */
 class SecureSession
 {
@@ -60,22 +60,37 @@ class SecureSession
                 return $this->reject($request, 'Session has been revoked.');
             }
 
-            $now = Carbon::now();
-            $nowTimestamp = $now->getTimestamp();
+            $nowUtc = Carbon::now('UTC');
+            $nowUtcTs = $nowUtc->getTimestamp();
+
+            // Helper to get Unix timestamp from raw DB string or Carbon instance safely
+            $getTimestamp = function (mixed $dateValue) use ($nowUtc): int {
+                if (! $dateValue) {
+                    return $nowUtc->getTimestamp();
+                }
+                if ($dateValue instanceof Carbon) {
+                    return $dateValue->getTimestamp();
+                }
+
+                return Carbon::parse((string) $dateValue, 'UTC')->getTimestamp();
+            };
 
             // ── Step 4: Expiry check (epoch seconds comparison) ───────────────────
-            if ($authSession->expires_at && $nowTimestamp > $authSession->expires_at->getTimestamp()) {
-                $authSession->update(['is_revoked' => true]);
-                Cache::forget($cacheKey);
+            if ($authSession->expires_at) {
+                $expiresTs = $getTimestamp($authSession->getRawOriginal('expires_at') ?? $authSession->expires_at);
+                if ($nowUtcTs > $expiresTs) {
+                    $authSession->update(['is_revoked' => true]);
+                    Cache::forget($cacheKey);
 
-                return $this->reject($request, 'Session expired.');
+                    return $this->reject($request, 'Session expired.');
+                }
             }
 
             // ── Step 5: Absolute session timeout (epoch seconds comparison) ──────
-            // Default: 8 hours. Prevents browser "restore previous session" bypass.
             $absoluteTimeoutHours = (int) config('session.absolute_timeout_hours', 8);
             if ($authSession->created_at) {
-                $sessionAgeSeconds = $nowTimestamp - $authSession->created_at->getTimestamp();
+                $createdTs = $getTimestamp($authSession->getRawOriginal('created_at') ?? $authSession->created_at);
+                $sessionAgeSeconds = $nowUtcTs - $createdTs;
                 if ($sessionAgeSeconds >= ($absoluteTimeoutHours * 3600)) {
                     $authSession->update(['is_revoked' => true]);
                     Cache::forget($cacheKey);
@@ -85,11 +100,14 @@ class SecureSession
             }
 
             // ── Step 6: Server-side idle timeout (epoch seconds comparison) ─────
-            // Uses last_activity_at epoch seconds vs current epoch seconds.
+            // Uses raw DB string parsed explicitly as UTC vs current UTC epoch timestamp.
             // 100% immune to timezone offsets (UTC vs Asia/Jakarta).
-            $idleTimeoutMinutes = (int) config('session.lifetime', 30);
             if ($authSession->last_activity_at) {
-                $idleSinceSeconds = $nowTimestamp - $authSession->last_activity_at->getTimestamp();
+                $idleTimeoutMinutes = (int) config('session.lifetime', 30);
+                $lastActivityTs = $getTimestamp($authSession->getRawOriginal('last_activity_at') ?? $authSession->last_activity_at);
+                $idleSinceSeconds = $nowUtcTs - $lastActivityTs;
+
+                // Only trigger if last_activity_at is in the past AND exceeds lifetime in seconds
                 if ($idleSinceSeconds >= ($idleTimeoutMinutes * 60)) {
                     $authSession->update(['is_revoked' => true]);
                     Cache::forget($cacheKey);
@@ -103,8 +121,8 @@ class SecureSession
             $activityKey = 'sess_act_'.$authSession->id;
             if (Cache::add($activityKey, true, 10)) {
                 $authSession->update([
-                    'expires_at' => $now->copy()->addMinutes(config('session.lifetime')),
-                    'last_activity_at' => $now,
+                    'expires_at' => Carbon::now()->addMinutes(config('session.lifetime')),
+                    'last_activity_at' => Carbon::now(),
                 ]);
                 Cache::forget($cacheKey);
             }
