@@ -48,6 +48,9 @@ const filterMembership = ref("all");
 const subTab = ref<'all' | 'pending_approval' | 'admin_created' | 'active'>('all');
 
 const pendingApprovalCount = computed(() => {
+	if (typeof props.pendingCount === 'number' && props.pendingCount > 0) {
+		return props.pendingCount;
+	}
 	return usersArray.value.filter((u: any) => {
 		return u.registration_type === 'self_registered' && u.status_approval === 'pending';
 	}).length;
