@@ -26,6 +26,18 @@ class CustomCsrfMiddleware extends Middleware
      */
     protected function newCookie($request, $config)
     {
+        cookie()->queue(new Cookie(
+            'XSRF-TOKEN',
+            $request->session()->token(),
+            $this->availableAt(60 * $config['lifetime']),
+            $config['path'],
+            $config['domain'],
+            $config['secure'],
+            false,
+            false,
+            $config['same_site'] ?? null
+        ));
+
         return new Cookie(
             'fm_csrf',
             $request->session()->token(),
