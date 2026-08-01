@@ -18,7 +18,7 @@
         </p>
 
         <div style="text-align: center; margin: 30px 0;">
-            <a href="{{ $activationUrl }}"
+            <a href="{!! $activationUrl !!}"
                style="background-color: #2563eb; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px 32px; border-radius: 8px; display: inline-block;">
                 Aktifkan Akun Saya
             </a>
@@ -26,7 +26,7 @@
 
         <p style="color: #94A3B8; font-size: 13px; text-align: center;">
             Jika tombol di atas tidak berfungsi, salin dan tempel URL berikut ke browser Anda:<br>
-            <a href="{{ $activationUrl }}" style="color: #2563eb; word-break: break-all;">{{ $activationUrl }}</a>
+            <a href="{!! $activationUrl !!}" style="color: #2563eb; word-break: break-all;">{!! $activationUrl !!}</a>
         </p>
 
         <p style="color: #DC2626; font-size: 14px; text-align: center;">
