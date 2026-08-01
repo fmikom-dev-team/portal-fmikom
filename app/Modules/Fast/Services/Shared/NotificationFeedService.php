@@ -236,15 +236,19 @@ class NotificationFeedService
             ->limit(6)
             ->get()
             ->map(function (Surat $surat): array {
-                $creatorName = $surat->creator?->name ?? 'Admin';
+                $creator = $surat->creator;
+                $creatorName = $creator !== null ? $creator->name : 'Admin';
                 $actedAt = $surat->created_at ?? $surat->updated_at;
+                $timestamp = $surat->created_at?->getTimestamp()
+                    ?: $surat->updated_at?->getTimestamp()
+                    ?: $surat->id;
 
                 return [
                     'scope' => 'admin',
                     'notification_key' => sprintf(
                         'admin:created:%d:%s',
                         $surat->id,
-                        (string) ($surat->created_at?->timestamp ?? $surat->updated_at?->timestamp ?? $surat->id),
+                        (string) $timestamp,
                     ),
                     'title' => $surat->jenisSurat?->nama ?? 'Surat Akademik',
                     'message' => "Surat dibuat oleh {$creatorName}",
@@ -255,7 +259,7 @@ class NotificationFeedService
                         'status' => $surat->status,
                         'creator_id' => $surat->created_by,
                         'creator_name' => $creatorName,
-                        'creator_role' => $surat->creator?->user_type,
+                        'creator_role' => $creator?->user_type,
                     ],
                     'time' => $actedAt?->toISOString(),
                 ];

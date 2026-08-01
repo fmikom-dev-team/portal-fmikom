@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Surat;
 use App\Models\SuratApprovalFlow;
 use App\Models\SuratHistory;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
@@ -139,16 +140,23 @@ class HistoryController extends Controller
                     'actor' => $flow->user?->name ?? $flow->actor_name ?? null,
                     'role' => $flow->role,
                 ])->values(),
-                'history_timeline' => $surat->histories->map(fn (SuratHistory $history): array => [
-                    'id' => $history->id,
-                    'label' => $this->historyActionLabel($history),
-                    'description' => $history->keterangan,
-                    'note' => strtolower((string) $history->user?->user_type) === 'admin' ? $history->keterangan : null,
-                    'created_at' => $history->created_at?->toISOString(),
-                    'action' => $history->action,
-                    'actor' => $history->user?->name ?? null,
-                    'role' => $history->user?->user_type ?? null,
-                ])->values(),
+                'history_timeline' => $surat->histories->map(function (SuratHistory $history): array {
+                    /** @var ?User $historyUser */
+                    $historyUser = $history->user;
+                    $historyUserType = $historyUser !== null ? $historyUser->user_type : null;
+                    $isAdminHistory = strtolower((string) $historyUserType) === 'admin';
+
+                    return [
+                        'id' => $history->id,
+                        'label' => $this->historyActionLabel($history),
+                        'description' => $history->keterangan,
+                        'note' => $isAdminHistory ? $history->keterangan : null,
+                        'created_at' => $history->created_at?->toISOString(),
+                        'action' => $history->action,
+                        'actor' => $historyUser?->name ?? null,
+                        'role' => $historyUserType,
+                    ];
+                })->values(),
                 'previewTemplateUrl' => $surat->canViewFinalDocumentPreview()
                     ? $this->signedDocumentRoute('surat.template-preview', $surat->id)
                     : null,
