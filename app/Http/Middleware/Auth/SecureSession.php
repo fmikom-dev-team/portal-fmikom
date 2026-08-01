@@ -63,16 +63,18 @@ class SecureSession
             $nowUtc = Carbon::now('UTC');
             $nowUtcTs = $nowUtc->getTimestamp();
 
-            // Helper to get Unix timestamp from raw DB string or Carbon instance safely
+            // Helper to get Unix timestamp from raw DB string or Carbon instance safely.
+            // Extract the date string ('Y-m-d H:i:s') first, then parse explicitly as UTC,
+            // preventing Eloquent's app.timezone (Asia/Jakarta) cast from shifting timestamps by 7 hours.
             $getTimestamp = function (mixed $dateValue) use ($nowUtc): int {
                 if (! $dateValue) {
                     return $nowUtc->getTimestamp();
                 }
-                if ($dateValue instanceof Carbon) {
-                    return $dateValue->getTimestamp();
-                }
+                $dateStr = $dateValue instanceof Carbon
+                    ? $dateValue->format('Y-m-d H:i:s')
+                    : (string) $dateValue;
 
-                return Carbon::parse((string) $dateValue, 'UTC')->getTimestamp();
+                return Carbon::parse($dateStr, 'UTC')->getTimestamp();
             };
 
             // ── Step 4: Expiry check (epoch seconds comparison) ───────────────────
@@ -118,15 +120,13 @@ class SecureSession
 
             // ── Step 7: Throttled activity ping ──────────────────────────────────
             // Update last_activity_at + slide expires_at at most once every 10 seconds.
-            // CRITICAL: Always use UTC explicitly — stored string is parsed as UTC in
-            // idle/expiry checks above. Using Carbon::now() (Asia/Jakarta) would write
-            // a timestamp that is 7 hours behind UTC, causing false idle timeouts.
+            // Format as UTC string to prevent Eloquent from converting to app.timezone.
             $activityKey = 'sess_act_'.$authSession->id;
             if (Cache::add($activityKey, true, 10)) {
-                $nowUtc = Carbon::now('UTC');
+                $nowUtcPing = Carbon::now('UTC');
                 $authSession->update([
-                    'expires_at' => $nowUtc->copy()->addMinutes(config('session.lifetime')),
-                    'last_activity_at' => $nowUtc,
+                    'expires_at' => $nowUtcPing->copy()->addMinutes(config('session.lifetime'))->toDateTimeString(),
+                    'last_activity_at' => $nowUtcPing->toDateTimeString(),
                 ]);
                 Cache::forget($cacheKey);
             }

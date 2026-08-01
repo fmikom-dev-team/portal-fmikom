@@ -157,12 +157,6 @@ parameters:
 			path: app/Http/Middleware/Auth/SecureSession.php
 
 		-
-			message: '#^Left side of && is always true\.$#'
-			identifier: booleanAnd.leftAlwaysTrue
-			count: 1
-			path: app/Http/Middleware/Auth/SecureSession.php
-
-		-
 			message: '#^Call to function method_exists\(\) with App\\Models\\User and ''isAdmin'' will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
@@ -1455,12 +1449,6 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
 			identifier: argument.unresolvableType
-			count: 1
-			path: app/Modules/Pagi/Services/PagiProfileService.php
-
-		-
-			message: '#^Strict comparison using \!\=\= between non\-empty\-string and '''' will always evaluate to true\.$#'
-			identifier: notIdentical.alwaysTrue
 			count: 1
 			path: app/Modules/Pagi/Services/PagiProfileService.php
 
