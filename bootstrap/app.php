@@ -20,6 +20,7 @@ use App\Http\Middleware\Radar\RadarSecurityShield;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\StaticAssetCacheHeaders;
 use App\Services\SystemAlertService;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -30,6 +31,7 @@ use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
 if (! defined('ROLE_SUPER_ADMIN_SUFFIX')) {
     define('ROLE_SUPER_ADMIN_SUFFIX', ':super-admin');
@@ -271,6 +273,24 @@ return Application::configure(basePath: dirname(__DIR__))
                     $e->getMessage().' ('.$e->getFile().':'.$e->getLine().')',
                     'error'
                 );
+            }
+        });
+
+        // Handle unauthenticated requests for Inertia (prevents 405 Method Not Allowed on non-GET redirects)
+        $exceptions->render(function (AuthenticationException $_, $request) {
+            if ($request->header('X-Inertia') || $request->inertia()) {
+                return response('', 409)->header('X-Inertia-Location', route('login'));
+            }
+
+            if ($request->wantsJson() || $request->expectsJson() || $request->ajax()) {
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
+        });
+
+        // Handle Method Not Allowed HTTP exception gracefully for Inertia
+        $exceptions->render(function (MethodNotAllowedHttpException $_, $request) {
+            if ($request->header('X-Inertia') || $request->inertia()) {
+                return response('', 409)->header('X-Inertia-Location', route('login'));
             }
         });
 
