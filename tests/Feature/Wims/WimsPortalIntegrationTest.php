@@ -868,6 +868,8 @@ it('requires completed status and final report before admin recap and assessor p
         'laporan_akhir_path' => 'laporan-final/penilaian-selesai.pdf',
     ]);
 
+    Cache::forget("module_access_{$admin->id}_WIMS_admin");
+
     $this->actingAs($admin)
         ->withSession(['active_module' => 'WIMS', 'active_role' => 'admin'])
         ->get(route('wims.admin.assessment-recap.index'))
@@ -934,6 +936,7 @@ function portalReadyUser(array $attributes = []): User
         'email_verified_at' => now(),
         'password_changed_at' => now(),
         'is_active' => true,
+        'status_approval' => \App\Enums\UserAccountStatus::Activated,
     ], $attributes));
 }
 

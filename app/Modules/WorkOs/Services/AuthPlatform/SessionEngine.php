@@ -41,23 +41,24 @@ class SessionEngine
         // 4. Resolve Laravel Session ID (fallback to random hash if no session, e.g., console/tests)
         $token = $request->hasSession() ? $request->session()->getId() : hash('sha256', Str::random(60).time());
 
-        // 5. Persist Session
+        // 5. Persist Session (use updateOrCreate to handle race conditions and prevent UNIQUE constraint violations)
         $now = Carbon::now();
 
-        $session = AuthSession::create([
-            'user_id' => $user->id,
-            'device_id' => $device->id,
-            'session_token' => $token,
-            'ip_address' => $ip,
-            'user_agent' => $request->userAgent(),
-            'geolocation' => $geo,
-            'is_revoked' => false,
-            'risk_score' => $riskScore,
-            'expires_at' => $now->copy()->addMinutes(config('session.lifetime')),
-            'last_activity_at' => $now,
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]);
+        $session = AuthSession::updateOrCreate(
+            ['session_token' => $token],
+            [
+                'user_id' => $user->id,
+                'device_id' => $device->id,
+                'ip_address' => $ip,
+                'user_agent' => $request->userAgent(),
+                'geolocation' => $geo,
+                'is_revoked' => false,
+                'risk_score' => $riskScore,
+                'expires_at' => $now->copy()->addMinutes(config('session.lifetime')),
+                'last_activity_at' => $now,
+                'updated_at' => $now,
+            ]
+        );
 
         return $session;
     }
