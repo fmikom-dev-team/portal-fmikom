@@ -58,14 +58,9 @@ class AppServiceProvider extends ServiceProvider
             $this->app->register(TelescopeServiceProvider::class);
         }
 
-        // ─── Auth Services ─────────────────────────────────────────────────
         $this->app->singleton(OtpService::class);
+        $this->app->singleton(ActivationService::class);
         $this->app->singleton(MagicLinkService::class);
-        $this->app->singleton(ActivationService::class, function ($app) {
-            return new ActivationService(
-                $app->make(OtpService::class),
-            );
-        });
     }
 
     /**
@@ -74,8 +69,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->registerAuthEvents();
+        $this->registerEmailEvents();
+        $this->registerSecurityAndGates();
+    }
 
-        // -- Auth Event Listeners for Audit Logging & Session Tracking -------------
+    /**
+     * Register authentication & user session lifecycle event listeners.
+     */
+    protected function registerAuthEvents(): void
+    {
         Event::listen(Login::class, function ($event) {
             $email = $event->user->email;
             $ip = request()->ip();
@@ -118,7 +121,6 @@ class AppServiceProvider extends ServiceProvider
                     $authSession = $sessionEngine->createSession($event->user, request());
                     session(['auth_session_token' => $authSession->id]);
                 } catch (\Throwable $e) {
-                    // Log error silently
                     Log::error('[AppServiceProvider] Failed to create AuthSession on login: '.$e->getMessage());
                 }
             }
@@ -128,36 +130,6 @@ class AppServiceProvider extends ServiceProvider
             $token = session('auth_session_token');
             if ($token) {
                 AuthSession::query()->where('id', $token)->update(['is_revoked' => true]);
-            }
-        });
-
-        // -- Real Email Logging -----------------------------------------------------
-        Event::listen(MessageSent::class, function ($event) {
-            $message = $event->message;
-            $toAddresses = $message->getTo();
-
-            foreach ($toAddresses as $address) {
-                $email = $address->getAddress();
-
-                // Find user by email (case-insensitive) to associate log correctly
-                $user = User::query()->whereRaw('LOWER(email) = ?', [strtolower($email)])->first();
-
-                $body = '';
-                if (method_exists($message, 'getHtmlBody') && $message->getHtmlBody()) {
-                    $body = $message->getHtmlBody();
-                } elseif (method_exists($message, 'getTextBody') && $message->getTextBody()) {
-                    $body = $message->getTextBody();
-                } elseif (method_exists($message, 'getBody') && $message->getBody()) {
-                    $body = $message->getBody()->toString();
-                }
-
-                AuthEmailLog::create([
-                    'user_id' => $user ? $user->id : null,
-                    'email' => $email,
-                    'subject' => $message->getSubject() ?? '(No Subject)',
-                    'body' => $body,
-                    'status' => 'Delivered',
-                ]);
             }
         });
 
@@ -192,9 +164,6 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Event::listen(PasswordReset::class, function ($event) {
-            // [FIX FIND-007] Revoke semua AuthSession aktif setelah password reset.
-            // OWASP mewajibkan semua session diinvalidasi setelah password change/reset.
-            // Mencegah attacker mempertahankan akses via session lama.
             try {
                 AuthSession::where('user_id', $event->user->id)
                     ->where('is_revoked', false)
@@ -216,74 +185,13 @@ class AppServiceProvider extends ServiceProvider
             ], $event->user);
         });
 
-        // Force HTTPS in non-local and non-testing environments to avoid mixed content issues
-        if (! in_array(config('app.env'), ['local', 'testing'])) {
-            URL::forceScheme('https');
-        }
-
-        // Authorization Gate for Laravel Pulse
-        Gate::define('viewPulse', function ($user) {
-            return method_exists($user, 'isSuperAdmin') && ($user->isSuperAdmin() || $user->isAdmin());
-        });
-
-        // Force Livewire asset injection only on Pulse routes
-        if (class_exists(Livewire::class) && ! app()->runningInConsole() && request()->is(config('pulse.path', 'pulse').'*')) {
-            Livewire::forceAssetInjection();
-        }
-
-        // Register Tracer Policies explicitly due to sub-namespace auto-discovery limitation
-        Gate::policy(CareerHistory::class, CareerHistoryPolicy::class);
-        Gate::policy(Surat::class, FastSuratPolicy::class);
-        Gate::policy(JenisSurat::class, FastJenisSuratPolicy::class);
-        Gate::policy(SuratCategory::class, FastSuratCategoryPolicy::class);
-        Gate::policy(TemplateGlobalSetting::class, FastTemplateGlobalSettingPolicy::class);
-
-        // -- Pagi Chat Rate Limiting (Flood Prevention) -------------------------
-        RateLimiter::for('pagi-chat-send', function ($request) {
-            return Limit::perMinute(30)->by($request->user()->id);
-        });
-
-        // -- Pagi API Dynamic Rate Limiting (Admin Configured) -----------------
-        RateLimiter::for('pagi-api', function ($request) {
-            $rateLimit = (int) (PortalSetting::query()->where('key', 'pagi_rate_limit_per_minute')->value('value') ?? 60);
-
-            return Limit::perMinute($rateLimit)->by($request->user()?->id ?: $request->ip());
-        });
-
-        // -- File Upload Rate Limiting (Flood & DoS Prevention) -----------------
-        RateLimiter::for('uploads', function ($request) {
-            return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
-        });
-
-        // Load migrations from subdirectories
-        $mainPath = database_path('migrations');
-        if (is_dir($mainPath)) {
-            $directories = glob($mainPath.'/*', GLOB_ONLYDIR);
-            $paths = array_merge([$mainPath], $directories);
-            $this->loadMigrationsFrom($paths);
-        }
-
-        // Decrypt SMTP password dynamically if encrypted
-        $mailPassword = config('mail.mailers.smtp.password');
-        if (is_string($mailPassword) && str_starts_with($mailPassword, 'base64:')) {
-            try {
-                $decrypted = Crypt::decryptString(substr($mailPassword, 7));
-                config(['mail.mailers.smtp.password' => $decrypted]);
-            } catch (\Throwable $e) {
-                Log::error('SMTP password decryption failed: '.$e->getMessage());
-            }
-        }
-
-        // -- Activity Log: Auth Events -----------------------------------------
         Event::listen(Login::class, function (Login $event) {
             if (! Schema::hasTable('activity_logs')) {
                 return;
             }
 
-            $userId = $event->user->getAuthIdentifier();
-
             ActivityLog::create([
-                'user_id' => $userId,
+                'user_id' => $event->user->getAuthIdentifier(),
                 'action' => 'auth.login',
                 'description' => 'Login ke sistem',
                 'ip_address' => request()->ip(),
@@ -295,15 +203,102 @@ class AppServiceProvider extends ServiceProvider
                 return;
             }
 
-            $userId = $event->user->getAuthIdentifier();
-
             ActivityLog::create([
-                'user_id' => $userId,
+                'user_id' => $event->user->getAuthIdentifier(),
                 'action' => 'auth.logout',
                 'description' => 'Logout dari sistem',
                 'ip_address' => request()->ip(),
             ]);
         });
+    }
+
+    /**
+     * Register email logging event listeners.
+     */
+    protected function registerEmailEvents(): void
+    {
+        Event::listen(MessageSent::class, function ($event) {
+            $message = $event->message;
+            $toAddresses = $message->getTo();
+
+            foreach ($toAddresses as $address) {
+                $email = $address->getAddress();
+
+                $user = User::query()->whereRaw('LOWER(email) = ?', [strtolower($email)])->first();
+
+                $body = '';
+                if (method_exists($message, 'getHtmlBody') && $message->getHtmlBody()) {
+                    $body = $message->getHtmlBody();
+                } elseif (method_exists($message, 'getTextBody') && $message->getTextBody()) {
+                    $body = $message->getTextBody();
+                } elseif (method_exists($message, 'getBody') && $message->getBody()) {
+                    $body = $message->getBody()->toString();
+                }
+
+                AuthEmailLog::create([
+                    'user_id' => $user ? $user->id : null,
+                    'email' => $email,
+                    'subject' => $message->getSubject() ?? '(No Subject)',
+                    'body' => $body,
+                    'status' => 'Delivered',
+                ]);
+            }
+        });
+    }
+
+    /**
+     * Register gates, policies, rate limiters, and environment security configurations.
+     */
+    protected function registerSecurityAndGates(): void
+    {
+        if (! in_array(config('app.env'), ['local', 'testing'])) {
+            URL::forceScheme('https');
+        }
+
+        Gate::define('viewPulse', function ($user) {
+            return method_exists($user, 'isSuperAdmin') && ($user->isSuperAdmin() || $user->isAdmin());
+        });
+
+        if (class_exists(Livewire::class) && ! app()->runningInConsole() && request()->is(config('pulse.path', 'pulse').'*')) {
+            Livewire::forceAssetInjection();
+        }
+
+        Gate::policy(CareerHistory::class, CareerHistoryPolicy::class);
+        Gate::policy(Surat::class, FastSuratPolicy::class);
+        Gate::policy(JenisSurat::class, FastJenisSuratPolicy::class);
+        Gate::policy(SuratCategory::class, FastSuratCategoryPolicy::class);
+        Gate::policy(TemplateGlobalSetting::class, FastTemplateGlobalSettingPolicy::class);
+
+        RateLimiter::for('pagi-chat-send', function ($request) {
+            return Limit::perMinute(30)->by($request->user()->id);
+        });
+
+        RateLimiter::for('pagi-api', function ($request) {
+            $rateLimit = (int) (PortalSetting::query()->where('key', 'pagi_rate_limit_per_minute')->value('value') ?? 60);
+
+            return Limit::perMinute($rateLimit)->by($request->user()?->id ?: $request->ip());
+        });
+
+        RateLimiter::for('uploads', function ($request) {
+            return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
+        });
+
+        $mainPath = database_path('migrations');
+        if (is_dir($mainPath)) {
+            $directories = glob($mainPath.'/*', GLOB_ONLYDIR);
+            $paths = array_merge([$mainPath], $directories);
+            $this->loadMigrationsFrom($paths);
+        }
+
+        $mailPassword = config('mail.mailers.smtp.password');
+        if (is_string($mailPassword) && str_starts_with($mailPassword, 'base64:')) {
+            try {
+                $decrypted = Crypt::decryptString(substr($mailPassword, 7));
+                config(['mail.mailers.smtp.password' => $decrypted]);
+            } catch (\Throwable $e) {
+                Log::error('SMTP password decryption failed: '.$e->getMessage());
+            }
+        }
     }
 
     /**
