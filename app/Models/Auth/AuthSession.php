@@ -23,6 +23,12 @@ class AuthSession extends Model
         'risk_score',
         'expires_at',
         'last_activity_at',
+        // Timestamps must be in $fillable so SessionEngine's explicit UTC strings
+        // are respected. Without this, Eloquent's freshTimestamp() overrides with
+        // app.timezone (Asia/Jakarta), causing a +7h offset that breaks SecureSession's
+        // UTC-based expiry and idle timeout calculations.
+        'created_at',
+        'updated_at',
     ];
 
     protected $casts = [

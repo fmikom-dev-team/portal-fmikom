@@ -117,7 +117,10 @@ class ActivationService
         int $approvedBy,
         ?string $approvalNotes = null,
     ): User {
-        return DB::transaction(function () use ($request, $approvedBy, $approvalNotes) {
+        // Run DB writes inside transaction. Email is sent AFTER commit (see below).
+        // Anti-pattern: Mail::queue() inside a transaction can hold DB locks while
+        // writing to Redis, and would send an email even if the transaction rolls back.
+        $result = DB::transaction(function () use ($request, $approvedBy, $approvalNotes) {
             // 1. Get or Create the User record from registration data
             $user = $request->createdUser ?? User::where('email', '=', $request->email, 'and')->first();
 
@@ -186,35 +189,42 @@ class ActivationService
             // 5. Update user status
             $user->forceFill(['status_approval' => UserAccountStatus::OtpSent->value])->save();
 
-            // 6. Send activation email with signed URL (queued)
-            $relativeUrl = URL::temporarySignedRoute(
-                'activation.confirm',
-                now()->addHours(24),
-                [
-                    'token' => $plainToken,
-                    'request_id' => $request->id,
-                ],
-                absolute: false
-            );
-            $activationUrl = rtrim((string) config('app.url'), '/').$relativeUrl;
-
-            try {
-                Mail::to($request->email)->queue(new ActivationEmail($user, $activationUrl));
-            } catch (\Throwable $e) {
-                Log::error('[ActivationService] Gagal mengirim email aktivasi: '.$e->getMessage(), [
-                    'email' => $request->email,
-                    'user_id' => $user->id,
-                ]);
-            }
-
             AuthAuditLog::log('account.registration_approved', $approvedBy, [
                 'registration_request_id' => $request->id,
                 'created_user_id' => $user->id,
                 'email' => $request->email,
             ]);
 
-            return $user;
+            // Return both user and plain token so email can be sent after commit
+            return ['user' => $user, 'plain_token' => $plainToken];
         });
+
+        $user = $result['user'];
+        $plainToken = $result['plain_token'];
+
+        // 6. Send activation email AFTER the transaction has successfully committed.
+        // This prevents the email from being sent if the transaction rolls back.
+        $relativeUrl = URL::temporarySignedRoute(
+            'activation.confirm',
+            now()->addHours(24),
+            [
+                'token' => $plainToken,
+                'request_id' => $request->id,
+            ],
+            absolute: false
+        );
+        $activationUrl = rtrim((string) config('app.url'), '/').$relativeUrl;
+
+        try {
+            Mail::to($request->email)->queue(new ActivationEmail($user, $activationUrl));
+        } catch (\Throwable $e) {
+            Log::error('[ActivationService] Gagal mengirim email aktivasi: '.$e->getMessage(), [
+                'email' => $request->email,
+                'user_id' => $user->id,
+            ]);
+        }
+
+        return $user;
     }
 
     /**
