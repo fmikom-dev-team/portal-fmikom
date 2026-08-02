@@ -113,7 +113,7 @@ class SecureSession
 
     protected function validateSessionTimeouts(AuthSession $authSession): ?string
     {
-        $nowTs = time();
+        $nowTs = Carbon::now()->getTimestamp();
         $reason = null;
 
         $getTimestamp = function (mixed $dateValue) use ($nowTs): int {
