@@ -7,6 +7,7 @@ use App\Models\Auth\AuthSession;
 use Carbon\Carbon;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Jenssegers\Agent\Agent;
 
 /**

@@ -29,9 +29,11 @@ class LogApiRequests
             // Strip sensitive data from payload
             $payload = Arr::except($request->input(), ['password', 'password_confirmation', 'token']);
 
+            $user = $request->user();
+
             AuditApiRequest::create([
-                'user_id' => auth()->id(),
-                'token_id' => method_exists(auth()->user(), 'currentAccessToken') ? auth()->user()->currentAccessToken()?->id : null,
+                'user_id' => $user?->id,
+                'token_id' => $user && method_exists($user, 'currentAccessToken') ? $user->currentAccessToken()?->id : null,
                 'endpoint' => $request->path(),
                 'method' => $request->method(),
                 'status_code' => $response->getStatusCode(),
