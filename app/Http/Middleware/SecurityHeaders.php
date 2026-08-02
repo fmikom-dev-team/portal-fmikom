@@ -214,7 +214,15 @@ class SecurityHeaders
         ];
 
         // Support proxy / Cloudflare SSL termination
-        $isSecure = $request->isSecure() || strtolower($request->header('X-Forwarded-Proto', '')) === 'https';
+        // Cek berbagai header yang dikirim oleh proxy (Cloudflare, NPM, Traefik, dll).
+        // Safety net terakhir: jika APP_ENV=production dan APP_URL=https://, paksa isSecure=true.
+        // Ini melindungi dari kondisi double-proxy (NPM → Traefik) yang tidak meneruskan
+        // X-Forwarded-Proto dengan benar, sehingga CSP, HSTS, dan cookie Secure tetap aktif.
+        $isSecure = $request->isSecure()
+            || strtolower($request->header('X-Forwarded-Proto', '')) === 'https'
+            || strtolower($request->header('X-Forwarded-Ssl', '')) === 'on'
+            || $request->header('X-Forwarded-Port', '') === '443'
+            || (app()->isProduction() && str_starts_with(config('app.url', ''), 'https://'));
 
         if ($isSecure && ! $isLocalHost) {
             $cspDirectives[] = 'upgrade-insecure-requests';
