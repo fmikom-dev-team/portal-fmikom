@@ -75,11 +75,11 @@ class SecureSession
         return $token ? (string) $token : null;
     }
 
-    protected function resolveAuthSession(Request $request, string $token): ?\App\Models\Auth\AuthSession
+    protected function resolveAuthSession(Request $request, string $token): ?AuthSession
     {
         $cacheKey = 'auth_sess_'.$token;
-        /** @var \App\Models\Auth\AuthSession|null $authSession */
-        $authSession = Cache::remember($cacheKey, 30, fn () => \App\Models\Auth\AuthSession::where('id', $token)
+        /** @var AuthSession|null $authSession */
+        $authSession = Cache::remember($cacheKey, 30, fn () => AuthSession::where('id', $token)
             ->where('user_id', $request->user()->id)
             ->first());
 
@@ -90,8 +90,8 @@ class SecureSession
                 Cache::lock($lockKey, 5)->block(3, function () use ($request, &$authSession, &$token) {
                     $token = (string) $request->session()->get('auth_session_token');
                     if ($token) {
-                        /** @var \App\Models\Auth\AuthSession|null $authSession */
-                        $authSession = \App\Models\Auth\AuthSession::where('id', $token)
+                        /** @var AuthSession|null $authSession */
+                        $authSession = AuthSession::where('id', $token)
                             ->where('user_id', $request->user()->id)
                             ->first();
                     }
@@ -111,7 +111,7 @@ class SecureSession
         return $authSession;
     }
 
-    protected function validateSessionTimeouts(\App\Models\Auth\AuthSession $authSession): ?string
+    protected function validateSessionTimeouts(AuthSession $authSession): ?string
     {
         $nowTs = time();
         $reason = null;
@@ -144,7 +144,7 @@ class SecureSession
         return $reason;
     }
 
-    protected function updateSessionActivity(\App\Models\Auth\AuthSession $authSession, string $cacheKey): void
+    protected function updateSessionActivity(AuthSession $authSession, string $cacheKey): void
     {
         $activityKey = 'sess_act_'.$authSession->id;
         if (Cache::add($activityKey, true, 10)) {
