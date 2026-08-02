@@ -62,6 +62,10 @@ class AuditLogsController extends Controller
 
         $events = $query->orderBy('created_at', 'desc')->paginate(20);
 
+        if ($request->header('X-Inertia') || ! $request->expectsJson()) {
+            return redirect()->route('workos.auth-platform.audit-logs');
+        }
+
         return response()->json([
             'events' => $events,
         ]);
@@ -86,6 +90,10 @@ class AuditLogsController extends Controller
         }
 
         $incidents = $query->orderBy('created_at', 'desc')->paginate(20);
+
+        if ($request->header('X-Inertia') || ! $request->expectsJson()) {
+            return redirect()->route('workos.auth-platform.audit-logs');
+        }
 
         return response()->json([
             'incidents' => $incidents,
