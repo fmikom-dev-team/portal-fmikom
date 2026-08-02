@@ -52,8 +52,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Register Telescope only in non-production or when the package is installed (dev dependency).
-        // In production Docker builds, Telescope is excluded via --no-dev, so we guard with class_exists.
         if (class_exists(TelescopeApplicationServiceProvider::class)) {
             $this->app->register(TelescopeServiceProvider::class);
         }
@@ -69,15 +67,31 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
-        $this->registerAuthEvents();
+        $this->registerLoginEvents();
+        $this->registerLogoutEvents();
+        $this->registerSecurityEvents();
         $this->registerEmailEvents();
         $this->registerSecurityAndGates();
     }
 
-    /**
-     * Register authentication & user session lifecycle event listeners.
-     */
-    protected function registerAuthEvents(): void
+    protected function resolveAuthProvider(): string
+    {
+        if (request()->is('auth/oauth/*')) {
+            $provider = request()->segment(3);
+
+            return ($provider === 'register' || ! $provider) ? 'oauth' : (string) $provider;
+        }
+        if (request()->is('passkeys/*')) {
+            return 'passkey';
+        }
+        if (request()->is('sso/*')) {
+            return 'sso';
+        }
+
+        return 'password';
+    }
+
+    protected function registerLoginEvents(): void
     {
         Event::listen(Login::class, function ($event) {
             $email = $event->user->email;
@@ -90,23 +104,11 @@ class AppServiceProvider extends ServiceProvider
                 ->exists();
 
             if (! $exists) {
-                $provider = 'password';
-                if (request()->is('auth/oauth/*')) {
-                    $provider = request()->segment(3);
-                    if ($provider === 'register' || ! $provider) {
-                        $provider = 'oauth';
-                    }
-                } elseif (request()->is('passkeys/*')) {
-                    $provider = 'passkey';
-                } elseif (request()->is('sso/*')) {
-                    $provider = 'sso';
-                }
-
                 AuthLoginAttempt::create([
                     'email' => $email,
                     'ip_address' => $ip,
                     'is_successful' => true,
-                    'provider' => $provider,
+                    'provider' => $this->resolveAuthProvider(),
                 ]);
             }
 
@@ -114,7 +116,6 @@ class AppServiceProvider extends ServiceProvider
                 'device' => request()->userAgent(),
             ], $event->user);
 
-            // Automatically create AuthSession on login so auth_session_token is ready
             if ($event->user && request()->hasSession() && ! session('auth_session_token')) {
                 try {
                     $sessionEngine = app(\App\Modules\WorkOs\Services\AuthPlatform\SessionEngine::class);
@@ -126,6 +127,22 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
+        Event::listen(Login::class, function (Login $event) {
+            if (! Schema::hasTable('activity_logs')) {
+                return;
+            }
+
+            ActivityLog::create([
+                'user_id' => $event->user->getAuthIdentifier(),
+                'action' => 'auth.login',
+                'description' => 'Login ke sistem',
+                'ip_address' => request()->ip(),
+            ]);
+        });
+    }
+
+    protected function registerLogoutEvents(): void
+    {
         Event::listen(Logout::class, function () {
             $token = session('auth_session_token');
             if ($token) {
@@ -133,28 +150,31 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
+        Event::listen(Logout::class, function (Logout $event) {
+            if (! Schema::hasTable('activity_logs')) {
+                return;
+            }
+
+            ActivityLog::create([
+                'user_id' => $event->user->getAuthIdentifier(),
+                'action' => 'auth.logout',
+                'description' => 'Logout dari sistem',
+                'ip_address' => request()->ip(),
+            ]);
+        });
+    }
+
+    protected function registerSecurityEvents(): void
+    {
         Event::listen(Failed::class, function ($event) {
             $email = $event->credentials['email'] ?? ($event->credentials['username'] ?? 'unknown');
-            $ip = request()->ip();
-
-            $provider = 'password';
-            if (request()->is('auth/oauth/*')) {
-                $provider = request()->segment(3);
-                if ($provider === 'register' || ! $provider) {
-                    $provider = 'oauth';
-                }
-            } elseif (request()->is('passkeys/*')) {
-                $provider = 'passkey';
-            } elseif (request()->is('sso/*')) {
-                $provider = 'sso';
-            }
 
             AuthLoginAttempt::create([
                 'email' => $email,
-                'ip_address' => $ip,
+                'ip_address' => request()->ip(),
                 'is_successful' => false,
                 'failure_reason' => 'invalid_credentials',
-                'provider' => $provider,
+                'provider' => $this->resolveAuthProvider(),
             ]);
 
             AuditLogger::log('user.login_failed', 'warning', [
@@ -184,37 +204,8 @@ class AppServiceProvider extends ServiceProvider
                 'device' => request()->userAgent(),
             ], $event->user);
         });
-
-        Event::listen(Login::class, function (Login $event) {
-            if (! Schema::hasTable('activity_logs')) {
-                return;
-            }
-
-            ActivityLog::create([
-                'user_id' => $event->user->getAuthIdentifier(),
-                'action' => 'auth.login',
-                'description' => 'Login ke sistem',
-                'ip_address' => request()->ip(),
-            ]);
-        });
-
-        Event::listen(Logout::class, function (Logout $event) {
-            if (! Schema::hasTable('activity_logs')) {
-                return;
-            }
-
-            ActivityLog::create([
-                'user_id' => $event->user->getAuthIdentifier(),
-                'action' => 'auth.logout',
-                'description' => 'Logout dari sistem',
-                'ip_address' => request()->ip(),
-            ]);
-        });
     }
 
-    /**
-     * Register email logging event listeners.
-     */
     protected function registerEmailEvents(): void
     {
         Event::listen(MessageSent::class, function ($event) {
@@ -223,7 +214,6 @@ class AppServiceProvider extends ServiceProvider
 
             foreach ($toAddresses as $address) {
                 $email = $address->getAddress();
-
                 $user = User::query()->whereRaw('LOWER(email) = ?', [strtolower($email)])->first();
 
                 $body = '';
@@ -246,9 +236,6 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-    /**
-     * Register gates, policies, rate limiters, and environment security configurations.
-     */
     protected function registerSecurityAndGates(): void
     {
         if (! in_array(config('app.env'), ['local', 'testing'])) {
@@ -301,9 +288,6 @@ class AppServiceProvider extends ServiceProvider
         }
     }
 
-    /**
-     * Configure default behaviors for production-ready applications.
-     */
     protected function configureDefaults(): void
     {
         Date::use(CarbonImmutable::class);
