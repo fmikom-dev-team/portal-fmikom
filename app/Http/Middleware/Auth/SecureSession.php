@@ -23,32 +23,28 @@ class SecureSession
 {
     public function handle(Request $request, Closure $next)
     {
-        if (! $request->user()) {
-            return $next($request);
+        if ($request->user()) {
+            $token = $this->ensureSessionToken($request);
+            if ($token) {
+                $authSession = $this->resolveAuthSession($request, $token);
+                if (! $authSession || $authSession->is_revoked) {
+                    Cache::forget('auth_sess_'.$token);
+
+                    return $this->reject($request, 'Session has been revoked.');
+                }
+
+                $rejectionReason = $this->validateSessionTimeouts($authSession);
+                if ($rejectionReason !== null) {
+                    $authSession->update(['is_revoked' => true]);
+                    Cache::forget('auth_sess_'.$token);
+
+                    return $this->reject($request, $rejectionReason);
+                }
+
+                $this->updateSessionActivity($authSession, 'auth_sess_'.$token);
+                $request->attributes->set('_session_risk_score', $authSession->risk_score);
+            }
         }
-
-        $token = $this->ensureSessionToken($request);
-        if (! $token) {
-            return $next($request);
-        }
-
-        $authSession = $this->resolveAuthSession($request, $token);
-        if (! $authSession || $authSession->is_revoked) {
-            Cache::forget('auth_sess_'.$token);
-
-            return $this->reject($request, 'Session has been revoked.');
-        }
-
-        $rejectionReason = $this->validateSessionTimeouts($authSession);
-        if ($rejectionReason !== null) {
-            $authSession->update(['is_revoked' => true]);
-            Cache::forget('auth_sess_'.$token);
-
-            return $this->reject($request, $rejectionReason);
-        }
-
-        $this->updateSessionActivity($authSession, 'auth_sess_'.$token);
-        $request->attributes->set('_session_risk_score', $authSession->risk_score);
 
         return $next($request);
     }
@@ -79,11 +75,11 @@ class SecureSession
         return $token ? (string) $token : null;
     }
 
-    protected function resolveAuthSession(Request $request, string $token): ?AuthSession
+    protected function resolveAuthSession(Request $request, string $token): ?\App\Models\Auth\AuthSession
     {
         $cacheKey = 'auth_sess_'.$token;
-        /** @var AuthSession|null $authSession */
-        $authSession = Cache::remember($cacheKey, 30, fn () => AuthSession::where('id', $token)
+        /** @var \App\Models\Auth\AuthSession|null $authSession */
+        $authSession = Cache::remember($cacheKey, 30, fn () => \App\Models\Auth\AuthSession::where('id', $token)
             ->where('user_id', $request->user()->id)
             ->first());
 
@@ -94,8 +90,8 @@ class SecureSession
                 Cache::lock($lockKey, 5)->block(3, function () use ($request, &$authSession, &$token) {
                     $token = (string) $request->session()->get('auth_session_token');
                     if ($token) {
-                        /** @var AuthSession|null $authSession */
-                        $authSession = AuthSession::where('id', $token)
+                        /** @var \App\Models\Auth\AuthSession|null $authSession */
+                        $authSession = \App\Models\Auth\AuthSession::where('id', $token)
                             ->where('user_id', $request->user()->id)
                             ->first();
                     }
@@ -115,9 +111,10 @@ class SecureSession
         return $authSession;
     }
 
-    protected function validateSessionTimeouts(AuthSession $authSession): ?string
+    protected function validateSessionTimeouts(\App\Models\Auth\AuthSession $authSession): ?string
     {
         $nowTs = time();
+        $reason = null;
 
         $getTimestamp = function (mixed $dateValue) use ($nowTs): int {
             if (! $dateValue) {
@@ -131,29 +128,23 @@ class SecureSession
         };
 
         if ($nowTs > $getTimestamp($authSession->expires_at)) {
-            return 'Session expired.';
-        }
-
-        $absoluteTimeoutHours = (int) config('session.absolute_timeout_hours', 8);
-        if ($authSession->created_at) {
-            $createdTs = $getTimestamp($authSession->created_at);
-            if (($nowTs - $createdTs) >= ($absoluteTimeoutHours * 3600)) {
-                return "Session absolute timeout ({$absoluteTimeoutHours}h) exceeded. Please login again.";
+            $reason = 'Session expired.';
+        } else {
+            $absoluteTimeoutHours = (int) config('session.absolute_timeout_hours', 8);
+            if (($nowTs - $getTimestamp($authSession->created_at)) >= ($absoluteTimeoutHours * 3600)) {
+                $reason = "Session absolute timeout ({$absoluteTimeoutHours}h) exceeded. Please login again.";
+            } else {
+                $idleTimeoutMinutes = (int) config('session.lifetime', 30);
+                if (($nowTs - $getTimestamp($authSession->last_activity_at)) >= ($idleTimeoutMinutes * 60)) {
+                    $reason = "Session idle timeout ({$idleTimeoutMinutes}m) exceeded.";
+                }
             }
         }
 
-        if ($authSession->last_activity_at) {
-            $idleTimeoutMinutes = (int) config('session.lifetime', 30);
-            $lastActivityTs = $getTimestamp($authSession->last_activity_at);
-            if (($nowTs - $lastActivityTs) >= ($idleTimeoutMinutes * 60)) {
-                return "Session idle timeout ({$idleTimeoutMinutes}m) exceeded.";
-            }
-        }
-
-        return null;
+        return $reason;
     }
 
-    protected function updateSessionActivity(AuthSession $authSession, string $cacheKey): void
+    protected function updateSessionActivity(\App\Models\Auth\AuthSession $authSession, string $cacheKey): void
     {
         $activityKey = 'sess_act_'.$authSession->id;
         if (Cache::add($activityKey, true, 10)) {
