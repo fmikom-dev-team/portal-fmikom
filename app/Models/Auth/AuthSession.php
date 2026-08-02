@@ -36,6 +36,8 @@ class AuthSession extends Model
         'is_revoked' => 'boolean',
         'expires_at' => 'datetime',
         'last_activity_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

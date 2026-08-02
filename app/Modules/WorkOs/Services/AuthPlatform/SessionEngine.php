@@ -42,11 +42,7 @@ class SessionEngine
         $token = $request->hasSession() ? $request->session()->getId() : hash('sha256', Str::random(60).time());
 
         // 5. Persist Session
-        // CRITICAL: Format timestamps explicitly as UTC strings (toDateTimeString())
-        // so Eloquent's datetime mutator does not convert them to app.timezone (Asia/Jakarta).
-        // This ensures 100% uniformity across created_at, expires_at, and last_activity_at in DB.
-        $nowUtc = Carbon::now('UTC');
-        $nowUtcStr = $nowUtc->toDateTimeString();
+        $now = Carbon::now();
 
         $session = AuthSession::create([
             'user_id' => $user->id,
@@ -57,10 +53,10 @@ class SessionEngine
             'geolocation' => $geo,
             'is_revoked' => false,
             'risk_score' => $riskScore,
-            'expires_at' => $nowUtc->copy()->addMinutes(config('session.lifetime'))->toDateTimeString(),
-            'last_activity_at' => $nowUtcStr,
-            'created_at' => $nowUtcStr,
-            'updated_at' => $nowUtcStr,
+            'expires_at' => $now->copy()->addMinutes(config('session.lifetime')),
+            'last_activity_at' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
         ]);
 
         return $session;
