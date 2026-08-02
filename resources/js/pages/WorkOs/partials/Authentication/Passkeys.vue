@@ -67,10 +67,16 @@ const registerPasskey = async () => {
 		successMsg.value =
 			"Passkey registered successfully! You can now use your biometric sensor to log in.";
 	} catch (e: any) {
-		errorMsg.value =
-			e.response?.data?.error ||
-			e.message ||
-			"Passkey registration failed or was cancelled.";
+		const isCancelled =
+			e?.name === "NotAllowedError" ||
+			e?.name === "AbortError" ||
+			e?.message?.includes("not allowed") ||
+			e?.message?.includes("timed out") ||
+			e?.message?.includes("w3.org");
+
+		errorMsg.value = isCancelled
+			? "Registrasi Passkey dibatalkan."
+			: e.response?.data?.error || e.message || "Gagal mendaftarkan Passkey.";
 	} finally {
 		isRegistering.value = false;
 	}

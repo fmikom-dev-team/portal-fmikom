@@ -247,8 +247,16 @@ const registerNewPasskey = async () => {
 		passkeySuccess.value = "Kunci sandi berhasil didaftarkan!";
 		localPasskeys.value.push(data.passkey);
 	} catch (e: any) {
-		passkeyError.value =
-			e.response?.data?.error || e.message || "Gagal mendaftarkan kunci sandi.";
+		const isCancelled =
+			e?.name === "NotAllowedError" ||
+			e?.name === "AbortError" ||
+			e?.message?.includes("not allowed") ||
+			e?.message?.includes("timed out") ||
+			e?.message?.includes("w3.org");
+
+		passkeyError.value = isCancelled
+			? "Registrasi kunci sandi dibatalkan."
+			: e.response?.data?.error || e.message || "Gagal mendaftarkan kunci sandi.";
 	} finally {
 		isRegisteringPasskey.value = false;
 	}

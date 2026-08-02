@@ -112,8 +112,19 @@ const loginWithPasskey = async () => {
 		// Reload/redirect to dashboard upon successful login
 		globalThis.location.href = "/dashboard";
 	} catch (e: any) {
-		passkeyError.value =
-			e.response?.data?.error || e.message || "Passkey login failed.";
+		const isCancelled =
+			e?.name === "NotAllowedError" ||
+			e?.name === "AbortError" ||
+			e?.message?.includes("not allowed") ||
+			e?.message?.includes("timed out") ||
+			e?.message?.includes("w3.org");
+
+		if (isCancelled) {
+			passkeyError.value = "Proses autentikasi Passkey dibatalkan.";
+		} else {
+			passkeyError.value =
+				e.response?.data?.error || e.message || "Gagal melakukan login Passkey.";
+		}
 	} finally {
 		isLoggingInPasskey.value = false;
 	}
