@@ -32,6 +32,24 @@ class SecureSession
 
         $token = $request->session()->get('auth_session_token');
 
+        // ── Step 0: Ensure auth_session_token exists for authenticated user ───
+        if (! $token) {
+            $lockKey = 'create_auth_sess_'.$request->user()->id;
+            try {
+                Cache::lock($lockKey, 5)->block(3, function () use ($request, &$token) {
+                    $token = $request->session()->get('auth_session_token');
+                    if (! $token) {
+                        $sessionEngine = app(SessionEngine::class);
+                        $authSession = $sessionEngine->createSession($request->user(), $request);
+                        $token = $authSession->id;
+                        $request->session()->put('auth_session_token', $token);
+                    }
+                });
+            } catch (\Throwable $e) {
+                // Silently allow request to proceed
+            }
+        }
+
         if ($token) {
             // ── Step 1: Resolve AuthSession record ───────────────────────────────
             // Cache per-token (30 s) so we avoid a DB hit on every single request.
@@ -41,20 +59,32 @@ class SecureSession
                 ->where('user_id', $request->user()->id)
                 ->first());
 
-            // ── Step 2: Missing session record — graceful recovery ────────────────
+            // ── Step 2: Missing session record — graceful recovery with atomic lock ──
             if (! $authSession) {
                 Cache::forget($cacheKey);
+                $lockKey = 'create_auth_sess_'.$request->user()->id;
                 try {
-                    $sessionEngine = app(SessionEngine::class);
-                    $authSession = $sessionEngine->createSession($request->user(), $request);
-                    $request->session()->put('auth_session_token', $authSession->id);
+                    Cache::lock($lockKey, 5)->block(3, function () use ($request, &$authSession, &$token) {
+                        $token = $request->session()->get('auth_session_token');
+                        if ($token) {
+                            $authSession = AuthSession::where('id', $token)
+                                ->where('user_id', $request->user()->id)
+                                ->first();
+                        }
+                        if (! $authSession) {
+                            $sessionEngine = app(SessionEngine::class);
+                            $authSession = $sessionEngine->createSession($request->user(), $request);
+                            $token = $authSession->id;
+                            $request->session()->put('auth_session_token', $token);
+                        }
+                    });
                 } catch (\Throwable $e) {
                     return $this->reject($request, 'Session not found.');
                 }
             }
 
             // ── Step 3: Revocation check ─────────────────────────────────────────
-            if ($authSession->is_revoked) {
+            if (! $authSession || $authSession->is_revoked) {
                 Cache::forget($cacheKey);
 
                 return $this->reject($request, 'Session has been revoked.');
