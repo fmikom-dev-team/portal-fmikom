@@ -57,10 +57,9 @@ class SessionCleanupService
      */
     public function revokeExpired(): int
     {
-        // CRITICAL: Compare against UTC string because expires_at is stored in UTC string format.
         return AuthSession::where('is_revoked', false)
             ->whereNotNull('expires_at')
-            ->where('expires_at', '<', Carbon::now('UTC')->toDateTimeString())
+            ->where('expires_at', '<', Carbon::now())
             ->update(['is_revoked' => true]);
     }
 

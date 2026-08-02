@@ -60,27 +60,24 @@ class SecureSession
                 return $this->reject($request, 'Session has been revoked.');
             }
 
-            $nowUtc = Carbon::now('UTC');
-            $nowUtcTs = $nowUtc->getTimestamp();
+            $nowTs = time();
 
-            // Helper to get Unix timestamp from raw DB string or Carbon instance safely.
-            // Extract the date string ('Y-m-d H:i:s') first, then parse explicitly as UTC,
-            // preventing Eloquent's app.timezone (Asia/Jakarta) cast from shifting timestamps by 7 hours.
-            $getTimestamp = function (mixed $dateValue) use ($nowUtc): int {
+            // Helper to get Unix Epoch Timestamp from Carbon instance or string safely.
+            $getTimestamp = function (mixed $dateValue) use ($nowTs): int {
                 if (! $dateValue) {
-                    return $nowUtc->getTimestamp();
+                    return $nowTs;
                 }
-                $dateStr = $dateValue instanceof Carbon
-                    ? $dateValue->format('Y-m-d H:i:s')
-                    : (string) $dateValue;
+                if ($dateValue instanceof Carbon) {
+                    return $dateValue->getTimestamp();
+                }
 
-                return Carbon::parse($dateStr, 'UTC')->getTimestamp();
+                return Carbon::parse((string) $dateValue)->getTimestamp();
             };
 
             // ── Step 4: Expiry check (epoch seconds comparison) ───────────────────
             if ($authSession->expires_at) {
-                $expiresTs = $getTimestamp($authSession->getRawOriginal('expires_at') ?? $authSession->expires_at);
-                if ($nowUtcTs > $expiresTs) {
+                $expiresTs = $getTimestamp($authSession->expires_at);
+                if ($nowTs > $expiresTs) {
                     $authSession->update(['is_revoked' => true]);
                     Cache::forget($cacheKey);
 
@@ -91,8 +88,8 @@ class SecureSession
             // ── Step 5: Absolute session timeout (epoch seconds comparison) ──────
             $absoluteTimeoutHours = (int) config('session.absolute_timeout_hours', 8);
             if ($authSession->created_at) {
-                $createdTs = $getTimestamp($authSession->getRawOriginal('created_at') ?? $authSession->created_at);
-                $sessionAgeSeconds = $nowUtcTs - $createdTs;
+                $createdTs = $getTimestamp($authSession->created_at);
+                $sessionAgeSeconds = $nowTs - $createdTs;
                 if ($sessionAgeSeconds >= ($absoluteTimeoutHours * 3600)) {
                     $authSession->update(['is_revoked' => true]);
                     Cache::forget($cacheKey);
@@ -102,12 +99,10 @@ class SecureSession
             }
 
             // ── Step 6: Server-side idle timeout (epoch seconds comparison) ─────
-            // Uses raw DB string parsed explicitly as UTC vs current UTC epoch timestamp.
-            // 100% immune to timezone offsets (UTC vs Asia/Jakarta).
             if ($authSession->last_activity_at) {
                 $idleTimeoutMinutes = (int) config('session.lifetime', 30);
-                $lastActivityTs = $getTimestamp($authSession->getRawOriginal('last_activity_at') ?? $authSession->last_activity_at);
-                $idleSinceSeconds = $nowUtcTs - $lastActivityTs;
+                $lastActivityTs = $getTimestamp($authSession->last_activity_at);
+                $idleSinceSeconds = $nowTs - $lastActivityTs;
 
                 // Only trigger if last_activity_at is in the past AND exceeds lifetime in seconds
                 if ($idleSinceSeconds >= ($idleTimeoutMinutes * 60)) {
@@ -120,13 +115,11 @@ class SecureSession
 
             // ── Step 7: Throttled activity ping ──────────────────────────────────
             // Update last_activity_at + slide expires_at at most once every 10 seconds.
-            // Format as UTC string to prevent Eloquent from converting to app.timezone.
             $activityKey = 'sess_act_'.$authSession->id;
             if (Cache::add($activityKey, true, 10)) {
-                $nowUtcPing = Carbon::now('UTC');
                 $authSession->update([
-                    'expires_at' => $nowUtcPing->copy()->addMinutes(config('session.lifetime'))->toDateTimeString(),
-                    'last_activity_at' => $nowUtcPing->toDateTimeString(),
+                    'expires_at' => Carbon::now()->addMinutes(config('session.lifetime')),
+                    'last_activity_at' => Carbon::now(),
                 ]);
                 Cache::forget($cacheKey);
             }
