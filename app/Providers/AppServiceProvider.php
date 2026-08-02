@@ -110,6 +110,18 @@ class AppServiceProvider extends ServiceProvider
             AuditLogger::log('user.signed_in', 'info', [
                 'device' => request()->userAgent(),
             ], $event->user);
+
+            // Automatically create AuthSession on login so auth_session_token is ready
+            if ($event->user && request()->hasSession() && ! session('auth_session_token')) {
+                try {
+                    $sessionEngine = app(\App\Modules\WorkOs\Services\AuthPlatform\SessionEngine::class);
+                    $authSession = $sessionEngine->createSession($event->user, request());
+                    session(['auth_session_token' => $authSession->id]);
+                } catch (\Throwable $e) {
+                    // Log error silently
+                    Log::error('[AppServiceProvider] Failed to create AuthSession on login: '.$e->getMessage());
+                }
+            }
         });
 
         Event::listen(Logout::class, function ($event) {
