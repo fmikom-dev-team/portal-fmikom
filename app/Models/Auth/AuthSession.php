@@ -24,6 +24,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Carbon\CarbonImmutable|null $last_activity_at
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \App\Models\User|null $user
+ * @property-read \App\Models\Auth\AuthDevice|null $device
  *
  * @method static \Illuminate\Database\Eloquent\Builder|AuthSession newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|AuthSession newQuery()
