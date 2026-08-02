@@ -122,18 +122,18 @@ class PortalPostController extends Controller
 
         if ($request->hasFile('thumbnail')) {
             $validated['thumbnail'] = $this->processAndStoreImage($request->file('thumbnail'), 'portal/posts/thumbnails');
-        } elseif ($request->has('thumbnail')) {
+        } elseif ($request->filled('thumbnail')) {
             $validated['thumbnail'] = $this->sanitizeStorageUrl($request->input('thumbnail'));
         } else {
-            unset($validated['thumbnail']);
+            $validated['thumbnail'] = $this->extractFirstImageFromContent($content);
         }
 
         if ($request->hasFile('og_image')) {
             $validated['og_image'] = $this->processAndStoreImage($request->file('og_image'), 'portal/posts/seo');
-        } elseif ($request->has('og_image')) {
+        } elseif ($request->filled('og_image')) {
             $validated['og_image'] = $this->sanitizeStorageUrl($request->input('og_image'));
         } else {
-            $validated['og_image'] = $this->sanitizeStorageUrl($validated['thumbnail'] ?? null);
+            $validated['og_image'] = $validated['thumbnail'] ?? $this->extractFirstImageFromContent($content);
         }
 
         if (isset($validated['tags']) && is_array($validated['tags'])) {
@@ -221,10 +221,12 @@ class PortalPostController extends Controller
                 Storage::disk('public')->delete(str_replace('/storage/', '', $post->thumbnail));
             }
             $validated['thumbnail'] = $this->processAndStoreImage($request->file('thumbnail'), 'portal/posts/thumbnails');
-        } elseif ($request->has('thumbnail')) {
+        } elseif ($request->filled('thumbnail')) {
             $validated['thumbnail'] = $this->sanitizeStorageUrl($request->input('thumbnail'));
+        } elseif ($request->has('thumbnail') && $request->input('thumbnail') === null) {
+            $validated['thumbnail'] = $this->extractFirstImageFromContent($content);
         } else {
-            unset($validated['thumbnail']);
+            $validated['thumbnail'] = $post->thumbnail ?? $this->extractFirstImageFromContent($content);
         }
 
         if ($request->hasFile('og_image')) {
@@ -233,10 +235,12 @@ class PortalPostController extends Controller
                 Storage::disk('public')->delete(str_replace('/storage/', '', $post->og_image));
             }
             $validated['og_image'] = $this->processAndStoreImage($request->file('og_image'), 'portal/posts/seo');
-        } elseif ($request->has('og_image')) {
+        } elseif ($request->filled('og_image')) {
             $validated['og_image'] = $this->sanitizeStorageUrl($request->input('og_image'));
+        } elseif ($request->has('og_image') && $request->input('og_image') === null) {
+            $validated['og_image'] = $validated['thumbnail'] ?? $this->extractFirstImageFromContent($content);
         } else {
-            $validated['og_image'] = $this->sanitizeStorageUrl($validated['thumbnail'] ?? $post->thumbnail ?? null);
+            $validated['og_image'] = $post->og_image ?? $validated['thumbnail'] ?? $post->thumbnail ?? $this->extractFirstImageFromContent($content);
         }
 
         if (isset($validated['tags']) && is_array($validated['tags'])) {
@@ -594,21 +598,39 @@ class PortalPostController extends Controller
     }
 
     /**
-     * Sanitize storage image URL — returns null if the physical file does not exist on disk.
+     * Sanitize storage image URL — returns trimmed URL string.
      */
     private function sanitizeStorageUrl(?string $url): ?string
     {
-        if (! $url) {
+        if (empty($url) || ! is_string($url)) {
             return null;
         }
 
-        if (str_starts_with($url, '/storage/')) {
-            $relativePath = str_replace('/storage/', '', $url);
-            if (! Storage::disk('public')->exists($relativePath)) {
-                return null;
+        return trim($url);
+    }
+
+    /**
+     * Extract the first image URL from Editor.js content JSON or raw HTML/text fallback.
+     */
+    private function extractFirstImageFromContent(?string $content): ?string
+    {
+        if (empty($content)) {
+            return null;
+        }
+
+        $data = json_decode($content, true);
+        if (is_array($data) && isset($data['blocks']) && is_array($data['blocks'])) {
+            foreach ($data['blocks'] as $block) {
+                if (($block['type'] ?? '') === 'image' && ! empty($block['data']['file']['url'])) {
+                    return $block['data']['file']['url'];
+                }
             }
         }
 
-        return $url;
+        if (preg_match('/(?:https?:\/\/[^\s"\'<>]+\.(?:png|jpg|jpeg|webp|gif|svg)|\/storage\/[^\s"\'<>]+\.(?:png|jpg|jpeg|webp|gif|svg))/i', $content, $matches)) {
+            return $matches[0];
+        }
+
+        return null;
     }
 }
