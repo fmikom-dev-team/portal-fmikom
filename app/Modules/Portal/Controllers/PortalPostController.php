@@ -602,7 +602,7 @@ class PortalPostController extends Controller
      */
     private function sanitizeStorageUrl(?string $url): ?string
     {
-        if (empty($url) || ! is_string($url)) {
+        if (blank($url)) {
             return null;
         }
 
