@@ -33,7 +33,7 @@ class LogApiRequests
 
             AuditApiRequest::create([
                 'user_id' => $user?->id,
-                'token_id' => $user && method_exists($user, 'currentAccessToken') ? $user->currentAccessToken()?->id : null,
+                'token_id' => $user?->currentAccessToken()?->id,
                 'endpoint' => $request->path(),
                 'method' => $request->method(),
                 'status_code' => $response->getStatusCode(),
