@@ -124,7 +124,7 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
-        Event::listen(Logout::class, function ($event) {
+        Event::listen(Logout::class, function () {
             $token = session('auth_session_token');
             if ($token) {
                 AuthSession::query()->where('id', $token)->update(['is_revoked' => true]);
