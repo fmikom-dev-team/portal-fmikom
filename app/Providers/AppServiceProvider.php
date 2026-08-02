@@ -15,6 +15,7 @@ use App\Models\Tracer\ActivityLog;
 use App\Models\Tracer\CareerHistory;
 use App\Models\User;
 use App\Modules\WorkOs\Services\AuditLogger;
+use App\Modules\WorkOs\Services\AuthPlatform\SessionEngine;
 use App\Policies\CareerHistoryPolicy;
 use App\Policies\FastJenisSuratPolicy;
 use App\Policies\FastSuratCategoryPolicy;
@@ -118,7 +119,7 @@ class AppServiceProvider extends ServiceProvider
 
             if ($event->user && request()->hasSession() && ! session('auth_session_token')) {
                 try {
-                    $sessionEngine = app(\App\Modules\WorkOs\Services\AuthPlatform\SessionEngine::class);
+                    $sessionEngine = app(SessionEngine::class);
                     $authSession = $sessionEngine->createSession($event->user, request());
                     session(['auth_session_token' => $authSession->id]);
                 } catch (\Throwable $e) {

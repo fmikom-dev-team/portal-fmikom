@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserAccountStatus;
 use App\Http\Middleware\EnsureFirstTimeLoginComplete;
 use App\Models\Magang\KetidakhadiranMagang;
 use App\Models\Magang\PendaftaranMagang;
@@ -936,7 +937,7 @@ function portalReadyUser(array $attributes = []): User
         'email_verified_at' => now(),
         'password_changed_at' => now(),
         'is_active' => true,
-        'status_approval' => \App\Enums\UserAccountStatus::Activated,
+        'status_approval' => UserAccountStatus::Activated,
     ], $attributes));
 }
 
