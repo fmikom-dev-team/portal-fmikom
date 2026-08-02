@@ -18,9 +18,6 @@ use Illuminate\Support\Facades\Cache;
  *  2. Checks idle timeout (server-side, immune to browser "restore session" bypass)
  *  3. Checks absolute session lifetime (max 8 hours regardless of activity)
  *  4. Refreshes last_activity_at + extends expires_at on each request (throttled)
- *
- * ALL date comparisons parse the raw database timestamp string explicitly as UTC,
- * ensuring 100% immunity to application/database timezone mismatches (e.g. UTC vs Asia/Jakarta).
  */
 class SecureSession
 {
@@ -30,15 +27,80 @@ class SecureSession
             return $next($request);
         }
 
-        $token = $request->session()->get('auth_session_token');
-
-        // ── Step 0: Ensure auth_session_token exists for authenticated user ───
+        $token = $this->ensureSessionToken($request);
         if (! $token) {
+            return $next($request);
+        }
+
+        $authSession = $this->resolveAuthSession($request, $token);
+        if (! $authSession || $authSession->is_revoked) {
+            Cache::forget('auth_sess_'.$token);
+
+            return $this->reject($request, 'Session has been revoked.');
+        }
+
+        $rejectionReason = $this->validateSessionTimeouts($authSession);
+        if ($rejectionReason !== null) {
+            $authSession->update(['is_revoked' => true]);
+            Cache::forget('auth_sess_'.$token);
+
+            return $this->reject($request, $rejectionReason);
+        }
+
+        $this->updateSessionActivity($authSession, 'auth_sess_'.$token);
+        $request->attributes->set('_session_risk_score', $authSession->risk_score);
+
+        return $next($request);
+    }
+
+    protected function ensureSessionToken(Request $request): ?string
+    {
+        $token = $request->session()->get('auth_session_token');
+        if ($token) {
+            return (string) $token;
+        }
+
+        $lockKey = 'create_auth_sess_'.$request->user()->id;
+        try {
+            Cache::lock($lockKey, 5)->block(3, function () use ($request, &$token) {
+                $token = $request->session()->get('auth_session_token');
+                if (! $token) {
+                    /** @var SessionEngine $sessionEngine */
+                    $sessionEngine = app(SessionEngine::class);
+                    $authSession = $sessionEngine->createSession($request->user(), $request);
+                    $token = $authSession->id;
+                    $request->session()->put('auth_session_token', $token);
+                }
+            });
+        } catch (\Throwable $e) {
+            // Silently allow request to proceed
+        }
+
+        return $token ? (string) $token : null;
+    }
+
+    protected function resolveAuthSession(Request $request, string $token): ?AuthSession
+    {
+        $cacheKey = 'auth_sess_'.$token;
+        /** @var AuthSession|null $authSession */
+        $authSession = Cache::remember($cacheKey, 30, fn () => AuthSession::where('id', $token)
+            ->where('user_id', $request->user()->id)
+            ->first());
+
+        if (! $authSession) {
+            Cache::forget($cacheKey);
             $lockKey = 'create_auth_sess_'.$request->user()->id;
             try {
-                Cache::lock($lockKey, 5)->block(3, function () use ($request, &$token) {
-                    $token = $request->session()->get('auth_session_token');
-                    if (! $token) {
+                Cache::lock($lockKey, 5)->block(3, function () use ($request, &$authSession, &$token) {
+                    $token = (string) $request->session()->get('auth_session_token');
+                    if ($token) {
+                        /** @var AuthSession|null $authSession */
+                        $authSession = AuthSession::where('id', $token)
+                            ->where('user_id', $request->user()->id)
+                            ->first();
+                    }
+                    if (! $authSession) {
+                        /** @var SessionEngine $sessionEngine */
                         $sessionEngine = app(SessionEngine::class);
                         $authSession = $sessionEngine->createSession($request->user(), $request);
                         $token = $authSession->id;
@@ -46,124 +108,65 @@ class SecureSession
                     }
                 });
             } catch (\Throwable $e) {
-                // Silently allow request to proceed
+                return null;
             }
         }
 
-        if ($token) {
-            // ── Step 1: Resolve AuthSession record ───────────────────────────────
-            // Cache per-token (30 s) so we avoid a DB hit on every single request.
-            // Short TTL ensures revocations propagate within 30 seconds.
-            $cacheKey = 'auth_sess_'.$token;
-            $authSession = Cache::remember($cacheKey, 30, fn () => AuthSession::where('id', $token)
-                ->where('user_id', $request->user()->id)
-                ->first());
+        return $authSession;
+    }
 
-            // ── Step 2: Missing session record — graceful recovery with atomic lock ──
-            if (! $authSession) {
-                Cache::forget($cacheKey);
-                $lockKey = 'create_auth_sess_'.$request->user()->id;
-                try {
-                    Cache::lock($lockKey, 5)->block(3, function () use ($request, &$authSession, &$token) {
-                        $token = $request->session()->get('auth_session_token');
-                        if ($token) {
-                            $authSession = AuthSession::where('id', $token)
-                                ->where('user_id', $request->user()->id)
-                                ->first();
-                        }
-                        if (! $authSession) {
-                            $sessionEngine = app(SessionEngine::class);
-                            $authSession = $sessionEngine->createSession($request->user(), $request);
-                            $token = $authSession->id;
-                            $request->session()->put('auth_session_token', $token);
-                        }
-                    });
-                } catch (\Throwable $e) {
-                    return $this->reject($request, 'Session not found.');
-                }
+    protected function validateSessionTimeouts(AuthSession $authSession): ?string
+    {
+        $nowTs = time();
+
+        $getTimestamp = function (mixed $dateValue) use ($nowTs): int {
+            if (! $dateValue) {
+                return $nowTs;
+            }
+            if ($dateValue instanceof Carbon) {
+                return $dateValue->getTimestamp();
             }
 
-            // ── Step 3: Revocation check ─────────────────────────────────────────
-            if (! $authSession || $authSession->is_revoked) {
-                Cache::forget($cacheKey);
+            return Carbon::parse((string) $dateValue)->getTimestamp();
+        };
 
-                return $this->reject($request, 'Session has been revoked.');
-            }
-
-            $nowTs = time();
-
-            // Helper to get Unix Epoch Timestamp from Carbon instance or string safely.
-            $getTimestamp = function (mixed $dateValue) use ($nowTs): int {
-                if (! $dateValue) {
-                    return $nowTs;
-                }
-                if ($dateValue instanceof Carbon) {
-                    return $dateValue->getTimestamp();
-                }
-
-                return Carbon::parse((string) $dateValue)->getTimestamp();
-            };
-
-            // ── Step 4: Expiry check (epoch seconds comparison) ───────────────────
-            if ($authSession->expires_at) {
-                $expiresTs = $getTimestamp($authSession->expires_at);
-                if ($nowTs > $expiresTs) {
-                    $authSession->update(['is_revoked' => true]);
-                    Cache::forget($cacheKey);
-
-                    return $this->reject($request, 'Session expired.');
-                }
-            }
-
-            // ── Step 5: Absolute session timeout (epoch seconds comparison) ──────
-            $absoluteTimeoutHours = (int) config('session.absolute_timeout_hours', 8);
-            if ($authSession->created_at) {
-                $createdTs = $getTimestamp($authSession->created_at);
-                $sessionAgeSeconds = $nowTs - $createdTs;
-                if ($sessionAgeSeconds >= ($absoluteTimeoutHours * 3600)) {
-                    $authSession->update(['is_revoked' => true]);
-                    Cache::forget($cacheKey);
-
-                    return $this->reject($request, "Session absolute timeout ({$absoluteTimeoutHours}h) exceeded. Please login again.");
-                }
-            }
-
-            // ── Step 6: Server-side idle timeout (epoch seconds comparison) ─────
-            if ($authSession->last_activity_at) {
-                $idleTimeoutMinutes = (int) config('session.lifetime', 30);
-                $lastActivityTs = $getTimestamp($authSession->last_activity_at);
-                $idleSinceSeconds = $nowTs - $lastActivityTs;
-
-                // Only trigger if last_activity_at is in the past AND exceeds lifetime in seconds
-                if ($idleSinceSeconds >= ($idleTimeoutMinutes * 60)) {
-                    $authSession->update(['is_revoked' => true]);
-                    Cache::forget($cacheKey);
-
-                    return $this->reject($request, "Session idle timeout ({$idleTimeoutMinutes}m) exceeded.");
-                }
-            }
-
-            // ── Step 7: Throttled activity ping ──────────────────────────────────
-            // Update last_activity_at + slide expires_at at most once every 10 seconds.
-            $activityKey = 'sess_act_'.$authSession->id;
-            if (Cache::add($activityKey, true, 10)) {
-                $authSession->update([
-                    'expires_at' => Carbon::now()->addMinutes(config('session.lifetime')),
-                    'last_activity_at' => Carbon::now(),
-                ]);
-                Cache::forget($cacheKey);
-            }
-
-            // ── Step 8: Share risk score with downstream middleware/controllers ───
-            $request->attributes->set('_session_risk_score', $authSession->risk_score);
+        if ($nowTs > $getTimestamp($authSession->expires_at)) {
+            return 'Session expired.';
         }
 
-        return $next($request);
+        $absoluteTimeoutHours = (int) config('session.absolute_timeout_hours', 8);
+        if ($authSession->created_at) {
+            $createdTs = $getTimestamp($authSession->created_at);
+            if (($nowTs - $createdTs) >= ($absoluteTimeoutHours * 3600)) {
+                return "Session absolute timeout ({$absoluteTimeoutHours}h) exceeded. Please login again.";
+            }
+        }
+
+        if ($authSession->last_activity_at) {
+            $idleTimeoutMinutes = (int) config('session.lifetime', 30);
+            $lastActivityTs = $getTimestamp($authSession->last_activity_at);
+            if (($nowTs - $lastActivityTs) >= ($idleTimeoutMinutes * 60)) {
+                return "Session idle timeout ({$idleTimeoutMinutes}m) exceeded.";
+            }
+        }
+
+        return null;
+    }
+
+    protected function updateSessionActivity(AuthSession $authSession, string $cacheKey): void
+    {
+        $activityKey = 'sess_act_'.$authSession->id;
+        if (Cache::add($activityKey, true, 10)) {
+            $authSession->update([
+                'expires_at' => Carbon::now()->addMinutes(config('session.lifetime')),
+                'last_activity_at' => Carbon::now(),
+            ]);
+            Cache::forget($cacheKey);
+        }
     }
 
     protected function reject(Request $request, string $reason): mixed
     {
-        // Perform full server-side logout to invalidate all session data.
         $request->session()->forget('auth_session_token');
         Auth::logout();
         $request->session()->invalidate();
@@ -173,13 +176,6 @@ class SecureSession
             return response()->json(['error' => 'Session invalid: '.$reason], 401);
         }
 
-        // INERTIA FIX: If this is an Inertia request (non-GET such as DELETE/POST/PATCH),
-        // a plain HTTP 302 redirect causes Inertia to re-send the request to /login with
-        // the same HTTP method (e.g. DELETE /login → 405 Method Not Allowed).
-        //
-        // Inertia::location() returns HTTP 409 Conflict + X-Inertia-Location header,
-        // which tells Inertia to perform a full browser GET navigation to the target URL.
-        // This is the only correct way to redirect Inertia non-GET requests server-side.
         if ($request->header('X-Inertia')) {
             return response('', 409)->header('X-Inertia-Location', route('login'));
         }
