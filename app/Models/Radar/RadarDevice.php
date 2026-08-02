@@ -11,6 +11,12 @@ class RadarDevice extends Model
     protected $fillable = [
         'user_id',
         'device_fingerprint',
+        'ip_address',
+        'user_agent',
+        'browser',
+        'os',
+        'country',
+        'city',
         'geolocation',
         'is_trusted',
         'is_blocked',
