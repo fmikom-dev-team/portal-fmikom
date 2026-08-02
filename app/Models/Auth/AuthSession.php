@@ -3,6 +3,8 @@
 namespace App\Models\Auth;
 
 use App\Models\User;
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -20,12 +22,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property array|null $geolocation
  * @property bool $is_revoked
  * @property int $risk_score
- * @property \Carbon\CarbonImmutable|null $expires_at
- * @property \Carbon\CarbonImmutable|null $last_activity_at
- * @property \Carbon\CarbonImmutable|null $created_at
- * @property \Carbon\CarbonImmutable|null $updated_at
- * @property-read \App\Models\User|null $user
- * @property-read \App\Models\Auth\AuthDevice|null $device
+ * @property CarbonImmutable|null $expires_at
+ * @property CarbonImmutable|null $last_activity_at
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
+ * @property-read User|null $user
+ * @property-read AuthDevice|null $device
  *
  * @method static \Illuminate\Database\Eloquent\Builder|AuthSession newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|AuthSession newQuery()
@@ -33,7 +35,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder|AuthSession whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|AuthSession whereUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|AuthSession whereIsRevoked($value)
- * @mixin \Illuminate\Database\Eloquent\Builder
+ *
+ * @mixin Builder
  */
 class AuthSession extends Model
 {
