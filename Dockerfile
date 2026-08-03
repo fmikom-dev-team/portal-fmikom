@@ -39,6 +39,7 @@ RUN --mount=type=cache,target=/var/cache/apk \
     (apk update || (sleep 2 && apk update)) && \
     apk add --no-cache \
     tzdata \
+    bash \
     nginx \
     supervisor \
     ffmpeg \
