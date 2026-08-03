@@ -187,7 +187,7 @@ class FirstTimeLoginController extends Controller
             if ($regRequest->role === 'alumni') {
                 $prodi = ProgramStudi::find($regRequest->program_studi_id);
                 $extra = [
-                    'Program Studi' => $prodi?->label ?? '-',
+                    'Program Studi' => $prodi ? $prodi->nama : '-',
                     'Tahun Lulus' => $regRequest->tahun_lulus ?? '-',
                 ];
             } elseif ($regRequest->role === 'mitra') {

@@ -56,11 +56,15 @@ watch(
 );
 
 // Real-time validation state
-const realtimeErrors = ref({ email: "", nomor_induk: "", local_email: "" });
+const realtimeErrors = ref({ email: "", nomor_induk: "", local_email: "", no_telepon: "" });
 const isChecking = ref(false);
 
 const isValidEmailFormat = (email: string) => {
 	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
+const isValidPhoneFormat = (phone: string) => {
+	return /^(\+?62|0)8[1-9][0-9]{7,11}$/.test(phone.trim());
 };
 
 const checkUnique = async () => {
@@ -107,6 +111,18 @@ watch(
 );
 
 watch(
+	() => form.no_telepon,
+	(newVal) => {
+		if (newVal && !isValidPhoneFormat(newVal)) {
+			realtimeErrors.value.no_telepon =
+				"Format nomor HP/WhatsApp tidak valid (contoh: 08123456789).";
+		} else {
+			realtimeErrors.value.no_telepon = "";
+		}
+	},
+);
+
+watch(
 	() => form.nomor_induk,
 	() => {
 		realtimeErrors.value.nomor_induk = "";
@@ -118,12 +134,13 @@ const isStep2Valid = computed(() => {
 		if (!form.nomor_induk || !form.email || !form.program_studi_id || !form.tahun_lulus)
 			return false;
 	} else if (form.role === "mitra") {
-		if (!form.nama_perusahaan || !form.email || !form.no_telepon)
+		if (!form.nama_perusahaan || !form.email || !form.no_telepon || !isValidPhoneFormat(form.no_telepon))
 			return false;
 	}
 	if (
 		realtimeErrors.value.nomor_induk ||
 		realtimeErrors.value.local_email ||
+		realtimeErrors.value.no_telepon ||
 		(form.email && realtimeErrors.value.email)
 	)
 		return false;
@@ -204,12 +221,20 @@ const nomorIndukPlaceholder = computed(() => {
                     <div class="grid grid-cols-2 gap-3">
                         <label :class="['flex flex-col items-center justify-center gap-2 p-4 border rounded-xl cursor-pointer transition-all', form.role === 'alumni' ? 'border-[#2563eb] bg-indigo-50/50 dark:bg-indigo-950/20 text-[#2563eb] dark:text-indigo-400 ring-1 ring-[#2563eb]' : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800']">
                             <input type="radio" v-model="form.role" value="alumni" class="sr-only" />
-                            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                            <!-- Icon Student / Graduation Cap untuk Alumni -->
+                            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 14v6.5" />
+                            </svg>
                             <span class="font-semibold text-xs text-center">Alumni FMIKOM</span>
                         </label>
                         <label :class="['flex flex-col items-center justify-center gap-2 p-4 border rounded-xl cursor-pointer transition-all', form.role === 'mitra' ? 'border-[#2563eb] bg-indigo-50/50 dark:bg-indigo-950/20 text-[#2563eb] dark:text-indigo-400 ring-1 ring-[#2563eb]' : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800']">
                             <input type="radio" v-model="form.role" value="mitra" class="sr-only" />
-                            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            <!-- Icon Bangunan Perusahaan Modern untuk Mitra -->
+                            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0V11m0 0h4m-4 0H9m4 0V7m0 0h4m-4 0H9m4 4v4m0 0h4m-4 0H9" />
+                            </svg>
                             <span class="font-semibold text-xs text-center">Mitra / Perusahaan</span>
                         </label>
                     </div>
@@ -243,7 +268,7 @@ const nomorIndukPlaceholder = computed(() => {
                 <!-- NIM / NIB -->
                 <div class="grid gap-2">
                     <Label for="nomor_induk" class="font-semibold text-slate-800 dark:text-slate-200">{{ nomorIndukLabel }}</Label>
-                    <Input id="nomor_induk" type="text" v-model="form.nomor_induk" :required="form.role === 'alumni'" :placeholder="nomorIndukPlaceholder" class="rounded-xl h-11 border-slate-200 dark:border-slate-800 dark:bg-slate-950 focus-visible:ring-0 transition-colors" :class="realtimeErrors.nomor_induk ? 'border-red-500 focus-visible:border-red-500 ring-1 ring-red-500' : 'focus-visible:border-[#2563eb]'" />
+                    <Input id="nomor_induk" type="text" v-model="form.nomor_induk" @input="form.nomor_induk = form.nomor_induk.replace(/[^a-zA-Z0-9.\-\/]/g, '')" :required="form.role === 'alumni'" :placeholder="nomorIndukPlaceholder" class="rounded-xl h-11 border-slate-200 dark:border-slate-800 dark:bg-slate-950 focus-visible:ring-0 transition-colors" :class="realtimeErrors.nomor_induk ? 'border-red-500 focus-visible:border-red-500 ring-1 ring-red-500' : 'focus-visible:border-[#2563eb]'" />
                     <div v-if="realtimeErrors.nomor_induk" class="flex items-center gap-1 text-red-500 text-sm mt-1 animate-in fade-in slide-in-from-top-1"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg><span class="font-medium">{{ realtimeErrors.nomor_induk }}</span></div>
                     <InputError v-else :message="form.errors.nomor_induk" />
                 </div>
@@ -291,9 +316,10 @@ const nomorIndukPlaceholder = computed(() => {
                         <Label for="no_telepon" class="font-semibold text-slate-800 dark:text-slate-200">Nomor Telepon / WhatsApp Perusahaan</Label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none"><svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg></div>
-                            <Input id="no_telepon" type="tel" v-model="form.no_telepon" required placeholder="Contoh: 08123456789" class="rounded-xl h-11 border-slate-200 dark:border-slate-800 dark:bg-slate-950 focus-visible:ring-0 focus-visible:border-[#2563eb] transition-colors pl-9" :class="form.errors.no_telepon ? 'border-red-500' : ''" />
+                            <Input id="no_telepon" type="tel" v-model="form.no_telepon" @input="form.no_telepon = form.no_telepon.replace(/[^\d+]/g, '')" required placeholder="Contoh: 08123456789" class="rounded-xl h-11 border-slate-200 dark:border-slate-800 dark:bg-slate-950 focus-visible:ring-0 focus-visible:border-[#2563eb] transition-colors pl-9" :class="(realtimeErrors.no_telepon || form.errors.no_telepon) ? 'border-red-500 focus-visible:border-red-500 ring-1 ring-red-500' : ''" />
                         </div>
-                        <InputError :message="form.errors.no_telepon" />
+                        <div v-if="realtimeErrors.no_telepon" class="flex items-center gap-1 text-red-500 text-sm mt-1 animate-in fade-in slide-in-from-top-1"><svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg><span class="font-medium">{{ realtimeErrors.no_telepon }}</span></div>
+                        <InputError v-else :message="form.errors.no_telepon" />
                     </div>
                 </template>
 
