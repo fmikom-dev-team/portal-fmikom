@@ -133,35 +133,57 @@ class AppServiceProvider extends ServiceProvider
                 return;
             }
 
-            ActivityLog::create([
-                'user_id' => $event->user->getAuthIdentifier(),
-                'action' => 'auth.login',
-                'description' => 'Login ke sistem',
-                'ip_address' => request()->ip(),
-            ]);
+            try {
+                /** @phpstan-ignore-next-line */
+                $userId = $event->user ? $event->user->getAuthIdentifier() : null;
+                if (! $userId) {
+                    return;
+                }
+
+                ActivityLog::create([
+                    'user_id' => $userId,
+                    'action' => 'auth.login',
+                    'description' => 'Login ke sistem',
+                    'ip_address' => request()->ip(),
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('[AppServiceProvider] Failed to log activity on login: '.$e->getMessage());
+            }
         });
     }
 
     protected function registerLogoutEvents(): void
     {
-        Event::listen(Logout::class, function () {
-            $token = session('auth_session_token');
-            if ($token) {
-                AuthSession::query()->where('id', $token)->update(['is_revoked' => true]);
-            }
-        });
-
         Event::listen(Logout::class, function (Logout $event) {
+            try {
+                $token = session('auth_session_token');
+                if ($token) {
+                    AuthSession::query()->where('id', $token)->update(['is_revoked' => true]);
+                }
+            } catch (\Throwable $e) {
+                Log::error('[AppServiceProvider] Failed to revoke session on logout: '.$e->getMessage());
+            }
+
             if (! Schema::hasTable('activity_logs')) {
                 return;
             }
 
-            ActivityLog::create([
-                'user_id' => $event->user->getAuthIdentifier(),
-                'action' => 'auth.logout',
-                'description' => 'Logout dari sistem',
-                'ip_address' => request()->ip(),
-            ]);
+            try {
+                /** @phpstan-ignore-next-line */
+                $userId = $event->user ? $event->user->getAuthIdentifier() : null;
+                if (! $userId) {
+                    return;
+                }
+
+                ActivityLog::create([
+                    'user_id' => $userId,
+                    'action' => 'auth.logout',
+                    'description' => 'Logout dari sistem',
+                    'ip_address' => request()->ip(),
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('[AppServiceProvider] Failed to log activity on logout: '.$e->getMessage());
+            }
         });
     }
 
