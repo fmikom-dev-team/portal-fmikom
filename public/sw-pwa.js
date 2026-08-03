@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1785566712629';
+const CACHE_VERSION = 'v1785720298325';
 const CACHE_NAME = `fmikom-portal-${CACHE_VERSION}`;
 const FONT_CACHE_NAME = `fmikom-fonts-${CACHE_VERSION}`;
 // ASSET_CACHE_NAME dihapus — tidak lagi digunakan untuk CacheFirst
@@ -98,8 +98,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Abaikan request backend API
+  // Abaikan request backend API & Auth routes (biarkan browser menangani secara native)
   if (
+    url.pathname === '/logout' ||
+    url.pathname === '/login' ||
+    url.pathname.startsWith('/logout') ||
+    url.pathname.startsWith('/login') ||
+    url.pathname.startsWith('/auth') ||
+    url.pathname.startsWith('/register') ||
     url.pathname.startsWith('/telescope') ||
     url.pathname.startsWith('/horizon') ||
     url.pathname.startsWith('/pulse') ||
