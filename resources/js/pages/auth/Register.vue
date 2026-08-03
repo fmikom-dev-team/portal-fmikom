@@ -221,19 +221,42 @@ const nomorIndukPlaceholder = computed(() => {
                     <div class="grid grid-cols-2 gap-3">
                         <label :class="['flex flex-col items-center justify-center gap-2 p-4 border rounded-xl cursor-pointer transition-all', form.role === 'alumni' ? 'border-[#2563eb] bg-indigo-50/50 dark:bg-indigo-950/20 text-[#2563eb] dark:text-indigo-400 ring-1 ring-[#2563eb]' : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800']">
                             <input type="radio" v-model="form.role" value="alumni" class="sr-only" />
-                            <!-- Icon Student / Graduation Cap untuk Alumni -->
-                            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 14v6.5" />
+                            <!-- Custom Icon Topi Alumni -->
+                            <svg class="w-6 h-6 shrink-0" viewBox="0 0 1024 768" fill="currentColor">
+                                <path d="M1024 736q0 13-9.5 22.5T992 768t-22.5-9.5T960 736V315L607 492q-40 20-95 20t-95-20L39 303Q0 283 0 255.5T39 209L417 20q40-20 95-20t95 20l378 189q34 17 38 42q1 1 1 4v481zM639 556l193-97v141q0 43-93.5 73.5T512 704t-226.5-30.5T192 600V459l193 97q40 20 127 20t127-20z"/>
                             </svg>
                             <span class="font-semibold text-xs text-center">Alumni FMIKOM</span>
                         </label>
                         <label :class="['flex flex-col items-center justify-center gap-2 p-4 border rounded-xl cursor-pointer transition-all', form.role === 'mitra' ? 'border-[#2563eb] bg-indigo-50/50 dark:bg-indigo-950/20 text-[#2563eb] dark:text-indigo-400 ring-1 ring-[#2563eb]' : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800']">
                             <input type="radio" v-model="form.role" value="mitra" class="sr-only" />
-                            <!-- Icon Bangunan Perusahaan Modern untuk Mitra -->
-                            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0V11m0 0h4m-4 0H9m4 0V7m0 0h4m-4 0H9m4 4v4m0 0h4m-4 0H9" />
+                            <!-- Custom Icon Gedung Perusahaan Mitra -->
+                            <svg class="w-6 h-6 shrink-0" viewBox="0 0 512 512" fill="currentColor">
+                                <rect x="45" y="165" width="80" height="260" rx="6"/>
+                                <rect x="145" y="40" width="220" height="385" rx="10"/>
+                                <rect x="385" y="165" width="80" height="260" rx="6"/>
+                                <rect x="30" y="440" width="452" height="35"/>
+                                <g class="fill-white dark:fill-slate-900">
+                                    <rect x="190" y="85" width="32" height="32"/>
+                                    <rect x="255" y="85" width="32" height="32"/>
+                                    <rect x="190" y="145" width="32" height="32"/>
+                                    <rect x="255" y="145" width="32" height="32"/>
+                                    <rect x="190" y="205" width="32" height="32"/>
+                                    <rect x="255" y="205" width="32" height="32"/>
+                                    <rect x="190" y="265" width="32" height="32"/>
+                                    <rect x="255" y="265" width="32" height="32"/>
+                                    <rect x="190" y="325" width="32" height="32"/>
+                                    <rect x="255" y="325" width="32" height="32"/>
+                                </g>
+                                <g class="fill-white dark:fill-slate-900">
+                                    <rect x="75" y="225" width="30" height="30"/>
+                                    <rect x="75" y="285" width="30" height="30"/>
+                                    <rect x="75" y="345" width="30" height="30"/>
+                                </g>
+                                <g class="fill-white dark:fill-slate-900">
+                                    <rect x="405" y="225" width="30" height="30"/>
+                                    <rect x="405" y="285" width="30" height="30"/>
+                                    <rect x="405" y="345" width="30" height="30"/>
+                                </g>
                             </svg>
                             <span class="font-semibold text-xs text-center">Mitra / Perusahaan</span>
                         </label>
