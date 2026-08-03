@@ -77,10 +77,18 @@ COPY --from=composer-builder /app/vendor ./vendor
 # Copy compiled frontend assets from Node stage
 COPY --from=frontend-builder /app/public/build ./public/build
 
-# Set permissions for entrypoint and frankenphp binary if present
+# Set permissions for entrypoint and pre-install frankenphp binary if missing
 RUN chmod +x /usr/local/bin/entrypoint.sh && \
-    if [ -f /var/www/html/frankenphp ]; then chmod +x /var/www/html/frankenphp && cp /var/www/html/frankenphp /usr/local/bin/frankenphp; fi
+    if [ -f /var/www/html/frankenphp ]; then \
+        chmod +x /var/www/html/frankenphp && cp /var/www/html/frankenphp /usr/local/bin/frankenphp; \
+    else \
+        curl -fL https://github.com/dunglas/frankenphp/releases/download/v1.4.3/frankenphp-linux-x86_64 -o /usr/local/bin/frankenphp && \
+        chmod +x /usr/local/bin/frankenphp && cp /usr/local/bin/frankenphp /var/www/html/frankenphp; \
+    fi
 
+# Healthcheck for zero-downtime deployments (45s start period for container grace time)
+HEALTHCHECK --interval=5s --timeout=3s --start-period=45s --retries=3 \
+  CMD curl -f http://localhost:80/up || exit 1
 
 # Expose HTTP port
 EXPOSE 80
