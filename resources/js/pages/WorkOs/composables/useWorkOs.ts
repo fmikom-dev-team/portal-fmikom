@@ -1,5 +1,5 @@
 import { reactive } from "vue";
-import { toast as sonnerToast } from "vue-sonner";
+import { showToast } from "@/composables/useGlobalToast";
 
 // ─── TOAST STATE ───────────────────────────────────────────────────────────────
 export const toastState = reactive({
@@ -14,15 +14,7 @@ export function toast(
 	duration = 3500,
 ) {
 	Object.assign(toastState, { show: false, msg, type });
-	if (type === "error") {
-		sonnerToast.error(msg, { duration });
-	} else if (type === "warning") {
-		sonnerToast.warning(msg, { duration });
-	} else if (type === "info") {
-		sonnerToast.info(msg, { duration });
-	} else {
-		sonnerToast.success(msg, { duration });
-	}
+	showToast(msg, type, duration);
 }
 
 // ─── USER TYPE BADGES ──────────────────────────────────────────────────────────
