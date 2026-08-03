@@ -82,7 +82,7 @@ RUN chmod +x /usr/local/bin/entrypoint.sh && \
     if [ -f /var/www/html/frankenphp ]; then \
         chmod +x /var/www/html/frankenphp && cp /var/www/html/frankenphp /usr/local/bin/frankenphp; \
     else \
-        curl -fL https://github.com/dunglas/frankenphp/releases/download/v1.4.3/frankenphp-linux-x86_64 -o /usr/local/bin/frankenphp && \
+        curl -fL https://github.com/dunglas/frankenphp/releases/download/v1.5.0/frankenphp-linux-x86_64 -o /usr/local/bin/frankenphp && \
         chmod +x /usr/local/bin/frankenphp && cp /usr/local/bin/frankenphp /var/www/html/frankenphp; \
     fi
 
