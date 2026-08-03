@@ -1191,7 +1191,7 @@ class DashboardController extends Controller // NOSONAR
     protected function getSmtpConfig()
     {
         $dbSettings = PortalSetting::whereIn('key', [
-            'smtp_host', 'smtp_port', 'smtp_sender', 'smtp_encryption', 'smtp_username', 'smtp_password'
+            'smtp_host', 'smtp_port', 'smtp_sender', 'smtp_encryption', 'smtp_username', 'smtp_password',
         ])->pluck('value', 'key')->toArray();
 
         return [
