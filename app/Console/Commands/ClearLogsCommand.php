@@ -27,7 +27,7 @@ class ClearLogsCommand extends Command
     public function handle(): int
     {
         $logPath = storage_path('logs');
-        $files = File::glob($logPath . '/*.log');
+        $files = File::glob($logPath.'/*.log');
 
         $count = 0;
         foreach ($files as $file) {
@@ -39,6 +39,7 @@ class ClearLogsCommand extends Command
         }
 
         $this->info("Successfully cleared {$count} Laravel log file(s).");
+
         return self::SUCCESS;
     }
 }
