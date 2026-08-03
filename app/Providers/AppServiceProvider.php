@@ -68,11 +68,65 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureDynamicMailSettings();
         $this->registerLoginEvents();
         $this->registerLogoutEvents();
         $this->registerSecurityEvents();
         $this->registerEmailEvents();
         $this->registerSecurityAndGates();
+    }
+
+    protected function configureDynamicMailSettings(): void
+    {
+        try {
+            if (! Schema::hasTable('portal_settings')) {
+                return;
+            }
+
+            $settings = cache()->remember('portal_settings', 86400, function () {
+                return PortalSetting::query()->pluck('value', 'key')->toArray();
+            });
+
+            if (empty($settings['smtp_host'])) {
+                return;
+            }
+
+            $host = $settings['smtp_host'];
+            $port = (int) ($settings['smtp_port'] ?? 587);
+            $sender = $settings['smtp_sender'] ?? config('mail.from.address');
+            $encryption = $settings['smtp_encryption'] ?? 'tls';
+            if ($encryption === 'none') {
+                $encryption = null;
+            }
+            $username = $settings['smtp_username'] ?? null;
+            $rawPassword = $settings['smtp_password'] ?? null;
+            $password = null;
+
+            if ($rawPassword) {
+                if (str_starts_with($rawPassword, 'base64:')) {
+                    try {
+                        $password = Crypt::decryptString(substr($rawPassword, 7));
+                    } catch (\Throwable $e) {
+                        $password = $rawPassword;
+                    }
+                } else {
+                    $password = $rawPassword;
+                }
+            }
+
+            config([
+                'mail.default' => 'smtp',
+                'mail.mailers.smtp.host' => $host,
+                'mail.mailers.smtp.port' => $port,
+                'mail.mailers.smtp.encryption' => $encryption,
+                'mail.mailers.smtp.username' => $username,
+                'mail.mailers.smtp.password' => $password,
+                'mail.from.address' => $sender,
+                'mail.from.name' => $settings['brand_name'] ?? config('mail.from.name', 'Portal FMIKOM'),
+            ]);
+        } catch (\Throwable $e) {
+            // Silently fall back to default mail configuration if database is unreachable
+        }
     }
 
     protected function resolveAuthProvider(): string
