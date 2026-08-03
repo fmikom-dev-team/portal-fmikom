@@ -68,16 +68,19 @@ class CreateNewUser implements CreatesNewUsers
             $rules['tahun_lulus'] = ['required', 'digits:4', 'integer', 'min:1990', 'max:'.date('Y')];
         }
 
-        // Mitra: butuh nomor telepon
+        // Mitra: butuh nomor telepon & nama perusahaan (dengan validasi format ketat)
         if (($input['role'] ?? '') === 'mitra') {
-            $rules['no_telepon'] = ['required', 'string', 'max:20'];
+            $rules['no_telepon'] = ['required', 'string', 'max:20', 'regex:/^(\+?62|0)8[1-9][0-9]{7,11}$/'];
+            $rules['nama_perusahaan'] = ['required', 'string', 'max:255'];
         }
 
         Validator::make($input, $rules, [
             'email.unique' => 'Email ini sudah terdaftar. Jika akun Anda sudah ada, silakan login atau hubungi admin.',
             'program_studi_id.required' => 'Program Studi wajib dipilih.',
             'tahun_lulus.required' => 'Tahun lulus wajib diisi.',
-            'no_telepon.required' => 'Nomor telepon wajib diisi.',
+            'no_telepon.required' => 'Nomor telepon / WhatsApp wajib diisi.',
+            'no_telepon.regex' => 'Format nomor HP/WhatsApp tidak valid (contoh: 08123456789).',
+            'nama_perusahaan.required' => 'Nama perusahaan / instansi wajib diisi.',
         ])->after(function ($validator) use ($input) {
             // Custom: mahasiswa/dosen must use /activate, not /register
             if (in_array($input['role'] ?? '', ['mahasiswa', 'dosen', 'staff'])) {
@@ -130,10 +133,11 @@ class CreateNewUser implements CreatesNewUsers
 
         // Create registration request (NOT a User)
         $registrationRequest = RegistrationRequest::create([
-            'full_name' => $input['name'],
-            'email' => $input['email'],
+            'full_name' => strip_tags(trim($input['name'])),
+            'email' => strtolower(trim($input['email'])),
             'phone' => $input['no_telepon'] ?? null,
             'role' => $input['role'],
+            'nama_perusahaan' => isset($input['nama_perusahaan']) ? strip_tags(trim($input['nama_perusahaan'])) : null,
             'student_number' => $studentNumber,
             'employee_number' => $employeeNumber,
             'program_studi_id' => $input['program_studi_id'] ?? null,
