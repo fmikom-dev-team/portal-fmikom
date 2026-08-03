@@ -19,6 +19,7 @@ test('new users can register', function () {
         'password' => 'DaftarBaru123!',
         'password_confirmation' => 'DaftarBaru123!',
         'role' => 'mitra',
+        'nama_perusahaan' => 'PT Test Perusahaan',
         'nomor_induk' => '12345678',
         'no_telepon' => '08123456789',
     ]);

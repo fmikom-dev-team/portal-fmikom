@@ -51,7 +51,7 @@ watch(
 		form.email = "";
 		form.nama_perusahaan = "";
 		step.value = 1;
-		realtimeErrors.value = { email: "", nomor_induk: "", local_email: "" };
+		realtimeErrors.value = { email: "", nomor_induk: "", local_email: "", no_telepon: "" };
 	},
 );
 
