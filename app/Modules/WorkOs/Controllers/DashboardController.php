@@ -1190,13 +1190,17 @@ class DashboardController extends Controller // NOSONAR
 
     protected function getSmtpConfig()
     {
+        $dbSettings = PortalSetting::whereIn('key', [
+            'smtp_host', 'smtp_port', 'smtp_sender', 'smtp_encryption', 'smtp_username', 'smtp_password'
+        ])->pluck('value', 'key')->toArray();
+
         return [
-            'host' => config('mail.mailers.smtp.host', 'smtp.gmail.com'),
-            'port' => (int) config('mail.mailers.smtp.port', 587),
-            'sender' => config('mail.from.address', 'nusakreasi.studio@gmail.com'),
-            'encryption' => config('mail.mailers.smtp.encryption', 'tls'),
-            'username' => config('mail.mailers.smtp.username', ''),
-            'password' => config('mail.mailers.smtp.password') ? '********' : '',
+            'host' => $dbSettings['smtp_host'] ?? config('mail.mailers.smtp.host', 'smtp.gmail.com'),
+            'port' => (int) ($dbSettings['smtp_port'] ?? config('mail.mailers.smtp.port', 587)),
+            'sender' => $dbSettings['smtp_sender'] ?? config('mail.from.address', 'nusakreasi.studio@gmail.com'),
+            'encryption' => $dbSettings['smtp_encryption'] ?? config('mail.mailers.smtp.encryption', 'tls'),
+            'username' => $dbSettings['smtp_username'] ?? config('mail.mailers.smtp.username', ''),
+            'password' => ! empty($dbSettings['smtp_password']) || config('mail.mailers.smtp.password') ? '********' : '',
             'status' => 'Active',
         ];
     }
@@ -1238,22 +1242,40 @@ class DashboardController extends Controller // NOSONAR
         $host = $request->host;
         $port = $request->port;
         $sender = $request->sender;
-        $encryption = $request->encryption === 'none' ? null : $request->encryption;
+        $encryption = $request->encryption === 'none' ? 'none' : $request->encryption;
         $username = $request->username;
         $password = $request->password;
 
+        // 1. Save to Database PortalSetting (Permanent across Docker re-deploys)
+        PortalSetting::updateOrCreate(['key' => 'smtp_host'], ['value' => $host]);
+        PortalSetting::updateOrCreate(['key' => 'smtp_port'], ['value' => (string) $port]);
+        PortalSetting::updateOrCreate(['key' => 'smtp_sender'], ['value' => $sender]);
+        PortalSetting::updateOrCreate(['key' => 'smtp_encryption'], ['value' => $encryption]);
+
+        if ($username !== null) {
+            PortalSetting::updateOrCreate(['key' => 'smtp_username'], ['value' => $username]);
+        }
+
+        if ($password !== null && $password !== '********') {
+            $encrypted = 'base64:'.Crypt::encryptString($password);
+            PortalSetting::updateOrCreate(['key' => 'smtp_password'], ['value' => $encrypted]);
+        }
+
+        // Invalidate settings cache
+        cache()->forget('portal_settings');
+
+        // 2. Also update local .env file as secondary backup
         $envData = [
             'MAIL_HOST' => $host,
             'MAIL_PORT' => $port,
             'MAIL_FROM_ADDRESS' => $sender,
-            'MAIL_ENCRYPTION' => $encryption ?? '',
+            'MAIL_ENCRYPTION' => $encryption === 'none' ? '' : $encryption,
         ];
 
         if ($username !== null) {
             $envData['MAIL_USERNAME'] = $username;
         }
         if ($password !== null && $password !== '********') {
-            // Encrypt the password before writing to .env for security
             $encrypted = 'base64:'.Crypt::encryptString($password);
             $envData['MAIL_PASSWORD'] = $encrypted;
         }
@@ -1262,7 +1284,7 @@ class DashboardController extends Controller // NOSONAR
 
         return response()->json([
             'success' => true,
-            'message' => 'SMTP Configurations updated successfully in .env file.',
+            'message' => 'SMTP Configurations saved permanently to Database & .env file.',
         ]);
     }
 
