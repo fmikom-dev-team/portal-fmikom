@@ -338,7 +338,29 @@ router.on("invalid", (event) => {
 				message: errMsg,
 			},
 		});
-		globalThis.dispatchEvent(customEvent);
+	} else if (status === 502 || status === 503) {
+		event.preventDefault();
+		const visitUrl = event.detail.response?.config?.url || globalThis.location.pathname;
+		const isAuthRoute = visitUrl.includes("/logout") || visitUrl.includes("/login");
+
+		if (isAuthRoute) {
+			globalThis.location.href = "/login";
+			return;
+		}
+
+		// Perform a graceful silent retry for 502/503 network flaps or container restarts
+		const retryKey = `fm_retry_${visitUrl}`;
+		const currentRetries = Number.parseInt(sessionStorage.getItem(retryKey) || "0", 10);
+
+		if (currentRetries < 2) {
+			sessionStorage.setItem(retryKey, String(currentRetries + 1));
+			setTimeout(() => {
+				router.visit(visitUrl, { preserveScroll: true, preserveState: true });
+			}, 1000);
+		} else {
+			sessionStorage.removeItem(retryKey);
+			globalThis.location.href = "/login";
+		}
 	}
 });
 
