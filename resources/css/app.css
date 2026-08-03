@@ -695,26 +695,34 @@ body.wims-role-body.dark {
   z-index: 9999;
 }
 
-/* Fix vue-sonner toaster wrapper & toast popup positioning */
-[data-sonner-toaster] {
-	position: fixed !important;
-	top: 16px !important;
-	right: 16px !important;
-	left: auto !important;
-	bottom: auto !important;
-	width: auto !important;
-	max-width: calc(100vw - 32px) !important;
-	pointer-events: none !important;
-	z-index: 999999 !important;
+/* Modern responsive vue-sonner toaster styling: Desktop = bottom-right, Mobile = top-right below header */
+@media (min-width: 640px) {
+	[data-sonner-toaster] {
+		position: fixed !important;
+		bottom: 24px !important;
+		right: 24px !important;
+		top: auto !important;
+		left: auto !important;
+		z-index: 999999 !important;
+		pointer-events: none !important;
+	}
+}
+
+@media (max-width: 639px) {
+	[data-sonner-toaster] {
+		position: fixed !important;
+		top: calc(env(safe-area-inset-top, 0px) + 64px) !important;
+		right: 16px !important;
+		bottom: auto !important;
+		left: auto !important;
+		z-index: 999999 !important;
+		pointer-events: none !important;
+	}
 }
 
 [data-sonner-toast] {
 	pointer-events: auto !important;
-	width: max-content !important;
-	max-width: 380px !important;
-	border-radius: 12px !important;
-	font-family: var(--font-sans) !important;
-	box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08) !important;
+	font-family: var(--font-sans, system-ui, sans-serif) !important;
 }
 
 /* PWA Page Slide Transitions */
