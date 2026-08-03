@@ -695,12 +695,12 @@ body.wims-role-body.dark {
   z-index: 9999;
 }
 
-/* Modern responsive vue-sonner toaster styling: Desktop = bottom-right, Mobile = top-right below header */
+/* Modern responsive vue-sonner toaster styling: Desktop/Tablet = bottom-right, Mobile = top-right below header */
 @media (min-width: 640px) {
 	[data-sonner-toaster] {
 		position: fixed !important;
-		bottom: 24px !important;
-		right: 24px !important;
+		bottom: 28px !important;
+		right: 28px !important;
 		top: auto !important;
 		left: auto !important;
 		z-index: 999999 !important;
