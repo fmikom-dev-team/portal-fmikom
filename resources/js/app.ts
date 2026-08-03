@@ -171,7 +171,7 @@ createInertiaApp({
 		toasterEl.id = 'toaster-root';
 		document.body.appendChild(toasterEl);
 		createApp(Toaster, {
-			position: 'bottom-center',
+			position: 'bottom-right',
 			offset: 24,
 			mobileOffset: 16,
 			duration: 3200,

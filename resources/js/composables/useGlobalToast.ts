@@ -15,12 +15,14 @@ export function showToast(
 	if (!message) return;
 	const now = Date.now();
 
-	// Deduplicate identical toast messages fired within 1500ms
-	if (message === lastToastMessage && now - lastToastTime < 1500) {
+	// Normalize message (strip trailing dots/whitespace and lowercase) for 100% accurate deduplication
+	const normalizedMsg = message.trim().replace(/\.+$/, "").toLowerCase();
+
+	if (normalizedMsg === lastToastMessage && now - lastToastTime < 2000) {
 		return;
 	}
 
-	lastToastMessage = message;
+	lastToastMessage = normalizedMsg;
 	lastToastTime = now;
 
 	if (type === "error") {

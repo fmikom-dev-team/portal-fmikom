@@ -56,7 +56,6 @@ function toggleRead(notif: any) {
 
 function deleteItem(notif: any) {
 	emit("delete-log", notif);
-	toast("Item log berhasil dihapus", "success");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
