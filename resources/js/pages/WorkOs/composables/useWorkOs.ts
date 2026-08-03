@@ -1,4 +1,5 @@
 import { reactive } from "vue";
+import { toast as sonnerToast } from "vue-sonner";
 
 // ─── TOAST STATE ───────────────────────────────────────────────────────────────
 export const toastState = reactive({
@@ -6,18 +7,22 @@ export const toastState = reactive({
 	msg: "",
 	type: "success" as "success" | "error" | "info" | "warning",
 });
-let _toastTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function toast(
 	msg: string,
 	type: "success" | "error" | "info" | "warning" = "success",
 	duration = 3500,
 ) {
-	if (_toastTimer) clearTimeout(_toastTimer);
-	Object.assign(toastState, { show: true, msg, type });
-	_toastTimer = setTimeout(() => {
-		toastState.show = false;
-	}, duration);
+	Object.assign(toastState, { show: false, msg, type });
+	if (type === "error") {
+		sonnerToast.error(msg, { duration });
+	} else if (type === "warning") {
+		sonnerToast.warning(msg, { duration });
+	} else if (type === "info") {
+		sonnerToast.info(msg, { duration });
+	} else {
+		sonnerToast.success(msg, { duration });
+	}
 }
 
 // ─── USER TYPE BADGES ──────────────────────────────────────────────────────────
