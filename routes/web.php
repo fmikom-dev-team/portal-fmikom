@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\UserInvitationAcceptController;
 use App\Http\Controllers\PwaController;
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\EnsureFirstTimeLoginComplete;
@@ -62,8 +63,8 @@ use Laravel\Fortify\Http\Requests\LoginRequest;
 
 // ─── Public Pages ────────────────────────────────────────────────────────────
 
-Route::get('/user-invitations/accept', [App\Http\Controllers\Auth\UserInvitationAcceptController::class, 'show'])->name('user-invitations.accept');
-Route::post('/user-invitations/accept', [App\Http\Controllers\Auth\UserInvitationAcceptController::class, 'accept'])->name('user-invitations.accept.process');
+Route::get('/user-invitations/accept', [UserInvitationAcceptController::class, 'show'])->name('user-invitations.accept');
+Route::post('/user-invitations/accept', [UserInvitationAcceptController::class, 'accept'])->name('user-invitations.accept.process');
 
 Route::get('/', function () {
     if (Auth::check()) {
