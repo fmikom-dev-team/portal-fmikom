@@ -179,6 +179,7 @@ class AuthenticationController extends Controller
                 'is_enabled' => (bool) $p->is_enabled,
                 'use_demo' => (bool) $p->use_demo_credentials,
                 'has_custom' => ! empty($p->client_id),
+                'has_secret' => ! empty($p->client_secret),
                 'client_id' => $p->client_id,
                 'scopes' => $p->scopes,
                 'redirect_uri' => url("/auth/oauth/{$p->slug}/callback", []),
@@ -209,15 +210,18 @@ class AuthenticationController extends Controller
             $data['use_demo_credentials'] = $request->boolean('use_demo');
         }
         if ($request->has('client_id')) {
-            $data['client_id'] = $request->client_id;
+            $data['client_id'] = trim((string) $request->client_id);
         }
         if ($request->has('scopes')) {
             $data['scopes'] = $request->scopes;
         }
 
-        // Encrypt client secret before storing
+        // Encrypt client secret before storing (trimming whitespace)
         if ($request->filled('client_secret')) {
-            $data['client_secret'] = Crypt::encryptString($request->client_secret);
+            $cleanSecret = trim((string) $request->client_secret);
+            if (! empty($cleanSecret)) {
+                $data['client_secret'] = Crypt::encryptString($cleanSecret);
+            }
         }
 
         $provider->fill($data)->save();
@@ -230,11 +234,22 @@ class AuthenticationController extends Controller
             'is_enabled' => $data['is_enabled'] ?? null,
         ]);
 
+        $fresh = $provider->fresh();
+
         return response()->json([
             'message' => 'Provider updated.',
-            'provider' => array_merge($provider->fresh()->toArray(), [
-                'redirect_uri' => url("/auth/oauth/{$slug}/callback"),
-            ]),
+            'provider' => [
+                'id' => $fresh->id,
+                'name' => $fresh->name,
+                'slug' => $fresh->slug,
+                'is_enabled' => (bool) $fresh->is_enabled,
+                'use_demo' => (bool) $fresh->use_demo_credentials,
+                'has_custom' => ! empty($fresh->client_id),
+                'has_secret' => ! empty($fresh->client_secret),
+                'client_id' => $fresh->client_id,
+                'scopes' => $fresh->scopes,
+                'redirect_uri' => url("/auth/oauth/{$fresh->slug}/callback"),
+            ],
         ]);
     }
 
