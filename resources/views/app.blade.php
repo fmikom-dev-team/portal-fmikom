@@ -57,9 +57,15 @@
                 $raw['brand_subtitle'] = $raw['brand_subtitle'] ?? 'Fakultas Matematika dan Ilmu Komputer';
                 $raw['brand_logo'] = $raw['brand_logo'] ?? '/asset/brand-logo.webp';
                 $raw['brand_favicon'] = $raw['brand_favicon'] ?? '/asset/brand-logo.webp';
+                $raw['seo_meta_title'] = $raw['seo_meta_title'] ?? 'FMIKOM Portal — Academic & Creative Network';
+                $raw['seo_meta_description'] = $raw['seo_meta_description'] ?? 'Tempat berbagi karya, portofolio, dan kolaborasi mahasiswa dan creator Fakultas Ilmu Komputer.';
                 return $raw;
             });
             $brandFavicon = $portalSettings['brand_favicon'] ?? '/asset/brand-logo.webp';
+            $defaultTitle = !empty($portalSettings['seo_meta_title']) ? $portalSettings['seo_meta_title'] : 'FMIKOM Portal — Academic & Creative Network';
+            $defaultDescription = !empty($portalSettings['seo_meta_description']) ? $portalSettings['seo_meta_description'] : 'Tempat berbagi karya, portofolio, dan kolaborasi mahasiswa dan creator Fakultas Ilmu Komputer.';
+            $rawLogo = $portalSettings['brand_logo'] ?? '/asset/brand-logo.webp';
+            $defaultImage = str_starts_with($rawLogo, 'http') ? $rawLogo : asset(ltrim($rawLogo, '/'));
         @endphp
         <link rel="icon" href="{{ $brandFavicon }}">
         <link rel="apple-touch-icon" href="{{ $portalSettings['brand_logo'] ?? '/asset/brand-logo.webp' }}">
@@ -68,23 +74,23 @@
         <link rel="manifest" href="/manifest.json">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
-        <meta name="apple-mobile-web-app-title" content="Portal FMIKOM">
+        <meta name="apple-mobile-web-app-title" content="{{ $portalSettings['brand_name'] ?? 'Portal FMIKOM' }}">
         <meta name="mobile-web-app-capable" content="yes">
 
         <!-- SEO Meta Tags -->
-        <meta name="description" content="{{ $metaDescription ?? 'FMIKOM Portal - Academic & Creative Network Fakultas Ilmu Komputer. Tempat berbagi karya, portofolio, dan kolaborasi mahasiswa dan creator.' }}">
+        <meta name="description" content="{{ $metaDescription ?? $defaultDescription }}">
         
-        <!-- Open Graph / Facebook -->
-        <meta property="og:type" content="{{ $metaType ?? 'profile' }}">
-        <meta property="og:title" content="{{ $metaTitle ?? 'FMIKOM Portal — Academic & Creative Network' }}">
-        <meta property="og:description" content="{{ $metaDescription ?? 'Tempat berbagi karya, portofolio, dan kolaborasi mahasiswa dan creator Fakultas Ilmu Komputer.' }}">
-        <meta property="og:image" content="{{ $metaImage ?? asset('og-image.png') }}">
+        <!-- Open Graph / Facebook / WhatsApp Share Link Preview -->
+        <meta property="og:type" content="{{ $metaType ?? 'website' }}">
+        <meta property="og:title" content="{{ $metaTitle ?? $defaultTitle }}">
+        <meta property="og:description" content="{{ $metaDescription ?? $defaultDescription }}">
+        <meta property="og:image" content="{{ $metaImage ?? $defaultImage }}">
 
         <!-- Twitter -->
         <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:title" content="{{ $metaTitle ?? 'FMIKOM Portal — Academic & Creative Network' }}">
-        <meta name="twitter:description" content="{{ $metaDescription ?? 'Tempat berbagi karya, portofolio, dan kolaborasi mahasiswa dan creator Fakultas Ilmu Komputer.' }}">
-        <meta name="twitter:image" content="{{ $metaImage ?? asset('og-image.png') }}">
+        <meta name="twitter:title" content="{{ $metaTitle ?? $defaultTitle }}">
+        <meta name="twitter:description" content="{{ $metaDescription ?? $defaultDescription }}">
+        <meta name="twitter:image" content="{{ $metaImage ?? $defaultImage }}">
 
         <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
         <link rel="dns-prefetch" href="https://fonts.bunny.net">
