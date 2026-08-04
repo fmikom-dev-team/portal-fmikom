@@ -128,8 +128,6 @@ class PortalPostController extends Controller
             $validated['thumbnail'] = $this->extractFirstImageFromContent($content);
         }
 
-        $validated['thumbnail_path'] = $validated['thumbnail'];
-
         if ($request->hasFile('og_image')) {
             $validated['og_image'] = $this->processAndStoreImage($request->file('og_image'), 'portal/posts/seo');
         } elseif ($request->filled('og_image')) {
@@ -155,11 +153,30 @@ class PortalPostController extends Controller
             }
         }
 
-        PortalPost::create($validated);
+        try {
+            $post = PortalPost::create($validated);
+        } catch (\Throwable $e) {
+            Log::error('PortalPost store error: '.$e->getMessage());
+            if ($request->header('X-Inertia')) {
+                return back()->withErrors(['error' => 'Gagal membuat postingan: '.$e->getMessage()]);
+            }
+            if ($request->expectsJson() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+                return response()->json(['message' => 'Gagal membuat postingan: '.$e->getMessage()], 500);
+            }
+            throw $e;
+        }
 
         Cache::forget('portal_latest_posts');
         Cache::forget('portal_settings');
         Cache::forget('portal_home_showcase');
+
+        if ($request->header('X-Inertia')) {
+            return redirect()->route('portal-admin.posts.index')->with('success', 'Post created successfully!');
+        }
+
+        if ($request->expectsJson() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return response()->json(['message' => 'Post created successfully', 'post' => $post]);
+        }
 
         return redirect()->route('portal-admin.posts.index')->with('success', 'Post created successfully!');
     }
@@ -231,8 +248,6 @@ class PortalPostController extends Controller
             $validated['thumbnail'] = $post->thumbnail ?? $this->extractFirstImageFromContent($content);
         }
 
-        $validated['thumbnail_path'] = $validated['thumbnail'];
-
         if ($request->hasFile('og_image')) {
             // Delete old og_image if exists
             if ($post->og_image && ! str_contains($post->og_image, 'portal/media/')) {
@@ -266,6 +281,9 @@ class PortalPostController extends Controller
             $post->update($validated);
         } catch (\Throwable $e) {
             Log::error('PortalPost update error: '.$e->getMessage());
+            if ($request->header('X-Inertia')) {
+                return back()->withErrors(['error' => 'Gagal memperbarui postingan: '.$e->getMessage()]);
+            }
             if ($request->expectsJson() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
                 return response()->json(['message' => 'Gagal memperbarui postingan: '.$e->getMessage()], 500);
             }
@@ -275,6 +293,10 @@ class PortalPostController extends Controller
         Cache::forget('portal_latest_posts');
         Cache::forget('portal_settings');
         Cache::forget('portal_home_showcase');
+
+        if ($request->header('X-Inertia')) {
+            return redirect()->route('portal-admin.posts.index')->with('success', 'Post updated successfully!');
+        }
 
         if ($request->expectsJson() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
             return response()->json(['message' => 'Post saved successfully', 'post' => $post]);
