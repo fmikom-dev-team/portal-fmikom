@@ -45,10 +45,10 @@ test('invitee can accept invitation and set password', function () {
         'expires_at' => now()->addDays(7),
     ]);
 
-    $responseGet = $this->get('/invitations/accept?token=test-invitation-token-123456');
+    $responseGet = $this->get('/user-invitations/accept?token=test-invitation-token-123456');
     $responseGet->assertOk();
 
-    $responsePost = $this->post('/invitations/accept', [
+    $responsePost = $this->post('/user-invitations/accept', [
         'token' => 'test-invitation-token-123456',
         'name' => 'Rudi Hermawan',
         'password' => 'SecurePassword123!',
@@ -79,7 +79,7 @@ test('expired invitation token is rejected', function () {
         'expires_at' => now()->subDays(1),
     ]);
 
-    $responsePost = $this->post('/invitations/accept', [
+    $responsePost = $this->post('/user-invitations/accept', [
         'token' => 'expired-token-999',
         'name' => 'Expired User',
         'password' => 'SecurePassword123!',

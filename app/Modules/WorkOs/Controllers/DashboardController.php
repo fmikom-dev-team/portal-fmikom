@@ -1981,8 +1981,8 @@ class DashboardController extends Controller // NOSONAR
                 'user_type' => $inv->user_type,
                 'status' => $inv->isExpired() && $inv->status === 'pending' ? 'expired' : $inv->status,
                 'invited_by' => optional($inv->invitedBy)->name ?: 'System Admin',
-                'created_at' => $inv->created_at?->format('M d, Y g:i A') ?? now()->format('M d, Y g:i A'),
-                'expires_at' => $inv->expires_at?->format('M d, Y g:i A') ?? now()->addDays(7)->format('M d, Y g:i A'),
+                'created_at' => $inv->created_at->format('M d, Y g:i A'),
+                'expires_at' => $inv->expires_at->format('M d, Y g:i A'),
             ])
             ->toArray();
     }
