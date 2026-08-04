@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
             JenisSuratSeeder::class,
             SuratTemplateSeeder::class,
             PortalPagesSeeder::class,
+            PortalSettingSeeder::class,
         ]);
     }
 }

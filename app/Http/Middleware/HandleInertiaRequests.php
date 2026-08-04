@@ -74,9 +74,15 @@ class HandleInertiaRequests extends Middleware
                 // Preserve user-configured branding logo and favicon from database with default fallback
                 if (empty($raw['brand_logo'])) {
                     $raw['brand_logo'] = '/asset/brand-logo.webp';
+                    if (\Illuminate\Support\Facades\Schema::hasTable('portal_settings')) {
+                        PortalSetting::updateOrCreate(['key' => 'brand_logo'], ['value' => '/asset/brand-logo.webp']);
+                    }
                 }
                 if (empty($raw['brand_favicon'])) {
                     $raw['brand_favicon'] = '/asset/brand-logo.webp';
+                    if (\Illuminate\Support\Facades\Schema::hasTable('portal_settings')) {
+                        PortalSetting::updateOrCreate(['key' => 'brand_favicon'], ['value' => '/asset/brand-logo.webp']);
+                    }
                 }
 
                 if (isset($raw['partners']) && is_string($raw['partners'])) {
