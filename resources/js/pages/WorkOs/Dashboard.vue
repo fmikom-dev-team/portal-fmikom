@@ -22,6 +22,7 @@ import UserDetails from "./partials/Users/Show.vue";
 const props = defineProps<{
 	users: any;
 	roles: any[];
+	invitations?: any[];
 	permissions: any[];
 	modules: any[];
 	stats: Record<string, number>;
@@ -841,6 +842,7 @@ const activeLabel = computed(() => {
                         v-else-if="activePage === 'users'"
                         :users="users"
                         :roles="roles"
+                        :invitations="invitations"
                         :pending-count="pendingCount"
                         :search-query="searchQuery"
                         @open-detail="openUser"

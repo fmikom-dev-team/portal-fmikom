@@ -20,11 +20,13 @@ use App\Models\Radar\RadarDevice;
 use App\Models\Radar\RadarProtection;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\UserInvitation;
 use App\Models\UserModuleRole;
 use App\Models\WorkOsWebhook;
 use App\Models\WorkOsWebhookDelivery;
 use App\Notifications\PagiNotification;
 use App\Notifications\UserApprovedNotification;
+use App\Notifications\UserInvitationNotification;
 use App\Notifications\WorkOsAlert;
 use App\Services\VirusScannerService;
 use Illuminate\Http\Request;
@@ -36,6 +38,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -80,6 +83,7 @@ class DashboardController extends Controller // NOSONAR
             'users' => fn () => $shouldLoad('users', ['users', 'organizations', 'authorization'])
                 ? ['data' => $this->getUsersData($request), 'total' => User::query()->count()]
                 : [],
+            'invitations' => fn () => $shouldLoad('invitations', ['users', 'organizations']) ? $this->getInvitationsData() : [],
             'roles' => fn () => $shouldLoad('roles', ['authorization', 'organizations', 'users']) ? $this->getRolesData() : [],
             'permissions' => fn () => $shouldLoad('permissions', ['authorization']) ? $this->getPermissionsData() : [],
             'modules' => fn () => $shouldLoad('modules', ['organizations', 'users', 'authorization']) ? $this->getModulesData() : [],
@@ -1889,5 +1893,97 @@ class DashboardController extends Controller // NOSONAR
         AuthEmailLog::query()->delete();
 
         return back()->with('success', 'Email logs cleared successfully.');
+    }
+
+    public function sendInvitation(Request $request)
+    {
+        $request->validate([
+            'email' => ['required', 'email', 'max:255'],
+            'first_name' => ['nullable', 'string', 'max:100'],
+            'last_name' => ['nullable', 'string', 'max:100'],
+            'user_type' => ['required', 'in:mahasiswa,alumni,mitra,dosen,staff,super_admin'],
+        ]);
+
+        if (User::where('email', $request->email)->exists()) {
+            throw ValidationException::withMessages([
+                'email' => 'User dengan alamat email ini sudah terdaftar sebagai pengguna aktif.',
+            ]);
+        }
+
+        $invitation = UserInvitation::updateOrCreate(
+            ['email' => $request->email],
+            [
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'user_type' => $request->user_type,
+                'token' => Str::random(64),
+                'status' => 'pending',
+                'invited_by_user_id' => auth()->id(),
+                'expires_at' => now()->addDays(7),
+                'accepted_at' => null,
+            ]
+        );
+
+        try {
+            Notification::route('mail', $request->email)->notify(new UserInvitationNotification($invitation));
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return back()->with('success', 'Email undangan berhasil dikirim ke '.$request->email);
+    }
+
+    public function resendInvitation($id)
+    {
+        $invitation = UserInvitation::findOrFail($id);
+
+        if ($invitation->status === 'accepted') {
+            return back()->with('error', 'Undangan ini sudah diterima oleh pengguna.');
+        }
+
+        $invitation->update([
+            'token' => Str::random(64),
+            'status' => 'pending',
+            'expires_at' => now()->addDays(7),
+        ]);
+
+        try {
+            Notification::route('mail', $invitation->email)->notify(new UserInvitationNotification($invitation));
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return back()->with('success', 'Email undangan berhasil dikirim ulang.');
+    }
+
+    public function revokeInvitation($id)
+    {
+        $invitation = UserInvitation::findOrFail($id);
+        $invitation->delete();
+
+        return back()->with('success', 'Undangan berhasil dibatalkan dan dihapus.');
+    }
+
+    private function getInvitationsData(): array
+    {
+        if (! Schema::hasTable('user_invitations')) {
+            return [];
+        }
+
+        return UserInvitation::with('invitedBy')
+            ->latest()
+            ->get()
+            ->map(fn ($inv) => [
+                'id' => $inv->id,
+                'email' => $inv->email,
+                'first_name' => $inv->first_name,
+                'last_name' => $inv->last_name,
+                'user_type' => $inv->user_type,
+                'status' => $inv->isExpired() && $inv->status === 'pending' ? 'expired' : $inv->status,
+                'invited_by' => optional($inv->invitedBy)->name ?: 'System Admin',
+                'created_at' => $inv->created_at?->format('M d, Y g:i A') ?? now()->format('M d, Y g:i A'),
+                'expires_at' => $inv->expires_at?->format('M d, Y g:i A') ?? now()->addDays(7)->format('M d, Y g:i A'),
+            ])
+            ->toArray();
     }
 }
