@@ -63,7 +63,12 @@ class PortalPost extends Model
         'category_id',
         'status',
         'published_at',
+        'thumbnail',
         'thumbnail_path',
+        'og_image',
+        'meta_title',
+        'meta_description',
+        'tags',
         'user_id',
         'is_featured',
     ];
