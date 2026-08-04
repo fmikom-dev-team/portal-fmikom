@@ -279,7 +279,7 @@ onMounted(() => {
 				"auditRecentEvents",
 			],
 		});
-	}, 15000);
+	}, 8000);
 
 	// Mark initially loaded non-empty props as loaded
 	Object.keys(props).forEach((key) => {
