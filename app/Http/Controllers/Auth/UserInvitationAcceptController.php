@@ -75,9 +75,10 @@ class UserInvitationAcceptController extends Controller
                 'name' => $request->name,
                 'password' => Hash::make($request->password),
                 'user_type' => $invitation->user_type,
-                'status_approval' => 'approved',
+                'status_approval' => 'activated',
                 'is_active' => true,
                 'email_verified_at' => $user->email_verified_at ?: now(),
+                'password_changed_at' => now(),
             ]);
 
             $invitation->update(['status' => 'accepted', 'accepted_at' => now()]);
@@ -91,9 +92,10 @@ class UserInvitationAcceptController extends Controller
             'email' => $invitation->email,
             'password' => Hash::make($request->password),
             'user_type' => $invitation->user_type,
-            'status_approval' => 'approved',
+            'status_approval' => 'activated',
             'is_active' => true,
             'email_verified_at' => now(),
+            'password_changed_at' => now(),
         ]);
 
         $newUser->assignDefaultModuleRoles();
