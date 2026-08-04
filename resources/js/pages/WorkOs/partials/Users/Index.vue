@@ -122,6 +122,12 @@ watch([filterRole, filterAuth, filterMembership], () => {
 	applyFilters();
 });
 const userTab = ref<"users" | "invitations">("users");
+
+watch(userTab, (newTab) => {
+	if (newTab === "invitations") {
+		router.reload({ only: ["invitations", "users"] });
+	}
+});
 const statusDropdownOpen = ref(false);
 const roleDropdownOpen = ref(false);
 
@@ -347,6 +353,7 @@ const sendInvitation = () => {
 	isSendingInvite.value = true;
 	router.post("/workos/invitations/send", { ...inviteForm }, {
 		preserveScroll: true,
+		only: ["invitations", "users"],
 		onSuccess: () => {
 			modal.inviteUser = false;
 			inviteForm.first_name = "";
@@ -366,17 +373,33 @@ const sendInvitation = () => {
 const resendInvite = (id: number) => {
 	router.post(`/workos/invitations/${id}/resend`, {}, {
 		preserveScroll: true,
+		only: ["invitations", "users"],
 		onError: () => toast("Gagal mengirim ulang email undangan.", "error"),
 	});
 };
 
-const revokeInvite = (id: number) => {
-	if (confirm("Apakah Anda yakin ingin membatalkan undangan ini?")) {
-		router.delete(`/workos/invitations/${id}`, {
+const revokeInvite = (inv: any) => {
+	confirmModal.title = "Batalkan Undangan";
+	confirmModal.description = "Apakah Anda yakin ingin membatalkan undangan ini?";
+	confirmModal.message = `Undangan untuk ${inv.email || "pengguna ini"} akan dibatalkan dan dihapus dari sistem.`;
+	confirmModal.confirmText = "Ya, Batalkan";
+	confirmModal.confirmBgClass = "bg-rose-600 hover:bg-rose-700 text-white";
+	confirmModal.onConfirm = () => {
+		confirmModal.isLoading = true;
+		router.delete(`/workos/invitations/${inv.id}`, {
 			preserveScroll: true,
-			onError: () => toast("Gagal membatalkan undangan.", "error"),
+			only: ["invitations", "users"],
+			onSuccess: () => {
+				confirmModal.show = false;
+				confirmModal.isLoading = false;
+			},
+			onError: () => {
+				confirmModal.isLoading = false;
+				toast("Gagal membatalkan undangan.", "error");
+			},
 		});
-	}
+	};
+	confirmModal.show = true;
 };
 
 const toggleStatusModal = reactive({
@@ -969,7 +992,7 @@ function executeRejectAction() {
                                     <button v-if="inv.status === 'pending'" @click="resendInvite(inv.id)" class="px-2.5 py-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded text-[12px] font-medium text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors shadow-sm dark:shadow-none cursor-pointer">
                                         Kirim Ulang
                                     </button>
-                                    <button @click="revokeInvite(inv.id)" class="px-2.5 py-1 bg-white dark:bg-zinc-800 border border-rose-200 dark:border-rose-900/50 rounded text-[12px] font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors shadow-sm dark:shadow-none cursor-pointer">
+                                    <button @click="revokeInvite(inv)" class="px-2.5 py-1 bg-white dark:bg-zinc-800 border border-rose-200 dark:border-rose-900/50 rounded text-[12px] font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors shadow-sm dark:shadow-none cursor-pointer">
                                         Batalkan
                                     </button>
                                 </td>
