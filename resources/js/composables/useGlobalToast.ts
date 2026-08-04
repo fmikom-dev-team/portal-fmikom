@@ -19,13 +19,13 @@ export function showToast(
 	// Normalize message (strip trailing dots/whitespace and lowercase) for 100% accurate deduplication
 	const normalizedMsg = message.trim().replace(/\.+$/, "").toLowerCase();
 
-	// 1. Exact match within 3 seconds
-	if (normalizedMsg === lastToastMessage && now - lastToastTime < 3000) {
+	// 1. Exact match within 8 seconds (prevents repeated toast during rapid tab switches / page reloads)
+	if (normalizedMsg === lastToastMessage && now - lastToastTime < 8000) {
 		return;
 	}
 
-	// 2. Partial / Overlap match within 2.5 seconds (e.g. "Undangan berhasil dibatalkan" vs "Undangan berhasil dibatalkan dan dihapus")
-	if (now - lastToastTime < 2500) {
+	// 2. Partial / Overlap match within 5 seconds
+	if (now - lastToastTime < 5000) {
 		const isSubstring =
 			normalizedMsg.includes(lastToastMessage) ||
 			lastToastMessage.includes(normalizedMsg);
@@ -35,8 +35,8 @@ export function showToast(
 			return;
 		}
 
-		// 3. Rapid dual-fire prevention for same toast type within 600ms
-		if (lastToastType === type && now - lastToastTime < 600) {
+		// 3. Rapid dual-fire prevention for same toast type within 1200ms
+		if (lastToastType === type && now - lastToastTime < 1200) {
 			return;
 		}
 	}
