@@ -24,6 +24,7 @@ use App\Models\UserInvitation;
 use App\Models\UserModuleRole;
 use App\Models\WorkOsWebhook;
 use App\Models\WorkOsWebhookDelivery;
+use App\Modules\WorkOs\Services\DashboardStatsService;
 use App\Notifications\PagiNotification;
 use App\Notifications\UserApprovedNotification;
 use App\Notifications\UserInvitationNotification;
@@ -592,13 +593,7 @@ class DashboardController extends Controller // NOSONAR
 
     private function getStats(): array
     {
-        return [
-            'total_users' => User::query()->count(),
-            'active_users' => User::query()->where('is_active', true)->count(),
-            'pending_users' => User::query()->where('status_approval', 'pending')->count(),
-            'total_roles' => Role::query()->count(),
-            'total_modules' => Module::query()->where('is_active', true)->count(),
-        ];
+        return app(DashboardStatsService::class)->getStats();
     }
 
     private function getUsersData(?Request $request = null)

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, router } from "@inertiajs/vue3";
-import { LogOut, Settings } from "lucide-vue-next";
+import { LayoutGrid, LogOut, Settings } from "lucide-vue-next";
+import { computed } from "vue";
 import UserInfo from "@/components/UserInfo.vue";
 import {
 	DropdownMenuGroup,
@@ -21,6 +22,13 @@ const handleLogout = () => {
 };
 
 defineProps<Props>();
+
+const settingsUrl = computed(() => {
+	if (typeof window !== "undefined" && window.location.pathname.startsWith("/workos")) {
+		return "/workos/settings";
+	}
+	return edit();
+});
 </script>
 
 <template>
@@ -32,23 +40,29 @@ defineProps<Props>();
     <DropdownMenuSeparator />
     <DropdownMenuGroup>
         <DropdownMenuItem :as-child="true">
-            <Link class="block w-full cursor-pointer" :href="edit()" prefetch>
-                <Settings class="mr-2 h-4 w-4" />
+            <Link class="block w-full cursor-pointer flex items-center" :href="settingsUrl" prefetch>
+                <Settings class="mr-2 h-4 w-4 text-slate-500" />
                 Settings
+            </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem :as-child="true">
+            <Link class="block w-full cursor-pointer flex items-center" href="/workos/organizations" prefetch>
+                <LayoutGrid class="mr-2 h-4 w-4 text-slate-500" />
+                Portal Modules
             </Link>
         </DropdownMenuItem>
     </DropdownMenuGroup>
     <DropdownMenuSeparator />
     <DropdownMenuItem :as-child="true">
         <Link
-            class="block w-full cursor-pointer"
+            class="block w-full cursor-pointer flex items-center"
             :href="logout()"
             method="post"
             @click="handleLogout"
             as="button"
             data-test="logout-button"
         >
-            <LogOut class="mr-2 h-4 w-4" />
+            <LogOut class="mr-2 h-4 w-4 text-rose-500" />
             Log out
         </Link>
     </DropdownMenuItem>
