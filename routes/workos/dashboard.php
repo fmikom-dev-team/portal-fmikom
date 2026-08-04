@@ -24,6 +24,10 @@ Route::post('/settings/sitelinks', [DashboardController::class, 'storeSitelink']
 Route::put('/settings/sitelinks/{id}', [DashboardController::class, 'updateSitelink'])->name('settings.sitelinks.update');
 Route::delete('/settings/sitelinks/{id}', [DashboardController::class, 'destroySitelink'])->name('settings.sitelinks.destroy');
 
+Route::post('/invitations/send', [DashboardController::class, 'sendInvitation'])->name('invitations.send');
+Route::post('/invitations/{id}/resend', [DashboardController::class, 'resendInvitation'])->name('invitations.resend');
+Route::delete('/invitations/{id}', [DashboardController::class, 'revokeInvitation'])->name('invitations.revoke');
+
 Route::post('/notifications/mark-all-read', [DashboardController::class, 'markAllNotificationsRead'])->name('notifications.mark-all-read');
 Route::post('/notifications/clear', [DashboardController::class, 'clearNotifications'])->name('notifications.clear');
 Route::post('/notifications/{id}/toggle-read', [DashboardController::class, 'toggleNotificationRead'])->name('notifications.toggle-read');

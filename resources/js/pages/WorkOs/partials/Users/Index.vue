@@ -296,7 +296,63 @@ onUnmounted(() => {
 });
 
 // ─── MODALS ───────────────────────────────────────────────────────────────────
-const modal = reactive({ createUser: false, uploadUsers: false });
+const modal = reactive({ createUser: false, inviteUser: false, uploadUsers: false });
+
+const invitationsList = computed(() => {
+	const pageProps = usePage().props as any;
+	if (props.invitations && Array.isArray(props.invitations)) return props.invitations;
+	if (pageProps.invitations && Array.isArray(pageProps.invitations)) return pageProps.invitations;
+	return [];
+});
+
+const inviteForm = reactive({
+	first_name: "",
+	last_name: "",
+	email: "",
+	user_type: "mahasiswa",
+});
+
+const isSendingInvite = ref(false);
+
+const sendInvitation = () => {
+	if (!inviteForm.email || isSendingInvite.value) return;
+	isSendingInvite.value = true;
+	router.post("/workos/invitations/send", { ...inviteForm }, {
+		preserveScroll: true,
+		onSuccess: () => {
+			modal.inviteUser = false;
+			inviteForm.first_name = "";
+			inviteForm.last_name = "";
+			inviteForm.email = "";
+			inviteForm.user_type = "mahasiswa";
+			toast("Email undangan berhasil dikirim!", "success");
+		},
+		onError: (err: any) => {
+			toast(err.email || err.error || "Gagal mengirim undangan email.", "error");
+		},
+		onFinish: () => {
+			isSendingInvite.value = false;
+		},
+	});
+};
+
+const resendInvite = (id: number) => {
+	router.post(`/workos/invitations/${id}/resend`, {}, {
+		preserveScroll: true,
+		onSuccess: () => toast("Email undangan berhasil dikirim ulang!", "success"),
+		onError: () => toast("Gagal mengirim ulang email undangan.", "error"),
+	});
+};
+
+const revokeInvite = (id: number) => {
+	if (confirm("Apakah Anda yakin ingin membatalkan undangan ini?")) {
+		router.delete(`/workos/invitations/${id}`, {
+			preserveScroll: true,
+			onSuccess: () => toast("Undangan berhasil dibatalkan.", "success"),
+			onError: () => toast("Gagal membatalkan undangan.", "error"),
+		});
+	}
+};
 
 const toggleStatusModal = reactive({
 	show: false,
@@ -813,7 +869,7 @@ function executeRejectAction() {
                 </button>
                 <button
                     class="h-[34px] px-4 bg-[#2563eb] dark:bg-blue-600 text-white rounded-md text-[13px] font-semibold hover:bg-[#1d4ed8] dark:hover:bg-blue-700 transition-colors shadow-sm cursor-pointer border-0 dark:shadow-none"
-                    @click="modal.createUser = true"
+                    @click="userTab === 'users' ? (modal.createUser = true) : (modal.inviteUser = true)"
                 >
                     {{ userTab === 'users' ? 'Create user' : 'Invite user' }}
                 </button>
@@ -837,20 +893,70 @@ function executeRejectAction() {
 
         <!-- Main Tab Content Transition -->
         <Transition name="fade" mode="out-in">
-            <!-- Invitations Empty State -->
-            <div v-if="userTab === 'invitations'" key="invitations" class="border border-[#e5e7eb] dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 p-12 flex flex-col items-center justify-center text-center mt-4">
-                <div class="w-12 h-12 flex items-center justify-center mb-4">
-                    <svg class="w-8 h-8 text-[#9ca3af] dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+            <!-- Invitations Section (Table or Empty state) -->
+            <div v-if="userTab === 'invitations'" key="invitations" class="space-y-4">
+                <div v-if="invitationsList.length > 0" class="border border-[#e5e7eb] dark:border-zinc-800 rounded-lg overflow-x-auto bg-white dark:bg-zinc-900 shadow-sm dark:shadow-none min-h-[300px]">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead>
+                            <tr class="bg-[#f9fafb] dark:bg-zinc-800/40 border-b border-[#e5e7eb] dark:border-zinc-800">
+                                <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-200">Penerima</th>
+                                <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-200">Role / Tipe</th>
+                                <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-200">Status</th>
+                                <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-200">Pengundang</th>
+                                <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-200">Tanggal Masa Berlaku</th>
+                                <th class="px-4 py-3 text-[12px] font-semibold text-[#111827] dark:text-zinc-200 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#e5e7eb] dark:divide-zinc-800">
+                            <tr v-for="inv in invitationsList" :key="inv.id" class="hover:bg-[#f9fafb] dark:hover:bg-zinc-800/50 transition-colors">
+                                <td class="px-4 py-3">
+                                    <div class="text-[13px] font-medium text-[#111827] dark:text-zinc-100">{{ inv.first_name }} {{ inv.last_name }}</div>
+                                    <div class="text-[12px] text-[#6b7280] dark:text-zinc-400">{{ inv.email }}</div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span :class="typeBadge(inv.user_type)">{{ typeLabel(inv.user_type) }}</span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span v-if="inv.status === 'accepted'" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Diterima
+                                    </span>
+                                    <span v-else-if="inv.status === 'expired'" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Kadaluarsa
+                                    </span>
+                                    <span v-else class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Pending
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-[13px] text-[#374151] dark:text-zinc-300">{{ inv.invited_by }}</td>
+                                <td class="px-4 py-3 text-[12px] text-[#6b7280] dark:text-zinc-400">{{ inv.expires_at }}</td>
+                                <td class="px-4 py-3 text-right space-x-2">
+                                    <button v-if="inv.status === 'pending'" @click="resendInvite(inv.id)" class="px-2.5 py-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded text-[12px] font-medium text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors shadow-sm dark:shadow-none cursor-pointer">
+                                        Kirim Ulang
+                                    </button>
+                                    <button @click="revokeInvite(inv.id)" class="px-2.5 py-1 bg-white dark:bg-zinc-800 border border-rose-200 dark:border-rose-900/50 rounded text-[12px] font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors shadow-sm dark:shadow-none cursor-pointer">
+                                        Batalkan
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <h3 class="text-[15px] font-semibold text-[#111827] dark:text-zinc-100 mb-3">No invitations have been created in this environment</h3>
-                <button
-                    class="h-[34px] px-4 border border-[#d1d5db] dark:border-zinc-700 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-300 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm cursor-pointer dark:shadow-none"
-                    @click="modal.createUser = true"
-                >
-                    Invite user
-                </button>
+
+                <div v-else class="border border-[#e5e7eb] dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 p-12 flex flex-col items-center justify-center text-center">
+                    <div class="w-12 h-12 flex items-center justify-center mb-4">
+                        <svg class="w-8 h-8 text-[#9ca3af] dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-[15px] font-semibold text-[#111827] dark:text-zinc-100 mb-1">Belum ada undangan yang dibuat</h3>
+                    <p class="text-[13px] text-[#6b7280] dark:text-zinc-400 mb-4">Kirimkan undangan email ke pengguna baru untuk menyetel password mereka sendiri secara mandiri.</p>
+                    <button
+                        class="h-[34px] px-4 bg-[#2563eb] dark:bg-blue-600 text-white rounded-md text-[13px] font-semibold hover:bg-[#1d4ed8] dark:hover:bg-blue-700 transition-colors shadow-sm cursor-pointer border-0 dark:shadow-none"
+                        @click="modal.inviteUser = true"
+                    >
+                        Invite user
+                    </button>
+                </div>
             </div>
 
 
@@ -1081,7 +1187,7 @@ function executeRejectAction() {
                         <div v-if="modal.createUser" class="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-[#e5e7eb] dark:border-zinc-800 w-full max-w-[480px] dark:shadow-none">
                             <!-- Modal Header -->
                             <div class="px-6 pt-6 pb-4">
-                                <h2 class="text-[18px] font-semibold text-[#111827] dark:text-zinc-100 tracking-tight">{{ userTab === 'users' ? 'Create user' : 'Invite user' }}</h2>
+                                <h2 class="text-[18px] font-semibold text-[#111827] dark:text-zinc-100 tracking-tight">Create user</h2>
                             </div>
 
                             <!-- Modal Body -->
@@ -1189,6 +1295,107 @@ function executeRejectAction() {
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                     </svg>
                                     {{ loading ? 'Creating…' : 'Create user' }}
+                                </button>
+                            </div>
+                        </div>
+                    </Transition>
+                </div>
+            </Transition>
+        </Teleport>
+
+        <!-- ─── INVITE USER MODAL ─── -->
+        <Teleport to="body">
+            <Transition
+                enter-from-class="opacity-0"
+                enter-active-class="transition-opacity duration-200"
+                leave-to-class="opacity-0"
+                leave-active-class="transition-opacity duration-150"
+            >
+                <div v-if="modal.inviteUser" class="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4" @click.self="modal.inviteUser = false">
+                    <Transition
+                        enter-from-class="opacity-0 scale-95"
+                        enter-active-class="transition-all duration-200 ease-out"
+                        leave-to-class="opacity-0 scale-95"
+                        leave-active-class="transition-all duration-150"
+                    >
+                        <div v-if="modal.inviteUser" class="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-[#e5e7eb] dark:border-zinc-800 w-full max-w-[480px] dark:shadow-none">
+                            <!-- Modal Header -->
+                            <div class="px-6 pt-6 pb-4">
+                                <h2 class="text-[18px] font-semibold text-[#111827] dark:text-zinc-100 tracking-tight">Invite user</h2>
+                                <p class="text-[12.5px] text-[#6b7280] dark:text-zinc-400 mt-1">
+                                    Kirim email undangan agar pengguna dapat menyetel password dan mengaktifkan akun secara mandiri.
+                                </p>
+                            </div>
+
+                            <!-- Modal Body -->
+                            <div class="px-6 pb-6 space-y-4">
+                                <!-- Names -->
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[13px] font-semibold text-[#374151] dark:text-zinc-300 mb-1.5">First name</label>
+                                        <input
+                                            v-model="inviteForm.first_name"
+                                            type="text"
+                                            placeholder="Jane (optional)"
+                                            class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] dark:placeholder:text-zinc-500 text-[#111827] dark:text-zinc-100 bg-white dark:bg-zinc-950"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label class="block text-[13px] font-semibold text-[#374151] dark:text-zinc-300 mb-1.5">Last name</label>
+                                        <input
+                                            v-model="inviteForm.last_name"
+                                            type="text"
+                                            placeholder="Doe (optional)"
+                                            class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] dark:placeholder:text-zinc-500 text-[#111827] dark:text-zinc-100 bg-white dark:bg-zinc-950"
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <!-- Email -->
+                                <div>
+                                    <label class="block text-[13px] font-semibold text-[#374151] dark:text-zinc-300 mb-1.5">Email address</label>
+                                    <input
+                                        v-model="inviteForm.email"
+                                        type="email"
+                                        placeholder="jane.doe@example.com"
+                                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] dark:placeholder:text-zinc-500 text-[#111827] dark:text-zinc-100 bg-white dark:bg-zinc-950"
+                                    />
+                                </div>
+
+                                <!-- User Type / Role -->
+                                <div>
+                                    <label class="block text-[13px] font-semibold text-[#374151] dark:text-zinc-300 mb-1.5">User Type / Role</label>
+                                    <select
+                                        v-model="inviteForm.user_type"
+                                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors text-[#111827] dark:text-zinc-100 bg-white dark:bg-zinc-950"
+                                    >
+                                        <option value="mahasiswa">Mahasiswa</option>
+                                        <option value="dosen">Dosen</option>
+                                        <option value="alumni">Alumni</option>
+                                        <option value="mitra">Mitra</option>
+                                        <option value="staff">Staff</option>
+                                        <option value="super_admin">Super Admin</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Modal Footer -->
+                            <div class="px-6 py-4 flex justify-end gap-2 border-t border-[#e5e7eb] dark:border-zinc-800 rounded-b-xl bg-[#f9fafb] dark:bg-zinc-800/20">
+                                <button
+                                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-300 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f3f4f6] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm cursor-pointer dark:shadow-none"
+                                    @click="modal.inviteUser = false"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    :disabled="isSendingInvite || !inviteForm.email"
+                                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#2563eb] dark:bg-blue-600 hover:bg-[#1d4ed8] dark:hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2 border-0 cursor-pointer dark:shadow-none"
+                                    @click="sendInvitation"
+                                >
+                                    <svg v-if="isSendingInvite" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    {{ isSendingInvite ? 'Sending...' : 'Send invitation' }}
                                 </button>
                             </div>
                         </div>

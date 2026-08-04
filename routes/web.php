@@ -62,6 +62,9 @@ use Laravel\Fortify\Http\Requests\LoginRequest;
 
 // ─── Public Pages ────────────────────────────────────────────────────────────
 
+Route::get('/invitations/accept', [App\Http\Controllers\Auth\InvitationAcceptController::class, 'show'])->name('invitations.accept');
+Route::post('/invitations/accept', [App\Http\Controllers\Auth\InvitationAcceptController::class, 'accept'])->name('invitations.accept.process');
+
 Route::get('/', function () {
     if (Auth::check()) {
         return redirect()->route('dashboard');

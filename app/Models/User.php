@@ -59,10 +59,8 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, HasPagiRelations, Notifiable, Searchable, UserHelpers;
 
     protected $fillable = [
-        'name', 'email', 'password', 'program_studi_id',
-        'no_telepon', 'foto_path', 'banner_path',
-        'nomor_induk',
-        // otp_code / otp_expires_at removed — now in auth_otp_tokens table
+        'name', 'email', 'password', 'user_type', 'status_approval', 'is_active', 'email_verified_at',
+        'program_studi_id', 'no_telepon', 'foto_path', 'banner_path', 'nomor_induk',
         'tahun_lulus', 'password_changed_at',
         'role_title', 'bio', 'location', 'website', 'twitter', 'linkedin', 'github', 'instagram',
         'metadata', 'tanggal_lahir', 'last_seen_at', 'pagi_username', 'deletion_requested_at',
