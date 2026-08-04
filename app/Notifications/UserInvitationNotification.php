@@ -26,7 +26,7 @@ class UserInvitationNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $acceptUrl = url('/invitations/accept?token='.$this->invitation->token);
+        $acceptUrl = url('/user-invitations/accept?token='.$this->invitation->token);
         $name = trim($this->invitation->first_name.' '.$this->invitation->last_name) ?: 'Rekan';
 
         return (new MailMessage)

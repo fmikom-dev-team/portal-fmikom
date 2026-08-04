@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class InvitationAcceptController extends Controller
+class UserInvitationAcceptController extends Controller
 {
     public function show(Request $request): Response
     {
@@ -81,9 +81,7 @@ class InvitationAcceptController extends Controller
             'email_verified_at' => now(),
         ]);
 
-        if (method_exists($newUser, 'assignDefaultModuleRoles')) {
-            $newUser->assignDefaultModuleRoles();
-        }
+        $newUser->assignDefaultModuleRoles();
 
         $invitation->update(['status' => 'accepted', 'accepted_at' => now()]);
 
