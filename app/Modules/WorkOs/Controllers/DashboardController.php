@@ -1384,18 +1384,30 @@ class DashboardController extends Controller // NOSONAR
         return back()->with('success', 'Semua notifikasi berhasil ditandai sebagai dibaca.');
     }
 
-    public function clearNotifications(Request $request)
+    public function clearNotifications()
     {
-        $user = $request->user();
-        $user->notifications()->delete();
-        cache()->put('user_notifications_cleared_'.$user->id, true, now()->addDays(30));
+        $user = auth()->user();
+        if ($user) {
+            $user->notifications()->delete();
+            PortalSetting::updateOrCreate(
+                ['key' => 'notif_cleared_'.$user->id],
+                ['value' => '1']
+            );
+        }
 
         return back()->with('success', 'Log aktivitas berhasil dikosongkan.');
     }
 
     public function destroyNotification(Request $request, $id)
     {
-        $request->user()->notifications()->where('id', $id)->delete();
+        $user = $request->user();
+        $user->notifications()->where('id', $id)->delete();
+        if ($user->notifications()->count() === 0) {
+            PortalSetting::updateOrCreate(
+                ['key' => 'notif_cleared_'.$user->id],
+                ['value' => '1']
+            );
+        }
 
         return back()->with('success', 'Item log berhasil dihapus.');
     }
@@ -1415,10 +1427,11 @@ class DashboardController extends Controller // NOSONAR
 
     private function getNotificationsForUser(User $user): array
     {
-        $cleared = cache()->get('user_notifications_cleared_'.$user->id, false);
+        $cleared = PortalSetting::where('key', 'notif_cleared_'.$user->id)->value('value') === '1';
+        $seeded = PortalSetting::where('key', 'notif_seeded_'.$user->id)->value('value') === '1';
         $hasAlerts = $user->notifications()->exists();
 
-        if (! $hasAlerts && ! $cleared) {
+        if (! $hasAlerts && ! $cleared && ! $seeded) {
             $this->seedDefaultNotificationsForUser($user);
         }
 

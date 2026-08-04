@@ -35,6 +35,7 @@ const emit = defineEmits<{
 const page = usePage();
 const authUser = computed(() => (page.props as any).auth?.user);
 const siteSettings = computed(() => (page.props as any).siteSettings || {});
+const imageError = ref(false);
 const userInitial = computed(() =>
 	(authUser.value?.name ?? "A").charAt(0).toUpperCase(),
 );
@@ -228,14 +229,11 @@ const activeTheme = computed({
         >
             <!-- Logo mark -->
             <div
-                class="w-[30px] h-[30px] rounded-[7px] flex items-center justify-center shrink-0 cursor-pointer overflow-hidden transition-all duration-300"
-                :class="siteSettings.brand_logo ? 'bg-transparent border-0 p-0 shadow-none' : 'bg-[#2563EB]'"
+                class="w-[30px] h-[30px] rounded-[7px] flex items-center justify-center shrink-0 cursor-pointer overflow-hidden transition-all duration-300 bg-transparent border-0 p-0 shadow-none"
                 @click="collapsed ? emit('toggle-collapse') : null"
             >
-                <img v-if="siteSettings.brand_logo" :src="siteSettings.brand_logo" alt="Brand Logo" class="w-full h-full object-contain" />
-                <svg v-else class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="color: #B6FF00">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+                <img v-if="siteSettings.brand_logo && !imageError" :src="siteSettings.brand_logo" @error="imageError = true" alt="Brand Logo" class="w-full h-full object-contain" />
+                <img v-else src="/asset/brand-logo.webp" alt="Brand Logo" class="w-full h-full object-contain" />
             </div>
 
             <!-- Brand name + controls (transitioned) -->
