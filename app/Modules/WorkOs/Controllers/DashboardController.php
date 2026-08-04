@@ -1897,6 +1897,57 @@ class DashboardController extends Controller // NOSONAR
 
     public function sendInvitation(Request $request)
     {
+        if ($request->has('members') && is_array($request->members)) {
+            $request->validate([
+                'members' => ['required', 'array', 'min:1'],
+                'members.*.email' => ['required', 'email', 'max:255'],
+                'members.*.user_type' => ['required', 'in:mahasiswa,alumni,mitra,dosen,staff,super_admin'],
+            ]);
+
+            $sentCount = 0;
+            $skippedCount = 0;
+
+            foreach ($request->members as $member) {
+                $email = trim($member['email'] ?? '');
+                $userType = $member['user_type'] ?? 'mahasiswa';
+
+                if (empty($email)) {
+                    continue;
+                }
+
+                if (User::where('email', $email)->exists()) {
+                    $skippedCount++;
+
+                    continue;
+                }
+
+                $invitation = UserInvitation::updateOrCreate(
+                    ['email' => $email],
+                    [
+                        'user_type' => $userType,
+                        'token' => Str::random(64),
+                        'status' => 'pending',
+                        'invited_by_user_id' => auth()->id(),
+                        'expires_at' => now()->addDays(7),
+                        'accepted_at' => null,
+                    ]
+                );
+
+                try {
+                    Notification::route('mail', $email)->notify(new UserInvitationNotification($invitation));
+                    $sentCount++;
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            }
+
+            if ($sentCount === 0 && $skippedCount > 0) {
+                return back()->with('error', 'Semua email yang dimasukkan sudah terdaftar sebagai pengguna aktif.');
+            }
+
+            return back()->with('success', "{$sentCount} Email undangan berhasil dikirim.");
+        }
+
         $request->validate([
             'email' => ['required', 'email', 'max:255'],
             'first_name' => ['nullable', 'string', 'max:100'],

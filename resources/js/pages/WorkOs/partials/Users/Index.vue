@@ -339,30 +339,59 @@ const copyInviteLink = (token: string) => {
 	});
 };
 
-const inviteForm = reactive({
-	first_name: "",
-	last_name: "",
-	email: "",
-	user_type: "mahasiswa",
+const inviteMembers = ref([
+	{ email: "", user_type: "mahasiswa" }
+]);
+
+function addInviteMember() {
+	inviteMembers.value.push({ email: "", user_type: "mahasiswa" });
+}
+
+function removeInviteMember(idx: number) {
+	if (inviteMembers.value.length > 1) {
+		inviteMembers.value.splice(idx, 1);
+	}
+}
+
+const quickInviteLink = computed(() => {
+	if (typeof window !== "undefined") {
+		return `${window.location.origin}/register`;
+	}
+	return "/register";
 });
+
+const copiedQuickLink = ref(false);
+function copyQuickInviteLink() {
+	if (typeof navigator !== "undefined") {
+		navigator.clipboard.writeText(quickInviteLink.value).then(() => {
+			copiedQuickLink.value = true;
+			setTimeout(() => {
+				copiedQuickLink.value = false;
+			}, 1800);
+			toast("Tautan pendaftaran cepat berhasil disalin!", "success");
+		});
+	}
+}
 
 const isSendingInvite = ref(false);
 
 const sendInvitation = () => {
-	if (!inviteForm.email || isSendingInvite.value) return;
+	const validMembers = inviteMembers.value.filter((m) => m.email.trim() !== "");
+	if (validMembers.length === 0 || isSendingInvite.value) {
+		toast("Masukkan setidaknya satu alamat email yang valid.", "warning");
+		return;
+	}
+
 	isSendingInvite.value = true;
-	router.post("/workos/invitations/send", { ...inviteForm }, {
+	router.post("/workos/invitations/send", { members: validMembers }, {
 		preserveScroll: true,
 		only: ["invitations", "users"],
 		onSuccess: () => {
 			modal.inviteUser = false;
-			inviteForm.first_name = "";
-			inviteForm.last_name = "";
-			inviteForm.email = "";
-			inviteForm.user_type = "mahasiswa";
+			inviteMembers.value = [{ email: "", user_type: "mahasiswa" }];
 		},
 		onError: (err: any) => {
-			toast(err.email || err.error || "Gagal mengirim undangan email.", "error");
+			toast(err.email || err.message || err.error || "Gagal mengirim undangan email.", "error");
 		},
 		onFinish: () => {
 			isSendingInvite.value = false;
@@ -1377,84 +1406,126 @@ function executeRejectAction() {
                         leave-to-class="opacity-0 scale-95"
                         leave-active-class="transition-all duration-150"
                     >
-                        <div v-if="modal.inviteUser" class="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-[#e5e7eb] dark:border-zinc-800 w-full max-w-[480px] dark:shadow-none">
+                        <div v-if="modal.inviteUser" class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-slate-200/90 dark:border-zinc-800 w-full max-w-[540px] dark:shadow-none overflow-hidden">
                             <!-- Modal Header -->
-                            <div class="px-6 pt-6 pb-4">
-                                <h2 class="text-[18px] font-semibold text-[#111827] dark:text-zinc-100 tracking-tight">Invite user</h2>
-                                <p class="text-[12.5px] text-[#6b7280] dark:text-zinc-400 mt-1">
-                                    Kirim email undangan agar pengguna dapat menyetel password dan mengaktifkan akun secara mandiri.
-                                </p>
+                            <div class="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-zinc-800">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-100 dark:border-blue-900/50">
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h2 class="text-[17px] font-bold text-slate-900 dark:text-zinc-100 tracking-tight">Undang Pengguna Baru</h2>
+                                            <p class="text-[12px] text-slate-500 dark:text-zinc-400">Tambah beberapa anggota sekaligus & tentukan perannya.</p>
+                                        </div>
+                                    </div>
+                                    <button @click="modal.inviteUser = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors">
+                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- Modal Body -->
-                            <div class="px-6 pb-6 space-y-4">
-                                <!-- Names -->
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-[13px] font-semibold text-[#374151] dark:text-zinc-300 mb-1.5">First name</label>
-                                        <input
-                                            v-model="inviteForm.first_name"
-                                            type="text"
-                                            placeholder="Jane (optional)"
-                                            class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] dark:placeholder:text-zinc-500 text-[#111827] dark:text-zinc-100 bg-white dark:bg-zinc-950"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label class="block text-[13px] font-semibold text-[#374151] dark:text-zinc-300 mb-1.5">Last name</label>
-                                        <input
-                                            v-model="inviteForm.last_name"
-                                            type="text"
-                                            placeholder="Doe (optional)"
-                                            class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] dark:placeholder:text-zinc-500 text-[#111827] dark:text-zinc-100 bg-white dark:bg-zinc-950"
-                                        />
-                                    </div>
-                                </div>
+                            <div class="p-6 space-y-4">
+                                <label class="block text-[12px] font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">Daftar Email & Role Undangan</label>
                                 
-                                <!-- Email -->
-                                <div>
-                                    <label class="block text-[13px] font-semibold text-[#374151] dark:text-zinc-300 mb-1.5">Email address</label>
-                                    <input
-                                        v-model="inviteForm.email"
-                                        type="email"
-                                        placeholder="jane.doe@example.com"
-                                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] dark:placeholder:text-zinc-500 text-[#111827] dark:text-zinc-100 bg-white dark:bg-zinc-950"
-                                    />
+                                <!-- Dynamic Email Input Cards -->
+                                <div class="space-y-2.5 max-h-[260px] overflow-y-auto pr-1">
+                                    <div 
+                                        v-for="(member, idx) in inviteMembers" 
+                                        :key="idx"
+                                        class="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 bg-slate-50/80 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-700/80 rounded-xl transition-all hover:border-blue-200 dark:hover:border-zinc-600"
+                                    >
+                                        <div class="relative flex-1">
+                                            <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                            </svg>
+                                            <input
+                                                type="email"
+                                                v-model="member.email"
+                                                placeholder="nama@company.com"
+                                                class="w-full pl-9 pr-3 py-1.5 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-700 rounded-lg text-[13px] text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                            />
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <select
+                                                v-model="member.user_type"
+                                                class="h-8 px-2.5 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-700 rounded-lg text-[12px] font-semibold text-slate-700 dark:text-zinc-200 focus:outline-none focus:border-blue-500"
+                                            >
+                                                <option value="mahasiswa">Mahasiswa</option>
+                                                <option value="dosen">Dosen</option>
+                                                <option value="alumni">Alumni</option>
+                                                <option value="mitra">Mitra</option>
+                                                <option value="staff">Staff</option>
+                                                <option value="super_admin">Super Admin</option>
+                                            </select>
+                                            <button
+                                                v-if="inviteMembers.length > 1"
+                                                @click="removeInviteMember(idx)"
+                                                class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                                                title="Hapus Baris"
+                                            >
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <!-- User Type / Role -->
-                                <div>
-                                    <label class="block text-[13px] font-semibold text-[#374151] dark:text-zinc-300 mb-1.5">User Type / Role</label>
-                                    <select
-                                        v-model="inviteForm.user_type"
-                                        class="w-full h-9 px-3 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors text-[#111827] dark:text-zinc-100 bg-white dark:bg-zinc-950"
-                                    >
-                                        <option value="mahasiswa">Mahasiswa</option>
-                                        <option value="dosen">Dosen</option>
-                                        <option value="alumni">Alumni</option>
-                                        <option value="mitra">Mitra</option>
-                                        <option value="staff">Staff</option>
-                                        <option value="super_admin">Super Admin</option>
-                                    </select>
+                                <!-- Add Row Button -->
+                                <button
+                                    @click="addInviteMember"
+                                    class="inline-flex items-center gap-1.5 text-[12px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors cursor-pointer"
+                                >
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                                    + Tambah Baris Email Lain
+                                </button>
+
+                                <div class="relative my-2">
+                                    <div class="absolute inset-0 flex items-center"><span class="w-full border-t border-slate-200 dark:border-zinc-800" /></div>
+                                    <div class="relative flex justify-center text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500"><span class="bg-white dark:bg-zinc-900 px-2">Atau Melalui Tautan</span></div>
+                                </div>
+
+                                <!-- Quick Registration Link -->
+                                <div class="space-y-1.5">
+                                    <label class="text-[11.5px] font-semibold text-slate-600 dark:text-zinc-400">Salin Tautan Pendaftaran Cepat</label>
+                                    <div class="flex items-center gap-2">
+                                        <input
+                                            type="text"
+                                            readonly
+                                            :value="quickInviteLink"
+                                            class="flex-1 px-3 py-1.5 bg-slate-100 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 rounded-lg text-[12px] text-slate-600 dark:text-zinc-300 font-mono select-all focus:outline-none"
+                                        />
+                                        <button
+                                            @click="copyQuickInviteLink"
+                                            class="h-8 px-3 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 text-[12px] font-semibold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm text-slate-700 dark:text-zinc-200"
+                                        >
+                                            <svg v-if="copiedQuickLink" class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                            <svg v-else class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                            {{ copiedQuickLink ? 'Tersalin!' : 'Salin Link' }}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Modal Footer -->
-                            <div class="px-6 py-4 flex justify-end gap-2 border-t border-[#e5e7eb] dark:border-zinc-800 rounded-b-xl bg-[#f9fafb] dark:bg-zinc-800/20">
+                            <div class="px-6 py-4 flex justify-end gap-2 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/20">
                                 <button
-                                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-300 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f3f4f6] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm cursor-pointer dark:shadow-none"
+                                    class="h-[34px] px-4 rounded-lg text-[13px] font-semibold text-slate-700 dark:text-zinc-300 border border-slate-300 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm cursor-pointer"
                                     @click="modal.inviteUser = false"
                                 >
-                                    Cancel
+                                    Batal
                                 </button>
                                 <button
-                                    :disabled="isSendingInvite || !inviteForm.email"
-                                    class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-[#2563eb] dark:bg-blue-600 hover:bg-[#1d4ed8] dark:hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2 border-0 cursor-pointer dark:shadow-none"
+                                    :disabled="isSendingInvite"
                                     @click="sendInvitation"
+                                    class="h-[34px] px-5 rounded-lg text-[13px] font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm cursor-pointer disabled:opacity-50 flex items-center gap-2 border-0"
                                 >
-                                    <svg v-if="isSendingInvite" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
-                                    {{ isSendingInvite ? 'Sending...' : 'Send invitation' }}
+                                    <svg v-if="isSendingInvite" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                    {{ isSendingInvite ? 'Mengirim...' : `Kirim ${inviteMembers.length} Undangan Email` }}
                                 </button>
                             </div>
                         </div>
