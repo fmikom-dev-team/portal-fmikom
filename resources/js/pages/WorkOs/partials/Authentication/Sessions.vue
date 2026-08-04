@@ -2,6 +2,7 @@
 import axios from "axios";
 import { AlertCircle, Check, Clock, Globe } from "lucide-vue-next";
 import { onMounted, ref } from "vue";
+import { showToast as globalShowToast } from "@/composables/useGlobalToast";
 import AppModal from "../../components/ui/AppModal.vue";
 
 const showLifetimeModal = ref(false);
@@ -21,10 +22,7 @@ const newOrigin = ref("");
 
 const toast = ref<{ type: "success" | "error"; message: string } | null>(null);
 const showToast = (message: string, type: "success" | "error" = "success") => {
-	toast.value = { type, message };
-	setTimeout(() => {
-		toast.value = null;
-	}, 3000);
+	globalShowToast(message, type);
 };
 
 const isLoading = ref(false);

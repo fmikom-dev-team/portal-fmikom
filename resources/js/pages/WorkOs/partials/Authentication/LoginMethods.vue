@@ -11,6 +11,7 @@ import {
 } from "lucide-vue-next";
 import { computed, onMounted, ref } from "vue";
 import AppModal from "../../components/ui/AppModal.vue";
+import { showToast as globalShowToast } from "@/composables/useGlobalToast";
 
 const emit = defineEmits(["navigate"]);
 
@@ -185,10 +186,7 @@ const saveMagicLinksSettings = async () => {
 // Toast
 // ─────────────────────────────────────────────────────────────────────────────
 const showToast = (type: "success" | "error", message: string) => {
-	toast.value = { type, message };
-	setTimeout(() => {
-		toast.value = null;
-	}, 3000);
+	globalShowToast(message, type);
 };
 
 // Complexity maps 1-4 → WorkOS labels

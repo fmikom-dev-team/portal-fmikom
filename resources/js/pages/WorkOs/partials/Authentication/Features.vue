@@ -13,6 +13,7 @@ import {
 	UserPlus,
 } from "lucide-vue-next";
 import { computed, onMounted, ref } from "vue";
+import { showToast as globalShowToast } from "@/composables/useGlobalToast";
 import AppModal from "../../components/ui/AppModal.vue";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -199,10 +200,7 @@ const enableFeature = async (key: string) => {
 // Toast
 // ─────────────────────────────────────────────────────────────────────────────
 const showToast = (type: "success" | "error", message: string) => {
-	toast.value = { type, message };
-	setTimeout(() => {
-		toast.value = null;
-	}, 3000);
+	globalShowToast(message, type);
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
