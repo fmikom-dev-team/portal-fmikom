@@ -64,7 +64,6 @@ class PortalPost extends Model
         'status',
         'published_at',
         'thumbnail',
-        'thumbnail_path',
         'og_image',
         'meta_title',
         'meta_description',
