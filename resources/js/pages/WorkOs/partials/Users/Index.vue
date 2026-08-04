@@ -20,6 +20,7 @@ const GENERIC_KEY_SVG = `<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 inline-bloc
 const props = defineProps<{
 	users: Array<any> | Record<string, any>;
 	roles?: Array<any>;
+	invitations?: Array<any>;
 	pendingCount: number;
 	searchQuery?: string;
 }>();
@@ -106,7 +107,7 @@ function applyFilters() {
 		},
 		preserveState: true,
 		preserveScroll: true,
-		only: ["users"],
+		only: ["users", "invitations"],
 	});
 }
 
@@ -298,12 +299,39 @@ onUnmounted(() => {
 // ─── MODALS ───────────────────────────────────────────────────────────────────
 const modal = reactive({ createUser: false, inviteUser: false, uploadUsers: false });
 
+const invitationSearch = ref("");
+
 const invitationsList = computed(() => {
 	const pageProps = usePage().props as any;
 	if (props.invitations && Array.isArray(props.invitations)) return props.invitations;
 	if (pageProps.invitations && Array.isArray(pageProps.invitations)) return pageProps.invitations;
 	return [];
 });
+
+const filteredInvitations = computed(() => {
+	const list = invitationsList.value;
+	if (!invitationSearch.value.trim()) return list;
+	const query = invitationSearch.value.toLowerCase();
+	return list.filter((inv: any) =>
+		(inv.email && inv.email.toLowerCase().includes(query)) ||
+		(inv.first_name && inv.first_name.toLowerCase().includes(query)) ||
+		(inv.last_name && inv.last_name.toLowerCase().includes(query)) ||
+		(inv.user_type && inv.user_type.toLowerCase().includes(query))
+	);
+});
+
+const copyInviteLink = (token: string) => {
+	if (!token) {
+		toast("Token undangan tidak ditemukan.", "error");
+		return;
+	}
+	const link = `${window.location.origin}/invitations/accept/${token}`;
+	navigator.clipboard.writeText(link).then(() => {
+		toast("Link undangan berhasil disalin!", "success");
+	}).catch(() => {
+		toast("Gagal menyalin link undangan.", "error");
+	});
+};
 
 const inviteForm = reactive({
 	first_name: "",
@@ -884,8 +912,9 @@ function executeRejectAction() {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z" />
                 </svg>
                 <input
+                    v-model="invitationSearch"
                     type="search"
-                    placeholder="Search"
+                    placeholder="Cari email, nama, atau tipe..."
                     class="w-full sm:w-[280px] h-[34px] pl-8 pr-3 text-[13px] border border-[#d1d5db] dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] transition-colors placeholder:text-[#9ca3af] dark:placeholder:text-zinc-500 text-[#111827] dark:text-zinc-100 shadow-sm bg-white dark:bg-zinc-900 dark:shadow-none"
                 />
             </div>
@@ -908,7 +937,7 @@ function executeRejectAction() {
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-[#e5e7eb] dark:divide-zinc-800">
-                            <tr v-for="inv in invitationsList" :key="inv.id" class="hover:bg-[#f9fafb] dark:hover:bg-zinc-800/50 transition-colors">
+                            <tr v-for="inv in filteredInvitations" :key="inv.id" class="hover:bg-[#f9fafb] dark:hover:bg-zinc-800/50 transition-colors">
                                 <td class="px-4 py-3">
                                     <div class="text-[13px] font-medium text-[#111827] dark:text-zinc-100">{{ inv.first_name }} {{ inv.last_name }}</div>
                                     <div class="text-[12px] text-[#6b7280] dark:text-zinc-400">{{ inv.email }}</div>
@@ -930,6 +959,17 @@ function executeRejectAction() {
                                 <td class="px-4 py-3 text-[13px] text-[#374151] dark:text-zinc-300">{{ inv.invited_by }}</td>
                                 <td class="px-4 py-3 text-[12px] text-[#6b7280] dark:text-zinc-400">{{ inv.expires_at }}</td>
                                 <td class="px-4 py-3 text-right space-x-2">
+                                    <button
+                                        v-if="inv.token && inv.status === 'pending'"
+                                        @click="copyInviteLink(inv.token)"
+                                        title="Salin URL Pendaftaran"
+                                        class="px-2.5 py-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded text-[12px] font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors shadow-sm dark:shadow-none cursor-pointer inline-flex items-center gap-1"
+                                    >
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                        Salin Link
+                                    </button>
                                     <button v-if="inv.status === 'pending'" @click="resendInvite(inv.id)" class="px-2.5 py-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded text-[12px] font-medium text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors shadow-sm dark:shadow-none cursor-pointer">
                                         Kirim Ulang
                                     </button>

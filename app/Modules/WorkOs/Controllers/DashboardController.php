@@ -1983,6 +1983,7 @@ class DashboardController extends Controller // NOSONAR
                 'invited_by' => optional($inv->invitedBy)->name ?: 'System Admin',
                 'created_at' => $inv->created_at->format('M d, Y g:i A'),
                 'expires_at' => $inv->expires_at->format('M d, Y g:i A'),
+                'token' => $inv->token,
             ])
             ->toArray();
     }
