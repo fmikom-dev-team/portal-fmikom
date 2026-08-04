@@ -137,7 +137,23 @@ const submit = async (status) => {
 	}
 
 	form.status = status;
-	form.post("/portal-admin/posts", { forceFormData: true });
+	if (!form.title) {
+		form.title = "Draft Tanpa Judul";
+	}
+	if (!form.slug) {
+		form.slug = `draft-${Date.now()}`;
+	}
+
+	form.transform((data) => {
+		const payload = { ...data };
+		if (!data.thumbnail && data.thumbnail_preview) {
+			payload.thumbnail = data.thumbnail_preview;
+		}
+		if (!data.og_image && data.og_image_preview) {
+			payload.og_image = data.og_image_preview;
+		}
+		return payload;
+	}).post("/portal-admin/posts", { forceFormData: true });
 };
 
 /* ── Preview ── */

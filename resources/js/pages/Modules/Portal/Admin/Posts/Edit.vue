@@ -51,10 +51,10 @@ const form = useForm({
 	meta_description: props.post.meta_description || "",
 	thumbnail: null,
 	thumbnail_url: props.post.thumbnail || null,
-	thumbnail_preview: null,
+	thumbnail_preview: props.post.thumbnail || null,
 	og_image: null,
 	og_image_url: props.post.og_image || null,
-	og_image_preview: null,
+	og_image_preview: props.post.og_image || null,
 });
 
 /* ── Autosave ── */
@@ -171,11 +171,11 @@ const submit = async (status) => {
 			...data,
 			_method: "PUT",
 		};
-		if (!data.thumbnail && data.thumbnail_url) {
-			payload.thumbnail = data.thumbnail_url;
+		if (!data.thumbnail && (data.thumbnail_preview || data.thumbnail_url)) {
+			payload.thumbnail = data.thumbnail_preview || data.thumbnail_url;
 		}
-		if (!data.og_image && data.og_image_url) {
-			payload.og_image = data.og_image_url;
+		if (!data.og_image && (data.og_image_preview || data.og_image_url)) {
+			payload.og_image = data.og_image_preview || data.og_image_url;
 		}
 		return payload;
 	}).post(`/portal-admin/posts/${props.post.id}`, { forceFormData: true });

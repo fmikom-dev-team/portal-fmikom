@@ -100,7 +100,7 @@ class PortalPostController extends Controller
                     ]);
                 } elseif ($request->filled($field)) {
                     $request->validate([
-                        $field => 'string|max:255',
+                        $field => 'string|max:1000',
                     ]);
                 }
             }
@@ -127,6 +127,8 @@ class PortalPostController extends Controller
         } else {
             $validated['thumbnail'] = $this->extractFirstImageFromContent($content);
         }
+
+        $validated['thumbnail_path'] = $validated['thumbnail'];
 
         if ($request->hasFile('og_image')) {
             $validated['og_image'] = $this->processAndStoreImage($request->file('og_image'), 'portal/posts/seo');
@@ -196,7 +198,7 @@ class PortalPostController extends Controller
                     ]);
                 } elseif ($request->filled($field)) {
                     $request->validate([
-                        $field => 'string|max:255',
+                        $field => 'string|max:1000',
                     ]);
                 }
             }
@@ -228,6 +230,8 @@ class PortalPostController extends Controller
         } else {
             $validated['thumbnail'] = $post->thumbnail ?? $this->extractFirstImageFromContent($content);
         }
+
+        $validated['thumbnail_path'] = $validated['thumbnail'];
 
         if ($request->hasFile('og_image')) {
             // Delete old og_image if exists
