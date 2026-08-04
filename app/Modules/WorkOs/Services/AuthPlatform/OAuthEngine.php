@@ -64,8 +64,8 @@ class OAuthEngine
             $driver->stateless();
         }
 
-        if ($providerConfig->scopes) {
-            $driver->scopes(explode(',', $providerConfig->scopes));
+        if (! empty($providerConfig->scopes)) {
+            $driver->scopes($providerConfig->scopes);
         }
 
         return $driver->redirect()->getTargetUrl();
