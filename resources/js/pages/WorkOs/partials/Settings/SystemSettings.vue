@@ -1,25 +1,33 @@
 <script setup lang="ts">
 import { router, usePage } from "@inertiajs/vue3";
+import axios from "axios";
 import {
 	AlertCircle,
 	Building2,
 	Camera,
 	CheckCircle,
 	Cpu,
+	Edit3,
+	ExternalLink,
 	Globe,
 	Info,
 	Layers,
 	LayoutGrid,
+	Link as LinkIcon,
 	Loader2,
 	Lock,
+	Plus,
 	RefreshCw,
 	Save,
+	Search,
 	ShieldAlert,
 	Sparkles,
+	Trash2,
 	UploadCloud,
 	X,
 } from "lucide-vue-next";
-import { computed, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
+import { toast } from "../../composables/useWorkOs";
 
 const props = defineProps<{
 	settings: Record<string, string>;
@@ -43,7 +51,103 @@ const form = reactive({
 	maintenance_message: props.settings.maintenance_message || "Sistem sedang dalam pemeliharaan. Silakan kembali beberapa saat lagi.",
 	public_registration: props.settings.public_registration !== "0" ? "1" : "0",
 	helpdesk_wa_number: props.settings.helpdesk_wa_number || "628123456789",
+	seo_meta_title: props.settings.seo_meta_title || "Portal FMIKOM - Fakultas Matematika dan Ilmu Komputer UNUGHA",
+	seo_meta_description: props.settings.seo_meta_description || "Sistem informasi terpadu, direktori alumni, jaringan mitra industri, dan layanan akademik FMIKOM UNUGHA.",
 });
+
+// Sitelinks CRUD State
+interface Sitelink {
+	id?: number;
+	title: string;
+	description: string;
+	url: string;
+	icon: string;
+	order_index?: number;
+	is_active: boolean;
+}
+
+const sitelinks = ref<Sitelink[]>([]);
+const isLoadingSitelinks = ref(false);
+const isSitelinkModalOpen = ref(false);
+const editingSitelinkId = ref<number | null>(null);
+
+const sitelinkForm = reactive<Sitelink>({
+	title: "",
+	description: "",
+	url: "",
+	icon: "Link",
+	is_active: true,
+});
+
+const fetchSitelinks = async () => {
+	isLoadingSitelinks.value = true;
+	try {
+		const res = await axios.get("/workos/settings/sitelinks");
+		sitelinks.value = res.data.sitelinks || [];
+	} catch (e) {
+		console.error("Failed to fetch sitelinks", e);
+	} finally {
+		isLoadingSitelinks.value = false;
+	}
+};
+
+onMounted(() => {
+	fetchSitelinks();
+});
+
+const openSitelinkModal = (item?: Sitelink) => {
+	if (item) {
+		editingSitelinkId.value = item.id || null;
+		sitelinkForm.title = item.title;
+		sitelinkForm.description = item.description || "";
+		sitelinkForm.url = item.url;
+		sitelinkForm.icon = item.icon || "Link";
+		sitelinkForm.is_active = item.is_active;
+	} else {
+		editingSitelinkId.value = null;
+		sitelinkForm.title = "";
+		sitelinkForm.description = "";
+		sitelinkForm.url = "";
+		sitelinkForm.icon = "Link";
+		sitelinkForm.is_active = true;
+	}
+	isSitelinkModalOpen.value = true;
+};
+
+const closeSitelinkModal = () => {
+	isSitelinkModalOpen.value = false;
+};
+
+const saveSitelink = async () => {
+	if (!sitelinkForm.title || !sitelinkForm.url) {
+		toast("Judul dan Target URL wajib diisi", "error");
+		return;
+	}
+	try {
+		if (editingSitelinkId.value) {
+			await axios.put(`/workos/settings/sitelinks/${editingSitelinkId.value}`, sitelinkForm);
+			toast("Sitelink berhasil diperbarui", "success");
+		} else {
+			await axios.post("/workos/settings/sitelinks", sitelinkForm);
+			toast("Sitelink baru berhasil ditambahkan", "success");
+		}
+		closeSitelinkModal();
+		fetchSitelinks();
+	} catch (e: any) {
+		toast(e.response?.data?.message || "Gagal menyimpan sitelink", "error");
+	}
+};
+
+const deleteSitelink = async (id: number) => {
+	if (!confirm("Apakah Anda yakin ingin menghapus Sitelink Google ini?")) return;
+	try {
+		await axios.delete(`/workos/settings/sitelinks/${id}`);
+		toast("Sitelink berhasil dihapus", "success");
+		fetchSitelinks();
+	} catch (e: any) {
+		toast("Gagal menghapus sitelink", "error");
+	}
+};
 
 // For previews
 const defaultLogo = "/asset/brand-logo.webp";
@@ -238,6 +342,7 @@ const flushCache = async () => {
 					<button
 						v-for="tab in [
 							{ id: 'branding', label: 'Branding & Visual', icon: Sparkles },
+							{ id: 'seo', label: 'SEO & Google Sitelinks', icon: Search },
 							{ id: 'system', label: 'Sistem & Maintenance', icon: ShieldAlert },
 							{ id: 'access', label: 'Akses & Registrasi', icon: Lock },
 							{ id: 'utility', label: 'Server & Utility', icon: Cpu },
@@ -382,6 +487,143 @@ const flushCache = async () => {
 							<p class="text-[11px] text-gray-500 dark:text-zinc-400 leading-relaxed">
 								Perubahan pada <strong>Nama Aplikasi</strong>, <strong>Logo</strong>, <strong>Favicon</strong>, dan <strong>Warna Aksen</strong> akan langsung diterapkan secara instan ke seluruh sistem setelah Anda menyimpan perubahan.
 							</p>
+						</div>
+					</div>
+
+					<!-- TAB 2: SEO & GOOGLE SITELINKS -->
+					<div v-show="activeTab === 'seo'" class="space-y-6">
+						<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+							<div>
+								<h3 class="text-[14.5px] font-bold text-gray-900 dark:text-zinc-100 flex items-center gap-2">
+									<Search class="w-4 h-4 text-blue-500" /> Mesin Pencari (SEO) & Google Sitelinks
+								</h3>
+								<p class="text-[11.5px] text-gray-500 dark:text-zinc-400 mt-0.5">Kelola judul meta, deskripsi pencarian, dan sub-link daftar Google untuk portal FMIKOM.</p>
+							</div>
+							<button
+								type="button"
+								@click="openSitelinkModal()"
+								class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[12px] font-semibold transition-colors cursor-pointer shadow-xs border-0"
+							>
+								<Plus class="w-4 h-4" /> Tambah Sitelink
+							</button>
+						</div>
+
+						<!-- Meta Title & Description Inputs -->
+						<div class="grid grid-cols-1 gap-4">
+							<div class="space-y-2">
+								<label class="block text-[12px] font-bold text-gray-700 dark:text-zinc-300">SEO Meta Title (Judul Google)</label>
+								<input
+									v-model="form.seo_meta_title"
+									type="text"
+									placeholder="Contoh: Portal FMIKOM - Fakultas Matematika dan Ilmu Komputer UNUGHA"
+									class="w-full bg-gray-50 dark:bg-zinc-800/40 border border-gray-200 dark:border-zinc-700 rounded-lg px-3.5 py-2.5 text-[13px] font-medium text-gray-800 dark:text-zinc-100 focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 focus:border-transparent outline-none transition-all"
+								/>
+							</div>
+
+							<div class="space-y-2">
+								<label class="block text-[12px] font-bold text-gray-700 dark:text-zinc-300">SEO Meta Description (Deskripsi Google)</label>
+								<textarea
+									v-model="form.seo_meta_description"
+									rows="2"
+									placeholder="Deskripsi ringkas yang tampil pada hasil pencarian Google..."
+									class="w-full bg-gray-50 dark:bg-zinc-800/40 border border-gray-200 dark:border-zinc-700 rounded-lg px-3.5 py-2.5 text-[13px] font-medium text-gray-800 dark:text-zinc-100 focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 focus:border-transparent outline-none transition-all resize-none"
+								></textarea>
+							</div>
+						</div>
+
+						<!-- Live Google Search Preview Card -->
+						<div class="space-y-2">
+							<label class="block text-[12px] font-bold text-gray-700 dark:text-zinc-300 flex items-center gap-1.5">
+								<Globe class="w-3.5 h-3.5 text-blue-600" /> Live Mockup Google Search Result
+							</label>
+							<div class="p-5 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-2xl shadow-xs space-y-3 font-sans">
+								<div class="flex items-center gap-2.5">
+									<img :src="faviconPreview" class="w-7 h-7 rounded-full object-contain bg-gray-100 dark:bg-zinc-800 p-1" alt="Favicon" />
+									<div>
+										<div class="text-[13.5px] font-medium text-[#202124] dark:text-zinc-200 leading-tight">Portal FMIKOM UNUGHA</div>
+										<div class="text-[11.5px] text-[#4d5156] dark:text-zinc-400">https://fmikom.unugha.ac.id</div>
+									</div>
+								</div>
+								<div class="text-[19px] font-normal text-[#1a0dab] dark:text-blue-400 hover:underline cursor-pointer leading-snug">
+									{{ form.seo_meta_title || 'Portal FMIKOM - Fakultas Matematika dan Ilmu Komputer UNUGHA' }}
+								</div>
+								<div class="text-[13px] text-[#4d5156] dark:text-zinc-300 leading-normal max-w-2xl">
+									{{ form.seo_meta_description || 'Sistem informasi terpadu, direktori alumni, jaringan mitra industri, dan layanan akademik FMIKOM UNUGHA.' }}
+								</div>
+
+								<!-- Live Sitelinks Sub-menu Grid -->
+								<div v-if="sitelinks.filter(s => s.is_active).length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 pt-3 border-t border-gray-100 dark:border-zinc-800">
+									<div v-for="st in sitelinks.filter(s => s.is_active)" :key="st.id" class="space-y-0.5">
+										<div class="text-[13.5px] font-medium text-[#1a0dab] dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-1">
+											{{ st.title }} <ExternalLink class="w-3 h-3 text-[#1a0dab] dark:text-blue-400" />
+										</div>
+										<div class="text-[11.5px] text-[#4d5156] dark:text-zinc-400 line-clamp-1">
+											{{ st.description || 'Halaman resmi portal FMIKOM' }}
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Sitelinks CRUD Table -->
+						<div class="space-y-3 pt-2">
+							<div class="flex items-center justify-between">
+								<h4 class="text-[13px] font-bold text-gray-900 dark:text-zinc-100 flex items-center gap-2">
+									<LinkIcon class="w-4 h-4 text-emerald-500" /> Daftar Sub-Link Sitelinks (Dikelola Dinamis)
+								</h4>
+								<span class="text-[11px] font-semibold text-gray-500 dark:text-zinc-400">Total: {{ sitelinks.length }} Items</span>
+							</div>
+
+							<div class="border border-gray-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-xs bg-white dark:bg-zinc-900">
+								<div v-if="isLoadingSitelinks" class="p-8 text-center text-gray-400 flex items-center justify-center gap-2 text-xs">
+									<Loader2 class="w-4 h-4 animate-spin text-blue-600" /> Memuat data sitelinks...
+								</div>
+								<div v-else-if="sitelinks.length === 0" class="p-8 text-center text-gray-400 dark:text-zinc-500 text-xs">
+									Belum ada sitelink yang didaftarkan. Klik "+ Tambah Sitelink" untuk membuat sub-link pertama.
+								</div>
+								<div v-else class="divide-y divide-gray-150 dark:divide-zinc-800">
+									<div
+										v-for="st in sitelinks"
+										:key="st.id"
+										class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-50/50 dark:hover:bg-zinc-800/40 transition-colors"
+									>
+										<div class="space-y-1 max-w-xl">
+											<div class="flex items-center gap-2">
+												<span class="font-bold text-[13px] text-gray-900 dark:text-zinc-100">{{ st.title }}</span>
+												<span class="text-[11px] font-mono px-2 py-0.5 bg-gray-100 dark:bg-zinc-800 rounded text-gray-600 dark:text-zinc-400">{{ st.url }}</span>
+												<span
+													:class="[
+														'text-[10px] font-bold px-2 py-0.5 rounded-full',
+														st.is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-zinc-400'
+													]"
+												>
+													{{ st.is_active ? 'Aktif 🟢' : 'Nonaktif ⚪' }}
+												</span>
+											</div>
+											<p class="text-[12px] text-gray-500 dark:text-zinc-400 line-clamp-1">{{ st.description }}</p>
+										</div>
+
+										<div class="flex items-center gap-2 shrink-0">
+											<button
+												type="button"
+												@click="openSitelinkModal(st)"
+												class="p-1.5 text-gray-500 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-lg transition-colors cursor-pointer border-0"
+												title="Edit Sitelink"
+											>
+												<Edit3 class="w-4 h-4" />
+											</button>
+											<button
+												type="button"
+												@click="deleteSitelink(st.id!)"
+												class="p-1.5 text-gray-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer border-0"
+												title="Hapus Sitelink"
+											>
+												<Trash2 class="w-4 h-4" />
+											</button>
+										</div>
+									</div>
+								</div>
+							</div>
 						</div>
 					</div>
 
@@ -668,6 +910,92 @@ const flushCache = async () => {
 							</div>
 						</div>
 					</Transition>
+				</div>
+			</div>
+		</Transition>
+
+		<!-- Sitelink Add/Edit Modal -->
+		<Transition
+			enter-active-class="transition duration-200 ease-out"
+			enter-from-class="opacity-0"
+			leave-active-class="transition duration-150 ease-in"
+			leave-to-class="opacity-0"
+		>
+			<div
+				v-if="isSitelinkModalOpen"
+				class="fixed inset-0 z-50 overflow-y-auto"
+			>
+				<div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+					<div class="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity" @click="closeSitelinkModal"></div>
+
+					<div class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg p-6 space-y-4">
+						<div class="flex items-center justify-between border-b border-gray-100 dark:border-zinc-800 pb-3">
+							<h3 class="text-[15px] font-bold text-gray-900 dark:text-zinc-100 flex items-center gap-2">
+								<Search class="w-4 h-4 text-blue-600" /> {{ editingSitelinkId ? 'Edit Sitelink Google' : 'Tambah Sitelink Google' }}
+							</h3>
+							<button @click="closeSitelinkModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200 cursor-pointer border-0 bg-transparent">
+								<X class="w-5 h-5" />
+							</button>
+						</div>
+
+						<div class="space-y-4">
+							<div class="space-y-1.5">
+								<label class="block text-[12px] font-bold text-gray-700 dark:text-zinc-300">Judul Sitelink (Google Sub-Title)</label>
+								<input
+									v-model="sitelinkForm.title"
+									type="text"
+									placeholder="Contoh: Tracer Study & Alumni"
+									class="w-full bg-gray-50 dark:bg-zinc-800/40 border border-gray-200 dark:border-zinc-700 rounded-lg px-3.5 py-2 text-[13px] font-medium text-gray-800 dark:text-zinc-100 focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 outline-none"
+								/>
+							</div>
+
+							<div class="space-y-1.5">
+								<label class="block text-[12px] font-bold text-gray-700 dark:text-zinc-300">Target URL</label>
+								<input
+									v-model="sitelinkForm.url"
+									type="text"
+									placeholder="Contoh: /tracer atau https://fmikom.unugha.ac.id/tracer"
+									class="w-full bg-gray-50 dark:bg-zinc-800/40 border border-gray-200 dark:border-zinc-700 rounded-lg px-3.5 py-2 text-[13px] font-mono text-gray-800 dark:text-zinc-100 focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 outline-none"
+								/>
+							</div>
+
+							<div class="space-y-1.5">
+								<label class="block text-[12px] font-bold text-gray-700 dark:text-zinc-300">Deskripsi Singkat untuk Google Search</label>
+								<textarea
+									v-model="sitelinkForm.description"
+									rows="2"
+									placeholder="Direktori lulusan dan jaringan alumni Fakultas Matematika dan Ilmu Komputer."
+									class="w-full bg-gray-50 dark:bg-zinc-800/40 border border-gray-200 dark:border-zinc-700 rounded-lg px-3.5 py-2 text-[12.5px] font-medium text-gray-800 dark:text-zinc-100 focus:ring-2 focus:ring-black dark:focus:ring-zinc-600 outline-none resize-none"
+								></textarea>
+							</div>
+
+							<div class="flex items-center justify-between pt-2">
+								<span class="text-[12px] font-bold text-gray-700 dark:text-zinc-300">Status Sitelink</span>
+								<label class="relative inline-flex items-center cursor-pointer">
+									<input type="checkbox" v-model="sitelinkForm.is_active" class="sr-only peer" />
+									<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-zinc-600 peer-checked:bg-emerald-600"></div>
+									<span class="ml-2 text-xs font-semibold text-gray-700 dark:text-zinc-300">{{ sitelinkForm.is_active ? 'Aktif 🟢' : 'Nonaktif ⚪' }}</span>
+								</label>
+							</div>
+						</div>
+
+						<div class="pt-4 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-end gap-2.5">
+							<button
+								type="button"
+								@click="closeSitelinkModal"
+								class="px-4 py-2 border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl text-[12.5px] font-semibold text-gray-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 shadow-xs transition-colors cursor-pointer"
+							>
+								Batal
+							</button>
+							<button
+								type="button"
+								@click="saveSitelink"
+								class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[12.5px] font-semibold transition-all shadow-sm cursor-pointer border-0"
+							>
+								Simpan Sitelink
+							</button>
+						</div>
+					</div>
 				</div>
 			</div>
 		</Transition>

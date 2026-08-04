@@ -13,6 +13,7 @@ use App\Models\Auth\RegistrationRequest;
 use App\Models\Module;
 use App\Models\Permission;
 use App\Models\Portal\PortalSetting;
+use App\Models\Portal\PortalSitelink;
 use App\Models\Radar\RadarBlockedItem;
 use App\Models\Radar\RadarDetection;
 use App\Models\Radar\RadarDevice;
@@ -35,6 +36,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -121,15 +123,22 @@ class DashboardController extends Controller // NOSONAR
             'public_registration' => ['nullable', 'in:0,1'],
             'helpdesk_wa_number' => ['nullable', 'string', 'max:30'],
             'helpdesk_wa_template' => ['nullable', 'string', 'max:2000'],
+            'seo_meta_title' => ['nullable', 'string', 'max:255'],
+            'seo_meta_description' => ['nullable', 'string', 'max:1000'],
             'brand_logo_file' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
             'brand_favicon_file' => ['nullable', 'file', 'mimes:ico,png', 'max:512'],
+            'seo_og_image_file' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:3072'],
         ]);
 
-        $allowed = ['maintenance_mode', 'maintenance_message', 'brand_name', 'brand_subtitle', 'brand_description', 'primary_color', 'public_registration', 'helpdesk_wa_number', 'helpdesk_wa_template'];
+        $allowed = [
+            'maintenance_mode', 'maintenance_message', 'brand_name', 'brand_subtitle',
+            'brand_description', 'primary_color', 'public_registration', 'helpdesk_wa_number',
+            'helpdesk_wa_template', 'seo_meta_title', 'seo_meta_description',
+        ];
 
         foreach ($allowed as $key) {
             if ($request->has($key)) {
-                PortalSetting::updateOrCreate(['key' => $key], ['value' => $request->input($key)]);
+                PortalSetting::updateOrCreate(['key' => $key], ['value' => (string) $request->input($key)]);
             }
         }
 
@@ -143,7 +152,6 @@ class DashboardController extends Controller // NOSONAR
                     'brand_logo_file' => $scanResult['reason'],
                 ]);
             }
-            $path = $file->store('branding', 'public');
             $mime = $file->getMimeType() ?: 'image/png';
             $base64 = base64_encode(file_get_contents($file->getRealPath()));
             $dataUri = "data:{$mime};base64,{$base64}";
@@ -158,11 +166,24 @@ class DashboardController extends Controller // NOSONAR
                     'brand_favicon_file' => $scanResult['reason'],
                 ]);
             }
-            $path = $file->store('branding', 'public');
             $mime = $file->getMimeType() ?: 'image/png';
             $base64 = base64_encode(file_get_contents($file->getRealPath()));
             $dataUri = "data:{$mime};base64,{$base64}";
             PortalSetting::updateOrCreate(['key' => 'brand_favicon'], ['value' => $dataUri]);
+        }
+
+        if ($request->hasFile('seo_og_image_file')) {
+            $file = $request->file('seo_og_image_file');
+            $scanResult = $scanner->scan($file);
+            if (! $scanResult['safe']) {
+                throw ValidationException::withMessages([
+                    'seo_og_image_file' => $scanResult['reason'],
+                ]);
+            }
+            $mime = $file->getMimeType() ?: 'image/png';
+            $base64 = base64_encode(file_get_contents($file->getRealPath()));
+            $dataUri = "data:{$mime};base64,{$base64}";
+            PortalSetting::updateOrCreate(['key' => 'seo_og_image'], ['value' => $dataUri]);
         }
 
         cache()->forget('portal_settings');
@@ -1542,7 +1563,132 @@ class DashboardController extends Controller // NOSONAR
             'helpdesk_wa_template' => $settings['helpdesk_wa_template'] ?? "Halo Admin FMIKOM, saya bermaksud mengajukan pembaruan email aktivasi akun:\n\n• Nama Mahasiswa : {nama}\n• NIM            : {nim}\n• Email Lama     : {email_lama}\n• Email Baru     : {email_baru}\n\nSaya siap melampirkan foto KTM/KTP sebagai verifikasi fisik. Mohon bantuannya.",
             'brand_logo' => $settings['brand_logo'] ?? '/asset/brand-logo.webp',
             'brand_favicon' => $settings['brand_favicon'] ?? '/asset/brand-logo.webp',
+            'seo_meta_title' => $settings['seo_meta_title'] ?? 'Portal FMIKOM - Fakultas Matematika dan Ilmu Komputer UNUGHA',
+            'seo_meta_description' => $settings['seo_meta_description'] ?? 'Sistem informasi terpadu, direktori alumni, jaringan mitra industri, dan layanan akademik FMIKOM UNUGHA.',
+            'seo_og_image' => $settings['seo_og_image'] ?? '/asset/brand-logo.webp',
         ];
+    }
+
+    public function getSitelinks()
+    {
+        if (Schema::hasTable('portal_sitelinks') && PortalSitelink::count() === 0) {
+            $defaultSitelinks = [
+                [
+                    'title' => 'Tracer Study & Alumni',
+                    'description' => 'Direktori lulusan dan jaringan alumni Fakultas Matematika dan Ilmu Komputer.',
+                    'url' => '/tracer',
+                    'icon' => 'GraduationCap',
+                    'order_index' => 1,
+                    'is_active' => true,
+                ],
+                [
+                    'title' => 'Mitra Industri & Kerja Sama',
+                    'description' => 'Jaringan perusahaan mitra dan peluang karir industri FMIKOM UNUGHA.',
+                    'url' => '/mitra',
+                    'icon' => 'Building',
+                    'order_index' => 2,
+                    'is_active' => true,
+                ],
+                [
+                    'title' => 'WIMS - Sistem Manajemen Magang',
+                    'description' => 'Platform manajemen magang, MBKM, dan evaluasi lapangan mahasiswa.',
+                    'url' => '/wims',
+                    'icon' => 'Briefcase',
+                    'order_index' => 3,
+                    'is_active' => true,
+                ],
+                [
+                    'title' => 'PAGI - Sistem Penjaminan Mutu',
+                    'description' => 'Penjaminan mutu internal dan sertifikasi kompetensi civitas akademika.',
+                    'url' => '/pagi',
+                    'icon' => 'ShieldCheck',
+                    'order_index' => 4,
+                    'is_active' => true,
+                ],
+            ];
+
+            foreach ($defaultSitelinks as $sitelink) {
+                PortalSitelink::create($sitelink);
+            }
+        }
+
+        $sitelinks = Schema::hasTable('portal_sitelinks')
+            ? PortalSitelink::orderBy('order_index', 'asc')->get()
+            : collect([]);
+
+        return response()->json(['sitelinks' => $sitelinks]);
+    }
+
+    public function storeSitelink(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+            'url' => 'required|string|max:255',
+            'icon' => 'nullable|string|max:100',
+            'is_active' => 'boolean',
+        ]);
+
+        $maxOrder = Schema::hasTable('portal_sitelinks') ? (PortalSitelink::max('order_index') ?? 0) : 0;
+
+        $sitelink = PortalSitelink::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'url' => $request->url,
+            'icon' => $request->icon ?? 'Link',
+            'order_index' => $maxOrder + 1,
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        cache()->forget('portal_settings');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sitelink Google berhasil ditambahkan.',
+            'sitelink' => $sitelink,
+        ]);
+    }
+
+    public function updateSitelink(Request $request, $id)
+    {
+        $sitelink = PortalSitelink::findOrFail($id);
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+            'url' => 'required|string|max:255',
+            'icon' => 'nullable|string|max:100',
+            'is_active' => 'boolean',
+        ]);
+
+        $sitelink->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'url' => $request->url,
+            'icon' => $request->icon ?? $sitelink->icon,
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        cache()->forget('portal_settings');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sitelink Google berhasil diperbarui.',
+            'sitelink' => $sitelink,
+        ]);
+    }
+
+    public function destroySitelink($id)
+    {
+        $sitelink = PortalSitelink::findOrFail($id);
+        $sitelink->delete();
+
+        cache()->forget('portal_settings');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sitelink Google berhasil dihapus.',
+        ]);
     }
 
     public function getHelpdeskSetting()

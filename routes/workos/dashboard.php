@@ -19,6 +19,11 @@ Route::post('/settings/update', [DashboardController::class, 'updateSystemSettin
 Route::get('/settings/helpdesk', [DashboardController::class, 'getHelpdeskSetting'])->name('settings.helpdesk');
 Route::post('/settings/flush-cache', [DashboardController::class, 'flushSystemCache'])->name('settings.flush-cache');
 
+Route::get('/settings/sitelinks', [DashboardController::class, 'getSitelinks'])->name('settings.sitelinks.index');
+Route::post('/settings/sitelinks', [DashboardController::class, 'storeSitelink'])->name('settings.sitelinks.store');
+Route::put('/settings/sitelinks/{id}', [DashboardController::class, 'updateSitelink'])->name('settings.sitelinks.update');
+Route::delete('/settings/sitelinks/{id}', [DashboardController::class, 'destroySitelink'])->name('settings.sitelinks.destroy');
+
 Route::post('/notifications/mark-all-read', [DashboardController::class, 'markAllNotificationsRead'])->name('notifications.mark-all-read');
 Route::post('/notifications/clear', [DashboardController::class, 'clearNotifications'])->name('notifications.clear');
 Route::post('/notifications/{id}/toggle-read', [DashboardController::class, 'toggleNotificationRead'])->name('notifications.toggle-read');
