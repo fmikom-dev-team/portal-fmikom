@@ -1,62 +1,63 @@
 <script setup lang="ts">
-import { Head } from "@inertiajs/vue3";
+import { Head, usePage } from "@inertiajs/vue3";
+import { AlertCircle } from "lucide-vue-next";
+import { computed } from "vue";
 
 const props = defineProps<{
 	status: string;
 	message: string;
 	organization?: string;
 }>();
+
+const page = usePage();
+const brandLogo = computed(() => {
+	const settings = (page.props as any).siteSettings;
+	return settings?.brand_logo || "/asset/brand-logo.webp";
+});
 </script>
 
 <template>
-    <Head>
-        <title>{{ status === 'expired' ? 'Invitation Expired' : 'Invalid Invitation' }}</title>
-    </Head>
-    <div style="min-height: 100vh; background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #f0f9ff 100%); display: flex; align-items: center; justify-content: center; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-        <div style="background: white; border-radius: 16px; padding: 48px 40px; max-width: 480px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.08); border: 1px solid #f3f4f6;">
-            <!-- Icon -->
-            <div style="width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;"
-                 :style="status === 'expired' ? 'background: #fef3c7;' : 'background: #fee2e2;'">
-                <svg v-if="status === 'expired'" width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="#d97706" stroke-width="1.8">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/>
-                </svg>
-                <svg v-else width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="#dc2626" stroke-width="1.8">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 9l-6 6m0-6l6 6"/>
-                </svg>
-            </div>
+	<Head title="Tautan Undangan Tidak Valid — Portal FMIKOM UNUGHA" />
 
-            <!-- Brand -->
-            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px;">
-                <div style="width: 28px; height: 28px; background: linear-gradient(135deg, #2563eb, #7c3aed); border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                    <span style="color: white; font-size: 14px; font-weight: 800;">W</span>
-                </div>
-                <span style="font-size: 15px; font-weight: 700; color: #111827;">Portal FMIKOM</span>
-            </div>
+	<div class="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center p-4 font-sans relative overflow-hidden">
+		<!-- Subtle Clean Background Accents -->
+		<div class="absolute -top-32 -left-32 w-96 h-96 bg-red-500/10 rounded-full blur-3xl pointer-events-none"></div>
+		<div class="absolute -bottom-32 -right-32 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-            <!-- Title -->
-            <h1 style="margin: 0 0 12px; font-size: 22px; font-weight: 700; color: #111827; letter-spacing: -0.4px;">
-                {{ status === 'expired' ? 'Invitation Expired' : status === 'already_accepted' ? 'Already Accepted' : 'Invalid Invitation' }}
-            </h1>
+		<div class="w-full max-w-md bg-white border border-slate-200/80 rounded-3xl p-8 shadow-xl shadow-slate-200/50 space-y-6 text-center relative z-10">
+			<!-- Header / Brand Logo -->
+			<div class="space-y-3">
+				<div class="w-16 h-16 bg-white border border-slate-200/80 shadow-md shadow-slate-200/40 rounded-2xl flex items-center justify-center mx-auto p-2.5 overflow-hidden">
+					<img :src="brandLogo" alt="Logo Aplikasi" class="w-full h-full object-contain" />
+				</div>
+				<div>
+					<h1 class="text-2xl font-bold tracking-tight text-slate-900">Terima Undangan Akun</h1>
+					<p class="text-xs text-slate-500 mt-1">Portal FMIKOM Universitas Nahdlatul Ulama Al Ghazali</p>
+				</div>
+			</div>
 
-            <!-- Message -->
-            <p style="margin: 0 0 8px; font-size: 15px; color: #6b7280; line-height: 1.6;">
-                {{ message }}
-            </p>
-            <p v-if="organization" style="margin: 0 0 32px; font-size: 14px; color: #9ca3af;">
-                Organization: <strong style="color: #374151;">{{ organization }}</strong>
-            </p>
+			<!-- Invalid Token Alert Box matching AcceptInvitation design -->
+			<div class="p-4 bg-red-50 border border-red-200 rounded-2xl flex items-start gap-3 text-red-700 text-xs leading-relaxed text-left">
+				<AlertCircle class="w-5 h-5 shrink-0 mt-0.5 text-red-600" />
+				<div>
+					<strong class="font-bold block mb-1 text-red-800">Tautan Tidak Valid</strong>
+					{{ message || 'Tautan undangan ini sudah tidak berlaku, kadaluarsa, atau telah digunakan.' }}
+				</div>
+			</div>
 
-            <!-- Action -->
-            <a href="/"
-               style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%); color: white; font-size: 14px; font-weight: 600; padding: 12px 28px; border-radius: 8px; text-decoration: none; box-shadow: 0 4px 14px rgba(82,68,228,0.35);">
-                Go to Portal FMIKOM
-            </a>
+			<!-- Action Button -->
+			<div class="pt-2">
+				<a
+					href="/"
+					class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-xs transition-all shadow-md shadow-blue-500/20 active:scale-[0.99] flex items-center justify-center gap-2 text-decoration-none border-0"
+				>
+					Kembali ke Portal FMIKOM
+				</a>
+			</div>
 
-            <p style="margin: 24px 0 0; font-size: 12px; color: #d1d5db;">
-                Please contact your organization admin if you believe this is an error.
-            </p>
-        </div>
-    </div>
+			<div class="pt-2 border-t border-slate-100">
+				<p class="text-[11px] text-slate-400">© {{ new Date().getFullYear() }} FMIKOM UNUGHA. All rights reserved.</p>
+			</div>
+		</div>
+	</div>
 </template>
