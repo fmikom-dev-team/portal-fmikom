@@ -70,8 +70,14 @@ class HandleInertiaRequests extends Middleware
                 $raw = PortalSetting::pluck('value', 'key')->toArray();
                 $raw['brand_name'] = $raw['brand_name'] ?? 'Portal FMIKOM';
                 $raw['brand_subtitle'] = $raw['brand_subtitle'] ?? 'Fakultas Matematika dan Ilmu Komputer';
-                $raw['brand_logo'] = $raw['brand_logo'] ?? '/asset/brand-logo.webp';
-                $raw['brand_favicon'] = $raw['brand_favicon'] ?? '/asset/brand-logo.webp';
+
+                // Sanitize legacy transient file paths that 404 on Docker re-deploys
+                if (empty($raw['brand_logo']) || str_starts_with($raw['brand_logo'], '/storage/branding/')) {
+                    $raw['brand_logo'] = '/asset/brand-logo.webp';
+                }
+                if (empty($raw['brand_favicon']) || str_starts_with($raw['brand_favicon'], '/storage/branding/')) {
+                    $raw['brand_favicon'] = '/asset/brand-logo.webp';
+                }
 
                 if (isset($raw['partners']) && is_string($raw['partners'])) {
                     $decoded = json_decode($raw['partners'], true);

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from "@inertiajs/vue3";
-import { computed, defineAsyncComponent, onMounted, ref, watch } from "vue";
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from "vue";
 import DashboardLayout from "./layouts/DashboardLayout.vue";
 import AuditLogsEvents from "./partials/AuditLogs/Events.vue";
 import AuditLogsIndex from "./partials/AuditLogs/Index.vue";
@@ -258,8 +258,28 @@ function getThreatSeverityType(severity: string): string {
 	return "info";
 }
 
+// Background Real-time Auto Refresh (Polling every 15s)
+let realTimePollTimer: any = null;
+
 // Restore org/user objects from props on mount (props are available at this point)
 onMounted(() => {
+	realTimePollTimer = setInterval(() => {
+		router.reload({
+			preserveScroll: true,
+			preserveState: true,
+			only: [
+				"stats",
+				"pendingCount",
+				"notifications",
+				"unreadNotificationsCount",
+				"radarDetections",
+				"radarBlockedItems",
+				"auditStats",
+				"auditRecentEvents",
+			],
+		});
+	}, 15000);
+
 	// Mark initially loaded non-empty props as loaded
 	Object.keys(props).forEach((key) => {
 		if (!isPropEmpty(key)) {
@@ -320,6 +340,12 @@ onMounted(() => {
 				});
 			},
 		);
+	}
+});
+
+onUnmounted(() => {
+	if (realTimePollTimer) {
+		clearInterval(realTimePollTimer);
 	}
 });
 
