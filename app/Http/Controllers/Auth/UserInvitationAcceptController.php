@@ -8,6 +8,7 @@ use App\Models\UserInvitation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -39,10 +40,24 @@ class UserInvitationAcceptController extends Controller
 
     public function accept(Request $request)
     {
+        $request->merge([
+            'name' => trim(strip_tags((string) $request->name)),
+        ]);
+
         $request->validate([
             'token' => ['required', 'string'],
-            'name' => ['required', 'string', 'max:255'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'name' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z\s\.\,\'\-]+$/'],
+            'password' => [
+                'required',
+                'string',
+                'confirmed',
+                Password::min(8)
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols(),
+            ],
+        ], [
+            'name.regex' => 'Nama lengkap hanya boleh berisi huruf, spasi, dan tanda baca standar.',
         ]);
 
         $invitation = UserInvitation::where('token', $request->token)
