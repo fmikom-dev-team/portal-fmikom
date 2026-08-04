@@ -36,12 +36,56 @@ const tahunLulusOptions = Array.from(
 );
 
 const form = useForm({
-	role: "mahasiswa", // default
+	role: "alumni", // default alumni (matching Register.vue)
 	nomor_induk: "",
-	program_studi_id: "", // untuk mahasiswa & alumni
+	program_studi_id: "", // untuk alumni
 	tahun_lulus: "", // khusus alumni
 	no_telepon: "", // khusus mitra
 	nama_perusahaan: "", // khusus mitra
+});
+
+const providerInfo = computed(() => {
+	const slug = (props.oauthData.provider || "google").toLowerCase();
+	if (slug === "microsoft") {
+		return {
+			name: "Microsoft",
+			title: "Pendaftaran Microsoft",
+			bannerLabel: "Menghubungkan Akun Microsoft",
+		};
+	}
+	if (slug === "github") {
+		return {
+			name: "GitHub",
+			title: "Pendaftaran GitHub",
+			bannerLabel: "Menghubungkan Akun GitHub",
+		};
+	}
+	if (slug === "apple") {
+		return {
+			name: "Apple",
+			title: "Pendaftaran Apple",
+			bannerLabel: "Menghubungkan Akun Apple",
+		};
+	}
+	if (slug === "gitlab") {
+		return {
+			name: "GitLab",
+			title: "Pendaftaran GitLab",
+			bannerLabel: "Menghubungkan Akun GitLab",
+		};
+	}
+	if (slug === "linkedin") {
+		return {
+			name: "LinkedIn",
+			title: "Pendaftaran LinkedIn",
+			bannerLabel: "Menghubungkan Akun LinkedIn",
+		};
+	}
+	return {
+		name: "Google",
+		title: "Pendaftaran Google",
+		bannerLabel: "Menghubungkan Akun Google",
+	};
 });
 
 const step = ref(1);
@@ -95,21 +139,21 @@ watch(
 	},
 );
 
-// Validasi step 1 (Role selection) selalu valid karena ada default 'mahasiswa'
+// Validasi step 1 (Role selection)
 const isStep1Valid = computed(() => {
 	return !!form.role;
 });
 
 // Validasi step 2 (Identitas)
 const isStep2Valid = computed(() => {
-	if (form.role === "mahasiswa") {
-		if (!form.nomor_induk || !form.program_studi_id) return false;
-	} else if (form.role === "alumni") {
+	if (form.role === "alumni") {
 		if (!form.nomor_induk || !form.program_studi_id || !form.tahun_lulus)
 			return false;
 	} else if (form.role === "mitra") {
 		if (!form.nama_perusahaan || !form.nomor_induk || !form.no_telepon)
 			return false;
+	} else if (form.role === "mahasiswa") {
+		if (!form.nomor_induk || !form.program_studi_id) return false;
 	}
 	if (realtimeErrors.value.nomor_induk) return false;
 	return true;
@@ -134,26 +178,24 @@ const submit = async () => {
 	}
 };
 
-// Password validation removed as OAuth registration no longer requires password setup
-
 // Label nomor induk berdasarkan role
 const nomorIndukLabel = computed(() => {
-	if (form.role === "mahasiswa") return "NIM";
 	if (form.role === "alumni") return "NIM Alumni";
-	return "NIB / No. Perusahaan";
+	if (form.role === "mitra") return "NIB / No. Perusahaan";
+	return "NIM";
 });
 
 const nomorIndukPlaceholder = computed(() => {
-	if (form.role === "mahasiswa") return "Masukkan Nomor Induk Mahasiswa";
 	if (form.role === "alumni") return "Masukkan NIM Alumni Anda";
-	return "Misal: 1982823000...";
+	if (form.role === "mitra") return "Misal: 1982823000...";
+	return "Masukkan Nomor Induk Mahasiswa";
 });
 </script>
 
 <template>
     <div class="w-full">
         <Head>
-        <title>Pendaftaran Google</title>
+        <title>{{ providerInfo.title }}</title>
     </Head>
 
         <!-- Stepper Indicator Responsive -->
@@ -167,10 +209,13 @@ const nomorIndukPlaceholder = computed(() => {
             <div class="text-xs sm:text-sm font-medium text-slate-500 mt-2 text-right">Langkah {{ step }} dari {{ totalSteps }}</div>
         </div>
 
-        <!-- Google Status Banner -->
+        <!-- Provider Status Banner Dynamic -->
         <div class="mb-6 p-4 bg-indigo-50/70 border border-indigo-100 rounded-2xl flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-slate-100 shadow-sm shrink-0">
-                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                <svg v-if="props.oauthData.provider?.toLowerCase() === 'microsoft'" class="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M11.4 24H0V12.6h11.4V24z" fill="#F25022"/><path d="M24 24H12.6V12.6H24V24z" fill="#00A4EF"/><path d="M11.4 11.4H0V0h11.4v11.4z" fill="#7FBA00"/><path d="M24 11.4H12.6V0H24v11.4z" fill="#FFB900"/></svg>
+                <svg v-else-if="props.oauthData.provider?.toLowerCase() === 'github'" class="w-5 h-5" viewBox="0 0 24 24" fill="#24292F" xmlns="http://www.w3.org/2000/svg"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+                <svg v-else-if="props.oauthData.provider?.toLowerCase() === 'apple'" class="w-5 h-5" viewBox="0 0 24 24" fill="#000000" xmlns="http://www.w3.org/2000/svg"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701z"/></svg>
+                <svg v-else class="w-5 h-5" viewBox="0 0 24 24" fill="none">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
@@ -178,7 +223,7 @@ const nomorIndukPlaceholder = computed(() => {
                 </svg>
             </div>
             <div class="min-w-0 flex-1">
-                <p class="text-xs font-semibold text-[#2563eb] uppercase tracking-wider">Menghubungkan Akun Google</p>
+                <p class="text-xs font-semibold text-[#2563eb] uppercase tracking-wider">{{ providerInfo.bannerLabel }}</p>
                 <h3 class="text-sm font-bold text-slate-800 truncate">{{ props.oauthData.name }}</h3>
                 <p class="text-xs text-slate-500 truncate">{{ props.oauthData.email }}</p>
             </div>
@@ -186,29 +231,31 @@ const nomorIndukPlaceholder = computed(() => {
 
         <form @submit.prevent="submit" class="flex flex-col gap-5">
 
-            <!-- STEP 1: Role -->
+            <!-- STEP 1: Role Selection -->
             <div v-show="step === 1" class="grid gap-4 animate-in slide-in-from-right-4 fade-in duration-300">
                 <div class="mb-2">
                     <h2 class="text-xl font-bold text-slate-800">Mendaftar Sebagai</h2>
                     <p class="text-sm text-slate-500">Pilih jenis keanggotaan Anda di portal ini.</p>
                 </div>
 
+                <!-- Student Account Info Banner (Matching Register.vue) -->
+                <div class="p-3 bg-blue-50/80 border border-blue-200/80 rounded-xl text-[12px] text-blue-900 leading-relaxed font-sans mb-1">
+                    💡 <strong>Akun Mahasiswa Aktif?</strong> Akun Anda telah terdaftar otomatis dari SIAKAD. Tidak perlu daftar baru. Silakan <a href="/activate" class="underline font-semibold text-blue-700 hover:text-blue-900">Lakukan Aktivasi Akun Mahasiswa di sini →</a>
+                </div>
+
                 <div class="grid gap-2">
-                    <div class="grid grid-cols-3 gap-2.5">
-                        <label :class="['flex flex-col items-center justify-center gap-1.5 p-3 border rounded-xl cursor-pointer transition-all', form.role === 'mahasiswa' ? 'border-[#2563eb] bg-indigo-50/50 text-[#2563eb] ring-1 ring-[#2563eb]' : 'border-slate-200 text-slate-600 hover:bg-slate-50']">
-                            <input type="radio" v-model="form.role" value="mahasiswa" class="sr-only" />
-                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path></svg>
-                            <span class="font-medium text-[11px] sm:text-xs text-center">Mahasiswa</span>
-                        </label>
-                        <label :class="['flex flex-col items-center justify-center gap-1.5 p-3 border rounded-xl cursor-pointer transition-all', form.role === 'alumni' ? 'border-[#2563eb] bg-indigo-50/50 text-[#2563eb] ring-1 ring-[#2563eb]' : 'border-slate-200 text-slate-600 hover:bg-slate-50']">
+                    <div class="grid grid-cols-2 gap-3">
+                        <label :class="['flex flex-col items-center justify-center gap-2 p-4 border rounded-xl cursor-pointer transition-all', form.role === 'alumni' ? 'border-[#2563eb] bg-indigo-50/50 text-[#2563eb] ring-1 ring-[#2563eb]' : 'border-slate-200 text-slate-600 hover:bg-slate-50']">
                             <input type="radio" v-model="form.role" value="alumni" class="sr-only" />
-                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
-                            <span class="font-medium text-[11px] sm:text-xs text-center">Alumni</span>
+                            <svg class="w-6 h-6 shrink-0" viewBox="0 0 1024 768" fill="currentColor">
+                                <path d="M1024 736q0 13-9.5 22.5T992 768t-22.5-9.5T960 736V315L607 492q-40 20-95 20t-95-20L39 303Q0 283 0 255.5T39 209L417 20q40-20 95-20t95 20l378 189q34 17 38 42q1 1 1 4v481zM639 556l193-97v141q0 43-93.5 73.5T512 704t-226.5-30.5T192 600V459l193 97q40 20 127 20t127-20z"/>
+                            </svg>
+                            <span class="font-semibold text-xs text-center">Alumni FMIKOM</span>
                         </label>
-                        <label :class="['flex flex-col items-center justify-center gap-1.5 p-3 border rounded-xl cursor-pointer transition-all', form.role === 'mitra' ? 'border-[#2563eb] bg-indigo-50/50 text-[#2563eb] ring-1 ring-[#2563eb]' : 'border-slate-200 text-slate-600 hover:bg-slate-50']">
+                        <label :class="['flex flex-col items-center justify-center gap-2 p-4 border rounded-xl cursor-pointer transition-all', form.role === 'mitra' ? 'border-[#2563eb] bg-indigo-50/50 text-[#2563eb] ring-1 ring-[#2563eb]' : 'border-slate-200 text-slate-600 hover:bg-slate-50']">
                             <input type="radio" v-model="form.role" value="mitra" class="sr-only" />
-                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                            <span class="font-medium text-[11px] sm:text-xs text-center">Mitra</span>
+                            <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            <span class="font-semibold text-xs text-center">Mitra Industri / Instansi</span>
                         </label>
                     </div>
                 </div>
