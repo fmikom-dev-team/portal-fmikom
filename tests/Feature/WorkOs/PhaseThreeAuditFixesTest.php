@@ -10,6 +10,9 @@ use App\Models\UserModuleRole;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
+use Tests\TestCase;
+
+/** @var TestCase $this */
 
 // Setup env backup/restore for the SMTP test
 $envBackup = null;
@@ -33,7 +36,7 @@ class DummyVideoCompressor
 {
     use HandlesImageCompression;
 
-    public function testCompress($file)
+    public function testCompress(UploadedFile $file): string
     {
         return $this->compressAndSaveBannerOrVideo($file, 'testing/videos');
     }
@@ -48,10 +51,10 @@ test('user assignDefaultModuleRoles helper correctly maps roles and modules', fu
     }
 
     // Setup roles
-    $mahasiswaRole = Role::firstOrCreate(['slug' => 'mahasiswa'], ['nama' => 'Mahasiswa']);
-    $alumniRole = Role::firstOrCreate(['slug' => 'alumni'], ['nama' => 'Alumni']);
-    $mitraRole = Role::firstOrCreate(['slug' => 'mitra'], ['nama' => 'Mitra']);
-    $dosenRole = Role::firstOrCreate(['slug' => 'dosen'], ['nama' => 'Dosen']);
+    Role::firstOrCreate(['slug' => 'mahasiswa'], ['nama' => 'Mahasiswa']);
+    Role::firstOrCreate(['slug' => 'alumni'], ['nama' => 'Alumni']);
+    Role::firstOrCreate(['slug' => 'mitra'], ['nama' => 'Mitra']);
+    Role::firstOrCreate(['slug' => 'dosen'], ['nama' => 'Dosen']);
 
     // Test mahasiswa
     $mahasiswa = User::factory()->create(['user_type' => 'mahasiswa']);
