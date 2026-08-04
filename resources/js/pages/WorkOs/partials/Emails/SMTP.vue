@@ -19,6 +19,7 @@ const configForm = reactive({
 });
 
 const isSaving = ref(false);
+const showPassword = ref(false);
 const testRecipient = ref("");
 const isSendingTest = ref(false);
 const showTestLogs = ref(false);
@@ -231,13 +232,29 @@ function clearLogsTerminal() {
                 </div>
                 <div>
                     <label for="smtp_password" class="block text-xs font-semibold text-gray-700 dark:text-zinc-300 mb-1.5">SMTP Password</label>
-                    <input
-                        id="smtp_password"
-                        v-model="configForm.password"
-                        type="password"
-                        placeholder="••••••••"
-                        class="w-full h-9 px-3 text-sm border border-gray-200 dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 dark:text-zinc-100 bg-white dark:bg-zinc-900"
-                    />
+                    <div class="relative">
+                        <input
+                            id="smtp_password"
+                            v-model="configForm.password"
+                            :type="showPassword ? 'text' : 'password'"
+                            placeholder="••••••••"
+                            class="w-full h-9 pl-3 pr-9 text-sm border border-gray-200 dark:border-zinc-700 rounded-md focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] text-gray-900 dark:text-zinc-100 bg-white dark:bg-zinc-900"
+                        />
+                        <button
+                            type="button"
+                            @click="showPassword = !showPassword"
+                            class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200 focus:outline-none transition-colors"
+                            :title="showPassword ? 'Hide Password' : 'Show Password'"
+                        >
+                            <svg v-if="showPassword" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a10.025 10.025 0 013.98-1c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m-4.692-4.692a3 3 0 00-4.243-4.243m4.243 4.243L3 3l18 18" />
+                            </svg>
+                            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 
