@@ -144,7 +144,10 @@ class DashboardController extends Controller // NOSONAR
                 ]);
             }
             $path = $file->store('branding', 'public');
-            PortalSetting::updateOrCreate(['key' => 'brand_logo'], ['value' => '/storage/'.$path]);
+            $mime = $file->getMimeType() ?: 'image/png';
+            $base64 = base64_encode(file_get_contents($file->getRealPath()));
+            $dataUri = "data:{$mime};base64,{$base64}";
+            PortalSetting::updateOrCreate(['key' => 'brand_logo'], ['value' => $dataUri]);
         }
 
         if ($request->hasFile('brand_favicon_file')) {
@@ -156,7 +159,10 @@ class DashboardController extends Controller // NOSONAR
                 ]);
             }
             $path = $file->store('branding', 'public');
-            PortalSetting::updateOrCreate(['key' => 'brand_favicon'], ['value' => '/storage/'.$path]);
+            $mime = $file->getMimeType() ?: 'image/png';
+            $base64 = base64_encode(file_get_contents($file->getRealPath()));
+            $dataUri = "data:{$mime};base64,{$base64}";
+            PortalSetting::updateOrCreate(['key' => 'brand_favicon'], ['value' => $dataUri]);
         }
 
         cache()->forget('portal_settings');
