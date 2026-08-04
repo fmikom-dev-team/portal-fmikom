@@ -109,11 +109,11 @@ const filteredUsers = computed(() => {
 			(u) =>
 				u.user.toLowerCase().includes(q) ||
 				u.userHandle.toLowerCase().includes(q) ||
-				(u.userNim && u.userNim.toLowerCase().includes(q)) ||
+				u.userNim?.toLowerCase().includes(q) ||
 				u.warningsHistory.some(
 					(w) =>
 						w.reason.toLowerCase().includes(q) ||
-						(w.workTitle && w.workTitle.toLowerCase().includes(q)),
+						w.workTitle?.toLowerCase().includes(q),
 				),
 		);
 	}

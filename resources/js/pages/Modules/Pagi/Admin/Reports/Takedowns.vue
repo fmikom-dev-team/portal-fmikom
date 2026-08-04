@@ -72,7 +72,7 @@ const filteredTakedowns = computed(() => {
 				t.author.toLowerCase().includes(q) ||
 				t.category.toLowerCase().includes(q) ||
 				t.reason.toLowerCase().includes(q) ||
-				(t.appealReason && t.appealReason.toLowerCase().includes(q)),
+				t.appealReason?.toLowerCase().includes(q),
 		);
 	}
 

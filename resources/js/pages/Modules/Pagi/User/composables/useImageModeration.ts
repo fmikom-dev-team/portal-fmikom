@@ -12,7 +12,7 @@ export function useImageModeration() {
 		reason?: string;
 		category?: string;
 	}> {
-		if (!file || !file.type.startsWith("image/")) {
+		if (!file?.type.startsWith("image/")) {
 			return { isFlagged: false };
 		}
 

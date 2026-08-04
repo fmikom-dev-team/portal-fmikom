@@ -170,7 +170,7 @@ const handleFetchGoogleModels = async () => {
 	} catch (e: any) {
 		aiTestResult.value = {
 			success: false,
-			message: "Kesalahan jaringan: " + e.message,
+			message: `Kesalahan jaringan: ${e.message}`,
 		};
 	} finally {
 		isFetchingModels.value = false;
@@ -214,7 +214,7 @@ const handleTestGoogleAi = async () => {
 	} catch (e: any) {
 		aiTestResult.value = {
 			success: false,
-			message: "Kesalahan jaringan: " + e.message,
+			message: `Kesalahan jaringan: ${e.message}`,
 		};
 	} finally {
 		isTestingAi.value = false;
