@@ -744,7 +744,7 @@ function executeRejectAction() {
                 </button>
                 <button
                     class="h-[34px] px-4 bg-[#2563eb] dark:bg-blue-600 text-white rounded-md text-[13px] font-semibold hover:bg-[#1d4ed8] dark:hover:bg-blue-700 transition-colors shadow-sm cursor-pointer border-0 dark:shadow-none flex-1 sm:flex-none text-center justify-center inline-flex items-center"
-                    @click="modal.createUser = true"
+                    @click="userTab === 'users' ? (modal.createUser = true) : (modal.inviteUser = true)"
                 >
                     {{ userTab === 'users' ? 'Create user' : 'Invite user' }}
                 </button>
