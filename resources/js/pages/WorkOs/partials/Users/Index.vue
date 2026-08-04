@@ -353,7 +353,6 @@ const sendInvitation = () => {
 			inviteForm.last_name = "";
 			inviteForm.email = "";
 			inviteForm.user_type = "mahasiswa";
-			toast("Email undangan berhasil dikirim!", "success");
 		},
 		onError: (err: any) => {
 			toast(err.email || err.error || "Gagal mengirim undangan email.", "error");
@@ -367,7 +366,6 @@ const sendInvitation = () => {
 const resendInvite = (id: number) => {
 	router.post(`/workos/invitations/${id}/resend`, {}, {
 		preserveScroll: true,
-		onSuccess: () => toast("Email undangan berhasil dikirim ulang!", "success"),
 		onError: () => toast("Gagal mengirim ulang email undangan.", "error"),
 	});
 };
@@ -376,7 +374,6 @@ const revokeInvite = (id: number) => {
 	if (confirm("Apakah Anda yakin ingin membatalkan undangan ini?")) {
 		router.delete(`/workos/invitations/${id}`, {
 			preserveScroll: true,
-			onSuccess: () => toast("Undangan berhasil dibatalkan.", "success"),
 			onError: () => toast("Gagal membatalkan undangan.", "error"),
 		});
 	}
@@ -551,7 +548,6 @@ function submitUpload() {
 			const flash = page.props.flash as any;
 			if (flash?.success) {
 				localSuccess.value = flash.success;
-				toast(flash.success, "success");
 				uploadFile.value = null;
 				uploadStep.value = 1;
 				modal.uploadUsers = false;
