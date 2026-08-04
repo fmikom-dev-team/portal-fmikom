@@ -7,7 +7,6 @@ use App\Models\Portal\PortalMedia;
 use App\Services\VirusScannerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -15,18 +14,9 @@ class PortalMediaController extends Controller
 {
     public function index(Request $request)
     {
-        // Auto-clean orphan media records whose physical file is missing from storage
-        $allMedia = PortalMedia::all();
-        foreach ($allMedia as $item) {
-            $relativePath = str_replace('/storage/', '', $item->path);
-            if (! Storage::disk('public')->exists($relativePath)) {
-                $item->delete();
-            }
-        }
-
         $media = PortalMedia::latest()->get();
 
-        if ($request->expectsJson()) {
+        if ($request->expectsJson() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
                 'media' => $media,
@@ -56,28 +46,31 @@ class PortalMediaController extends Controller
 
                 $filename = $file->getClientOriginalName();
                 $path = $file->store('portal/media', 'public');
+                $publicUrl = '/storage/'.$path;
 
-                PortalMedia::create([
-                    'filename' => $filename,
-                    'path' => '/storage/'.$path,
-                    'mime_type' => $file->getMimeType(),
-                    'size' => $file->getSize(),
-                ]);
+                PortalMedia::firstOrCreate(
+                    ['path' => $publicUrl],
+                    [
+                        'filename' => $filename,
+                        'mime_type' => $file->getMimeType(),
+                        'size' => $file->getSize(),
+                    ]
+                );
             }
         }
 
         return redirect()->back()->with('success', 'Media uploaded successfully!');
     }
 
-    public function destroy(PortalMedia $media)
+    public function destroy(Request $request, PortalMedia $media)
     {
-        $filePath = str_replace('/storage/', '', $media->path);
-        if (Storage::disk('public')->exists($filePath)) {
-            Storage::disk('public')->delete($filePath);
-        }
         $media->delete();
 
         Cache::forget('portal_settings');
+
+        if ($request->expectsJson() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return response()->json(['success' => true, 'message' => 'Media deleted successfully!']);
+        }
 
         return redirect()->route('portal-admin.media.index')->with('success', 'Media deleted successfully!');
     }
