@@ -943,7 +943,7 @@ function executeRejectAction() {
                                     <div class="text-[12px] text-[#6b7280] dark:text-zinc-400">{{ inv.email }}</div>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <span :class="typeBadge(inv.user_type)">{{ typeLabel(inv.user_type) }}</span>
+                                    <span :class="['inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset', typeBadge[inv.user_type] || 'bg-slate-100 text-slate-700 ring-slate-200']">{{ typeLabel(inv.user_type) }}</span>
                                 </td>
                                 <td class="px-4 py-3">
                                     <span v-if="inv.status === 'accepted'" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
