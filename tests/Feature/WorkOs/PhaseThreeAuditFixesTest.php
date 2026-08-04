@@ -249,6 +249,16 @@ test('smtp config updates with encrypted password in env and decrypts on boot', 
 
     $response->assertOk();
 
+    // Verify PortalSetting database table entries
+    $this->assertDatabaseHas('portal_settings', [
+        'key' => 'smtp_host',
+        'value' => 'smtp.mailtrap.io',
+    ]);
+    $this->assertDatabaseHas('portal_settings', [
+        'key' => 'smtp_port',
+        'value' => '2525',
+    ]);
+
     // Verify .env file content contains the base64 prefix
     $envContent = file_get_contents($envPath);
     expect($envContent)->toContain('MAIL_PASSWORD=base64:');
