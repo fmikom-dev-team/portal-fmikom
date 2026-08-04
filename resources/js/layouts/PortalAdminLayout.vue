@@ -647,11 +647,11 @@ onUnmounted(() => {
                                 </div>
 
                                 <Link 
-                                    href="/settings/profile" 
+                                    href="/portal-admin/settings" 
                                     class="flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/50 hover:text-blue-600 transition-all"
                                 >
-                                    <User class="w-4 h-4 opacity-70" />
-                                    Edit Profil
+                                    <Settings class="w-4 h-4 opacity-70" />
+                                    Settings
                                 </Link>
 
                                 <Link 
