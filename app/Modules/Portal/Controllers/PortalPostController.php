@@ -262,13 +262,21 @@ class PortalPostController extends Controller
             }
         }
 
-        $post->update($validated);
+        try {
+            $post->update($validated);
+        } catch (\Throwable $e) {
+            Log::error('PortalPost update error: '.$e->getMessage());
+            if ($request->expectsJson() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+                return response()->json(['message' => 'Gagal memperbarui postingan: '.$e->getMessage()], 500);
+            }
+            throw $e;
+        }
 
         Cache::forget('portal_latest_posts');
         Cache::forget('portal_settings');
         Cache::forget('portal_home_showcase');
 
-        if ($request->expectsJson()) {
+        if ($request->expectsJson() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
             return response()->json(['message' => 'Post saved successfully', 'post' => $post]);
         }
 

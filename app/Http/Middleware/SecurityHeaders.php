@@ -201,7 +201,6 @@ class SecurityHeaders
             'script-src-elem '.implode(' ', array_filter([
                 "'self'",
                 "'unsafe-inline'",
-                "'nonce-{$nonce}'",
                 'blob:',
                 'https://static.cloudflareinsights.com',
                 'https://cdnjs.cloudflare.com',
