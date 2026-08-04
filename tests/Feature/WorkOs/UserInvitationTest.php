@@ -60,7 +60,7 @@ test('invitee can accept invitation and set password', function () {
         'email' => 'rudi@example.com',
         'name' => 'Rudi Hermawan',
         'user_type' => 'dosen',
-        'status_approval' => 'approved',
+        'status_approval' => 'activated',
     ]);
 
     $this->assertDatabaseHas('user_invitations', [
