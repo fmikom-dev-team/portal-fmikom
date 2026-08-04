@@ -145,6 +145,15 @@ class PortalPostController extends Controller
         $validated['user_id'] = Auth::id();
 
         if ($validated['status'] === 'published') {
+            if (empty($validated['thumbnail'])) {
+                if ($request->header('X-Inertia')) {
+                    return back()->withErrors(['thumbnail' => 'Thumbnail utama wajib diunggah sebelum mempublikasikan berita.']);
+                }
+                throw ValidationException::withMessages([
+                    'thumbnail' => 'Thumbnail utama wajib diunggah sebelum mempublikasikan berita.',
+                ]);
+            }
+
             $publishedAt = $validated['published_at'] ?? null;
             if ($publishedAt && strtotime($publishedAt) > time()) {
                 $validated['status'] = PortalPost::STATUS_SCHEDULED;
@@ -269,6 +278,15 @@ class PortalPostController extends Controller
         }
 
         if ($validated['status'] === 'published') {
+            if (empty($validated['thumbnail'])) {
+                if ($request->header('X-Inertia')) {
+                    return back()->withErrors(['thumbnail' => 'Thumbnail utama wajib diunggah sebelum mempublikasikan berita.']);
+                }
+                throw ValidationException::withMessages([
+                    'thumbnail' => 'Thumbnail utama wajib diunggah sebelum mempublikasikan berita.',
+                ]);
+            }
+
             $publishedAt = $validated['published_at'] ?? null;
             if ($publishedAt && strtotime($publishedAt) > time()) {
                 $validated['status'] = PortalPost::STATUS_SCHEDULED;
@@ -618,12 +636,14 @@ class PortalPostController extends Controller
 
             $size = Storage::disk('public')->size($fullPath);
 
-            PortalMedia::create([
-                'filename' => $originalName,
-                'path' => $publicUrl,
-                'mime_type' => 'image/webp',
-                'size' => $size,
-            ]);
+            PortalMedia::firstOrCreate(
+                ['path' => $publicUrl],
+                [
+                    'filename' => $originalName,
+                    'mime_type' => 'image/webp',
+                    'size' => $size,
+                ]
+            );
         } catch (\Exception $e) {
             Log::error('Failed to auto-save post image to PortalMedia: '.$e->getMessage());
         }
