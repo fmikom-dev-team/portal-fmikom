@@ -48,7 +48,7 @@ watch(searchQuery, (newVal) => {
 // Watch search query changes to fetch results
 watch(searchQuery, (newVal) => {
     clearTimeout(debounceTimeout);
-    if (!props.endpoint || newVal.length < 2) {
+    if (!props.endpoint || newVal.length < 1) {
         searchResults.value = [];
         return;
     }
@@ -75,7 +75,7 @@ watch(searchQuery, (newVal) => {
         } finally {
             isSearching.value = false;
         }
-    }, 300);
+    }, 250);
 });
 
 // Focus input on open
@@ -229,9 +229,9 @@ onUnmounted(() => {
                                 </div>
 
                                 <!-- Prompt search -->
-                                <div v-else-if="searchQuery.length < 2" class="px-4 py-10 text-xs text-slate-450 dark:text-zinc-500 text-center flex flex-col items-center gap-1.5 select-none">
+                                <div v-else-if="searchQuery.length < 1" class="px-4 py-10 text-xs text-slate-450 dark:text-zinc-500 text-center flex flex-col items-center gap-1.5 select-none">
                                     <Search class="w-6 h-6 text-slate-300 dark:text-zinc-700" />
-                                    <span>Ketik kata pencarian Anda (minimal 2 karakter)</span>
+                                    <span>Ketik nama, email, NIM/NIDN, peran, atau modul...</span>
                                 </div>
 
                                 <!-- Empty State -->

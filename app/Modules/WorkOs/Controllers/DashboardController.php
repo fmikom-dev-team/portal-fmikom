@@ -1505,46 +1505,55 @@ class DashboardController extends Controller // NOSONAR
 
     public function instantSearch(Request $request)
     {
-        $q = $request->query('q', '');
-        if (strlen($q) < 2) {
+        $q = trim((string) $request->query('q', ''));
+        if (strlen($q) < 1) {
             return response()->json(['results' => []]);
         }
 
-        try {
-            // Meilisearch: Search only WorkOs user index, role via SQL fallback
-            $users = User::search($q)->take(5)->get()->map(fn ($u) => [
+        // Direct SQL Multi-Column Smart Search for maximum accuracy & 100% uptime
+        $users = User::where(function ($query) use ($q) {
+            $query->where('name', 'like', "%{$q}%")
+                ->orWhere('email', 'like', "%{$q}%")
+                ->orWhere('nomor_induk', 'like', "%{$q}%")
+                ->orWhere('user_type', 'like', "%{$q}%");
+        })
+            ->take(6)
+            ->get()
+            ->map(fn ($u) => [
                 'id' => $u->id,
-                'title' => $u->name,
-                'description' => $u->email.' • '.$u->user_type,
+                'title' => $u->name ?: $u->email,
+                'description' => ($u->nomor_induk ? "NIM/NIDN: {$u->nomor_induk} • " : '').$u->email.' • '.ucfirst(str_replace('_', ' ', (string) $u->user_type)),
                 'type' => 'User / Akun',
-                'url' => '/workos/users?search='.urlencode($u->name),
+                'url' => '/workos/users?search='.urlencode($u->name ?: $u->email),
             ]);
 
-            $roles = Role::where('nama', 'like', "%{$q}%")->take(3)->get()->map(fn ($r) => [
+        $roles = Role::where('nama', 'like', "%{$q}%")
+            ->orWhere('slug', 'like', "%{$q}%")
+            ->take(3)
+            ->get()
+            ->map(fn ($r) => [
                 'id' => $r->id,
                 'title' => $r->nama,
-                'description' => $r->slug,
+                'description' => 'Role Peran: '.$r->slug,
                 'type' => 'Role / Peran',
                 'url' => '/workos/authorization?tab=roles',
             ]);
 
-            $results = collect()->concat($users)->concat($roles)->values();
-
-            return response()->json(['results' => $results]);
-
-        } catch (\Throwable $e) {
-            Log::warning('Meilisearch WorkOs search failed, falling back to SQL', ['error' => $e->getMessage()]);
-
-            $users = User::where('name', 'like', "%{$q}%")->orWhere('email', 'like', "%{$q}%")->take(5)->get()->map(fn ($u) => [
-                'id' => $u->id,
-                'title' => $u->name,
-                'description' => $u->email,
-                'type' => 'User / Akun',
-                'url' => '/workos/users?search='.urlencode($u->name),
+        $modules = Module::where('name', 'like', "%{$q}%")
+            ->orWhere('code', 'like', "%{$q}%")
+            ->take(3)
+            ->get()
+            ->map(fn ($m) => [
+                'id' => $m->id,
+                'title' => 'Modul '.$m->name,
+                'description' => 'Kode: '.$m->code.' • Modul Terintegrasi WorkOS',
+                'type' => 'Modul Sistem',
+                'url' => '/workos/portal-modules',
             ]);
 
-            return response()->json(['results' => $users]);
-        }
+        $results = collect()->concat($users)->concat($roles)->concat($modules)->values();
+
+        return response()->json(['results' => $results]);
     }
 
     private function getSystemSettings()
