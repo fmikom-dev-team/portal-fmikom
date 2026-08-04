@@ -8,15 +8,12 @@ const siteSettings = computed(() => (page.props as any).siteSettings || {});
 
 <template>
     <div class="flex items-center min-w-0 max-w-full overflow-hidden">
-        <!-- Dynamic Logo from WorkOS Settings with Rhombus fallback -->
+        <!-- Dynamic Logo from WorkOS Settings with brand logo fallback -->
         <div 
-            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl overflow-hidden transition-all duration-300 select-none"
-            :class="siteSettings.brand_logo ? 'bg-transparent border-0 p-0 shadow-none' : 'bg-gradient-to-br from-[#6366f1] to-[#4f46e5] text-white shadow-lg shadow-indigo-100 dark:shadow-none hover:rotate-12'"
+            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl overflow-hidden transition-all duration-300 select-none bg-transparent border-0 p-0 shadow-none"
         >
             <img v-if="siteSettings.brand_logo" :src="siteSettings.brand_logo" class="h-full w-full object-contain" alt="Logo" />
-            <svg v-else class="h-[18px] w-[18px] text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
+            <img v-else src="/asset/brand-logo.webp" class="h-full w-full object-contain" alt="Logo" />
         </div>
         <!-- Typography -->
         <div class="ml-2.5 flex flex-col text-left group-data-[collapsible=icon]:hidden min-w-0 overflow-hidden">
