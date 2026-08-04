@@ -5,6 +5,7 @@ namespace App\Modules\WorkOs\Services\AuthPlatform;
 use App\Models\Auth\AuthOAuthCredential;
 use App\Models\Auth\AuthOAuthProvider;
 use App\Models\User;
+use App\Modules\WorkOs\Services\AuthPlatform\Providers\MicrosoftProvider;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -15,10 +16,24 @@ use Laravel\Socialite\Facades\Socialite;
 class OAuthEngine
 {
     /**
+     * Register custom drivers if needed.
+     */
+    protected function bootCustomDrivers(): void
+    {
+        Socialite::extend('microsoft', function ($app) {
+            $config = $app['config']['services.microsoft'] ?? [];
+
+            return Socialite::buildProvider(MicrosoftProvider::class, $config);
+        });
+    }
+
+    /**
      * Get the authorization URL for a specific provider.
      */
     public function getAuthorizationUrl(string $providerSlug)
     {
+        $this->bootCustomDrivers();
+
         $providerConfig = AuthOAuthProvider::where('slug', $providerSlug)->where('is_enabled', true)->first();
 
         if (! $providerConfig) {
@@ -44,13 +59,13 @@ class OAuthEngine
 
         $driver = Socialite::driver($configKey);
 
-        // Add PKCE support for security
-        if (in_array($configKey, ['google', 'twitter', 'github'])) {
-            $driver->stateless(); // Using stateless for API-based enterprise architecture
+        // Add PKCE / Stateless support for security
+        if (in_array($configKey, ['google', 'twitter', 'github', 'microsoft'])) {
+            $driver->stateless();
         }
 
         if ($providerConfig->scopes) {
-            $driver->scopes($providerConfig->scopes);
+            $driver->scopes(explode(',', $providerConfig->scopes));
         }
 
         return $driver->redirect()->getTargetUrl();
@@ -61,6 +76,8 @@ class OAuthEngine
      */
     public function handleCallback(string $providerSlug, array $requestData)
     {
+        $this->bootCustomDrivers();
+
         $providerConfig = AuthOAuthProvider::where('slug', $providerSlug)->where('is_enabled', true)->first();
 
         if (! $providerConfig) {
