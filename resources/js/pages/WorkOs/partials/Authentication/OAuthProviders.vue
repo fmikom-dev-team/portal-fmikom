@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import axios from "axios";
-import { AlertCircle, Check, Loader2, ShieldCheck } from "lucide-vue-next";
+import { AlertCircle, Check, Eye, EyeOff, Loader2, Lock, ShieldCheck } from "lucide-vue-next";
 import { computed, onMounted, ref } from "vue";
 import { showToast as globalShowToast } from "@/composables/useGlobalToast";
 
@@ -345,12 +345,26 @@ const isCustomCreds = computed(() => !form.value.use_demo);
                                 <!-- Client Secret -->
                                 <div>
                                     <div class="flex justify-between items-end mb-1.5">
-                                        <label for="client-secret-input" class="text-[14px] font-semibold text-gray-900 dark:text-zinc-100">{{ activeProvider.name }} Client Secret</label>
+                                        <label for="client-secret-input" class="text-[14px] font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-2">
+                                            <span>{{ activeProvider.name }} Client Secret</span>
+                                            <span v-if="activeProvider.has_secret || activeProvider.has_custom" class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                                                <Lock class="w-3 h-3" /> Tersimpan & Terenkripsi
+                                            </span>
+                                        </label>
                                         <a href="#" class="text-[13px] text-[#5c6dff] hover:underline flex items-center gap-1">{{ activeProvider.name }} Developer Console <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a>
                                     </div>
-                                    <input id="client-secret-input" v-model="form.client_secret" type="password"
-                                        :placeholder="`Enter your ${activeProvider.name} Client Secret`"
-                                        class="w-full px-3 py-2 text-[14px] border border-gray-300 dark:border-zinc-700 rounded-lg focus:ring-1 focus:ring-[#5c6dff] focus:border-[#5c6dff] outline-none transition" />
+                                    <div class="relative">
+                                        <input id="client-secret-input" v-model="form.client_secret" :type="form.showSecret ? 'text' : 'password'"
+                                            :placeholder="(activeProvider.has_secret || activeProvider.has_custom) ? '•••••••••••••••• (Kunci Tersimpan - Biarkan kosong jika tidak ingin mengubah)' : `Enter your ${activeProvider.name} Client Secret`"
+                                            class="w-full pl-3 pr-10 py-2 text-[14px] border border-gray-300 dark:border-zinc-700 rounded-lg focus:ring-1 focus:ring-[#5c6dff] focus:border-[#5c6dff] outline-none transition bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500" />
+                                        <button type="button" @click="form.showSecret = !form.showSecret" class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-zinc-300 rounded transition cursor-pointer border-0 bg-transparent" :title="form.showSecret ? 'Sembunyikan Secret' : 'Tampilkan Secret'">
+                                            <EyeOff v-if="form.showSecret" class="w-4 h-4" />
+                                            <Eye v-else class="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    <p v-if="activeProvider.has_secret || activeProvider.has_custom" class="text-[12px] text-gray-500 dark:text-zinc-400 mt-1">
+                                        💡 Kunci rahasia tersimpan aman di database server (AES-256). Biarkan kolom ini kosong jika tidak ada perubahan.
+                                    </p>
                                 </div>
 
                                 <!-- OAuth tokens -->
