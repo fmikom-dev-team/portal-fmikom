@@ -29,10 +29,7 @@ test.describe("Performance — Dashboard Load Time", () => {
 		console.log(`Homepage load time: ${loadTime}ms`);
 	});
 
-	test("dashboard dimuat setelah login dalam waktu wajar", async ({
-		page,
-		auth,
-	}) => {
+	test("dashboard dimuat setelah login dalam waktu wajar", async ({ page }) => {
 		await page.goto(ROUTES.home);
 		await page.waitForURL(/\/(dashboard|portal)/, { timeout: 15_000 });
 
@@ -45,7 +42,7 @@ test.describe("Performance — Dashboard Load Time", () => {
 		console.log(`Dashboard load time: ${loadTime}ms`);
 	});
 
-	test("settings profile dimuat dalam waktu wajar", async ({ page, auth }) => {
+	test("settings profile dimuat dalam waktu wajar", async ({ page }) => {
 		await page.goto(ROUTES.home);
 		await page.waitForURL(/\/(dashboard|portal)/, { timeout: 15_000 });
 

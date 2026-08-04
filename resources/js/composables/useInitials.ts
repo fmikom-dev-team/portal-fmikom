@@ -50,7 +50,7 @@ export function formatStorageUrl(path?: string | null): string | null {
 		return path;
 	const clean = path.replace(/^\/?(storage\/)+/, "");
 	if (!clean.includes("/") && !clean.includes(".")) return null;
-	return "/storage/" + clean;
+	return `/storage/${clean}`;
 }
 
 export function useInitials(): UseInitialsReturn {

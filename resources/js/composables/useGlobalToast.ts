@@ -26,8 +26,11 @@ export function showToast(
 
 	// 2. Partial / Overlap match within 2.5 seconds (e.g. "Undangan berhasil dibatalkan" vs "Undangan berhasil dibatalkan dan dihapus")
 	if (now - lastToastTime < 2500) {
-		const isSubstring = normalizedMsg.includes(lastToastMessage) || lastToastMessage.includes(normalizedMsg);
-		const sharedPrefix = normalizedMsg.slice(0, 15) === lastToastMessage.slice(0, 15);
+		const isSubstring =
+			normalizedMsg.includes(lastToastMessage) ||
+			lastToastMessage.includes(normalizedMsg);
+		const sharedPrefix =
+			normalizedMsg.slice(0, 15) === lastToastMessage.slice(0, 15);
 		if (isSubstring || (sharedPrefix && sharedPrefix.length >= 10)) {
 			return;
 		}

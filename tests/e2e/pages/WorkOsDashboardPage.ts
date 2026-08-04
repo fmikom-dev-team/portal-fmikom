@@ -68,7 +68,7 @@ export class WorkOsDashboardPage {
 				.first();
 			const text = await countEl.textContent({ timeout: 3_000 });
 			const parsed = parseInt(text?.replace(/\D/g, "") ?? "0", 10);
-			return isNaN(parsed) ? null : parsed;
+			return Number.isNaN(parsed) ? null : parsed;
 		} catch {
 			return null;
 		}

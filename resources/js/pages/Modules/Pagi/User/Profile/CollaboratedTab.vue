@@ -117,7 +117,7 @@ const formatAvatarUrl = (url: string | null | undefined) => {
 	)
 		return url;
 	const clean = url.replace(/^\/?(storage\/)+/, "");
-	return "/storage/" + clean;
+	return `/storage/${clean}`;
 };
 
 /** Build avatar items for AvatarGroup (owner + accepted collabs) */

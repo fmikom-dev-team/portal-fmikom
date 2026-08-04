@@ -64,7 +64,7 @@ const getCollabAvatar = (c: any) => {
 	)
 		return path;
 	const clean = path.replace(/^\/?(storage\/)+/, "");
-	return "/storage/" + clean;
+	return `/storage/${clean}`;
 };
 </script>
 

@@ -139,7 +139,7 @@ const formatAvatarUrl = (url: string | null | undefined) => {
 	)
 		return url;
 	const clean = url.replace(/^\/?(storage\/)+/, "");
-	return "/storage/" + clean;
+	return `/storage/${clean}`;
 };
 
 const getCollaborationAvatars = (project: any): AvatarItem[] => {

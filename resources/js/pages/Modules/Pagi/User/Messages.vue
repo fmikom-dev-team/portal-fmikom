@@ -323,7 +323,7 @@ function clientSideScan(text: string): {
 	const normalized = normalizeForScan(text);
 	for (const [word, category] of Object.entries(allBannedWords)) {
 		const pattern = new RegExp(
-			"\\b" + word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b",
+			`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
 			"iu",
 		);
 		if (
