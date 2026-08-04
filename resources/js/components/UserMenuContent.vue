@@ -46,7 +46,7 @@ const settingsUrl = computed(() => {
             </Link>
         </DropdownMenuItem>
         <DropdownMenuItem :as-child="true">
-            <Link class="block w-full cursor-pointer flex items-center" href="/workos/organizations" prefetch>
+            <Link class="block w-full cursor-pointer flex items-center" href="/dashboard" prefetch>
                 <LayoutGrid class="mr-2 h-4 w-4 text-slate-500" />
                 Portal Modules
             </Link>

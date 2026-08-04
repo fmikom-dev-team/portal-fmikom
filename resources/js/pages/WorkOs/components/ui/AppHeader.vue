@@ -325,7 +325,7 @@ onUnmounted(() => {
                             Settings
                         </Link>
                         <Link
-                            href="/workos/organizations"
+                            href="/dashboard"
                             class="w-full flex items-center gap-2.5 px-3 py-1.5 text-[12.5px] text-[#374151] dark:text-zinc-200 hover:bg-[#f9fafb] dark:hover:bg-zinc-800 transition-colors text-left font-medium cursor-pointer"
                             @click="showUserMenu = false"
                         >
