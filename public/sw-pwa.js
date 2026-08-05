@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1785952055369';
+const CACHE_VERSION = 'v1785953690857';
 const CACHE_NAME = `fmikom-portal-${CACHE_VERSION}`;
 const FONT_CACHE_NAME = `fmikom-fonts-${CACHE_VERSION}`;
 // ASSET_CACHE_NAME dihapus — tidak lagi digunakan untuk CacheFirst

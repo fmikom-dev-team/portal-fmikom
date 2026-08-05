@@ -75,48 +75,30 @@ class PortalMediaController extends Controller
             }
         }
 
-        $targetFilename = $media->filename;
         $targetPath = $media->path;
 
-        // 1. Fetch all records sharing the same filename or path to clean up duplicates
-        $matchingMedia = PortalMedia::where('id', $media->id)
-            ->orWhere(function ($query) use ($targetFilename, $targetPath) {
-                if (! empty($targetFilename)) {
-                    $query->where('filename', $targetFilename);
-                }
-                if (! empty($targetPath)) {
-                    $query->orWhere('path', $targetPath);
-                }
-            })
-            ->get();
+        // 1. Reference counting check: only delete physical file if no other PortalMedia record uses this path
+        if (! empty($targetPath)) {
+            $otherMediaCount = PortalMedia::where('path', $targetPath)
+                ->where('id', '!=', $media->id)
+                ->count();
 
-        foreach ($matchingMedia as $item) {
-            // Physically delete file asset from disk storage
-            if ($item->path) {
-                $parsedPath = parse_url($item->path, PHP_URL_PATH);
-                $relativePath = ltrim(str_replace('/storage/', '', $parsedPath), '/');
+            if ($otherMediaCount === 0) {
+                $parsedPath = parse_url($targetPath, PHP_URL_PATH);
+                $relativePath = ltrim(str_replace('/storage/', '', (string) $parsedPath), '/');
                 if (! empty($relativePath) && Storage::disk('public')->exists($relativePath)) {
                     Storage::disk('public')->delete($relativePath);
-                }
-                // Clear any post thumbnail references matching this media path
-                PortalPost::where('thumbnail', $item->path)->update(['thumbnail' => null]);
-
-                // Clear occurrences in post content JSON if any
-                $postsContainingPath = PortalPost::where('content', 'like', '%'.$item->path.'%')->get();
-                foreach ($postsContainingPath as $post) {
-                    $updatedContent = str_replace($item->path, '', (string) $post->content);
-                    $post->update(['content' => $updatedContent]);
                 }
             }
         }
 
-        // 2. Delete all matching duplicate records from database
-        PortalMedia::whereIn('id', $matchingMedia->pluck('id'))->delete();
+        // 2. Delete ONLY the target single media record (decoupled from PortalPost content)
+        $media->delete();
 
         Cache::forget('portal_settings');
         Cache::forget('portal_featured_posts');
 
-        // 3. Always return Inertia redirect back for web/Inertia requests
+        // 3. Return Inertia redirect or JSON response
         if ($request->wantsJson() && ! $request->header('X-Inertia')) {
             return response()->json(['success' => true, 'message' => 'Media deleted successfully!'])
                 ->header('Cache-Control', 'no-cache, no-store, must-revalidate');
