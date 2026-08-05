@@ -9,7 +9,7 @@ import {
 	Trash2,
 	Upload,
 } from "lucide-vue-next";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import PortalAdminLayout from "@/layouts/PortalAdminLayout.vue";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal.vue";
 
@@ -20,10 +20,20 @@ const props = defineProps({
 	},
 });
 
+const localMedia = ref<any[]>([...props.media]);
+
+watch(
+	() => props.media,
+	(newMedia) => {
+		localMedia.value = [...(newMedia || [])];
+	},
+	{ deep: true, immediate: true }
+);
+
 const searchQuery = ref("");
 const filteredMedia = computed(() => {
-	if (!searchQuery.value) return props.media;
-	return props.media.filter((item) =>
+	if (!searchQuery.value) return localMedia.value;
+	return localMedia.value.filter((item) =>
 		item.filename.toLowerCase().includes(searchQuery.value.toLowerCase()),
 	);
 });
@@ -37,6 +47,7 @@ const handleFileUpload = (e: any) => {
 	uploadForm.post("/portal-admin/media", {
 		onSuccess: () => {
 			uploadForm.reset();
+			router.reload({ only: ["media"] });
 		},
 	});
 };
@@ -51,17 +62,21 @@ const deleteMedia = (id: number) => {
 
 const handleDeleteConfirm = () => {
 	if (deleteId.value !== null) {
-		router.delete(`/portal-admin/media/${deleteId.value}`, {
+		const targetId = deleteId.value;
+		isDeleteModalOpen.value = false;
+		deleteId.value = null;
+
+		// Optimistically remove item from UI immediately
+		localMedia.value = localMedia.value.filter((item) => item.id !== targetId);
+
+		router.delete(`/portal-admin/media/${targetId}`, {
 			preserveScroll: true,
-			preserveState: false,
 			onSuccess: () => {
-				isDeleteModalOpen.value = false;
-				deleteId.value = null;
+				router.reload({ only: ["media"] });
 			},
-			onFinish: () => {
-				isDeleteModalOpen.value = false;
-				deleteId.value = null;
-			}
+			onError: () => {
+				localMedia.value = [...props.media];
+			},
 		});
 	}
 };
