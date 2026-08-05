@@ -69,6 +69,9 @@ COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 # Set working directory
 WORKDIR /var/www/html
 
+# Invalidate cache for application code copy
+ARG BUILDTIME=0
+
 # Copy application code
 COPY . .
 
