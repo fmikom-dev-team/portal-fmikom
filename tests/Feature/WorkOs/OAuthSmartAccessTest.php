@@ -153,4 +153,48 @@ class OAuthSmartAccessTest extends TestCase
         $this->assertEquals(UserAccountStatus::Activated, $user->status_approval);
         $this->assertAuthenticatedAs($user);
     }
+
+    public function test_smart_access_verification_works_with_signed_url_even_if_token_query_is_omitted(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'GitHub User',
+            'email' => 'githubuser@example.com',
+            'is_active' => false,
+            'status_approval' => UserAccountStatus::Approved->value,
+        ]);
+
+        $regRequest = RegistrationRequest::create([
+            'full_name' => 'GitHub User',
+            'email' => 'githubuser@example.com',
+            'role' => 'alumni',
+            'status' => RegistrationStatus::Approved->value,
+            'created_user_id' => $user->id,
+            'oauth_data' => [
+                'provider' => 'github',
+                'provider_id' => 3,
+                'external_id' => 'gh_123',
+                'name' => 'GitHub User',
+                'email' => 'githubuser@example.com',
+            ],
+            'ip_address' => '127.0.0.1',
+        ]);
+
+        $signedUrl = URL::temporarySignedRoute(
+            'auth.oauth.verify_access',
+            now()->addHours(24),
+            [
+                'request_id' => $regRequest->id,
+            ]
+        );
+
+        $response = $this->get($signedUrl);
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('auth/SmartAccessVerification')
+            ->where('isValid', true)
+            ->where('userData.name', 'GitHub User')
+            ->where('userData.provider', 'github')
+        );
+    }
 }

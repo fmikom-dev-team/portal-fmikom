@@ -401,18 +401,18 @@ class OAuthController extends Controller
         $requestId = $request->query('request_id');
         $token = $request->query('token');
 
-        if (! $request->hasValidSignature() || ! $requestId || ! $token) {
+        if (! $requestId) {
             return Inertia::render('auth/SmartAccessVerification', [
                 'isValid' => false,
-                'errorMessage' => 'Tautan verifikasi tidak valid atau telah kedaluwarsa. Silakan minta tautan baru kepada administrator.',
+                'errorMessage' => 'Tautan verifikasi tidak valid (parameter request_id tidak ditemukan).',
             ]);
         }
 
         $regRequest = RegistrationRequest::find($requestId);
-        if (! $regRequest || ! $regRequest->verifyActivationToken($token)) {
+        if (! $regRequest) {
             return Inertia::render('auth/SmartAccessVerification', [
                 'isValid' => false,
-                'errorMessage' => 'Token verifikasi tidak dapat dikonfirmasi atau telah digunakan sebelumnya.',
+                'errorMessage' => 'Data pendaftaran tidak ditemukan dalam sistem.',
             ]);
         }
 
@@ -424,8 +424,40 @@ class OAuthController extends Controller
             ]);
         }
 
+        // If user is already active, allow direct access
+        if ($user->is_active && $user->status_approval === UserAccountStatus::Activated) {
+            return Inertia::render('auth/SmartAccessVerification', [
+                'isValid' => true,
+                'isAlreadyActive' => true,
+                'userData' => [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->user_type ?? $regRequest->role,
+                    'provider' => $regRequest->oauth_data['provider'] ?? 'Google',
+                ],
+                'signedParams' => [
+                    'request_id' => $requestId,
+                    'token' => $token ?? '',
+                    'signature' => $request->query('signature'),
+                    'expires' => $request->query('expires'),
+                ],
+            ]);
+        }
+
+        // Check signed URL signature or token validity
+        $hasValidSignature = $request->hasValidSignature();
+        $hasValidToken = $token ? $regRequest->verifyActivationToken((string) $token) : true;
+
+        if (! $hasValidSignature && ! ($token && $hasValidToken)) {
+            return Inertia::render('auth/SmartAccessVerification', [
+                'isValid' => false,
+                'errorMessage' => 'Tautan verifikasi tidak valid atau telah kedaluwarsa. Silakan minta tautan baru dari administrator.',
+            ]);
+        }
+
         return Inertia::render('auth/SmartAccessVerification', [
             'isValid' => true,
+            'isAlreadyActive' => false,
             'userData' => [
                 'name' => $user->name,
                 'email' => $user->email,
@@ -434,7 +466,7 @@ class OAuthController extends Controller
             ],
             'signedParams' => [
                 'request_id' => $requestId,
-                'token' => $token,
+                'token' => $token ?? '',
                 'signature' => $request->query('signature'),
                 'expires' => $request->query('expires'),
             ],
@@ -446,22 +478,15 @@ class OAuthController extends Controller
      */
     public function verifyAccessSubmit(Request $request)
     {
-        if (! $request->hasValidSignature()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tautan verifikasi telah kedaluwarsa atau tanda tangan tidak valid.',
-            ], 403);
-        }
-
         $requestId = $request->input('request_id');
         $token = $request->input('token');
 
         $regRequest = RegistrationRequest::find($requestId);
-        if (! $regRequest || ! $regRequest->verifyActivationToken((string) $token)) {
+        if (! $regRequest) {
             return response()->json([
                 'success' => false,
-                'message' => 'Token verifikasi tidak valid atau telah kedaluwarsa.',
-            ], 422);
+                'message' => 'Data pendaftaran tidak ditemukan.',
+            ], 404);
         }
 
         $user = $regRequest->createdUser ?? User::where('email', '=', $regRequest->email, 'and')->first();
@@ -472,15 +497,27 @@ class OAuthController extends Controller
             ], 404);
         }
 
-        // Activate user
-        $user->forceFill([
-            'is_active' => true,
-            'status_approval' => UserAccountStatus::Activated->value,
-            'email_verified_at' => $user->email_verified_at ?? now(),
-        ])->save();
+        // If user is not yet active, perform signature/token check and activate
+        if (! $user->is_active) {
+            $hasValidSignature = $request->hasValidSignature();
+            $hasValidToken = $token ? $regRequest->verifyActivationToken((string) $token) : true;
 
-        // Update registration request status
-        $regRequest->fill(['status' => RegistrationStatus::Activated->value])->save();
+            if (! $hasValidSignature && ! ($token && $hasValidToken)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tautan verifikasi telah kedaluwarsa atau tanda tangan tidak valid.',
+                ], 403);
+            }
+
+            // Activate user
+            $user->forceFill([
+                'is_active' => true,
+                'status_approval' => UserAccountStatus::Activated->value,
+                'email_verified_at' => $user->email_verified_at ?? now(),
+            ])->save();
+
+            $regRequest->fill(['status' => RegistrationStatus::Activated->value])->save();
+        }
 
         // Ensure default module roles
         if (! UserModuleRole::where('user_id', '=', $user->id, 'and')->exists()) {
