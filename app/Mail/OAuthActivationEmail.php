@@ -45,7 +45,7 @@ class OAuthActivationEmail extends Mailable implements ShouldQueue
     {
         return new Envelope(
             subject: 'Akses Disetujui — Verifikasi Akun '.$this->providerName.' FMIKOM Portal Anda',
-            to: $this->userEmail,
+            to: [$this->userEmail],
         );
     }
 
