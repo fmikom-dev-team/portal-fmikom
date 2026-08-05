@@ -4,6 +4,7 @@ namespace App\Modules\Portal\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Portal\PortalMedia;
+use App\Models\Portal\PortalPost;
 use App\Services\VirusScannerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -74,7 +75,11 @@ class PortalMediaController extends Controller
             }
         }
 
-        // 2. Delete record from database
+        // 2. Clear any post thumbnail references to this media path & delete record
+        if ($media->path) {
+            PortalPost::where('thumbnail', $media->path)->update(['thumbnail' => null]);
+        }
+
         $media->delete();
 
         Cache::forget('portal_settings');
