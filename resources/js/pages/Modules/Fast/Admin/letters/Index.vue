@@ -118,19 +118,6 @@ function showToast(message: string, variant: 'success' | 'error' = 'success') {
     }, 2800);
 }
 watch(
-    () => [page.props.flash?.success, page.props.flash?.error],
-    ([success, error]) => {
-        if (typeof success === 'string' && success.length > 0) {
-            showToast(success, 'success');
-            return;
-        }
-        if (typeof error === 'string' && error.length > 0) {
-            showToast(error, 'error');
-        }
-    },
-    { immediate: true },
-);
-watch(
     () => props.surats.data.map((item) => item.id).join(','),
     () => {
         selectedSuratIds.value = [];

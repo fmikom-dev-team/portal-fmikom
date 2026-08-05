@@ -786,15 +786,6 @@ async function showToast(message: string) {
     }, 3200);
 }
 
-watch(
-    () => page.props.flash?.success,
-    (message) => {
-        if (typeof message === 'string' && message.length > 0)
-            showToast(message);
-    },
-    { immediate: true },
-);
-
 function openForm(jenis: JenisSuratOption) {
     router.get(
         `${safeEndpoints.value.basePath}/ajukan`,

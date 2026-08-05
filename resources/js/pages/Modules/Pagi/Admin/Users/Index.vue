@@ -1,24 +1,10 @@
 <script setup lang="ts">
 import { Link, router, useForm, usePage } from "@inertiajs/vue3";
-import { computed, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import { toast } from "vue-sonner";
 import PagiAdminLayout from "@/layouts/PagiAdminLayout.vue";
 
 const page = usePage();
-
-// Watch for flash messages from backend
-watch(
-	() => (page.props as any).flash,
-	(flash) => {
-		if (flash?.success) {
-			toast.success(flash.success);
-		}
-		if (flash?.error) {
-			toast.error(flash.error);
-		}
-	},
-	{ immediate: true, deep: true },
-);
 
 interface UserItem {
 	id: number;

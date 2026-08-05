@@ -349,7 +349,6 @@ watch(
         localSuccess.value = message ?? null;
         if (message) {
             localError.value = null;
-            toast(message, 'success');
         }
     },
     { immediate: true },
@@ -361,7 +360,6 @@ watch(
         localError.value = message ?? null;
         if (message) {
             localSuccess.value = null;
-            toast(message, 'error');
         }
     },
     { immediate: true },

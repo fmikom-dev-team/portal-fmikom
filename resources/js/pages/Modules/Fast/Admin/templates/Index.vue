@@ -287,19 +287,6 @@ function showToast(message: string, variant: 'success' | 'error' = 'success') {
     }, 0);
 }
 
-watch(
-    () => [page.props.flash?.success, page.props.flash?.error],
-    ([success, error]) => {
-        if (typeof success === 'string' && success.trim()) {
-            showToast(success, 'success');
-            return;
-        }
-        if (typeof error === 'string' && error.trim()) {
-            showToast(error, 'error');
-        }
-    },
-    { immediate: true },
-);
 function openAddDialog() {
     showAddDialog.value = true;
 }

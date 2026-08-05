@@ -148,19 +148,6 @@ const documentTitle = computed(() =>
         : props.jenis_surat,
 );
 
-watch(
-    () => page.props.flash?.success,
-    (message) => {
-        if (typeof message === 'string' && message.length > 0) {
-            toastMessage.value = message;
-            window.setTimeout(() => {
-                if (toastMessage.value === message) toastMessage.value = '';
-            }, 2800);
-        }
-    },
-    { immediate: true },
-);
-
 const hiddenFields = new Set(['created_by', 'jenis_surat_id', 'jenis_surat', 'keperluan']);
 
 const detailSource = computed<Record<string, unknown>>(() => {

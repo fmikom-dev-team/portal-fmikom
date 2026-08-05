@@ -51,19 +51,6 @@ const user = computed(() => page.props.auth?.user);
 const firstName = computed(() => user.value?.name || "Admin");
 const siteSettings = computed(() => (page.props as any).siteSettings || {});
 
-const flashSuccess = computed(() => (page.props as any).flash?.success);
-const flashError = computed(() => (page.props as any).flash?.error);
-const showFlashToast = ref(false);
-
-watch([flashSuccess, flashError], ([s, e]) => {
-	if (s || e) {
-		showFlashToast.value = true;
-		setTimeout(() => {
-			showFlashToast.value = false;
-		}, 4000);
-	}
-}, { immediate: true });
-
 const isSuperAdmin = computed(() => {
 	if (!user.value) return false;
 	if (user.value.is_super_admin) return true;
@@ -770,28 +757,6 @@ onUnmounted(() => {
                 <slot v-else />
             </main>
         </div>
-
-        <!-- Global Flash Toast Notification (Teleported to Body) -->
-        <Teleport to="body">
-            <Transition
-                enter-active-class="transition duration-300 ease-out"
-                enter-from-class="opacity-0 translate-y-3 scale-95"
-                enter-to-class="opacity-100 translate-y-0 scale-100"
-                leave-active-class="transition duration-200 ease-in"
-                leave-from-class="opacity-100 translate-y-0 scale-100"
-                leave-to-class="opacity-0 translate-y-3 scale-95"
-            >
-                <div
-                    v-if="showFlashToast && (flashSuccess || flashError)"
-                    class="fixed bottom-6 right-6 z-[999999] flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl max-w-sm cursor-pointer select-none"
-                    @click="showFlashToast = false"
-                >
-                    <div :class="['w-2.5 h-2.5 rounded-full shrink-0', flashError ? 'bg-red-500' : 'bg-emerald-500']"></div>
-                    <span class="text-xs font-bold leading-snug text-slate-800 dark:text-slate-100 flex-1">{{ flashSuccess || flashError }}</span>
-                    <button @click.stop="showFlashToast = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold p-1">✕</button>
-                </div>
-            </Transition>
-        </Teleport>
     </div>
 </template>
 
