@@ -1,16 +1,18 @@
 <script setup lang="ts">
 // biome-ignore-all lint/correctness/noUnusedImports: used in template
-import { Link, usePage } from "@inertiajs/vue3";
+import { Link, router, usePage } from "@inertiajs/vue3";
 import { useAppearance } from "@/composables/useAppearance";
 import {
 	ChevronDown,
 	ChevronLeft,
 	ChevronRight,
+	ChevronsUpDown,
 	FileText,
 	FolderOpen,
 	Image as ImageIcon,
 	Layers,
 	LayoutDashboard,
+	LayoutGrid,
 	LineChart,
 	LogOut,
 	Settings,
@@ -60,6 +62,16 @@ const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
 
 const siteSettings = computed(() => (page.props as any).siteSettings || {});
 const pagiCounts = computed(() => (page.props as any).pagi_moderation_counts || null);
+
+const authUser = computed(() => (page.props as any).auth?.user);
+const userName = computed(() => authUser.value?.name || "User Admin");
+const userEmail = computed(() => authUser.value?.email || "admin@fmikom.org");
+const userInitial = computed(() => userName.value.charAt(0).toUpperCase());
+const userMenuOpen = ref(false);
+
+const logout = () => {
+	router.post("/logout");
+};
 
 const activeTheme = computed({
 	get: () => appearance.value === "system" ? resolvedAppearance.value : appearance.value,
@@ -436,10 +448,10 @@ const badgeClasses: Record<string, string> = {
             </div>
         </div>
 
-        <!-- Footer -->
-        <div class="shrink-0 border-t border-slate-100 dark:border-zinc-800 p-3">
-            <!-- Theme Toggle -->
-            <div v-if="!collapsed" class="flex items-center justify-between px-1.5 mb-2.5">
+        <!-- ── Modern WorkOS-Style Sidebar Footer ── -->
+        <!-- Theme Toggle Row -->
+        <div class="shrink-0 border-t border-slate-100 dark:border-zinc-800 px-3.5 py-2.5">
+            <div v-if="!collapsed" class="flex items-center justify-between">
                 <span class="text-[12px] font-semibold text-slate-500 dark:text-zinc-400">Mode Tampilan</span>
                 <ThemeTogglerButton
                     v-model="activeTheme"
@@ -449,7 +461,7 @@ const badgeClasses: Record<string, string> = {
                     :modes="['light', 'dark']"
                 />
             </div>
-            <div v-else class="flex justify-center mb-2">
+            <div v-else class="flex justify-center">
                 <ThemeTogglerButton
                     v-model="activeTheme"
                     variant="ghost"
@@ -458,19 +470,78 @@ const badgeClasses: Record<string, string> = {
                     :modes="['light', 'dark']"
                 />
             </div>
+        </div>
 
-            <!-- Back to portal SSO (clear module session) -->
-            <Link
-                href="/dashboard"
+        <!-- User Profile Card Row (Matching WorkOS Gambar 3) -->
+        <div class="relative shrink-0 border-t border-slate-100 dark:border-zinc-800 p-2">
+            <button
+                type="button"
+                @click="userMenuOpen = !userMenuOpen"
                 :class="[
-                    'flex items-center gap-2.5 rounded-xl h-9 text-[12px] font-bold text-slate-400 dark:text-zinc-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all',
-                    collapsed ? 'justify-center px-0' : 'px-3',
+                    'flex items-center rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all duration-200 text-left group w-full',
+                    collapsed ? 'w-10 h-10 mx-auto justify-center px-0' : 'pl-1.5 pr-2 py-1.5'
                 ]"
-                :title="collapsed ? 'Portal SSO' : undefined"
+                aria-label="User menu"
             >
-                <LogOut class="h-3.5 w-3.5 shrink-0" />
-                <span v-if="!collapsed" class="truncate">Portal SSO</span>
-            </Link>
+                <div
+                    class="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 overflow-hidden bg-[#2563EB]"
+                    aria-hidden="true"
+                >
+                    <img v-if="authUser?.foto_path || authUser?.avatar" :src="authUser.foto_path || authUser.avatar" :alt="userName" class="w-full h-full object-cover" />
+                    <span v-else>{{ userInitial }}</span>
+                </div>
+
+                <div
+                    v-if="!collapsed"
+                    class="flex-1 min-w-0 ml-2.5 flex items-center justify-between overflow-hidden"
+                >
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[13px] font-bold text-slate-900 dark:text-zinc-100 truncate leading-snug">{{ userName }}</p>
+                        <p class="text-[11.5px] text-slate-400 dark:text-zinc-500 truncate leading-snug">{{ userEmail }}</p>
+                    </div>
+                    <ChevronsUpDown class="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500 dark:text-zinc-500 transition-colors shrink-0 ml-1.5" />
+                </div>
+            </button>
+
+            <!-- Floating Tooltip when Collapsed -->
+            <div 
+                v-if="collapsed" 
+                class="pointer-events-none fixed left-[84px] z-[99999] rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold px-3 py-1.5 whitespace-nowrap opacity-0 hover:opacity-100 transition-all duration-200 shadow-2xl flex items-center gap-1.5 transform translate-x-1"
+            >
+                <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 dark:bg-slate-100 rotate-45"></div>
+                <span class="relative z-10">{{ userName }}</span>
+            </div>
+
+            <!-- User Dropdown Popover Menu -->
+            <transition enter-active-class="transition duration-100 ease-out" enter-from-class="transform scale-95 opacity-0" enter-to-class="transform scale-100 opacity-100" leave-active-class="transition duration-75 ease-in" leave-from-class="transform scale-100 opacity-100" leave-to-class="transform scale-95 opacity-0">
+                <div
+                    v-if="userMenuOpen"
+                    class="absolute bottom-full left-2 right-2 mb-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl p-1.5 z-50 text-xs font-medium space-y-0.5"
+                >
+                    <div class="px-2.5 py-2 border-b border-slate-100 dark:border-zinc-800 mb-1">
+                        <p class="text-[12px] font-bold text-slate-900 dark:text-white truncate">{{ userName }}</p>
+                        <p class="text-[10.5px] text-slate-400 dark:text-zinc-400 truncate">{{ userEmail }}</p>
+                    </div>
+
+                    <Link
+                        href="/dashboard"
+                        class="flex items-center gap-2 px-2.5 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 transition-colors"
+                        @click="userMenuOpen = false"
+                    >
+                        <LayoutGrid class="w-3.5 h-3.5 text-blue-600" />
+                        <span>Portal SSO</span>
+                    </Link>
+
+                    <button
+                        type="button"
+                        @click="logout"
+                        class="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 transition-colors text-left"
+                    >
+                        <LogOut class="w-3.5 h-3.5" />
+                        <span>Keluar (Logout)</span>
+                    </button>
+                </div>
+            </transition>
         </div>
     </aside>
 </template>
