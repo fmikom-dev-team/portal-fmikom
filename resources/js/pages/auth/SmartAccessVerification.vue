@@ -60,9 +60,219 @@ const SCRAMBLED_STRINGS = [
 	"IZE$@GCC&9OEB%@LLRX%IJ!VILBQ$%K#XALOTXTQD1%J82QSFUS512FRQHSO@#R#MK0C0@686S$XS1EPS0YLQ!%TL374LL#Y@DL4&1G85XA6S59K99DWZ8@LEVWAK94Y99VDSXS^V$71J092U2V#AB*@*45AZXIGVM^08V1&F1#!ST5PP7WBR*RE1SZ%UCJNMHP#^DJ0O1JAZIGPB7%V7DBQ^CKZ^6B^Q510BMK8Y3TA&@HZAHYCMG1J9Y1FOQ2TS3M$A@R%5^X$71W@N@%&W100&7768Q3!8V2F6K8#R^X!3VZ^GUHQ#3%BUSASCQL1#C4#AJ5RQJ1ITY%CZVD$$EZP!QRML2FOU%M9OH#17#I&H4SLS8U0E9%L^MDYEWYCUL*RXKYHKB$A7PZ10AB6^",
 ];
 
-const scramblerText = ref(SCRAMBLED_STRINGS[0]);
-let scramblerInterval: ReturnType<typeof setInterval> | null = null;
-let scramblerIndex = 0;
+// WebGL Cloudscape Shader Background Logic
+const canvasRef = ref<HTMLCanvasElement | null>(null);
+const hostRef = ref<HTMLDivElement | null>(null);
+let animationFrameId = 0;
+let resizeObserver: ResizeObserver | null = null;
+
+const vertexShaderGLSL = `
+attribute vec2 position;
+void main() {
+  gl_Position = vec4(position, 0.0, 1.0);
+}
+`;
+
+const fragmentShaderGLSL = `
+precision highp float;
+
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform vec3 u_colorBottom;
+uniform vec3 u_colorMid;
+uniform vec3 u_colorTop;
+uniform float u_speed;
+
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+}
+
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  float a = hash(i);
+  float b = hash(i + vec2(1.0, 0.0));
+  float c = hash(i + vec2(0.0, 1.0));
+  float d = hash(i + vec2(1.0, 1.0));
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+}
+
+float fbm(vec2 p, float t) {
+  float v = 0.0;
+  float a = 0.5;
+  float fi = 0.0;
+  mat2 rot = mat2(0.86, 0.51, -0.51, 0.86);
+  
+  for (int i = 0; i < 6; i++) {
+    vec2 morph = vec2(sin(t * 0.5 + fi), cos(t * 0.3 - fi)) * 0.05;
+    v += a * noise(p + morph);
+    p = rot * p * 2.0;
+    a *= 0.5;
+    fi += 1.0;
+  }
+  return v;
+}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_resolution;
+  float t = u_time * u_speed;
+  vec2 aspect = vec2(u_resolution.x / max(u_resolution.y, 1.0), 1.0);
+  vec2 p = (uv - 0.5) * aspect;
+
+  vec2 wind = vec2(t * 0.1, t * 0.02);
+
+  float pattern = fbm(p * 2.2 - wind, t);
+
+  float bandLow = smoothstep(0.3, 0.65, pattern);
+  float bandHigh = smoothstep(0.7, 0.95, pattern); 
+  
+  vec3 color = mix(u_colorBottom, u_colorMid, bandLow);
+  color = mix(color, u_colorTop, bandHigh);
+
+  gl_FragColor = vec4(color, 1.0);
+}
+`;
+
+const hexToRgbNormalized = (hex: string): [number, number, number] => {
+	const normalized = hex.replace("#", "");
+	const r = Number.parseInt(normalized.slice(0, 2), 16) / 255;
+	const g = Number.parseInt(normalized.slice(2, 4), 16) / 255;
+	const b = Number.parseInt(normalized.slice(4, 6), 16) / 255;
+	return [r, g, b];
+};
+
+const initCloudscapeWebGL = () => {
+	const canvas = canvasRef.value;
+	const host = hostRef.value;
+	if (!canvas || !host) return;
+
+	const gl = canvas.getContext("webgl", { antialias: true, alpha: true });
+	if (!gl) return;
+
+	const compileGLSLShader = (type: number, source: string) => {
+		const shader = gl.createShader(type);
+		if (!shader) return null;
+		gl.shaderSource(shader, source);
+		gl.compileShader(shader);
+		if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+			gl.deleteShader(shader);
+			return null;
+		}
+		return shader;
+	};
+
+	const vertexShader = compileGLSLShader(gl.VERTEX_SHADER, vertexShaderGLSL);
+	const fragmentShader = compileGLSLShader(
+		gl.FRAGMENT_SHADER,
+		fragmentShaderGLSL,
+	);
+	if (!vertexShader || !fragmentShader) return;
+
+	const glProgram = gl.createProgram();
+	if (!glProgram) return;
+
+	gl.attachShader(glProgram, vertexShader);
+	gl.attachShader(glProgram, fragmentShader);
+	gl.linkProgram(glProgram);
+
+	if (!gl.getProgramParameter(glProgram, gl.LINK_STATUS)) {
+		gl.deleteProgram(glProgram);
+		return;
+	}
+
+	gl.useProgram(glProgram);
+
+	const vertexPositionAttribLocation = gl.getAttribLocation(
+		glProgram,
+		"position",
+	);
+	const screenQuadVertexBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, screenQuadVertexBuffer);
+	gl.bufferData(
+		gl.ARRAY_BUFFER,
+		new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
+		gl.STATIC_DRAW,
+	);
+	gl.enableVertexAttribArray(vertexPositionAttribLocation);
+	gl.vertexAttribPointer(
+		vertexPositionAttribLocation,
+		2,
+		gl.FLOAT,
+		false,
+		0,
+		0,
+	);
+
+	const resolutionUniformLocation = gl.getUniformLocation(
+		glProgram,
+		"u_resolution",
+	);
+	const timeUniformLocation = gl.getUniformLocation(glProgram, "u_time");
+	const colorBottomUniformLocation = gl.getUniformLocation(
+		glProgram,
+		"u_colorBottom",
+	);
+	const colorMidUniformLocation = gl.getUniformLocation(
+		glProgram,
+		"u_colorMid",
+	);
+	const colorTopUniformLocation = gl.getUniformLocation(
+		glProgram,
+		"u_colorTop",
+	);
+	const speedUniformLocation = gl.getUniformLocation(glProgram, "u_speed");
+
+	const resize = () => {
+		const dpr = Math.min(window.devicePixelRatio || 1, 2);
+		const { width, height } = host.getBoundingClientRect();
+		canvas.width = Math.max(1, Math.floor(width * dpr));
+		canvas.height = Math.max(1, Math.floor(height * dpr));
+		gl.viewport(0, 0, canvas.width, canvas.height);
+		if (resolutionUniformLocation) {
+			gl.uniform2f(resolutionUniformLocation, canvas.width, canvas.height);
+		}
+	};
+
+	resize();
+	resizeObserver = new ResizeObserver(resize);
+	resizeObserver.observe(host);
+
+	const start = performance.now();
+	const colorBottom = hexToRgbNormalized("#cbd5e1"); // Soft Slate Blue/Cyan
+	const colorMid = hexToRgbNormalized("#f1f5f9"); // Soft Slate White
+	const colorTop = hexToRgbNormalized("#ffffff"); // Pure White
+
+	const render = (now: number) => {
+		const elapsedSec = (now - start) / 1000;
+		gl.clearColor(0, 0, 0, 0);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+
+		if (timeUniformLocation) gl.uniform1f(timeUniformLocation, elapsedSec);
+		if (colorBottomUniformLocation)
+			gl.uniform3f(
+				colorBottomUniformLocation,
+				colorBottom[0],
+				colorBottom[1],
+				colorBottom[2],
+			);
+		if (colorMidUniformLocation)
+			gl.uniform3f(
+				colorMidUniformLocation,
+				colorMid[0],
+				colorMid[1],
+				colorMid[2],
+			);
+		if (colorTopUniformLocation)
+			gl.uniform3f(colorTopUniformLocation, colorTop[0], colorTop[1], colorTop[2]);
+		if (speedUniformLocation) gl.uniform1f(speedUniformLocation, 0.5);
+
+		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+		animationFrameId = requestAnimationFrame(render);
+	};
+
+	animationFrameId = requestAnimationFrame(render);
+};
 
 const startScrambler = () => {
 	scramblerInterval = setInterval(() => {
@@ -74,7 +284,7 @@ const startScrambler = () => {
 const animateStepProgress = (durationMs: number): Promise<void> => {
 	return new Promise((resolve) => {
 		currentStepProgress.value = 0;
-		const intervalMs = 25;
+		const intervalMs = 20;
 		const increment = 100 / (durationMs / intervalMs);
 
 		const timer = setInterval(() => {
@@ -93,7 +303,6 @@ const animateStepProgress = (durationMs: number): Promise<void> => {
 const runSequentialVerification = async () => {
 	if (!props.isValid || !props.signedParams) return;
 
-	// Execute API Request asynchronously in parallel
 	const apiPromise = axios.post(
 		"/auth/oauth/verify-access",
 		{
@@ -123,7 +332,6 @@ const runSequentialVerification = async () => {
 		currentStepIndex.value = 2;
 		await animateStepProgress(2200);
 
-		// Await API response
 		const response = await apiPromise;
 
 		if (response.data.success) {
@@ -152,6 +360,7 @@ const enterDashboard = () => {
 
 onMounted(() => {
 	startScrambler();
+	initCloudscapeWebGL();
 	if (props.isValid) {
 		runSequentialVerification();
 	}
@@ -159,18 +368,23 @@ onMounted(() => {
 
 onUnmounted(() => {
 	if (scramblerInterval) clearInterval(scramblerInterval);
+	if (animationFrameId) cancelAnimationFrame(animationFrameId);
+	if (resizeObserver) resizeObserver.disconnect();
 });
 </script>
 
 <template>
-    <!-- Clean Modern White Standalone Page Layout -->
-    <div class="min-h-screen w-full bg-slate-100/90 dark:bg-neutral-950 flex flex-col items-center justify-center p-4 sm:p-6 font-sans">
+    <!-- Clean Modern White Standalone Page Layout with WebGL Cloudscape Background -->
+    <div ref="hostRef" class="relative min-h-screen w-full bg-slate-100 flex flex-col items-center justify-center p-4 sm:p-6 font-sans overflow-hidden">
+        <!-- WebGL Canvas Shader Background -->
+        <canvas ref="canvasRef" aria-hidden="true" class="pointer-events-none absolute inset-0 h-full w-full z-0 opacity-80" />
+
         <Head>
             <title>Smart Access Control - Verifikasi Akses</title>
         </Head>
 
         <!-- INVALID / EXPIRED STATE -->
-        <div v-if="!props.isValid || verificationError" class="w-full max-w-sm p-6 bg-white dark:bg-neutral-900 border border-red-200 dark:border-red-900/60 rounded-2xl shadow-xl text-center animate-in fade-in zoom-in-95 duration-300">
+        <div v-if="!props.isValid || verificationError" class="relative z-10 w-full max-w-sm p-6 bg-white/95 backdrop-blur-md dark:bg-neutral-900 border border-red-200 dark:border-red-900/60 rounded-2xl shadow-xl text-center animate-in fade-in zoom-in-95 duration-300">
             <div class="w-12 h-12 mx-auto rounded-full bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 flex items-center justify-center mb-3">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -186,8 +400,8 @@ onUnmounted(() => {
         </div>
 
         <!-- FORGEUI SECURITY CARD (PERFECT PORTRAIT CARD PROPORTIONS) -->
-        <div v-else class="flex flex-col items-center gap-5 w-full max-w-[390px] sm:max-w-[420px] px-3 sm:px-0">
-            <div class="relative overflow-hidden shadow-2xl shadow-black/5 flex h-[470px] sm:h-[500px] w-full items-center justify-center rounded-3xl bg-white border border-neutral-200/90 dark:bg-neutral-900 dark:border-neutral-800 transition-all duration-300">
+        <div v-else class="relative z-10 flex flex-col items-center gap-5 w-full max-w-[390px] sm:max-w-[420px] px-3 sm:px-0">
+            <div class="relative overflow-hidden shadow-2xl shadow-black/5 flex h-[480px] sm:h-[510px] w-full items-center justify-center rounded-3xl bg-white/95 backdrop-blur-md border border-neutral-200/90 dark:bg-neutral-900 dark:border-neutral-800 transition-all duration-300">
                 <!-- Infinite Scrambler Matrix Background -->
                 <div class="absolute top-[12%] max-w-[340px] sm:max-w-[370px] px-3 pointer-events-none select-none">
                     <p class="font-mono text-[11px] sm:text-xs leading-4 break-words whitespace-normal text-neutral-400 opacity-35">
@@ -209,7 +423,7 @@ onUnmounted(() => {
                 </div>
 
                 <!-- FaceCard Animated Frame (Raised Higher Position - Zero Overlap) -->
-                <div class="absolute top-[26%] sm:top-[28%] z-10 rounded-[5px] bg-neutral-200/70 dark:bg-neutral-950/60 p-1 shadow-md transition-all duration-300">
+                <div class="absolute top-[24%] sm:top-[26%] z-10 rounded-[5px] bg-neutral-200/70 dark:bg-neutral-950/60 p-1 shadow-md transition-all duration-300">
                     <div class="relative h-32 w-26 sm:h-36 sm:w-28 rounded-[3px] bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900 flex items-center justify-center overflow-hidden">
                         <svg
                             viewBox="0 0 80 96"
@@ -244,6 +458,10 @@ onUnmounted(() => {
 
                 <!-- FORGEUI 3-CARD STACK CAROUSEL (Top Stack, Middle Active Focus, Bottom Stack) -->
                 <div v-if="!isFinished" class="absolute top-[60%] sm:top-[62%] w-[88%] max-w-[340px] h-[155px] flex flex-col items-center justify-center z-20 animate-in fade-in duration-300">
+                    <!-- Top and Bottom Gradient Mask Fades -->
+                    <div class="pointer-events-none absolute top-0 z-40 h-[30%] w-full bg-gradient-to-b from-white via-white/80 to-transparent dark:from-neutral-900" />
+                    <div class="pointer-events-none absolute bottom-0 z-40 h-[30%] w-full bg-gradient-to-t from-white via-white/80 to-transparent dark:from-neutral-900" />
+
                     <div
                         v-for="(stepItem, index) in steps"
                         :key="stepItem.id"
