@@ -509,14 +509,20 @@ class OAuthController extends Controller
                 ], 403);
             }
 
-            // Activate user
+            // Activate user and set password_changed_at so OAuth users are not redirected to force-change-password
             $user->forceFill([
                 'is_active' => true,
                 'status_approval' => UserAccountStatus::Activated->value,
                 'email_verified_at' => $user->email_verified_at ?? now(),
+                'password_changed_at' => $user->password_changed_at ?? now(),
             ])->save();
 
             $regRequest->fill(['status' => RegistrationStatus::Activated->value])->save();
+        } else {
+            // Ensure password_changed_at is filled for active OAuth users
+            if (is_null($user->password_changed_at)) {
+                $user->forceFill(['password_changed_at' => now()])->save();
+            }
         }
 
         // Ensure default module roles
