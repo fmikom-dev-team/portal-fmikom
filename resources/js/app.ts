@@ -16,7 +16,7 @@ import { initServiceWorkerUpdater, triggerSWCheck } from "@/composables/useServi
 
 (globalThis as any).axios = axios;
 (globalThis as any).axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
-(globalThis as any).axios.defaults.xsrfCookieName = "fm_csrf";
+(globalThis as any).axios.defaults.xsrfCookieName = "XSRF-TOKEN";
 (globalThis as any).axios.defaults.xsrfHeaderName = "X-XSRF-TOKEN";
 
 // ── Handle Chunk/Dynamic Import Loading Failures ─────────────────────────

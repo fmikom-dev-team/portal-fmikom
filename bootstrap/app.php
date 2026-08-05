@@ -210,7 +210,7 @@ return Application::configure(basePath: dirname(__DIR__))
             ],
         };
         $middleware->trustProxies(at: $trustedProxies);
-        $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+        $middleware->encryptCookies(except: ['appearance', 'sidebar_state', 'XSRF-TOKEN', 'fm_csrf']);
 
         // Global Middleware (Applies to all HTTP requests - Web, API, etc.)
         $middleware->append(StaticAssetCacheHeaders::class);

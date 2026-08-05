@@ -50,4 +50,26 @@ class CustomCsrfMiddleware extends Middleware
             $config['same_site'] ?? null
         );
     }
+
+    /**
+     * Determine if the request has a valid CSRF token.
+     *
+     * @param  Request  $request
+     * @return string|null
+     */
+    protected function getTokenFromRequest($request)
+    {
+        $token = $request->input('_token') ?: $request->header('X-CSRF-TOKEN');
+
+        if (! $token && $header = $request->header('X-XSRF-TOKEN')) {
+            try {
+                $token = $this->encrypter->decrypt($header, static::serialized());
+            } catch (\Throwable $e) {
+                // Fallback to raw unencrypted header string if cookie was excluded from encryption
+                $token = $header;
+            }
+        }
+
+        return $token;
+    }
 }
