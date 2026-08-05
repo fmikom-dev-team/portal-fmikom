@@ -66,21 +66,36 @@ class PortalMediaController extends Controller
 
     public function destroy(Request $request, PortalMedia $media)
     {
-        // 1. Physically delete file asset from disk storage
-        if ($media->path) {
-            $parsedPath = parse_url($media->path, PHP_URL_PATH);
-            $relativePath = ltrim(str_replace('/storage/', '', $parsedPath), '/');
-            if (! empty($relativePath) && Storage::disk('public')->exists($relativePath)) {
-                Storage::disk('public')->delete($relativePath);
+        $targetFilename = $media->filename;
+        $targetPath = $media->path;
+
+        // 1. Fetch all records sharing the same filename or path to clean up duplicates
+        $matchingMedia = PortalMedia::where('id', $media->id)
+            ->orWhere(function ($query) use ($targetFilename, $targetPath) {
+                if (! empty($targetFilename)) {
+                    $query->where('filename', $targetFilename);
+                }
+                if (! empty($targetPath)) {
+                    $query->orWhere('path', $targetPath);
+                }
+            })
+            ->get();
+
+        foreach ($matchingMedia as $item) {
+            // Physically delete file asset from disk storage
+            if ($item->path) {
+                $parsedPath = parse_url($item->path, PHP_URL_PATH);
+                $relativePath = ltrim(str_replace('/storage/', '', $parsedPath), '/');
+                if (! empty($relativePath) && Storage::disk('public')->exists($relativePath)) {
+                    Storage::disk('public')->delete($relativePath);
+                }
+                // Clear any post thumbnail references matching this media path
+                PortalPost::where('thumbnail', $item->path)->update(['thumbnail' => null]);
             }
         }
 
-        // 2. Clear any post thumbnail references to this media path & delete record
-        if ($media->path) {
-            PortalPost::where('thumbnail', $media->path)->update(['thumbnail' => null]);
-        }
-
-        $media->delete();
+        // 2. Delete all matching duplicate records from database
+        PortalMedia::whereIn('id', $matchingMedia->pluck('id'))->delete();
 
         Cache::forget('portal_settings');
 
