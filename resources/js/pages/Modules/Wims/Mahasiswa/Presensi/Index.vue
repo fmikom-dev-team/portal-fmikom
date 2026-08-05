@@ -224,6 +224,8 @@ watch(
     { immediate: true },
 );
 
+// Tombol presensi tetap nonaktif sampai lokasi valid, foto tersedia, dan request
+// sebelumnya selesai, sehingga pengiriman ganda dari UI dapat ditekan.
 const canSubmit = computed(
     () =>
         !!attendance.value.pendaftaran_id &&
@@ -234,6 +236,8 @@ const canSubmit = computed(
 );
 
 const checkout = () => {
+    // Backend tetap menjadi penentu akhir valid/tidaknya check-out walaupun
+    // frontend sudah lebih dulu menahan tombol saat syarat belum terpenuhi.
     form.post('/wims/absensi/checkout', {
         forceFormData: true,
     });
@@ -1071,6 +1075,7 @@ const getLocation = () =>
         locationError.value = '';
         locationAccuracy.value = null;
 
+        // Geolocation API hanya dijalankan setelah browser memberi izin akses lokasi.
         const requestPosition = () =>
             new Promise<GeolocationPosition>(
                 (positionResolve, positionReject) => {
@@ -1153,6 +1158,8 @@ const getLocation = () =>
                     return;
                 }
 
+                // Beberapa pembacaan GPS dicoba sekaligus lalu dipilih yang paling akurat
+                // agar koordinat yang dikirim tidak sekadar bergantung pada sampel pertama.
                 const bestPosition = fulfilled.reduce((best, current) =>
                     current.coords.accuracy < best.coords.accuracy
                         ? current
@@ -1197,6 +1204,8 @@ const startVerification = async () => {
 };
 
 const submit = () => {
+    // Koordinat, foto, dan pendaftaran aktif dikirim sebagai FormData ke Laravel
+    // melalui Inertia, lalu divalidasi ulang oleh controller dan service backend.
     form.post(absensiRoutes.store.url(), {
         forceFormData: true,
         preserveScroll: true,

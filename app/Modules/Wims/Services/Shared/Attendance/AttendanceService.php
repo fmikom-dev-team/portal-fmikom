@@ -6,8 +6,12 @@ class AttendanceService
 {
     public function calculateDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
     {
+        // Perhitungan Haversine memakai jari-jari bumi dalam meter agar hasil akhir
+        // langsung dapat dibandingkan dengan radius validasi lokasi perusahaan.
         $earthRadius = 6371000;
 
+        // Koordinat diubah dari derajat ke radian karena fungsi trigonometri
+        // pada rumus Haversine bekerja dengan satuan radian.
         $dLat = deg2rad($lat2 - $lat1);
         $dLng = deg2rad($lng2 - $lng1);
 
@@ -38,6 +42,8 @@ class AttendanceService
 
         return [
             'distance' => round($distance, 2),
+            // Titik yang tepat berada pada batas radius tetap dianggap valid
+            // karena aturan geofencing menggunakan pembanding jarak <= radius.
             'is_valid' => $distance <= $radius,
         ];
     }

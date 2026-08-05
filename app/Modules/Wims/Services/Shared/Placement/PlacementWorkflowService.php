@@ -24,6 +24,8 @@ class PlacementWorkflowService
                 'integer',
                 Rule::exists('users', 'id'),
                 function (string $attribute, mixed $value, \Closure $fail): void {
+                    // Backend memastikan dosen pembimbing memang memiliki role WIMS aktif,
+                    // sehingga pilihan dosen tidak hanya dibatasi oleh daftar di UI.
                     if (! $this->wimsModuleRoleService->hasActiveRole((int) $value, 'dosen')) {
                         $fail('Dosen pembimbing yang dipilih tidak memiliki assignment aktif pada modul WIMS.');
                     }

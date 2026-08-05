@@ -280,6 +280,8 @@ class SecurityHeaders
 
     private function buildPermissionsPolicy(Request $request): string
     {
+        // Sensor browser dibuka hanya pada route presensi WIMS yang memang
+        // membutuhkan kamera dan geolokasi untuk verifikasi kehadiran.
         $allowsWimsAttendanceSensors = $request->routeIs(
             'wims.attendance',
             'wims.absensi.store',

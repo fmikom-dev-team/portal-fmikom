@@ -33,6 +33,8 @@ class MitraAccessService
             return false;
         }
 
+        // Mitra hanya boleh memutuskan izin atau sakit untuk mahasiswa yang
+        // memang ditempatkan pada perusahaan milik akun mitra tersebut.
         return (int) $ketidakhadiran->perusahaan_id === (int) $company->id;
     }
 

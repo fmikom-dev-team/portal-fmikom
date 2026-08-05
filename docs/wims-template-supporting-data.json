@@ -1,0 +1,450 @@
+{
+  "generated_at": "2026-07-26",
+  "scope": "WIMS only",
+  "source_template": "C:\\Users\\asus2\\Downloads\\Template Dokumentasi Modul.docx",
+  "notes": [
+    "Data disusun dari repo lokal dan template Word yang dilampirkan user.",
+    "Item administratif kampus yang tidak terkonfirmasi dari codebase ditandai sebagai perlu konfirmasi."
+  ],
+  "template_sections": [
+    "Halaman Sampul",
+    "Deskripsi Umum",
+    "Latar Belakang",
+    "Tujuan",
+    "Arsitektur dan Teknologi",
+    "Struktur dan Fitur Utama",
+    "Lampiran Lengkap Kode Program"
+  ],
+  "module_meta": {
+    "code": "WIMS",
+    "title_options": [
+      "Modul WIMS - Work & Internship Management System",
+      "Modul WIMS - Web-based Internship Management System"
+    ],
+    "seeded_name": "Web-based Internship Management System",
+    "seeded_description": "Pengelolaan PKL dan magang FMIKOM: pendaftaran, penempatan, presensi, logbook, monitoring, penilaian, dan laporan akhir",
+    "integration_mode": "portal module",
+    "architecture_style": "modular monolith",
+    "faculty": {
+      "value": "FMIKOM",
+      "status": "confirmed_acronym_only"
+    },
+    "study_program": {
+      "value": null,
+      "status": "needs_confirmation"
+    },
+    "year": 2026,
+    "logos": {
+      "unugha_logo": "needs_confirmation",
+      "wims_logo": "not_found_in_repo"
+    }
+  },
+  "narratives": {
+    "deskripsi_umum": "WIMS adalah Web-based Internship Management System yang dikembangkan sebagai modul di dalam portal utama FMIKOM. Sistem ini memusatkan proses administrasi dan operasional magang, mulai dari pengajuan pendaftaran mahasiswa, verifikasi oleh admin, penempatan ke perusahaan mitra, pencatatan presensi dan logbook, monitoring oleh dosen serta mitra, sampai penilaian dan pengelolaan laporan akhir.",
+    "latar_belakang": "WIMS dikembangkan untuk mengatasi kebutuhan pengelolaan PKL dan magang yang melibatkan banyak aktor dan banyak jenis data. Tanpa sistem terintegrasi, proses pendaftaran, penempatan, kehadiran, aktivitas harian, evaluasi, dan dokumen akhir berpotensi tersebar dan sulit dipantau. Karena itu WIMS dibangun sebagai modul portal agar data dan aktivitas magang dapat dikelola dalam satu alur yang terdokumentasi.",
+    "tujuan": "WIMS bertujuan menyederhanakan proses administrasi dan operasional magang, menyediakan satu sumber data untuk seluruh aktivitas magang, meningkatkan visibilitas proses bagi mahasiswa, dosen, mitra, dan admin, serta memudahkan evaluasi dan rekap hasil melalui alur yang terdokumentasi.",
+    "arsitektur": "Secara arsitektural, WIMS dibangun dengan pendekatan modular monolith. Modul ini berjalan di dalam satu aplikasi portal utama yang sama dengan modul lain, berbagi autentikasi, basis data, dan model pengguna. Pada backend, proses bisnis dipisah ke dalam controller dan service khusus WIMS. Pada frontend, antarmuka dirender melalui halaman Inertia Vue yang dipisahkan berdasarkan role pengguna.",
+    "infrastruktur": "Pada lingkungan pengembangan, WIMS berjalan sebagai bagian dari aplikasi Laravel portal utama dengan basis data relasional, session berbasis database, queue berbasis database, dan penyimpanan file lokal. Infrastruktur minimum yang dibutuhkan meliputi server aplikasi PHP/Laravel, database untuk data operasional, serta storage untuk proposal, laporan akhir, bukti presensi, dan lampiran logbook."
+  },
+  "business_background_points": [
+    "Pengelolaan magang melibatkan mahasiswa, dosen, mitra, dan admin.",
+    "Data magang perlu tersentralisasi agar status pendaftaran sampai penilaian akhir tidak tersebar.",
+    "Integrasi dengan portal utama mengurangi duplikasi autentikasi dan pengelolaan akun.",
+    "Backlog WIMS menempatkan pendaftaran, penempatan, presensi, logbook, monitoring, penilaian, dan laporan akhir sebagai alur inti."
+  ],
+  "objectives": [
+    "Menyederhanakan proses administrasi magang.",
+    "Menyediakan satu sumber data untuk seluruh aktivitas magang.",
+    "Meningkatkan visibilitas proses bagi mahasiswa, dosen, mitra, dan admin.",
+    "Memudahkan evaluasi dan rekap hasil melalui alur yang terdokumentasi.",
+    "Mengurangi proses manual dalam pengelolaan magang.",
+    "Menyatukan data operasional dan akademik dalam satu modul."
+  ],
+  "technology": {
+    "backend": {
+      "language": "PHP",
+      "version": "8.2",
+      "framework": "Laravel 12",
+      "inertia_bridge": "Inertia Laravel 2"
+    },
+    "frontend": {
+      "framework": "Vue 3",
+      "version": "3.5",
+      "language": "TypeScript 5",
+      "bundler": "Vite 7",
+      "css": "Tailwind CSS 4"
+    },
+    "supporting_libraries": [
+      "axios",
+      "leaflet",
+      "apexcharts",
+      "chart.js",
+      "laravel-wayfinder"
+    ],
+    "storage": {
+      "primary_disk": "local",
+      "legacy_fallback_disk": "public"
+    },
+    "runtime_config": {
+      "db_connection_example": "sqlite",
+      "session_driver": "database",
+      "queue_connection": "database",
+      "cache_store": "database",
+      "filesystem_disk": "local",
+      "broadcast_connection": "log"
+    }
+  },
+  "roles": [
+    "super-admin",
+    "admin",
+    "admin-universitas",
+    "admin-akademik",
+    "prodi",
+    "dosen",
+    "mahasiswa",
+    "mitra"
+  ],
+  "features_by_role": {
+    "mahasiswa": [
+      "dashboard mahasiswa",
+      "profil mahasiswa",
+      "pendaftaran magang",
+      "unduh template proposal",
+      "presensi check-in",
+      "presensi check-out",
+      "unduh riwayat presensi",
+      "pengajuan ketidakhadiran",
+      "tambah dan ubah logbook",
+      "unduh logbook periode aktif",
+      "unggah laporan akhir",
+      "lihat laporan akhir",
+      "unduh laporan akhir",
+      "unduh template laporan akhir"
+    ],
+    "dosen": [
+      "dashboard dosen",
+      "monitoring daftar mahasiswa",
+      "monitoring detail mahasiswa",
+      "penilaian mahasiswa",
+      "lihat laporan akhir mahasiswa",
+      "unduh laporan akhir mahasiswa"
+    ],
+    "mitra": [
+      "dashboard mitra",
+      "monitoring daftar mahasiswa",
+      "monitoring detail mahasiswa",
+      "review logbook mahasiswa",
+      "setujui ketidakhadiran",
+      "tolak ketidakhadiran",
+      "penilaian mahasiswa",
+      "lihat laporan akhir mahasiswa",
+      "unduh laporan akhir mahasiswa"
+    ],
+    "admin": [
+      "dashboard admin WIMS",
+      "kelola perusahaan mitra",
+      "buat atau aktivasi akun mitra",
+      "verifikasi pendaftaran",
+      "bulk approve pendaftaran",
+      "kelola penempatan mahasiswa",
+      "aktivasi penempatan",
+      "penyelesaian penempatan individual dan massal",
+      "monitoring keseluruhan",
+      "detail monitoring mahasiswa",
+      "unduh absensi mahasiswa",
+      "unduh logbook mahasiswa",
+      "rekap nilai dosen dan mitra",
+      "kelola template proposal atau laporan akhir",
+      "kelola template penilaian"
+    ]
+  },
+  "route_groups": {
+    "entry": [
+      {
+        "method": "GET",
+        "path": "/wims"
+      }
+    ],
+    "mahasiswa": [
+      {"method": "GET", "path": "/wims/dashboard"},
+      {"method": "GET", "path": "/wims/profil"},
+      {"method": "POST", "path": "/wims/profil"},
+      {"method": "GET", "path": "/wims/pendaftaran"},
+      {"method": "POST", "path": "/wims/pendaftaran"},
+      {"method": "GET", "path": "/wims/pendaftaran/template-proposal/download"},
+      {"method": "GET", "path": "/wims/absensi"},
+      {"method": "POST", "path": "/wims/absensi"},
+      {"method": "POST", "path": "/wims/absensi/checkout"},
+      {"method": "GET", "path": "/wims/absensi/download"},
+      {"method": "POST", "path": "/wims/ketidakhadiran"},
+      {"method": "DELETE", "path": "/wims/ketidakhadiran/{ketidakhadiran}"},
+      {"method": "GET", "path": "/wims/logbook"},
+      {"method": "POST", "path": "/wims/logbook"},
+      {"method": "PUT", "path": "/wims/logbook/{logbook}"},
+      {"method": "GET", "path": "/wims/logbook/download"},
+      {"method": "GET", "path": "/wims/laporan"},
+      {"method": "POST", "path": "/wims/laporan"},
+      {"method": "GET", "path": "/wims/laporan/final-report/view"},
+      {"method": "GET", "path": "/wims/laporan/template/download"},
+      {"method": "GET", "path": "/wims/laporan/final-report/download"}
+    ],
+    "admin": [
+      {"method": "GET", "path": "/wims/admin/dashboard"},
+      {"method": "GET", "path": "/wims/admin/perusahaan"},
+      {"method": "POST", "path": "/wims/admin/perusahaan"},
+      {"method": "PUT", "path": "/wims/admin/perusahaan/{company}"},
+      {"method": "DELETE", "path": "/wims/admin/perusahaan/{company}"},
+      {"method": "POST", "path": "/wims/admin/perusahaan/{company}/account"},
+      {"method": "GET", "path": "/wims/admin/pendaftaran"},
+      {"method": "PATCH", "path": "/wims/admin/pendaftaran/{pendaftaran}/status"},
+      {"method": "POST", "path": "/wims/admin/pendaftaran/bulk-approve"},
+      {"method": "GET", "path": "/wims/admin/pendaftaran/{pendaftaran}/proposal/download"},
+      {"method": "GET", "path": "/wims/admin/penempatan"},
+      {"method": "POST", "path": "/wims/admin/penempatan/complete-selected"},
+      {"method": "POST", "path": "/wims/admin/penempatan/complete-filtered"},
+      {"method": "PUT", "path": "/wims/admin/penempatan/{pendaftaran}"},
+      {"method": "POST", "path": "/wims/admin/penempatan/{pendaftaran}/activate"},
+      {"method": "POST", "path": "/wims/admin/penempatan/{pendaftaran}/complete"},
+      {"method": "GET", "path": "/wims/admin/monitoring"},
+      {"method": "GET", "path": "/wims/admin/monitoring/{pendaftaran}"},
+      {"method": "GET", "path": "/wims/admin/monitoring/{pendaftaran}/download/absensi"},
+      {"method": "GET", "path": "/wims/admin/monitoring/{pendaftaran}/download/logbook"},
+      {"method": "GET", "path": "/wims/admin/rekap-nilai"},
+      {"method": "GET", "path": "/wims/admin/rekap-nilai/{pendaftaran}/download/{role}"},
+      {"method": "GET", "path": "/wims/admin/template-proposal-laporan"},
+      {"method": "POST", "path": "/wims/admin/template-proposal-laporan"},
+      {"method": "GET", "path": "/wims/admin/template-proposal-laporan/{finalReportTemplate}/download"},
+      {"method": "PUT", "path": "/wims/admin/template-proposal-laporan/{finalReportTemplate}"},
+      {"method": "DELETE", "path": "/wims/admin/template-proposal-laporan/{finalReportTemplate}"},
+      {"method": "GET", "path": "/wims/admin/penilaian-template"},
+      {"method": "POST", "path": "/wims/admin/penilaian-template"},
+      {"method": "PUT", "path": "/wims/admin/penilaian-template/{assessmentTemplate}"},
+      {"method": "DELETE", "path": "/wims/admin/penilaian-template/{assessmentTemplate}"}
+    ],
+    "dosen": [
+      {"method": "GET", "path": "/wims/dosen/dashboard"},
+      {"method": "GET", "path": "/wims/dosen/monitoring"},
+      {"method": "GET", "path": "/wims/dosen/monitoring/{mahasiswa}"},
+      {"method": "GET", "path": "/wims/dosen/penilaian-mahasiswa"},
+      {"method": "GET", "path": "/wims/dosen/penilaian-mahasiswa/{pendaftaran}"},
+      {"method": "POST", "path": "/wims/dosen/penilaian-mahasiswa/{pendaftaran}"},
+      {"method": "GET", "path": "/wims/dosen/penilaian-mahasiswa/{pendaftaran}/final-report/view"},
+      {"method": "GET", "path": "/wims/dosen/penilaian-mahasiswa/{pendaftaran}/final-report/download"}
+    ],
+    "mitra": [
+      {"method": "GET", "path": "/wims/mitra/dashboard"},
+      {"method": "GET", "path": "/wims/mitra/monitoring"},
+      {"method": "GET", "path": "/wims/mitra/monitoring/{mahasiswa}"},
+      {"method": "GET", "path": "/wims/mitra/penilaian-mahasiswa"},
+      {"method": "GET", "path": "/wims/mitra/penilaian-mahasiswa/{pendaftaran}"},
+      {"method": "POST", "path": "/wims/mitra/penilaian-mahasiswa/{pendaftaran}"},
+      {"method": "GET", "path": "/wims/mitra/penilaian-mahasiswa/{pendaftaran}/final-report/view"},
+      {"method": "GET", "path": "/wims/mitra/penilaian-mahasiswa/{pendaftaran}/final-report/download"},
+      {"method": "POST", "path": "/wims/mitra/ketidakhadiran/{ketidakhadiran}/approve"},
+      {"method": "POST", "path": "/wims/mitra/ketidakhadiran/{ketidakhadiran}/reject"},
+      {"method": "POST", "path": "/wims/mitra/logbook/{logbook}/review"}
+    ]
+  },
+  "entities": [
+    "users",
+    "program_studis",
+    "perusahaan_mitras",
+    "pembimbing_lapangans",
+    "pendaftaran_magangs",
+    "absensi_magangs",
+    "logbook_magangs",
+    "logbook_photos",
+    "ketidakhadiran_magangs",
+    "hari_liburs",
+    "assessment_templates",
+    "assessment_components",
+    "assessment_submissions",
+    "assessment_scores",
+    "final_report_templates",
+    "surat_penetapans"
+  ],
+  "core_relationship": {
+    "center_table": "pendaftaran_magangs",
+    "description": "Tabel pusat yang menghubungkan mahasiswa, perusahaan, dosen pembimbing, pembimbing lapangan, absensi, logbook, ketidakhadiran, penilaian, laporan akhir, dan surat penetapan."
+  },
+  "statuses": {
+    "registration": [
+      "pending",
+      "approved",
+      "rejected",
+      "aktif",
+      "selesai"
+    ],
+    "absence": [
+      "pending",
+      "approved",
+      "rejected",
+      "cancelled"
+    ],
+    "assessment_submission": [
+      "draft",
+      "submitted"
+    ],
+    "assessment_template_assessor_role": [
+      "dosen",
+      "mitra",
+      "both"
+    ]
+  },
+  "business_rules": [
+    "Mahasiswa tidak boleh mendaftar ulang jika sudah memiliki riwayat magang selesai.",
+    "Aktivasi penempatan mengubah status pendaftaran menjadi aktif.",
+    "Penyelesaian penempatan mengubah status pendaftaran menjadi selesai.",
+    "Akses penilaian dosen memerlukan role dosen WIMS aktif dan relasi pembimbing yang sesuai.",
+    "Akses mitra memerlukan assignment role mitra WIMS yang aktif.",
+    "Template penilaian aktif tidak boleh overlap bila cakupan assessor dan periode bertabrakan.",
+    "Draft penilaian boleh parsial, tetapi submit penilaian wajib menutup seluruh komponen template.",
+    "Penyimpanan file WIMS memakai disk local dengan fallback legacy public."
+  ],
+  "workflow": [
+    "Login ke portal utama.",
+    "Masuk ke modul WIMS.",
+    "Redirect ke dashboard sesuai role aktif.",
+    "Mahasiswa melengkapi profil.",
+    "Mahasiswa mengajukan pendaftaran dan mengunggah proposal.",
+    "Admin memverifikasi pendaftaran.",
+    "Admin menetapkan penempatan ke perusahaan dan dosen pembimbing.",
+    "Admin mengaktifkan penempatan.",
+    "Mahasiswa menjalankan presensi, logbook, dan jika perlu pengajuan ketidakhadiran.",
+    "Mitra meninjau logbook dan ketidakhadiran.",
+    "Dosen dan mitra melakukan monitoring.",
+    "Mahasiswa mengunggah laporan akhir.",
+    "Dosen dan mitra memberikan penilaian.",
+    "Admin melihat dan mengunduh rekap nilai."
+  ],
+  "code_inventory": {
+    "controllers": [
+      "app/Modules/Wims/Controllers/Admin/AssessmentRecapController.php",
+      "app/Modules/Wims/Controllers/Admin/AssessmentTemplateController.php",
+      "app/Modules/Wims/Controllers/Admin/CompanyController.php",
+      "app/Modules/Wims/Controllers/Admin/DashboardController.php",
+      "app/Modules/Wims/Controllers/Admin/FinalReportTemplateController.php",
+      "app/Modules/Wims/Controllers/Admin/MonitoringController.php",
+      "app/Modules/Wims/Controllers/Admin/PlacementController.php",
+      "app/Modules/Wims/Controllers/Admin/RegistrationController.php",
+      "app/Modules/Wims/Controllers/Dosen/DashboardController.php",
+      "app/Modules/Wims/Controllers/Dosen/MonitoringController.php",
+      "app/Modules/Wims/Controllers/Dosen/PenilaianMahasiswaController.php",
+      "app/Modules/Wims/Controllers/Mahasiswa/AttendanceController.php",
+      "app/Modules/Wims/Controllers/Mahasiswa/DashboardController.php",
+      "app/Modules/Wims/Controllers/Mahasiswa/KetidakhadiranController.php",
+      "app/Modules/Wims/Controllers/Mahasiswa/LaporanController.php",
+      "app/Modules/Wims/Controllers/Mahasiswa/LogbookController.php",
+      "app/Modules/Wims/Controllers/Mahasiswa/ProfileController.php",
+      "app/Modules/Wims/Controllers/Mahasiswa/RegistrationController.php",
+      "app/Modules/Wims/Controllers/Mitra/DashboardController.php",
+      "app/Modules/Wims/Controllers/Mitra/KetidakhadiranController.php",
+      "app/Modules/Wims/Controllers/Mitra/LogbookController.php",
+      "app/Modules/Wims/Controllers/Mitra/MonitoringController.php",
+      "app/Modules/Wims/Controllers/Mitra/PenilaianMahasiswaController.php",
+      "app/Modules/Wims/Controllers/WimsDashboardController.php"
+    ],
+    "requests": [
+      "app/Modules/Wims/Requests/Admin/UpsertAssessmentTemplateRequest.php",
+      "app/Modules/Wims/Requests/Admin/UpsertFinalReportTemplateRequest.php",
+      "app/Modules/Wims/Requests/Mahasiswa/StoreLogbookRequest.php",
+      "app/Modules/Wims/Requests/Mahasiswa/StoreRegistrationRequest.php"
+    ],
+    "models": [
+      "app/Models/Magang/AbsensiMagang.php",
+      "app/Models/Magang/AssessmentComponent.php",
+      "app/Models/Magang/AssessmentScore.php",
+      "app/Models/Magang/AssessmentSubmission.php",
+      "app/Models/Magang/AssessmentTemplate.php",
+      "app/Models/Magang/FinalReportTemplate.php",
+      "app/Models/Magang/HariLibur.php",
+      "app/Models/Magang/KetidakhadiranMagang.php",
+      "app/Models/Magang/LogbookMagang.php",
+      "app/Models/Magang/LogbookPhoto.php",
+      "app/Models/Magang/PembimbingLapangan.php",
+      "app/Models/Magang/PendaftaranMagang.php",
+      "app/Models/Magang/PerusahaanMitra.php",
+      "app/Models/Magang/SuratPenetapan.php"
+    ],
+    "frontend_pages": [
+      "resources/js/pages/Modules/Wims/Admin/Dashboard.vue",
+      "resources/js/pages/Modules/Wims/Admin/LaporanTemplate/Index.vue",
+      "resources/js/pages/Modules/Wims/Admin/Monitoring/Index.vue",
+      "resources/js/pages/Modules/Wims/Admin/Monitoring/Show.vue",
+      "resources/js/pages/Modules/Wims/Admin/Pendaftaran/Index.vue",
+      "resources/js/pages/Modules/Wims/Admin/Penempatan/Index.vue",
+      "resources/js/pages/Modules/Wims/Admin/PenilaianTemplate/Index.vue",
+      "resources/js/pages/Modules/Wims/Admin/Perusahaan/Index.vue",
+      "resources/js/pages/Modules/Wims/Admin/RekapNilai/Index.vue",
+      "resources/js/pages/Modules/Wims/Dosen/Dashboard.vue",
+      "resources/js/pages/Modules/Wims/Dosen/Monitoring/Index.vue",
+      "resources/js/pages/Modules/Wims/Dosen/Monitoring/Show.vue",
+      "resources/js/pages/Modules/Wims/Dosen/PenilaianMahasiswa/Index.vue",
+      "resources/js/pages/Modules/Wims/Dosen/PenilaianMahasiswa/Show.vue",
+      "resources/js/pages/Modules/Wims/Mahasiswa/Dashboard.vue",
+      "resources/js/pages/Modules/Wims/Mahasiswa/Laporan/Index.vue",
+      "resources/js/pages/Modules/Wims/Mahasiswa/Logbook/Index.vue",
+      "resources/js/pages/Modules/Wims/Mahasiswa/Pendaftaran/Index.vue",
+      "resources/js/pages/Modules/Wims/Mahasiswa/Presensi/Index.vue",
+      "resources/js/pages/Modules/Wims/Mahasiswa/Profile/Index.vue",
+      "resources/js/pages/Modules/Wims/Mitra/Dashboard.vue",
+      "resources/js/pages/Modules/Wims/Mitra/Monitoring/Index.vue",
+      "resources/js/pages/Modules/Wims/Mitra/Monitoring/Show.vue",
+      "resources/js/pages/Modules/Wims/Mitra/PenilaianMahasiswa/Index.vue",
+      "resources/js/pages/Modules/Wims/Mitra/PenilaianMahasiswa/Show.vue"
+    ],
+    "tests": [
+      "tests/Feature/Wims/WimsAssessmentModelsTest.php",
+      "tests/Feature/Wims/WimsAssessmentWorkflowTest.php",
+      "tests/Feature/Wims/WimsInertiaPageResolutionTest.php",
+      "tests/Feature/Wims/WimsOperationalModelsTest.php",
+      "tests/Feature/Wims/WimsPortalIntegrationTest.php",
+      "tests/Feature/Wims/WimsRegistrationRuleTest.php",
+      "tests/Feature/Wims/WimsSchemaTest.php",
+      "tests/Feature/Wims/WimsSupportServicesTest.php"
+    ],
+    "migrations": [
+      "database/migrations/magang/2026_03_29_181005_create_pendaftaran_magangs_table.php",
+      "database/migrations/magang/2026_03_29_181007_create_absensi_magangs_table.php",
+      "database/migrations/magang/2026_03_29_181007_create_logbook_magangs_table.php",
+      "database/migrations/magang/2026_06_14_100000_add_wims_fields_to_perusahaan_mitras_table.php",
+      "database/migrations/magang/2026_06_14_100100_add_wims_fields_to_pendaftaran_magangs_table.php",
+      "database/migrations/magang/2026_06_14_100300_add_wims_fields_to_absensi_magangs_table.php",
+      "database/migrations/magang/2026_06_14_100400_add_wims_fields_to_logbook_magangs_table.php",
+      "database/migrations/magang/2026_06_14_100500_create_hari_liburs_table.php",
+      "database/migrations/magang/2026_06_14_100600_create_ketidakhadiran_magangs_table.php",
+      "database/migrations/magang/2026_06_14_100700_create_logbook_photos_table.php",
+      "database/migrations/magang/2026_06_14_100800_create_surat_penetapans_table.php",
+      "database/migrations/magang/2026_06_14_100900_create_assessment_templates_table.php",
+      "database/migrations/magang/2026_06_14_101000_create_assessment_components_table.php",
+      "database/migrations/magang/2026_06_14_101100_create_assessment_submissions_table.php",
+      "database/migrations/magang/2026_06_14_101200_create_assessment_scores_table.php",
+      "database/migrations/2026_07_01_000000_create_final_report_templates_table.php",
+      "database/migrations/2026_07_04_000000_add_template_type_to_final_report_templates_table.php",
+      "database/migrations/magang/2026_07_04_000001_add_proposal_pkl_fields_to_pendaftaran_magangs_table.php"
+    ]
+  },
+  "diagram_sources": [
+    "docs/wims-use-case-diagram.md",
+    "docs/wims-activity-diagram.md",
+    "docs/wims-sequence-diagram.md",
+    "docs/wims-erd-class-diagram.md"
+  ],
+  "admin_placeholders": [
+    "Logo UNUGHA",
+    "Logo karya/ciptaan",
+    "Nama panjang resmi fakultas",
+    "Program studi yang akan dicantumkan"
+  ],
+  "references": [
+    "routes/wims.php",
+    "app/Modules/Wims/",
+    "app/Models/Magang/",
+    "database/migrations/magang/",
+    "database/seeders/ModuleSeeder.php",
+    "tests/Feature/Wims/",
+    "docs/wims-product-documentation.md",
+    "docs/wims-product-documentation-stakeholder.md",
+    "panduan.txt"
+  ]
+}

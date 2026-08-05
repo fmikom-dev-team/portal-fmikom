@@ -36,6 +36,8 @@ class AssessmentSubmissionService
         ?AssessmentSubmission $existingSubmission,
         array $validated,
     ): void {
+        // Validasi utama tetap dilakukan di backend agar komponen, role penilai,
+        // dan status submission tidak hanya dipercaya dari form frontend.
         $this->assertRoleMatchesTemplate($template, $role);
         $this->assertEditable($existingSubmission);
 
@@ -88,6 +90,8 @@ class AssessmentSubmissionService
                     ]);
                 }
 
+                // Nilai berbobot dihitung ulang di backend dari bobot template aktif
+                // agar total akhir tidak bergantung pada kalkulasi sisi pengguna.
                 $weightedScore = round($score * ((float) $component->weight_percentage / 100), 2);
                 $totalScore += $weightedScore;
 

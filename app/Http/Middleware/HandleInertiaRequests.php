@@ -139,6 +139,8 @@ class HandleInertiaRequests extends Middleware
                 'active_module' => $activeModule,
                 'active_role' => $activeRole,
             ] : null,
+            // Inertia membagikan periode WIMS yang sedang dipilih ke semua halaman
+            // agar query dan tampilan tetap konsisten saat pengguna berpindah menu.
             'selected_period_id' => fn () => $this->resolveWimsSelectedPeriodId($request),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'pending_comments_count' => fn () => ($user && ($user->isAdmin() || $user->isSuperAdmin()))
@@ -188,6 +190,8 @@ class HandleInertiaRequests extends Middleware
             $selectedId = (int) $queryValue;
 
             if ($selectedId > 0 && $request->hasSession()) {
+                // Pilihan periode disimpan di session supaya halaman WIMS berikutnya
+                // tetap memakai pendaftaran yang sama tanpa perlu input ulang.
                 $request->session()->put('wims.selected_pendaftaran_id', $selectedId);
             }
 

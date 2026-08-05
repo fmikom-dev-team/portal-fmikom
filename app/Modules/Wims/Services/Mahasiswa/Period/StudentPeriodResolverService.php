@@ -47,6 +47,8 @@ class StudentPeriodResolverService
             }
         }
 
+        // Jika pengguna tidak memilih periode tertentu, sistem memprioritaskan
+        // pendaftaran yang masih aktif agar halaman WIMS membuka konteks berjalan.
         foreach ($registrations as $registration) {
             if ($registration->status === 'aktif') {
                 return $registration;

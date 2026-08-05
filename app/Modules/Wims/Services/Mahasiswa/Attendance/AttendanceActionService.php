@@ -33,6 +33,8 @@ class AttendanceActionService
 
         // Validasi lokasi dipusatkan di service agar mekanisme geofencing pada
         // web-based internship management and attendance system tetap seragam.
+        // Titik referensi dan radius selalu diambil dari perusahaan pada penempatan
+        // mahasiswa, sehingga frontend tidak menentukan lokasi target sendiri.
         return $this->attendanceService->validateLocation(
             $latitude,
             $longitude,
@@ -72,6 +74,8 @@ class AttendanceActionService
         $photoPath = $this->storePhoto($photo, 'absensi/check-in');
 
         return AbsensiMagang::create([
+            // Relasi pendaftaran menjadi penghubung utama antara mahasiswa,
+            // perusahaan, periode magang, dan data presensi harian.
             'pendaftaran_id' => $pendaftaran->id,
             'tanggal' => $checkedAt->toDateString(),
             'waktu_masuk' => $checkedAt->format('H:i:s'),
@@ -124,6 +128,8 @@ class AttendanceActionService
         $extension = strtolower($photo->getClientOriginalExtension() ?: $photo->extension() ?: 'bin');
         $path = $directory.'/'.Str::uuid().'.'.$extension;
 
+        // File foto disimpan melalui helper storage WIMS agar lokasi penyimpanan
+        // backend tetap seragam dan tidak terekspos langsung dari frontend.
         WimsStorage::storeUploadedFileAs($photo, $directory, basename($path));
 
         return $path;

@@ -51,6 +51,8 @@ class AttendanceController extends Controller
             'photo' => 'required|image|max:5120',
         ]);
 
+        // Pendaftaran aktif diambil ulang dari relasi mahasiswa yang login agar
+        // perusahaan tujuan presensi tidak dapat dipilih bebas dari frontend.
         $pendaftaran = PendaftaranMagang::with('perusahaan')
             ->where('mahasiswa_id', $request->user()->id)
             ->whereKey($request->integer('pendaftaran_id'))
@@ -77,6 +79,8 @@ class AttendanceController extends Controller
             ]);
         }
 
+        // Jarak dihitung kembali di backend memakai lokasi mitra dari penempatan
+        // aktif, bukan dari data perusahaan yang mungkin dimanipulasi pengguna.
         $result = $this->attendanceActionService->validateLocation(
             $pendaftaran,
             (float) $request->latitude,
@@ -93,6 +97,8 @@ class AttendanceController extends Controller
             ]);
         }
 
+        // Presensi ganda dicegah pada backend agar refresh halaman atau request
+        // ulang tidak menghasilkan dua check-in pada tanggal yang sama.
         if ($this->attendanceActionService->hasCheckedInToday($pendaftaran)) {
             return back()->withErrors([
                 'absen' => 'Anda sudah melakukan presensi hari ini.',
@@ -141,6 +147,8 @@ class AttendanceController extends Controller
             abort(403);
         }
 
+        // Check-out hanya boleh melengkapi record check-in milik pendaftaran aktif
+        // pada tanggal hari ini, bukan membuat record presensi baru.
         $absensi = $this->attendanceActionService->findTodayAttendance($pendaftaran);
 
         if (! $absensi) {

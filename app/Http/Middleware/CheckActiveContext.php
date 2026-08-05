@@ -67,6 +67,8 @@ class CheckActiveContext
         }
 
         // 3. Cek role spesifik yang diizinkan (jika argumen diberikan di route)
+        // Route tetap ditolak walaupun menu mungkin tersembunyi di UI, sehingga
+        // pembatasan hak akses tidak berhenti pada sisi frontend.
         if (! empty($allowedRoles) && ! in_array($activeRole, $allowedRoles)) {
             abort(403, 'Akses Ditolak: Role Anda ('.$activeRole.') tidak diizinkan di halaman ini.');
         }

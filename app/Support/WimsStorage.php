@@ -9,6 +9,8 @@ use RuntimeException;
 
 class WimsStorage
 {
+    // File WIMS disimpan di disk local agar proposal, foto presensi, dan laporan
+    // akhir tidak otomatis terbuka sebagai file publik statis.
     private const PRIMARY_DISK = 'local';
 
     private const LEGACY_DISK = 'public';
@@ -81,6 +83,8 @@ class WimsStorage
                 $basePath = rtrim($basePath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
             }
 
+            // Validasi realpath mencegah path yang lolos keluar dari direktori disk
+            // saat file akan di-resolve kembali untuk diunduh atau dipreview.
             if (! $realPath || ! $basePath || ! str_starts_with($realPath, $basePath)) {
                 continue;
             }

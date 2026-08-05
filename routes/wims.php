@@ -27,6 +27,8 @@ use App\Modules\Wims\Controllers\Mitra\PenilaianMahasiswaController as MitraPeni
 use App\Modules\Wims\Controllers\WimsDashboardController;
 use Illuminate\Support\Facades\Route;
 
+// Seluruh route WIMS mewajibkan konteks modul aktif agar akses tidak hanya
+// bergantung pada menu yang ditampilkan di frontend.
 Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:wims'])
     ->prefix('wims')
     ->group(function () {
@@ -34,6 +36,8 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('module.wims.dashboard');
     });
 
+// Pemisahan group berdasarkan role menjadi lapisan otorisasi pertama
+// sebelum controller dan validasi bisnis WIMS dijalankan.
 Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:wims,mahasiswa'])
     ->prefix('wims')
     ->name('wims.')
@@ -53,6 +57,8 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
         Route::get('/pendaftaran/template-proposal/download', [MahasiswaRegistrationController::class, 'downloadProposalTemplate'])
             ->name('registration.proposal-template.download');
 
+        // Presensi dipisah antara halaman, check-in, check-out, dan unduhan riwayat
+        // agar setiap aksi memiliki endpoint dan validasi backend yang berbeda.
         Route::get('/absensi', [AttendanceController::class, 'index'])
             ->name('attendance');
         Route::post('/absensi', [AttendanceController::class, 'store'])

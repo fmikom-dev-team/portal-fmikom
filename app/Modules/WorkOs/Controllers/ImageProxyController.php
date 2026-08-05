@@ -21,6 +21,8 @@ class ImageProxyController extends Controller
                 $base64 .= substr('====', $mod4);
             }
 
+            // Path file dipulihkan dari nilai terenkripsi agar frontend tidak
+            // menerima jalur storage asli ketika menampilkan bukti WIMS.
             $relativePath = ltrim(Crypt::decryptString($base64), '/');
 
             if (str_contains($relativePath, '..') || str_contains($relativePath, '\\')) {
