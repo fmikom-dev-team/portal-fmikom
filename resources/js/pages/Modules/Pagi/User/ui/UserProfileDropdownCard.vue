@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from "vue";
 import { Link } from "@inertiajs/vue3";
 import {
 	ExternalLink,
@@ -7,6 +6,7 @@ import {
 	LogOut,
 	User as UserIcon,
 } from "lucide-vue-next";
+import { ref } from "vue";
 import { formatStorageUrl } from "@/composables/useInitials";
 
 defineProps<{
