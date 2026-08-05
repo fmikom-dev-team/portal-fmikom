@@ -200,6 +200,7 @@ class ActivationService
             return ['user' => $user, 'plain_token' => $plainToken];
         });
 
+        /** @var User $user */
         $user = $result['user'];
         $plainToken = $result['plain_token'];
 
