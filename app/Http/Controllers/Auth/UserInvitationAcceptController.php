@@ -81,6 +81,8 @@ class UserInvitationAcceptController extends Controller
                 'password_changed_at' => now(),
             ]);
 
+            $user->assignDefaultModuleRoles();
+
             $invitation->update(['status' => 'accepted', 'accepted_at' => now()]);
             Auth::login($user);
 
