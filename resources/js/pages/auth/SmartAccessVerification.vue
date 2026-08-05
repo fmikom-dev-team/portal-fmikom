@@ -30,6 +30,10 @@ const isRedirecting = ref(false);
 const redirectUrl = ref("");
 const verificationError = ref("");
 
+// Realtime Progress Evaluation States
+const activeStep = ref<1 | 2 | 3>(1);
+const step2Progress = ref(0);
+
 // Infinite Matrix Scrambler
 const SCRAMBLED_STRINGS = [
 	"6*7A0^!HIETD@6XS749%2$4L4RO$SH*8W#6OPLLF%WSKVI^PTT1PJUOS60EQL$*K53*Y#AK5GDM6XIWX79XR^DQOMEJF$F1ZNL*L0Z&#LJ4B$E97Q76VF0U#HY!37J5$GKCI0RMK$2P1F9JJYGVR@IAHYPZALXQMJ!519!GZTQSA$#BEXUYPSZ302Z*&DDWW!NI61S#!MAHJ0Y&3J8*EBIMM$#X%46NJ0*9P3L@UW5A8NCZX&98CQ75NL9XEH11NBB^E&LQ1YPZALMJ3DSUXBS9*DADQ7ND0SCI#HY!37J5$GKKAUGDYE@#8CBDUFA9#3EYGVR@IAHZCUKIYPZALX#3EYZX&98CQ75NL9XJ4B$E97Q76VF0LKU8S5KVSD9$#BEX2Z9HSABIU#CSDK@SN!",
@@ -49,11 +53,21 @@ const startScrambler = () => {
 	}, 500);
 };
 
-const verifyUserAccess = async () => {
+const runProgressAnimationAndVerify = async () => {
 	if (!props.isValid || !props.signedParams) return;
 
-	// Give time for face drawing animation
-	await new Promise((resolve) => setTimeout(resolve, 2000));
+	// Start Step 2 animation
+	activeStep.value = 2;
+	const animationDuration = 1800; // 1.8 seconds smooth progress
+	const intervalMs = 30;
+	const increment = 100 / (animationDuration / intervalMs);
+
+	const progressTimer = setInterval(() => {
+		step2Progress.value = Math.min(step2Progress.value + increment, 100);
+		if (step2Progress.value >= 100) {
+			clearInterval(progressTimer);
+		}
+	}, intervalMs);
 
 	try {
 		const response = await axios.post(
@@ -70,7 +84,12 @@ const verifyUserAccess = async () => {
 			},
 		);
 
+		// Ensure progress animation completes
+		await new Promise((resolve) => setTimeout(resolve, 1800));
+
 		if (response.data.success) {
+			activeStep.value = 3;
+			await new Promise((resolve) => setTimeout(resolve, 400));
 			redirectUrl.value = response.data.redirect_url || "/dashboard";
 			isFinished.value = true;
 		} else {
@@ -96,7 +115,7 @@ const enterDashboard = () => {
 onMounted(() => {
 	startScrambler();
 	if (props.isValid) {
-		verifyUserAccess();
+		runProgressAnimationAndVerify();
 	}
 });
 
@@ -185,8 +204,45 @@ onUnmounted(() => {
                 <!-- Curved Bottom Overlay Arch -->
                 <div class="absolute bottom-0 h-1/2 w-[150%] rounded-t-[60%] bg-gradient-to-b from-neutral-100/95 to-white shadow-[0_0_900px_rgba(250,250,250,0.9)] dark:from-neutral-900 dark:to-neutral-950 pointer-events-none" />
 
-                <!-- Bottom User Info & Cyan Animated Check Circle -->
-                <div class="absolute top-[70%] flex h-20 w-full flex-col items-center justify-center gap-1 z-10">
+                <!-- FORGEUI ONBOARDCARD PROGRESS ANIMATION (Shown during evaluation) -->
+                <div v-if="!isFinished" class="absolute top-[61%] w-[88%] max-w-[340px] flex flex-col items-center justify-center gap-1.5 z-20 animate-in fade-in duration-300">
+                    <!-- Step 3 Mini Card (Authorizing Session) -->
+                    <div :class="['w-full scale-[0.92] flex flex-col justify-center gap-1.5 rounded-xl border bg-gradient-to-br from-white to-neutral-50 p-2.5 shadow-sm transition-all duration-300 dark:from-neutral-900 dark:to-neutral-950', activeStep === 3 ? 'border-emerald-300 dark:border-emerald-800' : 'border-neutral-200/70 opacity-60 dark:border-neutral-800']">
+                        <div class="flex items-center gap-2 text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                            <div class="w-3.5 h-3.5 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" v-if="activeStep === 3"></div>
+                            <div class="w-3.5 h-3.5 rounded-full border border-neutral-300" v-else></div>
+                            <span>Authorizing User Session</span>
+                        </div>
+                        <div class="h-1.5 w-full bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                            <div class="h-full bg-emerald-500 transition-all duration-500" :style="{ width: activeStep === 3 ? '100%' : '0%' }"></div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 Mini Card (Evaluating Security Signals with Animated Progress) -->
+                    <div :class="['w-full flex flex-col justify-center gap-1.5 rounded-xl border bg-gradient-to-br from-white to-neutral-50 p-2.5 shadow-md transition-all duration-300 dark:from-neutral-900 dark:to-neutral-950', activeStep === 2 ? 'border-emerald-400 dark:border-emerald-700 ring-1 ring-emerald-500/20' : 'border-neutral-200/70 opacity-60 dark:border-neutral-800']">
+                        <div class="flex items-center gap-2 text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                            <div class="w-3.5 h-3.5 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" v-if="activeStep === 2"></div>
+                            <div class="w-3.5 h-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px]" v-else-if="activeStep === 3">✓</div>
+                            <div class="w-3.5 h-3.5 rounded-full border border-neutral-300" v-else></div>
+                            <span>Evaluating Security Signals</span>
+                        </div>
+                        <div class="h-1.5 w-full bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
+                            <div class="h-full bg-emerald-500 transition-all duration-100 ease-out" :style="{ width: activeStep === 3 ? '100%' : `${step2Progress}%` }"></div>
+                        </div>
+                    </div>
+
+                    <!-- Step 1 Mini Card (Token Verified - Completed) -->
+                    <div class="w-full scale-[0.92] flex flex-col justify-center gap-1.5 rounded-xl border border-emerald-200/90 dark:border-emerald-900/60 bg-gradient-to-br from-emerald-50/40 to-white p-2.5 opacity-80 shadow-sm dark:from-emerald-950/20 dark:to-neutral-900">
+                        <div class="flex items-center gap-2 text-xs font-medium text-emerald-800 dark:text-emerald-300">
+                            <div class="w-3.5 h-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-bold">✓</div>
+                            <span>Token Signature & Cipher Key</span>
+                        </div>
+                        <div class="h-1.5 w-full bg-emerald-500 rounded-full"></div>
+                    </div>
+                </div>
+
+                <!-- VERIFIED USER INFO & CYAN CHECK BADGE (Revealed upon completion) -->
+                <div v-else class="absolute top-[70%] flex h-20 w-full flex-col items-center justify-center gap-1 z-20 animate-in fade-in slide-in-from-bottom-2 duration-500">
                     <div class="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-neutral-800 dark:text-white">
                         <span>{{ props.userData?.name || 'User Verification' }}</span>
                         <!-- CheckCircle Badge Cyan -->
