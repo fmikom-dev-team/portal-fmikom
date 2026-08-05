@@ -66,6 +66,15 @@ class PortalMediaController extends Controller
 
     public function destroy(Request $request, PortalMedia $media)
     {
+        if (! $media->exists) {
+            $routeParam = $request->route('media') ?? $request->route('medium');
+            if ($routeParam) {
+                $media = $routeParam instanceof PortalMedia
+                    ? $routeParam
+                    : PortalMedia::findOrFail($routeParam);
+            }
+        }
+
         $targetFilename = $media->filename;
         $targetPath = $media->path;
 
