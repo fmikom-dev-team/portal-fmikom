@@ -91,6 +91,13 @@ class PortalMediaController extends Controller
                 }
                 // Clear any post thumbnail references matching this media path
                 PortalPost::where('thumbnail', $item->path)->update(['thumbnail' => null]);
+
+                // Clear occurrences in post content JSON if any
+                $postsContainingPath = PortalPost::where('content', 'like', '%'.$item->path.'%')->get();
+                foreach ($postsContainingPath as $post) {
+                    $updatedContent = str_replace($item->path, '', (string) $post->content);
+                    $post->update(['content' => $updatedContent]);
+                }
             }
         }
 
@@ -98,10 +105,12 @@ class PortalMediaController extends Controller
         PortalMedia::whereIn('id', $matchingMedia->pluck('id'))->delete();
 
         Cache::forget('portal_settings');
+        Cache::forget('portal_featured_posts');
 
         // 3. Always return Inertia redirect back for web/Inertia requests
         if ($request->wantsJson() && ! $request->header('X-Inertia')) {
-            return response()->json(['success' => true, 'message' => 'Media deleted successfully!']);
+            return response()->json(['success' => true, 'message' => 'Media deleted successfully!'])
+                ->header('Cache-Control', 'no-cache, no-store, must-revalidate');
         }
 
         return redirect()->back()->with('success', 'Media deleted successfully!');
