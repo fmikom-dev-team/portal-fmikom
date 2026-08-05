@@ -23,6 +23,7 @@ import Navbar from "./ui/Navbar.vue";
 import OptimizedImage from "./ui/OptimizedImage.vue";
 import PagiShareModal from "./ui/PagiShareModal.vue";
 import Preview from "./ui/Preview.vue";
+import UmumNavbar from "./ui/UmumNavbar.vue";
 import VideoLazy from "./ui/VideoLazy.vue";
 
 const props = defineProps<{
@@ -34,6 +35,15 @@ const props = defineProps<{
 		url: string;
 		type: "image" | "video";
 		title: string;
+		likes_count: number;
+		author_name: string;
+		author_avatar: string;
+		author_id: number;
+		author_role: string;
+		author_prodi: string;
+		author_username?: string;
+		is_liked?: boolean;
+		reported_by_me?: boolean;
 		is_manual: boolean;
 		likes: number;
 		views: number;
@@ -348,7 +358,8 @@ const submitReport = async () => {
     </Head>
 
 	<div class="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-slate-200 dark:selection:bg-slate-800 overflow-x-hidden">
-		<Navbar />
+		<Navbar v-if="isMahasiswa" />
+		<UmumNavbar v-else :roleName="props.roleName" />
 
 		<!-- HERO BANNER -->
 		<div class="relative overflow-hidden bg-linear-to-br from-[#030712] via-[#0b0f19] to-[#1e1b4b] border-b border-slate-900 py-12 md:py-16 px-4 sm:px-8 text-center select-none">

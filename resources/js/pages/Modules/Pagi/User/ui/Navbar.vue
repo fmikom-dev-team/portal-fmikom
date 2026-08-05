@@ -465,7 +465,7 @@ onUnmounted(() => {
 						</div>
 						<div class="flex flex-col">
 							<span class="text-sm font-black text-slate-900 dark:text-zinc-100 leading-none tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">PAGI</span>
-							<span class="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest leading-none mt-0.5 truncate max-w-[180px]">{{ siteSettings.brand_subtitle || 'Fakultas Ilmu Komputer' }}</span>
+							<span class="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest leading-none mt-0.5 whitespace-nowrap">{{ siteSettings.brand_subtitle || 'Fakultas Matematika dan Ilmu Komputer' }}</span>
 						</div>
 					</Link>
 
