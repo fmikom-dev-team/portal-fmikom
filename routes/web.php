@@ -460,7 +460,7 @@ Route::middleware(['auth', CheckRole::class.':super-admin,admin,dosen,akademik']
         Route::get('fetchUrl', [PortalPostController::class, 'fetchUrl'])->name('posts.fetch-url');
         Route::post('posts/upload-file', [PortalPostController::class, 'uploadFile'])->name('posts.upload-file');
         Route::resource('categories', PortalCategoryController::class);
-        Route::resource('media', PortalMediaController::class);
+        Route::resource('media', PortalMediaController::class)->parameters(['media' => 'media']);
         Route::resource('academic-calendars', PortalAcademicCalendarController::class);
         Route::resource('events', PortalEventController::class);
         Route::resource('comments', PortalCommentController::class)->only(['index', 'update', 'destroy']);
