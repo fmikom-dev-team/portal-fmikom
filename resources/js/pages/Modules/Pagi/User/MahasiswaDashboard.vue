@@ -528,8 +528,8 @@ const handleSearchBlur = () => {
                     <div v-show="showSortDropdown" class="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-slate-150 dark:border-zinc-850 bg-white dark:bg-zinc-900 shadow-lg p-1.5 z-50">
                         <button v-for="sortOpt in ['Recommended', 'Most Popular', 'Most Viewed']" :key="sortOpt"
                             @click="selectedSort = sortOpt; showSortDropdown = false"
-                            :class="['w-full text-left px-4 py-2 text-xs font-semibold rounded-xl transition-all',
-                                selectedSort === sortOpt ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-950 font-bold' : 'text-slate-600 hover:bg-slate-50 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-white']"
+                            :class="['w-full text-left px-4 py-2 text-xs font-semibold rounded-xl transition-all border-none cursor-pointer',
+                                selectedSort === sortOpt ? 'bg-indigo-600 text-white font-bold' : 'text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/60 dark:hover:text-white']"
                         >
                             {{ sortOpt }}
                         </button>
