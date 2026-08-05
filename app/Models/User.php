@@ -324,25 +324,47 @@ class User extends Authenticatable
      */
     public function assignDefaultModuleRoles(): void
     {
-        $roleObj = Role::query()->where('slug', '=', $this->user_type, 'and')->first();
+        $rawType = (string) $this->user_type;
+        $sanitizedSlug = str_replace('_', '-', strtolower($rawType));
+
+        // Find role object matching sanitized slug or raw user_type
+        $roleObj = Role::query()
+            ->where('slug', '=', $sanitizedSlug, 'and')
+            ->orWhere('slug', '=', $rawType)
+            ->first();
+
+        if (! $roleObj) {
+            $roleObj = Role::query()->where('slug', '=', 'user', 'and')->first()
+                ?: Role::query()->first();
+        }
+
         if ($roleObj) {
-            $defaultModules = [];
-            if ($this->user_type === 'mahasiswa' || $this->user_type === 'dosen') {
-                $defaultModules = ['FAST', 'PAGI', 'WIMS'];
-            } elseif ($this->user_type === 'alumni') {
-                $defaultModules = ['TRACE', 'PAGI'];
-            } elseif ($this->user_type === 'mitra') {
-                $defaultModules = ['WIMS', 'TRACE', 'PAGI'];
+            $defaultModuleCodes = [];
+
+            if (in_array($sanitizedSlug, ['super-admin', 'super_admin', 'admin'])) {
+                // Super Admin & Admin get access to ALL active modules
+                $defaultModuleCodes = Module::where('is_active', true)->pluck('code')->toArray();
+            } elseif ($sanitizedSlug === 'staff') {
+                $defaultModuleCodes = ['FAST', 'PAGI', 'TRACE', 'WIMS'];
+            } elseif ($sanitizedSlug === 'mahasiswa' || $sanitizedSlug === 'dosen') {
+                $defaultModuleCodes = ['FAST', 'PAGI', 'WIMS'];
+            } elseif ($sanitizedSlug === 'alumni') {
+                $defaultModuleCodes = ['TRACE', 'PAGI'];
+            } elseif ($sanitizedSlug === 'mitra') {
+                $defaultModuleCodes = ['WIMS', 'TRACE', 'PAGI'];
+            } else {
+                // Fallback for any other custom role type
+                $defaultModuleCodes = Module::where('is_active', true)->pluck('code')->toArray();
             }
 
-            if (! empty($defaultModules)) {
-                $modules = Module::query()->whereIn('code', $defaultModules, 'and', false)->get();
+            if (! empty($defaultModuleCodes)) {
+                $modules = Module::query()->whereIn('code', $defaultModuleCodes, 'and', false)->get();
                 foreach ($modules as $mod) {
                     UserModuleRole::firstOrCreate([
                         'user_id' => $this->id,
                         'module_id' => $mod->id,
-                        'role_id' => $roleObj->id,
                     ], [
+                        'role_id' => $roleObj->id,
                         'is_active' => true,
                     ]);
                 }
