@@ -678,17 +678,6 @@ onUnmounted(() => {
 				<FileText class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">CV</span>
 			</Link>
-
-			<!-- 6. Pesan -->
-			<Link href="/pagi/messages" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url.startsWith('/pagi/messages') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
-				<div class="relative flex flex-col items-center justify-center">
-					<MessageSquare class="w-5 h-5 transition-transform active:scale-90" />
-					<span v-if="unreadMessagesCount > 0" class="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-indigo-600 px-1 text-[8px] font-black text-white ring-2 ring-white dark:ring-zinc-950">
-						{{ unreadMessagesCount }}
-					</span>
-				</div>
-				<span class="text-[9px] font-extrabold tracking-tight uppercase">Pesan</span>
-			</Link>
 		</div>
 	</div>
 
