@@ -7,6 +7,7 @@ use App\Models\Portal\PortalMedia;
 use App\Services\VirusScannerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -64,14 +65,28 @@ class PortalMediaController extends Controller
 
     public function destroy(Request $request, PortalMedia $media)
     {
+        // 1. Physically delete file asset from disk storage
+        if ($media->path) {
+            $relativePath = str_replace('/storage/', '', $media->path);
+            if (Storage::disk('public')->exists($relativePath)) {
+                Storage::disk('public')->delete($relativePath);
+            }
+        }
+
+        // 2. Delete record from database
         $media->delete();
 
         Cache::forget('portal_settings');
 
-        if ($request->expectsJson() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+        // 3. Handle Inertia vs JSON API responses
+        if ($request->header('X-Inertia')) {
+            return redirect()->back()->with('success', 'Media deleted successfully!');
+        }
+
+        if ($request->expectsJson() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => 'Media deleted successfully!']);
         }
 
-        return redirect()->route('portal-admin.media.index')->with('success', 'Media deleted successfully!');
+        return redirect()->back()->with('success', 'Media deleted successfully!');
     }
 }
