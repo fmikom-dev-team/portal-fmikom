@@ -109,25 +109,25 @@ const runSequentialVerification = async () => {
 	);
 
 	try {
-		// Step 1: Token Signature & Cipher Key (1.5 seconds)
+		// Step 1: Token Signature & Cipher Key (2.4 seconds smooth pace)
 		currentStepIndex.value = 0;
-		await animateStepProgress(1500);
-		await new Promise((resolve) => setTimeout(resolve, 300));
+		await animateStepProgress(2400);
+		await new Promise((resolve) => setTimeout(resolve, 400));
 
-		// Step 2: Evaluating Security Signals (1.8 seconds)
+		// Step 2: Evaluating Security Signals (2.6 seconds smooth pace)
 		currentStepIndex.value = 1;
-		await animateStepProgress(1800);
-		await new Promise((resolve) => setTimeout(resolve, 300));
+		await animateStepProgress(2600);
+		await new Promise((resolve) => setTimeout(resolve, 400));
 
-		// Step 3: Authorizing User Session (1.4 seconds)
+		// Step 3: Authorizing User Session (2.2 seconds smooth pace)
 		currentStepIndex.value = 2;
-		await animateStepProgress(1400);
+		await animateStepProgress(2200);
 
 		// Await API response
 		const response = await apiPromise;
 
 		if (response.data.success) {
-			await new Promise((resolve) => setTimeout(resolve, 300));
+			await new Promise((resolve) => setTimeout(resolve, 500));
 			redirectUrl.value = response.data.redirect_url || "/dashboard";
 			isFinished.value = true;
 		} else {
@@ -242,35 +242,41 @@ onUnmounted(() => {
                 <!-- Curved Bottom Overlay Arch -->
                 <div class="absolute bottom-0 h-1/2 w-[150%] rounded-t-[60%] bg-gradient-to-b from-neutral-100/95 to-white shadow-[0_0_900px_rgba(250,250,250,0.9)] dark:from-neutral-900 dark:to-neutral-950 pointer-events-none" />
 
-                <!-- FORGEUI SEQUENTIAL ONBOARDCARD CAROUSEL (Positioned Cleanly Below Avatar) -->
-                <div v-if="!isFinished" class="absolute top-[62%] sm:top-[64%] w-[88%] max-w-[340px] flex flex-col items-center justify-center gap-2 z-20 animate-in fade-in duration-300">
+                <!-- FORGEUI 3-CARD STACK CAROUSEL (Top Stack, Middle Active Focus, Bottom Stack) -->
+                <div v-if="!isFinished" class="absolute top-[60%] sm:top-[62%] w-[88%] max-w-[340px] h-[155px] flex flex-col items-center justify-center z-20 animate-in fade-in duration-300">
                     <div
                         v-for="(stepItem, index) in steps"
                         :key="stepItem.id"
                         :class="[
-                            'w-full flex flex-col justify-center gap-1.5 rounded-xl border p-2.5 transition-all duration-500 ease-out shadow-sm',
+                            'absolute w-full flex flex-col justify-center gap-1.5 rounded-xl border p-2.5 transition-all duration-500 ease-out shadow-sm',
+                            // ACTIVE MIDDLE FOCUS CARD
                             index === currentStepIndex
-                                ? 'bg-gradient-to-br from-white to-neutral-50 border-emerald-400 dark:border-emerald-700 shadow-md ring-1 ring-emerald-500/20 scale-100 opacity-100 blur-none z-30'
+                                ? 'bg-gradient-to-br from-white to-neutral-50 border-emerald-400 dark:border-emerald-700 shadow-md ring-1 ring-emerald-500/20 scale-100 opacity-100 blur-none translate-y-0 z-30'
+                            // TOP COMPLETED STACK CARD (Pushed Up & Blurred)
                                 : index === currentStepIndex - 1
-                                ? 'bg-gradient-to-br from-emerald-50/40 to-white border-emerald-200/90 dark:border-emerald-900/60 scale-[0.92] opacity-50 blur-[0.6px] -translate-y-1.5 z-20'
-                                : 'hidden'
+                                ? 'bg-gradient-to-br from-emerald-50/50 to-white border-emerald-200/90 dark:border-emerald-900/60 scale-[0.90] opacity-45 blur-[0.7px] -translate-y-4 z-10 pointer-events-none'
+                            // BOTTOM WAITING STACK CARD (Pushed Down & Blurred)
+                                : index === currentStepIndex + 1
+                                ? 'bg-gradient-to-br from-white to-neutral-50/80 border-neutral-200/80 dark:border-neutral-800 scale-[0.90] opacity-45 blur-[0.7px] translate-y-4 z-10 pointer-events-none'
+                            // OFFSCREEN HIDDEN CARD
+                                : 'opacity-0 scale-[0.8] -translate-y-8 pointer-events-none hidden'
                         ]"
                     >
                         <div class="flex items-center gap-2 text-xs font-semibold text-neutral-800 dark:text-neutral-200">
                             <!-- Active Spinner -->
                             <div v-if="index === currentStepIndex" class="w-3.5 h-3.5 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin shrink-0"></div>
-                            <!-- Completed Check -->
+                            <!-- Completed Checkmark -->
                             <div v-else-if="index < currentStepIndex" class="w-3.5 h-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-bold shrink-0">✓</div>
                             <!-- Pending Bullet -->
-                            <div v-else class="w-3.5 h-3.5 rounded-full border border-neutral-300 shrink-0"></div>
+                            <div v-else class="w-3.5 h-3.5 rounded-full border border-neutral-300 dark:border-neutral-700 shrink-0"></div>
                             
                             <span class="truncate">{{ stepItem.title }}</span>
                         </div>
 
                         <!-- Animated Progress Bar -->
-                        <div class="h-1.5 w-full bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
+                        <div class="h-1.5 w-full bg-neutral-200/90 dark:bg-neutral-800 rounded-full overflow-hidden">
                             <div
-                                class="h-full bg-emerald-500 transition-all duration-100 ease-out rounded-full"
+                                class="h-full bg-emerald-500 transition-all duration-150 ease-out rounded-full"
                                 :style="{ width: index < currentStepIndex ? '100%' : index === currentStepIndex ? `${currentStepProgress}%` : '0%' }"
                             ></div>
                         </div>
