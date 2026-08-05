@@ -41,16 +41,27 @@ const isBlobOrData = computed(
 	() => props.src?.startsWith("blob:") || props.src?.startsWith("data:"),
 );
 
+const hasError = ref(false);
 const isLoaded = ref(isSmall.value || isBlobOrData.value);
 const imgRef = ref<HTMLImageElement | null>(null);
 
 const handleLoad = () => {
 	isLoaded.value = true;
+	hasError.value = false;
+};
+
+const handleError = () => {
+	hasError.value = true;
+	isLoaded.value = false;
 };
 
 const checkLoaded = () => {
 	if (imgRef.value?.complete) {
-		isLoaded.value = true;
+		if (imgRef.value.naturalWidth === 0) {
+			hasError.value = true;
+		} else {
+			isLoaded.value = true;
+		}
 	}
 };
 
@@ -148,6 +159,7 @@ const wrapperClass = computed(() => {
 		></div>
 		
 		<img
+			v-if="!hasError"
 			ref="imgRef"
 			:src="src"
 			:alt="alt"
@@ -157,6 +169,7 @@ const wrapperClass = computed(() => {
 			:fetchpriority="fetchpriority"
 			decoding="async"
 			@load="handleLoad"
+			@error="handleError"
 			:class="[
 				className,
 				'transition-all duration-300 z-10',
@@ -165,6 +178,9 @@ const wrapperClass = computed(() => {
 				isSensitive && !revealedSensitive ? 'blur-xl scale-110 filter pointer-events-none' : '',
 			]"
 		/>
+		<div v-else class="w-full h-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-500 dark:text-slate-300 text-xs font-black uppercase">
+			<span>{{ alt?.charAt(0) || 'U' }}</span>
+		</div>
 
 		<!-- SENSITIVE CONTENT BLUR OVERLAY -->
 		<div

@@ -39,6 +39,7 @@ const PagiProgressOverlay = defineAsyncComponent(
 
 import { ThemeTogglerButton } from "@/components/animate-ui/components/buttons/theme-toggler";
 import { useAppearance } from "@/composables/useAppearance";
+import { formatStorageUrl } from "@/composables/useInitials";
 
 const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
 
@@ -98,6 +99,11 @@ const currentRoleSlug = computed(() => {
 		"mitra";
 	return r.toLowerCase();
 });
+
+const imageError = ref(false);
+const handleImageError = () => {
+	imageError.value = true;
+};
 
 const isMobileMenuOpen = ref(false);
 const isExploreOpen = ref(false);
@@ -439,9 +445,9 @@ onUnmounted(() => {
 					<div v-if="$page.props.auth?.user" class="md:hidden relative shrink-0" @click.stop="isProfileModalOpen = !isProfileModalOpen">
 						<div class="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-all duration-300 group">
 							<div class="h-9 w-9 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0 ring-offset-white dark:ring-offset-zinc-950 group-hover:ring-2 ring-indigo-500/50 transition-all duration-300 shadow-xs">
-								<img v-if="user.foto_path" :src="'/storage/' + user.foto_path" :alt="user.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-355" />
-								<img v-else-if="user.avatar" :src="user.avatar" :alt="user.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-355" />
-								<span v-else class="text-slate-700 dark:text-slate-200 text-xs font-black">{{ user.name.charAt(0) }}</span>
+								<img v-if="user.foto_path && !imageError && formatStorageUrl(user.foto_path)" :src="formatStorageUrl(user.foto_path)!" :alt="user.name" @error="handleImageError" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-355" />
+								<img v-else-if="user.avatar && !imageError" :src="user.avatar" :alt="user.name" @error="handleImageError" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-355" />
+								<span v-else class="text-slate-700 dark:text-slate-200 text-xs font-black">{{ user.name?.charAt(0) || 'U' }}</span>
 							</div>
 							<div class="flex flex-col text-left">
 								<span class="text-xs font-black text-slate-800 dark:text-zinc-200 leading-none tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase">{{ user.name }}</span>
@@ -464,9 +470,9 @@ onUnmounted(() => {
 									<!-- Profile Header -->
 									<div class="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-zinc-800">
 										<div class="h-10 w-10 rounded-full border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0">
-											<img v-if="user.foto_path" :src="'/storage/' + user.foto_path" :alt="user.name" class="w-full h-full object-cover" />
-											<img v-else-if="user.avatar" :src="user.avatar" :alt="user.name" class="w-full h-full object-cover" />
-											<span v-else class="text-slate-700 dark:text-slate-200 text-xs font-black">{{ user.name.charAt(0) }}</span>
+											<img v-if="user.foto_path && !imageError && formatStorageUrl(user.foto_path)" :src="formatStorageUrl(user.foto_path)!" :alt="user.name" @error="handleImageError" class="w-full h-full object-cover" />
+											<img v-else-if="user.avatar && !imageError" :src="user.avatar" :alt="user.name" @error="handleImageError" class="w-full h-full object-cover" />
+											<span v-else class="text-slate-700 dark:text-slate-200 text-xs font-black">{{ user.name?.charAt(0) || 'U' }}</span>
 										</div>
 										<div class="flex flex-col text-left min-w-0">
 											<span class="text-xs font-bold text-slate-800 dark:text-zinc-200 truncate uppercase tracking-wide leading-tight">{{ user.name }}</span>
@@ -555,9 +561,9 @@ onUnmounted(() => {
 					<div v-if="$page.props.auth?.user" class="hidden md:block relative shrink-0" @click.stop="isProfileModalOpen = !isProfileModalOpen">
 						<div class="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-all duration-300 group">
 							<div class="h-9 w-9 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0 ring-offset-white dark:ring-offset-zinc-900 group-hover:ring-2 ring-indigo-500/50 transition-all duration-300 shadow-xs">
-								<img v-if="user.foto_path" :src="'/storage/' + user.foto_path" :alt="user.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-355" />
-								<img v-else-if="user.avatar" :src="user.avatar" :alt="user.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-355" />
-								<span v-else class="text-slate-700 dark:text-slate-200 text-xs font-black">{{ user.name.charAt(0) }}</span>
+								<img v-if="user.foto_path && !imageError && formatStorageUrl(user.foto_path)" :src="formatStorageUrl(user.foto_path)!" :alt="user.name" @error="handleImageError" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-355" />
+								<img v-else-if="user.avatar && !imageError" :src="user.avatar" :alt="user.name" @error="handleImageError" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-355" />
+								<span v-else class="text-slate-700 dark:text-slate-200 text-xs font-black">{{ user.name?.charAt(0) || 'U' }}</span>
 							</div>
 							<div class="flex flex-col text-left">
 								<span class="text-xs font-black text-slate-800 dark:text-zinc-200 leading-none tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase">{{ user.name }}</span>
@@ -579,9 +585,9 @@ onUnmounted(() => {
 									<!-- Profile Header -->
 									<div class="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-zinc-800">
 										<div class="h-10 w-10 rounded-full border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0">
-											<img v-if="user.foto_path" :src="'/storage/' + user.foto_path" :alt="user.name" class="w-full h-full object-cover" />
-											<img v-else-if="user.avatar" :src="user.avatar" :alt="user.name" class="w-full h-full object-cover" />
-											<span v-else class="text-slate-700 dark:text-slate-200 text-xs font-black">{{ user.name.charAt(0) }}</span>
+											<img v-if="user.foto_path && !imageError && formatStorageUrl(user.foto_path)" :src="formatStorageUrl(user.foto_path)!" :alt="user.name" @error="handleImageError" class="w-full h-full object-cover" />
+											<img v-else-if="user.avatar && !imageError" :src="user.avatar" :alt="user.name" @error="handleImageError" class="w-full h-full object-cover" />
+											<span v-else class="text-slate-700 dark:text-slate-200 text-xs font-black">{{ user.name?.charAt(0) || 'U' }}</span>
 										</div>
 										<div class="flex flex-col text-left min-w-0">
 											<span class="text-xs font-bold text-slate-800 dark:text-zinc-200 truncate uppercase tracking-wide leading-tight">{{ user.name }}</span>
@@ -637,12 +643,10 @@ onUnmounted(() => {
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">People</span>
 			</Link>
 
-			<Link v-if="currentRoleSlug === 'alumni'" href="/pagi/cv" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url.startsWith('/pagi/cv') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
+			<Link v-if="currentRoleSlug === 'alumni' || currentRoleSlug === 'mahasiswa'" href="/pagi/cv" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url.startsWith('/pagi/cv') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
 				<FileText class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">CV</span>
 			</Link>
-			<!-- Fallback placeholder if not alumni to keep centering layout -->
-			<div v-else class="flex-1"></div>
 
 			<Link href="/pagi/messages" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url.startsWith('/pagi/messages') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
 				<div class="relative flex flex-col items-center justify-center">
