@@ -95,7 +95,7 @@ const isVideoUrl = (url: string | null): boolean => {
 					</div>
 
 					<div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 shadow-2xs flex items-center justify-center overflow-hidden transition-transform duration-300">
-						<OptimizedImage v-if="user.foto_path" :src="formatStorageUrl(user.foto_path)!" alt="Avatar" fetchpriority="high" className="w-full h-full object-cover" />
+						<OptimizedImage v-if="user.foto_path && formatStorageUrl(user.foto_path)" :src="formatStorageUrl(user.foto_path)!" :alt="user.name || 'Avatar'" fetchpriority="high" className="w-full h-full object-cover" />
 						<div v-else class="w-full h-full bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
 							<span class="text-xl sm:text-2xl font-bold text-indigo-500 dark:text-indigo-400">{{ user.name?.charAt(0) || 'U' }}</span>
 						</div>
@@ -232,7 +232,7 @@ const isVideoUrl = (url: string | null): boolean => {
 				<!-- Avatar -->
 				<div v-if="isLoading" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse shrink-0"></div>
 				<div v-else class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 shadow-xs flex items-center justify-center overflow-hidden shrink-0">
-					<OptimizedImage v-if="user.foto_path" :src="formatStorageUrl(user.foto_path)!" alt="Avatar" fetchpriority="high" className="w-full h-full object-cover" />
+					<OptimizedImage v-if="user.foto_path && formatStorageUrl(user.foto_path)" :src="formatStorageUrl(user.foto_path)!" :alt="user.name || 'Avatar'" fetchpriority="high" className="w-full h-full object-cover" />
 					<div v-else class="w-full h-full bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
 						<span class="text-xl sm:text-2xl font-bold text-indigo-500 dark:text-indigo-400">{{ user.name?.charAt(0) || 'U' }}</span>
 					</div>

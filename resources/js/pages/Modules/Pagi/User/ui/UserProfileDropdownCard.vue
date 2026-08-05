@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import { Link } from "@inertiajs/vue3";
 import {
 	ExternalLink,
@@ -20,6 +21,8 @@ const emit = defineEmits<{
 	(e: "logout"): void;
 	(e: "close"): void;
 }>();
+
+const imageError = ref(false);
 
 const handleLogout = () => {
 	emit("logout");
@@ -64,9 +67,9 @@ const handleLogout = () => {
 			<!-- Profile Info Area -->
 			<div class="relative z-10 flex flex-col items-center -mt-10 mb-3 px-2">
 				<div class="h-20 w-20 rounded-full border-[3px] border-white dark:border-zinc-950 bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shadow-md mb-2 relative z-20">
-					<img v-if="user.foto_path" :src="formatStorageUrl(user.foto_path)!" :alt="user.name" class="w-full h-full object-cover" />
-					<img v-else-if="user.avatar" :src="user.avatar" :alt="user.name" class="w-full h-full object-cover" />
-					<span v-else class="text-slate-700 dark:text-slate-200 text-xl font-bold">{{ user.name.charAt(0) }}</span>
+					<img v-if="user.foto_path && !imageError && formatStorageUrl(user.foto_path)" :src="formatStorageUrl(user.foto_path)!" :alt="user.name" @error="imageError = true" class="w-full h-full object-cover" />
+					<img v-else-if="user.avatar && !imageError" :src="user.avatar" :alt="user.name" @error="imageError = true" class="w-full h-full object-cover" />
+					<span v-else class="text-slate-700 dark:text-slate-200 text-xl font-bold">{{ user.name?.charAt(0) || 'U' }}</span>
 				</div>
 				<h3 class="text-base font-black text-slate-800 dark:text-zinc-150 text-center truncate w-full px-2 tracking-tight leading-snug uppercase">{{ user.name }}</h3>
 				<p class="text-xs text-slate-500 dark:text-zinc-400 font-semibold text-center mt-0.5 truncate w-full px-2 leading-none">@{{ user.pagi_username || 'username' }}</p>

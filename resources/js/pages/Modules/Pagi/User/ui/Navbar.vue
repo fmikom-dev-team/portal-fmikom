@@ -207,6 +207,11 @@ const currentRoleSlug = computed(() => {
 	return r.toLowerCase();
 });
 
+const imageError = ref(false);
+const handleImageError = () => {
+	imageError.value = true;
+};
+
 const hasOpenedMobileProfile = ref(false);
 const hasOpenedDesktopProfile = ref(false);
 const hasOpenedNotifPanel = ref(false);
@@ -473,9 +478,9 @@ onUnmounted(() => {
 							class="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-all duration-300 group"
 						>
 							<div class="h-9 w-9 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0 ring-offset-white dark:ring-offset-zinc-950 group-hover:ring-2 ring-indigo-500/50 transition-all duration-300 shadow-xs">
-								<img v-if="user.foto_path" :src="formatStorageUrl(user.foto_path)!" :alt="user.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-350" />
-								<img v-else-if="user.avatar" :src="user.avatar" :alt="user.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-350" />
-								<span v-else class="text-slate-700 dark:text-slate-200 text-xs font-black">{{ user.name.charAt(0) }}</span>
+								<img v-if="user.foto_path && !imageError && formatStorageUrl(user.foto_path)" :src="formatStorageUrl(user.foto_path)!" :alt="user.name" @error="handleImageError" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-350" />
+								<img v-else-if="user.avatar && !imageError" :src="user.avatar" :alt="user.name" @error="handleImageError" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-350" />
+								<span v-else class="text-slate-700 dark:text-slate-200 text-xs font-black">{{ user.name?.charAt(0) || 'U' }}</span>
 							</div>
 							<div class="flex flex-col text-left">
 								<span class="text-xs font-black text-slate-800 dark:text-zinc-200 leading-none tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase truncate max-w-[120px]">{{ user.name }}</span>
@@ -598,9 +603,9 @@ onUnmounted(() => {
 							class="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-all duration-300 group"
 						>
 							<div class="h-9 w-9 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0 ring-offset-white dark:ring-offset-zinc-950 group-hover:ring-2 ring-indigo-500/50 transition-all duration-300 shadow-xs">
-								<img v-if="user.foto_path" :src="formatStorageUrl(user.foto_path)!" :alt="user.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-350" />
-								<img v-else-if="user.avatar" :src="user.avatar" :alt="user.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-350" />
-								<span v-else class="text-slate-700 dark:text-slate-200 text-xs font-black">{{ user.name.charAt(0) }}</span>
+								<img v-if="user.foto_path && !imageError && formatStorageUrl(user.foto_path)" :src="formatStorageUrl(user.foto_path)!" :alt="user.name" @error="handleImageError" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-350" />
+								<img v-else-if="user.avatar && !imageError" :src="user.avatar" :alt="user.name" @error="handleImageError" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-350" />
+								<span v-else class="text-slate-700 dark:text-slate-200 text-xs font-black">{{ user.name?.charAt(0) || 'U' }}</span>
 							</div>
 							<div class="flex flex-col text-left">
 								<span class="text-xs font-black text-slate-800 dark:text-zinc-200 leading-none tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase">{{ user.name }}</span>
@@ -655,10 +660,8 @@ onUnmounted(() => {
 				</div>
 				<span class="text-[8px] font-extrabold tracking-tight uppercase mt-0.5 text-slate-550 dark:text-zinc-400">Work</span>
 			</button>
-			<!-- Fallback placeholder if not mahasiswa to keep centering layout -->
-			<div v-else class="flex-1"></div>
 
-			<!-- 2. People -->
+			<!-- 4. People -->
 			<Link href="/pagi/people" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1"
 				:class="[ $page.url.startsWith('/pagi/people') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
 				<Users class="w-5 h-5 transition-transform active:scale-90" />
@@ -675,8 +678,17 @@ onUnmounted(() => {
 				<FileText class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">CV</span>
 			</Link>
-			<!-- Fallback for roles without CV (show empty space with same flex proportion) -->
-			<div v-else class="flex-1"></div>
+
+			<!-- 6. Pesan -->
+			<Link href="/pagi/messages" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url.startsWith('/pagi/messages') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
+				<div class="relative flex flex-col items-center justify-center">
+					<MessageSquare class="w-5 h-5 transition-transform active:scale-90" />
+					<span v-if="unreadMessagesCount > 0" class="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-indigo-600 px-1 text-[8px] font-black text-white ring-2 ring-white dark:ring-zinc-950">
+						{{ unreadMessagesCount }}
+					</span>
+				</div>
+				<span class="text-[9px] font-extrabold tracking-tight uppercase">Pesan</span>
+			</Link>
 		</div>
 	</div>
 
