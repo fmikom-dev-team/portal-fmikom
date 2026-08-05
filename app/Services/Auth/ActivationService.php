@@ -6,6 +6,7 @@ use App\Enums\OtpPurpose;
 use App\Enums\RegistrationStatus;
 use App\Enums\UserAccountStatus;
 use App\Mail\ActivationEmail;
+use App\Mail\OAuthActivationEmail;
 use App\Models\Auth\AuthAuditLog;
 use App\Models\Auth\AuthOAuthCredential;
 use App\Models\Auth\AuthOtpToken;
@@ -204,8 +205,11 @@ class ActivationService
 
         // 6. Send activation email AFTER the transaction has successfully committed.
         // This prevents the email from being sent if the transaction rolls back.
+        $isOAuth = $request->hasOAuthData();
+        $routeName = $isOAuth ? 'auth.oauth.verify_access' : 'activation.confirm';
+
         $relativeUrl = URL::temporarySignedRoute(
-            'activation.confirm',
+            $routeName,
             now()->addHours(24),
             [
                 'token' => $plainToken,
@@ -216,7 +220,12 @@ class ActivationService
         $activationUrl = rtrim((string) config('app.url'), '/').$relativeUrl;
 
         try {
-            Mail::to($request->email)->queue(new ActivationEmail($user, $activationUrl));
+            if ($isOAuth) {
+                $providerName = $request->oauth_data['provider'] ?? 'OAuth';
+                Mail::to($request->email)->queue(new OAuthActivationEmail($user, $activationUrl, (string) $providerName));
+            } else {
+                Mail::to($request->email)->queue(new ActivationEmail($user, $activationUrl));
+            }
         } catch (\Throwable $e) {
             Log::error('[ActivationService] Gagal mengirim email aktivasi: '.$e->getMessage(), [
                 'email' => $request->email,
@@ -250,8 +259,11 @@ class ActivationService
 
             $user->forceFill(['status_approval' => UserAccountStatus::OtpSent->value])->save();
 
+            $isOAuth = $regRequest->hasOAuthData();
+            $routeName = $isOAuth ? 'auth.oauth.verify_access' : 'activation.confirm';
+
             $relativeUrl = URL::temporarySignedRoute(
-                'activation.confirm',
+                $routeName,
                 now()->addHours(24),
                 [
                     'token' => $plainToken,
@@ -261,7 +273,12 @@ class ActivationService
             );
             $activationUrl = rtrim((string) config('app.url'), '/').$relativeUrl;
 
-            Mail::to($user->email)->queue(new ActivationEmail($user, $activationUrl));
+            if ($isOAuth) {
+                $providerName = $regRequest->oauth_data['provider'] ?? 'OAuth';
+                Mail::to($user->email)->queue(new OAuthActivationEmail($user, $activationUrl, (string) $providerName));
+            } else {
+                Mail::to($user->email)->queue(new ActivationEmail($user, $activationUrl));
+            }
 
             AuthAuditLog::log('account.activation_link_resent', $adminId ?? $user->id, [
                 'registration_request_id' => $regRequest->id,

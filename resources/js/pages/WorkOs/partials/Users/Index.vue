@@ -1093,7 +1093,13 @@ function executeRejectAction() {
                                             <div class="flex items-center gap-2">
                                                 <p class="text-[13px] font-medium text-[#111827] dark:text-zinc-200 leading-tight">{{ u.email }}</p>
                                                 <span 
-                                                    v-if="u.registration_type === 'self_registered'"
+                                                    v-if="u.registration_source === 'oauth'"
+                                                    class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 select-none shrink-0 flex items-center gap-1 border border-blue-200/60 dark:border-blue-800/60"
+                                                >
+                                                    ⚡ OAuth ({{ u.oauth_provider_name || 'Social' }})
+                                                </span>
+                                                <span 
+                                                    v-else-if="u.registration_type === 'self_registered'"
                                                     class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400 select-none shrink-0"
                                                 >
                                                     Registrasi Mandiri

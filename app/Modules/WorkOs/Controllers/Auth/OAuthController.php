@@ -379,6 +379,11 @@ class OAuthController extends Controller
      * Uses Laravel's Crypt facade backed by APP_KEY.
      * Returns null if the token is empty/null to avoid storing empty encrypted strings.
      */
+    /**
+     * [FIX HIGH-04] Encrypt an OAuth token before storing in the database.
+     * Uses Laravel's Crypt facade backed by APP_KEY.
+     * Returns null if the token is empty/null to avoid storing empty encrypted strings.
+     */
     private function encryptToken(?string $token): ?string
     {
         if (empty($token)) {
@@ -386,5 +391,112 @@ class OAuthController extends Controller
         }
 
         return Crypt::encryptString($token);
+    }
+
+    /**
+     * Display the Smart Access Control Verification page for approved OAuth users.
+     */
+    public function verifyAccessView(Request $request)
+    {
+        $requestId = $request->query('request_id');
+        $token = $request->query('token');
+
+        if (! $request->hasValidSignature() || ! $requestId || ! $token) {
+            return Inertia::render('auth/SmartAccessVerification', [
+                'isValid' => false,
+                'errorMessage' => 'Tautan verifikasi tidak valid atau telah kedaluwarsa. Silakan minta tautan baru kepada administrator.',
+            ]);
+        }
+
+        $regRequest = RegistrationRequest::find($requestId);
+        if (! $regRequest || ! $regRequest->verifyActivationToken($token)) {
+            return Inertia::render('auth/SmartAccessVerification', [
+                'isValid' => false,
+                'errorMessage' => 'Token verifikasi tidak dapat dikonfirmasi atau telah digunakan sebelumnya.',
+            ]);
+        }
+
+        $user = $regRequest->createdUser ?? User::where('email', '=', $regRequest->email, 'and')->first();
+        if (! $user) {
+            return Inertia::render('auth/SmartAccessVerification', [
+                'isValid' => false,
+                'errorMessage' => 'Data akun pengguna tidak ditemukan dalam sistem.',
+            ]);
+        }
+
+        return Inertia::render('auth/SmartAccessVerification', [
+            'isValid' => true,
+            'userData' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->user_type ?? $regRequest->role,
+                'provider' => $regRequest->oauth_data['provider'] ?? 'Google',
+            ],
+            'signedParams' => [
+                'request_id' => $requestId,
+                'token' => $token,
+                'signature' => $request->query('signature'),
+                'expires' => $request->query('expires'),
+            ],
+        ]);
+    }
+
+    /**
+     * Submit and activate OAuth user session after Smart Access animation completes.
+     */
+    public function verifyAccessSubmit(Request $request)
+    {
+        if (! $request->hasValidSignature()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tautan verifikasi telah kedaluwarsa atau tanda tangan tidak valid.',
+            ], 403);
+        }
+
+        $requestId = $request->input('request_id');
+        $token = $request->input('token');
+
+        $regRequest = RegistrationRequest::find($requestId);
+        if (! $regRequest || ! $regRequest->verifyActivationToken((string) $token)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token verifikasi tidak valid atau telah kedaluwarsa.',
+            ], 422);
+        }
+
+        $user = $regRequest->createdUser ?? User::where('email', '=', $regRequest->email, 'and')->first();
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pengguna tidak ditemukan dalam sistem.',
+            ], 404);
+        }
+
+        // Activate user
+        $user->forceFill([
+            'is_active' => true,
+            'status_approval' => UserAccountStatus::Activated->value,
+            'email_verified_at' => $user->email_verified_at ?? now(),
+        ])->save();
+
+        // Update registration request status
+        $regRequest->fill(['status' => RegistrationStatus::Activated->value])->save();
+
+        // Ensure default module roles
+        if (! UserModuleRole::where('user_id', '=', $user->id, 'and')->exists()) {
+            $user->assignDefaultModuleRoles();
+        }
+
+        // Log in user and establish session
+        $request->session()->regenerate();
+        Auth::login($user, remember: false);
+        $session = $this->sessionEngine->createSession($user, $request);
+        $request->session()->put('auth_session_token', $session->id);
+
+        return response()->json([
+            'success' => true,
+            'redirect_url' => route('dashboard', absolute: false),
+            'message' => 'Verifikasi berhasil! Mengalihkan ke dashboard...',
+        ]);
     }
 }

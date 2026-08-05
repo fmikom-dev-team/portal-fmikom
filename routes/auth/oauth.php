@@ -40,4 +40,11 @@ Route::prefix('auth/oauth')
         // Step 4: Store registration for new OAuth users
         Route::post('/register', [OAuthController::class, 'registerStore'])
             ->name('register.store');
+
+        // Step 5: Smart Access Control Verification Page for approved OAuth users
+        Route::get('/verify-access', [OAuthController::class, 'verifyAccessView'])
+            ->name('verify_access');
+
+        Route::post('/verify-access', [OAuthController::class, 'verifyAccessSubmit'])
+            ->name('verify_access.submit');
     });
