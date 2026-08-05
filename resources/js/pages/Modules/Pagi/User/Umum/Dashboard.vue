@@ -444,11 +444,11 @@ const handleLikeProject = async (p: any) => {
 							</button>
 
 							<!-- Sorting Options dropdown -->
-							<div v-show="showSortDropdown" class="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-slate-150 dark:border-zinc-850 bg-white dark:bg-zinc-900 shadow-lg p-1.5 z-50">
+							<div v-show="showSortDropdown" class="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-slate-150 dark:border-zinc-855 bg-white dark:bg-zinc-900 shadow-lg p-1.5 z-50">
 								<button v-for="sortOpt in ['Recommended', 'Most Popular', 'Most Viewed']" :key="sortOpt"
 									@click="selectedSort = sortOpt; showSortDropdown = false"
-									:class="['w-full text-left px-4 py-2 text-xs font-semibold rounded-xl transition-all border-none bg-transparent cursor-pointer',
-										selectedSort === sortOpt ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-950 font-bold' : 'text-slate-600 hover:bg-slate-50 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-white']"
+									:class="['w-full text-left px-4 py-2 text-xs font-semibold rounded-xl transition-all border-none cursor-pointer',
+										selectedSort === sortOpt ? 'bg-indigo-600 text-white font-bold' : 'text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/60 dark:hover:text-white']"
 								>
 									{{ sortOpt }}
 								</button>
@@ -457,11 +457,11 @@ const handleLikeProject = async (p: any) => {
 					</div>
 
 					<!-- Category Tabs -->
-					<div class="border-b border-slate-250 dark:border-slate-800/85 py-1">
+					<div class="border-b border-slate-200 dark:border-slate-800/85 py-1">
 						<div class="flex items-center gap-1.5 py-2 overflow-x-auto" style="scrollbar-width:none;">
 							<button v-for="cat in categories" :key="cat" @click="activeCategory = cat"
 								:class="['shrink-0 rounded-full px-4 py-1.5 text-xs font-bold transition-all whitespace-nowrap cursor-pointer border-none',
-									activeCategory === cat ? 'bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-950 shadow-sm' : 'text-slate-650 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-150 dark:hover:bg-slate-900 bg-transparent']">
+									activeCategory === cat ? 'bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-950 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900 bg-transparent']">
 								{{ cat }}
 							</button>
 						</div>
@@ -505,113 +505,115 @@ const handleLikeProject = async (p: any) => {
 							<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
 							Jelajahi Kreator
 						</Link>
-						<button @click="activeCategory = 'All Works'" class="h-9 px-5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-750 dark:text-slate-200 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-850 transition-all active:scale-97 cursor-pointer">
+						<button @click="activeCategory = 'All Works'" class="h-9 px-5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-97 cursor-pointer">
 							Lihat Semua Karya
 						</button>
 					</div>
 				</div>
 
 				<!-- Grid List Portofolio -->
-				<div v-else-if="visibleProjects.length > 0" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-					<div v-for="(p, pIdx) in visibleProjects" :key="p.id" class="group cursor-pointer" @click="openProjectModal(p)">
-						<div class="relative rounded-md overflow-hidden aspect-4/3 bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 mb-2">
-							<VideoLazy v-if="isVideoUrl(p.image)" :src="p.image" :autoplay="true" :loop="true" :muted="true" :playsinline="true" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
-							<OptimizedImage v-else :src="p.image" :alt="p.title" :is-sensitive="Boolean(p.status === 'review' || p.status === 'hidden')" :fetchpriority="pIdx < 8 ? 'high' : 'auto'" :loading="pIdx < 8 ? 'eager' : 'lazy'" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+				<template v-else-if="visibleProjects.length > 0">
+					<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+						<div v-for="(p, pIdx) in visibleProjects" :key="p.id" class="group cursor-pointer" @click="openProjectModal(p)">
+							<div class="relative rounded-md overflow-hidden aspect-4/3 bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 mb-2">
+								<VideoLazy v-if="isVideoUrl(p.image)" :src="p.image" :autoplay="true" :loop="true" :muted="true" :playsinline="true" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+								<OptimizedImage v-else :src="p.image" :alt="p.title" :is-sensitive="Boolean(p.status === 'review' || p.status === 'hidden')" :fetchpriority="pIdx < 8 ? 'high' : 'auto'" :loading="pIdx < 8 ? 'eager' : 'lazy'" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
 
-							<!-- Three-dot menu -->
-							<div class="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
-								<div class="relative">
-									<button @click.stop="toggleMenu(p.id, $event)" aria-label="Opsi karya" class="w-7 h-7 rounded-full bg-black/60 backdrop-blur-md hover:bg-black/80 flex items-center justify-center transition-all shadow-md cursor-pointer border-none" title="Opsi">
-										<MoreHorizontal class="h-3.5 w-3.5 text-white" />
-									</button>
-									<div v-if="openMenuId === p.id" class="absolute right-0 top-full mt-1.5 w-40 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden py-1">
-										<button @click.stop="openShareModal(p, $event)" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors text-left border-none bg-transparent cursor-pointer">
-											<Share2 class="h-3.5 w-3.5 text-indigo-500" /> Bagikan
+								<!-- Three-dot menu -->
+								<div class="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+									<div class="relative">
+										<button @click.stop="toggleMenu(p.id, $event)" aria-label="Opsi karya" class="w-7 h-7 rounded-full bg-black/60 backdrop-blur-md hover:bg-black/80 flex items-center justify-center transition-all shadow-md cursor-pointer border-none" title="Opsi">
+											<MoreHorizontal class="h-3.5 w-3.5 text-white" />
 										</button>
-										<button v-if="!$page.props.auth?.user || $page.props.auth?.user?.id !== p.user?.id" @click.stop="openReportModal(p, $event)" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors text-left border-none bg-transparent cursor-pointer" :class="{ 'opacity-50 cursor-not-allowed': p.reported_by_me }">
-											<Flag class="h-3.5 w-3.5" /> {{ p.reported_by_me ? 'Sudah Dilaporkan' : 'Laporkan' }}
-										</button>
+										<div v-if="openMenuId === p.id" class="absolute right-0 top-full mt-1.5 w-40 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden py-1">
+											<button @click.stop="openShareModal(p, $event)" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors text-left border-none bg-transparent cursor-pointer">
+												<Share2 class="h-3.5 w-3.5 text-indigo-500" /> Bagikan
+											</button>
+											<button v-if="!$page.props.auth?.user || $page.props.auth?.user?.id !== p.user?.id" @click.stop="openReportModal(p, $event)" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors text-left border-none bg-transparent cursor-pointer" :class="{ 'opacity-50 cursor-not-allowed': p.reported_by_me }">
+												<Flag class="h-3.5 w-3.5" /> {{ p.reported_by_me ? 'Sudah Dilaporkan' : 'Laporkan' }}
+											</button>
+										</div>
 									</div>
 								</div>
-							</div>
 
-							<!-- Hover overlay stats -->
-							<div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-end">
-								<div class="w-full p-3 opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-300">
-									<div class="flex items-center justify-between">
-										<div class="flex items-center gap-3 text-white text-xs">
-											<button @click.stop="handleLikeProject(p)" aria-label="Sukai karya" class="flex items-center gap-1 focus:outline-none transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer text-white" :class="{ 'text-red-500 hover:text-red-400': p.liked, 'hover:text-red-500': !p.liked }">
-												<Heart class="h-3.5 w-3.5 transition-colors" :class="{ 'fill-red-500 text-red-500': p.liked, 'text-white': !p.liked }" />
-												<span>{{ p.likes }}</span>
-											</button>
-											<span class="flex items-center gap-1"><Eye class="h-3.5 w-3.5" /> {{ p.views }}</span>
+								<!-- Hover overlay stats -->
+								<div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-end">
+									<div class="w-full p-3 opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-300">
+										<div class="flex items-center justify-between">
+											<div class="flex items-center gap-3 text-white text-xs">
+												<button @click.stop="handleLikeProject(p)" aria-label="Sukai karya" class="flex items-center gap-1 focus:outline-none transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer text-white" :class="{ 'text-red-500 hover:text-red-400': p.liked, 'hover:text-red-500': !p.liked }">
+													<Heart class="h-3.5 w-3.5 transition-colors" :class="{ 'fill-red-500 text-red-500': p.liked, 'text-white': !p.liked }" />
+													<span>{{ p.likes }}</span>
+												</button>
+												<span class="flex items-center gap-1"><Eye class="h-3.5 w-3.5" /> {{ p.views }}</span>
+											</div>
 										</div>
 									</div>
 								</div>
 							</div>
-						</div>
 
-						<!-- Details -->
-						<div class="flex items-center gap-2">
-							<div v-if="getAcceptedCollaborators(p).length > 0" class="flex -space-x-2 shrink-0">
-								<Link v-if="p.user" :href="p.user.pagi_username ? '/pagi/' + p.user.pagi_username : '/pagi/profile/' + p.user.id" class="relative z-10 shrink-0" @click.stop>
-									<OptimizedImage :src="p.avatar" :alt="p.author" className="h-6 w-6 rounded-full object-cover border-2 border-white dark:border-slate-900 shadow-sm" />
-								</Link>
-								<OptimizedImage v-else :src="p.avatar" :alt="p.author" className="h-6 w-6 rounded-full object-cover shrink-0 border-2 border-white dark:border-slate-900 shadow-sm" />
-								
-								<template v-for="(collab, idx) in getAcceptedCollaborators(p).slice(0, 2)" :key="collab.id">
-									<Link :href="collab.pagi_username ? '/pagi/' + collab.pagi_username : '/pagi/profile/' + collab.id" class="shrink-0" :style="{ zIndex: 9 - Number(idx) }" @click.stop>
-										<img :src="collab.avatar || getInitialsAvatar(collab.name)" :alt="collab.name" :title="collab.name" class="h-6 w-6 rounded-full object-cover border-2 border-white dark:border-slate-900 shadow-sm" />
+							<!-- Details -->
+							<div class="flex items-center gap-2">
+								<div v-if="getAcceptedCollaborators(p).length > 0" class="flex -space-x-2 shrink-0">
+									<Link v-if="p.user" :href="p.user.pagi_username ? '/pagi/' + p.user.pagi_username : '/pagi/profile/' + p.user.id" class="relative z-10 shrink-0" @click.stop>
+										<OptimizedImage :src="p.avatar" :alt="p.author" className="h-6 w-6 rounded-full object-cover border-2 border-white dark:border-slate-900 shadow-sm" />
 									</Link>
+									<OptimizedImage v-else :src="p.avatar" :alt="p.author" className="h-6 w-6 rounded-full object-cover shrink-0 border-2 border-white dark:border-slate-900 shadow-sm" />
+									
+									<template v-for="(collab, idx) in getAcceptedCollaborators(p).slice(0, 2)" :key="collab.id">
+										<Link :href="collab.pagi_username ? '/pagi/' + collab.pagi_username : '/pagi/profile/' + collab.id" class="shrink-0" :style="{ zIndex: 9 - Number(idx) }" @click.stop>
+											<img :src="collab.avatar || getInitialsAvatar(collab.name)" :alt="collab.name" :title="collab.name" class="h-6 w-6 rounded-full object-cover border-2 border-white dark:border-slate-900 shadow-sm" />
+										</Link>
+									</template>
+									<div v-if="getAcceptedCollaborators(p).length > 2" class="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[8px] font-black text-slate-600 dark:text-slate-400 shrink-0 z-0 shadow-sm">
+										+{{ getAcceptedCollaborators(p).length - 2 }}
+									</div>
+								</div>
+								<template v-else>
+									<Link v-if="p.user" :href="p.user.pagi_username ? '/pagi/' + p.user.pagi_username : '/pagi/profile/' + p.user.id" class="shrink-0" @click.stop>
+										<OptimizedImage :src="p.avatar" :alt="p.author" className="h-6 w-6 rounded-full object-cover border border-slate-200 dark:border-slate-800 hover:ring-2 hover:ring-indigo-500/50 transition-all" />
+									</Link>
+									<OptimizedImage v-else :src="p.avatar" :alt="p.author" className="h-6 w-6 rounded-full object-cover shrink-0 border border-slate-200 dark:border-slate-800" />
 								</template>
-								<div v-if="getAcceptedCollaborators(p).length > 2" class="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[8px] font-black text-slate-600 dark:text-slate-400 shrink-0 z-0 shadow-sm">
-									+{{ getAcceptedCollaborators(p).length - 2 }}
-								</div>
-							</div>
-							<template v-else>
-								<Link v-if="p.user" :href="p.user.pagi_username ? '/pagi/' + p.user.pagi_username : '/pagi/profile/' + p.user.id" class="shrink-0" @click.stop>
-									<OptimizedImage :src="p.avatar" :alt="p.author" className="h-6 w-6 rounded-full object-cover border border-slate-200 dark:border-slate-800 hover:ring-2 hover:ring-indigo-500/50 transition-all" />
-								</Link>
-								<OptimizedImage v-else :src="p.avatar" :alt="p.author" className="h-6 w-6 rounded-full object-cover shrink-0 border border-slate-200 dark:border-slate-800" />
-							</template>
 
-							<div class="min-w-0 flex-1 text-left">
-								<p class="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate group-hover:text-slate-950 dark:group-hover:text-white transition-colors group-hover:underline underline-offset-2 decoration-slate-400 dark:decoration-slate-600">{{ p.title }}</p>
-								<div class="flex items-center gap-1 mt-0.5 min-w-0">
-									<Link v-if="p.user" :href="p.user.pagi_username ? '/pagi/' + p.user.pagi_username : '/pagi/profile/' + p.user.id" class="text-[10px] text-slate-500 dark:text-zinc-400 hover:text-indigo-500 dark:hover:text-indigo-400 hover:underline transition-colors truncate block" @click.stop>{{ p.author }}</Link>
-									<p v-else class="text-[10px] text-slate-500 dark:text-zinc-400 truncate">{{ p.author }}</p>
-									<span v-if="getAcceptedCollaborators(p).length > 0" class="shrink-0 px-1 py-0.25 rounded-xs bg-indigo-50 dark:bg-indigo-950/45 text-indigo-600 dark:text-indigo-400 text-[8px] font-black tracking-wider uppercase border border-indigo-100/10">Collab</span>
+								<div class="min-w-0 flex-1 text-left">
+									<p class="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate group-hover:text-slate-950 dark:group-hover:text-white transition-colors group-hover:underline underline-offset-2 decoration-slate-400 dark:decoration-slate-600">{{ p.title }}</p>
+									<div class="flex items-center gap-1 mt-0.5 min-w-0">
+										<Link v-if="p.user" :href="p.user.pagi_username ? '/pagi/' + p.user.pagi_username : '/pagi/profile/' + p.user.id" class="text-[10px] text-slate-500 dark:text-zinc-400 hover:text-indigo-500 dark:hover:text-indigo-400 hover:underline transition-colors truncate block" @click.stop>{{ p.author }}</Link>
+										<p v-else class="text-[10px] text-slate-500 dark:text-zinc-400 truncate">{{ p.author }}</p>
+										<span v-if="getAcceptedCollaborators(p).length > 0" class="shrink-0 px-1 py-0.25 rounded-xs bg-indigo-50 dark:bg-indigo-950/45 text-indigo-600 dark:text-indigo-400 text-[8px] font-black tracking-wider uppercase border border-indigo-100/10">Collab</span>
+									</div>
 								</div>
-							</div>
-							<div class="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-zinc-400 shrink-0 select-none">
-								<button @click.stop="handleLikeProject(p)" aria-label="Sukai karya" class="flex items-center gap-0.5 transition-all duration-200 focus:outline-none hover:scale-110 active:scale-90 cursor-pointer border-none bg-transparent" :class="p.liked ? 'text-red-500 dark:text-red-400 font-bold' : 'text-slate-500 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-455'">
-									<Heart class="h-3 w-3 transition-colors" :class="{ 'fill-red-500 text-red-500 dark:text-red-400': p.liked }" /> 
-									<span>{{ p.likes }}</span>
-								</button>
-								<span class="flex items-center gap-0.5"><Eye class="h-3 w-3" /> {{ p.views }}</span>
+								<div class="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-zinc-400 shrink-0 select-none">
+									<button @click.stop="handleLikeProject(p)" aria-label="Sukai karya" class="flex items-center gap-0.5 transition-all duration-200 focus:outline-none hover:scale-110 active:scale-90 cursor-pointer border-none bg-transparent" :class="p.liked ? 'text-red-500 dark:text-red-400 font-bold' : 'text-slate-500 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400'">
+										<Heart class="h-3 w-3 transition-colors" :class="{ 'fill-red-500 text-red-500 dark:text-red-400': p.liked }" /> 
+										<span>{{ p.likes }}</span>
+									</button>
+									<span class="flex items-center gap-0.5"><Eye class="h-3 w-3" /> {{ p.views }}</span>
+								</div>
 							</div>
 						</div>
 					</div>
-				</div>
 
-				<!-- Load more -->
-				<div v-if="filteredProjects.length > displayLimit" class="mt-10 flex justify-center">
-					<button @click="displayLimit += 20" class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm transition-all cursor-pointer">
-						Load More Projects
+					<!-- Load more -->
+					<div v-if="filteredProjects.length > displayLimit" class="mt-10 flex justify-center">
+						<button @click="displayLimit += 20" class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm transition-all cursor-pointer">
+							Load More Projects
+						</button>
+					</div>
+				</template>
+
+				<!-- Empty State -->
+				<div v-else-if="filteredProjects.length === 0" class="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800 rounded-3xl p-8 shadow-xs w-full">
+					<div class="h-16 w-16 rounded-full bg-slate-50 dark:bg-zinc-800 flex items-center justify-center text-slate-400 mb-4">
+						<Search class="h-8 w-8 text-slate-400 dark:text-zinc-500" />
+					</div>
+					<h3 class="text-base font-black text-slate-900 dark:text-white">Tidak ada karya yang cocok</h3>
+					<p class="text-xs text-slate-500 dark:text-zinc-400 font-semibold max-w-sm mt-2">Coba ubah kata kunci pencarian Anda atau atur ulang filter kategori.</p>
+					<button @click="resetFilters" class="mt-5 px-5 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white text-xs font-bold transition-all shadow-md cursor-pointer border-none">
+						Atur Ulang Filter
 					</button>
 				</div>
-
-						<!-- Empty State -->
-						<div v-else class="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800 rounded-3xl p-8 shadow-xs w-full">
-							<div class="h-16 w-16 rounded-full bg-slate-50 dark:bg-zinc-800 flex items-center justify-center text-slate-400 mb-4">
-								<Search class="h-8 w-8 text-slate-400 dark:text-zinc-500" />
-							</div>
-							<h3 class="text-base font-black text-slate-900 dark:text-white">Tidak ada karya yang cocok</h3>
-							<p class="text-xs text-slate-500 dark:text-zinc-400 font-semibold max-w-sm mt-2">Coba ubah kata kunci pencarian Anda atau atur ulang filter kategori.</p>
-							<button @click="resetFilters" class="mt-5 px-5 py-2.5 rounded-full bg-indigo-650 text-white text-xs font-bold hover:bg-indigo-755 transition-all shadow-md cursor-pointer border-none">
-								Atur Ulang Filter
-							</button>
-						</div>
 					</template>
 				</Deferred>
 			</div>
