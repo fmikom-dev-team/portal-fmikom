@@ -52,6 +52,8 @@ const deleteMedia = (id: number) => {
 const handleDeleteConfirm = () => {
 	if (deleteId.value !== null) {
 		router.delete(`/portal-admin/media/${deleteId.value}`, {
+			preserveScroll: true,
+			preserveState: false,
 			onSuccess: () => {
 				isDeleteModalOpen.value = false;
 				deleteId.value = null;

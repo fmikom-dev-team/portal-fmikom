@@ -67,8 +67,9 @@ class PortalMediaController extends Controller
     {
         // 1. Physically delete file asset from disk storage
         if ($media->path) {
-            $relativePath = str_replace('/storage/', '', $media->path);
-            if (Storage::disk('public')->exists($relativePath)) {
+            $parsedPath = parse_url($media->path, PHP_URL_PATH);
+            $relativePath = ltrim(str_replace('/storage/', '', $parsedPath), '/');
+            if (! empty($relativePath) && Storage::disk('public')->exists($relativePath)) {
                 Storage::disk('public')->delete($relativePath);
             }
         }
@@ -78,12 +79,8 @@ class PortalMediaController extends Controller
 
         Cache::forget('portal_settings');
 
-        // 3. Handle Inertia vs JSON API responses
-        if ($request->header('X-Inertia')) {
-            return redirect()->back()->with('success', 'Media deleted successfully!');
-        }
-
-        if ($request->expectsJson() || $request->wantsJson()) {
+        // 3. Always return Inertia redirect back for web/Inertia requests
+        if ($request->wantsJson() && ! $request->header('X-Inertia')) {
             return response()->json(['success' => true, 'message' => 'Media deleted successfully!']);
         }
 
