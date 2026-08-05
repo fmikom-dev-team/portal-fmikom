@@ -600,9 +600,9 @@ class DashboardController extends Controller // NOSONAR
     {
         $query = User::with(['role', 'programStudi', 'moduleRoles.module', 'moduleRoles.role', 'oauthCredentials.provider']);
 
-        $selfRegisteredUserIds = RegistrationRequest::whereNotNull('created_user_id')
-            ->pluck('created_user_id')
-            ->toArray();
+        $selfRegisteredRequests = RegistrationRequest::whereNotNull('created_user_id')
+            ->get(['created_user_id', 'oauth_data'])
+            ->keyBy('created_user_id');
 
         $loginStats = AuthLoginAttempt::select('email', DB::raw('count(*) as count'), DB::raw('max(created_at) as last_login'))
             ->where('is_successful', true)
@@ -664,7 +664,7 @@ class DashboardController extends Controller // NOSONAR
 
         return $query->latest()
             ->get()
-            ->map(function ($u) use ($selfRegisteredUserIds, $loginStats) {
+            ->map(function ($u) use ($selfRegisteredRequests, $loginStats) {
 
                 $fotoPath = $u->photoUrl();
 
@@ -675,6 +675,22 @@ class DashboardController extends Controller // NOSONAR
                 $lastSignInAt = $stats && $stats->last_login
                     ? Carbon::parse($stats->last_login)->format(self::DATE_FORMAT)
                     : null;
+
+                $regReq = $selfRegisteredRequests->get($u->id);
+                $registrationSource = 'manual';
+                $oauthProviderSlug = null;
+                $oauthProviderName = null;
+
+                if ($regReq && $regReq->hasOAuthData()) {
+                    $registrationSource = 'oauth';
+                    $oauthProviderSlug = strtolower((string) ($regReq->oauth_data['provider'] ?? 'oauth'));
+                    $oauthProviderName = ucfirst($oauthProviderSlug);
+                } elseif ($u->oauthCredentials->isNotEmpty()) {
+                    $registrationSource = 'oauth';
+                    $firstCred = $u->oauthCredentials->first();
+                    $oauthProviderSlug = optional($firstCred->provider)->slug ?? 'oauth';
+                    $oauthProviderName = optional($firstCred->provider)->name ?? 'OAuth';
+                }
 
                 return [
                     'id' => $u->id,
@@ -687,7 +703,10 @@ class DashboardController extends Controller // NOSONAR
                         : null,
                     'status_approval' => $u->status_approval,
                     'is_active' => $u->is_active,
-                    'registration_type' => in_array($u->id, $selfRegisteredUserIds) ? 'self_registered' : 'admin_created',
+                    'registration_type' => $regReq ? 'self_registered' : 'admin_created',
+                    'registration_source' => $registrationSource,
+                    'oauth_provider_slug' => $oauthProviderSlug,
+                    'oauth_provider_name' => $oauthProviderName,
                     'foto_path' => $fotoPath,
                     'sign_in_count' => $signInCount,
                     'last_sign_in_at' => $lastSignInAt,
