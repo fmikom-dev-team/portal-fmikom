@@ -30,9 +30,27 @@ const isRedirecting = ref(false);
 const redirectUrl = ref("");
 const verificationError = ref("");
 
-// Realtime Progress Evaluation States
-const activeStep = ref<1 | 2 | 3>(1);
-const step2Progress = ref(0);
+// Realtime Sequential Step Carousel States
+const currentStepIndex = ref(0); // 0: Token, 1: Signals, 2: Session
+const currentStepProgress = ref(0);
+
+const steps = [
+	{
+		id: 1,
+		title: "Token Signature & Cipher Key",
+		detail: "Memverifikasi keabsahan tanda tangan digital...",
+	},
+	{
+		id: 2,
+		title: "Evaluating Security Signals",
+		detail: "Mengevaluasi sinyal peramban & riwayat IP...",
+	},
+	{
+		id: 3,
+		title: "Authorizing User Session",
+		detail: "Menyiapkan hak akses modul & sesi pengguna...",
+	},
+];
 
 // Infinite Matrix Scrambler
 const SCRAMBLED_STRINGS = [
@@ -53,43 +71,63 @@ const startScrambler = () => {
 	}, 500);
 };
 
-const runProgressAnimationAndVerify = async () => {
+const animateStepProgress = (durationMs: number): Promise<void> => {
+	return new Promise((resolve) => {
+		currentStepProgress.value = 0;
+		const intervalMs = 25;
+		const increment = 100 / (durationMs / intervalMs);
+
+		const timer = setInterval(() => {
+			currentStepProgress.value = Math.min(
+				currentStepProgress.value + increment,
+				100,
+			);
+			if (currentStepProgress.value >= 100) {
+				clearInterval(timer);
+				resolve();
+			}
+		}, intervalMs);
+	});
+};
+
+const runSequentialVerification = async () => {
 	if (!props.isValid || !props.signedParams) return;
 
-	// Start Step 2 animation
-	activeStep.value = 2;
-	const animationDuration = 1800; // 1.8 seconds smooth progress
-	const intervalMs = 30;
-	const increment = 100 / (animationDuration / intervalMs);
-
-	const progressTimer = setInterval(() => {
-		step2Progress.value = Math.min(step2Progress.value + increment, 100);
-		if (step2Progress.value >= 100) {
-			clearInterval(progressTimer);
-		}
-	}, intervalMs);
+	// Execute API Request asynchronously in parallel
+	const apiPromise = axios.post(
+		"/auth/oauth/verify-access",
+		{
+			request_id: props.signedParams?.request_id,
+			token: props.signedParams?.token,
+		},
+		{
+			params: {
+				signature: props.signedParams?.signature,
+				expires: props.signedParams?.expires,
+			},
+		},
+	);
 
 	try {
-		const response = await axios.post(
-			"/auth/oauth/verify-access",
-			{
-				request_id: props.signedParams?.request_id,
-				token: props.signedParams?.token,
-			},
-			{
-				params: {
-					signature: props.signedParams?.signature,
-					expires: props.signedParams?.expires,
-				},
-			},
-		);
+		// Step 1: Token Signature & Cipher Key (1.5 seconds)
+		currentStepIndex.value = 0;
+		await animateStepProgress(1500);
+		await new Promise((resolve) => setTimeout(resolve, 300));
 
-		// Ensure progress animation completes
-		await new Promise((resolve) => setTimeout(resolve, 1800));
+		// Step 2: Evaluating Security Signals (1.8 seconds)
+		currentStepIndex.value = 1;
+		await animateStepProgress(1800);
+		await new Promise((resolve) => setTimeout(resolve, 300));
+
+		// Step 3: Authorizing User Session (1.4 seconds)
+		currentStepIndex.value = 2;
+		await animateStepProgress(1400);
+
+		// Await API response
+		const response = await apiPromise;
 
 		if (response.data.success) {
-			activeStep.value = 3;
-			await new Promise((resolve) => setTimeout(resolve, 400));
+			await new Promise((resolve) => setTimeout(resolve, 300));
 			redirectUrl.value = response.data.redirect_url || "/dashboard";
 			isFinished.value = true;
 		} else {
@@ -115,7 +153,7 @@ const enterDashboard = () => {
 onMounted(() => {
 	startScrambler();
 	if (props.isValid) {
-		runProgressAnimationAndVerify();
+		runSequentialVerification();
 	}
 });
 
@@ -149,9 +187,9 @@ onUnmounted(() => {
 
         <!-- FORGEUI SECURITY CARD (PERFECT PORTRAIT CARD PROPORTIONS) -->
         <div v-else class="flex flex-col items-center gap-5 w-full max-w-[390px] sm:max-w-[420px] px-3 sm:px-0">
-            <div class="relative overflow-hidden shadow-2xl shadow-black/5 flex h-[460px] sm:h-[490px] w-full items-center justify-center rounded-3xl bg-white border border-neutral-200/90 dark:bg-neutral-900 dark:border-neutral-800 transition-all duration-300">
+            <div class="relative overflow-hidden shadow-2xl shadow-black/5 flex h-[470px] sm:h-[500px] w-full items-center justify-center rounded-3xl bg-white border border-neutral-200/90 dark:bg-neutral-900 dark:border-neutral-800 transition-all duration-300">
                 <!-- Infinite Scrambler Matrix Background -->
-                <div class="absolute top-[13%] max-w-[340px] sm:max-w-[370px] px-3 pointer-events-none select-none">
+                <div class="absolute top-[12%] max-w-[340px] sm:max-w-[370px] px-3 pointer-events-none select-none">
                     <p class="font-mono text-[11px] sm:text-xs leading-4 break-words whitespace-normal text-neutral-400 opacity-35">
                         {{ scramblerText }}
                     </p>
@@ -160,7 +198,7 @@ onUnmounted(() => {
                 <!-- Container Masks (Gradient Transitions) -->
                 <div class="absolute top-0 left-0 h-full w-16 sm:w-20 bg-gradient-to-r from-white via-white/80 to-transparent dark:from-neutral-900" />
                 <div class="absolute top-0 right-0 h-full w-16 sm:w-20 bg-gradient-to-l from-white via-white/80 to-transparent dark:from-neutral-900" />
-                <div class="absolute top-0 left-0 h-36 w-full bg-gradient-to-b from-white via-white/95 to-transparent dark:from-neutral-900" />
+                <div class="absolute top-0 left-0 h-32 w-full bg-gradient-to-b from-white via-white/95 to-transparent dark:from-neutral-900" />
 
                 <!-- Card Header Text -->
                 <div class="absolute top-5 left-0 w-full px-6 z-10">
@@ -170,9 +208,9 @@ onUnmounted(() => {
                     </p>
                 </div>
 
-                <!-- FaceCard Animated Frame (Center Avatar Portrait Scaled) -->
-                <div class="relative z-10 rounded-[5px] bg-neutral-200/70 dark:bg-neutral-950/60 p-1 shadow-md">
-                    <div class="relative h-36 w-28 sm:h-40 sm:w-30 rounded-[3px] bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900 flex items-center justify-center overflow-hidden">
+                <!-- FaceCard Animated Frame (Raised Higher Position - Zero Overlap) -->
+                <div class="absolute top-[26%] sm:top-[28%] z-10 rounded-[5px] bg-neutral-200/70 dark:bg-neutral-950/60 p-1 shadow-md transition-all duration-300">
+                    <div class="relative h-32 w-26 sm:h-36 sm:w-28 rounded-[3px] bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900 flex items-center justify-center overflow-hidden">
                         <svg
                             viewBox="0 0 80 96"
                             fill="none"
@@ -204,40 +242,38 @@ onUnmounted(() => {
                 <!-- Curved Bottom Overlay Arch -->
                 <div class="absolute bottom-0 h-1/2 w-[150%] rounded-t-[60%] bg-gradient-to-b from-neutral-100/95 to-white shadow-[0_0_900px_rgba(250,250,250,0.9)] dark:from-neutral-900 dark:to-neutral-950 pointer-events-none" />
 
-                <!-- FORGEUI ONBOARDCARD PROGRESS ANIMATION (Shown during evaluation) -->
-                <div v-if="!isFinished" class="absolute top-[61%] w-[88%] max-w-[340px] flex flex-col items-center justify-center gap-1.5 z-20 animate-in fade-in duration-300">
-                    <!-- Step 3 Mini Card (Authorizing Session) -->
-                    <div :class="['w-full scale-[0.92] flex flex-col justify-center gap-1.5 rounded-xl border bg-gradient-to-br from-white to-neutral-50 p-2.5 shadow-sm transition-all duration-300 dark:from-neutral-900 dark:to-neutral-950', activeStep === 3 ? 'border-emerald-300 dark:border-emerald-800' : 'border-neutral-200/70 opacity-60 dark:border-neutral-800']">
-                        <div class="flex items-center gap-2 text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                            <div class="w-3.5 h-3.5 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" v-if="activeStep === 3"></div>
-                            <div class="w-3.5 h-3.5 rounded-full border border-neutral-300" v-else></div>
-                            <span>Authorizing User Session</span>
-                        </div>
-                        <div class="h-1.5 w-full bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
-                            <div class="h-full bg-emerald-500 transition-all duration-500" :style="{ width: activeStep === 3 ? '100%' : '0%' }"></div>
-                        </div>
-                    </div>
-
-                    <!-- Step 2 Mini Card (Evaluating Security Signals with Animated Progress) -->
-                    <div :class="['w-full flex flex-col justify-center gap-1.5 rounded-xl border bg-gradient-to-br from-white to-neutral-50 p-2.5 shadow-md transition-all duration-300 dark:from-neutral-900 dark:to-neutral-950', activeStep === 2 ? 'border-emerald-400 dark:border-emerald-700 ring-1 ring-emerald-500/20' : 'border-neutral-200/70 opacity-60 dark:border-neutral-800']">
+                <!-- FORGEUI SEQUENTIAL ONBOARDCARD CAROUSEL (Positioned Cleanly Below Avatar) -->
+                <div v-if="!isFinished" class="absolute top-[62%] sm:top-[64%] w-[88%] max-w-[340px] flex flex-col items-center justify-center gap-2 z-20 animate-in fade-in duration-300">
+                    <div
+                        v-for="(stepItem, index) in steps"
+                        :key="stepItem.id"
+                        :class="[
+                            'w-full flex flex-col justify-center gap-1.5 rounded-xl border p-2.5 transition-all duration-500 ease-out shadow-sm',
+                            index === currentStepIndex
+                                ? 'bg-gradient-to-br from-white to-neutral-50 border-emerald-400 dark:border-emerald-700 shadow-md ring-1 ring-emerald-500/20 scale-100 opacity-100 blur-none z-30'
+                                : index === currentStepIndex - 1
+                                ? 'bg-gradient-to-br from-emerald-50/40 to-white border-emerald-200/90 dark:border-emerald-900/60 scale-[0.92] opacity-50 blur-[0.6px] -translate-y-1.5 z-20'
+                                : 'hidden'
+                        ]"
+                    >
                         <div class="flex items-center gap-2 text-xs font-semibold text-neutral-800 dark:text-neutral-200">
-                            <div class="w-3.5 h-3.5 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" v-if="activeStep === 2"></div>
-                            <div class="w-3.5 h-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px]" v-else-if="activeStep === 3">✓</div>
-                            <div class="w-3.5 h-3.5 rounded-full border border-neutral-300" v-else></div>
-                            <span>Evaluating Security Signals</span>
+                            <!-- Active Spinner -->
+                            <div v-if="index === currentStepIndex" class="w-3.5 h-3.5 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin shrink-0"></div>
+                            <!-- Completed Check -->
+                            <div v-else-if="index < currentStepIndex" class="w-3.5 h-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-bold shrink-0">✓</div>
+                            <!-- Pending Bullet -->
+                            <div v-else class="w-3.5 h-3.5 rounded-full border border-neutral-300 shrink-0"></div>
+                            
+                            <span class="truncate">{{ stepItem.title }}</span>
                         </div>
-                        <div class="h-1.5 w-full bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
-                            <div class="h-full bg-emerald-500 transition-all duration-100 ease-out" :style="{ width: activeStep === 3 ? '100%' : `${step2Progress}%` }"></div>
-                        </div>
-                    </div>
 
-                    <!-- Step 1 Mini Card (Token Verified - Completed) -->
-                    <div class="w-full scale-[0.92] flex flex-col justify-center gap-1.5 rounded-xl border border-emerald-200/90 dark:border-emerald-900/60 bg-gradient-to-br from-emerald-50/40 to-white p-2.5 opacity-80 shadow-sm dark:from-emerald-950/20 dark:to-neutral-900">
-                        <div class="flex items-center gap-2 text-xs font-medium text-emerald-800 dark:text-emerald-300">
-                            <div class="w-3.5 h-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-bold">✓</div>
-                            <span>Token Signature & Cipher Key</span>
+                        <!-- Animated Progress Bar -->
+                        <div class="h-1.5 w-full bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
+                            <div
+                                class="h-full bg-emerald-500 transition-all duration-100 ease-out rounded-full"
+                                :style="{ width: index < currentStepIndex ? '100%' : index === currentStepIndex ? `${currentStepProgress}%` : '0%' }"
+                            ></div>
                         </div>
-                        <div class="h-1.5 w-full bg-emerald-500 rounded-full"></div>
                     </div>
                 </div>
 
