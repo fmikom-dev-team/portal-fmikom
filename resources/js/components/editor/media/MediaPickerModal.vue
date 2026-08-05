@@ -13,6 +13,7 @@ const fetchMedia = async () => {
 	isLoading.value = true;
 	try {
 		const response = await axios.get("/portal-admin/media", {
+			params: { t: Date.now() },
 			headers: { Accept: "application/json" },
 		});
 		if (response.data.success) {

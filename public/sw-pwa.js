@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1785916527261';
+const CACHE_VERSION = 'v1785928402666';
 const CACHE_NAME = `fmikom-portal-${CACHE_VERSION}`;
 const FONT_CACHE_NAME = `fmikom-fonts-${CACHE_VERSION}`;
 // ASSET_CACHE_NAME dihapus — tidak lagi digunakan untuk CacheFirst
@@ -111,7 +111,8 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/pulse') ||
     url.pathname.startsWith('/broadcasting') ||
     url.pathname.startsWith('/sanctum') ||
-    url.pathname.startsWith('/vendor')
+    url.pathname.startsWith('/vendor') ||
+    url.pathname.startsWith('/storage')
   ) {
     return;
   }
