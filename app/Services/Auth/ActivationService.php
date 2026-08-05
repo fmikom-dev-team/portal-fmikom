@@ -171,8 +171,11 @@ class ActivationService
                         'expires_at' => $oauthData['expires_at'] ?? null,
                     ]
                 );
-                // OAuth users have email already verified by the provider
-                $user->forceFill(['email_verified_at' => now()])->save();
+                // OAuth users have email already verified by the provider and do not change passwords manually
+                $user->forceFill([
+                    'email_verified_at' => $user->email_verified_at ?? now(),
+                    'password_changed_at' => $user->password_changed_at ?? now(),
+                ])->save();
             }
 
             // 3. Generate activation token (hashed, stored in registration_request)
