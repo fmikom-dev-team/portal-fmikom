@@ -128,32 +128,32 @@ onUnmounted(() => {
             </a>
         </div>
 
-        <!-- FORGEUI SECURITY CARD (EXACT REPLICA - CLEAN MODERN WHITE) -->
-        <div v-else class="flex flex-col items-center gap-6">
-            <div class="relative overflow-hidden shadow-xl shadow-black/5 flex h-[432px] w-full max-w-[350px] items-center justify-center rounded-2xl bg-white border border-neutral-200/80 dark:bg-neutral-900 dark:border-neutral-800 transition-all duration-300">
+        <!-- FORGEUI SECURITY CARD (SCALED UP 2X - RESPONSIVE CLEAN MODERN WHITE) -->
+        <div v-else class="flex flex-col items-center gap-6 w-full max-w-[540px] sm:max-w-[620px] md:max-w-[680px] px-2 sm:px-0">
+            <div class="relative overflow-hidden shadow-2xl shadow-black/5 flex h-[520px] sm:h-[560px] w-full items-center justify-center rounded-3xl bg-white border border-neutral-200/90 dark:bg-neutral-900 dark:border-neutral-800 transition-all duration-300">
                 <!-- Infinite Scrambler Matrix Background -->
-                <div class="absolute top-[12%] max-w-[322px] px-3 pointer-events-none select-none">
-                    <p class="font-mono text-[11px] leading-4 break-words whitespace-normal text-neutral-400 opacity-40">
+                <div class="absolute top-[14%] max-w-[480px] sm:max-w-[560px] px-4 pointer-events-none select-none">
+                    <p class="font-mono text-xs sm:text-sm leading-5 break-words whitespace-normal text-neutral-400 opacity-35">
                         {{ scramblerText }}
                     </p>
                 </div>
 
                 <!-- Container Masks (Gradient Transitions) -->
-                <div class="absolute top-0 left-0 h-full w-16 bg-gradient-to-r from-white via-white/80 to-transparent dark:from-neutral-900" />
-                <div class="absolute top-0 right-0 h-full w-16 bg-gradient-to-l from-white via-white/80 to-transparent dark:from-neutral-900" />
-                <div class="absolute top-0 left-0 h-36 w-full bg-gradient-to-b from-white via-white/90 to-transparent dark:from-neutral-900" />
+                <div class="absolute top-0 left-0 h-full w-24 sm:w-32 bg-gradient-to-r from-white via-white/80 to-transparent dark:from-neutral-900" />
+                <div class="absolute top-0 right-0 h-full w-24 sm:w-32 bg-gradient-to-l from-white via-white/80 to-transparent dark:from-neutral-900" />
+                <div class="absolute top-0 left-0 h-44 w-full bg-gradient-to-b from-white via-white/95 to-transparent dark:from-neutral-900" />
 
                 <!-- Card Header Text -->
-                <div class="absolute top-4 left-0 w-full px-5 z-10">
-                    <h3 class="text-neutral-900 dark:text-white text-base font-bold tracking-tight">{{ cardTitle }}</h3>
-                    <p class="mt-1 text-[11px] leading-snug text-neutral-500 dark:text-neutral-400 line-clamp-3">
+                <div class="absolute top-6 left-0 w-full px-6 sm:px-8 z-10">
+                    <h3 class="text-neutral-900 dark:text-white text-lg sm:text-2xl font-extrabold tracking-tight">{{ cardTitle }}</h3>
+                    <p class="mt-1.5 text-xs sm:text-sm leading-relaxed text-neutral-500 dark:text-neutral-400 max-w-xl">
                         {{ cardDescription }}
                     </p>
                 </div>
 
-                <!-- FaceCard Animated Frame (Center Avatar) -->
-                <div class="relative z-10 rounded-[4px] bg-neutral-200/60 dark:bg-neutral-950/50 p-[3px] shadow-sm">
-                    <div class="relative h-32 w-24 rounded-[3px] bg-gradient-to-br from-neutral-100 to-neutral-200/90 dark:from-neutral-800 dark:to-neutral-900 flex items-center justify-center overflow-hidden">
+                <!-- FaceCard Animated Frame (Center Avatar Scaled Up) -->
+                <div class="relative z-10 rounded-[6px] bg-neutral-200/70 dark:bg-neutral-950/60 p-1 shadow-md">
+                    <div class="relative h-44 w-32 sm:h-48 sm:w-36 rounded-[4px] bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900 flex items-center justify-center overflow-hidden">
                         <svg
                             viewBox="0 0 80 96"
                             fill="none"
@@ -172,49 +172,49 @@ onUnmounted(() => {
                             />
                             <path
                                 d="M26.22 78.25c2.679-3.522 1.485-17.776 1.485-17.776-1.084-2.098-1.918-4.288-2.123-5.619-3.573 0-3.7-8.05-3.827-9.937-.102-1.509 1.403-1.383 2.169-1.132-.298-1.3-.92-5.408-1.021-11.446C22.775 24.794 30.94 17.75 40 17.75h.005c9.059 0 17.225 7.044 17.097 14.59-.102 6.038-.723 10.147-1.021 11.446.765-.251 2.271-.377 2.169 1.132-.128 1.887-.254 9.937-3.827 9.937-.205 1.331-1.039 3.521-2.123 5.619 0 0-1.194 14.254 1.485 17.776"
-                                class="animate-draw-outline stroke-[#06b6d4] [filter:drop-shadow(0_0_6px_#06b6d4)]"
+                                class="animate-draw-outline stroke-[#06b6d4] [filter:drop-shadow(0_0_8px_#06b6d4)]"
                             ></path>
                             <path
                                 d="M27.705 60.474a26.884 26.884 0 0 0 1.577 2.682c1.786 2.642 5.36 6.792 10.718 6.792h.005c5.358 0 8.932-4.15 10.718-6.792a26.884 26.884 0 0 0 1.577-2.682"
-                                class="animate-draw stroke-[#06b6d4] [filter:drop-shadow(0_0_6px_#06b6d4)]"
+                                class="animate-draw stroke-[#06b6d4] [filter:drop-shadow(0_0_8px_#06b6d4)]"
                             />
                         </svg>
                     </div>
                 </div>
 
                 <!-- Curved Bottom Overlay Arch -->
-                <div class="absolute bottom-0 h-1/2 w-[150%] rounded-t-[60%] bg-gradient-to-b from-neutral-100/90 to-white shadow-[0_0_900px_rgba(250,250,250,0.9)] dark:from-neutral-900 dark:to-neutral-950 pointer-events-none" />
+                <div class="absolute bottom-0 h-1/2 w-[150%] rounded-t-[60%] bg-gradient-to-b from-neutral-100/95 to-white shadow-[0_0_900px_rgba(250,250,250,0.9)] dark:from-neutral-900 dark:to-neutral-950 pointer-events-none" />
 
                 <!-- Bottom User Info & Cyan Animated Check Circle -->
-                <div class="absolute top-[68%] flex h-16 w-full flex-col items-center justify-center gap-1 z-10">
-                    <div class="flex items-center justify-center gap-1.5 text-xs font-semibold text-neutral-800 dark:text-white">
+                <div class="absolute top-[73%] flex h-20 w-full flex-col items-center justify-center gap-1.5 z-10">
+                    <div class="flex items-center justify-center gap-2 text-sm sm:text-base font-bold text-neutral-800 dark:text-white">
                         <span>{{ props.userData?.name || 'User Verification' }}</span>
                         <!-- CheckCircle Badge Cyan -->
-                        <div class="relative w-4 h-4 flex items-center justify-center">
-                            <div class="w-4 h-4 rounded-full bg-[#06b6d4] flex items-center justify-center text-white text-[10px] [filter:drop-shadow(0_0_4px_#06b6d4)] animate-in zoom-in duration-300">
+                        <div class="relative w-5 h-5 flex items-center justify-center">
+                            <div class="w-5 h-5 rounded-full bg-[#06b6d4] flex items-center justify-center text-white text-xs font-bold [filter:drop-shadow(0_0_5px_#06b6d4)] animate-in zoom-in duration-300">
                                 ✓
                             </div>
                         </div>
                     </div>
-                    <div class="text-[11px] text-neutral-500 font-normal">
+                    <div class="text-xs sm:text-sm text-neutral-500 font-normal">
                         {{ props.userData?.email || 'verifying@example.com' }}
                     </div>
                 </div>
             </div>
 
-            <!-- EXPLICIT ENTER DASHBOARD BUTTON -->
+            <!-- EXPLICIT ENTER DASHBOARD BUTTON (MATCHING EXPANDED WIDTH) -->
             <button
                 v-if="isFinished"
                 type="button"
                 @click="enterDashboard"
                 :disabled="isRedirecting"
-                class="w-full max-w-[350px] bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold text-sm py-3 px-6 rounded-xl shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer animate-in fade-in slide-in-from-bottom-2 duration-300"
+                class="w-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold text-base py-4 px-8 rounded-2xl shadow-xl shadow-blue-500/25 transition-all flex items-center justify-center gap-2.5 cursor-pointer animate-in fade-in slide-in-from-bottom-3 duration-300"
             >
                 <span v-if="isRedirecting">Mengalihkan...</span>
                 <span v-else>Masuk ke Dashboard Portal →</span>
             </button>
-            <div v-else class="text-xs font-medium text-neutral-500 animate-pulse flex items-center gap-2">
-                <div class="w-3.5 h-3.5 rounded-full border-2 border-blue-600 border-t-transparent animate-spin"></div>
+            <div v-else class="text-sm font-medium text-neutral-500 animate-pulse flex items-center gap-2 py-2">
+                <div class="w-4 h-4 rounded-full border-2 border-blue-600 border-t-transparent animate-spin"></div>
                 Evaluasi sinyal keamanan akun...
             </div>
         </div>
