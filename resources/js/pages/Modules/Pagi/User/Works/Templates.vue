@@ -2,15 +2,12 @@
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import { ArrowRight, Check, Star } from "lucide-vue-next";
 import { computed, ref } from "vue";
+import { usePagiRole } from "../composables/usePagiRole";
 import Navbar from "../ui/Navbar.vue";
 import UmumNavbar from "../ui/UmumNavbar.vue";
 
 const page = usePage();
-
-const isMahasiswa = computed(() => {
-	const role = (page.props as any).context?.active_role || "mahasiswa";
-	return role.toLowerCase() === "mahasiswa";
-});
+const { isMahasiswa } = usePagiRole();
 
 // Access authenticated user info for personalized template previews
 const userName = computed(

@@ -2,6 +2,7 @@
 import { Head, Link, usePage } from "@inertiajs/vue3";
 import { Edit3, Palette } from "lucide-vue-next";
 import { computed } from "vue";
+import { usePagiRole } from "../composables/usePagiRole";
 import Navbar from "../ui/Navbar.vue";
 import UmumNavbar from "../ui/UmumNavbar.vue";
 import WorkViewer from "./components/WorkViewer.vue";
@@ -82,11 +83,7 @@ const isOwner = computed(() => {
 	return (page.props as any).auth?.user?.id === props.profileUser.id;
 });
 
-const isMahasiswa = computed(() => {
-	const role =
-		props.roleName || (page.props as any).context?.active_role || "mahasiswa";
-	return role.toLowerCase() === "mahasiswa";
-});
+const { isMahasiswa } = usePagiRole(props.roleName);
 </script>
 
 <template>

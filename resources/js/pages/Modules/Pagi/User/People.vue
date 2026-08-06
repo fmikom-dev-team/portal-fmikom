@@ -12,6 +12,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import LazyWrapper from "@/components/Portal/LazyWrapper.vue";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLoadingState } from "@/composables/useLoadingState";
+import { usePagiRole } from "./composables/usePagiRole";
 import Navbar from "./ui/Navbar.vue";
 import OptimizedImage from "./ui/OptimizedImage.vue";
 import SidebarPeople from "./ui/SidebarPeople.vue";
@@ -41,12 +42,7 @@ const props = defineProps<{
 	}>;
 }>();
 const page = usePage();
-
-const isMahasiswa = computed(() => {
-	const role =
-		props.roleName || (page.props as any).context?.active_role || "mahasiswa";
-	return role.toLowerCase() === "mahasiswa";
-});
+const { isMahasiswa } = usePagiRole(props.roleName);
 
 const user = computed(
 	() => page.props.auth?.user || { name: "User", email: "" },

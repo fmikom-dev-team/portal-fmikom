@@ -19,6 +19,7 @@ import {
 import { computed, onUnmounted, ref, watch } from "vue";
 import AvatarGroup, { type AvatarItem } from "@/components/ui/AvatarGroup.vue";
 import { formatStorageUrl, getInitialsAvatar } from "@/composables/useInitials";
+import { usePagiRole } from "./composables/usePagiRole";
 import Navbar from "./ui/Navbar.vue";
 import OptimizedImage from "./ui/OptimizedImage.vue";
 import PagiShareModal from "./ui/PagiShareModal.vue";
@@ -68,6 +69,13 @@ const props = defineProps<{
 }>();
 
 const page = usePage();
+
+// ── Role detection via shared composable ────────────────────────────────────
+// FIX: isMahasiswa sebelumnya tidak terdefinisi di file ini, menyebabkan
+// Mahasiswa selalu mendapat UmumNavbar (tanpa CV link). Kini menggunakan
+// composable terpusat yang juga meng-cover Alumni sebagai "isCreator".
+const { isMahasiswa, isCreator } = usePagiRole(props.roleName);
+
 const searchQuery = ref(props.filters?.search || "");
 const selectedSort = ref(props.filters?.sort || "Recommended");
 const showSortDropdown = ref(false);

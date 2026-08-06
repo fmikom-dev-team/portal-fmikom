@@ -9,6 +9,7 @@ import {
 	ref,
 	watch,
 } from "vue";
+import { usePagiRole } from "../composables/usePagiRole";
 import Navbar from "../ui/Navbar.vue";
 import UmumNavbar from "../ui/UmumNavbar.vue";
 
@@ -115,27 +116,7 @@ const isOwnProfile = computed(() => {
 	return page.props.auth.user.id === user.value.id;
 });
 
-const isMahasiswa = computed(() => {
-	const role =
-		props.roleName || (page.props as any).context?.active_role || "mahasiswa";
-	return role.toLowerCase() === "mahasiswa";
-});
-
-const displayRoleName = computed(() => {
-	const role =
-		props.roleName ||
-		(page.props as any).context?.active_role ||
-		(page.props.roleName as string) ||
-		"Mahasiswa";
-	const r = role.toLowerCase();
-	if (r === "mahasiswa") return "Mahasiswa";
-	if (r === "super-admin" || r === "super_admin") return "Super Admin";
-	if (r === "dosen") return "Dosen";
-	if (r === "alumni") return "Alumni";
-	if (r === "mitra") return "Mitra Perusahaan";
-	if (r === "guest") return "Tamu";
-	return role.charAt(0).toUpperCase() + role.slice(1);
-});
+const { isMahasiswa, displayRoleName } = usePagiRole(props.roleName);
 
 // Toast Notification System
 const { toasts, addToast, removeToast } = useToast();
