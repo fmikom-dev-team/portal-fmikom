@@ -93,11 +93,11 @@ const handleLogout = () => {
 
 			<!-- Action Menu Items -->
 			<div class="space-y-1.5">
-				<Link v-if="currentRoleSlug === 'mahasiswa'" href="/pagi/profile" class="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-950 hover:bg-indigo-600 dark:bg-slate-50 dark:text-slate-950 dark:hover:bg-indigo-500 dark:hover:text-white py-2.5 text-xs font-black text-white transition-all shadow-md active:scale-97 cursor-pointer">
+				<Link v-if="['mahasiswa', 'alumni', 'super-admin', 'admin'].includes(currentRoleSlug)" href="/pagi/profile" class="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-950 hover:bg-indigo-600 dark:bg-slate-50 dark:text-slate-950 dark:hover:bg-indigo-500 dark:hover:text-white py-2.5 text-xs font-black text-white transition-all shadow-md active:scale-97 cursor-pointer">
 					<UserIcon class="h-3.5 w-3.5 text-slate-450" /> Lihat Profil PAGI
 				</Link>
 
-				<Link v-if="currentRoleSlug === 'mahasiswa' || currentRoleSlug === 'alumni'" href="/pagi/cv" class="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200/80 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-300 transition-all shadow-xs active:scale-97 cursor-pointer">
+				<Link v-if="['mahasiswa', 'alumni', 'super-admin', 'admin'].includes(currentRoleSlug)" href="/pagi/cv" class="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200/80 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-300 transition-all shadow-xs active:scale-97 cursor-pointer">
 					<FileText class="h-3.5 w-3.5 text-slate-450" /> CV Builder
 				</Link>
 
