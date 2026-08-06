@@ -136,6 +136,19 @@ if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
     php artisan migrate --force
 fi
 
+# Seed essential reference data (roles, modules, permissions, radar rules, portal settings).
+# All seeders are fully idempotent (firstOrCreate / syncWithoutDetaching / count-guard),
+# so this block is safe to run on every container start without duplicating data.
+# Set RUN_SEEDER=false in your environment to skip (e.g. during testing or manual overrides).
+if [ "${RUN_SEEDER:-true}" = "true" ]; then
+    echo "Seeding essential data (roles, modules, permissions, radar, portal settings)..."
+    php artisan db:seed --class=ModuleSeeder --force --no-interaction || true
+    php artisan db:seed --class=PermissionSeeder --force --no-interaction || true
+    php artisan db:seed --class=RadarSeeder --force --no-interaction || true
+    php artisan db:seed --class=PortalSettingSeeder --force --no-interaction || true
+    echo "Essential data seeding complete."
+fi
+
 # Register Laravel scheduler cron job
 echo "Configuring Laravel scheduler cron job..."
 echo "* * * * * cd /var/www/html && php artisan schedule:run >> /dev/null 2>&1" > /etc/crontabs/root
