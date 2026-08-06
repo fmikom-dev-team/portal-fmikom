@@ -17,6 +17,7 @@ import {
 } from "lucide-vue-next";
 import { computed, onMounted, ref } from "vue";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePagiRole } from "../composables/usePagiRole";
 import Navbar from "../ui/Navbar.vue";
 import UmumNavbar from "../ui/UmumNavbar.vue";
 
@@ -24,10 +25,7 @@ const isLoading = ref(false);
 
 const page = usePage();
 const flash = computed(() => (page.props.flash || {}) as Record<string, any>);
-const isMahasiswa = computed(() => {
-	const role = (page.props as any).context?.active_role || "mahasiswa";
-	return role.toLowerCase() === "mahasiswa";
-});
+const { isMahasiswa } = usePagiRole();
 
 const props = defineProps<{
 	cvs: Array<{
