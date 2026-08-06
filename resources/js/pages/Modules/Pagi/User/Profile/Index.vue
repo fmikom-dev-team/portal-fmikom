@@ -116,7 +116,7 @@ const isOwnProfile = computed(() => {
 	return page.props.auth.user.id === user.value.id;
 });
 
-const { isMahasiswa, displayRoleName } = usePagiRole(props.roleName);
+const { isMahasiswa, isCreator, displayRoleName } = usePagiRole(props.roleName);
 
 // Toast Notification System
 const { toasts, addToast, removeToast } = useToast();
@@ -725,7 +725,7 @@ const headUrl = computed(() => {
 
 	<div class="min-h-screen bg-slate-100 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-slate-900 selection:text-white dark:selection:bg-white dark:selection:text-slate-900" style="font-family:'Inter',system-ui,sans-serif;">
 		
-		<Navbar v-if="isMahasiswa" :roleName="displayRoleName" />
+		<Navbar v-if="isCreator" :roleName="displayRoleName" />
 		<UmumNavbar v-else :roleName="displayRoleName" />
 		<!-- Outer page padding to create the floating layer gap ("ngambang" effect) -->
 		<div class="mx-auto max-w-[1480px] px-1.5 sm:px-5 lg:px-6 pt-3 sm:pt-5 pb-0">
