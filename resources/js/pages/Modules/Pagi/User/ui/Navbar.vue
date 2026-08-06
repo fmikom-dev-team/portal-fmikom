@@ -545,7 +545,7 @@ onUnmounted(() => {
 						</Link>
 
 						<Link
-							v-if="currentRoleSlug === 'mahasiswa' || currentRoleSlug === 'alumni'"
+							v-if="['mahasiswa', 'alumni', 'super-admin', 'admin'].includes(currentRoleSlug)"
 							href="/pagi/cv"
 							data-onboard="pagi-cv"
 							class="px-3 py-1.5 text-sm font-semibold transition-colors"

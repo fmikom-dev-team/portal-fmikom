@@ -30,8 +30,9 @@ const ADMIN_ROLES = [
 /**
  * Slug role yang mendapat tampilan "Kreator" (Navbar penuh + CV Builder + Portfolio).
  * Alumni termasuk karena punya akses serupa Mahasiswa di PAGI.
+ * Super Admin & Admin juga disertakan agar pengujian fitur publik selalu mendapat Navbar lengkap.
  */
-const CREATOR_ROLES = ["mahasiswa", "alumni"] as const;
+const CREATOR_ROLES = ["mahasiswa", "alumni", "super-admin", "admin"] as const;
 
 /**
  * Slug role yang mendapat tampilan "Visitor/Umum" (UmumNavbar, tanpa CV).
