@@ -7,7 +7,7 @@ import Navbar from "../ui/Navbar.vue";
 import UmumNavbar from "../ui/UmumNavbar.vue";
 
 const page = usePage();
-const { isMahasiswa } = usePagiRole();
+const { isMahasiswa, isCreator } = usePagiRole();
 
 // Access authenticated user info for personalized template previews
 const userName = computed(
@@ -255,7 +255,7 @@ const selectPalette = (themeName: string, idx: number) => {
 	</Head>
 
 	<div class="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-slate-200 dark:selection:bg-slate-800">
-		<Navbar v-if="isMahasiswa" />
+		<Navbar v-if="isCreator" />
 		<UmumNavbar v-else />
 
 		<!-- Header Banner -->

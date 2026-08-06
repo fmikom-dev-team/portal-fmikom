@@ -25,7 +25,7 @@ const isLoading = ref(false);
 
 const page = usePage();
 const flash = computed(() => (page.props.flash || {}) as Record<string, any>);
-const { isMahasiswa } = usePagiRole();
+const { isMahasiswa, isCreator } = usePagiRole();
 
 const props = defineProps<{
 	cvs: Array<{
@@ -163,7 +163,7 @@ const downloadCv = (id: number) => {
     </Head>
 
     <div class="min-h-screen bg-slate-50 dark:bg-zinc-950 font-sans text-slate-900 dark:text-zinc-100">
-        <Navbar v-if="isMahasiswa" />
+        <Navbar v-if="isCreator" />
         <UmumNavbar v-else />
 
         <!-- Header Hero Section -->

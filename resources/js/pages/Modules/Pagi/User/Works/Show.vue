@@ -83,7 +83,7 @@ const isOwner = computed(() => {
 	return (page.props as any).auth?.user?.id === props.profileUser.id;
 });
 
-const { isMahasiswa } = usePagiRole(props.roleName);
+const { isMahasiswa, isCreator } = usePagiRole(props.roleName);
 </script>
 
 <template>
@@ -92,7 +92,7 @@ const { isMahasiswa } = usePagiRole(props.roleName);
 	</Head>
 
 	<div class="min-h-screen relative font-sans transition-colors duration-300">
-		<Navbar v-if="isMahasiswa" />
+		<Navbar v-if="isCreator" />
 		<UmumNavbar v-else :roleName="props.roleName" />
 
 		<!-- Floating Glassmorphic Owner Control Bar -->

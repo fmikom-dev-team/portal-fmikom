@@ -366,7 +366,7 @@ const submitReport = async () => {
     </Head>
 
 	<div class="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-slate-200 dark:selection:bg-slate-800 overflow-x-hidden">
-		<Navbar v-if="isMahasiswa" />
+		<Navbar v-if="isCreator" />
 		<UmumNavbar v-else :roleName="props.roleName" />
 
 		<!-- HERO BANNER -->
