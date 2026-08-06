@@ -67,9 +67,7 @@ export function usePagiRole(roleProp?: string | Ref<string | undefined>) {
 	 */
 	const activeRole = computed((): PagiRoleSlug => {
 		const fromProp =
-			typeof roleProp === "string"
-				? roleProp
-				: roleProp?.value ?? undefined;
+			typeof roleProp === "string" ? roleProp : (roleProp?.value ?? undefined);
 
 		const fromContext = (page.props as any).context?.active_role as
 			| string
@@ -79,9 +77,7 @@ export function usePagiRole(roleProp?: string | Ref<string | undefined>) {
 	});
 
 	/** User adalah Mahasiswa aktif. */
-	const isMahasiswa = computed(
-		() => activeRole.value === "mahasiswa",
-	);
+	const isMahasiswa = computed(() => activeRole.value === "mahasiswa");
 
 	/** User adalah Alumni FMIKOM. */
 	const isAlumni = computed(() => activeRole.value === "alumni");
@@ -131,8 +127,7 @@ export function usePagiRole(roleProp?: string | Ref<string | undefined>) {
 		return (
 			map[activeRole.value] ||
 			(activeRole.value
-				? activeRole.value.charAt(0).toUpperCase() +
-					activeRole.value.slice(1)
+				? activeRole.value.charAt(0).toUpperCase() + activeRole.value.slice(1)
 				: "")
 		);
 	});
