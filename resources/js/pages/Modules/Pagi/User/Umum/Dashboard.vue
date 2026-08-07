@@ -662,10 +662,10 @@ const handleLikeProject = async (p: any) => {
 						<CheckCircle2 v-if="toast.type === 'success'" class="w-4 h-4 text-emerald-500" />
 						<AlertCircle v-else class="w-4 h-4 text-rose-500" />
 					</div>
-					<div class="flex-1 text-xs font-semibold leading-relaxed pr-1 text-slate-800 dark:text-slate-250 text-left">
+					<div class="flex-1 text-xs font-semibold leading-relaxed pr-1 text-slate-800 dark:text-zinc-100 text-left">
 						{{ toast.message }}
 					</div>
-					<button @click="toasts = toasts.filter(t => t.id !== toast.id)" class="text-slate-450 hover:text-slate-650 dark:hover:text-white shrink-0 bg-transparent border-none cursor-pointer p-0.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-zinc-800/50 transition-colors flex items-center justify-center">
+					<button @click="toasts = toasts.filter(t => t.id !== toast.id)" class="text-slate-400 hover:text-slate-600 dark:text-zinc-400 dark:hover:text-white shrink-0 bg-transparent border-none cursor-pointer p-0.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-zinc-800/50 transition-colors flex items-center justify-center">
 						<X class="w-3.5 h-3.5" />
 					</button>
 				</div>
