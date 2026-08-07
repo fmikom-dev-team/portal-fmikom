@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\User;
 use App\Models\Module;
 use App\Models\Role;
+use App\Models\User;
 use App\Models\UserModuleRole;
 use App\Modules\Pagi\Services\PagiSocialService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -60,7 +60,7 @@ test('explorePeople excludes inactive users, unapproved users, users without pag
         'updated_at' => now(),
     ]);
 
-    $service = new PagiSocialService();
+    $service = new PagiSocialService;
     $result = $service->explorePeople($module->id);
 
     $ids = array_column($result, 'id');
