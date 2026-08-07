@@ -572,7 +572,7 @@ const submitReport = async () => {
 	</div>
 
 	<!-- TOAST ALERTS CONTAINER -->
-	<div class="fixed bottom-20 right-4 z-99999 max-w-sm space-y-2 pointer-events-none select-none">
+	<div class="fixed bottom-20 sm:bottom-6 left-3 right-3 sm:left-auto sm:right-4 z-[99999] max-w-full sm:max-w-sm space-y-2 pointer-events-none select-none">
 		<TransitionGroup 
 			enter-active-class="transition ease-out duration-300"
 			enter-from-class="opacity-0 translate-y-2 scale-95"

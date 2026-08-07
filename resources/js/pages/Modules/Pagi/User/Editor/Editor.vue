@@ -676,7 +676,7 @@ onUnmounted(() => {
 				<div 
 					v-for="toast in toasts" 
 					:key="toast.id"
-					class="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800/80 flex items-start gap-3.5 shadow-[0_12px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)] bg-white/95 dark:bg-slate-900/95 border-l-4 pointer-events-auto select-none w-80 max-w-xs"
+					class="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800/80 flex items-start gap-3.5 shadow-[0_12px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)] bg-white/95 dark:bg-slate-900/95 border-l-4 pointer-events-auto select-none w-full max-w-[calc(100vw-24px)] sm:max-w-xs break-words"
 					:class="[
 						toast.type === 'success' 
 							? 'border-l-emerald-500' 

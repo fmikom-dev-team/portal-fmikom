@@ -1652,7 +1652,7 @@ const downloadPdf = async () => {
             leave-from-class="opacity-100"
             leave-to-class="opacity-0"
         >
-            <div v-if="showToast" class="fixed bottom-6 right-6 z-[9999] max-w-sm bg-slate-900/95 dark:bg-zinc-900/95 text-white backdrop-blur-md border border-slate-800 dark:border-zinc-800 py-2.5 px-4 rounded-xl shadow-2xl flex items-center gap-3">
+            <div v-if="showToast" class="fixed bottom-20 sm:bottom-6 left-3 right-3 sm:left-auto sm:right-6 z-[9999] max-w-full sm:max-w-sm bg-slate-900/95 dark:bg-zinc-900/95 text-white backdrop-blur-md border border-slate-800 dark:border-zinc-800 py-2.5 px-4 rounded-xl shadow-2xl flex items-center gap-3 break-words">
                 <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" :class="
                     toastType === 'success' ? 'bg-emerald-500/10 text-emerald-400' :
                     toastType === 'error' ? 'bg-rose-500/10 text-rose-400' :
