@@ -109,7 +109,7 @@ watch(
 					
 					<Progress :value="form.progress.percentage" className="w-full max-w-[200px]" />
 					
-					<div class="text-[11px] font-black text-indigo-600 dark:text-indigo-455">
+					<div class="text-[11px] font-black text-indigo-600 dark:text-indigo-400">
 						{{ form.progress.percentage }}%
 					</div>
 				</div>

@@ -610,13 +610,13 @@ const handleSearchBlur = () => {
                         <OptimizedImage v-else :src="p.image" :alt="p.title" :is-sensitive="Boolean(p.status === 'review' || p.status === 'hidden')" :fetchpriority="'high'" :loading="'eager'" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         
                         <!-- Three-dot menu button at top right (Always visible on mobile/touch, hover on desktop) -->
-                        <div class="absolute top-3 right-3 z-20 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                        <div class="absolute top-2.5 right-2.5 z-20 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                             <div class="relative">
-                                <button @click.stop="toggleMenu(p.id, $event)" aria-label="Opsi karya" class="w-7 h-7 rounded-full bg-black/60 backdrop-blur-md hover:bg-black/80 flex items-center justify-center transition-all shadow-md cursor-pointer border-none" title="Opsi">
+                                <button @click.stop="toggleMenu(p.id, $event)" aria-label="Opsi karya" class="w-6.5 h-6.5 rounded-full bg-black/40 backdrop-blur-md hover:bg-black/75 border border-white/20 flex items-center justify-center transition-all shadow-sm active:scale-95 cursor-pointer border-none" title="Opsi">
                                     <MoreHorizontal class="h-3.5 w-3.5 text-white" />
                                 </button>
                                 <!-- Dropdown -->
-                                <div v-if="openMenuId === p.id" class="absolute right-0 top-full mt-1.5 w-40 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden py-1">
+                                <div v-if="openMenuId === p.id" class="absolute right-0 top-full mt-1.5 w-40 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-slate-200/80 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 overflow-hidden py-1.5">
                                     <button @click.stop="openShareModal(p, $event)" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors text-left border-none bg-transparent cursor-pointer">
                                         <Share2 class="h-3.5 w-3.5 text-indigo-500" /> Bagikan
                                     </button>
@@ -685,13 +685,13 @@ const handleSearchBlur = () => {
                         <OptimizedImage v-else :src="p.image" :alt="p.title" :is-sensitive="Boolean(p.status === 'review' || p.status === 'hidden')" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         
                         <!-- Three-dot menu button at top right -->
-                        <div class="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div class="absolute top-2.5 right-2.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
                             <div class="relative">
-                                <button @click.stop="toggleMenu(p.id, $event)" aria-label="Opsi karya" class="w-7 h-7 rounded-full bg-black/60 backdrop-blur-md hover:bg-black/80 flex items-center justify-center transition-all shadow-md cursor-pointer border-none" title="Opsi">
+                                <button @click.stop="toggleMenu(p.id, $event)" aria-label="Opsi karya" class="w-6.5 h-6.5 rounded-full bg-black/40 backdrop-blur-md hover:bg-black/75 border border-white/20 flex items-center justify-center transition-all shadow-sm active:scale-95 cursor-pointer border-none" title="Opsi">
                                     <MoreHorizontal class="h-3.5 w-3.5 text-white" />
                                 </button>
                                 <!-- Dropdown -->
-                                <div v-if="openMenuId === p.id" class="absolute right-0 top-full mt-1.5 w-40 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden py-1">
+                                <div v-if="openMenuId === p.id" class="absolute right-0 top-full mt-1.5 w-40 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-slate-200/80 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 overflow-hidden py-1.5">
                                     <button @click.stop="openShareModal(p, $event)" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors text-left border-none bg-transparent cursor-pointer">
                                         <Share2 class="h-3.5 w-3.5 text-indigo-500" /> Bagikan
                                     </button>

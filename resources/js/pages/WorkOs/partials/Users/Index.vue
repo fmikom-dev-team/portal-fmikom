@@ -1134,7 +1134,7 @@ function executeRejectAction() {
                                     </div>
                                 </td>
                                 <td class="px-4 py-3 text-[13px] text-[#111827] dark:text-zinc-200">
-                                    <span v-if="u.role" class="px-2 py-0.5 rounded text-[11.5px] font-medium bg-[#f3f4f6] dark:bg-zinc-800 text-gray-800 dark:text-zinc-350">
+                                    <span v-if="u.role" class="px-2 py-0.5 rounded text-[11.5px] font-medium bg-[#f3f4f6] dark:bg-zinc-800 text-gray-800 dark:text-zinc-300">
                                         {{ u.role.nama }}
                                     </span>
                                     <span v-else class="text-gray-400 dark:text-zinc-500">—</span>
@@ -1772,7 +1772,7 @@ function executeRejectAction() {
             </div>
             <template #footer>
                 <div class="flex justify-end gap-2">
-                    <button class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-350 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f3f4f6] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm cursor-pointer dark:shadow-none" @click="confirmModal.show = false">Batal</button>
+                    <button class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-300 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f3f4f6] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm cursor-pointer dark:shadow-none" @click="confirmModal.show = false">Batal</button>
                     <button
                         :disabled="confirmModal.isLoading"
                         class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer border-0 dark:shadow-none"
@@ -1803,7 +1803,7 @@ function executeRejectAction() {
             </div>
             <template #footer>
                 <div class="flex justify-end gap-2">
-                    <button class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-350 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f3f4f6] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm cursor-pointer dark:shadow-none" @click="rejectModal.show = false">Batal</button>
+                    <button class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-300 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f3f4f6] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm cursor-pointer dark:shadow-none" @click="rejectModal.show = false">Batal</button>
                     <button
                         :disabled="rejectModal.isLoading"
                         class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer border-0 dark:shadow-none"
@@ -1880,7 +1880,7 @@ function executeRejectAction() {
             </div>
             <template #footer>
                 <div class="flex justify-end gap-2">
-                    <button class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-350 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f3f4f6] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm cursor-pointer dark:shadow-none" @click="toggleStatusModal.show = false">Batal</button>
+                    <button class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-[#374151] dark:text-zinc-300 border border-[#d1d5db] dark:border-zinc-700 hover:bg-[#f3f4f6] dark:hover:bg-zinc-800 transition-colors bg-white dark:bg-zinc-900 shadow-sm cursor-pointer dark:shadow-none" @click="toggleStatusModal.show = false">Batal</button>
                     <button
                         :disabled="toggleStatusModal.isLoading || (['pending', 'approved', 'otp_sent', 'otp_verified'].indexOf(toggleStatusModal.user?.status_approval) === -1 && toggleStatusModal.targetStatus === !!toggleStatusModal.user?.is_active)"
                         class="h-[34px] px-4 rounded-md text-[13px] font-semibold text-white transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer border-0 dark:shadow-none"

@@ -60,15 +60,22 @@ class PagiSocialService
      */
     public function explorePeople(int $pagiModuleId): array
     {
-        return Cache::remember("pagi_explore_people_{$pagiModuleId}", 600, function () use ($pagiModuleId) {
+        return Cache::remember("pagi_explore_people_{$pagiModuleId}", 60, function () use ($pagiModuleId) {
             $userModuleRoles = UserModuleRole::query()
                 ->where('module_id', '=', $pagiModuleId)
                 ->where('is_active', '=', true)
+                ->whereHas('user', function ($q) {
+                    $q->where('is_active', true)
+                        ->whereNotIn('status_approval', ['pending', 'rejected', 'suspended'])
+                        ->whereNotNull('pagi_username')
+                        ->where('pagi_username', '!=', '');
+                })
                 ->with(['user.programStudi', 'role'])
                 ->latest('id')
-                ->limit(80)
                 ->get()
-                ->unique('user_id');
+                ->filter(fn ($umr) => $umr->user !== null)
+                ->unique('user_id')
+                ->take(80);
 
             $userIds = $userModuleRoles->pluck('user_id')->filter()->toArray();
 
@@ -160,6 +167,7 @@ class PagiSocialService
                     'followers_count' => $followersCounts[$u->id] ?? 0,
                     'skills' => $u->metadata['skills'] ?? [],
                     'location' => $u->location ?? $u->metadata['location'] ?? null,
+                    'is_message_enabled' => (bool) ($u->metadata['is_message_enabled'] ?? true),
                 ];
             })
                 ->filter()

@@ -274,7 +274,7 @@ const handleCollaborationResponse = async (
 				>
 					<Bell class="w-10 h-10 text-slate-300 dark:text-zinc-700 mb-3" />
 					<h3 class="text-sm font-bold text-slate-800 dark:text-zinc-200">Tidak ada notifikasi</h3>
-					<p class="text-xs text-slate-450 dark:text-zinc-550 mt-1">Notifikasi yang relevan dengan portofolio Anda akan tampil di sini.</p>
+					<p class="text-xs text-slate-500 dark:text-zinc-400 mt-1">Notifikasi yang relevan dengan portofolio Anda akan tampil di sini.</p>
 				</div>
 
 				<!-- Grouped Notification Stream -->

@@ -74,13 +74,13 @@ const transitionName = computed(() => `slide-${props.direction}`);
       
       // Variants
       variant === 'outline' || variant === 'default' 
-        ? 'border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200' 
+        ? 'border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 hover:text-slate-900 dark:text-zinc-200 dark:hover:text-white' 
         : '',
       variant === 'ghost' 
-        ? 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200' 
+        ? 'hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 hover:text-slate-900 dark:text-zinc-200 dark:hover:text-white border border-slate-200/80 dark:border-zinc-800' 
         : '',
       variant === 'secondary' 
-        ? 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200' 
+        ? 'bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-100' 
         : '',
         
       // Sizes

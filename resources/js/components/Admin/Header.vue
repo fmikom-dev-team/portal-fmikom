@@ -252,7 +252,7 @@ onBeforeUnmount(() => {
             <div id="notification-dropdown-wrapper" class="relative">
                 <button
                     @click.stop="showNotifications = !showNotifications; showUserMenu = false"
-                    class="relative flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-350 hover:bg-slate-200 dark:hover:bg-zinc-700 hover:text-indigo-600 transition-all cursor-pointer border-none"
+                    class="relative flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 hover:text-indigo-600 transition-all cursor-pointer border-none"
                     aria-label="Notifikasi"
                 >
                     <Bell class="h-4.5 w-4.5" />

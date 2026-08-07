@@ -258,7 +258,7 @@ watch(
 							<button
 								@click="openEditModal(edu)"
 								type="button"
-								class="p-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-500 hover:text-slate-800 dark:text-zinc-450 dark:hover:text-white shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
+								class="p-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-500 hover:text-slate-800 dark:text-zinc-300 dark:hover:text-white shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
 								title="Edit Pendidikan"
 							>
 								<Pencil class="w-3.5 h-3.5" />
@@ -266,7 +266,7 @@ watch(
 							<button
 								@click="deleteEducation(edu.id)"
 								type="button"
-								class="p-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-400 hover:text-red-600 dark:text-zinc-450 dark:hover:text-red-400 shadow-2xs hover:bg-red-50/50 dark:hover:bg-red-950/20 transition-colors cursor-pointer"
+								class="p-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-400 hover:text-red-600 dark:text-zinc-300 dark:hover:text-red-400 shadow-2xs hover:bg-red-50/50 dark:hover:bg-red-950/20 transition-colors cursor-pointer"
 								title="Hapus Pendidikan"
 							>
 								<Trash2 class="w-3.5 h-3.5" />
@@ -416,7 +416,7 @@ watch(
 					<button
 						@click="showAddModal = false"
 						type="button"
-						class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs font-bold text-slate-600 dark:text-zinc-450 hover:bg-slate-50 dark:hover:bg-zinc-800/80 transition-colors cursor-pointer"
+						class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs font-bold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/80 transition-colors cursor-pointer"
 					>
 						Batal
 					</button>
@@ -566,7 +566,7 @@ watch(
 					<button
 						@click="showEditModal = false"
 						type="button"
-						class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs font-bold text-slate-600 dark:text-zinc-450 hover:bg-slate-50 dark:hover:bg-zinc-800/80 transition-colors cursor-pointer"
+						class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs font-bold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/80 transition-colors cursor-pointer"
 					>
 						Batal
 					</button>

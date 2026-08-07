@@ -656,7 +656,7 @@ onUnmounted(() => {
 											class="w-full h-9 px-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-slate-800"
 										/>
 										<div class="flex items-center gap-2">
-											<button @click="activeEditSection = null" class="px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-355 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Cancel</button>
+											<button @click="activeEditSection = null" class="px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Cancel</button>
 											<button @click="saveLocation" class="px-3.5 py-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-950 text-[10px] font-bold uppercase tracking-wider hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors cursor-pointer">Save</button>
 										</div>
 									</div>
@@ -665,7 +665,7 @@ onUnmounted(() => {
 
 							<!-- Timezone Section -->
 							<div class="space-y-2">
-								<div v-if="!timezone && isOwnProfile" class="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-450 dark:hover:text-slate-200">
+								<div v-if="!timezone && isOwnProfile" class="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-slate-200">
 									<Plus class="w-3.5 h-3.5 text-slate-400 shrink-0" />
 									<button @click="toggleEditSection('timezone')" class="hover:underline cursor-pointer">Add timezone</button>
 								</div>
@@ -722,7 +722,7 @@ onUnmounted(() => {
 											Your time zone will not exclude you from jobs; it helps us find you better matches.
 										</div>
 										<div class="flex items-center gap-2">
-											<button @click="activeEditSection = null" class="px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-355 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Cancel</button>
+											<button @click="activeEditSection = null" class="px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Cancel</button>n>
 											<button @click="saveTimezone" class="px-3.5 py-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-950 text-[10px] font-bold uppercase tracking-wider hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors cursor-pointer">Save</button>
 										</div>
 									</div>

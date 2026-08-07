@@ -184,6 +184,7 @@ class PagiProfileService
             'timezone' => $user->metadata['timezone'] ?? null,
             'timezone_extended' => $user->metadata['timezone_extended'] ?? null,
             'languages' => $user->metadata['languages'] ?? [],
+            'metadata' => $user->metadata,
             // ── FIX #3: Use single COUNT query from DB instead of reading JSON metadata
             'followers_count' => $user->pagiFollowers()->count(),
             'following_count' => $user->pagiFollowing()->count(),

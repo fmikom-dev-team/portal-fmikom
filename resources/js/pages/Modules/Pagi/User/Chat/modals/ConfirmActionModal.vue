@@ -25,8 +25,8 @@ defineEmits<{
                 <div :class="[
                     'p-4 rounded-full mb-4 shadow-sm flex items-center justify-center',
                     type === 'unblock' 
-                        ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-500 dark:text-emerald-450' 
-                        : 'bg-red-50 dark:bg-red-950/30 text-red-500 dark:text-red-450'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-500 dark:text-emerald-400' 
+                        : 'bg-red-50 dark:bg-red-950/30 text-red-500 dark:text-red-400'
                 ]">
                     <!-- Clear Trash Icon / Delete Conversation -->
                     <svg v-if="type === 'clear' || type === 'delete-conversation'" class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">

@@ -83,7 +83,7 @@ const isOwner = computed(() => {
 	return (page.props as any).auth?.user?.id === props.profileUser.id;
 });
 
-const { isMahasiswa, isCreator } = usePagiRole(props.roleName);
+const { isMahasiswa, isCreator } = usePagiRole(() => props.roleName);
 </script>
 
 <template>

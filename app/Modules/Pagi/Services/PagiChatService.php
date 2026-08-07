@@ -193,7 +193,11 @@ class PagiChatService
      */
     public function sendMessage(User $user, int $receiverId, ?int $parentId, string $body): array
     {
-        User::query()->findOrFail($receiverId);
+        $receiver = User::query()->findOrFail($receiverId);
+
+        if (($receiver->metadata['is_message_enabled'] ?? true) === false) {
+            abort(403, 'Pengguna ini sedang menonaktifkan penerimaan pesan langsung.');
+        }
 
         // Check block status
         $userBlocked = DB::table('pagi_blocks')
@@ -494,18 +498,26 @@ class PagiChatService
 
         $allowedIds = array_values(array_intersect($userIds, $followingIds));
 
-        return User::query()->whereIn('id', $allowedIds, 'and', false)
-            ->select(['id', 'name', 'foto_path'])
+        return User::query()
+            ->whereIn('id', $allowedIds)
+            ->where('is_active', true)
+            ->whereNotIn('status_approval', ['pending', 'rejected', 'suspended'])
+            ->whereNotNull('pagi_username')
+            ->where('pagi_username', '!=', '')
             ->orderBy('name', 'asc')
             ->get()
+            ->filter(fn ($u) => ($u->metadata['is_message_enabled'] ?? true) !== false)
             ->map(fn ($u) => [
                 'id' => $u->id,
                 'name' => $u->name,
+                'pagi_username' => $u->pagi_username,
                 'foto_path' => $u->foto_path,
                 'avatar' => $u->foto_path
                     ? (str_starts_with($u->foto_path, 'http') ? $u->foto_path : '/storage/'.$u->foto_path)
                     : 'https://api.dicebear.com/7.x/initials/svg?seed='.urlencode($u->name).'&backgroundColor=3b82f6',
-            ])->toArray();
+            ])
+            ->values()
+            ->toArray();
     }
 
     /**

@@ -275,7 +275,7 @@ const selectTemplate = (templateId: string) => {
                             <span class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                                 {{ tpl.category }}
                             </span>
-                            <h3 class="font-bold text-sm text-slate-800 dark:text-zinc-150 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                            <h3 class="font-bold text-sm text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                 {{ tpl.title }}
                             </h3>
                             <p class="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">

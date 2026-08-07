@@ -36,6 +36,7 @@ use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -230,7 +231,7 @@ class PagiDashboardController extends Controller implements HasMiddleware
 
     private function resolveDashboardComponentName(string $role, string $defaultFallback): string
     {
-        $visitorRoles = ['dosen', 'alumni', 'mitra'];
+        $visitorRoles = ['dosen', 'mitra'];
         if (in_array(strtolower($role), $visitorRoles)) {
             $componentName = 'Modules/Pagi/User/Umum/Dashboard';
         } else {
@@ -253,11 +254,24 @@ class PagiDashboardController extends Controller implements HasMiddleware
     {
         $role = $request->attributes->get('resolved_role', session('active_role'));
         $module = Module::query()->where('code', 'PAGI')->first();
+        $user = Auth::user();
+        $hasUsername = $user && ! empty($user->pagi_username);
+        $hasPublishedWork = $user ? DB::table('pagi_works')->where('user_id', $user->id)->where('is_published', true)->where('status', 'active')->exists() : false;
+        $isProfileVisibleInPeople = $user ? $hasUsername : false;
+        $profileVisibilityReason = ! $hasUsername
+            ? 'Buat username unik terlebih dahulu di Pengaturan Profil agar profil Anda tampil di direktori People.'
+            : '';
 
         return Inertia::render('Modules/Pagi/User/People', [
             'moduleName' => 'PAGI',
             'roleName' => $role,
             'peopleYouMayKnow' => Inertia::defer(fn () => $module ? $this->socialService->explorePeople($module->id) : collect()),
+            'profileVisibilityStatus' => [
+                'isVisible' => $isProfileVisibleInPeople,
+                'hasUsername' => $hasUsername,
+                'hasPublishedWork' => $hasPublishedWork,
+                'reason' => $profileVisibilityReason,
+            ],
         ]);
     }
 
@@ -364,9 +378,9 @@ class PagiDashboardController extends Controller implements HasMiddleware
 
     private function resolveProfileComponentName(string $role): string
     {
-        $nonStudentRoles = ['dosen', 'alumni', 'mitra', 'super-admin', 'admin', 'admin-universitas', 'admin-akademik', 'prodi'];
+        $visitorRoles = ['dosen', 'mitra', 'prodi', 'admin-universitas', 'admin-akademik'];
 
-        return in_array(strtolower($role), $nonStudentRoles)
+        return in_array(strtolower($role), $visitorRoles)
             ? 'Modules/Pagi/User/Umum/Profile'
             : 'Modules/Pagi/User/Profile/Index';
     }
@@ -433,9 +447,16 @@ class PagiDashboardController extends Controller implements HasMiddleware
             return 'Modules/Pagi/User/Works/Show';
         }
 
-        $nonStudentRoles = ['dosen', 'alumni', 'mitra', 'super-admin', 'admin', 'admin-universitas', 'admin-akademik', 'prodi'];
+        $activeRole = strtolower((string) $request->attributes->get('resolved_role', session('active_role', '')));
+        $isSelf = Auth::check() && Auth::id() === $user->id;
 
-        return in_array(strtolower($user->user_type), $nonStudentRoles)
+        if ($isSelf && ! empty($activeRole)) {
+            return $this->resolveProfileComponentName($activeRole);
+        }
+
+        $visitorRoles = ['dosen', 'mitra', 'prodi', 'admin-universitas', 'admin-akademik'];
+
+        return in_array(strtolower($user->user_type), $visitorRoles)
             ? 'Modules/Pagi/User/Umum/Profile'
             : 'Modules/Pagi/User/Profile/Index';
     }
@@ -614,9 +635,11 @@ class PagiDashboardController extends Controller implements HasMiddleware
 
         $profileUser = $this->prepareSettingsData($user);
 
-        $component = in_array(strtolower($role), ['dosen', 'alumni', 'mitra'])
-            ? 'Modules/Pagi/User/Umum/Settings'
-            : 'Modules/Pagi/User/Settings/Index';
+        $creatorRoles = ['mahasiswa', 'alumni', 'super-admin', 'admin'];
+
+        $component = in_array(strtolower($role), $creatorRoles)
+            ? 'Modules/Pagi/User/Settings/Index'
+            : 'Modules/Pagi/User/Umum/Settings';
 
         return Inertia::render($component, [
             'moduleName' => 'PAGI',

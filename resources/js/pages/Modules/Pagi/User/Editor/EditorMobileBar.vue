@@ -73,7 +73,7 @@ const selectPreset = (bg: string, text: string) => {
 		<button
 			type="button"
 			@click="emit('cancel')"
-			class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-350 text-xs font-bold transition-colors cursor-pointer border-none bg-transparent"
+			class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-zinc-200 text-xs font-bold transition-colors cursor-pointer border-none bg-transparent"
 		>
 			<ArrowLeft class="w-4 h-4" />
 			<span>Kembali</span>
@@ -105,7 +105,7 @@ const selectPreset = (bg: string, text: string) => {
 			<button
 				type="button"
 				@click="activeSheet = 'actions'"
-				class="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-350 transition-colors cursor-pointer border-none bg-transparent"
+				class="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-zinc-200 transition-colors cursor-pointer border-none bg-transparent"
 			>
 				<MoreVertical class="w-4 h-4" />
 			</button>

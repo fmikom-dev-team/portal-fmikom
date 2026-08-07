@@ -254,16 +254,14 @@ class DashboardController extends Controller // NOSONAR
             'tanggal_lahir' => ['nullable', 'date'],
         ]);
 
-        if ($user->user_type === 'super_admin') {
-            if ($request->has('user_type') && $request->user_type !== 'super_admin' || $request->has('is_active') && ! $request->is_active) {
-                if ($user->id === Auth::id()) {
-                    return back()->withErrors(['user_type' => 'Anda tidak dapat mendemot atau menonaktifkan akun Super Admin Anda sendiri.']);
-                }
+        if ($user->user_type === 'super_admin' && (($request->has('user_type') && $request->user_type !== 'super_admin') || ($request->has('is_active') && ! $request->is_active))) {
+            if ($user->id === Auth::id()) {
+                return back()->withErrors(['user_type' => 'Anda tidak dapat mendemot atau menonaktifkan akun Super Admin Anda sendiri.']);
+            }
 
-                $activeSuperAdminsCount = User::query()->where('user_type', 'super_admin')->where('is_active', true)->count();
-                if ($activeSuperAdminsCount <= 1) {
-                    return back()->withErrors(['user_type' => 'Tidak dapat mendemot atau menonaktifkan satu-satunya Super Admin aktif di sistem.']);
-                }
+            $activeSuperAdminsCount = User::query()->where('user_type', 'super_admin')->where('is_active', true)->count();
+            if ($activeSuperAdminsCount <= 1) {
+                return back()->withErrors(['user_type' => 'Tidak dapat mendemot atau menonaktifkan satu-satunya Super Admin aktif di sistem.']);
             }
         }
 
@@ -475,7 +473,7 @@ class DashboardController extends Controller // NOSONAR
         return back()->with('success', "Organisasi '{$module->name}' berhasil dihapus.");
     }
 
-    public function addModuleRoleMapping(Request $request, $moduleId)
+    public function addModuleRoleMapping(Request $request, int|string $moduleId)
     {
         $module = Module::findOrFail($moduleId);
         $request->validate(['role_id' => 'required|exists:roles,id']);
@@ -487,7 +485,7 @@ class DashboardController extends Controller // NOSONAR
         return back()->with('success', 'Role berhasil ditambahkan ke organisasi.');
     }
 
-    public function removeModuleRoleMapping($moduleId, $roleId)
+    public function removeModuleRoleMapping(int|string $moduleId, int|string $roleId)
     {
         $module = Module::findOrFail($moduleId);
         $module->roles()->detach($roleId);
@@ -1402,9 +1400,10 @@ class DashboardController extends Controller // NOSONAR
         return back()->with('success', 'Semua notifikasi berhasil ditandai sebagai dibaca.');
     }
 
-    public function clearNotifications()
+    public function clearNotifications(Request $request)
     {
-        $user = auth()->user();
+        /** @var \App\Models\User|null $user */
+        $user = $request->user();
         if ($user) {
             $user->notifications()->delete();
             PortalSetting::updateOrCreate(
@@ -1416,7 +1415,7 @@ class DashboardController extends Controller // NOSONAR
         return back()->with('success', 'Log aktivitas berhasil dikosongkan.');
     }
 
-    public function destroyNotification(Request $request, $id)
+    public function destroyNotification(Request $request, int|string $id)
     {
         $user = $request->user();
         $user->notifications()->where('id', $id)->delete();
@@ -1430,7 +1429,7 @@ class DashboardController extends Controller // NOSONAR
         return back()->with('success', 'Item log berhasil dihapus.');
     }
 
-    public function toggleNotificationRead(Request $request, $id)
+    public function toggleNotificationRead(Request $request, int|string $id)
     {
         $notification = $request->user()->notifications()->findOrFail($id);
 
@@ -1689,7 +1688,7 @@ class DashboardController extends Controller // NOSONAR
         ]);
     }
 
-    public function updateSitelink(Request $request, $id)
+    public function updateSitelink(Request $request, int|string $id)
     {
         $sitelink = PortalSitelink::findOrFail($id);
 
@@ -1718,7 +1717,7 @@ class DashboardController extends Controller // NOSONAR
         ]);
     }
 
-    public function destroySitelink($id)
+    public function destroySitelink(int|string $id)
     {
         $sitelink = PortalSitelink::findOrFail($id);
         $sitelink->delete();
@@ -1885,9 +1884,9 @@ class DashboardController extends Controller // NOSONAR
         return back()->with('success', 'Webhook configurations saved successfully.');
     }
 
-    public function redeliverWebhookEvent($id)
+    public function redeliverWebhookEvent(int|string $id)
     {
-        $deliveryId = str_replace('whd_', '', $id);
+        $deliveryId = str_replace('whd_', '', (string) $id);
         $delivery = WorkOsWebhookDelivery::find($deliveryId);
         if (! $delivery) {
             return response()->json(['error' => 'Delivery not found'], 404);
@@ -1941,7 +1940,7 @@ class DashboardController extends Controller // NOSONAR
                         'user_type' => $userType,
                         'token' => Str::random(64),
                         'status' => 'pending',
-                        'invited_by_user_id' => auth()->id(),
+                        'invited_by_user_id' => Auth::id(),
                         'expires_at' => now()->addDays(7),
                         'accepted_at' => null,
                     ]
@@ -1983,7 +1982,7 @@ class DashboardController extends Controller // NOSONAR
                 'user_type' => $request->user_type,
                 'token' => Str::random(64),
                 'status' => 'pending',
-                'invited_by_user_id' => auth()->id(),
+                'invited_by_user_id' => Auth::id(),
                 'expires_at' => now()->addDays(7),
                 'accepted_at' => null,
             ]
@@ -1998,7 +1997,7 @@ class DashboardController extends Controller // NOSONAR
         return back()->with('success', 'Email undangan berhasil dikirim ke '.$request->email);
     }
 
-    public function resendInvitation($id)
+    public function resendInvitation(int|string $id)
     {
         $invitation = UserInvitation::findOrFail($id);
 
@@ -2021,7 +2020,7 @@ class DashboardController extends Controller // NOSONAR
         return back()->with('success', 'Email undangan berhasil dikirim ulang.');
     }
 
-    public function revokeInvitation($id)
+    public function revokeInvitation(int|string $id)
     {
         $invitation = UserInvitation::findOrFail($id);
         $invitation->delete();

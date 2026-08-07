@@ -193,7 +193,7 @@ const downloadCv = (id: number) => {
         </div>
 
         <!-- Main Content Area -->
-        <main class="max-w-6xl mx-auto px-6 py-10">
+        <main class="max-w-6xl mx-auto px-6 pt-8 pb-28 sm:pb-12">
             <!-- Flash Message Alerts -->
             <div v-if="flash.success" class="mb-5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-3.5 rounded-lg text-xs font-semibold flex items-center gap-2">
                 <Check class="w-4 h-4 shrink-0" />
@@ -232,7 +232,7 @@ const downloadCv = (id: number) => {
 
             <!-- CV List Empty State -->
             <div v-else-if="cvs.length === 0" class="text-center py-16 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-900 rounded-xl shadow-xs px-6">
-                <div class="w-14 h-14 rounded-xl bg-slate-50 dark:bg-zinc-800/50 flex items-center justify-center mx-auto mb-4 text-slate-400 dark:text-zinc-550">
+                <div class="w-14 h-14 rounded-xl bg-slate-50 dark:bg-zinc-800/50 flex items-center justify-center mx-auto mb-4 text-slate-400 dark:text-zinc-300">
                     <FileText class="w-7 h-7" />
                 </div>
                 <h3 class="text-base font-bold text-slate-800 dark:text-zinc-200 mb-1">Belum ada CV yang dibuat</h3>
@@ -275,7 +275,7 @@ const downloadCv = (id: number) => {
                                 <div class="relative dropdown-trigger">
                                     <button 
                                         @click.stop="toggleDropdown(cv.id)"
-                                        class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-zinc-550 dark:hover:text-zinc-350 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all border-none bg-transparent"
+                                        class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-zinc-300 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all border-none bg-transparent"
                                         aria-label="Opsi CV"
                                     >
                                         <MoreVertical class="w-4 h-4" />
@@ -338,7 +338,7 @@ const downloadCv = (id: number) => {
                                 </div>
                                 <div class="flex items-center justify-between text-slate-500 dark:text-zinc-400">
                                     <span>Pembaruan</span>
-                                    <span class="font-medium text-slate-700 dark:text-zinc-350">
+                                    <span class="font-medium text-slate-700 dark:text-zinc-200">
                                         {{ formatDate(cv.updated_at) }}
                                     </span>
                                 </div>
