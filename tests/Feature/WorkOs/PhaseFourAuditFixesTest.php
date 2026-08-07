@@ -197,8 +197,8 @@ test('Pagi collaborator pre-resolution and feed works without N+1 queries', func
 });
 
 test('explorePeople preloads followers counts correctly', function () {
-    $user = User::factory()->create(['user_type' => 'mahasiswa']);
-    $other = User::factory()->create(['user_type' => 'mahasiswa']);
+    $user = User::factory()->create(['user_type' => 'mahasiswa', 'pagi_username' => 'testuser1']);
+    $other = User::factory()->create(['user_type' => 'mahasiswa', 'pagi_username' => 'testuser2']);
 
     // Add UserModuleRole for both
     $module = Module::firstOrCreate(['code' => 'PAGI'], ['name' => 'PAGI', 'is_active' => true]);
