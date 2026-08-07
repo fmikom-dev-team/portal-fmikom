@@ -138,15 +138,10 @@ fi
 
 # Seed essential reference data (roles, modules, permissions, radar rules, portal settings).
 # All seeders are fully idempotent (firstOrCreate / syncWithoutDetaching / count-guard),
-# so this block is safe to run on every container start without duplicating data.
-# Set RUN_SEEDER=false in your environment to skip (e.g. during testing or manual overrides).
+# ensuring production security policies are enforced on every container restart without data loss.
 if [ "${RUN_SEEDER:-true}" = "true" ]; then
-    echo "Seeding essential data (roles, modules, permissions, radar, portal settings)..."
-    php artisan db:seed --class=ModuleSeeder --force --no-interaction || true
-    php artisan db:seed --class=PermissionSeeder --force --no-interaction || true
-    php artisan db:seed --class=RadarSeeder --force --no-interaction || true
-    php artisan db:seed --class=PortalSettingSeeder --force --no-interaction || true
-    echo "Essential data seeding complete."
+    echo "Seeding essential data (roles, modules, permissions, radar, portal settings) in background..."
+    (php artisan db:seed --force || true) &
 fi
 
 # Register Laravel scheduler cron job
