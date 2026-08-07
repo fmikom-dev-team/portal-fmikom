@@ -123,7 +123,7 @@ const isVisible = (sectionKey: string) => {
     <div class="space-y-6 select-none p-4">
         <!-- 1. Accent Color -->
         <div class="space-y-3">
-            <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-550 flex items-center gap-1.5">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-400 flex items-center gap-1.5">
                 <Palette class="w-4 h-4" />
                 Warna Aksen
             </h3>
@@ -161,7 +161,7 @@ const isVisible = (sectionKey: string) => {
 
         <!-- 2. Typography Settings -->
         <div class="space-y-4">
-            <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-550 flex items-center gap-1.5">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-400 flex items-center gap-1.5">
                 <Type class="w-4 h-4" />
                 Tipografi & Spasi
             </h3>
@@ -213,7 +213,7 @@ const isVisible = (sectionKey: string) => {
 
         <!-- 3. Section Visibility & Order -->
         <div class="space-y-3">
-            <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-550 flex items-center gap-1.5">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-400 flex items-center gap-1.5">
                 <LayoutGrid class="w-4 h-4" />
                 Urutan & Visibilitas
             </h3>
@@ -266,7 +266,7 @@ const isVisible = (sectionKey: string) => {
         <div v-if="isCreativeOrCustom" class="space-y-4">
             <div class="h-px bg-slate-100 dark:bg-zinc-800"></div>
             
-            <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-550 flex items-center gap-1.5">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-400 flex items-center gap-1.5">
                 <Sliders class="w-4 h-4" />
                 Tampilan Keahlian
             </h3>

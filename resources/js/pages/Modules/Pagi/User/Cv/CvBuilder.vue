@@ -1012,7 +1012,7 @@ const downloadPdf = async () => {
                                 @click="toggleAccordion('personal')"
                                 class="w-full flex items-center justify-between p-4 font-bold text-xs hover:bg-slate-50/80 dark:hover:bg-zinc-850/30 text-left border-none bg-transparent cursor-pointer"
                             >
-                                <span class="flex items-center gap-2 text-slate-800 dark:text-zinc-150 font-black">
+                                <span class="flex items-center gap-2 text-slate-800 dark:text-white font-black">
                                     <User class="w-4.5 h-4.5 text-indigo-500 shrink-0" />
                                     1. Informasi Pribadi
                                 </span>
@@ -1128,7 +1128,7 @@ const downloadPdf = async () => {
                                 @click="toggleAccordion('experience')"
                                 class="w-full flex items-center justify-between p-4 font-bold text-xs hover:bg-slate-50/80 dark:hover:bg-zinc-850/30 text-left border-none bg-transparent cursor-pointer"
                             >
-                                <span class="flex items-center gap-2 text-slate-800 dark:text-zinc-150 font-black">
+                                <span class="flex items-center gap-2 text-slate-800 dark:text-white font-black">
                                     <Briefcase class="w-4.5 h-4.5 text-indigo-500 shrink-0" />
                                     2. Pengalaman Kerja
                                 </span>
@@ -1187,7 +1187,7 @@ const downloadPdf = async () => {
                                 @click="toggleAccordion('education')"
                                 class="w-full flex items-center justify-between p-4 font-bold text-xs hover:bg-slate-50/80 dark:hover:bg-zinc-850/30 text-left border-none bg-transparent cursor-pointer"
                             >
-                                <span class="flex items-center gap-2 text-slate-800 dark:text-zinc-150 font-black">
+                                <span class="flex items-center gap-2 text-slate-800 dark:text-white font-black">
                                     <GraduationCap class="w-4.5 h-4.5 text-indigo-500 shrink-0" />
                                     3. Pendidikan
                                 </span>
@@ -1251,7 +1251,7 @@ const downloadPdf = async () => {
                                 @click="toggleAccordion('organizations')"
                                 class="w-full flex items-center justify-between p-4 font-bold text-xs hover:bg-slate-50/80 dark:hover:bg-zinc-850/30 text-left border-none bg-transparent cursor-pointer"
                             >
-                                <span class="flex items-center gap-2 text-slate-800 dark:text-zinc-150 font-black">
+                                <span class="flex items-center gap-2 text-slate-800 dark:text-white font-black">
                                     <Users class="w-4.5 h-4.5 text-indigo-500 shrink-0" />
                                     4. Organisasi & Kegiatan
                                 </span>
@@ -1310,7 +1310,7 @@ const downloadPdf = async () => {
                                 @click="toggleAccordion('skills')"
                                 class="w-full flex items-center justify-between p-4 font-bold text-xs hover:bg-slate-50/80 dark:hover:bg-zinc-850/30 text-left border-none bg-transparent cursor-pointer"
                             >
-                                <span class="flex items-center gap-2 text-slate-800 dark:text-zinc-150 font-black">
+                                <span class="flex items-center gap-2 text-slate-800 dark:text-white font-black">
                                     <Award class="w-4.5 h-4.5 text-indigo-500 shrink-0" />
                                     5. Keahlian
                                 </span>
@@ -1351,7 +1351,7 @@ const downloadPdf = async () => {
                                 @click="toggleAccordion('certifications')"
                                 class="w-full flex items-center justify-between p-4 font-bold text-xs hover:bg-slate-50/80 dark:hover:bg-zinc-850/30 text-left border-none bg-transparent cursor-pointer"
                             >
-                                <span class="flex items-center gap-2 text-slate-800 dark:text-zinc-150 font-black">
+                                <span class="flex items-center gap-2 text-slate-800 dark:text-white font-black">
                                     <BookOpen class="w-4.5 h-4.5 text-indigo-500 shrink-0" />
                                     6. Sertifikasi
                                 </span>
@@ -1403,7 +1403,7 @@ const downloadPdf = async () => {
                                 @click="toggleAccordion('trainings')"
                                 class="w-full flex items-center justify-between p-4 font-bold text-xs hover:bg-slate-50/80 dark:hover:bg-zinc-850/30 text-left border-none bg-transparent cursor-pointer"
                             >
-                                <span class="flex items-center gap-2 text-slate-800 dark:text-zinc-150 font-black">
+                                <span class="flex items-center gap-2 text-slate-800 dark:text-white font-black">
                                     <Sparkles class="w-4.5 h-4.5 text-indigo-500 shrink-0" />
                                     7. Pelatihan & Kursus
                                 </span>
@@ -1451,7 +1451,7 @@ const downloadPdf = async () => {
                                 @click="toggleAccordion('achievements')"
                                 class="w-full flex items-center justify-between p-4 font-bold text-xs hover:bg-slate-50/80 dark:hover:bg-zinc-850/30 text-left border-none bg-transparent cursor-pointer"
                             >
-                                <span class="flex items-center gap-2 text-slate-800 dark:text-zinc-150 font-black">
+                                <span class="flex items-center gap-2 text-slate-800 dark:text-white font-black">
                                     <Award class="w-4.5 h-4.5 text-indigo-500 shrink-0" />
                                     8. Prestasi & Penghargaan
                                 </span>
@@ -1499,7 +1499,7 @@ const downloadPdf = async () => {
                                 @click="toggleAccordion('languages')"
                                 class="w-full flex items-center justify-between p-4 font-bold text-xs hover:bg-slate-50/80 dark:hover:bg-zinc-850/30 text-left border-none bg-transparent cursor-pointer"
                             >
-                                <span class="flex items-center gap-2 text-slate-800 dark:text-zinc-150 font-black">
+                                <span class="flex items-center gap-2 text-slate-800 dark:text-white font-black">
                                     <Languages class="w-4.5 h-4.5 text-indigo-500 shrink-0" />
                                     9. Bahasa
                                 </span>
@@ -1542,7 +1542,7 @@ const downloadPdf = async () => {
                                 @click="toggleAccordion('references')"
                                 class="w-full flex items-center justify-between p-4 font-bold text-xs hover:bg-slate-50/80 dark:hover:bg-zinc-850/30 text-left border-none bg-transparent cursor-pointer"
                             >
-                                <span class="flex items-center gap-2 text-slate-800 dark:text-zinc-150 font-black">
+                                <span class="flex items-center gap-2 text-slate-800 dark:text-white font-black">
                                     <Users class="w-4.5 h-4.5 text-indigo-500 shrink-0" />
                                     10. Referensi Kerja
                                 </span>

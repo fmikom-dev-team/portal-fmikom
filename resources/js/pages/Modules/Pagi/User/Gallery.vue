@@ -74,7 +74,7 @@ const page = usePage();
 // FIX: isMahasiswa sebelumnya tidak terdefinisi di file ini, menyebabkan
 // Mahasiswa selalu mendapat UmumNavbar (tanpa CV link). Kini menggunakan
 // composable terpusat yang juga meng-cover Alumni sebagai "isCreator".
-const { isMahasiswa, isCreator } = usePagiRole(props.roleName);
+const { isMahasiswa, isCreator } = usePagiRole(() => props.roleName);
 
 const searchQuery = ref(props.filters?.search || "");
 const selectedSort = ref(props.filters?.sort || "Recommended");
@@ -365,7 +365,7 @@ const submitReport = async () => {
         <title>PAGI — Student Visual Gallery</title>
     </Head>
 
-	<div class="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-slate-200 dark:selection:bg-slate-800 overflow-x-hidden">
+	<div class="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-slate-200 dark:selection:bg-slate-800 overflow-x-clip">
 		<Navbar v-if="isCreator" />
 		<UmumNavbar v-else :roleName="props.roleName" />
 
@@ -395,30 +395,30 @@ const submitReport = async () => {
 			<div class="mx-auto max-w-[1400px] px-3 sm:px-4 flex items-center gap-2 sm:gap-3">
 				<!-- Left: Filter indicator/toggle -->
 				<button @click="showFilters = !showFilters" class="inline-flex items-center gap-1.5 rounded-full border border-slate-200/85 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 bg-white dark:bg-zinc-950 px-4 py-2.5 text-xs font-bold text-slate-800 dark:text-zinc-200 shadow-3xs transition-all shrink-0">
-					<SlidersHorizontal class="h-3.5 w-3.5" />
+					<SlidersHorizontal class="h-3.5 w-3.5 text-slate-600 dark:text-zinc-300" />
 					<span class="hidden sm:inline">Filter</span>
 				</button>
 
 				<!-- Center: Search Input -->
 				<div class="flex-1 relative rounded-full border border-slate-200/85 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/40 hover:border-slate-300 dark:hover:border-zinc-700 flex items-center pl-3.5 pr-2 py-1.5 transition-all min-w-0 shadow-3xs">
-					<Search class="h-4 w-4 text-slate-400 dark:text-zinc-550 shrink-0" />
+					<Search class="h-4 w-4 text-slate-500 dark:text-zinc-300 shrink-0" />
 					<input
 						id="gallery-search"
 						type="text"
 						v-model="searchQuery"
 						placeholder="Search gallery by title, student, or program..."
-						class="flex-1 bg-transparent border-none outline-none text-xs font-semibold text-slate-800 dark:text-zinc-150 placeholder-slate-400 dark:placeholder-slate-550 pl-2 py-1 w-0 min-w-0"
+						class="flex-1 bg-transparent border-none outline-none text-xs font-semibold text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 pl-2 py-1 w-0 min-w-0"
 					/>
 					
 					<!-- Search navigation links (desktop only) -->
 					<div class="hidden md:flex items-center gap-0.5 bg-white dark:bg-zinc-900 rounded-full p-0.5 border border-slate-100/80 dark:border-zinc-800 shrink-0 shadow-3xs">
-						<Link href="/pagi" class="px-4 py-1.5 rounded-full text-[11px] font-bold text-slate-500 hover:text-slate-800 dark:text-zinc-455 dark:hover:text-white transition-all">
+						<Link href="/pagi" class="px-4 py-1.5 rounded-full text-[11px] font-bold text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-white transition-all">
 							Projects
 						</Link>
 						<Link href="/pagi/gallery" class="px-4 py-1.5 rounded-full text-[11px] font-bold bg-slate-950 dark:bg-slate-50 text-white dark:text-slate-950 transition-all shadow-3xs">
 							Gallery
 						</Link>
-						<Link href="/pagi/people" class="px-4 py-1.5 rounded-full text-[11px] font-bold text-slate-500 hover:text-slate-800 dark:text-zinc-455 dark:hover:text-white transition-all">
+						<Link href="/pagi/people" class="px-4 py-1.5 rounded-full text-[11px] font-bold text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-white transition-all">
 							People
 						</Link>
 					</div>
@@ -427,13 +427,13 @@ const submitReport = async () => {
 				<!-- Right: Sorting Dropdown -->
 				<div class="relative shrink-0">
 					<button @click="showSortDropdown = !showSortDropdown" class="inline-flex items-center gap-1.5 rounded-full border border-slate-200/85 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 bg-white dark:bg-zinc-950 px-4 py-2.5 text-xs font-bold text-slate-800 dark:text-zinc-200 shadow-3xs transition-all">
-						<ListFilter class="h-3.5 w-3.5 text-slate-500" />
+						<ListFilter class="h-3.5 w-3.5 text-slate-600 dark:text-zinc-300" />
 						<span class="hidden sm:inline">{{ selectedSort }}</span>
-						<svg class="hidden sm:block w-3 h-3 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': showSortDropdown }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+						<svg class="hidden sm:block w-3 h-3 text-slate-500 dark:text-zinc-400 transition-transform duration-200" :class="{ 'rotate-180': showSortDropdown }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
 							<path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
 						</svg>
 					</button>
-					<div v-show="showSortDropdown" class="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-slate-150 dark:border-zinc-850 bg-white dark:bg-zinc-900 shadow-xl p-1.5 z-50">
+					<div v-show="showSortDropdown" class="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xl p-1.5 z-50">
 						<button v-for="sortOpt in ['Recommended', 'Most Popular', 'Most Viewed']" :key="sortOpt"
 							@click="selectedSort = sortOpt; showSortDropdown = false"
 							:class="['w-full text-left px-4 py-2.5 text-xs font-semibold rounded-xl transition-all border-none bg-transparent cursor-pointer',
@@ -465,7 +465,7 @@ const submitReport = async () => {
 				<div 
 					v-for="(item, idx) in localGalleryItems" 
 					:key="item.id" 
-					class="break-inside-avoid relative overflow-hidden rounded-2xl border border-slate-200/50 dark:border-zinc-800 shadow-2xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer mb-2.5"
+					class="break-inside-avoid relative overflow-hidden rounded-2xl border border-slate-200/50 dark:border-zinc-700/80 shadow-2xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer mb-2.5"
 					@click="openProjectModal(item.portfolio)"
 				>
 					<VideoLazy v-if="item.type === 'video'" :src="item.url" className="w-full h-auto object-cover rounded-2xl group-hover:scale-[1.015] transition-transform duration-500" />

@@ -51,7 +51,7 @@ const updateText = (c: string) => {
 					<h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 mb-4 uppercase tracking-wider">Add Content</h3>
 					<div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl grid grid-cols-2 overflow-hidden shadow-sm">
 						<button v-for="item in contentOptions" :key="'side-'+item.id" @click="emit('add-block', item.id)"
-							class="flex flex-col items-center justify-center py-4 gap-2 border-b border-r border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-355 hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer">
+							class="flex flex-col items-center justify-center py-4 gap-2 border-b border-r border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer">
 							<component :is="item.icon" class="h-5 w-5" stroke-width="1.5" />
 							<span class="text-[11px] font-semibold">{{ item.label }}</span>
 						</button>
@@ -65,7 +65,7 @@ const updateText = (c: string) => {
 						<button @click="emit('open-asset-modal')" class="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-800 text-sm font-semibold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 mb-3 shadow-sm cursor-pointer">
 							<Paperclip class="h-4 w-4" /> Attach Assets
 						</button>
-						<p class="text-[11px] text-slate-500 dark:text-slate-450 leading-relaxed">Add files like fonts, illustrations, photos, zips, or templates as free or paid downloads.</p>
+						<p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">Add files like fonts, illustrations, photos, zips, or templates as free or paid downloads.</p>
 					</div>
 				</div>
 

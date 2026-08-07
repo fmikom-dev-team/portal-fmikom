@@ -427,7 +427,7 @@ const copyShareUrl = () => {
 		
 		<!-- TOP BAR -->
 		<header class="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-zinc-900 bg-white dark:bg-zinc-900 shrink-0 z-30 shadow-xs">
-			<Link href="/pagi/works" class="flex items-center gap-2 text-sm font-extrabold text-slate-700 hover:text-slate-900 dark:text-zinc-350 dark:hover:text-white transition-colors cursor-pointer">
+			<Link href="/pagi/works" class="flex items-center gap-2 text-sm font-extrabold text-slate-700 hover:text-slate-900 dark:text-zinc-200 dark:hover:text-white transition-colors cursor-pointer">
 				<ArrowLeft class="w-4 h-4" />
 				<span>Templates</span>
 				<span class="text-slate-300 dark:text-zinc-700">/</span>

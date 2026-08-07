@@ -590,7 +590,7 @@ watch(
 		<div class="relative grid grid-cols-1 lg:grid-cols-12 gap-8 my-2 text-left">
 			<!-- Left Column: Cover photo (col-span-6) - Stationary -->
 			<div class="lg:col-span-6 flex flex-col gap-4 lg:sticky lg:top-0 self-start">
-				<h3 class="text-xs font-black text-slate-404 dark:text-slate-505 uppercase tracking-wider flex items-center">
+				<h3 class="text-xs font-black text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center">
 					Cover photo
 					<span class="text-rose-500 ml-1 text-xs font-bold leading-none select-none">*</span>
 				</h3>
@@ -609,7 +609,7 @@ watch(
 							Upload
 							<input type="file" accept="image/*,video/*" class="hidden" @change="onCoverFileSelected" />
 						</label>
-						<p class="text-[10px] font-semibold text-slate-404 dark:text-slate-505 leading-relaxed max-w-[220px]">
+						<p class="text-[10px] font-semibold text-slate-500 dark:text-zinc-400 leading-relaxed max-w-[220px]">
 							Media at least 1600 x 1200 (4:3 aspect ratio) in PNG, JPG, GIF, or MP4/WebM formats work best
 						</p>
 					</div>
@@ -667,7 +667,7 @@ watch(
 
 				<!-- Cover Fit Mode Option Toggle -->
 				<div v-if="coverPreviewUrl" class="flex flex-col gap-2 mt-2">
-					<label class="text-[10px] font-black text-slate-404 dark:text-slate-550 uppercase tracking-wider">Tampilan Cover (Fit Mode)</label>
+					<label class="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Tampilan Cover (Fit Mode)</label>
 					<div class="bg-slate-100 dark:bg-slate-950 p-1 rounded-xl flex items-center gap-1 border border-slate-200/40 dark:border-slate-800">
 						<button 
 							type="button"
@@ -726,7 +726,7 @@ watch(
 			<div class="lg:col-span-6 flex flex-col gap-5 lg:overflow-y-auto lg:max-h-[68vh] px-2 -mx-2 scrollbar-thin">
 				<!-- Project title input -->
 				<div class="flex flex-col gap-1.5">
-					<label class="text-[10px] font-black text-slate-404 dark:text-slate-505 uppercase tracking-wider flex items-center">
+					<label class="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center">
 						Project Title
 						<span class="text-rose-500 ml-1 text-xs font-bold leading-none select-none">*</span>
 					</label>
@@ -754,11 +754,11 @@ watch(
 				<!-- Skills tag list input -->
 				<div class="flex flex-col gap-1.5 relative">
 					<div class="flex justify-between items-center">
-						<label class="text-[10px] font-black text-slate-404 dark:text-slate-505 uppercase tracking-wider flex items-center">
+						<label class="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center">
 							Skills
 							<span class="text-rose-500 ml-1 text-xs font-bold leading-none select-none">*</span>
 						</label>
-						<span class="text-[10px] font-bold text-slate-404 dark:text-slate-505">{{ addWorkSkillsTags.length }}/3</span>
+						<span class="text-[10px] font-bold text-slate-500 dark:text-zinc-400">{{ addWorkSkillsTags.length }}/3</span>
 					</div>
 					<div class="w-full min-h-11 p-1.5 flex flex-wrap items-center gap-2 rounded-xl border border-slate-205 dark:border-slate-800 bg-transparent shadow-2xs focus-within:ring-1 focus-within:ring-slate-800">
 						<!-- Tags list -->
@@ -794,11 +794,11 @@ watch(
 				<!-- Tools tag list input -->
 				<div class="flex flex-col gap-1.5 relative">
 					<div class="flex justify-between items-center">
-						<label class="text-[10px] font-black text-slate-404 dark:text-slate-505 uppercase tracking-wider flex items-center">
+						<label class="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center">
 							Tools
 							<span class="text-rose-500 ml-1 text-xs font-bold leading-none select-none">*</span>
 						</label>
-						<span class="text-[10px] font-bold text-slate-404 dark:text-slate-505">{{ addWorkToolsTags.length }}/3</span>
+						<span class="text-[10px] font-bold text-slate-500 dark:text-zinc-400">{{ addWorkToolsTags.length }}/3</span>
 					</div>
 					<div class="w-full min-h-11 p-1.5 flex flex-wrap items-center gap-2 rounded-xl border border-slate-205 dark:border-slate-800 bg-transparent shadow-2xs focus-within:ring-1 focus-within:ring-slate-800">
 						<!-- Tags list -->
@@ -841,7 +841,7 @@ watch(
 
 				<!-- Completed work link input -->
 				<div class="flex flex-col gap-1.5">
-					<label class="text-[10px] font-black text-slate-404 dark:text-slate-505 uppercase tracking-wider">Completed work link</label>
+					<label class="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Completed work link</label>
 					<div class="relative">
 						<input 
 							v-model="addWorkForm.completed_work_link" 
@@ -851,7 +851,7 @@ watch(
 						/>
 						<ExternalLink class="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
 					</div>
-					<span class="text-[10px] font-bold text-slate-404 dark:text-slate-550">Optional</span>
+					<span class="text-[10px] font-bold text-slate-500 dark:text-zinc-400">Optional</span>
 				</div>
 
 				<!-- Collapsible Row for more details -->
@@ -870,8 +870,8 @@ watch(
 						<!-- Collaborators input -->
 						<div class="flex flex-col gap-1.5 relative">
 							<div class="flex justify-between items-center">
-								<label class="text-[10px] font-black text-slate-404 dark:text-slate-550 uppercase tracking-wider">Collaborators</label>
-								<span class="text-[10px] font-bold text-slate-404 dark:text-slate-550">{{ addWorkCollaboratorsTags.length }}/3</span>
+								<label class="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Collaborators</label>
+								<span class="text-[10px] font-bold text-slate-500 dark:text-zinc-400">{{ addWorkCollaboratorsTags.length }}/3</span>
 							</div>
 							<div class="w-full min-h-11 p-1.5 flex flex-wrap items-center gap-2 rounded-xl border border-slate-205 dark:border-slate-800 bg-transparent shadow-2xs focus-within:ring-1 focus-within:ring-slate-800">
 								<!-- Tags list -->
@@ -931,25 +931,25 @@ watch(
 									Tidak ada pengguna ditemukan untuk "<span class="font-bold text-slate-800 dark:text-slate-200">{{ addWorkCollaboratorsInput.trim() }}</span>"
 								</div>
 							</div>
-							<span class="text-[10px] font-bold text-slate-404 dark:text-slate-550">Optional</span>
+							<span class="text-[10px] font-bold text-slate-500 dark:text-zinc-400">Optional</span>
 						</div>
 
 						<!-- Client(s) input -->
 						<div class="flex flex-col gap-1.5">
-							<label class="text-[10px] font-black text-slate-404 dark:text-slate-550 uppercase tracking-wider">Client(s)</label>
+							<label class="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Client(s)</label>
 							<input 
 								v-model="addWorkForm.client" 
 								type="text" 
 								placeholder="Who hired you to complete this project?"
 								class="w-full h-11 px-4 rounded-xl border border-slate-205 dark:border-slate-800 bg-transparent text-xs font-semibold text-slate-800 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-slate-800 transition-all shadow-2xs"
 							/>
-							<span class="text-[10px] font-bold text-slate-404 dark:text-slate-550">Optional</span>
+							<span class="text-[10px] font-bold text-slate-500 dark:text-zinc-400">Optional</span>
 						</div>
 
 						<!-- Project Timeline -->
 						<div class="grid grid-cols-2 gap-4">
 							<div class="flex flex-col gap-1.5">
-								<label class="text-[10px] font-black text-slate-404 dark:text-slate-555 uppercase tracking-wider">Start date</label>
+								<label class="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Start date</label>
 								<input 
 									v-model="addWorkForm.start_date" 
 									type="date" 
@@ -957,7 +957,7 @@ watch(
 								/>
 							</div>
 							<div class="flex flex-col gap-1.5">
-								<label class="text-[10px] font-black text-slate-404 dark:text-slate-555 uppercase tracking-wider">End date</label>
+								<label class="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-wider">End date</label>
 								<input 
 									v-model="addWorkForm.end_date" 
 									type="date" 
@@ -968,7 +968,7 @@ watch(
 
 						<!-- Industry select dropdown -->
 						<div class="flex flex-col gap-1.5">
-							<label class="text-[10px] font-black text-slate-404 dark:text-slate-550 uppercase tracking-wider">Industry</label>
+							<label class="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Industry</label>
 							<select 
 								v-model="addWorkForm.industry" 
 								class="w-full h-11 px-4 rounded-xl border border-slate-205 dark:border-slate-800 bg-transparent text-xs font-semibold text-slate-800 dark:text-white focus:outline-hidden focus:ring-1 focus:ring-slate-800 transition-all shadow-2xs"

@@ -260,7 +260,7 @@ const filteredConversations = computed(() => {
                     v-model="searchQuery"
                     type="text"
                     placeholder="Cari kontak/nama..."
-                    class="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl pl-9 pr-3 py-2 text-xs font-medium text-slate-700 dark:text-zinc-300 placeholder-slate-400 dark:placeholder-zinc-600 outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"
+                    class="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl pl-9 pr-3 py-2 text-xs font-medium text-slate-700 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"
                 />
             </div>
         </div>
@@ -364,7 +364,7 @@ const filteredConversations = computed(() => {
                                 <div v-if="!conv.is_followed_placeholder" class="absolute right-[-24px] group-hover:right-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
                                     <button 
                                         @click.stop="toggleConvDropdown(conv.id)"
-                                        class="conv-dropdown-btn flex items-center justify-center w-5 h-5 rounded-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-450 shadow-sm"
+                                        class="conv-dropdown-btn flex items-center justify-center w-5 h-5 rounded-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-300 shadow-sm"
                                     >
                                         <ChevronDown class="w-3 h-3" />
                                     </button>

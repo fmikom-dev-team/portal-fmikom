@@ -51,24 +51,34 @@ export type PagiRoleSlug =
 	| "admin-akademik"
 	| string;
 
+export type RolePropType =
+	| string
+	| Ref<string | undefined>
+	| (() => string | undefined);
+
 /**
- * @param roleProp - Role dari prop komponen (string atau Ref<string>). Jika
- *   tidak diberikan, composable membaca dari Inertia shared context.
+ * @param roleProp - Role dari prop komponen (string, Ref, atau getter function () => string).
+ *   Jika tidak diberikan, composable membaca dari Inertia shared context.
  */
-export function usePagiRole(roleProp?: string | Ref<string | undefined>) {
+export function usePagiRole(roleProp?: RolePropType) {
 	const page = usePage();
 
 	/**
 	 * Role aktif yang sudah di-resolve dan di-lowercase.
 	 * Priority: roleProp → context.active_role → string kosong.
 	 *
-	 * TIDAK ada hardcoded fallback "mahasiswa" di sini — jika role tidak
-	 * diketahui, semua `is*` flag akan false. Ini lebih aman dari pada
-	 * mengasumsikan role tertentu secara diam-diam.
+	 * Mendorong reaktivitas penuh Vue 3 dengan mendeteksi getter function () => props.roleName.
 	 */
 	const activeRole = computed((): PagiRoleSlug => {
-		const fromProp =
-			typeof roleProp === "string" ? roleProp : (roleProp?.value ?? undefined);
+		let fromProp: string | undefined;
+
+		if (typeof roleProp === "function") {
+			fromProp = roleProp();
+		} else if (typeof roleProp === "string") {
+			fromProp = roleProp;
+		} else if (roleProp && "value" in roleProp) {
+			fromProp = (roleProp as Ref<string | undefined>).value;
+		}
 
 		const fromContext = (page.props as any).context?.active_role as
 			| string

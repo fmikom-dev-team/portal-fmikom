@@ -450,7 +450,7 @@ onUnmounted(() => {
 </script>
 <template>
 	<div class="sticky top-0 z-50 select-none">
-		<header class="border-b border-slate-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md" :class="{ 'hidden md:block': !$page.props.auth?.user }">
+		<header class="border-b border-slate-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md" :class="{ 'hidden md:block': !$page.props.auth?.user || $page.url.startsWith('/pagi/messages') }">
 			<div class="mx-auto flex h-14 max-w-[1400px] items-center justify-between px-4 gap-4 lg:px-6 w-full">
 				<!-- Left: Logo + Module Name (desktop) + Profile (mobile) + Nav -->
 				<div class="flex items-center gap-4 shrink-0">
@@ -465,7 +465,7 @@ onUnmounted(() => {
 						</div>
 						<div class="flex flex-col">
 							<span class="text-sm font-black text-slate-900 dark:text-zinc-100 leading-none tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">PAGI</span>
-							<span class="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest leading-none mt-0.5 whitespace-nowrap">{{ siteSettings.brand_subtitle || 'Fakultas Matematika dan Ilmu Komputer' }}</span>
+							<span class="hidden xl:inline text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest leading-none mt-0.5 whitespace-nowrap">{{ siteSettings.brand_subtitle || 'Fakultas Matematika dan Ilmu Komputer' }}</span>
 						</div>
 					</Link>
 
@@ -483,7 +483,7 @@ onUnmounted(() => {
 								<span v-else class="text-slate-700 dark:text-slate-200 text-xs font-black">{{ user.name?.charAt(0) || 'U' }}</span>
 							</div>
 							<div class="flex flex-col text-left">
-								<span class="text-xs font-black text-slate-800 dark:text-zinc-200 leading-none tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase truncate max-w-[120px]">{{ user.name }}</span>
+								<span class="text-xs font-black text-slate-900 dark:text-white leading-none tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase truncate max-w-[120px]">{{ user.name }}</span>
 								<span class="text-[9px] font-extrabold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-0.5">{{ computedRoleName }}</span>
 							</div>
 							<ChevronDown class="h-3 w-3 text-slate-400 ml-0.5 shrink-0 group-hover:text-slate-600 transition-colors" />
@@ -501,7 +501,7 @@ onUnmounted(() => {
 						/>
 					</div>
 					<!-- Login Icon/Link for Guests (MOBILE ONLY) -->
-					<Link v-else href="/login" class="md:hidden text-slate-600 dark:text-zinc-350 p-2 border border-slate-200 dark:border-zinc-800 rounded-xl flex items-center justify-center cursor-pointer" title="Log In" aria-label="Log In">
+					<Link v-else href="/login" class="md:hidden text-slate-600 dark:text-zinc-200 p-2 border border-slate-200 dark:border-zinc-800 rounded-xl flex items-center justify-center cursor-pointer" title="Log In" aria-label="Log In">
 						<UserIcon class="h-4.5 w-4.5" />
 					</Link>
 
@@ -511,7 +511,7 @@ onUnmounted(() => {
 						<Link
 							href="/pagi"
 							data-onboard="pagi-feed"
-							class="px-3 py-1.5 text-sm font-semibold transition-colors"
+							class="px-2 xl:px-3 py-1.5 text-sm font-semibold transition-colors"
 							:class="[ $page.url === '/pagi' ? 'text-slate-900 dark:text-white active-nav-btn' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100' ]"
 						>
 							Explore
@@ -520,7 +520,7 @@ onUnmounted(() => {
 						<Link
 							href="/pagi/gallery"
 							data-onboard="pagi-gallery"
-							class="px-3 py-1.5 text-sm font-semibold transition-colors"
+							class="px-2 xl:px-3 py-1.5 text-sm font-semibold transition-colors"
 							:class="[ $page.url.startsWith('/pagi/gallery') ? 'text-slate-900 dark:text-white active-nav-btn' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100' ]"
 						>
 							Gallery
@@ -529,7 +529,7 @@ onUnmounted(() => {
 						<Link
 							href="/pagi/people"
 							data-onboard="pagi-people"
-							class="px-3 py-1.5 text-sm font-semibold transition-colors"
+							class="px-2 xl:px-3 py-1.5 text-sm font-semibold transition-colors"
 							:class="[ $page.url.startsWith('/pagi/people') ? 'text-slate-900 dark:text-white active-nav-btn' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100' ]"
 						>
 							People
@@ -538,7 +538,7 @@ onUnmounted(() => {
 						<Link
 							v-if="false"
 							href="/pagi/works"
-							class="px-3 py-1.5 text-sm font-semibold transition-colors"
+							class="px-2 xl:px-3 py-1.5 text-sm font-semibold transition-colors"
 							:class="[ $page.url.startsWith('/pagi/works') ? 'text-slate-900 dark:text-white active-nav-btn' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100' ]"
 						>
 							Works
@@ -548,7 +548,7 @@ onUnmounted(() => {
 							v-if="['mahasiswa', 'alumni', 'super-admin', 'admin'].includes(currentRoleSlug)"
 							href="/pagi/cv"
 							data-onboard="pagi-cv"
-							class="px-3 py-1.5 text-sm font-semibold transition-colors"
+							class="px-2 xl:px-3 py-1.5 text-sm font-semibold transition-colors"
 							:class="[ $page.url.startsWith('/pagi/cv') ? 'text-slate-900 dark:text-white active-nav-btn' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100' ]"
 						>
 							CV
@@ -557,21 +557,14 @@ onUnmounted(() => {
 				</div>
 
 				<!-- Right Actions Area -->
-				<div class="flex items-center gap-3 ml-auto">
+				<div class="flex items-center gap-1.5 sm:gap-2.5 ml-auto">
 					<!-- Work button (desktop only) -->
-					<button v-if="$page.props.auth?.user && currentRoleSlug === 'mahasiswa'" data-onboard="pagi-create-work" @click="showPublishModal = true" class="hidden md:inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-950 text-white hover:bg-indigo-600 p-2 sm:px-4 sm:py-2 text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer border-none" aria-label="Publish Work">
-						<Plus class="h-3.5 w-3.5 shrink-0" /> <span class="hidden sm:inline">Work</span>
+					<button v-if="$page.props.auth?.user && currentRoleSlug === 'mahasiswa'" data-onboard="pagi-create-work" @click="showPublishModal = true" class="hidden md:inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-950 text-white hover:bg-indigo-600 p-2 sm:px-3 sm:py-2 text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer border-none" aria-label="Publish Work">
+						<Plus class="h-3.5 w-3.5 shrink-0" /> <span class="hidden xl:inline">Work</span>
 					</button>
 
 					<!-- Message Icon (mobile + desktop) -->
-					<Link v-if="$page.props.auth?.user" href="/pagi/messages" @click="handleMessageClick" class="md:hidden flex relative p-2 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-600 dark:text-zinc-350 transition-colors items-center justify-center" aria-label="Pesan">
-						<MessageSquare class="h-4.5 w-4.5" />
-						<span v-if="unreadMessagesCount > 0" class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-indigo-600 px-1 text-[9px] font-black text-white ring-2 ring-white dark:ring-zinc-950">
-							{{ unreadMessagesCount }}
-						</span>
-					</Link>
-					<!-- Message Icon (desktop only) -->
-					<Link v-if="$page.props.auth?.user" href="/pagi/messages" data-onboard="pagi-messages" @click="handleMessageClick" class="hidden md:flex relative p-2 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-600 dark:text-zinc-350 transition-colors items-center justify-center" aria-label="Pesan">
+					<Link v-if="$page.props.auth?.user" href="/pagi/messages" data-onboard="pagi-messages" @click="handleMessageClick" class="flex relative p-2 rounded-xl border border-slate-200/80 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-700 dark:text-zinc-200 hover:text-slate-900 dark:hover:text-white transition-colors items-center justify-center" aria-label="Pesan">
 						<MessageSquare class="h-4.5 w-4.5" />
 						<span v-if="unreadMessagesCount > 0" class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-indigo-600 px-1 text-[9px] font-black text-white ring-2 ring-white dark:ring-zinc-950">
 							{{ unreadMessagesCount }}
@@ -579,7 +572,7 @@ onUnmounted(() => {
 					</Link>
 
 					<!-- Notification Bell (click to open panel) -->
-					<button v-if="$page.props.auth?.user" data-onboard="pagi-notifications" @click="hasOpenedNotifPanel = true; toggleNotifPanel()" class="relative p-2 rounded-xl border border-slate-200/80 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-600 dark:text-zinc-350 transition-colors" aria-label="Notifikasi">
+					<button v-if="$page.props.auth?.user" data-onboard="pagi-notifications" @click="hasOpenedNotifPanel = true; toggleNotifPanel()" class="relative p-2 rounded-xl border border-slate-200/80 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-700 dark:text-zinc-200 hover:text-slate-900 dark:hover:text-white transition-colors" aria-label="Notifikasi">
 						<Bell class="h-4.5 w-4.5" />
 						<span v-if="totalUnread > 0" class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white ring-2 ring-white dark:ring-zinc-950">
 							{{ totalUnread }}
@@ -607,7 +600,7 @@ onUnmounted(() => {
 								<img v-else-if="user.avatar && !imageError" :src="user.avatar" :alt="user.name" @error="handleImageError" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-350" />
 								<span v-else class="text-slate-700 dark:text-slate-200 text-xs font-black">{{ user.name?.charAt(0) || 'U' }}</span>
 							</div>
-							<div class="flex flex-col text-left">
+							<div class="hidden xl:flex flex-col text-left">
 								<span class="text-xs font-black text-slate-800 dark:text-zinc-200 leading-none tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase">{{ user.name }}</span>
 								<span class="text-[9px] font-extrabold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-0.5">{{ computedRoleName }}</span>
 							</div>
@@ -641,14 +634,14 @@ onUnmounted(() => {
 		<div v-if="$page.props.auth?.user && !$page.url.startsWith('/pagi/messages') && !$page.url.startsWith('/pagi/editor')" class="fixed bottom-0 inset-x-0 h-16 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-xl border-t border-slate-200/80 dark:border-zinc-850 flex items-center justify-between px-2 z-50 md:hidden shadow-[0_-4px_24px_rgba(0,0,0,0.04)] select-none" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
 			<!-- 1. Explore (main dashboard) -->
 			<Link href="/pagi" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1"
-				:class="[ $page.url === '/pagi' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
+				:class="[ $page.url === '/pagi' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white' ]">
 				<LayoutGrid class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">Explore</span>
 			</Link>
 
 			<!-- 2. Gallery -->
 			<Link href="/pagi/gallery" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1"
-				:class="[ $page.url.startsWith('/pagi/gallery') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
+				:class="[ $page.url.startsWith('/pagi/gallery') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white' ]">
 				<Image class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">Gallery</span>
 			</Link>
@@ -658,12 +651,12 @@ onUnmounted(() => {
 				<div class="h-11 w-11 rounded-full bg-slate-950 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center shadow-lg border-2 border-white dark:border-zinc-900 hover:bg-indigo-600 dark:hover:bg-indigo-500">
 					<Plus class="w-5 h-5 font-black" />
 				</div>
-				<span class="text-[8px] font-extrabold tracking-tight uppercase mt-0.5 text-slate-550 dark:text-zinc-400">Work</span>
+				<span class="text-[8px] font-extrabold tracking-tight uppercase mt-0.5 text-slate-500 dark:text-zinc-400">Work</span>
 			</button>
 
 			<!-- 4. People -->
 			<Link href="/pagi/people" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1"
-				:class="[ $page.url.startsWith('/pagi/people') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
+				:class="[ $page.url.startsWith('/pagi/people') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white' ]">
 				<Users class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">People</span>
 			</Link>
@@ -673,7 +666,7 @@ onUnmounted(() => {
 				v-if="currentRoleSlug === 'mahasiswa' || currentRoleSlug === 'alumni'"
 				href="/pagi/cv" 
 				class="flex flex-col items-center justify-center gap-1 transition-colors flex-1"
-				:class="[ $page.url.startsWith('/pagi/cv') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]"
+				:class="[ $page.url.startsWith('/pagi/cv') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white' ]"
 			>
 				<FileText class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">CV</span>

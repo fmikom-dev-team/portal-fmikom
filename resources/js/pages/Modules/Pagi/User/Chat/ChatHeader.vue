@@ -35,7 +35,7 @@ const emit = defineEmits<{
         <div class="relative shrink-0 pointer-events-none">
             <div class="h-9 w-9 rounded-full border border-slate-200 dark:border-zinc-700 overflow-hidden bg-slate-100 dark:bg-zinc-800 flex items-center justify-center">
                 <img v-if="partner && avatarUrl(partner.foto_path)" :src="avatarUrl(partner!.foto_path)!" :alt="partner?.name || 'Avatar'" class="w-full h-full object-cover" />
-                <span v-else class="text-xs font-black text-slate-500">{{ partner?.name?.charAt(0) }}</span>
+                <span v-else class="text-xs font-black text-slate-500 dark:text-zinc-300">{{ partner?.name?.charAt(0) }}</span>
             </div>
             <span v-if="isOnline" class="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-white dark:ring-zinc-900"></span>
         </div>
@@ -47,7 +47,7 @@ const emit = defineEmits<{
                 <!-- Verified Seal Badge -->
                 <img v-if="isVerifiedUser(partner)" src="/premium.svg" class="w-3.5 h-3.5 shrink-0 select-none" title="Akun Terverifikasi" alt="Verified Badge" />
             </div>
-            <p class="text-[10px] font-semibold mt-0.5 leading-none transition-all duration-300" :class="isPartnerTyping ? 'text-emerald-600 dark:text-emerald-400 animate-pulse' : (isOnline ? 'text-green-600' : 'text-slate-400')">
+            <p class="text-[10px] font-semibold mt-0.5 leading-none transition-all duration-300" :class="isPartnerTyping ? 'text-emerald-600 dark:text-emerald-400 animate-pulse' : (isOnline ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-zinc-400')">
                 {{ isPartnerTyping ? 'Sedang mengetik...' : (isOnline ? 'Online' : (partner?.last_seen_at ? 'Terakhir dilihat ' + formatLastSeen(partner.last_seen_at) : 'Offline')) }}
             </p>
         </div>
@@ -66,7 +66,7 @@ const emit = defineEmits<{
                 leave-to-class="transform opacity-0 scale-95"
             >
                 <div v-if="showDropdown" class="absolute right-0 mt-2.5 z-50 w-52 rounded-2xl border border-slate-200/60 dark:border-zinc-800/80 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl p-1.5 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150">
-                    <button @click="$emit('clear-chat')" class="w-full text-left px-3.5 py-3 text-xs font-bold text-slate-700 dark:text-zinc-350 hover:bg-slate-100/60 dark:hover:bg-zinc-900/60 rounded-xl flex items-center gap-2.5 transition-colors">
+                    <button @click="$emit('clear-chat')" class="w-full text-left px-3.5 py-3 text-xs font-bold text-slate-700 dark:text-zinc-200 hover:bg-slate-100/60 dark:hover:bg-zinc-900/60 rounded-xl flex items-center gap-2.5 transition-colors">
                         <svg class="w-4 h-4 text-slate-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         Hapus Obrolan
                     </button>

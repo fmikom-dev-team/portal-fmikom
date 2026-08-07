@@ -276,8 +276,8 @@ const getElementPosition = (selector: string) => {
 	if (!el) return null;
 	const rect = el.getBoundingClientRect();
 	return {
-		top: rect.top + window.scrollY,
-		left: rect.left + window.scrollX,
+		top: rect.top,
+		left: rect.left,
 		width: rect.width,
 		height: rect.height,
 	};
@@ -316,11 +316,28 @@ const cleanupPositionListeners = () => {
 	resizeObserver = null;
 };
 
-watch(activeCoachmarkId, () => {
-	nextTick(() => {
-		updateTargetPosition();
-		setupPositionListeners();
-	});
+watch(activeCoachmarkId, (newVal) => {
+	if (newVal && activeStep.value) {
+		nextTick(() => {
+			const targetEl = document.querySelector(
+				activeStep.value?.targetSelector || "",
+			);
+			if (targetEl) {
+				targetEl.scrollIntoView({
+					behavior: "smooth",
+					block: "center",
+					inline: "nearest",
+				});
+			}
+			setTimeout(() => {
+				updateTargetPosition();
+				setupPositionListeners();
+			}, 300);
+		});
+	} else {
+		cleanupPositionListeners();
+		targetPos.value = null;
+	}
 });
 
 const handleKeyDown = (e: KeyboardEvent) => {
@@ -438,8 +455,10 @@ const dismissOnboarding = () => {
 const cardStyle = computed(() => {
 	if (!targetPos.value) return {};
 	const { top, left, width, height } = targetPos.value;
-	const cardWidth = 340;
-	const cardHeight = 180;
+	const winWidth = typeof window !== "undefined" ? window.innerWidth : 360;
+	const winHeight = typeof window !== "undefined" ? window.innerHeight : 640;
+	const cardWidth = Math.min(340, winWidth - 32);
+	const cardHeight = 190;
 	const margin = 16;
 
 	let calcTop = top + height + margin;
@@ -448,15 +467,16 @@ const cardStyle = computed(() => {
 	// Viewport bounds handling
 	calcLeft = Math.max(
 		margin,
-		Math.min(calcLeft, window.innerWidth - cardWidth - margin),
+		Math.min(calcLeft, winWidth - cardWidth - margin),
 	);
-	if (calcTop + cardHeight > window.innerHeight + window.scrollY - margin) {
+	if (calcTop + cardHeight > winHeight - margin) {
 		calcTop = Math.max(margin, top - cardHeight - margin);
 	}
 
 	return {
 		top: `${calcTop}px`,
 		left: `${calcLeft}px`,
+		width: `${cardWidth}px`,
 	};
 });
 </script>
@@ -508,7 +528,7 @@ const cardStyle = computed(() => {
 	>
 		<div
 			v-if="isOpen && !activeCoachmarkId && !isDismissedForever"
-			class="fixed bottom-5 right-5 z-50 w-80 max-h-[85vh] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col pointer-events-auto select-none"
+			class="fixed inset-x-4 bottom-20 sm:bottom-5 sm:right-5 sm:left-auto sm:inset-x-auto z-50 w-auto sm:w-80 max-h-[75vh] sm:max-h-[85vh] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col pointer-events-auto select-none"
 		>
 			<!-- Header with App Logo -->
 			<div class="p-4 border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/50 flex items-center justify-between">

@@ -71,8 +71,8 @@ const handleLogout = () => {
 					<img v-else-if="user.avatar && !imageError" :src="user.avatar" :alt="user.name" @error="imageError = true" class="w-full h-full object-cover" />
 					<span v-else class="text-slate-700 dark:text-slate-200 text-xl font-bold">{{ user.name?.charAt(0) || 'U' }}</span>
 				</div>
-				<h3 class="text-base font-black text-slate-800 dark:text-zinc-150 text-center truncate w-full px-2 tracking-tight leading-snug uppercase">{{ user.name }}</h3>
-				<p class="text-xs text-slate-500 dark:text-zinc-400 font-semibold text-center mt-0.5 truncate w-full px-2 leading-none">@{{ user.pagi_username || 'username' }}</p>
+				<h3 class="text-base font-black text-slate-900 dark:text-white text-center truncate w-full px-2 tracking-tight leading-snug uppercase">{{ user.name }}</h3>
+				<p class="text-xs text-slate-500 dark:text-zinc-300 font-semibold text-center mt-0.5 truncate w-full px-2 leading-none">@{{ user.pagi_username || 'username' }}</p>
 			</div>
 
 			<!-- Stats Grid -->
@@ -94,15 +94,15 @@ const handleLogout = () => {
 			<!-- Action Menu Items -->
 			<div class="space-y-1.5">
 				<Link v-if="['mahasiswa', 'alumni', 'super-admin', 'admin'].includes(currentRoleSlug)" href="/pagi/profile" class="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-950 hover:bg-indigo-600 dark:bg-slate-50 dark:text-slate-950 dark:hover:bg-indigo-500 dark:hover:text-white py-2.5 text-xs font-black text-white transition-all shadow-md active:scale-97 cursor-pointer">
-					<UserIcon class="h-3.5 w-3.5 text-slate-450" /> Lihat Profil PAGI
+					<UserIcon class="h-3.5 w-3.5" /> Lihat Profil PAGI
 				</Link>
 
-				<Link v-if="['mahasiswa', 'alumni', 'super-admin', 'admin'].includes(currentRoleSlug)" href="/pagi/cv" class="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200/80 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-300 transition-all shadow-xs active:scale-97 cursor-pointer">
-					<FileText class="h-3.5 w-3.5 text-slate-450" /> CV Builder
+				<Link v-if="['mahasiswa', 'alumni', 'super-admin', 'admin'].includes(currentRoleSlug)" href="/pagi/cv" class="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200/80 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-200 transition-all shadow-xs active:scale-97 cursor-pointer">
+					<FileText class="h-3.5 w-3.5 text-slate-400 dark:text-zinc-300 shrink-0" /> CV Builder
 				</Link>
 
-				<Link href="/dashboard" class="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200/80 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-300 transition-all shadow-xs active:scale-97 cursor-pointer">
-					<ExternalLink class="h-3.5 w-3.5 text-slate-450" /> Kembali ke Portal
+				<Link href="/dashboard" class="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200/80 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-200 transition-all shadow-xs active:scale-97 cursor-pointer">
+					<ExternalLink class="h-3.5 w-3.5 text-slate-400 dark:text-zinc-300 shrink-0" /> Kembali ke Portal
 				</Link>
 
 				<button @click="handleLogout" class="w-full flex items-center justify-center gap-2 rounded-xl border border-red-200/60 dark:border-red-950/40 hover:bg-red-50 dark:hover:bg-red-950/20 py-2.5 text-xs font-bold text-red-600 dark:text-red-400 transition-all active:scale-97 cursor-pointer">

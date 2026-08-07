@@ -278,7 +278,7 @@ onMounted(() => {
 				"auditStats",
 				"auditRecentEvents",
 			],
-		});
+		} as any);
 	}, 8000);
 
 	// Mark initially loaded non-empty props as loaded
@@ -990,7 +990,7 @@ const activeLabel = computed(() => {
                                 </button>
                                 <button
                                     @click="showApproveConfirm = false"
-                                    class="px-3.5 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-350 rounded-lg font-semibold hover:bg-slate-50 dark:hover:bg-zinc-750 transition-colors"
+                                    class="px-3.5 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 rounded-lg font-semibold hover:bg-slate-50 dark:hover:bg-zinc-750 transition-colors"
                                 >
                                     Batal
                                 </button>
@@ -1016,7 +1016,7 @@ const activeLabel = computed(() => {
                                 </button>
                                 <button
                                     @click="showRejectReasonInput = false"
-                                    class="px-3.5 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-350 rounded-lg font-semibold hover:bg-slate-50 dark:hover:bg-zinc-750 transition-colors"
+                                    class="px-3.5 py-1.5 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 rounded-lg font-semibold hover:bg-slate-50 dark:hover:bg-zinc-750 transition-colors"
                                 >
                                     Batal
                                 </button>

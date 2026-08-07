@@ -448,19 +448,19 @@ const formatNotificationMessage = (notif: any) => {
 					v-if="filteredNotifGroups.length === 0"
 					class="flex flex-col items-center justify-center py-20 px-4 text-center gap-3.5"
 				>
-					<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-900 flex items-center justify-center text-slate-400 dark:text-zinc-650">
+					<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-900 flex items-center justify-center text-slate-400 dark:text-zinc-500">
 						<Bell class="w-5 h-5" />
 					</div>
 					<div>
-						<h3 class="text-xs font-bold text-slate-800 dark:text-zinc-300 uppercase tracking-widest">Tidak ada notifikasi</h3>
-						<p class="text-[10px] text-slate-455 dark:text-zinc-550 mt-1 max-w-[240px] mx-auto font-medium leading-relaxed">Update terbaru dari portal kreatif Anda akan muncul di sini.</p>
+						<h3 class="text-xs font-bold text-slate-800 dark:text-zinc-200 uppercase tracking-widest">Tidak ada notifikasi</h3>
+						<p class="text-[10px] text-slate-500 dark:text-zinc-400 mt-1 max-w-[240px] mx-auto font-medium leading-relaxed">Update terbaru dari portal kreatif Anda akan muncul di sini.</p>
 					</div>
 				</div>
 
 				<!-- Groups -->
 				<div v-for="group in filteredNotifGroups" :key="group.group" class="py-2">
 					<!-- Group Label -->
-					<h3 class="text-[9px] font-black text-slate-400 dark:text-zinc-555 uppercase tracking-widest mb-1.5 px-2">
+					<h3 class="text-[9px] font-black text-slate-400 dark:text-zinc-400 uppercase tracking-widest mb-1.5 px-2">
 						{{ group.group }}
 					</h3>
 
@@ -494,7 +494,7 @@ const formatNotificationMessage = (notif: any) => {
 						<div class="min-w-0 flex-1">
 							<!-- Name + Action + Target & Relative Time Row -->
 							<div class="flex items-start justify-between gap-2">
-								<p class="text-xs text-slate-600 dark:text-zinc-350 font-medium leading-snug">
+								<p class="text-xs text-slate-700 dark:text-zinc-200 font-medium leading-snug">
 									<span class="font-bold text-slate-900 dark:text-white">{{ notif.title }}</span>
 									{{ ' ' + formatNotificationMessage(notif).action }}
 									<span v-if="formatNotificationMessage(notif).target" class="font-bold text-slate-900 dark:text-white"> {{ formatNotificationMessage(notif).target }}</span>

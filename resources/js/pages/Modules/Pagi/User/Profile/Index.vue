@@ -89,7 +89,6 @@ const props = defineProps<{
 	}>;
 }>();
 
-const tabs = ["Work", "Educational", "Gallery", "Certificates", "About"];
 const page = usePage();
 const user = computed(
 	() =>
@@ -116,7 +115,9 @@ const isOwnProfile = computed(() => {
 	return page.props.auth.user.id === user.value.id;
 });
 
-const { isMahasiswa, isCreator, displayRoleName } = usePagiRole(props.roleName);
+const { isMahasiswa, isCreator, displayRoleName } = usePagiRole(
+	() => props.roleName,
+);
 
 // Toast Notification System
 const { toasts, addToast, removeToast } = useToast();
@@ -200,8 +201,34 @@ const {
 // Tab Navigation logic
 const { activeTab } = useProfileTabs();
 
+const isAlumni = computed(() => {
+	const role = (displayRoleName.value || "").toLowerCase();
+	return role.includes("alumni");
+});
+
+const tabs = computed(() => {
+	if (isAlumni.value) {
+		return ["Educational", "Certificates", "About"];
+	}
+	return ["Work", "Educational", "Gallery", "Certificates", "About"];
+});
+
+watch(
+	isAlumni,
+	(val) => {
+		if (val && activeTab.value === "Work") {
+			activeTab.value = "Educational";
+		}
+	},
+	{ immediate: true },
+);
+
 const selectWorkTab = () => {
-	activeTab.value = "Work";
+	if (isAlumni.value) {
+		activeTab.value = "Educational";
+	} else {
+		activeTab.value = "Work";
+	}
 	const el = document.getElementById("profile_tabs_navigation");
 	if (el) {
 		el.scrollIntoView({ behavior: "smooth" });
@@ -226,7 +253,7 @@ const handleRealtimeWorkCreated = (e: any) => {
 		];
 		addToast("Karya baru ditambahkan ke profil!", "success");
 	}
-	router.reload({ preserveScroll: true, only: ["projects"] });
+	router.reload({ preserveScroll: true, only: ["projects"] } as any);
 };
 
 const handleRealtimeWorkUpdated = (e: any) => {
@@ -240,12 +267,12 @@ const handleRealtimeWorkUpdated = (e: any) => {
 			is_published: e.is_published ?? localProjects.value[idx].is_published,
 		};
 	}
-	router.reload({ preserveScroll: true, only: ["projects"] });
+	router.reload({ preserveScroll: true, only: ["projects"] } as any);
 };
 
 const handleRealtimeWorkDeleted = (e: any) => {
 	localProjects.value = localProjects.value.filter((p) => p.id !== e.id);
-	router.reload({ preserveScroll: true, only: ["projects"] });
+	router.reload({ preserveScroll: true, only: ["projects"] } as any);
 };
 
 onMounted(() => {
@@ -263,7 +290,7 @@ onMounted(() => {
 					handleRealtimeWorkDeleted(e);
 				})
 				.listen(".PagiProfileUpdated", () => {
-					router.reload({ preserveScroll: true });
+					router.reload({ preserveScroll: true } as any);
 				});
 		}
 
@@ -354,6 +381,14 @@ const openBannerModal = () => {
 const isLoading = ref(false);
 const isMessageEnabled = ref(true);
 
+watch(
+	() => user.value?.metadata?.is_message_enabled,
+	(val) => {
+		isMessageEnabled.value = val ?? true;
+	},
+	{ immediate: true },
+);
+
 const {
 	followingState,
 	isFollowLoading,
@@ -398,18 +433,24 @@ onMounted(() => {
 });
 
 // Message Switch toggle
-const toggleMessageSwitch = (e: Event) => {
-	e.stopPropagation();
-	isMessageEnabled.value = !isMessageEnabled.value;
+const toggleMessageSwitch = (e?: Event) => {
+	if (e && typeof e.stopPropagation === "function") {
+		e.stopPropagation();
+	}
+	const nextVal = !isMessageEnabled.value;
+	isMessageEnabled.value = nextVal;
+	if (user.value.metadata) {
+		user.value.metadata.is_message_enabled = nextVal;
+	}
 	router.post(
 		"/pagi/profile/update",
 		{
-			is_message_enabled: isMessageEnabled.value,
+			is_message_enabled: nextVal,
 		},
 		{
 			preserveScroll: true,
 			onSuccess: () => {
-				if (isMessageEnabled.value) {
+				if (nextVal) {
 					addToast("Direct messaging has been enabled.", "success");
 				} else {
 					addToast("Direct messaging has been disabled.", "info");
@@ -744,6 +785,7 @@ const headUrl = computed(() => {
 					:dynamicFollowersCount="dynamicFollowersCount"
 					:dynamicFollowingCount="dynamicFollowingCount"
 					:socialLinks="socialLinks"
+					:isStudent="isMahasiswa"
 					@open-avatar-modal="openAvatarModal"
 					@open-username-modal="openUsernameModal"
 					@open-location-modal="openLocationModal"

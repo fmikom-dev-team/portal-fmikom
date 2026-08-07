@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, router } from "@inertiajs/vue3";
+import { Link, router, usePage } from "@inertiajs/vue3";
 import {
 	AlertCircle,
 	ArrowRight,
@@ -8,10 +8,11 @@ import {
 	Circle,
 	FileEdit,
 	Image,
-	Sparkles,
 	X,
 } from "lucide-vue-next";
 import { computed } from "vue";
+
+const page = usePage();
 
 const props = defineProps<{
 	show: boolean;
@@ -63,12 +64,12 @@ const handleNavigateShowcase = () => {
 				@click.self="emit('close')"
 			>
 				<Transition
-					enter-active-class="transition-all duration-300 ease-out"
-					enter-from-class="opacity-0 translate-y-8 sm:scale-95"
+					enter-active-class="transition-all duration-350 ease-[cubic-bezier(0.16,1,0.3,1)]"
+					enter-from-class="opacity-0 translate-y-full sm:translate-y-6 sm:scale-95"
 					enter-to-class="opacity-100 translate-y-0 sm:scale-100"
-					leave-active-class="transition-all duration-200 ease-in"
+					leave-active-class="transition-all duration-250 ease-[cubic-bezier(0.7,0,0.84,0)]"
 					leave-from-class="opacity-100 translate-y-0 sm:scale-100"
-					leave-to-class="opacity-0 translate-y-8 sm:scale-95"
+					leave-to-class="opacity-0 translate-y-full sm:translate-y-6 sm:scale-95"
 				>
 					<div
 						class="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-t-3xl sm:rounded-3xl border border-slate-200/80 dark:border-zinc-800 shadow-2xl overflow-hidden select-none"
@@ -79,9 +80,15 @@ const handleNavigateShowcase = () => {
 						>
 							<div class="flex items-center gap-2.5">
 								<div
-									class="h-9 w-9 rounded-xl bg-indigo-600/10 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center"
+									class="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 shadow-md text-white flex items-center justify-center overflow-hidden shrink-0"
 								>
-									<Sparkles class="w-5 h-5" />
+									<img
+										v-if="(page.props as any).siteSettings?.brand_logo || (page.props as any).context?.site_settings?.brand_logo"
+										:src="(page.props as any).siteSettings?.brand_logo || (page.props as any).context?.site_settings?.brand_logo"
+										class="h-full w-full object-contain p-1"
+										alt="Logo PAGI"
+									/>
+									<span v-else class="text-white text-xs font-black tracking-tight">P</span>
 								</div>
 								<div>
 									<h3 class="text-base font-extrabold text-slate-900 dark:text-white leading-tight">

@@ -208,10 +208,10 @@ const onDrop = (index: number) => {
 
 				<!-- Hover / Mobile Actions Pill (Always visible on mobile/touch, hover on desktop) -->
 				<div v-if="isOwnProfile" class="absolute top-3 right-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-20 flex items-center bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs border border-slate-200 dark:border-slate-800 rounded-full p-1 shadow-md gap-0.5 select-none">
-					<button @click.stop="toggleProjectMenu(p.id)" class="w-7 h-7 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-355 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors border-none bg-transparent" title="Options">
+					<button @click.stop="toggleProjectMenu(p.id)" class="w-7 h-7 rounded-full flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors border-none bg-transparent" title="Options">
 						<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 10a2 2 0 110 4 2 2 0 010-4zm6 0a2 2 0 110 4 2 2 0 010-4zm6 0a2 2 0 110 4 2 2 0 010-4z" /></svg>
 					</button>
-					<div class="w-7 h-7 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-355 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-grab active:cursor-grabbing transition-colors" title="Drag to reorder">
+					<div class="w-7 h-7 rounded-full flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-grab active:cursor-grabbing transition-colors" title="Drag to reorder">
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9h.01M12 9h.01M16 9h.01M8 15h.01M12 15h.01M16 15h.01" /></svg>
 					</div>
 					<!-- Dropdown -->

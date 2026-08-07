@@ -195,7 +195,7 @@ const getCollabAvatar = (c: any) => {
 
 					<!-- Category Autocomplete Chips -->
 					<div class="flex flex-col gap-1.5 relative">
-						<label for="editor-pub-category" class="text-xs font-bold text-slate-800 dark:text-slate-200">Kategori <span class="text-red-500">*</span> <span class="text-slate-400 font-normal">(Maksimal 3)</span></label>
+						<label for="editor-pub-category" class="text-xs font-bold text-slate-800 dark:text-slate-200">Kategori <span class="text-red-500">*</span> <span class="text-slate-400 dark:text-zinc-500 font-normal">(Maksimal 3)</span></label>
 						<div class="w-full min-h-[44px] p-2 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-3xs">
 							<span v-for="(tag, idx) in categoryTags" :key="idx" class="h-7 px-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-xs font-bold text-indigo-700 dark:text-indigo-300 inline-flex items-center gap-1.5 border border-indigo-200/60 dark:border-indigo-800/60">
 								<img :src="`https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/${getToolSlug(tag)}/default.svg`"
@@ -246,7 +246,7 @@ const getCollabAvatar = (c: any) => {
 					<!-- Collaborators Field -->
 					<div class="flex flex-col gap-1.5 relative">
 						<div class="flex justify-between">
-							<label for="editor-pub-collab" class="text-xs font-bold text-slate-800 dark:text-slate-200">Kolaborator Tim <span class="text-slate-400 font-normal">(Opsional, Maks 3)</span></label>
+							<label for="editor-pub-collab" class="text-xs font-bold text-slate-800 dark:text-slate-200">Kolaborator Tim <span class="text-slate-400 dark:text-zinc-500 font-normal">(Opsional, Maks 3)</span></label>
 							<span class="text-xs text-slate-500 font-bold">{{ form.collaborators.length }}/3</span>
 						</div>
 						<div class="w-full min-h-[44px] p-2 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-3xs">

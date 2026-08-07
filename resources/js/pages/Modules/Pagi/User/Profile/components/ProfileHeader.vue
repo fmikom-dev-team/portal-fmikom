@@ -156,14 +156,15 @@ const isVideoUrl = (url: string | null): boolean => {
 					<div class="flex items-center gap-3.5 pt-1">
 						<!-- Message Button with Toggle Switch inside -->
 						<div v-if="isOwnProfile || isMessageEnabled" class="relative group/msg">
-							<button 
+							<div 
 								@click="emit('open-chat')" 
-								class="h-[44px] px-6 rounded-full border border-slate-300 dark:border-slate-800 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-3 shadow-2xs hover:border-slate-400 dark:hover:border-slate-700 active:scale-98"
+								class="h-[44px] px-6 rounded-full border border-slate-300/80 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-900 dark:text-white font-black text-xs tracking-wider uppercase transition-all duration-200 cursor-pointer flex items-center gap-3 shadow-2xs active:scale-98"
 							>
-								<span>Message</span>
-								<div 
+								<span class="text-slate-900 dark:text-white font-black">Message</span>
+								<button 
 									v-if="isOwnProfile"
-									@click.stop="emit('toggle-message-switch')"
+									type="button"
+									@click.stop.prevent="emit('toggle-message-switch', $event)"
 									class="w-9 h-5 rounded-full relative p-[2px] transition-colors duration-300 border cursor-pointer shrink-0 flex items-center"
 									:class="isMessageEnabled ? 'bg-emerald-500 border-transparent shadow-xs' : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700'"
 									role="switch"
@@ -171,11 +172,11 @@ const isVideoUrl = (url: string | null): boolean => {
 									aria-label="Aktifkan Pesan Langsung"
 								>
 									<div 
-										class="w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 transform"
+										class="w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 transform pointer-events-none"
 										:class="isMessageEnabled ? 'translate-x-4' : 'translate-x-0'"
 									></div>
-								</div>
-							</button>
+								</button>
+							</div>
 						</div>
 
 						<!-- Share Button -->
@@ -494,14 +495,15 @@ const isVideoUrl = (url: string | null): boolean => {
 			<div class="flex items-center gap-3 mt-4 w-full">
 				<!-- Message Button -->
 				<div v-if="isOwnProfile || isMessageEnabled" class="flex-1">
-					<button 
+					<div 
 						@click="emit('open-chat')" 
-						class="w-full h-11 px-5 rounded-full border border-slate-200 dark:border-slate-800 bg-white hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-800 dark:text-zinc-250 font-black text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-3 shadow-2xs hover:border-slate-300 active:scale-97"
+						class="w-full h-11 px-5 rounded-full border border-slate-200 dark:border-zinc-700 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-900 dark:text-white font-black text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-3 shadow-2xs active:scale-97"
 					>
-						<span>Message</span>
-						<div 
+						<span class="text-slate-900 dark:text-white font-black">Message</span>
+						<button 
 							v-if="isOwnProfile"
-							@click.stop="emit('toggle-message-switch')"
+							type="button"
+							@click.stop.prevent="emit('toggle-message-switch', $event)"
 							class="w-8 h-4.5 rounded-full relative p-[2px] transition-colors duration-300 border cursor-pointer shrink-0 flex items-center"
 							:class="isMessageEnabled ? 'bg-emerald-500 border-transparent shadow-xs' : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700'"
 							role="switch"
@@ -509,11 +511,11 @@ const isVideoUrl = (url: string | null): boolean => {
 							aria-label="Aktifkan Pesan Langsung"
 						>
 							<div 
-								class="w-3.5 h-3.5 rounded-full bg-white shadow-xs transition-transform duration-300 transform"
+								class="w-3.5 h-3.5 rounded-full bg-white shadow-xs transition-transform duration-300 transform pointer-events-none"
 								:class="isMessageEnabled ? 'translate-x-3.5' : 'translate-x-0'"
 							></div>
-						</div>
-					</button>
+						</button>
+					</div>
 				</div>
 
 				<!-- Follow/Following Button -->
@@ -534,7 +536,7 @@ const isVideoUrl = (url: string | null): boolean => {
 				<!-- Share Button -->
 				<button 
 					@click="emit('share-profile')"
-					class="w-11 h-11 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-350 flex items-center justify-center shrink-0 cursor-pointer shadow-2xs active:scale-95 transition-all hover:border-slate-300"
+					class="w-11 h-11 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-200 flex items-center justify-center shrink-0 cursor-pointer shadow-2xs active:scale-95 transition-all hover:border-slate-300"
 					title="Share Profile"
 					aria-label="Bagikan Profil"
 				>
@@ -547,7 +549,7 @@ const isVideoUrl = (url: string | null): boolean => {
 				<Link 
 					v-if="isOwnProfile"
 					href="/pagi/settings"
-					class="w-11 h-11 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-350 flex items-center justify-center shrink-0 cursor-pointer shadow-2xs active:scale-95 transition-all hover:border-slate-300"
+					class="w-11 h-11 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-200 flex items-center justify-center shrink-0 cursor-pointer shadow-2xs active:scale-95 transition-all hover:border-slate-300"
 					title="Pengaturan"
 					aria-label="Pengaturan"
 				>
