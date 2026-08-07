@@ -447,10 +447,22 @@ onUnmounted(() => {
 			
 			<template v-else>
 				<!-- Empty state -->
-				<div class="border border-dashed border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center bg-slate-50/50 dark:bg-slate-900/10">
-					<Award class="w-8 h-8 text-slate-400 mx-auto mb-3" />
-					<h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">No Certificates Added</h3>
-					<p class="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">Showcase your verified achievements and credentials on your profile.</p>
+				<div class="border border-dashed border-slate-200 dark:border-zinc-800 rounded-3xl p-12 text-center bg-slate-50/50 dark:bg-zinc-900/10 flex flex-col items-center justify-center gap-3">
+					<div class="h-12 w-12 rounded-full bg-slate-100 dark:bg-zinc-800/50 flex items-center justify-center text-slate-400">
+						<Award class="w-6 h-6" />
+					</div>
+					<div class="space-y-1">
+						<h3 class="text-sm font-bold text-slate-800 dark:text-zinc-200">Belum Ada Sertifikat</h3>
+						<p class="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">Tampilkan pencapaian dan lisensi terverifikasi di profil Anda.</p>
+					</div>
+					<button 
+						v-if="isOwnProfile && isStudent" 
+						@click="openAddModal" 
+						class="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-bold shadow-3xs transition-colors cursor-pointer justify-center"
+					>
+						<Plus class="w-3.5 h-3.5" />
+						<span>Upload Sertifikat Pertama</span>
+					</button>
 				</div>
 			</template>
 		</div>
