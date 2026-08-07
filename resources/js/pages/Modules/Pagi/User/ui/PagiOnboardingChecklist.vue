@@ -272,13 +272,21 @@ const targetPos = ref<{
 
 const getElementPosition = (selector: string) => {
 	if (typeof window === "undefined") return null;
-	const elements = Array.from(document.querySelectorAll(selector)) as HTMLElement[];
+	const elements = Array.from(
+		document.querySelectorAll(selector),
+	) as HTMLElement[];
 	if (elements.length === 0) return null;
 
-	const el = elements.find((e) => {
-		const rect = e.getBoundingClientRect();
-		return rect.width > 0 && rect.height > 0 && getComputedStyle(e).display !== 'none' && getComputedStyle(e).visibility !== 'hidden';
-	}) || elements[0];
+	const el =
+		elements.find((e) => {
+			const rect = e.getBoundingClientRect();
+			return (
+				rect.width > 0 &&
+				rect.height > 0 &&
+				getComputedStyle(e).display !== "none" &&
+				getComputedStyle(e).visibility !== "hidden"
+			);
+		}) || elements[0];
 
 	const rect = el.getBoundingClientRect();
 	return {
@@ -322,7 +330,9 @@ const cleanupPositionListeners = () => {
 	resizeObserver = null;
 };
 
-const isMobile = ref(typeof window !== "undefined" ? window.innerWidth < 640 : false);
+const isMobile = ref(
+	typeof window !== "undefined" ? window.innerWidth < 640 : false,
+);
 
 const updateIsMobile = () => {
 	if (typeof window !== "undefined") {
@@ -486,7 +496,10 @@ const popoverConfig = computed(() => {
 	calcLeft = Math.max(12, Math.min(calcLeft, winWidth - cardWidth - 12));
 
 	// Calculate arrow pointer X offset inside the card relative to target element center
-	const arrowLeft = Math.max(20, Math.min(elementCenterX - calcLeft, cardWidth - 20));
+	const arrowLeft = Math.max(
+		20,
+		Math.min(elementCenterX - calcLeft, cardWidth - 20),
+	);
 
 	let calcTop = top + height + margin;
 	let arrowDir: "up" | "down" = "up";
