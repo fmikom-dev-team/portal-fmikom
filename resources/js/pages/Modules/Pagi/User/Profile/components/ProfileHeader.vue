@@ -396,6 +396,7 @@ const isVideoUrl = (url: string | null): boolean => {
 			<div v-if="isLoading" class="w-full h-full rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
 			<div 
 				v-else
+				data-onboard="profile-banner"
 				class="w-full h-full group rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 cursor-pointer shadow-xs"
 				@click="isOwnProfile ? emit('open-banner-modal') : null"
 				:role="isOwnProfile ? 'button' : undefined"
@@ -431,6 +432,7 @@ const isVideoUrl = (url: string | null): boolean => {
 			<div v-if="isLoading" class="absolute -bottom-8 left-4 md:left-8 z-20 w-18 h-18 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full border-[3px] border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
 			<div 
 				v-else
+				data-onboard="profile-avatar"
 				class="absolute -bottom-8 left-4 md:left-8 md:-bottom-10 z-20"
 				@click.stop="isOwnProfile ? emit('open-avatar-modal') : null"
 				:role="isOwnProfile ? 'button' : undefined"
@@ -453,7 +455,7 @@ const isVideoUrl = (url: string | null): boolean => {
 		<!-- Details Section -->
 		<div class="mt-8 md:mt-12 flex flex-col items-start w-full px-1 md:px-8">
 			<!-- Name & Role -->
-			<div class="space-y-1.5 w-full">
+			<div class="space-y-1.5 w-full" data-onboard="profile-bio">
 				<template v-if="isLoading">
 					<div class="h-8 w-48 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
 					<div class="h-4 w-36 bg-slate-200 dark:bg-slate-800 rounded animate-pulse mt-2"></div>
@@ -562,7 +564,7 @@ const isVideoUrl = (url: string | null): boolean => {
 				<div class="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
 				<div class="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
 			</div>
-			<div v-else class="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500 dark:text-slate-400 mt-4 pt-3.5 border-t border-slate-150 dark:border-slate-800/80 w-full">
+			<div v-else data-onboard="profile-socials" class="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500 dark:text-slate-400 mt-4 pt-3.5 border-t border-slate-150 dark:border-slate-800/80 w-full">
 				<div 
 					@click="isOwnProfile ? emit('open-location-only-modal') : null"
 					class="flex items-center gap-1.5"
