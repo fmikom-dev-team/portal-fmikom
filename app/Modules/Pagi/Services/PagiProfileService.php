@@ -200,19 +200,8 @@ class PagiProfileService
                 'pagi_username' => $firstFollower->pagi_username,
                 'foto_path' => $this->resolveAssetPath($firstFollower->foto_path),
             ] : null,
-            'certificates' => $this->resolveCertificateLogos(
-                array_key_exists('certificates', $user->metadata ?? [])
-                    ? $user->metadata['certificates']
-                    : [
-                        ['id' => 1, 'title' => 'Google UX Design Professional Certificate', 'issuer' => 'Coursera', 'date' => 'Januari 2026', 'credentialId' => 'G-18A8B2C3'],
-                        ['id' => 2, 'title' => 'Figma UI/UX Advanced Design Course', 'issuer' => 'FMIKOM Academy', 'date' => 'Desember 2025', 'credentialId' => 'FM-882143'],
-                    ]
-            ),
-            'educations' => array_key_exists('educations', $user->metadata ?? [])
-                ? $user->metadata['educations']
-                : [
-                    ['id' => 1, 'level' => 'S1', 'institution' => 'Fakultas Ilmu Komputer, Universitas Amikom Purwokerto', 'major' => 'Teknologi Informasi', 'start_date' => '2022', 'end_date' => 'Present', 'description' => 'IPK 3.85. Aktif dalam organisasi mahasiswa dan riset AI.'],
-                ],
+            'certificates' => $this->resolveCertificateLogos($user->metadata['certificates'] ?? []),
+            'educations' => $user->metadata['educations'] ?? [],
         ];
 
         return [
