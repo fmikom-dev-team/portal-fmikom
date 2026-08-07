@@ -272,8 +272,14 @@ const targetPos = ref<{
 
 const getElementPosition = (selector: string) => {
 	if (typeof window === "undefined") return null;
-	const el = document.querySelector(selector) as HTMLElement | null;
-	if (!el) return null;
+	const elements = Array.from(document.querySelectorAll(selector)) as HTMLElement[];
+	if (elements.length === 0) return null;
+
+	const el = elements.find((e) => {
+		const rect = e.getBoundingClientRect();
+		return rect.width > 0 && rect.height > 0 && getComputedStyle(e).display !== 'none' && getComputedStyle(e).visibility !== 'hidden';
+	}) || elements[0];
+
 	const rect = el.getBoundingClientRect();
 	return {
 		top: rect.top,
@@ -316,6 +322,14 @@ const cleanupPositionListeners = () => {
 	resizeObserver = null;
 };
 
+const isMobile = ref(typeof window !== "undefined" ? window.innerWidth < 640 : false);
+
+const updateIsMobile = () => {
+	if (typeof window !== "undefined") {
+		isMobile.value = window.innerWidth < 640;
+	}
+};
+
 watch(activeCoachmarkId, (newVal) => {
 	if (newVal && activeStep.value) {
 		nextTick(() => {
@@ -326,13 +340,13 @@ watch(activeCoachmarkId, (newVal) => {
 				targetEl.scrollIntoView({
 					behavior: "smooth",
 					block: "center",
-					inline: "nearest",
+					inline: "center",
 				});
 			}
 			setTimeout(() => {
 				updateTargetPosition();
 				setupPositionListeners();
-			}, 300);
+			}, 350);
 		});
 	} else {
 		cleanupPositionListeners();
@@ -365,6 +379,8 @@ const openTourManually = () => {
 
 onMounted(() => {
 	if (typeof window === "undefined") return;
+	updateIsMobile();
+	window.addEventListener("resize", updateIsMobile);
 	window.addEventListener("keydown", handleKeyDown);
 	window.addEventListener("pagi:open_onboarding", openTourManually);
 	checkStorageState();
@@ -372,6 +388,7 @@ onMounted(() => {
 
 onUnmounted(() => {
 	if (typeof window === "undefined") return;
+	window.removeEventListener("resize", updateIsMobile);
 	window.removeEventListener("keydown", handleKeyDown);
 	window.removeEventListener("pagi:open_onboarding", openTourManually);
 	cleanupPositionListeners();
@@ -451,32 +468,46 @@ const dismissOnboarding = () => {
 	activeCoachmarkId.value = null;
 };
 
-// Compute dynamic position for coachmark popover card safely
-const cardStyle = computed(() => {
-	if (!targetPos.value) return {};
+// Compute dynamic position & pointer arrow position for coachmark popover card
+const popoverConfig = computed(() => {
+	if (!targetPos.value) return { style: {}, arrowDir: "up", arrowLeft: 50 };
+
 	const { top, left, width, height } = targetPos.value;
 	const winWidth = typeof window !== "undefined" ? window.innerWidth : 360;
 	const winHeight = typeof window !== "undefined" ? window.innerHeight : 640;
-	const cardWidth = Math.min(340, winWidth - 32);
-	const cardHeight = 190;
-	const margin = 16;
+
+	const cardWidth = Math.min(290, winWidth - 24);
+	const cardHeight = 165;
+	const margin = 14;
+
+	const elementCenterX = left + width / 2;
+
+	let calcLeft = elementCenterX - cardWidth / 2;
+	calcLeft = Math.max(12, Math.min(calcLeft, winWidth - cardWidth - 12));
+
+	// Calculate arrow pointer X offset inside the card relative to target element center
+	const arrowLeft = Math.max(20, Math.min(elementCenterX - calcLeft, cardWidth - 20));
 
 	let calcTop = top + height + margin;
-	let calcLeft = left + width / 2 - cardWidth / 2;
+	let arrowDir: "up" | "down" = "up";
 
-	// Viewport bounds handling
-	calcLeft = Math.max(
-		margin,
-		Math.min(calcLeft, winWidth - cardWidth - margin),
-	);
-	if (calcTop + cardHeight > winHeight - margin) {
-		calcTop = Math.max(margin, top - cardHeight - margin);
+	// Place card ABOVE element ONLY if placing below would overflow screen bottom OR element is in lower 35% of viewport
+	if (top > winHeight * 0.65 || calcTop + cardHeight > winHeight - 12) {
+		calcTop = top - cardHeight - margin;
+		arrowDir = "down";
 	}
 
+	// Clamp calcTop safely within viewport top/bottom margins
+	calcTop = Math.max(12, Math.min(calcTop, winHeight - cardHeight - 12));
+
 	return {
-		top: `${calcTop}px`,
-		left: `${calcLeft}px`,
-		width: `${cardWidth}px`,
+		style: {
+			top: `${calcTop}px`,
+			left: `${calcLeft}px`,
+			width: `${cardWidth}px`,
+		},
+		arrowDir,
+		arrowLeft,
 	};
 });
 </script>
@@ -703,69 +734,102 @@ const cardStyle = computed(() => {
 				<!-- Spotlight Highlight Border -->
 				<div
 					v-if="targetPos"
-					class="absolute border-2 border-indigo-500 rounded-xl transition-all duration-300 pointer-events-none"
+					class="absolute border-2 border-indigo-500 rounded-xl transition-all duration-300 pointer-events-none z-[101] animate-pulse"
 					:style="{
-						top: `${targetPos.top - 6}px`,
-						left: `${targetPos.left - 6}px`,
-						width: `${targetPos.width + 12}px`,
-						height: `${targetPos.height + 12}px`,
-						boxShadow: '0 0 0 4px rgba(99, 102, 241, 0.3), 0 0 24px rgba(99, 102, 241, 0.5)'
+						top: `${targetPos.top - 5}px`,
+						left: `${targetPos.left - 5}px`,
+						width: `${targetPos.width + 10}px`,
+						height: `${targetPos.height + 10}px`,
+						boxShadow: '0 0 0 4px rgba(99, 102, 241, 0.35), 0 0 25px rgba(99, 102, 241, 0.6)'
 					}"
 				></div>
 
-				<!-- Coachmark Popover Card -->
+				<!-- Precise Icon-Anchored Coachmark Popover Card -->
 				<div
 					v-if="targetPos"
-					class="absolute z-[101] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4 shadow-2xl max-w-xs pointer-events-auto transition-all duration-300 select-none"
-					:style="cardStyle"
+					class="fixed z-[102] bg-white/98 dark:bg-zinc-900/98 backdrop-blur-2xl border border-slate-200/90 dark:border-zinc-800 rounded-2xl p-4 shadow-[0_12px_40px_rgba(0,0,0,0.3)] pointer-events-auto transition-all duration-300 select-none"
+					:style="popoverConfig.style"
 				>
-					<div class="flex items-center justify-between mb-2">
-						<span class="text-[10px] font-extrabold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
-							Langkah {{ activeStepIndex + 1 }} dari {{ totalSteps }}
-						</span>
-						<button
-							@click="activeCoachmarkId = null"
-							class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
-							aria-label="Tutup"
-						>
-							<X class="h-3.5 w-3.5" />
-						</button>
+					<!-- Dynamic Directional Pointer Arrow -->
+					<div
+						v-if="popoverConfig.arrowDir === 'up'"
+						class="absolute -top-2 w-3.5 h-3.5 bg-white dark:bg-zinc-900 border-t border-l border-slate-200/90 dark:border-zinc-800 rotate-45 z-10 transition-all duration-300"
+						:style="{ left: `${popoverConfig.arrowLeft}px`, transform: 'translateX(-50%) rotate(45deg)' }"
+					></div>
+					<div
+						v-else
+						class="absolute -bottom-2 w-3.5 h-3.5 bg-white dark:bg-zinc-900 border-b border-r border-slate-200/90 dark:border-zinc-800 rotate-45 z-10 transition-all duration-300"
+						:style="{ left: `${popoverConfig.arrowLeft}px`, transform: 'translateX(-50%) rotate(45deg)' }"
+					></div>
+
+					<!-- Header Stepper Info & Segmented Progress Bar -->
+					<div class="space-y-1.5 mb-2.5">
+						<div class="flex items-center justify-between gap-2">
+							<span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/60">
+								Langkah {{ activeStepIndex + 1 }} dari {{ totalSteps }}
+							</span>
+
+							<button
+								@click="activeCoachmarkId = null"
+								class="p-0.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+								aria-label="Tutup"
+							>
+								<X class="h-3.5 w-3.5" />
+							</button>
+						</div>
+
+						<!-- Segmented Progress Indicators -->
+						<div class="flex items-center gap-1 w-full pt-0.5">
+							<div
+								v-for="(st, idx) in steps"
+								:key="st.id"
+								class="h-1 flex-1 rounded-full transition-all duration-300"
+								:class="[
+									completedSteps.has(st.id)
+										? 'bg-indigo-600 dark:bg-indigo-500'
+										: idx === activeStepIndex
+										? 'bg-indigo-400 dark:bg-indigo-400 animate-pulse'
+										: 'bg-slate-100 dark:bg-zinc-800'
+								]"
+							></div>
+						</div>
 					</div>
 
-					<h4 class="font-bold text-sm text-slate-900 dark:text-slate-100 mb-1 leading-snug">
+					<h4 class="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-slate-50 mb-1 leading-snug tracking-tight">
 						{{ activeStep.title }}
 					</h4>
 
-					<p v-if="activeStep.description" class="text-xs text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">
+					<p v-if="activeStep.description" class="text-[11px] sm:text-xs text-slate-600 dark:text-zinc-300 mb-3.5 leading-relaxed">
 						{{ activeStep.description }}
 					</p>
 
-					<div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
-						<div class="flex gap-1">
+					<!-- Action Controls -->
+					<div class="flex items-center justify-between gap-2 pt-2.5 border-t border-slate-100 dark:border-zinc-800/80">
+						<div class="flex items-center gap-1">
 							<button
 								@click="prevCoachmark"
 								:disabled="activeStepIndex <= 0"
-								class="p-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+								class="p-1 rounded-lg border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
 								title="Sebelumnya"
 							>
-								<ChevronLeft class="h-4 w-4" />
+								<ChevronLeft class="h-3.5 w-3.5" />
 							</button>
 							<button
 								@click="nextCoachmark"
 								:disabled="activeStepIndex >= totalSteps - 1"
-								class="p-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+								class="p-1 rounded-lg border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
 								title="Selanjutnya"
 							>
-								<ChevronRight class="h-4 w-4" />
+								<ChevronRight class="h-3.5 w-3.5" />
 							</button>
 						</div>
 
 						<button
 							@click="markStepComplete(activeStep.id)"
-							class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+							class="px-3 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs flex items-center gap-1 shadow-sm transition-all cursor-pointer"
 						>
 							<Check class="h-3.5 w-3.5" />
-							Selesai
+							<span>{{ activeStepIndex >= totalSteps - 1 ? 'Selesai' : 'Lanjut' }}</span>
 						</button>
 					</div>
 				</div>

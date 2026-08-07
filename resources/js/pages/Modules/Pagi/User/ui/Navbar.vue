@@ -473,7 +473,7 @@ onUnmounted(() => {
 					<div v-if="$page.props.auth?.user" class="hidden md:block h-6 w-px bg-slate-200 dark:bg-zinc-800"></div>
 
 					<!-- Profile Info Group (MOBILE ONLY) -->
-					<div v-if="$page.props.auth?.user" class="md:hidden relative shrink-0" @click.stop="hasOpenedMobileProfile = true; isProfileModalOpen = !isProfileModalOpen">
+					<div v-if="$page.props.auth?.user" data-onboard="pagi-profile" class="md:hidden relative shrink-0" @click.stop="hasOpenedMobileProfile = true; isProfileModalOpen = !isProfileModalOpen">
 						<div
 							class="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-all duration-300 group"
 						>
@@ -633,21 +633,21 @@ onUnmounted(() => {
 		<!-- Modern Premium Bottom Navbar for Mobile Features (Behance/Instagram style) -->
 		<div v-if="$page.props.auth?.user && !$page.url.startsWith('/pagi/messages') && !$page.url.startsWith('/pagi/editor')" class="fixed bottom-0 inset-x-0 h-16 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-xl border-t border-slate-200/80 dark:border-zinc-850 flex items-center justify-between px-2 z-50 md:hidden shadow-[0_-4px_24px_rgba(0,0,0,0.04)] select-none" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
 			<!-- 1. Explore (main dashboard) -->
-			<Link href="/pagi" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1"
+			<Link href="/pagi" data-onboard="pagi-feed" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1"
 				:class="[ $page.url === '/pagi' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white' ]">
 				<LayoutGrid class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">Explore</span>
 			</Link>
 
 			<!-- 2. Gallery -->
-			<Link href="/pagi/gallery" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1"
+			<Link href="/pagi/gallery" data-onboard="pagi-gallery" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1"
 				:class="[ $page.url.startsWith('/pagi/gallery') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white' ]">
 				<Image class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">Gallery</span>
 			</Link>
 
 			<!-- 3. Work (FAB in the middle!) -->
-			<button v-if="currentRoleSlug === 'mahasiswa'" @click="showPublishModal = true" class="flex flex-col items-center justify-center -mt-5 shrink-0 transition-transform active:scale-95 flex-1 bg-transparent border-none cursor-pointer">
+			<button v-if="currentRoleSlug === 'mahasiswa'" data-onboard="pagi-create-work" @click="showPublishModal = true" class="flex flex-col items-center justify-center -mt-5 shrink-0 transition-transform active:scale-95 flex-1 bg-transparent border-none cursor-pointer">
 				<div class="h-11 w-11 rounded-full bg-slate-950 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center shadow-lg border-2 border-white dark:border-zinc-900 hover:bg-indigo-600 dark:hover:bg-indigo-500">
 					<Plus class="w-5 h-5 font-black" />
 				</div>
@@ -655,7 +655,7 @@ onUnmounted(() => {
 			</button>
 
 			<!-- 4. People -->
-			<Link href="/pagi/people" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1"
+			<Link href="/pagi/people" data-onboard="pagi-people" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1"
 				:class="[ $page.url.startsWith('/pagi/people') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white' ]">
 				<Users class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">People</span>
@@ -665,6 +665,7 @@ onUnmounted(() => {
 			<Link 
 				v-if="currentRoleSlug === 'mahasiswa' || currentRoleSlug === 'alumni'"
 				href="/pagi/cv" 
+				data-onboard="pagi-cv"
 				class="flex flex-col items-center justify-center gap-1 transition-colors flex-1"
 				:class="[ $page.url.startsWith('/pagi/cv') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white' ]"
 			>

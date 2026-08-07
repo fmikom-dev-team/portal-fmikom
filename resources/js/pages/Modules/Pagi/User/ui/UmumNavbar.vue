@@ -442,7 +442,7 @@ onUnmounted(() => {
 					<div v-if="$page.props.auth?.user" class="hidden md:block h-6 w-px bg-slate-200 dark:bg-zinc-800"></div>
 
 					<!-- Profile Info Group (MOBILE ONLY) -->
-					<div v-if="$page.props.auth?.user" class="md:hidden relative shrink-0" @click.stop="isProfileModalOpen = !isProfileModalOpen">
+					<div v-if="$page.props.auth?.user" data-onboard="pagi-profile" class="md:hidden relative shrink-0" @click.stop="isProfileModalOpen = !isProfileModalOpen">
 						<div class="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-all duration-300 group">
 							<div class="h-9 w-9 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shrink-0 ring-offset-white dark:ring-offset-zinc-950 group-hover:ring-2 ring-indigo-500/50 transition-all duration-300 shadow-xs">
 								<img v-if="user.foto_path && !imageError && formatStorageUrl(user.foto_path)" :src="formatStorageUrl(user.foto_path)!" :alt="user.name" @error="handleImageError" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-355" />
@@ -628,28 +628,28 @@ onUnmounted(() => {
 
 		<!-- Bottom Navbar Mobile -->
 		<div v-if="$page.props.auth?.user && !$page.url.startsWith('/pagi/messages')" class="fixed bottom-0 inset-x-0 h-16 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-xl border-t border-slate-200/80 dark:border-zinc-850 flex items-center justify-between px-2 z-50 md:hidden shadow-[0_-4px_24px_rgba(0,0,0,0.04)] select-none" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
-			<Link href="/pagi" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url === '/pagi' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
+			<Link href="/pagi" data-onboard="pagi-feed" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url === '/pagi' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
 				<LayoutGrid class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">Explore</span>
 			</Link>
 
-			<Link href="/pagi/gallery" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url.startsWith('/pagi/gallery') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
+			<Link href="/pagi/gallery" data-onboard="pagi-gallery" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url.startsWith('/pagi/gallery') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
 				<Image class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">Gallery</span>
 			</Link>
 
-			<Link href="/pagi/people" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url.startsWith('/pagi/people') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
+			<Link href="/pagi/people" data-onboard="pagi-people" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url.startsWith('/pagi/people') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
 				<Users class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">People</span>
 			</Link>
 
-			<Link v-if="currentRoleSlug === 'alumni' || currentRoleSlug === 'mahasiswa'" href="/pagi/cv" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url.startsWith('/pagi/cv') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
+			<Link v-if="currentRoleSlug === 'alumni' || currentRoleSlug === 'mahasiswa'" href="/pagi/cv" data-onboard="pagi-cv" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url.startsWith('/pagi/cv') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
 				<FileText class="w-5 h-5 transition-transform active:scale-90" />
 				<span class="text-[9px] font-extrabold tracking-tight uppercase">CV</span>
 			</Link>
 
 			<!-- 4. Message / Pesan (Mobile bottom nav for Dosen/Mitra/Umum) -->
-			<Link href="/pagi/messages" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url.startsWith('/pagi/messages') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
+			<Link href="/pagi/messages" data-onboard="pagi-messages" class="flex flex-col items-center justify-center gap-1 transition-colors flex-1" :class="[ $page.url.startsWith('/pagi/messages') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-zinc-450 dark:hover:text-zinc-200' ]">
 				<div class="relative flex flex-col items-center justify-center">
 					<MessageSquare class="w-5 h-5 transition-transform active:scale-90" />
 					<span v-if="unreadMessagesCount > 0" class="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-indigo-600 px-1 text-[8px] font-black text-white ring-2 ring-white dark:ring-zinc-950">
