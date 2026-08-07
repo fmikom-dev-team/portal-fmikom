@@ -1402,7 +1402,7 @@ class DashboardController extends Controller // NOSONAR
 
     public function clearNotifications(Request $request)
     {
-        /** @var \App\Models\User|null $user */
+        /** @var User|null $user */
         $user = $request->user();
         if ($user) {
             $user->notifications()->delete();
