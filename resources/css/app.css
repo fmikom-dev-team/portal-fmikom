@@ -695,7 +695,7 @@ body.wims-role-body.dark {
   z-index: 9999;
 }
 
-/* Modern responsive vue-sonner toaster styling: Desktop/Tablet = bottom-right, Mobile = top-right below header */
+/* Modern responsive vue-sonner toaster styling: Desktop/Tablet = bottom-right, Mobile = top-center below header */
 @media (min-width: 640px) {
 	[data-sonner-toaster] {
 		position: fixed !important;
@@ -711,12 +711,40 @@ body.wims-role-body.dark {
 @media (max-width: 639px) {
 	[data-sonner-toaster] {
 		position: fixed !important;
-		top: calc(env(safe-area-inset-top, 0px) + 64px) !important;
-		right: 16px !important;
+		top: calc(env(safe-area-inset-top, 0px) + 68px) !important;
+		left: 12px !important;
+		right: 12px !important;
 		bottom: auto !important;
-		left: auto !important;
+		width: calc(100vw - 24px) !important;
+		max-width: calc(100vw - 24px) !important;
 		z-index: 999999 !important;
 		pointer-events: none !important;
+		display: flex !important;
+		flex-direction: column !important;
+		align-items: center !important;
+	}
+
+	[data-sonner-toast] {
+		width: 100% !important;
+		max-width: 100% !important;
+		box-sizing: border-box !important;
+		margin-left: 0 !important;
+		margin-right: 0 !important;
+	}
+
+	[data-sonner-toast] [data-content] {
+		width: 100% !important;
+		min-width: 0 !important;
+		word-break: break-word !important;
+		overflow-wrap: anywhere !important;
+		white-space: normal !important;
+	}
+
+	[data-sonner-toast] [data-title],
+	[data-sonner-toast] [data-description] {
+		word-break: break-word !important;
+		overflow-wrap: anywhere !important;
+		white-space: normal !important;
 	}
 }
 
