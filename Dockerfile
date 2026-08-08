@@ -94,8 +94,8 @@ RUN chmod +x /usr/local/bin/entrypoint.sh && \
 HEALTHCHECK --interval=5s --timeout=3s --start-period=45s --retries=3 \
   CMD curl -f http://localhost:80/up || exit 1
 
-# Expose HTTP port
-EXPOSE 80
+# Expose HTTP and Reverb WebSocket ports
+EXPOSE 80 8080
 
 # Configure entrypoint and default start command
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
