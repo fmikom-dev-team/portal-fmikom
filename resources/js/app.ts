@@ -92,9 +92,9 @@ function initEcho(reverbProps?: { key?: string; host?: string; port?: string | n
 			import.meta.env.VITE_REVERB_HOST ||
 			(!isLocal && isHttps ? "vpsmikom.unugha.id" : globalThis.location.hostname);
 		const wsPort =
-			reverbProps?.port || (isHttps && !isLocal ? undefined : import.meta.env.VITE_REVERB_PORT || 8080);
+			reverbProps?.port || (isHttps && !isLocal ? 443 : import.meta.env.VITE_REVERB_PORT || 8080);
 		const wssPort =
-			reverbProps?.port || (isHttps && !isLocal ? undefined : import.meta.env.VITE_REVERB_PORT || 8080);
+			reverbProps?.port || (isHttps && !isLocal ? 443 : import.meta.env.VITE_REVERB_PORT || 8080);
 		const forceTLS = reverbProps?.scheme === "https" || isHttps || import.meta.env.VITE_REVERB_SCHEME === "https";
 		const reverbAppKey = reverbProps?.key || import.meta.env.VITE_REVERB_APP_KEY;
 
