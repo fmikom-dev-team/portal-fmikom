@@ -96,6 +96,10 @@ class SecurityHeaders
             'https://nominatim.openstreetmap.org',
             "ws://{$host}",
             "wss://{$host}",
+            'wss://vpsmikom.unugha.id',
+            'https://vpsmikom.unugha.id',
+            'wss://api.suntree.my.id',
+            'https://api.suntree.my.id',
         ];
 
         // Dynamically add Reverb configuration to connect-src
