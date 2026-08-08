@@ -59,6 +59,7 @@
                 $raw['brand_favicon'] = $raw['brand_favicon'] ?? '/asset/brand-logo.webp';
                 $raw['seo_meta_title'] = $raw['seo_meta_title'] ?? 'FMIKOM Portal — Academic & Creative Network';
                 $raw['seo_meta_description'] = $raw['seo_meta_description'] ?? 'Tempat berbagi karya, portofolio, dan kolaborasi mahasiswa dan creator Fakultas Ilmu Komputer.';
+                $raw['google_site_verification'] = $raw['google_site_verification'] ?? 'omAURovnT0FAvkJ8n2oo_xqQEvPgdNftZZUfWi4DrF4';
                 return $raw;
             });
             $brandFavicon = $portalSettings['brand_favicon'] ?? '/asset/brand-logo.webp';
@@ -78,6 +79,7 @@
         <meta name="mobile-web-app-capable" content="yes">
 
         <!-- SEO Meta Tags -->
+        <meta name="google-site-verification" content="{{ $portalSettings['google_site_verification'] ?? 'omAURovnT0FAvkJ8n2oo_xqQEvPgdNftZZUfWi4DrF4' }}">
         <meta name="description" content="{{ $metaDescription ?? $defaultDescription }}">
         
         <!-- Open Graph / Facebook / WhatsApp Share Link Preview -->
