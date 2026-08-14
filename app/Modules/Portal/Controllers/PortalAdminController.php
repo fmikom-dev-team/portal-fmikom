@@ -77,7 +77,9 @@ class PortalAdminController extends Controller
             'show_alumni' => 'nullable|string',
             'testimonials_title' => 'nullable|string',
             'testimonials_subtitle' => 'nullable|string',
-            'testimonials' => 'nullable|string',
+            // Reject base64-embedded data URLs in testimonials JSON to prevent DB overflow.
+            // Avatars must be uploaded separately as testimonial_avatar_files[{id}].
+            'testimonials' => ['nullable', 'string', 'max:100000', 'not_regex:/data:[a-z]+\/[a-z]+;base64,/i'],
             'primary_color' => 'nullable|string',
             'benefits_title' => 'nullable|string',
             'benefits_subtitle' => 'nullable|string',
@@ -91,8 +93,9 @@ class PortalAdminController extends Controller
             'hero_gallery_files.*' => 'file|image|mimes:png,jpeg,jpg,webp|max:5120',
             'partner_files' => 'nullable|array',
             'partner_files.*' => 'file|image|mimes:png,jpeg,jpg,webp,svg|max:5120',
+            // Testimonial avatar files keyed by testimonial ID (e.g. testimonial_avatar_files[1786675522796])
             'testimonial_avatar_files' => 'nullable|array',
-            'testimonial_avatar_files.*' => 'file|image|mimes:png,jpeg,jpg,webp,svg|max:5120',
+            'testimonial_avatar_files.*' => 'file|image|mimes:png,jpeg,jpg,webp|max:3072',
         ]);
 
         foreach ($validated as $key => $value) {
@@ -155,6 +158,54 @@ class PortalAdminController extends Controller
                 }
             }
             PortalSetting::updateOrCreate(['key' => 'partners'], ['value' => json_encode($partners)]);
+        }
+
+        // Handle Testimonial Avatar uploads — keyed by testimonial ID
+        // e.g. testimonial_avatar_files[1786675522796] → File
+        // This replaces the broken base64-inline approach where avatars were
+        // embedded in the testimonials JSON, causing TEXT column overflow.
+        if ($request->hasFile('testimonial_avatar_files')) {
+            $testimonials = json_decode(
+                PortalSetting::where('key', 'testimonials')->value('value') ?: '[]',
+                true
+            ) ?: [];
+
+            // Index testimonials by their ID for fast lookup
+            $testimonialsById = [];
+            foreach ($testimonials as $index => $testimonial) {
+                if (isset($testimonial['id'])) {
+                    $testimonialsById[$testimonial['id']] = $index;
+                }
+            }
+
+            foreach ($request->file('testimonial_avatar_files') as $testimonialId => $file) {
+                $path = $this->compressAndSaveImage($file, 'portal/testimonials', 300, 300);
+                if (! $path) {
+                    continue;
+                }
+
+                $newUrl = '/storage/'.$path;
+
+                if (isset($testimonialsById[$testimonialId])) {
+                    $idx = $testimonialsById[$testimonialId];
+
+                    // Delete old file from storage if it was a stored file (not a URL)
+                    $oldAvatar = $testimonials[$idx]['avatar'] ?? null;
+                    if ($oldAvatar && str_starts_with($oldAvatar, '/storage/')) {
+                        $oldFilePath = str_replace('/storage/', '', $oldAvatar);
+                        if (Storage::disk('public')->exists($oldFilePath)) {
+                            Storage::disk('public')->delete($oldFilePath);
+                        }
+                    }
+
+                    $testimonials[$idx]['avatar'] = $newUrl;
+                }
+            }
+
+            PortalSetting::updateOrCreate(
+                ['key' => 'testimonials'],
+                ['value' => json_encode(array_values($testimonials))]
+            );
         }
 
         Cache::forget('portal_settings');

@@ -381,11 +381,30 @@ const testimonialItemForm = reactive({
 	name: "",
 	role: "",
 	quote: "",
+	// avatar holds either: a remote URL (https://...), a storage URL (/storage/...),
+	// or a temporary blob URL (blob:...) for local preview only.
+	// blob URLs are NEVER sent to the server — only the actual File is uploaded.
 	avatar: "",
 	theme: "light" as "light" | "dark",
 });
 
+// Map from testimonial ID → File object for pending avatar uploads.
+// Files here will be sent as testimonial_avatar_files[{id}] on submit.
+const pendingAvatarFiles = ref<Map<string, File>>(new Map());
+
+// Track active blob URLs so we can revoke them and prevent memory leaks.
+const activeBlobUrls = ref<Set<string>>(new Set());
+
+const revokeBlobUrl = (url: string) => {
+	if (url.startsWith('blob:') && activeBlobUrls.value.has(url)) {
+		URL.revokeObjectURL(url);
+		activeBlobUrls.value.delete(url);
+	}
+};
+
 const resetTestimonialItemForm = () => {
+	// Revoke temporary blob URL to free browser memory
+	revokeBlobUrl(testimonialItemForm.avatar);
 	testimonialItemForm.name = "";
 	testimonialItemForm.role = "";
 	testimonialItemForm.quote = "";
@@ -404,9 +423,12 @@ const startAddTestimonialItem = () => {
 const startEditTestimonialItem = (index: number) => {
 	const item = form.testimonials[index];
 	if (!item) return;
+	// Revoke any previous blob URL before loading another
+	revokeBlobUrl(testimonialItemForm.avatar);
 	testimonialItemForm.name = item.name || "";
 	testimonialItemForm.role = item.role || "";
 	testimonialItemForm.quote = item.quote || "";
+	// Show existing avatar (storage URL or dicebear URL); no base64 stored
 	testimonialItemForm.avatar = item.avatar || "";
 	testimonialItemForm.theme = item.theme === "dark" ? "dark" : "light";
 	isEditingTestimonialItem.value = true;
@@ -419,14 +441,25 @@ const saveTestimonialItem = () => {
 		return;
 	}
 
+	const testimonialId = editingTestimonialIndex.value !== null && form.testimonials[editingTestimonialIndex.value]?.id
+		? form.testimonials[editingTestimonialIndex.value].id
+		: String(Date.now());
+
+	// Determine avatar value for the saved item:
+	// - If it's a blob URL → it means user just uploaded a new file.
+	//   We keep the blob URL in the item for local preview, and the actual
+	//   File object is already staged in pendingAvatarFiles.
+	// - If it's a remote/storage URL → keep as-is.
+	// - If empty → use dicebear fallback.
+	const avatarValue = testimonialItemForm.avatar.trim()
+		|| `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(testimonialItemForm.name.trim())}`;
+
 	const newItem = {
-		id: editingTestimonialIndex.value !== null && form.testimonials[editingTestimonialIndex.value]?.id
-			? form.testimonials[editingTestimonialIndex.value].id
-			: String(Date.now()),
+		id: testimonialId,
 		name: testimonialItemForm.name.trim(),
 		role: testimonialItemForm.role.trim() || "Mahasiswa / Alumni",
 		quote: testimonialItemForm.quote.trim(),
-		avatar: testimonialItemForm.avatar.trim() || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(testimonialItemForm.name.trim())}`,
+		avatar: avatarValue,
 		theme: testimonialItemForm.theme,
 	};
 
@@ -434,6 +467,18 @@ const saveTestimonialItem = () => {
 		form.testimonials[editingTestimonialIndex.value] = newItem;
 	} else {
 		form.testimonials.push(newItem);
+	}
+
+	// Re-key pendingAvatarFiles: handleAvatarUpload may have staged the file under a
+	// temporary timestamp ID. Now that the final testimonialId is resolved, move
+	// the entry so the server receives it keyed by the correct ID on submit.
+	const pendingId = (testimonialItemForm as any)._pendingAvatarId as string | undefined;
+	const pendingFile = (testimonialItemForm as any)._pendingAvatarFile as File | undefined;
+	if (pendingFile) {
+		if (pendingId && pendingId !== testimonialId) {
+			pendingAvatarFiles.value.delete(pendingId);
+		}
+		pendingAvatarFiles.value.set(testimonialId, pendingFile);
 	}
 
 	resetTestimonialItemForm();
@@ -460,14 +505,31 @@ const handleAvatarUpload = (event: Event) => {
 	const target = event.target as HTMLInputElement;
 	if (target.files && target.files[0]) {
 		const file = target.files[0];
-		const reader = new FileReader();
-		reader.onload = (e) => {
-			if (e.target?.result) {
-				testimonialItemForm.avatar = e.target.result as string;
-			}
-		};
-		reader.readAsDataURL(file);
+		const testimonialId = editingTestimonialIndex.value !== null && form.testimonials[editingTestimonialIndex.value]?.id
+			? form.testimonials[editingTestimonialIndex.value].id
+			: String(Date.now());
+
+		// Revoke old blob URL if exists to free memory
+		revokeBlobUrl(testimonialItemForm.avatar);
+
+		// Create a local blob URL for preview only — this is NEVER sent to server
+		const blobUrl = URL.createObjectURL(file);
+		activeBlobUrls.value.add(blobUrl);
+		testimonialItemForm.avatar = blobUrl;
+
+		// Stage the actual File object for upload on submit, keyed by testimonial ID
+		pendingAvatarFiles.value.set(testimonialId, file);
+
+		// Store the testimonialId on the form so saveTestimonialItem can use it
+		// We piggyback on id resolution: if editing, use existing id; if new, use timestamp
+		// The key in pendingAvatarFiles is updated in saveTestimonialItem if needed
+		// Store the pending id for the current upload so saveTestimonialItem resolves correctly
+		(testimonialItemForm as any)._pendingAvatarId = testimonialId;
+		// Store File reference so we can re-key it on save if this is a new testimonial
+		(testimonialItemForm as any)._pendingAvatarFile = file;
 	}
+	// Reset input value so same file can be selected again if needed
+	if (target) target.value = "";
 };
 
 const submit = () => {
@@ -490,7 +552,16 @@ const submit = () => {
 	formData.append("show_alumni", form.show_alumni ? "1" : "0");
 	formData.append("testimonials_title", form.testimonials_title);
 	formData.append("testimonials_subtitle", form.testimonials_subtitle);
-	formData.append("testimonials", JSON.stringify(form.testimonials));
+
+	// Build a clean version of testimonials for JSON serialization:
+	// Replace any blob:// URLs with empty string so server doesn't receive blobs.
+	// The actual File objects are appended separately as testimonial_avatar_files[{id}].
+	const cleanTestimonials = form.testimonials.map((t: any) => ({
+		...t,
+		avatar: t.avatar?.startsWith('blob:') ? '' : (t.avatar || ''),
+	}));
+	formData.append("testimonials", JSON.stringify(cleanTestimonials));
+
 	formData.append("benefits_title", form.benefits_title);
 	formData.append("benefits_subtitle", form.benefits_subtitle);
 	formData.append("benefit_1_title", form.benefit_1_title);
@@ -505,6 +576,12 @@ const submit = () => {
 
 	// Append new partner files
 	newPartnerFiles.value.forEach((f) => { formData.append("partner_files[]", f); });
+
+	// Append pending testimonial avatar files keyed by testimonial ID.
+	// Server will upload to storage/portal/testimonials/ and update the URL in DB.
+	pendingAvatarFiles.value.forEach((file, testimonialId) => {
+		formData.append(`testimonial_avatar_files[${testimonialId}]`, file);
+	});
 
 	// Append removals
 	form.remove_hero_gallery.forEach((url) => { formData.append("remove_hero_gallery[]", url); });
@@ -525,6 +602,10 @@ const submit = () => {
 			newPartnerFilePreviews.value = [];
 			form.remove_hero_gallery = [];
 			form.remove_partners = [];
+			// Revoke all pending blob URLs now that upload is complete
+			activeBlobUrls.value.forEach(url => URL.revokeObjectURL(url));
+			activeBlobUrls.value.clear();
+			pendingAvatarFiles.value.clear();
 			closeEditModal();
 			setTimeout(() => (isSuccess.value = false), 3000);
 		},
