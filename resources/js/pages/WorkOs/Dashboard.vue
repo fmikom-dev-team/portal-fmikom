@@ -245,6 +245,15 @@ const PAGE_REQUIRED_PROPS: Record<string, string[]> = {
 
 const loadedProps = ref<Record<string, boolean>>({});
 
+const activeSectionKey = computed(() => {
+	if (activePage.value.startsWith("authz.")) return "authz";
+	if (activePage.value.startsWith("auth.")) return "auth";
+	if (activePage.value.startsWith("audit-logs.")) return "audit-logs";
+	if (activePage.value.startsWith("organizations.")) return "organizations";
+	if (activePage.value.startsWith("users.")) return "users";
+	return activePage.value;
+});
+
 function isPropEmpty(propName: string): boolean {
 	const val = (props as any)[propName];
 	if (val === undefined || val === null) return true;
@@ -277,13 +286,17 @@ onMounted(() => {
 				"radarBlockedItems",
 				"auditStats",
 				"auditRecentEvents",
+				"roles",
+				"permissions",
+				"users",
+				"modules",
 			],
 		} as any);
-	}, 8000);
+	}, 5000);
 
-	// Mark initially loaded non-empty props as loaded
+	// Mark initially loaded props as loaded
 	Object.keys(props).forEach((key) => {
-		if (!isPropEmpty(key)) {
+		if ((props as any)[key] !== undefined && (props as any)[key] !== null) {
 			loadedProps.value[key] = true;
 		}
 	});
@@ -324,9 +337,7 @@ onMounted(() => {
 			onFinish: () => {
 				isPageLoading.value = false;
 				propsToLoad.forEach((p) => {
-					if (!isPropEmpty(p)) {
-						loadedProps.value[p] = true;
-					}
+					loadedProps.value[p] = true;
 				});
 			}
 		});
@@ -424,9 +435,7 @@ function navigate(page: string) {
 			onFinish: () => {
 				isPageLoading.value = false;
 				propsToLoad.forEach((p) => {
-					if (!isPropEmpty(p)) {
-						loadedProps.value[p] = true;
-					}
+					loadedProps.value[p] = true;
 				});
 			}
 		});
@@ -643,7 +652,7 @@ const activeLabel = computed(() => {
             <!-- Content Area (Only this panel reloads / shows skeleton) -->
             <div class="flex-1 h-full overflow-y-auto wos-scroll">
                 <Transition name="fade-slide">
-                    <div :key="activePage + '_' + isPageLoading" class="w-full h-full">
+                    <div :key="activeSectionKey" class="w-full h-full">
                         <!-- Shimmer Skeleton Loading Page -->
                         <div v-if="isPageLoading" class="px-8 pt-8 pb-12 space-y-6 w-full max-w-[1200px]" style="font-family: var(--wos-font)">
                     <!-- Title Skeleton -->

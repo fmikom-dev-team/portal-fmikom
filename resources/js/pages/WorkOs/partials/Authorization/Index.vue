@@ -53,7 +53,7 @@ const handleNavigation = (dest: string) => {
 </script>
 
 <template>
-    <div class="h-full w-full p-4 sm:p-8 lg:p-12 overflow-y-auto wos-scroll bg-white dark:bg-zinc-900">
+    <div class="w-full min-h-full p-4 sm:p-6 lg:p-8 bg-white dark:bg-zinc-900">
         <Overview v-if="currentTab === 'overview'" :stats="stats" :roles="roles ?? []" :permissions="permissions ?? []" :users="users ?? []" @navigate="handleNavigation" />
         <Roles v-else-if="currentTab === 'roles'" :roles="roles ?? []" :permissions="permissions ?? []" :search-query="searchQuery" @navigate="handleNavigation" />
         <Permissions v-else-if="currentTab === 'permissions'" :permissions="permissions ?? []" :search-query="searchQuery" @navigate="handleNavigation" />

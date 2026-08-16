@@ -33,6 +33,8 @@ import {
 	ref,
 	watch,
 } from "vue";
+import { showToast } from "@/composables/useGlobalToast";
+import PagiNavbar from "@/components/Modules/Pagi/PagiNavbar.vue";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getInitialsAvatar } from "@/composables/useInitials";
 import OptimizedImage from "../ui/OptimizedImage.vue";
@@ -186,13 +188,8 @@ const hideSuggestionsWithDelay = () => {
 };
 
 // Toast system
-const toasts = ref<Array<{ id: number; message: string; type: string }>>([]);
-const addToast = (message: string, type = "success") => {
-	const id = Date.now();
-	toasts.value.push({ id, message, type });
-	setTimeout(() => {
-		toasts.value = toasts.value.filter((t) => t.id !== id);
-	}, 3000);
+const addToast = (message: string, type: any = "success") => {
+	showToast(message, type);
 };
 
 // Three-dot menu
@@ -638,39 +635,7 @@ const handleLikeProject = async (p: any) => {
 			:is-loading="isLoadingModal"
 			@close="closeProjectModal" 
 			@select-portfolio="viewingProject = $event"
-		/>		<!-- TOAST ALERTS CONTAINER -->
-		<div class="fixed top-6 right-6 z-[10010] flex flex-col gap-3 max-w-xs pointer-events-none">
-			<TransitionGroup 
-				enter-active-class="transform transition duration-300 ease-out"
-				enter-from-class="translate-y-2 opacity-0 scale-95"
-				enter-to-class="translate-y-0 opacity-100 scale-100"
-				leave-active-class="transition duration-200 ease-in"
-				leave-from-class="opacity-100 scale-100"
-				leave-to-class="opacity-0 scale-95"
-			>
-				<div 
-					v-for="toast in toasts" 
-					:key="toast.id"
-					class="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800/80 flex items-start gap-3.5 shadow-[0_12px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)] bg-white/95 dark:bg-slate-900/95 border-l-4 pointer-events-auto select-none w-80 max-w-xs"
-					:class="[
-						toast.type === 'success' 
-							? 'border-l-emerald-500' 
-							: 'border-l-rose-500'
-					]"
-				>
-					<div class="shrink-0 mt-0.5">
-						<CheckCircle2 v-if="toast.type === 'success'" class="w-4 h-4 text-emerald-500" />
-						<AlertCircle v-else class="w-4 h-4 text-rose-500" />
-					</div>
-					<div class="flex-1 text-xs font-semibold leading-relaxed pr-1 text-slate-800 dark:text-zinc-100 text-left">
-						{{ toast.message }}
-					</div>
-					<button @click="toasts = toasts.filter(t => t.id !== toast.id)" class="text-slate-400 hover:text-slate-600 dark:text-zinc-400 dark:hover:text-white shrink-0 bg-transparent border-none cursor-pointer p-0.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-zinc-800/50 transition-colors flex items-center justify-center">
-						<X class="w-3.5 h-3.5" />
-					</button>
-				</div>
-			</TransitionGroup>
-		</div>
+		/>
 
 		<!-- SHARE MODAL -->
 		<Teleport to="body">

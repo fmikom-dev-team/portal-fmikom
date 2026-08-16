@@ -19,6 +19,7 @@ import {
 import { computed, onUnmounted, ref, watch } from "vue";
 import AvatarGroup, { type AvatarItem } from "@/components/ui/AvatarGroup.vue";
 import { formatStorageUrl, getInitialsAvatar } from "@/composables/useInitials";
+import { showToast } from "@/composables/useGlobalToast";
 import { usePagiRole } from "./composables/usePagiRole";
 import Navbar from "./ui/Navbar.vue";
 import OptimizedImage from "./ui/OptimizedImage.vue";
@@ -330,13 +331,8 @@ const openReportModal = (item: any, e: Event) => {
 	reportReason.value = "other";
 	reportDescription.value = "";
 };
-const toasts = ref<Array<{ id: number; message: string; type: string }>>([]);
-const addToast = (message: string, type = "success") => {
-	const id = Date.now();
-	toasts.value.push({ id, message, type });
-	setTimeout(() => {
-		toasts.value = toasts.value.filter((t) => t.id !== id);
-	}, 3000);
+const addToast = (message: string, type: any = "success") => {
+	showToast(message, type);
 };
 
 const submitReport = async () => {

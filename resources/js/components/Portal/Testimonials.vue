@@ -110,29 +110,35 @@ const col3 = computed(() => activeItems.value.filter((_, i) => i % 3 === 2));
                 </p>
             </div>
 
-            <!-- 3 Columns Grid (Masonry style) -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Dynamic Responsive Grid (1, 2, or 3+ Masonry Columns) -->
+            <div :class="[
+                'grid gap-6',
+                activeItems.length === 1 ? 'grid-cols-1 max-w-xl mx-auto' :
+                activeItems.length === 2 ? 'grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto' :
+                'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+            ]">
                 
                 <!-- Column 1 -->
-                <div class="flex flex-col gap-6">
+                <div v-if="col1.length > 0" class="flex flex-col gap-6">
                     <template v-for="(item, idx) in col1" :key="item.id || idx">
                         <!-- Dark Card -->
                         <div
                             v-if="item.theme === 'dark'"
-                            class="bg-[#18181b] text-white rounded-2xl p-8 flex flex-col justify-between shadow-xl ring-1 ring-white/10 transition-transform duration-300 hover:-translate-y-1 h-full"
+                            class="bg-[#0f172a] text-white rounded-3xl p-8 flex flex-col justify-between shadow-xl ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl h-full relative overflow-hidden group"
                         >
-                            <div class="mb-8">
-                                <svg class="h-6 w-auto text-white/50 mb-6" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
-                                <p class="text-xl md:text-[1.35rem] font-medium leading-snug">"{{ item.quote }}"</p>
+                            <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-blue-500/20 transition-all"></div>
+                            <div class="mb-6 relative z-10">
+                                <svg class="h-6 w-auto text-blue-400 mb-5 opacity-80" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+                                <p class="text-[1.05rem] md:text-[1.125rem] font-semibold text-slate-100 leading-relaxed">"{{ item.quote }}"</p>
                             </div>
-                            <div class="flex items-center gap-4 mt-auto">
-                                <div class="h-11 w-11 rounded-full overflow-hidden shrink-0 border border-white/20 bg-slate-800 flex items-center justify-center">
-                                    <img v-if="item.avatar" :src="item.avatar" :alt="item.name" class="h-full w-full object-cover" width="44" height="44" loading="lazy" decoding="async">
-                                    <span v-else class="text-sm font-bold text-white">{{ item.name.charAt(0) }}</span>
+                            <div class="flex items-center gap-3.5 mt-auto pt-6 border-t border-white/10 relative z-10">
+                                <div class="h-11 w-11 rounded-full overflow-hidden shrink-0 border border-white/20 bg-slate-800 flex items-center justify-center shadow-xs">
+                                    <img v-if="item.avatar" :src="item.avatar" :alt="item.name" class="h-full w-full object-cover" width="44" height="44" loading="lazy" decoding="async" @error="(e) => (e.target as HTMLElement).style.display = 'none'">
+                                    <span v-else class="text-xs font-black text-white">{{ item.name.charAt(0) }}</span>
                                 </div>
-                                <div>
-                                    <h4 class="text-sm font-bold">{{ item.name }}</h4>
-                                    <p class="text-xs text-gray-400">{{ item.role }}</p>
+                                <div class="min-w-0 flex-1">
+                                    <h4 class="text-[13.5px] font-bold text-white truncate">{{ item.name }}</h4>
+                                    <p class="text-[11.5px] font-medium text-blue-300 truncate">{{ item.role }}</p>
                                 </div>
                             </div>
                         </div>
@@ -140,17 +146,21 @@ const col3 = computed(() => activeItems.value.filter((_, i) => i % 3 === 2));
                         <!-- Light Card -->
                         <div
                             v-else
-                            class="bg-white text-[#111827] rounded-2xl p-8 flex flex-col shadow-sm ring-1 ring-gray-200/60 transition-transform duration-300 hover:-translate-y-1"
+                            class="bg-white text-[#111827] rounded-3xl p-8 flex flex-col justify-between shadow-sm ring-1 ring-slate-200/80 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl h-full relative overflow-hidden group"
                         >
-                            <p class="text-base text-gray-600 mb-8 leading-relaxed">"{{ item.quote }}"</p>
-                            <div class="flex items-center gap-4 mt-auto">
-                                <div class="h-10 w-10 rounded-full overflow-hidden shrink-0 bg-gray-100 border border-gray-200 flex items-center justify-center">
-                                    <img v-if="item.avatar" :src="item.avatar" :alt="item.name" class="h-full w-full object-cover" width="40" height="40" loading="lazy" decoding="async">
-                                    <span v-else class="text-xs font-bold text-gray-700">{{ item.name.charAt(0) }}</span>
+                            <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-50/50 rounded-full blur-2xl pointer-events-none group-hover:bg-blue-100/50 transition-all"></div>
+                            <div class="mb-6 relative z-10">
+                                <svg class="h-6 w-auto text-blue-600 mb-5 opacity-80" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+                                <p class="text-[1.05rem] md:text-[1.125rem] font-semibold text-slate-800 leading-relaxed">"{{ item.quote }}"</p>
+                            </div>
+                            <div class="flex items-center gap-3.5 mt-auto pt-6 border-t border-slate-100 relative z-10">
+                                <div class="h-11 w-11 rounded-full overflow-hidden shrink-0 bg-blue-50 border border-blue-100 flex items-center justify-center shadow-xs">
+                                    <img v-if="item.avatar" :src="item.avatar" :alt="item.name" class="h-full w-full object-cover" width="44" height="44" loading="lazy" decoding="async" @error="(e) => (e.target as HTMLElement).style.display = 'none'">
+                                    <span v-else class="text-xs font-black text-blue-600">{{ item.name.charAt(0) }}</span>
                                 </div>
-                                <div>
-                                    <h4 class="text-sm font-bold text-gray-900">{{ item.name }}</h4>
-                                    <p class="text-xs text-gray-500">{{ item.role }}</p>
+                                <div class="min-w-0 flex-1">
+                                    <h4 class="text-[13.5px] font-bold text-slate-900 truncate">{{ item.name }}</h4>
+                                    <p class="text-[11.5px] font-medium text-blue-600 truncate">{{ item.role }}</p>
                                 </div>
                             </div>
                         </div>
@@ -158,25 +168,26 @@ const col3 = computed(() => activeItems.value.filter((_, i) => i % 3 === 2));
                 </div>
 
                 <!-- Column 2 -->
-                <div class="flex flex-col gap-6">
+                <div v-if="col2.length > 0" class="flex flex-col gap-6">
                     <template v-for="(item, idx) in col2" :key="item.id || idx">
                         <!-- Dark Card -->
                         <div
                             v-if="item.theme === 'dark'"
-                            class="bg-[#18181b] text-white rounded-2xl p-8 flex flex-col justify-between shadow-xl ring-1 ring-white/10 transition-transform duration-300 hover:-translate-y-1 h-full"
+                            class="bg-[#0f172a] text-white rounded-3xl p-8 flex flex-col justify-between shadow-xl ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl h-full relative overflow-hidden group"
                         >
-                            <div class="mb-8">
-                                <svg class="h-6 w-auto text-white/50 mb-6" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
-                                <p class="text-xl md:text-[1.35rem] font-medium leading-snug">"{{ item.quote }}"</p>
+                            <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-blue-500/20 transition-all"></div>
+                            <div class="mb-6 relative z-10">
+                                <svg class="h-6 w-auto text-blue-400 mb-5 opacity-80" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+                                <p class="text-[1.05rem] md:text-[1.125rem] font-semibold text-slate-100 leading-relaxed">"{{ item.quote }}"</p>
                             </div>
-                            <div class="flex items-center gap-4 mt-auto">
-                                <div class="h-11 w-11 rounded-full overflow-hidden shrink-0 border border-white/20 bg-slate-800 flex items-center justify-center">
-                                    <img v-if="item.avatar" :src="item.avatar" :alt="item.name" class="h-full w-full object-cover" width="44" height="44" loading="lazy" decoding="async">
-                                    <span v-else class="text-sm font-bold text-white">{{ item.name.charAt(0) }}</span>
+                            <div class="flex items-center gap-3.5 mt-auto pt-6 border-t border-white/10 relative z-10">
+                                <div class="h-11 w-11 rounded-full overflow-hidden shrink-0 border border-white/20 bg-slate-800 flex items-center justify-center shadow-xs">
+                                    <img v-if="item.avatar" :src="item.avatar" :alt="item.name" class="h-full w-full object-cover" width="44" height="44" loading="lazy" decoding="async" @error="(e) => (e.target as HTMLElement).style.display = 'none'">
+                                    <span v-else class="text-xs font-black text-white">{{ item.name.charAt(0) }}</span>
                                 </div>
-                                <div>
-                                    <h4 class="text-sm font-bold">{{ item.name }}</h4>
-                                    <p class="text-xs text-gray-400">{{ item.role }}</p>
+                                <div class="min-w-0 flex-1">
+                                    <h4 class="text-[13.5px] font-bold text-white truncate">{{ item.name }}</h4>
+                                    <p class="text-[11.5px] font-medium text-blue-300 truncate">{{ item.role }}</p>
                                 </div>
                             </div>
                         </div>
@@ -184,17 +195,21 @@ const col3 = computed(() => activeItems.value.filter((_, i) => i % 3 === 2));
                         <!-- Light Card -->
                         <div
                             v-else
-                            class="bg-white text-[#111827] rounded-2xl p-8 flex flex-col shadow-sm ring-1 ring-gray-200/60 transition-transform duration-300 hover:-translate-y-1"
+                            class="bg-white text-[#111827] rounded-3xl p-8 flex flex-col justify-between shadow-sm ring-1 ring-slate-200/80 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl h-full relative overflow-hidden group"
                         >
-                            <p class="text-base text-gray-600 mb-8 leading-relaxed">"{{ item.quote }}"</p>
-                            <div class="flex items-center gap-4 mt-auto">
-                                <div class="h-10 w-10 rounded-full overflow-hidden shrink-0 bg-gray-100 border border-gray-200 flex items-center justify-center">
-                                    <img v-if="item.avatar" :src="item.avatar" :alt="item.name" class="h-full w-full object-cover" width="40" height="40" loading="lazy" decoding="async">
-                                    <span v-else class="text-xs font-bold text-gray-700">{{ item.name.charAt(0) }}</span>
+                            <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-50/50 rounded-full blur-2xl pointer-events-none group-hover:bg-blue-100/50 transition-all"></div>
+                            <div class="mb-6 relative z-10">
+                                <svg class="h-6 w-auto text-blue-600 mb-5 opacity-80" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+                                <p class="text-[1.05rem] md:text-[1.125rem] font-semibold text-slate-800 leading-relaxed">"{{ item.quote }}"</p>
+                            </div>
+                            <div class="flex items-center gap-3.5 mt-auto pt-6 border-t border-slate-100 relative z-10">
+                                <div class="h-11 w-11 rounded-full overflow-hidden shrink-0 bg-blue-50 border border-blue-100 flex items-center justify-center shadow-xs">
+                                    <img v-if="item.avatar" :src="item.avatar" :alt="item.name" class="h-full w-full object-cover" width="44" height="44" loading="lazy" decoding="async" @error="(e) => (e.target as HTMLElement).style.display = 'none'">
+                                    <span v-else class="text-xs font-black text-blue-600">{{ item.name.charAt(0) }}</span>
                                 </div>
-                                <div>
-                                    <h4 class="text-sm font-bold text-gray-900">{{ item.name }}</h4>
-                                    <p class="text-xs text-gray-500">{{ item.role }}</p>
+                                <div class="min-w-0 flex-1">
+                                    <h4 class="text-[13.5px] font-bold text-slate-900 truncate">{{ item.name }}</h4>
+                                    <p class="text-[11.5px] font-medium text-blue-600 truncate">{{ item.role }}</p>
                                 </div>
                             </div>
                         </div>
@@ -202,25 +217,26 @@ const col3 = computed(() => activeItems.value.filter((_, i) => i % 3 === 2));
                 </div>
 
                 <!-- Column 3 -->
-                <div class="flex flex-col gap-6">
+                <div v-if="col3.length > 0" class="flex flex-col gap-6">
                     <template v-for="(item, idx) in col3" :key="item.id || idx">
                         <!-- Dark Card -->
                         <div
                             v-if="item.theme === 'dark'"
-                            class="bg-[#18181b] text-white rounded-2xl p-8 flex flex-col justify-between shadow-xl ring-1 ring-white/10 transition-transform duration-300 hover:-translate-y-1 h-full"
+                            class="bg-[#0f172a] text-white rounded-3xl p-8 flex flex-col justify-between shadow-xl ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl h-full relative overflow-hidden group"
                         >
-                            <div class="mb-8">
-                                <svg class="h-6 w-auto text-white/50 mb-6" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
-                                <p class="text-xl md:text-[1.35rem] font-medium leading-snug">"{{ item.quote }}"</p>
+                            <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-blue-500/20 transition-all"></div>
+                            <div class="mb-6 relative z-10">
+                                <svg class="h-6 w-auto text-blue-400 mb-5 opacity-80" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+                                <p class="text-[1.05rem] md:text-[1.125rem] font-semibold text-slate-100 leading-relaxed">"{{ item.quote }}"</p>
                             </div>
-                            <div class="flex items-center gap-4 mt-auto">
-                                <div class="h-11 w-11 rounded-full overflow-hidden shrink-0 border border-white/20 bg-slate-800 flex items-center justify-center">
-                                    <img v-if="item.avatar" :src="item.avatar" :alt="item.name" class="h-full w-full object-cover" width="44" height="44" loading="lazy" decoding="async">
-                                    <span v-else class="text-sm font-bold text-white">{{ item.name.charAt(0) }}</span>
+                            <div class="flex items-center gap-3.5 mt-auto pt-6 border-t border-white/10 relative z-10">
+                                <div class="h-11 w-11 rounded-full overflow-hidden shrink-0 border border-white/20 bg-slate-800 flex items-center justify-center shadow-xs">
+                                    <img v-if="item.avatar" :src="item.avatar" :alt="item.name" class="h-full w-full object-cover" width="44" height="44" loading="lazy" decoding="async" @error="(e) => (e.target as HTMLElement).style.display = 'none'">
+                                    <span v-else class="text-xs font-black text-white">{{ item.name.charAt(0) }}</span>
                                 </div>
-                                <div>
-                                    <h4 class="text-sm font-bold">{{ item.name }}</h4>
-                                    <p class="text-xs text-gray-400">{{ item.role }}</p>
+                                <div class="min-w-0 flex-1">
+                                    <h4 class="text-[13.5px] font-bold text-white truncate">{{ item.name }}</h4>
+                                    <p class="text-[11.5px] font-medium text-blue-300 truncate">{{ item.role }}</p>
                                 </div>
                             </div>
                         </div>
@@ -228,17 +244,21 @@ const col3 = computed(() => activeItems.value.filter((_, i) => i % 3 === 2));
                         <!-- Light Card -->
                         <div
                             v-else
-                            class="bg-white text-[#111827] rounded-2xl p-8 flex flex-col shadow-sm ring-1 ring-gray-200/60 transition-transform duration-300 hover:-translate-y-1"
+                            class="bg-white text-[#111827] rounded-3xl p-8 flex flex-col justify-between shadow-sm ring-1 ring-slate-200/80 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl h-full relative overflow-hidden group"
                         >
-                            <p class="text-base text-gray-600 mb-8 leading-relaxed">"{{ item.quote }}"</p>
-                            <div class="flex items-center gap-4 mt-auto">
-                                <div class="h-10 w-10 rounded-full overflow-hidden shrink-0 bg-gray-100 border border-gray-200 flex items-center justify-center">
-                                    <img v-if="item.avatar" :src="item.avatar" :alt="item.name" class="h-full w-full object-cover" width="40" height="40" loading="lazy" decoding="async">
-                                    <span v-else class="text-xs font-bold text-gray-700">{{ item.name.charAt(0) }}</span>
+                            <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-50/50 rounded-full blur-2xl pointer-events-none group-hover:bg-blue-100/50 transition-all"></div>
+                            <div class="mb-6 relative z-10">
+                                <svg class="h-6 w-auto text-blue-600 mb-5 opacity-80" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+                                <p class="text-[1.05rem] md:text-[1.125rem] font-semibold text-slate-800 leading-relaxed">"{{ item.quote }}"</p>
+                            </div>
+                            <div class="flex items-center gap-3.5 mt-auto pt-6 border-t border-slate-100 relative z-10">
+                                <div class="h-11 w-11 rounded-full overflow-hidden shrink-0 bg-blue-50 border border-blue-100 flex items-center justify-center shadow-xs">
+                                    <img v-if="item.avatar" :src="item.avatar" :alt="item.name" class="h-full w-full object-cover" width="44" height="44" loading="lazy" decoding="async" @error="(e) => (e.target as HTMLElement).style.display = 'none'">
+                                    <span v-else class="text-xs font-black text-blue-600">{{ item.name.charAt(0) }}</span>
                                 </div>
-                                <div>
-                                    <h4 class="text-sm font-bold text-gray-900">{{ item.name }}</h4>
-                                    <p class="text-xs text-gray-500">{{ item.role }}</p>
+                                <div class="min-w-0 flex-1">
+                                    <h4 class="text-[13.5px] font-bold text-slate-900 truncate">{{ item.name }}</h4>
+                                    <p class="text-[11.5px] font-medium text-blue-600 truncate">{{ item.role }}</p>
                                 </div>
                             </div>
                         </div>

@@ -59,160 +59,209 @@ class PortalAdminController extends Controller
         ]);
     }
 
+    /**
+     * Store an uploaded SVG file safely after sanitizing harmful executable tags.
+     */
+    protected function saveSvgFile($file, string $directory): ?string
+    {
+        $rawSvg = file_get_contents($file->getRealPath());
+        if (! $rawSvg) {
+            return null;
+        }
+
+        // Basic SVG sanitization: strip script tags, inline event handlers, and javascript: URIs
+        $sanitized = preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', '', $rawSvg);
+        $sanitized = preg_replace('/\bon\w+\s*=\s*([\'\"]).*?\1/i', '', $sanitized);
+        $sanitized = preg_replace('/\bhref\s*=\s*([\'\"])javascript:.*?\1/i', '', $sanitized);
+
+        $filename = uniqid('svg_', true).'.svg';
+        $path = $directory.'/'.$filename;
+
+        Storage::disk('public')->put($path, $sanitized);
+
+        return $path;
+    }
+
     public function updateAppearance(Request $request)
     {
-        $validated = $request->validate([
-            'hero_title' => 'nullable|string',
-            'hero_subtitle' => 'nullable|string',
-            'hero_description' => 'nullable|string',
-            'show_navbar' => 'nullable|string',
-            'show_hero' => 'nullable|string',
-            'show_features' => 'nullable|string',
-            'show_partners' => 'nullable|string',
-            'show_benefits' => 'nullable|string',
-            'show_testimonials' => 'nullable|string',
-            'show_events' => 'nullable|string',
-            'show_posts' => 'nullable|string',
-            'show_showcase' => 'nullable|string',
-            'show_alumni' => 'nullable|string',
-            'testimonials_title' => 'nullable|string',
-            'testimonials_subtitle' => 'nullable|string',
-            // Reject base64-embedded data URLs in testimonials JSON to prevent DB overflow.
-            // Avatars must be uploaded separately as testimonial_avatar_files[{id}].
-            'testimonials' => ['nullable', 'string', 'max:100000', 'not_regex:/data:[a-z]+\/[a-z]+;base64,/i'],
-            'primary_color' => 'nullable|string',
-            'benefits_title' => 'nullable|string',
-            'benefits_subtitle' => 'nullable|string',
-            'benefit_1_title' => 'nullable|string',
-            'benefit_1_desc' => 'nullable|string',
-            'benefit_2_title' => 'nullable|string',
-            'benefit_2_desc' => 'nullable|string',
-            'benefit_3_title' => 'nullable|string',
-            'benefit_3_desc' => 'nullable|string',
-            'hero_gallery_files' => 'nullable|array',
-            'hero_gallery_files.*' => 'file|image|mimes:png,jpeg,jpg,webp|max:5120',
-            'partner_files' => 'nullable|array',
-            'partner_files.*' => 'file|image|mimes:png,jpeg,jpg,webp,svg|max:5120',
-            // Testimonial avatar files keyed by testimonial ID (e.g. testimonial_avatar_files[1786675522796])
-            'testimonial_avatar_files' => 'nullable|array',
-            'testimonial_avatar_files.*' => 'file|image|mimes:png,jpeg,jpg,webp|max:3072',
-        ]);
+        try {
+            $validated = $request->validate([
+                'hero_title' => 'nullable|string',
+                'hero_subtitle' => 'nullable|string',
+                'hero_description' => 'nullable|string',
+                'show_navbar' => 'nullable|string',
+                'show_hero' => 'nullable|string',
+                'show_features' => 'nullable|string',
+                'show_partners' => 'nullable|string',
+                'show_benefits' => 'nullable|string',
+                'show_testimonials' => 'nullable|string',
+                'show_events' => 'nullable|string',
+                'show_posts' => 'nullable|string',
+                'show_showcase' => 'nullable|string',
+                'show_alumni' => 'nullable|string',
+                'testimonials_title' => 'nullable|string',
+                'testimonials_subtitle' => 'nullable|string',
+                // Reject base64-embedded data URLs in testimonials JSON to prevent DB overflow.
+                // Avatars must be uploaded separately as testimonial_avatar_files[{id}].
+                'testimonials' => ['nullable', 'string', 'max:200000', 'not_regex:/data:[a-z]+\/[a-z]+;base64,/i'],
+                'primary_color' => 'nullable|string',
+                'benefits_title' => 'nullable|string',
+                'benefits_subtitle' => 'nullable|string',
+                'benefit_1_title' => 'nullable|string',
+                'benefit_1_desc' => 'nullable|string',
+                'benefit_2_title' => 'nullable|string',
+                'benefit_2_desc' => 'nullable|string',
+                'benefit_3_title' => 'nullable|string',
+                'benefit_3_desc' => 'nullable|string',
+                'hero_gallery_files' => 'nullable|array',
+                'hero_gallery_files.*' => 'file|mimes:png,jpeg,jpg,webp|max:25600',
+                'partner_files' => 'nullable|array',
+                'partner_files.*' => 'file|mimes:png,jpeg,jpg,webp,svg|max:15360',
+                // Testimonial avatar files keyed by testimonial ID (e.g. testimonial_avatar_files[1786675522796])
+                'testimonial_avatar_files' => 'nullable|array',
+                'testimonial_avatar_files.*' => 'file|mimes:png,jpeg,jpg,webp|max:10240',
+            ], [
+                'hero_gallery_files.*.max' => 'Ukuran foto galeri tidak boleh melebihi 25MB per berkas.',
+                'hero_gallery_files.*.mimes' => 'Format foto galeri harus berupa PNG, JPG, JPEG, atau WEBP.',
+                'partner_files.*.max' => 'Ukuran logo mitra tidak boleh melebihi 15MB per berkas.',
+                'partner_files.*.mimes' => 'Format logo mitra harus berupa PNG, JPG, JPEG, WEBP, atau SVG.',
+                'testimonial_avatar_files.*.max' => 'Ukuran foto avatar testimonial tidak boleh melebihi 10MB per berkas.',
+                'testimonial_avatar_files.*.mimes' => 'Format foto avatar harus berupa PNG, JPG, JPEG, atau WEBP.',
+                'testimonials.not_regex' => 'Data testimoni terindikasi memuat format base64 yang tidak diizinkan.',
+            ]);
 
-        foreach ($validated as $key => $value) {
-            if ($key !== 'hero_gallery_files' && $key !== 'partner_files' && $key !== 'testimonial_avatar_files') {
-                PortalSetting::updateOrCreate(['key' => $key], ['value' => $value]);
-            }
-        }
-
-        Cache::forget('portal_welcome_events');
-        Cache::forget('portal_home_showcase');
-
-        // Handle Hero Gallery uploads — key is hero_gallery_files[]
-        if ($request->hasFile('hero_gallery_files')) {
-            $gallery = json_decode(PortalSetting::where('key', 'hero_gallery')->value('value') ?: '[]', true);
-            foreach ($request->file('hero_gallery_files') as $file) {
-                $path = $this->compressAndSaveImage($file, 'portal/gallery', 1200, 800);
-                if ($path) {
-                    $gallery[] = '/storage/'.$path;
-                }
-            }
-            PortalSetting::updateOrCreate(['key' => 'hero_gallery'], ['value' => json_encode($gallery)]);
-        }
-
-        // Handle Partner uploads — key is partner_files[]
-        if ($request->hasFile('partner_files')) {
-            $partners = json_decode(PortalSetting::where('key', 'partners')->value('value') ?: '[]', true);
-            foreach ($request->file('partner_files') as $file) {
-                $path = $this->compressAndSaveImage($file, 'portal/partners', 400, 150);
-                if ($path) {
-                    $partners[] = '/storage/'.$path;
-                }
-            }
-            PortalSetting::updateOrCreate(['key' => 'partners'], ['value' => json_encode($partners)]);
-        }
-
-        // Handle removals
-        $gallery = json_decode(PortalSetting::where('key', 'hero_gallery')->value('value') ?: '[]', true);
-        if ($request->has('remove_hero_gallery')) {
-            foreach ($request->remove_hero_gallery as $url) {
-                $gallery = array_values(array_filter($gallery, fn ($item) => $item !== $url));
-                $filePath = str_replace('/storage/', '', $url);
-                if (Storage::disk('public')->exists($filePath)) {
-                    Storage::disk('public')->delete($filePath);
-                }
-            }
-            PortalSetting::updateOrCreate(['key' => 'hero_gallery'], ['value' => json_encode($gallery)]);
-        }
-
-        $partners = json_decode(PortalSetting::where('key', 'partners')->value('value') ?: '[]', true);
-        if ($request->has('remove_partners')) {
-            foreach ($request->remove_partners as $url) {
-                $partners = array_values(array_filter($partners, function ($item) use ($url) {
-                    $itemUrl = is_array($item) ? ($item['logo'] ?? '') : $item;
-
-                    return $itemUrl !== $url;
-                }));
-                $filePath = str_replace('/storage/', '', $url);
-                if (Storage::disk('public')->exists($filePath)) {
-                    Storage::disk('public')->delete($filePath);
-                }
-            }
-            PortalSetting::updateOrCreate(['key' => 'partners'], ['value' => json_encode($partners)]);
-        }
-
-        // Handle Testimonial Avatar uploads — keyed by testimonial ID
-        // e.g. testimonial_avatar_files[1786675522796] → File
-        // This replaces the broken base64-inline approach where avatars were
-        // embedded in the testimonials JSON, causing TEXT column overflow.
-        if ($request->hasFile('testimonial_avatar_files')) {
-            $testimonials = json_decode(
-                PortalSetting::where('key', 'testimonials')->value('value') ?: '[]',
-                true
-            ) ?: [];
-
-            // Index testimonials by their ID for fast lookup
-            $testimonialsById = [];
-            foreach ($testimonials as $index => $testimonial) {
-                if (isset($testimonial['id'])) {
-                    $testimonialsById[$testimonial['id']] = $index;
+            foreach ($validated as $key => $value) {
+                if ($key !== 'hero_gallery_files' && $key !== 'partner_files' && $key !== 'testimonial_avatar_files') {
+                    PortalSetting::updateOrCreate(['key' => $key], ['value' => $value]);
                 }
             }
 
-            foreach ($request->file('testimonial_avatar_files') as $testimonialId => $file) {
-                $path = $this->compressAndSaveImage($file, 'portal/testimonials', 300, 300);
-                if (! $path) {
-                    continue;
+            Cache::forget('portal_welcome_events');
+            Cache::forget('portal_home_showcase');
+
+            // Handle Hero Gallery uploads — key is hero_gallery_files[]
+            if ($request->hasFile('hero_gallery_files')) {
+                $gallery = json_decode(PortalSetting::where('key', 'hero_gallery')->value('value') ?: '[]', true) ?: [];
+                foreach ($request->file('hero_gallery_files') as $file) {
+                    $path = $this->compressAndSaveImage($file, 'portal/gallery', 1600, 1000);
+                    if ($path) {
+                        $gallery[] = '/storage/'.$path;
+                    }
                 }
+                PortalSetting::updateOrCreate(['key' => 'hero_gallery'], ['value' => json_encode(array_values($gallery))]);
+            }
 
-                $newUrl = '/storage/'.$path;
+            // Handle Partner uploads — key is partner_files[]
+            // Gracefully handles raster images (via WebP compression) and SVG vector files
+            if ($request->hasFile('partner_files')) {
+                $partners = json_decode(PortalSetting::where('key', 'partners')->value('value') ?: '[]', true) ?: [];
+                foreach ($request->file('partner_files') as $file) {
+                    $ext = strtolower($file->getClientOriginalExtension());
+                    $mime = $file->getMimeType();
 
-                if (isset($testimonialsById[$testimonialId])) {
-                    $idx = $testimonialsById[$testimonialId];
-
-                    // Delete old file from storage if it was a stored file (not a URL)
-                    $oldAvatar = $testimonials[$idx]['avatar'] ?? null;
-                    if ($oldAvatar && str_starts_with($oldAvatar, '/storage/')) {
-                        $oldFilePath = str_replace('/storage/', '', $oldAvatar);
-                        if (Storage::disk('public')->exists($oldFilePath)) {
-                            Storage::disk('public')->delete($oldFilePath);
-                        }
+                    if ($ext === 'svg' || $mime === 'image/svg+xml') {
+                        $path = $this->saveSvgFile($file, 'portal/partners');
+                    } else {
+                        $path = $this->compressAndSaveImage($file, 'portal/partners', 400, 150);
                     }
 
-                    $testimonials[$idx]['avatar'] = $newUrl;
+                    if ($path) {
+                        $partners[] = '/storage/'.$path;
+                    }
                 }
+                PortalSetting::updateOrCreate(['key' => 'partners'], ['value' => json_encode(array_values($partners))]);
             }
 
-            PortalSetting::updateOrCreate(
-                ['key' => 'testimonials'],
-                ['value' => json_encode(array_values($testimonials))]
-            );
+            // Handle removals
+            $gallery = json_decode(PortalSetting::where('key', 'hero_gallery')->value('value') ?: '[]', true) ?: [];
+            if ($request->has('remove_hero_gallery')) {
+                foreach ($request->remove_hero_gallery as $url) {
+                    $gallery = array_values(array_filter($gallery, fn ($item) => $item !== $url));
+                    $filePath = str_replace('/storage/', '', $url);
+                    if (Storage::disk('public')->exists($filePath)) {
+                        Storage::disk('public')->delete($filePath);
+                    }
+                }
+                PortalSetting::updateOrCreate(['key' => 'hero_gallery'], ['value' => json_encode(array_values($gallery))]);
+            }
+
+            $partners = json_decode(PortalSetting::where('key', 'partners')->value('value') ?: '[]', true) ?: [];
+            if ($request->has('remove_partners')) {
+                foreach ($request->remove_partners as $url) {
+                    $partners = array_values(array_filter($partners, function ($item) use ($url) {
+                        $itemUrl = is_array($item) ? ($item['logo'] ?? '') : $item;
+
+                        return $itemUrl !== $url;
+                    }));
+                    $filePath = str_replace('/storage/', '', $url);
+                    if (Storage::disk('public')->exists($filePath)) {
+                        Storage::disk('public')->delete($filePath);
+                    }
+                }
+                PortalSetting::updateOrCreate(['key' => 'partners'], ['value' => json_encode(array_values($partners))]);
+            }
+
+            // Handle Testimonial Avatar uploads — keyed by testimonial ID
+            // e.g. testimonial_avatar_files[1786675522796] → File
+            if ($request->hasFile('testimonial_avatar_files')) {
+                $testimonials = json_decode(
+                    PortalSetting::where('key', 'testimonials')->value('value') ?: '[]',
+                    true
+                ) ?: [];
+
+                // Index testimonials by their ID for fast lookup
+                $testimonialsById = [];
+                foreach ($testimonials as $index => $testimonial) {
+                    if (isset($testimonial['id'])) {
+                        $testimonialsById[(string) $testimonial['id']] = $index;
+                    }
+                }
+
+                foreach ($request->file('testimonial_avatar_files') as $testimonialId => $file) {
+                    $path = $this->compressAndSaveImage($file, 'portal/testimonials', 300, 300);
+                    if (! $path) {
+                        continue;
+                    }
+
+                    $newUrl = '/storage/'.$path;
+                    $key = (string) $testimonialId;
+
+                    if (isset($testimonialsById[$key])) {
+                        $idx = $testimonialsById[$key];
+
+                        // Delete old file from storage if it was a stored file (not a remote URL)
+                        $oldAvatar = $testimonials[$idx]['avatar'] ?? null;
+                        if ($oldAvatar && str_starts_with($oldAvatar, '/storage/')) {
+                            $oldFilePath = str_replace('/storage/', '', $oldAvatar);
+                            if (Storage::disk('public')->exists($oldFilePath)) {
+                                Storage::disk('public')->delete($oldFilePath);
+                            }
+                        }
+
+                        $testimonials[$idx]['avatar'] = $newUrl;
+                    }
+                }
+
+                PortalSetting::updateOrCreate(
+                    ['key' => 'testimonials'],
+                    ['value' => json_encode(array_values($testimonials))]
+                );
+            }
+
+            Cache::forget('portal_settings');
+            Cache::forget('portal_welcome_events');
+            Cache::forget('portal_home_showcase');
+
+            return redirect()->back()->with('success', 'Pengaturan tata letak berhasil disimpan!');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            Log::error('Gagal memperbarui tata letak portal: '.$e->getMessage(), [
+                'exception' => $e,
+            ]);
+
+            return redirect()->back()->with('error', 'Terjadi kendala saat menyimpan pengaturan: '.$e->getMessage());
         }
-
-        Cache::forget('portal_settings');
-        Cache::forget('portal_welcome_events');
-        Cache::forget('portal_home_showcase');
-
-        return redirect()->back()->with('success', 'Layout settings updated successfully!');
     }
 
     public function settings()
@@ -226,39 +275,54 @@ class PortalAdminController extends Controller
 
     public function updateSettings(Request $request)
     {
-        $validated = $request->validate([
-            'posts_per_page' => 'nullable|integer|min:1|max:100',
-            'allow_comments' => 'nullable|string',
-            'moderate_comments' => 'nullable|string',
-            'author_name' => 'nullable|string|max:100',
-            'author_image_file' => 'nullable|image|max:2048',
-        ]);
+        try {
+            $validated = $request->validate([
+                'posts_per_page' => 'nullable|integer|min:1|max:100',
+                'allow_comments' => 'nullable|string',
+                'moderate_comments' => 'nullable|string',
+                'author_name' => 'nullable|string|max:100',
+                'author_image_file' => 'nullable|file|mimes:png,jpeg,jpg,webp|max:10240',
+            ], [
+                'author_image_file.max' => 'Ukuran foto profil penulis tidak boleh melebihi 10MB.',
+                'author_image_file.mimes' => 'Format foto profil harus berupa PNG, JPG, JPEG, atau WEBP.',
+            ]);
 
-        foreach ($validated as $key => $value) {
-            if ($key !== 'author_image_file') {
-                PortalSetting::updateOrCreate(['key' => $key], ['value' => $value ?? '']);
-            }
-        }
-
-        if ($request->hasFile('author_image_file')) {
-            $file = $request->file('author_image_file');
-
-            // Delete old file if exists to prevent storage accumulation
-            $oldPath = PortalSetting::where('key', 'author_image')->value('value');
-            if ($oldPath) {
-                $filePath = str_replace('/storage/', '', $oldPath);
-                if (Storage::disk('public')->exists($filePath)) {
-                    Storage::disk('public')->delete($filePath);
+            foreach ($validated as $key => $value) {
+                if ($key !== 'author_image_file') {
+                    PortalSetting::updateOrCreate(['key' => $key], ['value' => $value ?? '']);
                 }
             }
 
-            $path = $this->compressAndSaveImage($file, 'portal/author', 300, 300);
-            if ($path) {
-                PortalSetting::updateOrCreate(['key' => 'author_image'], ['value' => '/storage/'.$path]);
-            }
-        }
+            if ($request->hasFile('author_image_file')) {
+                $file = $request->file('author_image_file');
 
-        return redirect()->back()->with('success', 'Pengaturan berhasil disimpan!');
+                // Delete old file if exists to prevent storage accumulation
+                $oldPath = PortalSetting::where('key', 'author_image')->value('value');
+                if ($oldPath) {
+                    $filePath = str_replace('/storage/', '', $oldPath);
+                    if (Storage::disk('public')->exists($filePath)) {
+                        Storage::disk('public')->delete($filePath);
+                    }
+                }
+
+                $path = $this->compressAndSaveImage($file, 'portal/author', 400, 400);
+                if ($path) {
+                    PortalSetting::updateOrCreate(['key' => 'author_image'], ['value' => '/storage/'.$path]);
+                }
+            }
+
+            Cache::forget('portal_settings');
+
+            return redirect()->back()->with('success', 'Pengaturan berhasil disimpan!');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            Log::error('Gagal memperbarui pengaturan portal: '.$e->getMessage(), [
+                'exception' => $e,
+            ]);
+
+            return redirect()->back()->with('error', 'Terjadi kendala saat menyimpan pengaturan: '.$e->getMessage());
+        }
     }
 
     public function instantSearch(Request $request)

@@ -20,7 +20,6 @@ const lifetime = ref({
 const corsOrigins = ref<string[]>([]);
 const newOrigin = ref("");
 
-const toast = ref<{ type: "success" | "error"; message: string } | null>(null);
 const showToast = (message: string, type: "success" | "error" = "success") => {
 	globalShowToast(message, type);
 };
@@ -87,14 +86,6 @@ const saveCors = async () => {
 
 <template>
     <div class="space-y-6 animate-fade-in max-w-[800px]">
-        
-        <!-- Toast -->
-        <Transition enter-from-class="translate-y-2 opacity-0" enter-to-class="translate-y-0 opacity-100" leave-to-class="opacity-0" enter-active-class="transition duration-200" leave-active-class="transition duration-150">
-            <div v-if="toast" class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-[13px] font-medium bg-emerald-50 border-emerald-200 text-emerald-800 dark:shadow-none">
-                <Check class="w-4 h-4" />
-                {{ toast.message }}
-            </div>
-        </Transition>
 
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-2xl font-semibold text-gray-900 dark:text-zinc-100 tracking-tight">Sessions</h1>

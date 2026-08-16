@@ -4,14 +4,22 @@ let lastToastMessage = "";
 let lastToastTime = 0;
 let lastToastType = "";
 
+const defaultTitles: Record<string, string> = {
+	success: "Berhasil Disimpan",
+	error: "Pemberitahuan",
+	warning: "Peringatan",
+	info: "Informasi",
+};
+
 /**
- * Global Deduplicated Toast Dispatcher
+ * Global Deduplicated Modern Toast Dispatcher
  * Prevents duplicate toasts when both client JS and Inertia flash props fire for the same action.
  */
 export function showToast(
 	message: string,
 	type: "success" | "error" | "info" | "warning" = "success",
 	duration = 3500,
+	customTitle?: string,
 ) {
 	if (!message) return;
 	const now = Date.now();
@@ -45,13 +53,16 @@ export function showToast(
 	lastToastTime = now;
 	lastToastType = type;
 
+	const title = customTitle || defaultTitles[type] || "Pemberitahuan";
+
 	if (type === "error") {
-		sonnerToast.error(message, { duration });
+		sonnerToast.error(title, { description: message, duration });
 	} else if (type === "warning") {
-		sonnerToast.warning(message, { duration });
+		sonnerToast.warning(title, { description: message, duration });
 	} else if (type === "info") {
-		sonnerToast.info(message, { duration });
+		sonnerToast.info(title, { description: message, duration });
 	} else {
-		sonnerToast.success(message, { duration });
+		sonnerToast.success(title, { description: message, duration });
 	}
 }
+
