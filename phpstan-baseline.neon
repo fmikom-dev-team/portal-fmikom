@@ -151,12 +151,6 @@ parameters:
 			path: app/Http/Middleware/ApprovalAccess.php
 
 		-
-			message: '#^If condition is always true\.$#'
-			identifier: if.alwaysTrue
-			count: 2
-			path: app/Http/Middleware/Auth/SecureSession.php
-
-		-
 			message: '#^Call to function method_exists\(\) with App\\Models\\User and ''isAdmin'' will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
@@ -191,12 +185,6 @@ parameters:
 			identifier: larastan.relationExistence
 			count: 1
 			path: app/Http/Middleware/HandleInertiaRequests.php
-
-		-
-			message: '#^Using nullsafe property access on non\-nullable type Laravel\\Sanctum\\PersonalAccessToken\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Http/Middleware/LogApiRequests.php
 
 		-
 			message: '#^Method App\\Http\\Requests\\Settings\\PasswordUpdateRequest\:\:passwordRules\(\) should return array\<int, array\<mixed\>\|Illuminate\\Contracts\\Validation\\Rule\|string\> but returns list\<int, App\\Rules\\NotUsedPassword\|App\\Rules\\PasswordComplexityRule\|Illuminate\\Validation\\Rules\\Password\|string\>\.$#'
@@ -1555,6 +1543,12 @@ parameters:
 			path: app/Modules/Pagi/Services/PagiSocialService.php
 
 		-
+			message: '#^Call to function is_array\(\) with array\<string, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Modules/Portal/Controllers/PortalAdminController.php
+
+		-
 			message: '#^If condition is always true\.$#'
 			identifier: if.alwaysTrue
 			count: 2
@@ -2905,12 +2899,6 @@ parameters:
 			path: app/Modules/WorkOs/Controllers/Auth/ActivationController.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\ProgramStudi\:\:\$label\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/WorkOs/Controllers/Auth/FirstTimeLoginController.php
-
-		-
 			message: '#^Method App\\Modules\\WorkOs\\Controllers\\Auth\\FirstTimeLoginController\:\:passwordRules\(\) should return array\<int, array\<mixed\>\|Illuminate\\Contracts\\Validation\\Rule\|string\> but returns list\<int, App\\Rules\\NotUsedPassword\|App\\Rules\\PasswordComplexityRule\|Illuminate\\Validation\\Rules\\Password\|string\>\.$#'
 			identifier: return.type
 			count: 1
@@ -2918,12 +2906,6 @@ parameters:
 
 		-
 			message: '#^Using nullsafe property access "\?\-\>employee_number" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Modules/WorkOs/Controllers/Auth/FirstTimeLoginController.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>label" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Modules/WorkOs/Controllers/Auth/FirstTimeLoginController.php
@@ -2945,42 +2927,6 @@ parameters:
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Modules/WorkOs/Controllers/Auth/MFAController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$browser\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
-
-		-
-			message: '#^Expression on left side of \?\? is not nullable\.$#'
-			identifier: nullCoalesce.expr
-			count: 1
-			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Auth\\AuthSession\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
-
-		-
-			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Modules/WorkOs/Controllers/AuthAnalyticsController.php
 
 		-
 			message: '#^Using nullsafe property access "\?\-\>browser" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
@@ -3051,13 +2997,13 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 2
+			count: 3
 			path: app/Modules/WorkOs/Controllers/DashboardController.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$nama\.$#'
 			identifier: property.notFound
-			count: 1
+			count: 2
 			path: app/Modules/WorkOs/Controllers/DashboardController.php
 
 		-
@@ -3087,7 +3033,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
 			identifier: property.notFound
-			count: 2
+			count: 3
 			path: app/Modules/WorkOs/Controllers/DashboardController.php
 
 		-
@@ -3097,7 +3043,13 @@ parameters:
 			path: app/Modules/WorkOs/Controllers/DashboardController.php
 
 		-
-			message: '#^Anonymous function should return array\{id\: int, nama\: string, slug\: string, deskripsi\: string\|null, permissions_count\: int\<0, max\>, permissions\: Illuminate\\Support\\Collection\<int, array\{id\: mixed, name\: mixed, slug\: mixed, group\: mixed\}\>\} but returns array\{id\: int, nama\: string, slug\: string, deskripsi\: string\|null, permissions_count\: int\<0, max\>, permissions\: Illuminate\\Support\\Collection\<int, array\{id\: int, name\: mixed, slug\: string, group\: mixed\}\>\}\.$#'
+			message: '#^Anonymous function should return array\{id\: int, nama\: string, slug\: string, deskripsi\: string\|null, priority\: mixed, permissions_count\: int\<0, max\>, users_count\: int\<0, max\>, users\: array\<int, array\{id\: mixed, name\: mixed, email\: mixed\}\>, \.\.\.\} but returns array\{id\: int, nama\: string, slug\: string, deskripsi\: string\|null, priority\: mixed, permissions_count\: int\<0, max\>, users_count\: int\<0, max\>, users\: array\<int, array\{id\: mixed, name\: mixed, email\: mixed\}\>, \.\.\.\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Modules/WorkOs/Controllers/DashboardController.php
+
+		-
+			message: '#^Anonymous function should return array\{id\: int, name\: string, slug\: string, group\: string, description\: string\|null, roles_count\: int\<0, max\>, roles\: Illuminate\\Support\\Collection\<int, array\{id\: mixed, nama\: mixed, slug\: mixed\}\>\} but returns array\{id\: int, name\: string, slug\: string, group\: string, description\: string\|null, roles_count\: int\<0, max\>, roles\: Illuminate\\Support\\Collection\<int, array\{id\: int, nama\: mixed, slug\: string\}\>\}\.$#'
 			identifier: return.type
 			count: 1
 			path: app/Modules/WorkOs/Controllers/DashboardController.php
@@ -3123,7 +3075,7 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
 			identifier: argument.unresolvableType
-			count: 2
+			count: 3
 			path: app/Modules/WorkOs/Controllers/DashboardController.php
 
 		-
@@ -3184,12 +3136,6 @@ parameters:
 			message: '#^Access to an undefined property App\\Models\\ProgramStudi\:\:\$label\.$#'
 			identifier: property.notFound
 			count: 1
-			path: app/Modules/WorkOs/Controllers/UsersController.php
-
-		-
-			message: '#^Left side of && is always true\.$#'
-			identifier: booleanAnd.leftAlwaysTrue
-			count: 2
 			path: app/Modules/WorkOs/Controllers/UsersController.php
 
 		-
@@ -3325,24 +3271,6 @@ parameters:
 			path: app/Modules/WorkOs/Services/Sessions/AuthSessionService.php
 
 		-
-			message: '#^Parameter \#1 \$user of method App\\Modules\\WorkOs\\Services\\Sessions\\AuthSessionService\:\:resolveAuthenticationMethod\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Modules/WorkOs/Services/Sessions/AuthSessionService.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Modules\\WorkOs\\Services\\Sessions\\AuthSessionService\:\:resolveUserOrganization\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Modules/WorkOs/Services/Sessions/AuthSessionService.php
-
-		-
-			message: '#^Using nullsafe method call on non\-nullable type Carbon\\CarbonImmutable\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 2
-			path: app/Modules/WorkOs/Services/Sessions/AuthSessionService.php
-
-		-
 			message: '#^Cannot call method isAdmin\(\) on class\-string\|object\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -3375,19 +3303,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 4
-			path: app/Services/Auth/ActivationService.php
-
-		-
-			message: '#^Method App\\Services\\Auth\\ActivationService\:\:approveRegistrationRequest\(\) should return App\\Models\\User but returns Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Services/Auth/ActivationService.php
-
-		-
-			message: '#^Parameter \#1 \$user of class App\\Mail\\ActivationEmail constructor expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
+			count: 3
 			path: app/Services/Auth/ActivationService.php
 
 		-

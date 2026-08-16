@@ -205,41 +205,44 @@ class PortalAdminController extends Controller
             // Handle Testimonial Avatar uploads — keyed by testimonial ID
             // e.g. testimonial_avatar_files[1786675522796] → File
             if ($request->hasFile('testimonial_avatar_files')) {
-                $testimonials = json_decode(
-                    PortalSetting::where('key', 'testimonials')->value('value') ?: '[]',
-                    true
-                ) ?: [];
+                $rawTestimonials = PortalSetting::where('key', 'testimonials')->value('value');
+                /** @var array<int, array<string, mixed>> $testimonials */
+                $testimonials = is_string($rawTestimonials) ? (json_decode($rawTestimonials, true) ?: []) : [];
 
                 // Index testimonials by their ID for fast lookup
+                /** @var array<string|int, int> $testimonialsById */
                 $testimonialsById = [];
                 foreach ($testimonials as $index => $testimonial) {
-                    if (isset($testimonial['id'])) {
-                        $testimonialsById[(string) $testimonial['id']] = $index;
+                    if (is_array($testimonial) && isset($testimonial['id'])) {
+                        $testimonialsById[(string) $testimonial['id']] = (int) $index;
                     }
                 }
 
-                foreach ($request->file('testimonial_avatar_files') as $testimonialId => $file) {
-                    $path = $this->compressAndSaveImage($file, 'portal/testimonials', 300, 300);
-                    if (! $path) {
-                        continue;
-                    }
-
-                    $newUrl = '/storage/'.$path;
-                    $key = (string) $testimonialId;
-
-                    if (isset($testimonialsById[$key])) {
-                        $idx = $testimonialsById[$key];
-
-                        // Delete old file from storage if it was a stored file (not a remote URL)
-                        $oldAvatar = $testimonials[$idx]['avatar'] ?? null;
-                        if ($oldAvatar && str_starts_with($oldAvatar, '/storage/')) {
-                            $oldFilePath = str_replace('/storage/', '', $oldAvatar);
-                            if (Storage::disk('public')->exists($oldFilePath)) {
-                                Storage::disk('public')->delete($oldFilePath);
-                            }
+                $avatarFiles = $request->file('testimonial_avatar_files');
+                if (is_array($avatarFiles)) {
+                    foreach ($avatarFiles as $testimonialId => $file) {
+                        $path = $this->compressAndSaveImage($file, 'portal/testimonials', 300, 300);
+                        if (! $path) {
+                            continue;
                         }
 
-                        $testimonials[$idx]['avatar'] = $newUrl;
+                        $newUrl = '/storage/'.$path;
+                        $key = (string) $testimonialId;
+
+                        if (array_key_exists($key, $testimonialsById)) {
+                            $idx = $testimonialsById[$key];
+
+                            // Delete old file from storage if it was a stored file (not a remote URL)
+                            $oldAvatar = $testimonials[$idx]['avatar'] ?? null;
+                            if (is_string($oldAvatar) && str_starts_with($oldAvatar, '/storage/')) {
+                                $oldFilePath = str_replace('/storage/', '', $oldAvatar);
+                                if (Storage::disk('public')->exists($oldFilePath)) {
+                                    Storage::disk('public')->delete($oldFilePath);
+                                }
+                            }
+
+                            $testimonials[$idx]['avatar'] = $newUrl;
+                        }
                     }
                 }
 
