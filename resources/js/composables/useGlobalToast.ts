@@ -65,4 +65,3 @@ export function showToast(
 		sonnerToast.success(title, { description: message, duration });
 	}
 }
-
