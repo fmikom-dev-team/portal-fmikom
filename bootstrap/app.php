@@ -19,7 +19,6 @@ use App\Http\Middleware\LogWebUserActions;
 use App\Http\Middleware\Radar\RadarSecurityShield;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\StaticAssetCacheHeaders;
-use App\Services\SystemAlertService;
 use App\Services\SystemErrorInspectorService;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;

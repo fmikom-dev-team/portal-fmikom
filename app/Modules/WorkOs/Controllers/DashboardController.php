@@ -78,6 +78,7 @@ class DashboardController extends Controller // NOSONAR
 
             // Otherwise (initial page load), load if it matches the current active tab or prefix
             $mainTab = explode('.', $tab)[0];
+
             return in_array($tab, $tabsAllowed) || in_array($mainTab, $tabsAllowed);
         };
 

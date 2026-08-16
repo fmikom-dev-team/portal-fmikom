@@ -7,7 +7,6 @@ use App\Models\Audit\AuditApiRequest;
 use App\Models\Audit\AuditLog;
 use App\Models\Audit\AuditSecurityIncident;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 
 class AuditLogsController extends Controller
 {
