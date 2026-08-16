@@ -18,8 +18,8 @@ import {
 } from "lucide-vue-next";
 import { computed, onUnmounted, ref, watch } from "vue";
 import AvatarGroup, { type AvatarItem } from "@/components/ui/AvatarGroup.vue";
-import { formatStorageUrl, getInitialsAvatar } from "@/composables/useInitials";
 import { showToast } from "@/composables/useGlobalToast";
+import { formatStorageUrl, getInitialsAvatar } from "@/composables/useInitials";
 import { usePagiRole } from "./composables/usePagiRole";
 import Navbar from "./ui/Navbar.vue";
 import OptimizedImage from "./ui/OptimizedImage.vue";

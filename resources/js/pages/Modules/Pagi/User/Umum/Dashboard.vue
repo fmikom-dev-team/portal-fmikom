@@ -33,9 +33,9 @@ import {
 	ref,
 	watch,
 } from "vue";
-import { showToast } from "@/composables/useGlobalToast";
 import PagiNavbar from "@/components/Modules/Pagi/PagiNavbar.vue";
 import { Skeleton } from "@/components/ui/skeleton";
+import { showToast } from "@/composables/useGlobalToast";
 import { getInitialsAvatar } from "@/composables/useInitials";
 import OptimizedImage from "../ui/OptimizedImage.vue";
 

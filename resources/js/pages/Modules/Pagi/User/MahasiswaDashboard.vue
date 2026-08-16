@@ -29,9 +29,9 @@ import {
 import LazyWrapper from "@/components/Portal/LazyWrapper.vue";
 import ShadcnSearch from "@/components/ui/ShadcnSearch.vue";
 import { Skeleton } from "@/components/ui/skeleton";
+import { showToast } from "@/composables/useGlobalToast";
 import { formatStorageUrl, getInitialsAvatar } from "@/composables/useInitials";
 import { useLoadingState } from "@/composables/useLoadingState";
-import { showToast } from "@/composables/useGlobalToast";
 import Navbar from "./ui/Navbar.vue";
 import OptimizedImage from "./ui/OptimizedImage.vue";
 
