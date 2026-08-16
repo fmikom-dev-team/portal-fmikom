@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class PortalAdminController extends Controller
@@ -253,7 +254,7 @@ class PortalAdminController extends Controller
             Cache::forget('portal_home_showcase');
 
             return redirect()->back()->with('success', 'Pengaturan tata letak berhasil disimpan!');
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             throw $e;
         } catch (\Throwable $e) {
             Log::error('Gagal memperbarui tata letak portal: '.$e->getMessage(), [
@@ -314,7 +315,7 @@ class PortalAdminController extends Controller
             Cache::forget('portal_settings');
 
             return redirect()->back()->with('success', 'Pengaturan berhasil disimpan!');
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             throw $e;
         } catch (\Throwable $e) {
             Log::error('Gagal memperbarui pengaturan portal: '.$e->getMessage(), [
