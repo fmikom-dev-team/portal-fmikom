@@ -60,7 +60,6 @@ const providers = ref<any[]>([]);
 const isLoading = ref(true);
 const activeProvider = ref<any>(null);
 const isSaving = ref(false);
-const toast = ref<{ type: "success" | "error"; message: string } | null>(null);
 
 // Modal form state
 const form = ref({
@@ -182,15 +181,6 @@ const isCustomCreds = computed(() => !form.value.use_demo);
 
 <template>
     <div class="space-y-6 animate-fade-in max-w-[800px] relative">
-
-        <!-- Toast -->
-        <Transition enter-from-class="translate-y-2 opacity-0" enter-to-class="translate-y-0 opacity-100" leave-to-class="translate-y-2 opacity-0" enter-active-class="transition duration-200" leave-active-class="transition duration-150">
-            <div v-if="toast" :class="['fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-[13px] font-medium', toast.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800']">
-                <Check v-if="toast.type === 'success'" class="w-4 h-4" />
-                <AlertCircle v-else class="w-4 h-4" />
-                {{ toast.message }}
-            </div>
-        </Transition>
 
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-gray-200 dark:border-zinc-700 pb-5">

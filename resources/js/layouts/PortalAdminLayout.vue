@@ -76,9 +76,36 @@ const sidebarCollapsed = ref(false);
 const mobileOpen = ref(false);
 
 const userMenuOpen = ref(false);
+const profileDropdownOpen = ref(false);
 const userName = computed(() => user.value?.name || "User Admin");
 const userEmail = computed(() => user.value?.email || "admin@fmikom.org");
 const userInitial = computed(() => userName.value.charAt(0).toUpperCase());
+const userInitials = computed(() => {
+	const name = userName.value.trim();
+	if (!name) return "AD";
+	const parts = name.split(/\s+/);
+	if (parts.length >= 2) {
+		return (parts[0][0] + parts[1][0]).toUpperCase();
+	}
+	return name.substring(0, 2).toUpperCase();
+});
+
+const userAvatarUrl = computed(() => {
+	if (!user.value) return null;
+	const path = user.value.avatar || user.value.foto_path;
+	if (!path) return null;
+	if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("/storage/")) {
+		return path;
+	}
+	return `/storage/${path}`;
+});
+
+const handleProfileImgError = (event: Event) => {
+	const img = event.target as HTMLImageElement;
+	if (img) {
+		img.style.display = 'none';
+	}
+};
 
 const logout = () => {
 	router.post("/logout");
@@ -567,11 +594,17 @@ onUnmounted(() => {
                     aria-label="User menu"
                 >
                     <div
-                        class="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 overflow-hidden bg-[#2563EB]"
+                        class="w-8.5 h-8.5 rounded-full flex items-center justify-center text-white text-[11px] font-black shrink-0 overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-700 shadow-xs relative"
                         aria-hidden="true"
                     >
-                        <img v-if="user?.foto_path || user?.avatar" :src="user.foto_path || user.avatar" :alt="userName" class="w-full h-full object-cover" />
-                        <span v-else>{{ userInitial }}</span>
+                        <span class="select-none tracking-tight">{{ userInitials }}</span>
+                        <img 
+                            v-if="userAvatarUrl" 
+                            :src="userAvatarUrl" 
+                            alt="" 
+                            class="w-full h-full object-cover absolute inset-0"
+                            @error="handleProfileImgError" 
+                        />
                     </div>
 
                     <div
@@ -673,51 +706,60 @@ onUnmounted(() => {
 
                         <button
                             @click="profileDropdownOpen = !profileDropdownOpen"
-                            class="flex items-center gap-2 h-9 sm:h-10 px-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all relative z-50 text-left border border-transparent hover:border-slate-150 dark:hover:border-slate-700 select-none"
+                            type="button"
+                            class="flex items-center gap-2.5 h-10 px-3 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all relative z-50 text-left border border-slate-200/80 dark:border-slate-700/80 select-none shadow-xs active:scale-98 cursor-pointer"
                         >
-                            <div class="w-8 h-8 rounded-full overflow-hidden border border-slate-150 dark:border-slate-700 shadow-sm shrink-0 flex items-center justify-center bg-blue-600 text-white font-bold text-xs">
-                                <img v-if="user?.avatar" :src="user.avatar" class="w-full h-full object-cover" :alt="firstName" />
-                                <img v-else :src="`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(firstName)}&backgroundColor=2563eb&textColor=ffffff`" class="w-full h-full object-cover" :alt="firstName" />
+                            <div class="w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 shadow-xs shrink-0 flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-xs relative">
+                                <span class="select-none">{{ userInitials }}</span>
+                                <img 
+                                    v-if="userAvatarUrl" 
+                                    :src="userAvatarUrl" 
+                                    class="w-full h-full object-cover absolute inset-0" 
+                                    alt="" 
+                                    @error="handleProfileImgError" 
+                                />
                             </div>
                             <div class="hidden sm:flex flex-col">
                                 <span class="text-xs font-bold text-slate-800 dark:text-white leading-tight">{{ user?.name || 'Admin' }}</span>
                                 <span class="text-[9.5px] text-slate-400 font-medium leading-none mt-0.5">{{ user?.user_type ? user.user_type.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) : 'Super Admin' }}</span>
                             </div>
-                            <ChevronDown class="w-3.5 h-3.5 text-slate-400 hidden sm:block shrink-0" />
+                            <ChevronDown class="w-3.5 h-3.5 text-slate-400 hidden sm:block shrink-0 transition-transform duration-200" :class="profileDropdownOpen ? 'rotate-180 text-blue-600' : ''" />
                         </button>
                         
-                        <transition name="fade">
+                        <transition enter-active-class="transition duration-150 ease-out" enter-from-class="transform scale-95 opacity-0" enter-to-class="transform scale-100 opacity-100" leave-active-class="transition duration-100 ease-in" leave-from-class="transform scale-100 opacity-100" leave-to-class="transform scale-95 opacity-0">
                             <div 
                                 v-if="profileDropdownOpen" 
-                                class="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-xl py-2 z-50 transform origin-top-right transition-all"
+                                class="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xl p-1.5 z-50 transform origin-top-right transition-all space-y-0.5"
                             >
-                                <div class="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
-                                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-wider">Signed in as</p>
-                                    <p class="text-xs font-black text-slate-800 dark:text-white truncate mt-0.5">{{ user?.email }}</p>
+                                <div class="px-3 py-2.5 border-b border-slate-100 dark:border-slate-800 mb-1">
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Masuk sebagai</p>
+                                    <p class="text-xs font-bold text-slate-900 dark:text-white truncate mt-0.5">{{ user?.email }}</p>
                                 </div>
 
                                 <Link 
                                     href="/portal-admin/settings" 
-                                    class="flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/50 hover:text-blue-600 transition-all"
+                                    class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#2563EB] dark:hover:text-blue-400 transition-all"
+                                    @click="profileDropdownOpen = false"
                                 >
-                                    <Settings class="w-4 h-4 opacity-70" />
-                                    Settings
+                                    <Settings class="w-4 h-4 text-slate-400" />
+                                    <span>Settings & Profil</span>
                                 </Link>
 
                                 <Link 
                                     href="/dashboard" 
-                                    class="flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/50 hover:text-blue-600 transition-all"
+                                    class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#2563EB] dark:hover:text-blue-400 transition-all"
+                                    @click="profileDropdownOpen = false"
                                 >
-                                    <LayoutGrid class="w-4 h-4 opacity-70" />
-                                    Portal Utama
+                                    <LayoutGrid class="w-4 h-4 text-blue-600" />
+                                    <span>Kembali ke User Portal</span>
                                 </Link>
 
                                 <button 
                                     @click="logout"
-                                    class="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all text-left border-t border-slate-50 dark:border-slate-800 mt-1"
+                                    class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all text-left border-t border-slate-100 dark:border-slate-800 mt-1 cursor-pointer"
                                 >
-                                    <X class="w-4 h-4 opacity-80" />
-                                    Keluar (Logout)
+                                    <LogOut class="w-4 h-4" />
+                                    <span>Keluar (Logout)</span>
                                 </button>
                             </div>
                         </transition>

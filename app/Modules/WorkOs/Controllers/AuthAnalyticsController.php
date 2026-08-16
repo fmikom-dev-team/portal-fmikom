@@ -21,6 +21,10 @@ class AuthAnalyticsController extends Controller
      */
     public function analytics(Request $request)
     {
+        if ($request->header('X-Inertia') || ! $request->expectsJson()) {
+            return app(DashboardController::class)->index($request);
+        }
+
         $days = min((int) $request->get('days', 7), 365);
         $interval = $request->get('interval', 'daily'); // daily, weekly
         if (! in_array($interval, ['daily', 'weekly'], true)) {

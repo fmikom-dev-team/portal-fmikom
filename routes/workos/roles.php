@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 */
 Route::prefix('roles')->name('roles.')->group(function () {
     Route::post('/', [RolesController::class, 'store'])->name('store');
+    Route::patch('/priorities', [RolesController::class, 'updatePriorities'])->name('priorities.update');
     Route::patch('/{role}', [RolesController::class, 'update'])->name('update');
     Route::delete('/{role}', [RolesController::class, 'destroy'])->name('destroy');
     Route::patch('/{role}/permissions', [RolesController::class, 'syncPermissions'])->name('permissions.sync');

@@ -42,9 +42,19 @@ class RolesController extends Controller
 
     public function destroy(Role $role)
     {
+        $protectedSlugs = ['super-admin', 'admin', 'mahasiswa', 'dosen', 'alumni', 'mitra', 'staff', 'prodi'];
+        if (in_array(strtolower($role->slug), $protectedSlugs, true)) {
+            return back()->withErrors(['error' => "Role '{$role->nama}' adalah role sistem inti dan dilindungi dari penghapusan."]);
+        }
+
+        $assignedCount = $role->userModuleRoles()->count();
+        if ($assignedCount > 0) {
+            return back()->withErrors(['error' => "Role '{$role->nama}' sedang digunakan oleh {$assignedCount} pengguna. Harap pindahkan pengguna ke role lain terlebih dahulu."]);
+        }
+
         $roleName = $role->nama;
         $role->permissions()->detach();
-        $role->{'delete'}();
+        $role->delete();
 
         AuditLogger::log('role.deleted', 'warning', ['name' => $roleName], $role);
 
@@ -61,5 +71,20 @@ class RolesController extends Controller
         $role->permissions()->sync($request->permission_ids ?? []);
 
         return back()->with('success', "Permissions untuk role '{$role->nama}' berhasil disimpan.");
+    }
+
+    public function updatePriorities(Request $request)
+    {
+        $request->validate([
+            'roles' => ['required', 'array'],
+            'roles.*.id' => ['required', 'exists:roles,id'],
+            'roles.*.priority' => ['required', 'integer'],
+        ]);
+
+        foreach ($request->roles as $item) {
+            Role::where('id', $item['id'])->update(['priority' => $item['priority']]);
+        }
+
+        return back()->with('success', 'Prioritas role berhasil diperbarui.');
     }
 }

@@ -41,7 +41,6 @@ const methods = ref<any | null>(null);
 const password = ref<any>(null);
 const session = ref<any>(null);
 const saving = ref<string | null>(null); // key being saved
-const toast = ref<{ type: "success" | "error"; message: string } | null>(null);
 const activeModal = ref<string | null>(null);
 const isLoading = ref(true);
 const historyEnabled = ref(false);
@@ -289,15 +288,6 @@ const isStrongPreset = computed(() => {
 
 <template>
     <div class="space-y-5 animate-fade-in max-w-[800px]">
-
-        <!-- Toast -->
-        <Transition enter-from-class="translate-y-2 opacity-0" enter-to-class="translate-y-0 opacity-100" leave-to-class="opacity-0" enter-active-class="transition duration-200" leave-active-class="transition duration-150">
-            <div v-if="toast" :class="['fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-[13px] font-medium', toast.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/30 text-emerald-800 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/30 text-red-800 dark:text-red-400']">
-                <Check v-if="toast.type === 'success'" class="w-4 h-4" />
-                <AlertCircle v-else class="w-4 h-4" />
-                {{ toast.message }}
-            </div>
-        </Transition>
 
         <!-- Header -->
         <div class="border-b border-gray-200 dark:border-zinc-800 pb-5">

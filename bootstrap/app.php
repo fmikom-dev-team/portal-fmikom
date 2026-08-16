@@ -20,6 +20,7 @@ use App\Http\Middleware\Radar\RadarSecurityShield;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\StaticAssetCacheHeaders;
 use App\Services\SystemAlertService;
+use App\Services\SystemErrorInspectorService;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -267,12 +268,8 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->reportable(function (Throwable $e) {
-            if (! ($e instanceof ValidationException) && ! ($e instanceof TokenMismatchException) && ! ($e instanceof ThrottleRequestsException)) {
-                SystemAlertService::log(
-                    'System Exception: '.class_basename($e),
-                    $e->getMessage().' ('.$e->getFile().':'.$e->getLine().')',
-                    'error'
-                );
+            if (! ($e instanceof ValidationException) && ! ($e instanceof ThrottleRequestsException)) {
+                SystemErrorInspectorService::captureException($e, request());
             }
         });
 

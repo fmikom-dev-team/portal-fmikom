@@ -178,23 +178,13 @@ createInertiaApp({
 			offset: 24,
 			mobileOffset: 12,
 			duration: 3500,
-			richColors: true,
-			theme: "light",
+			richColors: false,
+			theme: "system",
 			closeButton: true,
 			gap: 10,
 			visibleToasts: 3,
 			toastOptions: {
-				class: "w-full max-w-full rounded-2xl border px-3.5 py-3 shadow-xl backdrop-blur-2xl transition-all select-none",
-				descriptionClass: "text-[12px] leading-relaxed break-words whitespace-normal text-slate-500 dark:text-zinc-400",
-				classes: {
-					toast: "rounded-2xl border border-slate-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 text-slate-800 dark:text-zinc-100 ring-1 ring-black/5 shadow-2xl w-full max-w-full",
-					title: "text-[12.5px] font-bold tracking-tight leading-snug break-words whitespace-normal",
-					description: "text-[11.5px] leading-relaxed break-words whitespace-normal text-slate-500 dark:text-zinc-400",
-					success: "border-emerald-400/95 bg-emerald-50 text-emerald-700 shadow-emerald-900/12",
-					error: "border-rose-400/95 bg-rose-50 text-rose-700 shadow-rose-900/12",
-					info: "border-sky-200/80 bg-sky-50/80 text-sky-900 shadow-sky-950/5",
-					warning: "border-amber-200/80 bg-amber-50/80 text-amber-900 shadow-amber-950/5",
-				},
+				class: "modern-toast-card",
 			},
 		}).mount(toasterEl);
 

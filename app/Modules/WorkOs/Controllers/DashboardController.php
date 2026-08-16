@@ -76,19 +76,23 @@ class DashboardController extends Controller // NOSONAR
                 return in_array($propName, $only);
             }
 
-            // Otherwise (initial page load), load if it matches the current active tab
-            return in_array($tab, $tabsAllowed);
+            // Otherwise (initial page load), load if it matches the current active tab or prefix
+            $mainTab = explode('.', $tab)[0];
+            return in_array($tab, $tabsAllowed) || in_array($mainTab, $tabsAllowed);
         };
 
+        $authzTabs = ['authorization', 'authz'];
+        $authTabs = ['authentication', 'auth'];
+
         return Inertia::render('WorkOs/Dashboard', [
-            'users' => fn () => $shouldLoad('users', ['users', 'organizations', 'authorization'])
+            'users' => fn () => $shouldLoad('users', ['users', 'organizations', ...$authzTabs])
                 ? ['data' => $this->getUsersData($request), 'total' => User::query()->count()]
                 : [],
             'invitations' => fn () => $shouldLoad('invitations', ['users', 'organizations']) ? $this->getInvitationsData() : [],
-            'roles' => fn () => $shouldLoad('roles', ['authorization', 'organizations', 'users']) ? $this->getRolesData() : [],
-            'permissions' => fn () => $shouldLoad('permissions', ['authorization']) ? $this->getPermissionsData() : [],
-            'modules' => fn () => $shouldLoad('modules', ['organizations', 'users', 'authorization']) ? $this->getModulesData() : [],
-            'stats' => fn () => $shouldLoad('stats', ['overview', 'authorization']) ? $this->getStats() : [],
+            'roles' => fn () => $shouldLoad('roles', [...$authzTabs, 'organizations', 'users']) ? $this->getRolesData() : [],
+            'permissions' => fn () => $shouldLoad('permissions', [...$authzTabs]) ? $this->getPermissionsData() : [],
+            'modules' => fn () => $shouldLoad('modules', ['organizations', 'users', ...$authzTabs]) ? $this->getModulesData() : [],
+            'stats' => fn () => $shouldLoad('stats', ['overview', ...$authzTabs]) ? $this->getStats() : [],
             'pendingCount' => fn () => User::query()->where('status_approval', 'pending')->count(), // Always load for sidebar badge
             'radarConfig' => fn () => $shouldLoad('radarConfig', ['radar']) ? $this->getRadarConfig() : [],
             'radarStats' => fn () => $shouldLoad('radarStats', ['radar']) ? $this->getRadarStats() : [],
@@ -744,24 +748,40 @@ class DashboardController extends Controller // NOSONAR
 
     private function getRolesData()
     {
-        return Role::withCount('permissions')
-            ->with('permissions')
+        return Role::withCount(['permissions', 'userModuleRoles'])
+            ->with(['permissions', 'userModuleRoles.user:id,name,email'])
             ->get()
-            ->map(fn ($r) => [
-                'id' => $r->id,
-                'nama' => $r->nama,
-                'slug' => $r->slug,
-                'deskripsi' => $r->deskripsi,
-                'permissions_count' => $r->permissions_count,
-                'permissions' => $r->permissions->map(fn ($p) => [
-                    'id' => $p->id, 'name' => $p->name, 'slug' => $p->slug, 'group' => $p->group,
-                ]),
-            ]);
+            ->map(function ($r) {
+                $assignedUsers = $r->userModuleRoles
+                    ->pluck('user')
+                    ->filter()
+                    ->unique('id')
+                    ->values();
+
+                return [
+                    'id' => $r->id,
+                    'nama' => $r->nama,
+                    'slug' => $r->slug,
+                    'deskripsi' => $r->deskripsi,
+                    'priority' => $r->priority ?? 0,
+                    'permissions_count' => $r->permissions_count,
+                    'users_count' => $r->user_module_roles_count,
+                    'users' => $assignedUsers->take(8)->map(fn ($u) => [
+                        'id' => $u->id,
+                        'name' => $u->name,
+                        'email' => $u->email,
+                    ])->all(),
+                    'permissions' => $r->permissions->map(fn ($p) => [
+                        'id' => $p->id, 'name' => $p->name, 'slug' => $p->slug, 'group' => $p->group,
+                    ]),
+                ];
+            });
     }
 
     private function getPermissionsData()
     {
         return Permission::withCount('roles')
+            ->with('roles:id,nama,slug')
             ->orderBy('group')
             ->orderBy('name')
             ->get()
@@ -772,6 +792,11 @@ class DashboardController extends Controller // NOSONAR
                 'group' => $p->group,
                 'description' => $p->description,
                 'roles_count' => $p->roles_count,
+                'roles' => $p->roles->map(fn ($r) => [
+                    'id' => $r->id,
+                    'nama' => $r->nama,
+                    'slug' => $r->slug,
+                ]),
             ]);
     }
 

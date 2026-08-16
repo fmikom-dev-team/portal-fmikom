@@ -428,6 +428,10 @@ class AuthenticationController extends Controller
 
     public function auditLogs(Request $request)
     {
+        if ($request->header('X-Inertia') || ! $request->expectsJson()) {
+            return app(DashboardController::class)->index($request);
+        }
+
         $query = AuthAuditLog::with('user:id,name,email')
             ->orderByDesc('occurred_at');
 
