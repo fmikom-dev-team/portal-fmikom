@@ -178,7 +178,7 @@ class SystemErrorInspectorService
             $frameLine = $frame['line'] ?? 0;
             $frameClass = $frame['class'] ?? '';
             $frameType = $frame['type'] ?? '';
-            $frameFunction = $frame['function'] ?? '';
+            $frameFunction = $frame['function'];
 
             $isAppCode = Str::startsWith($frameFile, ['app/', 'resources/', 'routes/']);
 
