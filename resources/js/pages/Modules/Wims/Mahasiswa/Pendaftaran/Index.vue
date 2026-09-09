@@ -79,7 +79,16 @@ type RegistrationItem = {
     submitted_at?: string | null;
     updated_at?: string | null;
 };
-type PageState = { can_submit?: boolean; is_revision?: boolean; is_new_submission?: boolean; is_locked?: boolean };
+type PageState = {
+    can_submit?: boolean;
+    is_revision?: boolean;
+    is_new_submission?: boolean;
+    is_locked?: boolean;
+    next_registration_assessment?: {
+        is_complete?: boolean;
+        blocking_reasons?: string[];
+    } | null;
+};
 type PeriodOption = {
     id?: number | string | null;
     label?: string | null;
@@ -149,6 +158,12 @@ const flash        = computed(() => page.props.flash ?? {});
 const pageErrors   = computed(() => page.props.errors ?? {});
 const registration = computed(() => props.registration ?? null);
 const isNewSubmission = computed(() => Boolean(props.pageState.is_new_submission));
+const nextRegistrationBlockingReasons = computed(
+    () => props.pageState.next_registration_assessment?.blocking_reasons ?? [],
+);
+const isAssessmentGateLocked = computed(
+    () => nextRegistrationBlockingReasons.value.length > 0,
+);
 const proposalAttachment = computed(() => registration.value?.proposal_attachment ?? null);
 const transcriptAttachment = computed(() => registration.value?.transcript_attachment ?? null);
 const recommendationAttachment = computed(() => registration.value?.recommendation_attachment ?? null);
@@ -170,7 +185,9 @@ const recommendationDisplayUploadedAt = computed(() => form.surat_rekomendasi_ka
 const proposalInputRef = ref<HTMLInputElement | null>(null);
 const transcriptInputRef = ref<HTMLInputElement | null>(null);
 const recommendationInputRef = ref<HTMLInputElement | null>(null);
-const isLocked     = computed(() => Boolean(props.pageState.is_locked));
+const isLocked     = computed(
+    () => Boolean(props.pageState.is_locked) || isAssessmentGateLocked.value,
+);
 const isRevision   = computed(() => Boolean(props.pageState.is_revision));
 const canSubmit    = computed(() => Boolean(props.pageState.can_submit));
 const localSuccess = ref<string | null>(flash.value.success ?? null);
@@ -959,7 +976,7 @@ watch(
                         </div>
 
                         <form class="space-y-5 px-5 py-5 sm:px-6" @submit.prevent="requestSubmit">
-                            <div v-if="isLocked" class="flex items-start gap-3 rounded-xl border border-blue-200/60 bg-blue-50 px-4 py-3 dark:border-blue-500/30 dark:bg-blue-500/10">
+                            <div v-if="isLocked && !isAssessmentGateLocked" class="flex items-start gap-3 rounded-xl border border-blue-200/60 bg-blue-50 px-4 py-3 dark:border-blue-500/30 dark:bg-blue-500/10">
                                 <Clock3 class="mt-0.5 size-4 shrink-0 text-blue-500 dark:text-blue-400" />
                                 <p class="text-xs leading-relaxed text-blue-700 dark:text-blue-300">Pendaftaran sedang menunggu keputusan kampus atau sudah aktif. Form dikunci sampai status berubah atau ada permintaan revisi.</p>
                             </div>

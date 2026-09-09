@@ -78,7 +78,7 @@ class RegistrationController extends Controller
 
         if (! $this->studentRegistrationPageService->canSubmitRegistration($actionRegistration)) {
             return back()->withErrors([
-                'registration' => 'Pendaftaran sedang menunggu keputusan kampus atau periode magang yang berjalan belum selesai.',
+                'registration' => 'Pendaftaran sedang menunggu keputusan kampus, periode magang belum selesai, atau penilaian akhir belum lengkap.',
             ]);
         }
 
@@ -99,11 +99,13 @@ class RegistrationController extends Controller
         if ($isRevision) {
             $this->studentRegistrationActionService->resubmitRevision($actionRegistration, $payload, $proposalFile, $transcriptFile, $recommendationFile, $removeRecommendation);
 
-            return back()->with('success', 'Perbaikan pendaftaran berhasil dikirim ulang dan menunggu review kampus.');
+            return to_route('wims.registration', ['pendaftaran' => $actionRegistration->id])
+                ->with('success', 'Perbaikan pendaftaran berhasil dikirim ulang dan menunggu review kampus.');
         }
 
-        $this->studentRegistrationActionService->create($user, $payload, $proposalFile, $transcriptFile, $recommendationFile);
+        $registration = $this->studentRegistrationActionService->create($user, $payload, $proposalFile, $transcriptFile, $recommendationFile);
 
-        return back()->with('success', 'Pendaftaran PKL/magang berhasil dikirim dan menunggu review kampus.');
+        return to_route('wims.registration', ['pendaftaran' => $registration->id])
+            ->with('success', 'Pendaftaran PKL/magang berhasil dikirim dan menunggu review kampus.');
     }
 }

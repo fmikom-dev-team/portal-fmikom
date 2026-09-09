@@ -13,13 +13,19 @@ class StudentRegistrationPageService
     public function __construct(
         private readonly StudentFinalReportTemplateService $studentFinalReportTemplateService,
         private readonly StudentPeriodResolverService $studentPeriodResolverService,
+        private readonly StudentNextRegistrationEligibilityService $studentNextRegistrationEligibilityService,
     ) {}
 
     public function build(User $user): array
     {
         $registrations = $this->studentPeriodResolverService->resolveRegistrations($user->id);
         $selectedRegistration = $this->studentPeriodResolverService->resolveSelectedRegistrationFromCollection($registrations);
-        $formSource = $selectedRegistration
+        $latestRegistration = $registrations->first();
+        $isLatestRegistrationSelected = ! $latestRegistration
+            || $selectedRegistration?->is($latestRegistration);
+        $canSubmitLatestRegistration = $this->canSubmitRegistration($latestRegistration);
+        $formSource = $isLatestRegistrationSelected
+            && $selectedRegistration
             && ! in_array($selectedRegistration->status, ['rejected', 'selesai'], true)
             ? $selectedRegistration
             : null;
@@ -30,10 +36,13 @@ class StudentRegistrationPageService
             'selected_period_id' => $selectedRegistration?->id,
             'periods' => $periods,
             'pageState' => [
-                'can_submit' => $this->canSubmitRegistration($selectedRegistration),
-                'is_revision' => $selectedRegistration?->status === 'revisi',
-                'is_new_submission' => ! $selectedRegistration || in_array($selectedRegistration->status, ['rejected', 'selesai'], true),
-                'is_locked' => in_array($selectedRegistration?->status, ['pending', 'approved', 'aktif'], true),
+                'can_submit' => $isLatestRegistrationSelected && $canSubmitLatestRegistration,
+                'is_revision' => $isLatestRegistrationSelected && $selectedRegistration?->status === 'revisi',
+                'is_new_submission' => $isLatestRegistrationSelected && (! $selectedRegistration || in_array($selectedRegistration->status, ['rejected', 'selesai'], true)),
+                'is_locked' => ! $isLatestRegistrationSelected || ! $canSubmitLatestRegistration,
+                'next_registration_assessment' => $latestRegistration?->status === 'selesai'
+                    ? $this->studentNextRegistrationEligibilityService->evaluate($latestRegistration)
+                    : null,
             ],
             'proposal_template' => $this->studentFinalReportTemplateService->buildTemplateCard('proposal', 'wims.registration.proposal-template.download'),
             'formDefaults' => [
@@ -81,7 +90,11 @@ class StudentRegistrationPageService
             return true;
         }
 
-        return in_array($registration->status, ['revisi', 'rejected', 'selesai'], true);
+        if ($registration->status === 'selesai') {
+            return $this->studentNextRegistrationEligibilityService->evaluate($registration)['is_complete'];
+        }
+
+        return in_array($registration->status, ['revisi', 'rejected'], true);
     }
 
     public function transformRegistration(PendaftaranMagang $registration): array

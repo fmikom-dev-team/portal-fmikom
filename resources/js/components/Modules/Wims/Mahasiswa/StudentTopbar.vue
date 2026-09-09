@@ -4,7 +4,7 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import {
     Bell, CheckCheck, CircleAlert, LogOut, Menu, Moon, RefreshCw, Sun, X,
 } from 'lucide-vue-next';
-import { useWimsStudentAppearance } from '@/composables/useWimsStudentAppearance';
+import { useAppearance } from '@/composables/useAppearance';
 
 const page = usePage();
 const props = defineProps<{
@@ -13,7 +13,9 @@ const props = defineProps<{
 const emit = defineEmits<{
     toggleSidebar: [];
 }>();
-const { appearance, resolvedAppearance, updateAppearance } = useWimsStudentAppearance();
+// WIMS Mahasiswa shares the Portal appearance preference. This prevents the
+// module from competing with the global `html.dark` state.
+const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
 
 const currentPath = computed(() => {
     const [path] = page.url.split('?');

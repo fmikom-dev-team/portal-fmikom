@@ -57,6 +57,7 @@ const mobileNotificationMenuRef = ref<HTMLElement | null>(null);
 const profileMenuRef = ref<HTMLElement | null>(null);
 let initialHtmlDarkClass = false;
 let initialBodyDarkClass = false;
+let removeThemeSyncListener: (() => void) | null = null;
 
 const currentPath = computed(() => {
     const [path] = page.url.split('?');
@@ -481,6 +482,10 @@ onMounted(() => {
     }
 
     syncRoleDocumentTheme();
+    // Core reapplies its global appearance after every Inertia navigation.
+    // Re-assert the WIMS role policy afterwards, matching the always-light
+    // behaviour of the Admin layout.
+    removeThemeSyncListener = router.on('success', syncRoleDocumentTheme);
     sidebarCollapsed.value = window.localStorage.getItem(sidebarStorageKey.value) === 'true';
     document.addEventListener('click', handleClickOutsideNotification);
     document.addEventListener('click', handleClickOutsideProfileMenu);
@@ -491,6 +496,8 @@ watch(sidebarCollapsed, (collapsed) => {
 });
 
 onBeforeUnmount(() => {
+    removeThemeSyncListener?.();
+    removeThemeSyncListener = null;
     document.removeEventListener('click', handleClickOutsideNotification);
     document.removeEventListener('click', handleClickOutsideProfileMenu);
     cleanupRoleDocumentTheme();

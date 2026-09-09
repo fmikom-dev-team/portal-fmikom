@@ -13,6 +13,7 @@ class StudentRegistrationActionService
 {
     public function __construct(
         private readonly StudentProposalAttachmentService $proposalAttachmentService,
+        private readonly StudentNextRegistrationEligibilityService $studentNextRegistrationEligibilityService,
     ) {}
 
     public function buildPayload(array $input): array
@@ -84,7 +85,7 @@ class StudentRegistrationActionService
         ?UploadedFile $proposalFile,
         ?UploadedFile $transcriptFile,
         ?UploadedFile $recommendationFile = null,
-    ): void
+    ): PendaftaranMagang
     {
         if (! $proposalFile || ! $transcriptFile) {
             throw ValidationException::withMessages([
@@ -107,7 +108,7 @@ class StudentRegistrationActionService
                 $storedPaths[] = $recommendationPath;
             }
 
-            DB::transaction(function () use ($user, $payload, $proposalFile, $transcriptFile, $recommendationFile, $proposalPath, $transcriptPath, $recommendationPath): void {
+            return DB::transaction(function () use ($user, $payload, $proposalFile, $transcriptFile, $recommendationFile, $proposalPath, $transcriptPath, $recommendationPath): PendaftaranMagang {
                 $latestRegistration = PendaftaranMagang::where('mahasiswa_id', $user->id)
                     ->orderByDesc('tanggal_mulai')
                     ->orderByDesc('id')
@@ -120,7 +121,17 @@ class StudentRegistrationActionService
                     ]);
                 }
 
-                PendaftaranMagang::create([
+                if ($latestRegistration?->status === 'selesai') {
+                    $eligibility = $this->studentNextRegistrationEligibilityService->evaluate($latestRegistration);
+
+                    if (! $eligibility['is_complete']) {
+                        throw ValidationException::withMessages([
+                            'registration' => implode(' ', $eligibility['blocking_reasons']),
+                        ]);
+                    }
+                }
+
+                return PendaftaranMagang::create([
                     'mahasiswa_id' => $user->id,
                     ...$payload,
                     'proposal_pkl_path' => $proposalPath,

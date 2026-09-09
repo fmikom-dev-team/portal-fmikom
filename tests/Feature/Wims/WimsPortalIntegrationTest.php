@@ -720,7 +720,7 @@ it('keeps the selected student period across WIMS pages until the user switches 
             ->component('Modules/Wims/Mahasiswa/Pendaftaran/Index')
             ->where('selected_period_id', $olderRegistration->id)
             ->where('registration.id', $olderRegistration->id)
-            ->where('pageState.can_submit', true)
+            ->where('pageState.can_submit', false)
         );
 
     expect($latestRegistration->id)->toBeGreaterThan($olderRegistration->id);

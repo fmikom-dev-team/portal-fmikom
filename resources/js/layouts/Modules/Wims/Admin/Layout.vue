@@ -81,6 +81,7 @@ const isMenuOpen = ref(false);
 const sidebarCollapsed = ref(false);
 let initialHtmlDarkClass = false;
 let initialBodyDarkClass = false;
+let removeThemeSyncListener: (() => void) | null = null;
 
 const syncAdminDocumentTheme = () => {
     if (typeof document === 'undefined') {
@@ -123,6 +124,9 @@ onMounted(() => {
     }
 
     syncAdminDocumentTheme();
+    // Core reapplies its global appearance after an Inertia navigation. Keep
+    // the WIMS Admin surface intentionally light after that event as well.
+    removeThemeSyncListener = router.on('success', syncAdminDocumentTheme);
     sidebarCollapsed.value = window.localStorage.getItem('wims-admin-sidebar-collapsed') === 'true';
     cleanupToastHandlers = registerToastHandlers();
 });
@@ -132,6 +136,8 @@ watch(sidebarCollapsed, (collapsed) => {
 });
 
 onBeforeUnmount(() => {
+    removeThemeSyncListener?.();
+    removeThemeSyncListener = null;
     cleanupToastHandlers?.();
     cleanupToastHandlers = null;
     cleanupAdminDocumentTheme();
@@ -619,7 +625,6 @@ const activePageHeader = computed(
         </transition>
     </div>
 </template>
-
 
 
 

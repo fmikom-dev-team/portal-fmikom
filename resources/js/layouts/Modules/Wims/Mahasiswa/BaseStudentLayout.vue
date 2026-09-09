@@ -1,63 +1,20 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import StudentBottomNav from '@/components/Modules/Wims/Mahasiswa/StudentBottomNav.vue';
 import StudentSidebar from '@/components/Modules/Wims/Mahasiswa/StudentSidebar.vue';
 import StudentTopbar from '@/components/Modules/Wims/Mahasiswa/StudentTopbar.vue';
-import { useWimsStudentAppearance } from '@/composables/useWimsStudentAppearance';
+import { useAppearance } from '@/composables/useAppearance';
 import AppToast from '@/pages/WorkOs/components/ui/AppToast.vue';
 
-const { resolvedAppearance } = useWimsStudentAppearance();
+// Follow the Portal preference while keeping WIMS-specific CSS tokens scoped
+// to this layout.
+const { resolvedAppearance } = useAppearance();
 const sidebarCollapsed = ref(false);
 const studentThemeClass = computed(() =>
     resolvedAppearance.value === 'dark' ? 'dark wims-student-dark' : '',
 );
-let initialHtmlDarkClass = false;
-let initialBodyDarkClass = false;
-
-const syncStudentDocumentTheme = () => {
-    if (typeof document === 'undefined') {
-        return;
-    }
-
-    const html = document.documentElement;
-    const body = document.body;
-    const isDark = resolvedAppearance.value === 'dark';
-
-    html.classList.add('wims-student-page');
-    body.classList.add('wims-student-page');
-    body.classList.add('wims-student-body');
-
-    html.classList.toggle('dark', isDark);
-    body.classList.toggle('dark', isDark);
-};
-
-const cleanupStudentDocumentTheme = () => {
-    if (typeof document === 'undefined') {
-        return;
-    }
-
-    const html = document.documentElement;
-    const body = document.body;
-
-    html.classList.remove('wims-student-page');
-    body.classList.remove('wims-student-page');
-    body.classList.remove('wims-student-body');
-    html.classList.toggle('dark', initialHtmlDarkClass);
-    body.classList.toggle('dark', initialBodyDarkClass);
-};
-
 onMounted(() => {
-    if (typeof document !== 'undefined') {
-        initialHtmlDarkClass = document.documentElement.classList.contains('dark');
-        initialBodyDarkClass = document.body.classList.contains('dark');
-    }
-    syncStudentDocumentTheme();
-
     sidebarCollapsed.value = window.localStorage.getItem('wims-student-sidebar-collapsed') === 'true';
-});
-
-watch(resolvedAppearance, () => {
-    syncStudentDocumentTheme();
 });
 
 watch(sidebarCollapsed, (collapsed) => {
@@ -66,9 +23,6 @@ watch(sidebarCollapsed, (collapsed) => {
     }
 });
 
-onBeforeUnmount(() => {
-    cleanupStudentDocumentTheme();
-});
 </script>
 
 <template>

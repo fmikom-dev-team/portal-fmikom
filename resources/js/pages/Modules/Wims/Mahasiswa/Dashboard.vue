@@ -99,6 +99,7 @@ type RegistrationProps = {
         | 'active'
         | 'completed'
         | null;
+    can_register_next?: boolean | null;
     company?: {
         proposal?: {
             name?: string | null;
@@ -636,8 +637,10 @@ const latestLogbookClasses = computed(() => {
 });
 
 const showHeroActions = computed(() =>
-    ['not_registered', 'active', 'completed'].includes(dashboardState.value),
+    ['not_registered', 'active'].includes(dashboardState.value)
+    || (dashboardState.value === 'completed' && props.registration.can_register_next === true),
 );
+const heroActionButtonClass = 'h-12 w-full rounded-xl border-2 border-cyan-100 !bg-none !bg-cyan-50 px-5 text-[13px] font-bold text-blue-700 shadow-lg shadow-blue-900/10 transition-all duration-300 hover:scale-[1.02] hover:border-cyan-200 hover:!bg-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-100 dark:border-cyan-200/30 dark:!bg-none dark:!bg-cyan-50 dark:text-blue-800 dark:hover:border-cyan-100 dark:hover:!bg-white';
 </script>
 
 <template>
@@ -703,21 +706,20 @@ const showHeroActions = computed(() =>
                             <Link :href="primaryCtaHref" class="group flex-1">
                                 <Button
                                     type="button"
-                                    class="relative h-12 w-full overflow-hidden rounded-xl border border-white/15 !bg-none !bg-white/10 px-5 text-[13px] font-bold !text-white shadow-lg shadow-blue-950/10 transition-all duration-300 hover:scale-[1.02] hover:!border-white/25 hover:!bg-white/20 hover:shadow-xl hover:shadow-blue-950/15 active:scale-95 dark:border-white/10 dark:!bg-none dark:!bg-white/[0.07] dark:!text-white dark:hover:!border-white/20 dark:hover:!bg-white/[0.14] dark:shadow-[0_12px_30px_-16px_rgba(8,15,30,0.35)] dark:hover:shadow-[0_16px_34px_-16px_rgba(8,15,30,0.45)]"
+                                    :class="heroActionButtonClass"
                                     :disabled="dashboardState === 'active' && attendanceButtonDisabled"
                                 >
-                                    <span class="relative z-20 flex items-center justify-center gap-2">
+                                    <span class="flex items-center justify-center gap-2">
                                         <Clock3 v-if="dashboardState === 'active'" class="size-4" />
                                         <BriefcaseBusiness v-else class="size-4" />
                                         {{ primaryCtaLabel }}
                                     </span>
-                                    <div class="absolute inset-0 z-10 -translate-x-full bg-gradient-to-r from-transparent via-blue-100/60 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                                 </Button>
                             </Link>
                             <Link v-if="dashboardState === 'active'" :href="logbookPageHref" class="group flex-1">
                                 <Button
                                     type="button"
-                                    class="h-12 w-full rounded-xl border-2 border-cyan-100 !bg-none !bg-cyan-50 px-5 text-[13px] font-bold text-blue-700 shadow-lg shadow-blue-900/10 transition-all duration-300 hover:scale-[1.02] hover:border-cyan-200 hover:!bg-white active:scale-95 dark:border-cyan-200/30 dark:!bg-none dark:!bg-cyan-50 dark:text-blue-800 dark:hover:border-cyan-100 dark:hover:!bg-white"
+                                    :class="heroActionButtonClass"
                                 >
                                     <span class="flex items-center justify-center gap-2">
                                         <ClipboardList class="size-4" />

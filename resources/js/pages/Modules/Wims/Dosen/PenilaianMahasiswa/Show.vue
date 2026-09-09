@@ -120,14 +120,6 @@ const submitForm = (action: 'draft' | 'submitted') => {
     form.action = action;
     form.post(`/wims/dosen/penilaian-mahasiswa/${props.student.pendaftaran_id}`, {
         preserveScroll: true,
-        onSuccess: (responsePage) => {
-            const flashMessage = responsePage.props.flash?.success;
-            if (!flashMessage) {
-                toast.success(action === 'submitted'
-                    ? 'Nilai dosen berhasil dikirim.'
-                    : 'Draft penilaian dosen berhasil disimpan.');
-            }
-        },
         onError: (errors) => {
             const firstError = Object.values(errors).flat().find((value) => typeof value === 'string' && value.trim().length > 0) as string | undefined;
             toast.error(firstError || 'Gagal menyimpan penilaian dosen.');
