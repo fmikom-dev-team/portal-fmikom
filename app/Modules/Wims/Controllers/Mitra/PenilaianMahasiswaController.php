@@ -37,11 +37,13 @@ class PenilaianMahasiswaController extends Controller
         $user = $request->user();
         $company = $this->mitraAccessService->resolveCompany($user);
 
-        $payload = $this->assessmentIndexService->buildCompanyData($user, $company);
+        $payload = $this->assessmentIndexService->buildCompanyData($user, $company, $request);
 
         return Inertia::render('Modules/Wims/Mitra/PenilaianMahasiswa/Index', [
             'summary' => $payload['summary'],
             'students' => $payload['students'],
+            'pagination' => $payload['pagination'],
+            'filters' => $payload['filters'],
         ]);
     }
 

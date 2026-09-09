@@ -28,7 +28,7 @@ const currentPath = computed(() => {
     return path || '/';
 });
 
-const items = [
+const items = computed(() => [
     {
         label: 'Daftar',
         href: withSelectedPeriod(wimsRoutes.registration().url),
@@ -64,7 +64,7 @@ const items = [
         icon: FileText,
         center: false,
     },
-];
+]);
 </script>
 
 <template>
@@ -141,5 +141,4 @@ const items = [
         </div>
     </nav>
 </template>
-
 

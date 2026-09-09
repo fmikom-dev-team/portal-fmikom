@@ -72,3 +72,28 @@ it('marks placement complete by updating registration history without touching l
     expect($registration->fresh()->status)->toBe('selesai')
         ->and(app(StudentRegistrationPageService::class)->hasCompletedInternshipHistory($student->id))->toBeTrue();
 });
+
+it('resolves a selected registration only for its owning student and normalizes dependent preferences', function () {
+    $student = User::factory()->create();
+    $otherStudent = User::factory()->create();
+    $registration = makeRegistrationRuleRegistration($student, overrides: [
+        'status' => 'revisi',
+    ]);
+    $otherRegistration = makeRegistrationRuleRegistration($otherStudent, overrides: [
+        'status' => 'revisi',
+    ]);
+    $service = app(StudentRegistrationPageService::class);
+
+    $payload = app(\App\Modules\Wims\Services\Mahasiswa\Registration\StudentRegistrationActionService::class)
+        ->buildPayload([
+            'bidang_minat' => 'Software Development',
+            'bidang_minat_lainnya' => 'Nilai lama yang harus dibuang',
+            'ukuran_seragam' => 'M',
+            'ukuran_seragam_custom' => 'Nilai custom lama yang harus dibuang',
+        ]);
+
+    expect($service->registrationForStudent($student->id, $registration->id)?->id)->toBe($registration->id)
+        ->and($service->registrationForStudent($student->id, $otherRegistration->id))->toBeNull()
+        ->and($payload['bidang_minat_lainnya'])->toBeNull()
+        ->and($payload['ukuran_seragam_custom'])->toBeNull();
+});

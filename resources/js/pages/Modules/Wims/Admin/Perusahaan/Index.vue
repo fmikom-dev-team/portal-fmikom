@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
+import axios from 'axios';
 import { toast } from 'vue-sonner';
 import {
     AlertTriangle,
@@ -110,6 +111,7 @@ const page = usePage<{
 }>();
 
 const search = ref(props.filters.search || '');
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
 const activeCompanyId = ref<number | null>(props.companies[0]?.id ?? null);
 const processing = ref(false);
 const editorOpen = ref(false);
@@ -167,6 +169,7 @@ const companyValidationError = computed(() => {
         'bidang_industri',
         'location',
         'schedule',
+        'company',
     ];
 
     return keys.map((key) => errors[key]).find(Boolean) ?? null;
@@ -231,6 +234,25 @@ watch(
     },
     { deep: true },
 );
+
+watch(search, (value) => {
+    if (searchTimer) {
+        clearTimeout(searchTimer);
+    }
+
+    searchTimer = setTimeout(() => {
+        router.get(
+            '/wims/admin/perusahaan',
+            { search: value.trim() || undefined },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                only: ['filters', 'summary', 'companies', 'portalUsers'],
+            },
+        );
+    }, 300);
+});
 
 const filteredCompanies = computed(() => {
     const keyword = search.value.trim().toLowerCase();
@@ -449,7 +471,7 @@ const destroyCompany = () => {
                     <div
                         v-for="company in filteredCompanies"
                         :key="company.id"
-                        class="border-b border-zinc-200 px-4 py-4 transition last:border-b-0 sm:px-5"
+                        class="border-b border-zinc-200 px-4 py-3 transition last:border-b-0 sm:px-5 sm:py-3.5"
                         :class="
                             editorOpen && activeCompanyId === company.id
                                 ? 'bg-blue-50/70'
@@ -457,57 +479,71 @@ const destroyCompany = () => {
                         "
                     >
                         <div
-                            class="flex h-full flex-col gap-4"
+                            class="flex flex-col gap-2.5"
                             :class="
                                 editorOpen && activeCompanyId === company.id
-                                    ? 'rounded-lg border border-blue-200 bg-blue-50/40 px-4 py-4'
-                                    : 'pb-5'
+                                    ? 'rounded-lg border border-blue-200 bg-blue-50/40 px-4 py-3'
+                                    : ''
                             "
                         >
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="min-w-0">
+                            <div
+                                class="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between lg:gap-5"
+                            >
+                                <div
+                                    class="flex min-w-0 flex-1 flex-wrap items-center gap-x-5 gap-y-1.5"
+                                >
                                     <p
-                                        class="truncate text-sm font-bold text-slate-950"
+                                        class="max-w-full truncate text-sm font-bold text-slate-950"
                                     >
                                         {{ company.nama }}
                                     </p>
+                                    <span
+                                        class="text-xs text-slate-500"
+                                    >
+                                        {{ company.kota || 'Kota belum diisi' }}
+                                    </span>
+                                    <span
+                                        class="hidden text-xs text-slate-300 sm:inline"
+                                        aria-hidden="true"
+                                    >
+                                        /
+                                    </span>
+                                    <span
+                                        class="min-w-0 truncate text-xs font-bold text-slate-600"
+                                    >
+                                        {{
+                                            company.bidang_industri ||
+                                            'Bidang umum'
+                                        }}
+                                    </span>
                                 </div>
 
-                                <span
-                                    class="shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold ring-1"
-                                    :class="
-                                        company.is_active
-                                            ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-                                            : 'bg-slate-100 text-slate-600 ring-slate-200'
-                                    "
+                                <div
+                                    class="flex shrink-0 items-center justify-between gap-2 lg:justify-end"
                                 >
-                                    {{
-                                        company.is_active
-                                            ? 'Aktif'
-                                            : 'Nonaktif'
-                                    }}
-                                </span>
-                            </div>
-
-                            <p class="text-xs text-slate-500">
-                                {{ company.kota || 'Kota belum diisi' }}
-                            </p>
-
-                            <div class="flex items-end justify-between gap-4">
-                                <p class="min-w-0 text-xs font-bold text-slate-600">
-                                    {{
-                                        company.bidang_industri ||
-                                        'Bidang umum'
-                                    }}
-                                </p>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    class="h-8 shrink-0 rounded-lg border-zinc-200 bg-white px-3 text-xs font-bold text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
-                                    @click="selectCompany(company.id)"
-                                >
-                                    Lihat Data
-                                </Button>
+                                    <span
+                                        class="shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold ring-1"
+                                        :class="
+                                            company.is_active
+                                                ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+                                                : 'bg-slate-100 text-slate-600 ring-slate-200'
+                                        "
+                                    >
+                                        {{
+                                            company.is_active
+                                                ? 'Aktif'
+                                                : 'Nonaktif'
+                                        }}
+                                    </span>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        class="h-8 shrink-0 rounded-lg border-zinc-200 bg-white px-3 text-xs font-bold text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
+                                        @click="selectCompany(company.id)"
+                                    >
+                                        Lihat Data
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -649,6 +685,8 @@ const destroyCompany = () => {
                                 v-model:latitude="form.latitude"
                                 v-model:longitude="form.longitude"
                                 v-model:address="form.alamat"
+                                :company-name="form.nama"
+                                :city="form.kota"
                             />
                         </div>
                         <InputError :message="companyFieldError('location')" />
@@ -962,7 +1000,7 @@ const destroyCompany = () => {
                             Hapus Perusahaan Mitra
                         </DialogTitle>
                         <DialogDescription class="text-sm leading-6 text-slate-600">
-                            Yakin ingin menghapus perusahaan mitra? semua data terkait perusahaan akan hilang, harap berhati-hati !
+                            Perusahaan hanya dapat dihapus jika belum pernah digunakan dalam pendaftaran PKL. Jika sudah memiliki riwayat, gunakan opsi nonaktifkan agar seluruh histori tetap aman.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -1015,6 +1053,3 @@ const destroyCompany = () => {
     background: #f8fafc;
 }
 </style>
-
-
-

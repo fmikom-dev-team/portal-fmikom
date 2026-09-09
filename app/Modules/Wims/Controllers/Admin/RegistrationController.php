@@ -38,6 +38,10 @@ class RegistrationController extends Controller
             return back()->with('error', 'Pendaftaran yang sudah masuk fase aktif atau selesai tidak dapat diubah dari modul approval.');
         }
 
+        if ($pendaftaran->status === 'rejected') {
+            return back()->with('error', 'Pendaftaran yang ditolak tidak dapat diproses kembali. Mahasiswa harus membuat pendaftaran baru.');
+        }
+
         $this->adminRegistrationActionService->updateStatus($pendaftaran, $validated);
 
         return back()->with('success', 'Status pendaftaran berhasil diperbarui.');
@@ -52,7 +56,7 @@ class RegistrationController extends Controller
 
         $registrations = PendaftaranMagang::query()
             ->whereIn('id', $validated['ids'])
-            ->whereNotIn('status', ['aktif', 'selesai'])
+            ->whereIn('status', ['pending', 'revisi'])
             ->get();
 
         if ($registrations->isEmpty()) {
@@ -72,11 +76,34 @@ class RegistrationController extends Controller
 
     public function downloadProposal(PendaftaranMagang $pendaftaran): BinaryFileResponse
     {
-        $location = WimsStorage::locate($pendaftaran->proposal_pkl_path);
+        return $this->downloadAttachment($pendaftaran->proposal_pkl_path, $pendaftaran->proposalAttachmentDownloadName(), 'File proposal PKL tidak ditemukan.');
+    }
+
+    public function downloadTranscript(PendaftaranMagang $pendaftaran): BinaryFileResponse
+    {
+        return $this->downloadAttachment(
+            $pendaftaran->transkrip_nilai_path,
+            'transkrip-nilai-'.$pendaftaran->id.'.pdf',
+            'File transkrip nilai tidak ditemukan.',
+        );
+    }
+
+    public function downloadRecommendation(PendaftaranMagang $pendaftaran): BinaryFileResponse
+    {
+        return $this->downloadAttachment(
+            $pendaftaran->surat_rekomendasi_kaprodi_path,
+            'surat-rekomendasi-kaprodi-'.$pendaftaran->id.'.pdf',
+            'File surat rekomendasi Kaprodi tidak ditemukan.',
+        );
+    }
+
+    private function downloadAttachment(?string $path, string $downloadName, string $message): BinaryFileResponse
+    {
+        $location = WimsStorage::locate($path);
         $absolutePath = $location['absolute_path'] ?? null;
 
-        abort_unless(filled($pendaftaran->proposal_pkl_path) && $absolutePath && is_file($absolutePath), 404, 'File proposal PKL tidak ditemukan.');
+        abort_unless(filled($path) && $absolutePath && is_file($absolutePath), 404, $message);
 
-        return response()->download($absolutePath, $pendaftaran->proposalAttachmentDownloadName());
+        return response()->download($absolutePath, $downloadName);
     }
 }

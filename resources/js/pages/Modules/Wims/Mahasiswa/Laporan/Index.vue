@@ -34,6 +34,14 @@ defineOptions({
 
 type PageState = 'not_registered' | 'waiting' | 'active' | 'completed';
 
+type PeriodOption = {
+    id?: number | string | null;
+    label?: string | null;
+    period_label?: string | null;
+    status_label?: string | null;
+    is_active?: boolean | null;
+};
+
 type RegistrationProps = {
     status?: string | null;
     company?: {
@@ -244,10 +252,10 @@ const evaluationStatusKey = computed(() => props.evaluation.status_key ?? 'not_a
 const statusLabel = computed(() => {
     if (props.registration?.status === 'selesai') return 'Selesai';
     if (props.registration?.status === 'aktif') return 'Aktif';
-    if (props.registration?.status === 'approved') return 'Approved';
+    if (props.registration?.status === 'approved') return 'Disetujui';
     if (props.registration?.status === 'revisi') return 'Revisi';
-    if (props.registration?.status === 'rejected') return 'Rejected';
-    if (props.registration?.status === 'pending') return 'Pending';
+    if (props.registration?.status === 'rejected') return 'Ditolak';
+    if (props.registration?.status === 'pending') return 'Menunggu Review';
     return 'Belum Mengajukan';
 });
 
@@ -625,16 +633,6 @@ const completionScore = computed(() => {
                             </p>
                         </div>
 
-                        <div class="grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto sm:items-center">
-                            <div class="min-w-0 rounded-xl bg-white/10 px-4 py-3 ring-1 ring-white/15 backdrop-blur-md dark:bg-white/[0.07] dark:ring-white/10">
-                                <p class="text-[10px] font-semibold uppercase tracking-wider text-white/60">Status</p>
-                                <p class="mt-1 text-sm font-bold text-white leading-none">{{ statusLabel }}</p>
-                            </div>
-                            <div class="min-w-0 rounded-xl bg-white/10 px-4 py-3 ring-1 ring-white/15 backdrop-blur-md dark:bg-white/[0.07] dark:ring-white/10">
-                                <p class="text-[10px] font-semibold uppercase tracking-wider text-white/60">Progress</p>
-                                <p class="mt-1 text-lg font-bold tabular-nums text-white leading-none">{{ progressPercentage }}%</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -876,9 +874,6 @@ const completionScore = computed(() => {
                                         Laporan dan Penilaian Akhir
                                     </h2>
                                 </div>
-                                <span class="inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-bold" :class="statusClasses">
-                                    {{ statusLabel }}
-                                </span>
                             </div>
 
                             <div class="grid gap-2.5 sm:grid-cols-2">
@@ -1312,5 +1307,3 @@ const completionScore = computed(() => {
         </div>
     </div>
 </template>
-
-

@@ -31,11 +31,13 @@ class PenilaianMahasiswaController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $payload = $this->assessmentIndexService->buildLecturerData($user);
+        $payload = $this->assessmentIndexService->buildLecturerData($user, $request);
 
         return Inertia::render('Modules/Wims/Dosen/PenilaianMahasiswa/Index', [
             'summary' => $payload['summary'],
             'students' => $payload['students'],
+            'pagination' => $payload['pagination'],
+            'filters' => $payload['filters'],
         ]);
     }
 

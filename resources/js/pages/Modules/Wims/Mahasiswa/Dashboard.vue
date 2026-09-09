@@ -220,7 +220,7 @@ const progressPercentage = computed(() =>
 );
 const animatedProgress = useNumberRoll(progressPercentage.value, 1200);
 const locationStatusLabel = computed(
-    () => props.attendance.location_status ?? 'Status lokasi belum tersedia',
+    () => props.attendance.location_status ?? 'Belum tersedia',
 );
 // Real-time clock
 const currentTime = ref('');
@@ -360,12 +360,12 @@ const dashboardState = computed<
 });
 
 const registrationStatusLabel = computed(() => {
-    if (props.registration.status === 'approved') return 'Approved';
+    if (props.registration.status === 'approved') return 'Disetujui';
     if (props.registration.status === 'aktif') return 'Aktif';
     if (props.registration.status === 'selesai') return 'Selesai';
     if (props.registration.status === 'revisi') return 'Revisi';
-    if (props.registration.status === 'rejected') return 'Rejected';
-    if (props.registration.status === 'pending') return 'Pending';
+    if (props.registration.status === 'rejected') return 'Ditolak';
+    if (props.registration.status === 'pending') return 'Menunggu Review';
 
     return 'Belum Mengajukan';
 });
@@ -546,7 +546,7 @@ const primaryCtaHref = computed(() => {
     }
 
     if (dashboardState.value === 'completed') {
-        return withSelectedPeriod(wimsRoutes.laporan().url);
+        return wimsRoutes.registration().url;
     }
 
     return registrationPageHref.value;
@@ -558,7 +558,7 @@ const primaryCtaLabel = computed(() => {
     }
 
     if (dashboardState.value === 'completed') {
-        return 'Buka Laporan Akhir';
+        return 'Daftar PKL Periode Berikutnya';
     }
 
     if (props.registration.status === 'revisi') {
@@ -569,7 +569,7 @@ const primaryCtaLabel = computed(() => {
         return 'Lihat Status Pendaftaran';
     }
 
-    return 'Ajukan PKL / Magang';
+    return 'Daftar';
 });
 
 const latestLogbookLabel = computed(() => {
@@ -612,7 +612,7 @@ const latestLogbookMeta = computed(() => {
         return 'Selesai';
     }
 
-    return heroDescription.value;
+    return '';
 });
 
 const latestLogbookClasses = computed(() => {
@@ -635,7 +635,9 @@ const latestLogbookClasses = computed(() => {
     return 'border-wims-border bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400';
 });
 
-const showHeroActions = computed(() => dashboardState.value === 'active');
+const showHeroActions = computed(() =>
+    ['not_registered', 'active', 'completed'].includes(dashboardState.value),
+);
 </script>
 
 <template>
@@ -701,20 +703,21 @@ const showHeroActions = computed(() => dashboardState.value === 'active');
                             <Link :href="primaryCtaHref" class="group flex-1">
                                 <Button
                                     type="button"
-                                    class="relative h-12 w-full overflow-hidden rounded-xl bg-white px-5 text-[13px] font-bold text-blue-700 shadow-lg shadow-blue-900/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-900/30 active:scale-95 dark:bg-white/95 dark:text-[#1847a6] dark:shadow-[0_12px_30px_-16px_rgba(8,15,30,0.7)] dark:hover:shadow-[0_16px_34px_-16px_rgba(8,15,30,0.85)]"
-                                    :disabled="attendanceButtonDisabled"
+                                    class="relative h-12 w-full overflow-hidden rounded-xl border border-white/15 !bg-none !bg-white/10 px-5 text-[13px] font-bold !text-white shadow-lg shadow-blue-950/10 transition-all duration-300 hover:scale-[1.02] hover:!border-white/25 hover:!bg-white/20 hover:shadow-xl hover:shadow-blue-950/15 active:scale-95 dark:border-white/10 dark:!bg-none dark:!bg-white/[0.07] dark:!text-white dark:hover:!border-white/20 dark:hover:!bg-white/[0.14] dark:shadow-[0_12px_30px_-16px_rgba(8,15,30,0.35)] dark:hover:shadow-[0_16px_34px_-16px_rgba(8,15,30,0.45)]"
+                                    :disabled="dashboardState === 'active' && attendanceButtonDisabled"
                                 >
-                                    <span class="relative z-10 flex items-center justify-center gap-2">
-                                        <Clock3 class="size-4" />
+                                    <span class="relative z-20 flex items-center justify-center gap-2">
+                                        <Clock3 v-if="dashboardState === 'active'" class="size-4" />
+                                        <BriefcaseBusiness v-else class="size-4" />
                                         {{ primaryCtaLabel }}
                                     </span>
-                                    <div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-blue-100/60 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                                    <div class="absolute inset-0 z-10 -translate-x-full bg-gradient-to-r from-transparent via-blue-100/60 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                                 </Button>
                             </Link>
-                            <Link :href="logbookPageHref" class="group flex-1">
+                            <Link v-if="dashboardState === 'active'" :href="logbookPageHref" class="group flex-1">
                                 <Button
                                     type="button"
-                                    class="h-12 w-full rounded-xl border-2 border-white/25 bg-white/10 px-5 text-[13px] font-bold text-white backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:border-white/40 hover:bg-white/20 active:scale-95 dark:border-white/15 dark:bg-slate-900/12 dark:text-white/92 dark:hover:border-white/24 dark:hover:bg-white/[0.12]"
+                                    class="h-12 w-full rounded-xl border-2 border-cyan-100 !bg-none !bg-cyan-50 px-5 text-[13px] font-bold text-blue-700 shadow-lg shadow-blue-900/10 transition-all duration-300 hover:scale-[1.02] hover:border-cyan-200 hover:!bg-white active:scale-95 dark:border-cyan-200/30 dark:!bg-none dark:!bg-cyan-50 dark:text-blue-800 dark:hover:border-cyan-100 dark:hover:!bg-white"
                                 >
                                     <span class="flex items-center justify-center gap-2">
                                         <ClipboardList class="size-4" />
@@ -860,7 +863,7 @@ const showHeroActions = computed(() => dashboardState.value === 'active');
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Presensi terakhir</p>
-                                            <p class="mt-1 text-[13px] font-bold text-wims-text">{{ latestAttendanceItem?.date || 'Belum ada riwayat' }}</p>
+                                            <p v-if="latestAttendanceItem?.date" class="mt-1 text-[13px] font-bold text-wims-text">{{ latestAttendanceItem.date }}</p>
                                         </div>
                                         <Clock3 class="size-4 flex-shrink-0" :class="latestAttendanceItem ? historyStatusTone(latestAttendanceItem).text : 'text-slate-400'" />
                                     </div>
@@ -874,7 +877,7 @@ const showHeroActions = computed(() => dashboardState.value === 'active');
                                     <div class="flex items-start justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Logbook terakhir</p>
-                                            <p class="mt-1 text-[13px] font-bold leading-5 text-wims-text break-words">{{ latestLogbookMeta }}</p>
+                                            <p v-if="latestLogbookMeta" class="mt-1 text-[13px] font-bold leading-5 text-wims-text break-words">{{ latestLogbookMeta }}</p>
                                         </div>
                                         <ClipboardList class="size-4 flex-shrink-0 text-slate-400" />
                                     </div>
@@ -886,7 +889,7 @@ const showHeroActions = computed(() => dashboardState.value === 'active');
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Status pengajuan</p>
-                                            <p class="mt-1 text-[13px] font-bold text-wims-text">{{ registrationStatusLabel }}</p>
+                                            <p v-if="props.registration.status" class="mt-1 text-[13px] font-bold text-wims-text">{{ registrationStatusLabel }}</p>
                                         </div>
                                         <FileText class="size-4 flex-shrink-0 text-slate-400" />
                                     </div>
@@ -1032,4 +1035,3 @@ const showHeroActions = computed(() => dashboardState.value === 'active');
         </div>
     </div>
 </template>
-

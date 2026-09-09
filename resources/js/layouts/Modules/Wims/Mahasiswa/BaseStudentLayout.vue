@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import StudentBottomNav from '@/components/Modules/Wims/Mahasiswa/StudentBottomNav.vue';
 import StudentSidebar from '@/components/Modules/Wims/Mahasiswa/StudentSidebar.vue';
 import StudentTopbar from '@/components/Modules/Wims/Mahasiswa/StudentTopbar.vue';
@@ -7,6 +7,7 @@ import { useWimsStudentAppearance } from '@/composables/useWimsStudentAppearance
 import AppToast from '@/pages/WorkOs/components/ui/AppToast.vue';
 
 const { resolvedAppearance } = useWimsStudentAppearance();
+const sidebarCollapsed = ref(false);
 const studentThemeClass = computed(() =>
     resolvedAppearance.value === 'dark' ? 'dark wims-student-dark' : '',
 );
@@ -51,10 +52,18 @@ onMounted(() => {
         initialBodyDarkClass = document.body.classList.contains('dark');
     }
     syncStudentDocumentTheme();
+
+    sidebarCollapsed.value = window.localStorage.getItem('wims-student-sidebar-collapsed') === 'true';
 });
 
 watch(resolvedAppearance, () => {
     syncStudentDocumentTheme();
+});
+
+watch(sidebarCollapsed, (collapsed) => {
+    if (typeof window !== 'undefined') {
+        window.localStorage.setItem('wims-student-sidebar-collapsed', String(collapsed));
+    }
 });
 
 onBeforeUnmount(() => {
@@ -68,10 +77,10 @@ onBeforeUnmount(() => {
         :class="studentThemeClass"
     >
         <div class="flex h-full min-h-0">
-            <StudentSidebar />
+            <StudentSidebar :collapsed="sidebarCollapsed" />
 
             <div class="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden">
-                <StudentTopbar />
+                <StudentTopbar :sidebar-collapsed="sidebarCollapsed" @toggle-sidebar="sidebarCollapsed = !sidebarCollapsed" />
 
                 <main class="min-w-0 min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
                     <div

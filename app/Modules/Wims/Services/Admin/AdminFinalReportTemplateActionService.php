@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Throwable;
+use Illuminate\Validation\ValidationException;
 
 class AdminFinalReportTemplateActionService
 {
@@ -50,6 +51,12 @@ class AdminFinalReportTemplateActionService
 
     public function update(FinalReportTemplate $template, array $validated, ?int $userId): FinalReportTemplate
     {
+        if ($template->template_type !== $validated['template_type']) {
+            throw ValidationException::withMessages([
+                'template_type' => 'Jenis template tidak dapat diubah. Buat template baru untuk jenis dokumen yang berbeda.',
+            ]);
+        }
+
         /** @var UploadedFile|null $file */
         $file = $validated['file'] ?? null;
         $storedPath = null;
@@ -99,6 +106,12 @@ class AdminFinalReportTemplateActionService
 
     public function delete(FinalReportTemplate $template): void
     {
+        if ($template->is_active) {
+            throw ValidationException::withMessages([
+                'template' => 'Template aktif tidak dapat dihapus. Nonaktifkan atau ganti dengan template baru terlebih dahulu.',
+            ]);
+        }
+
         $path = $template->file_path;
 
         DB::transaction(function () use ($template): void {

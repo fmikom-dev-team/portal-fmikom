@@ -48,6 +48,7 @@ const page = usePage<{
 }>();
 
 const isMenuOpen = ref(false);
+const sidebarCollapsed = ref(false);
 const isRefreshing = ref(false);
 const isNotificationOpen = ref(false);
 const isProfileMenuOpen = ref(false);
@@ -118,6 +119,9 @@ const refreshData = () => {
 };
 
 const isCompanyBrand = computed(() => props.brandStyle === 'company');
+const sidebarStorageKey = computed(() =>
+    isCompanyBrand.value ? 'wims-mitra-sidebar-collapsed' : 'wims-dosen-sidebar-collapsed',
+);
 const headerRoleLabel = computed(() =>
     isCompanyBrand.value ? 'Pembimbing Mitra' : 'Dosen Pembimbing',
 );
@@ -477,8 +481,13 @@ onMounted(() => {
     }
 
     syncRoleDocumentTheme();
+    sidebarCollapsed.value = window.localStorage.getItem(sidebarStorageKey.value) === 'true';
     document.addEventListener('click', handleClickOutsideNotification);
     document.addEventListener('click', handleClickOutsideProfileMenu);
+});
+
+watch(sidebarCollapsed, (collapsed) => {
+    window.localStorage.setItem(sidebarStorageKey.value, String(collapsed));
 });
 
 onBeforeUnmount(() => {
@@ -497,10 +506,13 @@ watch(currentPath, () => {
 
 <template>
     <div class="wims-role-shell flex h-screen flex-col overflow-hidden bg-wims-bg lg:flex-row">
-        <aside class="hidden lg:flex lg:w-[272px] lg:flex-shrink-0">
+        <aside
+            class="hidden flex-shrink-0 transition-[width] duration-300 lg:flex"
+            :class="sidebarCollapsed ? 'lg:w-[88px]' : 'lg:w-[272px]'"
+        >
             <div class="sticky top-0 flex h-screen w-full flex-col border-r border-wims-border bg-wims-card transition-colors duration-300">
                 <div class="relative flex h-full flex-col px-4 py-6">
-                    <div class="flex items-center gap-3 px-2 pb-8">
+                    <div class="flex items-center gap-3 px-2 pb-8" :class="sidebarCollapsed ? 'justify-center' : ''">
                     <div
                         class="relative flex size-10 items-center justify-center rounded-xl border shadow-[0_1px_6px_-2px_rgba(0,0,0,0.06)]"
                         :class="
@@ -512,7 +524,7 @@ watch(currentPath, () => {
                         <BriefcaseBusiness v-if="isCompanyBrand" class="size-5" />
                         <GraduationCap v-else class="size-5" />
                     </div>
-                    <div>
+                    <div v-if="!sidebarCollapsed">
                         <p
                             class="text-[15px] font-black uppercase tracking-[0.2em]"
                             :class="isCompanyBrand ? 'text-emerald-700' : 'text-blue-600'"
@@ -524,7 +536,7 @@ watch(currentPath, () => {
                         </p>
                     </div>
                 </div>
-                    <p class="mb-2.5 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400/80">
+                    <p v-if="!sidebarCollapsed" class="mb-2.5 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400/80">
                         Menu Utama
                     </p>
 
@@ -533,11 +545,14 @@ watch(currentPath, () => {
                             v-for="item in navigationItems"
                             :key="item.href"
                             :href="item.href"
-                            class="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200"
+                            class="group relative flex items-center gap-3 rounded-xl py-2.5 transition-all duration-200"
                             :class="
-                                isActive(item)
-                                    ? 'bg-blue-50/80 text-blue-700'
-                                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                                [
+                                    sidebarCollapsed ? 'justify-center px-2' : 'px-3',
+                                    isActive(item)
+                                        ? 'bg-blue-50/80 text-blue-700'
+                                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700',
+                                ]
                             "
                         >
                             <div
@@ -556,7 +571,7 @@ watch(currentPath, () => {
                                 <component :is="item.icon" class="size-4" />
                             </div>
 
-                            <div class="min-w-0 flex-1">
+                            <div v-if="!sidebarCollapsed" class="min-w-0 flex-1">
                                 <p
                                     class="text-[13px] font-semibold leading-none"
                                     :class="isActive(item) ? 'text-blue-700' : ''"
@@ -578,7 +593,7 @@ watch(currentPath, () => {
                     <div class="mb-4 h-px bg-wims-border/60" />
 
                     <div class="rounded-xl border border-wims-border/80 bg-slate-50/80 p-3 transition-colors duration-300">
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-3" :class="sidebarCollapsed ? 'justify-center' : ''">
                             <div
                                 class="relative flex size-9 flex-shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white shadow-[0_2px_8px_-4px_rgba(59,130,246,0.25)]"
                                 :class="
@@ -594,7 +609,7 @@ watch(currentPath, () => {
                                     :class="isCompanyBrand ? 'bg-emerald-500' : 'bg-blue-500'"
                                 />
                             </div>
-                            <div class="min-w-0 flex-1">
+                            <div v-if="!sidebarCollapsed" class="min-w-0 flex-1">
                                 <p class="truncate text-[13px] font-semibold text-wims-text">
                                     {{ user?.name || brand }}
                                 </p>
@@ -603,6 +618,7 @@ watch(currentPath, () => {
                                 </p>
                             </div>
                             <button
+                                v-if="!sidebarCollapsed"
                                 type="button"
                                 class="flex size-8 flex-shrink-0 items-center justify-center rounded-lg text-slate-400 transition-all duration-200 hover:bg-rose-50 hover:text-rose-500"
                                 title="Keluar"
@@ -619,13 +635,23 @@ watch(currentPath, () => {
         <div class="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden">
             <header class="sticky top-0 z-30 hidden border-b border-wims-border bg-wims-topbar backdrop-blur-xl transition-colors duration-300 lg:block">
                 <div class="mx-auto flex w-full max-w-[1320px] items-start justify-between gap-4 px-8 py-4 xl:px-10">
-                    <div class="min-w-0 max-w-3xl">
+                    <div class="flex min-w-0 max-w-3xl items-start gap-3">
+                        <button
+                            type="button"
+                            class="hidden size-10 shrink-0 items-center justify-center rounded-xl border border-wims-border/80 bg-wims-card text-slate-500 transition-all duration-200 hover:border-blue-300/60 hover:bg-blue-50/80 hover:text-blue-600 lg:inline-flex"
+                            :aria-label="sidebarCollapsed ? 'Buka sidebar' : 'Perkecil sidebar'"
+                            @click="sidebarCollapsed = !sidebarCollapsed"
+                        >
+                            <Menu class="size-4" />
+                        </button>
+                        <div class="min-w-0">
                         <h1 class="text-base font-semibold text-wims-text">
                             {{ pageMeta.title }}
                         </h1>
                         <p class="mt-1.5 text-[11px] leading-5 text-slate-600">
                             {{ pageMeta.subtitle }}
                         </p>
+                        </div>
                     </div>
                     <div ref="desktopNotificationMenuRef" class="hidden shrink-0 items-center gap-3 lg:flex">
                         <button

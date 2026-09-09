@@ -4,7 +4,6 @@ namespace App\Modules\Wims\Services\Admin;
 
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PerusahaanMitra;
-use App\Models\User;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use App\Modules\Wims\Support\AssessmentSummary;
@@ -24,13 +23,19 @@ class AdminMonitoringPageService
         $search = trim((string) $request->string('search', ''));
         $period = trim((string) $request->string('period', ''));
         $companyId = $request->integer('company_id') ?: null;
-        $dosenId = $request->integer('dosen_id') ?: null;
+        $allowedStatuses = ['pending', 'approved', 'aktif', 'selesai', 'revisi', 'rejected'];
+
+        if ($status !== 'all' && ! in_array($status, $allowedStatuses, true)) {
+            $status = 'all';
+        }
 
         $query = PendaftaranMagang::query()
             ->with([
                 'mahasiswa',
                 'perusahaan',
                 'dosenPembimbing',
+                'latestAbsensi',
+                'latestLogbook',
                 'assessmentSubmissions' => fn ($builder) => $builder
                     ->whereIn('assessor_role', ['dosen', 'mitra'])
                     ->orderByDesc('submitted_at')
@@ -68,7 +73,7 @@ class AdminMonitoringPageService
         }
 
         if ($period !== '') {
-            [$start, $end] = array_pad(explode('__', $period, 2), 2, null);
+            [$start, $end] = $this->resolvePeriod($period) ?? [null, null];
 
             if (filled($start) && filled($end)) {
                 $query
@@ -79,10 +84,6 @@ class AdminMonitoringPageService
 
         if ($companyId) {
             $query->where('perusahaan_id', $companyId);
-        }
-
-        if ($dosenId) {
-            $query->where('dosen_pembimbing_id', $dosenId);
         }
 
         $registrations = $query
@@ -96,15 +97,8 @@ class AdminMonitoringPageService
         ]);
 
         $registrations->through(function (PendaftaranMagang $pendaftaran): array {
-            $latestAttendance = $pendaftaran->absensis()
-                ->latest('tanggal')
-                ->latest('id')
-                ->first();
-
-            $latestLogbook = $pendaftaran->logbooks()
-                ->latest('tanggal')
-                ->latest('id')
-                ->first();
+            $latestAttendance = $pendaftaran->latestAbsensi;
+            $latestLogbook = $pendaftaran->latestLogbook;
             $assessmentSummary = AssessmentSummary::fromSubmissions($pendaftaran->assessmentSubmissions);
 
             return [
@@ -157,7 +151,6 @@ class AdminMonitoringPageService
                 'search' => $search,
                 'period' => $period,
                 'company_id' => $companyId,
-                'dosen_id' => $dosenId,
             ],
             'summary' => [
                 'all' => PendaftaranMagang::count(),
@@ -178,16 +171,6 @@ class AdminMonitoringPageService
                     ->map(fn (PerusahaanMitra $company) => [
                         'id' => $company->id,
                         'label' => $company->nama,
-                    ])
-                    ->values()
-                    ->all(),
-                'dosen' => $this->wimsModuleRoleService
-                    ->usersForRole('dosen')
-                    ->orderBy('name')
-                    ->get(['id', 'name'])
-                    ->map(fn (User $dosen) => [
-                        'id' => $dosen->id,
-                        'label' => $dosen->name,
                     ])
                     ->values()
                     ->all(),
@@ -241,5 +224,28 @@ class AdminMonitoringPageService
         }
 
         return Carbon::parse($date)->translatedFormat('d M Y');
+    }
+
+    private function resolvePeriod(string $period): ?array
+    {
+        [$start, $end] = array_pad(explode('__', $period, 2), 2, null);
+
+        if (! is_string($start) || ! is_string($end)) {
+            return null;
+        }
+
+        foreach ([$start, $end] as $date) {
+            if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                return null;
+            }
+
+            [$year, $month, $day] = array_map('intval', explode('-', $date));
+
+            if (! checkdate($month, $day, $year)) {
+                return null;
+            }
+        }
+
+        return $start <= $end ? [$start, $end] : null;
     }
 }

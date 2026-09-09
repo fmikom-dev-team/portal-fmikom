@@ -26,6 +26,11 @@ class PendaftaranMagang extends Model
         'pembimbing_lapangan_id', 'surat_tugas_id', 'tanggal_mulai',
         'tanggal_selesai', 'status', 'perusahaan_diminati_nama',
         'perusahaan_diminati_alamat', 'catatan_pengajuan',
+        'status_kip', 'sks_ditempuh', 'transkrip_nilai_path',
+        'transkrip_nilai_original_name', 'transkrip_nilai_uploaded_at',
+        'surat_rekomendasi_kaprodi_path', 'surat_rekomendasi_kaprodi_original_name',
+        'surat_rekomendasi_kaprodi_uploaded_at', 'bidang_minat',
+        'bidang_minat_lainnya', 'ukuran_seragam', 'ukuran_seragam_custom',
         'catatan_revisi_admin', 'proposal_pkl_path',
         'proposal_pkl_original_name', 'proposal_pkl_uploaded_at',
         'laporan_akhir_path', 'laporan_akhir_original_name', 'laporan_akhir_uploaded_at',
@@ -35,6 +40,8 @@ class PendaftaranMagang extends Model
         'tanggal_mulai' => 'date',
         'tanggal_selesai' => 'date',
         'proposal_pkl_uploaded_at' => 'datetime',
+        'transkrip_nilai_uploaded_at' => 'datetime',
+        'surat_rekomendasi_kaprodi_uploaded_at' => 'datetime',
         'laporan_akhir_uploaded_at' => 'datetime',
     ];
 
@@ -73,9 +80,21 @@ class PendaftaranMagang extends Model
         return $this->hasMany(AbsensiMagang::class, 'pendaftaran_id');
     }
 
+    public function latestAbsensi(): HasOne
+    {
+        return $this->hasOne(AbsensiMagang::class, 'pendaftaran_id')
+            ->ofMany(['tanggal' => 'max', 'id' => 'max']);
+    }
+
     public function logbooks(): HasMany
     {
         return $this->hasMany(LogbookMagang::class, 'pendaftaran_id');
+    }
+
+    public function latestLogbook(): HasOne
+    {
+        return $this->hasOne(LogbookMagang::class, 'pendaftaran_id')
+            ->ofMany(['tanggal' => 'max', 'id' => 'max']);
     }
 
     public function penilaian(): HasOne

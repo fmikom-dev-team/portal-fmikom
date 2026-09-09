@@ -9,6 +9,7 @@ use App\Support\WimsStorage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class LogbookActionService
@@ -27,8 +28,19 @@ class LogbookActionService
 
         try {
             DB::transaction(function () use ($pendaftaran, $attributes, $photos, &$storedPaths): void {
+                $lockedRegistration = PendaftaranMagang::query()
+                    ->lockForUpdate()
+                    ->findOrFail($pendaftaran->id);
+
+                if (LogbookMagang::query()
+                    ->where('pendaftaran_id', $lockedRegistration->id)
+                    ->whereDate('tanggal', now()->toDateString())
+                    ->exists()) {
+                    throw ValidationException::withMessages(['logbook' => 'Logbook hari ini sudah pernah dikirim.']);
+                }
+
                 $logbook = LogbookMagang::create([
-                    'pendaftaran_id' => $pendaftaran->id,
+                    'pendaftaran_id' => $lockedRegistration->id,
                     'tanggal' => now()->toDateString(),
                     'jam_mulai' => $attributes['jam_mulai'],
                     'jam_selesai' => $attributes['jam_selesai'],

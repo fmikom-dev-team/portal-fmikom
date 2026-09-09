@@ -4,9 +4,7 @@ import { Head, useForm, usePage } from '@inertiajs/vue3';
 import {
     Building2,
     CalendarDays,
-    ClipboardPenLine,
     LoaderCircle,
-    MapPinned,
     CheckCircle2,
     Clock3,
     XCircle,
@@ -14,7 +12,6 @@ import {
     Briefcase,
     Timer,
     ClipboardList,
-    IdCard,
     History,
     ChevronDown,
     ChevronUp,
@@ -26,6 +23,14 @@ import {
 import StudentLayout from '@/layouts/Modules/Wims/Mahasiswa/Layout.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import registrationRoutes from '@/routes/wims/registration';
 import { toast } from '@/pages/WorkOs/composables/useWorkOs';
 
@@ -45,6 +50,22 @@ type RegistrationItem = {
         name?: string | null;
         uploaded_at?: string | null;
     } | null;
+    transcript_attachment?: {
+        exists?: boolean;
+        name?: string | null;
+        uploaded_at?: string | null;
+    } | null;
+    recommendation_attachment?: {
+        exists?: boolean;
+        name?: string | null;
+        uploaded_at?: string | null;
+    } | null;
+    status_kip?: string | null;
+    sks_ditempuh?: number | null;
+    bidang_minat?: string | null;
+    bidang_minat_lainnya?: string | null;
+    ukuran_seragam?: string | null;
+    ukuran_seragam_custom?: string | null;
     company?: {
         proposal?: {
             name?: string | null;
@@ -58,7 +79,7 @@ type RegistrationItem = {
     submitted_at?: string | null;
     updated_at?: string | null;
 };
-type PageState = { can_submit?: boolean; is_revision?: boolean; is_locked?: boolean };
+type PageState = { can_submit?: boolean; is_revision?: boolean; is_new_submission?: boolean; is_locked?: boolean };
 type PeriodOption = {
     id?: number | string | null;
     label?: string | null;
@@ -83,6 +104,12 @@ type FormDefaults = {
     perusahaan_diminati_nama?: string | null;
     perusahaan_diminati_alamat?: string | null;
     catatan_pengajuan?: string | null;
+    status_kip?: string | null;
+    sks_ditempuh?: number | null;
+    bidang_minat?: string | null;
+    bidang_minat_lainnya?: string | null;
+    ukuran_seragam?: string | null;
+    ukuran_seragam_custom?: string | null;
 };
 type PageProps = {
     flash?: { success?: string; error?: string | null };
@@ -101,24 +128,48 @@ const props = defineProps<{
 const page = usePage<PageProps>();
 
 const form = useForm({
+    registration_id: props.selected_period_id ?? null,
     tanggal_mulai: props.formDefaults.tanggal_mulai ?? '',
     tanggal_selesai: props.formDefaults.tanggal_selesai ?? '',
     perusahaan_diminati_nama: props.formDefaults.perusahaan_diminati_nama ?? '',
     perusahaan_diminati_alamat: props.formDefaults.perusahaan_diminati_alamat ?? '',
     catatan_pengajuan: props.formDefaults.catatan_pengajuan ?? '',
+    status_kip: props.formDefaults.status_kip ?? '',
+    sks_ditempuh: props.formDefaults.sks_ditempuh ?? null,
+    bidang_minat: props.formDefaults.bidang_minat ?? '',
+    bidang_minat_lainnya: props.formDefaults.bidang_minat_lainnya ?? '',
+    ukuran_seragam: props.formDefaults.ukuran_seragam ?? '',
+    ukuran_seragam_custom: props.formDefaults.ukuran_seragam_custom ?? '',
     proposal_pkl: null as File | null,
+    transkrip_nilai: null as File | null,
+    surat_rekomendasi_kaprodi: null as File | null,
 });
 
 const flash        = computed(() => page.props.flash ?? {});
 const pageErrors   = computed(() => page.props.errors ?? {});
 const registration = computed(() => props.registration ?? null);
+const isNewSubmission = computed(() => Boolean(props.pageState.is_new_submission));
 const proposalAttachment = computed(() => registration.value?.proposal_attachment ?? null);
+const transcriptAttachment = computed(() => registration.value?.transcript_attachment ?? null);
+const recommendationAttachment = computed(() => registration.value?.recommendation_attachment ?? null);
 const proposalMarkedForRemoval = ref(false);
-const hasStoredProposalAttachment = computed(() => Boolean(proposalAttachment.value?.exists) && !proposalMarkedForRemoval.value);
+const transcriptMarkedForRemoval = ref(false);
+const recommendationMarkedForRemoval = ref(false);
+const hasStoredProposalAttachment = computed(() => !isNewSubmission.value && Boolean(proposalAttachment.value?.exists) && !proposalMarkedForRemoval.value);
 const proposalExistingFlag = computed(() => hasStoredProposalAttachment.value ? '1' : '');
+const hasStoredTranscriptAttachment = computed(() => !isNewSubmission.value && Boolean(transcriptAttachment.value?.exists) && !transcriptMarkedForRemoval.value);
+const transcriptExistingFlag = computed(() => hasStoredTranscriptAttachment.value ? '1' : '');
+const hasStoredRecommendationAttachment = computed(() => !isNewSubmission.value && Boolean(recommendationAttachment.value?.exists) && !recommendationMarkedForRemoval.value);
+const recommendationExistingFlag = computed(() => hasStoredRecommendationAttachment.value ? '1' : '');
 const proposalDisplayName = computed(() => form.proposal_pkl?.name || (hasStoredProposalAttachment.value ? (proposalAttachment.value?.name || 'Dokumen tersimpan') : null));
 const proposalDisplayUploadedAt = computed(() => form.proposal_pkl ? 'File baru siap dikirim.' : (hasStoredProposalAttachment.value ? (proposalAttachment.value?.uploaded_at || 'Waktu upload belum tersedia') : null));
+const transcriptDisplayName = computed(() => form.transkrip_nilai?.name || (hasStoredTranscriptAttachment.value ? (transcriptAttachment.value?.name || 'Dokumen tersimpan') : null));
+const transcriptDisplayUploadedAt = computed(() => form.transkrip_nilai ? 'File baru siap dikirim.' : (hasStoredTranscriptAttachment.value ? (transcriptAttachment.value?.uploaded_at || 'Waktu upload belum tersedia') : null));
+const recommendationDisplayName = computed(() => form.surat_rekomendasi_kaprodi?.name || (hasStoredRecommendationAttachment.value ? (recommendationAttachment.value?.name || 'Dokumen tersimpan') : null));
+const recommendationDisplayUploadedAt = computed(() => form.surat_rekomendasi_kaprodi ? 'File baru siap dikirim.' : (hasStoredRecommendationAttachment.value ? (recommendationAttachment.value?.uploaded_at || 'Waktu upload belum tersedia') : null));
 const proposalInputRef = ref<HTMLInputElement | null>(null);
+const transcriptInputRef = ref<HTMLInputElement | null>(null);
+const recommendationInputRef = ref<HTMLInputElement | null>(null);
 const isLocked     = computed(() => Boolean(props.pageState.is_locked));
 const isRevision   = computed(() => Boolean(props.pageState.is_revision));
 const canSubmit    = computed(() => Boolean(props.pageState.can_submit));
@@ -142,12 +193,34 @@ const companyAddressLabel = (registrationItem?: RegistrationItem | null) =>
 const showChecklist  = ref(true);
 const showLog        = ref(true);
 const showCardPreview = ref(false);
+const showSubmitConfirmation = ref(false);
+const currentFormStep = ref(1);
+const formSteps = [
+    { number: 1, label: 'Rencana PKL', description: 'Periode dan preferensi' },
+    { number: 2, label: 'Data Mahasiswa', description: 'KIP, akademik, dan preferensi' },
+    { number: 3, label: 'Dokumen & Ajukan', description: 'Lampiran dan pemeriksaan' },
+];
+const interestAreas = [
+    'Software Development',
+    'Network & Infrastructure',
+    'IT Business & Intelligence',
+    'IT Multimedia',
+    'Perekayasaan Perangkat Lunak',
+    'Data Sains',
+    'Arsitektur Enterprise',
+    'Analyst',
+    'Research Assistant',
+    'Consultant',
+    'Experts / Academics',
+    'Lainnya',
+];
+const uniformSizes = ['S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'Custom'];
 
 // -- Status helpers -------------------------------------------
 const statusLabel = (status?: string | null) => {
     const m: Record<string, string> = {
-        approved: 'Approved', aktif: 'Aktif', selesai: 'Selesai',
-        revisi: 'Revisi', rejected: 'Rejected', pending: 'Menunggu Review',
+        approved: 'Disetujui', aktif: 'Aktif', selesai: 'Selesai',
+        revisi: 'Revisi', rejected: 'Ditolak', pending: 'Menunggu Review',
     };
     return m[status ?? ''] ?? 'Belum Mengajukan';
 };
@@ -168,7 +241,7 @@ const steps = computed(() => {
     const s = registration.value?.status;
     return [
         { key: 'draft',    label: 'Pengajuan',     done: !!s,                                                   active: !s },
-        { key: 'pending',  label: 'Review Kampus', done: ['approved','aktif','selesai'].includes(s ?? ''),       active: s === 'pending' || s === 'revisi' },
+        { key: 'pending',  label: 'Review',        done: ['approved','aktif','selesai'].includes(s ?? ''),       active: s === 'pending' || s === 'revisi' },
         { key: 'approved', label: 'Disetujui',     done: ['aktif','selesai'].includes(s ?? ''),                  active: s === 'approved' },
         { key: 'aktif',    label: 'Aktif',         done: s === 'selesai',                                        active: s === 'aktif' },
         { key: 'selesai',  label: 'Selesai', done: s === 'selesai',                                        active: s === 'selesai' },
@@ -181,9 +254,22 @@ const countdown = computed(() => {
     const end   = registration.value?.tanggal_selesai ?? form.tanggal_selesai;
     if (!start || !end) return null;
 
+    const parseDateInput = (value: string, endOfDay = false) => {
+        const [year, month, day] = value.split('-').map(Number);
+
+        return new Date(
+            year,
+            month - 1,
+            day,
+            endOfDay ? 23 : 0,
+            endOfDay ? 59 : 0,
+            endOfDay ? 59 : 0,
+            endOfDay ? 999 : 0,
+        );
+    };
     const now      = new Date();
-    const startDate = new Date(start);
-    const endDate   = new Date(end);
+    const startDate = parseDateInput(start);
+    const endDate   = parseDateInput(end, true);
     const totalMs   = endDate.getTime() - startDate.getTime();
     const totalDays = Math.ceil(totalMs / 86400000);
 
@@ -209,6 +295,18 @@ const checklist = computed(() => [
         label: 'Proposal PKL dilampirkan',
         done: Boolean(form.proposal_pkl || proposalExistingFlag.value),
         required: true,
+    },
+    {
+        id: 'transcript',
+        label: 'Transkrip nilai dilampirkan',
+        done: Boolean(form.transkrip_nilai || transcriptExistingFlag.value),
+        required: true,
+    },
+    {
+        id: 'recommendation',
+        label: 'Surat rekomendasi Kaprodi (opsional)',
+        done: Boolean(form.surat_rekomendasi_kaprodi || recommendationExistingFlag.value),
+        required: false,
     },
     {
         id: 'tanggal',
@@ -271,11 +369,73 @@ const actionLabel = computed(() =>
     isRevision.value ? 'Kirim Ulang Pendaftaran' : 'Ajukan Pendaftaran',
 );
 const formIncomplete = computed(
-    () => !form.tanggal_mulai || !form.tanggal_selesai || (!form.proposal_pkl && !proposalExistingFlag.value),
+    () => !form.tanggal_mulai
+        || !form.tanggal_selesai
+        || !form.status_kip
+        || form.sks_ditempuh === null
+        || !form.bidang_minat
+        || (form.bidang_minat === 'Lainnya' && !form.bidang_minat_lainnya)
+        || !form.ukuran_seragam
+        || (form.ukuran_seragam === 'Custom' && !form.ukuran_seragam_custom)
+        || (!form.proposal_pkl && !proposalExistingFlag.value)
+        || (!form.transkrip_nilai && !transcriptExistingFlag.value),
 );
 const submitDisabled = computed(
     () => !canSubmit.value || formIncomplete.value || form.processing,
 );
+const continueToStudentData = () => {
+    if (!form.tanggal_mulai || !form.tanggal_selesai) {
+        localError.value = 'Lengkapi tanggal mulai dan selesai sebelum melanjutkan.';
+        return;
+    }
+
+    localError.value = null;
+    currentFormStep.value = 2;
+};
+const continueToDocuments = () => {
+    if (!form.status_kip || form.sks_ditempuh === null || !form.bidang_minat || !form.ukuran_seragam) {
+        localError.value = 'Lengkapi data mahasiswa sebelum melanjutkan ke dokumen.';
+        return;
+    }
+    if (form.bidang_minat === 'Lainnya' && !form.bidang_minat_lainnya) {
+        localError.value = 'Isi bidang minat lainnya sebelum melanjutkan.';
+        return;
+    }
+    if (form.ukuran_seragam === 'Custom' && !form.ukuran_seragam_custom) {
+        localError.value = 'Isi ukuran seragam custom sebelum melanjutkan.';
+        return;
+    }
+
+    localError.value = null;
+    currentFormStep.value = 3;
+};
+const backToPlan = () => {
+    localError.value = null;
+    currentFormStep.value = 1;
+};
+const backToStudentData = () => {
+    localError.value = null;
+    currentFormStep.value = 2;
+};
+const requestSubmit = () => {
+    if (submitDisabled.value) return;
+    showSubmitConfirmation.value = true;
+};
+const navigateToStep = (step: number) => {
+    if (isLocked.value) {
+        localError.value = null;
+        currentFormStep.value = Math.min(Math.max(step, 1), 3);
+        return;
+    }
+
+    if (step === 1) {
+        backToPlan();
+    } else if (step === 2) {
+        backToStudentData();
+    } else {
+        continueToDocuments();
+    }
+};
 const handleProposalFileChange = (event: Event) => {
     const target = event.target as HTMLInputElement | null;
     form.clearErrors('proposal_pkl');
@@ -296,26 +456,66 @@ const clearProposalFile = () => {
         proposalInputRef.value.value = '';
     }
 };
+const handleTranscriptFileChange = (event: Event) => {
+    const target = event.target as HTMLInputElement | null;
+    form.clearErrors('transkrip_nilai');
+    form.transkrip_nilai = target?.files?.[0] ?? null;
+};
+const clearTranscriptFile = () => {
+    const hadSelectedFile = Boolean(form.transkrip_nilai);
+    form.clearErrors('transkrip_nilai');
+    form.transkrip_nilai = null;
+    if (!hadSelectedFile && hasStoredTranscriptAttachment.value) {
+        transcriptMarkedForRemoval.value = true;
+    }
+    if (transcriptInputRef.value) transcriptInputRef.value.value = '';
+};
+const handleRecommendationFileChange = (event: Event) => {
+    const target = event.target as HTMLInputElement | null;
+    form.clearErrors('surat_rekomendasi_kaprodi');
+    form.surat_rekomendasi_kaprodi = target?.files?.[0] ?? null;
+};
+const clearRecommendationFile = () => {
+    const hadSelectedFile = Boolean(form.surat_rekomendasi_kaprodi);
+    form.clearErrors('surat_rekomendasi_kaprodi');
+    form.surat_rekomendasi_kaprodi = null;
+    if (!hadSelectedFile && hasStoredRecommendationAttachment.value) {
+        recommendationMarkedForRemoval.value = true;
+    }
+    if (recommendationInputRef.value) recommendationInputRef.value.value = '';
+};
 const submit = () => {
     if (submitDisabled.value) return;
     localError.value = null;
     form.transform((data) => ({
         ...data,
+        registration_id: isRevision.value ? (props.selected_period_id ?? null) : null,
         proposal_pkl_existing: proposalExistingFlag.value,
+        transkrip_nilai_existing: transcriptExistingFlag.value,
+        surat_rekomendasi_kaprodi_existing: recommendationExistingFlag.value,
+        surat_rekomendasi_kaprodi_remove: recommendationMarkedForRemoval.value,
     }));
     form.post(registrationRoutes.store.url(), {
         preserveScroll: true,
         onSuccess: (pageResponse) => {
-            const message = pageResponse.props.flash?.success
+            const responseProps = pageResponse.props as { flash?: { success?: string } };
+            const message = responseProps.flash?.success
                 ?? (isRevision.value
                     ? 'Perbaikan pendaftaran berhasil dikirim ulang dan menunggu review kampus.'
                     : 'Pendaftaran PKL/magang berhasil dikirim dan menunggu review kampus.');
 
             proposalMarkedForRemoval.value = false;
+            transcriptMarkedForRemoval.value = false;
+            recommendationMarkedForRemoval.value = false;
+            showSubmitConfirmation.value = false;
             form.proposal_pkl = null;
+            form.transkrip_nilai = null;
+            form.surat_rekomendasi_kaprodi = null;
             if (proposalInputRef.value) {
                 proposalInputRef.value.value = '';
             }
+            if (transcriptInputRef.value) transcriptInputRef.value.value = '';
+            if (recommendationInputRef.value) recommendationInputRef.value.value = '';
             localSuccess.value = message;
         },
         onError: (errors) => {
@@ -327,6 +527,14 @@ const submit = () => {
                 ?? errors.perusahaan_diminati_alamat
                 ?? errors.catatan_pengajuan
                 ?? errors.proposal_pkl
+                ?? errors.transkrip_nilai
+                ?? errors.surat_rekomendasi_kaprodi
+                ?? errors.status_kip
+                ?? errors.sks_ditempuh
+                ?? errors.bidang_minat
+                ?? errors.bidang_minat_lainnya
+                ?? errors.ukuran_seragam
+                ?? errors.ukuran_seragam_custom
                 ?? 'Pendaftaran gagal dikirim. Periksa kembali data yang diisi.';
 
             localSuccess.value = null;
@@ -340,6 +548,8 @@ watch(
     () => registration.value?.id,
     () => {
         proposalMarkedForRemoval.value = false;
+        transcriptMarkedForRemoval.value = false;
+        recommendationMarkedForRemoval.value = false;
     },
 );
 
@@ -398,20 +608,10 @@ watch(
                                 Pendaftaran PKL / Magang
                             </h1>
                             <p class="mt-2 text-[13px] leading-relaxed text-white/78 dark:text-white/70 sm:text-sm">
-                                Ajukan periode PKL/magang Anda. Perusahaan diminati bersifat opsional - keputusan final ditentukan oleh kampus.
+                                Ajukan periode PKL/magang Anda
                             </p>
                         </div>
 
-                        <!-- Status Badge on Hero -->
-                        <div v-if="registration" class="lg:min-w-[160px]">
-                            <div class="rounded-xl bg-white/10 px-4 py-3 ring-1 ring-white/15 backdrop-blur-md dark:bg-white/[0.07] dark:ring-white/10">
-                                <p class="text-[10px] font-semibold uppercase tracking-wider text-white/60">Status saat ini</p>
-                                <div class="mt-2 flex items-center gap-2">
-                                    <span class="inline-flex size-2 animate-pulse rounded-full" :class="statusConfig(registration.status).dot" />
-                                    <span class="text-[13px] font-bold text-white">{{ statusLabel(registration.status) }}</span>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -454,10 +654,25 @@ watch(
             </div>
 
             <!-- 2-Column -->
-            <div class="grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr] lg:gap-5">
+            <div class="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px] lg:gap-5">
 
                 <!-- Sidebar -->
-                <div class="space-y-4">
+                <div class="order-2 space-y-4 lg:order-2">
+                    <div class="space-y-4">
+                        <button
+                            type="button"
+                            class="flex w-full items-center justify-between rounded-2xl border border-wims-border/50 bg-wims-card/90 p-4 text-left shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30 lg:hidden"
+                            @click="showCardPreview = !showCardPreview"
+                        >
+                            <span>
+                                <span class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Informasi Pendukung</span>
+                                <span class="mt-1 block text-sm font-bold text-wims-text">Ringkasan Pendaftaran</span>
+                            </span>
+                            <ChevronUp v-if="showCardPreview" class="size-4 text-slate-400 dark:text-slate-500" />
+                            <ChevronDown v-else class="size-4 text-slate-400 dark:text-slate-500" />
+                        </button>
+
+                        <div class="space-y-4" :class="showCardPreview ? 'block' : 'hidden lg:block'">
                     <!-- Status Card -->
                     <div class="relative overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
                         <div class="absolute top-0 inset-x-0 h-[3px]" :class="statusConfig(registration?.status).bar" />
@@ -469,13 +684,14 @@ watch(
                                     {{ statusLabel(registration?.status) }}
                                 </Badge>
                             </div>
-                            <div v-if="registration?.submitted_at" class="mt-3 border-t border-wims-border/50 pt-3">
+                            <div v-if="registration?.submitted_at && registration?.status !== 'rejected'" class="mt-3 border-t border-wims-border/50 pt-3">
                                 <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Diajukan pada</p>
                                 <p class="mt-1 text-xs font-bold text-wims-text">{{ registration.submitted_at }}</p>
                             </div>
                         </div>
                     </div>
 
+                    <template v-if="registration?.status !== 'rejected'">
                     <!-- Countdown Timer -->
                     <div class="relative overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
                         <div class="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-blue-500 to-cyan-400" />
@@ -569,6 +785,9 @@ watch(
                         <p class="text-xs font-bold text-wims-text">{{ registration?.company?.proposal?.name || 'Belum mengusulkan perusahaan' }}</p>
                         <p class="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">{{ registration?.company?.proposal?.address || 'Kampus akan menentukan perusahaan mitra yang sesuai.' }}</p>
                     </div>
+                    </template>
+                        </div>
+                    </div>
 
                     <!-- Revision Note -->
                     <div v-if="registration?.revision_note" class="relative overflow-hidden rounded-2xl border border-amber-200/60 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
@@ -640,7 +859,33 @@ watch(
                 </div>
 
                 <!-- Form Column -->
-                <div class="space-y-4">
+                <div class="order-1 space-y-4 lg:order-1">
+                    <!-- Form Steps -->
+                    <div class="rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] px-4 py-4 sm:px-5">
+                        <div class="flex items-center gap-3">
+                            <template v-for="(step, index) in formSteps" :key="step.number">
+                                <button
+                                    type="button"
+                                    class="flex min-w-0 flex-1 flex-col items-center gap-1 text-center transition-colors sm:flex-row sm:items-center sm:gap-2 sm:text-left"
+                                    @click="navigateToStep(step.number)"
+                                >
+                                    <span
+                                        class="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors"
+                                        :class="currentFormStep >= step.number ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25' : 'border border-wims-border bg-wims-card text-slate-400 dark:text-slate-500'"
+                                    >
+                                        <CheckCircle2 v-if="currentFormStep > step.number" class="size-4" />
+                                        <span v-else>{{ step.number }}</span>
+                                    </span>
+                                    <span class="w-full min-w-0 max-w-[88px] sm:max-w-none">
+                                        <span class="block whitespace-normal break-normal text-[10px] font-bold leading-3 text-wims-text sm:text-xs sm:leading-normal">{{ step.label }}</span>
+                                        <span class="hidden whitespace-normal break-normal text-[10px] leading-3 text-slate-400 dark:text-slate-500 sm:block">{{ step.description }}</span>
+                                    </span>
+                                </button>
+                                <div v-if="index < formSteps.length - 1" class="h-px flex-1 bg-wims-border/60" />
+                            </template>
+                        </div>
+                    </div>
+
                     <div v-if="props.proposal_template?.download_url" class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-blue-200/40 dark:border-blue-500/20 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
                         <div class="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                             <div class="flex min-w-0 items-start gap-3">
@@ -666,7 +911,7 @@ watch(
                         </div>
                     </div>
                     <!-- Checklist -->
-                    <div class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                    <div v-if="currentFormStep === 3" class="overflow-hidden rounded-2xl bg-wims-card/90 backdrop-blur-sm border border-wims-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
                         <button
                             type="button"
                             class="flex w-full items-center justify-between px-5 py-3.5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
@@ -711,12 +956,9 @@ watch(
                                 <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Form Pengajuan</p>
                                 <h2 class="mt-0.5 text-[15px] font-bold text-wims-text">Data Pendaftaran</h2>
                             </div>
-                            <Badge v-if="registration" variant="outline" class="rounded-full px-2.5 py-0.5 text-xs font-bold" :class="statusConfig(registration.status).badge">
-                                {{ statusLabel(registration.status) }}
-                            </Badge>
                         </div>
 
-                        <form class="space-y-5 px-5 py-5 sm:px-6" @submit.prevent="submit">
+                        <form class="space-y-5 px-5 py-5 sm:px-6" @submit.prevent="requestSubmit">
                             <div v-if="isLocked" class="flex items-start gap-3 rounded-xl border border-blue-200/60 bg-blue-50 px-4 py-3 dark:border-blue-500/30 dark:bg-blue-500/10">
                                 <Clock3 class="mt-0.5 size-4 shrink-0 text-blue-500 dark:text-blue-400" />
                                 <p class="text-xs leading-relaxed text-blue-700 dark:text-blue-300">Pendaftaran sedang menunggu keputusan kampus atau sudah aktif. Form dikunci sampai status berubah atau ada permintaan revisi.</p>
@@ -730,129 +972,199 @@ watch(
                                 <p class="mt-2 text-xs leading-relaxed text-slate-700 dark:text-slate-300">{{ registration.revision_note }}</p>
                             </div>
 
-                            <div class="flex items-center gap-2">
-                                <div class="flex size-6 items-center justify-center rounded-md bg-blue-50 dark:bg-blue-500/15">
-                                    <CalendarDays class="size-3.5 text-blue-600 dark:text-blue-400" />
-                                </div>
+                             <div v-if="currentFormStep === 1" class="space-y-5">
+                             <div class="flex items-center gap-2">
                                 <span class="text-xs font-bold text-wims-text">Periode PKL / Magang</span>
                                 <div class="flex-1 border-t border-wims-border/40" />
                             </div>
                             <div class="grid gap-4 sm:grid-cols-2">
                                 <div class="space-y-1.5">
-                                    <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">Tanggal Mulai <span class="text-rose-400">*</span></label>
-                                    <div class="relative">
-                                        <CalendarDays class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-                                        <input v-model="form.tanggal_mulai" type="date" :disabled="isLocked" class="student-date-input h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card pr-3 pl-10 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
-                                    </div>
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Tanggal Mulai <span class="text-rose-400">*</span></label>
+                                    <input v-model="form.tanggal_mulai" type="date" :disabled="isLocked" class="student-date-input h-11 w-full rounded-xl border border-wims-border/60 bg-wims-card px-3 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10" />
                                     <p v-if="form.errors.tanggal_mulai" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.tanggal_mulai }}</p>
                                 </div>
                                 <div class="space-y-1.5">
-                                    <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">Tanggal Selesai <span class="text-rose-400">*</span></label>
-                                    <div class="relative">
-                                        <CalendarDays class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-                                        <input v-model="form.tanggal_selesai" type="date" :disabled="isLocked" class="student-date-input h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card pr-3 pl-10 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
-                                    </div>
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Tanggal Selesai <span class="text-rose-400">*</span></label>
+                                    <input v-model="form.tanggal_selesai" type="date" :disabled="isLocked" class="student-date-input h-11 w-full rounded-xl border border-wims-border/60 bg-wims-card px-3 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10" />
                                     <p v-if="form.errors.tanggal_selesai" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.tanggal_selesai }}</p>
                                 </div>
                             </div>
 
-                            <div class="flex items-center gap-2">
-                                <div class="flex size-6 items-center justify-center rounded-md bg-violet-50 dark:bg-violet-500/15">
-                                    <Building2 class="size-3.5 text-violet-600 dark:text-violet-400" />
-                                </div>
+                             <div class="flex items-center gap-2">
                                 <span class="text-xs font-bold text-wims-text">Preferensi Perusahaan</span>
                                 <div class="flex-1 border-t border-wims-border/40" />
                                 <span class="text-[10px] font-semibold text-slate-400 dark:text-slate-500">Opsional</span>
                             </div>
                             <div class="space-y-1.5">
-                                <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">Nama Perusahaan</label>
-                                <div class="relative">
-                                    <Building2 class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-                                    <input v-model="form.perusahaan_diminati_nama" type="text" :disabled="isLocked" placeholder="Isi jika sudah memiliki usulan perusahaan" class="h-10 w-full rounded-xl border border-wims-border/60 bg-wims-card pr-3 pl-10 text-sm text-wims-text placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
-                                </div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Nama Perusahaan</label>
+                                <input v-model="form.perusahaan_diminati_nama" type="text" :disabled="isLocked" placeholder="Isi jika sudah memiliki usulan perusahaan" class="h-11 w-full rounded-xl border border-wims-border/60 bg-wims-card px-3 text-sm text-wims-text placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10" />
                                 <p v-if="form.errors.perusahaan_diminati_nama" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.perusahaan_diminati_nama }}</p>
                             </div>
                             <div class="space-y-1.5">
-                                <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">Alamat / Kota</label>
-                                <div class="relative">
-                                    <MapPinned class="pointer-events-none absolute top-3 left-3 size-4 text-slate-400 dark:text-slate-500" />
-                                    <textarea v-model="form.perusahaan_diminati_alamat" :disabled="isLocked" rows="2" placeholder="Tambahkan alamat singkat atau kota perusahaan jika diperlukan" class="w-full rounded-xl border border-wims-border/60 bg-wims-card py-2.5 pr-3 pl-10 text-sm leading-relaxed text-wims-text placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
-                                </div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Alamat / Kota</label>
+                                <textarea v-model="form.perusahaan_diminati_alamat" :disabled="isLocked" rows="2" placeholder="Tambahkan alamat/kota perusahaan" class="w-full rounded-xl border border-wims-border/60 bg-wims-card px-3 py-2.5 text-sm leading-relaxed text-wims-text placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
                                 <p v-if="form.errors.perusahaan_diminati_alamat" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.perusahaan_diminati_alamat }}</p>
                             </div>
 
-                            <div class="flex items-center gap-2">
-                                <div class="flex size-6 items-center justify-center rounded-md bg-cyan-50 dark:bg-cyan-500/15">
-                                    <ClipboardPenLine class="size-3.5 text-cyan-600 dark:text-cyan-400" />
-                                </div>
+                             <div class="flex items-center gap-2">
                                 <span class="text-xs font-bold text-wims-text">Catatan Tambahan</span>
                                 <div class="flex-1 border-t border-wims-border/40" />
                                 <span class="text-[10px] font-semibold text-slate-400 dark:text-slate-500">Opsional</span>
                             </div>
                             <div class="space-y-1.5">
-                                <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">Catatan untuk Kampus</label>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Catatan untuk Kampus</label>
                                 <textarea v-model="form.catatan_pengajuan" :disabled="isLocked" rows="3" placeholder="Contoh: alasan memilih perusahaan, kebutuhan bidang, atau catatan tambahan untuk kampus" class="w-full rounded-xl border border-wims-border/60 bg-wims-card px-4 py-2.5 text-sm leading-relaxed text-wims-text placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-400/10 disabled:cursor-not-allowed disabled:opacity-50" />
                                 <p v-if="form.errors.catatan_pengajuan" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.catatan_pengajuan }}</p>
                             </div>
 
-                            <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 px-4 py-4 dark:bg-slate-800/30">
-                                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Dokumen Proposal PKL</p>
+                             </div>
 
-                                <div
-                                    v-if="proposalDisplayName"
-                                    class="mt-3 rounded-xl border border-wims-border/50 bg-wims-card px-4 py-3.5"
-                                >
-                                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-                                        <div class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400">
-                                            <FileText class="size-4" />
-                                        </div>
+                             <div v-if="currentFormStep === 1" class="pt-1">
+                                 <Button type="button" class="h-11 w-full rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50" :disabled="isLocked" @click="continueToStudentData">
+                                     Lanjut ke Data Mahasiswa
+                                 </Button>
+                             </div>
+
+                             <div v-if="currentFormStep === 2" class="space-y-5">
+                                 <div class="flex items-center gap-2">
+                                     <span class="text-xs font-bold text-wims-text">Data Akademik & Pendataan</span>
+                                     <div class="flex-1 border-t border-wims-border/40" />
+                                 </div>
+
+                                 <div class="space-y-1.5">
+                                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Status KIP <span class="text-rose-400">*</span></label>
+                                     <select v-model="form.status_kip" :disabled="isLocked" class="h-11 w-full rounded-xl border border-wims-border/60 bg-wims-card px-3 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10">
+                                         <option value="" disabled>Pilih status KIP</option>
+                                         <option value="kip">KIP</option>
+                                         <option value="bukan_kip">Bukan KIP</option>
+                                     </select>
+                                     <p v-if="form.errors.status_kip" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.status_kip }}</p>
+                                 </div>
+
+                                 <div class="space-y-1.5">
+                                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Jumlah SKS yang telah ditempuh <span class="text-rose-400">*</span></label>
+                                     <input v-model.number="form.sks_ditempuh" type="number" min="0" max="300" placeholder="Contoh: 120" :disabled="isLocked" class="h-11 w-full rounded-xl border border-wims-border/60 bg-wims-card px-3 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10" />
+                                     <p v-if="form.errors.sks_ditempuh" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.sks_ditempuh }}</p>
+                                 </div>
+
+                                 <div class="flex items-center gap-2">
+                                     <span class="text-xs font-bold text-wims-text">Preferensi Mahasiswa</span>
+                                     <div class="flex-1 border-t border-wims-border/40" />
+                                 </div>
+
+                                 <div class="space-y-1.5">
+                                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Bidang Minat <span class="text-rose-400">*</span></label>
+                                     <select v-model="form.bidang_minat" :disabled="isLocked" class="h-11 w-full rounded-xl border border-wims-border/60 bg-wims-card px-3 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10">
+                                         <option value="" disabled>Pilih bidang minat</option>
+                                         <option v-for="interest in interestAreas" :key="interest" :value="interest">{{ interest }}</option>
+                                     </select>
+                                     <input v-if="form.bidang_minat === 'Lainnya'" v-model="form.bidang_minat_lainnya" type="text" placeholder="Tuliskan bidang minat Anda" :disabled="isLocked" class="h-11 w-full rounded-xl border border-wims-border/60 bg-wims-card px-3 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10" />
+                                     <p v-if="form.errors.bidang_minat || form.errors.bidang_minat_lainnya" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.bidang_minat || form.errors.bidang_minat_lainnya }}</p>
+                                 </div>
+
+                                 <div class="space-y-1.5">
+                                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Ukuran Baju / Seragam PKL <span class="text-rose-400">*</span></label>
+                                     <select v-model="form.ukuran_seragam" :disabled="isLocked" class="h-11 w-full rounded-xl border border-wims-border/60 bg-wims-card px-3 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10">
+                                         <option value="" disabled>Pilih ukuran seragam</option>
+                                         <option v-for="size in uniformSizes" :key="size" :value="size">{{ size }}</option>
+                                     </select>
+                                     <input v-if="form.ukuran_seragam === 'Custom'" v-model="form.ukuran_seragam_custom" type="text" placeholder="Tuliskan ukuran custom" :disabled="isLocked" class="h-11 w-full rounded-xl border border-wims-border/60 bg-wims-card px-3 text-sm text-wims-text outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 disabled:cursor-not-allowed disabled:opacity-50 sm:h-10" />
+                                     <p v-if="form.errors.ukuran_seragam || form.errors.ukuran_seragam_custom" class="text-xs text-rose-500 dark:text-rose-400">{{ form.errors.ukuran_seragam || form.errors.ukuran_seragam_custom }}</p>
+                                 </div>
+
+                                 <div class="pt-1 space-y-2">
+                                     <Button type="button" variant="outline" class="h-10 w-full rounded-xl text-sm font-semibold" @click="backToPlan">
+                                         Kembali ke Rencana PKL
+                                     </Button>
+                                     <Button type="button" class="h-11 w-full rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50" :disabled="isLocked" @click="continueToDocuments">
+                                         Lanjut ke Dokumen
+                                     </Button>
+                                 </div>
+                             </div>
+
+                             <div v-if="currentFormStep === 3" class="rounded-xl border border-wims-border/50 bg-slate-50/80 px-4 py-4 dark:bg-slate-800/30">
+                                 <div class="flex items-center justify-between gap-3">
+                                     <div class="min-w-0 flex-1">
+                                         <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Dokumen Pengajuan</p>
+                                         <p class="mt-1 text-sm font-bold text-wims-text">Proposal PKL <span class="text-rose-400">*</span></p>
+                                         <p class="mt-1 text-[11px] text-slate-400 dark:text-slate-500">PDF, DOC, DOCX maksimal 5 MB.</p>
+                                     </div>
+                                         <Button type="button" variant="outline" class="h-11 shrink-0 rounded-xl border-blue-200 bg-white px-3.5 text-xs font-bold text-blue-600 shadow-sm hover:bg-blue-50 dark:border-blue-500/30 dark:bg-slate-900/30 dark:text-blue-300 dark:hover:bg-blue-500/10 sm:h-9" :disabled="isLocked" @click="proposalInputRef?.click()">
+                                         <Upload class="mr-2 size-4" />
+                                         {{ proposalDisplayName ? 'Ganti File' : 'Pilih File' }}
+                                     </Button>
+                                 </div>
+                                 <div v-if="proposalDisplayName" class="mt-3 flex items-center gap-3 rounded-xl border border-emerald-200/60 bg-emerald-50/60 px-3 py-2.5 dark:border-emerald-500/20 dark:bg-emerald-500/10">
+                                     <FileText class="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                                     <div class="min-w-0">
+                                         <p class="break-all text-xs font-semibold text-wims-text">{{ proposalDisplayName }}</p>
+                                         <p class="text-[11px] text-slate-400 dark:text-slate-500">{{ proposalDisplayUploadedAt }}</p>
+                                     </div>
+                                 </div>
+                                 <input ref="proposalInputRef" type="file" accept=".pdf,.doc,.docx" class="hidden" :disabled="isLocked" @change="handleProposalFileChange" />
+                                 <p v-if="form.errors.proposal_pkl" class="mt-2 text-xs text-rose-500 dark:text-rose-400">{{ form.errors.proposal_pkl }}</p>
+                             </div>
+
+                            <div v-if="currentFormStep === 3" class="space-y-4">
+                                <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 px-4 py-4 dark:bg-slate-800/30">
+                                    <div class="flex items-center justify-between gap-3">
                                         <div class="min-w-0 flex-1">
-                                            <p class="break-all text-sm font-bold leading-5 text-wims-text">
-                                                {{ proposalDisplayName }}
-                                            </p>
-                                            <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                                                {{ proposalDisplayUploadedAt }}
-                                            </p>
+                                            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Dokumen Akademik</p>
+                                            <p class="mt-1 text-sm font-bold text-wims-text">Transkrip Nilai Terakhir <span class="text-rose-400">*</span></p>
+                                            <p class="mt-1 text-[11px] text-slate-400 dark:text-slate-500">Format PDF, maksimal 5 MB.</p>
                                         </div>
-                                        <div class="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:items-center">
-                                            <Button type="button" variant="outline" class="h-9 rounded-xl border-blue-200 bg-white px-3.5 text-xs font-bold text-blue-600 shadow-sm transition-colors hover:bg-blue-50 dark:border-blue-500/30 dark:bg-slate-900/30 dark:text-blue-300 dark:hover:bg-blue-500/10" @click="proposalInputRef?.click()">
-                                                <Upload class="mr-2 size-4" />
-                                                {{ form.proposal_pkl ? 'Ganti File' : 'Pilih File' }}
-                                            </Button>
-                                            <Button v-if="proposalDisplayName" type="button" variant="ghost" class="h-9 rounded-xl px-3.5 text-xs font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200" @click="clearProposalFile">
-                                                Hapus File
-                                            </Button>
+                                        <Button type="button" variant="outline" class="h-11 shrink-0 rounded-xl border-blue-200 bg-white px-3.5 text-xs font-bold text-blue-600 shadow-sm hover:bg-blue-50 dark:border-blue-500/30 dark:bg-slate-900/30 dark:text-blue-300 dark:hover:bg-blue-500/10 sm:h-9" :disabled="isLocked" @click="transcriptInputRef?.click()">
+                                            <Upload class="mr-2 size-4" />
+                                            {{ transcriptDisplayName ? 'Ganti File' : 'Pilih File' }}
+                                        </Button>
+                                    </div>
+                                    <div v-if="transcriptDisplayName" class="mt-3 flex items-center gap-3 rounded-xl border border-emerald-200/60 bg-emerald-50/60 px-3 py-2.5 dark:border-emerald-500/20 dark:bg-emerald-500/10">
+                                        <FileText class="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                                        <div class="min-w-0">
+                                            <p class="break-all text-xs font-semibold text-wims-text">{{ transcriptDisplayName }}</p>
+                                            <p class="text-[11px] text-slate-400 dark:text-slate-500">{{ transcriptDisplayUploadedAt }}</p>
                                         </div>
                                     </div>
+                                    <input ref="transcriptInputRef" type="file" accept=".pdf,application/pdf" class="hidden" :disabled="isLocked" @change="handleTranscriptFileChange" />
+                                    <p v-if="form.errors.transkrip_nilai" class="mt-2 text-xs text-rose-500 dark:text-rose-400">{{ form.errors.transkrip_nilai }}</p>
                                 </div>
 
-                                <div
-                                    class="mt-3 rounded-xl border-2 border-dashed transition-all duration-200"
-                                    :class="isLocked ? 'border-slate-200 bg-slate-100/60 dark:border-slate-700 dark:bg-slate-800/30' : 'border-blue-200/70 bg-white/70 hover:border-blue-300/70 dark:border-blue-500/25 dark:bg-slate-900/20'"
-                                >
-                                    <label class="flex cursor-pointer flex-col items-center gap-2 px-4 py-6 text-center" :class="isLocked ? 'cursor-not-allowed opacity-60' : ''">
-                                        <div class="flex size-11 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-500/15">
-                                            <Upload class="size-5 text-blue-600 dark:text-blue-400" />
+                                <div class="rounded-xl border border-wims-border/50 bg-slate-50/80 px-4 py-4 dark:bg-slate-800/30">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div class="min-w-0 flex-1">
+                                            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Dokumen Pendukung <span class="font-normal normal-case tracking-normal">(opsional)</span></p>
+                                            <p class="mt-1 text-sm font-bold text-wims-text">Surat Rekomendasi Kaprodi</p>
+                                            <p class="mt-1 text-[11px] text-slate-400 dark:text-slate-500">Boleh dilampirkan jika diperlukan, termasuk bila SKS belum 110.</p>
                                         </div>
-                                        <div>
-                                            <p class="text-sm font-semibold text-wims-text">
-                                                Klik untuk pilih file atau drop file ke sini
-                                            </p>
-                                            <p class="mt-1 text-[11px] text-slate-400 dark:text-slate-500">PDF, DOC, DOCX maksimal 5 MB</p>
-                                        </div>
-                                        <input ref="proposalInputRef" type="file" accept=".pdf,.doc,.docx" class="hidden" :disabled="isLocked" @change="handleProposalFileChange" />
-                                    </label>
+                                        <Button type="button" variant="outline" class="h-11 shrink-0 rounded-xl border-blue-200 bg-white px-3.5 text-xs font-bold text-blue-600 shadow-sm hover:bg-blue-50 dark:border-blue-500/30 dark:bg-slate-900/30 dark:text-blue-300 dark:hover:bg-blue-500/10 sm:h-9" :disabled="isLocked" @click="recommendationInputRef?.click()">
+                                            <Upload class="mr-2 size-4" />
+                                            {{ recommendationDisplayName ? 'Ganti File' : 'Pilih File' }}
+                                        </Button>
+                                    </div>
+                                     <div v-if="recommendationDisplayName" class="mt-3 flex items-center gap-3 rounded-xl border border-blue-200/60 bg-blue-50/60 px-3 py-2.5 dark:border-blue-500/20 dark:bg-blue-500/10">
+                                         <FileText class="size-4 shrink-0 text-blue-600 dark:text-blue-400" />
+                                         <div class="min-w-0">
+                                             <p class="break-all text-xs font-semibold text-wims-text">{{ recommendationDisplayName }}</p>
+                                             <p class="text-[11px] text-slate-400 dark:text-slate-500">{{ recommendationDisplayUploadedAt }}</p>
+                                         </div>
+                                         <Button type="button" variant="ghost" class="ml-auto h-8 shrink-0 rounded-lg px-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-300 dark:hover:bg-rose-500/10" :disabled="isLocked" @click="clearRecommendationFile">
+                                             Hapus
+                                         </Button>
+                                     </div>
+                                    <input ref="recommendationInputRef" type="file" accept=".pdf,application/pdf" class="hidden" :disabled="isLocked" @change="handleRecommendationFileChange" />
+                                    <p v-if="form.errors.surat_rekomendasi_kaprodi" class="mt-2 text-xs text-rose-500 dark:text-rose-400">{{ form.errors.surat_rekomendasi_kaprodi }}</p>
                                 </div>
-
-                                <p v-if="form.errors.proposal_pkl" class="mt-2 text-xs text-rose-500 dark:text-rose-400">{{ form.errors.proposal_pkl }}</p>
                             </div>
 
-                            <div class="pt-1">
-                                <Button type="submit" class="h-11 w-full rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:from-slate-300 disabled:to-slate-300 disabled:text-slate-500 dark:disabled:from-slate-700 dark:disabled:to-slate-700 dark:disabled:text-slate-400" :disabled="submitDisabled">
+                             <div v-if="currentFormStep === 3" class="pt-1 space-y-2">
+                                 <Button type="button" variant="outline" class="h-10 w-full rounded-xl text-sm font-semibold" @click="backToStudentData">
+                                     Kembali ke Data Mahasiswa
+                                 </Button>
+                                 <Button type="submit" class="h-11 w-full rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:from-slate-300 disabled:to-slate-300 disabled:text-slate-500 dark:disabled:from-slate-700 dark:disabled:to-slate-700 dark:disabled:text-slate-400" :disabled="submitDisabled">
                                     <LoaderCircle v-if="form.processing" class="mr-2 size-4 animate-spin" />
                                     <span>{{ actionLabel }}</span>
                                 </Button>
-                                <p v-if="canSubmit && !isLocked && formIncomplete" class="mt-2 text-center text-[11px] text-slate-400 dark:text-slate-500">Lengkapi periode dan lampiran proposal untuk mengajukan</p>
+                                <p v-if="canSubmit && !isLocked && formIncomplete" class="mt-2 text-center text-[11px] text-slate-400 dark:text-slate-500">Lengkapi data wajib dan lampiran proposal serta transkrip untuk mengajukan</p>
                             </div>
                         </form>
                     </div>
@@ -860,6 +1172,37 @@ watch(
             </div>
         </div>
     </div>
+
+    <Dialog v-model:open="showSubmitConfirmation">
+        <DialogContent class="w-[calc(100%-2rem)] max-w-md rounded-2xl border-wims-border bg-wims-card sm:max-w-md">
+            <DialogHeader class="space-y-2 text-left">
+                <DialogTitle class="text-base font-bold text-wims-text">
+                    Periksa kembali data Anda
+                </DialogTitle>
+                <DialogDescription class="text-sm leading-6 text-slate-600 dark:text-slate-300">
+                    Pastikan data, periode, dan dokumen sudah benar sebelum dikirim.
+                </DialogDescription>
+            </DialogHeader>
+            <DialogFooter class="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button
+                    type="button"
+                    variant="outline"
+                    class="h-10 w-full rounded-xl text-sm font-semibold sm:w-auto"
+                    :disabled="form.processing"
+                    @click="showSubmitConfirmation = false"
+                >
+                    Periksa Kembali
+                </Button>
+                <Button
+                    type="button"
+                    class="h-10 w-full rounded-xl bg-blue-600 text-sm font-bold text-white hover:bg-blue-700 sm:w-auto"
+                    :disabled="form.processing"
+                    @click="submit"
+                >
+                    <LoaderCircle v-if="form.processing" class="mr-2 size-4 animate-spin" />
+                    Ya, Ajukan
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>
-
-

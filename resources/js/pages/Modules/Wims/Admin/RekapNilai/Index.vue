@@ -266,7 +266,7 @@ const openDownload = (url?: string | null) => {
 
             <CardContent class="space-y-5 px-5 py-5">
                 <form
-                    class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px_auto_auto]"
+                    class="grid gap-4 xl:grid-cols-[minmax(240px,1fr)_220px_auto_auto]"
                     @submit.prevent="applyFilters"
                 >
                     <div class="relative">

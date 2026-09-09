@@ -40,7 +40,8 @@ class MitraDashboardPageService
 
         $pendingAbsenceBaseQuery = KetidakhadiranMagang::query()
             ->where('status', 'pending')
-            ->where('perusahaan_id', $company->id);
+            ->where('perusahaan_id', $company->id)
+            ->whereHas('pendaftaran', fn ($query) => $query->where('perusahaan_id', $company->id));
 
         $pendingAbsenceRequests = (clone $pendingAbsenceBaseQuery)
             ->with(['mahasiswa', 'perusahaan'])

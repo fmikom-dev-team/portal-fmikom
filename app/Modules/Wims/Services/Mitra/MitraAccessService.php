@@ -33,7 +33,14 @@ class MitraAccessService
             return false;
         }
 
-        return (int) $ketidakhadiran->perusahaan_id === (int) $company->id;
+        $ketidakhadiran->loadMissing('pendaftaran');
+
+        // Gunakan perusahaan pada pendaftaran sebagai sumber otorisasi utama.
+        // perusahaan_id pada ketidakhadiran hanya denormalisasi untuk kebutuhan
+        // query dan harus tetap konsisten dengan pendaftaran terkait.
+        return (int) $ketidakhadiran->pendaftaran?->perusahaan_id === (int) $company->id
+            && (int) $ketidakhadiran->perusahaan_id === (int) $company->id
+            && (int) $ketidakhadiran->mahasiswa_id === (int) $ketidakhadiran->pendaftaran?->mahasiswa_id;
     }
 
     public function authorizeLogbookReview(User $user, LogbookMagang $logbook): void

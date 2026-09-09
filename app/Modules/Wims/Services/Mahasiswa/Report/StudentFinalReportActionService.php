@@ -7,6 +7,7 @@ use App\Modules\Wims\Services\Mahasiswa\Period\StudentPeriodResolverService;
 use App\Modules\Wims\Services\Shared\Assessment\FinalReportAccessService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class StudentFinalReportActionService
@@ -36,7 +37,17 @@ class StudentFinalReportActionService
             $newPath = $this->finalReportAccessService->storeFinalReport($file);
 
             DB::transaction(function () use ($registration, $file, $newPath): void {
-                $registration->update([
+                $lockedRegistration = PendaftaranMagang::query()
+                    ->lockForUpdate()
+                    ->findOrFail($registration->id);
+
+                if (! $lockedRegistration->isPostInternshipPhase()) {
+                    throw ValidationException::withMessages([
+                        'laporan_akhir' => 'Laporan akhir hanya dapat diunggah setelah periode PKL berakhir.',
+                    ]);
+                }
+
+                $lockedRegistration->update([
                     'laporan_akhir_path' => $newPath,
                     'laporan_akhir_original_name' => $file->getClientOriginalName(),
                     'laporan_akhir_uploaded_at' => now(),

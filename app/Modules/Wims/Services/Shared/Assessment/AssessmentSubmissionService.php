@@ -36,8 +36,9 @@ class AssessmentSubmissionService
         ?AssessmentSubmission $existingSubmission,
         array $validated,
     ): void {
+        // Validasi utama tetap dilakukan di backend agar komponen, role penilai,
+        // dan status submission tidak hanya dipercaya dari form frontend.
         $this->assertRoleMatchesTemplate($template, $role);
-        $this->assertEditable($existingSubmission);
 
         $allowedComponentIds = $template->components->pluck('id')->map(fn ($id) => (int) $id)->all();
         $scorePayloads = collect($validated['scores'] ?? [])->values();
@@ -59,6 +60,16 @@ class AssessmentSubmissionService
             $validated,
             $status
         ): void {
+            $lockedExistingSubmission = AssessmentSubmission::query()
+                ->where('pendaftaran_magang_id', $pendaftaran->id)
+                ->where('assessment_template_id', $template->id)
+                ->where('assessor_id', $user->id)
+                ->where('assessor_role', $role)
+                ->lockForUpdate()
+                ->first();
+
+            $this->assertEditable($lockedExistingSubmission);
+
             $submission = AssessmentSubmission::query()->updateOrCreate(
                 [
                     'pendaftaran_magang_id' => $pendaftaran->id,
@@ -71,7 +82,7 @@ class AssessmentSubmissionService
                     'notes' => $validated['notes'] ?? null,
                     'submitted_at' => $status === 'submitted'
                         ? now()
-                        : $existingSubmission?->submitted_at,
+                        : $lockedExistingSubmission?->submitted_at ?? $existingSubmission?->submitted_at,
                 ],
             );
 
@@ -88,6 +99,8 @@ class AssessmentSubmissionService
                     ]);
                 }
 
+                // Nilai berbobot dihitung ulang di backend dari bobot template aktif
+                // agar total akhir tidak bergantung pada kalkulasi sisi pengguna.
                 $weightedScore = round($score * ((float) $component->weight_percentage / 100), 2);
                 $totalScore += $weightedScore;
 

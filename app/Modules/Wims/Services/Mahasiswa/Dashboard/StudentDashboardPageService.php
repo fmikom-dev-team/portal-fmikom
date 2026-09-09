@@ -104,12 +104,12 @@ class StudentDashboardPageService
                     : ($attendanceToday?->timestamp_masuk ? 'checked_in' : ($approvedAbsenceToday ? 'excused_absence' : 'not_checked_in')),
                 'current_time' => now()->format('H:i').' WIB',
                 'location_status' => ! $selectedRegistration
-                    ? 'Pendaftaran aktif belum tersedia'
+                    ? 'Belum tersedia'
                     : (! $canDoDailyActivity
-                        ? 'Menunggu tanggal mulai periode PKL'
+                        ? 'Belum aktif'
                         : ($attendanceToday?->lokasi_valid === null
-                            ? 'Lokasi belum tervalidasi'
-                            : ($attendanceToday->lokasi_valid ? 'Lokasi terdeteksi (akan divalidasi saat absen)' : 'Lokasi di luar area'))),
+                            ? 'Belum tervalidasi'
+                            : ($attendanceToday->lokasi_valid ? 'Tervalidasi' : 'Di luar area'))),
                 'check_in_time' => $attendanceToday?->timestamp_masuk?->format('H:i'),
                 'check_out_time' => $attendanceToday?->timestamp_keluar?->format('H:i'),
                 'is_late' => $attendanceToday?->status === 'terlambat',

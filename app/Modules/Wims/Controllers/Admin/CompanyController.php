@@ -8,6 +8,7 @@ use App\Modules\Wims\Services\Admin\AdminCompanyActionService;
 use App\Modules\Wims\Services\Admin\AdminCompanyPageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -49,6 +50,15 @@ class CompanyController extends Controller
         $this->adminCompanyActionService->deleteCompany($company);
 
         return back()->with('success', 'Perusahaan mitra berhasil dihapus.');
+    }
+
+    public function resolveMapLink(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'url' => ['required', 'url', 'max:2000'],
+        ]);
+
+        return response()->json($this->adminCompanyActionService->resolveGoogleMapsLink($validated['url']));
     }
 
     public function storeAccount(Request $request, PerusahaanMitra $company): RedirectResponse

@@ -106,6 +106,8 @@ class MonitoringRegistrationResolverService
 
     private function resolveByDate(Builder $baseQuery, string $date): ?PendaftaranMagang
     {
+        // Monitoring lebih dulu mencari penempatan yang benar-benar aktif pada
+        // tanggal terpilih sebelum memakai fallback riwayat aktivitas.
         $activePendaftaran = (clone $baseQuery)
             ->whereDate('tanggal_mulai', '<=', $date)
             ->whereDate('tanggal_selesai', '>=', $date)
@@ -142,6 +144,8 @@ class MonitoringRegistrationResolverService
         return PendaftaranMagang::query()
             ->with(['perusahaan', 'mahasiswa'])
             ->where('mahasiswa_id', $mahasiswaId)
+            // Dosen hanya dapat melihat mahasiswa yang memang tercatat sebagai
+            // bimbingannya pada data penempatan WIMS.
             ->where('dosen_pembimbing_id', $currentUser->id);
     }
 
@@ -150,6 +154,8 @@ class MonitoringRegistrationResolverService
         return PendaftaranMagang::query()
             ->with(['perusahaan', 'mahasiswa'])
             ->where('mahasiswa_id', $mahasiswaId)
+            // Mitra dibatasi pada mahasiswa yang ditempatkan pada perusahaan
+            // yang terhubung dengan akun mitra yang sedang login.
             ->where('perusahaan_id', $company->id);
     }
 }
