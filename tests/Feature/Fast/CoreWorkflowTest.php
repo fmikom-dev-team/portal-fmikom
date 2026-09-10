@@ -201,7 +201,7 @@ it('exposes only valid finished documents through QR verification', function () 
         ->assertInertia(fn ($page) => $page
             ->where('found', true)
             ->where('valid', false)
-        ->where('surat.status', 'belum_divalidasi'));
+            ->where('surat.status', 'belum_divalidasi'));
 });
 
 it('builds a requester notification for a finished surat', function () {

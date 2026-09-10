@@ -156,63 +156,63 @@ class HandleInertiaRequests extends Middleware
 
                     $notifs = $query->limit(30)->get();
 
-                // Batch resolve portfolio work cover images
-                $portfolioIds = $notifs->map(fn ($n) => $n->data['portfolio_id'] ?? $n->data['work_id'] ?? null)->filter()->unique()->values();
-                $worksMap = [];
-                if ($portfolioIds->isNotEmpty()) {
-                    $works = PagiWork::query()->whereIn('id', $portfolioIds)->select('id', 'cover_image', 'content')->get();
-                    foreach ($works as $w) {
-                        $img = null;
-                        if ($w->cover_image) {
-                            $img = str_starts_with($w->cover_image, 'http') ? $w->cover_image : asset('storage/'.$w->cover_image);
-                        } elseif (is_array($w->content)) {
-                            foreach ($w->content as $b) {
-                                if (isset($b['preview']) && is_string($b['preview']) && ! str_starts_with($b['preview'], 'blob:')) {
-                                    $img = str_starts_with($b['preview'], 'http') ? $b['preview'] : asset('storage/'.$b['preview']);
-                                    break;
-                                }
-                                if (isset($b['file_path']) && is_string($b['file_path'])) {
-                                    $img = asset('storage/'.$b['file_path']);
-                                    break;
+                    // Batch resolve portfolio work cover images
+                    $portfolioIds = $notifs->map(fn ($n) => $n->data['portfolio_id'] ?? $n->data['work_id'] ?? null)->filter()->unique()->values();
+                    $worksMap = [];
+                    if ($portfolioIds->isNotEmpty()) {
+                        $works = PagiWork::query()->whereIn('id', $portfolioIds)->select('id', 'cover_image', 'content')->get();
+                        foreach ($works as $w) {
+                            $img = null;
+                            if ($w->cover_image) {
+                                $img = str_starts_with($w->cover_image, 'http') ? $w->cover_image : asset('storage/'.$w->cover_image);
+                            } elseif (is_array($w->content)) {
+                                foreach ($w->content as $b) {
+                                    if (isset($b['preview']) && is_string($b['preview']) && ! str_starts_with($b['preview'], 'blob:')) {
+                                        $img = str_starts_with($b['preview'], 'http') ? $b['preview'] : asset('storage/'.$b['preview']);
+                                        break;
+                                    }
+                                    if (isset($b['file_path']) && is_string($b['file_path'])) {
+                                        $img = asset('storage/'.$b['file_path']);
+                                        break;
+                                    }
                                 }
                             }
+                            $worksMap[$w->id] = $img;
                         }
-                        $worksMap[$w->id] = $img;
                     }
-                }
 
-                return $notifs->map(function ($n) use ($worksMap) {
-                    $data = $n->data;
-                    $pId = $data['portfolio_id'] ?? $data['work_id'] ?? null;
-                    $workImage = $data['work_image'] ?? ($pId ? ($worksMap[$pId] ?? null) : null);
+                    return $notifs->map(function ($n) use ($worksMap) {
+                        $data = $n->data;
+                        $pId = $data['portfolio_id'] ?? $data['work_id'] ?? null;
+                        $workImage = $data['work_image'] ?? ($pId ? ($worksMap[$pId] ?? null) : null);
 
-                    return [
-                        'id' => $n->id,
-                        'type' => $data['type'] ?? 'system',
-                        'title' => $data['title'] ?? 'PAGI System',
-                        'message' => $data['message'] ?? '',
-                        'avatar' => $data['avatar'] ?? null,
-                        'href' => $data['href'] ?? '/pagi',
-                        'unread' => is_null($n->read_at),
-                        'time' => $n->created_at->diffForHumans(),
-                        'created_at' => $n->created_at->toISOString(),
-                        'sender_id' => $data['sender_id'] ?? null,
-                        'portfolio_id' => $pId,
-                        'work_image' => $workImage,
-                        'is_invite' => isset($data['is_invite']) ? (bool) $data['is_invite'] : (! str_contains($data['message'] ?? '', 'menerima') && ! str_contains($data['message'] ?? '', 'ditolak')),
-                        'collaboration_handled' => isset($data['collaboration_handled']) ? (bool) $data['collaboration_handled'] : false,
-                        'collaboration_status' => $data['collaboration_status'] ?? null,
-                    ];
-                })->values()->toArray();
-            }) : [],
+                        return [
+                            'id' => $n->id,
+                            'type' => $data['type'] ?? 'system',
+                            'title' => $data['title'] ?? 'PAGI System',
+                            'message' => $data['message'] ?? '',
+                            'avatar' => $data['avatar'] ?? null,
+                            'href' => $data['href'] ?? '/pagi',
+                            'unread' => is_null($n->read_at),
+                            'time' => $n->created_at->diffForHumans(),
+                            'created_at' => $n->created_at->toISOString(),
+                            'sender_id' => $data['sender_id'] ?? null,
+                            'portfolio_id' => $pId,
+                            'work_image' => $workImage,
+                            'is_invite' => isset($data['is_invite']) ? (bool) $data['is_invite'] : (! str_contains($data['message'] ?? '', 'menerima') && ! str_contains($data['message'] ?? '', 'ditolak')),
+                            'collaboration_handled' => isset($data['collaboration_handled']) ? (bool) $data['collaboration_handled'] : false,
+                            'collaboration_status' => $data['collaboration_status'] ?? null,
+                        ];
+                    })->values()->toArray();
+                }) : [],
             'notifications' => $user ? fn () => $this->fastNotifications($request, $user) : null,
 
             // Bagikan active context ke semua Vue component via usePage().props.context
             // Digunakan untuk menampilkan badge modul/role aktif di navbar, sidebar, dll.
             'context' => $user ? [
-                'active_module' => $activeModule,
-                'active_role' => $activeRole,
-            ] : null,
+                    'active_module' => $activeModule,
+                    'active_role' => $activeRole,
+                ] : null,
             'selected_period_id' => fn () => $this->resolveWimsSelectedPeriodId($request),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'pending_comments_count' => fn () => ($user && ($user->isAdmin() || $user->isSuperAdmin()))
@@ -221,14 +221,14 @@ class HandleInertiaRequests extends Middleware
             // Pagi Admin sidebar badge counts (Realtime evaluation)
             'pagi_moderation_counts' => fn () => ($user && $request->is('pagi/admin*'))
                 ? [
-                    'moderation' => PagiReport::query()->whereIn('status', ['pending', 'report', 'review'])->count(),
-                    'reports' => PagiReport::query()->whereIn('status', ['pending', 'report', 'review'])->count(),
-                    'warnings' => PagiWarning::query()->where('is_active', true)->count(),
-                    'takedowns' => PagiReport::query()->where(function ($q) {
-                        $q->where('status', 'appeal')->orWhere('reason', 'like', '%banding%');
-                    })->count(),
-                    'resolved' => PagiReport::query()->whereIn('status', ['reviewed', 'dismissed', 'actioned', 'resolved'])->count(),
-                ]
+                        'moderation' => PagiReport::query()->whereIn('status', ['pending', 'report', 'review'])->count(),
+                        'reports' => PagiReport::query()->whereIn('status', ['pending', 'report', 'review'])->count(),
+                        'warnings' => PagiWarning::query()->where('is_active', true)->count(),
+                        'takedowns' => PagiReport::query()->where(function ($q) {
+                            $q->where('status', 'appeal')->orWhere('reason', 'like', '%banding%');
+                        })->count(),
+                        'resolved' => PagiReport::query()->whereIn('status', ['reviewed', 'dismissed', 'actioned', 'resolved'])->count(),
+                    ]
                 : null,
             'notif_count_pending_admin' => $user ? $this->fastPendingAdminCount() : 0,
             'notif_count_revision_admin' => $user ? $this->fastRevisionAdminCount() : 0,
