@@ -443,6 +443,7 @@ onMounted(() => {
     }
 });
 const fileInput = ref<HTMLInputElement | null>(null);
+const showSubmitConfirm = ref(false);
 function triggerFilePick() {
     fileInput.value?.click();
 }
@@ -470,6 +471,12 @@ function submit() {
         return;
     }
 
+    showSubmitConfirm.value = true;
+}
+
+function confirmSubmit() {
+    showSubmitConfirm.value = false;
+
     form.post(`${basePath.value}/submissions`, {
         forceFormData: true,
         preserveScroll: true,
@@ -495,7 +502,7 @@ function fieldError(name: string): string | undefined {
             { label: 'Ajukan Surat' },
         ]"
     >
-        <Head title="Ajukan Surat - FAST" />
+        <Head title="Ajukan Surat - FASt" />
         <div class="mx-auto max-w-7xl space-y-6">
             <!-- Summary -->
             <section class="grid gap-3 sm:grid-cols-2">
@@ -945,9 +952,6 @@ function fieldError(name: string): string | undefined {
                                 <p class="text-sm font-semibold text-slate-900">
                                     Kirim pengajuan setelah memastikan data benar
                                 </p>
-                                <p class="text-xs text-slate-400">
-                                    Pengajuan akan diproses sesuai alur FAST.
-                                </p>
                             </div>
                             <div class="flex flex-col gap-2 sm:flex-row">
                                 <button
@@ -971,5 +975,37 @@ function fieldError(name: string): string | undefined {
                 </form>
             </div>
         </Transition>
+
+        <div
+            v-if="showSubmitConfirm"
+            class="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4"
+            @click.self="showSubmitConfirm = false"
+        >
+            <div class="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+                <h3 class="text-base font-semibold text-slate-900">
+                    Konfirmasi Pengajuan
+                </h3>
+                <p class="mt-2 text-sm leading-6 text-slate-500">
+                    Pastikan seluruh data pengajuan sudah benar.
+                </p>
+                <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <button
+                        type="button"
+                        class="fast-btn fast-btn-outline px-4 py-2 text-sm font-medium"
+                        @click="showSubmitConfirm = false"
+                    >
+                        Kembali Periksa
+                    </button>
+                    <button
+                        type="button"
+                        class="fast-btn fast-btn-primary px-4 py-2 text-sm font-medium"
+                        :disabled="form.processing"
+                        @click="confirmSubmit"
+                    >
+                        {{ form.processing ? 'Mengirim...' : 'Ya, Kirim Pengajuan' }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </FastLayout>
 </template>

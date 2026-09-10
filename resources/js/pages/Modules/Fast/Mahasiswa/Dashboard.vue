@@ -5,20 +5,17 @@ import DocumentPreviewModal from '@/components/DocumentPreviewModal.vue';
 import LetterFlowCard from '@/components/Modules/Fast/LetterFlowCard.vue';
 import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import {
     FileText,
     CheckCircle2,
     XCircle,
-    Plus,
     Download,
     Eye,
-    AlertCircle,
     X,
     ZoomIn,
     ZoomOut,
     RotateCcw as ResetZoom,
-    ExternalLink,
     RefreshCw,
     Info,
     FilePlus2,
@@ -38,6 +35,7 @@ import {
 } from '@/lib/fastProgress';
 
 const { can } = useFastPermissions();
+const showSubmitConfirm = ref(false);
 
 type Summary = {
     total: number;
@@ -157,10 +155,8 @@ const safeEndpoints = computed(
 const showFormModal = ref(false);
 const selectedJenis = ref<JenisSuratOption | null>(null);
 const formStep = ref<'form' | 'preview'>('form');
-const toastMessage = ref('');
 const expandedReasonId = ref<number | null>(null);
 const expandedNotesId = ref<number | null>(null);
-let toastTimeoutId: number | null = null;
 const applicantFieldRefs = ref<Record<string, HTMLElement | null>>({});
 
 const visibleJenis = computed(() => safeJenisSurats.value.slice(0, 5));
@@ -470,6 +466,12 @@ function doSubmit() {
         return;
     }
 
+    showSubmitConfirm.value = true;
+}
+
+function confirmSubmit() {
+    showSubmitConfirm.value = false;
+
     submitForm.post(safeEndpoints.value.submission, {
         forceFormData: true,
         onSuccess: () => closeForm(),
@@ -640,7 +642,7 @@ function formatDate(date?: string | null) {
 function statusLabel(status: string) {
     const map: Record<string, string> = {
         pending: 'Menunggu Validasi',
-        revision_requested: 'Sedang Direvisi Admin',
+        revision_requested: 'Diproses',
         validated_admin: 'Diteruskan untuk disetujui',
         approved_kaprodi: 'Disetujui',
         approved_dekan: 'Disetujui',
@@ -654,7 +656,7 @@ function statusLabel(status: string) {
 
 function submissionStatusLabel(item: LatestSubmission) {
     if (item.status === 'revision_requested' && item.needsRevision) {
-        return 'Perlu Revisi';
+        return 'Diproses';
     }
 
     if (
@@ -743,7 +745,7 @@ function dashboardProgressLabel(item: LatestSubmission): string {
     const status = item.status;
     if (status === 'rejected_admin') return 'Ditolak Admin';
     if (status === 'rejected_approver') return 'Ditolak Final';
-    if (status === 'revision_requested') return 'Perlu Revisi';
+    if (status === 'revision_requested') return 'Diproses';
     if (status === 'cancelled') return 'Dibatalkan';
     if (status === 'approved_kaprodi' || status === 'approved_dekan') {
         return `Disetujui ${approvalRoleLabel(item)}`;
@@ -758,7 +760,7 @@ function dashboardProgressDescription(item: LatestSubmission): string {
         return 'Pengajuan berhenti pada tahap penolakan dan tidak melanjut ke proses berikutnya.';
     }
     if (item.status === 'revision_requested') {
-        return 'Pengajuan masih menunggu perbaikan sebelum diproses kembali.';
+        return 'Pengajuan masih diproses.';
     }
     if (item.status === 'finished') {
         return 'Seluruh tahap selesai dan dokumen akhir dapat diproses.';
@@ -772,20 +774,6 @@ function dashboardProgressDescription(item: LatestSubmission): string {
         : `Saat ini berada pada tahap ${current}.`;
 }
 
-async function showToast(message: string) {
-    if (toastTimeoutId !== null) {
-        window.clearTimeout(toastTimeoutId);
-        toastTimeoutId = null;
-    }
-    toastMessage.value = '';
-    await nextTick();
-    toastMessage.value = message;
-    toastTimeoutId = window.setTimeout(() => {
-        toastMessage.value = '';
-        toastTimeoutId = null;
-    }, 3200);
-}
-
 function openForm(jenis: JenisSuratOption) {
     router.get(
         `${safeEndpoints.value.basePath}/ajukan`,
@@ -796,7 +784,7 @@ function openForm(jenis: JenisSuratOption) {
 
 function rejectionHeadline(item: LatestSubmission) {
     if (item.needsRevision) {
-        return `Sedang direvisi admin setelah catatan ${item.rejectedByRole === 'dekan' ? 'Dekan' : 'Kaprodi'}`;
+        return 'Pengajuan masih diproses';
     }
 
     return item.rejectedByRole === 'admin'
@@ -830,7 +818,7 @@ function fieldError(name: string): string | undefined {
         active-menu="dashboard"
         :breadcrumbs="[{ label: 'Dashboard' }]"
     >
-        <Head title="Dashboard - FAST" />
+        <Head title="Dashboard - FASt" />
 
         <!-- Greeting -->
         <section class="relative mb-6 overflow-hidden rounded-[2rem] border border-slate-200/80 bg-[var(--primary)] text-white shadow-[0_18px_50px_rgba(15,23,42,0.14)]">
@@ -911,7 +899,7 @@ function fieldError(name: string): string | undefined {
         <!-- Main grid -->
         <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
             <!-- Kiri: Pengajuan Terbaru -->
-            <div class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+            <div class="order-2 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)] xl:order-1">
                 <!-- Toolbar -->
                 <div
                     class="flex items-start justify-between gap-3 border-b border-slate-100 bg-slate-50/40 px-5 py-4"
@@ -931,24 +919,6 @@ function fieldError(name: string): string | undefined {
                         <History class="size-3.5" />
                         Lihat Semua
                     </Link>
-                </div>
-
-                <!-- Perlu Revisi banner -->
-                <div
-                    v-if="latestVisible.some((i) => i.needsRevision)"
-                    class="mx-5 mt-4 rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3"
-                >
-                    <div class="flex items-start gap-2">
-                        <AlertCircle class="mt-0.5 size-4 shrink-0 text-amber-600" />
-                        <div data-field-key="lampiran">
-                            <p class="text-sm font-semibold text-amber-800">
-                                Ada pengajuan yang perlu direvisi
-                            </p>
-                            <p class="mt-0.5 text-xs text-amber-700">
-                                Tinjau catatan sebelum melanjutkan.
-                            </p>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Riwayat Pengajuan Cards -->
@@ -1176,7 +1146,7 @@ function fieldError(name: string): string | undefined {
                             </div>
 
                             <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
-                                <div class="flex flex-wrap items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
                                     <Link
                                         v-if="can('fast.submission.view')"
                                         :href="`${safeEndpoints.basePath}/history/${item.id}`"
@@ -1203,15 +1173,6 @@ function fieldError(name: string): string | undefined {
                                     >
                                         <Info class="size-3.5" /> Catatan
                                     </button>
-                                    <button
-                                        v-if="item.rejectionReason || item.revisionReason"
-                                        type="button"
-                                        title="Catatan"
-                                        class="fast-btn fast-btn-soft px-3 py-1.5 text-[11px] font-medium text-red-600"
-                                        @click="toggleReason(item.id)"
-                                    >
-                                        <AlertCircle class="size-3.5" /> Detail
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -1220,73 +1181,34 @@ function fieldError(name: string): string | undefined {
             </div>
 
             <!-- Kanan: Ajukan -->
-            <div class="space-y-4">
-                <LetterFlowCard />
-
-                <!-- Ajukan Surat Baru -->
-                <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <h3
-                        class="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900"
-                    >
-                        <FilePlus2 class="size-4 text-blue-500" /> Ajukan Surat
-                    </h3>
-
-                    <!-- Card grid -->
-                    <div
-                        v-if="visibleJenis.length === 0"
-                        class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-6 text-center"
-                    >
-                        <FileText class="mx-auto mb-2 size-6 text-slate-300" />
-                        <p class="text-xs font-medium text-slate-600">
-                            Tidak ada jenis surat
-                        </p>
-                    </div>
-                    <div v-else-if="can('fast.submission.create')" class="grid gap-2">
-                        <button
-                            v-for="jenis in visibleJenis"
-                            :key="jenis.id"
-                            type="button"
-                            class="group relative rounded-2xl border border-slate-200 bg-white p-3 text-left transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
-                            @click="openForm(jenis)"
+            <div class="order-1 space-y-4 xl:order-2">
+                <!-- Tombol cepat menuju menu Ajukan Surat -->
+                <Link
+                    v-if="can('fast.submission.create')"
+                    :href="`${safeEndpoints.basePath}/ajukan`"
+                    class="group relative flex min-h-[58px] w-full items-center justify-between overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-600 to-indigo-600 px-4 py-2.5 text-white shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-500/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200"
+                >
+                    <span
+                        class="pointer-events-none absolute -top-8 -right-6 size-28 rounded-full bg-white/10"
+                    />
+                    <span
+                        class="pointer-events-none absolute -right-10 -bottom-16 size-36 rounded-full border border-white/10"
+                    />
+                    <span class="relative flex items-center gap-3">
+                        <span
+                            class="grid size-9 shrink-0 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/20"
                         >
-                            <div class="flex items-start gap-2.5">
-                                <div
-                                    class="grid size-9 shrink-0 place-items-center rounded-xl border border-blue-100 bg-blue-50 text-blue-600"
-                                >
-                                    <FileText class="size-4" />
-                                </div>
-                                <div class="min-w-0 flex-1">
-                                    <p class="text-xs font-semibold text-slate-900">
-                                        {{ jenis.nama }}
-                                    </p>
-                                    <p
-                                        v-if="jenis.deskripsi"
-                                        class="mt-0.5 line-clamp-1 text-[10px] text-slate-400"
-                                    >
-                                        {{ jenis.deskripsi }}
-                                    </p>
-                                </div>
-                                <Plus class="size-3.5 shrink-0 text-slate-300 transition-colors group-hover:text-blue-500" />
-                            </div>
-                        </button>
-                    </div>
+                            <FilePlus2 class="size-5 text-white" />
+                        </span>
+                        <span class="min-w-0">
+                            <span class="block text-sm font-bold tracking-tight">
+                                Ajukan Surat Baru
+                            </span>
+                        </span>
+                    </span>
+                </Link>
 
-                    <div
-                        v-else
-                        class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-5 text-center text-xs text-slate-500"
-                    >
-                        Aksi pengajuan tidak tersedia untuk role ini.
-                    </div>
-
-                    <Link
-                        v-if="hasMoreJenis && can('fast.submission.create')"
-                        href="/mahasiswa/ajukan"
-                        class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-blue-600 transition-colors hover:text-blue-700"
-                    >
-                        Selengkapnya
-                        <ExternalLink class="size-3.5" />
-                    </Link>
-                </div>
+                <LetterFlowCard />
             </div>
         </div>
 
@@ -1760,15 +1682,37 @@ function fieldError(name: string): string | undefined {
             </div>
         </Transition>
 
-        <!-- Toast -->
-        <Transition name="toast">
-            <div
-                v-if="toastMessage"
-                class="fixed top-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800 shadow-lg"
-            >
-                {{ toastMessage }}
+        <div
+            v-if="showSubmitConfirm"
+            class="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4"
+            @click.self="showSubmitConfirm = false"
+        >
+            <div class="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+                <h3 class="text-base font-semibold text-slate-900">
+                    Konfirmasi Pengajuan
+                </h3>
+                <p class="mt-2 text-sm leading-6 text-slate-500">
+                    Pastikan seluruh data pengajuan sudah benar.
+                </p>
+                <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <button
+                        type="button"
+                        class="fast-btn fast-btn-outline px-4 py-2 text-sm font-medium"
+                        @click="showSubmitConfirm = false"
+                    >
+                        Kembali Periksa
+                    </button>
+                    <button
+                        type="button"
+                        class="fast-btn fast-btn-primary px-4 py-2 text-sm font-medium"
+                        :disabled="submitForm.processing"
+                        @click="confirmSubmit"
+                    >
+                        {{ submitForm.processing ? 'Mengirim...' : 'Ya, Kirim Pengajuan' }}
+                    </button>
+                </div>
             </div>
-        </Transition>
+        </div>
 
         <DocumentPreviewModal
             :open="viewerOpen"
@@ -1794,15 +1738,6 @@ function fieldError(name: string): string | undefined {
 .modal-enter-from,
 .modal-leave-to {
     opacity: 0;
-}
-.toast-enter-active,
-.toast-leave-active {
-    transition: all 0.2s;
-}
-.toast-enter-from,
-.toast-leave-to {
-    opacity: 0;
-    transform: translateX(-50%) translateY(8px);
 }
 .fade-enter-active,
 .fade-leave-active {

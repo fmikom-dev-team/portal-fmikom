@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import { Button } from '@/components/ui/button';
@@ -77,9 +77,6 @@ type PaginatedSurats = {
     to?: number | null;
     total: number;
 };
-type PageProps = {
-    flash?: { success?: string };
-};
 const props = withDefaults(
     defineProps<{
         role?: { name?: string | null; slug?: string | null };
@@ -94,12 +91,10 @@ const props = withDefaults(
         categories: () => [],
     },
 );
-const page = usePage<PageProps>();
 const { can } = useFastPermissions();
 const search = ref(props.filters.search ?? '');
 const categoryId = ref(props.filters.category_id ?? '');
 const status = ref(props.filters.status ?? 'pending');
-const toastMessage = ref('');
 const selectedSurat = ref<SuratItem | null>(null);
 const selectedSuratIds = ref<number[]>([]);
 const actionConfirmOpen = ref(false);
@@ -273,7 +268,7 @@ function initials(name?: string | null) {
         .map((part) => part[0]?.toUpperCase() ?? '')
         .join('');
 }
-function isInstitutionLetter(item: { is_institution?: boolean | null; letter_mode?: string | null }) {
+function isInstitutionLetter(item: { is_institution?: boolean | null; letter_mode?: string | null; subject?: unknown }) {
     return Boolean(item.is_institution) || item.letter_mode === 'institution';
 }
 function subjectName(item: { subject?: { name?: string | null } | null }) {
@@ -609,17 +604,17 @@ function submitFinalReject() {
                             <button
                                 v-if="can('fast.approval.surat.view')"
                                 type="button"
-                                class="flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[10px] font-medium text-slate-600 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
+                                class="fast-btn fast-btn-outline flex h-8 items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold text-slate-700"
                                 title="Lihat"
                                 @click="openDetail(item.id)"
                             >
-                                <Eye class="size-3" /> Lihat
+                                <Eye class="size-3.5" /> Lihat
                             </button>
                             <a
                                 v-if="canDownload(item) && can('fast.document.download')"
                                 :href="item.download_url || ''"
                                 target="_blank"
-                                class="fast-btn fast-btn-primary flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-medium"
+                                class="fast-btn fast-btn-primary flex h-8 items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold"
                                 title="Unduh PDF"
                             >
                                 <Download class="size-3" /> Unduh PDF
@@ -637,20 +632,20 @@ function submitFinalReject() {
                                 <button
                                     type="button"
                                     v-if="can('fast.approval.surat.reject')"
-                                    class="fast-btn flex items-center gap-1 border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[10px] font-medium text-amber-700 transition-colors hover:border-amber-300 hover:bg-amber-100 hover:text-amber-800"
+                                    class="fast-btn flex h-8 items-center gap-1.5 border border-amber-500 bg-amber-500 px-2.5 py-1.5 text-[11px] font-semibold text-white transition-colors hover:border-amber-600 hover:bg-amber-600"
                                     title="Kembalikan untuk revisi"
                                     @click="openRevisionConfirm(item)"
                                 >
-                                    <X class="size-3 text-amber-600" />
+                                    <X class="size-3.5" /> Revisi
                                 </button>
                                 <button
                                     type="button"
                                     v-if="can('fast.approval.surat.reject')"
-                                    class="fast-btn flex items-center gap-1 border border-red-200 bg-red-50 px-2.5 py-1.5 text-[10px] font-medium text-red-700 transition-colors hover:border-red-300 hover:bg-red-100 hover:text-red-800"
+                                    class="fast-btn fast-btn-danger flex h-8 items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold"
                                     title="Tolak final"
                                     @click="openFinalRejectConfirm(item)"
                                 >
-                                    <XCircle class="size-3 text-red-600" />
+                                    <XCircle class="size-3.5" /> Tolak Final
                                 </button>
                             </template>
                         </div>
@@ -932,24 +927,5 @@ function submitFinalReject() {
                 </div>
             </DialogContent>
         </Dialog>
-        <!-- Toast -->
-        <Transition
-            enter-active-class="transition duration-300 ease-out"
-            enter-from-class="translate-y-3 opacity-0"
-            enter-to-class="translate-y-0 opacity-100"
-            leave-active-class="transition duration-200 ease-in"
-            leave-from-class="translate-y-0 opacity-100"
-            leave-to-class="translate-y-3 opacity-0"
-        >
-            <div
-                v-if="toastMessage"
-                class="fixed top-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800 shadow-lg"
-            >
-                <div class="flex items-center gap-2.5">
-                    <BadgeCheck class="size-5 shrink-0 text-blue-500" />
-                    <p class="text-sm font-medium">{{ toastMessage }}</p>
-                </div>
-            </div>
-        </Transition>
     </AdminLayout>
 </template>

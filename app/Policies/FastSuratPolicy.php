@@ -188,7 +188,13 @@ class FastSuratPolicy
 
     protected function isAdminRole(User $user): bool
     {
-        return in_array($this->roleSlug($user), ['admin', 'super-admin'], true);
+        return in_array($this->roleSlug($user), [
+            'admin',
+            'super-admin',
+            'admin-universitas',
+            'admin-akademik',
+            'prodi',
+        ], true);
     }
 
     protected function isApprovalRole(User $user): bool

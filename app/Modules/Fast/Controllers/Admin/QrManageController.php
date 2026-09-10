@@ -82,7 +82,7 @@ class QrManageController extends Controller
             ])
             ->withQueryString();
 
-        return Inertia::render('admin/qr/Index', [
+        return Inertia::render('Modules/Fast/Admin/qr/Index', [
             'surats' => $surats,
             'filters' => compact('search', 'status'),
         ]);

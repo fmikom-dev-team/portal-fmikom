@@ -8,6 +8,20 @@ use App\Models\User;
 class FastPermissionCatalog
 {
     /**
+     * Roles that use the full FAST admin permission set when no custom
+     * permissions have been configured for the role yet.
+     *
+     * @var array<int, string>
+     */
+    protected const ADMIN_ROLE_SLUGS = [
+        'admin',
+        'super-admin',
+        'admin-universitas',
+        'admin-akademik',
+        'prodi',
+    ];
+
+    /**
      * @var array<string, array<int, string>>
      */
     protected const DEFAULT_ROLE_PERMISSIONS = [
@@ -117,6 +131,10 @@ class FastPermissionCatalog
             )));
 
             return $dbPermissions;
+        }
+
+        if (in_array($roleSlug, self::ADMIN_ROLE_SLUGS, true)) {
+            return self::DEFAULT_ROLE_PERMISSIONS['admin'];
         }
 
         return self::DEFAULT_ROLE_PERMISSIONS[$roleSlug] ?? [];

@@ -11,7 +11,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from '@/components/ui/dialog';
-import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import {
     AlertCircle,
@@ -44,6 +44,7 @@ type TimelineItem = {
     action?: string | null;
     actor?: string | null;
     role?: string | null;
+    timestamp?: string | null;
 };
 
 type ApprovalNote = {
@@ -59,6 +60,8 @@ type Surat = {
     id: number;
     type?: string | null;
     nomor_surat?: string | null;
+    nomor_surat_status?: string | null;
+    nomor_surat_status_label?: string | null;
     letter_mode?: string | null;
     letter_mode_label?: string | null;
     is_institution?: boolean;
@@ -68,6 +71,7 @@ type Surat = {
     isi_surat: Record<string, any>;
     lampiran: Lampiran[];
     tanggal_pengajuan: string | null;
+    tanggal_kebutuhan?: string | null;
     status: string;
     detail_data?: Record<string, unknown>;
     latest_rejection?: {
@@ -89,10 +93,6 @@ type Surat = {
     canDownloadPdf?: boolean;
 };
 
-type PageProps = {
-    flash?: { success?: string };
-};
-
 const props = withDefaults(
     defineProps<
         {
@@ -105,16 +105,27 @@ const props = withDefaults(
         role: () => ({ name: 'Approval', slug: 'dekan' }),
         back_href: '',
         back_label: 'Riwayat Approval',
+        id: 0,
+        type: 'surat_masuk',
+        status: 'pending',
+        jenis_surat: 'Surat',
+        keperluan: '',
+        isi_surat: () => ({}),
+        lampiran: () => [],
+        tanggal_pengajuan: null,
+        can_approve: false,
+        can_request_revision: false,
+        can_final_reject: false,
+        previewTemplateUrl: null,
+        generatedDocumentUrl: null,
     },
 );
 
-const page = usePage<PageProps>();
 const viewerOpen = ref(false);
 const viewerUrl = ref<string | null>(null);
 const viewerTitle = ref('');
 const viewerType = ref<'html' | 'pdf'>('html');
 const copiedNumber = ref(false);
-const toastMessage = ref('');
 const attachmentPreviewOpen = ref(false);
 const activeAttachment = ref<Lampiran | null>(null);
 
@@ -220,7 +231,7 @@ const subjectNim = computed(() =>
         : props.subject?.nim || subjectPayloadIdentifier.value || '-',
 );
 
-const processTimeline = computed(() => {
+const processTimeline = computed<TimelineItem[]>(() => {
     const approval = props.approval_timeline ?? [];
     if (approval.length > 0) {
         return approval.map((entry) => ({
@@ -228,6 +239,8 @@ const processTimeline = computed(() => {
             label: entry.label,
             note: entry.note ?? null,
             timestamp: entry.acted_at ?? null,
+            role: entry.role ?? null,
+            actor: entry.actor ?? null,
         }));
     }
 
@@ -236,6 +249,8 @@ const processTimeline = computed(() => {
         label: entry.label,
         note: entry.description ?? null,
         timestamp: entry.created_at ?? null,
+        role: entry.role ?? null,
+        actor: entry.actor ?? null,
     }));
 });
 
@@ -289,7 +304,7 @@ function formatDisplayValue(value: unknown): string {
     return String(value);
 }
 
-function formatDate(iso: string | null): string {
+function formatDate(iso: string | null | undefined): string {
     if (!iso) return '-';
 
     return (
@@ -303,7 +318,17 @@ function formatDate(iso: string | null): string {
     );
 }
 
-function formatDateTime(iso: string | null): string {
+function formatDateOnly(iso: string | null): string {
+    if (!iso) return '-';
+
+    return new Date(iso).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
+}
+
+function formatDateTime(iso: string | null | undefined): string {
     return formatDate(iso);
 }
 
@@ -590,6 +615,20 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                         </div>
 
                         <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
+                            <p class="text-slate-500">Tanggal Dibutuhkan</p>
+                            <p class="min-w-0 break-words font-medium leading-6 text-slate-900">
+                                {{ tanggal_kebutuhan ? formatDateOnly(tanggal_kebutuhan) : '-' }}
+                            </p>
+                        </div>
+
+                        <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
+                            <p class="text-slate-500">Keperluan</p>
+                            <p class="min-w-0 break-words font-medium leading-6 text-slate-900">
+                                {{ keperluan || '-' }}
+                            </p>
+                        </div>
+
+                        <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
                             <p class="text-slate-500">Nomor Surat</p>
                             <div class="min-w-0">
                                 <button
@@ -606,17 +645,21 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                                 <p v-else class="font-medium leading-6 text-slate-900">
                                     -
                                 </p>
+                                <span
+                                    v-if="nomor_surat_status_label"
+                                    class="mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold"
+                                    :class="nomor_surat_status === 'void'
+                                        ? 'bg-red-100 text-red-700'
+                                        : nomor_surat_status === 'issued'
+                                          ? 'bg-emerald-100 text-emerald-700'
+                                          : 'bg-slate-100 text-slate-600'"
+                                >
+                                    {{ nomor_surat_status_label }}
+                                </span>
                                 <p v-if="copiedNumber" class="mt-1 text-xs text-emerald-600">
                                     Nomor surat disalin.
                                 </p>
                             </div>
-                        </div>
-
-                        <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
-                            <p class="text-slate-500">Keperluan</p>
-                            <p class="min-w-0 break-words font-medium leading-6 text-slate-900">
-                                {{ keperluan || '-' }}
-                            </p>
                         </div>
 
                         <div
@@ -829,7 +872,7 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                             v-if="can('fast.document.preview')"
                             type="button"
                             :disabled="!isFinished"
-                            class="fast-btn fast-btn-outline w-full px-4 py-2.5 text-sm transition"
+                            class="fast-btn fast-btn-outline flex h-9 w-full items-center justify-center gap-2 px-4 py-2 text-sm font-semibold transition"
                             :class="
                                 !isFinished
                                     ? 'cursor-not-allowed border-dashed border-slate-200 bg-slate-50 text-slate-400 opacity-50 hover:bg-slate-50'
@@ -844,7 +887,7 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                         <button
                             v-if="can('fast.document.download') && canDownloadPdf"
                             type="button"
-                            class="fast-btn fast-btn-primary w-full px-4 py-2.5 text-sm"
+                            class="fast-btn fast-btn-primary flex h-9 w-full items-center justify-center gap-2 px-4 py-2 text-sm font-semibold"
                             @click="openDownloadPdf"
                         >
                             <Download class="size-4" />
@@ -939,7 +982,7 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                         </button>
                         <button
                             type="button"
-                            class="fast-btn rounded-xl border border-amber-500 bg-amber-500 px-4 py-2 text-sm text-white hover:bg-amber-600"
+                            class="fast-btn h-9 rounded-xl border border-amber-500 bg-amber-500 px-5 py-2 text-sm font-semibold text-white hover:border-amber-600 hover:bg-amber-600"
                             :disabled="revisionForm.processing || !revisionForm.reason.trim()"
                             @click="submitRevision"
                         >
@@ -1003,7 +1046,7 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                         </button>
                         <button
                             type="button"
-                            class="fast-btn fast-btn-danger rounded-xl px-4 py-2 text-sm"
+                            class="fast-btn fast-btn-danger h-9 rounded-xl px-5 py-2 text-sm font-semibold"
                             :disabled="finalRejectForm.processing || !finalRejectForm.reason.trim()"
                             @click="submitFinalReject"
                         >
@@ -1053,7 +1096,7 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                         class="flex justify-center"
                     >
                         <img
-                            :src="activeAttachment.url"
+                            :src="activeAttachment.url ?? ''"
                             :alt="activeAttachment.name"
                             class="max-h-[65vh] rounded-xl border border-slate-200 object-contain shadow-sm"
                         />
@@ -1063,7 +1106,7 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                         class="overflow-hidden rounded-xl border border-slate-200 shadow-sm"
                     >
                         <iframe
-                            :src="activeAttachment.url"
+                            :src="activeAttachment.url ?? ''"
                             class="h-[65vh] w-full"
                             title="Preview PDF"
                         />
@@ -1091,23 +1134,5 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
             </DialogContent>
         </Dialog>
 
-        <Transition
-            enter-active-class="transition duration-300 ease-out"
-            enter-from-class="translate-y-3 opacity-0"
-            enter-to-class="translate-y-0 opacity-100"
-            leave-active-class="transition duration-200 ease-in"
-            leave-from-class="translate-y-0 opacity-100"
-            leave-to-class="translate-y-3 opacity-0"
-        >
-            <div
-                v-if="toastMessage"
-                class="fixed top-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800 shadow-lg"
-            >
-                <div class="flex items-center gap-2.5">
-                    <CheckCircle class="size-5 shrink-0 text-blue-500" />
-                    <p class="text-sm font-medium">{{ toastMessage }}</p>
-                </div>
-            </div>
-        </Transition>
     </AdminLayout>
 </template>

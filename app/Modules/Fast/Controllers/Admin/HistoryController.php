@@ -98,7 +98,7 @@ class HistoryController extends Controller
             ])
             ->withQueryString();
 
-        return Inertia::render('admin/history/Index', [
+        return Inertia::render('Modules/Fast/Admin/history/Index', [
             'surats' => $surats,
             'filters' => [
                 'search' => $search,

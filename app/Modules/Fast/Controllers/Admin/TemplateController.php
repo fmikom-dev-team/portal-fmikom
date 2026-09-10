@@ -21,7 +21,7 @@ class TemplateController extends Controller
     {
         $this->authorize('viewAny', JenisSurat::class);
 
-        return Inertia::render('admin/templates/Index', $this->templateService->index($request));
+        return Inertia::render('Modules/Fast/Admin/templates/Index', $this->templateService->index($request));
     }
 
     public function store(Request $request): RedirectResponse

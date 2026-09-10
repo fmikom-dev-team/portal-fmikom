@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { computed, reactive, ref, watch } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { computed, reactive, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -63,10 +63,8 @@ type SuratDetail = {
     }[];
     draft_preview_url?: string | null;
 };
-type PaginationLink = { url: string | null; label: string; active: boolean };
 type PaginatedSurats = {
     data: SuratItem[];
-    links: PaginationLink[];
     from?: number | null;
     to?: number | null;
     total: number;
@@ -74,20 +72,17 @@ type PaginatedSurats = {
 type FilterState = {
     status?: string;
 };
-type PageProps = {
-    auth: { user?: { name?: string } };
-    flash?: { success?: string };
-};
 const props = withDefaults(
     defineProps<{
         role?: { name?: string | null; slug?: string | null };
         surats?: PaginatedSurats;
+        quickSubmissions?: SuratItem[];
         summary?: Summary;
         filters?: FilterState;
     }>(),
     {
         role: () => ({ name: 'Approval', slug: 'dekan' }),
-        surats: () => ({ data: [], links: [], total: 0 }),
+        surats: () => ({ data: [], total: 0 }),
         summary: () => ({
             waiting: 0,
             approved: 0,
@@ -98,13 +93,11 @@ const props = withDefaults(
     },
 );
 
-const page = usePage<PageProps>();
 const filters = reactive({
     status: props.filters.status ?? 'validated_admin',
 });
 const attachmentPreviewOpen = ref(false);
 const activeAttachment = ref<DetailLampiran | null>(null);
-const toastMessage = ref('');
 const normalizedRole = computed(() =>
     String(props.role.slug ?? props.role.name ?? '')
         .toLowerCase()
@@ -113,8 +106,8 @@ const normalizedRole = computed(() =>
         : 'dekan',
 );
 const basePath = computed(() => `/${normalizedRole.value}`);
-const visibleSurats = computed(() => props.surats.data.slice(0, 7));
-const quickSubmissions = computed(() => visibleSurats.value);
+const visibleSurats = computed(() => props.surats.data.slice(0, 6));
+const quickSubmissions = computed(() => props.quickSubmissions ?? []);
 const summaryCards = computed(() => [
     {
         label: 'Divalidasi Admin',
@@ -326,7 +319,7 @@ function isWordAttachment(f?: DetailLampiran | null) {
                     <div class="mb-3 flex items-center justify-between">
                         <div>
                             <h2 class="text-sm font-semibold text-slate-900">
-                                Daftar Surat Approval
+                                Daftar Surat
                             </h2>
                             <p class="mt-0.5 text-xs text-slate-400">
                                 {{ surats.from ?? 0 }}-{{ surats.to ?? 0 }} dari
@@ -407,25 +400,6 @@ function isWordAttachment(f?: DetailLampiran | null) {
                         </tbody>
                     </table>
                 </div>
-                <!-- Pagination -->
-                <div
-                    v-if="surats.links.length > 3"
-                    class="flex flex-wrap items-center gap-1.5 border-t border-slate-100 px-5 py-3"
-                >
-                <Link
-                    v-for="link in surats.links"
-                    :key="`${link.label}-${link.url}`"
-                    :href="link.url || ''"
-                    class="fast-btn px-3 py-1.5 text-xs font-medium"
-                    :class="[
-                        link.active
-                            ? 'fast-btn-primary'
-                            : 'fast-btn-outline',
-                        !link.url ? 'pointer-events-none opacity-40' : '',
-                    ]"
-                    v-html="link.label"
-                />
-                </div>
             </div>
             <!-- Sidebar -->
             <div class="space-y-4">
@@ -434,7 +408,7 @@ function isWordAttachment(f?: DetailLampiran | null) {
                     <h3
                         class="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900"
                     >
-                        <Clock3 class="size-4 text-blue-500" /> Surat Terbaru
+                        <Clock3 class="size-4 text-blue-500" /> Perlu Ditangani
                     </h3>
                     <div class="space-y-3">
                         <template v-if="quickSubmissions.length">
@@ -489,7 +463,7 @@ function isWordAttachment(f?: DetailLampiran | null) {
                             </div>
                         </template>
                         <p v-else class="text-xs text-slate-400">
-                            Belum ada pengajuan
+                            Tidak ada surat yang perlu ditangani
                         </p>
                     </div>
                     <div class="mt-3 border-t border-slate-100 pt-3">
@@ -567,24 +541,5 @@ function isWordAttachment(f?: DetailLampiran | null) {
                 </div>
             </DialogContent>
         </Dialog>
-        <!-- Toast -->
-        <Transition
-            enter-active-class="transition duration-300 ease-out"
-            enter-from-class="translate-y-3 opacity-0"
-            enter-to-class="translate-y-0 opacity-100"
-            leave-active-class="transition duration-200 ease-in"
-            leave-from-class="translate-y-0 opacity-100"
-            leave-to-class="translate-y-3 opacity-0"
-        >
-            <div
-                v-if="toastMessage"
-                class="fixed top-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800 shadow-lg"
-            >
-                <div class="flex items-center gap-2.5">
-                    <BadgeCheck class="size-5 shrink-0 text-blue-500" />
-                    <p class="text-sm font-medium">{{ toastMessage }}</p>
-                </div>
-            </div>
-        </Transition>
     </AdminLayout>
 </template>

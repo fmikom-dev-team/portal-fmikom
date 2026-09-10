@@ -2,7 +2,7 @@
 // resources/js/pages/Modules/Fast/Admin/archive/Index.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
 import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import {
     Search,
@@ -14,6 +14,17 @@ import {
 } from 'lucide-vue-next';
 
 const { can } = useFastPermissions();
+const page = usePage<{
+    context?: { active_role?: string | null } | null;
+}>();
+const activeRoleSlug = computed(() =>
+    String(page.props.context?.active_role ?? 'admin').toLowerCase(),
+);
+const adminBasePath = computed(() =>
+    ['dekan', 'kaprodi'].includes(activeRoleSlug.value)
+        ? `/${activeRoleSlug.value}/admin`
+        : '/admin',
+);
 type SuratItem = {
     id: number;
     type: string;
@@ -26,7 +37,11 @@ type SuratItem = {
     letter_mode_label?: string | null;
     is_institution?: boolean;
     subject?: { name?: string | null; nim?: string | null } | null;
-    jenisSurat?: { nama?: string | null } | null;
+    jenisSurat?: {
+        nama?: string | null;
+        category?: { nama?: string | null } | null;
+    } | null;
+    validator?: { name?: string | null } | null;
 };
 type Paginated = {
     data: SuratItem[];
@@ -58,7 +73,7 @@ const isFilterActive = computed(
 );
 function applyFilter() {
     router.get(
-        '/admin/archive',
+        `${adminBasePath.value}/archive`,
         {
             search: search.value || undefined,
             date_from: dateFrom.value || undefined,
@@ -75,25 +90,19 @@ function resetFilter() {
     categoryId.value = '';
     applyFilter();
 }
-function formatDate(d?: string | null) {
-    if (!d) return '-';
-    return new Intl.DateTimeFormat('id-ID', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-    }).format(new Date(d));
+function archiveUrl() {
+    const params = new URLSearchParams();
+
+    if (search.value) params.set('search', search.value);
+    if (dateFrom.value) params.set('date_from', dateFrom.value);
+    if (dateTo.value) params.set('date_to', dateTo.value);
+    if (categoryId.value) params.set('category_id', categoryId.value);
+
+    const query = params.toString();
+    return `${adminBasePath.value}/archive${query ? `?${query}` : ''}`;
 }
-function sourceLabel(type: string) {
-    return type === 'surat_keluar' ? 'Surat Keluar Admin' : 'Pengajuan User';
-}
-function subjectLabel(type: string) {
-    return type === 'surat_keluar' ? 'Atas Nama' : 'Pemohon';
-}
-function subjectIdentityLabel(type: string) {
-    return type === 'surat_keluar' ? 'No. Induk' : 'NIM';
-}
-function isInstitutionLetter(item: SuratItem) {
-    return !!item.is_institution || item.letter_mode === 'institution';
+function detailUrl(id: number) {
+    return `${adminBasePath.value}/surat/${id}?return_to=${encodeURIComponent(archiveUrl())}`;
 }
 </script>
 <template>
@@ -128,7 +137,7 @@ function isInstitutionLetter(item: SuratItem) {
                     <input
                         v-model="search"
                         type="text"
-                        placeholder="Cari nomor surat, nama..."
+                        placeholder="Cari nomor surat, jenis surat, kategori, pemohon, validator..."
                         class="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 pr-4 pl-10 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
                         @keyup.enter="applyFilter"
                     />
@@ -207,146 +216,69 @@ function isInstitutionLetter(item: SuratItem) {
                 muncul di sini.
             </p>
         </div>
-        <!-- Document card grid -->
-        <div v-else class="grid gap-4 sm:grid-cols-2">
-            <div
-                v-for="item in surats.data"
-                :key="item.id"
-                class="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all hover:shadow-lg"
-                :class="
-                    item.type === 'surat_keluar'
-                        ? 'hover:border-indigo-300'
-                        : 'hover:border-blue-300'
-                "
-            >
-                <!-- Top colored bar -->
-                <div
-                    class="h-1.5"
-                    :class="
-                        item.type === 'surat_keluar'
-                            ? 'bg-indigo-400'
-                            : 'bg-blue-400'
-                    "
-                />
-                <div class="p-5">
-                    <!-- Source badge + date -->
-                    <div class="mb-4 flex items-center justify-between">
-                        <span
-                            class="rounded-full border px-2.5 py-1 text-[10px] font-semibold"
-                            :class="
-                                item.type === 'surat_keluar'
-                                    ? 'border-indigo-100 bg-indigo-50 text-indigo-600'
-                                    : 'border-blue-100 bg-blue-50 text-blue-600'
-                            "
+        <!-- Arsip list -->
+        <div v-else class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[760px] text-left">
+                    <thead class="border-b border-slate-200 bg-slate-50">
+                        <tr class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                            <th class="px-5 py-3.5">Nomor Surat</th>
+                            <th class="px-5 py-3.5">Kategori</th>
+                            <th class="px-5 py-3.5">Validator Surat</th>
+                            <th class="px-5 py-3.5 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <tr
+                            v-for="item in surats.data"
+                            :key="item.id"
+                            class="transition-colors hover:bg-slate-50/80"
                         >
-                            {{ sourceLabel(item.type) }}
-                        </span>
-                        <span class="text-[10px] text-slate-400">{{
-                            formatDate(item.tanggal_selesai)
-                        }}</span>
-                    </div>
-                    <!-- Document icon + nomor -->
-                    <div class="mb-4 flex items-start gap-3">
-                        <div
-                            class="grid size-10 shrink-0 place-items-center rounded-xl border"
-                            :class="
-                                item.type === 'surat_keluar'
-                                    ? 'border-indigo-100 bg-indigo-50 text-indigo-600'
-                                    : 'border-blue-100 bg-blue-50 text-blue-600'
-                            "
-                        >
-                            <FileText class="size-5" />
-                        </div>
-                        <div class="min-w-0">
-                            <p
-                                class="truncate font-mono text-xs font-semibold text-slate-700"
-                            >
-                                {{ item.nomor_surat ?? '-' }}
-                            </p>
-                            <p class="mt-0.5 truncate text-xs text-slate-500">
-                                {{
-                                    isInstitutionLetter(item)
-                                        ? 'Surat Institusi'
-                                        : (item.jenisSurat?.nama ?? '-')
-                                }}
-                            </p>
-                        </div>
-                    </div>
-                    <p
-                        v-if="isInstitutionLetter(item)"
-                        class="mb-4 text-xs text-slate-500"
-                    >
-                        {{ item.jenisSurat?.nama ?? '-' }}
-                    </p>
-                    <!-- Details -->
-                        <div class="mb-4 space-y-1.5">
-                            <div class="flex items-center gap-2">
-                            <span class="w-14 text-[10px] text-slate-400"
-                                >{{ subjectLabel(item.type) }}</span
-                            >
-                            <span class="text-xs font-medium text-slate-700">{{
-                                isInstitutionLetter(item) ? 'Surat Institusi' : (item.subject?.name ?? '-')
-                            }}</span>
-                        </div>
-                        <div
-                            v-if="!isInstitutionLetter(item)"
-                            class="flex items-center gap-2"
-                        >
-                            <span class="w-14 text-[10px] text-slate-400"
-                                >{{ subjectIdentityLabel(item.type) }}</span
-                            >
-                            <span
-                                class="font-mono text-[10px] text-slate-500"
-                                >{{ item.subject?.nim ?? '-' }}</span
-                            >
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <span
-                                class="w-14 shrink-0 text-[10px] text-slate-400"
-                                >Keperluan</span
-                            >
-                            <span class="line-clamp-2 text-xs text-slate-600">{{
-                                item.keperluan ?? '-'
-                            }}</span>
-                        </div>
-                    </div>
-                    <!-- Actions -->
-                    <div
-                        class="flex items-center gap-2 border-t border-slate-100 pt-3"
-                    >
-                        <Link
-                            v-if="can('fast.admin.archive.view')"
-                            :href="`/admin/surat/${item.id}`"
-                            class="fast-btn fast-btn-outline flex flex-1 items-center justify-center gap-1.5 py-2 text-[10px] font-medium text-slate-600"
-                            title="Lihat"
-                        >
-                            <Eye class="size-3" /> Lihat
-                        </Link>
-                        <a
-                            v-if="item.download_url && can('fast.document.download')"
-                            :href="item.download_url"
-                            target="_blank"
-                            class="fast-btn fast-btn-primary flex flex-1 items-center justify-center gap-1.5 py-2 text-[10px] font-medium"
-                            title="Unduh PDF"
-                        >
-                            <Download class="size-3" /> Unduh PDF
-                        </a>
-                        <div
-                            v-else-if="can('fast.document.download')"
-                            class="flex flex-1 cursor-not-allowed items-center justify-center gap-1.5 rounded-lg bg-slate-100 py-2 text-[10px] font-medium text-slate-400"
-                            title="PDF belum tersedia"
-                        >
-                            <FileText class="size-3" /> PDF Belum Tersedia
-                        </div>
-                        <div
-                            v-else
-                            class="flex flex-1 cursor-not-allowed items-center justify-center gap-1.5 rounded-lg bg-slate-100 py-2 text-[10px] font-medium text-slate-400"
-                            title="Akses unduh tidak tersedia"
-                        >
-                            <FileText class="size-3" /> Akses Terkunci
-                        </div>
-                    </div>
-                </div>
+                            <td class="px-5 py-4">
+                                <p class="font-mono text-xs font-semibold text-slate-800">
+                                    {{ item.nomor_surat ?? '-' }}
+                                </p>
+                                <p class="mt-1 text-[11px] text-slate-400">
+                                    {{ item.jenisSurat?.nama ?? '-' }}
+                                </p>
+                            </td>
+                            <td class="px-5 py-4 text-sm text-slate-600">
+                                {{ item.jenisSurat?.category?.nama ?? '-' }}
+                            </td>
+                            <td class="px-5 py-4 text-sm text-slate-600">
+                                {{ item.validator?.name ?? '-' }}
+                            </td>
+                            <td class="px-5 py-4">
+                                <div class="flex justify-end gap-2">
+                                    <Link
+                                        v-if="can('fast.admin.archive.view')"
+                                        :href="detailUrl(item.id)"
+                                        class="fast-btn fast-btn-outline inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-600"
+                                        title="Lihat"
+                                    >
+                                        <Eye class="size-3.5" /> Lihat
+                                    </Link>
+                                    <a
+                                        v-if="item.download_url && can('fast.document.download')"
+                                        :href="item.download_url"
+                                        target="_blank"
+                                        class="fast-btn fast-btn-primary inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium"
+                                        title="Unduh PDF"
+                                    >
+                                        <Download class="size-3.5" /> Unduh
+                                    </a>
+                                    <span
+                                        v-else-if="can('fast.document.download')"
+                                        class="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-2 text-xs font-medium text-slate-400"
+                                        title="PDF belum tersedia"
+                                    >
+                                        <FileText class="size-3.5" /> Belum tersedia
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
         <!-- Pagination -->

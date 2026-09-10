@@ -8,7 +8,7 @@ class SubmissionController extends BaseSubmissionController
 {
     protected function pageName(): string
     {
-        return 'dosen/Ajukan';
+        return 'Modules/Fast/Dosen/Ajukan';
     }
 
     protected function basePath(): string

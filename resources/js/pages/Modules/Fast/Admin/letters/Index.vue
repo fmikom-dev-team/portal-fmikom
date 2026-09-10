@@ -9,7 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import {
@@ -51,16 +51,10 @@ type Paginated = {
     total: number;
     links: Array<{ url: string | null; label: string; active: boolean }>;
 };
-type PageProps = {
-    flash?: {
-        success?: string;
-        error?: string;
-    };
-};
 type Summary = {
     total: number;
     pending: number;
-    finished: number;
+    revision_requested: number;
     rejected: number;
 };
 const props = defineProps<{
@@ -69,9 +63,8 @@ const props = defineProps<{
     filters: { status?: string; search?: string; category_id?: string };
     categories: Array<{ id: number; nama: string }>;
 }>();
-const page = usePage<PageProps>();
 const { can } = useFastPermissions();
-const summary = props.summary;
+const revisionNotifCount = computed(() => props.summary.revision_requested ?? 0);
 const defaultStatus = 'pending';
 const search = ref(props.filters.search ?? '');
 const status = ref(props.filters.status ?? defaultStatus);
@@ -87,7 +80,7 @@ const toastVariant = ref<'success' | 'error'>('success');
 const selectedSuratIds = ref<number[]>([]);
 const actionConfirmOpen = ref(false);
 const actionTargetId = ref<number | null>(null);
-const pendingAction = ref<'approve' | 'revision' | 'reject' | null>(null);
+const pendingAction = ref<'approve' | 'complete' | 'revision' | 'reject' | null>(null);
 const selectableSurats = computed(() =>
     (props.surats.data ?? []).filter(
         (item) =>
@@ -139,7 +132,6 @@ const statusFilters = computed(() => [
     },
     { key: 'all', label: 'Semua Status' },
 ]);
-
 function applyFilter() {
     router.get(
         '/admin/surat',
@@ -212,7 +204,7 @@ function bulkApproveSelected() {
         },
     );
 }
-function openActionConfirm(id: number, action: 'approve' | 'revision' | 'reject') {
+function openActionConfirm(id: number, action: 'approve' | 'complete' | 'revision' | 'reject') {
     actionTargetId.value = id;
     pendingAction.value = action;
     actionConfirmOpen.value = true;
@@ -223,7 +215,17 @@ function closeActionConfirm() {
     pendingAction.value = null;
 }
 function editSuratRoute(id: number) {
-    return `/admin/surat/${id}/edit?return_to=/admin/surat`;
+    return `/admin/surat/${id}/edit?return_to=/admin/surat/${id}`;
+}
+function showSuratRoute(id: number) {
+    const params = new URLSearchParams();
+    params.set('status', status.value);
+    if (search.value.trim() !== '') params.set('search', search.value.trim());
+    if (categoryId.value !== '') params.set('category_id', categoryId.value);
+
+    const returnTo = `/admin/surat?${params.toString()}`;
+
+    return `/admin/surat/${id}?return_to=${encodeURIComponent(returnTo)}`;
 }
 function confirmAction() {
     if (actionTargetId.value === null || pendingAction.value === null) return;
@@ -239,7 +241,7 @@ function confirmAction() {
         return;
     }
 
-    if (targetAction === 'revision') {
+    if (targetAction === 'complete' || targetAction === 'revision') {
         router.visit(editSuratRoute(targetId));
         return;
     }
@@ -299,6 +301,7 @@ function approveSurat(id: number) {
 }
 function actionConfirmTitle() {
     if (pendingAction.value === 'approve') return 'Konfirmasi Proses';
+    if (pendingAction.value === 'complete') return 'Lengkapi Data Surat';
     if (pendingAction.value === 'revision') return 'Konfirmasi Revisi';
     if (pendingAction.value === 'reject') return 'Konfirmasi Tolak';
     return 'Konfirmasi Aksi';
@@ -306,6 +309,9 @@ function actionConfirmTitle() {
 function actionConfirmDescription() {
     if (pendingAction.value === 'approve') {
         return 'Surat akan divalidasi dan diteruskan ke tahap berikutnya. Pastikan data sudah benar.';
+    }
+    if (pendingAction.value === 'complete') {
+        return 'Lengkapi data kampus agar surat dapat diproses ke tahap berikutnya.';
     }
     if (pendingAction.value === 'revision') {
         return 'Anda akan membuka form revisi untuk melengkapi atau memperbaiki data surat.';
@@ -317,6 +323,7 @@ function actionConfirmDescription() {
 }
 function actionConfirmButtonLabel() {
     if (pendingAction.value === 'approve') return 'Lanjutkan Proses';
+    if (pendingAction.value === 'complete') return 'Lengkapi Data';
     if (pendingAction.value === 'revision') return 'Lanjutkan Revisi';
     if (pendingAction.value === 'reject') return 'Lanjutkan Tolak';
     return 'Lanjutkan';
@@ -372,6 +379,26 @@ function initials(name?: string | null) {
         :breadcrumbs="[{ label: 'Pengajuan Masuk' }]"
     >
         <Head title="Pengajuan Masuk" />
+        <div
+            v-if="revisionNotifCount > 0"
+            class="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3"
+        >
+            <div class="flex items-start gap-3">
+                <div
+                    class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-red-100 text-red-600"
+                >
+                    <AlertCircle class="size-4" />
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="text-sm font-semibold text-red-700">
+                        Ada {{ revisionNotifCount }} surat yang dikembalikan ke admin
+                    </p>
+                    <p class="mt-0.5 text-xs text-red-600">
+                        Surat ini masih perlu revisi atau tindak lanjut sebelum final.
+                    </p>
+                </div>
+            </div>
+        </div>
         <!-- Top bar: search + tombol -->
         <div class="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -419,7 +446,7 @@ function initials(name?: string | null) {
                     v-for="filter in statusFilters"
                     :key="filter.key || 'all'"
                     type="button"
-                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                    class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
                     :class="
                         status === filter.key
                             ? 'border-blue-500 bg-blue-500 text-white shadow-sm'
@@ -603,7 +630,7 @@ function initials(name?: string | null) {
                         <!-- Actions -->
                         <div class="flex shrink-0 items-center gap-2">
                             <Link
-                                :href="`/admin/surat/${item.id}`"
+                                :href="showSuratRoute(item.id)"
                                 class="fast-btn fast-btn-outline flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium text-slate-600"
                                 title="Lihat"
                             >
@@ -614,7 +641,7 @@ function initials(name?: string | null) {
                                 type="button"
                                 class="fast-btn flex items-center gap-1 border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[10px] font-medium text-amber-700 transition-colors hover:border-amber-300 hover:bg-amber-100 hover:text-amber-800"
                                 title="Lengkapi data kampus"
-                                @click="openActionConfirm(item.id, 'revision')"
+                                @click="openActionConfirm(item.id, 'complete')"
                             >
                                 <FileEdit class="size-3" /> Lengkapi Data
                             </button>
@@ -713,7 +740,7 @@ function initials(name?: string | null) {
                             :class="
                                 pendingAction === 'approve'
                                     ? 'bg-blue-600 hover:bg-blue-700'
-                                    : pendingAction === 'revision'
+                                    : pendingAction === 'complete' || pendingAction === 'revision'
                                         ? 'bg-amber-500 hover:bg-amber-600'
                                         : 'bg-red-600 hover:bg-red-700'
                             "

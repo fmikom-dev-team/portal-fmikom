@@ -29,19 +29,13 @@ class ApprovalService
     {
         [$user, $roleName, $roleSlug, $normalizedRole] = $this->resolveRoleContext($request);
 
-        $status = $request->string('status')->toString();
-        $defaultStatus = $this->waitingStatusesForRole($normalizedRole)[0] ?? '';
-        $effectiveStatus = $status !== '' ? $status : $defaultStatus;
         $search = $request->string('search')->trim()->toString();
         $categoryId = $request->integer('category_id');
 
-        $query = $this->baseQueryForRole($normalizedRole);
-
-        if ($effectiveStatus !== '') {
-            $query->where('status', $effectiveStatus);
-        } else {
-            $query->whereIn('status', $this->waitingStatusesForRole($normalizedRole));
-        }
+        $query = Surat::query()
+            ->with(['pemohon', 'subjectUser', 'jenisSurat.approvalRole', 'dataEntries'])
+            ->orderByRaw('COALESCE(tanggal_pengajuan, created_at) desc')
+            ->orderByDesc('id');
 
         if ($categoryId > 0) {
             $query->whereHas('jenisSurat', function ($jenisQuery) use ($categoryId): void {
@@ -54,12 +48,20 @@ class ApprovalService
         }
 
         $surats = $query
-            ->latest()
-            ->paginate(10)
-            ->through(fn (Surat $surat): array => $this->serializeSuratListItem($surat))
-            ->withQueryString();
+            ->limit(6)
+            ->get()
+            ->map(fn (Surat $surat): array => $this->serializeSuratListItem($surat))
+            ->values();
 
-        return inertia('approval/Index', [
+        $quickSubmissions = $this->baseQueryForRole($normalizedRole)
+            ->whereIn('status', $this->waitingStatusesForRole($normalizedRole))
+            ->orderByRaw('COALESCE(tanggal_pengajuan, created_at) desc')
+            ->orderByDesc('id')
+            ->limit(4)
+            ->get()
+            ->map(fn (Surat $surat): array => $this->serializeSuratListItem($surat));
+
+        return inertia('Modules/Fast/Shared/approval/Index', [
             'context' => [
                 'active_module' => 'FAST',
                 'active_role' => $normalizedRole,
@@ -68,7 +70,13 @@ class ApprovalService
                 'name' => $roleName,
                 'slug' => $roleSlug,
             ],
-            'surats' => $surats,
+            'surats' => [
+                'data' => $surats,
+                'from' => $surats->isNotEmpty() ? 1 : 0,
+                'to' => $surats->count(),
+                'total' => $surats->count(),
+            ],
+            'quickSubmissions' => $quickSubmissions,
             'summary' => [
                 'waiting' => $this->baseSummaryQuery($normalizedRole)->whereIn('status', $this->waitingStatusesForRole($normalizedRole))->count(),
                 'approved' => $this->baseSummaryQuery($normalizedRole)->whereIn('status', $this->approvedStatusesForRole($normalizedRole))->count(),
@@ -76,7 +84,7 @@ class ApprovalService
                 'final_rejected' => $this->baseSummaryQuery($normalizedRole)->where('status', Surat::STATUS_REJECTED_APPROVER)->count(),
             ],
             'filters' => [
-                'status' => $effectiveStatus,
+                'status' => '',
                 'search' => $search,
                 'category_id' => $categoryId > 0 ? (string) $categoryId : '',
             ],
@@ -125,7 +133,7 @@ class ApprovalService
 
         $surats = $query->latest()->paginate(10)->through(fn (Surat $surat): array => $this->serializeSuratListItem($surat))->withQueryString();
 
-        return inertia('approval/Queue', [
+        return inertia('Modules/Fast/Shared/approval/Queue', [
             'context' => [
                 'active_module' => 'FAST',
                 'active_role' => $normalizedRole,
@@ -182,7 +190,7 @@ class ApprovalService
             ->through(fn (Surat $surat): array => $this->serializeArchiveItem($surat))
             ->withQueryString();
 
-        return inertia('approval/Archive', [
+        return inertia('Modules/Fast/Shared/approval/Archive', [
             'context' => [
                 'active_module' => 'FAST',
                 'active_role' => $normalizedRole,
@@ -236,7 +244,7 @@ class ApprovalService
             ->through(fn (Surat $surat): array => $this->serializeDownloadItem($surat))
             ->withQueryString();
 
-        return inertia('approval/Download', [
+        return inertia('Modules/Fast/Shared/approval/Download', [
             'context' => [
                 'active_module' => 'FAST',
                 'active_role' => $normalizedRole,
@@ -280,7 +288,7 @@ class ApprovalService
             default => 'Riwayat Approval',
         };
 
-        return inertia('approval/Show', array_merge($this->serializeDetailItem($surat, $request), [
+        return inertia('Modules/Fast/Shared/approval/Show', array_merge($this->serializeDetailItem($surat, $request), [
             'context' => [
                 'active_module' => 'FAST',
                 'active_role' => $normalizedRole,
@@ -398,11 +406,14 @@ class ApprovalService
         $isiSurat = json_decode((string) $surat->isi_surat, true);
         $latestRejectedFlow = $surat->latestRejectedFlow();
         $letterMode = $surat->serializeLetterMode();
+        [, , , $resolvedRole] = $this->resolveRoleContext($request);
 
         return [
             'id' => $surat->id,
             'type' => $surat->type,
             'nomor_surat' => $surat->nomor_surat,
+            'nomor_surat_status' => $surat->resolvedNomorSuratStatus(),
+            'nomor_surat_status_label' => $surat->nomorSuratStatusLabel(),
             'subject' => $surat->serializeSubjectIdentity(),
             'letter_mode' => $letterMode['mode'],
             'letter_mode_label' => $letterMode['label'],
@@ -422,6 +433,7 @@ class ApprovalService
                 'type' => $lampiran->tipe,
             ])->values(),
             'tanggal_pengajuan' => optional($surat->tanggal_pengajuan ?? $surat->created_at)?->toISOString(),
+            'tanggal_kebutuhan' => optional($surat->tanggal_kebutuhan)?->toDateString(),
             'status' => $surat->status,
             'pdfUrl' => $surat->canViewFinalDocumentPreview()
                 ? route('documents.surat.pdf', $surat->id, absolute: false)
@@ -517,9 +529,9 @@ class ApprovalService
                     'actor' => $flow->approver?->name,
                 ])
                 ->values(),
-            'can_approve' => $surat->canBeApprovedByRole($this->normalizeRole($request->user()?->userTypeSlug(), $request->user()?->roleDisplayName())),
-            'can_request_revision' => $surat->canRequestRevisionByRole($this->normalizeRole($request->user()?->userTypeSlug(), $request->user()?->roleDisplayName())),
-            'can_final_reject' => $surat->canBeFinalRejectedByRole($this->normalizeRole($request->user()?->userTypeSlug(), $request->user()?->roleDisplayName())),
+            'can_approve' => $surat->canBeApprovedByRole($resolvedRole),
+            'can_request_revision' => $surat->canRequestRevisionByRole($resolvedRole),
+            'can_final_reject' => $surat->canBeFinalRejectedByRole($resolvedRole),
             'previewTemplateUrl' => $surat->canViewFinalDocumentPreview()
                 ? route('documents.surat.template-preview', $surat->id, absolute: false)
                 : null,

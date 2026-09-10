@@ -107,6 +107,12 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
                 'import_errors' => fn () => $request->session()->get('import_errors'),
             ],
+            'fast_flash' => [
+                'success' => fn () => $request->session()->get('fast_success'),
+                'error' => fn () => $request->session()->get('fast_error'),
+                'warning' => fn () => $request->session()->get('fast_warning'),
+                'info' => fn () => $request->session()->get('fast_info'),
+            ],
             'auth' => [
                 // SECURITY: Only UI-safe fields are shared to the frontend.
                 // Field sensitif (password, two_factor_secret, otp_code, dll) DILARANG di sini.
@@ -136,18 +142,19 @@ class HandleInertiaRequests extends Middleware
                     return $query->count();
                 })
                 : 0,
-            'recent_notifications' => $user ? fn () => Cache::remember("recent_notifs_{$user->id}_{$activeRole}", 30, function () use ($user, $activeModule, $activeRole) {
-                $query = $user->notifications()->latest();
+            'recent_notifications' => $user && $activeModule !== 'FAST'
+                ? fn () => Cache::remember("recent_notifs_{$user->id}_{$activeRole}", 30, function () use ($user, $activeModule, $activeRole) {
+                    $query = $user->notifications()->latest();
 
-                if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
-                    $query->whereNotIn('data->type', ['like', 'comment', 'follow', 'collaboration']);
-                }
+                    if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
+                        $query->whereNotIn('data->type', ['like', 'comment', 'follow', 'collaboration']);
+                    }
 
-                if ($activeModule === 'TRACE') {
-                    $query->where('data->href', 'like', '/trace%');
-                }
+                    if ($activeModule === 'TRACE') {
+                        $query->where('data->href', 'like', '/trace%');
+                    }
 
-                $notifs = $query->limit(30)->get();
+                    $notifs = $query->limit(30)->get();
 
                 // Batch resolve portfolio work cover images
                 $portfolioIds = $notifs->map(fn ($n) => $n->data['portfolio_id'] ?? $n->data['work_id'] ?? null)->filter()->unique()->values();

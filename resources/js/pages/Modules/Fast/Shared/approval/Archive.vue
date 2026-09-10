@@ -75,7 +75,6 @@ const props = withDefaults(
 const search = ref(props.filters.search ?? '');
 const status = ref(props.filters.status ?? '');
 const categoryId = ref(props.filters.category_id ?? '');
-const toastMessage = ref('');
 const normalizedRole = computed(() =>
     String(props.role.slug ?? props.role.name ?? '')
         .toLowerCase()
@@ -418,20 +417,20 @@ async function openDetail(id: number) {
                             <button
                                 v-if="can('fast.approval.surat.view')"
                                 type="button"
-                                class="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[10px] font-medium text-slate-600 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
+                                class="fast-btn fast-btn-outline flex h-8 items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold text-slate-700"
                                 title="Lihat"
                                 @click="openDetail(item.id)"
                             >
-                                <Eye class="size-3" /> Lihat
+                                <Eye class="size-3.5" /> Lihat
                             </button>
                             <a
                                 v-if="item.download_url && can('fast.document.download')"
                                 :href="item.download_url"
                                 target="_blank"
-                                class="fast-btn fast-btn-primary px-3 py-1.5 text-[10px] font-medium"
+                                class="fast-btn fast-btn-primary flex h-8 items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold"
                                 title="Download PDF"
                             >
-                                <Download class="size-3" /> PDF
+                                <Download class="size-3.5" /> PDF
                             </a>
                             <div
                                 v-else-if="can('fast.document.download')"
@@ -471,24 +470,5 @@ async function openDetail(id: number) {
                 v-html="link.label"
             />
         </div>
-        <!-- Toast -->
-        <Transition
-            enter-active-class="transition duration-300 ease-out"
-            enter-from-class="translate-y-3 opacity-0"
-            enter-to-class="translate-y-0 opacity-100"
-            leave-active-class="transition duration-200 ease-in"
-            leave-from-class="translate-y-0 opacity-100"
-            leave-to-class="translate-y-3 opacity-0"
-        >
-            <div
-                v-if="toastMessage"
-                class="fixed top-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800 shadow-lg"
-            >
-                <div class="flex items-center gap-2.5">
-                    <BadgeCheck class="size-5 shrink-0 text-blue-500" />
-                    <p class="text-sm font-medium">{{ toastMessage }}</p>
-                </div>
-            </div>
-        </Transition>
     </AdminLayout>
 </template>
