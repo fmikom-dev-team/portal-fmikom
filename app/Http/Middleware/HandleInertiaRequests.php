@@ -210,9 +210,9 @@ class HandleInertiaRequests extends Middleware
             // Bagikan active context ke semua Vue component via usePage().props.context
             // Digunakan untuk menampilkan badge modul/role aktif di navbar, sidebar, dll.
             'context' => $user ? [
-                    'active_module' => $activeModule,
-                    'active_role' => $activeRole,
-                ] : null,
+                'active_module' => $activeModule,
+                'active_role' => $activeRole,
+            ] : null,
             'selected_period_id' => fn () => $this->resolveWimsSelectedPeriodId($request),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'pending_comments_count' => fn () => ($user && ($user->isAdmin() || $user->isSuperAdmin()))
@@ -221,14 +221,14 @@ class HandleInertiaRequests extends Middleware
             // Pagi Admin sidebar badge counts (Realtime evaluation)
             'pagi_moderation_counts' => fn () => ($user && $request->is('pagi/admin*'))
                 ? [
-                        'moderation' => PagiReport::query()->whereIn('status', ['pending', 'report', 'review'])->count(),
-                        'reports' => PagiReport::query()->whereIn('status', ['pending', 'report', 'review'])->count(),
-                        'warnings' => PagiWarning::query()->where('is_active', true)->count(),
-                        'takedowns' => PagiReport::query()->where(function ($q) {
-                            $q->where('status', 'appeal')->orWhere('reason', 'like', '%banding%');
-                        })->count(),
-                        'resolved' => PagiReport::query()->whereIn('status', ['reviewed', 'dismissed', 'actioned', 'resolved'])->count(),
-                    ]
+                    'moderation' => PagiReport::query()->whereIn('status', ['pending', 'report', 'review'])->count(),
+                    'reports' => PagiReport::query()->whereIn('status', ['pending', 'report', 'review'])->count(),
+                    'warnings' => PagiWarning::query()->where('is_active', true)->count(),
+                    'takedowns' => PagiReport::query()->where(function ($q) {
+                        $q->where('status', 'appeal')->orWhere('reason', 'like', '%banding%');
+                    })->count(),
+                    'resolved' => PagiReport::query()->whereIn('status', ['reviewed', 'dismissed', 'actioned', 'resolved'])->count(),
+                ]
                 : null,
             'notif_count_pending_admin' => $user ? $this->fastPendingAdminCount() : 0,
             'notif_count_revision_admin' => $user ? $this->fastRevisionAdminCount() : 0,
