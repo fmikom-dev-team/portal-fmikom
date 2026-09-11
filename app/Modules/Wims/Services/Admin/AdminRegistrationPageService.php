@@ -28,7 +28,7 @@ class AdminRegistrationPageService
             ->orderByRaw("CASE WHEN status = 'pending' THEN 0 WHEN status = 'revisi' THEN 1 ELSE 2 END")
             ->latest('id');
 
-        if ($status !== '' && $status !== 'all') {
+        if ($status !== 'all') {
             $query->where('status', $status);
         }
 

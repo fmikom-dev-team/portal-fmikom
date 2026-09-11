@@ -52,10 +52,10 @@ class RegistrationController extends Controller
         $missingFiles = [];
         $isRevision = $actionRegistration?->status === 'revisi';
 
-        if (! $proposalFile && (! $isRevision || ! filled($actionRegistration?->proposal_pkl_path))) {
+        if (! $proposalFile && (! $isRevision || ! filled($actionRegistration->proposal_pkl_path))) {
             $missingFiles['proposal_pkl'] = 'Proposal PKL wajib dilampirkan saat pendaftaran.';
         }
-        if (! $transcriptFile && (! $isRevision || ! filled($actionRegistration?->transkrip_nilai_path))) {
+        if (! $transcriptFile && (! $isRevision || ! filled($actionRegistration->transkrip_nilai_path))) {
             $missingFiles['transkrip_nilai'] = 'Transkrip nilai terakhir wajib dilampirkan.';
         }
         if ($missingFiles) {

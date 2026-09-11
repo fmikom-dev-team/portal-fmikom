@@ -58,7 +58,7 @@ class DosenMonitoringOverviewService
                 $referenceDate = $this->resolveDashboardReferenceDate($pendaftaran, $today);
                 $registrationAttendance = $attendanceByRegistration->get($pendaftaran->id, collect());
                 $attendance = $registrationAttendance->first(
-                    fn (AbsensiMagang $item) => $item->tanggal?->toDateString() === $referenceDate,
+                    fn (AbsensiMagang $item) => $item->tanggal->toDateString() === $referenceDate,
                 );
                 $latestLogbook = $logbookByRegistration->get($pendaftaran->id, collect())->first();
 
@@ -242,10 +242,10 @@ class DosenMonitoringOverviewService
             ->count();
 
         $attendanceRows = ($attendanceRows ?? collect())->filter(
-            fn (AbsensiMagang $attendance) => $attendance->tanggal?->betweenIncluded($startDate, $referenceEndDate),
+            fn (AbsensiMagang $attendance) => $attendance->tanggal->betweenIncluded($startDate, $referenceEndDate),
         );
         $logbookRows = ($logbookRows ?? collect())->filter(
-            fn (LogbookMagang $logbook) => $logbook->tanggal?->betweenIncluded($startDate, $referenceEndDate),
+            fn (LogbookMagang $logbook) => $logbook->tanggal->betweenIncluded($startDate, $referenceEndDate),
         );
 
         $attendanceTotal = $attendanceRows->count();

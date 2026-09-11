@@ -7,8 +7,8 @@ use App\Modules\Wims\Services\Shared\Report\FinalReportTemplateAccessService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Throwable;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class AdminFinalReportTemplateActionService
 {

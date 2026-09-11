@@ -48,8 +48,7 @@ class StudentRegistrationActionService
         ?UploadedFile $transcriptFile = null,
         ?UploadedFile $recommendationFile = null,
         bool $removeRecommendation = false,
-    ): void
-    {
+    ): void {
         $registration = $registration->fresh();
         $replacements = $this->storeReplacements($registration, $proposalFile, $transcriptFile, $recommendationFile, $removeRecommendation);
 
@@ -85,8 +84,7 @@ class StudentRegistrationActionService
         ?UploadedFile $proposalFile,
         ?UploadedFile $transcriptFile,
         ?UploadedFile $recommendationFile = null,
-    ): PendaftaranMagang
-    {
+    ): PendaftaranMagang {
         if (! $proposalFile || ! $transcriptFile) {
             throw ValidationException::withMessages([
                 'proposal_pkl' => 'Proposal PKL wajib dilampirkan saat pendaftaran baru.',

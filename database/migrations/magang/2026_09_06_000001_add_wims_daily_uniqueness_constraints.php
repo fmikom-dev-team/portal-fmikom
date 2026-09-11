@@ -22,7 +22,7 @@ return new class extends Migration
             ->exists();
 
         if ($duplicateAttendance || $duplicateLogbooks) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 'Migrasi WIMS dibatalkan karena ditemukan data presensi atau logbook ganda pada pendaftaran dan tanggal yang sama. Bersihkan duplikasi secara manual sebelum menjalankan migrasi ulang.',
             );
         }

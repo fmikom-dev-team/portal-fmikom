@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Magang\PerusahaanMitra;
 use App\Modules\Wims\Services\Admin\AdminCompanyActionService;
 use App\Modules\Wims\Services\Admin\AdminCompanyPageService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 

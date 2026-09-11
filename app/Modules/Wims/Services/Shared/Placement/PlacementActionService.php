@@ -4,6 +4,7 @@ namespace App\Modules\Wims\Services\Shared\Placement;
 
 use App\Models\Magang\PendaftaranMagang;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -46,7 +47,7 @@ class PlacementActionService
             ->select('pendaftaran_magangs.*')
             ->chunkById(100, function (Collection $registrations) use (&$completed): void {
                 $eligible = $registrations
-                    ->filter(fn (PendaftaranMagang $pendaftaran) => $pendaftaran->canBeMarkedComplete())
+                    ->filter(fn (Model $model) => $model instanceof PendaftaranMagang && $model->canBeMarkedComplete())
                     ->values();
 
                 if ($eligible->isEmpty()) {

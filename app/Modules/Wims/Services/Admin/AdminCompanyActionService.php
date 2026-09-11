@@ -2,8 +2,8 @@
 
 namespace App\Modules\Wims\Services\Admin;
 
-use App\Models\Magang\PerusahaanMitra;
 use App\Models\Magang\PendaftaranMagang;
+use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use Illuminate\Http\Request;

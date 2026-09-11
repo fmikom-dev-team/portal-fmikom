@@ -33,7 +33,7 @@ class PlacementIndexService
             ->when($withRelations, fn (Builder $builder) => $builder->with(['mahasiswa', 'perusahaan']))
             ->whereIn('status', $allowedStatuses);
 
-        if ($status !== '' && $status !== 'all' && in_array($status, $allowedStatuses, true)) {
+        if ($status !== 'all') {
             $query->where('status', $status);
         }
 
@@ -212,11 +212,11 @@ class PlacementIndexService
         $canAssign = $pendaftaran->status === 'approved';
         $company = $pendaftaran->perusahaan;
         $companyReady = $company?->is_active === true
-            && filled($company?->latitude)
-            && filled($company?->longitude)
-            && (float) ($company?->radius_valid_meter ?? 0) > 0
-            && filled($company?->jam_masuk)
-            && filled($company?->jam_pulang);
+            && filled($company->latitude)
+            && filled($company->longitude)
+            && (float) $company->radius_valid_meter > 0
+            && filled($company->jam_masuk)
+            && filled($company->jam_pulang);
         $hasPlacementData = filled($pendaftaran->perusahaan_id)
             && filled($pendaftaran->dosen_pembimbing_id)
             && filled($pendaftaran->tanggal_mulai)

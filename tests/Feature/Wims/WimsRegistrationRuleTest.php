@@ -6,6 +6,7 @@ use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
 use App\Modules\Wims\Services\Mahasiswa\Dashboard\StudentDashboardPageService;
+use App\Modules\Wims\Services\Mahasiswa\Registration\StudentRegistrationActionService;
 use App\Modules\Wims\Services\Mahasiswa\Registration\StudentRegistrationPageService;
 use App\Modules\Wims\Services\Shared\Placement\PlacementActionService;
 use Illuminate\Http\UploadedFile;
@@ -110,7 +111,7 @@ it('persists the next registration and locks its form after the submission succe
     submitRegistrationRuleAssessment($completedRegistration, $lecturer, 'dosen');
     submitRegistrationRuleAssessment($completedRegistration, $mitra, 'mitra');
 
-    $actionService = app(\App\Modules\Wims\Services\Mahasiswa\Registration\StudentRegistrationActionService::class);
+    $actionService = app(StudentRegistrationActionService::class);
     $registration = $actionService->create(
         $student,
         $actionService->buildPayload([
@@ -222,7 +223,7 @@ it('resolves a selected registration only for its owning student and normalizes 
     ]);
     $service = app(StudentRegistrationPageService::class);
 
-    $payload = app(\App\Modules\Wims\Services\Mahasiswa\Registration\StudentRegistrationActionService::class)
+    $payload = app(StudentRegistrationActionService::class)
         ->buildPayload([
             'bidang_minat' => 'Software Development',
             'bidang_minat_lainnya' => 'Nilai lama yang harus dibuang',

@@ -82,7 +82,7 @@ class AssessmentSubmissionService
                     'notes' => $validated['notes'] ?? null,
                     'submitted_at' => $status === 'submitted'
                         ? now()
-                        : $lockedExistingSubmission?->submitted_at ?? $existingSubmission?->submitted_at,
+                        : $lockedExistingSubmission->submitted_at ?? $existingSubmission?->submitted_at,
                 ],
             );
 

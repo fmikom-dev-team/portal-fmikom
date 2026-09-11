@@ -52,7 +52,7 @@ class AdminMonitoringPageService
             ->orderByDesc('tanggal_mulai')
             ->orderByDesc('id');
 
-        if ($status !== '' && $status !== 'all') {
+        if ($status !== 'all') {
             $query->where('status', $status);
         }
 
