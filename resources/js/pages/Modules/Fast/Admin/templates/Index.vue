@@ -233,10 +233,6 @@ type GlobalSetting = {
     tipe: string;
 };
 type PageProps = {
-    flash?: {
-        success?: string;
-        error?: string;
-    };
     errors?: Record<string, string | string[]>;
 };
 const props = withDefaults(
@@ -361,7 +357,7 @@ function prepareFieldConfigForUi(fieldConfig?: FieldConfig[]) {
         __auto_name:
             !String(field.name ?? '').trim() ||
             slugifyLabel(field.label ?? '') === slugifyLabel(field.name ?? ''),
-    }));
+    })) as FieldConfig[];
 }
 function cloneKomponen(items?: SuratKomponen[]) {
     return JSON.parse(JSON.stringify(items ?? [])) as SuratKomponen[];
@@ -3430,9 +3426,10 @@ function settingLabel(key: string): string {
             @update:open="(v) => (v ? null : closeAddDialog())"
         >
             <DialogContent
-                class="max-h-[90vh] w-[min(520px,calc(100vw-2rem))] overflow-y-auto rounded-2xl border-0 bg-white p-0 shadow-xl"
+                class="max-h-[90vh] w-[min(520px,calc(100vw-2rem))] !overflow-hidden !rounded-3xl border-0 bg-white p-0 shadow-xl"
             >
-                <div class="border-b border-slate-100 px-6 py-5">
+                <div class="flex max-h-[90vh] min-h-0 flex-col overflow-hidden rounded-3xl">
+                <div class="shrink-0 border-b border-slate-100 px-6 py-5">
                     <DialogHeader>
                         <DialogTitle
                             class="text-base font-semibold text-slate-900"
@@ -3446,7 +3443,7 @@ function settingLabel(key: string): string {
                 </div>
                 <form
                     id="add-form"
-                    class="space-y-4 px-6 py-5"
+                    class="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5"
                     @submit.prevent="submitAdd"
                 >
                     <label class="block space-y-1.5"
@@ -3580,6 +3577,7 @@ function settingLabel(key: string): string {
                         }}</Button
                     >
                 </div>
+                </div>
             </DialogContent>
         </Dialog>
         <Dialog
@@ -3587,9 +3585,10 @@ function settingLabel(key: string): string {
             @update:open="(v) => (v ? null : closeGlobalSettings())"
         >
             <DialogContent
-                class="max-h-[92vh] w-[min(1400px,calc(100vw-1rem))] overflow-y-auto rounded-[28px] border border-slate-200 bg-slate-50 p-0 shadow-[0_20px_70px_rgba(15,23,42,0.18)]"
+                class="max-h-[92vh] w-[min(1400px,calc(100vw-1rem))] !overflow-hidden !rounded-[28px] border border-slate-200 bg-slate-50 p-0 shadow-[0_20px_70px_rgba(15,23,42,0.18)]"
             >
-                <div class="border-b border-slate-200 bg-white px-8 py-6">
+                <div class="flex max-h-[92vh] min-h-0 flex-col overflow-hidden rounded-[28px]">
+                <div class="shrink-0 border-b border-slate-200 bg-white px-8 py-6">
                     <DialogHeader>
                         <DialogTitle
                             class="text-lg font-semibold text-slate-900"
@@ -3601,7 +3600,7 @@ function settingLabel(key: string): string {
                         >
                     </DialogHeader>
                 </div>
-                <div class="space-y-6 px-8 py-6">
+                <div class="min-h-0 flex-1 space-y-6 overflow-y-auto px-8 py-6">
                     <!-- KOP / HEADER -->
                     <div
                         v-if="false"
@@ -4058,7 +4057,7 @@ function settingLabel(key: string): string {
                     </details>
                 </div>
                 <div
-                    class="flex justify-end gap-3 border-t border-slate-200 bg-white px-8 py-5"
+                    class="flex shrink-0 justify-end gap-3 border-t border-slate-200 bg-white px-8 py-5"
                 >
                     <Button
                         type="button"
@@ -4072,8 +4071,9 @@ function settingLabel(key: string): string {
                         type="button"
                         class="fast-btn fast-btn-primary rounded-xl px-5 py-2.5 text-sm"
                         @click="saveGlobalSettings"
-                        >Simpan Semua Pengaturan</Button
+                    >Simpan Semua Pengaturan</Button
                     >
+                </div>
                 </div>
             </DialogContent>
         </Dialog>

@@ -6,6 +6,7 @@ use App\Models\UserModuleRole;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\Response;
 
 class ApprovalAccess
@@ -47,7 +48,24 @@ class ApprovalAccess
         $sessionRole = strtolower((string) session('active_role', ''));
 
         if ($sessionModule === 'FAST' && in_array($sessionRole, $allowedRoles, true)) {
-            return $sessionRole;
+            $cacheKey = "module_access_{$user->id}_{$sessionModule}_{$sessionRole}";
+            $isValid = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($user, $sessionModule, $sessionRole): bool {
+                return UserModuleRole::query()
+                    ->where('user_id', $user->id)
+                    ->where('is_active', true)
+                    ->whereHas('module', fn ($query) => $query
+                        ->where('code', $sessionModule)
+                        ->where('is_active', true))
+                    ->whereHas('role', fn ($query) => $query->where('slug', $sessionRole))
+                    ->exists();
+            });
+
+            if ($isValid) {
+                return $sessionRole;
+            }
+
+            Cache::forget($cacheKey);
+            session()->forget(['active_module', 'active_role', 'active_module_at']);
         }
 
         $assignedRole = UserModuleRole::query()

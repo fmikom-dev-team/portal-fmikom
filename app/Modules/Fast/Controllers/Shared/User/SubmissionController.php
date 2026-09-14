@@ -126,6 +126,7 @@ class SubmissionController extends Controller
         abort_if($user === null, 403);
         $this->authorize('create', Surat::class);
 
+        // Lampiran dibatasi tipe dan ukuran sebelum masuk ke service penyimpanan.
         $validated = Validator::make($request->all(), [
             'jenis_surat_id' => [
                 'required',
@@ -207,6 +208,7 @@ class SubmissionController extends Controller
 
         Validator::make($request->all(), $dynamicRules, $dynamicMessages)->validate();
 
+        // Setiap lampiran dipindai dulu agar file yang tidak aman ditolak sebelum disimpan.
         $scanner = app(VirusScannerService::class);
         if ($request->hasFile('lampiran')) {
             foreach ($request->file('lampiran') as $file) {
@@ -219,6 +221,7 @@ class SubmissionController extends Controller
             }
         }
 
+        // Setelah lolos validasi, data diserahkan ke workflow agar penyimpanan surat tetap terpusat.
         $this->workflow->submit(
             $user,
             [
@@ -235,12 +238,12 @@ class SubmissionController extends Controller
 
         return redirect()
             ->route($this->dashboardRouteName())
-            ->with('success', 'Pengajuan surat berhasil dikirim.');
+            ->with('fast_success', 'Pengajuan surat berhasil dikirim.');
     }
 
     protected function pageName(): string
     {
-        return 'mahasiswa/Ajukan';
+        return 'Modules/Fast/Mahasiswa/Ajukan';
     }
 
     protected function basePath(): string

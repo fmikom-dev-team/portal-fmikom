@@ -28,6 +28,10 @@ class ArchiveController extends Controller
                 'pemohon:id,name,nomor_induk',
                 'subjectUser:id,name,nomor_induk',
                 'jenisSurat:id,nama,category_id',
+                'jenisSurat.category:id,nama',
+                'validatedByAdmin:id,name',
+                'approvedBy:id,name',
+                'approvalFlows.approver:id,name',
             ])
             ->whereIn('type', ['pengajuan', 'surat_keluar'])
             ->where('status', 'finished')
@@ -37,6 +41,14 @@ class ArchiveController extends Controller
         if ($search !== '') {
             $query->where(function ($q) use ($search): void {
                 $q->where('nomor_surat', 'like', "%{$search}%")
+                    ->orWhere('keperluan', 'like', "%{$search}%")
+                    ->orWhereHas('jenisSurat', function ($jenisQuery) use ($search): void {
+                        $jenisQuery
+                            ->where('nama', 'like', "%{$search}%")
+                            ->orWhereHas('category', function ($categoryQuery) use ($search): void {
+                                $categoryQuery->where('nama', 'like', "%{$search}%");
+                            });
+                    })
                     ->orWhere(function ($typeQuery) use ($search): void {
                         $typeQuery
                             ->where('type', 'pengajuan')
@@ -50,6 +62,15 @@ class ArchiveController extends Controller
                             ->whereHas('subjectUser', function ($userQuery) use ($search): void {
                                 FastUserIdentitySearch::apply($userQuery, $search);
                             });
+                    })
+                    ->orWhereHas('approvedBy', function ($userQuery) use ($search): void {
+                        FastUserIdentitySearch::apply($userQuery, $search);
+                    })
+                    ->orWhereHas('validatedByAdmin', function ($userQuery) use ($search): void {
+                        FastUserIdentitySearch::apply($userQuery, $search);
+                    })
+                    ->orWhereHas('approvalFlows.approver', function ($userQuery) use ($search): void {
+                        FastUserIdentitySearch::apply($userQuery, $search);
                     });
             });
         }
@@ -67,25 +88,41 @@ class ArchiveController extends Controller
         }
 
         $surats = $query->paginate(15)
-            ->through(fn (Surat $s) => [
-                'id' => $s->id,
-                'type' => $s->type,
-                'nomor_surat' => $s->nomor_surat,
-                'keperluan' => $s->keperluan,
-                'tanggal_selesai' => $s->tanggal_selesai?->toISOString(),
-                'generated_file_path' => $s->generated_file_path,
-                'subject' => $s->serializeSubjectIdentity(),
-                'letter_mode' => $s->resolvedLetterMode(),
-                'letter_mode_label' => $s->letterModeLabel(),
-                'is_institution' => $s->resolvedLetterMode() === 'institution',
-                'jenisSurat' => ['nama' => $s->jenisSurat?->nama],
-                'download_url' => $s->generated_file_path
-                    ? route('documents.surat.pdf', $s->id, absolute: false)
-                    : null,
-            ])
+            ->through(function (Surat $s): array {
+                $latestFinalApproval = $s->approvalFlows
+                    ->where('status', 'approved')
+                    ->whereIn('role', ['kaprodi', 'dekan'])
+                    ->sortByDesc('urutan')
+                    ->first();
+
+                return [
+                    'id' => $s->id,
+                    'type' => $s->type,
+                    'nomor_surat' => $s->nomor_surat,
+                    'keperluan' => $s->keperluan,
+                    'tanggal_selesai' => $s->tanggal_selesai?->toISOString(),
+                    'generated_file_path' => $s->generated_file_path,
+                    'subject' => $s->serializeSubjectIdentity(),
+                    'letter_mode' => $s->resolvedLetterMode(),
+                    'letter_mode_label' => $s->letterModeLabel(),
+                    'is_institution' => $s->resolvedLetterMode() === 'institution',
+                    'jenisSurat' => [
+                        'nama' => $s->jenisSurat?->nama,
+                        'category' => ['nama' => $s->jenisSurat?->category?->nama],
+                    ],
+                    'validator' => [
+                        'name' => $s->approvedBy->name
+                            ?? $latestFinalApproval?->approver->name
+                            ?? $s->validatedByAdmin?->name,
+                    ],
+                    'download_url' => $s->generated_file_path
+                        ? route('documents.surat.pdf', $s->id, absolute: false)
+                        : null,
+                ];
+            })
             ->withQueryString();
 
-        return Inertia::render('admin/archive/Index', [
+        return Inertia::render('Modules/Fast/Admin/archive/Index', [
             'surats' => $surats,
             'filters' => [
                 'search' => $search,

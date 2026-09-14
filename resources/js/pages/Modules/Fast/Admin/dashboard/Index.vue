@@ -1,8 +1,8 @@
 <script setup lang="ts">
 // File: resources/js/pages/admin/dashboard/Index.vue
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import {
     CheckCircle2,
     AlertCircle,
@@ -22,6 +22,7 @@ type SuratItem = {
     tanggal_pengajuan?: string | null;
     created_at?: string | null;
     pemohon?: { name?: string | null; nim?: string | null } | null;
+    subject?: { name?: string | null; nim?: string | null } | null;
     jenisSurat?: { id?: number | null; nama?: string | null } | null;
 };
 
@@ -53,36 +54,17 @@ type AdminActivitySummary = {
     recent: AdminActivityItem[];
 };
 
-type PageProps = {
-    flash?: {
-        success?: string;
-        error?: string;
-    };
-};
-
 const props = defineProps<{
     auth?: { user?: { name?: string | null } | null };
     surats: PaginatedSurats;
+    quickSubmissions?: SuratItem[];
     summary: Summary;
     links: {
         submissionsIndex: string;
     };
 }>();
 
-const page = usePage<PageProps>();
-const toastMessage = ref('');
-const toastVariant = ref<'success' | 'error'>('success');
-
-function showToast(message: string, variant: 'success' | 'error' = 'success') {
-    toastMessage.value = message;
-    toastVariant.value = variant;
-    window.setTimeout(() => {
-        if (toastMessage.value === message) {
-            toastMessage.value = '';
-        }
-    }, 2800);
-}
-const quickSubmissions = computed(() => props.surats.data.slice(0, 4));
+const quickSubmissions = computed(() => props.quickSubmissions ?? []);
 const statCards = computed(() => [
     {
         label: 'Total Pengajuan',
@@ -90,6 +72,7 @@ const statCards = computed(() => [
         icon: FileText,
         border: 'border-blue-200',
         iconColor: 'text-blue-400',
+        description: 'Seluruh pengajuan yang tercatat di sistem',
     },
     {
         label: 'Pending',
@@ -97,6 +80,7 @@ const statCards = computed(() => [
         icon: Clock3,
         border: 'border-sky-200',
         iconColor: 'text-sky-400',
+        description: 'Pengajuan yang masih dalam proses',
     },
     {
         label: 'Selesai',
@@ -104,6 +88,7 @@ const statCards = computed(() => [
         icon: CheckCircle2,
         border: 'border-green-200',
         iconColor: 'text-green-400',
+        description: 'Surat yang telah selesai diproses',
     },
     {
         label: 'Ditolak',
@@ -111,6 +96,7 @@ const statCards = computed(() => [
         icon: XCircle,
         border: 'border-red-200',
         iconColor: 'text-red-400',
+        description: 'Pengajuan yang ditolak dalam proses',
     },
 ]);
 
@@ -198,7 +184,7 @@ function activityBadgeClass(action?: string | null) {
             <div
                 v-for="stat in statCards"
                 :key="stat.label"
-                class="rounded-xl border border-slate-200/80 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)]"
+                class="rounded-2xl border border-slate-200/80 bg-white p-4 text-left shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition hover:shadow-sm"
                 :class="stat.border"
             >
                 <div class="flex items-center justify-between">
@@ -211,8 +197,11 @@ function activityBadgeClass(action?: string | null) {
                         :class="stat.iconColor"
                     />
                 </div>
-                <p class="mt-1 text-2xl font-bold text-slate-900">
+                <p class="mt-2 text-2xl font-bold text-slate-900">
                     {{ String(stat.value).padStart(2, '0') }}
+                </p>
+                <p class="mt-1 text-[11px] text-slate-400">
+                    {{ stat.description }}
                 </p>
             </div>
         </div>
@@ -229,7 +218,7 @@ function activityBadgeClass(action?: string | null) {
                 >
                     <div>
                         <h2 class="text-sm font-semibold text-slate-900">
-                            Daftar Pengajuan Masuk
+                            Daftar Surat
                         </h2>
                         <p class="mt-0.5 text-xs text-slate-400">
                             {{ surats?.from ?? 0 }} - {{ surats?.to ?? 0 }} dari
@@ -257,8 +246,7 @@ function activityBadgeClass(action?: string | null) {
                                     colspan="4"
                                     class="px-5 py-12 text-center text-sm text-slate-400"
                                 >
-                                    Belum ada pengajuan user yang menunggu
-                                    proses.
+                                    Belum ada data surat.
                                 </td>
                             </tr>
                             <tr
@@ -270,12 +258,12 @@ function activityBadgeClass(action?: string | null) {
                                     <p
                                         class="text-xs font-semibold text-slate-900"
                                     >
-                                        {{ item.pemohon?.name ?? '-' }}
+                                        {{ item.pemohon?.name ?? item.subject?.name ?? '-' }}
                                     </p>
                                     <p
                                         class="font-mono text-[10px] text-slate-400"
                                     >
-                                        {{ item.pemohon?.nim ?? '-' }}
+                                        {{ item.pemohon?.nim ?? item.subject?.nim ?? '-' }}
                                     </p>
                                 </td>
                                 <td
@@ -387,36 +375,6 @@ function activityBadgeClass(action?: string | null) {
 
             </div>
         </div>
-        <Transition
-            enter-active-class="transition duration-300 ease-out"
-            enter-from-class="translate-y-3 opacity-0"
-            enter-to-class="translate-y-0 opacity-100"
-            leave-active-class="transition duration-200 ease-in"
-            leave-from-class="translate-y-0 opacity-100"
-            leave-to-class="translate-y-3 opacity-0"
-        >
-            <div
-                v-if="toastMessage"
-                class="fixed top-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border px-4 py-3 shadow-lg"
-                :class="
-                    toastVariant === 'success'
-                        ? 'border-blue-200 bg-blue-50 text-blue-800'
-                        : 'border-red-200 bg-red-50 text-red-800'
-                "
-            >
-                <div class="flex items-center gap-2.5">
-                    <CheckCircle2
-                        v-if="toastVariant === 'success'"
-                        class="size-5 shrink-0 text-blue-500"
-                    />
-                    <AlertCircle
-                        v-else
-                        class="size-5 shrink-0 text-red-500"
-                    />
-                    <p class="text-sm font-medium">{{ toastMessage }}</p>
-                </div>
-            </div>
-        </Transition>
     </AdminLayout>
 </template>
 

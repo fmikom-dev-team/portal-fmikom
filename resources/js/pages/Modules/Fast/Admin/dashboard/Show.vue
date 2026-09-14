@@ -42,6 +42,7 @@ type TimelineItem = {
     action?: string | null;
     actor?: string | null;
     role?: string | null;
+    timestamp?: string | null;
 };
 
 type Surat = {
@@ -58,6 +59,7 @@ type Surat = {
     detail_data?: Record<string, any>;
     lampiran: Lampiran[];
     tanggal_pengajuan: string | null;
+    tanggal_kebutuhan?: string | null;
     status: string;
     latest_rejection?: {
         role?: string | null;
@@ -169,7 +171,7 @@ const statusColor: Record<string, string> = {
     rejected_approver: 'bg-red-50 text-red-700 border-red-200',
 };
 
-const processTimeline = computed(() => {
+const processTimeline = computed<TimelineItem[]>(() => {
     const approval = props.approval_timeline ?? [];
     if (approval.length > 0) {
         return approval.map((entry) => ({
@@ -177,6 +179,8 @@ const processTimeline = computed(() => {
             label: entry.label,
             note: entry.note ?? null,
             timestamp: entry.acted_at ?? null,
+            role: entry.role ?? null,
+            actor: entry.actor ?? null,
         }));
     }
 
@@ -185,6 +189,8 @@ const processTimeline = computed(() => {
         label: entry.label,
         note: entry.description ?? null,
         timestamp: entry.created_at ?? null,
+        role: entry.role ?? null,
+        actor: entry.actor ?? null,
     }));
 });
 
@@ -206,7 +212,7 @@ function formatDisplayValue(value: unknown): string {
     return String(value);
 }
 
-function formatDate(iso: string | null): string {
+function formatDate(iso: string | null | undefined): string {
     if (!iso) return '-';
 
     return (
@@ -220,10 +226,6 @@ function formatDate(iso: string | null): string {
     );
 }
 
-function formatDateTime(iso: string | null): string {
-    return formatDate(iso);
-}
-
 function formatDateOnly(iso: string | null): string {
     if (!iso) return '-';
 
@@ -232,6 +234,10 @@ function formatDateOnly(iso: string | null): string {
         month: 'long',
         year: 'numeric',
     });
+}
+
+function formatDateTime(iso: string | null | undefined): string {
+    return formatDate(iso);
 }
 
 function timelineBadgeClass(status?: string | null, action?: string | null): string {
@@ -356,12 +362,29 @@ function isWordAttachment(file?: Lampiran | null) {
 }
 
 function goBack() {
-    if (window.history.length > 1) {
-        window.history.back();
+    const returnTo = new URLSearchParams(window.location.search).get('return_to');
+
+    if (
+        returnTo?.startsWith('/admin/surat') ||
+        returnTo?.startsWith('/admin/history') ||
+        returnTo?.startsWith('/admin/archive')
+    ) {
+        router.visit(returnTo);
         return;
     }
 
-    router.visit('/admin/archive');
+    router.visit('/admin/surat');
+}
+
+function editSuratRoute(id: number) {
+    const returnTo = new URLSearchParams(window.location.search).get('return_to');
+    const viewUrl = returnTo?.startsWith('/admin/surat') ||
+        returnTo?.startsWith('/admin/history') ||
+        returnTo?.startsWith('/admin/archive')
+        ? `/admin/surat/${id}?return_to=${encodeURIComponent(returnTo)}`
+        : `/admin/surat/${id}`;
+
+    return `/admin/surat/${id}/edit?return_to=${encodeURIComponent(viewUrl)}`;
 }
 
 function closeViewer() {
@@ -515,6 +538,20 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                         </div>
 
                         <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
+                            <p class="text-slate-500">Tanggal Dibutuhkan</p>
+                            <p class="min-w-0 break-words font-medium leading-6 text-slate-900">
+                                {{ tanggal_kebutuhan ? formatDateOnly(tanggal_kebutuhan) : '-' }}
+                            </p>
+                        </div>
+
+                        <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
+                            <p class="text-slate-500">Keperluan</p>
+                            <p class="min-w-0 break-words font-medium leading-6 text-slate-900">
+                                {{ keperluan || '-' }}
+                            </p>
+                        </div>
+
+                        <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
                             <p class="text-slate-500">Nomor Surat</p>
                             <div class="min-w-0">
                                 <button
@@ -535,13 +572,6 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
                                     Nomor surat disalin.
                                 </p>
                             </div>
-                        </div>
-
-                        <div class="grid gap-2 px-4 py-3 text-sm md:grid-cols-[180px_minmax(0,1fr)] md:gap-4">
-                            <p class="text-slate-500">Keperluan</p>
-                            <p class="min-w-0 break-words font-medium leading-6 text-slate-900">
-                                {{ keperluan || '-' }}
-                            </p>
                         </div>
 
                         <div
@@ -751,7 +781,7 @@ function timelineCardClasses(state: 'done' | 'current' | 'pending'): string {
 
                     <div v-if="can_edit && can('fast.admin.surat.update')" class="mt-4">
                         <Link
-                            :href="`/admin/surat/${id}/edit?return_to=/admin/dashboard`"
+                            :href="editSuratRoute(id)"
                             class="fast-btn fast-btn-soft w-full px-4 py-2.5 text-sm font-semibold text-sky-700"
                         >
                             <FileEdit class="size-4" />

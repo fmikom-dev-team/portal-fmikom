@@ -42,12 +42,16 @@ class FastApprovalWorkflowService
             ]);
 
             $suratUpdatePayload = [
+                // Status surat dinaikkan di backend sesuai role, bukan dari input frontend.
                 'status' => $this->nextStatusForSurat($surat, $role),
             ];
 
             if ($role === self::ROLE_ADMIN) {
                 $suratUpdatePayload['validated_by_admin_id'] = $actor?->id;
                 $suratUpdatePayload['validated_by_admin_at'] = now();
+            } else {
+                $suratUpdatePayload['approved_by_id'] = $actor?->id;
+                $suratUpdatePayload['approved_at'] = now();
             }
 
             $surat->update($suratUpdatePayload);
@@ -61,6 +65,7 @@ class FastApprovalWorkflowService
             }
 
             if ($role === self::ROLE_ADMIN) {
+                // Histori disimpan agar perubahan status dan pelaku approval tetap bisa diaudit.
                 SuratHistoryService::validated($surat->id, $notes);
             } else {
                 SuratHistoryService::approved($surat->id, strtoupper($role), $notes);
@@ -126,7 +131,7 @@ class FastApprovalWorkflowService
                 'urutan' => $this->resolveOrder($role),
                 'role' => $role,
                 'status' => SuratApprovalFlow::STATUS_REVISION_REQUESTED,
-                'keterangan' => 'Dikembalikan '.strtoupper($role).' untuk revisi',
+                'keterangan' => 'Surat sedang ditinjau dan direvisi',
                 'catatan' => $notes,
                 'approved_at' => now(),
                 'tanggal_aksi' => now(),
@@ -270,6 +275,7 @@ class FastApprovalWorkflowService
     public function nextStatusForSurat(Surat $surat, string $role): string
     {
         if ($role === self::ROLE_ADMIN) {
+            // Admin bisa berhenti di validated_admin atau langsung finished bila tidak ada approval lanjutan.
             return $surat->requiresFinalApproval()
                 ? Surat::STATUS_VALIDATED_ADMIN
                 : Surat::STATUS_FINISHED;
@@ -281,6 +287,7 @@ class FastApprovalWorkflowService
     protected function shouldGenerateAfterApproval(Surat $surat, string $role): bool
     {
         if ($role === self::ROLE_ADMIN) {
+            // PDF final hanya dibuat setelah alur approval benar-benar selesai.
             return ! $surat->requiresFinalApproval();
         }
 
@@ -289,6 +296,7 @@ class FastApprovalWorkflowService
 
     protected function shouldPrepareDraftAfterApproval(Surat $surat, string $role): bool
     {
+        // Draft disiapkan dulu saat masih menunggu approver akhir supaya nomor dan QR sudah siap.
         return $role === self::ROLE_ADMIN && $surat->requiresFinalApproval();
     }
 }

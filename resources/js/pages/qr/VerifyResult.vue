@@ -133,6 +133,7 @@ function fmtFull(d?: string | null) {
                     </div>
                 </div>
 
+                <!-- Data publik dibatasi ke metadata surat agar isi internal dan lampiran tidak ikut tampil. -->
                 <div v-if="found && surat" class="px-6 py-5 space-y-4">
                     <div class="rounded-2xl border px-4 py-3" :class="cfg.border + ' ' + cfg.light">
                         <div class="flex items-center gap-2">

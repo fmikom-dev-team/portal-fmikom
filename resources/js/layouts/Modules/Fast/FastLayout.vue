@@ -3,6 +3,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import FastFlashToast from '@/components/Modules/Fast/FastFlashToast.vue';
 import NotificationBell from '@/components/Modules/Fast/NotificationBell.vue';
 import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import {
@@ -30,7 +31,6 @@ type FastPageProps = {
             user_type?: string | null;
         };
     };
-    flash?: { success?: string; error?: string; warning?: string };
     notif_count?: number;
     unread_notifications_count?: number;
     recent_notifications?: Array<{
@@ -74,6 +74,7 @@ const props = withDefaults(
 
 const page = usePage<any>();
 const siteSettings = computed(() => (page.props as any).siteSettings || {});
+const fastSidebarStorageKey = 'fast_sidebar_open';
 const sidebarOpen = ref(true);
 const mobileOpen = ref(false);
 const isMobile = ref(false);
@@ -115,21 +116,27 @@ const notifItems = computed(() => {
         return page.props.notifications.items ?? [];
     }
 
-    return (page.props.recent_notifications ?? []).map((item) => ({
-        id: item.id,
-        title: item.title ?? 'Notifikasi FAST',
-        message: item.message ?? '',
-        href: item.href ?? '#',
-        time: item.created_at ?? item.time ?? null,
-        readAt: item.unread === false ? item.created_at ?? item.time ?? null : null,
-    }));
+    return [];
 });
 function checkMobile() {
     isMobile.value = window.innerWidth < 1024;
-    if (isMobile.value) sidebarOpen.value = false;
-    else mobileOpen.value = false;
+    if (!isMobile.value) mobileOpen.value = false;
+}
+function loadSidebarPreference() {
+    const stored = window.localStorage.getItem(fastSidebarStorageKey);
+
+    if (stored === 'true' || stored === 'false') {
+        sidebarOpen.value = stored === 'true';
+    }
+}
+function saveSidebarPreference() {
+    window.localStorage.setItem(
+        fastSidebarStorageKey,
+        sidebarOpen.value ? 'true' : 'false',
+    );
 }
 onMounted(() => {
+    loadSidebarPreference();
     checkMobile();
     window.addEventListener('resize', checkMobile);
 });
@@ -191,7 +198,10 @@ function isActive(key: string) {
 
 function toggleSidebar() {
     if (isMobile.value) mobileOpen.value = !mobileOpen.value;
-    else sidebarOpen.value = !sidebarOpen.value;
+    else {
+        sidebarOpen.value = !sidebarOpen.value;
+        saveSidebarPreference();
+    }
 }
 
 function toggleProfileMenu() {
@@ -294,6 +304,7 @@ function batteryIcon() {
 
 <template>
     <Head :title="title" />
+    <FastFlashToast />
     <div class="fast-shell flex h-screen overflow-hidden bg-slate-50 font-sans">
         <!-- Mobile overlay -->
         <Transition name="fade">
@@ -456,7 +467,7 @@ function batteryIcon() {
                         <Menu class="size-5 md:size-5" />
                     </button>
                     <nav class="hidden items-center gap-1 text-sm md:flex">
-                        <span class="text-slate-400">FAST</span>
+                        <span class="text-slate-400">FASt</span>
                         <ChevronRight class="size-3.5 text-slate-300" />
                         <span class="font-medium text-slate-800">{{
                             headerLabel

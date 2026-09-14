@@ -3,11 +3,18 @@
 import AdminLayout from '@/layouts/Modules/Fast/AdminLayout.vue';
 import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import { Head, Link, router } from '@inertiajs/vue3';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { computed, ref } from 'vue';
 import {
     Search,
     Eye,
-    Download,
     CheckCircle2,
     XCircle,
     Clock3,
@@ -48,6 +55,8 @@ const props = defineProps<{
 const search = ref(props.filters.search ?? '');
 const status = ref(props.filters.status ?? 'pending');
 const categoryId = ref(props.filters.category_id ?? '');
+const processAgainConfirmOpen = ref(false);
+const processAgainTargetId = ref<number | null>(null);
 const isFilterActive = computed(
     () => search.value !== '' || categoryId.value !== '' || status.value !== 'pending',
 );
@@ -77,6 +86,41 @@ function resetFilter() {
     status.value = 'pending';
     categoryId.value = '';
     applyFilter();
+}
+function showSuratRoute(id: number) {
+    const params = new URLSearchParams();
+    params.set('status', status.value);
+    if (search.value.trim() !== '') params.set('search', search.value.trim());
+    if (categoryId.value !== '') params.set('category_id', categoryId.value);
+
+    const returnTo = `/admin/history?${params.toString()}`;
+
+    return `/admin/surat/${id}?return_to=${encodeURIComponent(returnTo)}`;
+}
+function editSuratRoute(id: number) {
+    const params = new URLSearchParams();
+    params.set('status', status.value);
+    if (search.value.trim() !== '') params.set('search', search.value.trim());
+    if (categoryId.value !== '') params.set('category_id', categoryId.value);
+
+    const returnTo = `/admin/history?${params.toString()}`;
+
+    return `/admin/surat/${id}/edit?return_to=${encodeURIComponent(returnTo)}`;
+}
+function openProcessAgainConfirm(id: number) {
+    processAgainTargetId.value = id;
+    processAgainConfirmOpen.value = true;
+}
+function closeProcessAgainConfirm() {
+    processAgainConfirmOpen.value = false;
+    processAgainTargetId.value = null;
+}
+function confirmProcessAgain() {
+    if (processAgainTargetId.value === null) return;
+
+    const targetId = processAgainTargetId.value;
+    closeProcessAgainConfirm();
+    router.visit(editSuratRoute(targetId));
 }
 function formatDate(d?: string | null) {
     if (!d) return '-';
@@ -166,12 +210,12 @@ function isInstitutionLetter(item: SuratItem) {
 </script>
 <template>
     <AdminLayout
-        title="Riwayat Admin"
+        title="Riwayat Pembuatan Surat"
         subtitle="Surat keluar buatan admin yang masih dalam proses atau perlu tindak lanjut"
         active-menu="history"
-        :breadcrumbs="[{ label: 'Riwayat Admin' }]"
+        :breadcrumbs="[{ label: 'Riwayat Pembuatan Surat' }]"
     >
-        <Head title="Riwayat Admin" />
+        <Head title="Riwayat Pembuatan Surat" />
         <div
             v-if="revisionNotifCount > 0"
             class="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3"
@@ -233,10 +277,6 @@ function isInstitutionLetter(item: SuratItem) {
                 >
                     Reset Filter
                 </button>
-                <p class="text-xs text-slate-400 lg:ml-auto">
-                    {{ surats.from ?? 0 }}-{{ surats.to ?? 0 }} dari
-                    {{ surats.total }} surat
-                </p>
             </div>
 
             <div class="mt-4 flex flex-wrap items-center gap-2">
@@ -359,28 +399,25 @@ function isInstitutionLetter(item: SuratItem) {
                         <div class="flex shrink-0 items-start gap-2">
                             <Link
                                 v-if="can('fast.admin.history.view')"
-                                :href="`/admin/surat/${item.id}`"
+                                :href="showSuratRoute(item.id)"
                                 class="fast-btn fast-btn-outline flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-medium text-slate-600"
                                 title="Lihat"
                             >
                                 <Eye class="size-3" /> Lihat
                             </Link>
-                            <a
-                                v-if="item.status === 'finished' && can('fast.document.download')"
-                                :href="`/admin/surat/${item.id}/pdf`"
-                                download
-                                class="fast-btn fast-btn-primary flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-medium"
-                                title="Unduh PDF"
+                            <button
+                                v-if="
+                                    status === 'revisi' &&
+                                    item.status === 'revision_requested' &&
+                                    can('fast.admin.surat.update')
+                                "
+                                type="button"
+                                class="fast-btn flex items-center gap-1 border border-orange-500 bg-orange-500 px-2.5 py-1.5 text-[10px] font-medium text-white hover:bg-orange-600"
+                                title="Proses ulang surat"
+                                @click="openProcessAgainConfirm(item.id)"
                             >
-                                <Download class="size-3" /> PDF
-                            </a>
-                            <div
-                                v-else-if="can('fast.document.download')"
-                                class="fast-btn fast-btn-soft flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-medium text-slate-400"
-                                title="PDF belum tersedia"
-                            >
-                                <Download class="size-3" /> PDF Belum Tersedia
-                            </div>
+                                <CheckCircle2 class="size-3" /> Proses Ulang
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -405,5 +442,42 @@ function isInstitutionLetter(item: SuratItem) {
                 v-html="link.label"
             />
         </div>
+        <Dialog
+            :open="processAgainConfirmOpen"
+            @update:open="(value) => (value ? null : closeProcessAgainConfirm())"
+        >
+            <DialogContent
+                class="max-w-md rounded-2xl border-0 bg-white p-0 sm:max-w-md"
+                :show-close-button="false"
+            >
+                <div class="p-6">
+                    <DialogHeader class="mb-4 text-left">
+                        <DialogTitle class="text-lg font-semibold text-slate-900">
+                            Konfirmasi Proses Ulang
+                        </DialogTitle>
+                        <DialogDescription class="text-sm text-slate-400">
+                            Surat akan dibuka kembali untuk diperbaiki sebelum diteruskan ke tahap persetujuan.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <DialogFooter class="mt-5 gap-2">
+                        <button
+                            type="button"
+                            class="fast-btn fast-btn-outline rounded-xl px-4 py-2 text-sm font-medium text-slate-600"
+                            @click="closeProcessAgainConfirm"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="button"
+                            class="fast-btn rounded-xl bg-orange-500 px-4 py-2 text-sm text-white hover:bg-orange-600"
+                            @click="confirmProcessAgain"
+                        >
+                            Proses Ulang
+                        </button>
+                    </DialogFooter>
+                </div>
+            </DialogContent>
+        </Dialog>
     </AdminLayout>
 </template>

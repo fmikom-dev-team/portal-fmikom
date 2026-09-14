@@ -100,7 +100,7 @@ class LetterIndexController extends Controller
             ])
             ->withQueryString();
 
-        return Inertia::render('admin/letters/Index', [
+        return Inertia::render('Modules/Fast/Admin/letters/Index', [
             'surats' => $surats,
             'filters' => [
                 'search' => $search,

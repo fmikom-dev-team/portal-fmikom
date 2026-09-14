@@ -5,6 +5,7 @@ import { useFastPermissions } from '@/composables/modules/fast/useFastPermission
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import LetterStepIndicator from '@/components/Modules/Fast/Admin/LetterStepIndicator.vue';
+import type { FastLetterFormState } from './types';
 import {
     ChevronLeft,
     Send,
@@ -72,7 +73,7 @@ const props = defineProps<{
     renderedAttachmentHtml?: string | null;
     previewDocumentUrl: string;
 }>();
-const form = useForm({
+const form = useForm<FastLetterFormState>({
     jenis_surat_id: props.formData.jenis_surat_id,
     subject_name: props.formData.subject_name ?? '',
     keperluan: props.formData.keperluan,

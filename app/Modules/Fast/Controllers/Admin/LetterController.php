@@ -43,7 +43,7 @@ class LetterController extends Controller
             ->orderBy('nama')
             ->get();
 
-        return Inertia::render('admin/letters/Create', [
+        return Inertia::render('Modules/Fast/Admin/letters/Create', [
             'jenisSurats' => $jenisSurats->map(fn (JenisSurat $jenisSurat): array => [
                 'id' => $jenisSurat->id,
                 'nama' => $jenisSurat->nama,
@@ -144,7 +144,7 @@ class LetterController extends Controller
             }
         }
 
-        return Inertia::render('admin/letters/Form', [
+        return Inertia::render('Modules/Fast/Admin/letters/Form', [
             'jenisSurat' => $this->serializeJenisSurat($jenisSurat),
             'formData' => $formData,
         ]);
@@ -196,7 +196,7 @@ class LetterController extends Controller
 
         [$jenisSurat, $payload, $previewDocumentHtml, $previewAttachmentHtml] = $this->buildPreviewDocument($request);
 
-        return Inertia::render('admin/letters/Preview', [
+        return Inertia::render('Modules/Fast/Admin/letters/Preview', [
             'jenisSurat' => $this->serializeJenisSurat($jenisSurat),
             'formData' => $payload,
             'subjectSummary' => $this->buildSubjectSummary($payload),
@@ -233,13 +233,13 @@ class LetterController extends Controller
         if ($surat->status === Surat::STATUS_FINISHED) {
             return redirect()
                 ->route('admin.dashboard')
-                ->with('success', 'Surat berhasil dibuat dan PDF langsung digenerate.')
+                ->with('fast_success', 'Surat berhasil dibuat dan PDF langsung digenerate.')
                 ->with('generated_surat_id', $surat->id);
         }
 
         return redirect()
             ->route('admin.dashboard')
-            ->with('success', 'Surat berhasil dibuat dan diteruskan ke '.($surat->finalApprovalRoleSlug() === 'dekan' ? 'Dekan' : 'Kaprodi').' untuk persetujuan.');
+            ->with('fast_success', 'Surat berhasil dibuat dan diteruskan ke '.($surat->finalApprovalRoleSlug() === 'dekan' ? 'Dekan' : 'Kaprodi').' untuk persetujuan.');
     }
 
     public function generate(Request $request, int $id): RedirectResponse
@@ -257,7 +257,7 @@ class LetterController extends Controller
 
         return redirect()
             ->route('admin.surat.generated-document', $generated->id)
-            ->with('success', 'PDF surat berhasil digenerate.');
+            ->with('fast_success', 'PDF surat berhasil digenerate.');
     }
 
     public function edit(Request $request, int $id): Response
@@ -278,7 +278,7 @@ class LetterController extends Controller
         $manualData = SuratDataContract::extractManualDataFromValidatedPayload($existingData);
         $returnTo = $this->safeReturnTo((string) $request->query('return_to', '/admin/surat/'.$surat->id), '/admin/surat/'.$surat->id);
 
-        return Inertia::render('admin/letters/Edit', [
+        return Inertia::render('Modules/Fast/Admin/letters/Edit', [
             'surat' => [
                 'id' => $surat->id,
                 'type' => $surat->type,
@@ -330,7 +330,7 @@ class LetterController extends Controller
 
         return redirect()
             ->to($returnTo)
-            ->with('success', $surat->status === Surat::STATUS_PENDING
+            ->with('fast_success', $surat->status === Surat::STATUS_PENDING
                 ? 'Surat berhasil diperbarui dan divalidasi admin.'
                 : 'Surat berhasil diperbarui dan diteruskan kembali untuk persetujuan.');
     }

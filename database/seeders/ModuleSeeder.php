@@ -35,6 +35,8 @@ class ModuleSeeder extends Seeder
             ['nama' => 'Admin Universitas', 'slug' => 'admin-universitas', 'deskripsi' => 'Admin universitas untuk pengelolaan lintas modul'],
             ['nama' => 'Admin Akademik', 'slug' => 'admin-akademik', 'deskripsi' => 'Admin akademik untuk operasional layanan akademik'],
             ['nama' => 'Koordinator Program Studi', 'slug' => 'prodi', 'deskripsi' => 'Pengelola akademik tingkat program studi'],
+            ['nama' => 'Ketua Program Studi', 'slug' => 'kaprodi', 'deskripsi' => 'Approver surat akademik tingkat program studi'],
+            ['nama' => 'Dekan', 'slug' => 'dekan', 'deskripsi' => 'Approver surat akademik tingkat fakultas'],
             ['nama' => 'Dosen / Struktural', 'slug' => 'dosen', 'deskripsi' => 'Dosen Pengajar FMIKOM'],
             ['nama' => 'Mahasiswa', 'slug' => 'mahasiswa', 'deskripsi' => 'Mahasiswa Aktif FMIKOM'],
             ['nama' => 'Alumni', 'slug' => 'alumni', 'deskripsi' => 'Alumni FMIKOM'],
@@ -82,7 +84,7 @@ class ModuleSeeder extends Seeder
     private function syncModuleRoles(array $modulesMap, array $rolesMap): void
     {
         $moduleRolesMap = [
-            'FAST' => ['super-admin', 'admin', 'dosen', 'mahasiswa', 'alumni'],
+            'FAST' => ['super-admin', 'admin', 'dosen', 'mahasiswa', 'alumni', 'kaprodi', 'dekan'],
             'PAGI' => ['super-admin', 'admin', 'admin-universitas', 'admin-akademik', 'prodi', 'dosen', 'mahasiswa', 'alumni', 'mitra'],
             'WIMS' => ['super-admin', 'admin', 'admin-universitas', 'admin-akademik', 'prodi', 'dosen', 'mahasiswa', 'mitra'],
             'TRACE' => ['super-admin', 'admin', 'alumni', 'mitra'],

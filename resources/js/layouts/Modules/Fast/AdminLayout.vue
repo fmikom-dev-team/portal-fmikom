@@ -3,6 +3,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import FastFlashToast from '@/components/Modules/Fast/FastFlashToast.vue';
 import NotificationBell from '@/components/Modules/Fast/NotificationBell.vue';
 import { useFastPermissions } from '@/composables/modules/fast/useFastPermissions';
 import {
@@ -41,7 +42,6 @@ type PageProps = {
         active_module?: string | null;
         active_role?: string | null;
     } | null;
-    flash?: { success?: string; error?: string; warning?: string };
     notif_count?: number;
     unread_notifications_count?: number;
     notif_count_revision_admin?: number;
@@ -90,6 +90,7 @@ const props = withDefaults(
 
 const page = usePage<PageProps>();
 const siteSettings = computed(() => (page.props as any).siteSettings || {});
+const fastSidebarStorageKey = 'fast_sidebar_open';
 const sidebarOpen = ref(true);
 const mobileOpen = ref(false);
 const isMobile = ref(false);
@@ -134,14 +135,7 @@ const notifItems = computed(() => {
         return page.props.notifications.items ?? [];
     }
 
-    return (page.props.recent_notifications ?? []).map((item) => ({
-        id: item.id,
-        title: item.title ?? 'Notifikasi FAST',
-        message: item.message ?? '',
-        href: item.href ?? '#',
-        time: item.created_at ?? item.time ?? null,
-        readAt: item.unread === false ? item.created_at ?? item.time ?? null : null,
-    }));
+    return [];
 });
 const navAdminQueueCount = computed(() => page.props.nav_counts?.admin_queue ?? 0);
 const navApprovalQueueCount = computed(
@@ -152,10 +146,23 @@ const notifCountRevisionAdmin = computed(
 );
 function checkMobile() {
     isMobile.value = window.innerWidth < 1024;
-    if (isMobile.value) sidebarOpen.value = false;
-    else mobileOpen.value = false;
+    if (!isMobile.value) mobileOpen.value = false;
+}
+function loadSidebarPreference() {
+    const stored = window.localStorage.getItem(fastSidebarStorageKey);
+
+    if (stored === 'true' || stored === 'false') {
+        sidebarOpen.value = stored === 'true';
+    }
+}
+function saveSidebarPreference() {
+    window.localStorage.setItem(
+        fastSidebarStorageKey,
+        sidebarOpen.value ? 'true' : 'false',
+    );
 }
 onMounted(() => {
+    loadSidebarPreference();
     checkMobile();
     window.addEventListener('resize', checkMobile);
 });
@@ -184,7 +191,16 @@ const currentPath = computed(() => page.url.split('?')[0]);
 
 const navItems = computed<NavItem[]>(() => {
     const slug = activeRoleSlug.value;
-    const isAdminRole = ['admin'].includes(slug);
+    // Semua role yang dilewatkan oleh AdminAccess harus mendapatkan
+    // navigasi admin FASt. Sebelumnya super-admin lolos middleware,
+    // tetapi tidak masuk cabang ini sehingga sidebar menjadi kosong.
+    const isAdminRole = [
+        'admin',
+        'super-admin',
+        'admin-universitas',
+        'admin-akademik',
+        'prodi',
+    ].includes(slug);
     const isApproverRole = ['kaprodi', 'dekan'].includes(slug);
     const isDosenRole =
         !isAdminRole &&
@@ -209,7 +225,7 @@ const navItems = computed<NavItem[]>(() => {
             },
             {
                 key: 'letters.index',
-                label: 'Pengajuan',
+                label: 'Data Pengajuan',
                 href: '/admin/surat',
                 icon: ClipboardList,
                 permission: 'fast.admin.queue.view',
@@ -218,7 +234,7 @@ const navItems = computed<NavItem[]>(() => {
             },
             {
                 key: 'history',
-                label: 'Riwayat Admin',
+                label: 'Riwayat Buat',
                 href: '/admin/history',
                 icon: History,
                 permission: 'fast.admin.history.view',
@@ -289,7 +305,7 @@ const navItems = computed<NavItem[]>(() => {
             },
             {
                 key: 'letters.index',
-                label: 'Pengajuan',
+                label: 'Data Pengajuan',
                 href: `${adminMirrorBasePath.value}/surat`,
                 icon: ClipboardList,
                 permission: 'fast.admin.queue.view',
@@ -298,7 +314,7 @@ const navItems = computed<NavItem[]>(() => {
             },
             {
                 key: 'history',
-                label: 'Riwayat Admin',
+                label: 'Riwayat Buat',
                 href: `${adminMirrorBasePath.value}/history`,
                 icon: History,
                 permission: 'fast.admin.history.view',
@@ -416,7 +432,10 @@ function isActive(item: NavItem) {
 
 function toggleSidebar() {
     if (isMobile.value) mobileOpen.value = !mobileOpen.value;
-    else sidebarOpen.value = !sidebarOpen.value;
+    else {
+        sidebarOpen.value = !sidebarOpen.value;
+        saveSidebarPreference();
+    }
 }
 
 function toggleProfileMenu() {
@@ -519,6 +538,7 @@ function batteryIcon() {
 
 <template>
     <Head :title="title" />
+    <FastFlashToast />
 
     <div class="fast-shell flex h-screen overflow-hidden bg-slate-50 font-sans">
         <!-- Mobile overlay -->
@@ -771,7 +791,7 @@ function batteryIcon() {
 
                     <!-- Breadcrumb -->
                     <nav class="hidden items-center gap-1 text-sm md:flex">
-                        <span class="text-slate-400">FAST</span>
+                        <span class="text-slate-400">FASt</span>
                         <ChevronRight class="size-3.5 text-slate-300" />
                         <span class="font-medium text-slate-800">{{
                             headerLabel

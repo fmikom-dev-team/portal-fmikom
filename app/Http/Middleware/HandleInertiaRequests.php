@@ -107,6 +107,12 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
                 'import_errors' => fn () => $request->session()->get('import_errors'),
             ],
+            'fast_flash' => [
+                'success' => fn () => $request->session()->get('fast_success'),
+                'error' => fn () => $request->session()->get('fast_error'),
+                'warning' => fn () => $request->session()->get('fast_warning'),
+                'info' => fn () => $request->session()->get('fast_info'),
+            ],
             'auth' => [
                 // SECURITY: Only UI-safe fields are shared to the frontend.
                 // Field sensitif (password, two_factor_secret, otp_code, dll) DILARANG di sini.
@@ -136,68 +142,69 @@ class HandleInertiaRequests extends Middleware
                     return $query->count();
                 })
                 : 0,
-            'recent_notifications' => $user ? fn () => Cache::remember("recent_notifs_{$user->id}_{$activeRole}", 30, function () use ($user, $activeModule, $activeRole) {
-                $query = $user->notifications()->latest();
+            'recent_notifications' => $user && $activeModule !== 'FAST'
+                ? fn () => Cache::remember("recent_notifs_{$user->id}_{$activeRole}", 30, function () use ($user, $activeModule, $activeRole) {
+                    $query = $user->notifications()->latest();
 
-                if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
-                    $query->whereNotIn('data->type', ['like', 'comment', 'follow', 'collaboration']);
-                }
+                    if ($activeModule === 'PAGI' && $activeRole !== 'mahasiswa') {
+                        $query->whereNotIn('data->type', ['like', 'comment', 'follow', 'collaboration']);
+                    }
 
-                if ($activeModule === 'TRACE') {
-                    $query->where('data->href', 'like', '/trace%');
-                }
+                    if ($activeModule === 'TRACE') {
+                        $query->where('data->href', 'like', '/trace%');
+                    }
 
-                $notifs = $query->limit(30)->get();
+                    $notifs = $query->limit(30)->get();
 
-                // Batch resolve portfolio work cover images
-                $portfolioIds = $notifs->map(fn ($n) => $n->data['portfolio_id'] ?? $n->data['work_id'] ?? null)->filter()->unique()->values();
-                $worksMap = [];
-                if ($portfolioIds->isNotEmpty()) {
-                    $works = PagiWork::query()->whereIn('id', $portfolioIds)->select('id', 'cover_image', 'content')->get();
-                    foreach ($works as $w) {
-                        $img = null;
-                        if ($w->cover_image) {
-                            $img = str_starts_with($w->cover_image, 'http') ? $w->cover_image : asset('storage/'.$w->cover_image);
-                        } elseif (is_array($w->content)) {
-                            foreach ($w->content as $b) {
-                                if (isset($b['preview']) && is_string($b['preview']) && ! str_starts_with($b['preview'], 'blob:')) {
-                                    $img = str_starts_with($b['preview'], 'http') ? $b['preview'] : asset('storage/'.$b['preview']);
-                                    break;
-                                }
-                                if (isset($b['file_path']) && is_string($b['file_path'])) {
-                                    $img = asset('storage/'.$b['file_path']);
-                                    break;
+                    // Batch resolve portfolio work cover images
+                    $portfolioIds = $notifs->map(fn ($n) => $n->data['portfolio_id'] ?? $n->data['work_id'] ?? null)->filter()->unique()->values();
+                    $worksMap = [];
+                    if ($portfolioIds->isNotEmpty()) {
+                        $works = PagiWork::query()->whereIn('id', $portfolioIds)->select('id', 'cover_image', 'content')->get();
+                        foreach ($works as $w) {
+                            $img = null;
+                            if ($w->cover_image) {
+                                $img = str_starts_with($w->cover_image, 'http') ? $w->cover_image : asset('storage/'.$w->cover_image);
+                            } elseif (is_array($w->content)) {
+                                foreach ($w->content as $b) {
+                                    if (isset($b['preview']) && is_string($b['preview']) && ! str_starts_with($b['preview'], 'blob:')) {
+                                        $img = str_starts_with($b['preview'], 'http') ? $b['preview'] : asset('storage/'.$b['preview']);
+                                        break;
+                                    }
+                                    if (isset($b['file_path']) && is_string($b['file_path'])) {
+                                        $img = asset('storage/'.$b['file_path']);
+                                        break;
+                                    }
                                 }
                             }
+                            $worksMap[$w->id] = $img;
                         }
-                        $worksMap[$w->id] = $img;
                     }
-                }
 
-                return $notifs->map(function ($n) use ($worksMap) {
-                    $data = $n->data;
-                    $pId = $data['portfolio_id'] ?? $data['work_id'] ?? null;
-                    $workImage = $data['work_image'] ?? ($pId ? ($worksMap[$pId] ?? null) : null);
+                    return $notifs->map(function ($n) use ($worksMap) {
+                        $data = $n->data;
+                        $pId = $data['portfolio_id'] ?? $data['work_id'] ?? null;
+                        $workImage = $data['work_image'] ?? ($pId ? ($worksMap[$pId] ?? null) : null);
 
-                    return [
-                        'id' => $n->id,
-                        'type' => $data['type'] ?? 'system',
-                        'title' => $data['title'] ?? 'PAGI System',
-                        'message' => $data['message'] ?? '',
-                        'avatar' => $data['avatar'] ?? null,
-                        'href' => $data['href'] ?? '/pagi',
-                        'unread' => is_null($n->read_at),
-                        'time' => $n->created_at->diffForHumans(),
-                        'created_at' => $n->created_at->toISOString(),
-                        'sender_id' => $data['sender_id'] ?? null,
-                        'portfolio_id' => $pId,
-                        'work_image' => $workImage,
-                        'is_invite' => isset($data['is_invite']) ? (bool) $data['is_invite'] : (! str_contains($data['message'] ?? '', 'menerima') && ! str_contains($data['message'] ?? '', 'ditolak')),
-                        'collaboration_handled' => isset($data['collaboration_handled']) ? (bool) $data['collaboration_handled'] : false,
-                        'collaboration_status' => $data['collaboration_status'] ?? null,
-                    ];
-                })->values()->toArray();
-            }) : [],
+                        return [
+                            'id' => $n->id,
+                            'type' => $data['type'] ?? 'system',
+                            'title' => $data['title'] ?? 'PAGI System',
+                            'message' => $data['message'] ?? '',
+                            'avatar' => $data['avatar'] ?? null,
+                            'href' => $data['href'] ?? '/pagi',
+                            'unread' => is_null($n->read_at),
+                            'time' => $n->created_at->diffForHumans(),
+                            'created_at' => $n->created_at->toISOString(),
+                            'sender_id' => $data['sender_id'] ?? null,
+                            'portfolio_id' => $pId,
+                            'work_image' => $workImage,
+                            'is_invite' => isset($data['is_invite']) ? (bool) $data['is_invite'] : (! str_contains($data['message'] ?? '', 'menerima') && ! str_contains($data['message'] ?? '', 'ditolak')),
+                            'collaboration_handled' => isset($data['collaboration_handled']) ? (bool) $data['collaboration_handled'] : false,
+                            'collaboration_status' => $data['collaboration_status'] ?? null,
+                        ];
+                    })->values()->toArray();
+                }) : [],
             'notifications' => $user ? fn () => $this->fastNotifications($request, $user) : null,
 
             // Bagikan active context ke semua Vue component via usePage().props.context

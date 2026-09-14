@@ -40,6 +40,7 @@ class SuratDocumentGeneratorService
         $surat = $this->prepareDraft($surat);
 
         if (blank($surat->qr_token)) {
+            // UUID v4 dibuat di backend hanya saat token belum ada supaya regenerasi tidak mengubah identitas QR.
             $surat->forceFill([
                 'qr_token' => (string) Str::uuid(),
             ])->save();
@@ -90,6 +91,7 @@ class SuratDocumentGeneratorService
         //     'template'     => $freshSurat->jenisSurat?->template,
         //     'customCss'    => $freshSurat->jenisSurat?->template?->css_style ?? '',
         // ];
+        // File PDF harus berhasil ditulis dulu sebelum status dan QR dianggap final.
         FastStorage::makeDirectory(dirname($outputPath), 'local');
 
         FastStorage::put(
@@ -98,6 +100,7 @@ class SuratDocumentGeneratorService
             'local',
         );
 
+        // Setelah file PDF tersimpan, status surat dinaikkan ke finished dan nomor surat ditandai issued.
         $updates = [
             'rendered_snapshot' => $rendered['html'],
             'generated_file_path' => $outputPath,
@@ -122,6 +125,7 @@ class SuratDocumentGeneratorService
     public function prepareDraft(Surat $surat): Surat
     {
         if (blank($surat->nomor_surat)) {
+            // Nomor surat dicadangkan sejak draft agar urutan tidak berubah saat finalisasi.
             $surat->forceFill([
                 'nomor_surat' => $this->generateNomorSurat($surat),
                 'nomor_surat_status' => Surat::NOMOR_SURAT_STATUS_RESERVED,
@@ -271,6 +275,7 @@ class SuratDocumentGeneratorService
         $existingQr = SuratQrCode::where('token', $surat->qr_token)->first();
 
         if ($existingQr !== null) {
+            // Record QR di tabel terpisah disinkronkan dengan token surat agar status active/revoked tetap konsisten.
             $existingQr->forceFill([
                 'surat_id' => $surat->id,
                 'status' => SuratQrCode::STATUS_ACTIVE,
@@ -290,7 +295,7 @@ class SuratDocumentGeneratorService
 
     protected function makeQrCodeBase64(Surat $surat): string
     {
-        // Ganti payload QR menjadi URL endpoint verifikasi
+        // QR hanya memuat URL verifikasi supaya isi surat tidak ditanam langsung ke gambar.
         $baseUrl = config('app.url') ?? 'http://localhost';
         $url = rtrim($baseUrl, '/').'/verifikasi-qr/'.$surat->qr_token;
 

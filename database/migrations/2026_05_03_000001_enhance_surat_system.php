@@ -134,6 +134,7 @@ return new class extends Migration
             Schema::create('surat_qr_codes', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('surat_id')->constrained('surats')->cascadeOnDelete();
+                // Token QR di tabel ini disamakan dengan qr_token di surats supaya status active/revoked bisa dilacak terpisah.
                 $table->string('token', 64)->unique()->comment('UUID token QR');
                 $table->enum('status', ['active', 'revoked', 'expired'])->default('active');
                 $table->timestamp('activated_at')->nullable()
