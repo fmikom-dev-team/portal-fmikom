@@ -92,14 +92,15 @@ class PlacementController extends Controller
 
     public function completeFiltered(Request $request): RedirectResponse
     {
-        $registrations = $this->placementWorkflowService->resolveCompletableFiltered($request);
+        $query = $this->placementWorkflowService->buildCompletableFilteredQuery($request);
+        $eligibleCount = (clone $query)->count();
 
-        if ($registrations->isEmpty()) {
+        if ($eligibleCount === 0) {
             return back()->with('error', 'Tidak ada mahasiswa aktif pada hasil filter yang memenuhi syarat untuk ditandai selesai.');
         }
 
-        $this->placementActionService->completeMany($registrations);
+        $completedCount = $this->placementActionService->completeFiltered($query);
 
-        return back()->with('success', sprintf('%d mahasiswa dari hasil filter berhasil ditandai selesai dan dipindahkan ke arsip.', $registrations->count()));
+        return back()->with('success', sprintf('%d mahasiswa dari hasil filter berhasil ditandai selesai dan dipindahkan ke arsip.', $completedCount));
     }
 }

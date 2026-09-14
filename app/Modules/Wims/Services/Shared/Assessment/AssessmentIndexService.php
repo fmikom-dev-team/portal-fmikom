@@ -6,148 +6,161 @@ use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
 use App\Modules\Wims\Support\AssessmentSummary;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 
 class AssessmentIndexService
 {
-    public function buildLecturerData(User $user): array
+    private const PER_PAGE = 20;
+
+    public function buildLecturerData(User $user, Request $request): array
     {
-        $pendaftarans = PendaftaranMagang::query()
+        return $this->buildData($user, $request, 'dosen', null);
+    }
+
+    public function buildCompanyData(User $user, ?PerusahaanMitra $company, Request $request): array
+    {
+        return $company
+            ? $this->buildData($user, $request, 'mitra', $company)
+            : $this->emptyPayload();
+    }
+
+    private function buildData(User $user, Request $request, string $role, ?PerusahaanMitra $company): array
+    {
+        $query = PendaftaranMagang::query()
+            ->when($role === 'dosen', fn (Builder $builder) => $builder->where('dosen_pembimbing_id', $user->id))
+            ->when($role === 'mitra', fn (Builder $builder) => $builder->where('perusahaan_id', $company?->id))
+            ->readyForAssessment(now());
+
+        $this->applyFilters($query, $request, $user->id, $role);
+
+        $page = (clone $query)
             ->with([
                 'mahasiswa:id,name,email,nomor_induk',
                 'perusahaan:id,nama',
-                'assessmentSubmissions' => fn ($query) => AssessmentSummary::orderLatestFirst($query)
+                'assessmentSubmissions' => fn ($submissionQuery) => AssessmentSummary::orderLatestFirst($submissionQuery)
                     ->where('assessor_id', $user->id)
-                    ->where('assessor_role', 'dosen')
+                    ->where('assessor_role', $role)
                     ->with('template:id,name'),
             ])
-            ->where('dosen_pembimbing_id', $user->id)
-            ->readyForAssessment(now())
             ->orderByDesc('tanggal_mulai')
             ->orderByDesc('id')
-            ->get()
-            ->map(function (PendaftaranMagang $pendaftaran) {
-                $submission = AssessmentSummary::latestSubmission(
-                    $pendaftaran->assessmentSubmissions,
-                    'dosen',
-                    $pendaftaran->dosen_pembimbing_id,
-                );
+            ->paginate(self::PER_PAGE)
+            ->withQueryString();
 
-                return [
-                    'id' => $pendaftaran->id,
-                    'student' => [
-                        'name' => $pendaftaran->mahasiswa?->name,
-                        'nim' => $pendaftaran->mahasiswa?->nim_nip ?: $pendaftaran->mahasiswa?->nomor_induk,
-                        'email' => $pendaftaran->mahasiswa?->email,
-                    ],
-                    'company' => [
-                        'id' => $pendaftaran->perusahaan?->id,
-                        'name' => $pendaftaran->perusahaan?->nama,
-                    ],
-                    'period' => [
-                        'start' => $pendaftaran->tanggal_mulai?->toDateString(),
-                        'end' => $pendaftaran->tanggal_selesai?->toDateString(),
-                        'label' => $this->formatPeriodLabel($pendaftaran),
-                    ],
-                    'registration_status' => $pendaftaran->status,
-                    'dashboard_phase' => $pendaftaran->isReadyForAssessment(now()) ? 'completed' : ($pendaftaran->status === 'aktif' ? 'active' : 'assigned'),
-                    'assessment' => [
-                        'status_key' => $submission?->status ?? 'not_assessed',
-                        'status_label' => $this->resolveSubmissionStatusLabel($submission?->status),
-                        'total_score' => $submission?->total_score !== null
-                            ? round((float) $submission->total_score, 2)
-                            : null,
-                        'submitted_at' => $submission?->submitted_at?->translatedFormat('d M Y H:i'),
-                        'template_name' => $submission?->template?->name,
-                    ],
-                ];
-            })
-            ->values();
+        $page->through(fn (PendaftaranMagang $pendaftaran) => $this->transformRegistration($pendaftaran, $user->id, $role));
 
-        return $this->buildIndexPayload($pendaftarans);
+        return $this->buildIndexPayload($page, $query, $request, $user->id, $role);
     }
 
-    public function buildCompanyData(User $user, ?PerusahaanMitra $company): array
+    private function transformRegistration(PendaftaranMagang $pendaftaran, int $assessorId, string $role): array
     {
-        if (! $company) {
-            return [
-                'summary' => [
-                    'total_students' => 0,
-                    'not_assessed' => 0,
-                    'draft' => 0,
-                    'submitted' => 0,
-                ],
-                'students' => [],
-            ];
+        $submission = AssessmentSummary::latestSubmission($pendaftaran->assessmentSubmissions, $role, $assessorId);
+        $statusKey = $submission?->status ?? 'not_assessed';
+
+        return [
+            'id' => $pendaftaran->id,
+            'student' => [
+                'name' => $pendaftaran->mahasiswa?->name,
+                'nim' => $pendaftaran->mahasiswa?->nomor_induk,
+                'email' => $pendaftaran->mahasiswa?->email,
+            ],
+            'company' => [
+                'id' => $pendaftaran->perusahaan?->id,
+                'name' => $pendaftaran->perusahaan?->nama,
+            ],
+            'period' => [
+                'start' => $pendaftaran->tanggal_mulai?->toDateString(),
+                'end' => $pendaftaran->tanggal_selesai?->toDateString(),
+                'label' => $this->formatPeriodLabel($pendaftaran),
+            ],
+            'registration_status' => $pendaftaran->status,
+            'dashboard_phase' => $pendaftaran->isReadyForAssessment(now()) ? 'completed' : ($pendaftaran->status === 'aktif' ? 'active' : 'assigned'),
+            'assessment' => [
+                'status_key' => $statusKey,
+                'status_label' => $this->resolveSubmissionStatusLabel($submission?->status),
+                'total_score' => $submission?->total_score !== null ? round((float) $submission->total_score, 2) : null,
+                'submitted_at' => $submission?->submitted_at?->translatedFormat('d M Y H:i'),
+                'template_name' => $submission?->template?->name,
+            ],
+        ];
+    }
+
+    private function applyFilters(Builder $query, Request $request, int $assessorId, string $role): void
+    {
+        $search = trim((string) $request->string('search', ''));
+        $status = (string) $request->string('status', 'all');
+
+        if ($search !== '') {
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
+            $query->where(function (Builder $builder) use ($escaped): void {
+                $builder->whereHas('mahasiswa', function (Builder $student) use ($escaped): void {
+                    $student->where('name', 'like', "%{$escaped}%")
+                        ->orWhere('email', 'like', "%{$escaped}%")
+                        ->orWhere('nomor_induk', 'like', "%{$escaped}%");
+                })->orWhereHas('perusahaan', fn (Builder $company) => $company->where('nama', 'like', "%{$escaped}%"));
+            });
         }
 
-        $pendaftarans = PendaftaranMagang::query()
-            ->with([
-                'mahasiswa:id,name,email,nomor_induk',
-                'perusahaan:id,nama',
-                'assessmentSubmissions' => fn ($query) => AssessmentSummary::orderLatestFirst($query)
-                    ->where('assessor_id', $user->id)
-                    ->where('assessor_role', 'mitra')
-                    ->with('template:id,name'),
-            ])
-            ->where('perusahaan_id', $company->id)
-            ->readyForAssessment(now())
-            ->orderByDesc('tanggal_mulai')
-            ->orderByDesc('id')
-            ->get()
-            ->map(function (PendaftaranMagang $pendaftaran) use ($user) {
-                $submission = AssessmentSummary::latestSubmission(
-                    $pendaftaran->assessmentSubmissions,
-                    'mitra',
-                    $user->id,
-                );
-                $statusKey = $submission?->status ?? 'not_assessed';
+        if (! in_array($status, ['all', 'not_assessed', 'draft', 'submitted'], true)) {
+            $status = 'all';
+        }
 
-                return [
-                    'id' => $pendaftaran->id,
-                    'student' => [
-                        'name' => $pendaftaran->mahasiswa?->name,
-                        'nim' => $pendaftaran->mahasiswa?->nim_nip ?: $pendaftaran->mahasiswa?->nomor_induk,
-                        'email' => $pendaftaran->mahasiswa?->email,
-                    ],
-                    'company' => [
-                        'id' => $pendaftaran->perusahaan?->id,
-                        'name' => $pendaftaran->perusahaan?->nama,
-                    ],
-                    'period' => [
-                        'start' => $pendaftaran->tanggal_mulai?->toDateString(),
-                        'end' => $pendaftaran->tanggal_selesai?->toDateString(),
-                        'label' => $this->formatPeriodLabel($pendaftaran),
-                    ],
-                    'registration_status' => $pendaftaran->status,
-                    'dashboard_phase' => $pendaftaran->isReadyForAssessment(now()) ? 'completed' : ($pendaftaran->status === 'aktif' ? 'active' : 'assigned'),
-                    'assessment' => [
-                        'status_key' => $statusKey,
-                        'status_label' => $this->resolveSubmissionStatusLabel($statusKey),
-                        'total_score' => $submission?->total_score !== null
-                            ? round((float) $submission->total_score, 2)
-                            : null,
-                        'submitted_at' => $submission?->submitted_at?->translatedFormat('d M Y H:i'),
-                        'template_name' => $submission?->template?->name,
-                    ],
-                ];
-            })
-            ->values();
+        $submission = fn (Builder $builder) => $builder
+            ->where('assessor_id', $assessorId)
+            ->where('assessor_role', $role);
 
-        return $this->buildIndexPayload($pendaftarans);
+        if ($status === 'not_assessed') {
+            $query->whereDoesntHave('assessmentSubmissions', $submission);
+        } elseif ($status === 'draft') {
+            // AssessmentSummary prioritizes an already submitted entry over a
+            // draft from another template. Mirror that rule in the SQL filter
+            // so the list cannot label an item "submitted" under "draft".
+            $query
+                ->whereHas('assessmentSubmissions', fn (Builder $builder) => $submission($builder)->where('status', 'draft'))
+                ->whereDoesntHave('assessmentSubmissions', fn (Builder $builder) => $submission($builder)->where('status', 'submitted'));
+        } elseif ($status === 'submitted') {
+            $query->whereHas('assessmentSubmissions', fn (Builder $builder) => $submission($builder)->where('status', 'submitted'));
+        }
     }
 
-    private function buildIndexPayload(Collection $pendaftarans): array
+    private function buildIndexPayload($page, Builder $filteredQuery, Request $request, int $assessorId, string $role): array
     {
+        $summaryQuery = clone $filteredQuery;
+        $submission = fn (Builder $builder) => $builder
+            ->where('assessor_id', $assessorId)
+            ->where('assessor_role', $role);
+
         return [
             'summary' => [
-                'total_students' => $pendaftarans->count(),
-                'not_assessed' => $pendaftarans->where('assessment.status_key', 'not_assessed')->count(),
-                'draft' => $pendaftarans->where('assessment.status_key', 'draft')->count(),
-                'submitted' => $pendaftarans->where('assessment.status_key', 'submitted')->count(),
+                'total_students' => (clone $summaryQuery)->count(),
+                'not_assessed' => (clone $summaryQuery)->whereDoesntHave('assessmentSubmissions', $submission)->count(),
+                'draft' => (clone $summaryQuery)->whereHas('assessmentSubmissions', fn (Builder $builder) => $submission($builder)->where('status', 'draft'))->count(),
+                'submitted' => (clone $summaryQuery)->whereHas('assessmentSubmissions', fn (Builder $builder) => $submission($builder)->where('status', 'submitted'))->count(),
             ],
-            'students' => $pendaftarans->all(),
+            'students' => $page->getCollection()->all(),
+            'pagination' => [
+                'current_page' => $page->currentPage(),
+                'last_page' => $page->lastPage(),
+                'from' => $page->firstItem(),
+                'to' => $page->lastItem(),
+                'total' => $page->total(),
+            ],
+            'filters' => [
+                'search' => trim((string) $request->string('search', '')),
+                'status' => (string) $request->string('status', 'all'),
+            ],
+        ];
+    }
+
+    private function emptyPayload(): array
+    {
+        return [
+            'summary' => ['total_students' => 0, 'not_assessed' => 0, 'draft' => 0, 'submitted' => 0],
+            'students' => [],
+            'pagination' => ['current_page' => 1, 'last_page' => 1, 'from' => null, 'to' => null, 'total' => 0],
+            'filters' => ['search' => '', 'status' => 'all'],
         ];
     }
 

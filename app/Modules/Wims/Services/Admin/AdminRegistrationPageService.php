@@ -19,12 +19,16 @@ class AdminRegistrationPageService
         $search = trim((string) $request->string('search', ''));
         $visibleStatuses = ['pending', 'approved', 'revisi', 'rejected', 'aktif'];
 
+        if ($status !== 'all' && ! in_array($status, $visibleStatuses, true)) {
+            $status = 'all';
+        }
+
         $query = PendaftaranMagang::with(['mahasiswa', 'perusahaan'])
             ->whereIn('status', $visibleStatuses)
             ->orderByRaw("CASE WHEN status = 'pending' THEN 0 WHEN status = 'revisi' THEN 1 ELSE 2 END")
             ->latest('id');
 
-        if ($status !== '' && $status !== 'all') {
+        if ($status !== 'all') {
             $query->where('status', $status);
         }
 
@@ -82,6 +86,24 @@ class AdminRegistrationPageService
                 'uploaded_at' => $pendaftaran->proposal_pkl_uploaded_at?->translatedFormat('d M Y H:i'),
                 'download_url' => route('wims.admin.registrations.proposal.download', $pendaftaran),
             ] : null,
+            'transcript_attachment' => filled($pendaftaran->transkrip_nilai_path) ? [
+                'exists' => true,
+                'name' => $pendaftaran->transkrip_nilai_original_name,
+                'uploaded_at' => $pendaftaran->transkrip_nilai_uploaded_at?->translatedFormat('d M Y H:i'),
+                'download_url' => route('wims.admin.registrations.transcript.download', $pendaftaran),
+            ] : null,
+            'recommendation_attachment' => filled($pendaftaran->surat_rekomendasi_kaprodi_path) ? [
+                'exists' => true,
+                'name' => $pendaftaran->surat_rekomendasi_kaprodi_original_name,
+                'uploaded_at' => $pendaftaran->surat_rekomendasi_kaprodi_uploaded_at?->translatedFormat('d M Y H:i'),
+                'download_url' => route('wims.admin.registrations.recommendation.download', $pendaftaran),
+            ] : null,
+            'status_kip' => $pendaftaran->status_kip,
+            'sks_ditempuh' => $pendaftaran->sks_ditempuh,
+            'bidang_minat' => $pendaftaran->bidang_minat,
+            'bidang_minat_lainnya' => $pendaftaran->bidang_minat_lainnya,
+            'ukuran_seragam' => $pendaftaran->ukuran_seragam,
+            'ukuran_seragam_custom' => $pendaftaran->ukuran_seragam_custom,
             'tanggal_mulai' => $this->formatDate($pendaftaran->tanggal_mulai),
             'tanggal_selesai' => $this->formatDate($pendaftaran->tanggal_selesai),
             'status' => $pendaftaran->status,

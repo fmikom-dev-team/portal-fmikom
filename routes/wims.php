@@ -19,6 +19,7 @@ use App\Modules\Wims\Controllers\Mahasiswa\LaporanController;
 use App\Modules\Wims\Controllers\Mahasiswa\LogbookController;
 use App\Modules\Wims\Controllers\Mahasiswa\ProfileController as MahasiswaProfileController;
 use App\Modules\Wims\Controllers\Mahasiswa\RegistrationController as MahasiswaRegistrationController;
+use App\Modules\Wims\Controllers\Mahasiswa\StudentNotificationController;
 use App\Modules\Wims\Controllers\Mitra\DashboardController as MitraDashboardController;
 use App\Modules\Wims\Controllers\Mitra\KetidakhadiranController as MitraKetidakhadiranController;
 use App\Modules\Wims\Controllers\Mitra\LogbookController as MitraLogbookController;
@@ -27,6 +28,8 @@ use App\Modules\Wims\Controllers\Mitra\PenilaianMahasiswaController as MitraPeni
 use App\Modules\Wims\Controllers\WimsDashboardController;
 use Illuminate\Support\Facades\Route;
 
+// Seluruh route WIMS mewajibkan konteks modul aktif agar akses tidak hanya
+// bergantung pada menu yang ditampilkan di frontend.
 Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:wims'])
     ->prefix('wims')
     ->group(function () {
@@ -34,6 +37,8 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('module.wims.dashboard');
     });
 
+// Pemisahan group berdasarkan role menjadi lapisan otorisasi pertama
+// sebelum controller dan validasi bisnis WIMS dijalankan.
 Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:wims,mahasiswa'])
     ->prefix('wims')
     ->name('wims.')
@@ -45,6 +50,8 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('profile');
         Route::post('/profil', [MahasiswaProfileController::class, 'update'])
             ->name('profile.update');
+        Route::post('/notifikasi/baca-semua', [StudentNotificationController::class, 'markAllRead'])
+            ->name('notifications.mark-all-read');
 
         Route::get('/pendaftaran', [MahasiswaRegistrationController::class, 'index'])
             ->name('registration');
@@ -53,6 +60,8 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
         Route::get('/pendaftaran/template-proposal/download', [MahasiswaRegistrationController::class, 'downloadProposalTemplate'])
             ->name('registration.proposal-template.download');
 
+        // Presensi dipisah antara halaman, check-in, check-out, dan unduhan riwayat
+        // agar setiap aksi memiliki endpoint dan validasi backend yang berbeda.
         Route::get('/absensi', [AttendanceController::class, 'index'])
             ->name('attendance');
         Route::post('/absensi', [AttendanceController::class, 'store'])
@@ -99,6 +108,8 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('companies.index');
         Route::post('/perusahaan', [AdminCompanyController::class, 'store'])
             ->name('companies.store');
+        Route::post('/perusahaan/resolve-map-link', [AdminCompanyController::class, 'resolveMapLink'])
+            ->name('companies.resolve-map-link');
         Route::put('/perusahaan/{company}', [AdminCompanyController::class, 'update'])
             ->name('companies.update');
         Route::delete('/perusahaan/{company}', [AdminCompanyController::class, 'destroy'])
@@ -114,6 +125,10 @@ Route::middleware(['auth', EnsureFirstTimeLoginComplete::class, 'module.context:
             ->name('registrations.bulk-approve');
         Route::get('/pendaftaran/{pendaftaran}/proposal/download', [AdminRegistrationController::class, 'downloadProposal'])
             ->name('registrations.proposal.download');
+        Route::get('/pendaftaran/{pendaftaran}/transcript/download', [AdminRegistrationController::class, 'downloadTranscript'])
+            ->name('registrations.transcript.download');
+        Route::get('/pendaftaran/{pendaftaran}/recommendation/download', [AdminRegistrationController::class, 'downloadRecommendation'])
+            ->name('registrations.recommendation.download');
 
         Route::get('/penempatan', [AdminPlacementController::class, 'index'])
             ->name('placements.index');

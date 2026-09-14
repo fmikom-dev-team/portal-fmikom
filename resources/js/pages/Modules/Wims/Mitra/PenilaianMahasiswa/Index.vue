@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import {
     ArrowLeft,
     ClipboardCheck,
@@ -58,40 +58,39 @@ const props = defineProps<{
         submitted: number;
     };
     students: StudentItem[];
+    pagination: {
+        current_page: number;
+        last_page: number;
+        from?: number | null;
+        to?: number | null;
+        total: number;
+    };
+    filters: {
+        search?: string;
+        status?: 'all' | 'not_assessed' | 'draft' | 'submitted';
+    };
 }>();
 
-const search = ref('');
-const status = ref<'all' | 'not_assessed' | 'draft' | 'submitted'>('all');
+const search = ref(props.filters?.search ?? '');
+const status = ref<'all' | 'not_assessed' | 'draft' | 'submitted'>(props.filters?.status ?? 'all');
+const hasStudents = () => props.pagination.total > 0;
 
-const filteredStudents = computed(() => {
-    const keyword = search.value.trim().toLowerCase();
-
-    return props.students.filter((item) => {
-        const matchesKeyword =
-            keyword === '' ||
-            [
-                item.student.name,
-                item.student.nim,
-                item.student.email,
-                item.company?.name,
-                item.period.label,
-            ]
-                .filter(Boolean)
-                .some((value) => String(value).toLowerCase().includes(keyword));
-
-        if (!matchesKeyword) {
-            return false;
-        }
-
-        if (status.value === 'all') {
-            return true;
-        }
-
-        return item.assessment.status_key === status.value;
+const applyFilters = () => {
+    router.get('/wims/mitra/penilaian-mahasiswa', { search: search.value.trim(), status: status.value }, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
     });
-});
+};
 
-const hasStudents = computed(() => props.students.length > 0);
+const goToPage = (page: number) => {
+    if (page < 1 || page > props.pagination.last_page || page === props.pagination.current_page) return;
+    router.get('/wims/mitra/penilaian-mahasiswa', { search: search.value.trim(), status: status.value, page }, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+    });
+};
 
 const statusLabelClass = (statusKey: StudentItem['assessment']['status_key']) => {
     if (statusKey === 'submitted') {
@@ -200,11 +199,13 @@ const goBack = () => {
                                     type="text"
                                     placeholder="Cari nama, NIM, atau perusahaan..."
                                     class="h-10 w-full rounded-lg border border-wims-border bg-white pr-3 pl-9 text-base text-wims-text outline-none transition duration-200 hover:border-slate-300 focus:border-[#0F62FE] focus:ring-2 focus:ring-[#0F62FE]/10 sm:text-sm"
+                                    @keyup.enter="applyFilters"
                                 />
                             </div>
                             <select
                                 v-model="status"
                                 class="h-10 rounded-lg border border-wims-border bg-white px-3 text-base text-wims-text outline-none transition duration-200 hover:border-slate-300 focus:border-[#0F62FE] focus:ring-2 focus:ring-[#0F62FE]/10 sm:text-sm"
+                                @change="applyFilters"
                             >
                                 <option value="all">Semua</option>
                                 <option value="not_assessed">Belum Dinilai</option>
@@ -215,7 +216,7 @@ const goBack = () => {
                     </div>
                 </CardHeader>
                 <CardContent class="px-0 pb-0">
-                    <div v-if="filteredStudents.length" class="hidden overflow-x-auto md:block">
+                    <div v-if="props.students.length" class="hidden overflow-x-auto md:block">
                         <table class="min-w-full border-collapse">
                             <thead class="bg-slate-50/70">
                                 <tr class="border-y border-wims-border">
@@ -230,7 +231,7 @@ const goBack = () => {
                             </thead>
                             <tbody>
                                 <tr
-                                    v-for="item in filteredStudents"
+                                    v-for="item in props.students"
                                     :key="item.id"
                                     class="border-t border-wims-border bg-white align-top transition duration-200 hover:bg-blue-50/40"
                                 >
@@ -289,9 +290,9 @@ const goBack = () => {
                         </table>
                     </div>
 
-                    <div v-if="filteredStudents.length" class="overflow-hidden rounded-2xl border border-wims-border bg-white md:hidden">
+                    <div v-if="props.students.length" class="overflow-hidden rounded-2xl border border-wims-border bg-white md:hidden">
                         <div
-                            v-for="item in filteredStudents"
+                            v-for="item in props.students"
                             :key="`mobile-${item.id}`"
                             class="border-b border-wims-border/70 px-4 py-3 last:border-b-0"
                         >
@@ -345,7 +346,7 @@ const goBack = () => {
                         <div class="flex size-12 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
                             <ClipboardCheck class="size-5" />
                         </div>
-                        <div v-if="hasStudents">
+                        <div v-if="hasStudents()">
                             <p class="text-[13px] font-bold text-wims-text">Tidak ada mahasiswa yang sesuai dengan filter.</p>
                             <p class="mt-1 text-[11px] text-slate-500">
                                 Coba ubah kata kunci atau filter status penilaian.
@@ -358,10 +359,17 @@ const goBack = () => {
                             </p>
                         </div>
                     </div>
+                    <div v-if="props.pagination.total" class="flex flex-col gap-3 border-t border-wims-border px-5 py-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                        <span>Menampilkan {{ props.pagination.from }}-{{ props.pagination.to }} dari {{ props.pagination.total }} mahasiswa</span>
+                        <div class="flex items-center gap-2">
+                            <Button type="button" variant="outline" size="sm" :disabled="props.pagination.current_page === 1" @click="goToPage(props.pagination.current_page - 1)">Sebelumnya</Button>
+                            <span>Halaman {{ props.pagination.current_page }} / {{ props.pagination.last_page }}</span>
+                            <Button type="button" variant="outline" size="sm" :disabled="props.pagination.current_page === props.pagination.last_page" @click="goToPage(props.pagination.current_page + 1)">Berikutnya</Button>
+                        </div>
+                    </div>
                 </CardContent>
             </Card>
         </div>
     </div>
 </template>
-
 

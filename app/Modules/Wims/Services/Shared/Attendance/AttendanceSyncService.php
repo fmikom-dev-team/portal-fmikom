@@ -13,6 +13,9 @@ use Illuminate\Support\Collection;
 
 class AttendanceSyncService
 {
+    /** @var array<string, true> */
+    private array $syncedKeys = [];
+
     public function syncForRegistrations(iterable $registrations, ?CarbonInterface $referenceDate = null): void
     {
         foreach ($registrations as $registration) {
@@ -24,6 +27,18 @@ class AttendanceSyncService
 
     public function syncForRegistration(PendaftaranMagang $registration, ?CarbonInterface $referenceDate = null): void
     {
+        $syncKey = $registration->id.'|'.($referenceDate?->toDateString() ?? now()->toDateString());
+
+        if (isset($this->syncedKeys[$syncKey])) {
+            return;
+        }
+
+        $this->syncedKeys[$syncKey] = true;
+
+        if (! in_array($registration->status, ['aktif', 'selesai'], true)) {
+            return;
+        }
+
         $registration->loadMissing('perusahaan');
 
         if (

@@ -8,6 +8,7 @@ use App\Models\Magang\LogbookMagang;
 use App\Models\Magang\PendaftaranMagang;
 use App\Models\User;
 use App\Modules\Wims\Services\Mahasiswa\Period\StudentPeriodResolverService;
+use App\Modules\Wims\Services\Mahasiswa\Registration\StudentNextRegistrationEligibilityService;
 use App\Modules\Wims\Services\Shared\Attendance\AttendanceSyncService;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use Illuminate\Support\Carbon;
@@ -18,6 +19,7 @@ class StudentDashboardPageService
         private readonly AttendanceSyncService $attendanceSyncService,
         private readonly WimsModuleRoleService $wimsModuleRoleService,
         private readonly StudentPeriodResolverService $studentPeriodResolverService,
+        private readonly StudentNextRegistrationEligibilityService $studentNextRegistrationEligibilityService,
     ) {}
 
     public function build(User $user, ?int $selectedRegistrationId = null): array
@@ -26,11 +28,14 @@ class StudentDashboardPageService
         $this->attendanceSyncService->syncForRegistrations($registrations);
 
         $selectedRegistration = $this->studentPeriodResolverService->resolveSelectedRegistrationFromCollection($registrations, $selectedRegistrationId);
+        $latestRegistration = $registrations->first();
         $periodOptions = $this->studentPeriodResolverService->buildPeriodOptions($registrations, $selectedRegistration?->id);
 
         $progressSource = $selectedRegistration;
         $historySource = $selectedRegistration;
         $dashboardState = $this->resolveDashboardState($selectedRegistration);
+        $canRegisterNext = $latestRegistration?->status === 'selesai'
+            && $this->studentNextRegistrationEligibilityService->evaluate($latestRegistration)['is_complete'];
 
         $attendanceToday = AbsensiMagang::query()
             ->where('pendaftaran_id', $selectedRegistration?->id)
@@ -104,12 +109,12 @@ class StudentDashboardPageService
                     : ($attendanceToday?->timestamp_masuk ? 'checked_in' : ($approvedAbsenceToday ? 'excused_absence' : 'not_checked_in')),
                 'current_time' => now()->format('H:i').' WIB',
                 'location_status' => ! $selectedRegistration
-                    ? 'Pendaftaran aktif belum tersedia'
+                    ? 'Belum tersedia'
                     : (! $canDoDailyActivity
-                        ? 'Menunggu tanggal mulai periode PKL'
+                        ? 'Belum aktif'
                         : ($attendanceToday?->lokasi_valid === null
-                            ? 'Lokasi belum tervalidasi'
-                            : ($attendanceToday->lokasi_valid ? 'Lokasi terdeteksi (akan divalidasi saat absen)' : 'Lokasi di luar area'))),
+                            ? 'Belum tervalidasi'
+                            : ($attendanceToday->lokasi_valid ? 'Tervalidasi' : 'Di luar area'))),
                 'check_in_time' => $attendanceToday?->timestamp_masuk?->format('H:i'),
                 'check_out_time' => $attendanceToday?->timestamp_keluar?->format('H:i'),
                 'is_late' => $attendanceToday?->status === 'terlambat',
@@ -130,6 +135,7 @@ class StudentDashboardPageService
                 'id' => $selectedRegistration?->id,
                 'status' => $selectedRegistration?->status,
                 'dashboard_state' => $dashboardState,
+                'can_register_next' => $canRegisterNext,
                 'company' => [
                     'proposal' => [
                         'name' => $selectedRegistration?->perusahaan_diminati_nama,
@@ -166,7 +172,7 @@ class StudentDashboardPageService
 
     private function resolveDashboardState(?PendaftaranMagang $registration): string
     {
-        if ($registration?->status === 'selesai') {
+        if ($registration?->isPostInternshipPhase()) {
             return 'completed';
         }
 

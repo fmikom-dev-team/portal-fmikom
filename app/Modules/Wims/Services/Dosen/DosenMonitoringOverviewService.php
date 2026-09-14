@@ -29,9 +29,26 @@ class DosenMonitoringOverviewService
 
         /** @var \Illuminate\Database\Eloquent\Collection<int, PendaftaranMagang> $pendaftarans */
         $pendaftarans = $pendaftarans;
+        $registrationIds = $pendaftarans->pluck('id');
+        $attendanceByRegistration = $registrationIds->isEmpty()
+            ? collect()
+            : AbsensiMagang::query()
+                ->whereIn('pendaftaran_id', $registrationIds)
+                ->orderByDesc('id')
+                ->get()
+                ->groupBy('pendaftaran_id');
+        $logbookByRegistration = $registrationIds->isEmpty()
+            ? collect()
+            : LogbookMagang::query()
+                ->whereIn('pendaftaran_id', $registrationIds)
+                ->orderByDesc('tanggal')
+                ->orderByDesc('id')
+                ->get()
+                ->groupBy('pendaftaran_id');
+        $holidayDates = $this->loadHolidayDates($pendaftarans, $today);
 
         $students = $pendaftarans
-            ->map(function (PendaftaranMagang $pendaftaran) use ($today) {
+            ->map(function (PendaftaranMagang $pendaftaran) use ($today, $attendanceByRegistration, $logbookByRegistration, $holidayDates) {
                 $assessmentSubmission = AssessmentSummary::latestSubmission(
                     $pendaftaran->assessmentSubmissions,
                     'dosen',
@@ -39,16 +56,11 @@ class DosenMonitoringOverviewService
                 );
                 $phase = $this->resolveDashboardPhase($pendaftaran, $today);
                 $referenceDate = $this->resolveDashboardReferenceDate($pendaftaran, $today);
-                $attendance = AbsensiMagang::query()
-                    ->where('pendaftaran_id', $pendaftaran->id)
-                    ->whereDate('tanggal', $referenceDate)
-                    ->latest('id')
-                    ->first();
-                $latestLogbook = LogbookMagang::query()
-                    ->where('pendaftaran_id', $pendaftaran->id)
-                    ->latest('tanggal')
-                    ->latest('id')
-                    ->first();
+                $registrationAttendance = $attendanceByRegistration->get($pendaftaran->id, collect());
+                $attendance = $registrationAttendance->first(
+                    fn (AbsensiMagang $item) => $item->tanggal->toDateString() === $referenceDate,
+                );
+                $latestLogbook = $logbookByRegistration->get($pendaftaran->id, collect())->first();
 
                 return [
                     'id' => $pendaftaran->mahasiswa?->id,
@@ -74,7 +86,15 @@ class DosenMonitoringOverviewService
                     'has_logbook' => $latestLogbook !== null,
                     'latest_logbook_date' => $latestLogbook?->tanggal?->translatedFormat('d M Y'),
                     'latest_logbook_activity' => $this->summarizeText($latestLogbook?->aktivitas_harian),
-                    'objective_summary' => $this->buildObjectiveSummary($pendaftaran, $phase, $today, $assessmentSubmission),
+                    'objective_summary' => $this->buildObjectiveSummary(
+                        $pendaftaran,
+                        $phase,
+                        $today,
+                        $assessmentSubmission,
+                        $attendanceByRegistration->get($pendaftaran->id, collect()),
+                        $logbookByRegistration->get($pendaftaran->id, collect()),
+                        $holidayDates,
+                    ),
                 ];
             })
             ->filter(fn (array $student) => $student['id'] !== null)
@@ -178,6 +198,9 @@ class DosenMonitoringOverviewService
         string $phase,
         string $today,
         ?AssessmentSubmission $assessmentSubmission = null,
+        ?Collection $attendanceRows = null,
+        ?Collection $logbookRows = null,
+        ?Collection $holidayDates = null,
     ): array {
         $emptySummary = [
             'expected_workdays' => 0,
@@ -211,27 +234,19 @@ class DosenMonitoringOverviewService
             return $emptySummary;
         }
 
-        $holidayDates = HariLibur::query()
-            ->where('is_active', true)
-            ->whereBetween('tanggal', [$startDate->toDateString(), $referenceEndDate->toDateString()])
-            ->pluck('tanggal')
-            ->map(fn ($date) => Carbon::parse($date)->toDateString())
-            ->flip();
+        $holidayDates ??= collect();
 
         // Expected workdays menjadi baseline objektif untuk rasio absensi dan logbook mahasiswa.
         $expectedWorkdays = collect(CarbonPeriod::create($startDate, $referenceEndDate))
             ->filter(fn (Carbon $date) => $pendaftaran->perusahaan?->worksOnDate($date, $holidayDates))
             ->count();
 
-        $attendanceRows = AbsensiMagang::query()
-            ->where('pendaftaran_id', $pendaftaran->id)
-            ->whereBetween('tanggal', [$startDate->toDateString(), $referenceEndDate->toDateString()])
-            ->get();
-
-        $logbookRows = LogbookMagang::query()
-            ->where('pendaftaran_id', $pendaftaran->id)
-            ->whereBetween('tanggal', [$startDate->toDateString(), $referenceEndDate->toDateString()])
-            ->get();
+        $attendanceRows = ($attendanceRows ?? collect())->filter(
+            fn (AbsensiMagang $attendance) => $attendance->tanggal->betweenIncluded($startDate, $referenceEndDate),
+        );
+        $logbookRows = ($logbookRows ?? collect())->filter(
+            fn (LogbookMagang $logbook) => $logbook->tanggal->betweenIncluded($startDate, $referenceEndDate),
+        );
 
         $attendanceTotal = $attendanceRows->count();
         $attendanceLate = $attendanceRows->where('status', 'terlambat')->count();
@@ -326,5 +341,25 @@ class DosenMonitoringOverviewService
         }
 
         return str($value)->squish()->limit($limit)->value();
+    }
+
+    private function loadHolidayDates(Collection $pendaftarans, string $today): Collection
+    {
+        $startDate = $pendaftarans
+            ->pluck('tanggal_mulai')
+            ->filter()
+            ->map(fn ($date) => Carbon::parse($date)->toDateString())
+            ->min();
+
+        if (! $startDate) {
+            return collect();
+        }
+
+        return HariLibur::query()
+            ->where('is_active', true)
+            ->whereBetween('tanggal', [$startDate, $today])
+            ->pluck('tanggal')
+            ->map(fn ($date) => Carbon::parse($date)->toDateString())
+            ->flip();
     }
 }

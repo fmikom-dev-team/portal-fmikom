@@ -32,7 +32,9 @@ class MonitoringController extends Controller
         $company = $this->mitraAccessService->resolveCompany($user);
 
         $overview = $this->monitoringOverviewService->buildOverview($user, $company, now()->toDateString());
-        $allowedStatuses = ['aktif', 'selesai', 'perlu-tindak-lanjut', 'revisi', 'alfa', 'belum-dinilai'];
+        // Filter yang tersedia di halaman monitoring hanya membedakan fase
+        // aktif dan selesai; nilai lain tidak boleh diterima diam-diam.
+        $allowedStatuses = ['aktif', 'selesai'];
         $initialStatus = (string) $request->query('status', '');
 
         if (! in_array($initialStatus, $allowedStatuses, true)) {

@@ -2,11 +2,13 @@
 
 namespace App\Modules\Wims\Services\Admin;
 
+use App\Models\Magang\PendaftaranMagang;
 use App\Models\Magang\PerusahaanMitra;
 use App\Models\User;
 use App\Modules\Wims\Services\Shared\Portal\WimsModuleRoleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -19,7 +21,9 @@ class AdminCompanyActionService
     public function validateCompany(Request $request): array
     {
         $isCreate = ! $request->route('company');
-        $required = fn (string $field): array => $isCreate ? ['required'] : ['nullable'];
+        // Saat edit, field operasional boleh tidak dikirim agar partial update tetap aman,
+        // tetapi jika dikirim tidak boleh dikosongkan atau diubah menjadi null.
+        $required = fn (string $field): array => $isCreate ? ['required'] : ['sometimes', 'required'];
 
         $validated = $request->validate([
             'nama' => ['required', 'string', 'max:255'],
@@ -86,20 +90,84 @@ class AdminCompanyActionService
 
     public function createCompany(array $validated): void
     {
-        $company = PerusahaanMitra::create($validated);
+        DB::transaction(function () use ($validated): void {
+            $company = PerusahaanMitra::create($validated);
 
-        $this->syncPortalAccount($company, $validated);
+            $this->syncPortalAccount($company, $validated);
+        });
+    }
+
+    public function resolveGoogleMapsLink(string $url): array
+    {
+        $parsed = parse_url($url);
+        $host = strtolower((string) ($parsed['host'] ?? ''));
+        $scheme = strtolower((string) ($parsed['scheme'] ?? ''));
+
+        if (! in_array($scheme, ['http', 'https'], true) || ! $this->isAllowedMapHost($host)) {
+            throw ValidationException::withMessages([
+                'url' => 'Tautan harus berasal dari Google Maps.',
+            ]);
+        }
+
+        try {
+            $response = Http::timeout(10)
+                ->withOptions([
+                    'allow_redirects' => [
+                        'max' => 5,
+                        'on_redirect' => function ($request, $response, $uri): void {
+                            if (! $this->isAllowedMapHost(strtolower($uri->getHost()))) {
+                                throw new \RuntimeException('Redirect host tidak diizinkan.');
+                            }
+                        },
+                    ],
+                ])
+                ->get($url);
+        } catch (\Throwable) {
+            throw ValidationException::withMessages([
+                'url' => 'Tautan Google Maps tidak dapat dibaca. Coba gunakan URL lengkap atau pilih titik di peta.',
+            ]);
+        }
+
+        if (! $response->successful() || ! $this->isAllowedMapHost(strtolower((string) $response->effectiveUri()->getHost()))) {
+            throw ValidationException::withMessages([
+                'url' => 'Tautan Google Maps tidak dapat dibaca. Coba gunakan URL lengkap atau pilih titik di peta.',
+            ]);
+        }
+
+        $coordinates = $this->extractCoordinates(implode("\n", [
+            (string) $response->effectiveUri(),
+            $response->body(),
+        ]));
+
+        if (! $coordinates) {
+            throw ValidationException::withMessages([
+                'url' => 'Koordinat tidak ditemukan dari tautan tersebut. Coba salin URL lokasi yang lebih lengkap.',
+            ]);
+        }
+
+        return [
+            'latitude' => $coordinates[0],
+            'longitude' => $coordinates[1],
+        ];
     }
 
     public function updateCompany(PerusahaanMitra $company, array $validated): void
     {
-        $company->update($validated);
+        DB::transaction(function () use ($company, $validated): void {
+            $company->update($validated);
 
-        $this->syncPortalAccount($company, $validated);
+            $this->syncPortalAccount($company, $validated);
+        });
     }
 
     public function deleteCompany(PerusahaanMitra $company): void
     {
+        if ($this->hasPlacementHistory($company)) {
+            throw ValidationException::withMessages([
+                'company' => 'Perusahaan yang sudah dipakai dalam pendaftaran tidak dapat dihapus. Nonaktifkan perusahaan untuk mempertahankan riwayat PKL.',
+            ]);
+        }
+
         DB::transaction(function () use ($company): void {
             $company->loadMissing('user');
 
@@ -210,5 +278,46 @@ class AdminCompanyActionService
                 'mitra_jabatan' => $validated['mitra_jabatan'] ?? $company->mitra_jabatan,
             ]);
         });
+    }
+
+    private function isAllowedMapHost(string $host): bool
+    {
+        return $host === 'maps.app.goo.gl'
+            || $host === 'maps.google.com'
+            || $host === 'google.com'
+            || str_ends_with($host, '.google.com')
+            || str_ends_with($host, '.google.co.id');
+    }
+
+    private function hasPlacementHistory(PerusahaanMitra $company): bool
+    {
+        return PendaftaranMagang::query()
+            ->where('perusahaan_id', $company->id)
+            ->exists();
+    }
+
+    /** @return array{0: float, 1: float}|null */
+    private function extractCoordinates(string $value): ?array
+    {
+        $patterns = [
+            '/@(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/',
+            '/!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/',
+            '/(?:[?&](?:q|query)=)(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $value, $matches) !== 1) {
+                continue;
+            }
+
+            $latitude = (float) $matches[1];
+            $longitude = (float) $matches[2];
+
+            if ($latitude >= -90 && $latitude <= 90 && $longitude >= -180 && $longitude <= 180) {
+                return [$latitude, $longitude];
+            }
+        }
+
+        return null;
     }
 }

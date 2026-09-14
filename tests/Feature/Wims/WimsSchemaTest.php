@@ -49,6 +49,16 @@ it('adds the required wims columns to existing magang tables', function () {
     ]))->toBeTrue();
 });
 
+it('enforces one attendance and one logbook row per registration date', function () {
+    $attendanceIndexes = collect(Schema::getIndexes('absensi_magangs'));
+    $logbookIndexes = collect(Schema::getIndexes('logbook_magangs'));
+
+    expect($attendanceIndexes->contains(fn (array $index) => $index['name'] === 'absensi_magangs_pendaftaran_tanggal_unique'))
+        ->toBeTrue()
+        ->and($logbookIndexes->contains(fn (array $index) => $index['name'] === 'logbook_magangs_pendaftaran_tanggal_unique'))
+        ->toBeTrue();
+});
+
 it('supports optional foreign keys for company user and logbook reviewer', function () {
     $mitraUser = User::factory()->create();
     $mahasiswa = User::factory()->create();

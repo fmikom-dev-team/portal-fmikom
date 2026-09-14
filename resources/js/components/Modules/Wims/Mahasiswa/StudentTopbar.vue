@@ -2,12 +2,20 @@
 import { computed, ref, watch } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import {
-    Bell, CheckCheck, CircleAlert, LogOut, Moon, RefreshCw, Sun, X,
+    Bell, CheckCheck, CircleAlert, LogOut, Menu, Moon, RefreshCw, Sun, X,
 } from 'lucide-vue-next';
-import { useWimsStudentAppearance } from '@/composables/useWimsStudentAppearance';
+import { useAppearance } from '@/composables/useAppearance';
 
 const page = usePage();
-const { appearance, resolvedAppearance, updateAppearance } = useWimsStudentAppearance();
+const props = defineProps<{
+    sidebarCollapsed?: boolean;
+}>();
+const emit = defineEmits<{
+    toggleSidebar: [];
+}>();
+// WIMS Mahasiswa shares the Portal appearance preference. This prevents the
+// module from competing with the global `html.dark` state.
+const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
 
 const currentPath = computed(() => {
     const [path] = page.url.split('?');
@@ -71,7 +79,13 @@ const getRelativeTime = (dateStr?: string | null) => {
 };
 
 const markAllRead = () => {
-    // Placeholder — emit or call API to mark all as read
+    router.post('/wims/notifikasi/baca-semua', {}, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+            showNotifications.value = false;
+        },
+    });
 };
 
 const title = computed(() => {
@@ -82,7 +96,7 @@ const title = computed(() => {
     if (path.startsWith('/wims/logbook')) return 'Logbook';
     if (path.startsWith('/wims/laporan')) return 'Laporan';
     if (path.startsWith('/wims/profil')) return 'Profil';
-    return 'Student Portal';
+    return 'Portal Mahasiswa';
 });
 
 const subtitle = computed(() => {
@@ -355,6 +369,16 @@ watch(currentPath, () => {
     <!-- ======== DESKTOP TOPBAR ======== -->
     <header class="sticky top-0 z-30 hidden border-b border-wims-border/80 bg-wims-topbar backdrop-blur-xl lg:block transition-colors duration-300">
         <div class="mx-auto flex w-full max-w-[1320px] items-center gap-6 px-8 py-3 xl:px-10">
+            <button
+                type="button"
+                class="flex size-9 flex-shrink-0 items-center justify-center rounded-xl border border-wims-border/80 bg-wims-card text-slate-500 transition-all duration-200 hover:border-blue-300/60 hover:bg-blue-50/80 hover:text-blue-600 active:scale-95 dark:text-slate-400 dark:hover:border-blue-500/30 dark:hover:bg-blue-500/10 dark:hover:text-blue-400"
+                :aria-label="props.sidebarCollapsed ? 'Tampilkan sidebar' : 'Sembunyikan sidebar'"
+                :title="props.sidebarCollapsed ? 'Tampilkan sidebar' : 'Sembunyikan sidebar'"
+                @click="emit('toggleSidebar')"
+            >
+                <Menu class="size-4" />
+            </button>
+
             <!-- Breadcrumb / Title -->
             <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2">

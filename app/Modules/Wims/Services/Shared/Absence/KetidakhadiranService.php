@@ -43,6 +43,8 @@ class KetidakhadiranService
             ]);
         }
 
+        // Rentang tanggal tidak boleh bertabrakan dengan pengajuan izin atau sakit
+        // yang masih pending maupun yang sudah disetujui untuk pendaftaran ini.
         $existingOverlap = KetidakhadiranMagang::query()
             ->where('pendaftaran_id', $pendaftaran->id)
             ->whereIn('status', ['pending', 'approved'])
@@ -73,6 +75,8 @@ class KetidakhadiranService
             ]);
         }
 
+        // Ketidakhadiran tidak boleh menimpa presensi manual yang sudah benar-benar
+        // tercatat agar integritas riwayat kehadiran harian tetap terjaga.
         $existingAttendance = AbsensiMagang::query()
             ->where('pendaftaran_id', $pendaftaran->id)
             ->whereIn('tanggal', $workDates->all())
@@ -95,6 +99,13 @@ class KetidakhadiranService
     public function approve(KetidakhadiranMagang $ketidakhadiran, User $reviewer, ?string $catatanMitra = null): void
     {
         DB::transaction(function () use ($ketidakhadiran, $reviewer, $catatanMitra): void {
+            $ketidakhadiran = KetidakhadiranMagang::query()
+                ->lockForUpdate()
+                ->findOrFail($ketidakhadiran->id);
+            $this->assertPending($ketidakhadiran);
+
+            // Status approval dan sinkronisasi row absensi dijalankan dalam satu
+            // transaksi supaya keputusan mitra tidak menyisakan data setengah jadi.
             $ketidakhadiran->update([
                 'status' => 'approved',
                 'reviewed_by_mitra_user_id' => $reviewer->id,
@@ -109,6 +120,11 @@ class KetidakhadiranService
     public function reject(KetidakhadiranMagang $ketidakhadiran, User $reviewer, ?string $catatanMitra = null): void
     {
         DB::transaction(function () use ($ketidakhadiran, $reviewer, $catatanMitra): void {
+            $ketidakhadiran = KetidakhadiranMagang::query()
+                ->lockForUpdate()
+                ->findOrFail($ketidakhadiran->id);
+            $this->assertPending($ketidakhadiran);
+
             $ketidakhadiran->update([
                 'status' => 'rejected',
                 'reviewed_by_mitra_user_id' => $reviewer->id,
@@ -126,6 +142,11 @@ class KetidakhadiranService
     public function cancel(KetidakhadiranMagang $ketidakhadiran): void
     {
         DB::transaction(function () use ($ketidakhadiran): void {
+            $ketidakhadiran = KetidakhadiranMagang::query()
+                ->lockForUpdate()
+                ->findOrFail($ketidakhadiran->id);
+            $this->assertPending($ketidakhadiran);
+
             $ketidakhadiran->update([
                 'status' => 'cancelled',
                 'cancelled_at' => now(),
@@ -212,6 +233,15 @@ class KetidakhadiranService
                 'user_agent' => null,
             ]);
             $attendance->save();
+        }
+    }
+
+    private function assertPending(KetidakhadiranMagang $ketidakhadiran): void
+    {
+        if ($ketidakhadiran->status !== 'pending') {
+            throw ValidationException::withMessages([
+                'ketidakhadiran' => 'Pengajuan ketidakhadiran sudah diproses sebelumnya.',
+            ]);
         }
     }
 

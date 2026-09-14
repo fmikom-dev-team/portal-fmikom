@@ -3,6 +3,8 @@
 namespace App\Modules\Wims\Services\Shared\Placement;
 
 use App\Models\Magang\PendaftaranMagang;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -35,6 +37,31 @@ class PlacementActionService
         DB::transaction(function () use ($registrations): void {
             $this->markRegistrationsComplete($registrations);
         });
+    }
+
+    public function completeFiltered(Builder $query): int
+    {
+        $completed = 0;
+
+        $query
+            ->select('pendaftaran_magangs.*')
+            ->chunkById(100, function (Collection $registrations) use (&$completed): void {
+                $eligible = $registrations
+                    ->filter(fn (Model $model) => $model instanceof PendaftaranMagang && $model->canBeMarkedComplete())
+                    ->values();
+
+                if ($eligible->isEmpty()) {
+                    return;
+                }
+
+                DB::transaction(function () use ($eligible): void {
+                    $this->markRegistrationsComplete($eligible);
+                });
+
+                $completed += $eligible->count();
+            });
+
+        return $completed;
     }
 
     private function markRegistrationsComplete(Collection $registrations): void

@@ -13,13 +13,22 @@ class StudentRegistrationPageService
     public function __construct(
         private readonly StudentFinalReportTemplateService $studentFinalReportTemplateService,
         private readonly StudentPeriodResolverService $studentPeriodResolverService,
+        private readonly StudentNextRegistrationEligibilityService $studentNextRegistrationEligibilityService,
     ) {}
 
     public function build(User $user): array
     {
         $registrations = $this->studentPeriodResolverService->resolveRegistrations($user->id);
         $selectedRegistration = $this->studentPeriodResolverService->resolveSelectedRegistrationFromCollection($registrations);
-        $formSource = $selectedRegistration?->status === 'revisi' ? $selectedRegistration : null;
+        $latestRegistration = $registrations->first();
+        $isLatestRegistrationSelected = ! $latestRegistration
+            || $selectedRegistration?->is($latestRegistration);
+        $canSubmitLatestRegistration = $this->canSubmitRegistration($latestRegistration);
+        $formSource = $isLatestRegistrationSelected
+            && $selectedRegistration
+            && ! in_array($selectedRegistration->status, ['rejected', 'selesai'], true)
+            ? $selectedRegistration
+            : null;
         $periods = $this->studentPeriodResolverService->buildPeriodOptions($registrations, $selectedRegistration?->id);
 
         return [
@@ -27,9 +36,13 @@ class StudentRegistrationPageService
             'selected_period_id' => $selectedRegistration?->id,
             'periods' => $periods,
             'pageState' => [
-                'can_submit' => $this->canSubmitRegistration($selectedRegistration),
-                'is_revision' => $selectedRegistration?->status === 'revisi',
-                'is_locked' => in_array($selectedRegistration?->status, ['pending', 'approved', 'aktif'], true),
+                'can_submit' => $isLatestRegistrationSelected && $canSubmitLatestRegistration,
+                'is_revision' => $isLatestRegistrationSelected && $selectedRegistration?->status === 'revisi',
+                'is_new_submission' => $isLatestRegistrationSelected && (! $selectedRegistration || in_array($selectedRegistration->status, ['rejected', 'selesai'], true)),
+                'is_locked' => ! $isLatestRegistrationSelected || ! $canSubmitLatestRegistration,
+                'next_registration_assessment' => $latestRegistration?->status === 'selesai'
+                    ? $this->studentNextRegistrationEligibilityService->evaluate($latestRegistration)
+                    : null,
             ],
             'proposal_template' => $this->studentFinalReportTemplateService->buildTemplateCard('proposal', 'wims.registration.proposal-template.download'),
             'formDefaults' => [
@@ -38,6 +51,12 @@ class StudentRegistrationPageService
                 'perusahaan_diminati_nama' => $formSource?->perusahaan_diminati_nama,
                 'perusahaan_diminati_alamat' => $formSource?->perusahaan_diminati_alamat,
                 'catatan_pengajuan' => $formSource?->catatan_pengajuan,
+                'status_kip' => $formSource?->status_kip,
+                'sks_ditempuh' => $formSource?->sks_ditempuh,
+                'bidang_minat' => $formSource?->bidang_minat,
+                'bidang_minat_lainnya' => $formSource?->bidang_minat_lainnya,
+                'ukuran_seragam' => $formSource?->ukuran_seragam,
+                'ukuran_seragam_custom' => $formSource?->ukuran_seragam_custom,
             ],
         ];
     }
@@ -57,13 +76,25 @@ class StudentRegistrationPageService
             ->first();
     }
 
+    public function registrationForStudent(int $userId, int $registrationId): ?PendaftaranMagang
+    {
+        return PendaftaranMagang::with('perusahaan')
+            ->where('mahasiswa_id', $userId)
+            ->whereKey($registrationId)
+            ->first();
+    }
+
     public function canSubmitRegistration(?PendaftaranMagang $registration, bool $hasCompletedHistory = false): bool
     {
         if (! $registration) {
             return true;
         }
 
-        return in_array($registration->status, ['revisi', 'rejected', 'selesai'], true);
+        if ($registration->status === 'selesai') {
+            return $this->studentNextRegistrationEligibilityService->evaluate($registration)['is_complete'];
+        }
+
+        return in_array($registration->status, ['revisi', 'rejected'], true);
     }
 
     public function transformRegistration(PendaftaranMagang $registration): array
@@ -92,6 +123,22 @@ class StudentRegistrationPageService
                 'name' => $registration->proposal_pkl_original_name,
                 'uploaded_at' => $registration->proposal_pkl_uploaded_at?->translatedFormat('d M Y H:i'),
             ] : null,
+            'transcript_attachment' => filled($registration->transkrip_nilai_path) ? [
+                'exists' => true,
+                'name' => $registration->transkrip_nilai_original_name,
+                'uploaded_at' => $registration->transkrip_nilai_uploaded_at?->translatedFormat('d M Y H:i'),
+            ] : null,
+            'recommendation_attachment' => filled($registration->surat_rekomendasi_kaprodi_path) ? [
+                'exists' => true,
+                'name' => $registration->surat_rekomendasi_kaprodi_original_name,
+                'uploaded_at' => $registration->surat_rekomendasi_kaprodi_uploaded_at?->translatedFormat('d M Y H:i'),
+            ] : null,
+            'status_kip' => $registration->status_kip,
+            'sks_ditempuh' => $registration->sks_ditempuh,
+            'bidang_minat' => $registration->bidang_minat,
+            'bidang_minat_lainnya' => $registration->bidang_minat_lainnya,
+            'ukuran_seragam' => $registration->ukuran_seragam,
+            'ukuran_seragam_custom' => $registration->ukuran_seragam_custom,
             'submitted_at' => $registration->created_at?->translatedFormat('d M Y H:i'),
             'updated_at' => $registration->updated_at?->translatedFormat('d M Y H:i'),
         ];

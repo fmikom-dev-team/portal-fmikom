@@ -85,6 +85,25 @@ it('keeps attendance sync idempotent and skips holidays plus non working days', 
         ->and($attendanceRows->contains(fn (AbsensiMagang $attendance) => $attendance->tanggal?->toDateString() === '2026-06-16'))->toBeFalse();
 });
 
+it('does not create attendance rows before a registration is activated', function () {
+    [, , $company] = makeActiveOperationalRegistration();
+
+    $registration = PendaftaranMagang::create([
+        'mahasiswa_id' => User::factory()->create()->id,
+        'perusahaan_id' => $company->id,
+        'tanggal_mulai' => '2026-06-15',
+        'tanggal_selesai' => '2026-06-19',
+        'status' => 'approved',
+    ]);
+
+    app(AttendanceSyncService::class)->syncForRegistration(
+        $registration->fresh('perusahaan'),
+        now()->setDate(2026, 6, 18),
+    );
+
+    expect(AbsensiMagang::where('pendaftaran_id', $registration->id)->count())->toBe(0);
+});
+
 it('syncs approved absence into izin or sakit and ignores pending absence', function () {
     [$student, , $company, $registration] = makeActiveOperationalRegistration();
 

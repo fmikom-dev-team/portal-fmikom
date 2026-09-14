@@ -361,6 +361,36 @@ it('deletes company records without deleting shared portal users and deactivates
     ]);
 });
 
+it('blocks deleting a company that is referenced by a registration', function () {
+    $admin = portalReadyUser(['name' => 'Admin Protect History']);
+    $student = portalReadyUser(['name' => 'Student Protect History']);
+    assignModuleRole($admin, $this->wimsModule, 'admin');
+    assignModuleRole($student, $this->wimsModule, 'mahasiswa');
+
+    $company = PerusahaanMitra::query()->create([
+        'nama' => 'PT Riwayat Tidak Dihapus',
+        'is_active' => true,
+    ]);
+
+    $registration = PendaftaranMagang::query()->create([
+        'mahasiswa_id' => $student->id,
+        'perusahaan_id' => $company->id,
+        'status' => 'selesai',
+        'tanggal_mulai' => '2026-06-01',
+        'tanggal_selesai' => '2026-06-30',
+    ]);
+
+    $this->actingAs($admin)
+        ->withSession(['active_module' => 'WIMS', 'active_role' => 'admin'])
+        ->from('/wims/admin/perusahaan')
+        ->delete(route('wims.admin.companies.destroy', $company))
+        ->assertRedirect('/wims/admin/perusahaan')
+        ->assertSessionHasErrors('company');
+
+    $this->assertDatabaseHas('perusahaan_mitras', ['id' => $company->id]);
+    $this->assertDatabaseHas('pendaftaran_magangs', ['id' => $registration->id]);
+});
+
 it('limits placement-related role queries to active WIMS assignments only', function () {
     $activeWimsDosen = portalReadyUser(['name' => 'Active WIMS Dosen']);
     $inactiveWimsDosen = portalReadyUser(['name' => 'Inactive WIMS Dosen']);
@@ -382,6 +412,13 @@ it('limits placement-related role queries to active WIMS assignments only', func
 
     $company = PerusahaanMitra::query()->create([
         'nama' => 'PT Placement',
+        'alamat' => 'Jl. Placement No. 1',
+        'kota' => 'Bandung',
+        'latitude' => -6.9175,
+        'longitude' => 107.6191,
+        'radius_valid_meter' => 100,
+        'jam_masuk' => '08:00',
+        'jam_pulang' => '16:00',
         'is_active' => true,
     ]);
 
@@ -422,6 +459,13 @@ it('limits placement-related role queries to active WIMS assignments only', func
 it('activates approved placements without requiring a document request', function () {
     $company = PerusahaanMitra::query()->create([
         'nama' => 'PT Aktivasi Tanpa Surat',
+        'alamat' => 'Jl. Aktivasi No. 1',
+        'kota' => 'Bandung',
+        'latitude' => -6.9175,
+        'longitude' => 107.6191,
+        'radius_valid_meter' => 100,
+        'jam_masuk' => '08:00',
+        'jam_pulang' => '16:00',
         'is_active' => true,
     ]);
 
@@ -676,7 +720,7 @@ it('keeps the selected student period across WIMS pages until the user switches 
             ->component('Modules/Wims/Mahasiswa/Pendaftaran/Index')
             ->where('selected_period_id', $olderRegistration->id)
             ->where('registration.id', $olderRegistration->id)
-            ->where('pageState.can_submit', true)
+            ->where('pageState.can_submit', false)
         );
 
     expect($latestRegistration->id)->toBeGreaterThan($olderRegistration->id);

@@ -14,7 +14,21 @@ class StudentProposalAttachmentService
 
     public function store(UploadedFile $file): string
     {
-        $directory = 'proposal-pkl';
+        return $this->storeToDirectory($file, 'proposal-pkl', 'proposal PKL');
+    }
+
+    public function storeTranscript(UploadedFile $file): string
+    {
+        return $this->storeToDirectory($file, 'transkrip-nilai', 'transkrip nilai');
+    }
+
+    public function storeRecommendation(UploadedFile $file): string
+    {
+        return $this->storeToDirectory($file, 'rekomendasi-kaprodi', 'surat rekomendasi Kaprodi');
+    }
+
+    private function storeToDirectory(UploadedFile $file, string $directory, string $label): string
+    {
         $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'pdf');
         $filename = Str::uuid().'.'.$extension;
         $path = $directory.'/'.$filename;
@@ -22,11 +36,11 @@ class StudentProposalAttachmentService
         $contents = file_get_contents($file->getRealPath());
 
         if ($contents === false) {
-            throw new RuntimeException('Gagal membaca file proposal PKL yang diunggah.');
+            throw new RuntimeException("Gagal membaca file {$label} yang diunggah.");
         }
 
         if (! Storage::disk(self::DISK)->put($path, $contents)) {
-            throw new RuntimeException('Gagal menyimpan file proposal PKL.');
+            throw new RuntimeException("Gagal menyimpan file {$label}.");
         }
 
         clearstatcache(true, $this->normalizeLocalPath(Storage::disk(self::DISK)->path($path)));

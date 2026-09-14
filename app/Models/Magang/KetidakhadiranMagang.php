@@ -35,6 +35,7 @@ class KetidakhadiranMagang extends Model
         'cancelled_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<PendaftaranMagang, $this> */
     public function pendaftaran(): BelongsTo
     {
         return $this->belongsTo(PendaftaranMagang::class, 'pendaftaran_id');

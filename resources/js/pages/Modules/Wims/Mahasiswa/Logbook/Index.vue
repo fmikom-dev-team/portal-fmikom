@@ -466,21 +466,6 @@ watch(
                             </p>
                         </div>
 
-                        <div class="flex items-center gap-3">
-                            <div class="rounded-xl bg-white/10 px-4 py-3 ring-1 ring-white/15 backdrop-blur-md dark:bg-white/[0.07] dark:ring-white/10">
-                                <div class="flex items-center gap-2.5">
-                                    <Flame class="size-5 text-orange-300" :class="streakCount > 0 ? 'animate-pulse' : ''" />
-                                    <div>
-                                        <p class="text-[10px] font-semibold uppercase tracking-wider text-white/60">Streak</p>
-                                        <p class="text-lg font-bold tabular-nums text-white leading-none">{{ streakCount }} hari</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="rounded-xl bg-white/10 px-4 py-3 ring-1 ring-white/15 backdrop-blur-md dark:bg-white/[0.07] dark:ring-white/10">
-                                <p class="text-[10px] font-semibold uppercase tracking-wider text-white/60">Total Entri</p>
-                                <p class="mt-1 text-lg font-bold tabular-nums text-white leading-none">{{ stats.total }}</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -970,7 +955,6 @@ input[type="time"] {
 .lb-enter-from,
 .lb-leave-to { opacity: 0; }
 </style>
-
 
 
 

@@ -63,7 +63,11 @@ const selectedPeriodBadge = computed(() =>
     selectedPeriod.value?.meta === 'Aktif' ? 'Aktif' : null,
 );
 
-const switchPeriod = (value: string) => {
+const switchPeriod = (value: unknown) => {
+    if (typeof value !== 'string') {
+        return;
+    }
+
     if (!value || value === selectedValue.value) {
         return;
     }

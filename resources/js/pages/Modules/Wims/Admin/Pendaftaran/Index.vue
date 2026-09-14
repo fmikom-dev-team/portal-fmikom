@@ -6,11 +6,19 @@ import {
     CheckCheck,
     Download,
     FileText,
+    LoaderCircle,
     RotateCcw,
     Search,
     SlidersHorizontal,
     XCircle,
+    MoreHorizontal,
 } from 'lucide-vue-next';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,11 +62,29 @@ type RegistrationItem = {
     id: number;
     application_note?: string | null;
     revision_note?: string | null;
+    status_kip?: string | null;
+    sks_ditempuh?: number | null;
+    bidang_minat?: string | null;
+    bidang_minat_lainnya?: string | null;
+    ukuran_seragam?: string | null;
+    ukuran_seragam_custom?: string | null;
     tanggal_mulai?: string | null;
     tanggal_selesai?: string | null;
     status?: string | null;
     dosen_pembimbing_id?: number | null;
     proposal_attachment?: {
+        exists?: boolean | null;
+        name?: string | null;
+        uploaded_at?: string | null;
+        download_url?: string | null;
+    } | null;
+    transcript_attachment?: {
+        exists?: boolean | null;
+        name?: string | null;
+        uploaded_at?: string | null;
+        download_url?: string | null;
+    } | null;
+    recommendation_attachment?: {
         exists?: boolean | null;
         name?: string | null;
         uploaded_at?: string | null;
@@ -113,6 +139,17 @@ const selectedIds = ref<number[]>([]);
 const revisionDialogOpen = ref(false);
 const revisionTarget = ref<RegistrationItem | null>(null);
 const revisionNote = ref('');
+const rejectionDialogOpen = ref(false);
+const rejectionTarget = ref<RegistrationItem | null>(null);
+const detailTarget = ref<RegistrationItem | null>(null);
+const detailDialogOpen = computed({
+    get: () => detailTarget.value !== null,
+    set: (open) => {
+        if (!open) {
+            detailTarget.value = null;
+        }
+    },
+});
 
 watch(
     () => props.filters,
@@ -215,7 +252,7 @@ const statusClass = (value?: string | null) => {
 };
 
 const canReview = (item: RegistrationItem) =>
-    !inArrayStatus(item.status, ['aktif', 'selesai']);
+    inArrayStatus(item.status, ['pending', 'revisi']);
 
 const selectableRegistrations = computed(() =>
     props.registrations.data.filter((item) => canReview(item)),
@@ -318,6 +355,13 @@ const updateStatus = (
         return;
     }
 
+    if (nextStatus === 'rejected') {
+        rejectionTarget.value = item;
+        rejectionDialogOpen.value = true;
+
+        return;
+    }
+
     processingId.value = item.id;
 
     router.patch(
@@ -330,6 +374,33 @@ const updateStatus = (
             preserveState: true,
             onFinish: () => {
                 processingId.value = null;
+            },
+        },
+    );
+};
+
+const submitRejection = () => {
+    if (!rejectionTarget.value) {
+        return;
+    }
+
+    processingId.value = rejectionTarget.value.id;
+
+    router.patch(
+        wimsRoutes.admin.registrations.updateStatus(rejectionTarget.value.id)
+            .url,
+        {
+            status: 'rejected',
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            onFinish: () => {
+                processingId.value = null;
+            },
+            onSuccess: () => {
+                rejectionDialogOpen.value = false;
+                rejectionTarget.value = null;
             },
         },
     );
@@ -419,7 +490,7 @@ const placementLink = (item: RegistrationItem) =>
                     </p>
                 </div>
             </div>
-        </section>
+         </section>
 
         <Card class="rounded-xl border border-zinc-200 bg-white py-0 shadow-none">
             <CardHeader class="border-b border-zinc-200 px-5 py-4">
@@ -514,7 +585,7 @@ const placementLink = (item: RegistrationItem) =>
                             />
                             Tandai semua yang bisa disetujui
                         </label>
-                        <span class="text-[11px] text-zinc-500">Hanya pendaftaran berstatus pending, revisi, atau ditolak</span>
+                        <span class="text-[11px] text-zinc-500">Hanya pendaftaran berstatus menunggu atau revisi</span>
                         <span v-if="selectedCount" class="rounded-full border border-blue-200 bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
                             {{ selectedCount }} dipilih
                         </span>
@@ -539,7 +610,7 @@ const placementLink = (item: RegistrationItem) =>
                             class="rounded-xl border border-zinc-200 bg-white px-4 py-4 shadow-none sm:px-5"
                         >
                             <div
-                                class="flex flex-col gap-4 xl:grid xl:grid-cols-[auto_minmax(0,0.9fr)_minmax(0,1.25fr)_minmax(280px,0.85fr)] xl:items-start"
+                                class="flex flex-col gap-4 xl:grid xl:grid-cols-[auto_minmax(0,1fr)_minmax(320px,0.85fr)] xl:items-start"
                             >
                                 <div class="pt-1">
                                     <input
@@ -586,121 +657,36 @@ const placementLink = (item: RegistrationItem) =>
                                     </div>
                                 </div>
 
-                                <div class="min-w-0 space-y-4 xl:pr-2">
-                                    <div class="flex items-start gap-3">
-                                        <div
-                                            class="mt-0.5 flex size-9 items-center justify-center rounded-lg bg-zinc-100 text-zinc-600"
-                                        >
-                                            <BriefcaseBusiness class="size-4" />
-                                        </div>
-                                        <div class="min-w-0 flex-1 space-y-4">
-                                            <div>
-                                                <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
-                                                    Perusahaan Usulan
-                                                </p>
-                                                <p
-                                                    class="mt-1 text-sm font-bold text-zinc-900"
-                                                >
-                                                    {{
-                                                        item.company?.proposal?.name ||
-                                                        'Belum ada usulan perusahaan'
-                                                    }}
-                                                </p>
-                                                <p
-                                                    v-if="
-                                                        item.company?.proposal?.address ||
-                                                        !['aktif', 'selesai'].includes(
-                                                            item.status || '',
-                                                        )
-                                                    "
-                                                    class="mt-1 text-sm leading-6 text-slate-600"
-                                                >
-                                                    {{
-                                                        item.company?.proposal?.address ||
-                                                        'Kampus dapat menentukan perusahaan pada tahap penempatan.'
-                                                    }}
-                                                </p>
-                                            </div>
-                                            <div
-                                                v-if="item.proposal_attachment?.exists"
-                                                class="rounded-lg border border-zinc-200 bg-zinc-50/80 px-3 py-3"
-                                            >
-                                                <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
-                                                    Proposal PKL
-                                                </p>
-                                                <div class="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                                    <div class="min-w-0 flex items-start gap-3">
-                                                        <div class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-                                                            <FileText class="size-4" />
-                                                        </div>
-                                                        <div class="min-w-0">
-                                                            <p class="truncate text-sm font-bold text-zinc-900">
-                                                                {{ item.proposal_attachment?.name || 'Proposal PKL terlampir' }}
-                                                            </p>
-                                                            <p class="mt-1 text-xs text-zinc-500">
-                                                                {{ item.proposal_attachment?.uploaded_at || 'Waktu upload belum tersedia' }}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    <a
-                                                        v-if="item.proposal_attachment?.download_url"
-                                                        :href="item.proposal_attachment.download_url"
-                                                        class="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-3.5 text-sm font-bold text-blue-600 transition-colors hover:bg-blue-50"
-                                                    >
-                                                        <Download class="size-4" />
-                                                        Unduh
-                                                    </a>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <p
-                                                    class="text-[11px] font-bold uppercase tracking-[0.16em]"
-                                                    :class="
-                                                        ['aktif', 'selesai'].includes(
-                                                            item.status || '',
-                                                        )
-                                                            ? 'text-slate-600'
-                                                            : 'text-slate-500'
-                                                    "
-                                                >
-                                                    Penempatan Final
-                                                </p>
-                                                <p
-                                                    class="mt-1 text-sm"
-                                                    :class="
-                                                        ['aktif', 'selesai'].includes(
-                                                            item.status || '',
-                                                        )
-                                                            ? 'font-bold text-zinc-950'
-                                                            : 'text-zinc-700'
-                                                    "
-                                                >
-                                                    {{
-                                                        item.company?.final?.name ||
-                                                        'Belum ditetapkan kampus'
-                                                    }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 <div
                                     class="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-4 xl:min-h-full"
                                 >
-                                    <div class="space-y-1">
-                                        <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
-                                            Periode PKL/Magang
-                                        </p>
-                                        <p class="text-sm font-bold text-zinc-900">
-                                            {{ item.tanggal_mulai || '-' }}
-                                        </p>
-                                        <p class="text-xs text-zinc-500">
-                                            s/d {{ item.tanggal_selesai || '-' }}
-                                        </p>
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="space-y-1">
+                                            <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                                                Periode PKL/Magang
+                                            </p>
+                                            <p class="flex flex-wrap items-center gap-1.5 text-sm font-bold text-zinc-900">
+                                                <span>{{ item.tanggal_mulai || '-' }}</span>
+                                                <span class="text-xs font-medium text-zinc-500">s/d</span>
+                                                <span>{{ item.tanggal_selesai || '-' }}</span>
+                                            </p>
+                                        </div>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger as-child>
+                                                <Button type="button" variant="outline" size="icon" class="size-9 shrink-0 rounded-lg border-zinc-200 bg-white text-zinc-600 shadow-sm hover:bg-zinc-100" aria-label="Lihat detail pendaftar">
+                                                    <MoreHorizontal class="size-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" class="w-48 rounded-xl border border-zinc-200 bg-white shadow-lg">
+                                                <DropdownMenuItem class="cursor-pointer text-sm font-semibold" @select="detailTarget = item">
+                                                    <FileText class="mr-2 size-4" />
+                                                    Lihat Detail
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
 
-                                    <div class="flex flex-wrap items-center gap-2">
+                                    <div class="flex flex-nowrap items-center gap-2">
                                         <template v-if="item.status === 'approved'">
                                             <Link
                                                 :href="placementLink(item)"
@@ -756,15 +742,19 @@ const placementLink = (item: RegistrationItem) =>
                                             class="flex flex-wrap items-center gap-2 text-xs"
                                         >
                                             <span
-                                                class="rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-[10px] font-bold text-slate-600"
+                                                class="rounded-full border px-2.5 py-0.5 text-[10px] font-bold"
+                                                :class="item.status === 'rejected' ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-zinc-200 bg-white text-slate-600'"
                                             >
                                                 {{
-                                                    item.status === 'selesai'
-                                                        ? 'Sudah selesai'
-                                                        : 'Sudah aktif'
+                                                    item.status === 'rejected'
+                                                        ? 'Menunggu pendaftaran baru'
+                                                        : item.status === 'selesai'
+                                                            ? 'Sudah selesai'
+                                                            : 'Sudah aktif'
                                                 }}
                                             </span>
                                             <Link
+                                                v-if="inArrayStatus(item.status, ['aktif', 'selesai'])"
                                                 :href="placementLink(item)"
                                                 class="inline-flex h-9 items-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30 active:scale-[0.98] dark:from-[#214FAF] dark:to-[#0F6FBE] dark:shadow-[0_14px_34px_-18px_rgba(8,15,30,0.84)] dark:hover:shadow-[0_18px_38px_-18px_rgba(8,15,30,0.92)]"
                                             >
@@ -864,6 +854,74 @@ const placementLink = (item: RegistrationItem) =>
             </CardContent>
         </Card>
 
+        <Dialog v-model:open="detailDialogOpen">
+            <DialogContent class="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+                <DialogHeader class="space-y-1.5 text-left">
+                    <DialogTitle class="text-[15px] font-bold text-slate-950">Detail Pendaftar</DialogTitle>
+                    <DialogDescription class="text-sm leading-6 text-slate-600">
+                        Data lengkap pengajuan PKL/magang mahasiswa.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div class="space-y-5 text-sm">
+                    <div class="space-y-1 border-b border-zinc-100 pb-4">
+                        <p class="text-base font-bold text-zinc-950">{{ detailTarget?.student?.name || '-' }}</p>
+                        <p class="text-zinc-500">{{ detailTarget?.student?.email || '-' }}</p>
+                        <p class="text-xs text-zinc-400">{{ detailTarget?.student?.identity || 'Identitas belum tersedia' }}</p>
+                    </div>
+
+                    <section class="space-y-3">
+                        <h3 class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Rencana PKL</h3>
+                        <div class="space-y-3">
+                            <div class="border-b border-zinc-100 pb-3"><p class="text-slate-500">Periode</p><p class="mt-1 font-semibold text-zinc-900">{{ detailTarget?.tanggal_mulai || '-' }} s/d {{ detailTarget?.tanggal_selesai || '-' }}</p></div>
+                            <div class="border-b border-zinc-100 pb-3"><p class="text-slate-500">Perusahaan usulan</p><p class="mt-1 font-semibold text-zinc-900">{{ detailTarget?.company?.proposal?.name || '-' }}</p></div>
+                            <div class="border-b border-zinc-100 pb-3"><p class="text-slate-500">Alamat/kota</p><p class="mt-1 font-semibold text-zinc-900">{{ detailTarget?.company?.proposal?.address || '-' }}</p></div>
+                            <div><p class="text-slate-500">Penempatan final</p><p class="mt-1 font-semibold text-zinc-900">{{ detailTarget?.company?.final?.name || 'Belum ditetapkan kampus' }}</p></div>
+                        </div>
+                    </section>
+
+                    <section class="space-y-3">
+                        <h3 class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Data Mahasiswa</h3>
+                        <div class="space-y-3">
+                            <div class="border-b border-zinc-100 pb-3"><p class="text-slate-500">Status KIP</p><p class="mt-1 font-semibold text-zinc-900">{{ detailTarget?.status_kip === 'kip' ? 'KIP' : detailTarget?.status_kip === 'bukan_kip' ? 'Bukan KIP' : '-' }}</p></div>
+                            <div class="border-b border-zinc-100 pb-3"><p class="text-slate-500">SKS ditempuh</p><p class="mt-1 font-semibold text-zinc-900">{{ detailTarget?.sks_ditempuh ?? '-' }}</p></div>
+                            <div class="border-b border-zinc-100 pb-3"><p class="text-slate-500">Bidang minat</p><p class="mt-1 font-semibold text-zinc-900">{{ detailTarget?.bidang_minat === 'Lainnya' ? detailTarget?.bidang_minat_lainnya || 'Lainnya' : detailTarget?.bidang_minat || '-' }}</p></div>
+                            <div><p class="text-slate-500">Ukuran seragam</p><p class="mt-1 font-semibold text-zinc-900">{{ detailTarget?.ukuran_seragam === 'Custom' ? detailTarget?.ukuran_seragam_custom || 'Custom' : detailTarget?.ukuran_seragam || '-' }}</p></div>
+                        </div>
+                    </section>
+
+                    <section class="space-y-3">
+                        <h3 class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Lampiran</h3>
+                        <div class="space-y-4">
+                            <div v-for="attachment in [
+                                { label: 'Proposal PKL', value: detailTarget?.proposal_attachment },
+                                { label: 'Transkrip Nilai', value: detailTarget?.transcript_attachment },
+                                { label: 'Surat Rekomendasi Kaprodi', value: detailTarget?.recommendation_attachment },
+                            ]" :key="attachment.label" class="border-b border-zinc-100 pb-4 last:border-b-0 last:pb-0">
+                                <p class="font-bold text-zinc-900">{{ attachment.label }}</p>
+                                <p class="mt-1 text-xs text-zinc-500">{{ attachment.value?.name || 'Belum dilampirkan' }}</p>
+                                <p v-if="attachment.value?.uploaded_at" class="mt-1 text-[11px] text-zinc-400">{{ attachment.value.uploaded_at }}</p>
+                                <a v-if="attachment.value?.download_url" :href="attachment.value.download_url" class="mt-2 inline-flex h-9 items-center gap-2 rounded-lg px-0 text-sm font-bold text-blue-600 hover:text-blue-700">
+                                    <Download class="size-4" />
+                                    Unduh dokumen
+                                </a>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section v-if="detailTarget?.application_note || detailTarget?.revision_note" class="space-y-3">
+                        <h3 class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Catatan</h3>
+                        <div v-if="detailTarget?.application_note" class="border-b border-zinc-100 pb-3"><p class="text-slate-500">Catatan mahasiswa</p><p class="mt-1 leading-6 text-zinc-700">{{ detailTarget.application_note }}</p></div>
+                        <div v-if="detailTarget?.revision_note"><p class="text-slate-500">Catatan revisi admin</p><p class="mt-1 leading-6 text-zinc-700">{{ detailTarget.revision_note }}</p></div>
+                    </section>
+                </div>
+
+                <DialogFooter>
+                    <Button type="button" variant="outline" class="h-10 rounded-lg border-zinc-200 text-sm font-bold text-zinc-700" @click="detailDialogOpen = false">Tutup</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
         <Dialog v-model:open="revisionDialogOpen">
             <DialogContent class="sm:max-w-lg">
                 <DialogHeader class="space-y-1.5 text-left">
@@ -932,7 +990,46 @@ const placementLink = (item: RegistrationItem) =>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+
+        <Dialog v-model:open="rejectionDialogOpen">
+            <DialogContent class="sm:max-w-md">
+                <DialogHeader class="space-y-1.5 text-left">
+                    <DialogTitle class="text-[15px] font-bold text-slate-950">
+                        Tolak pendaftaran?
+                    </DialogTitle>
+                    <DialogDescription class="text-sm leading-6 text-slate-600">
+                        Pastikan keputusan ini sudah benar sebelum dilanjutkan.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                    <p class="font-bold">{{ rejectionTarget?.student?.name || '-' }}</p>
+                    <p class="mt-1 text-xs text-rose-700">
+                        Status pendaftaran akan diubah menjadi ditolak.
+                    </p>
+                </div>
+
+                <DialogFooter class="gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        class="h-10 rounded-lg border-zinc-200 text-sm font-bold text-zinc-700"
+                        :disabled="processingId === rejectionTarget?.id"
+                        @click="rejectionDialogOpen = false"
+                    >
+                        Batal
+                    </Button>
+                    <Button
+                        type="button"
+                        class="h-10 rounded-lg bg-rose-600 text-sm font-bold text-white hover:bg-rose-700"
+                        :disabled="!rejectionTarget || processingId === rejectionTarget?.id"
+                        @click="submitRejection"
+                    >
+                        <LoaderCircle v-if="processingId === rejectionTarget?.id" class="mr-2 size-4 animate-spin" />
+                        Ya, Tolak
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
 </template>
-
-
